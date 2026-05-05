@@ -6,6 +6,7 @@ class VitrinProductCard extends StatelessWidget {
   final String category;
   final String description;
   final String? imagePath;
+  final VoidCallback? onWhatsAppTap;
 
   const VitrinProductCard({
     super.key,
@@ -14,6 +15,7 @@ class VitrinProductCard extends StatelessWidget {
     required this.category,
     required this.description,
     this.imagePath,
+    this.onWhatsAppTap,
   });
 
   @override
@@ -37,9 +39,8 @@ class VitrinProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product Image Area
           AspectRatio(
-            aspectRatio: 1,
+            aspectRatio: 1.2,
             child: ClipRRect(
               borderRadius: BorderRadius.vertical(
                 top: ((theme.cardTheme.shape as RoundedRectangleBorder?)?.borderRadius as BorderRadius?)?.topLeft ?? const Radius.circular(16),
@@ -54,60 +55,52 @@ class VitrinProductCard extends StatelessWidget {
           ),
           
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   category.toUpperCase(),
                   style: TextStyle(
-                    fontSize: 10, 
+                    fontSize: 9, 
                     fontWeight: FontWeight.w900, 
                     color: theme.primaryColor.withValues(alpha: 0.5),
                     letterSpacing: 1.5,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 16, 
+                    fontSize: 14, 
                     fontWeight: FontWeight.bold, 
                     color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12, 
-                    color: isDark ? Colors.white54 : Colors.black54, 
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       price,
                       style: TextStyle(
-                        fontSize: 18, 
+                        fontSize: 15, 
                         fontWeight: FontWeight.w900, 
                         color: theme.primaryColor,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF25D366).withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
+                    InkWell(
+                      onTap: onWhatsAppTap,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF25D366).withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.chat, size: 14, color: Color(0xFF25D366)),
                       ),
-                      child: const Icon(Icons.chat, size: 16, color: Color(0xFF25D366)),
                     ),
                   ],
                 ),

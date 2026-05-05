@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/store_data.dart';
+import '../widgets/vitrin_view.dart';
 import 'preview_screen.dart';
 
 class EditorScreen extends StatefulWidget {
@@ -49,92 +50,156 @@ class _EditorScreenState extends State<EditorScreen> {
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildModeToggle(),
-                  const SizedBox(height: 32),
-                  
-                  _buildSectionTitle('Mağaza Görünümü'),
-                  const SizedBox(height: 16),
-                  _buildLogoUpload(),
-                  const SizedBox(height: 16),
-                  _buildTextField('Mağaza adı', (v) => _data.name = v),
-                  const SizedBox(height: 16),
-                  _buildDropdown('İşletme türü', _data.businessType, businessTypes, (v) => setState(() => _data.businessType = v!)),
-                  const SizedBox(height: 16),
-                  _buildTextField('Kısa açıklama', (v) => _data.description = v, maxLines: 2),
-                  const SizedBox(height: 32),
-                  
-                  _buildSectionTitle('İletişim & Sosyal'),
-                  const SizedBox(height: 16),
-                  _buildTextField('WhatsApp', (v) => _data.whatsapp = v, prefixIcon: Icons.phone),
-                  const SizedBox(height: 16),
-                  _buildTextField('Instagram', (v) => _data.instagram = v, prefixIcon: Icons.camera_alt),
-                  const SizedBox(height: 16),
-                  _buildTextField('Web sitesi', (v) => _data.website = v, prefixIcon: Icons.language),
-                  const SizedBox(height: 16),
-                  _buildTextField('Satış / Pazaryeri Linki', (v) => _data.salesLink = v, prefixIcon: Icons.shopping_bag),
-                  const SizedBox(height: 16),
-                  _buildTextField('Adres', (v) => _data.address = v, prefixIcon: Icons.location_on, maxLines: 2),
-                  const SizedBox(height: 32),
-                  
-                  _buildSectionTitle('Tema & Durum'),
-                  const SizedBox(height: 16),
-                  _buildThemeSelector(),
-                  const SizedBox(height: 16),
-                  _buildDropdown('Vitrin durumu', _data.status, statuses, (v) => setState(() => _data.status = v!)),
-                  const SizedBox(height: 32),
-                  
-                  if (_data.isEsnafMode) ...[
-                    _buildSectionHeaderWithAction('Ürünler', _addProduct),
-                    const SizedBox(height: 16),
-                    ...List.generate(_data.products.length, (index) => _buildProductItem(index)),
-                    if (_data.products.isEmpty)
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: Text('Henüz ürün eklenmedi.', style: TextStyle(color: Colors.grey.shade400)),
-                        ),
-                      ),
-                  ],
-                  
-                  const SizedBox(height: 48),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PreviewScreen(storeData: _data),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade900,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 4,
-                      ),
-                      child: const Text('Vitrini Önizle & Paylaş', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 900;
+          
+          if (isWide) {
+            return Row(
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(32),
+                    child: _buildForm(),
+                  ),
+                ),
+                VerticalDivider(width: 1, color: Colors.black.withValues(alpha: 0.05)),
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    color: Colors.grey.shade100,
+                    child: Center(
+                      child: _buildLivePreviewMockup(),
                     ),
                   ),
-                  const SizedBox(height: 60),
-                ],
+                ),
+              ],
+            );
+          }
+          
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: _buildForm(),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildModeToggle(),
+          const SizedBox(height: 32),
+          
+          _buildSectionTitle('Mağaza Görünümü'),
+          const SizedBox(height: 16),
+          _buildLogoUpload(),
+          const SizedBox(height: 16),
+          _buildTextField('Mağaza adı', (v) => setState(() => _data.name = v)),
+          const SizedBox(height: 16),
+          _buildDropdown('İşletme türü', _data.businessType, businessTypes, (v) => setState(() => _data.businessType = v!)),
+          const SizedBox(height: 16),
+          _buildTextField('Kısa açıklama (Vitrin Altı)', (v) => setState(() => _data.description = v), maxLines: 2),
+          const SizedBox(height: 32),
+          
+          if (!_data.isEsnafMode) ...[
+            _buildSectionTitle('Kurumsal Bilgiler'),
+            const SizedBox(height: 16),
+            _buildTextField('Hakkımızda Metni', (v) => setState(() => _data.corporateBio = v), maxLines: 4),
+            const SizedBox(height: 32),
+          ],
+
+          _buildSectionTitle('İletişim & Sosyal'),
+          const SizedBox(height: 16),
+          _buildTextField('WhatsApp', (v) => setState(() => _data.whatsapp = v), prefixIcon: Icons.phone),
+          const SizedBox(height: 16),
+          _buildTextField('Instagram', (v) => setState(() => _data.instagram = v), prefixIcon: Icons.camera_alt),
+          const SizedBox(height: 16),
+          _buildTextField('Web sitesi', (v) => setState(() => _data.website = v), prefixIcon: Icons.language),
+          const SizedBox(height: 16),
+          _buildTextField('Satış / Pazaryeri Linki', (v) => setState(() => _data.salesLink = v), prefixIcon: Icons.shopping_bag),
+          const SizedBox(height: 16),
+          _buildTextField('Adres', (v) => setState(() => _data.address = v), prefixIcon: Icons.location_on, maxLines: 2),
+          const SizedBox(height: 32),
+          
+          _buildSectionTitle('Tema & Durum'),
+          const SizedBox(height: 16),
+          _buildThemeSelector(),
+          const SizedBox(height: 16),
+          _buildDropdown('Vitrin durumu', _data.status, statuses, (v) => setState(() => _data.status = v!)),
+          const SizedBox(height: 32),
+          
+          if (_data.isEsnafMode) ...[
+            _buildSectionHeaderWithAction('Ürünler', _addProduct),
+            const SizedBox(height: 16),
+            ...List.generate(_data.products.length, (index) => _buildProductItem(index)),
+            if (_data.products.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Text('Henüz ürün eklenmedi.', style: TextStyle(color: Colors.grey.shade400)),
+                ),
               ),
+          ],
+          
+          const SizedBox(height: 48),
+          SizedBox(
+            width: double.infinity,
+            height: 60,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PreviewScreen(storeData: _data),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade900,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 4,
+              ),
+              child: const Text('Vitrini Önizle & Paylaş', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ),
-        ),
+          const SizedBox(height: 60),
+        ],
       ),
+    );
+  }
+
+  Widget _buildLivePreviewMockup() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text('CANLI ÖNİZLEME', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.black26)),
+        const SizedBox(height: 32),
+        Container(
+          width: 375,
+          height: 700,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(color: Colors.black, width: 8),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40, offset: const Offset(0, 20))
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: VitrinView(storeData: _data, isEmbedded: true),
+          ),
+        ),
+        const SizedBox(height: 32),
+        const Text('Müşterileriniz vitrininizi bu şekilde görecek.', style: TextStyle(fontSize: 12, color: Colors.black45)),
+      ],
     );
   }
 
@@ -257,16 +322,16 @@ class _EditorScreenState extends State<EditorScreen> {
               Expanded(
                 child: Column(
                   children: [
-                    _buildSmallTextField('Ürün adı', (v) => product.name = v),
+                    _buildSmallTextField('Ürün adı', (v) => setState(() => product.name = v), initial: product.name),
                     const SizedBox(height: 8),
-                    _buildSmallTextField('Fiyat', (v) => product.price = v),
+                    _buildSmallTextField('Fiyat', (v) => setState(() => product.price = v), initial: product.price),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          _buildSmallTextField('Kısa açıklama', (v) => product.description = v, maxLines: 2),
+          _buildSmallTextField('Kısa açıklama', (v) => setState(() => product.description = v), maxLines: 2, initial: product.description),
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
@@ -320,8 +385,9 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildSmallTextField(String label, Function(String) onChanged, {int maxLines = 1}) {
+  Widget _buildSmallTextField(String label, Function(String) onChanged, {int maxLines = 1, String initial = ''}) {
     return TextFormField(
+      initialValue: initial,
       decoration: InputDecoration(
         labelText: label,
         isDense: true,

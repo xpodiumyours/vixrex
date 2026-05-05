@@ -5,7 +5,7 @@ class Product {
   String description;
   String? imagePath;
   String category;
-  String stockStatus; // 'Mevcut', 'Tükendi', 'Son birkaç adet'
+  String stockStatus;
 
   Product({
     required this.id,
@@ -27,11 +27,14 @@ class StoreData {
   String website;
   String salesLink;
   String address;
-  String theme; // Sade, Premium, Zarif, Doğal, Gece, Lüks, Sahil, Güneş
-  String status; // Açık, Bugün kampanya var, Yeni ürünler geldi, Stok sınırlı
-  bool isEsnafMode; // Esnaf Modu vs Kurumsal Mod
+  String theme;
+  String status;
+  bool isEsnafMode;
   String? logoUrl;
   List<Product> products;
+
+  // Kurumsal Mod Özel Alanları
+  String corporateBio;
 
   StoreData({
     this.name = '',
@@ -47,34 +50,24 @@ class StoreData {
     this.isEsnafMode = true,
     this.logoUrl,
     List<Product>? products,
+    this.corporateBio = '',
   }) : products = products ?? [];
 
   factory StoreData.dummy() {
     return StoreData(
-      name: 'Örnek Mağaza',
-      businessType: 'Butik',
-      description: 'Harika ürünlerimizi ve yeni koleksiyonlarımızı keşfedin.',
+      name: 'Örnek İşletme',
+      businessType: 'Butik / Danışmanlık',
+      description: 'Müşterilerimize en iyi hizmeti sunmak için buradayız.',
       whatsapp: '0555 123 45 67',
-      instagram: '@magazakullanici',
-      address: 'Merkez Mah. İstiklal Cad. No:1, İstanbul',
+      instagram: '@isletme',
+      address: 'Merkez Mah. No:1, İstanbul',
       theme: 'Premium',
-      status: 'Yeni ürünler geldi',
+      status: 'Açık',
       isEsnafMode: true,
+      corporateBio: '2010 yılından beri sektörde öncü çözümler sunuyoruz. Vizyonumuz global pazarda değer yaratmaktır.',
       products: [
-        Product(
-          id: '1',
-          name: 'Klasik Gömlek',
-          price: '450 TL',
-          description: 'Pamuklu, rahat kesim.',
-          category: 'Üst Giyim',
-        ),
-        Product(
-          id: '2',
-          name: 'Şık Pantolon',
-          price: '750 TL',
-          description: 'Keten kumaş, modern tasarım.',
-          category: 'Alt Giyim',
-        ),
+        Product(id: '1', name: 'Premium Ürün', price: '1.250 TL', category: 'Yeni', description: 'Özel tasarım ürün.'),
+        Product(id: '2', name: 'Standart Hizmet', price: '750 TL', category: 'Hizmet', description: 'Hızlı ve güvenilir.'),
       ],
     );
   }
