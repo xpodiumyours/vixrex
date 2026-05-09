@@ -12,7 +12,7 @@ class EditorScreen extends StatefulWidget {
 
 class _EditorScreenState extends State<EditorScreen> {
   final _formKey = GlobalKey<FormState>();
-  final StoreData _data = StoreData();
+  final StoreData _data = StoreData(isEsnafMode: false);
 
   final List<String> businessTypes = const [
     'Butik',
@@ -44,23 +44,27 @@ class _EditorScreenState extends State<EditorScreen> {
     'Stok sınırlı',
   ];
 
-  final List<String> stockStatuses = const [
-    'Mevcut',
-    'Tükendi',
-    'Son birkaç adet',
+  final List<String> platforms = const [
+    'Trendyol',
+    'Hepsiburada',
+    'N11',
+    'Amazon',
+    'Çiçeksepeti',
+    'Shopier',
+    'Diğer',
   ];
 
-  void _addProduct() {
+  void _addMarketplaceLink() {
     setState(() {
-      _data.products.add(
-        Product(id: DateTime.now().millisecondsSinceEpoch.toString()),
+      _data.marketplaceLinks.add(
+        MarketplaceLink(id: DateTime.now().millisecondsSinceEpoch.toString()),
       );
     });
   }
 
-  void _removeProduct(int index) {
+  void _removeMarketplaceLink(int index) {
     setState(() {
-      _data.products.removeAt(index);
+      _data.marketplaceLinks.removeAt(index);
     });
   }
 
@@ -119,14 +123,11 @@ class _EditorScreenState extends State<EditorScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildModeToggle(),
-          const SizedBox(height: 32),
-
           _buildSectionTitle('Mağaza Görünümü'),
           const SizedBox(height: 16),
           _buildLogoUpload(),
           const SizedBox(height: 16),
-          _buildTextField('Mağaza adı', (v) => setState(() => _data.name = v)),
+          _buildTextField('Mağaza adı', (v) => setState(() => _data.name = v), initial: _data.name),
           const SizedBox(height: 16),
           _buildDropdown(
             'İşletme türü',
@@ -139,19 +140,19 @@ class _EditorScreenState extends State<EditorScreen> {
             'Kısa açıklama (Vitrin Altı)',
             (v) => setState(() => _data.description = v),
             maxLines: 2,
+            initial: _data.description,
           ),
           const SizedBox(height: 32),
 
-          if (!_data.isEsnafMode) ...[
-            _buildSectionTitle('Kurumsal Bilgiler'),
-            const SizedBox(height: 16),
-            _buildTextField(
-              'Hakkımızda Metni',
-              (v) => setState(() => _data.corporateBio = v),
-              maxLines: 4,
-            ),
-            const SizedBox(height: 32),
-          ],
+          _buildSectionTitle('Kurumsal Bilgiler'),
+          const SizedBox(height: 16),
+          _buildTextField(
+            'Hakkımızda Metni',
+            (v) => setState(() => _data.corporateBio = v),
+            maxLines: 4,
+            initial: _data.corporateBio,
+          ),
+          const SizedBox(height: 32),
 
           _buildSectionTitle('İletişim & Sosyal'),
           const SizedBox(height: 16),
@@ -159,24 +160,21 @@ class _EditorScreenState extends State<EditorScreen> {
             'WhatsApp',
             (v) => setState(() => _data.whatsapp = v),
             prefixIcon: Icons.phone,
+            initial: _data.whatsapp,
           ),
           const SizedBox(height: 16),
           _buildTextField(
             'Instagram',
             (v) => setState(() => _data.instagram = v),
             prefixIcon: Icons.camera_alt,
+            initial: _data.instagram,
           ),
           const SizedBox(height: 16),
           _buildTextField(
             'Web sitesi',
             (v) => setState(() => _data.website = v),
             prefixIcon: Icons.language,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Satış / Pazaryeri Linki',
-            (v) => setState(() => _data.salesLink = v),
-            prefixIcon: Icons.shopping_bag,
+            initial: _data.website,
           ),
           const SizedBox(height: 16),
           _buildTextField(
@@ -184,6 +182,15 @@ class _EditorScreenState extends State<EditorScreen> {
             (v) => setState(() => _data.address = v),
             prefixIcon: Icons.location_on,
             maxLines: 2,
+            initial: _data.address,
+          ),
+          const SizedBox(height: 32),
+
+          _buildSectionHeaderWithAction('Pazaryeri Linkleri', _addMarketplaceLink),
+          const SizedBox(height: 16),
+          ...List.generate(
+            _data.marketplaceLinks.length,
+            (index) => _buildMarketplaceLinkItem(index),
           ),
           const SizedBox(height: 32),
 
@@ -198,25 +205,6 @@ class _EditorScreenState extends State<EditorScreen> {
             (v) => setState(() => _data.status = v!),
           ),
           const SizedBox(height: 32),
-
-          if (_data.isEsnafMode) ...[
-            _buildSectionHeaderWithAction('Ürünler', _addProduct),
-            const SizedBox(height: 16),
-            ...List.generate(
-              _data.products.length,
-              (index) => _buildProductItem(index),
-            ),
-            if (_data.products.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Text(
-                    'Henüz ürün eklenmedi.',
-                    style: TextStyle(color: Colors.grey.shade400),
-                  ),
-                ),
-              ),
-          ],
 
           const SizedBox(height: 48),
           SizedBox(
@@ -246,6 +234,46 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
           ),
           const SizedBox(height: 60),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMarketplaceLinkItem(int index) {
+    final link = _data.marketplaceLinks[index];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildDropdown(
+                  'Platform',
+                  link.platform,
+                  platforms,
+                  (v) => setState(() => link.platform = v!),
+                ),
+              ),
+              IconButton(
+                onPressed: () => _removeMarketplaceLink(index),
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            'Mağaza Linki',
+            (v) => setState(() => link.url = v),
+            prefixIcon: Icons.link,
+            initial: link.url,
+          ),
         ],
       ),
     );
@@ -284,42 +312,18 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(32),
-              child: VitrinView(storeData: _data, isEmbedded: true),
+              // Force rebuild with key if needed, though setState should be enough
+              child: VitrinView(
+                key: ValueKey('preview_${_data.name}_${_data.marketplaceLinks.length}_${_data.description}'),
+                storeData: _data, 
+                isEmbedded: true
+              ),
             ),
           ),
           const SizedBox(height: 32),
           const Text(
             'Müşterileriniz vitrininizi bu şekilde görecek.',
             style: TextStyle(fontSize: 12, color: Colors.black45),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildModeToggle() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x0D000000)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _ModeTab(
-              title: 'Esnaf Modu',
-              isSelected: _data.isEsnafMode,
-              onTap: () => setState(() => _data.isEsnafMode = true),
-            ),
-          ),
-          Expanded(
-            child: _ModeTab(
-              title: 'Kurumsal Mod',
-              isSelected: !_data.isEsnafMode,
-              onTap: () => setState(() => _data.isEsnafMode = false),
-            ),
           ),
         ],
       ),
@@ -336,7 +340,7 @@ class _EditorScreenState extends State<EditorScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0x330D47A1),
+            color: const Color(0x33000000),
             style: BorderStyle.solid,
           ),
         ),
@@ -378,54 +382,57 @@ class _EditorScreenState extends State<EditorScreen> {
         const SizedBox(height: 12),
         SizedBox(
           height: 100,
-          child: ListView.separated(
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: themes.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final isSelected = _data.theme == themes[index];
-              return InkWell(
+              return GestureDetector(
                 onTap: () => setState(() => _data.theme = themes[index]),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: _getThemeColor(themes[index]),
-                        borderRadius: BorderRadius.circular(12),
-                        border:
+                child: Container(
+                  width: 80,
+                  margin: const EdgeInsets.only(right: 12),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: _getThemeColor(themes[index]),
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              isSelected
+                                  ? Border.all(
+                                    color: Colors.blue.shade900,
+                                    width: 3,
+                                  )
+                                  : Border.all(color: Colors.black12),
+                          boxShadow:
+                              isSelected
+                                  ? const [
+                                    BoxShadow(
+                                      color: Color(0x330D47A1),
+                                      blurRadius: 8,
+                                    ),
+                                  ]
+                                  : null,
+                        ),
+                        child:
                             isSelected
-                                ? Border.all(
-                                  color: Colors.blue.shade900,
-                                  width: 3,
-                                )
-                                : Border.all(color: Colors.black12),
-                        boxShadow:
-                            isSelected
-                                ? const [
-                                  BoxShadow(
-                                    color: Color(0x330D47A1),
-                                    blurRadius: 8,
-                                  ),
-                                ]
+                                ? const Icon(Icons.check, color: Colors.white)
                                 : null,
                       ),
-                      child:
-                          isSelected
-                              ? const Icon(Icons.check, color: Colors.white)
-                              : null,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      themes[index],
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
+                      const SizedBox(height: 4),
+                      Text(
+                        themes[index],
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },
@@ -458,87 +465,6 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  Widget _buildProductItem(int index) {
-    final product = _data.products[index];
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x0D000000)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              _buildSmallImageUpload(),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  children: [
-                    _buildSmallTextField(
-                      'Ürün adı',
-                      (v) => setState(() => product.name = v),
-                      initial: product.name,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildSmallTextField(
-                      'Fiyat',
-                      (v) => setState(() => product.price = v),
-                      initial: product.price,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildSmallDropdown(
-                      'Stok Durumu',
-                      product.stockStatus,
-                      stockStatuses,
-                      (v) => setState(() => product.stockStatus = v!),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildSmallTextField(
-            'Kısa açıklama',
-            (v) => setState(() => product.description = v),
-            maxLines: 2,
-            initial: product.description,
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () => _removeProduct(index),
-              icon: const Icon(Icons.delete_outline, size: 18),
-              label: const Text('Sil', style: TextStyle(fontSize: 12)),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSmallImageUpload() {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0x0D000000)),
-      ),
-      child: const Icon(
-        Icons.add_a_photo_outlined,
-        size: 24,
-        color: Colors.black26,
-      ),
-    );
-  }
-
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -569,53 +495,27 @@ class _EditorScreenState extends State<EditorScreen> {
     Function(String) onChanged, {
     int maxLines = 1,
     IconData? prefixIcon,
+    String? initial,
   }) {
     return TextFormField(
+      initialValue: initial,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon:
             prefixIcon != null
-                ? Icon(prefixIcon, color: Colors.grey, size: 20)
+                ? Icon(prefixIcon, color: Colors.blue.shade900.withValues(alpha: 0.4), size: 20)
                 : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFF1F5F9),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
       ),
-      maxLines: maxLines,
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildSmallTextField(
-    String label,
-    Function(String) onChanged, {
-    int maxLines = 1,
-    String initial = '',
-  }) {
-    return TextFormField(
-      initialValue: initial,
-      decoration: InputDecoration(
-        labelText: label,
-        isDense: true,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-        filled: true,
-        fillColor: const Color(0xFFF1F5F9),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-      ),
-      style: const TextStyle(fontSize: 13),
       maxLines: maxLines,
       onChanged: onChanged,
     );
@@ -636,7 +536,7 @@ class _EditorScreenState extends State<EditorScreen> {
           borderSide: BorderSide.none,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFF1F5F9),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
@@ -645,73 +545,6 @@ class _EditorScreenState extends State<EditorScreen> {
       items:
           items.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
       onChanged: onChanged,
-    );
-  }
-
-  Widget _buildSmallDropdown(
-    String label,
-    String value,
-    List<String> items,
-    void Function(String?) onChanged,
-  ) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        isDense: true,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-        filled: true,
-        fillColor: const Color(0xFFF1F5F9),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-      style: const TextStyle(fontSize: 12, color: Colors.black87),
-      items:
-          items
-              .map(
-                (t) => DropdownMenuItem(
-                  value: t,
-                  child: Text(t, style: const TextStyle(fontSize: 12)),
-                ),
-              )
-              .toList(),
-      onChanged: onChanged,
-    );
-  }
-}
-
-class _ModeTab extends StatelessWidget {
-  final String title;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _ModeTab({
-    required this.title,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        height: 48,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.shade900 : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black54,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
     );
   }
 }

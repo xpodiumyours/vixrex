@@ -1,112 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
-import 'package:vitrinx/widgets/vitrin_product_card.dart';
 
 class VitrinView extends StatelessWidget {
   final StoreData storeData;
   final bool isEmbedded;
 
   const VitrinView({
-    super.key, 
-    required this.storeData, 
-    this.isEmbedded = false
+    super.key,
+    required this.storeData,
+    this.isEmbedded = false,
   });
-
-  ThemeData _getThemeData() {
-    switch (storeData.theme) {
-      case 'Premium':
-        return ThemeData(
-          brightness: Brightness.light,
-          scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-          primaryColor: const Color(0xFF0F172A),
-          colorScheme: const ColorScheme.light(
-            primary: Color(0xFF0F172A), 
-            secondary: Color(0xFF334155),
-            surface: Colors.white,
-          ),
-          textTheme: const TextTheme(
-            headlineMedium: TextStyle(fontWeight: FontWeight.w900, letterSpacing: -1.5),
-          ),
-        );
-      case 'Zarif':
-        return ThemeData(
-          brightness: Brightness.light,
-          scaffoldBackgroundColor: const Color(0xFFFAF9F6),
-          primaryColor: const Color(0xFF7C2D12),
-          colorScheme: const ColorScheme.light(primary: Color(0xFF7C2D12), secondary: Color(0xFF9A3412)),
-          cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-        );
-      case 'Doğal':
-        return ThemeData(
-          brightness: Brightness.light,
-          scaffoldBackgroundColor: const Color(0xFFF7FEE7),
-          primaryColor: const Color(0xFF166534),
-          colorScheme: const ColorScheme.light(primary: Color(0xFF166534), secondary: Color(0xFF3F6212)),
-          cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32))),
-        );
-      case 'Gece':
-        return ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF020617),
-          primaryColor: const Color(0xFF38BDF8),
-          colorScheme: const ColorScheme.dark(primary: Color(0xFF38BDF8), secondary: Color(0xFF818CF8)),
-          cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-        );
-      case 'Lüks':
-        return ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF0C0A09),
-          primaryColor: const Color(0xFFD4AF37),
-          colorScheme: const ColorScheme.dark(primary: Color(0xFFD4AF37), secondary: Color(0xFF78350F)),
-          cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero)),
-        );
-      case 'Sahil':
-        return ThemeData(
-          brightness: Brightness.light,
-          scaffoldBackgroundColor: const Color(0xFFF0F9FF),
-          primaryColor: const Color(0xFF0369A1),
-          colorScheme: const ColorScheme.light(primary: Color(0xFF0369A1), secondary: Color(0xFF0891B2)),
-          cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40))),
-        );
-      case 'Güneş':
-        return ThemeData(
-          brightness: Brightness.light,
-          scaffoldBackgroundColor: const Color(0xFFFFF7ED),
-          primaryColor: const Color(0xFF9A3412),
-          colorScheme: const ColorScheme.light(primary: Color(0xFF9A3412), secondary: Color(0xFFEA580C)),
-          cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-        );
-      case 'Sade':
-      default:
-        return ThemeData(
-          brightness: Brightness.light,
-          scaffoldBackgroundColor: Colors.white,
-          primaryColor: Colors.black,
-          colorScheme: const ColorScheme.light(primary: Colors.black),
-          cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero)),
-        );
-    }
-  }
-
-  double _getBorderRadius() {
-    switch (storeData.theme) {
-      case 'Lüks': return 0.0;
-      case 'Sahil': return 40.0;
-      case 'Premium': return 16.0;
-      case 'Gece': return 20.0;
-      case 'Zarif': return 12.0;
-      case 'Doğal': return 32.0;
-      case 'Güneş': return 8.0;
-      case 'Sade': return 0.0;
-      default: return 12.0;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final themeData = _getThemeData();
-    final radius = _getBorderRadius();
+    final radius = isEmbedded ? 16.0 : 32.0;
 
     return Theme(
       data: themeData,
@@ -120,15 +29,12 @@ class VitrinView extends StatelessWidget {
               const SizedBox(height: 24),
               _buildPremiumActionButtons(radius),
               const SizedBox(height: 40),
-              if (storeData.isEsnafMode) ...[
-                _buildModernCategoryTabs(themeData, radius),
-                const SizedBox(height: 24),
-                _buildProductGrid(context, themeData, radius),
-              ] else ...[
-                _buildProfessionalBio(themeData),
-                const SizedBox(height: 40),
-                _buildModernLinkHub(radius),
-              ],
+              
+              // Unified Professional Layout
+              _buildProfessionalBio(themeData),
+              const SizedBox(height: 40),
+              _buildModernLinkHub(radius),
+              
               const SizedBox(height: 60),
               _buildPremiumIdentityCard(context, themeData, radius),
               const SizedBox(height: 60),
@@ -139,6 +45,37 @@ class VitrinView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  ThemeData _getThemeData() {
+    final isDarkTheme = ['Premium', 'Gece', 'Lüks'].contains(storeData.theme);
+    final primaryColor = _getThemeColor(storeData.theme);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: isDarkTheme ? Brightness.dark : Brightness.light,
+      primaryColor: primaryColor,
+      scaffoldBackgroundColor: isDarkTheme ? const Color(0xFF0F172A) : Colors.white,
+      fontFamily: 'Inter',
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: isDarkTheme ? Brightness.dark : Brightness.light,
+        primary: primaryColor,
+      ),
+    );
+  }
+
+  Color _getThemeColor(String theme) {
+    switch (theme) {
+      case 'Premium': return const Color(0xFF1E293B);
+      case 'Zarif': return const Color(0xFF9E7C66);
+      case 'Doğal': return Colors.green.shade700;
+      case 'Gece': return const Color(0xFF0F172A);
+      case 'Lüks': return const Color(0xFFD4AF37);
+      case 'Sahil': return Colors.cyan.shade600;
+      case 'Güneş': return Colors.orange.shade700;
+      default: return Colors.blue.shade900;
+    }
   }
 
   Widget _buildModernHeader(ThemeData themeData, double radius) {
@@ -174,12 +111,12 @@ class VitrinView extends StatelessWidget {
                 child: CircleAvatar(
                   radius: isEmbedded ? 36 : 48,
                   backgroundColor: themeData.primaryColor.withValues(alpha: 0.05),
-                  child: Icon(storeData.isEsnafMode ? Icons.storefront_rounded : Icons.business_center_rounded, size: isEmbedded ? 32 : 40, color: themeData.primaryColor),
+                  child: Icon(Icons.business_center_rounded, size: isEmbedded ? 32 : 40, color: themeData.primaryColor),
                 ),
               ),
               const SizedBox(height: 20),
               Text(
-                storeData.name.isEmpty ? (storeData.isEsnafMode ? 'Mağaza İsmi' : 'Kurumsal Kimlik') : storeData.name,
+                storeData.name.isEmpty ? 'Dijital Vitrin' : storeData.name,
                 style: TextStyle(
                   fontSize: isEmbedded ? 24 : 32, 
                   fontWeight: FontWeight.w900, 
@@ -203,6 +140,22 @@ class VitrinView extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               StatusChip(status: storeData.status),
+              if (storeData.description.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    storeData.description,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? Colors.white60 : Colors.black45,
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -228,40 +181,6 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildModernCategoryTabs(ThemeData themeData, double radius) {
-    const categories = ['TÜM ÜRÜNLER', 'YENİLER', 'EN ÇOK SATANLAR'];
-    return SizedBox(
-      height: 38,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final isSelected = index == 0;
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? themeData.primaryColor : Colors.transparent,
-              borderRadius: BorderRadius.circular(radius > 16 ? 16 : radius),
-              border: Border.all(color: isSelected ? themeData.primaryColor : themeData.primaryColor.withValues(alpha: 0.1)),
-            ),
-            child: Text(
-              categories[index],
-              style: TextStyle(
-                color: isSelected ? Colors.white : themeData.primaryColor.withValues(alpha: 0.6), 
-                fontWeight: FontWeight.w900, 
-                fontSize: 10,
-                letterSpacing: 0.5
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildProfessionalBio(ThemeData themeData) {
     final isDark = themeData.brightness == Brightness.dark;
     return Padding(
@@ -270,7 +189,7 @@ class VitrinView extends StatelessWidget {
         children: [
           Icon(Icons.format_quote_rounded, color: themeData.primaryColor.withValues(alpha: 0.1), size: 48),
           Text(
-            storeData.corporateBio.isEmpty ? 'Profesyonel çözümler ve güvenilir hizmet anlayışıyla yanınızdayız.' : storeData.corporateBio,
+            storeData.corporateBio.isEmpty ? 'Tüm bilgileriniz, linkleriniz ve iletişim kanallarınız tek yerde.' : storeData.corporateBio,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16, 
@@ -284,41 +203,32 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildProductGrid(BuildContext context, ThemeData themeData, double radius) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          childAspectRatio: 0.65,
-        ),
-        itemCount: storeData.products.length,
-        itemBuilder: (context, index) {
-          final p = storeData.products[index];
-          return VitrinProductCard(
-            name: p.name.isEmpty ? 'İsimsiz Ürün' : p.name,
-            price: p.price.isEmpty ? 'Sorunuz' : p.price,
-            category: p.category,
-            description: p.description,
-            imagePath: p.imagePath,
-            stockStatus: p.stockStatus,
-            onWhatsAppTap: () => _openWhatsApp(context, "Merhaba, '${p.name}' hakkında bilgi alabilir miyim?"),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildModernLinkHub(double radius) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          _ModernLinkItem(icon: Icons.auto_stories_rounded, title: 'Dijital Katalog', subtitle: 'Geniş ürün ve hizmet yelpazesi', color: Colors.blueGrey, radius: radius),
+          // Dynamic Marketplace Links
+          ...storeData.marketplaceLinks.map((link) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _ModernLinkItem(
+              icon: _getPlatformIcon(link.platform),
+              title: link.platform,
+              subtitle: link.url.isEmpty ? 'Mağazamızı ziyaret edin' : link.url,
+              color: _getPlatformColor(link.platform),
+              radius: radius,
+            ),
+          )),
+          
+          if (storeData.marketplaceLinks.isEmpty)
+             _ModernLinkItem(
+              icon: Icons.auto_stories_rounded,
+              title: 'Dijital Katalog',
+              subtitle: 'Geniş ürün ve hizmet yelpazesi',
+              color: Colors.blueGrey,
+              radius: radius,
+            ),
+
           const SizedBox(height: 12),
           _ModernLinkItem(icon: Icons.verified_rounded, title: 'Referanslarımız', subtitle: 'Güçlü çözüm ortaklıklarımız', color: Colors.indigo, radius: radius),
           const SizedBox(height: 12),
@@ -326,6 +236,28 @@ class VitrinView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  IconData _getPlatformIcon(String platform) {
+    switch (platform) {
+      case 'Trendyol': return Icons.shopping_bag_rounded;
+      case 'Hepsiburada': return Icons.shopping_cart_rounded;
+      case 'N11': return Icons.store_rounded;
+      case 'Amazon': return Icons.cloud_done_rounded;
+      case 'Shopier': return Icons.sell_rounded;
+      default: return Icons.link_rounded;
+    }
+  }
+
+  Color _getPlatformColor(String platform) {
+    switch (platform) {
+      case 'Trendyol': return Colors.orange.shade800;
+      case 'Hepsiburada': return Colors.orange.shade700;
+      case 'N11': return Colors.red.shade700;
+      case 'Amazon': return Colors.blueGrey.shade900;
+      case 'Shopier': return Colors.pink.shade700;
+      default: return Colors.indigo;
+    }
   }
 
   Widget _buildPremiumIdentityCard(BuildContext context, ThemeData themeData, double radius) {
@@ -405,16 +337,6 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  void _openWhatsApp(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('WhatsApp Simülasyonu: $message'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF25D366),
-      ),
-    );
-  }
-
   void _showMvpInfo(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -476,6 +398,7 @@ class _ModernLinkItem extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0x0AFFFFFF) : Colors.white,
         borderRadius: BorderRadius.circular(radius > 16 ? 16 : radius),
@@ -495,7 +418,7 @@ class _ModernLinkItem extends StatelessWidget {
               children: [
                 Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: -0.3)), 
                 const SizedBox(height: 2),
-                Text(subtitle, style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 11))
+                Text(subtitle, style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis)
               ]
             )
           ),
