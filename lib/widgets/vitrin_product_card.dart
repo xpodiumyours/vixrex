@@ -6,6 +6,7 @@ class VitrinProductCard extends StatelessWidget {
   final String category;
   final String description;
   final String? imagePath;
+  final String stockStatus;
   final VoidCallback? onWhatsAppTap;
 
   const VitrinProductCard({
@@ -15,6 +16,7 @@ class VitrinProductCard extends StatelessWidget {
     required this.category,
     required this.description,
     this.imagePath,
+    this.stockStatus = 'Mevcut',
     this.onWhatsAppTap,
   });
 
@@ -25,14 +27,14 @@ class VitrinProductCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
+        color: isDark ? const Color(0x08FFFFFF) : Colors.white,
         borderRadius: (theme.cardTheme.shape as RoundedRectangleBorder?)?.borderRadius ?? BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.03)),
-        boxShadow: [
+        border: Border.all(color: isDark ? Colors.white10 : const Color(0x08000000)),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Color(0x08000000),
             blurRadius: 20,
-            offset: const Offset(0, 10),
+            offset: Offset(0, 10),
           )
         ],
       ),
@@ -46,7 +48,7 @@ class VitrinProductCard extends StatelessWidget {
                 top: ((theme.cardTheme.shape as RoundedRectangleBorder?)?.borderRadius as BorderRadius?)?.topLeft ?? const Radius.circular(16),
               ),
               child: Container(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
+                color: isDark ? const Color(0x0DFFFFFF) : Colors.grey.shade50,
                 child: Center(
                   child: Icon(Icons.image_outlined, size: 40, color: theme.primaryColor.withValues(alpha: 0.2)),
                 ),
@@ -59,27 +61,44 @@ class VitrinProductCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  category.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 9, 
-                    fontWeight: FontWeight.w900, 
-                    color: theme.primaryColor.withValues(alpha: 0.5),
-                    letterSpacing: 1.5,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      category.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 9, 
+                        fontWeight: FontWeight.w900, 
+                        color: theme.primaryColor.withValues(alpha: 0.5),
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    if (stockStatus != 'Mevcut')
+                      Text(
+                        stockStatus.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 8, 
+                          fontWeight: FontWeight.w900, 
+                          color: stockStatus == 'Tükendi' ? Colors.red : Colors.orange,
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14, 
-                    fontWeight: FontWeight.bold, 
-                    color: isDark ? Colors.white : Colors.black87,
+                Tooltip(
+                  message: description,
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14, 
+                      fontWeight: FontWeight.bold, 
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -95,8 +114,8 @@ class VitrinProductCard extends StatelessWidget {
                       onTap: onWhatsAppTap,
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF25D366).withValues(alpha: 0.1),
+                        decoration: const BoxDecoration(
+                          color: Color(0x1A25D366),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.chat, size: 14, color: Color(0xFF25D366)),

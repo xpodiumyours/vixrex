@@ -5,7 +5,7 @@ class Product {
   String description;
   String? imagePath;
   String category;
-  String stockStatus;
+  String stockStatus; // 'Mevcut', 'Tükendi', 'Son birkaç adet'
 
   Product({
     required this.id,

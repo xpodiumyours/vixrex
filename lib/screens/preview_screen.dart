@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/store_data.dart';
-import '../widgets/vitrin_view.dart';
+import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/widgets/vitrin_view.dart';
 
 class PreviewScreen extends StatelessWidget {
   final StoreData storeData;
@@ -20,7 +20,7 @@ class PreviewScreen extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: CircleAvatar(
-            backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+            backgroundColor: isDark ? Colors.white10 : const Color(0x0D000000),
             child: BackButton(color: isDark ? Colors.white : Colors.black87),
           ),
         ),

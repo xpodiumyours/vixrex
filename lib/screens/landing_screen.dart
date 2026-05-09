@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'editor_screen.dart';
-import 'preview_screen.dart';
+import 'package:vitrinx/screens/editor_screen.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({super.key});
@@ -25,7 +24,6 @@ class LandingScreen extends StatelessWidget {
   Widget _buildHeroSection(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -36,58 +34,65 @@ class LandingScreen extends StatelessWidget {
           ],
         ),
       ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: const Text(
-              '✨ YENİ NESİL DİJİTAL VİTRİN',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1.5),
-            ),
-          ),
-          const SizedBox(height: 32),
-          const Text(
-            'İşletmenizi Tek Linkle\nDünyaya Açın',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 42,
-              fontWeight: FontWeight.w900,
-              height: 1.1,
-              letterSpacing: -1.5,
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Ürünlerinizi sergileyin, sipariş alın veya kurumsal kimliğinizi\nprofesyonel bir QR kod ile paylaşın. Hepsi tek bir platformda.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.5),
-          ),
-          const SizedBox(height: 48),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 100),
+          child: Column(
             children: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const EditorScreen()));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.blue.shade900,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 20,
-                  shadowColor: Colors.black.withValues(alpha: 0.5),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0x1AFFFFFF),
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                child: const Text('VİTRİNİNİ ŞİMDİ OLUŞTUR', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                child: const Text(
+                  '✨ YENİ NESİL DİJİTAL VİTRİN',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5),
+                ),
               ),
+              const SizedBox(height: 40),
+              const Text(
+                'İşletmenizi Tek Linkle\nDünyaya Açın',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 48,
+                  fontWeight: FontWeight.w900,
+                  height: 1.1,
+                  letterSpacing: -2,
+                ),
+              ),
+              const SizedBox(height: 32),
+              const Text(
+                'Ürünlerinizi sergileyin, sipariş alın veya kurumsal kimliğinizi\nprofesyonel bir QR kod ile paylaşın. Hepsi tek bir platformda.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 17, height: 1.6),
+              ),
+              const SizedBox(height: 60),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const EditorScreen()));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.blue.shade900,
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      elevation: 20,
+                      shadowColor: const Color(0x80000000),
+                    ),
+                    child: const Text('VİTRİNİNİ ŞİMDİ OLUŞTUR', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -114,16 +119,16 @@ class LandingScreen extends StatelessWidget {
                 children: [
                   _buildModeCard(
                     title: 'Esnaf Modu',
-                    subtitle: 'Ürün Odaklı Satış',
+                    subtitle: 'Ürünlerini Sergile ve Sat',
                     icon: Icons.storefront_rounded,
-                    features: ['Sınırsız Ürün Listeleme', 'WhatsApp Sipariş Hattı', 'Kategori Yönetimi', 'Fiyat Bilgisi'],
+                    features: const ['Tüm Ürünlerin Bir Arada', 'WhatsApp ile Sipariş Alın', 'Kolay Ürün Kategorileri', 'Güncel Fiyat Listesi'],
                     color: Colors.blue.shade900,
                   ),
                   _buildModeCard(
                     title: 'Kurumsal Mod',
-                    subtitle: 'Kimlik ve Link Hub',
+                    subtitle: 'Dijital Kartvizit ve Tanıtım',
                     icon: Icons.business_center_rounded,
-                    features: ['Profesyonel Hakkımızda', 'Dijital Katalog Linkleri', 'Tek Tıkla vCard Kaydı', 'Referans Yönetimi'],
+                    features: const ['Etkileyici Hakkımızda Yazısı', 'Tüm Linklerin Tek Yerde', 'Rehbere Tek Tıkla Kayıt', 'Hizmet ve Referans Paylaşımı'],
                     color: const Color(0xFF1E293B),
                   ),
                 ],
@@ -142,7 +147,7 @@ class LandingScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 40, offset: const Offset(0, 10))],
+        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 40, offset: Offset(0, 10))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

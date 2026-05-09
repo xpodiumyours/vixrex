@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/store_data.dart';
-import '../widgets/status_chip.dart';
-import '../widgets/vitrin_product_card.dart';
+import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/widgets/status_chip.dart';
+import 'package:vitrinx/widgets/vitrin_product_card.dart';
 
 class VitrinView extends StatelessWidget {
   final StoreData storeData;
@@ -106,7 +106,6 @@ class VitrinView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeData = _getThemeData();
-    final isDark = themeData.brightness == Brightness.dark;
     final radius = _getBorderRadius();
 
     return Theme(
@@ -119,21 +118,21 @@ class VitrinView extends StatelessWidget {
             children: [
               _buildModernHeader(themeData, radius),
               const SizedBox(height: 24),
-              _buildPremiumActionButtons(themeData, radius),
+              _buildPremiumActionButtons(radius),
               const SizedBox(height: 40),
               if (storeData.isEsnafMode) ...[
                 _buildModernCategoryTabs(themeData, radius),
                 const SizedBox(height: 24),
                 _buildProductGrid(context, themeData, radius),
               ] else ...[
-                _buildProfessionalBio(themeData, radius),
+                _buildProfessionalBio(themeData),
                 const SizedBox(height: 40),
-                _buildModernLinkHub(themeData, radius),
+                _buildModernLinkHub(radius),
               ],
               const SizedBox(height: 60),
               _buildPremiumIdentityCard(context, themeData, radius),
               const SizedBox(height: 60),
-              _buildRefinedFooter(themeData, radius),
+              _buildModernFooter(themeData),
               const SizedBox(height: 100),
             ],
           ),
@@ -170,7 +169,7 @@ class VitrinView extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 30, offset: const Offset(0, 10))],
+                  boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 30, offset: Offset(0, 10))],
                 ),
                 child: CircleAvatar(
                   radius: isEmbedded ? 36 : 48,
@@ -211,7 +210,7 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildPremiumActionButtons(ThemeData themeData, double radius) {
+  Widget _buildPremiumActionButtons(double radius) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Wrap(
@@ -230,7 +229,7 @@ class VitrinView extends StatelessWidget {
   }
 
   Widget _buildModernCategoryTabs(ThemeData themeData, double radius) {
-    final categories = ['TÜM ÜRÜNLER', 'YENİLER', 'EN ÇOK SATANLAR'];
+    const categories = ['TÜM ÜRÜNLER', 'YENİLER', 'EN ÇOK SATANLAR'];
     return SizedBox(
       height: 38,
       child: ListView.separated(
@@ -263,7 +262,7 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildProfessionalBio(ThemeData themeData, double radius) {
+  Widget _buildProfessionalBio(ThemeData themeData) {
     final isDark = themeData.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -295,7 +294,7 @@ class VitrinView extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 14,
           mainAxisSpacing: 14,
-          childAspectRatio: 0.7,
+          childAspectRatio: 0.65,
         ),
         itemCount: storeData.products.length,
         itemBuilder: (context, index) {
@@ -306,6 +305,7 @@ class VitrinView extends StatelessWidget {
             category: p.category,
             description: p.description,
             imagePath: p.imagePath,
+            stockStatus: p.stockStatus,
             onWhatsAppTap: () => _openWhatsApp(context, "Merhaba, '${p.name}' hakkında bilgi alabilir miyim?"),
           );
         },
@@ -313,7 +313,7 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildModernLinkHub(ThemeData themeData, double radius) {
+  Widget _buildModernLinkHub(double radius) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -336,10 +336,10 @@ class VitrinView extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+          color: isDark ? const Color(0x0DFFFFFF) : Colors.white,
           borderRadius: BorderRadius.circular(radius > 20 ? 20 : radius),
-          border: Border.all(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 40, offset: const Offset(0, 10))],
+          border: Border.all(color: isDark ? Colors.white10 : const Color(0x0D000000)),
+          boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 40, offset: Offset(0, 10))],
         ),
         child: Column(
           children: [
@@ -385,7 +385,7 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildRefinedFooter(ThemeData themeData, double radius) {
+  Widget _buildModernFooter(ThemeData themeData) {
     final isDark = themeData.brightness == Brightness.dark;
     return Column(
       children: [
@@ -400,7 +400,7 @@ class VitrinView extends StatelessWidget {
           color: themeData.primaryColor.withValues(alpha: 0.1),
         ),
         const SizedBox(height: 20),
-        Text('BU BİR VITRINX DİJİTAL KİMLİĞİDİR', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.1), letterSpacing: 3)),
+        Text('BU BİR VITRINX DİJİTAL KİMLİĞİDİR', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: isDark ? Colors.white10 : const Color(0x1A000000), letterSpacing: 3)),
       ],
     );
   }
@@ -477,9 +477,9 @@ class _ModernLinkItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
+        color: isDark ? const Color(0x0AFFFFFF) : Colors.white,
         borderRadius: BorderRadius.circular(radius > 16 ? 16 : radius),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+        border: Border.all(color: isDark ? Colors.white10 : const Color(0x0D000000)),
       ),
       child: Row(
         children: [
@@ -499,7 +499,7 @@ class _ModernLinkItem extends StatelessWidget {
               ]
             )
           ),
-          Icon(Icons.arrow_forward_ios_rounded, color: Colors.black.withValues(alpha: 0.1), size: 14),
+          Icon(Icons.arrow_forward_ios_rounded, color: const Color(0x1A000000), size: 14),
         ],
       ),
     );
