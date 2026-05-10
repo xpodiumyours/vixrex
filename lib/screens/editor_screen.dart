@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
@@ -13,6 +15,14 @@ class EditorScreen extends StatefulWidget {
 class _EditorScreenState extends State<EditorScreen> {
   final _formKey = GlobalKey<FormState>();
   final StoreData _data = StoreData(isEsnafMode: false);
+  bool _isLoading = true;
+
+  // Modern Color Palette
+  static const Color primaryColor = Color(0xFFFF5A1F);
+  static const Color bgColor = Color(0xFFF8FAFC);
+  static const Color cardBorder = Color(0xFFE5E7EB);
+  static const Color inputBg = Color(0xFFF1F5F9);
+  static const Color darkText = Color(0xFF111827);
 
   final List<String> businessTypes = const [
     'Butik',
@@ -54,6 +64,77 @@ class _EditorScreenState extends State<EditorScreen> {
     'Diğer',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedData();
+  }
+
+  Future<void> _loadSavedData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? savedJson = prefs.getString('vitrin_data');
+      if (savedJson != null) {
+        final Map<String, dynamic> jsonData = jsonDecode(savedJson);
+        final loadedData = StoreData.fromJson(jsonData);
+        setState(() {
+          _data.name = loadedData.name;
+          _data.businessType = loadedData.businessType;
+          _data.description = loadedData.description;
+          _data.whatsapp = loadedData.whatsapp;
+          _data.instagram = loadedData.instagram;
+          _data.website = loadedData.website;
+          _data.address = loadedData.address;
+          _data.theme = loadedData.theme;
+          _data.status = loadedData.status;
+          _data.isEsnafMode = loadedData.isEsnafMode;
+          _data.corporateBio = loadedData.corporateBio;
+          _data.marketplaceLinks = loadedData.marketplaceLinks;
+          _data.products = loadedData.products;
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      debugPrint('Data load error: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String jsonData = jsonEncode(_data.toJson());
+      await prefs.setString('vitrin_data', jsonData);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.cloud_done_outlined, color: Colors.white),
+                SizedBox(width: 12),
+                Text('Vitrininiz bu cihazda kaydedildi.'),
+              ],
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: primaryColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
   void _addMarketplaceLink() {
     setState(() {
       _data.marketplaceLinks.add(
@@ -70,47 +151,125 @@ class _EditorScreenState extends State<EditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: primaryColor)),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
-          'Vitrin Düzenle',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 20,
+            color: darkText,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Row(
+          children: [
+            const Text(
+              'Vitrin Düzenle',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: darkText,
+                fontSize: 18,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              'VITRINX',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: primaryColor.withValues(alpha: 0.3),
+                fontSize: 12,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: TextButton.icon(
+              onPressed: _saveData,
+              icon: const Icon(Icons.cloud_done_outlined, size: 18),
+              label: const Text('Kaydet'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blueGrey.shade700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 8.0,
+              horizontal: 12.0,
+            ),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PreviewScreen(storeData: _data),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Önizle & Paylaş',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth > 900;
-
-          if (isWide) {
-            return Row(
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(32),
-                    child: _buildForm(),
+          return Row(
+            children: [
+              Expanded(
+                flex: 5,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(isWide ? 32 : 20),
+                  child: Center(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 800),
+                      child: _buildForm(),
+                    ),
                   ),
                 ),
-                const VerticalDivider(width: 1, color: Color(0x0D000000)),
+              ),
+              if (isWide) ...[
+                const VerticalDivider(width: 1, color: cardBorder),
                 Expanded(
                   flex: 4,
                   child: Container(
-                    color: Colors.grey.shade100,
-                    child: Center(child: _buildLivePreviewMockup()),
+                    color: const Color(0xFFF1F5F9),
+                    child: LayoutBuilder(
+                      builder: (context, previewConstraints) {
+                        return Center(
+                          child: _buildLivePreviewMockup(previewConstraints),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],
-            );
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: _buildForm(),
+            ],
           );
         },
       ),
@@ -123,117 +282,155 @@ class _EditorScreenState extends State<EditorScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Mağaza Görünümü'),
-          const SizedBox(height: 16),
-          _buildLogoUpload(),
-          const SizedBox(height: 16),
-          _buildTextField('Mağaza adı', (v) => setState(() => _data.name = v), initial: _data.name),
-          const SizedBox(height: 16),
-          _buildDropdown(
-            'İşletme türü',
-            _data.businessType,
-            businessTypes,
-            (v) => setState(() => _data.businessType = v!),
+          _buildEditCard(
+            title: 'Mağaza Görünümü',
+            children: [
+              _buildLogoUpload(),
+              const SizedBox(height: 20),
+              _buildTextField(
+                'Mağaza adı',
+                (v) => setState(() => _data.name = v),
+                initial: _data.name,
+              ),
+              const SizedBox(height: 16),
+              _buildDropdown(
+                'İşletme türü',
+                _data.businessType,
+                businessTypes,
+                (v) => setState(() => _data.businessType = v!),
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                'Kısa açıklama (Vitrin Altı)',
+                (v) => setState(() => _data.description = v),
+                maxLines: 2,
+                initial: _data.description,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Kısa açıklama (Vitrin Altı)',
-            (v) => setState(() => _data.description = v),
-            maxLines: 2,
-            initial: _data.description,
+          const SizedBox(height: 24),
+          _buildEditCard(
+            title: 'Kurumsal Bilgiler',
+            children: [
+              _buildTextField(
+                'Hakkımızda Metni',
+                (v) => setState(() => _data.corporateBio = v),
+                maxLines: 4,
+                initial: _data.corporateBio,
+              ),
+            ],
           ),
-          const SizedBox(height: 32),
-
-          _buildSectionTitle('Kurumsal Bilgiler'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Hakkımızda Metni',
-            (v) => setState(() => _data.corporateBio = v),
-            maxLines: 4,
-            initial: _data.corporateBio,
+          const SizedBox(height: 24),
+          _buildEditCard(
+            title: 'İletişim & Sosyal',
+            children: [
+              _buildTextField(
+                'WhatsApp',
+                (v) => setState(() => _data.whatsapp = v),
+                prefixIcon: Icons.phone_rounded,
+                initial: _data.whatsapp,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                'Instagram',
+                (v) => setState(() => _data.instagram = v),
+                prefixIcon: Icons.camera_alt_rounded,
+                initial: _data.instagram,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                'Web sitesi',
+                (v) => setState(() => _data.website = v),
+                prefixIcon: Icons.language_rounded,
+                initial: _data.website,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                'Adres',
+                (v) => setState(() => _data.address = v),
+                prefixIcon: Icons.location_on_rounded,
+                maxLines: 2,
+                initial: _data.address,
+              ),
+            ],
           ),
-          const SizedBox(height: 32),
-
-          _buildSectionTitle('İletişim & Sosyal'),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'WhatsApp',
-            (v) => setState(() => _data.whatsapp = v),
-            prefixIcon: Icons.phone,
-            initial: _data.whatsapp,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Instagram',
-            (v) => setState(() => _data.instagram = v),
-            prefixIcon: Icons.camera_alt,
-            initial: _data.instagram,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Web sitesi',
-            (v) => setState(() => _data.website = v),
-            prefixIcon: Icons.language,
-            initial: _data.website,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Adres',
-            (v) => setState(() => _data.address = v),
-            prefixIcon: Icons.location_on,
-            maxLines: 2,
-            initial: _data.address,
-          ),
-          const SizedBox(height: 32),
-
-          _buildSectionHeaderWithAction('Pazaryeri Linkleri', _addMarketplaceLink),
-          const SizedBox(height: 16),
-          ...List.generate(
-            _data.marketplaceLinks.length,
-            (index) => _buildMarketplaceLinkItem(index),
-          ),
-          const SizedBox(height: 32),
-
-          _buildSectionTitle('Tema & Durum'),
-          const SizedBox(height: 16),
-          _buildThemeSelector(),
-          const SizedBox(height: 16),
-          _buildDropdown(
-            'Vitrin durumu',
-            _data.status,
-            statuses,
-            (v) => setState(() => _data.status = v!),
-          ),
-          const SizedBox(height: 32),
-
-          const SizedBox(height: 48),
-          SizedBox(
-            width: double.infinity,
-            height: 60,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PreviewScreen(storeData: _data),
+          const SizedBox(height: 24),
+          _buildEditCard(
+            title: 'Pazaryeri Linkleri',
+            onAction: _addMarketplaceLink,
+            children: [
+              ...List.generate(
+                _data.marketplaceLinks.length,
+                (index) => _buildMarketplaceLinkItem(index),
+              ),
+              if (_data.marketplaceLinks.isEmpty)
+                Center(
+                  child: Text(
+                    'Henüz link eklenmedi.',
+                    style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade900,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
                 ),
-                elevation: 4,
-              ),
-              child: const Text(
-                'Vitrini Önizle & Paylaş',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
+            ],
           ),
-          const SizedBox(height: 60),
+          const SizedBox(height: 24),
+          _buildEditCard(
+            title: 'Tema & Durum',
+            children: [
+              _buildThemeSelector(),
+              const SizedBox(height: 24),
+              _buildDropdown(
+                'Vitrin durumu',
+                _data.status,
+                statuses,
+                (v) => setState(() => _data.status = v!),
+              ),
+            ],
+          ),
+          const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditCard({
+    required String title,
+    required List<Widget> children,
+    VoidCallback? onAction,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cardBorder),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: darkText,
+                ),
+              ),
+              if (onAction != null)
+                IconButton(
+                  onPressed: onAction,
+                  icon: const Icon(
+                    Icons.add_circle_outline_rounded,
+                    color: primaryColor,
+                  ),
+                  tooltip: 'Yeni Ekle',
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ...children,
         ],
       ),
     );
@@ -245,9 +442,9 @@ class _EditorScreenState extends State<EditorScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: inputBg.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+        border: Border.all(color: cardBorder.withValues(alpha: 0.5)),
       ),
       child: Column(
         children: [
@@ -261,9 +458,14 @@ class _EditorScreenState extends State<EditorScreen> {
                   (v) => setState(() => link.platform = v!),
                 ),
               ),
+              const SizedBox(width: 8),
               IconButton(
                 onPressed: () => _removeMarketplaceLink(index),
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                icon: const Icon(
+                  Icons.remove_circle_outline_rounded,
+                  color: Colors.redAccent,
+                  size: 20,
+                ),
               ),
             ],
           ),
@@ -271,7 +473,7 @@ class _EditorScreenState extends State<EditorScreen> {
           _buildTextField(
             'Mağaza Linki',
             (v) => setState(() => link.url = v),
-            prefixIcon: Icons.link,
+            prefixIcon: Icons.link_rounded,
             initial: link.url,
           ),
         ],
@@ -279,51 +481,66 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildLivePreviewMockup() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 40),
+  Widget _buildLivePreviewMockup(BoxConstraints constraints) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
         children: [
-          const Text(
-            'CANLI ÖNİZLEME',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 2,
-              color: Colors.black26,
-            ),
-          ),
-          const SizedBox(height: 32),
           Container(
-            width: 375,
-            height: 700,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(40),
-              border: Border.all(color: Colors.black, width: 8),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33000000),
-                  blurRadius: 40,
-                  offset: Offset(0, 20),
-                ),
-              ],
+              color: Colors.black.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(32),
-              // Force rebuild with key if needed, though setState should be enough
-              child: VitrinView(
-                key: ValueKey('preview_${_data.name}_${_data.marketplaceLinks.length}_${_data.description}'),
-                storeData: _data, 
-                isEmbedded: true
+            child: const Text(
+              'CANLI ÖNİZLEME',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
+                color: Colors.black45,
               ),
             ),
           ),
-          const SizedBox(height: 32),
-          const Text(
-            'Müşterileriniz vitrininizi bu şekilde görecek.',
-            style: TextStyle(fontSize: 12, color: Colors.black45),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 340,
+                  maxHeight: 620,
+                ),
+                child: AspectRatio(
+                  aspectRatio: 0.50,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(44),
+                      border: Border.all(color: darkText, width: 6),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 40,
+                          offset: const Offset(0, 20),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(38),
+                      child: VitrinView(
+                        key: ValueKey(
+                          'preview_${_data.name}_${_data.marketplaceLinks.length}_${_data.description}_${_data.theme}',
+                        ),
+                        storeData: _data,
+                        isEmbedded: true,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -334,36 +551,29 @@ class _EditorScreenState extends State<EditorScreen> {
     return InkWell(
       onTap: () {},
       child: Container(
-        height: 120,
+        height: 100,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: inputBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0x33000000),
-            style: BorderStyle.solid,
-          ),
+          border: Border.all(color: cardBorder, style: BorderStyle.solid),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.add_photo_alternate_outlined,
-              size: 32,
-              color: Colors.blue.shade900,
+              size: 28,
+              color: Colors.black38,
             ),
             const SizedBox(height: 8),
             Text(
-              'Logo veya Vitrin Görseli Yükle',
+              'Logo veya Vitrin Görseli',
               style: TextStyle(
-                color: Colors.blue.shade900,
+                color: Colors.grey.shade600,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
-            ),
-            const Text(
-              '(Tıkla veya sürükle-bırak)',
-              style: TextStyle(color: Colors.black38, fontSize: 11),
             ),
           ],
         ),
@@ -376,59 +586,81 @@ class _EditorScreenState extends State<EditorScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Tema seçimi',
-          style: TextStyle(fontSize: 14, color: Colors.black54),
+          'Tema Seçimi',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         SizedBox(
-          height: 100,
+          height: 120,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: themes.length,
             itemBuilder: (context, index) {
               final isSelected = _data.theme == themes[index];
+              final themeColor = _getThemeColor(themes[index]);
               return GestureDetector(
                 onTap: () => setState(() => _data.theme = themes[index]),
                 child: Container(
-                  width: 80,
-                  margin: const EdgeInsets.only(right: 12),
+                  width: 90,
+                  margin: const EdgeInsets.only(right: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? primaryColor : cardBorder,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    boxShadow:
+                        isSelected
+                            ? [
+                              BoxShadow(
+                                color: primaryColor.withValues(alpha: 0.1),
+                                blurRadius: 10,
+                              ),
+                            ]
+                            : null,
+                  ),
                   child: Column(
                     children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: _getThemeColor(themes[index]),
-                          borderRadius: BorderRadius.circular(12),
-                          border:
+                      Expanded(
+                        child: Container(
+                          margin: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                themeColor,
+                                themeColor.withValues(alpha: 0.7),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child:
                               isSelected
-                                  ? Border.all(
-                                    color: Colors.blue.shade900,
-                                    width: 3,
-                                  )
-                                  : Border.all(color: Colors.black12),
-                          boxShadow:
-                              isSelected
-                                  ? const [
-                                    BoxShadow(
-                                      color: Color(0x330D47A1),
-                                      blurRadius: 8,
+                                  ? const Center(
+                                    child: Icon(
+                                      Icons.check_circle,
+                                      color: Colors.white,
+                                      size: 20,
                                     ),
-                                  ]
+                                  )
                                   : null,
                         ),
-                        child:
-                            isSelected
-                                ? const Icon(Icons.check, color: Colors.white)
-                                : null,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        themes[index],
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Text(
+                          themes[index],
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight:
+                                isSelected ? FontWeight.w900 : FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
@@ -447,7 +679,7 @@ class _EditorScreenState extends State<EditorScreen> {
       case 'Sade':
         return Colors.white;
       case 'Premium':
-        return Colors.black87;
+        return const Color(0xFF1E293B);
       case 'Zarif':
         return const Color(0xFF9E7C66);
       case 'Doğal':
@@ -465,31 +697,6 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
-      ),
-    );
-  }
-
-  Widget _buildSectionHeaderWithAction(String title, VoidCallback onAction) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildSectionTitle(title),
-        TextButton.icon(
-          onPressed: onAction,
-          icon: const Icon(Icons.add),
-          label: const Text('Ekle'),
-        ),
-      ],
-    );
-  }
-
   Widget _buildTextField(
     String label,
     Function(String) onChanged, {
@@ -497,27 +704,47 @@ class _EditorScreenState extends State<EditorScreen> {
     IconData? prefixIcon,
     String? initial,
   }) {
-    return TextFormField(
-      initialValue: initial,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon:
-            prefixIcon != null
-                ? Icon(prefixIcon, color: Colors.blue.shade900.withValues(alpha: 0.4), size: 20)
-                : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
         ),
-        filled: true,
-        fillColor: const Color(0xFFF1F5F9),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+        const SizedBox(height: 8),
+        TextFormField(
+          initialValue: initial,
+          decoration: InputDecoration(
+            prefixIcon:
+                prefixIcon != null
+                    ? Icon(prefixIcon, color: Colors.black26, size: 18)
+                    : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            filled: true,
+            fillColor: inputBg,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            hintText: label,
+            hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+          ),
+          maxLines: maxLines,
+          onChanged: onChanged,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: darkText,
+          ),
         ),
-      ),
-      maxLines: maxLines,
-      onChanged: onChanged,
+      ],
     );
   }
 
@@ -527,24 +754,44 @@ class _EditorScreenState extends State<EditorScreen> {
     List<String> items,
     void Function(String?) onChanged,
   ) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
         ),
-        filled: true,
-        fillColor: const Color(0xFFF1F5F9),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            filled: true,
+            fillColor: inputBg,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+          ),
+          items:
+              items
+                  .map(
+                    (t) => DropdownMenuItem(
+                      value: t,
+                      child: Text(t, style: const TextStyle(fontSize: 14)),
+                    ),
+                  )
+                  .toList(),
+          onChanged: onChanged,
         ),
-      ),
-      items:
-          items.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-      onChanged: onChanged,
+      ],
     );
   }
 }

@@ -16,6 +16,26 @@ class Product {
     this.category = 'Tümü',
     this.stockStatus = 'Mevcut',
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'price': price,
+    'description': description,
+    'imagePath': imagePath,
+    'category': category,
+    'stockStatus': stockStatus,
+  };
+
+  factory Product.fromJson(Map<String, dynamic> json) => Product(
+    id: json['id'] ?? '',
+    name: json['name'] ?? '',
+    price: json['price'] ?? '',
+    description: json['description'] ?? '',
+    imagePath: json['imagePath'],
+    category: json['category'] ?? 'Tümü',
+    stockStatus: json['stockStatus'] ?? 'Mevcut',
+  );
 }
 
 class MarketplaceLink {
@@ -28,6 +48,18 @@ class MarketplaceLink {
     this.platform = 'Trendyol',
     this.url = '',
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'platform': platform,
+    'url': url,
+  };
+
+  factory MarketplaceLink.fromJson(Map<String, dynamic> json) => MarketplaceLink(
+    id: json['id'] ?? '',
+    platform: json['platform'] ?? 'Trendyol',
+    url: json['url'] ?? '',
+  );
 }
 
 class StoreData {
@@ -65,6 +97,42 @@ class StoreData {
     this.corporateBio = '',
   }) : products = products ?? [],
        marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')];
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'businessType': businessType,
+    'description': description,
+    'whatsapp': whatsapp,
+    'instagram': instagram,
+    'website': website,
+    'address': address,
+    'theme': theme,
+    'status': status,
+    'isEsnafMode': isEsnafMode,
+    'logoUrl': logoUrl,
+    'products': products.map((e) => e.toJson()).toList(),
+    'marketplaceLinks': marketplaceLinks.map((e) => e.toJson()).toList(),
+    'corporateBio': corporateBio,
+  };
+
+  factory StoreData.fromJson(Map<String, dynamic> json) {
+    return StoreData(
+      name: json['name'] ?? '',
+      businessType: json['businessType'] ?? 'Butik',
+      description: json['description'] ?? '',
+      whatsapp: json['whatsapp'] ?? '',
+      instagram: json['instagram'] ?? '',
+      website: json['website'] ?? '',
+      address: json['address'] ?? '',
+      theme: json['theme'] ?? 'Sade',
+      status: json['status'] ?? 'Açık',
+      isEsnafMode: json['isEsnafMode'] ?? true,
+      logoUrl: json['logoUrl'],
+      products: (json['products'] as List?)?.map((e) => Product.fromJson(e)).toList(),
+      marketplaceLinks: (json['marketplaceLinks'] as List?)?.map((e) => MarketplaceLink.fromJson(e)).toList(),
+      corporateBio: json['corporateBio'] ?? '',
+    );
+  }
 
   factory StoreData.dummy() {
     return StoreData(
