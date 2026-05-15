@@ -168,27 +168,115 @@ class _EditorScreenState extends State<EditorScreen> {
     });
   }
 
-  // ignore: unused_element
   int _calculateVitrinScore(StoreData data) {
-    var score = 0;
-
-    if (data.name.trim().isNotEmpty) score += 15;
-    if (data.businessType.trim().isNotEmpty) score += 10;
-    if (data.description.trim().length >= 10) score += 10;
-    if (data.whatsapp.trim().isNotEmpty) score += 15;
-    if (data.instagram.trim().isNotEmpty || data.website.trim().isNotEmpty) {
-      score += 10;
-    }
-    if (data.address.trim().isNotEmpty) score += 10;
-    if (data.marketplaceLinks.any(
-      (link) => link.platform.trim().isNotEmpty && link.url.trim().isNotEmpty,
-    )) {
-      score += 15;
-    }
-    if (statuses.contains(data.status.trim())) score += 5;
-    if (themes.contains(data.theme.trim())) score += 10;
+    final score = _buildVitrinScoreTasks(data).fold<int>(
+      0,
+      (total, task) => task.isComplete ? total + task.points : total,
+    );
 
     return score.clamp(0, 100).toInt();
+  }
+
+  bool _hasCompleteMarketplaceLink(StoreData data) {
+    return data.marketplaceLinks.any(
+      (link) => link.platform.trim().isNotEmpty && link.url.trim().isNotEmpty,
+    );
+  }
+
+  bool _hasSupportingVitrinContent(StoreData data) {
+    final hasLogo = data.logoUrl?.trim().isNotEmpty ?? false;
+    final hasCorporateInfo = data.corporateBio.trim().isNotEmpty;
+    final hasCatalogItem = data.products.any(
+      (product) =>
+          product.name.trim().isNotEmpty ||
+          product.price.trim().isNotEmpty ||
+          product.description.trim().isNotEmpty ||
+          product.imagePath?.trim().isNotEmpty == true,
+    );
+
+    return hasLogo || hasCorporateInfo || hasCatalogItem;
+  }
+
+  List<_VitrinScoreTask> _buildVitrinScoreTasks(StoreData data) {
+    final descriptionLength = data.description.trim().length;
+
+    return [
+      _VitrinScoreTask(
+        points: 20,
+        isComplete: data.name.trim().isNotEmpty,
+        suggestion: 'Mağaza adını ekle',
+      ),
+      _VitrinScoreTask(
+        points: 15,
+        isComplete: data.whatsapp.trim().isNotEmpty,
+        suggestion: 'WhatsApp numarası ekle',
+      ),
+      _VitrinScoreTask(
+        points: 15,
+        isComplete: descriptionLength >= 10,
+        suggestion:
+            descriptionLength == 0
+                ? 'Kısa açıklama yaz'
+                : 'Kısa açıklamayı güçlendir $descriptionLength/10',
+      ),
+      _VitrinScoreTask(
+        points: 10,
+        isComplete:
+            data.instagram.trim().isNotEmpty || data.website.trim().isNotEmpty,
+        suggestion: 'Instagram veya web sitesi ekle',
+      ),
+      _VitrinScoreTask(
+        points: 10,
+        isComplete: data.address.trim().isNotEmpty,
+        suggestion: 'Adres bilgisini ekle',
+      ),
+      _VitrinScoreTask(
+        points: 15,
+        isComplete: _hasCompleteMarketplaceLink(data),
+        suggestion: 'En az 1 pazaryeri linki ekle',
+      ),
+      _VitrinScoreTask(
+        points: 10,
+        isComplete: _hasSupportingVitrinContent(data),
+        suggestion: 'Logo, ürün veya hakkımızda bilgisi ekle',
+      ),
+      _VitrinScoreTask(
+        points: 5,
+        isComplete: data.theme.trim().isNotEmpty && data.theme.trim() != 'Sade',
+        suggestion: 'Vitrine uygun bir tema seç',
+      ),
+    ];
+  }
+
+  List<String> _buildVitrinScoreSuggestions(StoreData data) {
+    final tasks = _buildVitrinScoreTasks(data);
+
+    return tasks
+        .where((task) => !task.isComplete)
+        .map((task) => task.suggestion)
+        .take(3)
+        .toList();
+  }
+
+  String _vitrinScoreStatusText(int score) {
+    if (score < 40) return 'Vitrinin henüz hazır değil.';
+    if (score < 70) return 'Vitrinin gelişiyor.';
+    if (score < 90) return 'Vitrinin iyi durumda.';
+    return 'Vitrinin güçlü görünüyor.';
+  }
+
+  String _vitrinScoreBadgeText(int score) {
+    if (score < 40) return 'Hazırlanıyor';
+    if (score < 70) return 'Gelişiyor';
+    if (score < 90) return 'İyi durumda';
+    return 'Güçlü';
+  }
+
+  Color _vitrinScoreTone(int score) {
+    if (score < 40) return const Color(0xFF64748B);
+    if (score < 70) return const Color(0xFF475569);
+    if (score < 90) return const Color(0xFF0F766E);
+    return const Color(0xFF047857);
   }
 
   @override
@@ -377,6 +465,8 @@ class _EditorScreenState extends State<EditorScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildVitrinScoreCard(),
+          const SizedBox(height: 24),
           _buildEditCard(
             title: 'Mağaza Görünümü',
             headerWidget: _buildCompactStatusDropdown(),
@@ -531,6 +621,168 @@ class _EditorScreenState extends State<EditorScreen> {
             },
           ),
           const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVitrinScoreCard() {
+    final score = _calculateVitrinScore(_data);
+    final suggestions = _buildVitrinScoreSuggestions(_data);
+    final progress = score / 100;
+    final tone = _vitrinScoreTone(score);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.025),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: cardBorder),
+                ),
+                child: Icon(Icons.query_stats_rounded, color: tone, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Vitrin Skoru',
+                      style: TextStyle(
+                        color: darkText,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _vitrinScoreStatusText(score),
+                      style: TextStyle(
+                        color: Colors.blueGrey.shade600,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: tone.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: tone.withValues(alpha: 0.18)),
+                    ),
+                    child: Text(
+                      _vitrinScoreBadgeText(score),
+                      style: TextStyle(
+                        color: tone,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '$score/100',
+                    style: const TextStyle(
+                      color: darkText,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 5,
+              backgroundColor: const Color(0xFFE8EEF5),
+              valueColor: AlwaysStoppedAnimation<Color>(tone),
+            ),
+          ),
+          if (suggestions.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              'Sıradaki 3 adım',
+              style: TextStyle(
+                color: Colors.blueGrey.shade700,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Column(
+              children:
+                  suggestions.map((suggestion) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 7),
+                            child: Container(
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.blueGrey.shade400,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              suggestion,
+                              style: TextStyle(
+                                color: Colors.blueGrey.shade700,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+            ),
+          ],
         ],
       ),
     );
@@ -1039,7 +1291,7 @@ class _EditorScreenState extends State<EditorScreen> {
                   );
                 },
                 icon: const Icon(Icons.share_outlined, size: 18),
-                label: const Text('Önizle'),
+                label: const Text('Vitrini Aç'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
@@ -1057,4 +1309,16 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
     );
   }
+}
+
+class _VitrinScoreTask {
+  final int points;
+  final bool isComplete;
+  final String suggestion;
+
+  const _VitrinScoreTask({
+    required this.points,
+    required this.isComplete,
+    required this.suggestion,
+  });
 }
