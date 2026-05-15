@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 
@@ -98,7 +99,22 @@ class _EditorScreenState extends State<EditorScreen> {
       }
     } catch (e) {
       debugPrint('Data load error: $e');
+      if (!mounted) return;
+
       setState(() => _isLoading = false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Vitrin verileri yüklenemedi, varsayılan değerler kullanılıyor.',
+            ),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      });
     }
   }
 
@@ -200,54 +216,57 @@ class _EditorScreenState extends State<EditorScreen> {
             ],
           ],
         ),
-        actions: isWide ? [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: TextButton.icon(
-              onPressed: _saveData,
-              icon: const Icon(Icons.cloud_done_outlined, size: 18),
-              label: const Text('Kaydet'),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.blueGrey.shade700,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 8.0,
-              horizontal: 12.0,
-            ),
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PreviewScreen(storeData: _data),
+        actions:
+            isWide
+                ? [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: TextButton.icon(
+                      onPressed: _saveData,
+                      icon: const Icon(Icons.cloud_done_outlined, size: 18),
+                      label: const Text('Kaydet'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.blueGrey.shade700,
+                      ),
+                    ),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'Önizle & Paylaş',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ] : null,
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 12.0,
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PreviewScreen(storeData: _data),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Önizle & Paylaş',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ]
+                : null,
       ),
       bottomNavigationBar: !isWide ? _buildMobileBottomActions() : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth > 900;
-          
+
           if (!isWide) {
             return DefaultTabController(
               length: 2,
@@ -259,10 +278,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       labelColor: primaryColor,
                       unselectedLabelColor: Colors.grey,
                       indicatorColor: primaryColor,
-                      tabs: [
-                        Tab(text: 'Düzenle'),
-                        Tab(text: 'Canlı Önizleme'),
-                      ],
+                      tabs: [Tab(text: 'Düzenle'), Tab(text: 'Canlı Önizleme')],
                     ),
                   ),
                   Expanded(
@@ -282,7 +298,9 @@ class _EditorScreenState extends State<EditorScreen> {
                           child: LayoutBuilder(
                             builder: (context, previewConstraints) {
                               return Center(
-                                child: _buildLivePreviewMockup(previewConstraints),
+                                child: _buildLivePreviewMockup(
+                                  previewConstraints,
+                                ),
                               );
                             },
                           ),
@@ -436,15 +454,10 @@ class _EditorScreenState extends State<EditorScreen> {
           Builder(
             builder: (context) {
               final isDesktop = MediaQuery.of(context).size.width >= 800;
-              final children = [
-                _buildThemeSelector(),
-              ];
+              final children = [_buildThemeSelector()];
 
               if (isDesktop) {
-                return _buildEditCard(
-                  title: 'Tema Seçimi',
-                  children: children,
-                );
+                return _buildEditCard(title: 'Tema Seçimi', children: children);
               }
 
               return Container(
@@ -468,7 +481,9 @@ class _EditorScreenState extends State<EditorScreen> {
                     const SizedBox(height: 16),
                     _buildThemeSelector(limit: 2, showTitle: false),
                     Theme(
-                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                      data: Theme.of(
+                        context,
+                      ).copyWith(dividerColor: Colors.transparent),
                       child: ExpansionTile(
                         initiallyExpanded: false,
                         tilePadding: EdgeInsets.zero,
@@ -698,7 +713,7 @@ class _EditorScreenState extends State<EditorScreen> {
     if (skip != null) displayIterable = displayIterable.skip(skip);
     if (limit != null) displayIterable = displayIterable.take(limit);
     final displayThemes = displayIterable.toList();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -715,17 +730,22 @@ class _EditorScreenState extends State<EditorScreen> {
         ],
         LayoutBuilder(
           builder: (context, constraints) {
-            final itemWidth = constraints.maxWidth > 350 
-                ? (constraints.maxWidth - 24) / 3 
-                : (constraints.maxWidth - 12) / 2;
-            
+            final itemWidth =
+                constraints.maxWidth > 350
+                    ? (constraints.maxWidth - 24) / 3
+                    : (constraints.maxWidth - 12) / 2;
+
             return Wrap(
               spacing: 12,
               runSpacing: 12,
               children: List.generate(displayThemes.length, (index) {
                 final themeName = displayThemes[index];
                 final isSelected = _data.theme == themeName;
-                final themeColor = _getThemeColor(themeName);
+                final preset = vitrinThemePresetFor(themeName);
+                final checkColor =
+                    preset.accent.computeLuminance() > 0.65
+                        ? preset.textPrimary
+                        : preset.buttonText;
                 return GestureDetector(
                   onTap: () => setState(() => _data.theme = themeName),
                   child: AnimatedScale(
@@ -744,20 +764,21 @@ class _EditorScreenState extends State<EditorScreen> {
                           color: isSelected ? primaryColor : cardBorder,
                           width: isSelected ? 2 : 1,
                         ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: primaryColor.withValues(alpha: 0.2),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ]
-                            : const [
-                                BoxShadow(
-                                  color: Colors.transparent,
-                                  blurRadius: 0,
-                                ),
-                              ],
+                        boxShadow:
+                            isSelected
+                                ? [
+                                  BoxShadow(
+                                    color: primaryColor.withValues(alpha: 0.2),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                                : const [
+                                  BoxShadow(
+                                    color: Colors.transparent,
+                                    blurRadius: 0,
+                                  ),
+                                ],
                       ),
                       child: Column(
                         children: [
@@ -769,31 +790,35 @@ class _EditorScreenState extends State<EditorScreen> {
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    themeColor,
-                                    themeColor.withValues(alpha: 0.7),
+                                    preset.background,
+                                    preset.surfaceSoft,
+                                    preset.accent.withValues(alpha: 0.85),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: isSelected
-                                  ? const Center(
-                                      child: Icon(
-                                        Icons.check_circle,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                    )
-                                  : null,
+                              child:
+                                  isSelected
+                                      ? Center(
+                                        child: Icon(
+                                          Icons.check_circle,
+                                          color: checkColor,
+                                          size: 20,
+                                        ),
+                                      )
+                                      : null,
                             ),
                           ),
                           Padding(
                             padding: const EdgeInsets.only(bottom: 8.0),
                             child: Text(
-                              themes[index],
+                              themeName,
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight:
-                                    isSelected ? FontWeight.w900 : FontWeight.w500,
+                                    isSelected
+                                        ? FontWeight.w900
+                                        : FontWeight.w500,
                               ),
                             ),
                           ),
@@ -804,33 +829,10 @@ class _EditorScreenState extends State<EditorScreen> {
                 );
               }),
             );
-          }
+          },
         ),
       ],
     );
-  }
-
-  Color _getThemeColor(String theme) {
-    switch (theme) {
-      case 'Sade':
-        return Colors.white;
-      case 'Premium':
-        return const Color(0xFF1E293B);
-      case 'Zarif':
-        return const Color(0xFF9E7C66);
-      case 'Doğal':
-        return Colors.green.shade700;
-      case 'Gece':
-        return const Color(0xFF0F172A);
-      case 'Lüks':
-        return const Color(0xFFD4AF37);
-      case 'Sahil':
-        return Colors.cyan.shade600;
-      case 'Güneş':
-        return Colors.orange.shade700;
-      default:
-        return Colors.white;
-    }
   }
 
   Widget _buildTextField(
@@ -899,7 +901,11 @@ class _EditorScreenState extends State<EditorScreen> {
           value: _data.status,
           icon: const Padding(
             padding: EdgeInsets.only(left: 4.0),
-            child: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: primaryColor),
+            child: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 18,
+              color: primaryColor,
+            ),
           ),
           isDense: true,
           alignment: Alignment.center,
@@ -908,12 +914,10 @@ class _EditorScreenState extends State<EditorScreen> {
             fontWeight: FontWeight.w800,
             color: primaryColor,
           ),
-          items: statuses
-              .map((t) => DropdownMenuItem(
-                    value: t,
-                    child: Text(t),
-                  ))
-              .toList(),
+          items:
+              statuses
+                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                  .toList(),
           onChanged: (v) => setState(() => _data.status = v!),
         ),
       ),

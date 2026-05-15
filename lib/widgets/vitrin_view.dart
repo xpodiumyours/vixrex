@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
 
 class VitrinView extends StatelessWidget {
@@ -12,25 +13,23 @@ class VitrinView extends StatelessWidget {
     this.isEmbedded = false,
   });
 
-  // Modern Brand Colors
-  static const Color primaryBrandColor = Color(0xFFFF5A1F);
-
   @override
   Widget build(BuildContext context) {
-    final themeData = _getThemeData();
+    final preset = vitrinThemePresetFor(storeData.theme);
+    final themeData = _getThemeData(preset);
     final radius = isEmbedded ? 24.0 : 40.0;
     final children = <Widget>[
-      _buildModernHeader(themeData, radius),
+      _buildModernHeader(preset, radius),
       SizedBox(height: isEmbedded ? 16 : 32),
       _buildPremiumActionButtons(radius),
       SizedBox(height: isEmbedded ? 16 : 48),
-      _buildProfessionalBio(themeData),
+      _buildProfessionalBio(preset),
       SizedBox(height: isEmbedded ? 16 : 48),
-      _buildModernLinkHub(radius),
+      _buildModernLinkHub(preset, radius),
       SizedBox(height: isEmbedded ? 18 : 64),
-      _buildPremiumIdentityCard(context, themeData, radius),
+      _buildPremiumIdentityCard(context, preset, radius),
       SizedBox(height: isEmbedded ? 18 : 64),
-      _buildModernFooter(themeData),
+      _buildModernFooter(preset),
       SizedBox(height: isEmbedded ? 36 : 120),
     ];
 
@@ -51,59 +50,44 @@ class VitrinView extends StatelessWidget {
       child:
           isEmbedded
               ? Material(
-                color: themeData.scaffoldBackgroundColor,
+                color: preset.background,
                 child: SizedBox.expand(child: content),
               )
               : Scaffold(
-                backgroundColor: themeData.scaffoldBackgroundColor,
+                backgroundColor: preset.background,
                 extendBodyBehindAppBar: true,
                 body: content,
               ),
     );
   }
 
-  ThemeData _getThemeData() {
-    final isDarkTheme = ['Premium', 'Gece', 'Lüks'].contains(storeData.theme);
-    final themeColor = _getThemeColor(storeData.theme);
-
+  ThemeData _getThemeData(VitrinThemePreset preset) {
     return ThemeData(
       useMaterial3: true,
-      brightness: isDarkTheme ? Brightness.dark : Brightness.light,
-      primaryColor: themeColor,
-      scaffoldBackgroundColor:
-          isDarkTheme ? const Color(0xFF0F172A) : Colors.white,
+      brightness: preset.isDark ? Brightness.dark : Brightness.light,
+      primaryColor: preset.accent,
+      scaffoldBackgroundColor: preset.background,
       fontFamily: 'Inter',
       colorScheme: ColorScheme.fromSeed(
-        seedColor: themeColor,
-        brightness: isDarkTheme ? Brightness.dark : Brightness.light,
-        primary: themeColor,
+        seedColor: preset.accent,
+        brightness: preset.isDark ? Brightness.dark : Brightness.light,
+      ).copyWith(
+        primary: preset.accent,
+        onPrimary: preset.buttonText,
+        surface: preset.surface,
+        onSurface: preset.textPrimary,
+        outline: preset.border,
+      ),
+      textTheme: ThemeData(
+        brightness: preset.isDark ? Brightness.dark : Brightness.light,
+      ).textTheme.apply(
+        bodyColor: preset.textPrimary,
+        displayColor: preset.textPrimary,
       ),
     );
   }
 
-  Color _getThemeColor(String theme) {
-    switch (theme) {
-      case 'Premium':
-        return const Color(0xFF1E293B);
-      case 'Zarif':
-        return const Color(0xFF9E7C66);
-      case 'Doğal':
-        return const Color(0xFF15803D);
-      case 'Gece':
-        return const Color(0xFF0F172A);
-      case 'Lüks':
-        return const Color(0xFFB45309);
-      case 'Sahil':
-        return const Color(0xFF0891B2);
-      case 'Güneş':
-        return const Color(0xFFEA580C);
-      default:
-        return primaryBrandColor;
-    }
-  }
-
-  Widget _buildModernHeader(ThemeData themeData, double radius) {
-    final isDark = themeData.brightness == Brightness.dark;
+  Widget _buildModernHeader(VitrinThemePreset preset, double radius) {
     return Stack(
       alignment: Alignment.center,
       clipBehavior: Clip.none,
@@ -116,8 +100,10 @@ class VitrinView extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                themeData.primaryColor.withValues(alpha: 0.15),
-                themeData.primaryColor.withValues(alpha: 0.05),
+                preset.accent.withValues(alpha: preset.isDark ? 0.24 : 0.16),
+                preset.surfaceSoft.withValues(
+                  alpha: preset.isDark ? 0.32 : 0.8,
+                ),
               ],
             ),
           ),
@@ -129,7 +115,7 @@ class VitrinView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: preset.surface,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -141,13 +127,11 @@ class VitrinView extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: isEmbedded ? 32 : 54,
-                  backgroundColor: themeData.primaryColor.withValues(
-                    alpha: 0.05,
-                  ),
+                  backgroundColor: preset.accent.withValues(alpha: 0.14),
                   child: Icon(
                     Icons.business_center_rounded,
                     size: isEmbedded ? 30 : 48,
-                    color: themeData.primaryColor,
+                    color: preset.accent,
                   ),
                 ),
               ),
@@ -157,7 +141,7 @@ class VitrinView extends StatelessWidget {
                 style: TextStyle(
                   fontSize: isEmbedded ? 22 : 34,
                   fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : const Color(0xFF111827),
+                  color: preset.textPrimary,
                   letterSpacing: -1.2,
                   height: 1.1,
                 ),
@@ -170,14 +154,19 @@ class VitrinView extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: themeData.primaryColor.withValues(alpha: 0.1),
+                  color: preset.accent.withValues(
+                    alpha: preset.isDark ? 0.18 : 0.12,
+                  ),
                   borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: preset.accent.withValues(alpha: 0.18),
+                  ),
                 ),
                 child: Text(
                   storeData.businessType.toUpperCase(),
                   style: TextStyle(
                     fontSize: 10,
-                    color: themeData.primaryColor,
+                    color: preset.accent,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.8,
                   ),
@@ -194,7 +183,7 @@ class VitrinView extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: isDark ? Colors.white60 : Colors.black54,
+                      color: preset.textSecondary,
                       fontWeight: FontWeight.w500,
                       height: 1.5,
                     ),
@@ -252,8 +241,7 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildProfessionalBio(ThemeData themeData) {
-    final isDark = themeData.brightness == Brightness.dark;
+  Widget _buildProfessionalBio(VitrinThemePreset preset) {
     final isCompact = isEmbedded;
 
     return Padding(
@@ -262,7 +250,7 @@ class VitrinView extends StatelessWidget {
         children: [
           Icon(
             Icons.format_quote_rounded,
-            color: themeData.primaryColor.withValues(alpha: 0.15),
+            color: preset.accent.withValues(alpha: preset.isDark ? 0.28 : 0.18),
             size: isCompact ? 38 : 54,
           ),
           SizedBox(height: isCompact ? 4 : 8),
@@ -274,7 +262,7 @@ class VitrinView extends StatelessWidget {
             style: TextStyle(
               fontSize: isCompact ? 13 : 16,
               height: isCompact ? 1.55 : 1.8,
-              color: isDark ? Colors.white70 : Colors.black54,
+              color: preset.textSecondary,
               fontStyle: FontStyle.italic,
               letterSpacing: -0.2,
             ),
@@ -284,7 +272,7 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildModernLinkHub(double radius) {
+  Widget _buildModernLinkHub(VitrinThemePreset preset, double radius) {
     final isCompact = isEmbedded;
 
     return Padding(
@@ -299,6 +287,7 @@ class VitrinView extends StatelessWidget {
               color: _getPlatformColor(link.platform),
               radius: radius,
               compact: isCompact,
+              preset: preset,
             ),
           ),
 
@@ -310,6 +299,7 @@ class VitrinView extends StatelessWidget {
               color: Colors.blueGrey,
               radius: radius,
               compact: isCompact,
+              preset: preset,
             ),
 
           _ModernLinkItem(
@@ -319,6 +309,7 @@ class VitrinView extends StatelessWidget {
             color: Colors.indigo.shade400,
             radius: radius,
             compact: isCompact,
+            preset: preset,
           ),
           _ModernLinkItem(
             icon: Icons.qr_code_rounded,
@@ -327,6 +318,7 @@ class VitrinView extends StatelessWidget {
             color: Colors.teal.shade500,
             radius: radius,
             compact: isCompact,
+            preset: preset,
           ),
         ],
       ),
@@ -369,10 +361,9 @@ class VitrinView extends StatelessWidget {
 
   Widget _buildPremiumIdentityCard(
     BuildContext context,
-    ThemeData themeData,
+    VitrinThemePreset preset,
     double radius,
   ) {
-    final isDark = themeData.brightness == Brightness.dark;
     final isCompact = isEmbedded;
 
     return Padding(
@@ -381,10 +372,10 @@ class VitrinView extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(isCompact ? 18 : 28),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: preset.qrBackground,
           borderRadius: BorderRadius.circular(isCompact ? 20 : radius),
           border: Border.all(
-            color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+            color: preset.qrForeground.withValues(alpha: 0.14),
             width: isCompact ? 1.5 : 2,
           ),
           boxShadow: [
@@ -402,13 +393,13 @@ class VitrinView extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(isCompact ? 10 : 14),
                   decoration: BoxDecoration(
-                    color: themeData.primaryColor.withValues(alpha: 0.08),
+                    color: preset.qrForeground.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
                   ),
                   child: Icon(
                     Icons.qr_code_2_rounded,
                     size: isCompact ? 34 : 54,
-                    color: themeData.primaryColor,
+                    color: preset.qrForeground,
                   ),
                 ),
                 SizedBox(width: isCompact ? 14 : 24),
@@ -423,6 +414,7 @@ class VitrinView extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: isCompact ? 16 : 20,
+                          color: preset.qrForeground,
                           letterSpacing: -0.8,
                         ),
                       ),
@@ -431,7 +423,7 @@ class VitrinView extends StatelessWidget {
                         'TÜM BİLGİLERİM TEK QR İLE BURADA',
                         style: TextStyle(
                           fontSize: isCompact ? 8 : 10,
-                          color: themeData.primaryColor,
+                          color: preset.qrForeground.withValues(alpha: 0.72),
                           fontWeight: FontWeight.w900,
                           letterSpacing: isCompact ? 0.8 : 1.2,
                         ),
@@ -456,8 +448,8 @@ class VitrinView extends StatelessWidget {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: themeData.primaryColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: preset.accent,
+                  foregroundColor: preset.buttonText,
                   padding: EdgeInsets.symmetric(vertical: isCompact ? 12 : 18),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
@@ -472,8 +464,7 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildModernFooter(ThemeData themeData) {
-    final isDark = themeData.brightness == Brightness.dark;
+  Widget _buildModernFooter(VitrinThemePreset preset) {
     return Column(
       children: [
         Text(
@@ -481,23 +472,19 @@ class VitrinView extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w800,
-            color: themeData.primaryColor.withValues(alpha: 0.5),
+            color: preset.textSecondary,
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 48),
-        Container(
-          height: 1,
-          width: 50,
-          color: themeData.primaryColor.withValues(alpha: 0.2),
-        ),
+        Container(height: 1, width: 50, color: preset.border),
         const SizedBox(height: 24),
         Text(
           'BU BİR VITRINX DİJİTAL KİMLİĞİDİR',
           style: TextStyle(
             fontSize: 9,
             fontWeight: FontWeight.w900,
-            color: isDark ? Colors.white10 : const Color(0xFFCBD5E1),
+            color: preset.textSecondary.withValues(alpha: 0.72),
             letterSpacing: 4,
           ),
         ),
@@ -524,11 +511,15 @@ class _ActionIconBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final buttonRadius = compact ? 12.0 : 16.0;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color.withValues(alpha: isDark ? 0.18 : 0.09),
         borderRadius: BorderRadius.circular(buttonRadius),
+        border: Border.all(
+          color: color.withValues(alpha: isDark ? 0.22 : 0.12),
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -569,6 +560,7 @@ class _ModernLinkItem extends StatelessWidget {
   final Color color;
   final double radius;
   final bool compact;
+  final VitrinThemePreset preset;
 
   const _ModernLinkItem({
     required this.icon,
@@ -576,25 +568,27 @@ class _ModernLinkItem extends StatelessWidget {
     required this.subtitle,
     required this.color,
     required this.radius,
+    required this.preset,
     this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveColor =
+        preset.isDark && color.computeLuminance() < 0.35
+            ? preset.accent
+            : color;
+
     return Container(
       padding: EdgeInsets.all(compact ? 13 : 18),
       margin: EdgeInsets.only(bottom: compact ? 10 : 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: preset.surface,
         borderRadius: BorderRadius.circular(compact ? 16 : 20),
-        border: Border.all(
-          color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-          width: compact ? 1 : 1.5,
-        ),
+        border: Border.all(color: preset.border, width: compact ? 1 : 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha: preset.isDark ? 0.12 : 0.04),
             blurRadius: compact ? 12 : 20,
             offset: Offset(0, compact ? 3 : 5),
           ),
@@ -605,10 +599,12 @@ class _ModernLinkItem extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(compact ? 9 : 12),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: effectiveColor.withValues(
+                alpha: preset.isDark ? 0.18 : 0.1,
+              ),
               borderRadius: BorderRadius.circular(compact ? 11 : 14),
             ),
-            child: Icon(icon, color: color, size: compact ? 18 : 22),
+            child: Icon(icon, color: effectiveColor, size: compact ? 18 : 22),
           ),
           SizedBox(width: compact ? 12 : 18),
           Expanded(
@@ -620,6 +616,7 @@ class _ModernLinkItem extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: compact ? 14 : 16,
+                    color: preset.textPrimary,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -627,7 +624,7 @@ class _ModernLinkItem extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: isDark ? Colors.white38 : Colors.black45,
+                    color: preset.textSecondary,
                     fontSize: compact ? 10.5 : 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -639,7 +636,7 @@ class _ModernLinkItem extends StatelessWidget {
           ),
           Icon(
             Icons.arrow_forward_ios_rounded,
-            color: const Color(0xFFCBD5E1),
+            color: preset.textSecondary.withValues(alpha: 0.75),
             size: compact ? 11 : 14,
           ),
         ],

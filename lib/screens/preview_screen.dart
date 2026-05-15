@@ -26,19 +26,30 @@ class PreviewScreen extends StatelessWidget {
         ),
       ),
       body: VitrinView(storeData: storeData),
-      floatingActionButton: storeData.isEsnafMode 
-          ? FloatingActionButton.extended(
-              onPressed: () {}, // Handled inside VitrinView mockup if needed, or here for full screen
-              backgroundColor: const Color(0xFF25D366),
-              elevation: 10,
-              icon: const Icon(Icons.chat, color: Colors.white),
-              label: const Text('WhatsApp Sipariş', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            )
-          : FloatingActionButton(
-              onPressed: () {},
-              backgroundColor: isDark ? Colors.white : Colors.black,
-              child: Icon(Icons.share, color: isDark ? Colors.black : Colors.white),
-            ),
+      floatingActionButton:
+          storeData.isEsnafMode
+              ? FloatingActionButton.extended(
+                onPressed:
+                    () {}, // Handled inside VitrinView mockup if needed, or here for full screen
+                backgroundColor: const Color(0xFF25D366),
+                elevation: 10,
+                icon: const Icon(Icons.chat, color: Colors.white),
+                label: const Text(
+                  'WhatsApp Sipariş',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+              : FloatingActionButton(
+                onPressed: () {},
+                backgroundColor: isDark ? Colors.white : Colors.black,
+                child: Icon(
+                  Icons.share,
+                  color: isDark ? Colors.black : Colors.white,
+                ),
+              ),
     );
   }
 }

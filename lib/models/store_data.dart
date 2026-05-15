@@ -49,17 +49,14 @@ class MarketplaceLink {
     this.url = '',
   });
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'platform': platform,
-    'url': url,
-  };
+  Map<String, dynamic> toJson() => {'id': id, 'platform': platform, 'url': url};
 
-  factory MarketplaceLink.fromJson(Map<String, dynamic> json) => MarketplaceLink(
-    id: json['id'] ?? '',
-    platform: json['platform'] ?? 'Trendyol',
-    url: json['url'] ?? '',
-  );
+  factory MarketplaceLink.fromJson(Map<String, dynamic> json) =>
+      MarketplaceLink(
+        id: json['id'] ?? '',
+        platform: json['platform'] ?? 'Trendyol',
+        url: json['url'] ?? '',
+      );
 }
 
 class StoreData {
@@ -128,8 +125,12 @@ class StoreData {
       status: json['status'] ?? 'Açık',
       isEsnafMode: json['isEsnafMode'] ?? true,
       logoUrl: json['logoUrl'],
-      products: (json['products'] as List?)?.map((e) => Product.fromJson(e)).toList(),
-      marketplaceLinks: (json['marketplaceLinks'] as List?)?.map((e) => MarketplaceLink.fromJson(e)).toList(),
+      products:
+          (json['products'] as List?)?.map((e) => Product.fromJson(e)).toList(),
+      marketplaceLinks:
+          (json['marketplaceLinks'] as List?)
+              ?.map((e) => MarketplaceLink.fromJson(e))
+              .toList(),
       corporateBio: json['corporateBio'] ?? '',
     );
   }
@@ -145,14 +146,35 @@ class StoreData {
       theme: 'Premium',
       status: 'Açık',
       isEsnafMode: true,
-      corporateBio: '2010 yılından beri sektörde öncü çözümler sunuyoruz. Vizyonumuz global pazarda değer yaratmaktır.',
+      corporateBio:
+          '2010 yılından beri sektörde öncü çözümler sunuyoruz. Vizyonumuz global pazarda değer yaratmaktır.',
       marketplaceLinks: [
-        MarketplaceLink(id: '1', platform: 'Trendyol', url: 'trendyol.com/magaza'),
-        MarketplaceLink(id: '2', platform: 'Hepsiburada', url: 'hepsiburada.com/magaza'),
+        MarketplaceLink(
+          id: '1',
+          platform: 'Trendyol',
+          url: 'trendyol.com/magaza',
+        ),
+        MarketplaceLink(
+          id: '2',
+          platform: 'Hepsiburada',
+          url: 'hepsiburada.com/magaza',
+        ),
       ],
       products: [
-        Product(id: '1', name: 'Premium Ürün', price: '1.250 TL', category: 'Yeni', description: 'Özel tasarım ürün.'),
-        Product(id: '2', name: 'Standart Hizmet', price: '750 TL', category: 'Hizmet', description: 'Hızlı ve güvenilir.'),
+        Product(
+          id: '1',
+          name: 'Premium Ürün',
+          price: '1.250 TL',
+          category: 'Yeni',
+          description: 'Özel tasarım ürün.',
+        ),
+        Product(
+          id: '2',
+          name: 'Standart Hizmet',
+          price: '750 TL',
+          category: 'Hizmet',
+          description: 'Hızlı ve güvenilir.',
+        ),
       ],
     );
   }
