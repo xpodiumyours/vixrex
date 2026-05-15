@@ -168,6 +168,29 @@ class _EditorScreenState extends State<EditorScreen> {
     });
   }
 
+  // ignore: unused_element
+  int _calculateVitrinScore(StoreData data) {
+    var score = 0;
+
+    if (data.name.trim().isNotEmpty) score += 15;
+    if (data.businessType.trim().isNotEmpty) score += 10;
+    if (data.description.trim().length >= 10) score += 10;
+    if (data.whatsapp.trim().isNotEmpty) score += 15;
+    if (data.instagram.trim().isNotEmpty || data.website.trim().isNotEmpty) {
+      score += 10;
+    }
+    if (data.address.trim().isNotEmpty) score += 10;
+    if (data.marketplaceLinks.any(
+      (link) => link.platform.trim().isNotEmpty && link.url.trim().isNotEmpty,
+    )) {
+      score += 15;
+    }
+    if (statuses.contains(data.status.trim())) score += 5;
+    if (themes.contains(data.theme.trim())) score += 10;
+
+    return score.clamp(0, 100).toInt();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
