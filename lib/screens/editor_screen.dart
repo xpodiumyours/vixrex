@@ -108,22 +108,25 @@ class _EditorScreenState extends State<EditorScreen> {
       final String jsonData = jsonEncode(_data.toJson());
       await prefs.setString('vitrin_data', jsonData);
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Row(
               children: [
                 Icon(Icons.cloud_done_outlined, color: Colors.white),
                 SizedBox(width: 12),
-                Text('Vitrininiz bu cihazda kaydedildi.'),
+                Text('Vitrin başarıyla kaydedildi'),
               ],
             ),
             behavior: SnackBarBehavior.floating,
             backgroundColor: primaryColor,
+            duration: Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Hata: $e'),
@@ -157,6 +160,8 @@ class _EditorScreenState extends State<EditorScreen> {
       );
     }
 
+    final isWide = MediaQuery.of(context).size.width > 900;
+
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -181,19 +186,21 @@ class _EditorScreenState extends State<EditorScreen> {
                 fontSize: 18,
               ),
             ),
-            const Spacer(),
-            Text(
-              'VITRINX',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: primaryColor.withValues(alpha: 0.3),
-                fontSize: 12,
-                letterSpacing: 2,
+            if (isWide) ...[
+              const Spacer(),
+              Text(
+                'VITRINX',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: primaryColor.withValues(alpha: 0.3),
+                  fontSize: 12,
+                  letterSpacing: 2,
+                ),
               ),
-            ),
+            ],
           ],
         ),
-        actions: [
+        actions: isWide ? [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: TextButton.icon(
@@ -234,17 +241,66 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
           ),
-        ],
+        ] : null,
       ),
+      bottomNavigationBar: !isWide ? _buildMobileBottomActions() : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth > 900;
+          
+          if (!isWide) {
+            return DefaultTabController(
+              length: 2,
+              child: Column(
+                children: [
+                  Container(
+                    color: Colors.white,
+                    child: const TabBar(
+                      labelColor: primaryColor,
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: primaryColor,
+                      tabs: [
+                        Tab(text: 'Düzenle'),
+                        Tab(text: 'Canlı Önizleme'),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: Center(
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 800),
+                              child: _buildForm(),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          color: const Color(0xFFF1F5F9),
+                          child: LayoutBuilder(
+                            builder: (context, previewConstraints) {
+                              return Center(
+                                child: _buildLivePreviewMockup(previewConstraints),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
           return Row(
             children: [
               Expanded(
                 flex: 5,
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(isWide ? 32 : 20),
+                  padding: const EdgeInsets.all(32),
                   child: Center(
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 800),
@@ -253,22 +309,20 @@ class _EditorScreenState extends State<EditorScreen> {
                   ),
                 ),
               ),
-              if (isWide) ...[
-                const VerticalDivider(width: 1, color: cardBorder),
-                Expanded(
-                  flex: 4,
-                  child: Container(
-                    color: const Color(0xFFF1F5F9),
-                    child: LayoutBuilder(
-                      builder: (context, previewConstraints) {
-                        return Center(
-                          child: _buildLivePreviewMockup(previewConstraints),
-                        );
-                      },
-                    ),
+              const VerticalDivider(width: 1, color: cardBorder),
+              Expanded(
+                flex: 4,
+                child: Container(
+                  color: const Color(0xFFF1F5F9),
+                  child: LayoutBuilder(
+                    builder: (context, previewConstraints) {
+                      return Center(
+                        child: _buildLivePreviewMockup(previewConstraints),
+                      );
+                    },
                   ),
                 ),
-              ],
+              ),
             ],
           );
         },
@@ -284,6 +338,7 @@ class _EditorScreenState extends State<EditorScreen> {
         children: [
           _buildEditCard(
             title: 'Mağaza Görünümü',
+            headerWidget: _buildCompactStatusDropdown(),
             children: [
               _buildLogoUpload(),
               const SizedBox(height: 20),
@@ -305,6 +360,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 (v) => setState(() => _data.description = v),
                 maxLines: 2,
                 initial: _data.description,
+                hintText: 'İşletmenizi kısaca anlatın',
               ),
             ],
           ),
@@ -329,6 +385,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 (v) => setState(() => _data.whatsapp = v),
                 prefixIcon: Icons.phone_rounded,
                 initial: _data.whatsapp,
+                hintText: 'Örn: 05xx xxx xx xx',
               ),
               const SizedBox(height: 12),
               _buildTextField(
@@ -336,6 +393,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 (v) => setState(() => _data.instagram = v),
                 prefixIcon: Icons.camera_alt_rounded,
                 initial: _data.instagram,
+                hintText: 'Örn: instagram.com/magazaniz',
               ),
               const SizedBox(height: 12),
               _buildTextField(
@@ -343,6 +401,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 (v) => setState(() => _data.website = v),
                 prefixIcon: Icons.language_rounded,
                 initial: _data.website,
+                hintText: 'Örn: www.magazaniz.com',
               ),
               const SizedBox(height: 12),
               _buildTextField(
@@ -351,6 +410,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 prefixIcon: Icons.location_on_rounded,
                 maxLines: 2,
                 initial: _data.address,
+                hintText: 'Örn: Mahalle, cadde, ilçe',
               ),
             ],
           ),
@@ -373,18 +433,64 @@ class _EditorScreenState extends State<EditorScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          _buildEditCard(
-            title: 'Tema & Durum',
-            children: [
-              _buildThemeSelector(),
-              const SizedBox(height: 24),
-              _buildDropdown(
-                'Vitrin durumu',
-                _data.status,
-                statuses,
-                (v) => setState(() => _data.status = v!),
-              ),
-            ],
+          Builder(
+            builder: (context) {
+              final isDesktop = MediaQuery.of(context).size.width >= 800;
+              final children = [
+                _buildThemeSelector(),
+              ];
+
+              if (isDesktop) {
+                return _buildEditCard(
+                  title: 'Tema Seçimi',
+                  children: children,
+                );
+              }
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: cardBorder),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tema Seçimi',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: darkText,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildThemeSelector(limit: 2, showTitle: false),
+                    Theme(
+                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        initiallyExpanded: false,
+                        tilePadding: EdgeInsets.zero,
+                        iconColor: primaryColor,
+                        collapsedIconColor: Colors.grey,
+                        title: const Text(
+                          'Diğer Temaları Göster',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: primaryColor,
+                          ),
+                        ),
+                        children: [
+                          _buildThemeSelector(skip: 2, showTitle: false),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           const SizedBox(height: 100),
         ],
@@ -396,29 +502,35 @@ class _EditorScreenState extends State<EditorScreen> {
     required String title,
     required List<Widget> children,
     VoidCallback? onAction,
+    Widget? headerWidget,
   }) {
+    final isWide = MediaQuery.of(context).size.width > 900;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: cardBorder),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isWide ? 24 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: darkText,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: darkText,
+                  ),
                 ),
               ),
-              if (onAction != null)
+              if (headerWidget != null)
+                headerWidget
+              else if (onAction != null)
                 IconButton(
                   onPressed: onAction,
                   icon: const Icon(
@@ -581,94 +693,118 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildThemeSelector() {
+  Widget _buildThemeSelector({int? skip, int? limit, bool showTitle = true}) {
+    Iterable<String> displayIterable = themes;
+    if (skip != null) displayIterable = displayIterable.skip(skip);
+    if (limit != null) displayIterable = displayIterable.take(limit);
+    final displayThemes = displayIterable.toList();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Tema Seçimi',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: Colors.black54,
+        if (showTitle) ...[
+          const Text(
+            'Tema Seçimi',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.black54,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: themes.length,
-            itemBuilder: (context, index) {
-              final isSelected = _data.theme == themes[index];
-              final themeColor = _getThemeColor(themes[index]);
-              return GestureDetector(
-                onTap: () => setState(() => _data.theme = themes[index]),
-                child: Container(
-                  width: 90,
-                  margin: const EdgeInsets.only(right: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected ? primaryColor : cardBorder,
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow:
-                        isSelected
+          const SizedBox(height: 16),
+        ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final itemWidth = constraints.maxWidth > 350 
+                ? (constraints.maxWidth - 24) / 3 
+                : (constraints.maxWidth - 12) / 2;
+            
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: List.generate(displayThemes.length, (index) {
+                final themeName = displayThemes[index];
+                final isSelected = _data.theme == themeName;
+                final themeColor = _getThemeColor(themeName);
+                return GestureDetector(
+                  onTap: () => setState(() => _data.theme = themeName),
+                  child: AnimatedScale(
+                    scale: isSelected ? 1.05 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
+                      width: constraints.maxWidth > 400 ? 90 : itemWidth,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected ? primaryColor : cardBorder,
+                          width: isSelected ? 2 : 1,
+                        ),
+                        boxShadow: isSelected
                             ? [
-                              BoxShadow(
-                                color: primaryColor.withValues(alpha: 0.1),
-                                blurRadius: 10,
-                              ),
-                            ]
-                            : null,
-                  ),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                themeColor,
-                                themeColor.withValues(alpha: 0.7),
+                                BoxShadow(
+                                  color: primaryColor.withValues(alpha: 0.2),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : const [
+                                BoxShadow(
+                                  color: Colors.transparent,
+                                  blurRadius: 0,
+                                ),
                               ],
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child:
-                              isSelected
+                      ),
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    themeColor,
+                                    themeColor.withValues(alpha: 0.7),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: isSelected
                                   ? const Center(
-                                    child: Icon(
-                                      Icons.check_circle,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  )
+                                      child: Icon(
+                                        Icons.check_circle,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    )
                                   : null,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Text(
-                          themes[index],
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight:
-                                isSelected ? FontWeight.w900 : FontWeight.w500,
+                            ),
                           ),
-                        ),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Text(
+                              themes[index],
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight:
+                                    isSelected ? FontWeight.w900 : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              }),
+            );
+          }
         ),
       ],
     );
@@ -703,6 +839,7 @@ class _EditorScreenState extends State<EditorScreen> {
     int maxLines = 1,
     IconData? prefixIcon,
     String? initial,
+    String? hintText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -733,7 +870,7 @@ class _EditorScreenState extends State<EditorScreen> {
               horizontal: 16,
               vertical: 14,
             ),
-            hintText: label,
+            hintText: hintText ?? label,
             hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
           ),
           maxLines: maxLines,
@@ -745,6 +882,41 @@ class _EditorScreenState extends State<EditorScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCompactStatusDropdown() {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: primaryColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.2)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _data.status,
+          icon: const Padding(
+            padding: EdgeInsets.only(left: 4.0),
+            child: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: primaryColor),
+          ),
+          isDense: true,
+          alignment: Alignment.center,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: primaryColor,
+          ),
+          items: statuses
+              .map((t) => DropdownMenuItem(
+                    value: t,
+                    child: Text(t),
+                  ))
+              .toList(),
+          onChanged: (v) => setState(() => _data.status = v!),
+        ),
+      ),
     );
   }
 
@@ -792,6 +964,70 @@ class _EditorScreenState extends State<EditorScreen> {
           onChanged: onChanged,
         ),
       ],
+    );
+  }
+
+  Widget _buildMobileBottomActions() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: const Border(top: BorderSide(color: cardBorder)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _saveData,
+                icon: const Icon(Icons.cloud_done_outlined, size: 18),
+                label: const Text('Kaydet'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: primaryColor,
+                  side: const BorderSide(color: primaryColor),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  minimumSize: const Size(44, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PreviewScreen(storeData: _data),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.share_outlined, size: 18),
+                label: const Text('Önizle'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  minimumSize: const Size(44, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
