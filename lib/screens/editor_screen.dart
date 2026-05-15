@@ -627,10 +627,10 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Widget _buildVitrinScoreCard() {
-    final score = _calculateVitrinScore(_data);
+    final vitrinScore = _calculateVitrinScore(_data);
     final suggestions = _buildVitrinScoreSuggestions(_data);
-    final progress = score / 100;
-    final tone = _vitrinScoreTone(score);
+    final progress = vitrinScore / 100;
+    final tone = _vitrinScoreTone(vitrinScore);
 
     return Container(
       decoration: BoxDecoration(
@@ -677,7 +677,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _vitrinScoreStatusText(score),
+                      _vitrinScoreStatusText(vitrinScore),
                       style: TextStyle(
                         color: Colors.blueGrey.shade600,
                         fontSize: 11.5,
@@ -702,7 +702,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       border: Border.all(color: tone.withValues(alpha: 0.18)),
                     ),
                     child: Text(
-                      _vitrinScoreBadgeText(score),
+                      _vitrinScoreBadgeText(vitrinScore),
                       style: TextStyle(
                         color: tone,
                         fontSize: 10.5,
@@ -713,7 +713,7 @@ class _EditorScreenState extends State<EditorScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '$score/100',
+                    '$vitrinScore/100',
                     style: const TextStyle(
                       color: darkText,
                       fontSize: 22,
@@ -783,6 +783,114 @@ class _EditorScreenState extends State<EditorScreen> {
                   }).toList(),
             ),
           ],
+          if (vitrinScore >= 60) ...[
+            const SizedBox(height: 14),
+            _buildGoogleVisibilityCta(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleVisibilityCta() {
+    final hasAddress = _data.address.trim().isNotEmpty;
+    final hasMarketplaceLink = _hasCompleteMarketplaceLink(_data);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.travel_explore_rounded,
+                color: Color(0xFF334155),
+                size: 17,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Google’da daha görünür ol',
+                  style: TextStyle(
+                    color: darkText,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Vitrin bilgileriniz hazır. Bu bilgilerle Google aramalarında daha iyi anlatılmanız için öneriler hazırlayabiliriz.',
+            style: TextStyle(
+              color: Colors.blueGrey.shade700,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+          if (hasAddress) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Adres bilginizle yakın çevrenizde öne çıkmanıza yardımcı olacak öneriler de hazırlanabilir.',
+              style: TextStyle(
+                color: Colors.blueGrey.shade600,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+          ],
+          if (hasMarketplaceLink) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Pazaryeri linklerinize trafik çekebilecek içerik fikirleri de eklenebilir.',
+              style: TextStyle(
+                color: Colors.blueGrey.shade600,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Google Görünürlük Asistanı yakında burada olacak.',
+                    ),
+                    behavior: SnackBarBehavior.floating,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+              label: const Text('Google önerilerini hazırla'),
+              style: TextButton.styleFrom(
+                foregroundColor: primaryColor,
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(44, 36),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
