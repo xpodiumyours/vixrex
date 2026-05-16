@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
+import 'package:vitrinx/screens/public_vitrin_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +35,8 @@ class VitrinXApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final initialHome = _buildInitialHome();
+
     return MaterialApp(
       title: 'VitrinX',
       debugShowCheckedModeBanner: false,
@@ -42,7 +45,44 @@ class VitrinXApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Helvetica', // Basic font since no GoogleFonts
       ),
-      home: const LandingScreen(),
+      home: initialHome,
+      onGenerateRoute: _generateRoute,
     );
+  }
+
+  Widget _buildInitialHome() {
+    final slug = _publicSlugFromUri(Uri.base);
+
+    if (slug != null) {
+      return PublicVitrinScreen(slug: slug);
+    }
+
+    return const LandingScreen();
+  }
+
+  Route<dynamic> _generateRoute(RouteSettings settings) {
+    final routeName = settings.name ?? '/';
+    final slug = _publicSlugFromUri(Uri.parse(routeName));
+
+    if (slug != null) {
+      return MaterialPageRoute(
+        builder: (_) => PublicVitrinScreen(slug: slug),
+        settings: settings,
+      );
+    }
+
+    return MaterialPageRoute(
+      builder: (_) => const LandingScreen(),
+      settings: settings,
+    );
+  }
+
+  String? _publicSlugFromUri(Uri uri) {
+    if (uri.pathSegments.length != 2 || uri.pathSegments.first != 'v') {
+      return null;
+    }
+
+    final slug = uri.pathSegments.last.trim();
+    return slug.isEmpty ? null : slug;
   }
 }
