@@ -72,6 +72,19 @@ class _EditorScreenState extends State<EditorScreen> {
     _loadSavedData();
   }
 
+  void _closeGoogleAssistant() {
+    setState(() => _isGoogleAssistantOpen = false);
+  }
+
+  void _toggleGoogleAssistant() {
+    if (_isGoogleAssistantOpen) {
+      _closeGoogleAssistant();
+      return;
+    }
+
+    setState(() => _isGoogleAssistantOpen = true);
+  }
+
   Future<void> _loadSavedData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -388,7 +401,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
           if (!isWide) {
             return DefaultTabController(
-              length: 2,
+              length: 3,
               child: Column(
                 children: [
                   Container(
@@ -397,7 +410,11 @@ class _EditorScreenState extends State<EditorScreen> {
                       labelColor: primaryColor,
                       unselectedLabelColor: Colors.grey,
                       indicatorColor: primaryColor,
-                      tabs: [Tab(text: 'Düzenle'), Tab(text: 'Canlı Önizleme')],
+                      tabs: [
+                        Tab(text: 'Düzenle'),
+                        Tab(text: 'Canlı Önizleme'),
+                        Tab(text: 'Yayınla'),
+                      ],
                     ),
                   ),
                   Expanded(
@@ -422,6 +439,15 @@ class _EditorScreenState extends State<EditorScreen> {
                                 ),
                               );
                             },
+                          ),
+                        ),
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: Center(
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 800),
+                              child: _buildPublishPanel(),
+                            ),
                           ),
                         ),
                       ],
@@ -800,10 +826,297 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildGoogleVisibilityCta() {
-    final hasAddress = _data.address.trim().isNotEmpty;
+  Widget _buildPublishPanel() {
+    final slug = _buildStoreSlug(_data.name);
+    final publicLink = 'vitrinx.app/v/$slug';
+    final checklist = _buildPublishChecklistItems();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildPublishCard(
+          children: [
+            const Text(
+              'Vitrininizi yayınlayın',
+              style: TextStyle(
+                color: darkText,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'VitrinX linkiniz hazır olduğunda müşteriler bu adrese girerek canlı vitrininizi görebilecek.',
+              style: TextStyle(
+                color: Colors.blueGrey.shade600,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    publicLink,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: darkText,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Bu link sonraki aşamada gerçek public vitrin adresiniz olacak.',
+                    style: TextStyle(
+                      color: Colors.blueGrey.shade600,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildPublishCard(
+          children: [
+            _buildPublishSectionTitle('Yayın öncesi kontrol'),
+            const SizedBox(height: 10),
+            ...checklist.map(_buildPublishChecklistRow),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildPublishCard(
+          children: [
+            _buildPublishSectionTitle('Bu link nerede kullanılabilir?'),
+            const SizedBox(height: 10),
+            _buildPublishBulletRow('WhatsApp mesajı'),
+            _buildPublishBulletRow('Instagram bio'),
+            _buildPublishBulletRow('Google İşletme profili'),
+            _buildPublishBulletRow('QR kart / mağaza içi afiş'),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Public vitrin linki hazırlandı. Yayınlama altyapısı sonraki adımda eklenecek.',
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  minimumSize: const Size(44, 46),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                child: const Text('Public linki hazırla'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Gerçek yayınlama için sonraki aşamada Supabase bağlantısı eklenecek.',
+              style: TextStyle(
+                color: Colors.blueGrey.shade500,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 100),
+      ],
+    );
+  }
+
+  String _buildStoreSlug(String storeName) {
+    var slug = storeName.trim().toLowerCase();
+    if (slug.isEmpty) return 'magazaniz';
+
+    const replacements = {
+      'ç': 'c',
+      'ğ': 'g',
+      'ı': 'i',
+      'ö': 'o',
+      'ş': 's',
+      'ü': 'u',
+    };
+
+    replacements.forEach((source, target) {
+      slug = slug.replaceAll(source, target);
+    });
+
+    slug = slug.replaceAll(RegExp(r'[^a-z0-9\s-]'), '');
+    slug = slug.replaceAll(RegExp(r'\s+'), '-');
+    slug = slug.replaceAll(RegExp(r'-+'), '-');
+    slug = slug.replaceAll(RegExp(r'^-|-$'), '');
+
+    return slug.isEmpty ? 'magazaniz' : slug;
+  }
+
+  List<_PublishChecklistItem> _buildPublishChecklistItems() {
     final hasMarketplaceLink = _hasCompleteMarketplaceLink(_data);
 
+    return [
+      _PublishChecklistItem(
+        isReady: _data.name.trim().isNotEmpty,
+        readyText: 'Mağaza adı hazır',
+        missingText: 'Mağaza adı eksik',
+      ),
+      _PublishChecklistItem(
+        isReady: _data.whatsapp.trim().isNotEmpty,
+        readyText: 'WhatsApp iletişimi hazır',
+        missingText: 'WhatsApp eklenmemiş',
+      ),
+      _PublishChecklistItem(
+        isReady: _data.description.trim().isNotEmpty,
+        readyText: 'Kısa açıklama hazır',
+        missingText: 'Kısa açıklama eksik',
+      ),
+      _PublishChecklistItem(
+        isReady: hasMarketplaceLink,
+        readyText: 'Pazaryeri linki hazır',
+        missingText: 'Pazaryeri linki eklenmemiş',
+      ),
+      _PublishChecklistItem(
+        isReady: _data.address.trim().isNotEmpty,
+        readyText: 'Adres bilgisi hazır',
+        missingText: 'Adres bilgisi eksik',
+      ),
+    ];
+  }
+
+  Widget _buildPublishCard({required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildPublishSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        color: darkText,
+        fontSize: 14,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+  }
+
+  Widget _buildPublishChecklistRow(_PublishChecklistItem item) {
+    final color =
+        item.isReady ? const Color(0xFF0F766E) : Colors.blueGrey.shade500;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            item.isReady
+                ? Icons.check_circle_rounded
+                : Icons.info_outline_rounded,
+            color: color,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              item.isReady ? item.readyText : item.missingText,
+              style: TextStyle(
+                color: Colors.blueGrey.shade700,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPublishBulletRow(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 7),
+            child: Container(
+              width: 4,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.shade400,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.blueGrey.shade700,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleVisibilityCta() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -825,7 +1138,7 @@ class _EditorScreenState extends State<EditorScreen> {
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Google’da daha görünür ol',
+                  'İlk içeriğini hazırlayalım',
                   style: TextStyle(
                     color: darkText,
                     fontSize: 12.5,
@@ -837,7 +1150,7 @@ class _EditorScreenState extends State<EditorScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Vitrin bilgileriniz hazır. Bu bilgilerle Google aramalarında daha iyi anlatılmanız için öneriler hazırlayabiliriz.',
+            'Vitrin bilgileriniz hazır. Bu bilgilerle mağazanız için blog başlığı, Google işletme gönderisi ve sosyal medya açıklaması hazırlayabiliriz.',
             style: TextStyle(
               color: Colors.blueGrey.shade700,
               fontSize: 11.5,
@@ -845,38 +1158,12 @@ class _EditorScreenState extends State<EditorScreen> {
               height: 1.35,
             ),
           ),
-          if (hasAddress) ...[
-            const SizedBox(height: 6),
-            Text(
-              'Adres bilginizle yakın çevrenizde öne çıkmanıza yardımcı olacak öneriler de hazırlanabilir.',
-              style: TextStyle(
-                color: Colors.blueGrey.shade600,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                height: 1.35,
-              ),
-            ),
-          ],
-          if (hasMarketplaceLink) ...[
-            const SizedBox(height: 6),
-            Text(
-              'Pazaryeri linklerinize trafik çekebilecek içerik fikirleri de eklenebilir.',
-              style: TextStyle(
-                color: Colors.blueGrey.shade600,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                height: 1.35,
-              ),
-            ),
-          ],
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: () {
-                setState(() {
-                  _isGoogleAssistantOpen = !_isGoogleAssistantOpen;
-                });
+                _toggleGoogleAssistant();
               },
               icon: Icon(
                 _isGoogleAssistantOpen
@@ -885,7 +1172,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 size: 16,
               ),
               label: Text(
-                _isGoogleAssistantOpen ? 'Gizle' : 'Google önerilerini hazırla',
+                _isGoogleAssistantOpen ? 'Gizle' : 'İçerik taslağını hazırla',
               ),
               style: TextButton.styleFrom(
                 foregroundColor: primaryColor,
@@ -911,9 +1198,9 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Widget _buildGoogleVisibilityAssistant() {
-    final readyInfo = _buildGoogleReadyInfoRows(_data);
-    final exampleTitles = _buildGoogleExampleTitles(_data);
+    final usedInfoLabels = _buildGoogleUsedInfoLabels(_data);
     final hasLocation = _data.address.trim().isNotEmpty;
+    final opportunity = _buildGoogleContentOpportunity(_data);
 
     return Container(
       width: double.infinity,
@@ -934,7 +1221,7 @@ class _EditorScreenState extends State<EditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Google Görünürlük Asistanı',
+                      'Blog & İçerik Asistanı',
                       style: TextStyle(
                         color: darkText,
                         fontSize: 12.5,
@@ -943,7 +1230,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     ),
                     SizedBox(height: 5),
                     Text(
-                      'Vitrin bilgilerinizden yola çıkarak Google’da daha iyi anlatılmanız için öneriler hazırlayabiliriz.',
+                      'Vitrin bilgilerinizden yola çıkarak ilk içerik taslağınız için başlangıç hazırlıyoruz.',
                       style: TextStyle(
                         color: Color(0xFF64748B),
                         fontSize: 11,
@@ -957,7 +1244,7 @@ class _EditorScreenState extends State<EditorScreen> {
               const SizedBox(width: 8),
               IconButton(
                 onPressed: () {
-                  setState(() => _isGoogleAssistantOpen = false);
+                  _closeGoogleAssistant();
                 },
                 tooltip: 'Gizle',
                 icon: Icon(
@@ -976,9 +1263,9 @@ class _EditorScreenState extends State<EditorScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          _buildAssistantSectionTitle('Hazır bilgiler'),
+          _buildAssistantSectionTitle('Kullandığımız bilgiler'),
           const SizedBox(height: 8),
-          if (readyInfo.isEmpty)
+          if (usedInfoLabels.isEmpty)
             Text(
               'Henüz yeterli vitrin bilgisi yok. Önce mağaza adı, açıklama ve iletişim bilgilerini tamamlayın.',
               style: TextStyle(
@@ -989,98 +1276,200 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             )
           else
-            Column(children: readyInfo),
+            _buildUsedInfoSummary(usedInfoLabels),
           if (!hasLocation) ...[
             const SizedBox(height: 7),
             Text(
-              'Konum bilgisi henüz yok',
+              '(konum henüz eklenmemiş)',
               style: TextStyle(
                 color: Colors.blueGrey.shade500,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w600,
+                fontStyle: FontStyle.italic,
               ),
             ),
           ],
           const SizedBox(height: 14),
-          _buildAssistantSectionTitle('Şimdiden hazırlanabilecek örnekler'),
+          _buildAssistantSectionTitle('Önerilen ilk içerik'),
           const SizedBox(height: 8),
-          Column(
-            children:
-                exampleTitles
-                    .map((title) => _buildAssistantBulletRow(title))
-                    .toList(),
-          ),
+          _buildContentTitleCard(opportunity.title),
           const SizedBox(height: 14),
-          _buildAssistantSectionTitle(
-            'Daha iyi öneriler için 3 bilgiyi tamamlayın',
-          ),
+          _buildAssistantSectionTitle('Kullanım alanı'),
           const SizedBox(height: 8),
-          _buildAssistantHintRow('Hedef müşteri', 'Kime ulaşmak istiyorsunuz?'),
-          _buildAssistantHintRow(
-            'Öne çıkan ürün / hizmet',
-            'Hangi ürün veya hizmeti öne çıkarmak istiyorsunuz?',
+          _buildAssistantPlainText(opportunity.usage),
+          const SizedBox(height: 14),
+          _buildAssistantSectionTitle('Kısa başlangıç metni'),
+          const SizedBox(height: 8),
+          _buildAssistantPlainText(opportunity.introText),
+          const SizedBox(height: 14),
+          _buildAssistantSectionTitle('Daha iyi sonuç için'),
+          const SizedBox(height: 8),
+          _buildAssistantPlainText(
+            'Hedef müşteri · Öne çıkan ürün/hizmet · Bulunmak istediğiniz kelimeler',
           ),
-          _buildAssistantHintRow(
-            'Bulunmak istediğiniz kelimeler',
-            'Müşteriler sizi hangi kelimelerle bulsun?',
-          ),
+          const SizedBox(height: 12),
+          _buildContentDraftStatus(),
         ],
       ),
     );
   }
 
-  List<Widget> _buildGoogleReadyInfoRows(StoreData data) {
-    final rows = <Widget>[];
+  List<String> _buildGoogleUsedInfoLabels(StoreData data) {
+    final labels = <String>[];
     final completeMarketplaceLinks = _completeMarketplaceLinks(data);
 
-    void addRow(String label, String value) {
-      final trimmedValue = value.trim();
-      if (trimmedValue.isEmpty) return;
-      rows.add(_buildReadyInfoRow(label, trimmedValue));
+    void addLabel(String label, String value) {
+      if (value.trim().isEmpty) return;
+      labels.add(label);
     }
 
-    addRow('Mağaza adı', data.name);
-    addRow('Kategori', data.businessType);
-    addRow('Açıklama', data.description);
-    addRow('Konum', data.address);
-    addRow('Web sitesi', data.website);
-    addRow('Instagram', data.instagram);
+    addLabel('Mağaza adı', data.name);
+    addLabel('Kategori', data.businessType);
+    addLabel('Açıklama', data.description);
+    addLabel('Konum', data.address);
+    addLabel('Web sitesi', data.website);
+    addLabel('Instagram', data.instagram);
 
     if (completeMarketplaceLinks.isNotEmpty) {
-      final platforms = completeMarketplaceLinks
-          .map((link) => link.platform.trim())
-          .where((platform) => platform.isNotEmpty)
-          .take(3)
-          .join(', ');
-      addRow('Pazaryeri', platforms);
+      labels.add('Pazaryeri');
     }
 
-    return rows;
+    return labels;
   }
 
-  List<String> _buildGoogleExampleTitles(StoreData data) {
-    final titles = <String>[];
+  Widget _buildUsedInfoSummary(List<String> labels) {
+    return Text(
+      labels.join(' · '),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: Colors.blueGrey.shade700,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        height: 1.35,
+      ),
+    );
+  }
+
+  _GoogleContentOpportunity _buildGoogleContentOpportunity(StoreData data) {
     final location = _googleLocationLabel(data.address);
-    final category = data.businessType.trim();
+    final category = _contentCategoryLabel(data.businessType);
     final storeName = data.name.trim();
+    final title = _buildGoogleContentTitle(
+      name: storeName,
+      location: location,
+      category: category,
+    );
 
+    return _GoogleContentOpportunity(
+      title: title,
+      usage: 'Blog taslağı · Google işletme gönderisi · Instagram açıklaması',
+      introText:
+          'Mağazanızın sunduğu ürünleri, konumunu ve iletişim kanallarını anlatan kısa bir içerik taslağı hazırlanabilir.',
+    );
+  }
+
+  String _buildGoogleContentTitle({
+    required String name,
+    required String location,
+    required String category,
+  }) {
+    final safeCategory = category.isEmpty ? 'mağaza' : category;
+
+    if (name.isNotEmpty && category.isNotEmpty) {
+      return '$name için $safeCategory rehberi';
+    }
     if (location.isNotEmpty && category.isNotEmpty) {
-      titles.add('$location bölgesinde $category arayanlar için 5 öneri');
+      return '$location bölgesinde $safeCategory arayanlar için kısa rehber';
     }
-    if (storeName.isNotEmpty && category.isNotEmpty) {
-      titles.add('$storeName ile $category alışverişinde öne çıkan seçenekler');
-    }
-    if (location.isNotEmpty && category.isNotEmpty) {
-      titles.add('$location çevresinde $category için kısa rehber');
+    if (name.isNotEmpty) {
+      return '$name için içerik taslağı';
     }
 
-    if (titles.isEmpty) {
-      titles.add(
-        'İşletmenizi Google’da daha iyi anlatmak için içerik fikirleri hazırlayın',
-      );
-    }
+    return 'Mağazanız için içerik taslağı';
+  }
 
-    return titles.take(3).toList();
+  String _contentCategoryLabel(String businessType) {
+    switch (businessType.trim()) {
+      case 'Butik':
+        return 'butik mağaza';
+      case 'İç giyim':
+        return 'iç giyim mağazası';
+      case 'Kozmetik':
+        return 'kozmetik mağazası';
+      case 'Hediyelik':
+        return 'hediyelik mağazası';
+      case 'Market':
+        return 'market';
+      case 'Telefon aksesuarı':
+        return 'telefon aksesuarı mağazası';
+      case 'Kafe / Lokanta':
+        return 'kafe ve lokanta';
+      case 'Kuaför':
+        return 'kuaför';
+      case 'Diğer':
+        return 'işletme';
+      default:
+        return businessType.trim();
+    }
+  }
+
+  Widget _buildContentTitleCard(String title) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Text(
+        title,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: Colors.blueGrey.shade800,
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          height: 1.35,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAssistantPlainText(String text) {
+    return Text(
+      text,
+      maxLines: 3,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: Colors.blueGrey.shade700,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        height: 1.35,
+      ),
+    );
+  }
+
+  Widget _buildContentDraftStatus() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Text(
+        'İçerik taslağı için başlangıç hazır. Daha güçlü metin için 3 bilgiyi tamamlayabilirsiniz.',
+        style: TextStyle(
+          color: Colors.blueGrey.shade800,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1.35,
+        ),
+      ),
+    );
   }
 
   String _googleLocationLabel(String address) {
@@ -1096,102 +1485,6 @@ class _EditorScreenState extends State<EditorScreen> {
         color: Colors.blueGrey.shade800,
         fontSize: 11,
         fontWeight: FontWeight.w900,
-      ),
-    );
-  }
-
-  Widget _buildReadyInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(
-              Icons.check_circle_rounded,
-              color: Color(0xFF0F766E),
-              size: 14,
-            ),
-          ),
-          const SizedBox(width: 7),
-          Expanded(
-            child: Text(
-              '$label: $value',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.blueGrey.shade700,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                height: 1.3,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAssistantBulletRow(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 7),
-            child: Container(
-              width: 4,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.blueGrey.shade400,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: Colors.blueGrey.shade700,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAssistantHintRow(String title, String description) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: darkText,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            description,
-            style: TextStyle(
-              color: Colors.blueGrey.shade600,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              height: 1.3,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1728,5 +2021,29 @@ class _VitrinScoreTask {
     required this.points,
     required this.isComplete,
     required this.suggestion,
+  });
+}
+
+class _GoogleContentOpportunity {
+  final String title;
+  final String usage;
+  final String introText;
+
+  const _GoogleContentOpportunity({
+    required this.title,
+    required this.usage,
+    required this.introText,
+  });
+}
+
+class _PublishChecklistItem {
+  final bool isReady;
+  final String readyText;
+  final String missingText;
+
+  const _PublishChecklistItem({
+    required this.isReady,
+    required this.readyText,
+    required this.missingText,
   });
 }
