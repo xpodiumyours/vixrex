@@ -77,6 +77,10 @@ class StoreData {
   // Kurumsal Mod Özel Alanları
   String corporateBio;
 
+  /// Referans / müşteri yorum sayfası linki.
+  /// Dolu ise public vitrinde Referanslarımız kartı görünür.
+  String referencesLink;
+
   StoreData({
     this.name = '',
     this.businessType = 'Butik',
@@ -92,6 +96,7 @@ class StoreData {
     List<Product>? products,
     List<MarketplaceLink>? marketplaceLinks,
     this.corporateBio = '',
+    this.referencesLink = '',
   }) : products = products ?? [],
        marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')];
 
@@ -110,6 +115,7 @@ class StoreData {
     'products': products.map((e) => e.toJson()).toList(),
     'marketplaceLinks': marketplaceLinks.map((e) => e.toJson()).toList(),
     'corporateBio': corporateBio,
+    'referencesLink': referencesLink,
   };
 
   factory StoreData.fromJson(Map<String, dynamic> json) {
@@ -132,6 +138,7 @@ class StoreData {
               ?.map((e) => MarketplaceLink.fromJson(e))
               .toList(),
       corporateBio: json['corporateBio'] ?? '',
+      referencesLink: json['referencesLink'] ?? '',
     );
   }
 

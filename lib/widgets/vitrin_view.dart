@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
@@ -9,11 +11,16 @@ class VitrinView extends StatelessWidget {
   final bool isEmbedded;
   final bool publicMode;
 
+  /// Public vitrinde sayfanın tamamını tarayacak olan URL.
+  /// Doluysa [publicMode] == true iken gerçek QR kod kartı gösterilir.
+  final String? publicLink;
+
   const VitrinView({
     super.key,
     required this.storeData,
     this.isEmbedded = false,
     this.publicMode = false,
+    this.publicLink,
   });
 
   @override
@@ -41,12 +48,16 @@ class VitrinView extends StatelessWidget {
             isEmbedded
                 ? 18
                 : publicMode
-                ? 32
+                ? 24
                 : 64,
       ),
       if (!publicMode) ...[
         _buildPremiumIdentityCard(context, preset, radius),
         SizedBox(height: isEmbedded ? 18 : 64),
+      ],
+      if (publicMode && (publicLink?.isNotEmpty ?? false)) ...[
+        _buildPublicQrCard(publicLink!),
+        const SizedBox(height: 24),
       ],
       _buildModernFooter(preset),
       SizedBox(
@@ -508,7 +519,80 @@ class VitrinView extends StatelessWidget {
               preset: preset,
             ),
           ],
+
+          if (publicMode && _hasVCardData())
+            Builder(
+              builder:
+                  (ctx) => _ModernLinkItem(
+                    icon: Icons.contact_page_rounded,
+                    title: 'vCard Kaydet',
+                    subtitle: 'İletişim bilgilerini hızlıca kopyala',
+                    color: Colors.teal.shade500,
+                    radius: radius,
+                    compact: isCompact,
+                    preset: preset,
+                    onTap: () => _copyVCardToClipboard(ctx),
+                  ),
+            ),
+
+          if (publicMode && storeData.referencesLink.trim().isNotEmpty)
+            _ModernLinkItem(
+              icon: Icons.verified_rounded,
+              title: 'Referanslarımız',
+              subtitle: 'Müşteri yorumları ve referanslarımız',
+              color: Colors.indigo.shade400,
+              radius: radius,
+              compact: isCompact,
+              preset: preset,
+              onTap:
+                  () => _openExternalUrl(
+                    _normalizeExternalUrl(storeData.referencesLink.trim()),
+                  ),
+            ),
         ],
+      ),
+    );
+  }
+
+  /// vCard kartını göstermek için yeterli veri var mı?
+  bool _hasVCardData() {
+    if (storeData.name.trim().isEmpty) return false;
+    return storeData.whatsapp.trim().isNotEmpty ||
+        storeData.instagram.trim().isNotEmpty ||
+        storeData.website.trim().isNotEmpty ||
+        storeData.address.trim().isNotEmpty;
+  }
+
+  /// Boş alanları atlayarak iletişim metnini oluşturur.
+  String _buildVCardContactText() {
+    final lines = <String>[
+      'Mağaza: ${storeData.name.trim()}',
+      if (storeData.whatsapp.trim().isNotEmpty)
+        'WhatsApp: ${storeData.whatsapp.trim()}',
+      if (storeData.instagram.trim().isNotEmpty)
+        'Instagram: ${storeData.instagram.trim()}',
+      if (storeData.website.trim().isNotEmpty)
+        'Web: ${storeData.website.trim()}',
+      if (storeData.address.trim().isNotEmpty)
+        'Adres: ${storeData.address.trim()}',
+    ];
+    return lines.join('\n');
+  }
+
+  /// İletişim bilgilerini panoya kopyalar ve SnackBar gösterir.
+  Future<void> _copyVCardToClipboard(BuildContext context) async {
+    final text = _buildVCardContactText();
+    await Clipboard.setData(ClipboardData(text: text));
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'İletişim bilgileri kopyalandı.',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
       ),
     );
   }
@@ -652,6 +736,67 @@ class VitrinView extends StatelessWidget {
     );
   }
 
+  Widget _buildPublicQrCard(String url) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            const Text(
+              'Vitrin QR kodu',
+              style: TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.4,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Müşteriler bu kodu okutarak vitrininize ulaşabilir.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            QrImageView(
+              data: url,
+              version: QrVersions.auto,
+              size: 160,
+              backgroundColor: Colors.white,
+              eyeStyle: const QrEyeStyle(
+                eyeShape: QrEyeShape.square,
+                color: Color(0xFF111827),
+              ),
+              dataModuleStyle: const QrDataModuleStyle(
+                dataModuleShape: QrDataModuleShape.square,
+                color: Color(0xFF111827),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildModernFooter(VitrinThemePreset preset) {
     return Column(
       children: [
@@ -688,7 +833,13 @@ class VitrinView extends StatelessWidget {
     if (uri == null) return;
 
     try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final didLaunch = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!didLaunch) {
+        debugPrint('External link could not be opened: $url');
+      }
     } catch (error) {
       debugPrint('External link open error: $error');
     }

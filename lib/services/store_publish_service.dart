@@ -40,7 +40,7 @@ class StorePublishService {
       'status': data.status.trim(),
       'marketplace_links': _marketplaceLinksToJson(data),
       'catalog_link': '',
-      'references_link': '',
+      'references_link': data.referencesLink.trim(),
       'vcard_link': '',
       'is_published': true,
     };

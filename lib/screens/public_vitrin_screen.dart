@@ -51,6 +51,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       status: _readString(data['status'], fallback: 'Açık'),
       isEsnafMode: true,
       corporateBio: description,
+      referencesLink: _readString(data['references_link']),
       marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),
     );
   }
@@ -116,8 +117,15 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
           );
         }
 
+        final publicLink =
+            '${Uri.base.origin}/v/${Uri.encodeComponent(widget.slug)}';
+
         return _PublicVitrinShell(
-          child: VitrinView(storeData: storeData, publicMode: true),
+          child: VitrinView(
+            storeData: storeData,
+            publicMode: true,
+            publicLink: publicLink,
+          ),
         );
       },
     );

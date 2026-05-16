@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
@@ -109,6 +110,7 @@ class _EditorScreenState extends State<EditorScreen> {
           _data.status = loadedData.status;
           _data.isEsnafMode = loadedData.isEsnafMode;
           _data.corporateBio = loadedData.corporateBio;
+          _data.referencesLink = loadedData.referencesLink;
           _data.marketplaceLinks = loadedData.marketplaceLinks;
           _data.products = loadedData.products;
           _isLoading = false;
@@ -232,6 +234,17 @@ class _EditorScreenState extends State<EditorScreen> {
         content: Text(message),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showShelfPhotoComingSoon() {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Raf fotoğrafı ekleme yakında aktif olacak.'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
       ),
     );
   }
@@ -610,6 +623,15 @@ class _EditorScreenState extends State<EditorScreen> {
                 (v) => setState(() => _data.corporateBio = v),
                 maxLines: 4,
                 initial: _data.corporateBio,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                'Referans / yorum linki',
+                (v) => setState(() => _data.referencesLink = v),
+                prefixIcon: Icons.verified_rounded,
+                initial: _data.referencesLink,
+                hintText:
+                    'Örn: Google yorumları, Instagram öne çıkanlar veya web sayfanız',
               ),
             ],
           ),
@@ -1125,6 +1147,8 @@ class _EditorScreenState extends State<EditorScreen> {
               fontWeight: FontWeight.w900,
             ),
           ),
+          const SizedBox(height: 12),
+          _buildPublishedQrBlock(link),
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -1146,6 +1170,75 @@ class _EditorScreenState extends State<EditorScreen> {
                   fontWeight: FontWeight.w900,
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPublishedQrBlock(String link) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.teal.shade100),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 96,
+            height: 96,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: QrImageView(
+              data: link,
+              version: QrVersions.auto,
+              backgroundColor: Colors.white,
+              errorCorrectionLevel: QrErrorCorrectLevel.M,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'QR ile paylaş',
+                  style: TextStyle(
+                    color: darkText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Müşteriler bu kodu okutarak vitrininize ulaşabilir.',
+                  style: TextStyle(
+                    color: Colors.blueGrey.shade700,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Mağaza içine, paket üzerine veya sosyal medya görseline ekleyebilirsiniz.',
+                  style: TextStyle(
+                    color: Colors.blueGrey.shade500,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1843,10 +1936,11 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Widget _buildLogoUpload() {
     return InkWell(
-      onTap: () {},
+      onTap: _showShelfPhotoComingSoon,
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        height: 100,
         width: double.infinity,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: inputBg,
           borderRadius: BorderRadius.circular(16),
@@ -1856,18 +1950,41 @@ class _EditorScreenState extends State<EditorScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.add_photo_alternate_outlined,
-              size: 28,
-              color: Colors.black38,
+              Icons.add_a_photo_outlined,
+              size: 26,
+              color: primaryColor,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Logo veya Vitrin Görseli',
+            const SizedBox(height: 10),
+            const Text(
+              'Anlık raf / reyon fotoğrafı',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+                color: darkText,
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
               ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Bugünkü rafınızı, kampanyalı ürünlerinizi veya yeni gelenleri müşterilere gösterin.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.blueGrey.shade600,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 6,
+              runSpacing: 6,
+              children: const [
+                _ShelfHintChip(label: 'Bugünün vitrini'),
+                _ShelfHintChip(label: 'Yeni gelenler'),
+                _ShelfHintChip(label: 'Kampanya rafı'),
+              ],
             ),
           ],
         ),
@@ -2197,6 +2314,32 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShelfHintChip extends StatelessWidget {
+  final String label;
+
+  const _ShelfHintChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _EditorScreenState.cardBorder),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: Colors.blueGrey.shade600,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );
