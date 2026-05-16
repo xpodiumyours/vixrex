@@ -467,7 +467,7 @@ class _EditorScreenState extends State<EditorScreen> {
                   child: Center(
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 800),
-                      child: _buildForm(),
+                      child: _buildForm(showDesktopPublishCard: true),
                     ),
                   ),
                 ),
@@ -493,13 +493,17 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildForm() {
+  Widget _buildForm({bool showDesktopPublishCard = false}) {
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildVitrinScoreCard(),
+          if (showDesktopPublishCard) ...[
+            const SizedBox(height: 16),
+            _buildPublishPanel(compact: true, includeBottomSpacing: false),
+          ],
           const SizedBox(height: 24),
           _buildEditCard(
             title: 'Mağaza Görünümü',
@@ -826,134 +830,193 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildPublishPanel() {
+  Widget _buildPublishPanel({
+    bool compact = false,
+    bool includeBottomSpacing = true,
+  }) {
     final slug = _buildStoreSlug(_data.name);
     final publicLink = 'vitrinx.app/v/$slug';
     final checklist = _buildPublishChecklistItems();
+    final panelChildren =
+        compact
+            ? <Widget>[
+              _buildPublishCard(
+                children: [
+                  _buildPublishIntro(),
+                  const SizedBox(height: 16),
+                  _buildPublishLinkBlock(publicLink),
+                  const SizedBox(height: 18),
+                  _buildPublishSectionTitle('Yayın öncesi kontrol'),
+                  const SizedBox(height: 10),
+                  ...checklist.map(_buildPublishChecklistRow),
+                  const SizedBox(height: 10),
+                  _buildPublishSectionTitle('Bu link nerede kullanılabilir?'),
+                  const SizedBox(height: 10),
+                  _buildPublishUsageList(),
+                  const SizedBox(height: 16),
+                  _buildPublishActionArea(),
+                ],
+              ),
+            ]
+            : <Widget>[
+              _buildPublishCard(
+                children: [
+                  _buildPublishIntro(),
+                  const SizedBox(height: 16),
+                  _buildPublishLinkBlock(publicLink),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildPublishCard(
+                children: [
+                  _buildPublishSectionTitle('Yayın öncesi kontrol'),
+                  const SizedBox(height: 10),
+                  ...checklist.map(_buildPublishChecklistRow),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildPublishCard(
+                children: [
+                  _buildPublishSectionTitle('Bu link nerede kullanılabilir?'),
+                  const SizedBox(height: 10),
+                  _buildPublishUsageList(),
+                  const SizedBox(height: 16),
+                  _buildPublishActionArea(),
+                ],
+              ),
+            ];
+
+    if (includeBottomSpacing) {
+      panelChildren.add(const SizedBox(height: 100));
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      children: panelChildren,
+    );
+  }
+
+  Widget _buildPublishIntro() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildPublishCard(
-          children: [
-            const Text(
-              'Vitrininizi yayınlayın',
-              style: TextStyle(
-                color: darkText,
-                fontSize: 18,
+        const Text(
+          'Vitrininizi yayınlayın',
+          style: TextStyle(
+            color: darkText,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'VitrinX linkiniz hazır olduğunda müşteriler bu adrese girerek canlı vitrininizi görebilecek.',
+          style: TextStyle(
+            color: Colors.blueGrey.shade600,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPublishLinkBlock(String publicLink) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            publicLink,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: darkText,
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Bu link sonraki aşamada gerçek public vitrin adresiniz olacak.',
+            style: TextStyle(
+              color: Colors.blueGrey.shade600,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPublishUsageList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildPublishBulletRow('WhatsApp mesajı'),
+        _buildPublishBulletRow('Instagram bio'),
+        _buildPublishBulletRow('Google İşletme profili'),
+        _buildPublishBulletRow('QR kart / mağaza içi afiş'),
+      ],
+    );
+  }
+
+  Widget _buildPublishActionArea() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Public vitrin linki hazırlandı. Yayınlama altyapısı sonraki adımda eklenecek.',
+                  ),
+                  behavior: SnackBarBehavior.floating,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              minimumSize: const Size(44, 46),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 13,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'VitrinX linkiniz hazır olduğunda müşteriler bu adrese girerek canlı vitrininizi görebilecek.',
-              style: TextStyle(
-                color: Colors.blueGrey.shade600,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    publicLink,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: darkText,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Bu link sonraki aşamada gerçek public vitrin adresiniz olacak.',
-                    style: TextStyle(
-                      color: Colors.blueGrey.shade600,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            child: const Text('Public linki hazırla'),
+          ),
         ),
-        const SizedBox(height: 16),
-        _buildPublishCard(
-          children: [
-            _buildPublishSectionTitle('Yayın öncesi kontrol'),
-            const SizedBox(height: 10),
-            ...checklist.map(_buildPublishChecklistRow),
-          ],
+        const SizedBox(height: 10),
+        Text(
+          'Gerçek yayınlama için sonraki aşamada Supabase bağlantısı eklenecek.',
+          style: TextStyle(
+            color: Colors.blueGrey.shade500,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+            height: 1.35,
+          ),
         ),
-        const SizedBox(height: 16),
-        _buildPublishCard(
-          children: [
-            _buildPublishSectionTitle('Bu link nerede kullanılabilir?'),
-            const SizedBox(height: 10),
-            _buildPublishBulletRow('WhatsApp mesajı'),
-            _buildPublishBulletRow('Instagram bio'),
-            _buildPublishBulletRow('Google İşletme profili'),
-            _buildPublishBulletRow('QR kart / mağaza içi afiş'),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Public vitrin linki hazırlandı. Yayınlama altyapısı sonraki adımda eklenecek.',
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  minimumSize: const Size(44, 46),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                child: const Text('Public linki hazırla'),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Gerçek yayınlama için sonraki aşamada Supabase bağlantısı eklenecek.',
-              style: TextStyle(
-                color: Colors.blueGrey.shade500,
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                height: 1.35,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 100),
       ],
     );
   }
