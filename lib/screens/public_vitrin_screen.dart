@@ -37,10 +37,12 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
   }
 
   StoreData _storeDataFromSupabase(Map<String, dynamic> data) {
+    final description = _readString(data['description']);
+
     return StoreData(
       name: _readString(data['name']),
       businessType: _readString(data['business_type'], fallback: 'Butik'),
-      description: _readString(data['description']),
+      description: description,
       whatsapp: _readString(data['whatsapp']),
       instagram: _readString(data['instagram']),
       website: _readString(data['website']),
@@ -48,6 +50,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       theme: _readString(data['theme'], fallback: 'Sade'),
       status: _readString(data['status'], fallback: 'Açık'),
       isEsnafMode: true,
+      corporateBio: description,
       marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),
     );
   }
@@ -113,8 +116,60 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
           );
         }
 
-        return VitrinView(storeData: storeData);
+        return _PublicVitrinShell(
+          child: VitrinView(storeData: storeData, publicMode: true),
+        );
       },
+    );
+  }
+}
+
+class _PublicVitrinShell extends StatelessWidget {
+  final Widget child;
+
+  const _PublicVitrinShell({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFEFF4F8),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth > 640;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 24 : 0,
+                vertical: isDesktop ? 24 : 0,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 500),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(isDesktop ? 28 : 0),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        boxShadow:
+                            isDesktop
+                                ? [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 16),
+                                  ),
+                                ]
+                                : null,
+                      ),
+                      child: child,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }

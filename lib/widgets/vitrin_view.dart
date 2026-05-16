@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
@@ -6,11 +7,13 @@ import 'package:vitrinx/widgets/status_chip.dart';
 class VitrinView extends StatelessWidget {
   final StoreData storeData;
   final bool isEmbedded;
+  final bool publicMode;
 
   const VitrinView({
     super.key,
     required this.storeData,
     this.isEmbedded = false,
+    this.publicMode = false,
   });
 
   @override
@@ -20,17 +23,40 @@ class VitrinView extends StatelessWidget {
     final radius = isEmbedded ? 24.0 : 40.0;
     final children = <Widget>[
       _buildModernHeader(preset, radius),
-      SizedBox(height: isEmbedded ? 16 : 32),
-      _buildPremiumActionButtons(radius),
-      SizedBox(height: isEmbedded ? 16 : 48),
-      _buildProfessionalBio(preset),
-      SizedBox(height: isEmbedded ? 16 : 48),
+      SizedBox(height: isEmbedded ? 16 : 26),
+      if (_hasVisibleActions()) ...[
+        _buildPremiumActionButtons(radius),
+        SizedBox(height: isEmbedded ? 16 : 30),
+      ],
+      if (publicMode && storeData.description.trim().isNotEmpty) ...[
+        _buildAboutCard(preset),
+        SizedBox(height: isEmbedded ? 16 : 30),
+      ] else if (!publicMode) ...[
+        _buildProfessionalBio(preset),
+        SizedBox(height: isEmbedded ? 16 : 48),
+      ],
       _buildModernLinkHub(preset, radius),
-      SizedBox(height: isEmbedded ? 18 : 64),
-      _buildPremiumIdentityCard(context, preset, radius),
-      SizedBox(height: isEmbedded ? 18 : 64),
+      SizedBox(
+        height:
+            isEmbedded
+                ? 18
+                : publicMode
+                ? 32
+                : 64,
+      ),
+      if (!publicMode) ...[
+        _buildPremiumIdentityCard(context, preset, radius),
+        SizedBox(height: isEmbedded ? 18 : 64),
+      ],
       _buildModernFooter(preset),
-      SizedBox(height: isEmbedded ? 36 : 120),
+      SizedBox(
+        height:
+            isEmbedded
+                ? 36
+                : publicMode
+                ? 48
+                : 120,
+      ),
     ];
 
     final content =
@@ -40,6 +66,8 @@ class VitrinView extends StatelessWidget {
               physics: const ClampingScrollPhysics(),
               children: children,
             )
+            : publicMode
+            ? Column(children: children)
             : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Column(children: children),
@@ -48,7 +76,9 @@ class VitrinView extends StatelessWidget {
     return Theme(
       data: themeData,
       child:
-          isEmbedded
+          publicMode
+              ? Material(color: preset.background, child: content)
+              : isEmbedded
               ? Material(
                 color: preset.background,
                 child: SizedBox.expand(child: content),
@@ -88,12 +118,43 @@ class VitrinView extends StatelessWidget {
   }
 
   Widget _buildModernHeader(VitrinThemePreset preset, double radius) {
+    final headerHeight =
+        isEmbedded
+            ? 150.0
+            : publicMode
+            ? 218.0
+            : 260.0;
+    final topPadding =
+        isEmbedded
+            ? 28.0
+            : publicMode
+            ? 42.0
+            : 80.0;
+    final avatarRadius =
+        isEmbedded
+            ? 32.0
+            : publicMode
+            ? 42.0
+            : 54.0;
+    final avatarIconSize =
+        isEmbedded
+            ? 30.0
+            : publicMode
+            ? 38.0
+            : 48.0;
+    final titleSize =
+        isEmbedded
+            ? 22.0
+            : publicMode
+            ? 28.0
+            : 34.0;
+
     return Stack(
       alignment: Alignment.center,
       clipBehavior: Clip.none,
       children: [
         Container(
-          height: isEmbedded ? 150 : 260,
+          height: headerHeight,
           width: double.infinity,
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -109,7 +170,7 @@ class VitrinView extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.fromLTRB(24, isEmbedded ? 28 : 80, 24, 0),
+          padding: EdgeInsets.fromLTRB(24, topPadding, 24, 0),
           child: Column(
             children: [
               Container(
@@ -126,11 +187,11 @@ class VitrinView extends StatelessWidget {
                   ],
                 ),
                 child: CircleAvatar(
-                  radius: isEmbedded ? 32 : 54,
+                  radius: avatarRadius,
                   backgroundColor: preset.accent.withValues(alpha: 0.14),
                   child: Icon(
                     Icons.business_center_rounded,
-                    size: isEmbedded ? 30 : 48,
+                    size: avatarIconSize,
                     color: preset.accent,
                   ),
                 ),
@@ -138,8 +199,10 @@ class VitrinView extends StatelessWidget {
               SizedBox(height: isEmbedded ? 14 : 24),
               Text(
                 storeData.name.isEmpty ? 'Dijital Vitrin' : storeData.name,
+                maxLines: publicMode ? 2 : null,
+                overflow: publicMode ? TextOverflow.ellipsis : null,
                 style: TextStyle(
-                  fontSize: isEmbedded ? 22 : 34,
+                  fontSize: titleSize,
                   fontWeight: FontWeight.w900,
                   color: preset.textPrimary,
                   letterSpacing: -1.2,
@@ -174,7 +237,7 @@ class VitrinView extends StatelessWidget {
               ),
               SizedBox(height: isEmbedded ? 12 : 20),
               StatusChip(status: storeData.status),
-              if (storeData.description.isNotEmpty) ...[
+              if (!publicMode && storeData.description.isNotEmpty) ...[
                 SizedBox(height: isEmbedded ? 10 : 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -199,6 +262,7 @@ class VitrinView extends StatelessWidget {
 
   Widget _buildPremiumActionButtons(double radius) {
     final isCompact = isEmbedded;
+    final actions = _buildVisibleActions(radius, isCompact);
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
@@ -206,43 +270,153 @@ class VitrinView extends StatelessWidget {
         spacing: isCompact ? 8 : 12,
         runSpacing: isCompact ? 8 : 12,
         alignment: WrapAlignment.center,
-        children: [
+        children: actions,
+      ),
+    );
+  }
+
+  bool _hasVisibleActions() {
+    if (!publicMode) return true;
+
+    return storeData.whatsapp.trim().isNotEmpty ||
+        storeData.instagram.trim().isNotEmpty ||
+        storeData.website.trim().isNotEmpty ||
+        storeData.address.trim().isNotEmpty;
+  }
+
+  List<Widget> _buildVisibleActions(double radius, bool isCompact) {
+    if (!publicMode) {
+      return [
+        _ActionIconBtn(
+          label: 'WhatsApp',
+          icon: Icons.chat_bubble_rounded,
+          color: const Color(0xFF25D366),
+          radius: radius,
+          compact: isCompact,
+        ),
+        _ActionIconBtn(
+          label: 'Instagram',
+          icon: Icons.camera_rounded,
+          color: const Color(0xFFE1306C),
+          radius: radius,
+          compact: isCompact,
+        ),
+        if (storeData.website.isNotEmpty)
           _ActionIconBtn(
-            label: 'WhatsApp',
-            icon: Icons.chat_bubble_rounded,
-            color: const Color(0xFF25D366),
+            label: 'Web',
+            icon: Icons.language_rounded,
+            color: Colors.blue.shade600,
             radius: radius,
             compact: isCompact,
           ),
-          _ActionIconBtn(
-            label: 'Instagram',
-            icon: Icons.camera_rounded,
-            color: const Color(0xFFE1306C),
-            radius: radius,
-            compact: isCompact,
-          ),
-          if (storeData.website.isNotEmpty)
-            _ActionIconBtn(
-              label: 'Web',
-              icon: Icons.language_rounded,
-              color: Colors.blue.shade600,
-              radius: radius,
-              compact: isCompact,
+        _ActionIconBtn(
+          label: 'Adres',
+          icon: Icons.location_on_rounded,
+          color: Colors.red.shade500,
+          radius: radius,
+          compact: isCompact,
+        ),
+      ];
+    }
+
+    return [
+      if (storeData.whatsapp.trim().isNotEmpty)
+        _ActionIconBtn(
+          label: 'WhatsApp',
+          icon: Icons.chat_bubble_rounded,
+          color: const Color(0xFF25D366),
+          radius: radius,
+          compact: isCompact,
+          onTap: () => _openExternalUrl(_buildWhatsAppUrl(storeData.whatsapp)),
+        ),
+      if (storeData.instagram.trim().isNotEmpty)
+        _ActionIconBtn(
+          label: 'Instagram',
+          icon: Icons.camera_rounded,
+          color: const Color(0xFFE1306C),
+          radius: radius,
+          compact: isCompact,
+          onTap:
+              () => _openExternalUrl(_buildInstagramUrl(storeData.instagram)),
+        ),
+      if (storeData.website.trim().isNotEmpty)
+        _ActionIconBtn(
+          label: 'Web',
+          icon: Icons.language_rounded,
+          color: Colors.blue.shade600,
+          radius: radius,
+          compact: isCompact,
+          onTap:
+              () => _openExternalUrl(_normalizeExternalUrl(storeData.website)),
+        ),
+      if (storeData.address.trim().isNotEmpty)
+        _ActionIconBtn(
+          label: 'Adres',
+          icon: Icons.location_on_rounded,
+          color: Colors.red.shade500,
+          radius: radius,
+          compact: isCompact,
+          onTap: () => _openExternalUrl(_buildMapsUrl(storeData.address)),
+        ),
+    ];
+  }
+
+  Widget _buildAboutCard(VitrinThemePreset preset) {
+    final isCompact = isEmbedded;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(isCompact ? 16 : 18),
+        decoration: BoxDecoration(
+          color: preset.surface,
+          borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
+          border: Border.all(color: preset.border, width: isCompact ? 1 : 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: preset.isDark ? 0.1 : 0.04),
+              blurRadius: isCompact ? 12 : 20,
+              offset: Offset(0, isCompact ? 3 : 5),
             ),
-          _ActionIconBtn(
-            label: 'Adres',
-            icon: Icons.location_on_rounded,
-            color: Colors.red.shade500,
-            radius: radius,
-            compact: isCompact,
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hakkımızda',
+              style: TextStyle(
+                color: preset.textPrimary,
+                fontSize: isCompact ? 14 : 16,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.4,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              storeData.description.trim(),
+              style: TextStyle(
+                color: preset.textSecondary,
+                fontSize: isCompact ? 12 : 13,
+                fontWeight: FontWeight.w500,
+                height: 1.55,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildProfessionalBio(VitrinThemePreset preset) {
     final isCompact = isEmbedded;
+    final bioText =
+        storeData.corporateBio.trim().isNotEmpty
+            ? storeData.corporateBio.trim()
+            : storeData.description.trim().isNotEmpty
+            ? storeData.description.trim()
+            : 'Tüm bilgileriniz, linkleriniz ve iletişim kanallarınız tek yerde.';
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 28 : 40),
@@ -255,9 +429,7 @@ class VitrinView extends StatelessWidget {
           ),
           SizedBox(height: isCompact ? 4 : 8),
           Text(
-            storeData.corporateBio.isEmpty
-                ? 'Tüm bilgileriniz, linkleriniz ve iletişim kanallarınız tek yerde.'
-                : storeData.corporateBio,
+            bioText,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: isCompact ? 13 : 16,
@@ -274,12 +446,22 @@ class VitrinView extends StatelessWidget {
 
   Widget _buildModernLinkHub(VitrinThemePreset preset, double radius) {
     final isCompact = isEmbedded;
+    final visibleMarketplaceLinks =
+        publicMode
+            ? storeData.marketplaceLinks
+                .where(
+                  (link) =>
+                      link.platform.trim().isNotEmpty &&
+                      link.url.trim().isNotEmpty,
+                )
+                .toList()
+            : storeData.marketplaceLinks;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
       child: Column(
         children: [
-          ...storeData.marketplaceLinks.map(
+          ...visibleMarketplaceLinks.map(
             (link) => _ModernLinkItem(
               icon: _getPlatformIcon(link.platform),
               title: link.platform,
@@ -288,10 +470,14 @@ class VitrinView extends StatelessWidget {
               radius: radius,
               compact: isCompact,
               preset: preset,
+              onTap:
+                  publicMode
+                      ? () => _openExternalUrl(_normalizeExternalUrl(link.url))
+                      : null,
             ),
           ),
 
-          if (storeData.marketplaceLinks.isEmpty)
+          if (!publicMode && storeData.marketplaceLinks.isEmpty)
             _ModernLinkItem(
               icon: Icons.auto_stories_rounded,
               title: 'Dijital Katalog',
@@ -302,24 +488,26 @@ class VitrinView extends StatelessWidget {
               preset: preset,
             ),
 
-          _ModernLinkItem(
-            icon: Icons.verified_rounded,
-            title: 'Referanslarımız',
-            subtitle: 'Güçlü çözüm ortaklıklarımız',
-            color: Colors.indigo.shade400,
-            radius: radius,
-            compact: isCompact,
-            preset: preset,
-          ),
-          _ModernLinkItem(
-            icon: Icons.qr_code_rounded,
-            title: 'vCard Kaydet',
-            subtitle: 'Hızlı iletişim için rehbere ekle',
-            color: Colors.teal.shade500,
-            radius: radius,
-            compact: isCompact,
-            preset: preset,
-          ),
+          if (!publicMode) ...[
+            _ModernLinkItem(
+              icon: Icons.verified_rounded,
+              title: 'Referanslarımız',
+              subtitle: 'Güçlü çözüm ortaklıklarımız',
+              color: Colors.indigo.shade400,
+              radius: radius,
+              compact: isCompact,
+              preset: preset,
+            ),
+            _ModernLinkItem(
+              icon: Icons.qr_code_rounded,
+              title: 'vCard Kaydet',
+              subtitle: 'Hızlı iletişim için rehbere ekle',
+              color: Colors.teal.shade500,
+              radius: radius,
+              compact: isCompact,
+              preset: preset,
+            ),
+          ],
         ],
       ),
     );
@@ -468,9 +656,11 @@ class VitrinView extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'vitrinx.app/${storeData.name.toLowerCase().replaceAll(' ', '-')}',
+          publicMode
+              ? 'Bu vitrin VitrinX ile oluşturuldu'
+              : 'vitrinx.app/${storeData.name.toLowerCase().replaceAll(' ', '-')}',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: publicMode ? 12 : 14,
             fontWeight: FontWeight.w800,
             color: preset.textSecondary,
             letterSpacing: -0.5,
@@ -479,17 +669,64 @@ class VitrinView extends StatelessWidget {
         const SizedBox(height: 48),
         Container(height: 1, width: 50, color: preset.border),
         const SizedBox(height: 24),
-        Text(
-          'BU BİR VITRINX DİJİTAL KİMLİĞİDİR',
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w900,
-            color: preset.textSecondary.withValues(alpha: 0.72),
-            letterSpacing: 4,
+        if (!publicMode)
+          Text(
+            'BU BİR VITRINX DİJİTAL KİMLİĞİDİR',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              color: preset.textSecondary.withValues(alpha: 0.72),
+              letterSpacing: 4,
+            ),
           ),
-        ),
       ],
     );
+  }
+
+  Future<void> _openExternalUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (error) {
+      debugPrint('External link open error: $error');
+    }
+  }
+
+  String _normalizeExternalUrl(String value) {
+    final text = value.trim();
+    if (text.startsWith('http://') || text.startsWith('https://')) {
+      return text;
+    }
+
+    return 'https://$text';
+  }
+
+  String _buildInstagramUrl(String value) {
+    final text = value.trim();
+    if (text.contains('instagram.com')) return _normalizeExternalUrl(text);
+
+    final username = text.replaceFirst('@', '').replaceAll('/', '').trim();
+    return 'https://instagram.com/$username';
+  }
+
+  String _buildWhatsAppUrl(String value) {
+    var number = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (number.startsWith('0') && number.length == 11) {
+      number = '90${number.substring(1)}';
+    } else if (number.startsWith('5') && number.length == 10) {
+      number = '90$number';
+    }
+
+    return 'https://wa.me/$number';
+  }
+
+  String _buildMapsUrl(String address) {
+    return Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': address.trim(),
+    }).toString();
   }
 }
 
@@ -499,6 +736,7 @@ class _ActionIconBtn extends StatelessWidget {
   final Color color;
   final double radius;
   final bool compact;
+  final VoidCallback? onTap;
 
   const _ActionIconBtn({
     required this.label,
@@ -506,6 +744,7 @@ class _ActionIconBtn extends StatelessWidget {
     required this.color,
     required this.radius,
     this.compact = false,
+    this.onTap,
   });
 
   @override
@@ -524,7 +763,7 @@ class _ActionIconBtn extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: onTap,
           borderRadius: BorderRadius.circular(buttonRadius),
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -561,6 +800,7 @@ class _ModernLinkItem extends StatelessWidget {
   final double radius;
   final bool compact;
   final VitrinThemePreset preset;
+  final VoidCallback? onTap;
 
   const _ModernLinkItem({
     required this.icon,
@@ -570,6 +810,7 @@ class _ModernLinkItem extends StatelessWidget {
     required this.radius,
     required this.preset,
     this.compact = false,
+    this.onTap,
   });
 
   @override
@@ -580,7 +821,6 @@ class _ModernLinkItem extends StatelessWidget {
             : color;
 
     return Container(
-      padding: EdgeInsets.all(compact ? 13 : 18),
       margin: EdgeInsets.only(bottom: compact ? 10 : 16),
       decoration: BoxDecoration(
         color: preset.surface,
@@ -594,52 +834,66 @@ class _ModernLinkItem extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(compact ? 9 : 12),
-            decoration: BoxDecoration(
-              color: effectiveColor.withValues(
-                alpha: preset.isDark ? 0.18 : 0.1,
-              ),
-              borderRadius: BorderRadius.circular(compact ? 11 : 14),
-            ),
-            child: Icon(icon, color: effectiveColor, size: compact ? 18 : 22),
-          ),
-          SizedBox(width: compact ? 12 : 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(compact ? 16 : 20),
+          child: Padding(
+            padding: EdgeInsets.all(compact ? 13 : 18),
+            child: Row(
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: compact ? 14 : 16,
-                    color: preset.textPrimary,
-                    letterSpacing: -0.5,
+                Container(
+                  padding: EdgeInsets.all(compact ? 9 : 12),
+                  decoration: BoxDecoration(
+                    color: effectiveColor.withValues(
+                      alpha: preset.isDark ? 0.18 : 0.1,
+                    ),
+                    borderRadius: BorderRadius.circular(compact ? 11 : 14),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: effectiveColor,
+                    size: compact ? 18 : 22,
                   ),
                 ),
-                SizedBox(height: compact ? 2 : 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: preset.textSecondary,
-                    fontSize: compact ? 10.5 : 12,
-                    fontWeight: FontWeight.w500,
+                SizedBox(width: compact ? 12 : 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: compact ? 14 : 16,
+                          color: preset.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(height: compact ? 2 : 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          color: preset.textSecondary,
+                          fontSize: compact ? 10.5 : 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: preset.textSecondary.withValues(alpha: 0.75),
+                  size: compact ? 11 : 14,
                 ),
               ],
             ),
           ),
-          Icon(
-            Icons.arrow_forward_ios_rounded,
-            color: preset.textSecondary.withValues(alpha: 0.75),
-            size: compact ? 11 : 14,
-          ),
-        ],
+        ),
       ),
     );
   }

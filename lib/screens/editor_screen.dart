@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
@@ -182,7 +183,8 @@ class _EditorScreenState extends State<EditorScreen> {
     });
 
     try {
-      final publicLink = await const StorePublishService().publishStore(_data);
+      final publicPath = await const StorePublishService().publishStore(_data);
+      final publicLink = _buildFullPublicLink(publicPath);
       if (!mounted) return;
 
       setState(() => _publishedLink = publicLink);
@@ -215,6 +217,23 @@ class _EditorScreenState extends State<EditorScreen> {
         setState(() => _isPublishing = false);
       }
     }
+  }
+
+  Future<void> _copyPublishedLink(String message) async {
+    final link = _publishedLink;
+    if (link == null || link.trim().isEmpty) return;
+
+    await Clipboard.setData(ClipboardData(text: link));
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _addMarketplaceLink() {
@@ -883,8 +902,6 @@ class _EditorScreenState extends State<EditorScreen> {
     bool compact = false,
     bool includeBottomSpacing = true,
   }) {
-    final slug = _buildStoreSlug(_data.name);
-    final publicLink = 'vitrinx.app/v/$slug';
     final checklist = _buildPublishChecklistItems();
     final panelChildren =
         compact
@@ -892,8 +909,6 @@ class _EditorScreenState extends State<EditorScreen> {
               _buildPublishCard(
                 children: [
                   _buildPublishIntro(),
-                  const SizedBox(height: 16),
-                  _buildPublishLinkBlock(publicLink),
                   const SizedBox(height: 18),
                   _buildPublishSectionTitle('Yayın öncesi kontrol'),
                   const SizedBox(height: 10),
@@ -908,13 +923,7 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ]
             : <Widget>[
-              _buildPublishCard(
-                children: [
-                  _buildPublishIntro(),
-                  const SizedBox(height: 16),
-                  _buildPublishLinkBlock(publicLink),
-                ],
-              ),
+              _buildPublishCard(children: [_buildPublishIntro()]),
               const SizedBox(height: 16),
               _buildPublishCard(
                 children: [
@@ -945,6 +954,17 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
+  String _buildFullPublicLink(String path) {
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    final base = Uri.base;
+    final hasWebOrigin =
+        (base.scheme == 'http' || base.scheme == 'https') &&
+        base.host.isNotEmpty;
+    final origin = hasWebOrigin ? base.origin : '';
+
+    return '$origin$normalizedPath';
+  }
+
   Widget _buildPublishIntro() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -968,43 +988,6 @@ class _EditorScreenState extends State<EditorScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildPublishLinkBlock(String publicLink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            publicLink,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: darkText,
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Bu link sonraki aşamada gerçek public vitrin adresiniz olacak.',
-            style: TextStyle(
-              color: Colors.blueGrey.shade600,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1068,7 +1051,11 @@ class _EditorScreenState extends State<EditorScreen> {
                         Text('Hazırlanıyor...'),
                       ],
                     )
-                    : const Text('Public linki hazırla'),
+                    : Text(
+                      _publishedLink == null
+                          ? 'Vitrin linkini oluştur'
+                          : 'Linki yeniden göster',
+                    ),
           ),
         ),
         const SizedBox(height: 10),
@@ -1097,15 +1084,37 @@ class _EditorScreenState extends State<EditorScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Hazırlanan vitrin linki',
-            style: TextStyle(
-              color: Colors.teal.shade800,
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Hazırlanan vitrin linki',
+                  style: TextStyle(
+                    color: Colors.teal.shade800,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => _copyPublishedLink('Vitrin linki kopyalandı.'),
+                tooltip: 'Linki kopyala',
+                icon: Icon(
+                  Icons.copy_rounded,
+                  color: Colors.teal.shade800,
+                  size: 17,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(32, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  side: BorderSide(color: Colors.teal.shade100),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             link,
             maxLines: 1,
@@ -1114,6 +1123,29 @@ class _EditorScreenState extends State<EditorScreen> {
               color: darkText,
               fontSize: 13,
               fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed:
+                  () => _copyPublishedLink('Paylaşım için link kopyalandı.'),
+              icon: const Icon(Icons.share_outlined, size: 16),
+              label: const Text('Paylaş'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.teal.shade800,
+                side: BorderSide(color: Colors.teal.shade200),
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                minimumSize: const Size(44, 42),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ),
         ],
@@ -1140,31 +1172,6 @@ class _EditorScreenState extends State<EditorScreen> {
         ),
       ),
     );
-  }
-
-  String _buildStoreSlug(String storeName) {
-    var slug = storeName.trim().toLowerCase();
-    if (slug.isEmpty) return 'magazaniz';
-
-    const replacements = {
-      'ç': 'c',
-      'ğ': 'g',
-      'ı': 'i',
-      'ö': 'o',
-      'ş': 's',
-      'ü': 'u',
-    };
-
-    replacements.forEach((source, target) {
-      slug = slug.replaceAll(source, target);
-    });
-
-    slug = slug.replaceAll(RegExp(r'[^a-z0-9\s-]'), '');
-    slug = slug.replaceAll(RegExp(r'\s+'), '-');
-    slug = slug.replaceAll(RegExp(r'-+'), '-');
-    slug = slug.replaceAll(RegExp(r'^-|-$'), '');
-
-    return slug.isEmpty ? 'magazaniz' : slug;
   }
 
   List<_PublishChecklistItem> _buildPublishChecklistItems() {

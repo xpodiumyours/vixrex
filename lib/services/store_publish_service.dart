@@ -11,13 +11,13 @@ class StorePublishService {
 
     try {
       await Supabase.instance.client.from('stores').insert(payload);
-      return 'vitrinx.app/v/$slug';
+      return '/v/$slug';
     } on PostgrestException catch (error) {
       if (_isDuplicateSlugError(error)) {
         debugPrint(
           'Store slug already exists, returning existing public link.',
         );
-        return 'vitrinx.app/v/$slug';
+        return '/v/$slug';
       }
 
       throw Exception('Vitrin yayınlanamadı: ${error.message}');
