@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
@@ -18,6 +19,9 @@ class _EditorScreenState extends State<EditorScreen> {
   final StoreData _data = StoreData(isEsnafMode: false);
   bool _isLoading = true;
   bool _isGoogleAssistantOpen = false;
+  bool _isPublishing = false;
+  String? _publishedLink;
+  String? _publishError;
 
   // Modern Color Palette
   static const Color primaryColor = Color(0xFFFF5A1F);
@@ -164,6 +168,51 @@ class _EditorScreenState extends State<EditorScreen> {
             backgroundColor: Colors.redAccent,
           ),
         );
+      }
+    }
+  }
+
+  Future<void> _publishStore() async {
+    if (_isPublishing) return;
+
+    setState(() {
+      _isPublishing = true;
+      _publishedLink = null;
+      _publishError = null;
+    });
+
+    try {
+      final publicLink = await const StorePublishService().publishStore(_data);
+      if (!mounted) return;
+
+      setState(() => _publishedLink = publicLink);
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vitrin linkiniz hazırlandı.'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } catch (error) {
+      debugPrint('Publish store error: $error');
+      if (!mounted) return;
+
+      setState(() {
+        _publishError =
+            'Vitrin bağlantısı hazırlanamadı. Supabase ayarlarını veya izinleri kontrol edin.';
+      });
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vitrin yayınlanırken bir sorun oluştu.'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPublishing = false);
       }
     }
   }
@@ -975,21 +1024,18 @@ class _EditorScreenState extends State<EditorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_publishedLink != null) ...[
+          _buildPublishedLinkBlock(_publishedLink!),
+          const SizedBox(height: 12),
+        ],
+        if (_publishError != null) ...[
+          _buildPublishErrorBlock(_publishError!),
+          const SizedBox(height: 12),
+        ],
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Public vitrin linki hazırlandı. Yayınlama altyapısı sonraki adımda eklenecek.',
-                  ),
-                  behavior: SnackBarBehavior.floating,
-                  duration: Duration(seconds: 3),
-                ),
-              );
-            },
+            onPressed: _isPublishing ? null : _publishStore,
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryColor,
               foregroundColor: Colors.white,
@@ -1004,7 +1050,25 @@ class _EditorScreenState extends State<EditorScreen> {
                 fontWeight: FontWeight.w900,
               ),
             ),
-            child: const Text('Public linki hazırla'),
+            child:
+                _isPublishing
+                    ? const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Text('Hazırlanıyor...'),
+                      ],
+                    )
+                    : const Text('Public linki hazırla'),
           ),
         ),
         const SizedBox(height: 10),
@@ -1018,6 +1082,63 @@ class _EditorScreenState extends State<EditorScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPublishedLinkBlock(String link) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDFA),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: const Color(0xFF99F6E4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hazırlanan vitrin linki',
+            style: TextStyle(
+              color: Colors.teal.shade800,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            link,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: darkText,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPublishErrorBlock(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Text(
+        message,
+        style: TextStyle(
+          color: Colors.orange.shade900,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1.35,
+        ),
+      ),
     );
   }
 

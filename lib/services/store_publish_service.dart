@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
 
@@ -12,6 +13,13 @@ class StorePublishService {
       await Supabase.instance.client.from('stores').insert(payload);
       return 'vitrinx.app/v/$slug';
     } on PostgrestException catch (error) {
+      if (_isDuplicateSlugError(error)) {
+        debugPrint(
+          'Store slug already exists, returning existing public link.',
+        );
+        return 'vitrinx.app/v/$slug';
+      }
+
       throw Exception('Vitrin yayınlanamadı: ${error.message}');
     } catch (error) {
       throw Exception('Vitrin yayınlanamadı: $error');
@@ -48,6 +56,22 @@ class StorePublishService {
           (link) => {'platform': link.platform.trim(), 'url': link.url.trim()},
         )
         .toList();
+  }
+
+  bool _isDuplicateSlugError(PostgrestException error) {
+    final searchableText =
+        [
+          error.message,
+          error.code,
+          error.details?.toString(),
+          error.hint,
+          error.toString(),
+        ].whereType<String>().join(' ').toLowerCase();
+
+    return searchableText.contains('stores_slug_key') ||
+        searchableText.contains('duplicate key') ||
+        searchableText.contains('23505') ||
+        searchableText.contains('409');
   }
 
   String _generateSlug(String name) {
