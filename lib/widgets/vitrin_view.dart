@@ -31,6 +31,10 @@ class VitrinView extends StatelessWidget {
     final children = <Widget>[
       _buildModernHeader(preset, radius),
       SizedBox(height: isEmbedded ? 16 : 26),
+      if (storeData.shelfImageUrl.trim().isNotEmpty) ...[
+        _buildShelfImageCard(preset),
+        SizedBox(height: isEmbedded ? 16 : 30),
+      ],
       if (_hasVisibleActions()) ...[
         _buildPremiumActionButtons(radius),
         SizedBox(height: isEmbedded ? 16 : 30),
@@ -370,6 +374,104 @@ class VitrinView extends StatelessWidget {
           onTap: () => _openExternalUrl(_buildMapsUrl(storeData.address)),
         ),
     ];
+  }
+
+  Widget _buildShelfImageCard(VitrinThemePreset preset) {
+    final isCompact = isEmbedded;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(isCompact ? 12 : 14),
+        decoration: BoxDecoration(
+          color: preset.surface,
+          borderRadius: BorderRadius.circular(isCompact ? 18 : 22),
+          border: Border.all(color: preset.border, width: isCompact ? 1 : 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: preset.isDark ? 0.16 : 0.05,
+              ),
+              blurRadius: isCompact ? 14 : 24,
+              offset: Offset(0, isCompact ? 4 : 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: isCompact ? 30 : 36,
+                  height: isCompact ? 30 : 36,
+                  decoration: BoxDecoration(
+                    color: preset.accent.withValues(
+                      alpha: preset.isDark ? 0.18 : 0.1,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.storefront_rounded,
+                    color: preset.accent,
+                    size: isCompact ? 16 : 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Bugünkü raf / reyon',
+                        style: TextStyle(
+                          color: preset.textPrimary,
+                          fontSize: isCompact ? 13 : 15,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      Text(
+                        'Mağazadan güncel görünüm',
+                        style: TextStyle(
+                          color: preset.textSecondary,
+                          fontSize: isCompact ? 10 : 11,
+                          fontWeight: FontWeight.w600,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: isCompact ? 10 : 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(isCompact ? 14 : 16),
+              child: AspectRatio(
+                aspectRatio: 16 / 10,
+                child: Image.network(
+                  storeData.shelfImageUrl.trim(),
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder:
+                      (_, __, ___) => Container(
+                        color: preset.surfaceSoft,
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: preset.textSecondary,
+                          size: isCompact ? 26 : 32,
+                        ),
+                      ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildAboutCard(VitrinThemePreset preset) {

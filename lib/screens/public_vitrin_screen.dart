@@ -52,6 +52,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       isEsnafMode: true,
       corporateBio: description,
       referencesLink: _readString(data['references_link']),
+      shelfImageUrl: _readString(data['shelf_image_url']),
       marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),
     );
   }

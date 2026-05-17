@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
+import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
@@ -22,8 +24,13 @@ class _EditorScreenState extends State<EditorScreen> {
   bool _isLoading = true;
   bool _isGoogleAssistantOpen = false;
   bool _isPublishing = false;
+  bool _isUploadingShelf = false;
   String? _publishedLink;
   String? _publishError;
+  Uint8List? _selectedShelfBytes;
+  String? _selectedShelfFileName;
+  String _selectedShelfExtension = 'jpg';
+  String _selectedShelfContentType = 'image/jpeg';
 
   // Modern Color Palette
   static const Color primaryColor = Color(0xFFFF5A1F);
@@ -111,6 +118,7 @@ class _EditorScreenState extends State<EditorScreen> {
           _data.isEsnafMode = loadedData.isEsnafMode;
           _data.corporateBio = loadedData.corporateBio;
           _data.referencesLink = loadedData.referencesLink;
+          _data.shelfImageUrl = loadedData.shelfImageUrl;
           _data.marketplaceLinks = loadedData.marketplaceLinks;
           _data.products = loadedData.products;
           _isLoading = false;
@@ -180,22 +188,52 @@ class _EditorScreenState extends State<EditorScreen> {
 
     setState(() {
       _isPublishing = true;
+      _isUploadingShelf = _selectedShelfBytes != null;
       _publishedLink = null;
       _publishError = null;
     });
 
+    var shelfUploadFailed = false;
+
     try {
+      final selectedShelfBytes = _selectedShelfBytes;
+      if (selectedShelfBytes != null) {
+        try {
+          final uploadedUrl = await const StoreShelfUploadService()
+              .uploadShelfImage(
+                selectedShelfBytes,
+                _generateStoreSlug(_data.name),
+                fileExtension: _selectedShelfExtension,
+                contentType: _selectedShelfContentType,
+              );
+
+          _data.shelfImageUrl = uploadedUrl;
+        } catch (uploadError) {
+          shelfUploadFailed = true;
+          _data.shelfImageUrl = '';
+          debugPrint('Shelf image upload error: $uploadError');
+        } finally {
+          if (mounted) {
+            setState(() => _isUploadingShelf = false);
+          }
+        }
+      }
+
       final publicPath = await const StorePublishService().publishStore(_data);
       final publicLink = _buildFullPublicLink(publicPath);
       if (!mounted) return;
 
+      final publishSnackMessage =
+          shelfUploadFailed
+              ? 'Fotoğraf yüklenemedi, vitrin fotoğrafsız yayınlandı.'
+              : 'Vitrin linkiniz hazırlandı.';
       setState(() => _publishedLink = publicLink);
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vitrin linkiniz hazırlandı.'),
+        SnackBar(
+          content: Text(publishSnackMessage),
           behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         ),
       );
     } catch (error) {
@@ -216,7 +254,10 @@ class _EditorScreenState extends State<EditorScreen> {
       );
     } finally {
       if (mounted) {
-        setState(() => _isPublishing = false);
+        setState(() {
+          _isPublishing = false;
+          _isUploadingShelf = false;
+        });
       }
     }
   }
@@ -238,13 +279,73 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  void _showShelfPhotoComingSoon() {
+  Future<void> _pickShelfPhoto() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.image,
+      withData: true,
+    );
+
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.single;
+    if (file.size > 5 * 1024 * 1024) {
+      _showInfoSnackBar("Fotoğraf 5 MB'tan büyük olamaz.");
+      return;
+    }
+
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      _showInfoSnackBar('Fotoğraf okunamadı. Lütfen başka bir görsel deneyin.');
+      return;
+    }
+
+    final extension = (file.extension ?? 'jpg').toLowerCase();
+    final contentType = _contentTypeForShelfExtension(extension);
+    if (contentType == null) {
+      _showInfoSnackBar('Sadece JPG, PNG veya WEBP görsel seçebilirsiniz.');
+      return;
+    }
+
+    setState(() {
+      _selectedShelfBytes = bytes;
+      _selectedShelfFileName = file.name;
+      _selectedShelfExtension = extension == 'jpeg' ? 'jpg' : extension;
+      _selectedShelfContentType = contentType;
+    });
+  }
+
+  void _clearShelfPhoto() {
+    setState(() {
+      _selectedShelfBytes = null;
+      _selectedShelfFileName = null;
+      _data.shelfImageUrl = '';
+    });
+  }
+
+  String? _contentTypeForShelfExtension(String extension) {
+    switch (extension.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return null;
+    }
+  }
+
+  void _showInfoSnackBar(String message) {
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Raf fotoğrafı ekleme yakında aktif olacak.'),
+      SnackBar(
+        content: Text(message),
         behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 2),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -987,6 +1088,31 @@ class _EditorScreenState extends State<EditorScreen> {
     return '$origin$normalizedPath';
   }
 
+  String _generateStoreSlug(String name) {
+    var slug = name.trim().toLowerCase();
+    if (slug.isEmpty) return 'magazaniz';
+
+    const replacements = {
+      'ç': 'c',
+      'ğ': 'g',
+      'ı': 'i',
+      'ö': 'o',
+      'ş': 's',
+      'ü': 'u',
+    };
+
+    replacements.forEach((source, target) {
+      slug = slug.replaceAll(source, target);
+    });
+
+    slug = slug.replaceAll(RegExp(r'[^a-z0-9\s-]'), '');
+    slug = slug.replaceAll(RegExp(r'\s+'), '-');
+    slug = slug.replaceAll(RegExp(r'-+'), '-');
+    slug = slug.replaceAll(RegExp(r'^-|-$'), '');
+
+    return slug.isEmpty ? 'magazaniz' : slug;
+  }
+
   Widget _buildPublishIntro() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1057,11 +1183,11 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
             child:
                 _isPublishing
-                    ? const Row(
+                    ? Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
@@ -1069,8 +1195,12 @@ class _EditorScreenState extends State<EditorScreen> {
                             color: Colors.white,
                           ),
                         ),
-                        SizedBox(width: 10),
-                        Text('Hazırlanıyor...'),
+                        const SizedBox(width: 10),
+                        Text(
+                          _isUploadingShelf
+                              ? 'Fotoğraf yükleniyor...'
+                              : 'Hazırlanıyor...',
+                        ),
                       ],
                     )
                     : Text(
@@ -1935,8 +2065,11 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Widget _buildLogoUpload() {
+    final hasShelfPreview =
+        _selectedShelfBytes != null || _data.shelfImageUrl.trim().isNotEmpty;
+
     return InkWell(
-      onTap: _showShelfPhotoComingSoon,
+      onTap: _pickShelfPhoto,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         width: double.infinity,
@@ -1949,6 +2082,79 @@ class _EditorScreenState extends State<EditorScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            if (hasShelfPreview) ...[
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(13),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child:
+                          _selectedShelfBytes != null
+                              ? Image.memory(
+                                _selectedShelfBytes!,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                              : Image.network(
+                                _data.shelfImageUrl.trim(),
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (_, __, ___) => _buildShelfImageError(),
+                              ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      onPressed: _clearShelfPhoto,
+                      tooltip: 'Fotoğrafı kaldır',
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: darkText,
+                        minimumSize: const Size(34, 34),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.storefront_rounded,
+                    size: 16,
+                    color: primaryColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _selectedShelfFileName ?? 'Yayınlanmış raf fotoğrafı',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: darkText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Değiştir',
+                    style: TextStyle(
+                      color: Colors.blueGrey.shade600,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
             const Icon(
               Icons.add_a_photo_outlined,
               size: 26,
@@ -1992,6 +2198,32 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
+  Widget _buildShelfImageError() {
+    return Container(
+      color: Colors.white,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.broken_image_outlined,
+            color: Colors.blueGrey.shade300,
+            size: 28,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Fotoğraf önizlenemedi',
+            style: TextStyle(
+              color: Colors.blueGrey.shade500,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildThemeSelector({int? skip, int? limit, bool showTitle = true}) {
     Iterable<String> displayIterable = themes;
     if (skip != null) displayIterable = displayIterable.skip(skip);
@@ -2005,9 +2237,9 @@ class _EditorScreenState extends State<EditorScreen> {
           const Text(
             'Tema Seçimi',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.black54,
+              color: darkText,
             ),
           ),
           const SizedBox(height: 16),
@@ -2026,90 +2258,13 @@ class _EditorScreenState extends State<EditorScreen> {
                 final themeName = displayThemes[index];
                 final isSelected = _data.theme == themeName;
                 final preset = vitrinThemePresetFor(themeName);
-                final checkColor =
-                    preset.accent.computeLuminance() > 0.65
-                        ? preset.textPrimary
-                        : preset.buttonText;
-                return GestureDetector(
+
+                return _HoverThemeCard(
+                  themeName: themeName,
+                  preset: preset,
+                  isSelected: isSelected,
+                  width: constraints.maxWidth > 400 ? 90 : itemWidth,
                   onTap: () => setState(() => _data.theme = themeName),
-                  child: AnimatedScale(
-                    scale: isSelected ? 1.05 : 1.0,
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeInOut,
-                      width: constraints.maxWidth > 400 ? 90 : itemWidth,
-                      height: 110,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isSelected ? primaryColor : cardBorder,
-                          width: isSelected ? 2 : 1,
-                        ),
-                        boxShadow:
-                            isSelected
-                                ? [
-                                  BoxShadow(
-                                    color: primaryColor.withValues(alpha: 0.2),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ]
-                                : const [
-                                  BoxShadow(
-                                    color: Colors.transparent,
-                                    blurRadius: 0,
-                                  ),
-                                ],
-                      ),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    preset.background,
-                                    preset.surfaceSoft,
-                                    preset.accent.withValues(alpha: 0.85),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child:
-                                  isSelected
-                                      ? Center(
-                                        child: Icon(
-                                          Icons.check_circle,
-                                          color: checkColor,
-                                          size: 20,
-                                        ),
-                                      )
-                                      : null,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Text(
-                              themeName,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight:
-                                    isSelected
-                                        ? FontWeight.w900
-                                        : FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 );
               }),
             );
@@ -2380,4 +2535,134 @@ class _PublishChecklistItem {
     required this.readyText,
     required this.missingText,
   });
+}
+
+class _HoverThemeCard extends StatefulWidget {
+  final String themeName;
+  final VitrinThemePreset preset;
+  final bool isSelected;
+  final double width;
+  final VoidCallback onTap;
+
+  const _HoverThemeCard({
+    required this.themeName,
+    required this.preset,
+    required this.isSelected,
+    required this.width,
+    required this.onTap,
+  });
+
+  @override
+  State<_HoverThemeCard> createState() => _HoverThemeCardState();
+}
+
+class _HoverThemeCardState extends State<_HoverThemeCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = widget.isSelected ? 1.03 : (_isHovered ? 1.01 : 1.0);
+    final shadowOpacity = widget.isSelected ? 0.15 : (_isHovered ? 0.08 : 0.0);
+    final checkColor =
+        widget.preset.accent.computeLuminance() > 0.65
+            ? widget.preset.textPrimary
+            : widget.preset.buttonText;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: scale,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: widget.width,
+            height: 116,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color:
+                    widget.isSelected
+                        ? const Color(0xFFFF5A1F)
+                        : const Color(0xFFE2E8F0),
+                width: widget.isSelected ? 2 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(
+                    0xFFFF5A1F,
+                  ).withValues(alpha: shadowOpacity),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          widget.preset.background,
+                          widget.preset.surfaceSoft,
+                          widget.preset.accent.withValues(alpha: 0.85),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Stack(
+                      children: [
+                        if (widget.isSelected)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.transparent,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.check_circle,
+                                color: checkColor,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10, left: 4, right: 4),
+                  child: Text(
+                    widget.themeName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight:
+                          widget.isSelected ? FontWeight.w800 : FontWeight.w600,
+                      color:
+                          widget.isSelected
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

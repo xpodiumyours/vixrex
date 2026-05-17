@@ -80,6 +80,7 @@ class StoreData {
   /// Referans / müşteri yorum sayfası linki.
   /// Dolu ise public vitrinde Referanslarımız kartı görünür.
   String referencesLink;
+  String shelfImageUrl;
 
   StoreData({
     this.name = '',
@@ -97,6 +98,7 @@ class StoreData {
     List<MarketplaceLink>? marketplaceLinks,
     this.corporateBio = '',
     this.referencesLink = '',
+    this.shelfImageUrl = '',
   }) : products = products ?? [],
        marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')];
 
@@ -116,6 +118,7 @@ class StoreData {
     'marketplaceLinks': marketplaceLinks.map((e) => e.toJson()).toList(),
     'corporateBio': corporateBio,
     'referencesLink': referencesLink,
+    'shelfImageUrl': shelfImageUrl,
   };
 
   factory StoreData.fromJson(Map<String, dynamic> json) {
@@ -139,6 +142,7 @@ class StoreData {
               .toList(),
       corporateBio: json['corporateBio'] ?? '',
       referencesLink: json['referencesLink'] ?? '',
+      shelfImageUrl: json['shelfImageUrl'] ?? '',
     );
   }
 

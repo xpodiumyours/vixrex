@@ -42,6 +42,7 @@ class StorePublishService {
       'catalog_link': '',
       'references_link': data.referencesLink.trim(),
       'vcard_link': '',
+      'shelf_image_url': data.shelfImageUrl.trim(),
       'is_published': true,
     };
   }

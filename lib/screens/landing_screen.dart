@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:vitrinx/screens/editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
@@ -82,44 +83,98 @@ class _LandingScreenState extends State<LandingScreen>
           colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
         ),
       ),
-      child: SafeArea(
-        bottom: false,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth > 900;
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: isDesktop ? 120 : 60,
-                  ),
-                  child:
-                      isDesktop
-                          ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                flex: 5,
-                                child: _buildHeroContent(isDesktop: true),
+      child: Stack(
+        children: [
+          // Ambient Mesh Glows
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _animController,
+              builder: (context, child) {
+                final sinVal = math.sin(_animController.value * math.pi * 2);
+                final cosVal = math.cos(_animController.value * math.pi * 2);
+                return Stack(
+                  children: [
+                    Positioned(
+                      top: 100 + sinVal * 30,
+                      left: -100 + cosVal * 40,
+                      child: _buildMeshGlow(
+                        brandOrange.withValues(alpha: 0.3),
+                        300,
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 50 + cosVal * 30,
+                      right: -50 + sinVal * 40,
+                      child: _buildMeshGlow(
+                        blueAccent.withValues(alpha: 0.25),
+                        400,
+                      ),
+                    ),
+                    Positioned(
+                      top: 200 - sinVal * 20,
+                      right: 150 + cosVal * 20,
+                      child: _buildMeshGlow(
+                        pinkAccent.withValues(alpha: 0.2),
+                        250,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktop = constraints.maxWidth > 900;
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: isDesktop ? 120 : 60,
+                      ),
+                      child:
+                          isDesktop
+                              ? Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    flex: 5,
+                                    child: _buildHeroContent(isDesktop: true),
+                                  ),
+                                  const SizedBox(width: 40),
+                                  Expanded(flex: 5, child: _buildHeroMockup()),
+                                ],
+                              )
+                              : Column(
+                                children: [
+                                  _buildHeroContent(isDesktop: false),
+                                  const SizedBox(height: 60),
+                                  _buildHeroMockup(),
+                                ],
                               ),
-                              const SizedBox(width: 40),
-                              Expanded(flex: 5, child: _buildHeroMockup()),
-                            ],
-                          )
-                          : Column(
-                            children: [
-                              _buildHeroContent(isDesktop: false),
-                              const SizedBox(height: 60),
-                              _buildHeroMockup(),
-                            ],
-                          ),
-                ),
-              ),
-            );
-          },
-        ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMeshGlow(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+        child: Container(color: Colors.transparent),
       ),
     );
   }
@@ -187,25 +242,54 @@ class _LandingScreenState extends State<LandingScreen>
             runSpacing: 16,
             alignment: isDesktop ? WrapAlignment.start : WrapAlignment.center,
             children: [
-              ElevatedButton(
-                onPressed: _navigateToEditor,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: brandOrange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 24,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  elevation: 8,
-                  shadowColor: brandOrange.withValues(alpha: 0.5),
-                ),
-                child: const Text(
-                  'Vitrinimi Oluştur',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                ),
+              AnimatedBuilder(
+                animation: _animController,
+                builder: (context, child) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: brandOrange.withValues(
+                            alpha:
+                                0.3 +
+                                0.2 *
+                                    math.sin(
+                                      _animController.value * math.pi * 2,
+                                    ),
+                          ),
+                          blurRadius:
+                              20 +
+                              10 *
+                                  math.sin(_animController.value * math.pi * 2),
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _navigateToEditor,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: brandOrange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 24,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Vitrinimi Oluştur',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
               OutlinedButton(
                 onPressed: _navigateToPreview,
@@ -280,40 +364,50 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Widget _buildFloatingBadge(IconData icon, Color color, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1.5,
             ),
-            child: Icon(icon, color: color, size: 16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Text(
-            text,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-              color: darkAccent,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 16),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                text,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -356,38 +450,46 @@ class _LandingScreenState extends State<LandingScreen>
                     spacing: 24,
                     runSpacing: 24,
                     alignment: WrapAlignment.center,
-                    children: [
-                      _HoverFeatureCard(
-                        icon: Icons.link_rounded,
-                        color: blueAccent,
-                        title: 'Tek linkte mağaza',
-                        desc:
-                            'Müşteri tüm bilgilerinize tek bağlantıdan ulaşır.',
-                      ),
-                      _HoverFeatureCard(
-                        icon: Icons.qr_code_2_rounded,
-                        color: brandOrange,
-                        title: 'QR ile paylaş',
-                        desc:
-                            'Mağaza içine, paket üzerine veya sosyal medyaya ekleyin.',
-                      ),
-                      _HoverFeatureCard(
-                        icon: Icons.chat_bubble_rounded,
-                        color: mint,
-                        title: 'Sosyal medya ve WhatsApp',
-                        desc: 'Müşteri size doğrudan ulaşabilsin.',
-                      ),
-                      _HoverFeatureCard(
-                        icon: Icons.shopping_cart_rounded,
-                        color: pinkAccent,
-                        title: 'Pazaryeri ve referanslar',
-                        desc:
-                            'Trendyol, Hepsiburada, yorum ve referans linklerinizi toplayın.',
-                      ),
-                    ].map((widget) => SizedBox(
-                      width: isDesktop ? (constraints.maxWidth - 24) / 2 : constraints.maxWidth,
-                      child: widget,
-                    )).toList(),
+                    children:
+                        [
+                              _HoverFeatureCard(
+                                icon: Icons.link_rounded,
+                                color: blueAccent,
+                                title: 'Tek linkte mağaza',
+                                desc:
+                                    'Müşteri tüm bilgilerinize tek bağlantıdan ulaşır.',
+                              ),
+                              _HoverFeatureCard(
+                                icon: Icons.qr_code_2_rounded,
+                                color: brandOrange,
+                                title: 'QR ile paylaş',
+                                desc:
+                                    'Mağaza içine, paket üzerine veya sosyal medyaya ekleyin.',
+                              ),
+                              _HoverFeatureCard(
+                                icon: Icons.chat_bubble_rounded,
+                                color: mint,
+                                title: 'Sosyal medya ve WhatsApp',
+                                desc: 'Müşteri size doğrudan ulaşabilsin.',
+                              ),
+                              _HoverFeatureCard(
+                                icon: Icons.shopping_cart_rounded,
+                                color: pinkAccent,
+                                title: 'Pazaryeri ve referanslar',
+                                desc:
+                                    'Trendyol, Hepsiburada, yorum ve referans linklerinizi toplayın.',
+                              ),
+                            ]
+                            .map(
+                              (widget) => SizedBox(
+                                width:
+                                    isDesktop
+                                        ? (constraints.maxWidth - 24) / 2
+                                        : constraints.maxWidth,
+                                child: widget,
+                              ),
+                            )
+                            .toList(),
                   );
                 },
               ),
@@ -461,7 +563,10 @@ class _LandingScreenState extends State<LandingScreen>
           decoration: BoxDecoration(
             color: brandOrange.withValues(alpha: 0.1),
             shape: BoxShape.circle,
-            border: Border.all(color: brandOrange.withValues(alpha: 0.3), width: 2),
+            border: Border.all(
+              color: brandOrange.withValues(alpha: 0.3),
+              width: 2,
+            ),
           ),
           alignment: Alignment.center,
           child: Text(
