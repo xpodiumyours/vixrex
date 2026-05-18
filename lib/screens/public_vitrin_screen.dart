@@ -27,7 +27,9 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
     final response =
         await Supabase.instance.client
             .from('stores')
-            .select()
+            .select(
+              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,theme,status,marketplace_links,references_link,shelf_image_url,is_published',
+            )
             .eq('slug', widget.slug)
             .eq('is_published', true)
             .maybeSingle();
@@ -38,6 +40,10 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
 
   StoreData _storeDataFromSupabase(Map<String, dynamic> data) {
     final description = _readString(data['description']);
+    final corporateBio = _readString(
+      data['corporate_bio'],
+      fallback: description,
+    );
 
     return StoreData(
       name: _readString(data['name']),
@@ -50,7 +56,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       theme: _readString(data['theme'], fallback: 'Sade'),
       status: _readString(data['status'], fallback: 'Açık'),
       isEsnafMode: true,
-      corporateBio: description,
+      corporateBio: corporateBio,
       referencesLink: _readString(data['references_link']),
       shelfImageUrl: _readString(data['shelf_image_url']),
       marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),

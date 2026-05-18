@@ -39,7 +39,7 @@ class VitrinView extends StatelessWidget {
         _buildPremiumActionButtons(radius),
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
-      if (publicMode && storeData.description.trim().isNotEmpty) ...[
+      if (publicMode && _aboutText().isNotEmpty) ...[
         _buildAboutCard(preset),
         SizedBox(height: isEmbedded ? 16 : 30),
       ] else if (!publicMode) ...[
@@ -476,6 +476,7 @@ class VitrinView extends StatelessWidget {
 
   Widget _buildAboutCard(VitrinThemePreset preset) {
     final isCompact = isEmbedded;
+    final aboutText = _aboutText();
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
@@ -508,7 +509,7 @@ class VitrinView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              storeData.description.trim(),
+              aboutText,
               style: TextStyle(
                 color: preset.textSecondary,
                 fontSize: isCompact ? 12 : 13,
@@ -520,6 +521,12 @@ class VitrinView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _aboutText() {
+    final corporateBio = storeData.corporateBio.trim();
+    if (corporateBio.isNotEmpty) return corporateBio;
+    return storeData.description.trim();
   }
 
   Widget _buildProfessionalBio(VitrinThemePreset preset) {

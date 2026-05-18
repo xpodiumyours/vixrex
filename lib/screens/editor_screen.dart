@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,8 +19,10 @@ class EditorScreen extends StatefulWidget {
   State<EditorScreen> createState() => _EditorScreenState();
 }
 
-class _EditorScreenState extends State<EditorScreen> {
+class _EditorScreenState extends State<EditorScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  late final TabController _mobileTabController;
   final StoreData _data = StoreData(isEsnafMode: false);
   bool _isLoading = true;
   bool _isGoogleAssistantOpen = false;
@@ -38,6 +41,7 @@ class _EditorScreenState extends State<EditorScreen> {
   static const Color cardBorder = Color(0xFFE5E7EB);
   static const Color inputBg = Color(0xFFF1F5F9);
   static const Color darkText = Color(0xFF111827);
+  static const String _editTokenPrefsKey = 'vitrin_edit_token';
 
   final List<String> businessTypes = const [
     'Butik',
@@ -82,7 +86,14 @@ class _EditorScreenState extends State<EditorScreen> {
   @override
   void initState() {
     super.initState();
+    _mobileTabController = TabController(length: 3, vsync: this);
     _loadSavedData();
+  }
+
+  @override
+  void dispose() {
+    _mobileTabController.dispose();
+    super.dispose();
   }
 
   void _closeGoogleAssistant() {
@@ -219,13 +230,19 @@ class _EditorScreenState extends State<EditorScreen> {
         }
       }
 
-      final publicPath = await const StorePublishService().publishStore(_data);
-      final publicLink = _buildFullPublicLink(publicPath);
+      final editToken = await _loadOrCreateEditToken();
+      final publishResult = await const StorePublishService().publishStore(
+        _data,
+        editToken: editToken,
+      );
+      final publicLink = _buildFullPublicLink(publishResult.publicPath);
       if (!mounted) return;
 
       final publishSnackMessage =
           shelfUploadFailed
               ? 'Fotoğraf yüklenemedi, vitrin fotoğrafsız yayınlandı.'
+              : publishResult.wasUpdated
+              ? 'Vitrininiz güncellendi.'
               : 'Vitrin linkiniz hazırlandı.';
       setState(() => _publishedLink = publicLink);
       ScaffoldMessenger.of(context).clearSnackBars();
@@ -240,16 +257,19 @@ class _EditorScreenState extends State<EditorScreen> {
       debugPrint('Publish store error: $error');
       if (!mounted) return;
 
+      final userMessage =
+          error is StorePublishException
+              ? error.message
+              : 'Vitrin bağlantısı hazırlanamadı. Supabase ayarlarını veya izinleri kontrol edin.';
       setState(() {
-        _publishError =
-            'Vitrin bağlantısı hazırlanamadı. Supabase ayarlarını veya izinleri kontrol edin.';
+        _publishError = userMessage;
       });
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vitrin yayınlanırken bir sorun oluştu.'),
+        SnackBar(
+          content: Text(userMessage),
           behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         ),
       );
     } finally {
@@ -277,6 +297,35 @@ class _EditorScreenState extends State<EditorScreen> {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<String> _loadOrCreateEditToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedToken = prefs.getString(_editTokenPrefsKey);
+    if (savedToken != null && savedToken.trim().isNotEmpty) {
+      return savedToken;
+    }
+
+    final token = _generateEditToken();
+    await prefs.setString(_editTokenPrefsKey, token);
+    return token;
+  }
+
+  String _generateEditToken() {
+    Random random;
+    try {
+      random = Random.secure();
+    } catch (_) {
+      random = Random();
+    }
+
+    final randomBytes = List<int>.generate(32, (_) => random.nextInt(256));
+    final timestampBytes = utf8.encode(
+      DateTime.now().microsecondsSinceEpoch.toString(),
+    );
+    return base64Url
+        .encode([...timestampBytes, ...randomBytes])
+        .replaceAll('=', '');
   }
 
   Future<void> _pickShelfPhoto() async {
@@ -482,6 +531,351 @@ class _EditorScreenState extends State<EditorScreen> {
     return const Color(0xFF047857);
   }
 
+  Color _mobileVitrinScoreTone(int score) {
+    if (score < 40) return const Color(0xFFEA580C);
+    if (score < 80) return const Color(0xFFD97706);
+    return const Color(0xFF059669);
+  }
+
+  String _mobileVitrinScoreLabel(int score) {
+    if (score < 40) return 'Eksik';
+    if (score < 80) return 'Gelişiyor';
+    return 'Güçlü';
+  }
+
+  List<String> _buildVitrinScoreSheetSuggestions() {
+    final suggestions =
+        _buildVitrinScoreTasks(_data)
+            .where((task) => !task.isComplete)
+            .map((task) => task.suggestion)
+            .toList();
+
+    final hasShelfPhoto =
+        _selectedShelfBytes != null || _data.shelfImageUrl.trim().isNotEmpty;
+    if (!hasShelfPhoto && !suggestions.contains('Raf / reyon fotoğrafı ekle')) {
+      suggestions.add('Raf / reyon fotoğrafı ekle');
+    }
+
+    return suggestions;
+  }
+
+  void _focusMobileEditTab() {
+    if (_mobileTabController.index != 0) {
+      _mobileTabController.animateTo(0);
+    }
+  }
+
+  void _handleScoreTaskCompleteTap() {
+    Navigator.of(context).maybePop();
+    _focusMobileEditTab();
+  }
+
+  Future<void> _showVitrinScoreSheet() async {
+    final score = _calculateVitrinScore(_data);
+    final tone = _mobileVitrinScoreTone(score);
+    final suggestions = _buildVitrinScoreSheetSuggestions();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Container(
+            margin: const EdgeInsets.all(12),
+            padding: EdgeInsets.only(
+              left: 18,
+              right: 18,
+              top: 14,
+              bottom: 18 + MediaQuery.of(sheetContext).viewInsets.bottom,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: cardBorder),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 32,
+                  offset: const Offset(0, 18),
+                ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              tone.withValues(alpha: 0.16),
+                              tone.withValues(alpha: 0.06),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: tone.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.workspace_premium_rounded,
+                          color: tone,
+                          size: 23,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Vitrin Skoru',
+                              style: TextStyle(
+                                color: darkText,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Vitrininizi güçlendirmek için eksik adımları tamamlayın.',
+                              style: TextStyle(
+                                color: Colors.blueGrey.shade600,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '$score/100',
+                        style: const TextStyle(
+                          color: darkText,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: score / 100,
+                      minHeight: 5,
+                      backgroundColor: const Color(0xFFE8EEF5),
+                      valueColor: AlwaysStoppedAnimation<Color>(tone),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    _vitrinScoreStatusText(score),
+                    style: TextStyle(
+                      color: tone,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    suggestions.isEmpty ? 'Her şey hazır' : 'Eksik adımlar',
+                    style: const TextStyle(
+                      color: darkText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (suggestions.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                      ),
+                      child: const Text(
+                        'Vitrinin güçlü görünüyor. Yayınla sekmesinden public linkini hazırlayabilirsin.',
+                        style: TextStyle(
+                          color: Color(0xFF166534),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          height: 1.35,
+                        ),
+                      ),
+                    )
+                  else
+                    ...suggestions.map(
+                      (suggestion) => _buildScoreSheetTaskRow(suggestion, tone),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildScoreSheetTaskRow(String suggestion, Color tone) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: tone.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(Icons.checklist_rounded, color: tone, size: 15),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              suggestion,
+              style: TextStyle(
+                color: Colors.blueGrey.shade800,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.25,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: _handleScoreTaskCompleteTap,
+            style: TextButton.styleFrom(
+              foregroundColor: tone,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              minimumSize: const Size(44, 34),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              'Tamamla',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileVitrinScoreBadge() {
+    final score = _calculateVitrinScore(_data);
+    final tone = _mobileVitrinScoreTone(score);
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _showVitrinScoreSheet,
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            height: 38,
+            padding: const EdgeInsets.only(left: 8, right: 10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  tone.withValues(alpha: 0.14),
+                  tone.withValues(alpha: 0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: tone.withValues(alpha: 0.22)),
+              boxShadow: [
+                BoxShadow(
+                  color: tone.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 25,
+                  height: 25,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.84),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.workspace_premium_rounded,
+                    color: tone,
+                    size: 15,
+                  ),
+                ),
+                const SizedBox(width: 7),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$score/100',
+                      style: const TextStyle(
+                        color: darkText,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _mobileVitrinScoreLabel(score),
+                      style: TextStyle(
+                        color: tone,
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -574,7 +968,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     ),
                   ),
                 ]
-                : null,
+                : [_buildMobileVitrinScoreBadge()],
       ),
       bottomNavigationBar: !isWide ? _buildMobileBottomActions() : null,
       body: LayoutBuilder(
@@ -588,11 +982,12 @@ class _EditorScreenState extends State<EditorScreen> {
                 children: [
                   Container(
                     color: Colors.white,
-                    child: const TabBar(
+                    child: TabBar(
+                      controller: _mobileTabController,
                       labelColor: primaryColor,
                       unselectedLabelColor: Colors.grey,
                       indicatorColor: primaryColor,
-                      tabs: [
+                      tabs: const [
                         Tab(text: 'Düzenle'),
                         Tab(text: 'Canlı Önizleme'),
                         Tab(text: 'Yayınla'),
@@ -601,13 +996,14 @@ class _EditorScreenState extends State<EditorScreen> {
                   ),
                   Expanded(
                     child: TabBarView(
+                      controller: _mobileTabController,
                       children: [
                         SingleChildScrollView(
                           padding: const EdgeInsets.all(16),
                           child: Center(
                             child: Container(
                               constraints: const BoxConstraints(maxWidth: 800),
-                              child: _buildForm(),
+                              child: _buildForm(showScoreCard: false),
                             ),
                           ),
                         ),
@@ -675,18 +1071,21 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildForm({bool showDesktopPublishCard = false}) {
+  Widget _buildForm({
+    bool showDesktopPublishCard = false,
+    bool showScoreCard = true,
+  }) {
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildVitrinScoreCard(),
+          if (showScoreCard) _buildVitrinScoreCard(),
           if (showDesktopPublishCard) ...[
-            const SizedBox(height: 16),
+            SizedBox(height: showScoreCard ? 16 : 0),
             _buildPublishPanel(compact: true, includeBottomSpacing: false),
           ],
-          const SizedBox(height: 24),
+          SizedBox(height: showScoreCard || showDesktopPublishCard ? 24 : 0),
           _buildEditCard(
             title: 'Mağaza Görünümü',
             headerWidget: _buildCompactStatusDropdown(),
@@ -1206,7 +1605,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     : Text(
                       _publishedLink == null
                           ? 'Vitrin linkini oluştur'
-                          : 'Linki yeniden göster',
+                          : 'Vitrini güncelle',
                     ),
           ),
         ),

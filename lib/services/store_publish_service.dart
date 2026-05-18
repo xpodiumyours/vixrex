@@ -5,33 +5,86 @@ import 'package:vitrinx/models/store_data.dart';
 class StorePublishService {
   const StorePublishService();
 
-  Future<String> publishStore(StoreData data) async {
+  Future<StorePublishResult> publishStore(
+    StoreData data, {
+    required String editToken,
+  }) async {
     final slug = _generateSlug(data.name);
-    final payload = _toStoreMap(data, slug);
+    final client = Supabase.instance.client;
 
     try {
-      await Supabase.instance.client.from('stores').insert(payload);
-      return '/v/$slug';
+      final existingStore =
+          await client
+              .from('stores')
+              .select('slug')
+              .eq('slug', slug)
+              .maybeSingle();
+
+      if (existingStore == null) {
+        await client
+            .from('stores')
+            .insert(_toStoreInsertMap(data, slug, editToken));
+        return StorePublishResult(publicPath: '/v/$slug', wasUpdated: false);
+      }
+
+      await _updateStoreWithToken(client, data, slug, editToken);
+      return StorePublishResult(publicPath: '/v/$slug', wasUpdated: true);
     } on PostgrestException catch (error) {
       if (_isDuplicateSlugError(error)) {
         debugPrint(
-          'Store slug already exists, returning existing public link.',
+          'Store slug already exists after select, trying token update.',
         );
-        return '/v/$slug';
+        await _updateStoreWithToken(client, data, slug, editToken);
+        return StorePublishResult(publicPath: '/v/$slug', wasUpdated: true);
       }
 
-      throw Exception('Vitrin yayınlanamadı: ${error.message}');
+      throw StorePublishException(_messageForPostgrestError(error));
+    } on StorePublishException {
+      rethrow;
     } catch (error) {
-      throw Exception('Vitrin yayınlanamadı: $error');
+      throw StorePublishException('Vitrin yayınlanamadı: $error');
     }
   }
 
-  Map<String, dynamic> _toStoreMap(StoreData data, String slug) {
+  Future<void> _updateStoreWithToken(
+    SupabaseClient client,
+    StoreData data,
+    String slug,
+    String editToken,
+  ) async {
+    try {
+      await client.rpc(
+        'update_store_with_token',
+        params: {
+          'p_slug': slug,
+          'p_edit_token': editToken,
+          'p_store': _toStoreUpdateMap(data),
+        },
+      );
+    } on PostgrestException catch (error) {
+      throw StorePublishException(_messageForPostgrestError(error));
+    }
+  }
+
+  Map<String, dynamic> _toStoreInsertMap(
+    StoreData data,
+    String slug,
+    String editToken,
+  ) {
     return {
       'slug': slug,
+      'edit_token': editToken,
+      ..._toStoreUpdateMap(data),
+      'shelf_image_url': data.shelfImageUrl.trim(),
+    };
+  }
+
+  Map<String, dynamic> _toStoreUpdateMap(StoreData data) {
+    final payload = <String, dynamic>{
       'name': data.name.trim(),
       'business_type': data.businessType.trim(),
       'description': data.description.trim(),
+      'corporate_bio': data.corporateBio.trim(),
       'whatsapp': data.whatsapp.trim(),
       'instagram': data.instagram.trim(),
       'website': data.website.trim(),
@@ -42,9 +95,15 @@ class StorePublishService {
       'catalog_link': '',
       'references_link': data.referencesLink.trim(),
       'vcard_link': '',
-      'shelf_image_url': data.shelfImageUrl.trim(),
       'is_published': true,
     };
+
+    final shelfImageUrl = data.shelfImageUrl.trim();
+    if (shelfImageUrl.isNotEmpty) {
+      payload['shelf_image_url'] = shelfImageUrl;
+    }
+
+    return payload;
   }
 
   List<Map<String, String>> _marketplaceLinksToJson(StoreData data) {
@@ -57,6 +116,35 @@ class StorePublishService {
           (link) => {'platform': link.platform.trim(), 'url': link.url.trim()},
         )
         .toList();
+  }
+
+  String _messageForPostgrestError(PostgrestException error) {
+    final searchableText =
+        [
+          error.message,
+          error.code,
+          error.details?.toString(),
+          error.hint,
+          error.toString(),
+        ].whereType<String>().join(' ').toLowerCase();
+
+    if (searchableText.contains('edit_token_mismatch') ||
+        searchableText.contains('edit token mismatch')) {
+      return 'Bu vitrin başka bir cihazdan oluşturulmuş olabilir.';
+    }
+
+    if (searchableText.contains('update_store_with_token') ||
+        searchableText.contains('could not find the function')) {
+      return 'Güncelleme altyapısı Supabase tarafında henüz kurulmamış.';
+    }
+
+    if (searchableText.contains('row-level security') ||
+        searchableText.contains('permission denied') ||
+        searchableText.contains('violates row-level security')) {
+      return 'Vitrin güncelleme izni Supabase tarafında eksik görünüyor.';
+    }
+
+    return 'Vitrin yayınlanamadı: ${error.message}';
   }
 
   bool _isDuplicateSlugError(PostgrestException error) {
@@ -99,4 +187,23 @@ class StorePublishService {
 
     return slug.isEmpty ? 'magazaniz' : slug;
   }
+}
+
+class StorePublishResult {
+  final String publicPath;
+  final bool wasUpdated;
+
+  const StorePublishResult({
+    required this.publicPath,
+    required this.wasUpdated,
+  });
+}
+
+class StorePublishException implements Exception {
+  final String message;
+
+  const StorePublishException(this.message);
+
+  @override
+  String toString() => message;
 }
