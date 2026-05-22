@@ -28,16 +28,28 @@ class VitrinView extends StatelessWidget {
     final preset = vitrinThemePresetFor(storeData.theme);
     final themeData = _getThemeData(preset);
     final radius = isEmbedded ? 24.0 : 40.0;
+    final hasShelfImage = storeData.shelfImageUrl.trim().isNotEmpty;
     final children = <Widget>[
       _buildModernHeader(preset, radius),
       SizedBox(height: isEmbedded ? 16 : 26),
-      if (storeData.shelfImageUrl.trim().isNotEmpty) ...[
-        _buildShelfImageCard(preset),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ],
-      if (_hasVisibleActions()) ...[
-        _buildPremiumActionButtons(radius),
-        SizedBox(height: isEmbedded ? 16 : 30),
+      if (publicMode) ...[
+        if (_hasVisibleActions()) ...[
+          _buildPremiumActionButtons(radius),
+          SizedBox(height: isEmbedded ? 16 : 30),
+        ],
+        if (hasShelfImage) ...[
+          _buildShelfImageCard(preset),
+          SizedBox(height: isEmbedded ? 16 : 30),
+        ],
+      ] else ...[
+        if (hasShelfImage) ...[
+          _buildShelfImageCard(preset),
+          SizedBox(height: isEmbedded ? 16 : 30),
+        ],
+        if (_hasVisibleActions()) ...[
+          _buildPremiumActionButtons(radius),
+          SizedBox(height: isEmbedded ? 16 : 30),
+        ],
       ],
       if (publicMode && _aboutText().isNotEmpty) ...[
         _buildAboutCard(preset),
@@ -163,6 +175,15 @@ class VitrinView extends StatelessWidget {
             : publicMode
             ? 28.0
             : 34.0;
+    final storeName = storeData.name.trim();
+    final businessType = storeData.businessType.trim();
+    final status = storeData.status.trim();
+    final titleText =
+        storeName.isNotEmpty
+            ? storeName
+            : (publicMode ? 'Vitrin' : 'Dijital Vitrin');
+    final shouldShowBusinessType = !publicMode || businessType.isNotEmpty;
+    final shouldShowStatus = !publicMode || status.isNotEmpty;
 
     return Stack(
       alignment: Alignment.center,
@@ -213,7 +234,7 @@ class VitrinView extends StatelessWidget {
               ),
               SizedBox(height: isEmbedded ? 14 : 24),
               Text(
-                storeData.name.isEmpty ? 'Dijital Vitrin' : storeData.name,
+                titleText,
                 maxLines: publicMode ? 2 : null,
                 overflow: publicMode ? TextOverflow.ellipsis : null,
                 style: TextStyle(
@@ -225,33 +246,38 @@ class VitrinView extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: isEmbedded ? 8 : 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: preset.accent.withValues(
-                    alpha: preset.isDark ? 0.18 : 0.12,
+              if (shouldShowBusinessType) ...[
+                SizedBox(height: isEmbedded ? 8 : 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
                   ),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: preset.accent.withValues(alpha: 0.18),
+                  decoration: BoxDecoration(
+                    color: preset.accent.withValues(
+                      alpha: preset.isDark ? 0.18 : 0.12,
+                    ),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: preset.accent.withValues(alpha: 0.18),
+                    ),
+                  ),
+                  child: Text(
+                    (businessType.isEmpty ? 'Vitrin' : businessType)
+                        .toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: preset.accent,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.8,
+                    ),
                   ),
                 ),
-                child: Text(
-                  storeData.businessType.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: preset.accent,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.8,
-                  ),
-                ),
-              ),
-              SizedBox(height: isEmbedded ? 12 : 20),
-              StatusChip(status: storeData.status),
+              ],
+              if (shouldShowStatus) ...[
+                SizedBox(height: isEmbedded ? 12 : 20),
+                StatusChip(status: status),
+              ],
               if (!publicMode && storeData.description.isNotEmpty) ...[
                 SizedBox(height: isEmbedded ? 10 : 20),
                 Padding(

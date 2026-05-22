@@ -47,14 +47,14 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
 
     return StoreData(
       name: _readString(data['name']),
-      businessType: _readString(data['business_type'], fallback: 'Butik'),
+      businessType: _readString(data['business_type']),
       description: description,
       whatsapp: _readString(data['whatsapp']),
       instagram: _readString(data['instagram']),
       website: _readString(data['website']),
       address: _readString(data['address']),
       theme: _readString(data['theme'], fallback: 'Sade'),
-      status: _readString(data['status'], fallback: 'Açık'),
+      status: _readString(data['status']),
       isEsnafMode: true,
       corporateBio: corporateBio,
       referencesLink: _readString(data['references_link']),
