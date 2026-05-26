@@ -35,12 +35,20 @@ class _EditorScreenState extends State<EditorScreen>
   String _selectedShelfExtension = 'jpg';
   String _selectedShelfContentType = 'image/jpeg';
 
-  // Modern Color Palette
-  static const Color primaryColor = Color(0xFFFF5A1F);
-  static const Color bgColor = Color(0xFFF8FAFC);
-  static const Color cardBorder = Color(0xFFE5E7EB);
-  static const Color inputBg = Color(0xFFF1F5F9);
-  static const Color darkText = Color(0xFF111827);
+  // Premium dark editor palette
+  static const Color primaryColor = Color(0xFFFF4D00);
+  static const Color secondaryColor = Color(0xFFB200FF);
+  static const Color bgColor = Color(0xFF121322);
+  static const Color cardBorder = Color.fromRGBO(255, 255, 255, 0.12);
+  static const Color inputBg = Color.fromRGBO(255, 255, 255, 0.095);
+  static const Color darkText = Color(0xFFF8FAFC);
+  static const Color mutedText = Color(0xFF94A3B8);
+  static const Color softText = Color(0xFFCBD5E1);
+  static const LinearGradient ctaGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryColor, secondaryColor],
+  );
   static const String _editTokenPrefsKey = 'vitrin_edit_token';
 
   final List<String> businessTypes = const [
@@ -590,7 +598,7 @@ class _EditorScreenState extends State<EditorScreen>
               bottom: 18 + MediaQuery.of(sheetContext).viewInsets.bottom,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: const Color(0xFF11111A),
               borderRadius: BorderRadius.circular(26),
               border: Border.all(color: cardBorder),
               boxShadow: [
@@ -611,7 +619,7 @@ class _EditorScreenState extends State<EditorScreen>
                       width: 38,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE2E8F0),
+                        color: Colors.white24,
                         borderRadius: BorderRadius.circular(99),
                       ),
                     ),
@@ -659,7 +667,7 @@ class _EditorScreenState extends State<EditorScreen>
                             Text(
                               'Vitrininizi güçlendirmek için eksik adımları tamamlayın.',
                               style: TextStyle(
-                                color: Colors.blueGrey.shade600,
+                                color: softText.withValues(alpha: 0.75),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 height: 1.3,
@@ -684,7 +692,7 @@ class _EditorScreenState extends State<EditorScreen>
                     child: LinearProgressIndicator(
                       value: score / 100,
                       minHeight: 5,
-                      backgroundColor: const Color(0xFFE8EEF5),
+                      backgroundColor: Colors.white12,
                       valueColor: AlwaysStoppedAnimation<Color>(tone),
                     ),
                   ),
@@ -712,7 +720,7 @@ class _EditorScreenState extends State<EditorScreen>
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDF4),
+                        color: Colors.white.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFFBBF7D0)),
                       ),
@@ -744,7 +752,7 @@ class _EditorScreenState extends State<EditorScreen>
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: cardBorder),
       ),
@@ -764,7 +772,7 @@ class _EditorScreenState extends State<EditorScreen>
             child: Text(
               suggestion,
               style: TextStyle(
-                color: Colors.blueGrey.shade800,
+                color: softText.withValues(alpha: 0.9),
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 height: 1.25,
@@ -876,6 +884,260 @@ class _EditorScreenState extends State<EditorScreen>
     );
   }
 
+  BoxDecoration _premiumCardDecoration({double radius = 24}) {
+    return BoxDecoration(
+      color: const Color.fromRGBO(31, 28, 44, 0.82),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: cardBorder, width: 1),
+      boxShadow: const [
+        BoxShadow(
+          color: Color.fromRGBO(0, 0, 0, 0.38),
+          blurRadius: 24,
+          offset: Offset(0, 12),
+        ),
+        BoxShadow(
+          color: Color.fromRGBO(178, 0, 255, 0.08),
+          blurRadius: 38,
+          offset: Offset(0, 0),
+        ),
+      ],
+    );
+  }
+
+  BoxDecoration _studioFrameDecoration() {
+    return BoxDecoration(
+      color: const Color.fromRGBO(24, 22, 36, 0.94),
+      borderRadius: BorderRadius.circular(32),
+      border: Border.all(color: cardBorder),
+      boxShadow: const [
+        BoxShadow(
+          color: Color.fromRGBO(0, 0, 0, 0.46),
+          blurRadius: 34,
+          offset: Offset(0, 18),
+        ),
+        BoxShadow(
+          color: Color.fromRGBO(255, 77, 0, 0.10),
+          blurRadius: 56,
+          offset: Offset(-16, 0),
+        ),
+        BoxShadow(
+          color: Color.fromRGBO(178, 0, 255, 0.10),
+          blurRadius: 70,
+          offset: Offset(18, 20),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditorBackdrop({required Widget child}) {
+    return Stack(
+      children: [
+        const Positioned.fill(
+          child: CustomPaint(painter: _EditorGridPainter()),
+        ),
+        Positioned(
+          top: -180,
+          left: -170,
+          child: IgnorePointer(
+            child: Container(
+              width: 460,
+              height: 460,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x2AFF5E1A), Colors.transparent],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          right: -180,
+          bottom: -210,
+          child: IgnorePointer(
+            child: Container(
+              width: 520,
+              height: 520,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x22B200FF), Colors.transparent],
+                ),
+              ),
+            ),
+          ),
+        ),
+        child,
+      ],
+    );
+  }
+
+  Widget _gradientUnderline({double width = 58}) {
+    return Container(
+      width: width,
+      height: 4,
+      decoration: BoxDecoration(
+        gradient: ctaGradient,
+        borderRadius: BorderRadius.circular(999),
+      ),
+    );
+  }
+
+  Widget _buildStudioTopBar() {
+    return Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: const BoxDecoration(
+        color: Color.fromRGBO(255, 255, 255, 0.035),
+        border: Border(bottom: BorderSide(color: cardBorder)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              gradient: ctaGradient,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: secondaryColor.withValues(alpha: 0.24),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Text(
+                'VX',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'VitrinX Studio',
+                  style: TextStyle(
+                    color: darkText,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Esnaf vitrini için canlı editör',
+                  style: TextStyle(
+                    color: mutedText,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: cardBorder),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.auto_awesome_rounded, color: primaryColor, size: 15),
+                SizedBox(width: 7),
+                Text(
+                  'Premium vitrin oluşturucu',
+                  style: TextStyle(
+                    color: softText,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGradientButton({
+    required String label,
+    required VoidCallback? onPressed,
+    IconData? icon,
+    Widget? child,
+    bool expand = false,
+    EdgeInsetsGeometry padding = const EdgeInsets.symmetric(
+      horizontal: 28,
+      vertical: 12,
+    ),
+  }) {
+    final content =
+        child ??
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 18, color: Colors.white),
+              const SizedBox(width: 8),
+            ],
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        );
+
+    final button = Opacity(
+      opacity: onPressed == null ? 0.62 : 1,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: ctaGradient,
+          borderRadius: BorderRadius.circular(40),
+          boxShadow: [
+            BoxShadow(
+              color: secondaryColor.withValues(alpha: 0.22),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(40),
+            child: Padding(padding: padding, child: content),
+          ),
+        ),
+      ),
+    );
+
+    return expand ? SizedBox(width: double.infinity, child: button) : button;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -889,8 +1151,11 @@ class _EditorScreenState extends State<EditorScreen>
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromRGBO(18, 19, 34, 0.94),
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: darkText,
+        shape: const Border(bottom: BorderSide(color: cardBorder)),
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(
@@ -916,9 +1181,9 @@ class _EditorScreenState extends State<EditorScreen>
                 'VITRINX',
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
-                  color: primaryColor.withValues(alpha: 0.3),
+                  color: primaryColor.withValues(alpha: 0.62),
                   fontSize: 12,
-                  letterSpacing: 2,
+                  letterSpacing: 0,
                 ),
               ),
             ],
@@ -929,12 +1194,13 @@ class _EditorScreenState extends State<EditorScreen>
                 ? [
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: TextButton.icon(
+                    child: _buildGradientButton(
+                      label: 'Kaydet',
                       onPressed: _saveData,
-                      icon: const Icon(Icons.cloud_done_outlined, size: 18),
-                      label: const Text('Kaydet'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.blueGrey.shade700,
+                      icon: Icons.cloud_done_outlined,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 11,
                       ),
                     ),
                   ),
@@ -944,7 +1210,9 @@ class _EditorScreenState extends State<EditorScreen>
                       vertical: 8.0,
                       horizontal: 12.0,
                     ),
-                    child: ElevatedButton(
+                    child: _buildGradientButton(
+                      label: 'Ã–nizle & PaylaÅŸ',
+                      icon: Icons.visibility_rounded,
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -953,17 +1221,12 @@ class _EditorScreenState extends State<EditorScreen>
                           ),
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
                       child: const Text(
                         'Önizle & Paylaş',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -971,45 +1234,49 @@ class _EditorScreenState extends State<EditorScreen>
                 : [_buildMobileVitrinScoreBadge()],
       ),
       bottomNavigationBar: !isWide ? _buildMobileBottomActions() : null,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth > 900;
+      body: _buildEditorBackdrop(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 900;
 
-          if (!isWide) {
-            return DefaultTabController(
-              length: 3,
-              child: Column(
-                children: [
-                  Container(
-                    color: Colors.white,
-                    child: TabBar(
-                      controller: _mobileTabController,
-                      labelColor: primaryColor,
-                      unselectedLabelColor: Colors.grey,
-                      indicatorColor: primaryColor,
-                      tabs: const [
-                        Tab(text: 'Düzenle'),
-                        Tab(text: 'Canlı Önizleme'),
-                        Tab(text: 'Yayınla'),
-                      ],
+            if (!isWide) {
+              return DefaultTabController(
+                length: 3,
+                child: Column(
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: Color.fromRGBO(22, 22, 36, 0.88),
+                        border: Border(bottom: BorderSide(color: cardBorder)),
+                      ),
+                      child: TabBar(
+                        controller: _mobileTabController,
+                        labelColor: primaryColor,
+                        unselectedLabelColor: mutedText,
+                        indicatorColor: primaryColor,
+                        tabs: const [
+                          Tab(text: 'Düzenle'),
+                          Tab(text: 'Canlı Önizleme'),
+                          Tab(text: 'Yayınla'),
+                        ],
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _mobileTabController,
-                      children: [
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: Center(
-                            child: Container(
-                              constraints: const BoxConstraints(maxWidth: 800),
-                              child: _buildForm(showScoreCard: false),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _mobileTabController,
+                        children: [
+                          SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: Center(
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 800,
+                                ),
+                                child: _buildForm(showScoreCard: false),
+                              ),
                             ),
                           ),
-                        ),
-                        Container(
-                          color: const Color(0xFFF1F5F9),
-                          child: LayoutBuilder(
+                          LayoutBuilder(
                             builder: (context, previewConstraints) {
                               return Center(
                                 child: _buildLivePreviewMockup(
@@ -1018,55 +1285,83 @@ class _EditorScreenState extends State<EditorScreen>
                               );
                             },
                           ),
-                        ),
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: Center(
-                            child: Container(
-                              constraints: const BoxConstraints(maxWidth: 800),
-                              child: _buildPublishPanel(),
+                          SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: Center(
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 800,
+                                ),
+                                child: _buildPublishPanel(),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                  ],
+                ),
+              );
+            }
+
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Container(
+                  width: min(constraints.maxWidth - 48, 1360),
+                  height: max(0, constraints.maxHeight - 48),
+                  clipBehavior: Clip.antiAlias,
+                  decoration: _studioFrameDecoration(),
+                  child: Column(
+                    children: [
+                      _buildStudioTopBar(),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.fromLTRB(
+                                  34,
+                                  30,
+                                  28,
+                                  34,
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 780,
+                                    ),
+                                    child: _buildForm(
+                                      showDesktopPublishCard: true,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const VerticalDivider(width: 1, color: cardBorder),
+                            Expanded(
+                              flex: 4,
+                              child: LayoutBuilder(
+                                builder: (context, previewConstraints) {
+                                  return Center(
+                                    child: _buildLivePreviewMockup(
+                                      previewConstraints,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
-          }
-
-          return Row(
-            children: [
-              Expanded(
-                flex: 5,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(32),
-                  child: Center(
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 800),
-                      child: _buildForm(showDesktopPublishCard: true),
-                    ),
-                  ),
-                ),
-              ),
-              const VerticalDivider(width: 1, color: cardBorder),
-              Expanded(
-                flex: 4,
-                child: Container(
-                  color: const Color(0xFFF1F5F9),
-                  child: LayoutBuilder(
-                    builder: (context, previewConstraints) {
-                      return Center(
-                        child: _buildLivePreviewMockup(previewConstraints),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -1261,19 +1556,8 @@ class _EditorScreenState extends State<EditorScreen>
     final tone = _vitrinScoreTone(vitrinScore);
 
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.025),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(18),
+      decoration: _premiumCardDecoration(radius: 24),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1284,8 +1568,8 @@ class _EditorScreenState extends State<EditorScreen>
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(10),
+                  color: primaryColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: cardBorder),
                 ),
                 child: Icon(Icons.query_stats_rounded, color: tone, size: 18),
@@ -1299,15 +1583,18 @@ class _EditorScreenState extends State<EditorScreen>
                       'Vitrin Skoru',
                       style: TextStyle(
                         color: darkText,
-                        fontSize: 14,
+                        fontSize: 22,
                         fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
                       ),
                     ),
+                    const SizedBox(height: 7),
+                    _gradientUnderline(width: 52),
                     const SizedBox(height: 2),
                     Text(
                       _vitrinScoreStatusText(vitrinScore),
                       style: TextStyle(
-                        color: Colors.blueGrey.shade600,
+                        color: softText.withValues(alpha: 0.82),
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1343,7 +1630,7 @@ class _EditorScreenState extends State<EditorScreen>
                   Text(
                     '$vitrinScore/100',
                     style: const TextStyle(
-                      color: darkText,
+                      color: primaryColor,
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0,
@@ -1359,7 +1646,7 @@ class _EditorScreenState extends State<EditorScreen>
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 5,
-              backgroundColor: const Color(0xFFE8EEF5),
+              backgroundColor: Colors.white12,
               valueColor: AlwaysStoppedAnimation<Color>(tone),
             ),
           ),
@@ -1368,7 +1655,7 @@ class _EditorScreenState extends State<EditorScreen>
             Text(
               'Sıradaki 3 adım',
               style: TextStyle(
-                color: Colors.blueGrey.shade700,
+                color: softText,
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
               ),
@@ -1388,7 +1675,7 @@ class _EditorScreenState extends State<EditorScreen>
                               width: 4,
                               height: 4,
                               decoration: BoxDecoration(
-                                color: Colors.blueGrey.shade400,
+                                color: mutedText,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -1398,7 +1685,7 @@ class _EditorScreenState extends State<EditorScreen>
                             child: Text(
                               suggestion,
                               style: TextStyle(
-                                color: Colors.blueGrey.shade700,
+                                color: softText.withValues(alpha: 0.88),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 height: 1.35,
@@ -1520,15 +1807,18 @@ class _EditorScreenState extends State<EditorScreen>
           'Vitrininizi yayınlayın',
           style: TextStyle(
             color: darkText,
-            fontSize: 18,
+            fontSize: 24,
             fontWeight: FontWeight.w900,
+            letterSpacing: 0,
           ),
         ),
+        const SizedBox(height: 8),
+        _gradientUnderline(width: 64),
         const SizedBox(height: 8),
         Text(
           'VitrinX linkiniz hazır olduğunda müşteriler bu adrese girerek canlı vitrininizi görebilecek.',
           style: TextStyle(
-            color: Colors.blueGrey.shade600,
+            color: softText.withValues(alpha: 0.8),
             fontSize: 12,
             fontWeight: FontWeight.w600,
             height: 1.35,
@@ -1613,7 +1903,7 @@ class _EditorScreenState extends State<EditorScreen>
         Text(
           'Gerçek yayınlama için sonraki aşamada Supabase bağlantısı eklenecek.',
           style: TextStyle(
-            color: Colors.blueGrey.shade500,
+            color: mutedText,
             fontSize: 10.5,
             fontWeight: FontWeight.w600,
             height: 1.35,
@@ -1628,9 +1918,9 @@ class _EditorScreenState extends State<EditorScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDFA),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: const Color(0xFF99F6E4)),
+        color: const Color.fromRGBO(45, 212, 191, 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color.fromRGBO(45, 212, 191, 0.26)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1641,7 +1931,7 @@ class _EditorScreenState extends State<EditorScreen>
                 child: Text(
                   'Hazırlanan vitrin linki',
                   style: TextStyle(
-                    color: Colors.teal.shade800,
+                    color: const Color(0xFF5EEAD4),
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
                   ),
@@ -1656,11 +1946,13 @@ class _EditorScreenState extends State<EditorScreen>
                   size: 17,
                 ),
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.white,
+                  backgroundColor: const Color.fromRGBO(255, 255, 255, 0.08),
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(32, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  side: BorderSide(color: Colors.teal.shade100),
+                  side: const BorderSide(
+                    color: Color.fromRGBO(45, 212, 191, 0.22),
+                  ),
                 ),
               ),
             ],
@@ -1687,8 +1979,10 @@ class _EditorScreenState extends State<EditorScreen>
               icon: const Icon(Icons.share_outlined, size: 16),
               label: const Text('Paylaş'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.teal.shade800,
-                side: BorderSide(color: Colors.teal.shade200),
+                foregroundColor: const Color(0xFF5EEAD4),
+                side: const BorderSide(
+                  color: Color.fromRGBO(45, 212, 191, 0.32),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 minimumSize: const Size(44, 42),
                 shape: RoundedRectangleBorder(
@@ -1711,9 +2005,9 @@ class _EditorScreenState extends State<EditorScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.teal.shade100),
+        color: const Color.fromRGBO(255, 255, 255, 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color.fromRGBO(255, 255, 255, 0.10)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -1723,7 +2017,7 @@ class _EditorScreenState extends State<EditorScreen>
             height: 96,
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: const Color.fromRGBO(31, 28, 44, 0.86),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
@@ -1751,7 +2045,7 @@ class _EditorScreenState extends State<EditorScreen>
                 Text(
                   'Müşteriler bu kodu okutarak vitrininize ulaşabilir.',
                   style: TextStyle(
-                    color: Colors.blueGrey.shade700,
+                    color: softText.withValues(alpha: 0.86),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
@@ -1761,7 +2055,7 @@ class _EditorScreenState extends State<EditorScreen>
                 Text(
                   'Mağaza içine, paket üzerine veya sosyal medya görseline ekleyebilirsiniz.',
                   style: TextStyle(
-                    color: Colors.blueGrey.shade500,
+                    color: mutedText,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     height: 1.3,
@@ -1780,14 +2074,14 @@ class _EditorScreenState extends State<EditorScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: const Color(0xFFFED7AA)),
+        color: const Color.fromRGBO(255, 77, 0, 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color.fromRGBO(255, 77, 0, 0.28)),
       ),
       child: Text(
         message,
         style: TextStyle(
-          color: Colors.orange.shade900,
+          color: const Color(0xFFFFB085),
           fontSize: 11,
           fontWeight: FontWeight.w700,
           height: 1.35,
@@ -1831,19 +2125,8 @@ class _EditorScreenState extends State<EditorScreen>
   Widget _buildPublishCard({required List<Widget> children}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(18),
+      decoration: _premiumCardDecoration(radius: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,
@@ -1856,15 +2139,15 @@ class _EditorScreenState extends State<EditorScreen>
       title,
       style: const TextStyle(
         color: darkText,
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: FontWeight.w900,
+        letterSpacing: 0,
       ),
     );
   }
 
   Widget _buildPublishChecklistRow(_PublishChecklistItem item) {
-    final color =
-        item.isReady ? const Color(0xFF0F766E) : Colors.blueGrey.shade500;
+    final color = item.isReady ? const Color(0xFF2DD4BF) : mutedText;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 9),
@@ -1883,7 +2166,7 @@ class _EditorScreenState extends State<EditorScreen>
             child: Text(
               item.isReady ? item.readyText : item.missingText,
               style: TextStyle(
-                color: Colors.blueGrey.shade700,
+                color: softText.withValues(alpha: 0.88),
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 height: 1.3,
@@ -1907,7 +2190,7 @@ class _EditorScreenState extends State<EditorScreen>
               width: 4,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.blueGrey.shade400,
+                color: softText.withValues(alpha: 0.72),
                 shape: BoxShape.circle,
               ),
             ),
@@ -1917,7 +2200,7 @@ class _EditorScreenState extends State<EditorScreen>
             child: Text(
               text,
               style: TextStyle(
-                color: Colors.blueGrey.shade700,
+                color: softText.withValues(alpha: 0.88),
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 height: 1.35,
@@ -1934,9 +2217,9 @@ class _EditorScreenState extends State<EditorScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Colors.white.withValues(alpha: 0.055),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1945,7 +2228,7 @@ class _EditorScreenState extends State<EditorScreen>
             children: [
               Icon(
                 Icons.travel_explore_rounded,
-                color: Color(0xFF334155),
+                color: Color(0xFFFF4D00),
                 size: 17,
               ),
               SizedBox(width: 8),
@@ -1965,7 +2248,7 @@ class _EditorScreenState extends State<EditorScreen>
           Text(
             'Vitrin bilgileriniz hazır. Bu bilgilerle mağazanız için blog başlığı, Google işletme gönderisi ve sosyal medya açıklaması hazırlayabiliriz.',
             style: TextStyle(
-              color: Colors.blueGrey.shade700,
+              color: softText.withValues(alpha: 0.78),
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
               height: 1.35,
@@ -2001,7 +2284,7 @@ class _EditorScreenState extends State<EditorScreen>
           ),
           if (_isGoogleAssistantOpen) ...[
             const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+            const Divider(height: 1, color: cardBorder),
             const SizedBox(height: 12),
             _buildGoogleVisibilityAssistant(),
           ],
@@ -2019,9 +2302,9 @@ class _EditorScreenState extends State<EditorScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FA),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2045,7 +2328,7 @@ class _EditorScreenState extends State<EditorScreen>
                     Text(
                       'Vitrin bilgilerinizden yola çıkarak ilk içerik taslağınız için başlangıç hazırlıyoruz.',
                       style: TextStyle(
-                        color: Color(0xFF64748B),
+                        color: softText,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         height: 1.35,
@@ -2060,17 +2343,13 @@ class _EditorScreenState extends State<EditorScreen>
                   _closeGoogleAssistant();
                 },
                 tooltip: 'Gizle',
-                icon: Icon(
-                  Icons.close_rounded,
-                  color: Colors.blueGrey.shade500,
-                  size: 17,
-                ),
+                icon: Icon(Icons.close_rounded, color: mutedText, size: 17),
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.white,
+                  backgroundColor: Colors.white.withValues(alpha: 0.08),
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(30, 30),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  side: const BorderSide(color: cardBorder),
                 ),
               ),
             ],
@@ -2082,7 +2361,7 @@ class _EditorScreenState extends State<EditorScreen>
             Text(
               'Henüz yeterli vitrin bilgisi yok. Önce mağaza adı, açıklama ve iletişim bilgilerini tamamlayın.',
               style: TextStyle(
-                color: Colors.blueGrey.shade600,
+                color: softText.withValues(alpha: 0.78),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 height: 1.35,
@@ -2095,7 +2374,7 @@ class _EditorScreenState extends State<EditorScreen>
             Text(
               '(konum henüz eklenmemiş)',
               style: TextStyle(
-                color: Colors.blueGrey.shade500,
+                color: mutedText,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w600,
                 fontStyle: FontStyle.italic,
@@ -2156,7 +2435,7 @@ class _EditorScreenState extends State<EditorScreen>
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        color: Colors.blueGrey.shade700,
+        color: softText.withValues(alpha: 0.82),
         fontSize: 11,
         fontWeight: FontWeight.w700,
         height: 1.35,
@@ -2232,16 +2511,16 @@ class _EditorScreenState extends State<EditorScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: cardBorder),
       ),
       child: Text(
         title,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          color: Colors.blueGrey.shade800,
+          color: darkText,
           fontSize: 12,
           fontWeight: FontWeight.w900,
           height: 1.35,
@@ -2256,7 +2535,7 @@ class _EditorScreenState extends State<EditorScreen>
       maxLines: 3,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        color: Colors.blueGrey.shade700,
+        color: softText.withValues(alpha: 0.8),
         fontSize: 11,
         fontWeight: FontWeight.w600,
         height: 1.35,
@@ -2269,14 +2548,14 @@ class _EditorScreenState extends State<EditorScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: cardBorder),
       ),
       child: Text(
         'İçerik taslağı için başlangıç hazır. Daha güçlü metin için 3 bilgiyi tamamlayabilirsiniz.',
         style: TextStyle(
-          color: Colors.blueGrey.shade800,
+          color: softText.withValues(alpha: 0.86),
           fontSize: 11,
           fontWeight: FontWeight.w700,
           height: 1.35,
@@ -2295,7 +2574,7 @@ class _EditorScreenState extends State<EditorScreen>
     return Text(
       title,
       style: TextStyle(
-        color: Colors.blueGrey.shade800,
+        color: softText.withValues(alpha: 0.86),
         fontSize: 11,
         fontWeight: FontWeight.w900,
       ),
@@ -2310,11 +2589,7 @@ class _EditorScreenState extends State<EditorScreen>
   }) {
     final isWide = MediaQuery.of(context).size.width > 900;
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cardBorder),
-      ),
+      decoration: _premiumCardDecoration(radius: 24),
       padding: EdgeInsets.all(isWide ? 24 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2326,9 +2601,10 @@ class _EditorScreenState extends State<EditorScreen>
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 20,
                     fontWeight: FontWeight.w900,
                     color: darkText,
+                    letterSpacing: 0,
                   ),
                 ),
               ),
@@ -2345,6 +2621,8 @@ class _EditorScreenState extends State<EditorScreen>
                 ),
             ],
           ),
+          const SizedBox(height: 8),
+          _gradientUnderline(width: 52),
           const SizedBox(height: 20),
           ...children,
         ],
@@ -2358,9 +2636,9 @@ class _EditorScreenState extends State<EditorScreen>
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: inputBg.withValues(alpha: 0.5),
+        color: Colors.white.withValues(alpha: 0.045),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder.withValues(alpha: 0.5)),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         children: [
@@ -2398,68 +2676,616 @@ class _EditorScreenState extends State<EditorScreen>
   }
 
   Widget _buildLivePreviewMockup(BoxConstraints constraints) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    final isMobilePreview = constraints.maxWidth < 520;
+
+    if (isMobilePreview) {
+      return _buildMobileLivePreview();
+    }
+
+    return _buildDesktopLivePreview(constraints);
+  }
+
+  Widget _buildPremium3DDeviceFrame({
+    required Widget child,
+    required double width,
+    required double height,
+    required bool isDarkTheme,
+    bool isMobilePreview = false,
+  }) {
+    final statusColor =
+        isDarkTheme
+            ? Colors.white.withValues(alpha: 0.75)
+            : Colors.black.withValues(alpha: 0.75);
+    final indicatorColor =
+        isDarkTheme
+            ? Colors.white.withValues(alpha: 0.32)
+            : Colors.black.withValues(alpha: 0.28);
+    final frameRadius = isMobilePreview ? 46.0 : 52.0;
+    final framePadding = isMobilePreview ? 2.2 : 3.0;
+    final shellRadius = frameRadius - 3;
+    final screenRadius = frameRadius - 5;
+    final statusBarHeight = isMobilePreview ? 38.0 : 44.0;
+    final bottomInset = isMobilePreview ? 16.0 : 20.0;
+    final statusHorizontalPadding = isMobilePreview ? 20.0 : 22.0;
+    final islandWidth = isMobilePreview ? 92.0 : 110.0;
+    final islandHeight = isMobilePreview ? 23.0 : 26.0;
+    final homeIndicatorWidth = isMobilePreview ? 92.0 : 120.0;
+    // Titanium frame gradient (silver/matte like iPhone 15 Pro)
+    const titaniumGradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFF9EA5AD), // top-left highlight
+        Color(0xFF6B7480), // mid
+        Color(0xFF4A5260), // shadow
+        Color(0xFF7E8898), // bottom-right partial light
+      ],
+      stops: [0.0, 0.35, 0.65, 1.0],
+    );
+
+    return Stack(
+      children: [
+        // Outer titanium body with gradient border
+        Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            gradient: titaniumGradient,
+            borderRadius: BorderRadius.circular(frameRadius),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.62),
+                blurRadius: isMobilePreview ? 42 : 52,
+                offset: Offset(0, isMobilePreview ? 22 : 28),
+              ),
+              BoxShadow(
+                color: primaryColor.withValues(alpha: 0.18),
+                blurRadius: isMobilePreview ? 38 : 48,
+                offset: const Offset(-12, 8),
+              ),
+              BoxShadow(
+                color: secondaryColor.withValues(alpha: 0.22),
+                blurRadius: isMobilePreview ? 48 : 60,
+                offset: Offset(14, isMobilePreview ? 22 : 28),
+              ),
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(-2, -2),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.all(framePadding),
+          child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'CANLI ÖNİZLEME',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2,
-                color: Colors.black45,
+              color: const Color(0xFF0A0A0F),
+              borderRadius: BorderRadius.circular(shellRadius),
+              border: Border.all(
+                color: const Color(0xFF1A1A22),
+                width: isMobilePreview ? 1.1 : 1.5,
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 340,
-                  maxHeight: 620,
-                ),
-                child: AspectRatio(
-                  aspectRatio: 0.50,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(44),
-                      border: Border.all(color: darkText, width: 6),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 40,
-                          offset: const Offset(0, 20),
-                        ),
-                      ],
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(screenRadius),
+              child: Stack(
+                children: [
+                  // Screen background (black behind VitrinView)
+                  const Positioned.fill(
+                    child: ColoredBox(color: Color(0xFF000000)),
+                  ),
+                  // Main phone screen content
+                  Positioned.fill(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        top: statusBarHeight,
+                        bottom: bottomInset,
+                      ),
+                      child: child,
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(38),
-                      child: VitrinView(
-                        key: ValueKey(
-                          'preview_${_data.name}_${_data.marketplaceLinks.length}_${_data.description}_${_data.theme}',
+                  ),
+
+                  // Gentle inner screen depth so the mockup feels less flat.
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(screenRadius),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(
+                                alpha: isMobilePreview ? 0.12 : 0.08,
+                              ),
+                              Colors.transparent,
+                              Colors.black.withValues(
+                                alpha: isMobilePreview ? 0.10 : 0.08,
+                              ),
+                            ],
+                            stops: const [0.0, 0.18, 1.0],
+                          ),
                         ),
-                        storeData: _data,
-                        isEmbedded: true,
                       ),
                     ),
                   ),
-                ),
+
+                  // Glossy edge-glow reflection (left)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(screenRadius),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.06),
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.08),
+                            ],
+                            stops: const [0.0, 0.5, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Status Bar background blur
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: statusBarHeight,
+                    child: Container(
+                      color:
+                          isDarkTheme
+                              ? const Color(0xCC000000)
+                              : Colors.white.withValues(alpha: 0.82),
+                    ),
+                  ),
+
+                  // Status Bar content
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: statusBarHeight,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: statusHorizontalPadding,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '9:41',
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: isMobilePreview ? 12 : 13,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.signal_cellular_4_bar_rounded,
+                                size: 12,
+                                color: statusColor,
+                              ),
+                              const SizedBox(width: 3),
+                              Icon(
+                                Icons.wifi_rounded,
+                                size: 14,
+                                color: statusColor,
+                              ),
+                              const SizedBox(width: 4),
+                              // Battery icon
+                              SizedBox(
+                                width: 24,
+                                height: 12,
+                                child: Stack(
+                                  alignment: Alignment.centerLeft,
+                                  children: [
+                                    Container(
+                                      width: 21,
+                                      height: 11,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: statusColor,
+                                          width: 1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          2.5,
+                                        ),
+                                      ),
+                                      padding: const EdgeInsets.all(1.5),
+                                      child: Container(
+                                        width: 14,
+                                        decoration: BoxDecoration(
+                                          color: statusColor,
+                                          borderRadius: BorderRadius.circular(
+                                            1,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      child: Container(
+                                        width: 2,
+                                        height: 5,
+                                        decoration: BoxDecoration(
+                                          color: statusColor,
+                                          borderRadius: const BorderRadius.only(
+                                            topRight: Radius.circular(1),
+                                            bottomRight: Radius.circular(1),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Dynamic Island (pill-shaped, modern)
+                  Positioned(
+                    top: isMobilePreview ? 8 : 10,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        width: islandWidth,
+                        height: islandHeight,
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(islandHeight / 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.45),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Front camera dot
+                            Container(
+                              width: 8,
+                              height: 8,
+                              margin: const EdgeInsets.only(right: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1C1C28),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF2C2C3E),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Home Indicator (swipe bar)
+                  Positioned(
+                    bottom: 5,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        width: homeIndicatorWidth,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: indicatorColor,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
+            ),
+          ),
+        ),
+
+        // Physical side buttons — Volume Up
+        Positioned(
+          left: 0,
+          top: height * 0.22,
+          child: Container(
+            width: 4,
+            height: height * 0.07,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF8A929C), Color(0xFF5A6270)],
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(3),
+                bottomLeft: Radius.circular(3),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  blurRadius: 4,
+                  offset: const Offset(-2, 0),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Physical side buttons — Volume Down
+        Positioned(
+          left: 0,
+          top: height * 0.315,
+          child: Container(
+            width: 4,
+            height: height * 0.07,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF8A929C), Color(0xFF5A6270)],
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(3),
+                bottomLeft: Radius.circular(3),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  blurRadius: 4,
+                  offset: const Offset(-2, 0),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Physical side buttons — Power/Lock
+        Positioned(
+          right: 0,
+          top: height * 0.265,
+          child: Container(
+            width: 4,
+            height: height * 0.10,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF8A929C), Color(0xFF5A6270)],
+              ),
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(3),
+                bottomRight: Radius.circular(3),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  blurRadius: 4,
+                  offset: const Offset(2, 0),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLivePreview() {
+    final preset = vitrinThemePresetFor(_data.theme);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      child: Column(
+        children: [
+          _buildLivePreviewBadge(),
+          const SizedBox(height: 16),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, phoneConstraints) {
+                final maxPhoneWidth = min(
+                  phoneConstraints.maxWidth * 0.92,
+                  342.0,
+                );
+                final maxPhoneHeight = phoneConstraints.maxHeight;
+                const targetRatio = 2.14;
+                var phoneHeight = min(
+                  maxPhoneHeight,
+                  maxPhoneWidth * targetRatio,
+                );
+                var phoneWidth = phoneHeight / targetRatio;
+
+                if (phoneWidth < 286.0 &&
+                    maxPhoneWidth >= 286.0 &&
+                    maxPhoneHeight >= 286.0 * targetRatio) {
+                  phoneWidth = 286.0;
+                  phoneHeight = phoneWidth * targetRatio;
+                }
+
+                phoneWidth = phoneWidth.clamp(260.0, maxPhoneWidth).toDouble();
+                phoneHeight = min(maxPhoneHeight, phoneWidth * targetRatio);
+
+                return Center(
+                  child: _buildPremium3DDeviceFrame(
+                    width: phoneWidth,
+                    height: phoneHeight,
+                    isDarkTheme: preset.isDark,
+                    isMobilePreview: true,
+                    child: VitrinView(
+                      key: ValueKey(
+                        'mobile_preview_${_data.name}_${_data.marketplaceLinks.length}_${_data.description}_${_data.theme}_${_data.shelfImageUrl}',
+                      ),
+                      storeData: _data,
+                      isEmbedded: true,
+                      compactEmbeddedHeader: true,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLivePreviewBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cardBorder),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.visibility_rounded, size: 14, color: primaryColor),
+          SizedBox(width: 7),
+          Text(
+            'CANLI ÖNİZLEME',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+              color: softText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopLivePreview(BoxConstraints constraints) {
+    final preset = vitrinThemePresetFor(_data.theme);
+
+    return Stack(
+      children: [
+        // Lighter 3D background with radial depth effects
+        Positioned.fill(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF1E2235), // lighter navy-slate
+                  Color(0xFF252842), // mid blue-slate
+                  Color(0xFF1A1D30), // slightly deeper
+                ],
+              ),
+              border: Border.all(color: Color.fromRGBO(255, 255, 255, 0.10)),
+              boxShadow: [
+                BoxShadow(
+                  color: Color.fromRGBO(0, 0, 0, 0.52),
+                  blurRadius: 34,
+                  offset: Offset(0, 18),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Radial top-left glow (accent light)
+        Positioned(
+          top: 24,
+          left: 24,
+          child: IgnorePointer(
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x22FF4D00), Colors.transparent],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Radial bottom-right glow (secondary light)
+        Positioned(
+          bottom: 24,
+          right: 24,
+          child: IgnorePointer(
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x1AB200FF), Colors.transparent],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Main content column
+        Positioned.fill(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                _buildLivePreviewBadge(),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, phoneConstraints) {
+                      // Modern 9:19.5 aspect ratio (iPhone 15 Pro-like)
+                      final availableH = phoneConstraints.maxHeight;
+                      final availableW = phoneConstraints.maxWidth;
+                      // Fit phone to fill available space, respecting ratio
+                      double phoneHeight = availableH * 0.96;
+                      double phoneWidth = phoneHeight / 2.17;
+                      if (phoneWidth > availableW * 0.88) {
+                        phoneWidth = availableW * 0.88;
+                        phoneHeight = phoneWidth * 2.17;
+                      }
+                      phoneWidth = max(260.0, min(phoneWidth, 390.0));
+                      phoneHeight = max(520.0, min(phoneHeight, availableH));
+
+                      return Center(
+                        child: _buildPremium3DDeviceFrame(
+                          width: phoneWidth,
+                          height: phoneHeight,
+                          isDarkTheme: preset.isDark,
+                          child: VitrinView(
+                            key: ValueKey(
+                              'preview_${_data.name}_${_data.marketplaceLinks.length}_${_data.description}_${_data.theme}_${_data.shelfImageUrl}',
+                            ),
+                            storeData: _data,
+                            isEmbedded: true,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -2545,7 +3371,7 @@ class _EditorScreenState extends State<EditorScreen>
                   Text(
                     'Değiştir',
                     style: TextStyle(
-                      color: Colors.blueGrey.shade600,
+                      color: softText.withValues(alpha: 0.78),
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),
@@ -2574,7 +3400,7 @@ class _EditorScreenState extends State<EditorScreen>
               'Bugünkü rafınızı, kampanyalı ürünlerinizi veya yeni gelenleri müşterilere gösterin.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.blueGrey.shade600,
+                color: softText.withValues(alpha: 0.76),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 height: 1.35,
@@ -2599,21 +3425,17 @@ class _EditorScreenState extends State<EditorScreen>
 
   Widget _buildShelfImageError() {
     return Container(
-      color: Colors.white,
+      color: inputBg,
       alignment: Alignment.center,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.broken_image_outlined,
-            color: Colors.blueGrey.shade300,
-            size: 28,
-          ),
+          Icon(Icons.broken_image_outlined, color: mutedText, size: 28),
           const SizedBox(height: 8),
           Text(
             'Fotoğraf önizlenemedi',
             style: TextStyle(
-              color: Colors.blueGrey.shade500,
+              color: softText.withValues(alpha: 0.72),
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -2686,10 +3508,10 @@ class _EditorScreenState extends State<EditorScreen>
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.black54,
+            color: softText.withValues(alpha: 0.78),
           ),
         ),
         const SizedBox(height: 8),
@@ -2698,11 +3520,11 @@ class _EditorScreenState extends State<EditorScreen>
           decoration: InputDecoration(
             prefixIcon:
                 prefixIcon != null
-                    ? Icon(prefixIcon, color: Colors.black26, size: 18)
+                    ? Icon(prefixIcon, color: mutedText, size: 18)
                     : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: const BorderSide(color: cardBorder),
             ),
             filled: true,
             fillColor: inputBg,
@@ -2711,7 +3533,18 @@ class _EditorScreenState extends State<EditorScreen>
               vertical: 14,
             ),
             hintText: hintText ?? label,
-            hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0x66FF4D00)),
+            ),
+            hintStyle: TextStyle(
+              color: mutedText.withValues(alpha: 0.58),
+              fontSize: 14,
+            ),
           ),
           maxLines: maxLines,
           onChanged: onChanged,
@@ -2773,10 +3606,10 @@ class _EditorScreenState extends State<EditorScreen>
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.black54,
+            color: softText.withValues(alpha: 0.78),
           ),
         ),
         const SizedBox(height: 8),
@@ -2785,7 +3618,15 @@ class _EditorScreenState extends State<EditorScreen>
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0x66FF4D00)),
             ),
             filled: true,
             fillColor: inputBg,
@@ -2794,12 +3635,27 @@ class _EditorScreenState extends State<EditorScreen>
               vertical: 12,
             ),
           ),
+          dropdownColor: const Color(0xFF171722),
+          iconEnabledColor: mutedText,
+          style: const TextStyle(
+            color: darkText,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+          borderRadius: BorderRadius.circular(14),
           items:
               items
                   .map(
                     (t) => DropdownMenuItem(
                       value: t,
-                      child: Text(t, style: const TextStyle(fontSize: 14)),
+                      child: Text(
+                        t,
+                        style: const TextStyle(
+                          color: darkText,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   )
                   .toList(),
@@ -2813,13 +3669,13 @@ class _EditorScreenState extends State<EditorScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withValues(alpha: 0.08),
         border: const Border(top: BorderSide(color: cardBorder)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+            color: secondaryColor.withValues(alpha: 0.10),
+            blurRadius: 22,
+            offset: const Offset(0, -8),
           ),
         ],
       ),
@@ -2827,24 +3683,18 @@ class _EditorScreenState extends State<EditorScreen>
         child: Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
+              child: _buildGradientButton(
+                label: 'Kaydet',
                 onPressed: _saveData,
-                icon: const Icon(Icons.cloud_done_outlined, size: 18),
-                label: const Text('Kaydet'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryColor,
-                  side: const BorderSide(color: primaryColor),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  minimumSize: const Size(44, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                icon: Icons.cloud_done_outlined,
+                expand: true,
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: ElevatedButton.icon(
+              child: _buildGradientButton(
+                label: 'Vitrini Aç',
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -2853,18 +3703,9 @@ class _EditorScreenState extends State<EditorScreen>
                     ),
                   );
                 },
-                icon: const Icon(Icons.share_outlined, size: 18),
-                label: const Text('Vitrini Aç'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  minimumSize: const Size(44, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                icon: Icons.share_outlined,
+                expand: true,
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ],
@@ -2872,6 +3713,29 @@ class _EditorScreenState extends State<EditorScreen>
       ),
     );
   }
+}
+
+class _EditorGridPainter extends CustomPainter {
+  const _EditorGridPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..color = const Color(0x14FFFFFF)
+          ..strokeWidth = 0.5;
+
+    for (double x = 0; x <= size.width; x += 40) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    for (double y = 0; y <= size.height; y += 40) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _ShelfHintChip extends StatelessWidget {
@@ -2884,14 +3748,14 @@ class _ShelfHintChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: _EditorScreenState.cardBorder),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: Colors.blueGrey.shade600,
+          color: _EditorScreenState.softText.withValues(alpha: 0.9),
           fontSize: 10,
           fontWeight: FontWeight.w800,
         ),
@@ -2962,6 +3826,10 @@ class _HoverThemeCardState extends State<_HoverThemeCard> {
   Widget build(BuildContext context) {
     final scale = widget.isSelected ? 1.03 : (_isHovered ? 1.01 : 1.0);
     final shadowOpacity = widget.isSelected ? 0.15 : (_isHovered ? 0.08 : 0.0);
+    final borderColor =
+        widget.isSelected
+            ? widget.preset.accent.withValues(alpha: 0.95)
+            : _EditorScreenState.cardBorder;
     final checkColor =
         widget.preset.accent.computeLuminance() > 0.65
             ? widget.preset.textPrimary
@@ -2982,22 +3850,17 @@ class _HoverThemeCardState extends State<_HoverThemeCard> {
             width: widget.width,
             height: 116,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: const Color.fromRGBO(14, 14, 22, 0.86),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color:
-                    widget.isSelected
-                        ? const Color(0xFFFF5A1F)
-                        : const Color(0xFFE2E8F0),
+                color: borderColor,
                 width: widget.isSelected ? 2 : 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(
-                    0xFFFF5A1F,
-                  ).withValues(alpha: shadowOpacity),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  color: widget.preset.accent.withValues(alpha: shadowOpacity),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
@@ -3012,14 +3875,70 @@ class _HoverThemeCardState extends State<_HoverThemeCard> {
                         end: Alignment.bottomRight,
                         colors: [
                           widget.preset.background,
+                          widget.preset.surface,
                           widget.preset.surfaceSoft,
-                          widget.preset.accent.withValues(alpha: 0.85),
+                          widget.preset.accent.withValues(alpha: 0.72),
                         ],
+                        stops: const [0, 0.48, 0.78, 1],
                       ),
                       borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
                     ),
                     child: Stack(
                       children: [
+                        Positioned(
+                          left: 10,
+                          top: 10,
+                          child: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: widget.preset.accent,
+                              border: Border.all(
+                                color: widget.preset.buttonText.withValues(
+                                  alpha: 0.28,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 10,
+                          right: 10,
+                          bottom: 12,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _ThemePreviewLine(
+                                width: 42,
+                                color: widget.preset.textPrimary,
+                              ),
+                              const SizedBox(height: 5),
+                              _ThemePreviewLine(
+                                width: 28,
+                                color: widget.preset.accent,
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                height: 9,
+                                decoration: BoxDecoration(
+                                  color: widget.preset.surface.withValues(
+                                    alpha: 0.72,
+                                  ),
+                                  borderRadius: BorderRadius.circular(99),
+                                  border: Border.all(
+                                    color: widget.preset.border.withValues(
+                                      alpha: 0.48,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         if (widget.isSelected)
                           Positioned(
                             top: 4,
@@ -3052,8 +3971,8 @@ class _HoverThemeCardState extends State<_HoverThemeCard> {
                           widget.isSelected ? FontWeight.w800 : FontWeight.w600,
                       color:
                           widget.isSelected
-                              ? const Color(0xFF0F172A)
-                              : const Color(0xFF64748B),
+                              ? widget.preset.accent
+                              : _EditorScreenState.mutedText,
                     ),
                   ),
                 ),
@@ -3061,6 +3980,25 @@ class _HoverThemeCardState extends State<_HoverThemeCard> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ThemePreviewLine extends StatelessWidget {
+  final double width;
+  final Color color;
+
+  const _ThemePreviewLine({required this.width, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: 4,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(99),
       ),
     );
   }
