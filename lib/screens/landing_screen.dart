@@ -58,7 +58,7 @@ class _LandingScreenState extends State<LandingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: brandOrange,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -80,7 +80,7 @@ class _LandingScreenState extends State<LandingScreen>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          colors: [Color(0xFFFFFBF7), Color(0xFFF6F8FF)],
         ),
       ),
       child: Stack(
@@ -219,7 +219,7 @@ class _LandingScreenState extends State<LandingScreen>
             'Esnafın dijital vitrini',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: TextStyle(
-              color: Colors.white,
+              color: darkAccent,
               fontSize: isDesktop ? 64 : 42,
               fontWeight: FontWeight.w900,
               height: 1.1,
@@ -231,7 +231,7 @@ class _LandingScreenState extends State<LandingScreen>
             'Mağaza bilgilerinizi, ürün linklerinizi, sosyal medya hesaplarınızı ve QR kodunuzu tek paylaşılabilir vitrin sayfasında toplayın.',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: const TextStyle(
-              color: Colors.white70,
+              color: Color(0xFF475569),
               fontSize: 18,
               height: 1.6,
             ),
@@ -270,7 +270,7 @@ class _LandingScreenState extends State<LandingScreen>
                       onPressed: _navigateToEditor,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: brandOrange,
-                        foregroundColor: Colors.white,
+                        foregroundColor: darkAccent,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 32,
                           vertical: 24,
@@ -294,8 +294,8 @@ class _LandingScreenState extends State<LandingScreen>
               OutlinedButton(
                 onPressed: _navigateToPreview,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white30, width: 2),
+                  foregroundColor: darkAccent,
+                  side: const BorderSide(color: Color(0x33111827), width: 2),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
                     vertical: 24,
@@ -402,7 +402,7 @@ class _LandingScreenState extends State<LandingScreen>
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
-                  color: Colors.white,
+                  color: Color(0xFFF8FAFC),
                 ),
               ),
             ],
@@ -503,7 +503,7 @@ class _LandingScreenState extends State<LandingScreen>
   Widget _buildStepsSection(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: Colors.white,
+      color: Color(0xFFF8FAFC),
       padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 24),
       child: Center(
         child: ConstrainedBox(
@@ -612,7 +612,7 @@ class _LandingScreenState extends State<LandingScreen>
                 'Mağazanız için paylaşılabilir bir dijital vitrin hazırlayın.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Color(0xFFF8FAFC),
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
                   height: 1.2,
@@ -624,7 +624,7 @@ class _LandingScreenState extends State<LandingScreen>
                 'Linkinizi müşterilerinize gönderin, QR kodunuzu mağazada kullanın, tüm kanallarınızı tek yerde toplayın.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: Color(0xFF475569),
                   fontSize: 18,
                   height: 1.5,
                 ),
@@ -633,8 +633,8 @@ class _LandingScreenState extends State<LandingScreen>
               ElevatedButton(
                 onPressed: _navigateToEditor,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: brandOrange,
+                  backgroundColor: brandOrange,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 40,
                     vertical: 24,
@@ -659,7 +659,7 @@ class _LandingScreenState extends State<LandingScreen>
   Widget _buildFooter() {
     return Container(
       width: double.infinity,
-      color: darkAccent,
+      color: Color(0xFFF8FAFC),
       padding: const EdgeInsets.symmetric(vertical: 60),
       child: Column(
         children: [
@@ -676,7 +676,7 @@ class _LandingScreenState extends State<LandingScreen>
           const Text(
             'Dijital Dünyadaki Yeni Eviniz',
             style: TextStyle(
-              color: Colors.white54,
+              color: Color(0xFF64748B),
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -696,7 +696,7 @@ class _PhoneMockup extends StatelessWidget {
       width: 320,
       height: 640,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(40),
         border: Border.all(color: Colors.white24, width: 8),
         boxShadow: [
@@ -738,7 +738,7 @@ class _PhoneMockup extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: const BoxDecoration(
-                        color: Colors.white,
+                        color: Color(0xFFF8FAFC),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -823,7 +823,7 @@ class _PhoneMockup extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.black12),
                 ),
@@ -885,7 +885,7 @@ class _PhoneMockup extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black12),
       ),
@@ -954,7 +954,7 @@ class _HoverFeatureCardState extends State<_HoverFeatureCard> {
         transform: Matrix4.translationValues(0, _isHovered ? -8 : 0, 0),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(

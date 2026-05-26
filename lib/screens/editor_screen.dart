@@ -35,15 +35,15 @@ class _EditorScreenState extends State<EditorScreen>
   String _selectedShelfExtension = 'jpg';
   String _selectedShelfContentType = 'image/jpeg';
 
-  // Premium dark editor palette
+  // Premium light editor palette
   static const Color primaryColor = Color(0xFFFF4D00);
   static const Color secondaryColor = Color(0xFFB200FF);
-  static const Color bgColor = Color(0xFF121322);
-  static const Color cardBorder = Color.fromRGBO(255, 255, 255, 0.12);
-  static const Color inputBg = Color.fromRGBO(255, 255, 255, 0.095);
-  static const Color darkText = Color(0xFFF8FAFC);
-  static const Color mutedText = Color(0xFF94A3B8);
-  static const Color softText = Color(0xFFCBD5E1);
+  static const Color bgColor = Color(0xFFF6F8FC);
+  static const Color cardBorder = Color.fromRGBO(15, 23, 42, 0.10);
+  static const Color inputBg = Color(0xFFF1F5F9);
+  static const Color darkText = Color(0xFF111827);
+  static const Color mutedText = Color(0xFF64748B);
+  static const Color softText = Color(0xFF334155);
   static const LinearGradient ctaGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -62,18 +62,6 @@ class _EditorScreenState extends State<EditorScreen>
     'Kuaför',
     'Diğer',
   ];
-
-  final List<String> themes = const [
-    'Sade',
-    'Premium',
-    'Zarif',
-    'Doğal',
-    'Gece',
-    'Lüks',
-    'Sahil',
-    'Güneş',
-  ];
-
   final List<String> statuses = const [
     'Açık',
     'Bugün kampanya var',
@@ -496,14 +484,9 @@ class _EditorScreenState extends State<EditorScreen>
         suggestion: 'En az 1 pazaryeri linki ekle',
       ),
       _VitrinScoreTask(
-        points: 10,
+        points: 15,
         isComplete: _hasSupportingVitrinContent(data),
         suggestion: 'Logo, ürün veya hakkımızda bilgisi ekle',
-      ),
-      _VitrinScoreTask(
-        points: 5,
-        isComplete: data.theme.trim().isNotEmpty && data.theme.trim() != 'Sade',
-        suggestion: 'Vitrine uygun bir tema seç',
       ),
     ];
   }
@@ -598,7 +581,7 @@ class _EditorScreenState extends State<EditorScreen>
               bottom: 18 + MediaQuery.of(sheetContext).viewInsets.bottom,
             ),
             decoration: BoxDecoration(
-              color: const Color(0xFF11111A),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(26),
               border: Border.all(color: cardBorder),
               boxShadow: [
@@ -720,7 +703,7 @@ class _EditorScreenState extends State<EditorScreen>
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
+                        color: const Color(0xFFF0FDF4),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFFBBF7D0)),
                       ),
@@ -752,7 +735,7 @@ class _EditorScreenState extends State<EditorScreen>
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: inputBg,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: cardBorder),
       ),
@@ -886,7 +869,7 @@ class _EditorScreenState extends State<EditorScreen>
 
   BoxDecoration _premiumCardDecoration({double radius = 24}) {
     return BoxDecoration(
-      color: const Color.fromRGBO(31, 28, 44, 0.82),
+      color: const Color.fromRGBO(255, 255, 255, 0.94),
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(color: cardBorder, width: 1),
       boxShadow: const [
@@ -906,7 +889,7 @@ class _EditorScreenState extends State<EditorScreen>
 
   BoxDecoration _studioFrameDecoration() {
     return BoxDecoration(
-      color: const Color.fromRGBO(24, 22, 36, 0.94),
+      color: const Color.fromRGBO(255, 255, 255, 0.92),
       borderRadius: BorderRadius.circular(32),
       border: Border.all(color: cardBorder),
       boxShadow: const [
@@ -1151,7 +1134,7 @@ class _EditorScreenState extends State<EditorScreen>
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(18, 19, 34, 0.94),
+        backgroundColor: const Color.fromRGBO(255, 255, 255, 0.94),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         foregroundColor: darkText,
@@ -1485,63 +1468,6 @@ class _EditorScreenState extends State<EditorScreen>
                   ),
                 ),
             ],
-          ),
-          const SizedBox(height: 24),
-          Builder(
-            builder: (context) {
-              final isDesktop = MediaQuery.of(context).size.width >= 800;
-              final children = [_buildThemeSelector()];
-
-              if (isDesktop) {
-                return _buildEditCard(title: 'Tema Seçimi', children: children);
-              }
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: cardBorder),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Tema Seçimi',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: darkText,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildThemeSelector(limit: 2, showTitle: false),
-                    Theme(
-                      data: Theme.of(
-                        context,
-                      ).copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
-                        initiallyExpanded: false,
-                        tilePadding: EdgeInsets.zero,
-                        iconColor: primaryColor,
-                        collapsedIconColor: Colors.grey,
-                        title: const Text(
-                          'Diğer Temaları Göster',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: primaryColor,
-                          ),
-                        ),
-                        children: [
-                          _buildThemeSelector(skip: 2, showTitle: false),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
           ),
           const SizedBox(height: 100),
         ],
@@ -2749,7 +2675,7 @@ class _EditorScreenState extends State<EditorScreen>
                 offset: Offset(14, isMobilePreview ? 22 : 28),
               ),
               BoxShadow(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: const Color.fromRGBO(255, 255, 255, 0.94),
                 blurRadius: 12,
                 offset: const Offset(-2, -2),
               ),
@@ -3150,7 +3076,7 @@ class _EditorScreenState extends State<EditorScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: const Color.fromRGBO(255, 255, 255, 0.94),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: cardBorder),
       ),
@@ -3445,56 +3371,6 @@ class _EditorScreenState extends State<EditorScreen>
     );
   }
 
-  Widget _buildThemeSelector({int? skip, int? limit, bool showTitle = true}) {
-    Iterable<String> displayIterable = themes;
-    if (skip != null) displayIterable = displayIterable.skip(skip);
-    if (limit != null) displayIterable = displayIterable.take(limit);
-    final displayThemes = displayIterable.toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (showTitle) ...[
-          const Text(
-            'Tema Seçimi',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: darkText,
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final itemWidth =
-                constraints.maxWidth > 350
-                    ? (constraints.maxWidth - 24) / 3
-                    : (constraints.maxWidth - 12) / 2;
-
-            return Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: List.generate(displayThemes.length, (index) {
-                final themeName = displayThemes[index];
-                final isSelected = _data.theme == themeName;
-                final preset = vitrinThemePresetFor(themeName);
-
-                return _HoverThemeCard(
-                  themeName: themeName,
-                  preset: preset,
-                  isSelected: isSelected,
-                  width: constraints.maxWidth > 400 ? 90 : itemWidth,
-                  onTap: () => setState(() => _data.theme = themeName),
-                );
-              }),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _buildTextField(
     String label,
     Function(String) onChanged, {
@@ -3635,7 +3511,7 @@ class _EditorScreenState extends State<EditorScreen>
               vertical: 12,
             ),
           ),
-          dropdownColor: const Color(0xFF171722),
+          dropdownColor: Colors.white,
           iconEnabledColor: mutedText,
           style: const TextStyle(
             color: darkText,
@@ -3669,7 +3545,7 @@ class _EditorScreenState extends State<EditorScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: const Color.fromRGBO(255, 255, 255, 0.94),
         border: const Border(top: BorderSide(color: cardBorder)),
         boxShadow: [
           BoxShadow(
@@ -3722,7 +3598,7 @@ class _EditorGridPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint =
         Paint()
-          ..color = const Color(0x14FFFFFF)
+          ..color = const Color.fromRGBO(15, 23, 42, 0.055)
           ..strokeWidth = 0.5;
 
     for (double x = 0; x <= size.width; x += 40) {
@@ -3748,7 +3624,7 @@ class _ShelfHintChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: const Color.fromRGBO(255, 255, 255, 0.94),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: _EditorScreenState.cardBorder),
       ),
@@ -3798,208 +3674,4 @@ class _PublishChecklistItem {
     required this.readyText,
     required this.missingText,
   });
-}
-
-class _HoverThemeCard extends StatefulWidget {
-  final String themeName;
-  final VitrinThemePreset preset;
-  final bool isSelected;
-  final double width;
-  final VoidCallback onTap;
-
-  const _HoverThemeCard({
-    required this.themeName,
-    required this.preset,
-    required this.isSelected,
-    required this.width,
-    required this.onTap,
-  });
-
-  @override
-  State<_HoverThemeCard> createState() => _HoverThemeCardState();
-}
-
-class _HoverThemeCardState extends State<_HoverThemeCard> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = widget.isSelected ? 1.03 : (_isHovered ? 1.01 : 1.0);
-    final shadowOpacity = widget.isSelected ? 0.15 : (_isHovered ? 0.08 : 0.0);
-    final borderColor =
-        widget.isSelected
-            ? widget.preset.accent.withValues(alpha: 0.95)
-            : _EditorScreenState.cardBorder;
-    final checkColor =
-        widget.preset.accent.computeLuminance() > 0.65
-            ? widget.preset.textPrimary
-            : widget.preset.buttonText;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedScale(
-          scale: scale,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: widget.width,
-            height: 116,
-            decoration: BoxDecoration(
-              color: const Color.fromRGBO(14, 14, 22, 0.86),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: borderColor,
-                width: widget.isSelected ? 2 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: widget.preset.accent.withValues(alpha: shadowOpacity),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          widget.preset.background,
-                          widget.preset.surface,
-                          widget.preset.surfaceSoft,
-                          widget.preset.accent.withValues(alpha: 0.72),
-                        ],
-                        stops: const [0, 0.48, 0.78, 1],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 10,
-                          top: 10,
-                          child: Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: widget.preset.accent,
-                              border: Border.all(
-                                color: widget.preset.buttonText.withValues(
-                                  alpha: 0.28,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 10,
-                          right: 10,
-                          bottom: 12,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _ThemePreviewLine(
-                                width: 42,
-                                color: widget.preset.textPrimary,
-                              ),
-                              const SizedBox(height: 5),
-                              _ThemePreviewLine(
-                                width: 28,
-                                color: widget.preset.accent,
-                              ),
-                              const SizedBox(height: 6),
-                              Container(
-                                height: 9,
-                                decoration: BoxDecoration(
-                                  color: widget.preset.surface.withValues(
-                                    alpha: 0.72,
-                                  ),
-                                  borderRadius: BorderRadius.circular(99),
-                                  border: Border.all(
-                                    color: widget.preset.border.withValues(
-                                      alpha: 0.48,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (widget.isSelected)
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                color: Colors.transparent,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.check_circle,
-                                color: checkColor,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10, left: 4, right: 4),
-                  child: Text(
-                    widget.themeName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight:
-                          widget.isSelected ? FontWeight.w800 : FontWeight.w600,
-                      color:
-                          widget.isSelected
-                              ? widget.preset.accent
-                              : _EditorScreenState.mutedText,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ThemePreviewLine extends StatelessWidget {
-  final double width;
-  final Color color;
-
-  const _ThemePreviewLine({required this.width, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: 4,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.62),
-        borderRadius: BorderRadius.circular(99),
-      ),
-    );
-  }
 }

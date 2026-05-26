@@ -49,17 +49,17 @@ const Map<String, VitrinThemePreset> vitrinThemePresets = {
   'Sade': sadeVitrinTheme,
   'Premium': VitrinThemePreset(
     name: 'Premium',
-    background: Color(0xFF101827),
-    surface: Color(0xFF182235),
-    surfaceSoft: Color(0xFF223149),
-    textPrimary: Color(0xFFF8FAFC),
-    textSecondary: Color(0xFFCBD5E1),
-    accent: Color(0xFFF6B756),
-    buttonText: Color(0xFF111827),
-    border: Color(0xFF344256),
+    background: Color(0xFFF8FAFC),
+    surface: Color(0xFFFFFFFF),
+    surfaceSoft: Color(0xFFF1F5F9),
+    textPrimary: Color(0xFF0F172A),
+    textSecondary: Color(0xFF475569),
+    accent: Color(0xFFB3925F),
+    buttonText: Color(0xFFFFFFFF),
+    border: Color(0xFFE2E8F0),
     qrBackground: Color(0xFFFFFFFF),
-    qrForeground: Color(0xFF111827),
-    isDark: true,
+    qrForeground: Color(0xFF0F172A),
+    isDark: false,
   ),
   'Zarif': VitrinThemePreset(
     name: 'Zarif',
@@ -148,5 +148,5 @@ const Map<String, VitrinThemePreset> vitrinThemePresets = {
 };
 
 VitrinThemePreset vitrinThemePresetFor(String name) {
-  return vitrinThemePresets[name] ?? sadeVitrinTheme;
+  return vitrinThemePresets['Premium']!;
 }

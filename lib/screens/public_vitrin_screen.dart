@@ -53,7 +53,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       instagram: _readString(data['instagram']),
       website: _readString(data['website']),
       address: _readString(data['address']),
-      theme: _readString(data['theme'], fallback: 'Sade'),
+      theme: _readString(data['theme'], fallback: 'Premium'),
       status: _readString(data['status']),
       isEsnafMode: true,
       corporateBio: corporateBio,

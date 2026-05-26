@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 
 class PreviewScreen extends StatelessWidget {
@@ -10,7 +11,7 @@ class PreviewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = storeData.theme;
-    final isDark = theme == 'Gece' || theme == 'Lüks';
+    final isDark = vitrinThemePresetFor(theme).isDark;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
