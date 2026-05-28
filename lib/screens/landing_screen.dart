@@ -97,26 +97,17 @@ class _LandingScreenState extends State<LandingScreen>
                     Positioned(
                       top: 100 + sinVal * 30,
                       left: -100 + cosVal * 40,
-                      child: _buildMeshGlow(
-                        brandOrange.withValues(alpha: 0.3),
-                        300,
-                      ),
+                      child: _buildMeshGlow(brandOrange.withOpacity(0.3), 300),
                     ),
                     Positioned(
                       bottom: 50 + cosVal * 30,
                       right: -50 + sinVal * 40,
-                      child: _buildMeshGlow(
-                        blueAccent.withValues(alpha: 0.25),
-                        400,
-                      ),
+                      child: _buildMeshGlow(blueAccent.withOpacity(0.25), 400),
                     ),
                     Positioned(
                       top: 200 - sinVal * 20,
                       right: 150 + cosVal * 20,
-                      child: _buildMeshGlow(
-                        pinkAccent.withValues(alpha: 0.2),
-                        250,
-                      ),
+                      child: _buildMeshGlow(pinkAccent.withOpacity(0.2), 250),
                     ),
                   ],
                 );
@@ -200,9 +191,9 @@ class _LandingScreenState extends State<LandingScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: brandOrange.withValues(alpha: 0.15),
+              color: brandOrange.withOpacity(0.15),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: brandOrange.withValues(alpha: 0.3)),
+              border: Border.all(color: brandOrange.withOpacity(0.3)),
             ),
             child: const Text(
               '✨ YENİ NESİL DİJİTAL VİTRİN',
@@ -250,9 +241,8 @@ class _LandingScreenState extends State<LandingScreen>
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: brandOrange.withValues(
-                            alpha:
-                                0.3 +
+                          color: brandOrange.withOpacity(
+                            0.3 +
                                 0.2 *
                                     math.sin(
                                       _animController.value * math.pi * 2,
@@ -371,15 +361,15 @@ class _LandingScreenState extends State<LandingScreen>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
+            color: Colors.white.withOpacity(0.15),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withOpacity(0.2),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -391,7 +381,7 @@ class _LandingScreenState extends State<LandingScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
+                  color: color.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 16),
@@ -561,12 +551,9 @@ class _LandingScreenState extends State<LandingScreen>
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: brandOrange.withValues(alpha: 0.1),
+            color: brandOrange.withOpacity(0.1),
             shape: BoxShape.circle,
-            border: Border.all(
-              color: brandOrange.withValues(alpha: 0.3),
-              width: 2,
-            ),
+            border: Border.all(color: brandOrange.withOpacity(0.3), width: 2),
           ),
           alignment: Alignment.center,
           child: Text(
@@ -668,7 +655,7 @@ class _LandingScreenState extends State<LandingScreen>
             style: TextStyle(
               fontWeight: FontWeight.w900,
               letterSpacing: 8,
-              color: brandOrange.withValues(alpha: 0.8),
+              color: brandOrange.withOpacity(0.8),
               fontSize: 16,
             ),
           ),
@@ -701,12 +688,12 @@ class _PhoneMockup extends StatelessWidget {
         border: Border.all(color: Colors.white24, width: 8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withOpacity(0.3),
             blurRadius: 40,
             offset: const Offset(0, 20),
           ),
           BoxShadow(
-            color: const Color(0xFFFF5A1F).withValues(alpha: 0.2),
+            color: const Color(0xFFFF5A1F).withOpacity(0.2),
             blurRadius: 80,
             offset: const Offset(-20, 20),
           ),
@@ -727,7 +714,7 @@ class _PhoneMockup extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       const Color(0xFFF1F5F9),
-                      const Color(0xFFFF5A1F).withValues(alpha: 0.1),
+                      const Color(0xFFFF5A1F).withOpacity(0.1),
                     ],
                   ),
                 ),
@@ -763,7 +750,7 @@ class _PhoneMockup extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        color: const Color(0xFF10B981).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(

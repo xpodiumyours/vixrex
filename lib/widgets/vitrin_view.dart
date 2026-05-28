@@ -165,13 +165,10 @@ class VitrinView extends StatelessWidget {
                   bottomRight: Radius.circular(34),
                 )
                 : BorderRadius.circular(radius),
-        border: Border.all(
-          color: preset.border.withValues(alpha: 0.55),
-          width: 1,
-        ),
+        border: Border.all(color: preset.border.withOpacity(0.55), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: preset.isDark ? 0.28 : 0.08),
+            color: Colors.black.withOpacity(preset.isDark ? 0.28 : 0.08),
             blurRadius: publicMode ? 34 : 22,
             offset: const Offset(0, 14),
           ),
@@ -204,17 +201,17 @@ class VitrinView extends StatelessWidget {
                 colors:
                     hasHeroImage
                         ? [
-                          Colors.black.withValues(alpha: 0.24),
-                          Colors.black.withValues(alpha: 0.36),
-                          Colors.black.withValues(alpha: 0.70),
+                          Colors.black.withOpacity(0.24),
+                          Colors.black.withOpacity(0.36),
+                          Colors.black.withOpacity(0.70),
                         ]
                         : [
                           Colors.transparent,
-                          preset.background.withValues(
-                            alpha: preset.isDark ? 0.12 : 0.18,
+                          preset.background.withOpacity(
+                            preset.isDark ? 0.12 : 0.18,
                           ),
-                          preset.background.withValues(
-                            alpha: preset.isDark ? 0.34 : 0.58,
+                          preset.background.withOpacity(
+                            preset.isDark ? 0.34 : 0.58,
                           ),
                         ],
               ),
@@ -276,13 +273,11 @@ class VitrinView extends StatelessWidget {
                       vertical: isEmbedded ? 6 : 7,
                     ),
                     decoration: BoxDecoration(
-                      color: preset.accent.withValues(
-                        alpha: preset.isDark ? 0.16 : 0.11,
+                      color: preset.accent.withOpacity(
+                        preset.isDark ? 0.16 : 0.11,
                       ),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color: preset.accent.withValues(alpha: 0.2),
-                      ),
+                      border: Border.all(color: preset.accent.withOpacity(0.2)),
                     ),
                     child: Text(
                       (businessType.isEmpty ? 'Vitrin' : businessType)
@@ -326,9 +321,9 @@ class VitrinView extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            preset.accent.withValues(alpha: preset.isDark ? 0.2 : 0.16),
-            preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.42 : 0.88),
-            preset.background.withValues(alpha: preset.isDark ? 0.96 : 0.98),
+            preset.accent.withOpacity(preset.isDark ? 0.2 : 0.16),
+            preset.surfaceSoft.withOpacity(preset.isDark ? 0.42 : 0.88),
+            preset.background.withOpacity(preset.isDark ? 0.96 : 0.98),
           ],
           stops: const [0, 0.48, 1],
         ),
@@ -346,13 +341,13 @@ class VitrinView extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            preset.accent.withValues(alpha: preset.isDark ? 0.24 : 0.14),
-            preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.96),
-            preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.74 : 0.9),
+            preset.accent.withOpacity(preset.isDark ? 0.24 : 0.14),
+            preset.surface.withOpacity(preset.isDark ? 0.9 : 0.96),
+            preset.surfaceSoft.withOpacity(preset.isDark ? 0.74 : 0.9),
           ],
         ),
         border: Border.all(
-          color: preset.accent.withValues(alpha: preset.isDark ? 0.3 : 0.2),
+          color: preset.accent.withOpacity(preset.isDark ? 0.3 : 0.2),
           width: 1.2,
         ),
       ),
@@ -509,19 +504,17 @@ class VitrinView extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [
               preset.surface,
-              preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.38 : 0.5),
+              preset.surfaceSoft.withOpacity(preset.isDark ? 0.38 : 0.5),
             ],
           ),
           borderRadius: BorderRadius.circular(cardRadius),
           border: Border.all(
-            color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
+            color: preset.border.withOpacity(preset.isDark ? 0.9 : 0.78),
             width: isCompact ? 1 : 1.3,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(
-                alpha: preset.isDark ? 0.18 : 0.06,
-              ),
+              color: Colors.black.withOpacity(preset.isDark ? 0.18 : 0.06),
               blurRadius: isCompact ? 14 : 28,
               offset: Offset(0, isCompact ? 4 : 10),
             ),
@@ -536,8 +529,8 @@ class VitrinView extends StatelessWidget {
                   width: isCompact ? 28 : 36,
                   height: isCompact ? 28 : 36,
                   decoration: BoxDecoration(
-                    color: preset.accent.withValues(
-                      alpha: preset.isDark ? 0.2 : 0.12,
+                    color: preset.accent.withOpacity(
+                      preset.isDark ? 0.2 : 0.12,
                     ),
                     borderRadius: BorderRadius.circular(isCompact ? 11 : 13),
                   ),
@@ -623,17 +616,15 @@ class VitrinView extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(isCompact ? 16 : 22),
         decoration: BoxDecoration(
-          color: preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.98),
+          color: preset.surface.withOpacity(preset.isDark ? 0.9 : 0.98),
           borderRadius: BorderRadius.circular(isCompact ? 16 : 24),
           border: Border.all(
-            color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
+            color: preset.border.withOpacity(preset.isDark ? 0.9 : 0.78),
             width: isCompact ? 1 : 1.3,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(
-                alpha: preset.isDark ? 0.12 : 0.045,
-              ),
+              color: Colors.black.withOpacity(preset.isDark ? 0.12 : 0.045),
               blurRadius: isCompact ? 12 : 24,
               offset: Offset(0, isCompact ? 3 : 8),
             ),
@@ -688,7 +679,7 @@ class VitrinView extends StatelessWidget {
         children: [
           Icon(
             Icons.format_quote_rounded,
-            color: preset.accent.withValues(alpha: preset.isDark ? 0.28 : 0.18),
+            color: preset.accent.withOpacity(preset.isDark ? 0.28 : 0.18),
             size: isCompact ? 38 : 54,
           ),
           SizedBox(height: isCompact ? 4 : 8),
@@ -900,12 +891,12 @@ class VitrinView extends StatelessWidget {
           color: preset.qrBackground,
           borderRadius: BorderRadius.circular(isCompact ? 20 : radius),
           border: Border.all(
-            color: preset.qrForeground.withValues(alpha: 0.14),
+            color: preset.qrForeground.withOpacity(0.14),
             width: isCompact ? 1.5 : 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: isCompact ? 24 : 40,
               offset: Offset(0, isCompact ? 8 : 15),
             ),
@@ -918,7 +909,7 @@ class VitrinView extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(isCompact ? 10 : 14),
                   decoration: BoxDecoration(
-                    color: preset.qrForeground.withValues(alpha: 0.06),
+                    color: preset.qrForeground.withOpacity(0.06),
                     borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
                   ),
                   child: Icon(
@@ -948,7 +939,7 @@ class VitrinView extends StatelessWidget {
                         'TÜM BİLGİLERİM TEK QR İLE BURADA',
                         style: TextStyle(
                           fontSize: isCompact ? 8 : 10,
-                          color: preset.qrForeground.withValues(alpha: 0.72),
+                          color: preset.qrForeground.withOpacity(0.72),
                           fontWeight: FontWeight.w900,
                           letterSpacing: isCompact ? 0.8 : 1.2,
                         ),
@@ -1004,12 +995,12 @@ class VitrinView extends StatelessWidget {
           color: preset.qrBackground,
           borderRadius: BorderRadius.circular(isCompact ? 18 : 24),
           border: Border.all(
-            color: preset.qrForeground.withValues(alpha: 0.12),
+            color: preset.qrForeground.withOpacity(0.12),
             width: isCompact ? 1 : 1.4,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.055),
+              color: Colors.black.withOpacity(0.055),
               blurRadius: isCompact ? 18 : 28,
               offset: Offset(0, isCompact ? 5 : 10),
             ),
@@ -1031,7 +1022,7 @@ class VitrinView extends StatelessWidget {
               'Müşteriler bu kodu okutarak vitrininize ulaşabilir.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: preset.qrForeground.withValues(alpha: 0.62),
+                color: preset.qrForeground.withOpacity(0.62),
                 fontSize: isCompact ? 11 : 12,
                 fontWeight: FontWeight.w500,
                 height: 1.4,
@@ -1043,9 +1034,7 @@ class VitrinView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: preset.qrBackground,
                 borderRadius: BorderRadius.circular(isCompact ? 16 : 18),
-                border: Border.all(
-                  color: preset.qrForeground.withValues(alpha: 0.1),
-                ),
+                border: Border.all(color: preset.qrForeground.withOpacity(0.1)),
               ),
               child: QrImageView(
                 data: url,
@@ -1078,8 +1067,8 @@ class VitrinView extends StatelessWidget {
           style: TextStyle(
             fontSize: publicMode ? 12 : 14,
             fontWeight: publicMode ? FontWeight.w700 : FontWeight.w800,
-            color: preset.textSecondary.withValues(
-              alpha: preset.isDark ? 0.86 : 0.78,
+            color: preset.textSecondary.withOpacity(
+              preset.isDark ? 0.86 : 0.78,
             ),
             letterSpacing: 0,
           ),
@@ -1088,7 +1077,7 @@ class VitrinView extends StatelessWidget {
         Container(
           height: 1,
           width: publicMode ? 34 : 50,
-          color: preset.border.withValues(alpha: publicMode ? 0.7 : 1),
+          color: preset.border.withOpacity(publicMode ? 0.7 : 1),
         ),
         SizedBox(height: publicMode ? 18 : 24),
         if (!publicMode)
@@ -1097,7 +1086,7 @@ class VitrinView extends StatelessWidget {
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w900,
-              color: preset.textSecondary.withValues(alpha: 0.72),
+              color: preset.textSecondary.withOpacity(0.72),
               letterSpacing: 4,
             ),
           ),
@@ -1182,12 +1171,12 @@ class _ActionIconBtn extends StatelessWidget {
     final buttonRadius = compact ? 12.0 : 16.0;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
-        emphasis ? color : color.withValues(alpha: isDark ? 0.18 : 0.09);
+        emphasis ? color : color.withOpacity(isDark ? 0.18 : 0.09);
     final foregroundColor = emphasis ? Colors.white : color;
     final borderColor =
         emphasis
-            ? color.withValues(alpha: isDark ? 0.38 : 0.22)
-            : color.withValues(alpha: isDark ? 0.22 : 0.12);
+            ? color.withOpacity(isDark ? 0.38 : 0.22)
+            : color.withOpacity(isDark ? 0.22 : 0.12);
 
     return Container(
       decoration: BoxDecoration(
@@ -1198,7 +1187,7 @@ class _ActionIconBtn extends StatelessWidget {
             emphasis
                 ? [
                   BoxShadow(
-                    color: color.withValues(alpha: isDark ? 0.22 : 0.18),
+                    color: color.withOpacity(isDark ? 0.22 : 0.18),
                     blurRadius: compact ? 14 : 22,
                     offset: Offset(0, compact ? 5 : 8),
                   ),
@@ -1274,17 +1263,17 @@ class _ModernLinkItem extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             preset.surface,
-            preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.36 : 0.5),
+            preset.surfaceSoft.withOpacity(preset.isDark ? 0.36 : 0.5),
           ],
         ),
         borderRadius: BorderRadius.circular(compact ? 16 : 24),
         border: Border.all(
-          color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
+          color: preset.border.withOpacity(preset.isDark ? 0.9 : 0.78),
           width: compact ? 1 : 1.3,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: preset.isDark ? 0.14 : 0.045),
+            color: Colors.black.withOpacity(preset.isDark ? 0.14 : 0.045),
             blurRadius: compact ? 12 : 24,
             offset: Offset(0, compact ? 3 : 8),
           ),
@@ -1302,13 +1291,11 @@ class _ModernLinkItem extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(compact ? 9 : 13),
                   decoration: BoxDecoration(
-                    color: effectiveColor.withValues(
-                      alpha: preset.isDark ? 0.2 : 0.11,
+                    color: effectiveColor.withOpacity(
+                      preset.isDark ? 0.2 : 0.11,
                     ),
                     borderRadius: BorderRadius.circular(compact ? 11 : 16),
-                    border: Border.all(
-                      color: effectiveColor.withValues(alpha: 0.08),
-                    ),
+                    border: Border.all(color: effectiveColor.withOpacity(0.08)),
                   ),
                   child: Icon(
                     icon,
@@ -1349,17 +1336,15 @@ class _ModernLinkItem extends StatelessWidget {
                   width: compact ? 24 : 30,
                   height: compact ? 24 : 30,
                   decoration: BoxDecoration(
-                    color: preset.surfaceSoft.withValues(
-                      alpha: preset.isDark ? 0.38 : 0.72,
+                    color: preset.surfaceSoft.withOpacity(
+                      preset.isDark ? 0.38 : 0.72,
                     ),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: preset.border.withValues(alpha: 0.6),
-                    ),
+                    border: Border.all(color: preset.border.withOpacity(0.6)),
                   ),
                   child: Icon(
                     Icons.arrow_forward_ios_rounded,
-                    color: preset.textSecondary.withValues(alpha: 0.75),
+                    color: preset.textSecondary.withOpacity(0.75),
                     size: compact ? 10 : 12,
                   ),
                 ),

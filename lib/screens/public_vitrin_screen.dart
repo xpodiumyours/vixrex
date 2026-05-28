@@ -169,7 +169,7 @@ class _PublicVitrinShell extends StatelessWidget {
                             isDesktop
                                 ? [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.08),
+                                    color: Colors.black.withOpacity(0.08),
                                     blurRadius: 30,
                                     offset: const Offset(0, 16),
                                   ),

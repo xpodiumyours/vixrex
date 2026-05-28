@@ -148,5 +148,5 @@ const Map<String, VitrinThemePreset> vitrinThemePresets = {
 };
 
 VitrinThemePreset vitrinThemePresetFor(String name) {
-  return vitrinThemePresets['Premium']!;
+  return vitrinThemePresets[name] ?? vitrinThemePresets['Premium']!;
 }
