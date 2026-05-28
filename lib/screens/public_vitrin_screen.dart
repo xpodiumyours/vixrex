@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 
@@ -146,8 +147,9 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
           );
         }
 
-        final publicLink =
-            '${Uri.base.origin}/v/${Uri.encodeComponent(widget.slug)}';
+        final publicLink = PublicSiteConfig.buildPublicLink(
+          '/v/${Uri.encodeComponent(widget.slug)}',
+        );
 
         return _PublicVitrinShell(
           child: VitrinView(

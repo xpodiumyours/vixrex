@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
@@ -1856,14 +1857,7 @@ class _EditorScreenState extends State<EditorScreen>
   }
 
   String _buildFullPublicLink(String path) {
-    final normalizedPath = path.startsWith('/') ? path : '/$path';
-    final base = Uri.base;
-    final hasWebOrigin =
-        (base.scheme == 'http' || base.scheme == 'https') &&
-        base.host.isNotEmpty;
-    final origin = hasWebOrigin ? base.origin : '';
-
-    return '$origin$normalizedPath';
+    return PublicSiteConfig.buildPublicLink(path);
   }
 
   String _generateStoreSlug(String name) {
