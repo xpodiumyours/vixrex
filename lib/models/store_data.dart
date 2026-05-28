@@ -59,6 +59,38 @@ class MarketplaceLink {
       );
 }
 
+class StoreGalleryItem {
+  String id;
+  String imageUrl;
+  String title;
+  String description;
+
+  StoreGalleryItem({
+    required this.id,
+    this.imageUrl = '',
+    this.title = '',
+    this.description = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'imageUrl': imageUrl,
+    'title': title,
+    'description': description,
+  };
+
+  factory StoreGalleryItem.fromJson(Map<String, dynamic> json) {
+    return StoreGalleryItem(
+      id: (json['id'] ?? '').toString(),
+      imageUrl:
+          (json['imageUrl'] ?? json['image_url'] ?? json['url'] ?? '')
+              .toString(),
+      title: (json['title'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+    );
+  }
+}
+
 class StoreData {
   String name;
   String businessType;
@@ -81,6 +113,7 @@ class StoreData {
   /// Dolu ise public vitrinde Referanslarımız kartı görünür.
   String referencesLink;
   String shelfImageUrl;
+  List<StoreGalleryItem> galleryItems;
 
   StoreData({
     this.name = '',
@@ -99,8 +132,10 @@ class StoreData {
     this.corporateBio = '',
     this.referencesLink = '',
     this.shelfImageUrl = '',
+    List<StoreGalleryItem>? galleryItems,
   }) : products = products ?? [],
-       marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')];
+       marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')],
+       galleryItems = galleryItems ?? [];
 
   Map<String, dynamic> toJson() => {
     'name': name,
@@ -119,9 +154,14 @@ class StoreData {
     'corporateBio': corporateBio,
     'referencesLink': referencesLink,
     'shelfImageUrl': shelfImageUrl,
+    'galleryItems': galleryItems.map((e) => e.toJson()).toList(),
   };
 
   factory StoreData.fromJson(Map<String, dynamic> json) {
+    final parsedGalleryItems = _parseGalleryItems(
+      json['galleryItems'] ?? json['gallery_items'],
+    );
+
     return StoreData(
       name: json['name'] ?? '',
       businessType: json['businessType'] ?? 'Butik',
@@ -142,8 +182,44 @@ class StoreData {
               .toList(),
       corporateBio: json['corporateBio'] ?? '',
       referencesLink: json['referencesLink'] ?? '',
-      shelfImageUrl: json['shelfImageUrl'] ?? '',
+      shelfImageUrl: json['shelfImageUrl'] ?? json['shelf_image_url'] ?? '',
+      galleryItems: parsedGalleryItems,
     );
+  }
+
+  static List<StoreGalleryItem> _parseGalleryItems(Object? rawItems) {
+    if (rawItems is! List) return [];
+
+    return rawItems
+        .whereType<Map>()
+        .map(
+          (item) => StoreGalleryItem.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .where((item) => item.imageUrl.trim().isNotEmpty)
+        .take(12)
+        .toList();
+  }
+
+  List<StoreGalleryItem> get displayGalleryItems {
+    final validItems =
+        galleryItems
+            .where((item) => item.imageUrl.trim().isNotEmpty)
+            .take(12)
+            .toList();
+
+    if (validItems.isNotEmpty) return validItems;
+
+    final legacyImageUrl = shelfImageUrl.trim();
+    if (legacyImageUrl.isEmpty) return [];
+
+    return [
+      StoreGalleryItem(id: 'legacy-shelf-image', imageUrl: legacyImageUrl),
+    ];
+  }
+
+  String get coverImageUrl {
+    final items = displayGalleryItems;
+    return items.isEmpty ? '' : items.first.imageUrl.trim();
   }
 
   factory StoreData.dummy() {

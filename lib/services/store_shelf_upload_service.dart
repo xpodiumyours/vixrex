@@ -31,6 +31,20 @@ class StoreShelfUploadService {
     }
   }
 
+  Future<String> uploadGalleryImage(
+    Uint8List bytes,
+    String slug, {
+    String fileExtension = 'jpg',
+    String contentType = 'image/jpeg',
+  }) {
+    return uploadShelfImage(
+      bytes,
+      '${_safeSlug(slug)}/gallery',
+      fileExtension: fileExtension,
+      contentType: contentType,
+    );
+  }
+
   String _safeSlug(String slug) {
     final cleaned = slug.trim().replaceAll(RegExp(r'^/+|/+$'), '');
     return cleaned.isEmpty ? 'magazaniz' : cleaned;

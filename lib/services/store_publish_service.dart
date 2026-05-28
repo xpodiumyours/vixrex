@@ -10,9 +10,10 @@ class StorePublishService {
     required String editToken,
   }) async {
     final slug = _generateSlug(data.name);
-    final client = Supabase.instance.client;
+    late final SupabaseClient client;
 
     try {
+      client = Supabase.instance.client;
       final existingStore =
           await client
               .from('stores')
@@ -42,7 +43,7 @@ class StorePublishService {
     } on StorePublishException {
       rethrow;
     } catch (error) {
-      throw StorePublishException('Vitrin yayınlanamadı: $error');
+      throw StorePublishException(_messageForUnexpectedError(error));
     }
   }
 
@@ -71,15 +72,11 @@ class StorePublishService {
     String slug,
     String editToken,
   ) {
-    return {
-      'slug': slug,
-      'edit_token': editToken,
-      ..._toStoreUpdateMap(data),
-      'shelf_image_url': data.shelfImageUrl.trim(),
-    };
+    return {'slug': slug, 'edit_token': editToken, ..._toStoreUpdateMap(data)};
   }
 
   Map<String, dynamic> _toStoreUpdateMap(StoreData data) {
+    final shelfImageUrl = data.coverImageUrl.trim();
     final payload = <String, dynamic>{
       'name': data.name.trim(),
       'business_type': data.businessType.trim(),
@@ -92,18 +89,30 @@ class StorePublishService {
       'theme': data.theme.trim(),
       'status': data.status.trim(),
       'marketplace_links': _marketplaceLinksToJson(data),
+      'gallery_items': _galleryItemsToJson(data),
       'catalog_link': '',
       'references_link': data.referencesLink.trim(),
       'vcard_link': '',
+      'shelf_image_url': shelfImageUrl,
       'is_published': true,
     };
 
-    final shelfImageUrl = data.shelfImageUrl.trim();
-    if (shelfImageUrl.isNotEmpty) {
-      payload['shelf_image_url'] = shelfImageUrl;
-    }
-
     return payload;
+  }
+
+  List<Map<String, String>> _galleryItemsToJson(StoreData data) {
+    return data.displayGalleryItems
+        .where((item) => item.imageUrl.trim().isNotEmpty)
+        .take(12)
+        .map(
+          (item) => {
+            'id': item.id.trim(),
+            'imageUrl': item.imageUrl.trim(),
+            'title': item.title.trim(),
+            'description': item.description.trim(),
+          },
+        )
+        .toList();
   }
 
   List<Map<String, String>> _marketplaceLinksToJson(StoreData data) {
@@ -145,6 +154,20 @@ class StorePublishService {
     }
 
     return 'Vitrin yayınlanamadı: ${error.message}';
+  }
+
+  String _messageForUnexpectedError(Object error) {
+    final searchableText = error.toString().toLowerCase();
+
+    if (searchableText.contains('supabase') &&
+        (searchableText.contains('initialize') ||
+            searchableText.contains('not initialized') ||
+            searchableText.contains('has not been initialized') ||
+            searchableText.contains('instance'))) {
+      return 'Supabase bağlantı bilgileri eksik. Uygulamayı SUPABASE_URL ve SUPABASE_PUBLISHABLE_KEY değerleriyle başlatın.';
+    }
+
+    return 'Vitrin yayınlanamadı: $error';
   }
 
   bool _isDuplicateSlugError(PostgrestException error) {

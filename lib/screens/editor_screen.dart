@@ -27,13 +27,11 @@ class _EditorScreenState extends State<EditorScreen>
   bool _isLoading = true;
   bool _isGoogleAssistantOpen = false;
   bool _isPublishing = false;
-  bool _isUploadingShelf = false;
+  bool _isUploadingGallery = false;
+  int _selectedGalleryIndex = 0;
+  final List<_EditorGalleryItem> _galleryItems = [];
   String? _publishedLink;
   String? _publishError;
-  Uint8List? _selectedShelfBytes;
-  String? _selectedShelfFileName;
-  String _selectedShelfExtension = 'jpg';
-  String _selectedShelfContentType = 'image/jpeg';
 
   // Premium light editor palette
   static const Color primaryColor = Color(0xFFFF4D00);
@@ -50,6 +48,8 @@ class _EditorScreenState extends State<EditorScreen>
     colors: [primaryColor, secondaryColor],
   );
   static const String _editTokenPrefsKey = 'vitrin_edit_token';
+  static const int _maxGalleryPhotos = 12;
+  static const int _maxGalleryPhotoBytes = 5 * 1024 * 1024;
 
   final List<String> businessTypes = const [
     'Butik',
@@ -89,6 +89,9 @@ class _EditorScreenState extends State<EditorScreen>
   @override
   void dispose() {
     _mobileTabController.dispose();
+    for (final item in _galleryItems) {
+      item.dispose();
+    }
     super.dispose();
   }
 
@@ -126,8 +129,10 @@ class _EditorScreenState extends State<EditorScreen>
           _data.corporateBio = loadedData.corporateBio;
           _data.referencesLink = loadedData.referencesLink;
           _data.shelfImageUrl = loadedData.shelfImageUrl;
+          _data.galleryItems = loadedData.galleryItems;
           _data.marketplaceLinks = loadedData.marketplaceLinks;
           _data.products = loadedData.products;
+          _replaceEditorGalleryItems(loadedData.displayGalleryItems);
           _isLoading = false;
         });
       } else {
@@ -195,36 +200,22 @@ class _EditorScreenState extends State<EditorScreen>
 
     setState(() {
       _isPublishing = true;
-      _isUploadingShelf = _selectedShelfBytes != null;
+      _isUploadingGallery = _galleryItems.any((item) => item.hasLocalBytes);
       _publishedLink = null;
       _publishError = null;
     });
 
-    var shelfUploadFailed = false;
+    var failedUploadCount = 0;
 
     try {
-      final selectedShelfBytes = _selectedShelfBytes;
-      if (selectedShelfBytes != null) {
-        try {
-          final uploadedUrl = await const StoreShelfUploadService()
-              .uploadShelfImage(
-                selectedShelfBytes,
-                _generateStoreSlug(_data.name),
-                fileExtension: _selectedShelfExtension,
-                contentType: _selectedShelfContentType,
-              );
-
-          _data.shelfImageUrl = uploadedUrl;
-        } catch (uploadError) {
-          shelfUploadFailed = true;
-          _data.shelfImageUrl = '';
-          debugPrint('Shelf image upload error: $uploadError');
-        } finally {
-          if (mounted) {
-            setState(() => _isUploadingShelf = false);
-          }
+      if (_galleryItems.any((item) => item.hasLocalBytes)) {
+        failedUploadCount = await _uploadPendingGalleryImages();
+        if (mounted) {
+          setState(() => _isUploadingGallery = false);
         }
       }
+
+      _syncPublishedGalleryData();
 
       final editToken = await _loadOrCreateEditToken();
       final publishResult = await const StorePublishService().publishStore(
@@ -235,8 +226,8 @@ class _EditorScreenState extends State<EditorScreen>
       if (!mounted) return;
 
       final publishSnackMessage =
-          shelfUploadFailed
-              ? 'Fotoğraf yüklenemedi, vitrin fotoğrafsız yayınlandı.'
+          failedUploadCount > 0
+              ? '$failedUploadCount fotoğraf yüklenemedi. Diğer görsellerle vitrin güncellendi.'
               : publishResult.wasUpdated
               ? 'Vitrininiz güncellendi.'
               : 'Vitrin linkiniz hazırlandı.';
@@ -272,7 +263,7 @@ class _EditorScreenState extends State<EditorScreen>
       if (mounted) {
         setState(() {
           _isPublishing = false;
-          _isUploadingShelf = false;
+          _isUploadingGallery = false;
         });
       }
     }
@@ -324,7 +315,137 @@ class _EditorScreenState extends State<EditorScreen>
         .replaceAll('=', '');
   }
 
-  Future<void> _pickShelfPhoto() async {
+  void _replaceEditorGalleryItems(List<StoreGalleryItem> items) {
+    for (final item in _galleryItems) {
+      item.dispose();
+    }
+
+    _galleryItems
+      ..clear()
+      ..addAll(
+        items
+            .where((item) => item.imageUrl.trim().isNotEmpty)
+            .take(_maxGalleryPhotos)
+            .map(_EditorGalleryItem.fromStoreItem),
+      );
+    _selectedGalleryIndex = 0;
+  }
+
+  void _syncPublishedGalleryData() {
+    final publishedItems =
+        _galleryItems
+            .where((item) => item.imageUrl.trim().isNotEmpty)
+            .take(_maxGalleryPhotos)
+            .map((item) => item.toStoreItem())
+            .toList();
+
+    _data.galleryItems = publishedItems;
+    _data.shelfImageUrl =
+        publishedItems.isEmpty ? '' : publishedItems.first.imageUrl.trim();
+  }
+
+  List<VitrinGalleryPreviewItem> _galleryPreviewItems() {
+    return _galleryItems
+        .where((item) => item.hasPreviewImage)
+        .take(_maxGalleryPhotos)
+        .map((item) => item.toPreviewItem())
+        .toList();
+  }
+
+  String _galleryPreviewKey() {
+    return _galleryItems
+        .map(
+          (item) =>
+              '${item.id}_${item.imageUrl}_${item.hasLocalBytes}_${item.title}_${item.description}',
+        )
+        .join('|');
+  }
+
+  Future<int> _uploadPendingGalleryImages() async {
+    var failedUploadCount = 0;
+    final uploadService = const StoreShelfUploadService();
+    final slug = _generateStoreSlug(_data.name);
+
+    for (final item in _galleryItems) {
+      final bytes = item.bytes;
+      if (bytes == null) continue;
+
+      try {
+        final uploadedUrl = await uploadService.uploadGalleryImage(
+          bytes,
+          slug,
+          fileExtension: item.extension,
+          contentType: item.contentType,
+        );
+        item.markUploaded(uploadedUrl);
+      } catch (uploadError) {
+        failedUploadCount += 1;
+        debugPrint('Gallery image upload error: $uploadError');
+      }
+    }
+
+    return failedUploadCount;
+  }
+
+  Future<void> _pickGalleryPhotos() async {
+    final remainingSlots = _maxGalleryPhotos - _galleryItems.length;
+    if (remainingSlots <= 0) {
+      _showInfoSnackBar(
+        'En fazla $_maxGalleryPhotos fotoğraf ekleyebilirsiniz.',
+      );
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.image,
+      withData: true,
+    );
+
+    if (result == null || result.files.isEmpty) return;
+
+    var rejectedCount = 0;
+    final newItems = <_EditorGalleryItem>[];
+    final selectedFiles = result.files.take(remainingSlots).toList();
+
+    for (final file in selectedFiles) {
+      final item = _editorGalleryItemFromFile(file);
+      if (item == null) {
+        rejectedCount += 1;
+        continue;
+      }
+      newItems.add(item);
+    }
+
+    if (result.files.length > remainingSlots) {
+      rejectedCount += result.files.length - remainingSlots;
+    }
+
+    if (newItems.isEmpty) {
+      _showInfoSnackBar(
+        rejectedCount > 0
+            ? 'Seçilen fotoğraflar eklenemedi. JPG, PNG veya WEBP ve en fazla 5 MB olmalı.'
+            : 'Fotoğraf eklenmedi.',
+      );
+      return;
+    }
+
+    setState(() {
+      final firstNewIndex = _galleryItems.length;
+      _galleryItems.addAll(newItems);
+      _selectedGalleryIndex = firstNewIndex;
+    });
+
+    if (rejectedCount > 0) {
+      _showInfoSnackBar(
+        '$rejectedCount fotoğraf eklenemedi. Sınır: $_maxGalleryPhotos fotoğraf, dosya başı 5 MB.',
+      );
+    }
+  }
+
+  Future<void> _replaceGalleryPhoto(int index) async {
+    if (index < 0 || index >= _galleryItems.length) return;
+
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       type: FileType.image,
@@ -333,39 +454,80 @@ class _EditorScreenState extends State<EditorScreen>
 
     if (result == null || result.files.isEmpty) return;
 
-    final file = result.files.single;
-    if (file.size > 5 * 1024 * 1024) {
-      _showInfoSnackBar("Fotoğraf 5 MB'tan büyük olamaz.");
-      return;
-    }
-
-    final bytes = file.bytes;
-    if (bytes == null || bytes.isEmpty) {
-      _showInfoSnackBar('Fotoğraf okunamadı. Lütfen başka bir görsel deneyin.');
-      return;
-    }
-
-    final extension = (file.extension ?? 'jpg').toLowerCase();
-    final contentType = _contentTypeForShelfExtension(extension);
-    if (contentType == null) {
-      _showInfoSnackBar('Sadece JPG, PNG veya WEBP görsel seçebilirsiniz.');
+    final replacement = _editorGalleryItemFromFile(result.files.single);
+    if (replacement == null) {
+      _showInfoSnackBar(
+        'Fotoğraf eklenemedi. JPG, PNG veya WEBP ve en fazla 5 MB olmalı.',
+      );
       return;
     }
 
     setState(() {
-      _selectedShelfBytes = bytes;
-      _selectedShelfFileName = file.name;
-      _selectedShelfExtension = extension == 'jpeg' ? 'jpg' : extension;
-      _selectedShelfContentType = contentType;
+      _galleryItems[index].replaceImageFrom(replacement);
+      replacement.dispose();
     });
   }
 
-  void _clearShelfPhoto() {
+  _EditorGalleryItem? _editorGalleryItemFromFile(PlatformFile file) {
+    if (file.size > _maxGalleryPhotoBytes) return null;
+
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) return null;
+
+    final extension = (file.extension ?? 'jpg').toLowerCase();
+    final contentType = _contentTypeForShelfExtension(extension);
+    if (contentType == null) return null;
+
+    return _EditorGalleryItem(
+      id: _newGalleryItemId(),
+      bytes: bytes,
+      fileName: file.name,
+      extension: extension == 'jpeg' ? 'jpg' : extension,
+      contentType: contentType,
+    );
+  }
+
+  String _newGalleryItemId() {
+    final random = Random();
+    return '${DateTime.now().microsecondsSinceEpoch}_${random.nextInt(999999)}';
+  }
+
+  void _removeGalleryPhoto(int index) {
+    if (index < 0 || index >= _galleryItems.length) return;
+
     setState(() {
-      _selectedShelfBytes = null;
-      _selectedShelfFileName = null;
-      _data.shelfImageUrl = '';
+      final removedItem = _galleryItems.removeAt(index);
+      removedItem.dispose();
+      _normalizeGallerySelection();
+      _syncPublishedGalleryData();
     });
+  }
+
+  void _makeGalleryCover(int index) {
+    if (index <= 0 || index >= _galleryItems.length) return;
+
+    setState(() {
+      final item = _galleryItems.removeAt(index);
+      _galleryItems.insert(0, item);
+      _selectedGalleryIndex = 0;
+      _syncPublishedGalleryData();
+    });
+  }
+
+  void _selectGalleryItem(int index) {
+    if (index < 0 || index >= _galleryItems.length) return;
+    setState(() => _selectedGalleryIndex = index);
+  }
+
+  void _normalizeGallerySelection() {
+    if (_galleryItems.isEmpty) {
+      _selectedGalleryIndex = 0;
+      return;
+    }
+
+    if (_selectedGalleryIndex >= _galleryItems.length) {
+      _selectedGalleryIndex = _galleryItems.length - 1;
+    }
   }
 
   String? _contentTypeForShelfExtension(String extension) {
@@ -541,10 +703,10 @@ class _EditorScreenState extends State<EditorScreen>
             .map((task) => task.suggestion)
             .toList();
 
-    final hasShelfPhoto =
-        _selectedShelfBytes != null || _data.shelfImageUrl.trim().isNotEmpty;
-    if (!hasShelfPhoto && !suggestions.contains('Raf / reyon fotoğrafı ekle')) {
-      suggestions.add('Raf / reyon fotoğrafı ekle');
+    final hasGalleryPhoto =
+        _galleryItems.isNotEmpty || _data.displayGalleryItems.isNotEmpty;
+    if (!hasGalleryPhoto && !suggestions.contains('Galeri fotoğrafı ekle')) {
+      suggestions.add('Galeri fotoğrafı ekle');
     }
 
     return suggestions;
@@ -1200,7 +1362,11 @@ class _EditorScreenState extends State<EditorScreen>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => PreviewScreen(storeData: _data),
+                            builder:
+                                (_) => PreviewScreen(
+                                  storeData: _data,
+                                  previewGalleryItems: _galleryPreviewItems(),
+                                ),
                           ),
                         );
                       },
@@ -1368,7 +1534,7 @@ class _EditorScreenState extends State<EditorScreen>
             title: 'Mağaza Görünümü',
             headerWidget: _buildCompactStatusDropdown(),
             children: [
-              _buildLogoUpload(),
+              _buildGalleryStudio(),
               const SizedBox(height: 20),
               _buildTextField(
                 'Mağaza adı',
@@ -1812,8 +1978,8 @@ class _EditorScreenState extends State<EditorScreen>
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          _isUploadingShelf
-                              ? 'Fotoğraf yükleniyor...'
+                          _isUploadingGallery
+                              ? 'Galeri yükleniyor...'
                               : 'Hazırlanıyor...',
                         ),
                       ],
@@ -1827,7 +1993,7 @@ class _EditorScreenState extends State<EditorScreen>
         ),
         const SizedBox(height: 10),
         Text(
-          'Gerçek yayınlama için sonraki aşamada Supabase bağlantısı eklenecek.',
+          'Galeri fotoğrafları Supabase Storage’a yüklenir ve public vitrinde görünür.',
           style: TextStyle(
             color: mutedText,
             fontSize: 10.5,
@@ -3056,11 +3222,12 @@ class _EditorScreenState extends State<EditorScreen>
                     isMobilePreview: true,
                     child: VitrinView(
                       key: ValueKey(
-                        'mobile_preview_${_data.name}_${_data.marketplaceLinks.length}_${_data.description}_${_data.theme}_${_data.shelfImageUrl}',
+                        'mobile_preview_${_data.name}_${_data.marketplaceLinks.length}_${_data.description}_${_data.theme}_${_galleryPreviewKey()}',
                       ),
                       storeData: _data,
                       isEmbedded: true,
                       compactEmbeddedHeader: true,
+                      previewGalleryItems: _galleryPreviewItems(),
                     ),
                   ),
                 );
@@ -3197,10 +3364,11 @@ class _EditorScreenState extends State<EditorScreen>
                           isDarkTheme: preset.isDark,
                           child: VitrinView(
                             key: ValueKey(
-                              'preview_${_data.name}_${_data.marketplaceLinks.length}_${_data.description}_${_data.theme}_${_data.shelfImageUrl}',
+                              'preview_${_data.name}_${_data.marketplaceLinks.length}_${_data.description}_${_data.theme}_${_galleryPreviewKey()}',
                             ),
                             storeData: _data,
                             isEmbedded: true,
+                            previewGalleryItems: _galleryPreviewItems(),
                           ),
                         ),
                       );
@@ -3215,137 +3383,549 @@ class _EditorScreenState extends State<EditorScreen>
     );
   }
 
-  Widget _buildLogoUpload() {
-    final hasShelfPreview =
-        _selectedShelfBytes != null || _data.shelfImageUrl.trim().isNotEmpty;
+  Widget _buildGalleryStudio() {
+    _normalizeGallerySelection();
+    final selectedItem =
+        _galleryItems.isEmpty ? null : _galleryItems[_selectedGalleryIndex];
 
-    return InkWell(
-      onTap: _pickShelfPhoto,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: inputBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder, style: BorderStyle.solid),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (hasShelfPreview) ...[
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(13),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child:
-                          _selectedShelfBytes != null
-                              ? Image.memory(
-                                _selectedShelfBytes!,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              )
-                              : Image.network(
-                                _data.shelfImageUrl.trim(),
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder:
-                                    (_, __, ___) => _buildShelfImageError(),
-                              ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: inputBg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: secondaryColor.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  gradient: ctaGradient,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withValues(alpha: 0.22),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
                     ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: IconButton(
-                      onPressed: _clearShelfPhoto,
-                      tooltip: 'Fotoğrafı kaldır',
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: darkText,
-                        minimumSize: const Size(34, 34),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ],
+                ),
+                child: const Icon(
+                  Icons.photo_library_rounded,
+                  color: Colors.white,
+                  size: 19,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Galeri Stüdyosu',
+                      style: TextStyle(
+                        color: darkText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.storefront_rounded,
-                    size: 16,
-                    color: primaryColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _selectedShelfFileName ?? 'Yayınlanmış raf fotoğrafı',
+                    SizedBox(height: 2),
+                    Text(
+                      'Kapak, fotoğraflar ve kısa açıklamalar',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: darkText,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                      style: TextStyle(
+                        color: mutedText,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.86),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: cardBorder),
+                ),
+                child: Text(
+                  '${_galleryItems.length} / $_maxGalleryPhotos',
+                  style: const TextStyle(
+                    color: darkText,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
                   ),
-                  Text(
-                    'Değiştir',
-                    style: TextStyle(
-                      color: softText.withValues(alpha: 0.78),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_galleryItems.isEmpty)
+            _buildGalleryEmptyState()
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 620;
+                if (!isWide) {
+                  return Column(
+                    children: [
+                      _buildGalleryMainStage(selectedItem!),
+                      const SizedBox(height: 14),
+                      _buildGalleryGrid(),
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _buildGalleryMainStage(selectedItem!)),
+                    const SizedBox(width: 16),
+                    SizedBox(width: 230, child: _buildGalleryGrid()),
+                  ],
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGalleryEmptyState() {
+    return InkWell(
+      onTap: _pickGalleryPhotos,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                gradient: ctaGradient,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: 0.22),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-            ],
-            const Icon(
-              Icons.add_a_photo_outlined,
-              size: 26,
-              color: primaryColor,
+              child: const Icon(
+                Icons.add_photo_alternate_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             const Text(
-              'Anlık raf / reyon fotoğrafı',
+              'İlk fotoğrafı ekle',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: darkText,
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w900,
+                letterSpacing: 0,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 7),
             Text(
-              'Bugünkü rafınızı, kampanyalı ürünlerinizi veya yeni gelenleri müşterilere gösterin.',
+              'Mağazanı, ürünlerini veya rafını gösteren güçlü görseller seç. İlk fotoğraf kapak olur.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: softText.withValues(alpha: 0.76),
-                fontSize: 11,
+                color: softText.withValues(alpha: 0.74),
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
-                height: 1.35,
+                height: 1.4,
               ),
             ),
-            const SizedBox(height: 12),
-            Wrap(
+            const SizedBox(height: 14),
+            const Wrap(
               alignment: WrapAlignment.center,
               spacing: 6,
               runSpacing: 6,
-              children: const [
-                _ShelfHintChip(label: 'Bugünün vitrini'),
-                _ShelfHintChip(label: 'Yeni gelenler'),
-                _ShelfHintChip(label: 'Kampanya rafı'),
+              children: [
+                _ShelfHintChip(label: 'Kapak fotoğrafı'),
+                _ShelfHintChip(label: 'Ürün alanı'),
+                _ShelfHintChip(label: 'Mağaza atmosferi'),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildGalleryMainStage(_EditorGalleryItem item) {
+    final isCover = _selectedGalleryIndex == 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: AspectRatio(
+            aspectRatio: 16 / 10,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _buildEditorGalleryImage(item),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.08),
+                        Colors.black.withValues(alpha: 0.05),
+                        Colors.black.withValues(alpha: 0.48),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: _GalleryPill(
+                    label:
+                        isCover
+                            ? 'Kapak'
+                            : '${_selectedGalleryIndex + 1}. fotoğraf',
+                    icon: isCover ? Icons.star_rounded : Icons.image_rounded,
+                  ),
+                ),
+                Positioned(
+                  right: 10,
+                  bottom: 10,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
+                    children: [
+                      if (!isCover)
+                        _buildGalleryToolbarButton(
+                          label: 'Kapak yap',
+                          icon: Icons.star_rounded,
+                          onPressed:
+                              () => _makeGalleryCover(_selectedGalleryIndex),
+                        ),
+                      _buildGalleryToolbarButton(
+                        label: 'Değiştir',
+                        icon: Icons.swap_horiz_rounded,
+                        onPressed:
+                            () => _replaceGalleryPhoto(_selectedGalleryIndex),
+                      ),
+                      _buildGalleryToolbarButton(
+                        label: 'Sil',
+                        icon: Icons.close_rounded,
+                        onPressed:
+                            () => _removeGalleryPhoto(_selectedGalleryIndex),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        _buildGalleryMetaFields(item),
+      ],
+    );
+  }
+
+  Widget _buildGalleryMetaFields(_EditorGalleryItem item) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildCompactGalleryTextField(
+          label: 'Kısa başlık',
+          controller: item.titleController,
+          hintText: 'Örn: Yeni sezon rafı',
+          maxLength: 40,
+        ),
+        const SizedBox(height: 10),
+        _buildCompactGalleryTextField(
+          label: 'Açıklama',
+          controller: item.descriptionController,
+          hintText: 'Örn: El yapımı ürünlerin yer aldığı ana vitrin.',
+          maxLength: 120,
+          maxLines: 2,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactGalleryTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hintText,
+    required int maxLength,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: softText.withValues(alpha: 0.82),
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 7),
+        TextField(
+          controller: controller,
+          maxLength: maxLength,
+          maxLines: maxLines,
+          onChanged: (_) {
+            _syncPublishedGalleryData();
+            setState(() {});
+          },
+          decoration: InputDecoration(
+            counterText: '',
+            hintText: hintText,
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.86),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 11,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(color: Color(0x66FF4D00)),
+            ),
+            hintStyle: TextStyle(
+              color: mutedText.withValues(alpha: 0.62),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          style: const TextStyle(
+            color: darkText,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGalleryGrid() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 420 ? 3 : 2;
+        const gap = 9.0;
+        final tileWidth =
+            (constraints.maxWidth - gap * (columns - 1)) / columns;
+        final children = <Widget>[
+          ...List.generate(
+            _galleryItems.length,
+            (index) => SizedBox(
+              width: tileWidth,
+              child: _buildGalleryThumbnailTile(index),
+            ),
+          ),
+          if (_galleryItems.length < _maxGalleryPhotos)
+            SizedBox(width: tileWidth, child: _buildGalleryAddTile()),
+        ];
+
+        return Wrap(spacing: gap, runSpacing: gap, children: children);
+      },
+    );
+  }
+
+  Widget _buildGalleryThumbnailTile(int index) {
+    final item = _galleryItems[index];
+    final isSelected = _selectedGalleryIndex == index;
+
+    return InkWell(
+      onTap: () => _selectGalleryItem(index),
+      borderRadius: BorderRadius.circular(15),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: EdgeInsets.all(isSelected ? 2 : 0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: isSelected ? primaryColor : cardBorder,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: primaryColor.withValues(alpha: 0.18),
+                      blurRadius: 14,
+                      offset: const Offset(0, 7),
+                    ),
+                  ]
+                  : null,
+        ),
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(isSelected ? 12 : 15),
+                child: _buildEditorGalleryImage(item),
+              ),
+              Positioned(
+                left: 6,
+                top: 6,
+                child: _GalleryPill(
+                  label: index == 0 ? 'Kapak' : '${index + 1}',
+                  icon: index == 0 ? Icons.star_rounded : Icons.image_rounded,
+                  compact: true,
+                ),
+              ),
+              Positioned(
+                right: 5,
+                top: 5,
+                child: GestureDetector(
+                  onTap: () => _removeGalleryPhoto(index),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 15,
+                      color: darkText,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGalleryAddTile() {
+    return InkWell(
+      onTap: _pickGalleryPhotos,
+      borderRadius: BorderRadius.circular(15),
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.78),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: cardBorder),
+          ),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_photo_alternate_rounded, color: primaryColor),
+              SizedBox(height: 6),
+              Text(
+                'Ekle',
+                style: TextStyle(
+                  color: darkText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGalleryToolbarButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.92),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: darkText),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: darkText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditorGalleryImage(_EditorGalleryItem item) {
+    final bytes = item.bytes;
+    if (bytes != null) {
+      return Image.memory(
+        bytes,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+      );
+    }
+
+    return Image.network(
+      item.imageUrl.trim(),
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _buildShelfImageError(),
     );
   }
 
@@ -3575,7 +4155,11 @@ class _EditorScreenState extends State<EditorScreen>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => PreviewScreen(storeData: _data),
+                      builder:
+                          (_) => PreviewScreen(
+                            storeData: _data,
+                            previewGalleryItems: _galleryPreviewItems(),
+                          ),
                     ),
                   );
                 },
@@ -3586,6 +4170,127 @@ class _EditorScreenState extends State<EditorScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EditorGalleryItem {
+  final String id;
+  Uint8List? bytes;
+  String imageUrl;
+  String? fileName;
+  String extension;
+  String contentType;
+  final TextEditingController titleController;
+  final TextEditingController descriptionController;
+
+  _EditorGalleryItem({
+    required this.id,
+    this.bytes,
+    this.imageUrl = '',
+    this.fileName,
+    this.extension = 'jpg',
+    this.contentType = 'image/jpeg',
+    String title = '',
+    String description = '',
+  }) : titleController = TextEditingController(text: title),
+       descriptionController = TextEditingController(text: description);
+
+  factory _EditorGalleryItem.fromStoreItem(StoreGalleryItem item) {
+    return _EditorGalleryItem(
+      id:
+          item.id.isEmpty
+              ? DateTime.now().microsecondsSinceEpoch.toString()
+              : item.id,
+      imageUrl: item.imageUrl,
+      title: item.title,
+      description: item.description,
+    );
+  }
+
+  String get title => titleController.text.trim();
+
+  String get description => descriptionController.text.trim();
+
+  bool get hasLocalBytes => bytes != null;
+
+  bool get hasPreviewImage => hasLocalBytes || imageUrl.trim().isNotEmpty;
+
+  void markUploaded(String uploadedUrl) {
+    imageUrl = uploadedUrl;
+    bytes = null;
+  }
+
+  void replaceImageFrom(_EditorGalleryItem replacement) {
+    bytes = replacement.bytes;
+    imageUrl = '';
+    fileName = replacement.fileName;
+    extension = replacement.extension;
+    contentType = replacement.contentType;
+  }
+
+  StoreGalleryItem toStoreItem() {
+    return StoreGalleryItem(
+      id: id,
+      imageUrl: imageUrl.trim(),
+      title: title,
+      description: description,
+    );
+  }
+
+  VitrinGalleryPreviewItem toPreviewItem() {
+    return VitrinGalleryPreviewItem(
+      imageUrl: imageUrl,
+      imageBytes: bytes,
+      title: title,
+      description: description,
+    );
+  }
+
+  void dispose() {
+    titleController.dispose();
+    descriptionController.dispose();
+  }
+}
+
+class _GalleryPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool compact;
+
+  const _GalleryPill({
+    required this.label,
+    required this.icon,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 7 : 9,
+        vertical: compact ? 4 : 6,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.54),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: compact ? 10 : 13),
+          SizedBox(width: compact ? 3 : 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: compact ? 8.5 : 10,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }

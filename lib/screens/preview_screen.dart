@@ -5,8 +5,13 @@ import 'package:vitrinx/widgets/vitrin_view.dart';
 
 class PreviewScreen extends StatelessWidget {
   final StoreData storeData;
+  final List<VitrinGalleryPreviewItem>? previewGalleryItems;
 
-  const PreviewScreen({super.key, required this.storeData});
+  const PreviewScreen({
+    super.key,
+    required this.storeData,
+    this.previewGalleryItems,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +31,10 @@ class PreviewScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: VitrinView(storeData: storeData),
+      body: VitrinView(
+        storeData: storeData,
+        previewGalleryItems: previewGalleryItems,
+      ),
       floatingActionButton:
           storeData.isEsnafMode
               ? FloatingActionButton.extended(

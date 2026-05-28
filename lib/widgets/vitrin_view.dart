@@ -6,11 +6,36 @@ import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
 
+class VitrinGalleryPreviewItem {
+  final String imageUrl;
+  final Uint8List? imageBytes;
+  final String title;
+  final String description;
+
+  const VitrinGalleryPreviewItem({
+    this.imageUrl = '',
+    this.imageBytes,
+    this.title = '',
+    this.description = '',
+  });
+
+  factory VitrinGalleryPreviewItem.fromStoreItem(StoreGalleryItem item) {
+    return VitrinGalleryPreviewItem(
+      imageUrl: item.imageUrl,
+      title: item.title,
+      description: item.description,
+    );
+  }
+
+  bool get hasImage => imageBytes != null || imageUrl.trim().isNotEmpty;
+}
+
 class VitrinView extends StatelessWidget {
   final StoreData storeData;
   final bool isEmbedded;
   final bool publicMode;
   final bool compactEmbeddedHeader;
+  final List<VitrinGalleryPreviewItem>? previewGalleryItems;
 
   /// Public vitrinde sayfanın tamamını tarayacak olan URL.
   /// Doluysa [publicMode] == true iken gerçek QR kod kartı gösterilir.
@@ -22,6 +47,7 @@ class VitrinView extends StatelessWidget {
     this.isEmbedded = false,
     this.publicMode = false,
     this.compactEmbeddedHeader = false,
+    this.previewGalleryItems,
     this.publicLink,
   });
 
@@ -30,9 +56,10 @@ class VitrinView extends StatelessWidget {
     final preset = vitrinThemePresetFor(storeData.theme);
     final themeData = _getThemeData(preset);
     final radius = isEmbedded ? 24.0 : 40.0;
-    final hasShelfImage = storeData.shelfImageUrl.trim().isNotEmpty;
+    final galleryItems = _effectiveGalleryItems();
+    final hasGalleryMedia = galleryItems.isNotEmpty;
     final children = <Widget>[
-      _buildModernHeader(preset, radius),
+      _buildModernHeader(preset, radius, galleryItems),
       SizedBox(height: isEmbedded ? 14 : 24),
       _buildStoreIdentityBlock(preset),
       SizedBox(height: isEmbedded ? 16 : 28),
@@ -47,8 +74,8 @@ class VitrinView extends StatelessWidget {
         _buildProfessionalBio(preset),
         SizedBox(height: isEmbedded ? 16 : 48),
       ],
-      if (hasShelfImage) ...[
-        _buildShelfImageCard(preset),
+      if (hasGalleryMedia) ...[
+        _buildShelfImageCard(preset, galleryItems),
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
       _buildModernLinkHub(preset, radius),
@@ -137,9 +164,49 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildModernHeader(VitrinThemePreset preset, double radius) {
-    final imageUrl = storeData.shelfImageUrl.trim();
-    final hasHeroImage = imageUrl.isNotEmpty;
+  List<VitrinGalleryPreviewItem> _effectiveGalleryItems() {
+    final previewItems =
+        previewGalleryItems?.where((item) => item.hasImage).take(12).toList();
+    if (previewItems != null && previewItems.isNotEmpty) return previewItems;
+
+    return storeData.displayGalleryItems
+        .map(VitrinGalleryPreviewItem.fromStoreItem)
+        .toList();
+  }
+
+  Widget _buildGalleryImage(
+    VitrinGalleryPreviewItem item, {
+    BoxFit fit = BoxFit.cover,
+    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder,
+  }) {
+    final imageBytes = item.imageBytes;
+    if (imageBytes != null) {
+      return Image.memory(
+        imageBytes,
+        width: double.infinity,
+        height: double.infinity,
+        fit: fit,
+        filterQuality: FilterQuality.medium,
+      );
+    }
+
+    return Image.network(
+      item.imageUrl.trim(),
+      width: double.infinity,
+      height: double.infinity,
+      fit: fit,
+      filterQuality: FilterQuality.medium,
+      errorBuilder: errorBuilder,
+    );
+  }
+
+  Widget _buildModernHeader(
+    VitrinThemePreset preset,
+    double radius,
+    List<VitrinGalleryPreviewItem> galleryItems,
+  ) {
+    final heroItem = galleryItems.isEmpty ? null : galleryItems.first;
+    final hasHeroImage = heroItem != null;
     final heroHeight =
         isEmbedded
             ? (compactEmbeddedHeader ? 178.0 : 230.0)
@@ -165,10 +232,13 @@ class VitrinView extends StatelessWidget {
                   bottomRight: Radius.circular(34),
                 )
                 : BorderRadius.circular(radius),
-        border: Border.all(color: preset.border.withOpacity(0.55), width: 1),
+        border: Border.all(
+          color: preset.border.withValues(alpha: 0.55),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(preset.isDark ? 0.28 : 0.08),
+            color: Colors.black.withValues(alpha: preset.isDark ? 0.28 : 0.08),
             blurRadius: publicMode ? 34 : 22,
             offset: const Offset(0, 14),
           ),
@@ -177,11 +247,9 @@ class VitrinView extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (hasHeroImage)
-            Image.network(
-              imageUrl,
-              fit: BoxFit.cover,
-              filterQuality: FilterQuality.medium,
+          if (heroItem != null)
+            _buildGalleryImage(
+              heroItem,
               errorBuilder:
                   (_, __, ___) => Stack(
                     fit: StackFit.expand,
@@ -201,17 +269,17 @@ class VitrinView extends StatelessWidget {
                 colors:
                     hasHeroImage
                         ? [
-                          Colors.black.withOpacity(0.24),
-                          Colors.black.withOpacity(0.36),
-                          Colors.black.withOpacity(0.70),
+                          Colors.black.withValues(alpha: 0.24),
+                          Colors.black.withValues(alpha: 0.36),
+                          Colors.black.withValues(alpha: 0.70),
                         ]
                         : [
                           Colors.transparent,
-                          preset.background.withOpacity(
-                            preset.isDark ? 0.12 : 0.18,
+                          preset.background.withValues(
+                            alpha: preset.isDark ? 0.12 : 0.18,
                           ),
-                          preset.background.withOpacity(
-                            preset.isDark ? 0.34 : 0.58,
+                          preset.background.withValues(
+                            alpha: preset.isDark ? 0.34 : 0.58,
                           ),
                         ],
               ),
@@ -273,11 +341,13 @@ class VitrinView extends StatelessWidget {
                       vertical: isEmbedded ? 6 : 7,
                     ),
                     decoration: BoxDecoration(
-                      color: preset.accent.withOpacity(
-                        preset.isDark ? 0.16 : 0.11,
+                      color: preset.accent.withValues(
+                        alpha: preset.isDark ? 0.16 : 0.11,
                       ),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: preset.accent.withOpacity(0.2)),
+                      border: Border.all(
+                        color: preset.accent.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Text(
                       (businessType.isEmpty ? 'Vitrin' : businessType)
@@ -321,9 +391,9 @@ class VitrinView extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            preset.accent.withOpacity(preset.isDark ? 0.2 : 0.16),
-            preset.surfaceSoft.withOpacity(preset.isDark ? 0.42 : 0.88),
-            preset.background.withOpacity(preset.isDark ? 0.96 : 0.98),
+            preset.accent.withValues(alpha: preset.isDark ? 0.2 : 0.16),
+            preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.42 : 0.88),
+            preset.background.withValues(alpha: preset.isDark ? 0.96 : 0.98),
           ],
           stops: const [0, 0.48, 1],
         ),
@@ -341,13 +411,13 @@ class VitrinView extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            preset.accent.withOpacity(preset.isDark ? 0.24 : 0.14),
-            preset.surface.withOpacity(preset.isDark ? 0.9 : 0.96),
-            preset.surfaceSoft.withOpacity(preset.isDark ? 0.74 : 0.9),
+            preset.accent.withValues(alpha: preset.isDark ? 0.24 : 0.14),
+            preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.96),
+            preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.74 : 0.9),
           ],
         ),
         border: Border.all(
-          color: preset.accent.withOpacity(preset.isDark ? 0.3 : 0.2),
+          color: preset.accent.withValues(alpha: preset.isDark ? 0.3 : 0.2),
           width: 1.2,
         ),
       ),
@@ -489,119 +559,286 @@ class VitrinView extends StatelessWidget {
     ];
   }
 
-  Widget _buildShelfImageCard(VitrinThemePreset preset) {
+  Widget _buildShelfImageCard(
+    VitrinThemePreset preset,
+    List<VitrinGalleryPreviewItem> galleryItems,
+  ) {
     final isCompact = isEmbedded;
     final cardRadius = isCompact ? 16.0 : 26.0;
+    var selectedIndex = 0;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 14 : 24),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(isCompact ? 10 : 16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              preset.surface,
-              preset.surfaceSoft.withOpacity(preset.isDark ? 0.38 : 0.5),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(cardRadius),
-          border: Border.all(
-            color: preset.border.withOpacity(preset.isDark ? 0.9 : 0.78),
-            width: isCompact ? 1 : 1.3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(preset.isDark ? 0.18 : 0.06),
-              blurRadius: isCompact ? 14 : 28,
-              offset: Offset(0, isCompact ? 4 : 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: isCompact ? 28 : 36,
-                  height: isCompact ? 28 : 36,
-                  decoration: BoxDecoration(
-                    color: preset.accent.withOpacity(
-                      preset.isDark ? 0.2 : 0.12,
-                    ),
-                    borderRadius: BorderRadius.circular(isCompact ? 11 : 13),
+      child: StatefulBuilder(
+        builder: (context, setGalleryState) {
+          if (selectedIndex >= galleryItems.length) selectedIndex = 0;
+          final selectedItem = galleryItems[selectedIndex];
+          final selectedTitle = selectedItem.title.trim();
+          final selectedDescription = selectedItem.description.trim();
+          final shouldShowText =
+              selectedTitle.isNotEmpty || selectedDescription.isNotEmpty;
+
+          return Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(isCompact ? 10 : 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  preset.surface,
+                  preset.surfaceSoft.withValues(
+                    alpha: preset.isDark ? 0.38 : 0.5,
                   ),
-                  child: Icon(
-                    Icons.storefront_rounded,
-                    color: preset.accent,
-                    size: isCompact ? 16 : 18,
-                  ),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(cardRadius),
+              border: Border.all(
+                color: preset.border.withValues(
+                  alpha: preset.isDark ? 0.9 : 0.78,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Bugünkü raf / reyon',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                width: isCompact ? 1 : 1.3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(
+                    alpha: preset.isDark ? 0.18 : 0.06,
+                  ),
+                  blurRadius: isCompact ? 14 : 28,
+                  offset: Offset(0, isCompact ? 4 : 10),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: isCompact ? 28 : 36,
+                      height: isCompact ? 28 : 36,
+                      decoration: BoxDecoration(
+                        color: preset.accent.withValues(
+                          alpha: preset.isDark ? 0.2 : 0.12,
+                        ),
+                        borderRadius: BorderRadius.circular(
+                          isCompact ? 11 : 13,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.photo_library_rounded,
+                        color: preset.accent,
+                        size: isCompact ? 16 : 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Vitrin galerisi',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: preset.textPrimary,
+                              fontSize: isCompact ? 11 : 15,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                          Text(
+                            '${selectedIndex + 1} / ${galleryItems.length} seçili',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: preset.textSecondary,
+                              fontSize: isCompact ? 9 : 11,
+                              fontWeight: FontWeight.w600,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isCompact ? 8 : 10,
+                        vertical: isCompact ? 5 : 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: preset.accent.withValues(
+                          alpha: preset.isDark ? 0.18 : 0.1,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: preset.accent.withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Text(
+                        '${galleryItems.length} fotoğraf',
                         style: TextStyle(
-                          color: preset.textPrimary,
-                          fontSize: isCompact ? 11 : 15,
+                          color: preset.accent,
+                          fontSize: isCompact ? 9 : 10,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0,
                         ),
                       ),
-                      Text(
-                        'Mağazadan güncel görünüm',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: preset.textSecondary,
-                          fontSize: isCompact ? 9 : 11,
-                          fontWeight: FontWeight.w600,
-                          height: 1.3,
+                    ),
+                  ],
+                ),
+                SizedBox(height: isCompact ? 10 : 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(isCompact ? 12 : 20),
+                  child: AspectRatio(
+                    aspectRatio:
+                        isCompact
+                            ? 16 / 9
+                            : publicMode
+                            ? 16 / 9
+                            : 16 / 10,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _buildGalleryImage(
+                          selectedItem,
+                          errorBuilder:
+                              (_, __, ___) => Container(
+                                color: preset.surfaceSoft,
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  color: preset.textSecondary,
+                                  size: isCompact ? 26 : 32,
+                                ),
+                              ),
                         ),
-                      ),
-                    ],
+                        Positioned(
+                          left: isCompact ? 8 : 12,
+                          top: isCompact ? 8 : 12,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isCompact ? 8 : 10,
+                              vertical: isCompact ? 5 : 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.48),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Text(
+                              selectedIndex == 0
+                                  ? 'Kapak'
+                                  : '${selectedIndex + 1}. fotoğraf',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isCompact ? 9 : 10,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+                if (shouldShowText) ...[
+                  SizedBox(height: isCompact ? 10 : 12),
+                  if (selectedTitle.isNotEmpty)
+                    Text(
+                      selectedTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: preset.textPrimary,
+                        fontSize: isCompact ? 12 : 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                        height: 1.2,
+                      ),
+                    ),
+                  if (selectedDescription.isNotEmpty) ...[
+                    SizedBox(height: isCompact ? 4 : 6),
+                    Text(
+                      selectedDescription,
+                      maxLines: isCompact ? 2 : 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: preset.textSecondary,
+                        fontSize: isCompact ? 10 : 12,
+                        fontWeight: FontWeight.w600,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ],
+                if (galleryItems.length > 1) ...[
+                  SizedBox(height: isCompact ? 10 : 14),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(galleryItems.length, (index) {
+                        final item = galleryItems[index];
+                        final isSelected = selectedIndex == index;
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            right: index == galleryItems.length - 1 ? 0 : 8,
+                          ),
+                          child: GestureDetector(
+                            onTap:
+                                () => setGalleryState(
+                                  () => selectedIndex = index,
+                                ),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              width: isCompact ? 48 : 58,
+                              height: isCompact ? 48 : 58,
+                              padding: EdgeInsets.all(isSelected ? 2 : 0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(
+                                  isCompact ? 12 : 15,
+                                ),
+                                border: Border.all(
+                                  color:
+                                      isSelected
+                                          ? preset.accent
+                                          : preset.border.withValues(
+                                            alpha: 0.72,
+                                          ),
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                  isCompact ? 9 : 12,
+                                ),
+                                child: _buildGalleryImage(
+                                  item,
+                                  errorBuilder:
+                                      (_, __, ___) => Container(
+                                        color: preset.surfaceSoft,
+                                        alignment: Alignment.center,
+                                        child: Icon(
+                                          Icons.image_not_supported_outlined,
+                                          color: preset.textSecondary,
+                                          size: isCompact ? 16 : 18,
+                                        ),
+                                      ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ],
               ],
             ),
-            SizedBox(height: isCompact ? 10 : 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(isCompact ? 12 : 20),
-              child: AspectRatio(
-                aspectRatio:
-                    isCompact
-                        ? 16 / 9
-                        : publicMode
-                        ? 16 / 9
-                        : 16 / 10,
-                child: Image.network(
-                  storeData.shelfImageUrl.trim(),
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  filterQuality: FilterQuality.medium,
-                  errorBuilder:
-                      (_, __, ___) => Container(
-                        color: preset.surfaceSoft,
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.broken_image_outlined,
-                          color: preset.textSecondary,
-                          size: isCompact ? 26 : 32,
-                        ),
-                      ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -616,15 +853,17 @@ class VitrinView extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(isCompact ? 16 : 22),
         decoration: BoxDecoration(
-          color: preset.surface.withOpacity(preset.isDark ? 0.9 : 0.98),
+          color: preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.98),
           borderRadius: BorderRadius.circular(isCompact ? 16 : 24),
           border: Border.all(
-            color: preset.border.withOpacity(preset.isDark ? 0.9 : 0.78),
+            color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
             width: isCompact ? 1 : 1.3,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(preset.isDark ? 0.12 : 0.045),
+              color: Colors.black.withValues(
+                alpha: preset.isDark ? 0.12 : 0.045,
+              ),
               blurRadius: isCompact ? 12 : 24,
               offset: Offset(0, isCompact ? 3 : 8),
             ),
@@ -679,7 +918,7 @@ class VitrinView extends StatelessWidget {
         children: [
           Icon(
             Icons.format_quote_rounded,
-            color: preset.accent.withOpacity(preset.isDark ? 0.28 : 0.18),
+            color: preset.accent.withValues(alpha: preset.isDark ? 0.28 : 0.18),
             size: isCompact ? 38 : 54,
           ),
           SizedBox(height: isCompact ? 4 : 8),
@@ -891,12 +1130,12 @@ class VitrinView extends StatelessWidget {
           color: preset.qrBackground,
           borderRadius: BorderRadius.circular(isCompact ? 20 : radius),
           border: Border.all(
-            color: preset.qrForeground.withOpacity(0.14),
+            color: preset.qrForeground.withValues(alpha: 0.14),
             width: isCompact ? 1.5 : 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: isCompact ? 24 : 40,
               offset: Offset(0, isCompact ? 8 : 15),
             ),
@@ -909,7 +1148,7 @@ class VitrinView extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(isCompact ? 10 : 14),
                   decoration: BoxDecoration(
-                    color: preset.qrForeground.withOpacity(0.06),
+                    color: preset.qrForeground.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
                   ),
                   child: Icon(
@@ -939,7 +1178,7 @@ class VitrinView extends StatelessWidget {
                         'TÜM BİLGİLERİM TEK QR İLE BURADA',
                         style: TextStyle(
                           fontSize: isCompact ? 8 : 10,
-                          color: preset.qrForeground.withOpacity(0.72),
+                          color: preset.qrForeground.withValues(alpha: 0.72),
                           fontWeight: FontWeight.w900,
                           letterSpacing: isCompact ? 0.8 : 1.2,
                         ),
@@ -995,12 +1234,12 @@ class VitrinView extends StatelessWidget {
           color: preset.qrBackground,
           borderRadius: BorderRadius.circular(isCompact ? 18 : 24),
           border: Border.all(
-            color: preset.qrForeground.withOpacity(0.12),
+            color: preset.qrForeground.withValues(alpha: 0.12),
             width: isCompact ? 1 : 1.4,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.055),
+              color: Colors.black.withValues(alpha: 0.055),
               blurRadius: isCompact ? 18 : 28,
               offset: Offset(0, isCompact ? 5 : 10),
             ),
@@ -1022,7 +1261,7 @@ class VitrinView extends StatelessWidget {
               'Müşteriler bu kodu okutarak vitrininize ulaşabilir.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: preset.qrForeground.withOpacity(0.62),
+                color: preset.qrForeground.withValues(alpha: 0.62),
                 fontSize: isCompact ? 11 : 12,
                 fontWeight: FontWeight.w500,
                 height: 1.4,
@@ -1034,7 +1273,9 @@ class VitrinView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: preset.qrBackground,
                 borderRadius: BorderRadius.circular(isCompact ? 16 : 18),
-                border: Border.all(color: preset.qrForeground.withOpacity(0.1)),
+                border: Border.all(
+                  color: preset.qrForeground.withValues(alpha: 0.1),
+                ),
               ),
               child: QrImageView(
                 data: url,
@@ -1067,8 +1308,8 @@ class VitrinView extends StatelessWidget {
           style: TextStyle(
             fontSize: publicMode ? 12 : 14,
             fontWeight: publicMode ? FontWeight.w700 : FontWeight.w800,
-            color: preset.textSecondary.withOpacity(
-              preset.isDark ? 0.86 : 0.78,
+            color: preset.textSecondary.withValues(
+              alpha: preset.isDark ? 0.86 : 0.78,
             ),
             letterSpacing: 0,
           ),
@@ -1077,7 +1318,7 @@ class VitrinView extends StatelessWidget {
         Container(
           height: 1,
           width: publicMode ? 34 : 50,
-          color: preset.border.withOpacity(publicMode ? 0.7 : 1),
+          color: preset.border.withValues(alpha: publicMode ? 0.7 : 1),
         ),
         SizedBox(height: publicMode ? 18 : 24),
         if (!publicMode)
@@ -1086,7 +1327,7 @@ class VitrinView extends StatelessWidget {
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w900,
-              color: preset.textSecondary.withOpacity(0.72),
+              color: preset.textSecondary.withValues(alpha: 0.72),
               letterSpacing: 4,
             ),
           ),
@@ -1171,12 +1412,12 @@ class _ActionIconBtn extends StatelessWidget {
     final buttonRadius = compact ? 12.0 : 16.0;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
-        emphasis ? color : color.withOpacity(isDark ? 0.18 : 0.09);
+        emphasis ? color : color.withValues(alpha: isDark ? 0.18 : 0.09);
     final foregroundColor = emphasis ? Colors.white : color;
     final borderColor =
         emphasis
-            ? color.withOpacity(isDark ? 0.38 : 0.22)
-            : color.withOpacity(isDark ? 0.22 : 0.12);
+            ? color.withValues(alpha: isDark ? 0.38 : 0.22)
+            : color.withValues(alpha: isDark ? 0.22 : 0.12);
 
     return Container(
       decoration: BoxDecoration(
@@ -1187,7 +1428,7 @@ class _ActionIconBtn extends StatelessWidget {
             emphasis
                 ? [
                   BoxShadow(
-                    color: color.withOpacity(isDark ? 0.22 : 0.18),
+                    color: color.withValues(alpha: isDark ? 0.22 : 0.18),
                     blurRadius: compact ? 14 : 22,
                     offset: Offset(0, compact ? 5 : 8),
                   ),
@@ -1263,17 +1504,17 @@ class _ModernLinkItem extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             preset.surface,
-            preset.surfaceSoft.withOpacity(preset.isDark ? 0.36 : 0.5),
+            preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.36 : 0.5),
           ],
         ),
         borderRadius: BorderRadius.circular(compact ? 16 : 24),
         border: Border.all(
-          color: preset.border.withOpacity(preset.isDark ? 0.9 : 0.78),
+          color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
           width: compact ? 1 : 1.3,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(preset.isDark ? 0.14 : 0.045),
+            color: Colors.black.withValues(alpha: preset.isDark ? 0.14 : 0.045),
             blurRadius: compact ? 12 : 24,
             offset: Offset(0, compact ? 3 : 8),
           ),
@@ -1291,11 +1532,13 @@ class _ModernLinkItem extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(compact ? 9 : 13),
                   decoration: BoxDecoration(
-                    color: effectiveColor.withOpacity(
-                      preset.isDark ? 0.2 : 0.11,
+                    color: effectiveColor.withValues(
+                      alpha: preset.isDark ? 0.2 : 0.11,
                     ),
                     borderRadius: BorderRadius.circular(compact ? 11 : 16),
-                    border: Border.all(color: effectiveColor.withOpacity(0.08)),
+                    border: Border.all(
+                      color: effectiveColor.withValues(alpha: 0.08),
+                    ),
                   ),
                   child: Icon(
                     icon,
@@ -1336,15 +1579,17 @@ class _ModernLinkItem extends StatelessWidget {
                   width: compact ? 24 : 30,
                   height: compact ? 24 : 30,
                   decoration: BoxDecoration(
-                    color: preset.surfaceSoft.withOpacity(
-                      preset.isDark ? 0.38 : 0.72,
+                    color: preset.surfaceSoft.withValues(
+                      alpha: preset.isDark ? 0.38 : 0.72,
                     ),
                     shape: BoxShape.circle,
-                    border: Border.all(color: preset.border.withOpacity(0.6)),
+                    border: Border.all(
+                      color: preset.border.withValues(alpha: 0.6),
+                    ),
                   ),
                   child: Icon(
                     Icons.arrow_forward_ios_rounded,
-                    color: preset.textSecondary.withOpacity(0.75),
+                    color: preset.textSecondary.withValues(alpha: 0.75),
                     size: compact ? 10 : 12,
                   ),
                 ),

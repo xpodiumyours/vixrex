@@ -28,7 +28,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
         await Supabase.instance.client
             .from('stores')
             .select(
-              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,theme,status,marketplace_links,references_link,shelf_image_url,is_published',
+              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published',
             )
             .eq('slug', widget.slug)
             .eq('is_published', true)
@@ -59,6 +59,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       corporateBio: corporateBio,
       referencesLink: _readString(data['references_link']),
       shelfImageUrl: _readString(data['shelf_image_url']),
+      galleryItems: _parseGalleryItems(data['gallery_items']),
       marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),
     );
   }
@@ -91,6 +92,27 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
           .toList();
     } catch (error) {
       debugPrint('Marketplace links parse error: $error');
+      return [];
+    }
+  }
+
+  List<StoreGalleryItem> _parseGalleryItems(Object? rawItems) {
+    try {
+      final decodedItems = rawItems is String ? jsonDecode(rawItems) : rawItems;
+
+      if (decodedItems is! List) return [];
+
+      return decodedItems
+          .whereType<Map>()
+          .map(
+            (item) =>
+                StoreGalleryItem.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .where((item) => item.imageUrl.trim().isNotEmpty)
+          .take(12)
+          .toList();
+    } catch (error) {
+      debugPrint('Gallery items parse error: $error');
       return [];
     }
   }
@@ -169,7 +191,7 @@ class _PublicVitrinShell extends StatelessWidget {
                             isDesktop
                                 ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
+                                    color: Colors.black.withValues(alpha: 0.08),
                                     blurRadius: 30,
                                     offset: const Offset(0, 16),
                                   ),
