@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 
 class PublicVitrinScreen extends StatefulWidget {
@@ -36,6 +38,12 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
             .maybeSingle();
 
     if (response == null) return null;
+    unawaited(
+      const VitrinViewService().recordView(
+        slug: widget.slug,
+        source: _readViewSource(),
+      ),
+    );
     return _storeDataFromSupabase(response);
   }
 
@@ -69,6 +77,18 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
     if (value == null) return fallback;
     final text = value.toString().trim();
     return text.isEmpty ? fallback : text;
+  }
+
+  String _readViewSource() {
+    final source =
+        Uri.base.queryParameters['src'] ?? Uri.base.queryParameters['source'];
+    final normalized = source?.trim().toLowerCase();
+
+    if (normalized == 'direct' || normalized == 'qr' || normalized == 'share') {
+      return normalized!;
+    }
+
+    return source == null ? 'direct' : 'unknown';
   }
 
   List<MarketplaceLink> _parseMarketplaceLinks(Object? rawLinks) {
