@@ -62,7 +62,7 @@ class VitrinProductCard extends StatelessWidget {
                   child: Icon(
                     Icons.image_outlined,
                     size: 40,
-                    color: theme.primaryColor.withOpacity(0.2),
+                    color: theme.primaryColor.withValues(alpha: 0.2),
                   ),
                 ),
               ),
@@ -82,7 +82,7 @@ class VitrinProductCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w900,
-                        color: theme.primaryColor.withOpacity(0.5),
+                        color: theme.primaryColor.withValues(alpha: 0.5),
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -151,3 +151,4 @@ class VitrinProductCard extends StatelessWidget {
     );
   }
 }
+
