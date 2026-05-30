@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
+import 'package:vitrinx/services/store_publish_validator.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
@@ -221,6 +222,23 @@ class _EditorScreenState extends State<EditorScreen>
   Future<void> _publishStore() async {
     if (_isPublishing) return;
 
+    final validationMessage = const StorePublishValidator().validate(_data);
+    if (validationMessage != null) {
+      setState(() {
+        _publishedLink = null;
+        _publishError = validationMessage;
+      });
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(validationMessage),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isPublishing = true;
       _isUploadingGallery = _galleryItems.any((item) => item.hasLocalBytes);
@@ -236,6 +254,11 @@ class _EditorScreenState extends State<EditorScreen>
         if (mounted) {
           setState(() => _isUploadingGallery = false);
         }
+        if (failedUploadCount > 0) {
+          throw StorePublishException(
+            '$failedUploadCount fotoğraf yüklenemedi. Vitrin yayınlanmadı. Lütfen tekrar deneyin veya sorunlu fotoğrafı kaldırın.',
+          );
+        }
       }
 
       _syncPublishedGalleryData();
@@ -249,9 +272,7 @@ class _EditorScreenState extends State<EditorScreen>
       if (!mounted) return;
 
       final publishSnackMessage =
-          failedUploadCount > 0
-              ? '$failedUploadCount fotoğraf yüklenemedi. Diğer görsellerle vitrin güncellendi.'
-              : publishResult.wasUpdated
+          publishResult.wasUpdated
               ? 'Vitrininiz güncellendi.'
               : 'Vitrin linkiniz hazırlandı.';
       setState(() => _publishedLink = publicLink);

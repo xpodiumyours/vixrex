@@ -2,18 +2,26 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
+import 'package:vitrinx/services/store_publish_validator.dart';
 
 class StorePublishService {
   final StorePublishPayloadBuilder payloadBuilder;
+  final StorePublishValidator validator;
 
   const StorePublishService({
     this.payloadBuilder = const StorePublishPayloadBuilder(),
+    this.validator = const StorePublishValidator(),
   });
 
   Future<StorePublishResult> publishStore(
     StoreData data, {
     required String editToken,
   }) async {
+    final validationMessage = validator.validate(data);
+    if (validationMessage != null) {
+      throw StorePublishException(validationMessage);
+    }
+
     final slug = payloadBuilder.generateSlug(data.name);
     late final SupabaseClient client;
 
