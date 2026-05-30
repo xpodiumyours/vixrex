@@ -1,0 +1,146 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/store_publish_payload_builder.dart';
+
+void main() {
+  const builder = StorePublishPayloadBuilder();
+
+  group('StorePublishPayloadBuilder slug', () {
+    test('Türkçe karakterleri ve boşlukları güvenli slug değerine çevirir', () {
+      expect(
+        builder.generateSlug('  Aymira Giyim Şişli  '),
+        'aymira-giyim-sisli',
+      );
+      expect(
+        builder.generateSlug('Çanta & Aksesuar / Özel'),
+        'canta-aksesuar-ozel',
+      );
+      expect(builder.generateSlug(''), 'magazaniz');
+      expect(builder.generateSlug('!!!'), 'magazaniz');
+    });
+  });
+
+  group('StorePublishPayloadBuilder payload', () {
+    test('store update payload alanlarını trimleyerek hazırlar', () {
+      final data = StoreData(
+        name: '  Aymira Giyim  ',
+        businessType: ' Butik ',
+        description: '  Yeni sezon ürünler  ',
+        corporateBio: '  Mahalle butiği  ',
+        whatsapp: '  0555 111 22 33  ',
+        instagram: '  @aymira  ',
+        website: '  https://example.com  ',
+        address: '  Kadıköy, İstanbul  ',
+        theme: ' Premium ',
+        status: ' Açık ',
+        referencesLink: '  https://example.com/referans  ',
+        galleryItems: [
+          StoreGalleryItem(
+            id: '  cover  ',
+            imageUrl: '  https://example.com/cover.jpg  ',
+            title: '  Kapak  ',
+            description: '  Ana reyon  ',
+          ),
+        ],
+        marketplaceLinks: [
+          MarketplaceLink(
+            id: '1',
+            platform: ' Trendyol ',
+            url: ' https://trendyol.com/magaza ',
+          ),
+        ],
+      );
+
+      final payload = builder.toStoreUpdateMap(data);
+
+      expect(payload['name'], 'Aymira Giyim');
+      expect(payload['business_type'], 'Butik');
+      expect(payload['description'], 'Yeni sezon ürünler');
+      expect(payload['corporate_bio'], 'Mahalle butiği');
+      expect(payload['whatsapp'], '0555 111 22 33');
+      expect(payload['instagram'], '@aymira');
+      expect(payload['website'], 'https://example.com');
+      expect(payload['address'], 'Kadıköy, İstanbul');
+      expect(payload['theme'], 'Premium');
+      expect(payload['status'], 'Açık');
+      expect(payload['references_link'], 'https://example.com/referans');
+      expect(payload['shelf_image_url'], 'https://example.com/cover.jpg');
+      expect(payload['is_published'], isTrue);
+    });
+
+    test('insert payload slug ve edit token ekler', () {
+      final payload = builder.toStoreInsertMap(
+        StoreData(name: 'Aymira'),
+        'aymira',
+        'edit-token',
+      );
+
+      expect(payload['slug'], 'aymira');
+      expect(payload['edit_token'], 'edit-token');
+      expect(payload['is_published'], isTrue);
+    });
+  });
+
+  group('StorePublishPayloadBuilder gallery items', () {
+    test('galeri öğelerini trimler ve en fazla 12 öğe döndürür', () {
+      final data = StoreData(
+        galleryItems: List.generate(
+          14,
+          (index) => StoreGalleryItem(
+            id: ' $index ',
+            imageUrl: ' https://example.com/$index.jpg ',
+            title: ' Başlık $index ',
+            description: ' Açıklama $index ',
+          ),
+        ),
+      );
+
+      final items = builder.galleryItemsToJson(data);
+
+      expect(items, hasLength(12));
+      expect(items.first, {
+        'id': '0',
+        'imageUrl': 'https://example.com/0.jpg',
+        'title': 'Başlık 0',
+        'description': 'Açıklama 0',
+      });
+    });
+
+    test('galeri boşsa eski shelfImageUrl fallback olarak gönderilir', () {
+      final data = StoreData(shelfImageUrl: ' https://example.com/legacy.jpg ');
+
+      final items = builder.galleryItemsToJson(data);
+
+      expect(items, [
+        {
+          'id': 'legacy-shelf-image',
+          'imageUrl': 'https://example.com/legacy.jpg',
+          'title': '',
+          'description': '',
+        },
+      ]);
+    });
+  });
+
+  group('StorePublishPayloadBuilder marketplace links', () {
+    test('sadece platform ve url dolu marketplace linklerini gönderir', () {
+      final data = StoreData(
+        marketplaceLinks: [
+          MarketplaceLink(
+            id: '1',
+            platform: ' Trendyol ',
+            url: ' https://trendyol.com/magaza ',
+          ),
+          MarketplaceLink(id: '2', platform: ' Hepsiburada ', url: ''),
+          MarketplaceLink(id: '3', platform: '', url: 'https://example.com'),
+        ],
+      );
+
+      final links = builder.marketplaceLinksToJson(data);
+
+      expect(links, [
+        {'platform': 'Trendyol', 'url': 'https://trendyol.com/magaza'},
+      ]);
+    });
+  });
+}
