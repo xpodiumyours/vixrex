@@ -1,0 +1,36 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:vitrinx/config/public_site_config.dart';
+
+void main() {
+  group('PublicSiteConfig', () {
+    test('PUBLIC_SITE_URL varsa public linki bu origin ile üretir', () {
+      final link = PublicSiteConfig.buildPublicLink(
+        '/v/test-magaza',
+        configuredOriginOverride: 'https://vitrinx-two.vercel.app/silinecek',
+        baseUriOverride: Uri.parse('http://localhost:7357'),
+      );
+
+      expect(link, 'https://vitrinx-two.vercel.app/v/test-magaza');
+    });
+
+    test('PUBLIC_SITE_URL yoksa mevcut web origin değerine düşer', () {
+      final link = PublicSiteConfig.buildPublicLink(
+        'v/test-magaza',
+        configuredOriginOverride: '',
+        baseUriOverride: Uri.parse('http://localhost:7357/editor'),
+      );
+
+      expect(link, 'http://localhost:7357/v/test-magaza');
+    });
+
+    test('geçersiz origin varsa sadece path döner', () {
+      final link = PublicSiteConfig.buildPublicLink(
+        '/v/test-magaza',
+        configuredOriginOverride: 'vitrinx-two.vercel.app',
+        baseUriOverride: Uri.parse('about:blank'),
+      );
+
+      expect(link, '/v/test-magaza');
+    });
+  });
+}

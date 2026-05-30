@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vitrinx/config/public_vitrin_route_config.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
 
@@ -51,7 +52,7 @@ class VitrinXApp extends StatelessWidget {
   }
 
   Widget _buildInitialHome() {
-    final slug = _publicSlugFromUri(Uri.base);
+    final slug = PublicVitrinRouteConfig.publicSlugFromUri(Uri.base);
 
     if (slug != null) {
       return PublicVitrinScreen(slug: slug);
@@ -62,7 +63,9 @@ class VitrinXApp extends StatelessWidget {
 
   Route<dynamic> _generateRoute(RouteSettings settings) {
     final routeName = settings.name ?? '/';
-    final slug = _publicSlugFromUri(Uri.parse(routeName));
+    final slug = PublicVitrinRouteConfig.publicSlugFromUri(
+      Uri.parse(routeName),
+    );
 
     if (slug != null) {
       return MaterialPageRoute(
@@ -75,14 +78,5 @@ class VitrinXApp extends StatelessWidget {
       builder: (_) => const LandingScreen(),
       settings: settings,
     );
-  }
-
-  String? _publicSlugFromUri(Uri uri) {
-    if (uri.pathSegments.length != 2 || uri.pathSegments.first != 'v') {
-      return null;
-    }
-
-    final slug = uri.pathSegments.last.trim();
-    return slug.isEmpty ? null : slug;
   }
 }

@@ -3,15 +3,21 @@ class PublicSiteConfig {
     'PUBLIC_SITE_URL',
   );
 
-  static String buildPublicLink(String path) {
+  static String buildPublicLink(
+    String path, {
+    String? configuredOriginOverride,
+    Uri? baseUriOverride,
+  }) {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
-    final preferredOrigin = _normalizeOrigin(configuredOrigin);
+    final preferredOrigin = _normalizeOrigin(
+      configuredOriginOverride ?? configuredOrigin,
+    );
 
     if (preferredOrigin != null) {
       return '$preferredOrigin$normalizedPath';
     }
 
-    final base = Uri.base;
+    final base = baseUriOverride ?? Uri.base;
     final hasWebOrigin =
         (base.scheme == 'http' || base.scheme == 'https') &&
         base.host.isNotEmpty;
