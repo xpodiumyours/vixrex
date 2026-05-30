@@ -29,7 +29,6 @@ class _EditorScreenState extends State<EditorScreen>
   late final TabController _mobileTabController;
   final StoreData _data = StoreData(isEsnafMode: false);
   bool _isLoading = true;
-  bool _isGoogleAssistantOpen = false;
   bool _isPublishing = false;
   bool _isUploadingGallery = false;
   int _selectedGalleryIndex = 0;
@@ -115,19 +114,6 @@ class _EditorScreenState extends State<EditorScreen>
       item.dispose();
     }
     super.dispose();
-  }
-
-  void _closeGoogleAssistant() {
-    setState(() => _isGoogleAssistantOpen = false);
-  }
-
-  void _toggleGoogleAssistant() {
-    if (_isGoogleAssistantOpen) {
-      _closeGoogleAssistant();
-      return;
-    }
-
-    setState(() => _isGoogleAssistantOpen = true);
   }
 
   Future<void> _loadSavedData() async {
@@ -782,13 +768,13 @@ class _EditorScreenState extends State<EditorScreen>
     return 'Vitrinin güçlü görünüyor.';
   }
 
-  Color _mobileVitrinScoreTone(int score) {
+  Color _vitrinScoreTone(int score) {
     if (score < 40) return const Color(0xFFEA580C);
     if (score < 80) return const Color(0xFFD97706);
     return const Color(0xFF059669);
   }
 
-  String _mobileVitrinScoreLabel(int score) {
+  String _vitrinScoreLabel(int score) {
     if (score < 40) return 'Eksik';
     if (score < 80) return 'Gelişiyor';
     return 'Güçlü';
@@ -874,7 +860,7 @@ class _EditorScreenState extends State<EditorScreen>
 
   Future<void> _showVitrinScoreSheet() async {
     final score = _calculateVitrinScore(_data);
-    final tone = _mobileVitrinScoreTone(score);
+    final tone = _vitrinScoreTone(score);
     final tasks = _buildVitrinScoreActionTasks();
 
     await showModalBottomSheet<void>(
@@ -1033,6 +1019,10 @@ class _EditorScreenState extends State<EditorScreen>
                       (task) =>
                           _buildScoreTaskRow(task, tone, closeSheet: true),
                     ),
+                  if (score >= 60) ...[
+                    const SizedBox(height: 12),
+                    _buildGoogleVisibilityCta(),
+                  ],
                 ],
               ),
             ),
@@ -1178,9 +1168,9 @@ class _EditorScreenState extends State<EditorScreen>
     );
   }
 
-  Widget _buildMobileVitrinScoreBadge() {
+  Widget _buildVitrinScoreBadge() {
     final score = _calculateVitrinScore(_data);
-    final tone = _mobileVitrinScoreTone(score);
+    final tone = _vitrinScoreTone(score);
 
     return Padding(
       padding: const EdgeInsets.only(right: 10),
@@ -1243,7 +1233,7 @@ class _EditorScreenState extends State<EditorScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _mobileVitrinScoreLabel(score),
+                      _vitrinScoreLabel(score),
                       style: TextStyle(
                         color: tone,
                         fontSize: 8.5,
@@ -1570,6 +1560,7 @@ class _EditorScreenState extends State<EditorScreen>
             isWide
                 ? [
                   _buildTodayViewBadge(),
+                  _buildVitrinScoreBadge(),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: _buildGradientButton(
@@ -1615,7 +1606,7 @@ class _EditorScreenState extends State<EditorScreen>
                 ]
                 : [
                   _buildTodayViewBadge(compact: true),
-                  _buildMobileVitrinScoreBadge(),
+                  _buildVitrinScoreBadge(),
                 ],
       ),
       bottomNavigationBar: !isWide ? _buildMobileBottomActions() : null,
@@ -1657,7 +1648,7 @@ class _EditorScreenState extends State<EditorScreen>
                                 constraints: const BoxConstraints(
                                   maxWidth: 800,
                                 ),
-                                child: _buildForm(showScoreCard: false),
+                                child: _buildForm(),
                               ),
                             ),
                           ),
@@ -1787,21 +1778,16 @@ class _EditorScreenState extends State<EditorScreen>
     );
   }
 
-  Widget _buildForm({
-    bool showDesktopPublishCard = false,
-    bool showScoreCard = true,
-  }) {
+  Widget _buildForm({bool showDesktopPublishCard = false}) {
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (showScoreCard) _buildVitrinScoreCard(),
           if (showDesktopPublishCard) ...[
-            SizedBox(height: showScoreCard ? 16 : 0),
             _buildPublishPanel(compact: true, includeBottomSpacing: false),
           ],
-          SizedBox(height: showScoreCard || showDesktopPublishCard ? 24 : 0),
+          SizedBox(height: showDesktopPublishCard ? 24 : 0),
           _buildEditCard(
             title: 'Mağaza Görünümü',
             headerWidget: _buildCompactStatusDropdown(),
@@ -1945,130 +1931,6 @@ class _EditorScreenState extends State<EditorScreen>
     );
   }
 
-  Widget _buildVitrinScoreCard() {
-    final vitrinScore = _calculateVitrinScore(_data);
-    final tasks = _buildVitrinScoreActionTasks();
-    final tone = _mobileVitrinScoreTone(vitrinScore);
-
-    return Container(
-      decoration: _premiumCardDecoration(radius: 24),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cardBorder),
-                ),
-                child: Icon(Icons.query_stats_rounded, color: tone, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Vitrin Skoru',
-                      style: TextStyle(
-                        color: darkText,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    _gradientUnderline(width: 52),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Vitrininizi güçlendirmek için eksik adımları tamamlayın.',
-                      style: TextStyle(
-                        color: softText.withValues(alpha: 0.82),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                '$vitrinScore/100',
-                style: const TextStyle(
-                  color: darkText,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: vitrinScore / 100,
-              minHeight: 5,
-              backgroundColor: Colors.white12,
-              valueColor: AlwaysStoppedAnimation<Color>(tone),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            _vitrinScoreStatusText(vitrinScore),
-            style: TextStyle(
-              color: tone,
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            tasks.isEmpty ? 'Her şey hazır' : 'Eksik adımlar',
-            style: const TextStyle(
-              color: darkText,
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 10),
-          if (tasks.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFBBF7D0)),
-              ),
-              child: const Text(
-                'Vitrinin güçlü görünüyor. Yayınla bölümünden public linkini hazırlayabilirsin.',
-                style: TextStyle(
-                  color: Color(0xFF166534),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  height: 1.35,
-                ),
-              ),
-            )
-          else
-            ...tasks.map((task) => _buildScoreTaskRow(task, tone)),
-          if (vitrinScore >= 60) ...[
-            const SizedBox(height: 14),
-            _buildGoogleVisibilityCta(),
-          ],
-        ],
-      ),
-    );
-  }
-
   Widget _buildPublishPanel({
     bool compact = false,
     bool includeBottomSpacing = true,
@@ -2090,8 +1952,6 @@ class _EditorScreenState extends State<EditorScreen>
                   _buildPublishUsageList(),
                   const SizedBox(height: 16),
                   _buildPublishActionArea(),
-                  const SizedBox(height: 12),
-                  _buildVisibilityBoostCallout(),
                 ],
               ),
             ]
@@ -2113,8 +1973,6 @@ class _EditorScreenState extends State<EditorScreen>
                   _buildPublishUsageList(),
                   const SizedBox(height: 16),
                   _buildPublishActionArea(),
-                  const SizedBox(height: 12),
-                  _buildVisibilityBoostCallout(),
                 ],
               ),
             ];
@@ -2281,98 +2139,6 @@ class _EditorScreenState extends State<EditorScreen>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildVisibilityBoostCallout() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 430;
-
-        final textContent = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Daha çok kişi görsün mü?',
-              style: TextStyle(
-                color: darkText,
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'SEO anahtar kelimeleri ve blog fikirleriyle vitrininizi güçlendirin.',
-              style: TextStyle(
-                color: softText.withValues(alpha: 0.78),
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                height: 1.35,
-              ),
-            ),
-          ],
-        );
-
-        final action = TextButton.icon(
-          onPressed: _showPremiumVisibilityInfo,
-          icon: const Icon(Icons.auto_awesome_rounded, size: 15),
-          label: const Text('Görünürlüğü artır'),
-          style: TextButton.styleFrom(
-            foregroundColor: primaryColor,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            minimumSize: const Size(44, 36),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            textStyle: const TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        );
-
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(13),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                primaryColor.withValues(alpha: 0.08),
-                secondaryColor.withValues(alpha: 0.06),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: primaryColor.withValues(alpha: 0.18)),
-          ),
-          child:
-              isNarrow
-                  ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildVisibilityBoostIcon(),
-                          const SizedBox(width: 10),
-                          Expanded(child: textContent),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Align(alignment: Alignment.centerLeft, child: action),
-                    ],
-                  )
-                  : Row(
-                    children: [
-                      _buildVisibilityBoostIcon(),
-                      const SizedBox(width: 10),
-                      Expanded(child: textContent),
-                      const SizedBox(width: 10),
-                      action,
-                    ],
-                  ),
-        );
-      },
     );
   }
 
@@ -2695,371 +2461,94 @@ class _EditorScreenState extends State<EditorScreen>
   }
 
   Widget _buildGoogleVisibilityCta() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.055),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.travel_explore_rounded,
-                color: Color(0xFFFF4D00),
-                size: 17,
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'İlk içeriğini hazırlayalım',
-                  style: TextStyle(
-                    color: darkText,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Vitrin bilgileriniz hazır. Bu bilgilerle mağazanız için blog başlığı, Google işletme gönderisi ve sosyal medya açıklaması hazırlayabiliriz.',
-            style: TextStyle(
-              color: softText.withValues(alpha: 0.78),
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () {
-                _toggleGoogleAssistant();
-              },
-              icon: Icon(
-                _isGoogleAssistantOpen
-                    ? Icons.expand_less_rounded
-                    : Icons.auto_awesome_rounded,
-                size: 16,
-              ),
-              label: Text(
-                _isGoogleAssistantOpen ? 'Gizle' : 'İçerik taslağını hazırla',
-              ),
-              style: TextButton.styleFrom(
-                foregroundColor: primaryColor,
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(44, 36),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                textStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 430;
+
+        final textContent = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Daha çok kişi görsün mü?',
+              style: TextStyle(
+                color: darkText,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
               ),
             ),
-          ),
-          if (_isGoogleAssistantOpen) ...[
-            const SizedBox(height: 12),
-            const Divider(height: 1, color: cardBorder),
-            const SizedBox(height: 12),
-            _buildGoogleVisibilityAssistant(),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGoogleVisibilityAssistant() {
-    final usedInfoLabels = _buildGoogleUsedInfoLabels(_data);
-    final hasLocation = _data.address.trim().isNotEmpty;
-    final opportunity = _buildGoogleContentOpportunity(_data);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Blog & İçerik Asistanı',
-                      style: TextStyle(
-                        color: darkText,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    Text(
-                      'Vitrin bilgilerinizden yola çıkarak ilk içerik taslağınız için başlangıç hazırlıyoruz.',
-                      style: TextStyle(
-                        color: softText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: () {
-                  _closeGoogleAssistant();
-                },
-                tooltip: 'Gizle',
-                icon: Icon(Icons.close_rounded, color: mutedText, size: 17),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.08),
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(30, 30),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  side: const BorderSide(color: cardBorder),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          _buildAssistantSectionTitle('Kullandığımız bilgiler'),
-          const SizedBox(height: 8),
-          if (usedInfoLabels.isEmpty)
+            const SizedBox(height: 4),
             Text(
-              'Henüz yeterli vitrin bilgisi yok. Önce mağaza adı, açıklama ve iletişim bilgilerini tamamlayın.',
+              'SEO anahtar kelimeleri ve içerik fikirleriyle vitrininizi güçlendirin.',
               style: TextStyle(
                 color: softText.withValues(alpha: 0.78),
                 fontSize: 11,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 height: 1.35,
-              ),
-            )
-          else
-            _buildUsedInfoSummary(usedInfoLabels),
-          if (!hasLocation) ...[
-            const SizedBox(height: 7),
-            Text(
-              '(konum henüz eklenmemiş)',
-              style: TextStyle(
-                color: mutedText,
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                fontStyle: FontStyle.italic,
               ),
             ),
           ],
-          const SizedBox(height: 14),
-          _buildAssistantSectionTitle('Önerilen ilk içerik'),
-          const SizedBox(height: 8),
-          _buildContentTitleCard(opportunity.title),
-          const SizedBox(height: 14),
-          _buildAssistantSectionTitle('Kullanım alanı'),
-          const SizedBox(height: 8),
-          _buildAssistantPlainText(opportunity.usage),
-          const SizedBox(height: 14),
-          _buildAssistantSectionTitle('Kısa başlangıç metni'),
-          const SizedBox(height: 8),
-          _buildAssistantPlainText(opportunity.introText),
-          const SizedBox(height: 14),
-          _buildAssistantSectionTitle('Daha iyi sonuç için'),
-          const SizedBox(height: 8),
-          _buildAssistantPlainText(
-            'Hedef müşteri · Öne çıkan ürün/hizmet · Bulunmak istediğiniz kelimeler',
+        );
+
+        final action = TextButton.icon(
+          onPressed: _showPremiumVisibilityInfo,
+          icon: const Icon(Icons.auto_awesome_rounded, size: 15),
+          label: const Text('Görünürlüğü artır'),
+          style: TextButton.styleFrom(
+            foregroundColor: primaryColor,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            minimumSize: const Size(44, 36),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            textStyle: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w900,
+            ),
           ),
-          const SizedBox(height: 12),
-          _buildContentDraftStatus(),
-        ],
-      ),
-    );
-  }
+        );
 
-  List<String> _buildGoogleUsedInfoLabels(StoreData data) {
-    final labels = <String>[];
-    final completeMarketplaceLinks = _completeMarketplaceLinks(data);
-
-    void addLabel(String label, String value) {
-      if (value.trim().isEmpty) return;
-      labels.add(label);
-    }
-
-    addLabel('Mağaza adı', data.name);
-    addLabel('Kategori', data.businessType);
-    addLabel('Açıklama', data.description);
-    addLabel('Konum', data.address);
-    addLabel('Web sitesi', data.website);
-    addLabel('Instagram', data.instagram);
-
-    if (completeMarketplaceLinks.isNotEmpty) {
-      labels.add('Pazaryeri');
-    }
-
-    return labels;
-  }
-
-  Widget _buildUsedInfoSummary(List<String> labels) {
-    return Text(
-      labels.join(' · '),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        color: softText.withValues(alpha: 0.82),
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        height: 1.35,
-      ),
-    );
-  }
-
-  _GoogleContentOpportunity _buildGoogleContentOpportunity(StoreData data) {
-    final location = _googleLocationLabel(data.address);
-    final category = _contentCategoryLabel(data.businessType);
-    final storeName = data.name.trim();
-    final title = _buildGoogleContentTitle(
-      name: storeName,
-      location: location,
-      category: category,
-    );
-
-    return _GoogleContentOpportunity(
-      title: title,
-      usage: 'Blog taslağı · Google işletme gönderisi · Instagram açıklaması',
-      introText:
-          'Mağazanızın sunduğu ürünleri, konumunu ve iletişim kanallarını anlatan kısa bir içerik taslağı hazırlanabilir.',
-    );
-  }
-
-  String _buildGoogleContentTitle({
-    required String name,
-    required String location,
-    required String category,
-  }) {
-    final safeCategory = category.isEmpty ? 'mağaza' : category;
-
-    if (name.isNotEmpty && category.isNotEmpty) {
-      return '$name için $safeCategory rehberi';
-    }
-    if (location.isNotEmpty && category.isNotEmpty) {
-      return '$location bölgesinde $safeCategory arayanlar için kısa rehber';
-    }
-    if (name.isNotEmpty) {
-      return '$name için içerik taslağı';
-    }
-
-    return 'Mağazanız için içerik taslağı';
-  }
-
-  String _contentCategoryLabel(String businessType) {
-    switch (businessType.trim()) {
-      case 'Butik':
-        return 'butik mağaza';
-      case 'İç giyim':
-        return 'iç giyim mağazası';
-      case 'Kozmetik':
-        return 'kozmetik mağazası';
-      case 'Hediyelik':
-        return 'hediyelik mağazası';
-      case 'Market':
-        return 'market';
-      case 'Telefon aksesuarı':
-        return 'telefon aksesuarı mağazası';
-      case 'Kafe / Lokanta':
-        return 'kafe ve lokanta';
-      case 'Kuaför':
-        return 'kuaför';
-      case 'Diğer':
-        return 'işletme';
-      default:
-        return businessType.trim();
-    }
-  }
-
-  Widget _buildContentTitleCard(String title) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Text(
-        title,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: darkText,
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
-          height: 1.35,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAssistantPlainText(String text) {
-    return Text(
-      text,
-      maxLines: 3,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        color: softText.withValues(alpha: 0.8),
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        height: 1.35,
-      ),
-    );
-  }
-
-  Widget _buildContentDraftStatus() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Text(
-        'İçerik taslağı için başlangıç hazır. Daha güçlü metin için 3 bilgiyi tamamlayabilirsiniz.',
-        style: TextStyle(
-          color: softText.withValues(alpha: 0.86),
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          height: 1.35,
-        ),
-      ),
-    );
-  }
-
-  String _googleLocationLabel(String address) {
-    final trimmedAddress = address.trim();
-    if (trimmedAddress.isEmpty) return '';
-    return trimmedAddress.split(',').first.trim();
-  }
-
-  Widget _buildAssistantSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        color: softText.withValues(alpha: 0.86),
-        fontSize: 11,
-        fontWeight: FontWeight.w900,
-      ),
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                primaryColor.withValues(alpha: 0.08),
+                secondaryColor.withValues(alpha: 0.06),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: primaryColor.withValues(alpha: 0.18)),
+          ),
+          child:
+              isNarrow
+                  ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildVisibilityBoostIcon(),
+                          const SizedBox(width: 10),
+                          Expanded(child: textContent),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Align(alignment: Alignment.centerLeft, child: action),
+                    ],
+                  )
+                  : Row(
+                    children: [
+                      _buildVisibilityBoostIcon(),
+                      const SizedBox(width: 10),
+                      Expanded(child: textContent),
+                      const SizedBox(width: 10),
+                      action,
+                    ],
+                  ),
+        );
+      },
     );
   }
 
@@ -4757,18 +4246,6 @@ class _VitrinScoreTask {
     required this.isComplete,
     required this.suggestion,
     required this.target,
-  });
-}
-
-class _GoogleContentOpportunity {
-  final String title;
-  final String usage;
-  final String introText;
-
-  const _GoogleContentOpportunity({
-    required this.title,
-    required this.usage,
-    required this.introText,
   });
 }
 
