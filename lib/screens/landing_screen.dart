@@ -63,6 +63,7 @@ class _LandingScreenState extends State<LandingScreen>
         child: Column(
           children: [
             _buildHeroSection(context),
+            _buildValueBandSection(context),
             _buildFeaturesSection(context),
             _buildStepsSection(context),
             _buildBottomCTA(context),
@@ -97,17 +98,26 @@ class _LandingScreenState extends State<LandingScreen>
                     Positioned(
                       top: 100 + sinVal * 30,
                       left: -100 + cosVal * 40,
-                      child: _buildMeshGlow(brandOrange.withValues(alpha: 0.3), 300),
+                      child: _buildMeshGlow(
+                        brandOrange.withValues(alpha: 0.3),
+                        300,
+                      ),
                     ),
                     Positioned(
                       bottom: 50 + cosVal * 30,
                       right: -50 + sinVal * 40,
-                      child: _buildMeshGlow(blueAccent.withValues(alpha: 0.25), 400),
+                      child: _buildMeshGlow(
+                        blueAccent.withValues(alpha: 0.25),
+                        400,
+                      ),
                     ),
                     Positioned(
                       top: 200 - sinVal * 20,
                       right: 150 + cosVal * 20,
-                      child: _buildMeshGlow(pinkAccent.withValues(alpha: 0.2), 250),
+                      child: _buildMeshGlow(
+                        pinkAccent.withValues(alpha: 0.2),
+                        250,
+                      ),
                     ),
                   ],
                 );
@@ -196,7 +206,7 @@ class _LandingScreenState extends State<LandingScreen>
               border: Border.all(color: brandOrange.withValues(alpha: 0.3)),
             ),
             child: const Text(
-              '✨ YENİ NESİL DİJİTAL VİTRİN',
+              'ESNAF İÇİN DİJİTAL VİTRİN',
               style: TextStyle(
                 color: brandOrange,
                 fontWeight: FontWeight.w900,
@@ -207,19 +217,19 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           const SizedBox(height: 32),
           Text(
-            'Esnafın dijital vitrini',
+            'Mağazanızın tek linkte hazır vitrini',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: TextStyle(
               color: darkAccent,
               fontSize: isDesktop ? 64 : 42,
               fontWeight: FontWeight.w900,
               height: 1.1,
-              letterSpacing: -2,
+              letterSpacing: 0,
             ),
           ),
           const SizedBox(height: 24),
           Text(
-            'Mağaza bilgilerinizi, ürün linklerinizi, sosyal medya hesaplarınızı ve QR kodunuzu tek paylaşılabilir vitrin sayfasında toplayın.',
+            'Fotoğraflarınızı, iletişim bilgilerinizi, pazaryeri linklerinizi ve QR kodunuzu müşterilerinizle tek sayfada paylaşın.',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: const TextStyle(
               color: Color(0xFF475569),
@@ -241,8 +251,9 @@ class _LandingScreenState extends State<LandingScreen>
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: brandOrange.withValues(alpha: 
-                            0.3 +
+                          color: brandOrange.withValues(
+                            alpha:
+                                0.3 +
                                 0.2 *
                                     math.sin(
                                       _animController.value * math.pi * 2,
@@ -260,7 +271,7 @@ class _LandingScreenState extends State<LandingScreen>
                       onPressed: _navigateToEditor,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: brandOrange,
-                        foregroundColor: darkAccent,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 32,
                           vertical: 24,
@@ -271,7 +282,7 @@ class _LandingScreenState extends State<LandingScreen>
                         elevation: 0,
                       ),
                       child: const Text(
-                        'Vitrinimi Oluştur',
+                        'Ücretsiz vitrinini oluştur',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
@@ -295,14 +306,56 @@ class _LandingScreenState extends State<LandingScreen>
                   ),
                 ),
                 child: const Text(
-                  'Örnek Vitrine Bak',
+                  'Canlı örneği incele',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 24),
+          _buildHeroTrustChips(isDesktop: isDesktop),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeroTrustChips({required bool isDesktop}) {
+    final items = [
+      'Kredi kartı gerekmez',
+      'Dakikalar içinde hazırlanır',
+      'Mobil uyumlu paylaşım',
+    ];
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      alignment: isDesktop ? WrapAlignment.start : WrapAlignment.center,
+      children:
+          items.map((text) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle_rounded, size: 16, color: mint),
+                  const SizedBox(width: 7),
+                  Text(
+                    text,
+                    style: const TextStyle(
+                      color: Color(0xFF334155),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
     );
   }
 
@@ -330,9 +383,9 @@ class _LandingScreenState extends State<LandingScreen>
                     100 +
                     math.sin((_animController.value + 0.3) * math.pi * 2) * 10,
                 child: _buildFloatingBadge(
-                  Icons.favorite_rounded,
-                  pinkAccent,
-                  'Referanslar',
+                  Icons.chat_bubble_rounded,
+                  mint,
+                  'WhatsApp',
                 ),
               ),
               Positioned(
@@ -341,9 +394,9 @@ class _LandingScreenState extends State<LandingScreen>
                     120 +
                     math.sin((_animController.value + 0.6) * math.pi * 2) * 10,
                 child: _buildFloatingBadge(
-                  Icons.shopping_bag_rounded,
+                  Icons.qr_code_2_rounded,
                   brandOrange,
-                  'Pazaryeri',
+                  'QR kod',
                 ),
               ),
             ],
@@ -402,6 +455,99 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
+  Widget _buildValueBandSection(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: lightBg,
+      padding: const EdgeInsets.fromLTRB(24, 48, 24, 20),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isDesktop = constraints.maxWidth > 820;
+              final copy = Column(
+                crossAxisAlignment:
+                    isDesktop
+                        ? CrossAxisAlignment.start
+                        : CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Müşteri sizi nereden bulursa bulsun, tek linkten ulaşır.',
+                    textAlign: isDesktop ? TextAlign.left : TextAlign.center,
+                    style: const TextStyle(
+                      color: darkAccent,
+                      fontSize: 28,
+                      height: 1.2,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'WhatsApp, Instagram, Google İşletme, paket üstü QR veya sosyal medya bio alanı için tek paylaşılabilir vitrin.',
+                    textAlign: isDesktop ? TextAlign.left : TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 16,
+                      height: 1.55,
+                    ),
+                  ),
+                ],
+              );
+              final chips = Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                alignment: isDesktop ? WrapAlignment.end : WrapAlignment.center,
+                children:
+                    const [
+                      'WhatsApp mesajı',
+                      'Instagram bio',
+                      'Google İşletme',
+                      'Paket üstü QR',
+                    ].map((text) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 11,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Text(
+                          text,
+                          style: const TextStyle(
+                            color: Color(0xFF334155),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+              );
+
+              if (isDesktop) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(flex: 5, child: copy),
+                    const SizedBox(width: 48),
+                    Expanded(flex: 4, child: chips),
+                  ],
+                );
+              }
+
+              return Column(
+                children: [copy, const SizedBox(height: 24), chips],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFeaturesSection(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -413,18 +559,18 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'Bir link, tüm mağaza',
+                'Bir link, tüm mağaza kanallarınız',
                 style: TextStyle(
                   fontSize: 42,
                   fontWeight: FontWeight.w900,
                   color: darkAccent,
-                  letterSpacing: -1,
+                  letterSpacing: 0,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
               const Text(
-                'WhatsApp, Instagram, pazaryeri linkleri, referanslar ve QR kod tek vitrinde.',
+                'Müşteri iletişim, konum, fotoğraf ve pazaryeri bilgilerine tek vitrinden ulaşır.',
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.black54,
@@ -445,29 +591,31 @@ class _LandingScreenState extends State<LandingScreen>
                               _HoverFeatureCard(
                                 icon: Icons.link_rounded,
                                 color: blueAccent,
-                                title: 'Tek linkte mağaza',
+                                title: 'Mağazanızı tek linkte toplayın',
                                 desc:
-                                    'Müşteri tüm bilgilerinize tek bağlantıdan ulaşır.',
+                                    'İletişim, konum, sosyal medya ve pazaryeri bağlantıları tek yerde görünür.',
                               ),
                               _HoverFeatureCard(
-                                icon: Icons.qr_code_2_rounded,
+                                icon: Icons.photo_library_rounded,
                                 color: brandOrange,
-                                title: 'QR ile paylaş',
+                                title: 'Fotoğraflarla vitrininizi gösterin',
                                 desc:
-                                    'Mağaza içine, paket üzerine veya sosyal medyaya ekleyin.',
+                                    'Raf, ürün, reyon veya mağaza fotoğraflarınızı müşteriye hızlıca sunun.',
                               ),
                               _HoverFeatureCard(
                                 icon: Icons.chat_bubble_rounded,
                                 color: mint,
-                                title: 'Sosyal medya ve WhatsApp',
-                                desc: 'Müşteri size doğrudan ulaşabilsin.',
+                                title:
+                                    'WhatsApp ve konumla hızlı ulaşım sağlayın',
+                                desc:
+                                    'Müşteri sizi aramakla uğraşmadan mesaj atabilir veya yol tarifi alabilir.',
                               ),
                               _HoverFeatureCard(
-                                icon: Icons.shopping_cart_rounded,
+                                icon: Icons.qr_code_2_rounded,
                                 color: pinkAccent,
-                                title: 'Pazaryeri ve referanslar',
+                                title: 'QR kodla her yerde paylaşın',
                                 desc:
-                                    'Trendyol, Hepsiburada, yorum ve referans linklerinizi toplayın.',
+                                    'Mağaza içi afiş, paket, kartvizit ve sosyal medya için hazır paylaşım.',
                               ),
                             ]
                             .map(
@@ -506,7 +654,7 @@ class _LandingScreenState extends State<LandingScreen>
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
                   color: darkAccent,
-                  letterSpacing: -1,
+                  letterSpacing: 0,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -515,9 +663,21 @@ class _LandingScreenState extends State<LandingScreen>
                 builder: (context, constraints) {
                   final isDesktop = constraints.maxWidth > 800;
                   final steps = [
-                    _buildStepTimeline(1, 'Bilgilerini ekle'),
-                    _buildStepTimeline(2, 'Vitrin linkini oluştur'),
-                    _buildStepTimeline(3, 'QR veya sosyal medya ile paylaş'),
+                    _buildStepTimeline(
+                      1,
+                      'Bilgilerini ekle',
+                      'Mağaza adı, açıklama, WhatsApp, adres ve linklerini gir.',
+                    ),
+                    _buildStepTimeline(
+                      2,
+                      'Fotoğraflarını yükle',
+                      'Mağazanı ve ürünlerini gösteren görsellerle vitrini güçlendir.',
+                    ),
+                    _buildStepTimeline(
+                      3,
+                      'Vitrin linkini paylaş',
+                      'QR kodu veya linki müşterilerinle paylaş.',
+                    ),
                   ];
 
                   if (isDesktop) {
@@ -544,7 +704,7 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildStepTimeline(int step, String title) {
+  Widget _buildStepTimeline(int step, String title, String description) {
     return Column(
       children: [
         Container(
@@ -553,7 +713,10 @@ class _LandingScreenState extends State<LandingScreen>
           decoration: BoxDecoration(
             color: brandOrange.withValues(alpha: 0.1),
             shape: BoxShape.circle,
-            border: Border.all(color: brandOrange.withValues(alpha: 0.3), width: 2),
+            border: Border.all(
+              color: brandOrange.withValues(alpha: 0.3),
+              width: 2,
+            ),
           ),
           alignment: Alignment.center,
           child: Text(
@@ -573,6 +736,20 @@ class _LandingScreenState extends State<LandingScreen>
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: darkAccent,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            description,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 14,
+              height: 1.45,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -596,14 +773,14 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'Mağazanız için paylaşılabilir bir dijital vitrin hazırlayın.',
+                'Bugün mağazanız için paylaşılabilir bir vitrin oluşturun.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color(0xFFF8FAFC),
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
                   height: 1.2,
-                  letterSpacing: -1,
+                  letterSpacing: 0,
                 ),
               ),
               const SizedBox(height: 24),
@@ -611,7 +788,7 @@ class _LandingScreenState extends State<LandingScreen>
                 'Linkinizi müşterilerinize gönderin, QR kodunuzu mağazada kullanın, tüm kanallarınızı tek yerde toplayın.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0xFF475569),
+                  color: Color(0xFFE2E8F0),
                   fontSize: 18,
                   height: 1.5,
                 ),
@@ -632,7 +809,7 @@ class _LandingScreenState extends State<LandingScreen>
                   elevation: 10,
                 ),
                 child: const Text(
-                  'Vitrinimi Oluştur',
+                  'Vitrinimi oluştur',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                 ),
               ),
@@ -987,4 +1164,3 @@ class _HoverFeatureCardState extends State<_HoverFeatureCard> {
     );
   }
 }
-

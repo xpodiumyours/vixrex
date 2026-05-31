@@ -12,7 +12,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.textContaining('VITRINX'), findsAtLeastNWidgets(1));
-    expect(find.text('Vitrinimi Oluştur'), findsAtLeastNWidgets(1));
+    expect(find.text('Ücretsiz vitrinini oluştur'), findsAtLeastNWidgets(1));
     expect(find.text('Dakikalar içinde yayına hazır'), findsOneWidget);
   });
 
