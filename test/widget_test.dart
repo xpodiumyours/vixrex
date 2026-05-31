@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vitrinx/main.dart';
+import 'package:vitrinx/screens/editor_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('VitrinX giriş ekranı testleri', (WidgetTester tester) async {
@@ -26,5 +28,22 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(LandingScreen), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets('Mobil editörde canlı önizleme sekmesi gösterilmez', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: EditorScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Düzenle'), findsOneWidget);
+    expect(find.text('Yayınla'), findsOneWidget);
+    expect(find.text('Canlı Önizleme'), findsNothing);
   });
 }

@@ -13,6 +13,7 @@ import 'package:vitrinx/services/store_publish_validator.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
+import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 
@@ -69,7 +70,7 @@ class _EditorScreenState extends State<EditorScreen>
   );
   static const String _editTokenPrefsKey = 'vitrin_edit_token';
   static const int _maxGalleryPhotos = 12;
-  static const int _maxGalleryPhotoBytes = 5 * 1024 * 1024;
+  static const int _maxGalleryPhotoBytes = GalleryImageFileValidator.maxBytes;
 
   final List<String> businessTypes = const [
     'Butik',
@@ -102,7 +103,7 @@ class _EditorScreenState extends State<EditorScreen>
   @override
   void initState() {
     super.initState();
-    _mobileTabController = TabController(length: 3, vsync: this);
+    _mobileTabController = TabController(length: 2, vsync: this);
     _loadSavedData();
   }
 
@@ -506,16 +507,18 @@ class _EditorScreenState extends State<EditorScreen>
     if (result == null || result.files.isEmpty) return;
 
     var rejectedCount = 0;
+    GalleryImageValidationFailure? firstFailure;
     final newItems = <_EditorGalleryItem>[];
     final selectedFiles = result.files.take(remainingSlots).toList();
 
     for (final file in selectedFiles) {
-      final item = _editorGalleryItemFromFile(file);
-      if (item == null) {
+      final result = _editorGalleryItemFromFile(file);
+      if (!result.isValid) {
         rejectedCount += 1;
+        firstFailure ??= result.failure;
         continue;
       }
-      newItems.add(item);
+      newItems.add(result.item!);
     }
 
     if (result.files.length > remainingSlots) {
@@ -525,7 +528,7 @@ class _EditorScreenState extends State<EditorScreen>
     if (newItems.isEmpty) {
       _showInfoSnackBar(
         rejectedCount > 0
-            ? 'Seçilen fotoğraflar eklenemedi. JPG, PNG veya WEBP ve en fazla 5 MB olmalı.'
+            ? _galleryImageFailureMessage(firstFailure)
             : 'Fotoğraf eklenmedi.',
       );
       return;
@@ -539,7 +542,7 @@ class _EditorScreenState extends State<EditorScreen>
 
     if (rejectedCount > 0) {
       _showInfoSnackBar(
-        '$rejectedCount fotoğraf eklenemedi. Sınır: $_maxGalleryPhotos fotoğraf, dosya başı 5 MB.',
+        '$rejectedCount fotoğraf eklenemedi. Sınır: $_maxGalleryPhotos fotoğraf, dosya başı ${_maxGalleryPhotoBytes ~/ (1024 * 1024)} MB.',
       );
     }
   }
@@ -556,35 +559,36 @@ class _EditorScreenState extends State<EditorScreen>
     if (result == null || result.files.isEmpty) return;
 
     final replacement = _editorGalleryItemFromFile(result.files.single);
-    if (replacement == null) {
-      _showInfoSnackBar(
-        'Fotoğraf eklenemedi. JPG, PNG veya WEBP ve en fazla 5 MB olmalı.',
-      );
+    if (!replacement.isValid) {
+      _showInfoSnackBar(_galleryImageFailureMessage(replacement.failure));
       return;
     }
 
     setState(() {
-      _galleryItems[index].replaceImageFrom(replacement);
-      replacement.dispose();
+      _galleryItems[index].replaceImageFrom(replacement.item!);
+      replacement.item!.dispose();
     });
   }
 
-  _EditorGalleryItem? _editorGalleryItemFromFile(PlatformFile file) {
-    if (file.size > _maxGalleryPhotoBytes) return null;
-
+  _GalleryFilePickResult _editorGalleryItemFromFile(PlatformFile file) {
     final bytes = file.bytes;
-    if (bytes == null || bytes.isEmpty) return null;
-
-    final extension = (file.extension ?? 'jpg').toLowerCase();
-    final contentType = _contentTypeForShelfExtension(extension);
-    if (contentType == null) return null;
-
-    return _EditorGalleryItem(
-      id: _newGalleryItemId(),
+    final validation = GalleryImageFileValidator.validate(
       bytes: bytes,
-      fileName: file.name,
-      extension: extension == 'jpeg' ? 'jpg' : extension,
-      contentType: contentType,
+      reportedSize: file.size,
+    );
+    final fileInfo = validation.fileInfo;
+    if (fileInfo == null) {
+      return _GalleryFilePickResult.failure(validation.failure);
+    }
+
+    return _GalleryFilePickResult.success(
+      _EditorGalleryItem(
+        id: _newGalleryItemId(),
+        bytes: bytes,
+        fileName: file.name,
+        extension: fileInfo.extension,
+        contentType: fileInfo.contentType,
+      ),
     );
   }
 
@@ -631,18 +635,12 @@ class _EditorScreenState extends State<EditorScreen>
     }
   }
 
-  String? _contentTypeForShelfExtension(String extension) {
-    switch (extension.toLowerCase()) {
-      case 'jpg':
-      case 'jpeg':
-        return 'image/jpeg';
-      case 'png':
-        return 'image/png';
-      case 'webp':
-        return 'image/webp';
-      default:
-        return null;
+  String _galleryImageFailureMessage(GalleryImageValidationFailure? failure) {
+    if (failure == GalleryImageValidationFailure.unreadable) {
+      return 'Fotoğraf tarayıcı tarafından okunamadı. Lütfen galeriden tekrar seçin.';
     }
+
+    return 'Seçilen fotoğraflar eklenemedi. JPG, PNG veya WEBP ve en fazla ${_maxGalleryPhotoBytes ~/ (1024 * 1024)} MB olmalı.';
   }
 
   void _showInfoSnackBar(String message) {
@@ -1532,30 +1530,40 @@ class _EditorScreenState extends State<EditorScreen>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          children: [
-            const Text(
-              'Vitrin Düzenle',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: darkText,
-                fontSize: 18,
-              ),
-            ),
-            if (isWide) ...[
-              const Spacer(),
-              Text(
-                'VITRINX',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: primaryColor.withValues(alpha: 0.62),
-                  fontSize: 12,
-                  letterSpacing: 0,
+        title:
+            isWide
+                ? Row(
+                  children: [
+                    const Text(
+                      'Vitrin Düzenle',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: darkText,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'VITRINX',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: primaryColor.withValues(alpha: 0.62),
+                        fontSize: 12,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ],
+                )
+                : const Text(
+                  'Vitrin Düzenle',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: darkText,
+                    fontSize: 17,
+                  ),
                 ),
-              ),
-            ],
-          ],
-        ),
         actions:
             isWide
                 ? [
@@ -1617,7 +1625,7 @@ class _EditorScreenState extends State<EditorScreen>
 
             if (!isWide) {
               return DefaultTabController(
-                length: 3,
+                length: 2,
                 child: Column(
                   children: [
                     Container(
@@ -1632,7 +1640,6 @@ class _EditorScreenState extends State<EditorScreen>
                         indicatorColor: primaryColor,
                         tabs: const [
                           Tab(text: 'Düzenle'),
-                          Tab(text: 'Canlı Önizleme'),
                           Tab(text: 'Yayınla'),
                         ],
                       ),
@@ -1651,15 +1658,6 @@ class _EditorScreenState extends State<EditorScreen>
                                 child: _buildForm(),
                               ),
                             ),
-                          ),
-                          LayoutBuilder(
-                            builder: (context, previewConstraints) {
-                              return Center(
-                                child: _buildLivePreviewMockup(
-                                  previewConstraints,
-                                ),
-                              );
-                            },
                           ),
                           SingleChildScrollView(
                             padding: const EdgeInsets.all(16),
@@ -4131,6 +4129,21 @@ class _EditorGalleryItem {
     titleController.dispose();
     descriptionController.dispose();
   }
+}
+
+class _GalleryFilePickResult {
+  const _GalleryFilePickResult._({this.item, this.failure});
+
+  const _GalleryFilePickResult.success(_EditorGalleryItem item)
+    : this._(item: item);
+
+  const _GalleryFilePickResult.failure(GalleryImageValidationFailure? failure)
+    : this._(failure: failure);
+
+  final _EditorGalleryItem? item;
+  final GalleryImageValidationFailure? failure;
+
+  bool get isValid => item != null;
 }
 
 class _GalleryPill extends StatelessWidget {
