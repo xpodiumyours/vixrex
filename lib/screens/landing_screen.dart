@@ -16,6 +16,7 @@ class _LandingScreenState extends State<LandingScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   int _activeProfileIndex = 0;
+  final TextEditingController _storeNameController = TextEditingController();
 
   // Modern Color Palette
   static const Color brandOrange = Color(0xFFFF5A1F);
@@ -193,13 +194,17 @@ class _LandingScreenState extends State<LandingScreen>
   @override
   void dispose() {
     _animController.dispose();
+    _storeNameController.dispose();
     super.dispose();
   }
 
   void _navigateToEditor() {
+    final name = _storeNameController.text;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const EditorScreen()),
+      MaterialPageRoute(
+        builder: (_) => EditorScreen(initialStoreName: name),
+      ),
     );
   }
 
@@ -395,64 +400,11 @@ class _LandingScreenState extends State<LandingScreen>
               height: 1.6,
             ),
           ),
-          const SizedBox(height: 48),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            alignment: isDesktop ? WrapAlignment.start : WrapAlignment.center,
-            children: [
-              AnimatedBuilder(
-                animation: _animController,
-                builder: (context, child) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: brandOrange.withValues(
-                            alpha:
-                                0.3 +
-                                0.2 *
-                                    math.sin(
-                                      _animController.value * math.pi * 2,
-                                    ),
-                          ),
-                          blurRadius:
-                              20 +
-                              10 *
-                                  math.sin(_animController.value * math.pi * 2),
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _navigateToEditor,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: brandOrange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 24,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Ücretsiz vitrinini oluştur',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
           const SizedBox(height: 24),
+          _buildSocialProofRow(isDesktop: isDesktop),
+          const SizedBox(height: 24),
+          _buildClaimBar(isDesktop: isDesktop),
+          const SizedBox(height: 32),
           _buildHeroTrustChips(isDesktop: isDesktop),
         ],
       ),
@@ -496,6 +448,254 @@ class _LandingScreenState extends State<LandingScreen>
               ),
             );
           }).toList(),
+    );
+  }
+
+  Widget _buildClaimBar({required bool isDesktop}) {
+    final inputWidget = Expanded(
+      flex: isDesktop ? 6 : 1,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            const Text(
+              'vitrinx.app/',
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: TextField(
+                controller: _storeNameController,
+                style: const TextStyle(
+                  color: darkAccent,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                ),
+                decoration: const InputDecoration(
+                  hintText: 'magazaniz',
+                  hintStyle: TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final buttonWidget = AnimatedBuilder(
+      animation: _animController,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: brandOrange.withValues(
+                  alpha: 0.24 + 0.16 * math.sin(_animController.value * math.pi * 2),
+                ),
+                blurRadius: 16 + 8 * math.sin(_animController.value * math.pi * 2),
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ElevatedButton(
+            onPressed: _navigateToEditor,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: brandOrange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 28,
+                vertical: 20,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              elevation: 0,
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Ücretsiz Oluştur',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward_rounded, size: 18),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (isDesktop) {
+      return SizedBox(
+        height: 64,
+        child: Row(
+          children: [
+            inputWidget,
+            const SizedBox(width: 12),
+            buttonWidget,
+          ],
+        ),
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 56,
+            child: Row(
+              children: [
+                inputWidget,
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 56,
+            child: buttonWidget,
+          ),
+        ],
+      );
+    }
+  }
+
+  Widget _buildSocialProofRow({required bool isDesktop}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 100,
+            height: 36,
+            child: Stack(
+              children: [
+                Positioned(
+                  left: 0,
+                  child: _buildSocialProofAvatar(
+                    icon: Icons.checkroom_rounded,
+                    color: brandOrange,
+                  ),
+                ),
+                Positioned(
+                  left: 20,
+                  child: _buildSocialProofAvatar(
+                    icon: Icons.restaurant_menu_rounded,
+                    color: const Color(0xFFEA580C),
+                  ),
+                ),
+                Positioned(
+                  left: 40,
+                  child: _buildSocialProofAvatar(
+                    icon: Icons.content_cut_rounded,
+                    color: const Color(0xFFDB2777),
+                  ),
+                ),
+                Positioned(
+                  left: 60,
+                  child: _buildSocialProofAvatar(
+                    icon: Icons.build_circle_rounded,
+                    color: blueAccent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: isDesktop ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 16),
+                    Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 16),
+                    Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 16),
+                    Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 16),
+                    Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 16),
+                    SizedBox(width: 6),
+                    Text(
+                      '4.9/5',
+                      style: TextStyle(
+                        color: darkAccent,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  '1.200\'den fazla esnaf ve butik VitrinX kullanıyor',
+                  style: TextStyle(
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSocialProofAvatar({
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: color,
+            size: 14,
+          ),
+        ),
+      ),
     );
   }
 

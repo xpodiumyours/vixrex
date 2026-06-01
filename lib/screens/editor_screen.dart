@@ -18,7 +18,9 @@ import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 
 class EditorScreen extends StatefulWidget {
-  const EditorScreen({super.key});
+  final String? initialStoreName;
+
+  const EditorScreen({super.key, this.initialStoreName});
 
   @override
   State<EditorScreen> createState() => _EditorScreenState();
@@ -103,6 +105,10 @@ class _EditorScreenState extends State<EditorScreen>
   @override
   void initState() {
     super.initState();
+    if (widget.initialStoreName != null &&
+        widget.initialStoreName!.trim().isNotEmpty) {
+      _data.name = widget.initialStoreName!.trim();
+    }
     _mobileTabController = TabController(length: 2, vsync: this);
     _loadSavedData();
   }
@@ -125,7 +131,10 @@ class _EditorScreenState extends State<EditorScreen>
         final Map<String, dynamic> jsonData = jsonDecode(savedJson);
         final loadedData = StoreData.fromJson(jsonData);
         setState(() {
-          _data.name = loadedData.name;
+          _data.name = (widget.initialStoreName != null &&
+                  widget.initialStoreName!.trim().isNotEmpty)
+              ? widget.initialStoreName!.trim()
+              : loadedData.name;
           _data.businessType = loadedData.businessType;
           _data.description = loadedData.description;
           _data.whatsapp = loadedData.whatsapp;
@@ -146,7 +155,13 @@ class _EditorScreenState extends State<EditorScreen>
         });
         unawaited(_refreshTodayViewCount());
       } else {
-        setState(() => _isLoading = false);
+        setState(() {
+          if (widget.initialStoreName != null &&
+              widget.initialStoreName!.trim().isNotEmpty) {
+            _data.name = widget.initialStoreName!.trim();
+          }
+          _isLoading = false;
+        });
         unawaited(_refreshTodayViewCount());
       }
     } catch (e) {
