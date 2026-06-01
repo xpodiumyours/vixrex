@@ -24,13 +24,160 @@ class _LandingScreenState extends State<LandingScreen>
   static const Color blueAccent = Color(0xFF2563EB);
   static const Color pinkAccent = Color(0xFFFB7185);
 
+  static const List<_HeroDemoProfile> _heroDemoProfiles = [
+    _HeroDemoProfile(
+      name: 'Aymira Giyim',
+      category: 'Kadın giyim / butik',
+      status: 'Açık',
+      description: 'Yeni sezon reyonları ve mağaza fotoğrafları tek vitrinde.',
+      icon: Icons.checkroom_rounded,
+      accentColor: Color(0xFFFF5A1F),
+      badgeIcon: Icons.photo_library_rounded,
+      badgeText: 'Galeri',
+      secondaryBadgeIcon: Icons.qr_code_2_rounded,
+      secondaryBadgeText: 'QR kod',
+      actions: [
+        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
+        _HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
+      ],
+      links: [
+        _HeroDemoLink(
+          'Vitrin galerisi',
+          'Raf ve reyon fotoğrafları',
+          Icons.photo_library_rounded,
+          Color(0xFFFF5A1F),
+        ),
+        _HeroDemoLink(
+          'Trendyol',
+          'Mağazayı ziyaret edin',
+          Icons.shopping_bag_rounded,
+          Color(0xFFF27A1A),
+        ),
+        _HeroDemoLink(
+          'Yol tarifi',
+          'Mağazaya kolay ulaşın',
+          Icons.location_on_rounded,
+          Color(0xFFEF4444),
+        ),
+      ],
+    ),
+    _HeroDemoProfile(
+      name: 'Lezzet Durağı',
+      category: 'Kafe / restoran',
+      status: 'Açık',
+      description: 'Menü, konum ve WhatsApp sipariş bilgileri tek ekranda.',
+      icon: Icons.restaurant_menu_rounded,
+      accentColor: Color(0xFFEA580C),
+      badgeIcon: Icons.menu_book_rounded,
+      badgeText: 'Menü',
+      secondaryBadgeIcon: Icons.directions_rounded,
+      secondaryBadgeText: 'Yol tarifi',
+      actions: [
+        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
+        _HeroDemoAction(Icons.location_on_rounded, Color(0xFFEF4444)),
+      ],
+      links: [
+        _HeroDemoLink(
+          'Günün menüsü',
+          'Sıcak yemek ve tatlılar',
+          Icons.local_dining_rounded,
+          Color(0xFFEA580C),
+        ),
+        _HeroDemoLink(
+          'Paket servis',
+          'WhatsApp ile sipariş',
+          Icons.delivery_dining_rounded,
+          Color(0xFF10B981),
+        ),
+        _HeroDemoLink(
+          'Konum',
+          'En yakın rotayı açın',
+          Icons.map_rounded,
+          Color(0xFF2563EB),
+        ),
+      ],
+    ),
+    _HeroDemoProfile(
+      name: 'Nova Kuaför',
+      category: 'Kuaför / güzellik',
+      status: 'Açık',
+      description: 'Randevu, hizmetler ve sosyal medya bağlantıları hazır.',
+      icon: Icons.content_cut_rounded,
+      accentColor: Color(0xFFDB2777),
+      badgeIcon: Icons.calendar_month_rounded,
+      badgeText: 'Randevu',
+      secondaryBadgeIcon: Icons.camera_alt_rounded,
+      secondaryBadgeText: 'Instagram',
+      actions: [
+        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
+        _HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
+      ],
+      links: [
+        _HeroDemoLink(
+          'Hizmetler',
+          'Kesim, boya ve bakım',
+          Icons.spa_rounded,
+          Color(0xFFDB2777),
+        ),
+        _HeroDemoLink(
+          'Instagram',
+          'Önce-sonra çalışmaları',
+          Icons.camera_alt_rounded,
+          Color(0xFFE1306C),
+        ),
+        _HeroDemoLink(
+          'Randevu al',
+          'WhatsApp ile hızlı iletişim',
+          Icons.event_available_rounded,
+          Color(0xFF10B981),
+        ),
+      ],
+    ),
+    _HeroDemoProfile(
+      name: 'TeknoFix',
+      category: 'Telefon teknik servis',
+      status: 'Açık',
+      description: 'Servis talebi, adres ve güvenilir iletişim tek vitrinde.',
+      icon: Icons.build_circle_rounded,
+      accentColor: Color(0xFF2563EB),
+      badgeIcon: Icons.chat_bubble_rounded,
+      badgeText: 'WhatsApp',
+      secondaryBadgeIcon: Icons.location_on_rounded,
+      secondaryBadgeText: 'Konum',
+      actions: [
+        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
+        _HeroDemoAction(Icons.phone_android_rounded, Color(0xFF2563EB)),
+      ],
+      links: [
+        _HeroDemoLink(
+          'Servis kaydı',
+          'Ekran, batarya ve bakım',
+          Icons.construction_rounded,
+          Color(0xFF2563EB),
+        ),
+        _HeroDemoLink(
+          'Google yorumları',
+          'Müşteri güveni',
+          Icons.verified_rounded,
+          Color(0xFF6366F1),
+        ),
+        _HeroDemoLink(
+          'Konum',
+          'Servis noktasına ulaşın',
+          Icons.location_on_rounded,
+          Color(0xFFEF4444),
+        ),
+      ],
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat(reverse: true);
+      duration: const Duration(seconds: 16),
+    )..repeat();
   }
 
   @override
@@ -364,43 +511,89 @@ class _LandingScreenState extends State<LandingScreen>
       animation: _animController,
       builder: (context, child) {
         final floatOffset = math.sin(_animController.value * math.pi * 2) * 8;
-        return Transform(
-          transform:
-              Matrix4.identity()
+        final activeIndex = math.min(
+          (_animController.value * _heroDemoProfiles.length).floor(),
+          _heroDemoProfiles.length - 1,
+        );
+        final activeProfile = _heroDemoProfiles[activeIndex];
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Transform(
+              transform: Matrix4.identity()
                 ..setEntry(3, 2, 0.001)
                 ..rotateY(-0.1)
                 ..rotateX(0.05)
                 ..translate(0.0, floatOffset, 0.0),
-          alignment: Alignment.center,
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              const _PhoneMockup(),
-              Positioned(
-                right: -40,
-                top:
-                    100 +
-                    math.sin((_animController.value + 0.3) * math.pi * 2) * 10,
-                child: _buildFloatingBadge(
-                  Icons.chat_bubble_rounded,
-                  mint,
-                  'WhatsApp',
-                ),
+              alignment: Alignment.center,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 520),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, animation) {
+                      final slide = Tween<Offset>(
+                        begin: const Offset(0.06, 0),
+                        end: Offset.zero,
+                      ).animate(animation);
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(position: slide, child: child),
+                      );
+                    },
+                    child: _PhoneMockup(
+                      key: ValueKey(activeProfile.name),
+                      profile: activeProfile,
+                    ),
+                  ),
+                  Positioned(
+                    right: -40,
+                    top:
+                        100 +
+                        math.sin((_animController.value + 0.3) * math.pi * 2) * 10,
+                    child: _buildFloatingBadge(
+                      activeProfile.badgeIcon,
+                      activeProfile.accentColor,
+                      activeProfile.badgeText,
+                    ),
+                  ),
+                  Positioned(
+                    left: -30,
+                    bottom:
+                        120 +
+                        math.sin((_animController.value + 0.6) * math.pi * 2) * 10,
+                    child: _buildFloatingBadge(
+                      activeProfile.secondaryBadgeIcon,
+                      activeProfile.secondaryBadgeColor,
+                      activeProfile.secondaryBadgeText,
+                    ),
+                  ),
+                ],
               ),
-              Positioned(
-                left: -30,
-                bottom:
-                    120 +
-                    math.sin((_animController.value + 0.6) * math.pi * 2) * 10,
-                child: _buildFloatingBadge(
-                  Icons.qr_code_2_rounded,
-                  brandOrange,
-                  'QR kod',
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(_heroDemoProfiles.length, (index) {
+                final isActive = index == activeIndex;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 260),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: isActive ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? brandOrange
+                        : const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                );
+              }),
+            ),
+          ],
         );
       },
     );
@@ -851,8 +1044,64 @@ class _LandingScreenState extends State<LandingScreen>
   }
 }
 
+class _HeroDemoAction {
+  final IconData icon;
+  final Color color;
+
+  const _HeroDemoAction(this.icon, this.color);
+}
+
+class _HeroDemoLink {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+
+  const _HeroDemoLink(this.title, this.subtitle, this.icon, this.color);
+}
+
+class _HeroDemoProfile {
+  final String name;
+  final String category;
+  final String status;
+  final String description;
+  final IconData icon;
+  final Color accentColor;
+  final IconData badgeIcon;
+  final String badgeText;
+  final IconData secondaryBadgeIcon;
+  final String secondaryBadgeText;
+  final List<_HeroDemoAction> actions;
+  final List<_HeroDemoLink> links;
+
+  const _HeroDemoProfile({
+    required this.name,
+    required this.category,
+    required this.status,
+    required this.description,
+    required this.icon,
+    required this.accentColor,
+    required this.badgeIcon,
+    required this.badgeText,
+    required this.secondaryBadgeIcon,
+    required this.secondaryBadgeText,
+    required this.actions,
+    required this.links,
+  });
+
+  Color get secondaryBadgeColor {
+    if (links.isEmpty) return accentColor;
+    return links.last.color;
+  }
+}
+
 class _PhoneMockup extends StatelessWidget {
-  const _PhoneMockup();
+  final _HeroDemoProfile profile;
+
+  const _PhoneMockup({
+    super.key,
+    required this.profile,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -882,58 +1131,63 @@ class _PhoneMockup extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           child: Column(
             children: [
-              // Mockup Header
               Container(
-                height: 200,
+                height: 160,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
                       const Color(0xFFF1F5F9),
-                      const Color(0xFFFF5A1F).withValues(alpha: 0.1),
+                      profile.accentColor.withValues(alpha: 0.16),
                     ],
                   ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 20),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(8),
                       decoration: const BoxDecoration(
                         color: Color(0xFFF8FAFC),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.store_rounded,
-                        size: 32,
-                        color: Color(0xFFFF5A1F),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Butik Mağaza',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A),
+                      child: Icon(
+                        profile.icon,
+                        size: 26,
+                        color: profile.accentColor,
                       ),
                     ),
                     const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      child: Text(
+                        profile.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
+                        horizontal: 8,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF10B981).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
-                        'AÇIK',
-                        style: TextStyle(
-                          fontSize: 10,
+                      child: Text(
+                        profile.status.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 9,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF10B981),
                         ),
@@ -942,75 +1196,122 @@ class _PhoneMockup extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              // Action buttons mock
+              const SizedBox(height: 12),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 22),
+                child: Column(
                   children: [
-                    _buildMockIconButton(
-                      Icons.chat_bubble,
-                      const Color(0xFF25D366),
+                    Text(
+                      profile.category.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: profile.accentColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    _buildMockIconButton(
-                      Icons.camera_alt,
-                      const Color(0xFFE1306C),
+                    const SizedBox(height: 6),
+                    Text(
+                      profile.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF475569),
+                        fontSize: 12,
+                        height: 1.35,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              // Mock Links
-              _buildMockLinkItem(
-                'Trendyol',
-                'Mağazamızı ziyaret edin',
-                const Color(0xFFF27A1A),
-                Icons.shopping_bag,
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children:
+                      profile.actions
+                          .map(
+                            (action) => Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                              ),
+                              child: _buildMockIconButton(
+                                action.icon,
+                                action.color,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                ),
               ),
-              _buildMockLinkItem(
-                'Referanslarımız',
-                'Müşteri yorumları',
-                Colors.indigo.shade400,
-                Icons.verified,
-              ),
-              _buildMockLinkItem(
-                'vCard Kaydet',
-                'İletişim bilgilerini kopyala',
-                Colors.teal.shade500,
-                Icons.contact_page,
-              ),
-              const SizedBox(height: 20),
-              // QR code mock
+              const SizedBox(height: 12),
+              for (final link in profile.links.take(3))
+                _buildMockLinkItem(
+                  link.title,
+                  link.subtitle,
+                  link.color,
+                  link.icon,
+                ),
+              const SizedBox(height: 12),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.black12),
                 ),
-                child: Column(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Vitrin QR kodu',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        color: Color(0xFF0F172A),
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Vitrin hazır',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '${profile.links.length} bağlantı',
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    Icon(
-                      Icons.qr_code_2_rounded,
-                      size: 80,
-                      color: Colors.black87,
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: profile.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.qr_code_2_rounded,
+                        size: 24,
+                        color: profile.accentColor,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               const Text(
                 'Bu vitrin VitrinX ile oluşturuldu',
                 style: TextStyle(
@@ -1019,7 +1320,7 @@ class _PhoneMockup extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -1029,13 +1330,14 @@ class _PhoneMockup extends StatelessWidget {
 
   Widget _buildMockIconButton(IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      width: 44,
+      height: 38,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
-      child: Icon(icon, color: color, size: 20),
+      child: Icon(icon, color: color, size: 18),
     );
   }
 
