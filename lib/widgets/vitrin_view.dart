@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -59,7 +60,7 @@ class VitrinView extends StatelessWidget {
     final galleryItems = _effectiveGalleryItems();
     final hasGalleryMedia = galleryItems.isNotEmpty;
     final children = <Widget>[
-      _buildModernHeader(preset, radius, galleryItems),
+      _buildModernHeader(context, preset, radius, galleryItems),
       SizedBox(height: isEmbedded ? 14 : 24),
       _buildStoreIdentityBlock(preset),
       SizedBox(height: isEmbedded ? 16 : 28),
@@ -201,6 +202,7 @@ class VitrinView extends StatelessWidget {
   }
 
   Widget _buildModernHeader(
+    BuildContext context,
     VitrinThemePreset preset,
     double radius,
     List<VitrinGalleryPreviewItem> galleryItems,
@@ -287,6 +289,11 @@ class VitrinView extends StatelessWidget {
           ),
           if (!hasHeroImage)
             Center(child: _buildVxMonogram(preset, monogramRadius)),
+          Positioned(
+            top: isEmbedded ? 12 : 20,
+            right: isEmbedded ? 12 : 20,
+            child: _buildShareButton(context, preset),
+          ),
         ],
       ),
     );
@@ -773,6 +780,10 @@ class VitrinView extends StatelessWidget {
                       ),
                     ),
                   ],
+                ],
+                if (storeData.whatsapp.trim().isNotEmpty) ...[
+                  SizedBox(height: isCompact ? 12 : 16),
+                  _buildShelfWhatsAppButton(context, preset, selectedItem, isCompact),
                 ],
                 if (galleryItems.length > 1) ...[
                   SizedBox(height: isCompact ? 10 : 14),
@@ -1385,6 +1396,152 @@ class VitrinView extends StatelessWidget {
       'api': '1',
       'query': address.trim(),
     }).toString();
+  }
+
+  Widget _buildShareButton(BuildContext context, VitrinThemePreset preset) {
+    final slug = storeData.name.toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '-');
+    final shareUrl = publicLink ?? 'https://vitrinx.app/v/$slug';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(99),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.35),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.18),
+              width: 1,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                await Clipboard.setData(ClipboardData(text: shareUrl));
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Row(
+                      children: [
+                        Icon(Icons.check_circle_outline_rounded, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text('Vitrin bağlantısı panoya kopyalandı!'),
+                      ],
+                    ),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: preset.accent,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: EdgeInsets.all(isEmbedded ? 8.0 : 12.0),
+                child: Icon(
+                  Icons.share_rounded,
+                  color: Colors.white,
+                  size: isEmbedded ? 16 : 20,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShelfWhatsAppButton(
+    BuildContext context,
+    VitrinThemePreset preset,
+    VitrinGalleryPreviewItem item,
+    bool isCompact,
+  ) {
+    final title = item.title.trim().isNotEmpty
+        ? item.title.trim()
+        : 'Vitrin Görseli';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0x1A25D366),
+        borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+        border: Border.all(
+          color: const Color(0xFF25D366).withValues(alpha: isDark ? 0.35 : 0.22),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            if (!publicMode) {
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    "Müşteriler bu butona bastığında WhatsApp'tan '$title' hakkında bilgi sorabilir.",
+                  ),
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+              return;
+            }
+            final url = _buildWhatsAppInquiryUrl(
+              storeData.whatsapp,
+              storeData.name,
+              title,
+            );
+            _openExternalUrl(url);
+          },
+          borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: isCompact ? 10 : 12,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  color: Color(0xFF25D366),
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  isCompact ? 'Görseldeki Ürünü Sor' : 'Fotoğraftaki Ürünü WhatsApp\'tan Sor',
+                  style: const TextStyle(
+                    color: Color(0xFF25D366),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _buildWhatsAppInquiryUrl(
+    String numberValue,
+    String storeName,
+    String itemTitle,
+  ) {
+    var number = numberValue.replaceAll(RegExp(r'[^0-9]'), '');
+    if (number.startsWith('0') && number.length == 11) {
+      number = '90${number.substring(1)}';
+    } else if (number.startsWith('5') && number.length == 10) {
+      number = '90$number';
+    }
+
+    final message =
+        "Merhaba! $storeName vitrininizdeki '$itemTitle' görseli hakkında bilgi alabilir miyim?";
+    final encodedMessage = Uri.encodeComponent(message);
+    return 'https://wa.me/$number?text=$encodedMessage';
   }
 }
 
