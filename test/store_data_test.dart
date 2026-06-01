@@ -42,5 +42,17 @@ void main() {
 
       expect(store.displayGalleryItems, hasLength(12));
     });
+
+    test('dummy örnek vitrin dolu galeri ve mağaza bilgileriyle gelir', () {
+      final store = StoreData.dummy();
+
+      expect(store.name, 'Aymira Giyim');
+      expect(store.businessType, 'Kadın giyim / butik');
+      expect(store.whatsapp, isNotEmpty);
+      expect(store.instagram, isNotEmpty);
+      expect(store.address, isNotEmpty);
+      expect(store.displayGalleryItems, hasLength(4));
+      expect(store.coverImageUrl, startsWith('https://images.unsplash.com/'));
+    });
   });
 }

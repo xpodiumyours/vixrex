@@ -224,43 +224,87 @@ class StoreData {
 
   factory StoreData.dummy() {
     return StoreData(
-      name: 'Örnek İşletme',
-      businessType: 'Butik / Danışmanlık',
-      description: 'Müşterilerimize en iyi hizmeti sunmak için buradayız.',
+      name: 'Aymira Giyim',
+      businessType: 'Kadın giyim / butik',
+      description:
+          'Raflarımızdaki günlük giyim, elbise, triko ve sezon ürünlerini tek vitrinde inceleyin.',
       whatsapp: '0555 123 45 67',
-      instagram: '@isletme',
-      address: 'Merkez Mah. No:1, İstanbul',
+      instagram: '@aymiragiyim',
+      website: 'aymiragiyim.com',
+      address: 'Atatürk Cad. No:24, Merkez, İstanbul',
       theme: 'Premium',
       status: 'Açık',
       isEsnafMode: true,
       corporateBio:
-          '2010 yılından beri sektörde öncü çözümler sunuyoruz. Vizyonumuz global pazarda değer yaratmaktır.',
+          'Aymira Giyim; günlük kombinler, elbise seçenekleri, triko ürünleri ve sezon parçalarını aynı vitrinde sunan yerel bir butik mağazadır. Mağazaya gelmeden önce rafları, reyonları ve öne çıkan ürünleri bu vitrinden inceleyebilirsiniz.',
+      referencesLink: 'https://maps.google.com/?q=Aymira+Giyim',
+      shelfImageUrl:
+          'https://images.unsplash.com/photo-1777628530456-bb93d3a03faf?auto=format&fit=crop&w=1400&q=80',
+      galleryItems: [
+        StoreGalleryItem(
+          id: 'demo-storefront',
+          imageUrl:
+              'https://images.unsplash.com/photo-1777628530456-bb93d3a03faf?auto=format&fit=crop&w=1400&q=80',
+          title: 'Mağaza vitrini',
+          description:
+              'Sezon ürünleri ve öne çıkan kombinler giriş reyonunda sergilenir.',
+        ),
+        StoreGalleryItem(
+          id: 'demo-shelf',
+          imageUrl:
+              'https://images.unsplash.com/photo-1761090617068-f1b3257d27ad?auto=format&fit=crop&w=1200&q=80',
+          title: 'Yeni sezon reyonu',
+          description:
+              'Günlük giyim, triko ve rahat kombin seçenekleri tek rafta toplanır.',
+        ),
+        StoreGalleryItem(
+          id: 'demo-dresses',
+          imageUrl:
+              'https://images.unsplash.com/photo-1767968037382-8eb9c564339f?auto=format&fit=crop&w=1200&q=80',
+          title: 'Elbise ve tekstil rafı',
+          description:
+              'Farklı beden ve renk seçenekleriyle elbise, bluz ve etek ürünleri.',
+        ),
+        StoreGalleryItem(
+          id: 'demo-accessories',
+          imageUrl:
+              'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=1200&q=80',
+          title: 'Kombin tamamlayıcıları',
+          description:
+              'Günlük stile eşlik eden tamamlayıcı parçalar ve mağaza düzeni.',
+        ),
+      ],
       marketplaceLinks: [
         MarketplaceLink(
           id: '1',
           platform: 'Trendyol',
-          url: 'trendyol.com/magaza',
+          url: 'trendyol.com/magaza/aymira-giyim',
         ),
         MarketplaceLink(
           id: '2',
-          platform: 'Hepsiburada',
-          url: 'hepsiburada.com/magaza',
+          platform: 'Instagram',
+          url: 'instagram.com/aymiragiyim',
+        ),
+        MarketplaceLink(
+          id: '3',
+          platform: 'Google İşletme',
+          url: 'maps.google.com/?q=Aymira+Giyim',
         ),
       ],
       products: [
         Product(
           id: '1',
-          name: 'Premium Ürün',
-          price: '1.250 TL',
-          category: 'Yeni',
-          description: 'Özel tasarım ürün.',
+          name: 'Yeni sezon elbise',
+          price: 'Mağazada sorunuz',
+          category: 'Elbise',
+          description: 'Günlük kullanım ve özel günler için seçilmiş modeller.',
         ),
         Product(
           id: '2',
-          name: 'Standart Hizmet',
-          price: '750 TL',
-          category: 'Hizmet',
-          description: 'Hızlı ve güvenilir.',
+          name: 'Triko ve günlük kombin',
+          price: 'Mağazada sorunuz',
+          category: 'Günlük giyim',
+          description: 'Raflarda bulunan rahat ve sezonluk kombin seçenekleri.',
         ),
       ],
     );
