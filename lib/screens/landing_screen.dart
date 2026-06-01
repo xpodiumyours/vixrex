@@ -15,6 +15,7 @@ class LandingScreen extends StatefulWidget {
 class _LandingScreenState extends State<LandingScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
+  int _activeProfileIndex = 0;
 
   // Modern Color Palette
   static const Color brandOrange = Color(0xFFFF5A1F);
@@ -53,14 +54,13 @@ class _LandingScreenState extends State<LandingScreen>
           Icons.shopping_bag_rounded,
           Color(0xFFF27A1A),
         ),
-        _HeroDemoLink(
-          'Yol tarifi',
-          'Mağazaya kolay ulaşın',
-          Icons.location_on_rounded,
-          Color(0xFFEF4444),
-        ),
       ],
       coverImageUrl: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=400&q=80',
+      galleryImages: [
+        'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=300&q=80',
+        'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=300&q=80',
+        'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=300&q=80',
+      ],
     ),
     _HeroDemoProfile(
       name: 'Lezzet Durağı',
@@ -90,14 +90,13 @@ class _LandingScreenState extends State<LandingScreen>
           Icons.delivery_dining_rounded,
           Color(0xFF10B981),
         ),
-        _HeroDemoLink(
-          'Konum',
-          'En yakın rotayı açın',
-          Icons.map_rounded,
-          Color(0xFF2563EB),
-        ),
       ],
       coverImageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80',
+      galleryImages: [
+        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=300&q=80',
+        'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=300&q=80',
+        'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=300&q=80',
+      ],
     ),
     _HeroDemoProfile(
       name: 'Nova Kuaför',
@@ -122,12 +121,6 @@ class _LandingScreenState extends State<LandingScreen>
           Color(0xFFDB2777),
         ),
         _HeroDemoLink(
-          'Instagram',
-          'Önce-sonra çalışmaları',
-          Icons.camera_alt_rounded,
-          Color(0xFFE1306C),
-        ),
-        _HeroDemoLink(
           'Randevu al',
           'WhatsApp ile hızlı iletişim',
           Icons.event_available_rounded,
@@ -135,6 +128,11 @@ class _LandingScreenState extends State<LandingScreen>
         ),
       ],
       coverImageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80',
+      galleryImages: [
+        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=300&q=80',
+        'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=300&q=80',
+        'https://images.unsplash.com/photo-1634449571010-02389ed0f9b0?auto=format&fit=crop&w=300&q=80',
+      ],
     ),
     _HeroDemoProfile(
       name: 'TeknoFix',
@@ -164,14 +162,13 @@ class _LandingScreenState extends State<LandingScreen>
           Icons.verified_rounded,
           Color(0xFF6366F1),
         ),
-        _HeroDemoLink(
-          'Konum',
-          'Servis noktasına ulaşın',
-          Icons.location_on_rounded,
-          Color(0xFFEF4444),
-        ),
       ],
-      coverImageUrl: 'https://images.unsplash.com/photo-1597740985671-2a8a3b80f02e?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl: 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=400&q=80',
+      galleryImages: [
+        'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=300&q=80',
+        'https://images.unsplash.com/photo-1545259741-2ea3ebf61fa3?auto=format&fit=crop&w=300&q=80',
+        'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=300&q=80',
+      ],
     ),
   ];
 
@@ -182,6 +179,15 @@ class _LandingScreenState extends State<LandingScreen>
       vsync: this,
       duration: const Duration(seconds: 16),
     )..repeat();
+    _animController.addListener(() {
+      final newIndex = math.min(
+        (_animController.value * _heroDemoProfiles.length).floor(),
+        _heroDemoProfiles.length - 1,
+      );
+      if (newIndex != _activeProfileIndex) {
+        setState(() => _activeProfileIndex = newIndex);
+      }
+    });
   }
 
   @override
@@ -198,10 +204,11 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   void _navigateToPreview() {
+    final activeProfile = _heroDemoProfiles[_activeProfileIndex];
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PreviewScreen(storeData: StoreData.dummy()),
+        builder: (_) => PreviewScreen(storeData: activeProfile.toStoreData()),
       ),
     );
   }
@@ -1078,6 +1085,7 @@ class _HeroDemoProfile {
   final List<_HeroDemoAction> actions;
   final List<_HeroDemoLink> links;
   final String coverImageUrl;
+  final List<String> galleryImages;
 
   const _HeroDemoProfile({
     required this.name,
@@ -1093,11 +1101,40 @@ class _HeroDemoProfile {
     required this.actions,
     required this.links,
     required this.coverImageUrl,
+    required this.galleryImages,
   });
 
   Color get secondaryBadgeColor {
     if (links.isEmpty) return accentColor;
     return links.last.color;
+  }
+
+  StoreData toStoreData() {
+    final galleryItems = [
+      StoreGalleryItem(id: 'cover', imageUrl: coverImageUrl),
+      ...galleryImages.asMap().entries.map(
+        (e) => StoreGalleryItem(
+          id: 'gallery-${e.key}',
+          imageUrl: e.value,
+        ),
+      ),
+    ];
+    return StoreData(
+      name: name,
+      businessType: category,
+      description: description,
+      status: status,
+      theme: 'Premium',
+      isEsnafMode: true,
+      galleryItems: galleryItems,
+      marketplaceLinks: links.asMap().entries.map(
+        (e) => MarketplaceLink(
+          id: '${e.key}',
+          platform: e.value.title,
+          url: '',
+        ),
+      ).toList(),
+    );
   }
 }
 
@@ -1281,13 +1318,14 @@ class _PhoneMockup extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              for (final link in profile.links.take(3))
+              for (final link in profile.links.take(2))
                 _buildMockLinkItem(
                   link.title,
                   link.subtitle,
                   link.color,
                   link.icon,
                 ),
+              _buildMockGalleryRow(profile),
               const SizedBox(height: 12),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -1358,6 +1396,95 @@ class _PhoneMockup extends StatelessWidget {
     );
   }
 
+  Widget _buildMockGalleryRow(_HeroDemoProfile profile) {
+    final allImages = [profile.coverImageUrl, ...profile.galleryImages];
+    final displayImages = allImages.take(3).toList();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: profile.accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.photo_library_rounded,
+                  color: profile.accentColor,
+                  size: 14,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Vitrin galerisi',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: profile.accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  '${allImages.length} foto\u011fraf',
+                  style: TextStyle(
+                    color: profile.accentColor,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: displayImages.asMap().entries.map((e) {
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(left: e.key == 0 ? 0 : 5),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: profile.accentColor.withValues(alpha: 0.12),
+                          image: DecorationImage(
+                            image: NetworkImage(e.value),
+                            fit: BoxFit.cover,
+                            onError: (exception, stackTrace) {
+                              // Suppress errors during tests or network issues
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMockIconButton(IconData icon, Color color) {
     return Container(
       width: 44,
@@ -1381,7 +1508,7 @@ class _PhoneMockup extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Color(0xFFF8FAFC),
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black12),
       ),
