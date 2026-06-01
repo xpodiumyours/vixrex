@@ -60,6 +60,7 @@ class _LandingScreenState extends State<LandingScreen>
           Color(0xFFEF4444),
         ),
       ],
+      coverImageUrl: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=400&q=80',
     ),
     _HeroDemoProfile(
       name: 'Lezzet Durağı',
@@ -96,6 +97,7 @@ class _LandingScreenState extends State<LandingScreen>
           Color(0xFF2563EB),
         ),
       ],
+      coverImageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80',
     ),
     _HeroDemoProfile(
       name: 'Nova Kuaför',
@@ -132,6 +134,7 @@ class _LandingScreenState extends State<LandingScreen>
           Color(0xFF10B981),
         ),
       ],
+      coverImageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80',
     ),
     _HeroDemoProfile(
       name: 'TeknoFix',
@@ -168,6 +171,7 @@ class _LandingScreenState extends State<LandingScreen>
           Color(0xFFEF4444),
         ),
       ],
+      coverImageUrl: 'https://images.unsplash.com/photo-1597740985671-2a8a3b80f02e?auto=format&fit=crop&w=400&q=80',
     ),
   ];
 
@@ -1073,6 +1077,7 @@ class _HeroDemoProfile {
   final String secondaryBadgeText;
   final List<_HeroDemoAction> actions;
   final List<_HeroDemoLink> links;
+  final String coverImageUrl;
 
   const _HeroDemoProfile({
     required this.name,
@@ -1087,6 +1092,7 @@ class _HeroDemoProfile {
     required this.secondaryBadgeText,
     required this.actions,
     required this.links,
+    required this.coverImageUrl,
   });
 
   Color get secondaryBadgeColor {
@@ -1131,37 +1137,61 @@ class _PhoneMockup extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           child: Column(
             children: [
-              Container(
-                height: 160,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFFF1F5F9),
-                      profile.accentColor.withValues(alpha: 0.16),
-                    ],
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              SizedBox(
+                height: 124,
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    const SizedBox(height: 20),
                     Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF8FAFC),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        profile.icon,
-                        size: 26,
-                        color: profile.accentColor,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: profile.accentColor.withValues(alpha: 0.16),
+                        image: DecorationImage(
+                          image: NetworkImage(profile.coverImageUrl),
+                          fit: BoxFit.cover,
+                          onError: (exception, stackTrace) {
+                            // Suppress errors during tests or network issues
+                          },
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                    Positioned(
+                      top: 76,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF8FAFC),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            profile.icon,
+                            size: 24,
+                            color: profile.accentColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
                       child: Text(
                         profile.name,
                         maxLines: 1,
@@ -1174,11 +1204,11 @@ class _PhoneMockup extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
-                        vertical: 4,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF10B981).withValues(alpha: 0.15),
@@ -1187,7 +1217,7 @@ class _PhoneMockup extends StatelessWidget {
                       child: Text(
                         profile.status.toUpperCase(),
                         style: const TextStyle(
-                          fontSize: 9,
+                          fontSize: 8,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF10B981),
                         ),
@@ -1196,7 +1226,7 @@ class _PhoneMockup extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 22),
                 child: Column(
