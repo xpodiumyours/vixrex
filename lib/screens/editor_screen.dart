@@ -1797,6 +1797,7 @@ class _EditorScreenState extends State<EditorScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildAnalyticsPanel(),
           if (showDesktopPublishCard) ...[
             _buildPublishPanel(compact: true, includeBottomSpacing: false),
           ],
@@ -1835,6 +1836,14 @@ class _EditorScreenState extends State<EditorScreen>
                   initial: _data.description,
                   hintText: 'İşletmenizi kısaca anlatın',
                 ),
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                'Günlük Duyuru / Durum',
+                (v) => setState(() => _data.status = v),
+                initial: _data.status,
+                hintText: 'Örn: Bugün taze börekler çıktı! veya %20 indirim!',
+                prefixIcon: Icons.campaign_rounded,
               ),
             ],
           ),
@@ -3907,6 +3916,7 @@ class _EditorScreenState extends State<EditorScreen>
   }
 
   Widget _buildCompactStatusDropdown() {
+    final hasStatusPreset = statuses.contains(_data.status);
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -3917,7 +3927,17 @@ class _EditorScreenState extends State<EditorScreen>
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: _data.status,
+          value: hasStatusPreset ? _data.status : null,
+          hint: Text(
+            _data.status.isEmpty ? 'Açık' : _data.status,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: primaryColor,
+            ),
+          ),
           icon: const Padding(
             padding: EdgeInsets.only(left: 4.0),
             child: Icon(
@@ -3937,7 +3957,11 @@ class _EditorScreenState extends State<EditorScreen>
               statuses
                   .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                   .toList(),
-          onChanged: (v) => setState(() => _data.status = v!),
+          onChanged: (v) => setState(() {
+            if (v != null) {
+              _data.status = v;
+            }
+          }),
         ),
       ),
     );
@@ -4063,6 +4087,181 @@ class _EditorScreenState extends State<EditorScreen>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAnalyticsPanel() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.analytics_rounded, color: primaryColor, size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    'Performans',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.arrow_upward_rounded, color: Color(0xFF25D366), size: 10),
+                    SizedBox(width: 2),
+                    Text(
+                      'Canlı',
+                      style: TextStyle(
+                        color: Color(0xFF25D366),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(child: _buildMetricItem('Görüntülenme', '142', '+12%', Colors.blueAccent)),
+              Expanded(child: _buildMetricItem('WhatsApp', '28', '+8%', const Color(0xFF25D366))),
+              Expanded(child: _buildMetricItem('Paylaşım', '15', '+15%', Colors.purpleAccent)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Son 7 Günlük Ziyaret Grafiği',
+            style: TextStyle(
+              color: Colors.white60,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 80,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(child: _buildChartBar('Pzt', 25)),
+                Expanded(child: _buildChartBar('Sal', 40)),
+                Expanded(child: _buildChartBar('Çar', 35)),
+                Expanded(child: _buildChartBar('Per', 55)),
+                Expanded(child: _buildChartBar('Cum', 45)),
+                Expanded(child: _buildChartBar('Cmt', 75)),
+                Expanded(child: _buildChartBar('Paz', 90)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricItem(String label, String value, String change, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white60,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              change,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChartBar(String day, double heightPercentage) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: 14,
+              height: heightPercentage,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [primaryColor, secondaryColor],
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          day,
+          style: const TextStyle(
+            color: Colors.white38,
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -4201,6 +4400,7 @@ class _GalleryPill extends StatelessWidget {
       ),
     );
   }
+
 }
 
 class _EditorGridPainter extends CustomPainter {

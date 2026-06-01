@@ -10,8 +10,9 @@ import 'package:vitrinx/widgets/vitrin_view.dart';
 
 class PublicVitrinScreen extends StatefulWidget {
   final String slug;
+  final StoreData? mockStoreData;
 
-  const PublicVitrinScreen({super.key, required this.slug});
+  const PublicVitrinScreen({super.key, required this.slug, this.mockStoreData});
 
   @override
   State<PublicVitrinScreen> createState() => _PublicVitrinScreenState();
@@ -27,6 +28,9 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
   }
 
   Future<StoreData?> _fetchStore() async {
+    if (widget.mockStoreData != null) {
+      return widget.mockStoreData;
+    }
     final response =
         await Supabase.instance.client
             .from('stores')

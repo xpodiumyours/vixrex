@@ -33,8 +33,9 @@ class StatusChip extends StatelessWidget {
         icon = Icons.warning_amber;
         break;
       default:
-        bgColor = Colors.grey.shade200;
-        textColor = Colors.black87;
+        bgColor = const Color(0xFFFF5A1F).withValues(alpha: 0.12);
+        textColor = const Color(0xFFFF5A1F);
+        icon = Icons.campaign_rounded;
     }
 
     return Container(
@@ -46,10 +47,8 @@ class StatusChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            Icon(icon, size: 14, color: textColor),
-            const SizedBox(width: 6),
-          ],
+          Icon(icon, size: 14, color: textColor),
+          const SizedBox(width: 6),
           Text(
             status,
             style: TextStyle(

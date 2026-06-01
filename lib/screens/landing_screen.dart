@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:vitrinx/screens/editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
+import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/models/store_data.dart';
 
 class LandingScreen extends StatefulWidget {
@@ -292,38 +293,107 @@ class _LandingScreenState extends State<LandingScreen>
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isDesktop = constraints.maxWidth > 900;
-                return Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: isDesktop ? 120 : 60,
-                      ),
-                      child:
-                          isDesktop
-                              ? Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    flex: 5,
-                                    child: _buildHeroContent(isDesktop: true),
+                return Column(
+                  children: [
+                    _buildTopNavBar(context, isDesktop),
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1200),
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            left: 24,
+                            right: 24,
+                            top: isDesktop ? 40 : 20,
+                            bottom: isDesktop ? 100 : 50,
+                          ),
+                          child:
+                              isDesktop
+                                  ? Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        flex: 5,
+                                        child: _buildHeroContent(isDesktop: true),
+                                      ),
+                                      const SizedBox(width: 40),
+                                      Expanded(flex: 5, child: _buildHeroMockup()),
+                                    ],
+                                  )
+                                  : Column(
+                                    children: [
+                                      _buildHeroContent(isDesktop: false),
+                                      const SizedBox(height: 40),
+                                      _buildHeroMockup(),
+                                    ],
                                   ),
-                                  const SizedBox(width: 40),
-                                  Expanded(flex: 5, child: _buildHeroMockup()),
-                                ],
-                              )
-                              : Column(
-                                children: [
-                                  _buildHeroContent(isDesktop: false),
-                                  const SizedBox(height: 60),
-                                  _buildHeroMockup(),
-                                ],
-                              ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 );
               },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopNavBar(BuildContext context, bool isDesktop) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 40 : 20,
+        vertical: 16,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: brandOrange.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.storefront_rounded,
+                  color: brandOrange,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'VitrinX',
+                style: TextStyle(
+                  color: darkAccent,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ExploreScreen()),
+              );
+            },
+            icon: const Icon(Icons.explore_rounded, size: 16),
+            label: const Text(
+              'Vitrinleri Keşfet',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: darkAccent,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
           ),
         ],
