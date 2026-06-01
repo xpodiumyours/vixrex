@@ -450,24 +450,6 @@ class _LandingScreenState extends State<LandingScreen>
                   );
                 },
               ),
-              OutlinedButton(
-                onPressed: _navigateToPreview,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: darkAccent,
-                  side: const BorderSide(color: Color(0x33111827), width: 2),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 24,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-                child: const Text(
-                  'Canlı örneği incele',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -555,9 +537,15 @@ class _LandingScreenState extends State<LandingScreen>
                         child: SlideTransition(position: slide, child: child),
                       );
                     },
-                    child: _PhoneMockup(
-                      key: ValueKey(activeProfile.name),
-                      profile: activeProfile,
+                    child: GestureDetector(
+                      onTap: _navigateToPreview,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: _PhoneMockup(
+                          key: ValueKey(activeProfile.name),
+                          profile: activeProfile,
+                        ),
+                      ),
                     ),
                   ),
                   Positioned(
