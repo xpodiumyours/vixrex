@@ -45,3 +45,6 @@ app.*.map.json
 /android/app/release
 .vercel
 devtools_options.yaml
+landing_dump.txt
+vitrin_dump.txt
+
