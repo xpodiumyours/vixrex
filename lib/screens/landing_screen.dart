@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:vitrinx/screens/editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
+import 'package:vitrinx/screens/store_setup_screen.dart';
 import 'package:vitrinx/models/store_data.dart';
 
 class LandingScreen extends StatefulWidget {
@@ -476,6 +477,8 @@ class _LandingScreenState extends State<LandingScreen>
           _buildClaimBar(isDesktop: isDesktop),
           const SizedBox(height: 32),
           _buildHeroTrustChips(isDesktop: isDesktop),
+          const SizedBox(height: 24),
+          _buildSecondaryActions(isDesktop: isDesktop),
         ],
       ),
     );
@@ -519,6 +522,64 @@ class _LandingScreenState extends State<LandingScreen>
             );
           }).toList(),
     );
+  }
+
+  Widget _buildSecondaryActions({required bool isDesktop}) {
+    final buttons = [
+      ElevatedButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StoreSetupScreen()),
+          );
+        },
+        icon: const Icon(Icons.add_business_rounded, size: 18),
+        label: const Text(
+          'Mağaza Aç',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: brandOrange,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+      const SizedBox(width: 12, height: 12),
+      OutlinedButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ExploreScreen()),
+          );
+        },
+        icon: const Icon(Icons.explore_rounded, size: 18, color: darkAccent),
+        label: const Text(
+          'Vitrinleri Keşfet',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: darkAccent),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: darkAccent, width: 1.5),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    ];
+
+    return isDesktop
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: buttons,
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: buttons,
+          );
   }
 
   Widget _buildClaimBar({required bool isDesktop}) {
@@ -616,6 +677,29 @@ class _LandingScreenState extends State<LandingScreen>
       },
     );
 
+    final storeSetupButton = OutlinedButton.icon(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const StoreSetupScreen()),
+        );
+      },
+      icon: const Icon(Icons.add_business_rounded, size: 16, color: brandOrange),
+      label: const Text(
+        'Mağaza Aç →',
+        style: TextStyle(
+          fontWeight: FontWeight.w900,
+          fontSize: 14,
+          color: brandOrange,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: brandOrange, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+      ),
+    );
+
     if (isDesktop) {
       return SizedBox(
         height: 64,
@@ -624,6 +708,8 @@ class _LandingScreenState extends State<LandingScreen>
             inputWidget,
             const SizedBox(width: 12),
             buttonWidget,
+            const SizedBox(width: 10),
+            storeSetupButton,
           ],
         ),
       );
@@ -643,6 +729,11 @@ class _LandingScreenState extends State<LandingScreen>
           SizedBox(
             height: 56,
             child: buttonWidget,
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 52,
+            child: storeSetupButton,
           ),
         ],
       );

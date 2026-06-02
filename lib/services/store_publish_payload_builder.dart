@@ -57,6 +57,8 @@ class StorePublishPayloadBuilder {
       'vcard_link': '',
       'shelf_image_url': shelfImageUrl,
       'is_published': true,
+      'is_store': data.isStore,
+      'kategori': data.kategori,
     };
   }
 

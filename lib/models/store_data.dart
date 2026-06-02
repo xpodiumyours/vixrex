@@ -114,6 +114,8 @@ class StoreData {
   String referencesLink;
   String shelfImageUrl;
   List<StoreGalleryItem> galleryItems;
+  bool isStore;
+  String kategori;
 
   StoreData({
     this.name = '',
@@ -133,6 +135,8 @@ class StoreData {
     this.referencesLink = '',
     this.shelfImageUrl = '',
     List<StoreGalleryItem>? galleryItems,
+    this.isStore = false,
+    this.kategori = '',
   }) : products = products ?? [],
        marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')],
        galleryItems = galleryItems ?? [];
@@ -155,6 +159,8 @@ class StoreData {
     'referencesLink': referencesLink,
     'shelfImageUrl': shelfImageUrl,
     'galleryItems': galleryItems.map((e) => e.toJson()).toList(),
+    'isStore': isStore,
+    'kategori': kategori,
   };
 
   factory StoreData.fromJson(Map<String, dynamic> json) {
@@ -164,7 +170,7 @@ class StoreData {
 
     return StoreData(
       name: json['name'] ?? '',
-      businessType: json['businessType'] ?? 'Butik',
+      businessType: json['businessType'] ?? json['business_type'] ?? 'Butik',
       description: json['description'] ?? '',
       whatsapp: json['whatsapp'] ?? '',
       instagram: json['instagram'] ?? '',
@@ -172,18 +178,22 @@ class StoreData {
       address: json['address'] ?? '',
       theme: json['theme'] ?? 'Premium',
       status: json['status'] ?? 'Açık',
-      isEsnafMode: json['isEsnafMode'] ?? true,
-      logoUrl: json['logoUrl'],
+      isEsnafMode: json['isEsnafMode'] ?? json['is_esnaf_mode'] ?? true,
+      logoUrl: json['logoUrl'] ?? json['logo_url'],
       products:
           (json['products'] as List?)?.map((e) => Product.fromJson(e)).toList(),
       marketplaceLinks:
           (json['marketplaceLinks'] as List?)
               ?.map((e) => MarketplaceLink.fromJson(e))
+              .toList() ?? (json['marketplace_links'] as List?)
+              ?.map((e) => MarketplaceLink.fromJson(e))
               .toList(),
-      corporateBio: json['corporateBio'] ?? '',
-      referencesLink: json['referencesLink'] ?? '',
+      corporateBio: json['corporateBio'] ?? json['corporate_bio'] ?? '',
+      referencesLink: json['referencesLink'] ?? json['references_link'] ?? '',
       shelfImageUrl: json['shelfImageUrl'] ?? json['shelf_image_url'] ?? '',
       galleryItems: parsedGalleryItems,
+      isStore: json['is_store'] ?? json['isStore'] ?? false,
+      kategori: json['kategori'] ?? json['category'] ?? '',
     );
   }
 
