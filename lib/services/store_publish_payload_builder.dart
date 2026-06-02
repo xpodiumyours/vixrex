@@ -33,7 +33,13 @@ class StorePublishPayloadBuilder {
     String slug,
     String editToken,
   ) {
-    return {'slug': slug, 'edit_token': editToken, ...toStoreUpdateMap(data)};
+    return {
+      'slug': slug,
+      // Supabase kolon adı edit_token veya düzenleme_belirteci olabilir — ikisini de gönder
+      'edit_token': editToken,
+      'düzenleme_belirteci': editToken,
+      ...toStoreUpdateMap(data),
+    };
   }
 
   Map<String, dynamic> toStoreUpdateMap(StoreData data) {
@@ -57,6 +63,8 @@ class StorePublishPayloadBuilder {
       'vcard_link': '',
       'shelf_image_url': shelfImageUrl,
       'is_published': true,
+      // Türkçe kolon adı alternatifi
+      'yayınlandı': true,
       'is_store': data.isStore,
       'kategori': data.kategori,
     };

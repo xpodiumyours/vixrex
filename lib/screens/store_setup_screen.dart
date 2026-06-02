@@ -153,8 +153,10 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       final builder = const StorePublishPayloadBuilder();
       final slug = builder.generateSlug(name);
 
-      // Slug çakışma kontrolü
       final client = Supabase.instance.client;
+
+      // ── Slug çakışma kontrolü ──────────────────────────────────────────────
+      debugPrint('[StoreSetup] Slug kontrol ediliyor: $slug');
       final existing = await client
           .from('stores')
           .select('slug')
@@ -167,10 +169,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
         );
       }
 
-      // edit_token üret
+      // ── Token + StoreData ─────────────────────────────────────────────────
       final editToken = _generateToken();
 
-      // StoreData oluştur
       final storeData = StoreData(
         name: name,
         description: _descCtrl.text.trim(),
@@ -182,36 +183,111 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
         status: 'Açık',
       );
 
+      // ── Payload oluştur ve logla ──────────────────────────────────────────
       final payload = builder.toStoreInsertMap(storeData, slug, editToken);
-      await client.from('stores').insert(payload);
+      debugPrint('[StoreSetup] INSERT payload:');
+      payload.forEach((k, v) => debugPrint('  $k: $v'));
 
-      // Kaydet
+      // Zorunlu alanları doğrula
+      assert(payload['is_store'] == true,  'is_store eksik veya false!');
+      assert(payload['kategori'] != null && (payload['kategori'] as String).isNotEmpty,
+          'kategori eksik!');
+      assert(payload['yayinlandi'] == true || payload['is_published'] == true,
+          'yayinlandi/is_published eksik!');
+      assert(payload['slug'] != null && (payload['slug'] as String).isNotEmpty,
+          'slug eksik!');
+      assert(
+        payload.containsKey('düzenleme_belirteci') || payload.containsKey('edit_token'),
+        'edit token eksik!');
+
+      // ── Supabase insert ───────────────────────────────────────────────────
+      debugPrint('[StoreSetup] Supabase insert başlıyor...');
+      await client.from('stores').insert(payload);
+      debugPrint('[StoreSetup] Supabase insert başarılı ✓');
+
+      // ── Yerel kayıt ──────────────────────────────────────────────────────
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('store_edit_token', editToken);
       await prefs.setString('vitrin_data', jsonEncode(storeData.toJson()));
 
       final link = 'https://vitrinx.app/v/$slug';
+      debugPrint('[StoreSetup] Mağaza yayınlandı: $link');
 
       if (!mounted) return;
-      setState(() {
-        _publishedLink = link;
-      });
-    } catch (e) {
+      setState(() => _publishedLink = link);
+    } on PostgrestException catch (e) {
+      debugPrint('[StoreSetup] Supabase PostgrestException:');
+      debugPrint('  code   : ${e.code}');
+      debugPrint('  message: ${e.message}');
+      debugPrint('  details: ${e.details}');
+      debugPrint('  hint   : ${e.hint}');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString().replaceAll('Exception: ', ''),
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      final msg = _supabaseErrorToTurkish(e);
+      _showErrorSnackbar(msg);
+    } catch (e, st) {
+      debugPrint('[StoreSetup] Beklenmeyen hata: $e');
+      debugPrint('$st');
+      if (!mounted) return;
+      final raw = e.toString().replaceAll('Exception: ', '');
+      _showErrorSnackbar(raw);
     } finally {
       if (mounted) setState(() => _isPublishing = false);
     }
+  }
+
+  /// Supabase hata kodunu Türkçe mesaja çevirir.
+  String _supabaseErrorToTurkish(PostgrestException e) {
+    final code = e.code ?? '';
+    final msg = e.message.toLowerCase();
+
+    // RLS / yetki hatası
+    if (code == '42501' || msg.contains('row-level security') || msg.contains('permission denied')) {
+      return 'Sunucu güvenlik kuralı engeli (RLS). Lütfen yöneticinizle iletişime geçin.';
+    }
+    // Benzersizlik ihlali (unique constraint)
+    if (code == '23505' || msg.contains('unique') || msg.contains('duplicate')) {
+      if (msg.contains('slug')) {
+        return 'Bu mağaza adresi (slug) zaten kullanılıyor. Farklı bir mağaza adı deneyin.';
+      }
+      return 'Bu bilgilerle kayıtlı bir mağaza zaten var.';
+    }
+    // Zorunlu alan eksik (not-null constraint)
+    if (code == '23502' || msg.contains('null value') || msg.contains('not-null')) {
+      return 'Eksik zorunlu alan: ${e.details ?? e.message}. Lütfen tüm alanları doldurun.';
+    }
+    // Tablo bulunamadı
+    if (code == '42P01' || msg.contains('does not exist')) {
+      return '"stores" tablosu bulunamadı. Veritabanı yapılandırmasını kontrol edin.';
+    }
+    // Ağ / JWT hatası
+    if (msg.contains('jwt') || msg.contains('token')) {
+      return 'Oturum süresi dolmuş olabilir. Uygulamayı yeniden başlatın.';
+    }
+    // Genel hata
+    return 'Sunucu hatası (${e.code}): ${e.message}';
+  }
+
+  void _showErrorSnackbar(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                msg,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   String _generateToken() {
