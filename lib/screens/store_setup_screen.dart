@@ -192,13 +192,12 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       assert(payload['is_store'] == true,  'is_store eksik veya false!');
       assert(payload['kategori'] != null && (payload['kategori'] as String).isNotEmpty,
           'kategori eksik!');
-      assert(payload['yayinlandi'] == true || payload['is_published'] == true,
-          'yayinlandi/is_published eksik!');
+      assert(payload['is_published'] == true,
+          'is_published eksik!');
       assert(payload['slug'] != null && (payload['slug'] as String).isNotEmpty,
           'slug eksik!');
-      assert(
-        payload.containsKey('düzenleme_belirteci') || payload.containsKey('edit_token'),
-        'edit token eksik!');
+      assert(payload.containsKey('edit_token'),
+          'edit_token eksik!');
 
       // ── Supabase insert ───────────────────────────────────────────────────
       debugPrint('[StoreSetup] Supabase insert başlıyor...');
