@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
@@ -16,6 +17,7 @@ import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
+import 'package:vitrinx/screens/landing_screen.dart';
 
 class EditorScreen extends StatefulWidget {
   final String? initialStoreName;
@@ -33,8 +35,10 @@ class _EditorScreenState extends State<EditorScreen>
   final StoreData _data = StoreData(isEsnafMode: false);
   bool _isLoading = true;
   bool _isPublishing = false;
+  bool _isDeleting = false;
   bool _isUploadingGallery = false;
   int _selectedGalleryIndex = 0;
+  String? _existingVitrinToken;
   int _todayViewCount = 0;
   bool _isTodayViewCountLoading = false;
   final List<_EditorGalleryItem> _galleryItems = [];
@@ -126,6 +130,12 @@ class _EditorScreenState extends State<EditorScreen>
   Future<void> _loadSavedData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_editTokenPrefsKey);
+      if (mounted) {
+        setState(() {
+          _existingVitrinToken = token;
+        });
+      }
       final String? savedJson = prefs.getString('vitrin_data');
       if (savedJson != null) {
         final Map<String, dynamic> jsonData = jsonDecode(savedJson);
@@ -277,7 +287,10 @@ class _EditorScreenState extends State<EditorScreen>
           publishResult.wasUpdated
               ? 'Vitrininiz güncellendi.'
               : 'Vitrin linkiniz hazırlandı.';
-      setState(() => _publishedLink = publicLink);
+      setState(() {
+        _publishedLink = publicLink;
+        _existingVitrinToken = editToken;
+      });
       unawaited(_refreshTodayViewCount(force: true));
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -330,6 +343,116 @@ class _EditorScreenState extends State<EditorScreen>
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
+    );
+  }
+
+  Future<void> _deleteVitrin() async {
+    if (_isDeleting) return;
+    setState(() => _isDeleting = true);
+
+    try {
+      final token = _existingVitrinToken;
+      if (token != null && token.isNotEmpty) {
+        final client = Supabase.instance.client;
+        debugPrint('[Editor] Vitrin siliniyor, token: $token');
+        await client.from('stores').delete().eq('edit_token', token);
+        debugPrint('[Editor] Vitrin veritabanından silindi ✓');
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_editTokenPrefsKey);
+      await prefs.remove('vitrin_data');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vitrininiz başarıyla silindi.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LandingScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      debugPrint('[Editor] Silme hatası: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Vitrin silinirken bir hata oluştu: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
+  void _showDeleteVitrinConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
+              SizedBox(width: 10),
+              Text(
+                'Vitrini Sil',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  color: darkText,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Bu işlem geri alınamaz. Vitrininiz tamamen silinecektir. Devam etmek istiyor musunuz?',
+            style: TextStyle(color: softText, fontSize: 14, height: 1.5),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Vazgeç',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: mutedText,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteVitrin();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Sil',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1946,6 +2069,43 @@ class _EditorScreenState extends State<EditorScreen>
                   ),
               ],
             ),
+          ),
+          const SizedBox(height: 24),
+          _buildEditCard(
+            title: 'Ayarlar',
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton.icon(
+                  onPressed: _isDeleting ? null : _showDeleteVitrinConfirmation,
+                  icon: _isDeleting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.redAccent,
+                          ),
+                        )
+                      : const Icon(Icons.delete_outline_rounded, size: 20),
+                  label: const Text(
+                    'Vitrini Sil',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.redAccent,
+                    side: const BorderSide(color: Colors.redAccent, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 100),
         ],

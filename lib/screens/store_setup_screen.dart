@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
+import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
 
 // ─── Kategori Modeli ────────────────────────────────────────────────────────
@@ -44,7 +45,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
   // ── Adım ──────────────────────────────────────────────────────────────────
   int _step = 0; // 0 = kategori, 1 = bilgiler, 2 = özet
   bool _isPublishing = false;
+  bool _isDeleting = false;
   String? _publishedLink;
+  String? _existingStoreToken;
 
   // ── Form state ──────────────────────────────────────────────────────────
   late final PageController _pageController;
@@ -81,6 +84,21 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _progressController.animateTo(0.34);
     });
+    _loadExistingStoreToken();
+  }
+
+  Future<void> _loadExistingStoreToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('store_edit_token');
+      if (mounted) {
+        setState(() {
+          _existingStoreToken = token;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading store edit token: $e');
+    }
   }
 
   @override
@@ -213,7 +231,10 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       debugPrint('[StoreSetup] Mağaza yayınlandı: $link');
 
       if (!mounted) return;
-      setState(() => _publishedLink = link);
+      setState(() {
+        _publishedLink = link;
+        _existingStoreToken = editToken;
+      });
     } on PostgrestException catch (e) {
       debugPrint('[StoreSetup] Supabase PostgrestException:');
       debugPrint('  code   : ${e.code}');
@@ -286,6 +307,110 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
         duration: const Duration(seconds: 6),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+    );
+  }
+
+  Future<void> _deleteStore() async {
+    if (_isDeleting) return;
+    setState(() => _isDeleting = true);
+
+    try {
+      final token = _existingStoreToken;
+      if (token != null && token.isNotEmpty) {
+        final client = Supabase.instance.client;
+        debugPrint('[StoreSetup] Mağaza siliniyor, token: $token');
+        await client.from('stores').delete().eq('edit_token', token);
+        debugPrint('[StoreSetup] Mağaza veritabanından silindi ✓');
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('store_edit_token');
+      await prefs.remove('vitrin_data');
+
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mağazanız başarıyla silindi.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LandingScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      debugPrint('[StoreSetup] Silme hatası: $e');
+      if (!mounted) return;
+      _showErrorSnackbar('Mağaza silinirken bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
+              SizedBox(width: 10),
+              Text(
+                'Mağazayı Sil',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  color: darkText,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Bu işlem geri alınamaz. Mağazanız tamamen silinecektir. Devam etmek istiyor musunuz?',
+            style: TextStyle(color: softText, fontSize: 14, height: 1.5),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Vazgeç',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: mutedText,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteStore();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Sil',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -727,6 +852,40 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
 
           // CTA
           _buildPublishButton(),
+          if (_existingStoreToken != null) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: OutlinedButton.icon(
+                onPressed: _isDeleting ? null : _showDeleteConfirmation,
+                icon: _isDeleting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.redAccent,
+                        ),
+                      )
+                    : const Icon(Icons.delete_outline_rounded, size: 20),
+                label: const Text(
+                  'Mağazamı Sil',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  side: const BorderSide(color: Colors.redAccent, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 80),
         ],
       ),
@@ -915,6 +1074,37 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
               ],
             ),
           ),
+          if (_existingStoreToken != null) ...[
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: _isDeleting ? null : _showDeleteConfirmation,
+              icon: _isDeleting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.redAccent,
+                      ),
+                    )
+                  : const Icon(Icons.delete_outline_rounded, size: 20),
+              label: const Text(
+                'Mağazamı Sil',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent, width: 1.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+          ],
         ],
       ),
     );
