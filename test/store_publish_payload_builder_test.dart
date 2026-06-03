@@ -79,6 +79,26 @@ void main() {
       expect(payload['edit_token'], 'edit-token');
       expect(payload['is_published'], isTrue);
     });
+
+    test('store update payload konum verilerini ekler', () {
+      final consentTime = DateTime.utc(2026, 6, 3, 12, 0, 0);
+      final data = StoreData(
+        name: 'Aymira',
+        latitude: 41.0082,
+        longitude: 28.9784,
+        locationAccuracyMeters: 10.5,
+        locationConsentAt: consentTime,
+        locationSource: 'geolocator',
+      );
+
+      final payload = builder.toStoreUpdateMap(data);
+
+      expect(payload['latitude'], 41.0082);
+      expect(payload['longitude'], 28.9784);
+      expect(payload['location_accuracy_meters'], 10.5);
+      expect(payload['location_consent_at'], consentTime.toIso8601String());
+      expect(payload['location_source'], 'geolocator');
+    });
   });
 
   group('StorePublishPayloadBuilder gallery items', () {

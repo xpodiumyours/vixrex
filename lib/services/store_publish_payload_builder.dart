@@ -63,6 +63,11 @@ class StorePublishPayloadBuilder {
       'is_published': true,
       'is_store': data.isStore,
       'kategori': data.kategori,
+      'latitude': data.latitude,
+      'longitude': data.longitude,
+      'location_accuracy_meters': data.locationAccuracyMeters,
+      'location_consent_at': data.locationConsentAt?.toIso8601String(),
+      'location_source': data.locationSource,
     };
   }
 

@@ -117,6 +117,13 @@ class StoreData {
   bool isStore;
   String kategori;
 
+  // Konum ve KVKK Alanları
+  double? latitude;
+  double? longitude;
+  double? locationAccuracyMeters;
+  DateTime? locationConsentAt;
+  String? locationSource;
+
   StoreData({
     this.name = '',
     this.businessType = 'Butik',
@@ -137,6 +144,11 @@ class StoreData {
     List<StoreGalleryItem>? galleryItems,
     this.isStore = false,
     this.kategori = '',
+    this.latitude,
+    this.longitude,
+    this.locationAccuracyMeters,
+    this.locationConsentAt,
+    this.locationSource,
   }) : products = products ?? [],
        marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')],
        galleryItems = galleryItems ?? [];
@@ -161,6 +173,11 @@ class StoreData {
     'galleryItems': galleryItems.map((e) => e.toJson()).toList(),
     'isStore': isStore,
     'kategori': kategori,
+    'latitude': latitude,
+    'longitude': longitude,
+    'locationAccuracyMeters': locationAccuracyMeters,
+    'locationConsentAt': locationConsentAt?.toIso8601String(),
+    'locationSource': locationSource,
   };
 
   factory StoreData.fromJson(Map<String, dynamic> json) {
@@ -194,6 +211,13 @@ class StoreData {
       galleryItems: parsedGalleryItems,
       isStore: json['is_store'] ?? json['isStore'] ?? false,
       kategori: json['kategori'] ?? json['category'] ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      locationAccuracyMeters: (json['locationAccuracyMeters'] ?? json['location_accuracy_meters'] as num?)?.toDouble(),
+      locationConsentAt: json['locationConsentAt'] != null || json['location_consent_at'] != null
+          ? DateTime.tryParse((json['locationConsentAt'] ?? json['location_consent_at']) as String)
+          : null,
+      locationSource: json['locationSource'] ?? json['location_source'] as String?,
     );
   }
 

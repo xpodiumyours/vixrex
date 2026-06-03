@@ -1392,6 +1392,12 @@ class VitrinView extends StatelessWidget {
   }
 
   String _buildMapsUrl(String address) {
+    if (storeData.latitude != null && storeData.longitude != null) {
+      return Uri.https('www.google.com', '/maps/search/', {
+        'api': '1',
+        'query': '${storeData.latitude},${storeData.longitude}',
+      }).toString();
+    }
     return Uri.https('www.google.com', '/maps/search/', {
       'api': '1',
       'query': address.trim(),

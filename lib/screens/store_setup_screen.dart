@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
@@ -61,6 +62,16 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
 
   String? _nameError;
   String? _waError;
+
+  // ── Konum & KVKK state ───────────────────────────────────────────────────
+  double? _latitude;
+  double? _longitude;
+  double? _locationAccuracyMeters;
+  DateTime? _locationConsentAt;
+  String? _locationSource;
+  bool _kvkkConsent = false;
+  bool _isLocating = false;
+  String? _locationStatusMessage;
 
   // ── Kategoriler ───────────────────────────────────────────────────────────
   static const List<_Category> _categories = [
@@ -161,6 +172,69 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
     return ok;
   }
 
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLocating = true;
+      _locationStatusMessage = null;
+    });
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _locationStatusMessage = 'Konum servisleri devre dışı. Lütfen cihazınızda konumu açın.';
+          _isLocating = false;
+        });
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _locationStatusMessage = 'Konum izni reddedildi. Konum almak için izin vermelisiniz.';
+            _isLocating = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _locationStatusMessage = 'Konum izinleri kalıcı olarak reddedildi. Tarayıcı ayarlarından izin verin.';
+          _isLocating = false;
+        });
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      );
+
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _locationAccuracyMeters = position.accuracy;
+        _locationConsentAt = DateTime.now();
+        _locationSource = 'geolocator';
+        _locationStatusMessage = 'Konum başarıyla alındı (Hata payı: ~${position.accuracy.toStringAsFixed(0)}m).';
+        _isLocating = false;
+
+        if (_addressCtrl.text.trim().isEmpty) {
+          _addressCtrl.text = 'Koordinatlarla işaretlenen konum';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _locationStatusMessage = 'Konum alınırken hata oluştu: $e';
+        _isLocating = false;
+      });
+    }
+  }
+
   // ── Yayınla ───────────────────────────────────────────────────────────────
   Future<void> _publish() async {
     if (_isPublishing) return;
@@ -199,6 +273,11 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
         kategori: _selectedCategory!.label,
         businessType: _selectedCategory!.label,
         status: 'Açık',
+        latitude: _latitude,
+        longitude: _longitude,
+        locationAccuracyMeters: _locationAccuracyMeters,
+        locationConsentAt: _locationConsentAt,
+        locationSource: _locationSource,
       );
 
       // ── Payload oluştur ve logla ──────────────────────────────────────────
@@ -682,6 +761,87 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
             icon: Icons.location_on_outlined,
             maxLines: 2,
           ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Checkbox(
+                  value: _kvkkConsent,
+                  activeColor: primaryColor,
+                  onChanged: (val) {
+                    setState(() {
+                      _kvkkConsent = val ?? false;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _kvkkConsent = !_kvkkConsent;
+                    });
+                  },
+                  child: const Text(
+                    'Konum verilerimin KVKK kapsamında işlenmesine açık rıza veriyorum.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: softText,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _kvkkConsent && !_isLocating ? _getCurrentLocation : null,
+              icon: _isLocating
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                      ),
+                    )
+                  : const Icon(Icons.my_location_rounded, size: 16),
+              label: Text(
+                _isLocating ? 'Konum Alınıyor...' : 'Konumumu Kullan',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primaryColor,
+                disabledForegroundColor: mutedText.withValues(alpha: 0.6),
+                side: BorderSide(
+                  color: _kvkkConsent ? primaryColor : const Color.fromRGBO(15, 23, 42, 0.15),
+                  width: 1.5,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          if (_locationStatusMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _locationStatusMessage!,
+              style: TextStyle(
+                fontSize: 12,
+                color: _latitude != null ? Colors.green.shade700 : Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
           const SizedBox(height: 80), // nav için alan bırak
         ],
       ),
