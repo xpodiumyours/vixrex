@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
+import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
 
 // ─── Kategori Modeli ────────────────────────────────────────────────────────
@@ -102,15 +103,55 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
   Future<void> _loadExistingStoreToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('store_edit_token');
+      final token = prefs.getString(LocalStorageKeys.storeEditToken);
+      final savedStore =
+          _readSavedStoreData(prefs.getString(LocalStorageKeys.storeData)) ??
+          _readSavedStoreData(prefs.getString(LocalStorageKeys.vitrinData));
       if (mounted) {
         setState(() {
           _existingStoreToken = token;
+          if (savedStore != null && savedStore.isStore) {
+            _applySavedStoreData(savedStore);
+          }
         });
       }
     } catch (e) {
       debugPrint('Error loading store edit token: $e');
     }
+  }
+
+  StoreData? _readSavedStoreData(String? rawJson) {
+    if (rawJson == null || rawJson.trim().isEmpty) return null;
+
+    final decoded = jsonDecode(rawJson);
+    if (decoded is Map<String, dynamic>) {
+      return StoreData.fromJson(decoded);
+    }
+    if (decoded is Map) {
+      return StoreData.fromJson(Map<String, dynamic>.from(decoded));
+    }
+    return null;
+  }
+
+  void _applySavedStoreData(StoreData data) {
+    _Category? savedCategory;
+    for (final category in _categories) {
+      if (category.label == data.kategori) {
+        savedCategory = category;
+        break;
+      }
+    }
+    _selectedCategory = savedCategory;
+    _nameCtrl.text = data.name;
+    _descCtrl.text = data.description;
+    _waCtrl.text = data.whatsapp;
+    _addressCtrl.text = data.address;
+    _latitude = data.latitude;
+    _longitude = data.longitude;
+    _locationAccuracyMeters = data.locationAccuracyMeters;
+    _locationConsentAt = data.locationConsentAt;
+    _locationSource = data.locationSource;
+    _kvkkConsent = data.latitude != null && data.longitude != null;
   }
 
   @override
@@ -275,27 +316,32 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       final name = _nameCtrl.text.trim();
       final builder = const StorePublishPayloadBuilder();
       final slug = builder.generateSlug(name);
+      final existingToken = _existingStoreToken;
+      final hasExistingStoreToken =
+          existingToken != null && existingToken.trim().isNotEmpty;
+      final editToken =
+          hasExistingStoreToken ? existingToken.trim() : _generateToken();
 
       final client = Supabase.instance.client;
 
       // ── Slug çakışma kontrolü ──────────────────────────────────────────────
-      debugPrint('[StoreSetup] Slug kontrol ediliyor: $slug');
-      final existing =
-          await client
-              .from('stores')
-              .select('slug')
-              .eq('slug', slug)
-              .maybeSingle();
+      if (!hasExistingStoreToken) {
+        debugPrint('[StoreSetup] Slug kontrol ediliyor: $slug');
+        final existing =
+            await client
+                .from('stores')
+                .select('slug')
+                .eq('slug', slug)
+                .maybeSingle();
 
-      if (existing != null) {
-        throw Exception(
-          'Bu mağaza adıyla bir sayfa zaten var. Lütfen farklı bir ad deneyin.',
-        );
+        if (existing != null) {
+          throw Exception(
+            'Bu mağaza adıyla bir sayfa zaten var. Lütfen farklı bir ad deneyin.',
+          );
+        }
       }
 
       // ── Token + StoreData ─────────────────────────────────────────────────
-      final editToken = _generateToken();
-
       final storeData = StoreData(
         name: name,
         description: _descCtrl.text.trim(),
@@ -332,14 +378,46 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       assert(payload.containsKey('edit_token'), 'edit_token eksik!');
 
       // ── Supabase insert ───────────────────────────────────────────────────
-      debugPrint('[StoreSetup] Supabase insert başlıyor...');
-      await client.from('stores').insert(payload);
-      debugPrint('[StoreSetup] Supabase insert başarılı ✓');
+      if (hasExistingStoreToken) {
+        debugPrint('[StoreSetup] Supabase update başlıyor...');
+        final existingByToken =
+            await client
+                .from('stores')
+                .select('edit_token')
+                .eq('edit_token', editToken)
+                .maybeSingle();
+
+        if (existingByToken == null) {
+          debugPrint(
+            '[StoreSetup] Token ile kayıt bulunamadı, insert deneniyor...',
+          );
+          await client.from('stores').insert(payload);
+        } else {
+          await client
+              .from('stores')
+              .update(payload)
+              .eq('edit_token', editToken);
+        }
+        debugPrint('[StoreSetup] Supabase kayıt güncelleme başarılı ✓');
+      } else {
+        debugPrint('[StoreSetup] Supabase insert başlıyor...');
+        await client.from('stores').insert(payload);
+        debugPrint('[StoreSetup] Supabase insert başarılı ✓');
+      }
 
       // ── Yerel kayıt ──────────────────────────────────────────────────────
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('store_edit_token', editToken);
-      await prefs.setString('vitrin_data', jsonEncode(storeData.toJson()));
+      await prefs.setString(LocalStorageKeys.storeEditToken, editToken);
+      await prefs.setString(
+        LocalStorageKeys.storeData,
+        jsonEncode(storeData.toJson()),
+      );
+      final legacyData = _readSavedStoreData(
+        prefs.getString(LocalStorageKeys.vitrinData),
+      );
+      if (legacyData != null && legacyData.isStore) {
+        await prefs.remove(LocalStorageKeys.vitrinData);
+      }
 
       final link = 'https://vitrinx.app/v/$slug';
       debugPrint('[StoreSetup] Mağaza yayınlandı: $link');
@@ -405,6 +483,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
     if (code == '42P01' || msg.contains('does not exist')) {
       return '"stores" tablosu bulunamadı. Veritabanı yapılandırmasını kontrol edin.';
     }
+    if (code == 'PGRST204' || msg.contains('schema cache')) {
+      return 'Supabase şema güncellemesi eksik. Konum kolonları ve schema cache yenilemesi uygulanmalı.';
+    }
     // Ağ / JWT hatası
     if (msg.contains('jwt') || msg.contains('token')) {
       return 'Oturum süresi dolmuş olabilir. Uygulamayı yeniden başlatın.';
@@ -457,8 +538,14 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       }
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('store_edit_token');
-      await prefs.remove('vitrin_data');
+      await prefs.remove(LocalStorageKeys.storeEditToken);
+      await prefs.remove(LocalStorageKeys.storeData);
+      final legacyData = _readSavedStoreData(
+        prefs.getString(LocalStorageKeys.vitrinData),
+      );
+      if (legacyData != null && legacyData.isStore) {
+        await prefs.remove(LocalStorageKeys.vitrinData);
+      }
 
       if (!mounted) return;
 

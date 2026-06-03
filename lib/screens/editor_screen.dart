@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_publish_validator.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
@@ -74,7 +75,7 @@ class _EditorScreenState extends State<EditorScreen>
     end: Alignment.bottomRight,
     colors: [primaryColor, secondaryColor],
   );
-  static const String _editTokenPrefsKey = 'vitrin_edit_token';
+  static const String _editTokenPrefsKey = LocalStorageKeys.vitrinEditToken;
   static const int _maxGalleryPhotos = 12;
   static const int _maxGalleryPhotoBytes = GalleryImageFileValidator.maxBytes;
 
@@ -136,15 +137,27 @@ class _EditorScreenState extends State<EditorScreen>
           _existingVitrinToken = token;
         });
       }
-      final String? savedJson = prefs.getString('vitrin_data');
+      final String? savedJson = prefs.getString(LocalStorageKeys.vitrinData);
       if (savedJson != null) {
         final Map<String, dynamic> jsonData = jsonDecode(savedJson);
         final loadedData = StoreData.fromJson(jsonData);
+        if (loadedData.isStore) {
+          setState(() {
+            if (widget.initialStoreName != null &&
+                widget.initialStoreName!.trim().isNotEmpty) {
+              _data.name = widget.initialStoreName!.trim();
+            }
+            _isLoading = false;
+          });
+          unawaited(_refreshTodayViewCount());
+          return;
+        }
         setState(() {
-          _data.name = (widget.initialStoreName != null &&
-                  widget.initialStoreName!.trim().isNotEmpty)
-              ? widget.initialStoreName!.trim()
-              : loadedData.name;
+          _data.name =
+              (widget.initialStoreName != null &&
+                      widget.initialStoreName!.trim().isNotEmpty)
+                  ? widget.initialStoreName!.trim()
+                  : loadedData.name;
           _data.businessType = loadedData.businessType;
           _data.description = loadedData.description;
           _data.whatsapp = loadedData.whatsapp;
@@ -199,7 +212,7 @@ class _EditorScreenState extends State<EditorScreen>
     try {
       final prefs = await SharedPreferences.getInstance();
       final String jsonData = jsonEncode(_data.toJson());
-      await prefs.setString('vitrin_data', jsonData);
+      await prefs.setString(LocalStorageKeys.vitrinData, jsonData);
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -361,7 +374,7 @@ class _EditorScreenState extends State<EditorScreen>
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_editTokenPrefsKey);
-      await prefs.remove('vitrin_data');
+      await prefs.remove(LocalStorageKeys.vitrinData);
 
       if (!mounted) return;
 
@@ -401,10 +414,16 @@ class _EditorScreenState extends State<EditorScreen>
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.redAccent,
+                size: 24,
+              ),
               SizedBox(width: 10),
               Text(
                 'Vitrini Sil',
@@ -420,16 +439,16 @@ class _EditorScreenState extends State<EditorScreen>
             'Bu işlem geri alınamaz. Vitrininiz tamamen silinecektir. Devam etmek istiyor musunuz?',
             style: TextStyle(color: softText, fontSize: 14, height: 1.5),
           ),
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Vazgeç',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: mutedText,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, color: mutedText),
               ),
             ),
             ElevatedButton(
@@ -2079,22 +2098,20 @@ class _EditorScreenState extends State<EditorScreen>
                 height: 50,
                 child: OutlinedButton.icon(
                   onPressed: _isDeleting ? null : _showDeleteVitrinConfirmation,
-                  icon: _isDeleting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.redAccent,
-                          ),
-                        )
-                      : const Icon(Icons.delete_outline_rounded, size: 20),
+                  icon:
+                      _isDeleting
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.redAccent,
+                            ),
+                          )
+                          : const Icon(Icons.delete_outline_rounded, size: 20),
                   label: const Text(
                     'Vitrini Sil',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.redAccent,
@@ -4117,11 +4134,12 @@ class _EditorScreenState extends State<EditorScreen>
               statuses
                   .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                   .toList(),
-          onChanged: (v) => setState(() {
-            if (v != null) {
-              _data.status = v;
-            }
-          }),
+          onChanged:
+              (v) => setState(() {
+                if (v != null) {
+                  _data.status = v;
+                }
+              }),
         ),
       ),
     );
@@ -4298,7 +4316,11 @@ class _EditorScreenState extends State<EditorScreen>
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.arrow_upward_rounded, color: Color(0xFF25D366), size: 10),
+                    Icon(
+                      Icons.arrow_upward_rounded,
+                      color: Color(0xFF25D366),
+                      size: 10,
+                    ),
                     SizedBox(width: 2),
                     Text(
                       'Canlı',
@@ -4317,9 +4339,30 @@ class _EditorScreenState extends State<EditorScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: _buildMetricItem('Görüntülenme', '142', '+12%', Colors.blueAccent)),
-              Expanded(child: _buildMetricItem('WhatsApp', '28', '+8%', const Color(0xFF25D366))),
-              Expanded(child: _buildMetricItem('Paylaşım', '15', '+15%', Colors.purpleAccent)),
+              Expanded(
+                child: _buildMetricItem(
+                  'Görüntülenme',
+                  '142',
+                  '+12%',
+                  Colors.blueAccent,
+                ),
+              ),
+              Expanded(
+                child: _buildMetricItem(
+                  'WhatsApp',
+                  '28',
+                  '+8%',
+                  const Color(0xFF25D366),
+                ),
+              ),
+              Expanded(
+                child: _buildMetricItem(
+                  'Paylaşım',
+                  '15',
+                  '+15%',
+                  Colors.purpleAccent,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -4353,7 +4396,12 @@ class _EditorScreenState extends State<EditorScreen>
     );
   }
 
-  Widget _buildMetricItem(String label, String value, String change, Color color) {
+  Widget _buildMetricItem(
+    String label,
+    String value,
+    String change,
+    Color color,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -4560,7 +4608,6 @@ class _GalleryPill extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _EditorGridPainter extends CustomPainter {

@@ -8,6 +8,7 @@ import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/store_setup_screen.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/local_storage_keys.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -21,6 +22,7 @@ class _LandingScreenState extends State<LandingScreen>
   late final AnimationController _animController;
   int _activeProfileIndex = 0;
   bool _hasSavedVitrin = false;
+  bool _hasSavedStore = false;
   bool _isCheckingSavedVitrin = true;
   final TextEditingController _storeNameController = TextEditingController();
 
@@ -212,25 +214,31 @@ class _LandingScreenState extends State<LandingScreen>
   Future<void> _loadSavedVitrinState() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedJson = prefs.getString('vitrin_data');
+      final savedVitrinJson = prefs.getString(LocalStorageKeys.vitrinData);
+      final savedStoreJson = prefs.getString(LocalStorageKeys.storeData);
+      final legacyJson = prefs.getString(LocalStorageKeys.vitrinData);
       var hasSavedVitrin = false;
+      var hasSavedStore = false;
 
-      if (savedJson != null && savedJson.trim().isNotEmpty) {
-        final decoded = jsonDecode(savedJson);
-        if (decoded is Map<String, dynamic>) {
-          hasSavedVitrin = _hasMeaningfulSavedVitrin(
-            StoreData.fromJson(decoded),
-          );
-        } else if (decoded is Map) {
-          hasSavedVitrin = _hasMeaningfulSavedVitrin(
-            StoreData.fromJson(Map<String, dynamic>.from(decoded)),
-          );
-        }
+      final savedVitrin = _readSavedStoreData(savedVitrinJson);
+      if (savedVitrin != null && !savedVitrin.isStore) {
+        hasSavedVitrin = _hasMeaningfulSavedVitrin(savedVitrin);
+      }
+
+      final savedStore = _readSavedStoreData(savedStoreJson);
+      if (savedStore != null && savedStore.isStore) {
+        hasSavedStore = _hasMeaningfulSavedVitrin(savedStore);
+      }
+
+      final legacyData = _readSavedStoreData(legacyJson);
+      if (legacyData != null && legacyData.isStore) {
+        hasSavedStore = _hasMeaningfulSavedVitrin(legacyData);
       }
 
       if (!mounted) return;
       setState(() {
         _hasSavedVitrin = hasSavedVitrin;
+        _hasSavedStore = hasSavedStore;
         _isCheckingSavedVitrin = false;
       });
     } catch (error) {
@@ -238,9 +246,23 @@ class _LandingScreenState extends State<LandingScreen>
       if (!mounted) return;
       setState(() {
         _hasSavedVitrin = false;
+        _hasSavedStore = false;
         _isCheckingSavedVitrin = false;
       });
     }
+  }
+
+  StoreData? _readSavedStoreData(String? rawJson) {
+    if (rawJson == null || rawJson.trim().isEmpty) return null;
+
+    final decoded = jsonDecode(rawJson);
+    if (decoded is Map<String, dynamic>) {
+      return StoreData.fromJson(decoded);
+    }
+    if (decoded is Map) {
+      return StoreData.fromJson(Map<String, dynamic>.from(decoded));
+    }
+    return null;
   }
 
   bool _hasMeaningfulSavedVitrin(StoreData data) {
@@ -281,6 +303,18 @@ class _LandingScreenState extends State<LandingScreen>
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const EditorScreen()),
+    );
+    if (mounted) {
+      _loadSavedVitrinState();
+    }
+  }
+
+  Future<void> _navigateToSavedStore() async {
+    if (!_hasSavedStore || _isCheckingSavedVitrin) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const StoreSetupScreen()),
     );
     if (mounted) {
       _loadSavedVitrinState();
@@ -609,12 +643,19 @@ class _LandingScreenState extends State<LandingScreen>
 
   Widget _buildSecondaryActions({required bool isDesktop}) {
     final canOpenSavedVitrin = _hasSavedVitrin && !_isCheckingSavedVitrin;
+    final canOpenSavedStore = _hasSavedStore && !_isCheckingSavedVitrin;
     final savedVitrinLabel =
         _isCheckingSavedVitrin
             ? 'Kontrol ediliyor'
             : _hasSavedVitrin
             ? 'Vitrinime Git'
             : 'Kayıtlı vitrin yok';
+    final savedStoreLabel =
+        _isCheckingSavedVitrin
+            ? 'Kontrol ediliyor'
+            : _hasSavedStore
+            ? 'Mağazama Git'
+            : 'Kayıtlı mağaza yok';
 
     final buttons = [
       ElevatedButton.icon(
@@ -634,6 +675,36 @@ class _LandingScreenState extends State<LandingScreen>
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: brandOrange,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: const Color(0xFFE2E8F0),
+          disabledForegroundColor: const Color(0xFF64748B),
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+      const SizedBox(width: 12, height: 12),
+      ElevatedButton.icon(
+        onPressed:
+            canOpenSavedStore
+                ? () {
+                  _navigateToSavedStore();
+                }
+                : null,
+        icon: Icon(
+          canOpenSavedStore
+              ? Icons.storefront_rounded
+              : Icons.lock_outline_rounded,
+          size: 18,
+        ),
+        label: Text(
+          savedStoreLabel,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: darkAccent,
           foregroundColor: Colors.white,
           disabledBackgroundColor: const Color(0xFFE2E8F0),
           disabledForegroundColor: const Color(0xFF64748B),
