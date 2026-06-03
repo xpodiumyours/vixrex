@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
@@ -256,23 +257,64 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       LocationSettings locationSettings;
       if (kIsWeb) {
         locationSettings = WebSettings(
-          accuracy: LocationAccuracy.high,
+          accuracy: LocationAccuracy.best,
           timeLimit: const Duration(seconds: 8),
           maximumAge: Duration.zero,
         );
       } else {
         locationSettings = const LocationSettings(
-          accuracy: LocationAccuracy.high,
+          accuracy: LocationAccuracy.best,
           timeLimit: Duration(seconds: 8),
         );
       }
 
-      final position = await Geolocator.getCurrentPosition(
+      // Listen to the position stream to refine coordinates over a short window
+      Position? bestPosition;
+      final positionStream = Geolocator.getPositionStream(
+        locationSettings: locationSettings,
+      );
+
+      final completer = Completer<Position?>();
+      StreamSubscription<Position>? subscription;
+
+      subscription = positionStream.listen(
+        (pos) {
+          if (bestPosition == null || pos.accuracy < bestPosition!.accuracy) {
+            bestPosition = pos;
+          }
+          // If accuracy is highly precise, complete early
+          if (pos.accuracy <= 20) {
+            completer.complete(pos);
+          }
+        },
+        onError: (err) {
+          if (!completer.isCompleted) {
+            completer.completeError(err);
+          }
+        },
+      );
+
+      // Force resolution after 4 seconds with the best position found so far
+      Future.delayed(const Duration(seconds: 4), () {
+        if (!completer.isCompleted) {
+          completer.complete(bestPosition);
+        }
+      });
+
+      Position? position;
+      try {
+        position = await completer.future.timeout(const Duration(seconds: 8));
+      } finally {
+        await subscription.cancel();
+      }
+
+      // Fallback to single-shot if stream yielded no position
+      position ??= await Geolocator.getCurrentPosition(
         locationSettings: locationSettings,
       );
 
       setState(() {
-        _latitude = position.latitude;
+        _latitude = position!.latitude;
         _longitude = position.longitude;
         _locationAccuracyMeters = position.accuracy;
         _locationConsentAt = DateTime.now();
