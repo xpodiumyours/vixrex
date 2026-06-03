@@ -90,7 +90,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
       final response = await client
           .from('stores')
           .select()
-          .eq('is_store', true)
           .eq('is_published', true);
 
       final List<dynamic> data = response as List<dynamic>;
@@ -150,6 +149,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
         shelfImageUrl:
             'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=500&q=80',
         isStore: true,
+      ),
+      StoreData(
+        name: 'Elit Aksesuar',
+        description:
+            'Özel tasarım takılar ve şık gümüş aksesuarlar vitrini.',
+        kategori: 'Dekorasyon',
+        businessType: 'Dekorasyon',
+        whatsapp: '0555 345 67 89',
+        address: 'Moda Cad. No:89, Kadıköy, İstanbul',
+        shelfImageUrl:
+            'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=500&q=80',
+        isStore: false,
       ),
     ];
   }
@@ -585,7 +596,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     )
                   else
                     _buildImagePlaceholder(),
-                  // Kategori badge on image
+                  // Kategori ve Tip badge on image
                   Positioned(
                     top: 10,
                     left: 10,
@@ -599,7 +610,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        store.kategori.isNotEmpty ? store.kategori : 'Mağaza',
+                        '${store.isStore ? "Mağaza" : "Vitrin"}${store.kategori.isNotEmpty ? " • ${store.kategori}" : ""}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
