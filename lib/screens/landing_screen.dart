@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/screens/editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
@@ -18,6 +20,8 @@ class _LandingScreenState extends State<LandingScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   int _activeProfileIndex = 0;
+  bool _hasSavedVitrin = false;
+  bool _isCheckingSavedVitrin = true;
   final TextEditingController _storeNameController = TextEditingController();
 
   // Modern Color Palette
@@ -58,7 +62,8 @@ class _LandingScreenState extends State<LandingScreen>
           Color(0xFFF27A1A),
         ),
       ],
-      coverImageUrl: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl:
+          'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=300&q=80',
@@ -94,7 +99,8 @@ class _LandingScreenState extends State<LandingScreen>
           Color(0xFF10B981),
         ),
       ],
-      coverImageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl:
+          'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=300&q=80',
@@ -130,7 +136,8 @@ class _LandingScreenState extends State<LandingScreen>
           Color(0xFF10B981),
         ),
       ],
-      coverImageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl:
+          'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=300&q=80',
@@ -166,7 +173,8 @@ class _LandingScreenState extends State<LandingScreen>
           Color(0xFF6366F1),
         ),
       ],
-      coverImageUrl: 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl:
+          'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1545259741-2ea3ebf61fa3?auto=format&fit=crop&w=300&q=80',
@@ -191,6 +199,7 @@ class _LandingScreenState extends State<LandingScreen>
         setState(() => _activeProfileIndex = newIndex);
       }
     });
+    _loadSavedVitrinState();
   }
 
   @override
@@ -200,14 +209,82 @@ class _LandingScreenState extends State<LandingScreen>
     super.dispose();
   }
 
-  void _navigateToEditor() {
-    final name = _storeNameController.text;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditorScreen(initialStoreName: name),
-      ),
+  Future<void> _loadSavedVitrinState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedJson = prefs.getString('vitrin_data');
+      var hasSavedVitrin = false;
+
+      if (savedJson != null && savedJson.trim().isNotEmpty) {
+        final decoded = jsonDecode(savedJson);
+        if (decoded is Map<String, dynamic>) {
+          hasSavedVitrin = _hasMeaningfulSavedVitrin(
+            StoreData.fromJson(decoded),
+          );
+        } else if (decoded is Map) {
+          hasSavedVitrin = _hasMeaningfulSavedVitrin(
+            StoreData.fromJson(Map<String, dynamic>.from(decoded)),
+          );
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _hasSavedVitrin = hasSavedVitrin;
+        _isCheckingSavedVitrin = false;
+      });
+    } catch (error) {
+      debugPrint('Saved vitrin state load error: $error');
+      if (!mounted) return;
+      setState(() {
+        _hasSavedVitrin = false;
+        _isCheckingSavedVitrin = false;
+      });
+    }
+  }
+
+  bool _hasMeaningfulSavedVitrin(StoreData data) {
+    final hasTextContent = [
+      data.name,
+      data.description,
+      data.whatsapp,
+      data.instagram,
+      data.website,
+      data.address,
+      data.corporateBio,
+      data.referencesLink,
+      data.shelfImageUrl,
+    ].any((value) => value.trim().isNotEmpty);
+
+    final hasGallery = data.displayGalleryItems.isNotEmpty;
+    final hasMarketplace = data.marketplaceLinks.any(
+      (link) => link.url.trim().isNotEmpty,
     );
+
+    return hasTextContent || hasGallery || hasMarketplace;
+  }
+
+  Future<void> _navigateToEditor() async {
+    final name = _storeNameController.text;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EditorScreen(initialStoreName: name)),
+    );
+    if (mounted) {
+      _loadSavedVitrinState();
+    }
+  }
+
+  Future<void> _navigateToSavedVitrin() async {
+    if (!_hasSavedVitrin || _isCheckingSavedVitrin) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EditorScreen()),
+    );
+    if (mounted) {
+      _loadSavedVitrinState();
+    }
   }
 
   void _navigateToPreview() {
@@ -310,14 +387,20 @@ class _LandingScreenState extends State<LandingScreen>
                           child:
                               isDesktop
                                   ? Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
                                       Expanded(
                                         flex: 5,
-                                        child: _buildHeroContent(isDesktop: true),
+                                        child: _buildHeroContent(
+                                          isDesktop: true,
+                                        ),
                                       ),
                                       const SizedBox(width: 40),
-                                      Expanded(flex: 5, child: _buildHeroMockup()),
+                                      Expanded(
+                                        flex: 5,
+                                        child: _buildHeroMockup(),
+                                      ),
                                     ],
                                   )
                                   : Column(
@@ -525,22 +608,35 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Widget _buildSecondaryActions({required bool isDesktop}) {
+    final canOpenSavedVitrin = _hasSavedVitrin && !_isCheckingSavedVitrin;
+    final savedVitrinLabel =
+        _isCheckingSavedVitrin
+            ? 'Kontrol ediliyor'
+            : _hasSavedVitrin
+            ? 'Vitrinime Git'
+            : 'Kayıtlı vitrin yok';
+
     final buttons = [
       ElevatedButton.icon(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StoreSetupScreen()),
-          );
-        },
-        icon: const Icon(Icons.add_business_rounded, size: 18),
-        label: const Text(
-          'Mağaza Aç',
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+        onPressed:
+            canOpenSavedVitrin
+                ? () {
+                  _navigateToSavedVitrin();
+                }
+                : null,
+        icon: Icon(
+          canOpenSavedVitrin ? Icons.edit_rounded : Icons.lock_outline_rounded,
+          size: 18,
+        ),
+        label: Text(
+          savedVitrinLabel,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: brandOrange,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: const Color(0xFFE2E8F0),
+          disabledForegroundColor: const Color(0xFF64748B),
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
@@ -559,7 +655,11 @@ class _LandingScreenState extends State<LandingScreen>
         icon: const Icon(Icons.explore_rounded, size: 18, color: darkAccent),
         label: const Text(
           'Vitrinleri Keşfet',
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: darkAccent),
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 14,
+            color: darkAccent,
+          ),
         ),
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: darkAccent, width: 1.5),
@@ -572,14 +672,11 @@ class _LandingScreenState extends State<LandingScreen>
     ];
 
     return isDesktop
-        ? Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: buttons,
-          )
+        ? Row(mainAxisAlignment: MainAxisAlignment.start, children: buttons)
         : Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: buttons,
-          );
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: buttons,
+        );
   }
 
   Widget _buildClaimBar({required bool isDesktop}) {
@@ -637,9 +734,12 @@ class _LandingScreenState extends State<LandingScreen>
             boxShadow: [
               BoxShadow(
                 color: brandOrange.withValues(
-                  alpha: 0.24 + 0.16 * math.sin(_animController.value * math.pi * 2),
+                  alpha:
+                      0.24 +
+                      0.16 * math.sin(_animController.value * math.pi * 2),
                 ),
-                blurRadius: 16 + 8 * math.sin(_animController.value * math.pi * 2),
+                blurRadius:
+                    16 + 8 * math.sin(_animController.value * math.pi * 2),
                 offset: const Offset(0, 4),
               ),
             ],
@@ -649,10 +749,7 @@ class _LandingScreenState extends State<LandingScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: brandOrange,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 28,
-                vertical: 20,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -663,10 +760,7 @@ class _LandingScreenState extends State<LandingScreen>
               children: [
                 Text(
                   'Ücretsiz Oluştur',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                 ),
                 SizedBox(width: 8),
                 Icon(Icons.arrow_forward_rounded, size: 18),
@@ -684,7 +778,11 @@ class _LandingScreenState extends State<LandingScreen>
           MaterialPageRoute(builder: (_) => const StoreSetupScreen()),
         );
       },
-      icon: const Icon(Icons.add_business_rounded, size: 16, color: brandOrange),
+      icon: const Icon(
+        Icons.add_business_rounded,
+        size: 16,
+        color: brandOrange,
+      ),
       label: const Text(
         'Mağaza Aç →',
         style: TextStyle(
@@ -717,24 +815,11 @@ class _LandingScreenState extends State<LandingScreen>
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            height: 56,
-            child: Row(
-              children: [
-                inputWidget,
-              ],
-            ),
-          ),
+          SizedBox(height: 56, child: Row(children: [inputWidget])),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 56,
-            child: buttonWidget,
-          ),
+          SizedBox(height: 56, child: buttonWidget),
           const SizedBox(height: 10),
-          SizedBox(
-            height: 52,
-            child: storeSetupButton,
-          ),
+          SizedBox(height: 52, child: storeSetupButton),
         ],
       );
     }
@@ -744,7 +829,8 @@ class _LandingScreenState extends State<LandingScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+        mainAxisAlignment:
+            isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
         children: [
           SizedBox(
             width: 100,
@@ -785,16 +871,39 @@ class _LandingScreenState extends State<LandingScreen>
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment: isDesktop ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+              crossAxisAlignment:
+                  isDesktop
+                      ? CrossAxisAlignment.start
+                      : CrossAxisAlignment.center,
               children: [
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
-                    Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 16),
-                    Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 16),
-                    Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 16),
-                    Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 16),
-                    Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 16),
+                    Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFFFBBF24),
+                      size: 16,
+                    ),
+                    Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFFFBBF24),
+                      size: 16,
+                    ),
+                    Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFFFBBF24),
+                      size: 16,
+                    ),
+                    Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFFFBBF24),
+                      size: 16,
+                    ),
+                    Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFFFBBF24),
+                      size: 16,
+                    ),
                     SizedBox(width: 6),
                     Text(
                       '4.9/5',
@@ -850,11 +959,7 @@ class _LandingScreenState extends State<LandingScreen>
             color: color.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 14,
-          ),
+          child: Icon(icon, color: color, size: 14),
         ),
       ),
     );
@@ -874,11 +979,12 @@ class _LandingScreenState extends State<LandingScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Transform(
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.001)
-                ..rotateY(-0.1)
-                ..rotateX(0.05)
-                ..translate(0.0, floatOffset, 0.0),
+              transform:
+                  Matrix4.identity()
+                    ..setEntry(3, 2, 0.001)
+                    ..rotateY(-0.1)
+                    ..rotateX(0.05)
+                    ..translate(0.0, floatOffset, 0.0),
               alignment: Alignment.center,
               child: Stack(
                 clipBehavior: Clip.none,
@@ -913,7 +1019,8 @@ class _LandingScreenState extends State<LandingScreen>
                     right: -40,
                     top:
                         100 +
-                        math.sin((_animController.value + 0.3) * math.pi * 2) * 10,
+                        math.sin((_animController.value + 0.3) * math.pi * 2) *
+                            10,
                     child: _buildFloatingBadge(
                       activeProfile.badgeIcon,
                       activeProfile.accentColor,
@@ -924,7 +1031,8 @@ class _LandingScreenState extends State<LandingScreen>
                     left: -30,
                     bottom:
                         120 +
-                        math.sin((_animController.value + 0.6) * math.pi * 2) * 10,
+                        math.sin((_animController.value + 0.6) * math.pi * 2) *
+                            10,
                     child: _buildFloatingBadge(
                       activeProfile.secondaryBadgeIcon,
                       activeProfile.secondaryBadgeColor,
@@ -945,9 +1053,7 @@ class _LandingScreenState extends State<LandingScreen>
                   width: isActive ? 24 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: isActive
-                        ? brandOrange
-                        : const Color(0xFFCBD5E1),
+                    color: isActive ? brandOrange : const Color(0xFFCBD5E1),
                     borderRadius: BorderRadius.circular(99),
                   ),
                 );
@@ -1462,10 +1568,7 @@ class _HeroDemoProfile {
     final galleryItems = [
       StoreGalleryItem(id: 'cover', imageUrl: coverImageUrl),
       ...galleryImages.asMap().entries.map(
-        (e) => StoreGalleryItem(
-          id: 'gallery-${e.key}',
-          imageUrl: e.value,
-        ),
+        (e) => StoreGalleryItem(id: 'gallery-${e.key}', imageUrl: e.value),
       ),
     ];
     return StoreData(
@@ -1476,13 +1579,18 @@ class _HeroDemoProfile {
       theme: 'Premium',
       isEsnafMode: true,
       galleryItems: galleryItems,
-      marketplaceLinks: links.asMap().entries.map(
-        (e) => MarketplaceLink(
-          id: '${e.key}',
-          platform: e.value.title,
-          url: '',
-        ),
-      ).toList(),
+      marketplaceLinks:
+          links
+              .asMap()
+              .entries
+              .map(
+                (e) => MarketplaceLink(
+                  id: '${e.key}',
+                  platform: e.value.title,
+                  url: '',
+                ),
+              )
+              .toList(),
     );
   }
 }
@@ -1490,10 +1598,7 @@ class _HeroDemoProfile {
 class _PhoneMockup extends StatelessWidget {
   final _HeroDemoProfile profile;
 
-  const _PhoneMockup({
-    super.key,
-    required this.profile,
-  });
+  const _PhoneMockup({super.key, required this.profile});
 
   @override
   Widget build(BuildContext context) {
@@ -1803,31 +1908,34 @@ class _PhoneMockup extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Row(
-            children: displayImages.asMap().entries.map((e) {
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(left: e.key == 0 ? 0 : 5),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: profile.accentColor.withValues(alpha: 0.12),
-                          image: DecorationImage(
-                            image: NetworkImage(e.value),
-                            fit: BoxFit.cover,
-                            onError: (exception, stackTrace) {
-                              // Suppress errors during tests or network issues
-                            },
+            children:
+                displayImages.asMap().entries.map((e) {
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: e.key == 0 ? 0 : 5),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: profile.accentColor.withValues(
+                                alpha: 0.12,
+                              ),
+                              image: DecorationImage(
+                                image: NetworkImage(e.value),
+                                fit: BoxFit.cover,
+                                onError: (exception, stackTrace) {
+                                  // Suppress errors during tests or network issues
+                                },
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
         ],
       ),
