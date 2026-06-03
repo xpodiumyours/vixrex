@@ -402,6 +402,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
 
       // ── Payload oluştur ve logla ──────────────────────────────────────────
       final payload = builder.toStoreInsertMap(storeData, slug, editToken);
+      if (client.auth.currentUser != null) {
+        payload['user_id'] = client.auth.currentUser!.id;
+      }
       debugPrint('[StoreSetup] INSERT payload:');
       payload.forEach((k, v) => debugPrint('  $k: $v'));
 

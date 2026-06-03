@@ -35,9 +35,11 @@ class StorePublishService {
               .maybeSingle();
 
       if (existingStore == null) {
-        await client
-            .from('stores')
-            .insert(payloadBuilder.toStoreInsertMap(data, slug, editToken));
+        final payload = payloadBuilder.toStoreInsertMap(data, slug, editToken);
+        if (client.auth.currentUser != null) {
+          payload['user_id'] = client.auth.currentUser!.id;
+        }
+        await client.from('stores').insert(payload);
         return StorePublishResult(publicPath: '/v/$slug', wasUpdated: false);
       }
 

@@ -3,12 +3,15 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/screens/editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/store_setup_screen.dart';
+import 'package:vitrinx/screens/auth_screen.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
+import 'package:vitrinx/services/auth_service.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -213,7 +216,65 @@ class _LandingScreenState extends State<LandingScreen>
 
   Future<void> _loadSavedVitrinState() async {
     try {
+      final authService = const AuthService();
+      User? currentUser;
+      try {
+        currentUser = authService.currentUser;
+      } catch (_) {
+        // Supabase not initialized (e.g. in tests)
+      }
       final prefs = await SharedPreferences.getInstance();
+
+      if (currentUser != null) {
+        final store = await authService.getStoreForCurrentUser();
+        if (store != null) {
+          if (!mounted) return;
+          if (store.isStore) {
+            await prefs.setString(LocalStorageKeys.storeData, jsonEncode(store.toJson()));
+            
+            if (!mounted) return;
+            final dbStore = await Supabase.instance.client
+                .from('stores')
+                .select('edit_token')
+                .eq('user_id', currentUser.id)
+                .maybeSingle();
+            
+            if (!mounted) return;
+            if (dbStore != null && dbStore['edit_token'] != null) {
+              await prefs.setString(LocalStorageKeys.storeEditToken, dbStore['edit_token'] as String);
+            }
+
+            if (!mounted) return;
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const StoreSetupScreen()),
+            );
+            return;
+          } else {
+            await prefs.setString(LocalStorageKeys.vitrinData, jsonEncode(store.toJson()));
+            
+            if (!mounted) return;
+            final dbStore = await Supabase.instance.client
+                .from('stores')
+                .select('edit_token')
+                .eq('user_id', currentUser.id)
+                .maybeSingle();
+            
+            if (!mounted) return;
+            if (dbStore != null && dbStore['edit_token'] != null) {
+              await prefs.setString(LocalStorageKeys.vitrinEditToken, dbStore['edit_token'] as String);
+            }
+
+            if (!mounted) return;
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const EditorScreen()),
+            );
+            return;
+          }
+        }
+      }
+
       final savedVitrinJson = prefs.getString(LocalStorageKeys.vitrinData);
       final savedStoreJson = prefs.getString(LocalStorageKeys.storeData);
       final legacyJson = prefs.getString(LocalStorageKeys.vitrinData);
@@ -263,6 +324,14 @@ class _LandingScreenState extends State<LandingScreen>
       return StoreData.fromJson(Map<String, dynamic>.from(decoded));
     }
     return null;
+  }
+
+  bool get _isUserLoggedIn {
+    try {
+      return const AuthService().currentUser != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   bool _hasMeaningfulSavedVitrin(StoreData data) {
@@ -492,27 +561,76 @@ class _LandingScreenState extends State<LandingScreen>
               ),
             ],
           ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ExploreScreen()),
-              );
-            },
-            icon: const Icon(Icons.explore_rounded, size: 16),
-            label: const Text(
-              'Vitrinleri Keşfet',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: darkAccent,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ExploreScreen()),
+                  );
+                },
+                icon: const Icon(Icons.explore_rounded, size: 16),
+                label: Text(
+                  isDesktop ? 'Vitrinleri Keşfet' : 'Keşfet',
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: darkAccent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 10),
+              if (_isUserLoggedIn) ...[
+                TextButton.icon(
+                  onPressed: () async {
+                    await const AuthService().signOut();
+                    if (mounted) {
+                      setState(() {});
+                      _loadSavedVitrinState();
+                    }
+                  },
+                  icon: const Icon(Icons.logout_rounded, size: 16, color: darkAccent),
+                  label: Text(
+                    isDesktop ? 'Çıkış Yap' : 'Çıkış',
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: darkAccent),
+                  ),
+                ),
+              ] else ...[
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AuthScreen()),
+                    ).then((_) {
+                      if (mounted) {
+                        setState(() {});
+                        _loadSavedVitrinState();
+                      }
+                    });
+                  },
+                  icon: const Icon(Icons.login_rounded, size: 16),
+                  label: const Text(
+                    'Giriş Yap',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: brandOrange,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),
