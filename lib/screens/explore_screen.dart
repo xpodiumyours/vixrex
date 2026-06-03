@@ -17,6 +17,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<StoreData> _allStores = [];
   bool _isLoading = true;
+  String? _loadErrorMessage;
   String _selectedCategory = 'Tümü';
   bool _onlyFavorites = false;
   List<String> _favoritedStoreNames = [];
@@ -79,9 +80,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _loadStores() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadErrorMessage = null;
+    });
     try {
       final client = Supabase.instance.client;
+      debugPrint('[Explore] Supabase stores sorgusu başlıyor...');
       final response = await client
           .from('stores')
           .select()
@@ -89,14 +94,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
           .eq('is_published', true);
 
       final List<dynamic> data = response as List<dynamic>;
+      debugPrint(
+        '[Explore] Supabase stores sorgusu başarılı. Kayıt sayısı: ${data.length}',
+      );
       setState(() {
         _allStores = data.map((json) => StoreData.fromJson(json)).toList();
         _isLoading = false;
       });
-    } catch (e) {
-      // Handle Supabase not initialized or connection error (e.g. in tests)
+    } on PostgrestException catch (e) {
+      debugPrint('[Explore] Supabase PostgrestException:');
+      debugPrint('  code   : ${e.code}');
+      debugPrint('  message: ${e.message}');
+      debugPrint('  details: ${e.details}');
+      debugPrint('  hint   : ${e.hint}');
       setState(() {
         _allStores = _getMockStores();
+        _loadErrorMessage =
+            'Keşfet verisi Supabase tarafından okunamadı. Konsol loglarını kontrol edin.';
+        _isLoading = false;
+      });
+    } catch (e) {
+      // Handle Supabase not initialized or connection error (e.g. in tests)
+      debugPrint('[Explore] Mağaza listesi yüklenemedi: $e');
+      setState(() {
+        _allStores = _getMockStores();
+        _loadErrorMessage =
+            'Keşfet verisi yüklenemedi. Geçici örnek liste gösteriliyor.';
         _isLoading = false;
       });
     }
@@ -106,22 +129,26 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return [
       StoreData(
         name: 'Aymira Giyim',
-        description: 'Sezonun en trend kadın kıyafetleri ve tasarım kombinleri.',
+        description:
+            'Sezonun en trend kadın kıyafetleri ve tasarım kombinleri.',
         kategori: 'Giyim & Butik',
         businessType: 'Giyim & Butik',
         whatsapp: '0555 123 45 67',
         address: 'Bahariye Cad. No:12, Kadıköy, İstanbul',
-        shelfImageUrl: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=500&q=80',
+        shelfImageUrl:
+            'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=500&q=80',
         isStore: true,
       ),
       StoreData(
         name: 'Lezzet Durağı',
-        description: 'Taze kahveler, kruvasanlar ve el yapımı ekşi mayalı ekmekler.',
+        description:
+            'Taze kahveler, kruvasanlar ve el yapımı ekşi mayalı ekmekler.',
         kategori: 'Gıda & Fırın',
         businessType: 'Gıda & Fırın',
         whatsapp: '0555 234 56 78',
         address: 'Şair Nedim Cad. No:45, Beşiktaş, İstanbul',
-        shelfImageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=500&q=80',
+        shelfImageUrl:
+            'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=500&q=80',
         isStore: true,
       ),
     ];
@@ -223,10 +250,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         const SizedBox(height: 2),
                         const Text(
                           'Hızlı mesaj şablonu seçin:',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: mutedText,
-                          ),
+                          style: TextStyle(fontSize: 12, color: mutedText),
                         ),
                       ],
                     ),
@@ -243,7 +267,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       _openWhatsApp(store.whatsapp, option);
                     },
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                       side: const BorderSide(color: cardBorder, width: 1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -333,13 +360,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
-                  prefixIcon: const Icon(Icons.search_rounded, color: mutedText, size: 20),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 18),
-                          onPressed: () => _searchController.clear(),
-                        )
-                      : null,
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: mutedText,
+                    size: 20,
+                  ),
+                  suffixIcon:
+                      _searchController.text.isNotEmpty
+                          ? IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            onPressed: () => _searchController.clear(),
+                          )
+                          : null,
                   filled: true,
                   fillColor: inputBg,
                   border: OutlineInputBorder(
@@ -348,7 +380,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: darkText),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: darkText,
+                ),
               ),
             ),
             // Filter Categories Bar
@@ -357,7 +393,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
               color: Colors.white,
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 children: [
                   // Favorites Filter Chip
                   Padding(
@@ -368,9 +407,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            _onlyFavorites ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                            _onlyFavorites
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
                             size: 14,
-                            color: _onlyFavorites ? Colors.white : Colors.redAccent,
+                            color:
+                                _onlyFavorites
+                                    ? Colors.white
+                                    : Colors.redAccent,
                           ),
                           const SizedBox(width: 4),
                           const Text('Favorilerim'),
@@ -416,30 +460,63 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
             // Divider
             Container(height: 1, color: cardBorder),
+            if (_loadErrorMessage != null) _buildLoadWarning(),
             // Grid List
             Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: primaryColor),
-                    )
-                  : stores.isEmpty
+              child:
+                  _isLoading
+                      ? const Center(
+                        child: CircularProgressIndicator(color: primaryColor),
+                      )
+                      : stores.isEmpty
                       ? _buildEmptyState()
                       : GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.72,
-                          ),
-                          itemCount: stores.length,
-                          itemBuilder: (context, index) {
-                            return _buildStoreCard(stores[index]);
-                          },
-                        ),
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 0.72,
+                            ),
+                        itemCount: stores.length,
+                        itemBuilder: (context, index) {
+                          return _buildStoreCard(stores[index]);
+                        },
+                      ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadWarning() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline_rounded, size: 18, color: primaryColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _loadErrorMessage!,
+              style: const TextStyle(
+                color: Color(0xFF9A3412),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -452,8 +529,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
           const Icon(Icons.storefront_rounded, size: 48, color: mutedText),
           const SizedBox(height: 12),
           Text(
-            _onlyFavorites ? 'Favorilere ekli mağaza bulunamadı.' : 'Aramanızla eşleşen mağaza bulunamadı.',
-            style: const TextStyle(fontSize: 14, color: mutedText, fontWeight: FontWeight.bold),
+            _onlyFavorites
+                ? 'Favorilere ekli mağaza bulunamadı.'
+                : 'Aramanızla eşleşen mağaza bulunamadı.',
+            style: const TextStyle(
+              fontSize: 14,
+              color: mutedText,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -475,12 +558,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
       child: InkWell(
         onTap: () {
           // Open public vitrin page
-          final slug = const StorePublishPayloadBuilder().generateSlug(store.name);
+          final slug = const StorePublishPayloadBuilder().generateSlug(
+            store.name,
+          );
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => PublicVitrinScreen(slug: slug),
-            ),
+            MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: slug)),
           );
         },
         child: Column(
@@ -496,7 +579,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     Image.network(
                       store.shelfImageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(),
+                      errorBuilder:
+                          (context, error, stackTrace) =>
+                              _buildImagePlaceholder(),
                     )
                   else
                     _buildImagePlaceholder(),
@@ -505,7 +590,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     top: 10,
                     left: 10,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(8),
@@ -534,7 +622,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         icon: Icon(
-                          isFavorited ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          isFavorited
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
                           size: 18,
                           color: isFavorited ? Colors.redAccent : mutedText,
                         ),
@@ -626,11 +716,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
       ),
       child: const Center(
-        child: Icon(
-          Icons.storefront_outlined,
-          color: primaryColor,
-          size: 32,
-        ),
+        child: Icon(Icons.storefront_outlined, color: primaryColor, size: 32),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
@@ -182,7 +183,8 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         setState(() {
-          _locationStatusMessage = 'Konum servisleri devre dışı. Lütfen cihazınızda konumu açın.';
+          _locationStatusMessage =
+              'Konum servisleri devre dışı. Lütfen cihazınızda konumu açın.';
           _isLocating = false;
         });
         return;
@@ -193,7 +195,8 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           setState(() {
-            _locationStatusMessage = 'Konum izni reddedildi. Konum almak için izin vermelisiniz.';
+            _locationStatusMessage =
+                'Konum izni reddedildi. Konum almak için izin vermelisiniz.';
             _isLocating = false;
           });
           return;
@@ -202,16 +205,29 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
 
       if (permission == LocationPermission.deniedForever) {
         setState(() {
-          _locationStatusMessage = 'Konum izinleri kalıcı olarak reddedildi. Tarayıcı ayarlarından izin verin.';
+          _locationStatusMessage =
+              'Konum izinleri kalıcı olarak reddedildi. Tarayıcı ayarlarından izin verin.';
           _isLocating = false;
         });
         return;
       }
 
+      LocationSettings locationSettings;
+      if (kIsWeb) {
+        locationSettings = WebSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 8),
+          maximumAge: Duration.zero,
+        );
+      } else {
+        locationSettings = const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 8),
+        );
+      }
+
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-        ),
+        locationSettings: locationSettings,
       );
 
       setState(() {
@@ -220,7 +236,16 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
         _locationAccuracyMeters = position.accuracy;
         _locationConsentAt = DateTime.now();
         _locationSource = 'geolocator';
-        _locationStatusMessage = 'Konum başarıyla alındı (Hata payı: ~${position.accuracy.toStringAsFixed(0)}m).';
+
+        final accuracyStr = position.accuracy.toStringAsFixed(0);
+        if (position.accuracy > 100) {
+          _locationStatusMessage =
+              'Konum alındı. Hata payı: yaklaşık $accuracyStr m. Hata payı yüksek. Daha iyi sonuç için açık alanda tekrar deneyebilirsiniz.';
+        } else {
+          _locationStatusMessage =
+              'Konum alındı. Hata payı: yaklaşık $accuracyStr m.';
+        }
+
         _isLocating = false;
 
         if (_addressCtrl.text.trim().isEmpty) {
@@ -229,7 +254,13 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       });
     } catch (e) {
       setState(() {
-        _locationStatusMessage = 'Konum alınırken hata oluştu: $e';
+        final errorStr = e.toString().toLowerCase();
+        if (errorStr.contains('timeout') || errorStr.contains('time out')) {
+          _locationStatusMessage =
+              'Konum alınamadı. Lütfen tekrar deneyin veya adresi elle yazın.';
+        } else {
+          _locationStatusMessage = 'Konum alınırken hata oluştu: $e';
+        }
         _isLocating = false;
       });
     }
@@ -249,11 +280,12 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
 
       // ── Slug çakışma kontrolü ──────────────────────────────────────────────
       debugPrint('[StoreSetup] Slug kontrol ediliyor: $slug');
-      final existing = await client
-          .from('stores')
-          .select('slug')
-          .eq('slug', slug)
-          .maybeSingle();
+      final existing =
+          await client
+              .from('stores')
+              .select('slug')
+              .eq('slug', slug)
+              .maybeSingle();
 
       if (existing != null) {
         throw Exception(
@@ -286,15 +318,18 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       payload.forEach((k, v) => debugPrint('  $k: $v'));
 
       // Zorunlu alanları doğrula
-      assert(payload['is_store'] == true,  'is_store eksik veya false!');
-      assert(payload['kategori'] != null && (payload['kategori'] as String).isNotEmpty,
-          'kategori eksik!');
-      assert(payload['is_published'] == true,
-          'is_published eksik!');
-      assert(payload['slug'] != null && (payload['slug'] as String).isNotEmpty,
-          'slug eksik!');
-      assert(payload.containsKey('edit_token'),
-          'edit_token eksik!');
+      assert(payload['is_store'] == true, 'is_store eksik veya false!');
+      assert(
+        payload['kategori'] != null &&
+            (payload['kategori'] as String).isNotEmpty,
+        'kategori eksik!',
+      );
+      assert(payload['is_published'] == true, 'is_published eksik!');
+      assert(
+        payload['slug'] != null && (payload['slug'] as String).isNotEmpty,
+        'slug eksik!',
+      );
+      assert(payload.containsKey('edit_token'), 'edit_token eksik!');
 
       // ── Supabase insert ───────────────────────────────────────────────────
       debugPrint('[StoreSetup] Supabase insert başlıyor...');
@@ -308,6 +343,12 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
 
       final link = 'https://vitrinx.app/v/$slug';
       debugPrint('[StoreSetup] Mağaza yayınlandı: $link');
+      debugPrint(
+        '[StoreSetup] Keşfet kontrolü: slug=$slug, name=$name, '
+        'is_store=${payload['is_store']}, '
+        'is_published=${payload['is_published']}, '
+        'kategori=${payload['kategori']}',
+      );
 
       if (!mounted) return;
       setState(() {
@@ -340,18 +381,24 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
     final msg = e.message.toLowerCase();
 
     // RLS / yetki hatası
-    if (code == '42501' || msg.contains('row-level security') || msg.contains('permission denied')) {
+    if (code == '42501' ||
+        msg.contains('row-level security') ||
+        msg.contains('permission denied')) {
       return 'Sunucu güvenlik kuralı engeli (RLS). Lütfen yöneticinizle iletişime geçin.';
     }
     // Benzersizlik ihlali (unique constraint)
-    if (code == '23505' || msg.contains('unique') || msg.contains('duplicate')) {
+    if (code == '23505' ||
+        msg.contains('unique') ||
+        msg.contains('duplicate')) {
       if (msg.contains('slug')) {
         return 'Bu mağaza adresi (slug) zaten kullanılıyor. Farklı bir mağaza adı deneyin.';
       }
       return 'Bu bilgilerle kayıtlı bir mağaza zaten var.';
     }
     // Zorunlu alan eksik (not-null constraint)
-    if (code == '23502' || msg.contains('null value') || msg.contains('not-null')) {
+    if (code == '23502' ||
+        msg.contains('null value') ||
+        msg.contains('not-null')) {
       return 'Eksik zorunlu alan: ${e.details ?? e.message}. Lütfen tüm alanları doldurun.';
     }
     // Tablo bulunamadı
@@ -371,12 +418,19 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline_rounded, color: Colors.white, size: 18),
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 msg,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
             ),
           ],
@@ -407,7 +461,7 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       await prefs.remove('vitrin_data');
 
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Mağazanız başarıyla silindi.'),
@@ -424,7 +478,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
     } catch (e) {
       debugPrint('[StoreSetup] Silme hatası: $e');
       if (!mounted) return;
-      _showErrorSnackbar('Mağaza silinirken bir hata oluştu. Lütfen tekrar deneyin.');
+      _showErrorSnackbar(
+        'Mağaza silinirken bir hata oluştu. Lütfen tekrar deneyin.',
+      );
     } finally {
       if (mounted) {
         setState(() => _isDeleting = false);
@@ -438,10 +494,16 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.redAccent,
+                size: 24,
+              ),
               SizedBox(width: 10),
               Text(
                 'Mağazayı Sil',
@@ -457,16 +519,16 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
             'Bu işlem geri alınamaz. Mağazanız tamamen silinecektir. Devam etmek istiyor musunuz?',
             style: TextStyle(color: softText, fontSize: 14, height: 1.5),
           ),
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Vazgeç',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: mutedText,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, color: mutedText),
               ),
             ),
             ElevatedButton(
@@ -524,11 +586,7 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
             child: PageView(
               controller: _pageController,
               physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _buildStep1(),
-                _buildStep2(),
-                _buildStep3(),
-              ],
+              children: [_buildStep1(), _buildStep2(), _buildStep3()],
             ),
           ),
           if (_publishedLink == null) _buildBottomNav(),
@@ -579,28 +637,37 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                       width: active ? 32 : 24,
                       height: active ? 32 : 24,
                       decoration: BoxDecoration(
-                        color: done || active ? primaryColor : const Color(0xFFE2E8F0),
+                        color:
+                            done || active
+                                ? primaryColor
+                                : const Color(0xFFE2E8F0),
                         shape: BoxShape.circle,
-                        boxShadow: active
-                            ? [
-                                BoxShadow(
-                                  color: primaryColor.withValues(alpha: 0.35),
-                                  blurRadius: 12,
-                                )
-                              ]
-                            : null,
+                        boxShadow:
+                            active
+                                ? [
+                                  BoxShadow(
+                                    color: primaryColor.withValues(alpha: 0.35),
+                                    blurRadius: 12,
+                                  ),
+                                ]
+                                : null,
                       ),
                       child: Center(
-                        child: done
-                            ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
-                            : Text(
-                                '${i + 1}',
-                                style: TextStyle(
-                                  color: active ? Colors.white : mutedText,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: active ? 14 : 12,
+                        child:
+                            done
+                                ? const Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                )
+                                : Text(
+                                  '${i + 1}',
+                                  style: TextStyle(
+                                    color: active ? Colors.white : mutedText,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: active ? 14 : 12,
+                                  ),
                                 ),
-                              ),
                       ),
                     ),
                     if (i < 2)
@@ -609,7 +676,10 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                           height: 2,
                           margin: const EdgeInsets.symmetric(horizontal: 6),
                           decoration: BoxDecoration(
-                            color: i < _step ? primaryColor : const Color(0xFFE2E8F0),
+                            color:
+                                i < _step
+                                    ? primaryColor
+                                    : const Color(0xFFE2E8F0),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -649,7 +719,11 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
               const Spacer(),
               Text(
                 ['Kategori seçin', 'Bilgileri doldurun', 'Yayınlayın'][_step],
-                style: const TextStyle(color: mutedText, fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: mutedText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -713,7 +787,11 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
         children: [
           const Text(
             'Mağazanızı tanıtalım',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: darkText),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: darkText,
+            ),
           ),
           const SizedBox(height: 4),
           const Text(
@@ -760,6 +838,37 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
             hint: 'Örn: Kadıköy, İstanbul',
             icon: Icons.location_on_outlined,
             maxLines: 2,
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child:
+                  _isLocating
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: Center(
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                primaryColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                      : IconButton(
+                        icon: const Icon(Icons.my_location_rounded, size: 20),
+                        color: primaryColor,
+                        disabledColor: mutedText.withValues(alpha: 0.4),
+                        onPressed:
+                            _kvkkConsent && !_isLocating
+                                ? _getCurrentLocation
+                                : null,
+                        tooltip: 'Konumumu Kullan',
+                      ),
+            ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -798,46 +907,16 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _kvkkConsent && !_isLocating ? _getCurrentLocation : null,
-              icon: _isLocating
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                      ),
-                    )
-                  : const Icon(Icons.my_location_rounded, size: 16),
-              label: Text(
-                _isLocating ? 'Konum Alınıyor...' : 'Konumumu Kullan',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primaryColor,
-                disabledForegroundColor: mutedText.withValues(alpha: 0.6),
-                side: BorderSide(
-                  color: _kvkkConsent ? primaryColor : const Color.fromRGBO(15, 23, 42, 0.15),
-                  width: 1.5,
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
           if (_locationStatusMessage != null) ...[
             const SizedBox(height: 8),
             Text(
               _locationStatusMessage!,
               style: TextStyle(
                 fontSize: 12,
-                color: _latitude != null ? Colors.green.shade700 : Colors.redAccent,
+                color:
+                    _latitude != null
+                        ? Colors.green.shade700
+                        : Colors.redAccent,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -858,6 +937,7 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
     TextInputType? keyboardType,
     String? errorText,
     ValueChanged<String>? onChanged,
+    Widget? suffixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -875,7 +955,10 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
             if (required)
               const Text(
                 ' *',
-                style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
           ],
         ),
@@ -892,6 +975,7 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
           ),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: mutedText, size: 18),
+            suffixIcon: suffixIcon,
             hintText: hint,
             hintStyle: TextStyle(
               color: mutedText.withValues(alpha: 0.58),
@@ -899,7 +983,10 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
             ),
             filled: true,
             fillColor: errorText != null ? const Color(0xFFFFF1F1) : inputBg,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
@@ -916,7 +1003,10 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: errorText != null ? Colors.redAccent : const Color(0x66FF4D00),
+                color:
+                    errorText != null
+                        ? Colors.redAccent
+                        : const Color(0x66FF4D00),
                 width: 1.5,
               ),
             ),
@@ -941,8 +1031,11 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
     final name = _nameCtrl.text.trim().isEmpty ? '—' : _nameCtrl.text.trim();
     final desc = _descCtrl.text.trim().isEmpty ? '—' : _descCtrl.text.trim();
     final wa = _waCtrl.text.trim().isEmpty ? '—' : _waCtrl.text.trim();
-    final addr = _addressCtrl.text.trim().isEmpty ? '—' : _addressCtrl.text.trim();
-    final slug = const StorePublishPayloadBuilder().generateSlug(_nameCtrl.text.trim());
+    final addr =
+        _addressCtrl.text.trim().isEmpty ? '—' : _addressCtrl.text.trim();
+    final slug = const StorePublishPayloadBuilder().generateSlug(
+      _nameCtrl.text.trim(),
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -951,7 +1044,11 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
         children: [
           const Text(
             'Her şey hazır!',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: darkText),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: darkText,
+            ),
           ),
           const SizedBox(height: 4),
           const Text(
@@ -975,11 +1072,26 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
             accent: primaryColor,
           ),
           const SizedBox(height: 12),
-          _SummaryCard(icon: '📝', title: 'Açıklama', value: desc, accent: const Color(0xFF64748B)),
+          _SummaryCard(
+            icon: '📝',
+            title: 'Açıklama',
+            value: desc,
+            accent: const Color(0xFF64748B),
+          ),
           const SizedBox(height: 12),
-          _SummaryCard(icon: '📱', title: 'WhatsApp', value: wa, accent: const Color(0xFF25D366)),
+          _SummaryCard(
+            icon: '📱',
+            title: 'WhatsApp',
+            value: wa,
+            accent: const Color(0xFF25D366),
+          ),
           const SizedBox(height: 12),
-          _SummaryCard(icon: '📍', title: 'Adres', value: addr, accent: const Color(0xFF2563EB)),
+          _SummaryCard(
+            icon: '📍',
+            title: 'Adres',
+            value: addr,
+            accent: const Color(0xFF2563EB),
+          ),
           const SizedBox(height: 16),
 
           // Vitrin linki önizleme
@@ -1019,22 +1131,20 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
               height: 54,
               child: OutlinedButton.icon(
                 onPressed: _isDeleting ? null : _showDeleteConfirmation,
-                icon: _isDeleting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.redAccent,
-                        ),
-                      )
-                    : const Icon(Icons.delete_outline_rounded, size: 20),
+                icon:
+                    _isDeleting
+                        ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.redAccent,
+                          ),
+                        )
+                        : const Icon(Icons.delete_outline_rounded, size: 20),
                 label: const Text(
                   'Mağazamı Sil',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.redAccent,
@@ -1062,55 +1172,61 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
           gradient: _isPublishing ? null : ctaGradient,
           color: _isPublishing ? const Color(0xFFE2E8F0) : null,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: _isPublishing
-              ? []
-              : [
-                  BoxShadow(
-                    color: primaryColor.withValues(alpha: 0.38),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+          boxShadow:
+              _isPublishing
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: primaryColor.withValues(alpha: 0.38),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
         ),
         child: Center(
-          child: _isPublishing
-              ? const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: mutedText,
-                        strokeWidth: 2.5,
+          child:
+              _isPublishing
+                  ? const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: mutedText,
+                          strokeWidth: 2.5,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 12),
-                    Text(
-                      'Yayınlanıyor...',
-                      style: TextStyle(
-                        color: mutedText,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
+                      SizedBox(width: 12),
+                      Text(
+                        'Yayınlanıyor...',
+                        style: TextStyle(
+                          color: mutedText,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                  ],
-                )
-              : const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 20),
-                    SizedBox(width: 10),
-                    Text(
-                      'Mağazamı Yayınla',
-                      style: TextStyle(
+                    ],
+                  )
+                  : const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.rocket_launch_rounded,
                         color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
+                        size: 20,
                       ),
-                    ),
-                  ],
-                ),
+                      SizedBox(width: 10),
+                      Text(
+                        'Mağazamı Yayınla',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
         ),
       ),
     );
@@ -1132,12 +1248,20 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
               color: const Color(0xFF10B981).withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 48),
+            child: const Icon(
+              Icons.check_circle_rounded,
+              color: Color(0xFF10B981),
+              size: 48,
+            ),
           ),
           const SizedBox(height: 20),
           const Text(
             'Mağazanız Yayında! 🎉',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: darkText),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: darkText,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -1166,7 +1290,11 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
               children: [
                 const Text(
                   'Mağaza Linkiniz',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: mutedText),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: mutedText,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -1183,7 +1311,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                          await Clipboard.setData(ClipboardData(text: _publishedLink!));
+                          await Clipboard.setData(
+                            ClipboardData(text: _publishedLink!),
+                          );
                           if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -1201,7 +1331,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                         style: OutlinedButton.styleFrom(
                           foregroundColor: darkText,
                           side: const BorderSide(color: cardBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
@@ -1212,7 +1344,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                         onPressed: () {
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (_) => const ExploreScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const ExploreScreen(),
+                            ),
                           );
                         },
                         icon: const Icon(Icons.explore_rounded, size: 16),
@@ -1224,7 +1358,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                           backgroundColor: primaryColor,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
@@ -1238,22 +1374,20 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
             const SizedBox(height: 24),
             OutlinedButton.icon(
               onPressed: _isDeleting ? null : _showDeleteConfirmation,
-              icon: _isDeleting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.redAccent,
-                      ),
-                    )
-                  : const Icon(Icons.delete_outline_rounded, size: 20),
+              icon:
+                  _isDeleting
+                      ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.redAccent,
+                        ),
+                      )
+                      : const Icon(Icons.delete_outline_rounded, size: 20),
               label: const Text(
                 'Mağazamı Sil',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.redAccent,
@@ -1292,7 +1426,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                     foregroundColor: darkText,
                     side: const BorderSide(color: cardBorder, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                 ),
               ),
@@ -1312,7 +1448,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                 ),
               ),
@@ -1343,31 +1481,32 @@ class _CategoryCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: selected
-              ? category.accent.withValues(alpha: 0.08)
-              : Colors.white,
+          color:
+              selected ? category.accent.withValues(alpha: 0.08) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected
-                ? category.accent
-                : const Color.fromRGBO(15, 23, 42, 0.10),
+            color:
+                selected
+                    ? category.accent
+                    : const Color.fromRGBO(15, 23, 42, 0.10),
             width: selected ? 2 : 1,
           ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: category.accent.withValues(alpha: 0.18),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [
-                  const BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.04),
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ],
+          boxShadow:
+              selected
+                  ? [
+                    BoxShadow(
+                      color: category.accent.withValues(alpha: 0.18),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                  : [
+                    const BoxShadow(
+                      color: Color.fromRGBO(0, 0, 0, 0.04),
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1377,9 +1516,10 @@ class _CategoryCard extends StatelessWidget {
               width: selected ? 52 : 44,
               height: selected ? 52 : 44,
               decoration: BoxDecoration(
-                color: selected
-                    ? category.accent.withValues(alpha: 0.15)
-                    : const Color(0xFFF1F5F9),
+                color:
+                    selected
+                        ? category.accent.withValues(alpha: 0.15)
+                        : const Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -1449,7 +1589,9 @@ class _SummaryCard extends StatelessWidget {
               color: accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Center(child: Text(icon, style: const TextStyle(fontSize: 20))),
+            child: Center(
+              child: Text(icon, style: const TextStyle(fontSize: 20)),
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
