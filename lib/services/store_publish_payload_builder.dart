@@ -63,12 +63,31 @@ class StorePublishPayloadBuilder {
       'is_published': true,
       'is_store': data.isStore,
       'kategori': data.kategori,
+      'working_hours': data.workingHours.trim(),
+      'logo_url': data.logoUrl,
       'latitude': data.latitude,
       'longitude': data.longitude,
       'location_accuracy_meters': data.locationAccuracyMeters,
       'location_consent_at': data.locationConsentAt?.toIso8601String(),
       'location_source': data.locationSource,
+      'products': productsToJson(data),
     };
+  }
+
+  List<Map<String, dynamic>> productsToJson(StoreData data) {
+    return data.products
+        .map(
+          (p) => {
+            'id': p.id.trim(),
+            'name': p.name.trim(),
+            'price': p.price.trim(),
+            'description': p.description.trim(),
+            'imagePath': p.imagePath?.trim(),
+            'category': p.category.trim(),
+            'stockStatus': p.stockStatus.trim(),
+          },
+        )
+        .toList();
   }
 
   List<Map<String, String>> galleryItemsToJson(StoreData data) {

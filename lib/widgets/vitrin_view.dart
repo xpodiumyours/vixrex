@@ -79,6 +79,10 @@ class VitrinView extends StatelessWidget {
         _buildShelfImageCard(preset, galleryItems),
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
+      if (storeData.isStore && storeData.products.isNotEmpty) ...[
+        _buildProductsCatalogBlock(preset, radius),
+        SizedBox(height: isEmbedded ? 16 : 30),
+      ],
       _buildModernLinkHub(preset, radius),
       SizedBox(
         height:
@@ -564,6 +568,189 @@ class VitrinView extends StatelessWidget {
           onTap: () => _openExternalUrl(_buildMapsUrl(storeData.address)),
         ),
     ];
+  }
+
+  Widget _buildProductsCatalogBlock(VitrinThemePreset preset, double radius) {
+    final isCompact = isEmbedded;
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(isCompact ? 16 : 22),
+        decoration: BoxDecoration(
+          color: preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.98),
+          borderRadius: BorderRadius.circular(isCompact ? 16 : 24),
+          border: Border.all(
+            color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
+            width: isCompact ? 1 : 1.3,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: preset.isDark ? 0.12 : 0.045,
+              ),
+              blurRadius: isCompact ? 12 : 24,
+              offset: Offset(0, isCompact ? 3 : 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.shopping_bag_rounded,
+                  color: preset.accent,
+                  size: isCompact ? 18 : 22,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Ürün Kataloğu',
+                  style: TextStyle(
+                    color: preset.textPrimary,
+                    fontSize: isCompact ? 14 : 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: storeData.products.length,
+              separatorBuilder: (context, index) => Divider(
+                color: preset.border.withValues(alpha: 0.5),
+                height: 24,
+              ),
+              itemBuilder: (context, index) {
+                final product = storeData.products[index];
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (product.imagePath != null && product.imagePath!.trim().isNotEmpty) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          product.imagePath!.trim(),
+                          width: isCompact ? 60 : 70,
+                          height: isCompact ? 60 : 70,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => Container(
+                            width: isCompact ? 60 : 70,
+                            height: isCompact ? 60 : 70,
+                            color: preset.border.withValues(alpha: 0.3),
+                            child: Icon(Icons.shopping_bag_outlined, color: preset.textSecondary),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  product.name,
+                                  style: TextStyle(
+                                    color: preset.textPrimary,
+                                    fontSize: isCompact ? 13 : 14,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildProductStockBadge(product.stockStatus, preset),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              if (product.category.isNotEmpty && product.category != 'Tümü' && product.category != 'Genel') ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: preset.accent.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    product.category,
+                                    style: TextStyle(
+                                      color: preset.accent,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Text(
+                                product.price.trim().isEmpty ? 'Fiyat Belirtilmemiş' : product.price,
+                                style: TextStyle(
+                                  color: preset.textPrimary,
+                                  fontSize: isCompact ? 12 : 13,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (product.description.trim().isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              product.description,
+                              style: TextStyle(
+                                color: preset.textSecondary,
+                                fontSize: isCompact ? 11 : 12,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductStockBadge(String status, VitrinThemePreset preset) {
+    Color color;
+    String text = status;
+    if (status == 'Son birkaç adet') {
+      color = Colors.orange;
+    } else if (status == 'Tükendi') {
+      color = Colors.red;
+    } else {
+      color = Colors.green;
+      text = 'Mevcut';
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 
   Widget _buildShelfImageCard(

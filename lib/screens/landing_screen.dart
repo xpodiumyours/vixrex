@@ -4,7 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/screens/editor_screen.dart';
+import 'package:vitrinx/screens/store_editor_screen.dart';
+import 'package:vitrinx/screens/vitrin_editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/store_setup_screen.dart';
@@ -247,7 +248,7 @@ class _LandingScreenState extends State<LandingScreen>
             if (!mounted) return;
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const EditorScreen()),
+              MaterialPageRoute(builder: (_) => const StoreEditorScreen()),
             );
             return;
           } else {
@@ -268,7 +269,7 @@ class _LandingScreenState extends State<LandingScreen>
             if (!mounted) return;
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const EditorScreen()),
+              MaterialPageRoute(builder: (_) => const VitrinEditorScreen()),
             );
             return;
           }
@@ -359,7 +360,7 @@ class _LandingScreenState extends State<LandingScreen>
     final name = _storeNameController.text;
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => EditorScreen(initialStoreName: name)),
+      MaterialPageRoute(builder: (_) => VitrinEditorScreen(initialStoreName: name)),
     );
     if (mounted) {
       _loadSavedVitrinState();
@@ -371,7 +372,7 @@ class _LandingScreenState extends State<LandingScreen>
 
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const EditorScreen()),
+      MaterialPageRoute(builder: (_) => const VitrinEditorScreen()),
     );
     if (mounted) {
       _loadSavedVitrinState();
@@ -381,9 +382,27 @@ class _LandingScreenState extends State<LandingScreen>
   Future<void> _navigateToSavedStore() async {
     if (!_hasSavedStore || _isCheckingSavedVitrin) return;
 
+    final prefs = await SharedPreferences.getInstance();
+    final savedStoreJson = prefs.getString(LocalStorageKeys.storeData);
+    if (savedStoreJson == null || savedStoreJson.trim().isEmpty) {
+      final legacyJson = prefs.getString(LocalStorageKeys.vitrinData);
+      final legacyData = _readSavedStoreData(legacyJson);
+      if (legacyData != null && legacyData.isStore) {
+        await prefs.setString(LocalStorageKeys.storeData, legacyJson!);
+        final legacyToken = prefs.getString(LocalStorageKeys.vitrinEditToken);
+        if (legacyToken != null) {
+          await prefs.setString(LocalStorageKeys.storeEditToken, legacyToken);
+          await prefs.remove(LocalStorageKeys.vitrinEditToken);
+        }
+        await prefs.remove(LocalStorageKeys.vitrinData);
+      }
+    }
+
+    if (!mounted) return;
+
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const EditorScreen()),
+      MaterialPageRoute(builder: (_) => const StoreEditorScreen()),
     );
     if (mounted) {
       _loadSavedVitrinState();

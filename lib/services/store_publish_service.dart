@@ -7,10 +7,12 @@ import 'package:vitrinx/services/store_publish_validator.dart';
 class StorePublishService {
   final StorePublishPayloadBuilder payloadBuilder;
   final StorePublishValidator validator;
+  final SupabaseClient? supabaseClient;
 
   const StorePublishService({
     this.payloadBuilder = const StorePublishPayloadBuilder(),
     this.validator = const StorePublishValidator(),
+    this.supabaseClient,
   });
 
   Future<StorePublishResult> publishStore(
@@ -26,7 +28,7 @@ class StorePublishService {
     late final SupabaseClient client;
 
     try {
-      client = Supabase.instance.client;
+      client = supabaseClient ?? Supabase.instance.client;
       final existingStore =
           await client
               .from('stores')
@@ -54,11 +56,11 @@ class StorePublishService {
         return StorePublishResult(publicPath: '/v/$slug', wasUpdated: true);
       }
 
-      throw StorePublishException(_messageForPostgrestError(error));
+      throw StorePublishException(_messageForPostgrestError(error, data.isStore));
     } on StorePublishException {
       rethrow;
     } catch (error) {
-      throw StorePublishException(_messageForUnexpectedError(error));
+      throw StorePublishException(_messageForUnexpectedError(error, data.isStore));
     }
   }
 
@@ -78,11 +80,11 @@ class StorePublishService {
         },
       );
     } on PostgrestException catch (error) {
-      throw StorePublishException(_messageForPostgrestError(error));
+      throw StorePublishException(_messageForPostgrestError(error, data.isStore));
     }
   }
 
-  String _messageForPostgrestError(PostgrestException error) {
+  String _messageForPostgrestError(PostgrestException error, bool isStore) {
     final searchableText =
         [
           error.message,
@@ -94,7 +96,9 @@ class StorePublishService {
 
     if (searchableText.contains('edit_token_mismatch') ||
         searchableText.contains('edit token mismatch')) {
-      return 'Bu vitrin başka bir cihazdan oluşturulmuş olabilir.';
+      return isStore
+          ? 'Bu mağaza başka bir cihazdan oluşturulmuş olabilir.'
+          : 'Bu vitrin başka bir cihazdan oluşturulmuş olabilir.';
     }
 
     if (searchableText.contains('update_store_with_token') ||
@@ -105,13 +109,17 @@ class StorePublishService {
     if (searchableText.contains('row-level security') ||
         searchableText.contains('permission denied') ||
         searchableText.contains('violates row-level security')) {
-      return 'Vitrin güncelleme izni Supabase tarafında eksik görünüyor.';
+      return isStore
+          ? 'Mağaza güncelleme izni Supabase tarafında eksik görünüyor.'
+          : 'Vitrin güncelleme izni Supabase tarafında eksik görünüyor.';
     }
 
-    return 'Vitrin yayınlanamadı: ${error.message}';
+    return isStore
+        ? 'Mağaza yayınlanamadı: ${error.message}'
+        : 'Vitrin yayınlanamadı: ${error.message}';
   }
 
-  String _messageForUnexpectedError(Object error) {
+  String _messageForUnexpectedError(Object error, bool isStore) {
     final searchableText = error.toString().toLowerCase();
 
     if (searchableText.contains('supabase') &&
@@ -122,7 +130,9 @@ class StorePublishService {
       return 'Supabase bağlantı bilgileri eksik. Uygulamayı SUPABASE_URL ve SUPABASE_PUBLISHABLE_KEY değerleriyle başlatın.';
     }
 
-    return 'Vitrin yayınlanamadı: $error';
+    return isStore
+        ? 'Mağaza yayınlanamadı: $error'
+        : 'Vitrin yayınlanamadı: $error';
   }
 
   bool _isDuplicateSlugError(PostgrestException error) {

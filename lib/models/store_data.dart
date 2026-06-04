@@ -28,15 +28,37 @@ class Product {
   };
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
-    id: json['id'] ?? '',
-    name: json['name'] ?? '',
-    price: json['price'] ?? '',
-    description: json['description'] ?? '',
-    imagePath: json['imagePath'],
-    category: json['category'] ?? 'Tümü',
-    stockStatus: json['stockStatus'] ?? 'Mevcut',
+    id: (json['id'] ?? '').toString(),
+    name: (json['name'] ?? '').toString(),
+    price: (json['price'] ?? '').toString(),
+    description: (json['description'] ?? '').toString(),
+    imagePath: json['imagePath'] as String?,
+    category: (json['category'] ?? 'Tümü').toString(),
+    stockStatus: (json['stockStatus'] ?? 'Mevcut').toString(),
   );
+
+  /// Mevcut ürünün bir kopyasını, belirtilen alanlar güncellenmiş şekilde döner.
+  Product copyWith({
+    String? id,
+    String? name,
+    String? price,
+    String? description,
+    String? imagePath,
+    String? category,
+    String? stockStatus,
+  }) {
+    return Product(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      description: description ?? this.description,
+      imagePath: imagePath ?? this.imagePath,
+      category: category ?? this.category,
+      stockStatus: stockStatus ?? this.stockStatus,
+    );
+  }
 }
+
 
 class MarketplaceLink {
   String id;
@@ -101,6 +123,7 @@ class StoreData {
   String address;
   String theme;
   String status;
+  /// Esnaf modu flag'i. [PreviewScreen] tarafından kullanıldığı için kaldırılamaz.
   bool isEsnafMode;
   String? logoUrl;
   List<Product> products;
@@ -116,6 +139,7 @@ class StoreData {
   List<StoreGalleryItem> galleryItems;
   bool isStore;
   String kategori;
+  String workingHours;
 
   // Konum ve KVKK Alanları
   double? latitude;
@@ -144,6 +168,7 @@ class StoreData {
     List<StoreGalleryItem>? galleryItems,
     this.isStore = false,
     this.kategori = '',
+    this.workingHours = '',
     this.latitude,
     this.longitude,
     this.locationAccuracyMeters,
@@ -173,6 +198,7 @@ class StoreData {
     'galleryItems': galleryItems.map((e) => e.toJson()).toList(),
     'isStore': isStore,
     'kategori': kategori,
+    'workingHours': workingHours,
     'latitude': latitude,
     'longitude': longitude,
     'locationAccuracyMeters': locationAccuracyMeters,
@@ -186,39 +212,124 @@ class StoreData {
     );
 
     return StoreData(
-      name: json['name'] ?? '',
-      businessType: json['businessType'] ?? json['business_type'] ?? 'Butik',
-      description: json['description'] ?? '',
-      whatsapp: json['whatsapp'] ?? '',
-      instagram: json['instagram'] ?? '',
-      website: json['website'] ?? '',
-      address: json['address'] ?? '',
-      theme: json['theme'] ?? 'Premium',
-      status: json['status'] ?? 'Açık',
-      isEsnafMode: json['isEsnafMode'] ?? json['is_esnaf_mode'] ?? true,
-      logoUrl: json['logoUrl'] ?? json['logo_url'],
-      products:
-          (json['products'] as List?)?.map((e) => Product.fromJson(e)).toList(),
+      name: _getString(json, 'name') ?? '',
+      businessType:
+          _getString(json, 'businessType', 'business_type') ?? 'Butik',
+      description: _getString(json, 'description') ?? '',
+      whatsapp: _getString(json, 'whatsapp') ?? '',
+      instagram: _getString(json, 'instagram') ?? '',
+      website: _getString(json, 'website') ?? '',
+      address: _getString(json, 'address') ?? '',
+      theme: _getString(json, 'theme') ?? 'Premium',
+      status: _getString(json, 'status') ?? 'Açık',
+      isEsnafMode: (json['isEsnafMode'] ?? json['is_esnaf_mode'] ?? true) as bool,
+      logoUrl: _getString(json, 'logoUrl', 'logo_url'),
+      products: (json['products'] as List?)
+          ?.map((e) => Product.fromJson(e as Map<String, dynamic>))
+          .toList(),
       marketplaceLinks:
-          (json['marketplaceLinks'] as List?)
-              ?.map((e) => MarketplaceLink.fromJson(e))
-              .toList() ?? (json['marketplace_links'] as List?)
-              ?.map((e) => MarketplaceLink.fromJson(e))
+          ((json['marketplaceLinks'] ?? json['marketplace_links']) as List?)
+              ?.map((e) => MarketplaceLink.fromJson(e as Map<String, dynamic>))
               .toList(),
-      corporateBio: json['corporateBio'] ?? json['corporate_bio'] ?? '',
-      referencesLink: json['referencesLink'] ?? json['references_link'] ?? '',
-      shelfImageUrl: json['shelfImageUrl'] ?? json['shelf_image_url'] ?? '',
+      corporateBio:
+          _getString(json, 'corporateBio', 'corporate_bio') ?? '',
+      referencesLink:
+          _getString(json, 'referencesLink', 'references_link') ?? '',
+      shelfImageUrl:
+          _getString(json, 'shelfImageUrl', 'shelf_image_url') ?? '',
       galleryItems: parsedGalleryItems,
-      isStore: json['is_store'] ?? json['isStore'] ?? false,
-      kategori: json['kategori'] ?? json['category'] ?? '',
+      isStore: (json['is_store'] ?? json['isStore'] ?? false) as bool,
+      kategori: _getString(json, 'kategori', 'category') ?? '',
+      workingHours:
+          _getString(json, 'workingHours', 'working_hours') ?? '',
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
-      locationAccuracyMeters: (json['locationAccuracyMeters'] ?? json['location_accuracy_meters'] as num?)?.toDouble(),
-      locationConsentAt: json['locationConsentAt'] != null || json['location_consent_at'] != null
-          ? DateTime.tryParse((json['locationConsentAt'] ?? json['location_consent_at']) as String)
-          : null,
-      locationSource: json['locationSource'] ?? json['location_source'] as String?,
+      locationAccuracyMeters:
+          ((json['locationAccuracyMeters'] ?? json['location_accuracy_meters'])
+                  as num?)
+              ?.toDouble(),
+      locationConsentAt: _parseDateTime(
+        json['locationConsentAt'] ?? json['location_consent_at'],
+      ),
+      locationSource:
+          _getString(json, 'locationSource', 'location_source'),
     );
+  }
+
+  /// Mevcut nesnenin bir kopyasını, belirtilen alanlar güncellenmiş
+  /// şekilde döner. Değiştirilmek istenmeyen alanlar atlanabilir.
+  StoreData copyWith({
+    String? name,
+    String? businessType,
+    String? description,
+    String? whatsapp,
+    String? instagram,
+    String? website,
+    String? address,
+    String? theme,
+    String? status,
+    bool? isEsnafMode,
+    String? logoUrl,
+    List<Product>? products,
+    List<MarketplaceLink>? marketplaceLinks,
+    String? corporateBio,
+    String? referencesLink,
+    String? shelfImageUrl,
+    List<StoreGalleryItem>? galleryItems,
+    bool? isStore,
+    String? kategori,
+    String? workingHours,
+    double? latitude,
+    double? longitude,
+    double? locationAccuracyMeters,
+    DateTime? locationConsentAt,
+    String? locationSource,
+  }) {
+    return StoreData(
+      name: name ?? this.name,
+      businessType: businessType ?? this.businessType,
+      description: description ?? this.description,
+      whatsapp: whatsapp ?? this.whatsapp,
+      instagram: instagram ?? this.instagram,
+      website: website ?? this.website,
+      address: address ?? this.address,
+      theme: theme ?? this.theme,
+      status: status ?? this.status,
+      isEsnafMode: isEsnafMode ?? this.isEsnafMode,
+      logoUrl: logoUrl ?? this.logoUrl,
+      products: products ?? List.of(this.products),
+      marketplaceLinks: marketplaceLinks ?? List.of(this.marketplaceLinks),
+      corporateBio: corporateBio ?? this.corporateBio,
+      referencesLink: referencesLink ?? this.referencesLink,
+      shelfImageUrl: shelfImageUrl ?? this.shelfImageUrl,
+      galleryItems: galleryItems ?? List.of(this.galleryItems),
+      isStore: isStore ?? this.isStore,
+      kategori: kategori ?? this.kategori,
+      workingHours: workingHours ?? this.workingHours,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      locationAccuracyMeters:
+          locationAccuracyMeters ?? this.locationAccuracyMeters,
+      locationConsentAt: locationConsentAt ?? this.locationConsentAt,
+      locationSource: locationSource ?? this.locationSource,
+    );
+  }
+
+  // ── Private yardımcılar ───────────────────────────────────────────────
+
+  /// JSON map'inden camelCase ve snake_case olmak üzere iki anahtarı dener.
+  static String? _getString(
+    Map<String, dynamic> json,
+    String camel, [
+    String? snake,
+  ]) {
+    final v = json[camel] ?? (snake != null ? json[snake] : null);
+    return v as String?;
+  }
+
+  static DateTime? _parseDateTime(Object? raw) {
+    if (raw == null) return null;
+    return DateTime.tryParse(raw.toString());
   }
 
   static List<StoreGalleryItem> _parseGalleryItems(Object? rawItems) {

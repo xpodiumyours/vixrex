@@ -6,7 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class VitrinViewService {
-  const VitrinViewService();
+  final SupabaseClient? supabaseClient;
+
+  const VitrinViewService({this.supabaseClient});
 
   static const String _sessionKeyPrefsKey = 'vitrin_view_session_key';
 
@@ -16,7 +18,8 @@ class VitrinViewService {
   }) async {
     try {
       final sessionKey = await _loadOrCreateSessionKey();
-      await Supabase.instance.client.rpc(
+      final client = supabaseClient ?? Supabase.instance.client;
+      await client.rpc(
         'record_vitrin_view',
         params: {
           'p_store_slug': slug.trim(),
@@ -36,7 +39,8 @@ class VitrinViewService {
     try {
       if (slug.trim().isEmpty || editToken.trim().isEmpty) return 0;
 
-      final response = await Supabase.instance.client.rpc(
+      final client = supabaseClient ?? Supabase.instance.client;
+      final response = await client.rpc(
         'get_today_vitrin_view_count',
         params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
       );

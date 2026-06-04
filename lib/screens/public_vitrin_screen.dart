@@ -35,7 +35,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
         await Supabase.instance.client
             .from('stores')
             .select(
-              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published',
+              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published,is_store,products',
             )
             .eq('slug', widget.slug)
             .eq('is_published', true)
@@ -69,11 +69,13 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       theme: _readString(data['theme'], fallback: 'Premium'),
       status: _readString(data['status']),
       isEsnafMode: true,
+      isStore: _readBool(data['is_store']),
       corporateBio: corporateBio,
       referencesLink: _readString(data['references_link']),
       shelfImageUrl: _readString(data['shelf_image_url']),
       galleryItems: _parseGalleryItems(data['gallery_items']),
       marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),
+      products: _parseProducts(data['products']),
     );
   }
 
@@ -81,6 +83,12 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
     if (value == null) return fallback;
     final text = value.toString().trim();
     return text.isEmpty ? fallback : text;
+  }
+
+  bool _readBool(Object? value) {
+    if (value is bool) return value;
+    if (value is String) return value.toLowerCase() == 'true';
+    return false;
   }
 
   String _readViewSource() {
@@ -117,6 +125,31 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
           .toList();
     } catch (error) {
       debugPrint('Marketplace links parse error: $error');
+      return [];
+    }
+  }
+
+  List<Product> _parseProducts(Object? rawProducts) {
+    try {
+      final decodedProducts = rawProducts is String ? jsonDecode(rawProducts) : rawProducts;
+      if (decodedProducts is! List) return [];
+
+      return decodedProducts
+          .whereType<Map>()
+          .map(
+            (p) => Product(
+              id: _readString(p['id']),
+              name: _readString(p['name']),
+              price: _readString(p['price']),
+              description: _readString(p['description']),
+              category: _readString(p['category'], fallback: 'Genel'),
+              stockStatus: _readString(p['stockStatus'] ?? p['stock_status'], fallback: 'Mevcut'),
+              imagePath: p['imagePath'] != null ? _readString(p['imagePath']) : (p['image_path'] != null ? _readString(p['image_path']) : null),
+            ),
+          )
+          .toList();
+    } catch (error) {
+      debugPrint('Products parse error: $error');
       return [];
     }
   }

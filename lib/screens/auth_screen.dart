@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/editor_screen.dart';
+import 'package:vitrinx/screens/store_editor_screen.dart';
+import 'package:vitrinx/screens/vitrin_editor_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/services/auth_service.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
@@ -120,7 +121,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const EditorScreen()),
+          MaterialPageRoute(builder: (_) => const StoreEditorScreen()),
           (route) => false,
         );
       } else {
@@ -144,7 +145,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const EditorScreen()),
+          MaterialPageRoute(builder: (_) => const VitrinEditorScreen()),
           (route) => false,
         );
       }

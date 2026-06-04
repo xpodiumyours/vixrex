@@ -13,8 +13,8 @@ void main() {
       // Run the initial animation
       await tester.pump(const Duration(milliseconds: 600));
 
-      // Step indicator should show Adım 1/3
-      expect(find.text('Adım 1/3'), findsOneWidget);
+      // Step indicator should show Adım 1/5
+      expect(find.text('Adım 1/5'), findsOneWidget);
 
       // Category grid items
       expect(find.text('Giyim & Butik'), findsOneWidget);
@@ -42,13 +42,24 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: StoreSetupScreen()));
       await tester.pump(const Duration(milliseconds: 600));
 
-      // Tap category and advance to Step 2
+      // Tap category and select business type to advance to Step 2
       await tester.tap(find.text('Giyim & Butik'));
       await tester.pumpAndSettle();
+      
+      // Select business type dropdown option
+      await tester.ensureVisible(find.byType(DropdownButton<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownButton<String>));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Diğer Butik').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Diğer Butik').last);
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('İleri'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Adım 2/3'), findsOneWidget);
+      expect(find.text('Adım 2/5'), findsOneWidget);
 
       // Verify KVKK checkbox is unchecked by default
       final checkboxFinder = find.byType(Checkbox);

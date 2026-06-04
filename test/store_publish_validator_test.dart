@@ -1,38 +1,162 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_validator.dart';
+import 'package:vitrinx/models/store_data.dart';
+
+// Helper: geçerli bir mağaza verisi oluşturur.
+StoreData validStore({
+  List<Product>? products,
+}) {
+  return StoreData(
+    name: 'Test Mağaza',
+    whatsapp: '05551234567',
+    description: 'Test açıklama',
+    address: 'Test Sokak No:1',
+    kategori: 'Giyim & Butik',
+    isStore: true,
+    products: products ?? [],
+  );
+}
+
+// Helper: geçerli bir vitrin verisi oluşturur.
+StoreData validVitrin() {
+  return StoreData(
+    name: 'Test Vitrin',
+    whatsapp: '05559876543',
+    description: 'Test vitrin açıklama',
+    address: 'Test Mahalle',
+    isStore: false,
+    marketplaceLinks: [
+      MarketplaceLink(id: '1', platform: 'Trendyol', url: 'trendyol.com/x'),
+    ],
+  );
+}
 
 void main() {
   const validator = StorePublishValidator();
 
-  test('yayın için zorunlu alanlar eksikse kullanıcı mesajı döner', () {
-    final message = validator.validate(StoreData());
+  group('StorePublishValidator.validate dispatching', () {
+    test('isStore=true calls validateStore', () {
+      final result = validator.validate(validStore());
+      expect(result, isNull);
+    });
 
-    expect(message, isNotNull);
-    expect(message, contains('mağaza adı'));
-    expect(message, contains('WhatsApp numarası'));
-    expect(message, contains('kısa açıklama'));
-    expect(message, contains('en az 1 pazaryeri linki'));
-    expect(message, contains('adres bilgisi'));
+    test('isStore=false calls validateVitrin', () {
+      final result = validator.validate(validVitrin());
+      expect(result, isNull);
+    });
   });
 
-  test('zorunlu alanlar tamamlandığında null döner', () {
-    final message = validator.validate(
-      StoreData(
-        name: 'Aymira Giyim',
-        whatsapp: '0555 111 22 33',
-        description: 'Mahalle butiği',
-        address: 'Kadıköy, İstanbul',
-        marketplaceLinks: [
-          MarketplaceLink(
-            id: '1',
-            platform: 'Trendyol',
-            url: 'https://trendyol.com/magaza',
-          ),
-        ],
-      ),
-    );
+  group('StorePublishValidator.validateStore', () {
+    test('valid store returns null', () {
+      expect(validator.validateStore(validStore()), isNull);
+    });
 
-    expect(message, isNull);
+    test('missing name returns error', () {
+      final data = validStore();
+      data.name = '';
+      expect(validator.validateStore(data), isNotNull);
+      expect(validator.validateStore(data), contains('mağaza adı'));
+    });
+
+    test('missing whatsapp returns error', () {
+      final data = validStore();
+      data.whatsapp = '';
+      expect(validator.validateStore(data), contains('telefon'));
+    });
+
+    test('missing description returns error', () {
+      final data = validStore();
+      data.description = '';
+      expect(validator.validateStore(data), contains('kısa açıklama'));
+    });
+
+    test('missing address returns error', () {
+      final data = validStore();
+      data.address = '';
+      expect(validator.validateStore(data), contains('adres'));
+    });
+
+    test('missing kategori returns error', () {
+      final data = validStore();
+      data.kategori = '';
+      expect(validator.validateStore(data), contains('kategori'));
+    });
+
+    test('product with empty name returns error', () {
+      final data = validStore(products: [Product(id: 'p1', name: '')]);
+      expect(validator.validateStore(data), contains('ürün'));
+    });
+
+    test('product with valid name passes', () {
+      final data = validStore(products: [Product(id: 'p1', name: 'Gömlek')]);
+      expect(validator.validateStore(data), isNull);
+    });
+
+    test('whitespace-only name treated as empty', () {
+      final data = validStore();
+      data.name = '   ';
+      expect(validator.validateStore(data), isNotNull);
+    });
+  });
+
+  group('StorePublishValidator.validateVitrin', () {
+    test('valid vitrin returns null', () {
+      expect(validator.validateVitrin(validVitrin()), isNull);
+    });
+
+    test('missing name returns error', () {
+      final data = validVitrin();
+      data.name = '';
+      expect(validator.validateVitrin(data), isNotNull);
+    });
+
+    test('missing whatsapp returns error', () {
+      final data = validVitrin();
+      data.whatsapp = '';
+      expect(validator.validateVitrin(data), isNotNull);
+    });
+
+    test('missing description returns error', () {
+      final data = validVitrin();
+      data.description = '';
+      expect(validator.validateVitrin(data), isNotNull);
+    });
+
+    test('missing address returns error', () {
+      final data = validVitrin();
+      data.address = '';
+      expect(validator.validateVitrin(data), isNotNull);
+    });
+
+    test('no marketplace links returns error', () {
+      final data = validVitrin();
+      data.marketplaceLinks.clear();
+      expect(validator.validateVitrin(data), contains('pazaryeri'));
+    });
+
+    test('marketplace link with empty url returns error', () {
+      final data = validVitrin();
+      data.marketplaceLinks = [
+        MarketplaceLink(id: '1', platform: 'Trendyol', url: ''),
+      ];
+      expect(validator.validateVitrin(data), contains('pazaryeri'));
+    });
+
+    test('marketplace link with only platform, no url returns error', () {
+      final data = validVitrin();
+      data.marketplaceLinks = [
+        MarketplaceLink(id: '1', platform: '', url: 'trendyol.com'),
+      ];
+      expect(validator.validateVitrin(data), contains('pazaryeri'));
+    });
+
+    test('error message mentions the field(s) missing', () {
+      final data = validVitrin();
+      data.name = '';
+      data.whatsapp = '';
+      final msg = validator.validateVitrin(data)!;
+      expect(msg, contains('mağaza adı'));
+      expect(msg, contains('WhatsApp'));
+    });
   });
 }
