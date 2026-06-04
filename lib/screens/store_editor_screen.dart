@@ -4,17 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-
-
 import 'package:qr_flutter/qr_flutter.dart';
-
-
-
-
-
-
-
-
 
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 
@@ -25,7 +15,6 @@ import 'package:vitrinx/screens/store_editor/widgets/store_info_section.dart';
 import 'package:vitrinx/screens/store_editor/widgets/store_products_section.dart';
 import 'package:vitrinx/screens/store_editor/widgets/store_gallery_section.dart';
 import 'package:vitrinx/screens/store_editor/widgets/store_score_section.dart';
-
 
 class StoreEditorScreen extends StatefulWidget {
   final String? initialStoreName;
@@ -38,7 +27,6 @@ class StoreEditorScreen extends StatefulWidget {
 
 class _StoreEditorScreenState extends State<StoreEditorScreen>
     with SingleTickerProviderStateMixin {
-
   final _formKey = GlobalKey<FormState>();
   late final TabController _mobileTabController;
   late final StoreEditorController _controller;
@@ -71,7 +59,9 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
   @override
   void initState() {
     super.initState();
-    _controller = StoreEditorController(initialStoreName: widget.initialStoreName);
+    _controller = StoreEditorController(
+      initialStoreName: widget.initialStoreName,
+    );
     _mobileTabController = TabController(length: 2, vsync: this);
     _controller.addListener(_onControllerChanged);
     _controller.loadSavedData(context);
@@ -145,9 +135,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
 
   Widget _buildTodayViewBadge({bool compact = false}) {
     final text =
-        _controller.isTodayViewCountLoading
-            ? 'YÃ¼kleniyor...'
-            : ' Ziyaret';
+        _controller.isTodayViewCountLoading ? 'YÃ¼kleniyor...' : ' Ziyaret';
 
     return Padding(
       padding: const EdgeInsets.only(right: 10),
@@ -296,7 +284,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'VitrinX Studio',
+                  'Magaza Studio',
                   style: TextStyle(
                     color: darkText,
                     fontSize: 17,
@@ -306,7 +294,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                 ),
                 SizedBox(height: 3),
                 Text(
-                  'Esnaf vitrini iÃ§in canlÄ± editÃ¶r',
+                  'Magaza icin canli editor',
                   style: TextStyle(
                     color: mutedText,
                     fontSize: 11,
@@ -455,7 +443,8 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
   // Replacing state handlers with controller methods
   Future<void> _saveData() => _controller.saveData(context);
   Future<void> _publishStore() => _controller.publishStore(context);
-  Future<void> _copyPublishedLink(String msg) => _controller.copyPublishedLink(context, msg);
+  Future<void> _copyPublishedLink(String msg) =>
+      _controller.copyPublishedLink(context, msg);
   Future<void> _deleteVitrin() => _controller.deleteVitrin(context);
 
   @override
@@ -490,7 +479,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                 ? Row(
                   children: [
                     const Text(
-                      'Vitrin Düzenle',
+                      'Mağaza Düzenle',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         color: darkText,
@@ -510,7 +499,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                   ],
                 )
                 : const Text(
-                  'Vitrin Düzenle',
+                  'Mağaza Düzenle',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -552,7 +541,8 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                             builder:
                                 (_) => PreviewScreen(
                                   storeData: _controller.data,
-                                  previewGalleryItems: _controller.galleryPreviewItems(),
+                                  previewGalleryItems:
+                                      _controller.galleryPreviewItems(),
                                 ),
                           ),
                         );
@@ -695,7 +685,6 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
     );
   }
 
-  
   Widget _buildForm({bool showDesktopPublishCard = false}) {
     return Form(
       key: _formKey,
@@ -717,9 +706,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
             scoreTargetKeys: _scoreTargetKeys,
           ),
           const SizedBox(height: 24),
-          StoreProductsSection(
-            controller: _controller,
-          ),
+          StoreProductsSection(controller: _controller),
           const SizedBox(height: 24),
           _buildEditCard(
             title: 'Ayarlar',
@@ -728,17 +715,21 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                 width: double.infinity,
                 height: 50,
                 child: OutlinedButton.icon(
-                  onPressed: _controller.isDeleting ? null : _showDeleteVitrinConfirmation,
-                  icon: _controller.isDeleting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.redAccent,
-                          ),
-                        )
-                      : const Icon(Icons.delete_outline_rounded, size: 20),
+                  onPressed:
+                      _controller.isDeleting
+                          ? null
+                          : _showDeleteVitrinConfirmation,
+                  icon:
+                      _controller.isDeleting
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.redAccent,
+                            ),
+                          )
+                          : const Icon(Icons.delete_outline_rounded, size: 20),
                   label: const Text(
                     'MaÄŸazayÄ± Sil',
                     style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
@@ -815,8 +806,6 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
     );
   }
 
-  
-
   String _buildPublicLinkWithSource(String link, String source) {
     try {
       final uri = Uri.parse(link);
@@ -829,14 +818,12 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
     }
   }
 
-  
-
   Widget _buildPublishIntro() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Vitrininizi yayınlayın',
+          'Mağazanızı yayınlayın',
           style: TextStyle(
             color: darkText,
             fontSize: 24,
@@ -848,7 +835,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
         _gradientUnderline(width: 64),
         const SizedBox(height: 8),
         Text(
-          'VitrinX linkiniz hazır olduğunda müşteriler bu adrese girerek canlı vitrininizi görebilecek.',
+          'Mağaza linkiniz hazır olduğunda müşteriler bu adrese girerek canlı mağazanızı görebilecek.',
           style: TextStyle(
             color: softText.withValues(alpha: 0.8),
             fontSize: 12,
@@ -926,14 +913,14 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                     )
                     : Text(
                       _controller.publishedLink == null
-                          ? 'Vitrin linkini oluştur'
-                          : 'Vitrini güncelle',
+                          ? 'Mağaza linkini oluştur'
+                          : 'Mağazayı güncelle',
                     ),
           ),
         ),
         const SizedBox(height: 10),
         Text(
-          'Galeri fotoğrafları Supabase Storage’a yüklenir ve public vitrinde görünür.',
+          'Galeri fotograflari Supabase Storage yuklenir ve public magazada gorunur.',
           style: TextStyle(
             color: mutedText,
             fontSize: 10.5,
@@ -944,8 +931,6 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
       ],
     );
   }
-
-  
 
   Widget _buildPublishedLinkBlock(String link) {
     return Container(
@@ -963,7 +948,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
             children: [
               Expanded(
                 child: Text(
-                  'Hazırlanan vitrin linki',
+                  'Hazirlanan magaza linki',
                   style: TextStyle(
                     color: const Color(0xFF5EEAD4),
                     fontSize: 11,
@@ -972,7 +957,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                 ),
               ),
               IconButton(
-                onPressed: () => _copyPublishedLink('Vitrin linki kopyalandı.'),
+                onPressed: () => _copyPublishedLink('Mağaza linki kopyalandı.'),
                 tooltip: 'Linki kopyala',
                 icon: Icon(
                   Icons.copy_rounded,
@@ -1079,7 +1064,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Müşteriler bu kodu okutarak vitrininize ulaşabilir.',
+                  'Musteriler bu kodu okutarak magazaniza ulasabilir.',
                   style: TextStyle(
                     color: softText.withValues(alpha: 0.86),
                     fontSize: 11,
@@ -1125,8 +1110,6 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
       ),
     );
   }
-
-  
 
   Widget _buildPublishCard({required List<Widget> children}) {
     return Container(
@@ -1218,8 +1201,6 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
     );
   }
 
-  
-
   Widget _buildEditCard({
     required String title,
     required List<Widget> children,
@@ -1268,8 +1249,6 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
       ),
     );
   }
-
-  
 
   Widget _buildLivePreviewMockup(BoxConstraints constraints) {
     final isMobilePreview = constraints.maxWidth < 520;
@@ -1872,7 +1851,8 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                             ),
                             storeData: _controller.data,
                             isEmbedded: true,
-                            previewGalleryItems: _controller.galleryPreviewItems(),
+                            previewGalleryItems:
+                                _controller.galleryPreviewItems(),
                           ),
                         ),
                       );
@@ -1885,7 +1865,9 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
         ),
       ],
     );
-  }  Widget _buildMobileBottomActions() {
+  }
+
+  Widget _buildMobileBottomActions() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1914,7 +1896,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
             const SizedBox(width: 12),
             Expanded(
               child: _buildGradientButton(
-                label: 'Vitrini Aç',
+                label: 'Mağazayı Aç',
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -1922,7 +1904,8 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                       builder:
                           (_) => PreviewScreen(
                             storeData: _controller.data,
-                            previewGalleryItems: _controller.galleryPreviewItems(),
+                            previewGalleryItems:
+                                _controller.galleryPreviewItems(),
                           ),
                     ),
                   );
@@ -2143,8 +2126,6 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
     );
   }
 }
-
-
 
 class _EditorGridPainter extends CustomPainter {
   const _EditorGridPainter();

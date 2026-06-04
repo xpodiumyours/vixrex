@@ -4,27 +4,28 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 class LocationResult {
-  const LocationResult._({this.position, this.errorMessage});
+  const LocationResult._({
+    this.position,
+    this.approximatePosition,
+    this.errorMessage,
+  });
 
   factory LocationResult.success(Position position) =>
       LocationResult._(position: position);
+
+  factory LocationResult.approximate(Position position, String message) =>
+      LocationResult._(approximatePosition: position, errorMessage: message);
 
   factory LocationResult.failure(String message) =>
       LocationResult._(errorMessage: message);
 
   final Position? position;
+  final Position? approximatePosition;
   final String? errorMessage;
 
   bool get isSuccess => position != null;
-}
-
-class LocationAccuracyException implements Exception {
-  const LocationAccuracyException(this.accuracyMeters);
-
-  final double accuracyMeters;
-
-  @override
-  String toString() => 'LocationAccuracyException($accuracyMeters)';
+  bool get hasApproximatePosition => approximatePosition != null;
+  Position? get bestPosition => position ?? approximatePosition;
 }
 
 class LocationService {
@@ -61,13 +62,17 @@ class LocationService {
 
     try {
       final position = await _fetchBestPosition(_buildLocationSettings());
-      return LocationResult.success(position);
+      if (position.accuracy <= maxAcceptedAccuracyMeters) {
+        return LocationResult.success(position);
+      }
+      return LocationResult.approximate(
+        position,
+        buildAccuracyMessage(position.accuracy),
+      );
     } on TimeoutException {
       return LocationResult.failure(
         'Konum alinamadi. Lutfen tekrar deneyin veya adresi elle yazin.',
       );
-    } on LocationAccuracyException catch (error) {
-      return LocationResult.failure(buildAccuracyMessage(error.accuracyMeters));
     } catch (error) {
       final errorText = error.toString().toLowerCase();
       if (errorText.contains('timeout') || errorText.contains('time out')) {
@@ -84,8 +89,23 @@ class LocationService {
     if (accuracyMeters <= maxAcceptedAccuracyMeters) {
       return 'Konum basariyla alindi. Hata payi: yaklasik $accuracyText m.';
     }
-    return 'Konum bulundu ama hata payi yuksek: $accuracyText m. '
-        '30 metre alti dogruluk icin acik alanda tekrar deneyin.';
+    return 'Konum yaklasik bulundu. Hata payi: yaklasik $accuracyText m. '
+        '30 metre alti dogruluk icin acik alanda bekleyin, Wi-Fi acik deneyin '
+        'veya Google Maps uzerinden kontrol edin.';
+  }
+
+  static Uri buildGoogleMapsSearchUri(double latitude, double longitude) {
+    return Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': '$latitude,$longitude',
+    });
+  }
+
+  static Uri buildGoogleMapsDirectionsUri(double latitude, double longitude) {
+    return Uri.https('www.google.com', '/maps/dir/', {
+      'api': '1',
+      'destination': '$latitude,$longitude',
+    });
   }
 
   LocationSettings _buildLocationSettings() {
@@ -143,10 +163,6 @@ class LocationService {
     final resolvedPosition =
         position ??
         await Geolocator.getCurrentPosition(locationSettings: settings);
-
-    if (resolvedPosition.accuracy > maxAcceptedAccuracyMeters) {
-      throw LocationAccuracyException(resolvedPosition.accuracy);
-    }
 
     return resolvedPosition;
   }

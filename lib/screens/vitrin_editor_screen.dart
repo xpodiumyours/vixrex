@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
@@ -72,6 +73,9 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
   bool _kvkkConsent = false;
   bool _isLocating = false;
   String? _locationStatusMessage;
+  double? _pendingMapsLatitude;
+  double? _pendingMapsLongitude;
+  double? _pendingMapsAccuracyMeters;
   final TextEditingController _addressCtrl = TextEditingController();
 
   final List<String> categories = const [
@@ -288,6 +292,9 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
   Future<void> _getCurrentLocation() async {
     setState(() {
       _isLocating = true;
+      _pendingMapsLatitude = null;
+      _pendingMapsLongitude = null;
+      _pendingMapsAccuracyMeters = null;
       _locationStatusMessage =
           'Konum aranıyor... 30 metre altı doğruluk bekleniyor.';
     });
@@ -296,8 +303,12 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
     if (!mounted) return;
 
     if (!result.isSuccess) {
+      final approximatePosition = result.approximatePosition;
       setState(() {
         _locationStatusMessage = result.errorMessage;
+        _pendingMapsLatitude = approximatePosition?.latitude;
+        _pendingMapsLongitude = approximatePosition?.longitude;
+        _pendingMapsAccuracyMeters = approximatePosition?.accuracy;
         _isLocating = false;
       });
       return;
@@ -313,11 +324,46 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
       _locationStatusMessage = LocationService.buildAccuracyMessage(
         position.accuracy,
       );
+      _pendingMapsLatitude = null;
+      _pendingMapsLongitude = null;
+      _pendingMapsAccuracyMeters = null;
       _isLocating = false;
 
       if (_addressCtrl.text.trim().isEmpty) {
         _addressCtrl.text = 'Koordinatlarla işaretlenen konum';
         _data.address = 'Koordinatlarla işaretlenen konum';
+      }
+    });
+  }
+
+  Future<void> _openPendingLocationInMaps() async {
+    final latitude = _pendingMapsLatitude;
+    final longitude = _pendingMapsLongitude;
+    if (latitude == null || longitude == null) return;
+
+    final uri = LocationService.buildGoogleMapsSearchUri(latitude, longitude);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void _confirmPendingLocation() {
+    final latitude = _pendingMapsLatitude;
+    final longitude = _pendingMapsLongitude;
+    if (latitude == null || longitude == null) return;
+
+    setState(() {
+      _latitude = latitude;
+      _longitude = longitude;
+      _locationAccuracyMeters = _pendingMapsAccuracyMeters;
+      _locationConsentAt = DateTime.now();
+      _locationSource = 'vitrin_editor_gps_user_confirmed_approximate';
+      _locationStatusMessage =
+          'Yaklasik konum kullanici onayi ile kaydedildi. Google Maps uzerinden kontrol edildi.';
+      _pendingMapsLatitude = null;
+      _pendingMapsLongitude = null;
+      _pendingMapsAccuracyMeters = null;
+      if (_addressCtrl.text.trim().isEmpty) {
+        _addressCtrl.text = 'Koordinatlarla isaretlenen konum';
+        _data.address = 'Koordinatlarla isaretlenen konum';
       }
     });
   }
@@ -2206,10 +2252,38 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
                           color:
                               _latitude != null
                                   ? Colors.green.shade700
+                                  : _pendingMapsLatitude != null
+                                  ? Colors.orange.shade800
                                   : Colors.redAccent,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+                      if (_pendingMapsLatitude != null &&
+                          _pendingMapsLongitude != null)
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            TextButton.icon(
+                              onPressed: _openPendingLocationInMaps,
+                              icon: const Icon(Icons.map_outlined, size: 16),
+                              label: const Text("Google Maps'te Kontrol Et"),
+                              style: TextButton.styleFrom(
+                                foregroundColor: primaryColor,
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: _confirmPendingLocation,
+                              icon: const Icon(
+                                Icons.check_circle_outline,
+                                size: 16,
+                              ),
+                              label: const Text('Bu Konumu Kullan'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.green.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ],
                 ),

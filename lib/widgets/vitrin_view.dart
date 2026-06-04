@@ -489,7 +489,8 @@ class VitrinView extends StatelessWidget {
     return storeData.whatsapp.trim().isNotEmpty ||
         storeData.instagram.trim().isNotEmpty ||
         storeData.website.trim().isNotEmpty ||
-        storeData.address.trim().isNotEmpty;
+        storeData.address.trim().isNotEmpty ||
+        (storeData.latitude != null && storeData.longitude != null);
   }
 
   List<Widget> _buildVisibleActions(double radius, bool isCompact) {
@@ -558,7 +559,8 @@ class VitrinView extends StatelessWidget {
           onTap:
               () => _openExternalUrl(_normalizeExternalUrl(storeData.website)),
         ),
-      if (storeData.address.trim().isNotEmpty)
+      if (storeData.address.trim().isNotEmpty ||
+          (storeData.latitude != null && storeData.longitude != null))
         _ActionIconBtn(
           label: 'Adres',
           icon: Icons.location_on_rounded,
@@ -620,16 +622,18 @@ class VitrinView extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: storeData.products.length,
-              separatorBuilder: (context, index) => Divider(
-                color: preset.border.withValues(alpha: 0.5),
-                height: 24,
-              ),
+              separatorBuilder:
+                  (context, index) => Divider(
+                    color: preset.border.withValues(alpha: 0.5),
+                    height: 24,
+                  ),
               itemBuilder: (context, index) {
                 final product = storeData.products[index];
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (product.imagePath != null && product.imagePath!.trim().isNotEmpty) ...[
+                    if (product.imagePath != null &&
+                        product.imagePath!.trim().isNotEmpty) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.network(
@@ -637,12 +641,16 @@ class VitrinView extends StatelessWidget {
                           width: isCompact ? 60 : 70,
                           height: isCompact ? 60 : 70,
                           fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) => Container(
-                            width: isCompact ? 60 : 70,
-                            height: isCompact ? 60 : 70,
-                            color: preset.border.withValues(alpha: 0.3),
-                            child: Icon(Icons.shopping_bag_outlined, color: preset.textSecondary),
-                          ),
+                          errorBuilder:
+                              (c, e, s) => Container(
+                                width: isCompact ? 60 : 70,
+                                height: isCompact ? 60 : 70,
+                                color: preset.border.withValues(alpha: 0.3),
+                                child: Icon(
+                                  Icons.shopping_bag_outlined,
+                                  color: preset.textSecondary,
+                                ),
+                              ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -666,15 +674,23 @@ class VitrinView extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              _buildProductStockBadge(product.stockStatus, preset),
+                              _buildProductStockBadge(
+                                product.stockStatus,
+                                preset,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              if (product.category.isNotEmpty && product.category != 'Tümü' && product.category != 'Genel') ...[
+                              if (product.category.isNotEmpty &&
+                                  product.category != 'Tümü' &&
+                                  product.category != 'Genel') ...[
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: preset.accent.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
@@ -691,7 +707,9 @@ class VitrinView extends StatelessWidget {
                                 const SizedBox(width: 6),
                               ],
                               Text(
-                                product.price.trim().isEmpty ? 'Fiyat Belirtilmemiş' : product.price,
+                                product.price.trim().isEmpty
+                                    ? 'Fiyat Belirtilmemiş'
+                                    : product.price,
                                 style: TextStyle(
                                   color: preset.textPrimary,
                                   fontSize: isCompact ? 12 : 13,
@@ -970,7 +988,12 @@ class VitrinView extends StatelessWidget {
                 ],
                 if (storeData.whatsapp.trim().isNotEmpty) ...[
                   SizedBox(height: isCompact ? 12 : 16),
-                  _buildShelfWhatsAppButton(context, preset, selectedItem, isCompact),
+                  _buildShelfWhatsAppButton(
+                    context,
+                    preset,
+                    selectedItem,
+                    isCompact,
+                  ),
                 ],
                 if (galleryItems.length > 1) ...[
                   SizedBox(height: isCompact ? 10 : 14),
@@ -1592,7 +1615,10 @@ class VitrinView extends StatelessWidget {
   }
 
   Widget _buildShareButton(BuildContext context, VitrinThemePreset preset) {
-    final slug = storeData.name.toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '-');
+    final slug = storeData.name.toLowerCase().replaceAll(
+      RegExp(r'[^a-zA-Z0-9]'),
+      '-',
+    );
     final shareUrl = publicLink ?? 'https://vitrinx.app/v/$slug';
 
     return ClipRRect(
@@ -1619,7 +1645,10 @@ class VitrinView extends StatelessWidget {
                   SnackBar(
                     content: const Row(
                       children: [
-                        Icon(Icons.check_circle_outline_rounded, color: Colors.white),
+                        Icon(
+                          Icons.check_circle_outline_rounded,
+                          color: Colors.white,
+                        ),
                         SizedBox(width: 8),
                         Text('Vitrin bağlantısı panoya kopyalandı!'),
                       ],
@@ -1651,9 +1680,8 @@ class VitrinView extends StatelessWidget {
     VitrinGalleryPreviewItem item,
     bool isCompact,
   ) {
-    final title = item.title.trim().isNotEmpty
-        ? item.title.trim()
-        : 'Vitrin Görseli';
+    final title =
+        item.title.trim().isNotEmpty ? item.title.trim() : 'Vitrin Görseli';
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -1662,7 +1690,9 @@ class VitrinView extends StatelessWidget {
         color: const Color(0x1A25D366),
         borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
         border: Border.all(
-          color: const Color(0xFF25D366).withValues(alpha: isDark ? 0.35 : 0.22),
+          color: const Color(
+            0xFF25D366,
+          ).withValues(alpha: isDark ? 0.35 : 0.22),
         ),
       ),
       child: Material(
@@ -1691,9 +1721,7 @@ class VitrinView extends StatelessWidget {
           },
           borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
           child: Padding(
-            padding: EdgeInsets.symmetric(
-              vertical: isCompact ? 10 : 12,
-            ),
+            padding: EdgeInsets.symmetric(vertical: isCompact ? 10 : 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -1704,7 +1732,9 @@ class VitrinView extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  isCompact ? 'Görseldeki Ürünü Sor' : 'Fotoğraftaki Ürünü WhatsApp\'tan Sor',
+                  isCompact
+                      ? 'Görseldeki Ürünü Sor'
+                      : 'Fotoğraftaki Ürünü WhatsApp\'tan Sor',
                   style: const TextStyle(
                     color: Color(0xFF25D366),
                     fontWeight: FontWeight.w900,

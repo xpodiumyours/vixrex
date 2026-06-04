@@ -35,7 +35,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
         await Supabase.instance.client
             .from('stores')
             .select(
-              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published,is_store,products',
+              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,latitude,longitude,location_accuracy_meters,location_consent_at,location_source,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published,is_store,products',
             )
             .eq('slug', widget.slug)
             .eq('is_published', true)
@@ -66,6 +66,11 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       instagram: _readString(data['instagram']),
       website: _readString(data['website']),
       address: _readString(data['address']),
+      latitude: _readDouble(data['latitude']),
+      longitude: _readDouble(data['longitude']),
+      locationAccuracyMeters: _readDouble(data['location_accuracy_meters']),
+      locationConsentAt: _readDateTime(data['location_consent_at']),
+      locationSource: _readString(data['location_source']),
       theme: _readString(data['theme'], fallback: 'Premium'),
       status: _readString(data['status']),
       isEsnafMode: true,
@@ -89,6 +94,17 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
     if (value is bool) return value;
     if (value is String) return value.toLowerCase() == 'true';
     return false;
+  }
+
+  double? _readDouble(Object? value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value.trim());
+    return null;
+  }
+
+  DateTime? _readDateTime(Object? value) {
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
   }
 
   String _readViewSource() {
@@ -131,7 +147,8 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
 
   List<Product> _parseProducts(Object? rawProducts) {
     try {
-      final decodedProducts = rawProducts is String ? jsonDecode(rawProducts) : rawProducts;
+      final decodedProducts =
+          rawProducts is String ? jsonDecode(rawProducts) : rawProducts;
       if (decodedProducts is! List) return [];
 
       return decodedProducts
@@ -143,8 +160,16 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
               price: _readString(p['price']),
               description: _readString(p['description']),
               category: _readString(p['category'], fallback: 'Genel'),
-              stockStatus: _readString(p['stockStatus'] ?? p['stock_status'], fallback: 'Mevcut'),
-              imagePath: p['imagePath'] != null ? _readString(p['imagePath']) : (p['image_path'] != null ? _readString(p['image_path']) : null),
+              stockStatus: _readString(
+                p['stockStatus'] ?? p['stock_status'],
+                fallback: 'Mevcut',
+              ),
+              imagePath:
+                  p['imagePath'] != null
+                      ? _readString(p['imagePath'])
+                      : (p['image_path'] != null
+                          ? _readString(p['image_path'])
+                          : null),
             ),
           )
           .toList();

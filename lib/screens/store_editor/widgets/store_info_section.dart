@@ -76,12 +76,16 @@ class _StoreInfoSectionState extends State<StoreInfoSection> {
                 const SizedBox(height: 16),
                 EditorDropdown(
                   label: 'Kategori',
-                  value: categories.contains(data.kategori) ? data.kategori : 'Diğer',
+                  value:
+                      categories.contains(data.kategori)
+                          ? data.kategori
+                          : 'Diğer',
                   items: categories,
                   onChanged: (v) {
                     setState(() {
                       data.kategori = v!;
-                      if (data.businessType.isEmpty || categories.contains(data.businessType)) {
+                      if (data.businessType.isEmpty ||
+                          categories.contains(data.businessType)) {
                         data.businessType = v;
                       }
                     });
@@ -90,12 +94,16 @@ class _StoreInfoSectionState extends State<StoreInfoSection> {
                 const SizedBox(height: 16),
                 EditorDropdown(
                   label: 'İşletme türü',
-                  value: businessTypes.contains(data.businessType)
-                      ? data.businessType
-                      : (businessTypes.contains(data.kategori) ? data.kategori : 'Diğer'),
-                  items: businessTypes.contains(data.businessType)
-                      ? businessTypes
-                      : [...businessTypes, data.businessType],
+                  value:
+                      businessTypes.contains(data.businessType)
+                          ? data.businessType
+                          : (businessTypes.contains(data.kategori)
+                              ? data.kategori
+                              : 'Diğer'),
+                  items:
+                      businessTypes.contains(data.businessType)
+                          ? businessTypes
+                          : [...businessTypes, data.businessType],
                   onChanged: (v) {
                     setState(() {
                       data.businessType = v!;
@@ -153,7 +161,8 @@ class _StoreInfoSectionState extends State<StoreInfoSection> {
                   label: 'Referans / yorum linki',
                   initial: data.referencesLink,
                   prefixIcon: Icons.verified_rounded,
-                  hintText: 'Örn: Google yorumları, Instagram öne çıkanlar veya web sayfanız',
+                  hintText:
+                      'Örn: Google yorumları, Instagram öne çıkanlar veya web sayfanız',
                   onChanged: (v) => data.referencesLink = v,
                 ),
               ],
@@ -216,32 +225,41 @@ class _StoreInfoSectionState extends State<StoreInfoSection> {
                         hintText: 'Örn: Mahalle, cadde, ilçe',
                         suffixIcon: Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: controller.isLocating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: Center(
-                                    child: SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          Color(0xFFFF4D00),
+                          child:
+                              controller.isLocating
+                                  ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Color(0xFFFF4D00),
+                                              ),
                                         ),
                                       ),
                                     ),
+                                  )
+                                  : IconButton(
+                                    icon: const Icon(
+                                      Icons.my_location_rounded,
+                                      size: 20,
+                                    ),
+                                    color: const Color(0xFFFF4D00),
+                                    disabledColor: const Color(
+                                      0xFF64748B,
+                                    ).withAlpha((0.4 * 255).round()),
+                                    onPressed:
+                                        controller.kvkkConsent &&
+                                                !controller.isLocating
+                                            ? controller.getCurrentLocation
+                                            : null,
+                                    tooltip: 'Konumumu Kullan',
                                   ),
-                                )
-                              : IconButton(
-                                  icon: const Icon(Icons.my_location_rounded, size: 20),
-                                  color: const Color(0xFFFF4D00),
-                                  disabledColor: const Color(0xFF64748B).withAlpha((0.4 * 255).round()),
-                                  onPressed: controller.kvkkConsent && !controller.isLocating
-                                      ? controller.getCurrentLocation
-                                      : null,
-                                  tooltip: 'Konumumu Kullan',
-                                ),
                         ),
                         onChanged: (v) => data.address = v,
                       ),
@@ -264,7 +282,9 @@ class _StoreInfoSectionState extends State<StoreInfoSection> {
                           Expanded(
                             child: GestureDetector(
                               onTap: () {
-                                controller.setKvkkConsent(!controller.kvkkConsent);
+                                controller.setKvkkConsent(
+                                  !controller.kvkkConsent,
+                                );
                               },
                               child: const Text(
                                 'Konum verilerimin KVKK kapsamında işlenmesine açık rıza veriyorum.',
@@ -284,12 +304,41 @@ class _StoreInfoSectionState extends State<StoreInfoSection> {
                           controller.locationStatusMessage!,
                           style: TextStyle(
                             fontSize: 12,
-                            color: controller.latitude != null
-                                ? Colors.green.shade700
-                                : Colors.redAccent,
+                            color:
+                                controller.latitude != null
+                                    ? Colors.green.shade700
+                                    : controller.pendingMapsLatitude != null
+                                    ? Colors.orange.shade800
+                                    : Colors.redAccent,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        if (controller.pendingMapsLatitude != null &&
+                            controller.pendingMapsLongitude != null)
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              TextButton.icon(
+                                onPressed: controller.openPendingLocationInMaps,
+                                icon: const Icon(Icons.map_outlined, size: 16),
+                                label: const Text("Google Maps'te Kontrol Et"),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFFF4D00),
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: controller.confirmPendingLocation,
+                                icon: const Icon(
+                                  Icons.check_circle_outline,
+                                  size: 16,
+                                ),
+                                label: const Text('Bu Konumu Kullan'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.green.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ],
                   ),
@@ -306,7 +355,9 @@ class _StoreInfoSectionState extends State<StoreInfoSection> {
                 onAction: () {
                   setState(() {
                     data.marketplaceLinks.add(
-                      MarketplaceLink(id: DateTime.now().millisecondsSinceEpoch.toString()),
+                      MarketplaceLink(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      ),
                     );
                   });
                 },

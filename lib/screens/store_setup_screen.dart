@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
@@ -103,6 +104,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
   bool _kvkkConsent = false;
   bool _isLocating = false;
   String? _locationStatusMessage;
+  double? _pendingMapsLatitude;
+  double? _pendingMapsLongitude;
+  double? _pendingMapsAccuracyMeters;
 
   // Ürünler
   final List<Product> _products = [];
@@ -368,6 +372,9 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
   Future<void> _getCurrentLocation() async {
     setState(() {
       _isLocating = true;
+      _pendingMapsLatitude = null;
+      _pendingMapsLongitude = null;
+      _pendingMapsAccuracyMeters = null;
       _locationStatusMessage =
           'Konum aranıyor... 30 metre altı doğruluk bekleniyor.';
     });
@@ -376,8 +383,12 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
     if (!mounted) return;
 
     if (!result.isSuccess) {
+      final approximatePosition = result.approximatePosition;
       setState(() {
         _locationStatusMessage = result.errorMessage;
+        _pendingMapsLatitude = approximatePosition?.latitude;
+        _pendingMapsLongitude = approximatePosition?.longitude;
+        _pendingMapsAccuracyMeters = approximatePosition?.accuracy;
         _isLocating = false;
       });
       return;
@@ -393,11 +404,45 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       _locationStatusMessage = LocationService.buildAccuracyMessage(
         position.accuracy,
       );
+      _pendingMapsLatitude = null;
+      _pendingMapsLongitude = null;
+      _pendingMapsAccuracyMeters = null;
       _isLocating = false;
     });
   }
 
   // ── YAYINLA ───────────────────────────────────────────────────────────────
+  Future<void> _openPendingLocationInMaps() async {
+    final latitude = _pendingMapsLatitude;
+    final longitude = _pendingMapsLongitude;
+    if (latitude == null || longitude == null) return;
+
+    final uri = LocationService.buildGoogleMapsSearchUri(latitude, longitude);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void _confirmPendingLocation() {
+    final latitude = _pendingMapsLatitude;
+    final longitude = _pendingMapsLongitude;
+    if (latitude == null || longitude == null) return;
+
+    setState(() {
+      _latitude = latitude;
+      _longitude = longitude;
+      _locationAccuracyMeters = _pendingMapsAccuracyMeters;
+      _locationConsentAt = DateTime.now();
+      _locationSource = 'setup_screen_gps_user_confirmed_approximate';
+      _locationStatusMessage =
+          'Yaklasik konum kullanici onayi ile kaydedildi. Google Maps uzerinden kontrol edildi.';
+      _pendingMapsLatitude = null;
+      _pendingMapsLongitude = null;
+      _pendingMapsAccuracyMeters = null;
+      if (_addressCtrl.text.trim().isEmpty) {
+        _addressCtrl.text = 'Koordinatlarla isaretlenen konum';
+      }
+    });
+  }
+
   Future<void> _publish() async {
     if (_isPublishing) return;
     setState(() => _isPublishing = true);
@@ -1056,10 +1101,32 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                 color:
                     _latitude != null
                         ? Colors.green.shade700
+                        : _pendingMapsLatitude != null
+                        ? Colors.orange.shade800
                         : Colors.redAccent,
                 fontWeight: FontWeight.bold,
               ),
             ),
+            if (_pendingMapsLatitude != null && _pendingMapsLongitude != null)
+              Wrap(
+                spacing: 8,
+                children: [
+                  TextButton.icon(
+                    onPressed: _openPendingLocationInMaps,
+                    icon: const Icon(Icons.map_outlined, size: 16),
+                    label: const Text("Google Maps'te Kontrol Et"),
+                    style: TextButton.styleFrom(foregroundColor: primaryColor),
+                  ),
+                  TextButton.icon(
+                    onPressed: _confirmPendingLocation,
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text('Bu Konumu Kullan'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.green.shade700,
+                    ),
+                  ),
+                ],
+              ),
           ],
           const SizedBox(height: 80),
         ],

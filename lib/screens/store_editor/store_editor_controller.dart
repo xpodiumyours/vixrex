@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
+import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_publish_validator.dart';
@@ -19,6 +18,7 @@ import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'editor_gallery_item.dart';
 
 enum StoreScoreTarget {
@@ -61,7 +61,7 @@ class StorePublishChecklistItem {
 class StoreEditorController extends ChangeNotifier {
   final String? initialStoreName;
   final StoreData data = StoreData(isEsnafMode: false, isStore: true);
-  
+
   bool isLoading = true;
   bool isPublishing = false;
   bool isDeleting = false;
@@ -87,6 +87,9 @@ class StoreEditorController extends ChangeNotifier {
   bool kvkkConsent = false;
   bool isLocating = false;
   String? locationStatusMessage;
+  double? pendingMapsLatitude;
+  double? pendingMapsLongitude;
+  double? pendingMapsAccuracyMeters;
 
   // Logo fields
   Uint8List? logoBytes;
@@ -129,12 +132,14 @@ class StoreEditorController extends ChangeNotifier {
       if (savedJson != null) {
         final Map<String, dynamic> jsonData = jsonDecode(savedJson);
         final loadedData = StoreData.fromJson(jsonData);
-        
-        data.name = (initialStoreName != null && initialStoreName!.trim().isNotEmpty)
-            ? initialStoreName!.trim()
-            : loadedData.name;
+
+        data.name =
+            (initialStoreName != null && initialStoreName!.trim().isNotEmpty)
+                ? initialStoreName!.trim()
+                : loadedData.name;
         data.businessType = loadedData.businessType;
-        data.kategori = loadedData.kategori.isEmpty ? 'Diğer' : loadedData.kategori;
+        data.kategori =
+            loadedData.kategori.isEmpty ? 'Diğer' : loadedData.kategori;
         data.description = loadedData.description;
         data.whatsapp = loadedData.whatsapp;
         data.instagram = loadedData.instagram;
@@ -157,7 +162,8 @@ class StoreEditorController extends ChangeNotifier {
         locationAccuracyMeters = loadedData.locationAccuracyMeters;
         locationConsentAt = loadedData.locationConsentAt;
         locationSource = loadedData.locationSource;
-        kvkkConsent = loadedData.latitude != null && loadedData.longitude != null;
+        kvkkConsent =
+            loadedData.latitude != null && loadedData.longitude != null;
 
         addressCtrl.text = loadedData.address;
         _replaceEditorGalleryItems(loadedData.displayGalleryItems);
@@ -178,7 +184,9 @@ class StoreEditorController extends ChangeNotifier {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Mağaza verileri yüklenemedi, varsayılan değerler kullanılıyor.'),
+            content: Text(
+              'Mağaza verileri yüklenemedi, varsayılan değerler kullanılıyor.',
+            ),
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 3),
           ),
@@ -190,7 +198,7 @@ class StoreEditorController extends ChangeNotifier {
   Future<void> saveData(BuildContext context) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       if (logoBytes != null) {
         final slug = generateStoreSlug(data.name);
         final logoUrl = await const StoreShelfUploadService().uploadShelfImage(
@@ -213,7 +221,7 @@ class StoreEditorController extends ChangeNotifier {
 
       final String jsonData = jsonEncode(data.toJson());
       await prefs.setString(LocalStorageKeys.storeData, jsonData);
-      
+
       notifyListeners();
 
       if (!context.mounted) return;
@@ -247,121 +255,79 @@ class StoreEditorController extends ChangeNotifier {
 
   Future<void> getCurrentLocation() async {
     isLocating = true;
-    locationStatusMessage = null;
+    pendingMapsLatitude = null;
+    pendingMapsLongitude = null;
+    pendingMapsAccuracyMeters = null;
+    locationStatusMessage =
+        'Konum araniyor... 30 metre alti dogruluk bekleniyor.';
     notifyListeners();
 
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        locationStatusMessage = 'Konum servisleri devre dışı. Lütfen cihazınızda konumu açın.';
-        isLocating = false;
-        notifyListeners();
-        return;
-      }
+    final result = await const LocationService().getCurrentLocation();
 
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          locationStatusMessage = 'Konum izni reddedildi. Konum almak için izin vermelisiniz.';
-          isLocating = false;
-          notifyListeners();
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        locationStatusMessage = 'Konum izinleri kalıcı olarak reddedildi. Tarayıcı ayarlarından izin verin.';
-        isLocating = false;
-        notifyListeners();
-        return;
-      }
-
-      LocationSettings locationSettings;
-      if (kIsWeb) {
-        locationSettings = WebSettings(
-          accuracy: LocationAccuracy.best,
-          timeLimit: const Duration(seconds: 8),
-          maximumAge: Duration.zero,
-        );
-      } else {
-        locationSettings = const LocationSettings(
-          accuracy: LocationAccuracy.best,
-          timeLimit: Duration(seconds: 8),
-        );
-      }
-
-      Position? bestPosition;
-      final positionStream = Geolocator.getPositionStream(
-        locationSettings: locationSettings,
-      );
-
-      final completer = Completer<Position?>();
-      StreamSubscription<Position>? subscription;
-
-      subscription = positionStream.listen(
-        (pos) {
-          if (bestPosition == null || pos.accuracy < bestPosition!.accuracy) {
-            bestPosition = pos;
-          }
-          if (pos.accuracy <= 20) {
-            completer.complete(pos);
-          }
-        },
-        onError: (err) {
-          if (!completer.isCompleted) {
-            completer.completeError(err);
-          }
-        },
-      );
-
-      Future.delayed(const Duration(seconds: 4), () {
-        if (!completer.isCompleted) {
-          completer.complete(bestPosition);
-        }
-      });
-
-      Position? position;
-      try {
-        position = await completer.future.timeout(const Duration(seconds: 8));
-      } finally {
-        await subscription.cancel();
-      }
-
-      position ??= await Geolocator.getCurrentPosition(
-        locationSettings: locationSettings,
-      );
-
-      latitude = position.latitude;
-      longitude = position.longitude;
-      locationAccuracyMeters = position.accuracy;
-      locationConsentAt = DateTime.now();
-      locationSource = 'geolocator';
-
-      final accuracyStr = position.accuracy.toStringAsFixed(0);
-      if (position.accuracy > 100) {
-        locationStatusMessage = 'Konum alındı. Hata payı: yaklaşık $accuracyStr m. Hata payı yüksek. Daha iyi sonuç için açık alanda tekrar deneyebilirsiniz.';
-      } else {
-        locationStatusMessage = 'Konum alındı. Hata payı: yaklaşık $accuracyStr m.';
-      }
-
-      isLocating = false;
-
-      if (addressCtrl.text.trim().isEmpty) {
-        addressCtrl.text = 'Koordinatlarla işaretlenen konum';
-        data.address = 'Koordinatlarla işaretlenen konum';
-      }
-      notifyListeners();
-    } catch (e) {
-      final errorStr = e.toString().toLowerCase();
-      if (errorStr.contains('timeout') || errorStr.contains('time out')) {
-        locationStatusMessage = 'Konum alınamadı. Lütfen tekrar deneyin veya adresi elle yazın.';
-      } else {
-        locationStatusMessage = 'Konum alınırken hata oluştu: $e';
-      }
+    if (!result.isSuccess) {
+      final approximatePosition = result.approximatePosition;
+      locationStatusMessage = result.errorMessage;
+      pendingMapsLatitude = approximatePosition?.latitude;
+      pendingMapsLongitude = approximatePosition?.longitude;
+      pendingMapsAccuracyMeters = approximatePosition?.accuracy;
       isLocating = false;
       notifyListeners();
+      return;
     }
+
+    final position = result.position!;
+    latitude = position.latitude;
+    longitude = position.longitude;
+    locationAccuracyMeters = position.accuracy;
+    locationConsentAt = DateTime.now();
+    locationSource = 'store_editor_gps_high_accuracy';
+    locationStatusMessage = LocationService.buildAccuracyMessage(
+      position.accuracy,
+    );
+    pendingMapsLatitude = null;
+    pendingMapsLongitude = null;
+    pendingMapsAccuracyMeters = null;
+    isLocating = false;
+
+    if (addressCtrl.text.trim().isEmpty) {
+      addressCtrl.text = 'Koordinatlarla isaretlenen konum';
+      data.address = 'Koordinatlarla isaretlenen konum';
+    }
+    notifyListeners();
+  }
+
+  Future<void> openPendingLocationInMaps() async {
+    final pendingLatitude = pendingMapsLatitude;
+    final pendingLongitude = pendingMapsLongitude;
+    if (pendingLatitude == null || pendingLongitude == null) return;
+
+    final uri = LocationService.buildGoogleMapsSearchUri(
+      pendingLatitude,
+      pendingLongitude,
+    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void confirmPendingLocation() {
+    final pendingLatitude = pendingMapsLatitude;
+    final pendingLongitude = pendingMapsLongitude;
+    if (pendingLatitude == null || pendingLongitude == null) return;
+
+    latitude = pendingLatitude;
+    longitude = pendingLongitude;
+    locationAccuracyMeters = pendingMapsAccuracyMeters;
+    locationConsentAt = DateTime.now();
+    locationSource = 'store_editor_gps_user_confirmed_approximate';
+    locationStatusMessage =
+        'Yaklasik konum kullanici onayi ile kaydedildi. Google Maps uzerinden kontrol edildi.';
+    pendingMapsLatitude = null;
+    pendingMapsLongitude = null;
+    pendingMapsAccuracyMeters = null;
+    if (addressCtrl.text.trim().isEmpty) {
+      addressCtrl.text = 'Koordinatlarla isaretlenen konum';
+      data.address = 'Koordinatlarla isaretlenen konum';
+    }
+    notifyListeners();
   }
 
   Future<void> publishStore(BuildContext context) async {
@@ -379,7 +345,7 @@ class StoreEditorController extends ChangeNotifier {
       publishedLink = null;
       publishError = validationMessage;
       notifyListeners();
-      
+
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -441,17 +407,18 @@ class StoreEditorController extends ChangeNotifier {
         data,
         editToken: editToken,
       );
-      
+
       final publicLink = _buildFullPublicLink(publishResult.publicPath);
 
-      final publishSnackMessage = publishResult.wasUpdated
-          ? 'Mağazanız güncellendi.'
-          : 'Mağaza linkiniz hazırlandı.';
-          
+      final publishSnackMessage =
+          publishResult.wasUpdated
+              ? 'Mağazanız güncellendi.'
+              : 'Mağaza linkiniz hazırlandı.';
+
       publishedLink = publicLink;
       existingVitrinToken = editToken;
       notifyListeners();
-      
+
       unawaited(refreshTodayViewCount(force: true));
 
       if (!context.mounted) return;
@@ -465,10 +432,11 @@ class StoreEditorController extends ChangeNotifier {
       );
     } catch (error) {
       debugPrint('Publish store error: $error');
-      final userMessage = error is StorePublishException
-          ? error.message
-          : 'Mağaza bağlantısı hazırlanamadı. Supabase ayarlarını veya izinleri kontrol edin.';
-          
+      final userMessage =
+          error is StorePublishException
+              ? error.message
+              : 'Mağaza bağlantısı hazırlanamadı. Supabase ayarlarını veya izinleri kontrol edin.';
+
       publishError = userMessage;
       notifyListeners();
 
@@ -642,14 +610,16 @@ class StoreEditorController extends ChangeNotifier {
   }
 
   void _syncPublishedGalleryData() {
-    final publishedItems = galleryItems
-        .where((item) => item.imageUrl.trim().isNotEmpty)
-        .take(_maxGalleryPhotos)
-        .map((item) => item.toStoreItem())
-        .toList();
+    final publishedItems =
+        galleryItems
+            .where((item) => item.imageUrl.trim().isNotEmpty)
+            .take(_maxGalleryPhotos)
+            .map((item) => item.toStoreItem())
+            .toList();
 
     data.galleryItems = publishedItems;
-    data.shelfImageUrl = publishedItems.isEmpty ? '' : publishedItems.first.imageUrl.trim();
+    data.shelfImageUrl =
+        publishedItems.isEmpty ? '' : publishedItems.first.imageUrl.trim();
   }
 
   List<VitrinGalleryPreviewItem> galleryPreviewItems() {
@@ -663,7 +633,8 @@ class StoreEditorController extends ChangeNotifier {
   String galleryPreviewKey() {
     return galleryItems
         .map(
-          (item) => '${item.id}_${item.imageUrl}_${item.hasLocalBytes}_${item.title}_${item.description}',
+          (item) =>
+              '${item.id}_${item.imageUrl}_${item.hasLocalBytes}_${item.title}_${item.description}',
         )
         .join('|');
   }
@@ -697,7 +668,10 @@ class StoreEditorController extends ChangeNotifier {
   Future<void> pickGalleryPhotos(BuildContext context) async {
     final remainingSlots = _maxGalleryPhotos - galleryItems.length;
     if (remainingSlots <= 0) {
-      _showInfoSnackBar(context, 'En fazla $_maxGalleryPhotos fotoğraf ekleyebilirsiniz.');
+      _showInfoSnackBar(
+        context,
+        'En fazla $_maxGalleryPhotos fotoğraf ekleyebilirsiniz.',
+      );
       return;
     }
 
@@ -732,7 +706,9 @@ class StoreEditorController extends ChangeNotifier {
     if (newItems.isEmpty) {
       _showInfoSnackBar(
         context,
-        rejectedCount > 0 ? _galleryImageFailureMessage(firstFailure) : 'Fotoğraf eklenmedi.',
+        rejectedCount > 0
+            ? _galleryImageFailureMessage(firstFailure)
+            : 'Fotoğraf eklenmedi.',
       );
       return;
     }
@@ -765,7 +741,10 @@ class StoreEditorController extends ChangeNotifier {
 
     final replacement = _editorGalleryItemFromFile(result.files.single);
     if (!replacement.isValid) {
-      _showInfoSnackBar(context, _galleryImageFailureMessage(replacement.failure));
+      _showInfoSnackBar(
+        context,
+        _galleryImageFailureMessage(replacement.failure),
+      );
       return;
     }
 
@@ -865,7 +844,9 @@ class StoreEditorController extends ChangeNotifier {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('SEO anahtar kelime ve blog fikirleri premium özellik olarak hazırlanıyor.'),
+        content: Text(
+          'SEO anahtar kelime ve blog fikirleri premium özellik olarak hazırlanıyor.',
+        ),
         behavior: SnackBarBehavior.floating,
         duration: Duration(seconds: 3),
       ),
@@ -874,11 +855,14 @@ class StoreEditorController extends ChangeNotifier {
 
   // Points & Profile checklist targets
   bool hasCompleteMarketplaceLink() {
-    return data.marketplaceLinks.any((link) => link.platform.trim().isNotEmpty && link.url.trim().isNotEmpty);
+    return data.marketplaceLinks.any(
+      (link) => link.platform.trim().isNotEmpty && link.url.trim().isNotEmpty,
+    );
   }
 
   bool hasSupportingVitrinContent() {
-    final hasLogo = (data.logoUrl?.trim().isNotEmpty ?? false) || logoBytes != null;
+    final hasLogo =
+        (data.logoUrl?.trim().isNotEmpty ?? false) || logoBytes != null;
     final hasCorporateInfo = data.corporateBio.trim().isNotEmpty;
     final hasCatalogItem = data.products.any(
       (product) =>
@@ -908,14 +892,16 @@ class StoreEditorController extends ChangeNotifier {
       StoreScoreTask(
         points: 15,
         isComplete: descriptionLength >= 10,
-        suggestion: descriptionLength == 0
-            ? 'Kısa açıklama yaz'
-            : 'Kısa açıklamayı güçlendir $descriptionLength/10',
+        suggestion:
+            descriptionLength == 0
+                ? 'Kısa açıklama yaz'
+                : 'Kısa açıklamayı güçlendir $descriptionLength/10',
         target: StoreScoreTarget.description,
       ),
       StoreScoreTask(
         points: 10,
-        isComplete: data.instagram.trim().isNotEmpty || data.website.trim().isNotEmpty,
+        isComplete:
+            data.instagram.trim().isNotEmpty || data.website.trim().isNotEmpty,
         suggestion: 'Instagram veya web sitesi ekle',
         target: StoreScoreTarget.social,
       ),
@@ -942,7 +928,8 @@ class StoreEditorController extends ChangeNotifier {
 
   List<StoreScoreTask> scoreActionTasks() {
     final tasks = scoreTasks().where((task) => !task.isComplete).toList();
-    final hasGalleryPhoto = galleryItems.isNotEmpty || data.displayGalleryItems.isNotEmpty;
+    final hasGalleryPhoto =
+        galleryItems.isNotEmpty || data.displayGalleryItems.isNotEmpty;
     if (!hasGalleryPhoto) {
       tasks.add(
         const StoreScoreTask(
@@ -1071,9 +1058,11 @@ class StoreEditorController extends ChangeNotifier {
 class _GalleryFilePickResult {
   const _GalleryFilePickResult._({this.item, this.failure});
 
-  const _GalleryFilePickResult.success(EditorGalleryItem item) : this._(item: item);
+  const _GalleryFilePickResult.success(EditorGalleryItem item)
+    : this._(item: item);
 
-  const _GalleryFilePickResult.failure(GalleryImageValidationFailure? failure) : this._(failure: failure);
+  const _GalleryFilePickResult.failure(GalleryImageValidationFailure? failure)
+    : this._(failure: failure);
 
   final EditorGalleryItem? item;
   final GalleryImageValidationFailure? failure;

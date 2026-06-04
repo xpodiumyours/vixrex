@@ -24,11 +24,3 @@ with check (
 );
 
 drop policy if exists "Allow public shelf image reads" on storage.objects;
-
-create policy "Allow public shelf image reads"
-on storage.objects
-for select
-to anon, authenticated
-using (
-  bucket_id = 'shelf-images'
-);
