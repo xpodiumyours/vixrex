@@ -247,7 +247,7 @@ class _LandingScreenState extends State<LandingScreen>
             if (!mounted) return;
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const StoreSetupScreen()),
+              MaterialPageRoute(builder: (_) => const EditorScreen()),
             );
             return;
           } else {
@@ -383,7 +383,7 @@ class _LandingScreenState extends State<LandingScreen>
 
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const StoreSetupScreen()),
+      MaterialPageRoute(builder: (_) => const EditorScreen()),
     );
     if (mounted) {
       _loadSavedVitrinState();
@@ -766,13 +766,13 @@ class _LandingScreenState extends State<LandingScreen>
         _isCheckingSavedVitrin
             ? 'Kontrol ediliyor'
             : _hasSavedVitrin
-            ? 'Vitrinime Git'
+            ? 'Vitrinimi Düzenle'
             : 'Kayıtlı vitrin yok';
     final savedStoreLabel =
         _isCheckingSavedVitrin
             ? 'Kontrol ediliyor'
             : _hasSavedStore
-            ? 'Mağazama Git'
+            ? 'Mağazamı Düzenle'
             : 'Kayıtlı mağaza yok';
 
     final buttons = [

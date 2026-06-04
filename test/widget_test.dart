@@ -71,7 +71,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('Vitrinime Git'), findsOneWidget);
-    expect(find.text('Mağazama Git'), findsOneWidget);
+    expect(find.text('Vitrinimi Düzenle'), findsOneWidget);
+    expect(find.text('Mağazamı Düzenle'), findsOneWidget);
   });
 }

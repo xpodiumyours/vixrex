@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:geolocator/geolocator.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -61,6 +63,27 @@ class _EditorScreenState extends State<EditorScreen>
     _VitrinScoreTarget.gallery: GlobalKey(),
   };
 
+  // Geolocation & Consent variables
+  double? _latitude;
+  double? _longitude;
+  double? _locationAccuracyMeters;
+  DateTime? _locationConsentAt;
+  String? _locationSource;
+  bool _kvkkConsent = false;
+  bool _isLocating = false;
+  String? _locationStatusMessage;
+  final TextEditingController _addressCtrl = TextEditingController();
+
+  final List<String> categories = const [
+    'Giyim & Butik',
+    'Gıda & Fırın',
+    'Kozmetik',
+    'Dekorasyon',
+    'Elektronik',
+    'Kırtasiye',
+    'Diğer',
+  ];
+
   // Premium light editor palette
   static const Color primaryColor = Color(0xFFFF4D00);
   static const Color secondaryColor = Color(0xFFB200FF);
@@ -75,7 +98,6 @@ class _EditorScreenState extends State<EditorScreen>
     end: Alignment.bottomRight,
     colors: [primaryColor, secondaryColor],
   );
-  static const String _editTokenPrefsKey = LocalStorageKeys.vitrinEditToken;
   static const int _maxGalleryPhotos = 12;
   static const int _maxGalleryPhotoBytes = GalleryImageFileValidator.maxBytes;
 
@@ -122,6 +144,7 @@ class _EditorScreenState extends State<EditorScreen>
   void dispose() {
     _viewCountDebounce?.cancel();
     _mobileTabController.dispose();
+    _addressCtrl.dispose();
     for (final item in _galleryItems) {
       item.dispose();
     }
@@ -131,27 +154,24 @@ class _EditorScreenState extends State<EditorScreen>
   Future<void> _loadSavedData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(_editTokenPrefsKey);
+      
+      // Try to load storeData first, then fallback to vitrinData
+      final String? savedJson = prefs.getString(LocalStorageKeys.storeData) ?? 
+                               prefs.getString(LocalStorageKeys.vitrinData);
+      
+      final token = prefs.getString(LocalStorageKeys.storeEditToken) ?? 
+                    prefs.getString(LocalStorageKeys.vitrinEditToken);
+
       if (mounted) {
         setState(() {
           _existingVitrinToken = token;
         });
       }
-      final String? savedJson = prefs.getString(LocalStorageKeys.vitrinData);
+
       if (savedJson != null) {
         final Map<String, dynamic> jsonData = jsonDecode(savedJson);
         final loadedData = StoreData.fromJson(jsonData);
-        if (loadedData.isStore) {
-          setState(() {
-            if (widget.initialStoreName != null &&
-                widget.initialStoreName!.trim().isNotEmpty) {
-              _data.name = widget.initialStoreName!.trim();
-            }
-            _isLoading = false;
-          });
-          unawaited(_refreshTodayViewCount());
-          return;
-        }
+        
         setState(() {
           _data.name =
               (widget.initialStoreName != null &&
@@ -159,6 +179,7 @@ class _EditorScreenState extends State<EditorScreen>
                   ? widget.initialStoreName!.trim()
                   : loadedData.name;
           _data.businessType = loadedData.businessType;
+          _data.kategori = loadedData.kategori.isEmpty ? 'Diğer' : loadedData.kategori;
           _data.description = loadedData.description;
           _data.whatsapp = loadedData.whatsapp;
           _data.instagram = loadedData.instagram;
@@ -167,12 +188,22 @@ class _EditorScreenState extends State<EditorScreen>
           _data.theme = loadedData.theme;
           _data.status = loadedData.status;
           _data.isEsnafMode = loadedData.isEsnafMode;
+          _data.isStore = loadedData.isStore;
           _data.corporateBio = loadedData.corporateBio;
           _data.referencesLink = loadedData.referencesLink;
           _data.shelfImageUrl = loadedData.shelfImageUrl;
           _data.galleryItems = loadedData.galleryItems;
           _data.marketplaceLinks = loadedData.marketplaceLinks;
           _data.products = loadedData.products;
+
+          _latitude = loadedData.latitude;
+          _longitude = loadedData.longitude;
+          _locationAccuracyMeters = loadedData.locationAccuracyMeters;
+          _locationConsentAt = loadedData.locationConsentAt;
+          _locationSource = loadedData.locationSource;
+          _kvkkConsent = loadedData.latitude != null && loadedData.longitude != null;
+
+          _addressCtrl.text = loadedData.address;
           _replaceEditorGalleryItems(loadedData.displayGalleryItems);
           _isLoading = false;
         });
@@ -183,6 +214,8 @@ class _EditorScreenState extends State<EditorScreen>
               widget.initialStoreName!.trim().isNotEmpty) {
             _data.name = widget.initialStoreName!.trim();
           }
+          _data.kategori = 'Diğer';
+          _addressCtrl.text = _data.address;
           _isLoading = false;
         });
         unawaited(_refreshTodayViewCount());
@@ -211,8 +244,18 @@ class _EditorScreenState extends State<EditorScreen>
   Future<void> _saveData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      
+      // Update coordinates, consent, and address fields
+      _data.address = _addressCtrl.text.trim();
+      _data.latitude = _latitude;
+      _data.longitude = _longitude;
+      _data.locationAccuracyMeters = _locationAccuracyMeters;
+      _data.locationConsentAt = _locationConsentAt;
+      _data.locationSource = _locationSource;
+
       final String jsonData = jsonEncode(_data.toJson());
-      await prefs.setString(LocalStorageKeys.vitrinData, jsonData);
+      final String key = _data.isStore ? LocalStorageKeys.storeData : LocalStorageKeys.vitrinData;
+      await prefs.setString(key, jsonData);
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -244,8 +287,147 @@ class _EditorScreenState extends State<EditorScreen>
     }
   }
 
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLocating = true;
+      _locationStatusMessage = null;
+    });
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _locationStatusMessage =
+              'Konum servisleri devre dışı. Lütfen cihazınızda konumu açın.';
+          _isLocating = false;
+        });
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _locationStatusMessage =
+                'Konum izni reddedildi. Konum almak için izin vermelisiniz.';
+            _isLocating = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _locationStatusMessage =
+              'Konum izinleri kalıcı olarak reddedildi. Tarayıcı ayarlarından izin verin.';
+          _isLocating = false;
+        });
+        return;
+      }
+
+      LocationSettings locationSettings;
+      if (kIsWeb) {
+        locationSettings = WebSettings(
+          accuracy: LocationAccuracy.best,
+          timeLimit: const Duration(seconds: 8),
+          maximumAge: Duration.zero,
+        );
+      } else {
+        locationSettings = const LocationSettings(
+          accuracy: LocationAccuracy.best,
+          timeLimit: Duration(seconds: 8),
+        );
+      }
+
+      Position? bestPosition;
+      final positionStream = Geolocator.getPositionStream(
+        locationSettings: locationSettings,
+      );
+
+      final completer = Completer<Position?>();
+      StreamSubscription<Position>? subscription;
+
+      subscription = positionStream.listen(
+        (pos) {
+          if (bestPosition == null || pos.accuracy < bestPosition!.accuracy) {
+            bestPosition = pos;
+          }
+          if (pos.accuracy <= 20) {
+            completer.complete(pos);
+          }
+        },
+        onError: (err) {
+          if (!completer.isCompleted) {
+            completer.completeError(err);
+          }
+        },
+      );
+
+      Future.delayed(const Duration(seconds: 4), () {
+        if (!completer.isCompleted) {
+          completer.complete(bestPosition);
+        }
+      });
+
+      Position? position;
+      try {
+        position = await completer.future.timeout(const Duration(seconds: 8));
+      } finally {
+        await subscription.cancel();
+      }
+
+      position ??= await Geolocator.getCurrentPosition(
+        locationSettings: locationSettings,
+      );
+
+      setState(() {
+        _latitude = position!.latitude;
+        _longitude = position.longitude;
+        _locationAccuracyMeters = position.accuracy;
+        _locationConsentAt = DateTime.now();
+        _locationSource = 'geolocator';
+
+        final accuracyStr = position.accuracy.toStringAsFixed(0);
+        if (position.accuracy > 100) {
+          _locationStatusMessage =
+              'Konum alındı. Hata payı: yaklaşık $accuracyStr m. Hata payı yüksek. Daha iyi sonuç için açık alanda tekrar deneyebilirsiniz.';
+        } else {
+          _locationStatusMessage =
+              'Konum alındı. Hata payı: yaklaşık $accuracyStr m.';
+        }
+
+        _isLocating = false;
+
+        if (_addressCtrl.text.trim().isEmpty) {
+          _addressCtrl.text = 'Koordinatlarla işaretlenen konum';
+          _data.address = 'Koordinatlarla işaretlenen konum';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        final errorStr = e.toString().toLowerCase();
+        if (errorStr.contains('timeout') || errorStr.contains('time out')) {
+          _locationStatusMessage =
+              'Konum alınamadı. Lütfen tekrar deneyin veya adresi elle yazın.';
+        } else {
+          _locationStatusMessage = 'Konum alınırken hata oluştu: $e';
+        }
+        _isLocating = false;
+      });
+    }
+  }
+
   Future<void> _publishStore() async {
     if (_isPublishing) return;
+
+    // Sync coordinate, consent, and address fields to data model before publishing
+    _data.address = _addressCtrl.text.trim();
+    _data.latitude = _latitude;
+    _data.longitude = _longitude;
+    _data.locationAccuracyMeters = _locationAccuracyMeters;
+    _data.locationConsentAt = _locationConsentAt;
+    _data.locationSource = _locationSource;
 
     final validationMessage = const StorePublishValidator().validate(_data);
     if (validationMessage != null) {
@@ -373,8 +555,10 @@ class _EditorScreenState extends State<EditorScreen>
       }
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_editTokenPrefsKey);
+      await prefs.remove(LocalStorageKeys.vitrinEditToken);
+      await prefs.remove(LocalStorageKeys.storeEditToken);
       await prefs.remove(LocalStorageKeys.vitrinData);
+      await prefs.remove(LocalStorageKeys.storeData);
 
       if (!mounted) return;
 
@@ -477,13 +661,14 @@ class _EditorScreenState extends State<EditorScreen>
 
   Future<String> _loadOrCreateEditToken() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedToken = prefs.getString(_editTokenPrefsKey);
+    final String key = _data.isStore ? LocalStorageKeys.storeEditToken : LocalStorageKeys.vitrinEditToken;
+    final savedToken = prefs.getString(key);
     if (savedToken != null && savedToken.trim().isNotEmpty) {
       return savedToken;
     }
 
     final token = _generateEditToken();
-    await prefs.setString(_editTokenPrefsKey, token);
+    await prefs.setString(key, token);
     return token;
   }
 
@@ -1745,7 +1930,7 @@ class _EditorScreenState extends State<EditorScreen>
                       horizontal: 12.0,
                     ),
                     child: _buildGradientButton(
-                      label: 'Ã–nizle & PaylaÅŸ',
+                      label: 'Önizle & Paylaş',
                       icon: Icons.visibility_rounded,
                       onPressed: () {
                         Navigator.push(
@@ -1963,9 +2148,24 @@ class _EditorScreenState extends State<EditorScreen>
               ),
               const SizedBox(height: 16),
               _buildDropdown(
+                'Kategori',
+                categories.contains(_data.kategori) ? _data.kategori : 'Diğer',
+                categories,
+                (v) => setState(() {
+                  _data.kategori = v!;
+                  // Also sync to businessType if it was empty or matches a category, to keep data clean
+                  if (_data.businessType.isEmpty || categories.contains(_data.businessType)) {
+                    _data.businessType = v;
+                  }
+                }),
+              ),
+              const SizedBox(height: 16),
+              _buildDropdown(
                 'İşletme türü',
-                _data.businessType,
-                businessTypes,
+                businessTypes.contains(_data.businessType) ? _data.businessType : (businessTypes.contains(_data.kategori) ? _data.kategori : 'Diğer'),
+                businessTypes.contains(_data.businessType)
+                    ? businessTypes
+                    : [...businessTypes, _data.businessType],
                 (v) => setState(() => _data.businessType = v!),
               ),
               const SizedBox(height: 16),
@@ -2054,13 +2254,97 @@ class _EditorScreenState extends State<EditorScreen>
               const SizedBox(height: 12),
               _buildScoreTargetAnchor(
                 _VitrinScoreTarget.address,
-                _buildTextField(
-                  'Adres',
-                  (v) => setState(() => _data.address = v),
-                  prefixIcon: Icons.location_on_rounded,
-                  maxLines: 2,
-                  initial: _data.address,
-                  hintText: 'Örn: Mahalle, cadde, ilçe',
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTextField(
+                      'Adres',
+                      (v) => setState(() => _data.address = v),
+                      prefixIcon: Icons.location_on_rounded,
+                      maxLines: 2,
+                      controller: _addressCtrl,
+                      hintText: 'Örn: Mahalle, cadde, ilçe',
+                      suffixIcon: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _isLocating
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : IconButton(
+                                icon: const Icon(Icons.my_location_rounded, size: 20),
+                                color: primaryColor,
+                                disabledColor: mutedText.withValues(alpha: 0.4),
+                                onPressed: _kvkkConsent && !_isLocating
+                                    ? _getCurrentLocation
+                                    : null,
+                                tooltip: 'Konumumu Kullan',
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            value: _kvkkConsent,
+                            activeColor: primaryColor,
+                            onChanged: (val) {
+                              setState(() {
+                                _kvkkConsent = val ?? false;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _kvkkConsent = !_kvkkConsent;
+                              });
+                            },
+                            child: const Text(
+                              'Konum verilerimin KVKK kapsamında işlenmesine açık rıza veriyorum.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: softText,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_locationStatusMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _locationStatusMessage!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _latitude != null
+                              ? Colors.green.shade700
+                              : Colors.redAccent,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -4036,6 +4320,8 @@ class _EditorScreenState extends State<EditorScreen>
     IconData? prefixIcon,
     String? initial,
     String? hintText,
+    TextEditingController? controller,
+    Widget? suffixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -4050,12 +4336,14 @@ class _EditorScreenState extends State<EditorScreen>
         ),
         const SizedBox(height: 8),
         TextFormField(
-          initialValue: initial,
+          controller: controller,
+          initialValue: controller == null ? initial : null,
           decoration: InputDecoration(
             prefixIcon:
                 prefixIcon != null
                     ? Icon(prefixIcon, color: mutedText, size: 18)
                     : null,
+            suffixIcon: suffixIcon,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: cardBorder),

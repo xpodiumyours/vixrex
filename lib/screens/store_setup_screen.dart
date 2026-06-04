@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/screens/editor_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
@@ -474,10 +475,11 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       );
 
       if (!mounted) return;
-      setState(() {
-        _publishedLink = link;
-        _existingStoreToken = editToken;
-      });
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const EditorScreen()),
+        (route) => false,
+      );
     } on PostgrestException catch (e) {
       debugPrint('[StoreSetup] Supabase PostgrestException:');
       debugPrint('  code   : ${e.code}');
