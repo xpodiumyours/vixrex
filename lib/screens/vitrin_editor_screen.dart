@@ -4270,6 +4270,8 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
         width: double.infinity,
         height: double.infinity,
         fit: BoxFit.cover,
+        cacheWidth: 600,
+        cacheHeight: 600,
       );
     }
 
@@ -4278,6 +4280,8 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
       width: double.infinity,
       height: double.infinity,
       fit: BoxFit.cover,
+      cacheWidth: 600,
+      cacheHeight: 600,
       errorBuilder: (_, __, ___) => _buildShelfImageError(),
     );
   }

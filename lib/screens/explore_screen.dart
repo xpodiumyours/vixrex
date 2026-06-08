@@ -590,6 +590,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     Image.network(
                       store.shelfImageUrl,
                       fit: BoxFit.cover,
+                      cacheWidth: 400,
+                      cacheHeight: 400,
                       errorBuilder:
                           (context, error, stackTrace) =>
                               _buildImagePlaceholder(),

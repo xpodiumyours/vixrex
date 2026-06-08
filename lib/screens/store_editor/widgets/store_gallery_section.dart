@@ -88,12 +88,12 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
                       child: controller.logoBytes != null
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(45),
-                              child: Image.memory(controller.logoBytes!, fit: BoxFit.cover),
+                              child: Image.memory(controller.logoBytes!, fit: BoxFit.cover, cacheWidth: 150, cacheHeight: 150),
                             )
                           : (data.logoUrl != null && data.logoUrl!.isNotEmpty
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(45),
-                                  child: Image.network(data.logoUrl!, fit: BoxFit.cover),
+                                  child: Image.network(data.logoUrl!, fit: BoxFit.cover, cacheWidth: 150, cacheHeight: 150),
                                 )
                               : const Icon(Icons.storefront_rounded, color: mutedText, size: 36)),
                     ),
@@ -661,6 +661,8 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
         width: double.infinity,
         height: double.infinity,
         fit: BoxFit.cover,
+        cacheWidth: 600,
+        cacheHeight: 600,
       );
     }
 
@@ -669,6 +671,8 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
       width: double.infinity,
       height: double.infinity,
       fit: BoxFit.cover,
+      cacheWidth: 600,
+      cacheHeight: 600,
       errorBuilder: (_, __, ___) => _buildShelfImageError(),
     );
   }

@@ -1263,6 +1263,8 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                                   child: Image.memory(
                                     imageBytes,
                                     fit: BoxFit.cover,
+                                    cacheWidth: 300,
+                                    cacheHeight: 300,
                                   ),
                                 )
                                 : (product.imagePath != null &&
@@ -1272,6 +1274,8 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                                       child: Image.network(
                                         product.imagePath!,
                                         fit: BoxFit.cover,
+                                        cacheWidth: 300,
+                                        cacheHeight: 300,
                                       ),
                                     )
                                     : const Icon(
@@ -1478,6 +1482,8 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                                   child: Image.memory(
                                     localImageBytes!,
                                     fit: BoxFit.cover,
+                                    cacheWidth: 300,
+                                    cacheHeight: 300,
                                   ),
                                 )
                                 : (product?.imagePath != null &&
@@ -1487,6 +1493,8 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                                       child: Image.network(
                                         product.imagePath!,
                                         fit: BoxFit.cover,
+                                        cacheWidth: 300,
+                                        cacheHeight: 300,
                                       ),
                                     )
                                     : const Column(
@@ -1806,7 +1814,7 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                       _logoBytes != null
                           ? ClipRRect(
                             borderRadius: BorderRadius.circular(36),
-                            child: Image.memory(_logoBytes!, fit: BoxFit.cover),
+                            child: Image.memory(_logoBytes!, fit: BoxFit.cover, cacheWidth: 150, cacheHeight: 150),
                           )
                           : (_logoUrl != null && _logoUrl!.isNotEmpty
                               ? ClipRRect(
@@ -1814,6 +1822,8 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                                 child: Image.network(
                                   _logoUrl!,
                                   fit: BoxFit.cover,
+                                  cacheWidth: 150,
+                                  cacheHeight: 150,
                                 ),
                               )
                               : const Icon(
@@ -1896,12 +1906,12 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                   _coverBytes != null
                       ? ClipRRect(
                         borderRadius: BorderRadius.circular(14),
-                        child: Image.memory(_coverBytes!, fit: BoxFit.cover),
+                        child: Image.memory(_coverBytes!, fit: BoxFit.cover, cacheWidth: 400, cacheHeight: 300),
                       )
                       : (_coverUrl != null && _coverUrl!.isNotEmpty
                           ? ClipRRect(
                             borderRadius: BorderRadius.circular(14),
-                            child: Image.network(_coverUrl!, fit: BoxFit.cover),
+                            child: Image.network(_coverUrl!, fit: BoxFit.cover, cacheWidth: 400, cacheHeight: 300),
                           )
                           : const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -2035,6 +2045,8 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                                   child: Image.memory(
                                     item.bytes!,
                                     fit: BoxFit.cover,
+                                    cacheWidth: 300,
+                                    cacheHeight: 300,
                                   ),
                                 )
                                 : ClipRRect(
@@ -2042,6 +2054,8 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                                   child: Image.network(
                                     item.imageUrl,
                                     fit: BoxFit.cover,
+                                    cacheWidth: 300,
+                                    cacheHeight: 300,
                                   ),
                                 ),
                       ),

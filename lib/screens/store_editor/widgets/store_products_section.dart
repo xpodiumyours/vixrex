@@ -82,6 +82,8 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
                 width: 48,
                 height: 48,
                 fit: BoxFit.cover,
+                cacheWidth: 96,
+                cacheHeight: 96,
                 errorBuilder: (_, __, ___) => Container(
                   width: 48,
                   height: 48,
@@ -237,7 +239,7 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
                             : (productImagePath != null
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(productImagePath!, fit: BoxFit.cover),
+                                    child: Image.network(productImagePath!, fit: BoxFit.cover, cacheWidth: 300, cacheHeight: 300),
                                   )
                                 : const Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
