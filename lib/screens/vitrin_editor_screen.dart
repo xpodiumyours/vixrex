@@ -4270,14 +4270,19 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
         width: double.infinity,
         height: double.infinity,
         fit: BoxFit.cover,
+        cacheWidth: 400,
+        cacheHeight: 400,
       );
     }
 
+    final imageUrl = item.imageUrl.trim();
     return Image.network(
-      item.imageUrl.trim(),
+      imageUrl,
       width: double.infinity,
       height: double.infinity,
       fit: BoxFit.cover,
+      cacheWidth: 400,
+      cacheHeight: 400,
       errorBuilder: (_, __, ___) => _buildShelfImageError(),
     );
   }

@@ -12,6 +12,13 @@ class VitrinViewService {
 
   static const String _sessionKeyPrefsKey = 'vitrin_view_session_key';
 
+  // ── Singleton Pattern for SharedPreferences ────────────────────────────
+
+  static final Future<SharedPreferences> _prefsFuture =
+      SharedPreferences.getInstance();
+
+  Future<SharedPreferences> get _prefs => _prefsFuture;
+
   Future<void> recordView({
     required String slug,
     required String source,
@@ -55,7 +62,7 @@ class VitrinViewService {
   }
 
   Future<String> _loadOrCreateSessionKey() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs;
     final savedKey = prefs.getString(_sessionKeyPrefsKey);
 
     if (savedKey != null && savedKey.trim().length >= 16) {

@@ -768,7 +768,7 @@ class _EditorScreenState extends State<EditorScreen>
       ..clear()
       ..addAll(
         items
-            .where((item) => item.imageUrl.trim().isNotEmpty)
+            .where((item) => item.trimmedImageUrl.isNotEmpty)
             .take(_maxGalleryPhotos)
             .map(_EditorGalleryItem.fromStoreItem),
       );
@@ -778,14 +778,14 @@ class _EditorScreenState extends State<EditorScreen>
   void _syncPublishedGalleryData() {
     final publishedItems =
         _galleryItems
-            .where((item) => item.imageUrl.trim().isNotEmpty)
+            .where((item) => item.trimmedImageUrl.isNotEmpty)
             .take(_maxGalleryPhotos)
             .map((item) => item.toStoreItem())
             .toList();
 
     _data.galleryItems = publishedItems;
     _data.shelfImageUrl =
-        publishedItems.isEmpty ? '' : publishedItems.first.imageUrl.trim();
+        publishedItems.isEmpty ? '' : publishedItems.first.trimmedImageUrl;
   }
 
   List<VitrinGalleryPreviewItem> _galleryPreviewItems() {
@@ -4279,14 +4279,19 @@ class _EditorScreenState extends State<EditorScreen>
         width: double.infinity,
         height: double.infinity,
         fit: BoxFit.cover,
+        cacheWidth: 400,
+        cacheHeight: 400,
       );
     }
 
+    final imageUrl = item.imageUrl.trim();
     return Image.network(
-      item.imageUrl.trim(),
+      imageUrl,
       width: double.infinity,
       height: double.infinity,
       fit: BoxFit.cover,
+      cacheWidth: 400,
+      cacheHeight: 400,
       errorBuilder: (_, __, ___) => _buildShelfImageError(),
     );
   }
@@ -4772,6 +4777,11 @@ class _EditorGalleryItem {
   final TextEditingController titleController;
   final TextEditingController descriptionController;
 
+  // Cache for trimmed strings to avoid repeated operations
+  String? _trimmedImageUrl;
+  String? _cachedTitle;
+  String? _cachedDescription;
+
   _EditorGalleryItem({
     required this.id,
     this.bytes,
@@ -4782,7 +4792,15 @@ class _EditorGalleryItem {
     String title = '',
     String description = '',
   }) : titleController = TextEditingController(text: title),
-       descriptionController = TextEditingController(text: description);
+       descriptionController = TextEditingController(text: description) {
+    // Invalidate cache when controllers change
+    titleController.addListener(_invalidateTitleCache);
+    descriptionController.addListener(_invalidateDescriptionCache);
+  }
+
+  void _invalidateTitleCache() => _cachedTitle = null;
+  void _invalidateDescriptionCache() => _cachedDescription = null;
+  void _invalidateImageUrlCache() => _trimmedImageUrl = null;
 
   factory _EditorGalleryItem.fromStoreItem(StoreGalleryItem item) {
     return _EditorGalleryItem(
@@ -4796,16 +4814,28 @@ class _EditorGalleryItem {
     );
   }
 
-  String get title => titleController.text.trim();
+  String get title {
+    _cachedTitle ??= titleController.text.trim();
+    return _cachedTitle!;
+  }
 
-  String get description => descriptionController.text.trim();
+  String get description {
+    _cachedDescription ??= descriptionController.text.trim();
+    return _cachedDescription!;
+  }
+
+  String get trimmedImageUrl {
+    _trimmedImageUrl ??= imageUrl.trim();
+    return _trimmedImageUrl!;
+  }
 
   bool get hasLocalBytes => bytes != null;
 
-  bool get hasPreviewImage => hasLocalBytes || imageUrl.trim().isNotEmpty;
+  bool get hasPreviewImage => hasLocalBytes || trimmedImageUrl.isNotEmpty;
 
   void markUploaded(String uploadedUrl) {
     imageUrl = uploadedUrl;
+    _invalidateImageUrlCache();
     bytes = null;
   }
 
@@ -4820,7 +4850,7 @@ class _EditorGalleryItem {
   StoreGalleryItem toStoreItem() {
     return StoreGalleryItem(
       id: id,
-      imageUrl: imageUrl.trim(),
+      imageUrl: trimmedImageUrl,
       title: title,
       description: description,
     );
