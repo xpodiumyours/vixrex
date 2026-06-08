@@ -13,6 +13,7 @@ import 'package:vitrinx/screens/auth_screen.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/auth_service.dart';
+import 'package:vitrinx/core/theme/vitrin_theme.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -582,31 +583,22 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           Row(
             children: [
-              ElevatedButton.icon(
+              VitrinButton(
+                text: isDesktop ? 'Vitrinleri Keşfet' : 'Keşfet',
+                icon: Icons.explore_rounded,
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const ExploreScreen()),
                   );
                 },
-                icon: const Icon(Icons.explore_rounded, size: 16),
-                label: Text(
-                  isDesktop ? 'Vitrinleri Keşfet' : 'Keşfet',
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: darkAccent,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
               ),
               const SizedBox(width: 10),
               if (_isUserLoggedIn) ...[
-                TextButton.icon(
+                VitrinButton(
+                  text: isDesktop ? 'Çıkış Yap' : 'Çıkış',
+                  icon: Icons.logout_rounded,
+                  isSecondary: true,
                   onPressed: () async {
                     await const AuthService().signOut();
                     if (mounted) {
@@ -614,14 +606,11 @@ class _LandingScreenState extends State<LandingScreen>
                       _loadSavedVitrinState();
                     }
                   },
-                  icon: const Icon(Icons.logout_rounded, size: 16, color: darkAccent),
-                  label: Text(
-                    isDesktop ? 'Çıkış Yap' : 'Çıkış',
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: darkAccent),
-                  ),
                 ),
               ] else ...[
-                ElevatedButton.icon(
+                VitrinButton(
+                  text: 'Giriş Yap',
+                  icon: Icons.login_rounded,
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -633,20 +622,6 @@ class _LandingScreenState extends State<LandingScreen>
                       }
                     });
                   },
-                  icon: const Icon(Icons.login_rounded, size: 16),
-                  label: const Text(
-                    'Giriş Yap',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: brandOrange,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
                 ),
               ],
             ],
@@ -795,87 +770,29 @@ class _LandingScreenState extends State<LandingScreen>
             : 'Kayıtlı mağaza yok';
 
     final buttons = [
-      ElevatedButton.icon(
-        onPressed:
-            canOpenSavedVitrin
-                ? () {
-                  _navigateToSavedVitrin();
-                }
-                : null,
-        icon: Icon(
-          canOpenSavedVitrin ? Icons.edit_rounded : Icons.lock_outline_rounded,
-          size: 18,
-        ),
-        label: Text(
-          savedVitrinLabel,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: brandOrange,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFFE2E8F0),
-          disabledForegroundColor: const Color(0xFF64748B),
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
+      VitrinButton(
+        text: savedVitrinLabel,
+        icon: canOpenSavedVitrin ? Icons.edit_rounded : Icons.lock_outline_rounded,
+        onPressed: canOpenSavedVitrin ? () => _navigateToSavedVitrin() : null,
       ),
       const SizedBox(width: 12, height: 12),
-      ElevatedButton.icon(
-        onPressed:
-            canOpenSavedStore
-                ? () {
-                  _navigateToSavedStore();
-                }
-                : null,
-        icon: Icon(
-          canOpenSavedStore
-              ? Icons.storefront_rounded
-              : Icons.lock_outline_rounded,
-          size: 18,
-        ),
-        label: Text(
-          savedStoreLabel,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: darkAccent,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFFE2E8F0),
-          disabledForegroundColor: const Color(0xFF64748B),
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
+      VitrinButton(
+        text: savedStoreLabel,
+        icon: canOpenSavedStore ? Icons.storefront_rounded : Icons.lock_outline_rounded,
+        isSecondary: true,
+        onPressed: canOpenSavedStore ? () => _navigateToSavedStore() : null,
       ),
       const SizedBox(width: 12, height: 12),
-      OutlinedButton.icon(
+      VitrinButton(
+        text: 'Vitrinleri Keşfet',
+        icon: Icons.explore_rounded,
+        isSecondary: true,
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const ExploreScreen()),
           );
         },
-        icon: const Icon(Icons.explore_rounded, size: 18, color: darkAccent),
-        label: const Text(
-          'Vitrinleri Keşfet',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 14,
-            color: darkAccent,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: darkAccent, width: 1.5),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
       ),
     ];
 
@@ -952,58 +869,25 @@ class _LandingScreenState extends State<LandingScreen>
               ),
             ],
           ),
-          child: ElevatedButton(
+          child: VitrinButton(
+            text: 'Ücretsiz Oluştur',
+            icon: Icons.arrow_forward_rounded,
             onPressed: _navigateToEditor,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: brandOrange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              elevation: 0,
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Ücretsiz Oluştur',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-                ),
-                SizedBox(width: 8),
-                Icon(Icons.arrow_forward_rounded, size: 18),
-              ],
-            ),
           ),
         );
       },
     );
 
-    final storeSetupButton = OutlinedButton.icon(
+    final storeSetupButton = VitrinButton(
+      text: 'Mağaza Aç →',
+      icon: Icons.add_business_rounded,
+      isSecondary: true,
       onPressed: () {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const StoreSetupScreen()),
         );
       },
-      icon: const Icon(
-        Icons.add_business_rounded,
-        size: 16,
-        color: brandOrange,
-      ),
-      label: const Text(
-        'Mağaza Aç →',
-        style: TextStyle(
-          fontWeight: FontWeight.w900,
-          fontSize: 14,
-          color: brandOrange,
-        ),
-      ),
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: brandOrange, width: 1.5),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-      ),
     );
 
     if (isDesktop) {
@@ -1661,24 +1545,9 @@ class _LandingScreenState extends State<LandingScreen>
                 ),
               ),
               const SizedBox(height: 48),
-              ElevatedButton(
+              VitrinButton(
+                text: 'Vitrinimi oluştur',
                 onPressed: _navigateToEditor,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: brandOrange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 24,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  elevation: 10,
-                ),
-                child: const Text(
-                  'Vitrinimi oluştur',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-                ),
               ),
             ],
           ),
@@ -1846,7 +1715,9 @@ class _PhoneMockup extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: profile.accentColor.withValues(alpha: 0.16),
                         image: DecorationImage(
-                          image: NetworkImage(profile.coverImageUrl),
+                          image: NetworkImage(
+                            profile.coverImageUrl,
+                          ),
                           fit: BoxFit.cover,
                           onError: (exception, stackTrace) {
                             // Suppress errors during tests or network issues
@@ -2131,7 +2002,9 @@ class _PhoneMockup extends StatelessWidget {
                                 alpha: 0.12,
                               ),
                               image: DecorationImage(
-                                image: NetworkImage(e.value),
+                                image: NetworkImage(
+                                  e.value,
+                                ),
                                 fit: BoxFit.cover,
                                 onError: (exception, stackTrace) {
                                   // Suppress errors during tests or network issues
@@ -2242,8 +2115,8 @@ class _HoverFeatureCardState extends State<_HoverFeatureCard> {
         transform: Matrix4.translationValues(0, _isHovered ? -8 : 0, 0),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(24),
+          color: VitrinTheme.cardBgColor,
+          borderRadius: BorderRadius.circular(VitrinTheme.cardRadius),
           boxShadow: [
             BoxShadow(
               color: widget.color.withValues(alpha: _isHovered ? 0.15 : 0.05),
@@ -2260,27 +2133,19 @@ class _HoverFeatureCardState extends State<_HoverFeatureCard> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: widget.color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(VitrinTheme.smallRadius),
               ),
               child: Icon(widget.icon, color: widget.color, size: 28),
             ),
             const SizedBox(height: 20),
             Text(
               widget.title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: _LandingScreenState.darkAccent,
-              ),
+              style: VitrinTheme.subHeadingStyle,
             ),
             const SizedBox(height: 12),
             Text(
               widget.desc,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black54,
-                height: 1.5,
-              ),
+              style: VitrinTheme.bodyStyle,
             ),
           ],
         ),
