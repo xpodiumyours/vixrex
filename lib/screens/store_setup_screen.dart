@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
@@ -1091,6 +1092,23 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                 ),
               ),
             ],
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed:
+                  () => Navigator.pushNamed(context, LegalConfig.privacyPath),
+              style: TextButton.styleFrom(
+                foregroundColor: primaryColor,
+                padding: const EdgeInsets.only(left: 32, top: 2),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                'KVKK ve gizlilik metnini görüntüle',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+              ),
+            ),
           ),
           if (_locationStatusMessage != null) ...[
             const SizedBox(height: 8),

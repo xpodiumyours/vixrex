@@ -320,7 +320,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
           (context) => const [
             PopupMenuItem(
               value: LegalConfig.privacyPath,
-              child: Text('Gizlilik Politikası'),
+              child: Text('KVKK ve Gizlilik Politikası'),
             ),
             PopupMenuItem(
               value: LegalConfig.termsPath,

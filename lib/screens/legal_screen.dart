@@ -20,7 +20,7 @@ enum LegalPageType {
   String get title {
     switch (this) {
       case LegalPageType.privacy:
-        return 'Gizlilik Politikası';
+        return 'Gizlilik ve KVKK Politikası';
       case LegalPageType.terms:
         return 'Kullanım Şartları';
       case LegalPageType.dataDeletion:
@@ -31,7 +31,7 @@ enum LegalPageType {
   String get subtitle {
     switch (this) {
       case LegalPageType.privacy:
-        return 'VitrinX içinde hangi verilerin işlendiğini ve neden kullanıldığını açıklar.';
+        return 'VitrinX içinde kişisel verilerin KVKK kapsamında nasıl işlendiğini açıklar.';
       case LegalPageType.terms:
         return 'VitrinX kullanırken geçerli olan temel kuralları ve sorumlulukları açıklar.';
       case LegalPageType.dataDeletion:

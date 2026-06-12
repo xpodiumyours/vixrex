@@ -432,8 +432,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       const SizedBox(height: 10),
                       Text(
                         _isLogin
-                            ? 'Giriş yaparak VitrinX kullanım şartlarını ve gizlilik politikasını kabul etmiş olursunuz.'
-                            : 'Kayıt olarak VitrinX kullanım şartlarını ve gizlilik politikasını kabul etmiş olursunuz.',
+                            ? 'Giriş yaparak VitrinX kullanım şartlarını, gizlilik ve KVKK politikasını kabul etmiş olursunuz.'
+                            : 'Kayıt olarak VitrinX kullanım şartlarını, gizlilik ve KVKK politikasını kabul etmiş olursunuz.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Color(0xFF64748B),
@@ -448,7 +448,10 @@ class _AuthScreenState extends State<AuthScreen> {
                         spacing: 4,
                         runSpacing: 0,
                         children: [
-                          _buildLegalLink('Gizlilik', LegalConfig.privacyPath),
+                          _buildLegalLink(
+                            'KVKK/Gizlilik',
+                            LegalConfig.privacyPath,
+                          ),
                           _buildLegalLink('Şartlar', LegalConfig.termsPath),
                           _buildLegalLink(
                             'Veri Silme',

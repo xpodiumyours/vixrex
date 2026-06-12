@@ -1743,7 +1743,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
           (context) => const [
             PopupMenuItem(
               value: LegalConfig.privacyPath,
-              child: Text('Gizlilik Politikası'),
+              child: Text('KVKK ve Gizlilik Politikası'),
             ),
             PopupMenuItem(
               value: LegalConfig.termsPath,
@@ -2277,6 +2277,29 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
                           ),
                         ),
                       ],
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed:
+                            () => Navigator.pushNamed(
+                              context,
+                              LegalConfig.privacyPath,
+                            ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: primaryColor,
+                          padding: const EdgeInsets.only(left: 32, top: 2),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'KVKK ve gizlilik metnini görüntüle',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
                     ),
                     if (_locationStatusMessage != null) ...[
                       const SizedBox(height: 8),

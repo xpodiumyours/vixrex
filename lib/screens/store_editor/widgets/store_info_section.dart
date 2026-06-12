@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import '../store_editor_controller.dart';
 import 'editor_ui_components.dart';
@@ -297,6 +298,29 @@ class _StoreInfoSectionState extends State<StoreInfoSection> {
                             ),
                           ),
                         ],
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed:
+                              () => Navigator.pushNamed(
+                                context,
+                                LegalConfig.privacyPath,
+                              ),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFFFF4D00),
+                            padding: const EdgeInsets.only(left: 32, top: 2),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'KVKK ve gizlilik metnini görüntüle',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
                       ),
                       if (controller.locationStatusMessage != null) ...[
                         const SizedBox(height: 8),

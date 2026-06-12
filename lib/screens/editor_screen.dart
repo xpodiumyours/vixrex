@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
@@ -154,13 +155,15 @@ class _EditorScreenState extends State<EditorScreen>
   Future<void> _loadSavedData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Try to load storeData first, then fallback to vitrinData
-      final String? savedJson = prefs.getString(LocalStorageKeys.storeData) ?? 
-                               prefs.getString(LocalStorageKeys.vitrinData);
-      
-      final token = prefs.getString(LocalStorageKeys.storeEditToken) ?? 
-                    prefs.getString(LocalStorageKeys.vitrinEditToken);
+      final String? savedJson =
+          prefs.getString(LocalStorageKeys.storeData) ??
+          prefs.getString(LocalStorageKeys.vitrinData);
+
+      final token =
+          prefs.getString(LocalStorageKeys.storeEditToken) ??
+          prefs.getString(LocalStorageKeys.vitrinEditToken);
 
       if (mounted) {
         setState(() {
@@ -171,7 +174,7 @@ class _EditorScreenState extends State<EditorScreen>
       if (savedJson != null) {
         final Map<String, dynamic> jsonData = jsonDecode(savedJson);
         final loadedData = StoreData.fromJson(jsonData);
-        
+
         setState(() {
           _data.name =
               (widget.initialStoreName != null &&
@@ -179,7 +182,8 @@ class _EditorScreenState extends State<EditorScreen>
                   ? widget.initialStoreName!.trim()
                   : loadedData.name;
           _data.businessType = loadedData.businessType;
-          _data.kategori = loadedData.kategori.isEmpty ? 'Diğer' : loadedData.kategori;
+          _data.kategori =
+              loadedData.kategori.isEmpty ? 'Diğer' : loadedData.kategori;
           _data.description = loadedData.description;
           _data.whatsapp = loadedData.whatsapp;
           _data.instagram = loadedData.instagram;
@@ -201,7 +205,8 @@ class _EditorScreenState extends State<EditorScreen>
           _locationAccuracyMeters = loadedData.locationAccuracyMeters;
           _locationConsentAt = loadedData.locationConsentAt;
           _locationSource = loadedData.locationSource;
-          _kvkkConsent = loadedData.latitude != null && loadedData.longitude != null;
+          _kvkkConsent =
+              loadedData.latitude != null && loadedData.longitude != null;
 
           _addressCtrl.text = loadedData.address;
           _replaceEditorGalleryItems(loadedData.displayGalleryItems);
@@ -244,7 +249,7 @@ class _EditorScreenState extends State<EditorScreen>
   Future<void> _saveData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Update coordinates, consent, and address fields
       _data.address = _addressCtrl.text.trim();
       _data.latitude = _latitude;
@@ -254,7 +259,10 @@ class _EditorScreenState extends State<EditorScreen>
       _data.locationSource = _locationSource;
 
       final String jsonData = jsonEncode(_data.toJson());
-      final String key = _data.isStore ? LocalStorageKeys.storeData : LocalStorageKeys.vitrinData;
+      final String key =
+          _data.isStore
+              ? LocalStorageKeys.storeData
+              : LocalStorageKeys.vitrinData;
       await prefs.setString(key, jsonData);
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
@@ -661,7 +669,10 @@ class _EditorScreenState extends State<EditorScreen>
 
   Future<String> _loadOrCreateEditToken() async {
     final prefs = await SharedPreferences.getInstance();
-    final String key = _data.isStore ? LocalStorageKeys.storeEditToken : LocalStorageKeys.vitrinEditToken;
+    final String key =
+        _data.isStore
+            ? LocalStorageKeys.storeEditToken
+            : LocalStorageKeys.vitrinEditToken;
     final savedToken = prefs.getString(key);
     if (savedToken != null && savedToken.trim().isNotEmpty) {
       return savedToken;
@@ -2153,7 +2164,8 @@ class _EditorScreenState extends State<EditorScreen>
                 (v) => setState(() {
                   _data.kategori = v!;
                   // Also sync to businessType if it was empty or matches a category, to keep data clean
-                  if (_data.businessType.isEmpty || categories.contains(_data.businessType)) {
+                  if (_data.businessType.isEmpty ||
+                      categories.contains(_data.businessType)) {
                     _data.businessType = v;
                   }
                 }),
@@ -2161,7 +2173,11 @@ class _EditorScreenState extends State<EditorScreen>
               const SizedBox(height: 16),
               _buildDropdown(
                 'İşletme türü',
-                businessTypes.contains(_data.businessType) ? _data.businessType : (businessTypes.contains(_data.kategori) ? _data.kategori : 'Diğer'),
+                businessTypes.contains(_data.businessType)
+                    ? _data.businessType
+                    : (businessTypes.contains(_data.kategori)
+                        ? _data.kategori
+                        : 'Diğer'),
                 businessTypes.contains(_data.businessType)
                     ? businessTypes
                     : [...businessTypes, _data.businessType],
@@ -2265,32 +2281,40 @@ class _EditorScreenState extends State<EditorScreen>
                       hintText: 'Örn: Mahalle, cadde, ilçe',
                       suffixIcon: Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: _isLocating
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: Center(
-                                  child: SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        primaryColor,
+                        child:
+                            _isLocating
+                                ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              primaryColor,
+                                            ),
                                       ),
                                     ),
                                   ),
+                                )
+                                : IconButton(
+                                  icon: const Icon(
+                                    Icons.my_location_rounded,
+                                    size: 20,
+                                  ),
+                                  color: primaryColor,
+                                  disabledColor: mutedText.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  onPressed:
+                                      _kvkkConsent && !_isLocating
+                                          ? _getCurrentLocation
+                                          : null,
+                                  tooltip: 'Konumumu Kullan',
                                 ),
-                              )
-                            : IconButton(
-                                icon: const Icon(Icons.my_location_rounded, size: 20),
-                                color: primaryColor,
-                                disabledColor: mutedText.withValues(alpha: 0.4),
-                                onPressed: _kvkkConsent && !_isLocating
-                                    ? _getCurrentLocation
-                                    : null,
-                                tooltip: 'Konumumu Kullan',
-                              ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -2330,15 +2354,39 @@ class _EditorScreenState extends State<EditorScreen>
                         ),
                       ],
                     ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed:
+                            () => Navigator.pushNamed(
+                              context,
+                              LegalConfig.privacyPath,
+                            ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: primaryColor,
+                          padding: const EdgeInsets.only(left: 32, top: 2),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'KVKK ve gizlilik metnini görüntüle',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
                     if (_locationStatusMessage != null) ...[
                       const SizedBox(height: 8),
                       Text(
                         _locationStatusMessage!,
                         style: TextStyle(
                           fontSize: 12,
-                          color: _latitude != null
-                              ? Colors.green.shade700
-                              : Colors.redAccent,
+                          color:
+                              _latitude != null
+                                  ? Colors.green.shade700
+                                  : Colors.redAccent,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

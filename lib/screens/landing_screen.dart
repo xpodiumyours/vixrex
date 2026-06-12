@@ -1758,7 +1758,7 @@ class _LandingScreenState extends State<LandingScreen>
             runSpacing: 8,
             children: [
               _buildFooterLegalLink(
-                label: 'Gizlilik Politikası',
+                label: 'KVKK ve Gizlilik Politikası',
                 routePath: LegalConfig.privacyPath,
               ),
               _buildFooterLegalLink(
