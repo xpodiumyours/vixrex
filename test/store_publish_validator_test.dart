@@ -3,9 +3,7 @@ import 'package:vitrinx/services/store_publish_validator.dart';
 import 'package:vitrinx/models/store_data.dart';
 
 // Helper: geçerli bir mağaza verisi oluşturur.
-StoreData validStore({
-  List<Product>? products,
-}) {
+StoreData validStore({List<Product>? products}) {
   return StoreData(
     name: 'Test Mağaza',
     whatsapp: '05551234567',
@@ -25,9 +23,7 @@ StoreData validVitrin() {
     description: 'Test vitrin açıklama',
     address: 'Test Mahalle',
     isStore: false,
-    marketplaceLinks: [
-      MarketplaceLink(id: '1', platform: 'Trendyol', url: 'trendyol.com/x'),
-    ],
+    marketplaceLinks: [],
   );
 }
 
@@ -128,26 +124,26 @@ void main() {
       expect(validator.validateVitrin(data), isNotNull);
     });
 
-    test('no marketplace links returns error', () {
+    test('no marketplace links still passes', () {
       final data = validVitrin();
       data.marketplaceLinks.clear();
-      expect(validator.validateVitrin(data), contains('pazaryeri'));
+      expect(validator.validateVitrin(data), isNull);
     });
 
-    test('marketplace link with empty url returns error', () {
+    test('marketplace link with empty url still passes', () {
       final data = validVitrin();
       data.marketplaceLinks = [
         MarketplaceLink(id: '1', platform: 'Trendyol', url: ''),
       ];
-      expect(validator.validateVitrin(data), contains('pazaryeri'));
+      expect(validator.validateVitrin(data), isNull);
     });
 
-    test('marketplace link with only platform, no url returns error', () {
+    test('marketplace link with only platform, no url still passes', () {
       final data = validVitrin();
       data.marketplaceLinks = [
         MarketplaceLink(id: '1', platform: '', url: 'trendyol.com'),
       ];
-      expect(validator.validateVitrin(data), contains('pazaryeri'));
+      expect(validator.validateVitrin(data), isNull);
     });
 
     test('error message mentions the field(s) missing', () {

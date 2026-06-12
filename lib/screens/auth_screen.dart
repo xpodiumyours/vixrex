@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/store_editor_screen.dart';
 import 'package:vitrinx/screens/vitrin_editor_screen.dart';
@@ -20,7 +21,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  
+
   bool _isLogin = true;
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -72,7 +73,7 @@ class _AuthScreenState extends State<AuthScreen> {
     // 1. Check for local edit tokens and link them if present
     final localStoreToken = prefs.getString(LocalStorageKeys.storeEditToken);
     final localVitrinToken = prefs.getString(LocalStorageKeys.vitrinEditToken);
-    
+
     bool linked = false;
     if (localStoreToken != null && localStoreToken.isNotEmpty) {
       linked = await authService.linkAnonymousStore(localStoreToken);
@@ -85,7 +86,9 @@ class _AuthScreenState extends State<AuthScreen> {
     if (linked) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Mevcut vitrininiz hesabınızla başarıyla ilişkilendirildi!'),
+          content: Text(
+            'Mevcut vitrininiz hesabınızla başarıyla ilişkilendirildi!',
+          ),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
         ),
@@ -100,21 +103,28 @@ class _AuthScreenState extends State<AuthScreen> {
     if (store != null) {
       // Cache details in SharedPreferences and redirect to the appropriate editor screen
       if (store.isStore) {
-        await prefs.setString(LocalStorageKeys.storeData, jsonEncode(store.toJson()));
-        
+        await prefs.setString(
+          LocalStorageKeys.storeData,
+          jsonEncode(store.toJson()),
+        );
+
         if (!mounted) return;
 
         // Fetch and cache the edit token for the store to ensure smooth editor integration
-        final dbStore = await Supabase.instance.client
-            .from('stores')
-            .select('edit_token')
-            .eq('user_id', authService.currentUser!.id)
-            .maybeSingle();
+        final dbStore =
+            await Supabase.instance.client
+                .from('stores')
+                .select('edit_token')
+                .eq('user_id', authService.currentUser!.id)
+                .maybeSingle();
 
         if (!mounted) return;
 
         if (dbStore != null && dbStore['edit_token'] != null) {
-          await prefs.setString(LocalStorageKeys.storeEditToken, dbStore['edit_token'] as String);
+          await prefs.setString(
+            LocalStorageKeys.storeEditToken,
+            dbStore['edit_token'] as String,
+          );
         }
 
         if (!mounted) return;
@@ -125,20 +135,27 @@ class _AuthScreenState extends State<AuthScreen> {
           (route) => false,
         );
       } else {
-        await prefs.setString(LocalStorageKeys.vitrinData, jsonEncode(store.toJson()));
-        
+        await prefs.setString(
+          LocalStorageKeys.vitrinData,
+          jsonEncode(store.toJson()),
+        );
+
         if (!mounted) return;
 
-        final dbStore = await Supabase.instance.client
-            .from('stores')
-            .select('edit_token')
-            .eq('user_id', authService.currentUser!.id)
-            .maybeSingle();
+        final dbStore =
+            await Supabase.instance.client
+                .from('stores')
+                .select('edit_token')
+                .eq('user_id', authService.currentUser!.id)
+                .maybeSingle();
 
         if (!mounted) return;
 
         if (dbStore != null && dbStore['edit_token'] != null) {
-          await prefs.setString(LocalStorageKeys.vitrinEditToken, dbStore['edit_token'] as String);
+          await prefs.setString(
+            LocalStorageKeys.vitrinEditToken,
+            dbStore['edit_token'] as String,
+          );
         }
 
         if (!mounted) return;
@@ -200,7 +217,10 @@ class _AuthScreenState extends State<AuthScreen> {
       appBar: AppBar(
         title: Text(
           _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
-          style: const TextStyle(color: darkAccent, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: darkAccent,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: darkAccent),
@@ -257,10 +277,12 @@ class _AuthScreenState extends State<AuthScreen> {
                         ],
                       ),
                       const SizedBox(height: 32),
-                      
+
                       // Title Text
                       Text(
-                        _isLogin ? 'Hesabınıza Giriş Yapın' : 'Yeni Hesap Oluşturun',
+                        _isLogin
+                            ? 'Hesabınıza Giriş Yapın'
+                            : 'Yeni Hesap Oluşturun',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 18,
@@ -270,9 +292,9 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _isLogin 
-                          ? 'Vitrinlerinizi yönetmek için bilgilerinizi girin.'
-                          : 'Mağazanıza her cihazdan erişmek için kayıt olun.',
+                        _isLogin
+                            ? 'Vitrinlerinizi yönetmek için bilgilerinizi girin.'
+                            : 'Mağazanıza her cihazdan erişmek için kayıt olun.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 13,
@@ -293,14 +315,19 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: brandOrange, width: 2),
+                            borderSide: const BorderSide(
+                              color: brandOrange,
+                              width: 2,
+                            ),
                           ),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'E-posta adresi boş bırakılamaz';
                           }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                          if (!RegExp(
+                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                          ).hasMatch(value.trim())) {
                             return 'Geçersiz e-posta adresi';
                           }
                           return null;
@@ -317,9 +344,9 @@ class _AuthScreenState extends State<AuthScreen> {
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword 
-                                ? Icons.visibility_off_outlined 
-                                : Icons.visibility_outlined,
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                             ),
                             onPressed: () {
                               setState(() {
@@ -332,7 +359,10 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: brandOrange, width: 2),
+                            borderSide: const BorderSide(
+                              color: brandOrange,
+                              width: 2,
+                            ),
                           ),
                         ),
                         validator: (value) {
@@ -359,22 +389,25 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                           elevation: 0,
                         ),
-                        child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : Text(
-                              _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        child:
+                            _isLoading
+                                ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                                : Text(
+                                  _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                       ),
                       const SizedBox(height: 16),
 
@@ -387,14 +420,41 @@ class _AuthScreenState extends State<AuthScreen> {
                           });
                         },
                         child: Text(
-                          _isLogin 
-                            ? 'Hesabınız yok mu? Hemen kayıt olun' 
-                            : 'Zaten hesabınız var mı? Giriş yapın',
+                          _isLogin
+                              ? 'Hesabınız yok mu? Hemen kayıt olun'
+                              : 'Zaten hesabınız var mı? Giriş yapın',
                           style: const TextStyle(
                             color: brandOrange,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _isLogin
+                            ? 'Giriş yaparak VitrinX kullanım şartlarını ve gizlilik politikasını kabul etmiş olursunuz.'
+                            : 'Kayıt olarak VitrinX kullanım şartlarını ve gizlilik politikasını kabul etmiş olursunuz.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 12,
+                          height: 1.35,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 4,
+                        runSpacing: 0,
+                        children: [
+                          _buildLegalLink('Gizlilik', LegalConfig.privacyPath),
+                          _buildLegalLink('Şartlar', LegalConfig.termsPath),
+                          _buildLegalLink(
+                            'Veri Silme',
+                            LegalConfig.dataDeletionPath,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -403,6 +463,22 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLegalLink(String label, String routePath) {
+    return TextButton(
+      onPressed: () => Navigator.pushNamed(context, routePath),
+      style: TextButton.styleFrom(
+        foregroundColor: brandOrange,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        minimumSize: const Size(0, 32),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
       ),
     );
   }

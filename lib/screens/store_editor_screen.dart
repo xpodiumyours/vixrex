@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'package:qr_flutter/qr_flutter.dart';
 
+import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 
 import 'package:vitrinx/widgets/vitrin_view.dart';
@@ -304,7 +305,41 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
               ],
             ),
           ),
+          _buildLegalMenuButton(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLegalMenuButton() {
+    return PopupMenuButton<String>(
+      tooltip: 'Hukuki bilgiler',
+      color: Colors.white,
+      onSelected: (routePath) => Navigator.pushNamed(context, routePath),
+      itemBuilder:
+          (context) => const [
+            PopupMenuItem(
+              value: LegalConfig.privacyPath,
+              child: Text('Gizlilik Politikası'),
+            ),
+            PopupMenuItem(
+              value: LegalConfig.termsPath,
+              child: Text('Kullanım Şartları'),
+            ),
+            PopupMenuItem(
+              value: LegalConfig.dataDeletionPath,
+              child: Text('Veri Silme'),
+            ),
+          ],
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
+        ),
+        child: const Icon(Icons.policy_rounded, color: softText, size: 18),
       ),
     );
   }

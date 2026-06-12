@@ -1088,8 +1088,8 @@ class _EditorScreenState extends State<EditorScreen>
       ),
       _VitrinScoreTask(
         points: 15,
-        isComplete: _hasCompleteMarketplaceLink(data),
-        suggestion: 'En az 1 pazaryeri linki ekle',
+        isComplete: true,
+        suggestion: 'Pazaryeri linki isteğe bağlı',
         target: _VitrinScoreTarget.marketplace,
       ),
       _VitrinScoreTask(
@@ -2840,9 +2840,12 @@ class _EditorScreenState extends State<EditorScreen>
         missingText: 'Kısa açıklama eksik',
       ),
       _PublishChecklistItem(
-        isReady: hasMarketplaceLink,
-        readyText: 'Pazaryeri linki hazır',
-        missingText: 'Pazaryeri linki eklenmemiş',
+        isReady: true,
+        readyText:
+            hasMarketplaceLink
+                ? 'Pazaryeri linki hazır'
+                : 'Pazaryeri linki isteğe bağlı',
+        missingText: '',
       ),
       _PublishChecklistItem(
         isReady: _data.address.trim().isNotEmpty,

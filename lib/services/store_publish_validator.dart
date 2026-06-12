@@ -24,9 +24,6 @@ class StorePublishValidator {
     if (data.description.trim().isEmpty) {
       missingItems.add('kısa açıklama');
     }
-    if (!_hasCompleteMarketplaceLink(data)) {
-      missingItems.add('en az 1 pazaryeri linki');
-    }
     if (data.address.trim().isEmpty) {
       missingItems.add('adres bilgisi');
     }
@@ -67,11 +64,5 @@ class StorePublishValidator {
     }
 
     return null;
-  }
-
-  bool _hasCompleteMarketplaceLink(StoreData data) {
-    return data.marketplaceLinks.any(
-      (link) => link.platform.trim().isNotEmpty && link.url.trim().isNotEmpty,
-    );
   }
 }

@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/screens/store_editor_screen.dart';
 import 'package:vitrinx/screens/vitrin_editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
@@ -1750,7 +1751,44 @@ class _LandingScreenState extends State<LandingScreen>
               fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(height: 24),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildFooterLegalLink(
+                label: 'Gizlilik Politikası',
+                routePath: LegalConfig.privacyPath,
+              ),
+              _buildFooterLegalLink(
+                label: 'Kullanım Şartları',
+                routePath: LegalConfig.termsPath,
+              ),
+              _buildFooterLegalLink(
+                label: 'Veri Silme',
+                routePath: LegalConfig.dataDeletionPath,
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFooterLegalLink({
+    required String label,
+    required String routePath,
+  }) {
+    return TextButton(
+      onPressed: () => Navigator.pushNamed(context, routePath),
+      style: TextButton.styleFrom(
+        foregroundColor: const Color(0xFF475569),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
       ),
     );
   }
