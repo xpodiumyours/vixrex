@@ -16,7 +16,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.textContaining('VITRINX'), findsAtLeastNWidgets(1));
-    expect(find.text('Ücretsiz Oluştur'), findsAtLeastNWidgets(1));
+    expect(find.text('VitrinX Oluştur'), findsAtLeastNWidgets(1));
+    expect(find.text('Mağaza Aç · Yakında'), findsAtLeastNWidgets(1));
     expect(find.text('Dakikalar içinde yayına hazır'), findsOneWidget);
   });
 
@@ -51,28 +52,30 @@ void main() {
     expect(find.text('Canlı Önizleme'), findsNothing);
   });
 
-  testWidgets('StoreEditorScreen kategori dropdown ve ürün kataloğu alanlarını içerir', (
-    WidgetTester tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(const MaterialApp(home: StoreEditorScreen()));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'StoreEditorScreen kategori dropdown ve ürün kataloğu alanlarını içerir',
+    (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(const MaterialApp(home: StoreEditorScreen()));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Kategori'), findsAtLeastNWidgets(1));
-    expect(find.text('Ürün Kataloğu'), findsOneWidget);
-  });
+      expect(find.text('Kategori'), findsAtLeastNWidgets(1));
+      expect(find.text('Ürün Kataloğu'), findsOneWidget);
+    },
+  );
 
-  testWidgets('VitrinEditorScreen kategori ve ürün kataloğunu içermez ama pazaryeri linklerini içerir', (
-    WidgetTester tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(const MaterialApp(home: VitrinEditorScreen()));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'VitrinEditorScreen kategori ve ürün kataloğunu içermez ama pazaryeri linklerini içerir',
+    (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(const MaterialApp(home: VitrinEditorScreen()));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Kategori'), findsNothing);
-    expect(find.text('Ürün Kataloğu'), findsNothing);
-    expect(find.text('Pazaryeri Linkleri'), findsOneWidget);
-  });
+      expect(find.text('Kategori'), findsNothing);
+      expect(find.text('Ürün Kataloğu'), findsNothing);
+      expect(find.text('Pazaryeri Linkleri'), findsOneWidget);
+    },
+  );
 
   testWidgets('Landing vitrin ve mağaza erişimlerini ayrı gösterir', (
     WidgetTester tester,

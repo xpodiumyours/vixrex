@@ -114,7 +114,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       });
     } catch (e) {
       // Handle Supabase not initialized or connection error (e.g. in tests)
-      debugPrint('[Explore] Mağaza listesi yüklenemedi: $e');
+      debugPrint('[Explore] VitrinX listesi yüklenemedi: $e');
       setState(() {
         _allStores = _getMockStores();
         _loadErrorMessage =
@@ -152,8 +152,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ),
       StoreData(
         name: 'Elit Aksesuar',
-        description:
-            'Özel tasarım takılar ve şık gümüş aksesuarlar vitrini.',
+        description: 'Özel tasarım takılar ve şık gümüş aksesuarlar vitrini.',
         kategori: 'Dekorasyon',
         businessType: 'Dekorasyon',
         whatsapp: '0555 345 67 89',
@@ -324,7 +323,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       backgroundColor: bgColor,
       appBar: AppBar(
         title: const Text(
-          'VitrinX Keşfet',
+          "VitrinX'leri Keşfet",
           style: TextStyle(
             color: darkText,
             fontWeight: FontWeight.w900,
@@ -350,7 +349,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: const Text(
-                'Çevrendeki esnafların canlı reyonları',
+                'Yayındaki VitrinX profillerini keşfet',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -365,7 +364,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Ürün, mağaza veya reyon ara...',
+                  hintText: 'Vitrin, ürün veya kategori ara...',
                   hintStyle: TextStyle(
                     color: mutedText.withValues(alpha: 0.6),
                     fontWeight: FontWeight.bold,
@@ -541,8 +540,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
           const SizedBox(height: 12),
           Text(
             _onlyFavorites
-                ? 'Favorilere ekli mağaza bulunamadı.'
-                : 'Aramanızla eşleşen mağaza bulunamadı.',
+                ? 'Favorilere ekli vitrin bulunamadı.'
+                : 'Aramanızla eşleşen vitrin bulunamadı.',
             style: const TextStyle(
               fontSize: 14,
               color: mutedText,
@@ -610,7 +609,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '${store.isStore ? "Mağaza" : "Vitrin"}${store.kategori.isNotEmpty ? " • ${store.kategori}" : ""}',
+                        'VitrinX${store.kategori.isNotEmpty ? " • ${store.kategori}" : ""}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,

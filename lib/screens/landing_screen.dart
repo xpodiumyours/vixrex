@@ -8,7 +8,6 @@ import 'package:vitrinx/screens/store_editor_screen.dart';
 import 'package:vitrinx/screens/vitrin_editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
-import 'package:vitrinx/screens/store_setup_screen.dart';
 import 'package:vitrinx/screens/auth_screen.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
@@ -231,18 +230,25 @@ class _LandingScreenState extends State<LandingScreen>
         if (store != null) {
           if (!mounted) return;
           if (store.isStore) {
-            await prefs.setString(LocalStorageKeys.storeData, jsonEncode(store.toJson()));
-            
+            await prefs.setString(
+              LocalStorageKeys.storeData,
+              jsonEncode(store.toJson()),
+            );
+
             if (!mounted) return;
-            final dbStore = await Supabase.instance.client
-                .from('stores')
-                .select('edit_token')
-                .eq('user_id', currentUser.id)
-                .maybeSingle();
-            
+            final dbStore =
+                await Supabase.instance.client
+                    .from('stores')
+                    .select('edit_token')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+
             if (!mounted) return;
             if (dbStore != null && dbStore['edit_token'] != null) {
-              await prefs.setString(LocalStorageKeys.storeEditToken, dbStore['edit_token'] as String);
+              await prefs.setString(
+                LocalStorageKeys.storeEditToken,
+                dbStore['edit_token'] as String,
+              );
             }
 
             if (!mounted) return;
@@ -252,18 +258,25 @@ class _LandingScreenState extends State<LandingScreen>
             );
             return;
           } else {
-            await prefs.setString(LocalStorageKeys.vitrinData, jsonEncode(store.toJson()));
-            
+            await prefs.setString(
+              LocalStorageKeys.vitrinData,
+              jsonEncode(store.toJson()),
+            );
+
             if (!mounted) return;
-            final dbStore = await Supabase.instance.client
-                .from('stores')
-                .select('edit_token')
-                .eq('user_id', currentUser.id)
-                .maybeSingle();
-            
+            final dbStore =
+                await Supabase.instance.client
+                    .from('stores')
+                    .select('edit_token')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+
             if (!mounted) return;
             if (dbStore != null && dbStore['edit_token'] != null) {
-              await prefs.setString(LocalStorageKeys.vitrinEditToken, dbStore['edit_token'] as String);
+              await prefs.setString(
+                LocalStorageKeys.vitrinEditToken,
+                dbStore['edit_token'] as String,
+              );
             }
 
             if (!mounted) return;
@@ -360,7 +373,9 @@ class _LandingScreenState extends State<LandingScreen>
     final name = _storeNameController.text;
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => VitrinEditorScreen(initialStoreName: name)),
+      MaterialPageRoute(
+        builder: (_) => VitrinEditorScreen(initialStoreName: name),
+      ),
     );
     if (mounted) {
       _loadSavedVitrinState();
@@ -407,6 +422,17 @@ class _LandingScreenState extends State<LandingScreen>
     if (mounted) {
       _loadSavedVitrinState();
     }
+  }
+
+  void _showStoreComingSoonMessage() {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Mağaza özelliği yakında açılacak.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   void _navigateToPreview() {
@@ -591,14 +617,20 @@ class _LandingScreenState extends State<LandingScreen>
                 },
                 icon: const Icon(Icons.explore_rounded, size: 16),
                 label: Text(
-                  isDesktop ? 'Vitrinleri Keşfet' : 'Keşfet',
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                  "VitrinX'leri Keşfet",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: darkAccent,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 16 : 10,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -614,10 +646,18 @@ class _LandingScreenState extends State<LandingScreen>
                       _loadSavedVitrinState();
                     }
                   },
-                  icon: const Icon(Icons.logout_rounded, size: 16, color: darkAccent),
+                  icon: const Icon(
+                    Icons.logout_rounded,
+                    size: 16,
+                    color: darkAccent,
+                  ),
                   label: Text(
                     isDesktop ? 'Çıkış Yap' : 'Çıkış',
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: darkAccent),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                      color: darkAccent,
+                    ),
                   ),
                 ),
               ] else ...[
@@ -642,7 +682,10 @@ class _LandingScreenState extends State<LandingScreen>
                     backgroundColor: brandOrange,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -862,7 +905,7 @@ class _LandingScreenState extends State<LandingScreen>
         },
         icon: const Icon(Icons.explore_rounded, size: 18, color: darkAccent),
         label: const Text(
-          'Vitrinleri Keşfet',
+          "VitrinX'leri Keşfet",
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 14,
@@ -967,7 +1010,7 @@ class _LandingScreenState extends State<LandingScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Ücretsiz Oluştur',
+                  'VitrinX Oluştur',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                 ),
                 SizedBox(width: 8),
@@ -980,19 +1023,14 @@ class _LandingScreenState extends State<LandingScreen>
     );
 
     final storeSetupButton = OutlinedButton.icon(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const StoreSetupScreen()),
-        );
-      },
+      onPressed: _showStoreComingSoonMessage,
       icon: const Icon(
         Icons.add_business_rounded,
         size: 16,
         color: brandOrange,
       ),
       label: const Text(
-        'Mağaza Aç →',
+        'Mağaza Aç · Yakında',
         style: TextStyle(
           fontWeight: FontWeight.w900,
           fontSize: 14,

@@ -9,20 +9,16 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: ExploreScreen(),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
     // Verify header title
-    expect(find.text('VitrinX Keşfet'), findsOneWidget);
-    expect(find.text('Çevrendeki esnafların canlı reyonları'), findsOneWidget);
+    expect(find.text("VitrinX'leri Keşfet"), findsOneWidget);
+    expect(find.text('Yayındaki VitrinX profillerini keşfet'), findsOneWidget);
 
     // Verify search text field hint
-    expect(find.text('Ürün, mağaza veya reyon ara...'), findsOneWidget);
+    expect(find.text('Vitrin, ürün veya kategori ara...'), findsOneWidget);
 
     // Verify category chips exist
     expect(find.text('Tümü'), findsAtLeastNWidgets(1));
@@ -34,11 +30,7 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: ExploreScreen(),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
@@ -59,14 +51,10 @@ void main() {
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({
-      'favorite_stores': ['Aymira Giyim']
+      'favorite_stores': ['Aymira Giyim'],
     });
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: ExploreScreen(),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
