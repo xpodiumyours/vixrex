@@ -13,6 +13,19 @@ Map<String, dynamic> buildStoreSchemas(StoreData store, {String? publicUrl}) {
       '@type': 'PostalAddress',
       'streetAddress': store.address.trim(),
     };
+
+    final parts =
+        store.address
+            .split(',')
+            .map((p) => p.trim())
+            .where((p) => p.isNotEmpty)
+            .toList();
+    if (parts.isNotEmpty) {
+      localBusiness['areaServed'] = {
+        '@type': 'AdministrativeArea',
+        'name': parts.last,
+      };
+    }
   }
 
   if (store.latitude != null && store.longitude != null) {
@@ -21,6 +34,8 @@ Map<String, dynamic> buildStoreSchemas(StoreData store, {String? publicUrl}) {
       'latitude': store.latitude,
       'longitude': store.longitude,
     };
+    localBusiness['hasMap'] =
+        'https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}';
   }
 
   if (store.whatsapp.trim().isNotEmpty) {
@@ -113,12 +128,35 @@ Map<String, dynamic> buildStoreSchemas(StoreData store, {String? publicUrl}) {
     productsList.add(productSchema);
   }
 
-  if (productsList.isEmpty) {
-    return localBusiness;
-  }
+  // BreadcrumbList Schema
+  final Map<String, dynamic> breadcrumbList = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      {
+        '@type': 'ListItem',
+        'position': 1,
+        'name': 'VitrinX',
+        'item': 'https://vitrinx.app/',
+      },
+      {
+        '@type': 'ListItem',
+        'position': 2,
+        'name':
+            store.kategori.trim().isNotEmpty ? store.kategori.trim() : 'Keşfet',
+        'item': 'https://vitrinx.app/explore',
+      },
+      {
+        '@type': 'ListItem',
+        'position': 3,
+        'name': store.name.trim(),
+        'item': publicUrl ?? '',
+      },
+    ],
+  };
 
   return {
     '@context': 'https://schema.org',
-    '@graph': [localBusiness, ...productsList],
+    '@graph': [localBusiness, breadcrumbList, ...productsList],
   };
 }

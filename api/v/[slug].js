@@ -71,10 +71,21 @@ export default async function handler(req, res) {
     };
 
     if (store.address && store.address.trim().length > 0) {
+      const trimmedAddress = store.address.trim();
       localBusiness['address'] = {
         '@type': 'PostalAddress',
-        'streetAddress': store.address.trim(),
+        'streetAddress': trimmedAddress,
       };
+
+      // Parse city/district from address for areaServed
+      const parts = trimmedAddress.split(',').map(p => p.trim()).filter(p => p.length > 0);
+      if (parts.length > 0) {
+        const city = parts[parts.length - 1];
+        localBusiness['areaServed'] = {
+          '@type': 'AdministrativeArea',
+          'name': city,
+        };
+      }
     }
 
     if (store.latitude != null && store.longitude != null) {
@@ -83,6 +94,8 @@ export default async function handler(req, res) {
         'latitude': store.latitude,
         'longitude': store.longitude,
       };
+      // hasMap Local SEO link
+      localBusiness['hasMap'] = `https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}`;
     }
 
     if (store.whatsapp && store.whatsapp.trim().length > 0) {
@@ -128,6 +141,32 @@ export default async function handler(req, res) {
         };
       }
     }
+
+    // 2. BreadcrumbList Schema
+    const breadcrumbList = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      'itemListElement': [
+        {
+          '@type': 'ListItem',
+          'position': 1,
+          'name': 'VitrinX',
+          'item': `${protocol}://${host}/`,
+        },
+        {
+          '@type': 'ListItem',
+          'position': 2,
+          'name': store.kategori || 'Keşfet',
+          'item': `${protocol}://${host}/explore`,
+        },
+        {
+          '@type': 'ListItem',
+          'position': 3,
+          'name': (store.name || '').trim(),
+          'item': publicUrl,
+        },
+      ],
+    };
 
     // Products Parser
     let products = [];
@@ -182,13 +221,15 @@ export default async function handler(req, res) {
       productsList.push(productSchema);
     }
 
-    let jsonLdMap = localBusiness;
-    if (productsList.length > 0) {
-      jsonLdMap = {
-        '@context': 'https://schema.org',
-        '@graph': [localBusiness, ...productsList],
-      };
-    }
+    // Always use @graph representation containing LocalBusiness and BreadcrumbList
+    const jsonLdMap = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        localBusiness,
+        breadcrumbList,
+        ...productsList,
+      ],
+    };
 
     const jsonLdString = JSON.stringify(jsonLdMap).replace(/</g, '\\u003c');
 
