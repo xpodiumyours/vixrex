@@ -21,6 +21,7 @@ import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
+import 'package:vitrinx/widgets/google_business_guide_card.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 
@@ -2785,6 +2786,7 @@ class _EditorScreenState extends State<EditorScreen>
               ),
             ),
           ),
+          GoogleBusinessGuideCard(publishedLink: link),
         ],
       ),
     );

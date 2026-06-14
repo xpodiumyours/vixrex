@@ -10,6 +10,7 @@ import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 
 import 'package:vitrinx/widgets/vitrin_view.dart';
+import 'package:vitrinx/widgets/google_business_guide_card.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/store_editor/store_editor_controller.dart';
 import 'package:vitrinx/screens/store_editor/widgets/store_info_section.dart';
@@ -1297,6 +1298,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
               ),
             ),
           ),
+          GoogleBusinessGuideCard(publishedLink: link),
         ],
       ),
     );

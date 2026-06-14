@@ -17,6 +17,7 @@ import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/utils/token_generator.dart';
+import 'package:vitrinx/widgets/google_business_guide_card.dart';
 
 // ─── Kategori Modeli ────────────────────────────────────────────────────────
 class _Category {
@@ -2644,6 +2645,7 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
               ],
             ),
           ),
+          GoogleBusinessGuideCard(publishedLink: _publishedLink!),
           if (_existingStoreToken != null) ...[
             const SizedBox(height: 24),
             OutlinedButton.icon(
