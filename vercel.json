@@ -50,7 +50,7 @@
       "destination": "/api/sitemap"
     },
     {
-      "source": "/v/:slug",
+      "source": "/v/:slug((?!.*\\.).*)",
       "destination": "/api/v/:slug"
     },
     {
