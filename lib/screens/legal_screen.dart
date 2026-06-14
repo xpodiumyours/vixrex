@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/legal_config.dart';
 
 enum LegalPageType {
@@ -38,6 +40,28 @@ enum LegalPageType {
         return 'Hesap, vitrin ve mağaza verilerinizin silinmesini nasıl talep edeceğinizi açıklar.';
     }
   }
+
+  IconData get icon {
+    switch (this) {
+      case LegalPageType.privacy:
+        return Icons.security_rounded;
+      case LegalPageType.terms:
+        return Icons.gavel_rounded;
+      case LegalPageType.dataDeletion:
+        return Icons.delete_sweep_rounded;
+    }
+  }
+
+  Color get accentColor {
+    switch (this) {
+      case LegalPageType.privacy:
+        return const Color(0xFF10B981); // Mint green
+      case LegalPageType.terms:
+        return const Color(0xFF3B82F6); // Royal blue
+      case LegalPageType.dataDeletion:
+        return const Color(0xFFFF5A1F); // Brand orange
+    }
+  }
 }
 
 class LegalScreen extends StatelessWidget {
@@ -59,39 +83,87 @@ class LegalScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
-        foregroundColor: const Color(0xFF0F172A),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(type.title),
+        scrolledUnderElevation: 0,
+        foregroundColor: const Color(0xFF0F172A),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: Text(
+          type.title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+            letterSpacing: -0.5,
+          ),
+        ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 820),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _Header(type: type),
-                  const SizedBox(height: 24),
-                  for (final section in sections) ...[
-                    _LegalSection(section: section),
-                    const SizedBox(height: 18),
-                  ],
-                  const SizedBox(height: 10),
-                  Text(
-                    'Son güncelleme: 12 Haziran 2026',
-                    style: TextStyle(
-                      color: Colors.black.withValues(alpha: 0.55),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+        child: Stack(
+          children: [
+            // Ambient glowing circles for premium styling
+            Positioned(
+              top: -80,
+              left: -80,
+              child: Container(
+                width: 260,
+                height: 260,
+                decoration: BoxDecoration(
+                  color: type.accentColor.withValues(alpha: 0.06),
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
-          ),
+            Positioned(
+              bottom: 40,
+              right: -100,
+              child: Container(
+                width: 320,
+                height: 320,
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withValues(alpha: 0.05),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            // Page content
+            SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 820),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _Header(type: type),
+                      const SizedBox(height: 24),
+                      for (final section in sections) ...[
+                        _LegalSection(section: section, accentColor: type.accentColor),
+                        const SizedBox(height: 16),
+                      ],
+                      const SizedBox(height: 8),
+                      _EmailContactCard(accentColor: type.accentColor),
+                      const SizedBox(height: 24),
+                      Center(
+                        child: Text(
+                          'Son güncelleme: 12 Haziran 2026',
+                          style: TextStyle(
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.45),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -102,75 +174,75 @@ class LegalScreen extends StatelessWidget {
       case LegalPageType.privacy:
         return const [
           _LegalSectionData(
-            title: 'Ürün sahibi',
+            title: 'Ürün Sahibi',
             body:
                 '${LegalConfig.productOwnershipText} Bu politika, VitrinX hizmeti kapsamında işlenen kullanıcı, mağaza, vitrin ve iletişim verileri için hazırlanmıştır.',
           ),
           _LegalSectionData(
-            title: 'Toplanan veriler',
+            title: 'Toplanan Veriler',
             body:
                 'VitrinX; hesap açtığınızda e-posta adresinizi, mağaza veya vitrin oluşturduğunuzda işletme adı, açıklama, adres, WhatsApp, Instagram, web sitesi, çalışma saatleri, ürün bilgileri, görseller ve isteğe bağlı konum bilgilerini işleyebilir.',
           ),
           _LegalSectionData(
-            title: 'Verilerin kullanım amacı',
+            title: 'Verilerin Kullanım Amacı',
             body:
                 'Bu veriler vitrininizi oluşturmak, yayınlamak, mağaza bağlantınızı göstermek, hesabınıza erişmenizi sağlamak, destek taleplerini yanıtlamak ve güvenli çalışmayı korumak için kullanılır.',
           ),
           _LegalSectionData(
-            title: 'Konum ve izinler',
+            title: 'Konum ve İzinler',
             body:
                 'Konum bilgisi yalnızca kullanıcı izin verirse alınır. Konum, işletme adresini haritada göstermek ve müşterilerin yol tarifi almasını kolaylaştırmak için kullanılır. Konum paylaşmak zorunlu değildir; adresi elle girebilirsiniz.',
           ),
           _LegalSectionData(
-            title: 'Görseller ve kullanıcı içeriği',
+            title: 'Görseller ve Kullanıcı İçeriği',
             body:
                 'Yüklediğiniz logo, ürün ve galeri görselleri vitrininizde gösterilebilir. Başkasına ait telifli görsel, yanıltıcı bilgi, yasa dışı ürün veya uygunsuz içerik yüklememelisiniz.',
           ),
           _LegalSectionData(
-            title: 'Üçüncü taraf hizmetler',
+            title: 'Üçüncü Taraf Hizmetler',
             body:
                 'VitrinX; hesap, veritabanı ve görsel saklama için Supabase hizmetlerinden; harita ve dış bağlantılar için cihazınızın veya tarayıcınızın ilgili servislerinden yararlanabilir.',
           ),
           _LegalSectionData(
-            title: 'Saklama ve silme',
+            title: 'Saklama ve Silme',
             body:
                 'Verileriniz hizmeti sunmak için gerekli olduğu sürece saklanır. Hesap, vitrin veya mağaza verilerinizin silinmesini data deletion sayfasındaki yöntemle talep edebilirsiniz.',
           ),
           _LegalSectionData(
             title: 'İletişim',
             body:
-                'Gizlilik, KVKK ve veri silme talepleri için bizimle ${LegalConfig.privacyEmail} adresinden iletişime geçebilirsiniz.',
+                'Gizlilik, KVKK ve veri silme talepleri için bizimle iletişim kurabilirsiniz. Hızlı kopyalama panelini aşağıda bulabilirsiniz.',
           ),
         ];
       case LegalPageType.terms:
         return const [
           _LegalSectionData(
-            title: 'Marka ve telif hakları',
+            title: 'Marka ve Telif Hakları',
             body:
                 '${LegalConfig.productOwnershipText} VitrinX adı, arayüzü, tasarım dili, metinleri ve hizmet yapısı Xpodiumyours tarafından sunulur. Kullanıcılar kendilerine ait olmayan marka, logo, görsel, metin veya telifli içerikleri izinsiz paylaşmamalıdır.',
           ),
           _LegalSectionData(
-            title: 'Hizmetin amacı',
+            title: 'Hizmetin Amacı',
             body:
                 'VitrinX, küçük işletmelerin ürün, hizmet, iletişim, konum ve sosyal bağlantılarını paylaşılabilir bir dijital vitrin olarak yayınlamasına yardımcı olur.',
           ),
           _LegalSectionData(
-            title: 'Kullanıcı sorumluluğu',
+            title: 'Kullanıcı Sorumluluğu',
             body:
                 'Vitrininize eklediğiniz işletme bilgileri, fiyatlar, ürün açıklamaları, bağlantılar ve görsellerden siz sorumlusunuz. Bilgilerin doğru ve güncel tutulması gerekir.',
           ),
           _LegalSectionData(
-            title: 'Yasak içerikler',
+            title: 'Yasak İçerikler',
             body:
                 'Yasa dışı ürün veya hizmet, yanıltıcı bilgi, nefret veya şiddet içeriği, cinsel içerik, başkasına ait marka/telif ihlali içeren görsel veya metin paylaşamazsınız.',
           ),
           _LegalSectionData(
-            title: 'İçerik kaldırma',
+            title: 'İçerik Kaldırma',
             body:
                 'VitrinX; hukuka, platform kurallarına veya kullanıcı güvenliğine aykırı olduğu bildirilen içerikleri inceleyebilir, kaldırabilir veya ilgili vitrine erişimi sınırlayabilir.',
           ),
           _LegalSectionData(
-            title: 'Dış bağlantılar',
+            title: 'Dış Bağlantılar',
             body:
                 'WhatsApp, Instagram, Google Maps, pazar yeri ve web sitesi bağlantıları üçüncü taraf hizmetlere yönlendirebilir. Bu hizmetlerin kendi şartları ve gizlilik politikaları geçerlidir.',
           ),
@@ -182,43 +254,43 @@ class LegalScreen extends StatelessWidget {
           _LegalSectionData(
             title: 'İletişim',
             body:
-                'Şartlar, içerik şikayeti veya hesap talepleri için ${LegalConfig.privacyEmail} adresinden iletişime geçebilirsiniz.',
+                'Şartlar, içerik şikayeti veya hesap talepleri için bizimle iletişim kurabilirsiniz. Hızlı kopyalama panelini aşağıda bulabilirsiniz.',
           ),
         ];
       case LegalPageType.dataDeletion:
         return const [
           _LegalSectionData(
-            title: 'Ürün sahibi',
+            title: 'Ürün Sahibi',
             body:
                 '${LegalConfig.productOwnershipText} Hesap, vitrin, mağaza ve ilişkili veri silme talepleri bu ürün kapsamında değerlendirilir.',
           ),
           _LegalSectionData(
-            title: 'Silme talebi nasıl gönderilir?',
+            title: 'Silme Talebi Nasıl Gönderilir?',
             body:
-                'Hesap, vitrin veya mağaza verilerinizin silinmesini istemek için ${LegalConfig.privacyEmail} adresine e-posta gönderin. Konu satırına "VitrinX veri silme talebi" yazın.',
+                'Hesap, vitrin veya mağaza verilerinizin silinmesini istemek için destek e-posta adresimize bir talep göndermeniz yeterlidir. Konu satırına "VitrinX veri silme talebi" yazmanız işlemlerinizi hızlandıracaktır.',
           ),
           _LegalSectionData(
-            title: 'E-postaya eklenmesi gereken bilgiler',
+            title: 'E-postaya Eklenmesi Gereken Bilgiler',
             body:
                 'Talebinize kayıtlı e-posta adresinizi, vitrin veya mağaza bağlantınızı, silinmesini istediğiniz veri türünü ve size ulaşabileceğimiz iletişim adresini ekleyin.',
           ),
           _LegalSectionData(
-            title: 'Silinebilecek veriler',
+            title: 'Silinebilecek Veriler',
             body:
                 'Hesap bilgileri, vitrin/mağaza kayıtları, ürün bilgileri, galeri görselleri, logo, konum bilgileri ve yerel kayıtla ilişkili sunucu verileri silme kapsamına alınabilir.',
           ),
           _LegalSectionData(
-            title: 'Saklanabilecek sınırlı veriler',
+            title: 'Saklanabilecek Sınırlı Veriler',
             body:
                 'Yasal yükümlülük, güvenlik incelemesi, kötüye kullanım önleme veya uyuşmazlık çözümü için gerekli olan sınırlı kayıtlar mevzuatın izin verdiği süre boyunca saklanabilir.',
           ),
           _LegalSectionData(
-            title: 'İşlem süresi',
+            title: 'İşlem Süresi',
             body:
                 'Talebiniz alındıktan sonra kimlik/doğrulama kontrolü yapılır ve uygun talepler makul süre içinde işleme alınır.',
           ),
           _LegalSectionData(
-            title: 'Uygulama içi silme',
+            title: 'Uygulama İçi Silme',
             body:
                 'Uygulama içindeki vitrin veya mağaza silme butonu mevcut vitrininizi kaldırmaya yardımcı olur. Hesap ve tüm ilişkili veri talepleri için bu sayfadaki e-posta yolunu kullanın.',
           ),
@@ -236,40 +308,60 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 32,
+            offset: const Offset(0, 16),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            LegalConfig.productOwnershipText,
-            style: TextStyle(
-              color: Color(0xFFFF5A1F),
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.2,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  LegalConfig.productOwnershipText.toUpperCase(),
+                  style: TextStyle(
+                    color: type.accentColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.8,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: type.accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  type.icon,
+                  color: type.accentColor,
+                  size: 26,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             type.title,
             style: const TextStyle(
               color: Color(0xFF0F172A),
-              fontSize: 34,
-              height: 1.1,
+              fontSize: 30,
+              height: 1.15,
               fontWeight: FontWeight.w900,
-              letterSpacing: 0,
+              letterSpacing: -0.8,
             ),
           ),
           const SizedBox(height: 12),
@@ -277,7 +369,7 @@ class _Header extends StatelessWidget {
             type.subtitle,
             style: const TextStyle(
               color: Color(0xFF475569),
-              fontSize: 16,
+              fontSize: 15,
               height: 1.5,
               fontWeight: FontWeight.w600,
             ),
@@ -289,9 +381,10 @@ class _Header extends StatelessWidget {
 }
 
 class _LegalSection extends StatelessWidget {
-  const _LegalSection({required this.section});
+  const _LegalSection({required this.section, required this.accentColor});
 
   final _LegalSectionData section;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
@@ -300,30 +393,212 @@ class _LegalSection extends StatelessWidget {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            section.title,
-            style: const TextStyle(
-              color: Color(0xFF0F172A),
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  section.title,
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             section.body,
             style: const TextStyle(
               color: Color(0xFF334155),
-              fontSize: 15,
-              height: 1.55,
+              fontSize: 14.5,
+              height: 1.6,
               fontWeight: FontWeight.w500,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmailContactCard extends StatefulWidget {
+  const _EmailContactCard({required this.accentColor});
+
+  final Color accentColor;
+
+  @override
+  State<_EmailContactCard> createState() => _EmailContactCardState();
+}
+
+class _EmailContactCardState extends State<_EmailContactCard> {
+  bool _isCopied = false;
+
+  Future<void> _copyEmail() async {
+    await Clipboard.setData(const ClipboardData(text: LegalConfig.privacyEmail));
+    setState(() => _isCopied = true);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _isCopied = false);
+    });
+  }
+
+  Future<void> _launchEmail() async {
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: LegalConfig.privacyEmail,
+      query: 'subject=VitrinX Veri Silme Talebi',
+    );
+    try {
+      if (await canLaunchUrl(emailLaunchUri)) {
+        await launchUrl(emailLaunchUri);
+      }
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            widget.accentColor.withValues(alpha: 0.12),
+            widget.accentColor.withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: widget.accentColor.withValues(alpha: 0.18), width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.mail_outline_rounded, color: widget.accentColor, size: 22),
+              const SizedBox(width: 8),
+              const Text(
+                'İletişim & Hızlı Talep',
+                style: TextStyle(
+                  color: Color(0xFF0F172A),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Sorularınız ve talepleriniz için aşağıdaki kurumsal e-posta adresimizi kullanabilir veya doğrudan e-posta göndermek için tıklayabilirsiniz.',
+            style: TextStyle(
+              color: Color(0xFF334155),
+              fontSize: 13.5,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 18),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isSmall = constraints.maxWidth < 420;
+              return isSmall
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildEmailAddressBox(),
+                        const SizedBox(height: 10),
+                        _buildEmailActionButton(),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(child: _buildEmailAddressBox()),
+                        const SizedBox(width: 12),
+                        _buildEmailActionButton(),
+                      ],
+                    );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailAddressBox() {
+    return InkWell(
+      onTap: _copyEmail,
+      borderRadius: BorderRadius.circular(14),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: widget.accentColor.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                LegalConfig.privacyEmail,
+                style: const TextStyle(
+                  color: Color(0xFF0F172A),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 200),
+              crossFadeState: _isCopied ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              firstChild: Icon(Icons.copy_rounded, color: widget.accentColor, size: 18),
+              secondChild: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailActionButton() {
+    return ElevatedButton(
+      onPressed: _launchEmail,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: widget.accentColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'E-Posta Gönder',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+          SizedBox(width: 6),
+          Icon(Icons.open_in_new_rounded, size: 14),
         ],
       ),
     );

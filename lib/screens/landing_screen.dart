@@ -456,6 +456,7 @@ class _LandingScreenState extends State<LandingScreen>
             _buildHeroSection(context),
             _buildValueBandSection(context),
             _buildFeaturesSection(context),
+            _buildGoogleSeoAdvantageSection(context),
             _buildStepsSection(context),
             _buildBottomCTA(context),
             _buildFooter(),
@@ -609,78 +610,24 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           Row(
             children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ExploreScreen()),
-                  );
-                },
-                icon: const Icon(Icons.explore_rounded, size: 16),
-                label: Text(
-                  "VitrinX'leri Keşfet",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: darkAccent,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isDesktop ? 16 : 10,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              if (_isUserLoggedIn) ...[
-                TextButton.icon(
-                  onPressed: () async {
-                    await const AuthService().signOut();
-                    if (mounted) {
-                      setState(() {});
-                      _loadSavedVitrinState();
-                    }
-                  },
-                  icon: const Icon(
-                    Icons.logout_rounded,
-                    size: 16,
-                    color: darkAccent,
-                  ),
-                  label: Text(
-                    isDesktop ? 'Çıkış Yap' : 'Çıkış',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 13,
-                      color: darkAccent,
-                    ),
-                  ),
-                ),
-              ] else ...[
+              if (isDesktop)
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const AuthScreen()),
-                    ).then((_) {
-                      if (mounted) {
-                        setState(() {});
-                        _loadSavedVitrinState();
-                      }
-                    });
+                      MaterialPageRoute(builder: (_) => const ExploreScreen()),
+                    );
                   },
-                  icon: const Icon(Icons.login_rounded, size: 16),
+                  icon: const Icon(Icons.explore_rounded, size: 16),
                   label: const Text(
-                    'Giriş Yap',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                    "VitrinX'leri Keşfet",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: brandOrange,
+                    backgroundColor: darkAccent,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
@@ -691,7 +638,126 @@ class _LandingScreenState extends State<LandingScreen>
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
+                )
+              else
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ExploreScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.explore_rounded, size: 18),
+                  color: darkAccent,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.8),
+                    padding: const EdgeInsets.all(10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                  ),
                 ),
+              const SizedBox(width: 10),
+              if (_isUserLoggedIn) ...[
+                if (isDesktop)
+                  TextButton.icon(
+                    onPressed: () async {
+                      await const AuthService().signOut();
+                      if (mounted) {
+                        setState(() {});
+                        _loadSavedVitrinState();
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.logout_rounded,
+                      size: 16,
+                      color: darkAccent,
+                    ),
+                    label: const Text(
+                      'Çıkış Yap',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                        color: darkAccent,
+                      ),
+                    ),
+                  )
+                else
+                  IconButton(
+                    onPressed: () async {
+                      await const AuthService().signOut();
+                      if (mounted) {
+                        setState(() {});
+                        _loadSavedVitrinState();
+                      }
+                    },
+                    icon: const Icon(Icons.logout_rounded, size: 18),
+                    color: darkAccent,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.8),
+                      padding: const EdgeInsets.all(10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                    ),
+                  ),
+              ] else ...[
+                if (isDesktop)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AuthScreen()),
+                      ).then((_) {
+                        if (mounted) {
+                          setState(() {});
+                          _loadSavedVitrinState();
+                        }
+                      });
+                    },
+                    icon: const Icon(Icons.login_rounded, size: 16),
+                    label: const Text(
+                      'Giriş Yap',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: brandOrange,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  )
+                else
+                  IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AuthScreen()),
+                      ).then((_) {
+                        if (mounted) {
+                          setState(() {});
+                          _loadSavedVitrinState();
+                        }
+                      });
+                    },
+                    icon: const Icon(Icons.login_rounded, size: 18),
+                    color: Colors.white,
+                    style: IconButton.styleFrom(
+                      backgroundColor: brandOrange,
+                      padding: const EdgeInsets.all(10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
               ],
             ],
           ),
@@ -866,7 +932,6 @@ class _LandingScreenState extends State<LandingScreen>
           ),
         ),
       ),
-      const SizedBox(width: 12, height: 12),
       ElevatedButton.icon(
         onPressed:
             canOpenSavedStore
@@ -896,7 +961,6 @@ class _LandingScreenState extends State<LandingScreen>
           ),
         ),
       ),
-      const SizedBox(width: 12, height: 12),
       OutlinedButton.icon(
         onPressed: () {
           Navigator.push(
@@ -924,11 +988,19 @@ class _LandingScreenState extends State<LandingScreen>
     ];
 
     return isDesktop
-        ? Row(mainAxisAlignment: MainAxisAlignment.start, children: buttons)
+        ? Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.start,
+            children: buttons,
+          )
         : Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: buttons,
-        );
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: buttons
+                .expand((b) => [b, const SizedBox(height: 12)])
+                .toList()
+              ..removeLast(),
+          );
   }
 
   Widget _buildClaimBar({required bool isDesktop}) {
@@ -1534,6 +1606,193 @@ class _LandingScreenState extends State<LandingScreen>
                               ),
                             )
                             .toList(),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleSeoAdvantageSection(BuildContext context) {
+    final List<Map<String, dynamic>> seoItems = [
+      {
+        'icon': Icons.map_rounded,
+        'title': 'Harita & Konum Entegrasyonu',
+        'desc': 'Dükkan adresiniz ve konum koordinatlarınız, Google Haritalar standartlarına tam uyumlu olarak arka planda işlenir.',
+        'color': const Color(0xFFFF5A1F),
+      },
+      {
+        'icon': Icons.qr_code_scanner_rounded,
+        'title': 'Akıllı Arama Kartı Yapısı',
+        'desc': 'Ürünleriniz, Google botlarının dükkanınızı doğrudan listeleyebileceği yapılandırılmış veri (JSON-LD) formatında sunulur.',
+        'color': const Color(0xFF2563EB),
+      },
+      {
+        'icon': Icons.bolt_rounded,
+        'title': 'Hız & Performans Optimizasyonu',
+        'desc': 'Yüklediğiniz fotoğraflar kalitesi bozulmadan sıkıştırılır. Hızlı açılan sayfalar aramalarda daha üst sıralara taşınır.',
+        'color': const Color(0xFF10B981),
+      },
+      {
+        'icon': Icons.rocket_launch_rounded,
+        'title': 'Sosyal Paylaşım Hızlandırıcı',
+        'desc': 'Vitrin linkinizi WhatsApp veya Instagram\'da paylaştığınızda, Google botlarına dükkanınızı taraması için otomatik teknik sinyal gönderilir.',
+        'color': const Color(0xFFDB2777),
+      },
+    ];
+
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFF1F5F9),
+      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 24),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0EA),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: const Color(0xFFFFDCD0)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.auto_awesome_rounded, color: Color(0xFFFF5A1F), size: 14),
+                    SizedBox(width: 8),
+                    Text(
+                      'ÜCRETSİZ PREMİUM ENTEGRASYON',
+                      style: TextStyle(
+                        color: Color(0xFFFF5A1F),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Google Arama Görünürlüğü',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Dükkanınızın internette ve Google Haritalar\'da kolayca bulunması için arka planda tüm ayarları otomatik yapıyoruz:',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF475569),
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 52),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isDesktop = constraints.maxWidth > 768;
+                  return Wrap(
+                    spacing: 24,
+                    runSpacing: 24,
+                    alignment: WrapAlignment.center,
+                    children: seoItems.map((item) {
+                      final iconColor = item['color'] as Color;
+                      return Container(
+                        width: isDesktop ? (constraints.maxWidth - 24) / 2 : constraints.maxWidth,
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: const Color.fromRGBO(15, 23, 42, 0.06), width: 1.5),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color.fromRGBO(0, 0, 0, 0.015),
+                              blurRadius: 16,
+                              offset: Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: iconColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Icon(item['icon'] as IconData, color: iconColor, size: 24),
+                            ),
+                            const SizedBox(width: 18),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          item['title'] as String,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w900,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFECFDF5),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: const Color(0xFFA7F3D0), width: 0.8),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.check_circle_outline_rounded, color: Color(0xFF059669), size: 10),
+                                            SizedBox(width: 3),
+                                            Text(
+                                              'Aktif',
+                                              style: TextStyle(
+                                                color: Color(0xFF059669),
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    item['desc'] as String,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF475569),
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   );
                 },
               ),

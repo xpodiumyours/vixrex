@@ -27,18 +27,18 @@ Data Safety cevaplari icin onerilen beyan:
 - Veri toplaniyor: Evet.
 - Veri paylasimi: Supabase hizmet saglayici olarak kullaniliyor. Diger dis baglantilar kullanici aksiyonu ile aciliyor.
 - Veri sifreleme: Supabase ve HTTPS uzerinden aktarim kullaniliyor.
-- Kullanici veri silme talebi: Evet, `/data-deletion` sayfasi ve `privacy@vitrinx.app` uzerinden.
+- Kullanici veri silme talebi: Evet, uygulama ici doğrudan silme mekanizması (Danger Zone), web üzerinden `/data-deletion` sayfasi ve `privacy@vitrinx.app` uzerinden.
 - Reklam: Mevcut paketlerde reklam SDK'si yok.
 - Odeme: Mevcut paketlerde uygulama ici odeme SDK'si yok.
 
 ## Hesap ve Veri Silme
 
-Google Play icin uygulamada hesap olusturma oldugundan iki yol korunmali:
+Google Play için uygulamada hesap oluşturma olduğundan iki yol korunmuştur ve tamamen uyumludur:
 
-- Uygulama ici erisim: Landing, auth ve editor hukuki linkleri.
-- Web erisimi: `https://vitrinx.app/data-deletion`
+- **Uygulama içi erişim (In-app Deletion Path):** Editör ekranlarının (Vitrin/Mağaza) altındaki **"Tehlikeli Alan / Danger Zone"** bölümünden tek tıkla ve onay penceresiyle hesap ve tüm veriler anında kalıcı olarak silinebilir (Supabase RPC tetiklenir).
+- **Web erişimi (Web Deletion Path):** `https://vitrinx.app/data-deletion` sayfası üzerinden kullanıcılar uygulamayı indirmeden de veri silme talebinde bulunabilir.
 
-Silme talebinde istenecek bilgiler:
+Silme talebinde (web/e-posta yoluyla) istenecek bilgiler:
 
 - Kayitli e-posta adresi.
 - Vitrin veya magaza linki.

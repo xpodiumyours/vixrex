@@ -5,7 +5,13 @@ class AuthService {
   const AuthService();
 
   /// Returns the currently authenticated user session.
-  User? get currentUser => Supabase.instance.client.auth.currentUser;
+  User? get currentUser {
+    try {
+      return Supabase.instance.client.auth.currentUser;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Returns whether a user session is active.
   bool get hasActiveSession => currentUser != null;
@@ -29,6 +35,17 @@ class AuthService {
   /// Sign out.
   Future<void> signOut() async {
     await Supabase.instance.client.auth.signOut();
+  }
+
+  /// Deletes the currently authenticated user's account and all their data.
+  Future<void> deleteAccount() async {
+    final user = currentUser;
+    if (user == null) return;
+
+    // Call the database RPC to delete the user account
+    await Supabase.instance.client.rpc('delete_user_account');
+    // Sign out to clear local session
+    await signOut();
   }
 
   /// Fetches the store details for the currently logged-in user.

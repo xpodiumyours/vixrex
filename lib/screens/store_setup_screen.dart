@@ -402,13 +402,29 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       _locationAccuracyMeters = position.accuracy;
       _locationConsentAt = DateTime.now();
       _locationSource = 'setup_screen_gps_high_accuracy';
-      _locationStatusMessage = LocationService.buildAccuracyMessage(
-        position.accuracy,
-      );
+      _locationStatusMessage = 'Adres çözümleniyor...';
       _pendingMapsLatitude = null;
       _pendingMapsLongitude = null;
       _pendingMapsAccuracyMeters = null;
+    });
+
+    final geoAddress = await const LocationService().getAddressFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
       _isLocating = false;
+      _locationStatusMessage = LocationService.buildAccuracyMessage(
+        position.accuracy,
+      );
+      if (geoAddress != null && geoAddress.isNotEmpty) {
+        _addressCtrl.text = geoAddress;
+      } else if (_addressCtrl.text.trim().isEmpty) {
+        _addressCtrl.text = 'Koordinatlarla isaretlenen konum';
+      }
     });
   }
 
@@ -422,7 +438,7 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  void _confirmPendingLocation() {
+  Future<void> _confirmPendingLocation() async {
     final latitude = _pendingMapsLatitude;
     final longitude = _pendingMapsLongitude;
     if (latitude == null || longitude == null) return;
@@ -433,12 +449,27 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       _locationAccuracyMeters = _pendingMapsAccuracyMeters;
       _locationConsentAt = DateTime.now();
       _locationSource = 'setup_screen_gps_user_confirmed_approximate';
+      _locationStatusMessage = 'Adres çözümleniyor...';
+      _isLocating = true;
+    });
+
+    final geoAddress = await const LocationService().getAddressFromCoordinates(
+      latitude,
+      longitude,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLocating = false;
       _locationStatusMessage =
           'Yaklasik konum kullanici onayi ile kaydedildi. Google Maps uzerinden kontrol edildi.';
       _pendingMapsLatitude = null;
       _pendingMapsLongitude = null;
       _pendingMapsAccuracyMeters = null;
-      if (_addressCtrl.text.trim().isEmpty) {
+      if (geoAddress != null && geoAddress.isNotEmpty) {
+        _addressCtrl.text = geoAddress;
+      } else if (_addressCtrl.text.trim().isEmpty) {
         _addressCtrl.text = 'Koordinatlarla isaretlenen konum';
       }
     });

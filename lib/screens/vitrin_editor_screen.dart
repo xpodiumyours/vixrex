@@ -23,6 +23,7 @@ import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
+import 'package:vitrinx/services/auth_service.dart';
 
 class VitrinEditorScreen extends StatefulWidget {
   final String? initialStoreName;
@@ -41,6 +42,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
   bool _isLoading = true;
   bool _isPublishing = false;
   bool _isDeleting = false;
+  bool _isDeletingAccount = false;
   bool _isUploadingGallery = false;
   int _selectedGalleryIndex = 0;
   String? _existingVitrinToken;
@@ -322,15 +324,28 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
       _locationAccuracyMeters = position.accuracy;
       _locationConsentAt = DateTime.now();
       _locationSource = 'vitrin_editor_gps_high_accuracy';
-      _locationStatusMessage = LocationService.buildAccuracyMessage(
-        position.accuracy,
-      );
+      _locationStatusMessage = 'Adres çözümleniyor...';
       _pendingMapsLatitude = null;
       _pendingMapsLongitude = null;
       _pendingMapsAccuracyMeters = null;
-      _isLocating = false;
+    });
 
-      if (_addressCtrl.text.trim().isEmpty) {
+    final geoAddress = await const LocationService().getAddressFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLocating = false;
+      _locationStatusMessage = LocationService.buildAccuracyMessage(
+        position.accuracy,
+      );
+      if (geoAddress != null && geoAddress.isNotEmpty) {
+        _addressCtrl.text = geoAddress;
+        _data.address = geoAddress;
+      } else if (_addressCtrl.text.trim().isEmpty) {
         _addressCtrl.text = 'Koordinatlarla işaretlenen konum';
         _data.address = 'Koordinatlarla işaretlenen konum';
       }
@@ -346,7 +361,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  void _confirmPendingLocation() {
+  Future<void> _confirmPendingLocation() async {
     final latitude = _pendingMapsLatitude;
     final longitude = _pendingMapsLongitude;
     if (latitude == null || longitude == null) return;
@@ -357,12 +372,28 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
       _locationAccuracyMeters = _pendingMapsAccuracyMeters;
       _locationConsentAt = DateTime.now();
       _locationSource = 'vitrin_editor_gps_user_confirmed_approximate';
+      _locationStatusMessage = 'Adres çözümleniyor...';
+      _isLocating = true;
+    });
+
+    final geoAddress = await const LocationService().getAddressFromCoordinates(
+      latitude,
+      longitude,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLocating = false;
       _locationStatusMessage =
           'Yaklasik konum kullanici onayi ile kaydedildi. Google Maps uzerinden kontrol edildi.';
       _pendingMapsLatitude = null;
       _pendingMapsLongitude = null;
       _pendingMapsAccuracyMeters = null;
-      if (_addressCtrl.text.trim().isEmpty) {
+      if (geoAddress != null && geoAddress.isNotEmpty) {
+        _addressCtrl.text = geoAddress;
+        _data.address = geoAddress;
+      } else if (_addressCtrl.text.trim().isEmpty) {
         _addressCtrl.text = 'Koordinatlarla isaretlenen konum';
         _data.address = 'Koordinatlarla isaretlenen konum';
       }
@@ -601,6 +632,121 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
               ),
               child: const Text(
                 'Sil',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteAccount() async {
+    if (_isDeletingAccount) return;
+    setState(() => _isDeletingAccount = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Clear local cache for vitrin token and data
+      await prefs.remove(LocalStorageKeys.vitrinEditToken);
+      await prefs.remove(LocalStorageKeys.vitrinData);
+      await prefs.remove(LocalStorageKeys.storeEditToken);
+      await prefs.remove(LocalStorageKeys.storeData);
+
+      // Perform the account deletion backend logic
+      await const AuthService().deleteAccount();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hesabınız ve tüm verileriniz başarıyla silindi.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LandingScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      debugPrint('[Editor] Hesap silme hatası: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Hesap silinirken bir hata oluştu: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isDeletingAccount = false);
+      }
+    }
+  }
+
+  void _showDeleteAccountConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.redAccent,
+                size: 24,
+              ),
+              SizedBox(width: 10),
+              Text(
+                'Hesabımı Sil',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  color: darkText,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Bu işlem geri alınamaz. Hesabınız, oluşturduğunuz vitrinler, ürünler ve yüklediğiniz tüm görseller kalıcı olarak silinecektir. Devam etmek istiyor musunuz?',
+            style: TextStyle(color: softText, fontSize: 14, height: 1.5),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Vazgeç',
+                style: TextStyle(fontWeight: FontWeight.bold, color: mutedText),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteAccount();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Hesabı Sil',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -2373,42 +2519,169 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
             ),
           ),
           const SizedBox(height: 24),
-          _buildEditCard(
-            title: 'Ayarlar',
-            children: [
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: OutlinedButton.icon(
-                  onPressed: _isDeleting ? null : _showDeleteVitrinConfirmation,
-                  icon:
-                      _isDeleting
-                          ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.redAccent,
-                            ),
-                          )
-                          : const Icon(Icons.delete_outline_rounded, size: 20),
-                  label: const Text(
-                    'Vitrini Sil',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.redAccent,
-                    side: const BorderSide(color: Colors.redAccent, width: 1.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF2F2),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFFEE2E2), width: 1.5),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.gpp_maybe_rounded,
+                        color: Colors.redAccent,
+                        size: 20,
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tehlikeli Alan / Danger Zone',
+                            style: TextStyle(
+                              color: Color(0xFF991B1B),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Geri alınamayacak silme işlemlerini buradan gerçekleştirebilirsiniz.',
+                            style: TextStyle(
+                              color: Color(0xFFB91C1C),
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+                _buildDangerZoneTile(
+                  title: 'Vitrini Sil',
+                  subtitle: 'Mevcut vitrininizi ve tüm yerel verilerinizi kalıcı olarak kaldırır.',
+                  isLoading: _isDeleting,
+                  onTap: _isDeleting ? null : _showDeleteVitrinConfirmation,
+                  icon: Icons.delete_outline_rounded,
+                ),
+                if (const AuthService().currentUser != null) ...[
+                  const SizedBox(height: 12),
+                  _buildDangerZoneTile(
+                    title: 'Hesabımı ve Tüm Verilerimi Sil',
+                    subtitle: 'Kullanıcı kaydınızı, vitrinlerinizi ve tüm Supabase verilerinizi temizler.',
+                    isLoading: _isDeletingAccount,
+                    onTap: _isDeletingAccount ? null : _showDeleteAccountConfirmation,
+                    icon: Icons.person_remove_outlined,
+                  ),
+                ],
+              ],
+            ),
           ),
           const SizedBox(height: 100),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDangerZoneTile({
+    required String title,
+    required String subtitle,
+    required bool isLoading,
+    required VoidCallback? onTap,
+    required IconData icon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFEE2E2)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(153, 27, 27, 0.02),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.redAccent,
+                          ),
+                        )
+                      : Icon(
+                          icon,
+                          color: Colors.redAccent,
+                          size: 20,
+                        ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Color(0xFF111827),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Color(0xFFFCA5A5),
+                  size: 14,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -4536,8 +4809,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
         ),
       ),
     );
-  }
-}
+  }}
 
 class _EditorGalleryItem {
   final String id;

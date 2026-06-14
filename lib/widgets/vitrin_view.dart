@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
+import 'package:vitrinx/services/seo_helper.dart';
 
 class VitrinGalleryPreviewItem {
   final String imageUrl;
@@ -54,6 +55,9 @@ class VitrinView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (publicMode) {
+      injectStoreJsonLd(storeData);
+    }
     final preset = vitrinThemePresetFor(storeData.theme);
     final themeData = _getThemeData(preset);
     final radius = isEmbedded ? 24.0 : 40.0;
@@ -1214,9 +1218,9 @@ class VitrinView extends StatelessWidget {
               preset: preset,
             ),
             _ModernLinkItem(
-              icon: Icons.qr_code_rounded,
-              title: 'vCard Kaydet',
-              subtitle: 'Hızlı iletişim için rehbere ekle',
+              icon: Icons.contact_page_rounded,
+              title: 'Kişilerime Ekle',
+              subtitle: 'Tek dokunuşla tüm iletişim bilgilerini rehberine kaydet',
               color: Colors.teal.shade500,
               radius: radius,
               compact: isCompact,
@@ -1229,13 +1233,13 @@ class VitrinView extends StatelessWidget {
               builder:
                   (ctx) => _ModernLinkItem(
                     icon: Icons.contact_page_rounded,
-                    title: 'vCard Kaydet',
-                    subtitle: 'İletişim bilgilerini hızlıca kopyala',
+                    title: 'Kişilerime Ekle',
+                    subtitle: 'Tek dokunuşla tüm iletişim bilgilerini rehberine kaydet',
                     color: Colors.teal.shade500,
                     radius: radius,
                     compact: isCompact,
                     preset: preset,
-                    onTap: () => _copyVCardToClipboard(ctx),
+                    onTap: () => _downloadVCard(ctx),
                   ),
             ),
 
@@ -1299,6 +1303,65 @@ class VitrinView extends StatelessWidget {
         duration: Duration(seconds: 2),
       ),
     );
+  }
+
+  /// vCard (.vcf) dosya içeriğini standart formatta oluşturur.
+  String _buildVCardFileContent() {
+    final name = storeData.name.trim();
+    final phone = storeData.whatsapp.trim();
+    final address = storeData.address.trim();
+    final website = storeData.website.trim();
+    final bio = storeData.corporateBio.trim().isNotEmpty
+        ? storeData.corporateBio.trim()
+        : storeData.description.trim();
+
+    final card = StringBuffer();
+    card.writeln('BEGIN:VCARD');
+    card.writeln('VERSION:3.0');
+    card.writeln('FN:$name');
+    card.writeln('ORG:$name');
+    if (phone.isNotEmpty) {
+      // Clean phone number for tel: link, keeping only digits and plus
+      final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+      card.writeln('TEL;TYPE=CELL,VOICE:$cleanPhone');
+    }
+    if (website.isNotEmpty) {
+      card.writeln('URL;TYPE=WORK:$website');
+    }
+    if (address.isNotEmpty) {
+      final escapedAddress = address.replaceAll(',', '\\,').replaceAll('\n', ' ');
+      card.writeln('ADR;TYPE=WORK:;;$escapedAddress;;;;');
+    }
+    if (bio.isNotEmpty) {
+      card.writeln('NOTE:$bio');
+    }
+    card.writeln('END:VCARD');
+    return card.toString();
+  }
+
+  /// vCard verisini cihaz seviyesinde dosya olarak indirir / açar.
+  /// Başarısızlık durumunda otomatik olarak panoya kopyalama moduna düşer.
+  Future<void> _downloadVCard(BuildContext context) async {
+    final vCardText = _buildVCardFileContent();
+    final uri = Uri.dataFromString(
+      vCardText,
+      mimeType: 'text/vcard',
+      parameters: {'charset': 'utf-8'},
+    );
+
+    try {
+      final didLaunch = await launchUrl(
+        uri,
+        mode: LaunchMode.platformDefault,
+      );
+      if (!didLaunch && context.mounted) {
+        await _copyVCardToClipboard(context);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        await _copyVCardToClipboard(context);
+      }
+    }
   }
 
   IconData _getPlatformIcon(String platform) {

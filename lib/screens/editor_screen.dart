@@ -13,6 +13,7 @@ import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
+import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_publish_validator.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
@@ -389,14 +390,26 @@ class _EditorScreenState extends State<EditorScreen>
         locationSettings: locationSettings,
       );
 
+      if (!mounted) return;
+
       setState(() {
         _latitude = position!.latitude;
         _longitude = position.longitude;
         _locationAccuracyMeters = position.accuracy;
         _locationConsentAt = DateTime.now();
         _locationSource = 'geolocator';
+        _locationStatusMessage = 'Adres çözümleniyor...';
+      });
 
-        final accuracyStr = position.accuracy.toStringAsFixed(0);
+      final geoAddress = await const LocationService().getAddressFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        final accuracyStr = position!.accuracy.toStringAsFixed(0);
         if (position.accuracy > 100) {
           _locationStatusMessage =
               'Konum alındı. Hata payı: yaklaşık $accuracyStr m. Hata payı yüksek. Daha iyi sonuç için açık alanda tekrar deneyebilirsiniz.';
@@ -407,7 +420,10 @@ class _EditorScreenState extends State<EditorScreen>
 
         _isLocating = false;
 
-        if (_addressCtrl.text.trim().isEmpty) {
+        if (geoAddress != null && geoAddress.isNotEmpty) {
+          _addressCtrl.text = geoAddress;
+          _data.address = geoAddress;
+        } else if (_addressCtrl.text.trim().isEmpty) {
           _addressCtrl.text = 'Koordinatlarla işaretlenen konum';
           _data.address = 'Koordinatlarla işaretlenen konum';
         }
