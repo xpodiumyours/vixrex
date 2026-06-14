@@ -1,3 +1,13 @@
+function escapeHtmlAttr(unsafe) {
+  if (!unsafe) return '';
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export default async function handler(req, res) {
   const { slug } = req.query;
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -26,7 +36,6 @@ export default async function handler(req, res) {
     const stores = await supabaseResponse.json();
 
     if (!stores || stores.length === 0) {
-      // Return a standard clean 404 SEO page if the store is not found or not published
       res.status(404).send(`<!DOCTYPE html>
 <html>
 <head>
@@ -53,12 +62,12 @@ export default async function handler(req, res) {
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const publicUrl = `${protocol}://${host}/v/${store.slug}`;
 
-    // 1. Build LocalBusiness JSON-LD Schema
+    // 1. LocalBusiness JSON-LD Schema
     const localBusiness = {
       '@context': 'https://schema.org',
       '@type': 'LocalBusiness',
       'name': (store.name || '').trim(),
-      'description': (store.description || '').trim(),
+      'description': (store.description || store.corporate_bio || '').trim(),
     };
 
     if (store.address && store.address.trim().length > 0) {
@@ -80,22 +89,25 @@ export default async function handler(req, res) {
       localBusiness['telephone'] = store.whatsapp.trim();
     }
 
-    // Handle gallery image
-    let galleryItems = [];
-    try {
-      if (typeof store.gallery_items === 'string') {
-        galleryItems = JSON.parse(store.gallery_items);
-      } else if (Array.isArray(store.gallery_items)) {
-        galleryItems = store.gallery_items;
-      }
-    } catch (e) {
-      console.error('Failed to parse gallery_items', e);
+    if (store.logo_url && store.logo_url.trim().length > 0) {
+      localBusiness['logo'] = store.logo_url.trim();
     }
 
-    if (galleryItems.length > 0 && galleryItems[0].imageUrl) {
-      const imgUrl = galleryItems[0].imageUrl.trim();
-      if (imgUrl.length > 0) {
-        localBusiness['image'] = imgUrl;
+    // Cover image mapping
+    if (store.shelf_image_url && store.shelf_image_url.trim().length > 0) {
+      localBusiness['image'] = store.shelf_image_url.trim();
+    } else {
+      let galleryItems = [];
+      try {
+        if (typeof store.gallery_items === 'string') {
+          galleryItems = JSON.parse(store.gallery_items);
+        } else if (Array.isArray(store.gallery_items)) {
+          galleryItems = store.gallery_items;
+        }
+      } catch (e) {}
+
+      if (galleryItems.length > 0 && galleryItems[0].imageUrl) {
+        localBusiness['image'] = galleryItems[0].imageUrl.trim();
       }
     }
 
@@ -103,26 +115,16 @@ export default async function handler(req, res) {
       localBusiness['url'] = publicUrl;
     }
 
-    // Working Hours Parser
+    // Working Hours
     if (store.working_hours) {
       const hoursRegex = /^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/;
       const match = hoursRegex.exec(store.working_hours.trim());
       if (match) {
-        const opens = match[1];
-        const closes = match[2];
         localBusiness['openingHoursSpecification'] = {
           '@type': 'OpeningHoursSpecification',
-          'dayOfWeek': [
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday',
-            'Saturday',
-            'Sunday',
-          ],
-          'opens': opens,
-          'closes': closes,
+          'dayOfWeek': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+          'opens': match[1],
+          'closes': match[2],
         };
       }
     }
@@ -135,9 +137,7 @@ export default async function handler(req, res) {
       } else if (Array.isArray(store.products)) {
         products = store.products;
       }
-    } catch (e) {
-      console.error('Failed to parse products', e);
-    }
+    } catch (e) {}
 
     const digitRegex = /\d/;
     let hasNumericalPrice = false;
@@ -179,28 +179,28 @@ export default async function handler(req, res) {
           };
         }
       }
-
-      productsList.add ? productsList.add(productSchema) : productsList.push(productSchema);
+      productsList.push(productSchema);
     }
 
     let jsonLdMap = localBusiness;
     if (productsList.length > 0) {
       jsonLdMap = {
         '@context': 'https://schema.org',
-        '@graph': [
-          localBusiness,
-          ...productsList,
-        ],
+        '@graph': [localBusiness, ...productsList],
       };
     }
 
-    // Escape script tags in JSON strings just in case
     const jsonLdString = JSON.stringify(jsonLdMap).replace(/</g, '\\u003c');
 
-    const title = `${store.name || 'Vitrin'} - VitrinX`;
-    const description = store.description || 'Küçük işletmeler için dijital vitrin kartı.';
+    const rawTitle = store.name ? `${store.name} - VitrinX` : 'VitrinX';
+    const rawDesc = store.description || store.corporate_bio || 'Küçük işletmeler için dijital vitrin kartı.';
+    const shareImage = store.logo_url || store.shelf_image_url || `${protocol}://${host}/favicon.png`;
 
-    // 2. Generate HTML SEO Shell
+    const title = escapeHtmlAttr(rawTitle);
+    const description = escapeHtmlAttr(rawDesc);
+    const imageUrl = escapeHtmlAttr(shareImage);
+
+    // 2. Dynamic HTML Shell with Social Share Meta Tags
     const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -208,7 +208,21 @@ export default async function handler(req, res) {
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="${description.replace(/"/g, '&quot;')}">
+  <meta name="description" content="${description}">
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${imageUrl}">
+  <meta property="og:url" content="${publicUrl}">
+  <meta property="og:site_name" content="VitrinX">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${imageUrl}">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -219,7 +233,7 @@ export default async function handler(req, res) {
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="/favicon.png"/>
 
-  <title>${title.replace(/"/g, '&quot;')}</title>
+  <title>${title}</title>
   <link rel="canonical" href="${publicUrl}">
   <link rel="manifest" href="/manifest.json">
 
@@ -243,6 +257,8 @@ export default async function handler(req, res) {
 </body>
 </html>`;
 
+    // 30 Min cache, stale-while-revalidate for 5 minutes
+    res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=300');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(200).send(html);
   } catch (error) {
