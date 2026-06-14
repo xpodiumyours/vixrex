@@ -917,18 +917,26 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                 const SizedBox(height: 20),
                 _buildDangerZoneTile(
                   title: 'Mağazayı Sil',
-                  subtitle: 'Mevcut mağazanızı ve tüm yerel verilerinizi kalıcı olarak kaldırır.',
+                  subtitle:
+                      'Mevcut mağazanızı ve tüm yerel verilerinizi kalıcı olarak kaldırır.',
                   isLoading: _controller.isDeleting,
-                  onTap: _controller.isDeleting ? null : _showDeleteVitrinConfirmation,
+                  onTap:
+                      _controller.isDeleting
+                          ? null
+                          : _showDeleteVitrinConfirmation,
                   icon: Icons.delete_outline_rounded,
                 ),
                 if (const AuthService().currentUser != null) ...[
                   const SizedBox(height: 12),
                   _buildDangerZoneTile(
                     title: 'Hesabımı ve Tüm Verilerimi Sil',
-                    subtitle: 'Kullanıcı kaydınızı, mağaza/vitrinlerinizi ve tüm Supabase verilerinizi temizler.',
+                    subtitle:
+                        'Kullanıcı kaydınızı, mağaza/vitrinlerinizi ve tüm Supabase verilerinizi temizler.',
                     isLoading: _isDeletingAccount,
-                    onTap: _isDeletingAccount ? null : _showDeleteAccountConfirmation,
+                    onTap:
+                        _isDeletingAccount
+                            ? null
+                            : _showDeleteAccountConfirmation,
                     icon: Icons.person_remove_outlined,
                   ),
                 ],
@@ -975,20 +983,17 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                     color: const Color(0xFFFEF2F2),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.redAccent,
-                          ),
-                        )
-                      : Icon(
-                          icon,
-                          color: Colors.redAccent,
-                          size: 20,
-                        ),
+                  child:
+                      isLoading
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.redAccent,
+                            ),
+                          )
+                          : Icon(icon, color: Colors.redAccent, size: 20),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -1478,7 +1483,6 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
       ),
     );
   }
-
 
   Widget _buildLivePreviewMockup(BoxConstraints constraints) {
     final isMobilePreview = constraints.maxWidth < 520;

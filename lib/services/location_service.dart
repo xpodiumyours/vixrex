@@ -169,19 +169,24 @@ class LocationService {
     return resolvedPosition;
   }
 
-  Future<String?> getAddressFromCoordinates(double latitude, double longitude) async {
+  Future<String?> getAddressFromCoordinates(
+    double latitude,
+    double longitude,
+  ) async {
     try {
       final url = Uri.parse(
         'https://nominatim.openstreetmap.org/reverse?format=json&lat=$latitude&lon=$longitude&zoom=18&addressdetails=1',
       );
-      
-      final response = await http.get(
-        url,
-        headers: {
-          'User-Agent': 'VitrinX-Flutter-App',
-          'Accept-Language': 'tr-TR,tr;q=0.9',
-        },
-      ).timeout(const Duration(seconds: 5));
+
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'User-Agent': 'VitrinX-Flutter-App',
+              'Accept-Language': 'tr-TR,tr;q=0.9',
+            },
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
@@ -189,8 +194,13 @@ class LocationService {
 
         if (addressData != null) {
           final road = addressData['road'] ?? addressData['street'] ?? '';
-          final suburb = addressData['suburb'] ?? addressData['neighbourhood'] ?? '';
-          final town = addressData['town'] ?? addressData['city_district'] ?? addressData['district'] ?? '';
+          final suburb =
+              addressData['suburb'] ?? addressData['neighbourhood'] ?? '';
+          final town =
+              addressData['town'] ??
+              addressData['city_district'] ??
+              addressData['district'] ??
+              '';
           final city = addressData['city'] ?? addressData['province'] ?? '';
 
           final parts = <String>[];
@@ -203,7 +213,7 @@ class LocationService {
             return parts.join(', ');
           }
         }
-        
+
         return data['display_name'] as String?;
       }
     } catch (e) {

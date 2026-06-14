@@ -33,11 +33,7 @@ class StorePublishPayloadBuilder {
     String slug,
     String editToken,
   ) {
-    return {
-      'slug': slug,
-      'edit_token': editToken,
-      ...toStoreUpdateMap(data),
-    };
+    return {'slug': slug, 'edit_token': editToken, ...toStoreUpdateMap(data)};
   }
 
   Map<String, dynamic> toStoreUpdateMap(StoreData data) {

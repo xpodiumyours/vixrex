@@ -621,10 +621,7 @@ class _LandingScreenState extends State<LandingScreen>
                   icon: const Icon(Icons.explore_rounded, size: 16),
                   label: const Text(
                     "VitrinX'leri Keşfet",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: darkAccent,
@@ -720,7 +717,10 @@ class _LandingScreenState extends State<LandingScreen>
                     icon: const Icon(Icons.login_rounded, size: 16),
                     label: const Text(
                       'Giriş Yap',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: brandOrange,
@@ -989,18 +989,17 @@ class _LandingScreenState extends State<LandingScreen>
 
     return isDesktop
         ? Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.start,
-            children: buttons,
-          )
+          spacing: 12,
+          runSpacing: 12,
+          alignment: WrapAlignment.start,
+          children: buttons,
+        )
         : Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: buttons
-                .expand((b) => [b, const SizedBox(height: 12)])
-                .toList()
-              ..removeLast(),
-          );
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children:
+              buttons.expand((b) => [b, const SizedBox(height: 12)]).toList()
+                ..removeLast(),
+        );
   }
 
   Widget _buildClaimBar({required bool isDesktop}) {
@@ -1621,25 +1620,29 @@ class _LandingScreenState extends State<LandingScreen>
       {
         'icon': Icons.map_rounded,
         'title': 'Harita & Konum Entegrasyonu',
-        'desc': 'Dükkan adresiniz ve konum koordinatlarınız, Google Haritalar standartlarına tam uyumlu olarak arka planda işlenir.',
+        'desc':
+            'Dükkan adresiniz ve konum koordinatlarınız, Google Haritalar standartlarına tam uyumlu olarak arka planda işlenir.',
         'color': const Color(0xFFFF5A1F),
       },
       {
         'icon': Icons.qr_code_scanner_rounded,
         'title': 'Akıllı Arama Kartı Yapısı',
-        'desc': 'Ürünleriniz, Google botlarının dükkanınızı doğrudan listeleyebileceği yapılandırılmış veri (JSON-LD) formatında sunulur.',
+        'desc':
+            'Ürünleriniz, Google botlarının dükkanınızı doğrudan listeleyebileceği yapılandırılmış veri (JSON-LD) formatında sunulur.',
         'color': const Color(0xFF2563EB),
       },
       {
         'icon': Icons.bolt_rounded,
         'title': 'Hız & Performans Optimizasyonu',
-        'desc': 'Yüklediğiniz fotoğraflar kalitesi bozulmadan sıkıştırılır. Hızlı açılan sayfalar aramalarda daha üst sıralara taşınır.',
+        'desc':
+            'Yüklediğiniz fotoğraflar kalitesi bozulmadan sıkıştırılır. Hızlı açılan sayfalar aramalarda daha üst sıralara taşınır.',
         'color': const Color(0xFF10B981),
       },
       {
         'icon': Icons.rocket_launch_rounded,
         'title': 'Sosyal Paylaşım Hızlandırıcı',
-        'desc': 'Vitrin linkinizi WhatsApp veya Instagram\'da paylaştığınızda, Google botlarına dükkanınızı taraması için otomatik teknik sinyal gönderilir.',
+        'desc':
+            'Vitrin linkinizi WhatsApp veya Instagram\'da paylaştığınızda, Google botlarına dükkanınızı taraması için otomatik teknik sinyal gönderilir.',
         'color': const Color(0xFFDB2777),
       },
     ];
@@ -1654,7 +1657,10 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF0EA),
                   borderRadius: BorderRadius.circular(30),
@@ -1663,7 +1669,11 @@ class _LandingScreenState extends State<LandingScreen>
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.auto_awesome_rounded, color: Color(0xFFFF5A1F), size: 14),
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Color(0xFFFF5A1F),
+                      size: 14,
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'ÜCRETSİZ PREMİUM ENTEGRASYON',
@@ -1706,93 +1716,117 @@ class _LandingScreenState extends State<LandingScreen>
                     spacing: 24,
                     runSpacing: 24,
                     alignment: WrapAlignment.center,
-                    children: seoItems.map((item) {
-                      final iconColor = item['color'] as Color;
-                      return Container(
-                        width: isDesktop ? (constraints.maxWidth - 24) / 2 : constraints.maxWidth,
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: const Color.fromRGBO(15, 23, 42, 0.06), width: 1.5),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color.fromRGBO(0, 0, 0, 0.015),
-                              blurRadius: 16,
-                              offset: Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: iconColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(16),
+                    children:
+                        seoItems.map((item) {
+                          final iconColor = item['color'] as Color;
+                          return Container(
+                            width:
+                                isDesktop
+                                    ? (constraints.maxWidth - 24) / 2
+                                    : constraints.maxWidth,
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: const Color.fromRGBO(15, 23, 42, 0.06),
+                                width: 1.5,
                               ),
-                              child: Icon(item['icon'] as IconData, color: iconColor, size: 24),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color.fromRGBO(0, 0, 0, 0.015),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 8),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 18),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: iconColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Icon(
+                                    item['icon'] as IconData,
+                                    color: iconColor,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 18),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: Text(
-                                          item['title'] as String,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w900,
-                                            color: Color(0xFF0F172A),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFECFDF5),
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(color: const Color(0xFFA7F3D0), width: 0.8),
-                                        ),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.check_circle_outline_rounded, color: Color(0xFF059669), size: 10),
-                                            SizedBox(width: 3),
-                                            Text(
-                                              'Aktif',
-                                              style: TextStyle(
-                                                color: Color(0xFF059669),
-                                                fontSize: 9,
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              item['title'] as String,
+                                              style: const TextStyle(
+                                                fontSize: 16,
                                                 fontWeight: FontWeight.w900,
+                                                color: Color(0xFF0F172A),
                                               ),
                                             ),
-                                          ],
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFECFDF5),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: const Color(0xFFA7F3D0),
+                                                width: 0.8,
+                                              ),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons
+                                                      .check_circle_outline_rounded,
+                                                  color: Color(0xFF059669),
+                                                  size: 10,
+                                                ),
+                                                SizedBox(width: 3),
+                                                Text(
+                                                  'Aktif',
+                                                  style: TextStyle(
+                                                    color: Color(0xFF059669),
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        item['desc'] as String,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: Color(0xFF475569),
+                                          height: 1.5,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    item['desc'] as String,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF475569),
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                          );
+                        }).toList(),
                   );
                 },
               ),

@@ -141,7 +141,10 @@ class LegalScreen extends StatelessWidget {
                       _Header(type: type),
                       const SizedBox(height: 24),
                       for (final section in sections) ...[
-                        _LegalSection(section: section, accentColor: type.accentColor),
+                        _LegalSection(
+                          section: section,
+                          accentColor: type.accentColor,
+                        ),
                         const SizedBox(height: 16),
                       ],
                       const SizedBox(height: 8),
@@ -151,7 +154,9 @@ class LegalScreen extends StatelessWidget {
                         child: Text(
                           'Son güncelleme: 12 Haziran 2026',
                           style: TextStyle(
-                            color: const Color(0xFF0F172A).withValues(alpha: 0.45),
+                            color: const Color(
+                              0xFF0F172A,
+                            ).withValues(alpha: 0.45),
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -345,11 +350,7 @@ class _Header extends StatelessWidget {
                   color: type.accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  type.icon,
-                  color: type.accentColor,
-                  size: 26,
-                ),
+                child: Icon(type.icon, color: type.accentColor, size: 26),
               ),
             ],
           ),
@@ -451,7 +452,9 @@ class _EmailContactCardState extends State<_EmailContactCard> {
   bool _isCopied = false;
 
   Future<void> _copyEmail() async {
-    await Clipboard.setData(const ClipboardData(text: LegalConfig.privacyEmail));
+    await Clipboard.setData(
+      const ClipboardData(text: LegalConfig.privacyEmail),
+    );
     setState(() => _isCopied = true);
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _isCopied = false);
@@ -486,14 +489,21 @@ class _EmailContactCardState extends State<_EmailContactCard> {
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: widget.accentColor.withValues(alpha: 0.18), width: 1.2),
+        border: Border.all(
+          color: widget.accentColor.withValues(alpha: 0.18),
+          width: 1.2,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.mail_outline_rounded, color: widget.accentColor, size: 22),
+              Icon(
+                Icons.mail_outline_rounded,
+                color: widget.accentColor,
+                size: 22,
+              ),
               const SizedBox(width: 8),
               const Text(
                 'İletişim & Hızlı Talep',
@@ -521,20 +531,20 @@ class _EmailContactCardState extends State<_EmailContactCard> {
               final isSmall = constraints.maxWidth < 420;
               return isSmall
                   ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildEmailAddressBox(),
-                        const SizedBox(height: 10),
-                        _buildEmailActionButton(),
-                      ],
-                    )
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildEmailAddressBox(),
+                      const SizedBox(height: 10),
+                      _buildEmailActionButton(),
+                    ],
+                  )
                   : Row(
-                      children: [
-                        Expanded(child: _buildEmailAddressBox()),
-                        const SizedBox(width: 12),
-                        _buildEmailActionButton(),
-                      ],
-                    );
+                    children: [
+                      Expanded(child: _buildEmailAddressBox()),
+                      const SizedBox(width: 12),
+                      _buildEmailActionButton(),
+                    ],
+                  );
             },
           ),
         ],
@@ -568,9 +578,20 @@ class _EmailContactCardState extends State<_EmailContactCard> {
             ),
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 200),
-              crossFadeState: _isCopied ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-              firstChild: Icon(Icons.copy_rounded, color: widget.accentColor, size: 18),
-              secondChild: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+              crossFadeState:
+                  _isCopied
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+              firstChild: Icon(
+                Icons.copy_rounded,
+                color: widget.accentColor,
+                size: 18,
+              ),
+              secondChild: const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF10B981),
+                size: 18,
+              ),
             ),
           ],
         ),
@@ -586,9 +607,7 @@ class _EmailContactCardState extends State<_EmailContactCard> {
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,

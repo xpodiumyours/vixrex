@@ -65,7 +65,8 @@ class FakeSupabaseQueryBuilder implements SupabaseQueryBuilder {
   }
 }
 
-class FakePostgrestFilterBuilder<T> implements PostgrestFilterBuilder<T>, Future<T> {
+class FakePostgrestFilterBuilder<T>
+    implements PostgrestFilterBuilder<T>, Future<T> {
   final FakeSupabaseClient client;
   final bool isInsert;
   FakePostgrestFilterBuilder(this.client, {this.isInsert = false});
@@ -96,12 +97,16 @@ class FakePostgrestFilterBuilder<T> implements PostgrestFilterBuilder<T>, Future
   }
 
   @override
-  Future<R> then<R>(FutureOr<R> Function(T value) onValue, {Function? onError}) {
+  Future<R> then<R>(
+    FutureOr<R> Function(T value) onValue, {
+    Function? onError,
+  }) {
     return _future.then(onValue, onError: onError);
   }
 }
 
-class FakePostgrestTransformBuilder<T> implements PostgrestTransformBuilder<T>, Future<T> {
+class FakePostgrestTransformBuilder<T>
+    implements PostgrestTransformBuilder<T>, Future<T> {
   final FakeSupabaseClient client;
   FakePostgrestTransformBuilder(this.client);
 
@@ -114,7 +119,10 @@ class FakePostgrestTransformBuilder<T> implements PostgrestTransformBuilder<T>, 
   }
 
   @override
-  Future<R> then<R>(FutureOr<R> Function(T value) onValue, {Function? onError}) {
+  Future<R> then<R>(
+    FutureOr<R> Function(T value) onValue, {
+    Function? onError,
+  }) {
     return _future.then(onValue, onError: onError);
   }
 
@@ -164,50 +172,65 @@ void main() {
   });
 
   group('StorePublishService.publishStore - Güncelleme', () {
-    test('Mağaza zaten mevcutsa update_store_with_token rpc fonksiyonunu çağırır', () async {
-      fakeClient.selectResponse = {'slug': 'test-magazasi'};
+    test(
+      'Mağaza zaten mevcutsa update_store_with_token rpc fonksiyonunu çağırır',
+      () async {
+        fakeClient.selectResponse = {'slug': 'test-magazasi'};
 
-      final result = await service.publishStore(sampleStore, editToken: 't123');
+        final result = await service.publishStore(
+          sampleStore,
+          editToken: 't123',
+        );
 
-      expect(result.wasUpdated, isTrue);
-      expect(result.publicPath, '/v/test-magazasi');
-      expect(fakeClient.rpcCalls.length, 1);
-      expect(fakeClient.rpcCalls.first['fn'], 'update_store_with_token');
-      expect(fakeClient.rpcCalls.first['params']['p_edit_token'], 't123');
-    });
+        expect(result.wasUpdated, isTrue);
+        expect(result.publicPath, '/v/test-magazasi');
+        expect(fakeClient.rpcCalls.length, 1);
+        expect(fakeClient.rpcCalls.first['fn'], 'update_store_with_token');
+        expect(fakeClient.rpcCalls.first['params']['p_edit_token'], 't123');
+      },
+    );
 
-    test('Duplicate slug hatası (23505) aldığında token update fonksiyonunu tetikler', () async {
-      fakeClient.selectResponse = null;
-      fakeClient.postgrestExceptionToThrowOnInsert = const PostgrestException(
-        message: 'duplicate key value violates unique constraint',
-        code: '23505',
-      );
+    test(
+      'Duplicate slug hatası (23505) aldığında token update fonksiyonunu tetikler',
+      () async {
+        fakeClient.selectResponse = null;
+        fakeClient.postgrestExceptionToThrowOnInsert = const PostgrestException(
+          message: 'duplicate key value violates unique constraint',
+          code: '23505',
+        );
 
-      final result = await service.publishStore(sampleStore, editToken: 't123');
+        final result = await service.publishStore(
+          sampleStore,
+          editToken: 't123',
+        );
 
-      expect(result.wasUpdated, isTrue);
-      expect(result.publicPath, '/v/test-magazasi');
-      expect(fakeClient.rpcCalls.length, 1);
-      expect(fakeClient.rpcCalls.first['fn'], 'update_store_with_token');
-    });
+        expect(result.wasUpdated, isTrue);
+        expect(result.publicPath, '/v/test-magazasi');
+        expect(fakeClient.rpcCalls.length, 1);
+        expect(fakeClient.rpcCalls.first['fn'], 'update_store_with_token');
+      },
+    );
 
-    test('Yetki/RLS hatası aldığında uygun açıklayıcı mesaj fırlatır', () async {
-      fakeClient.selectResponse = {'slug': 'test-magazasi'};
-      fakeClient.postgrestExceptionToThrow = const PostgrestException(
-        message: 'row-level security policy violation',
-        code: '42501',
-      );
+    test(
+      'Yetki/RLS hatası aldığında uygun açıklayıcı mesaj fırlatır',
+      () async {
+        fakeClient.selectResponse = {'slug': 'test-magazasi'};
+        fakeClient.postgrestExceptionToThrow = const PostgrestException(
+          message: 'row-level security policy violation',
+          code: '42501',
+        );
 
-      expect(
-        () => service.publishStore(sampleStore, editToken: 't123'),
-        throwsA(
-          isA<StorePublishException>().having(
-            (e) => e.toString(),
-            'message',
-            contains('Supabase tarafında eksik'),
+        expect(
+          () => service.publishStore(sampleStore, editToken: 't123'),
+          throwsA(
+            isA<StorePublishException>().having(
+              (e) => e.toString(),
+              'message',
+              contains('Supabase tarafında eksik'),
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   });
 }

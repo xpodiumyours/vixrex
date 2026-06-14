@@ -17,7 +17,6 @@ void main() {
       expect(service.sanitizeSlug('my-store/gallery'), 'my-store/gallery');
     });
 
-
     test('boş string fallback döner', () {
       expect(service.sanitizeSlug(''), 'magazaniz');
     });

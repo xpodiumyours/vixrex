@@ -8,10 +8,7 @@ import 'package:vitrinx/services/store_shelf_upload_service.dart';
 class StoreProductsSection extends StatefulWidget {
   final StoreEditorController controller;
 
-  const StoreProductsSection({
-    super.key,
-    required this.controller,
-  });
+  const StoreProductsSection({super.key, required this.controller});
 
   @override
   State<StoreProductsSection> createState() => _StoreProductsSectionState();
@@ -82,12 +79,17 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
                 width: 48,
                 height: 48,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 48,
-                  height: 48,
-                  color: inputBg,
-                  child: const Icon(Icons.image_not_supported_rounded, size: 20, color: mutedText),
-                ),
+                errorBuilder:
+                    (_, __, ___) => Container(
+                      width: 48,
+                      height: 48,
+                      color: inputBg,
+                      child: const Icon(
+                        Icons.image_not_supported_rounded,
+                        size: 20,
+                        color: mutedText,
+                      ),
+                    ),
               ),
             )
           else
@@ -98,7 +100,11 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
                 color: inputBg,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.shopping_bag_outlined, size: 20, color: mutedText),
+              child: const Icon(
+                Icons.shopping_bag_outlined,
+                size: 20,
+                color: mutedText,
+              ),
             ),
           const SizedBox(width: 12),
           Expanded(
@@ -142,7 +148,11 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
             onPressed: () => _showProductFormDialog(context, editIndex: index),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
+            icon: const Icon(
+              Icons.delete_outline_rounded,
+              size: 18,
+              color: Colors.redAccent,
+            ),
             onPressed: () => controller.removeProduct(index, context),
           ),
         ],
@@ -153,9 +163,10 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
   void _showProductFormDialog(BuildContext context, {int? editIndex}) {
     final controller = widget.controller;
     final isEdit = editIndex != null;
-    final product = isEdit
-        ? controller.data.products[editIndex]
-        : Product(id: DateTime.now().microsecondsSinceEpoch.toString());
+    final product =
+        isEdit
+            ? controller.data.products[editIndex]
+            : Product(id: DateTime.now().microsecondsSinceEpoch.toString());
 
     final nameCtrl = TextEditingController(text: product.name);
     final priceCtrl = TextEditingController(text: product.price);
@@ -164,8 +175,20 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
     String? productImagePath = product.imagePath;
     bool isUploadingImage = false;
 
-    final productCategories = const ['Genel', 'Elbise', 'Günlük giyim', 'Ayakkabı', 'Aksesuar', 'Yiyecek & İçecek', 'Elektronik', 'Diğer'];
-    String selectedCategory = productCategories.contains(product.category) ? product.category : 'Genel';
+    final productCategories = const [
+      'Genel',
+      'Elbise',
+      'Günlük giyim',
+      'Ayakkabı',
+      'Aksesuar',
+      'Yiyecek & İçecek',
+      'Elektronik',
+      'Diğer',
+    ];
+    String selectedCategory =
+        productCategories.contains(product.category)
+            ? product.category
+            : 'Genel';
 
     const primaryColor = Color(0xFFFF4D00);
     const darkText = Color(0xFF111827);
@@ -184,13 +207,13 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
                 withData: true,
               );
               if (result == null || result.files.isEmpty) return;
-              
+
               setDialogState(() => isUploadingImage = true);
               try {
                 final file = result.files.first;
                 final bytes = file.bytes;
                 if (bytes == null) return;
-                
+
                 final slug = controller.generateStoreSlug(controller.data.name);
                 final uploadService = const StoreShelfUploadService();
                 final url = await uploadService.uploadShelfImage(
@@ -213,10 +236,15 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
 
             return AlertDialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               title: Text(
                 isEdit ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: darkText),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: darkText,
+                ),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -232,33 +260,55 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: cardBorder),
                         ),
-                        child: isUploadingImage
-                            ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
-                            : (productImagePath != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(productImagePath!, fit: BoxFit.cover),
-                                  )
-                                : const Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.add_a_photo_rounded, color: mutedText),
-                                      SizedBox(height: 4),
-                                      Text('Fotoğraf', style: TextStyle(fontSize: 11, color: mutedText)),
-                                    ],
-                                  )),
+                        child:
+                            isUploadingImage
+                                ? const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : (productImagePath != null
+                                    ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                        productImagePath!,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                    : const Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.add_a_photo_rounded,
+                                          color: mutedText,
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          'Fotoğraf',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: mutedText,
+                                          ),
+                                        ),
+                                      ],
+                                    )),
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: nameCtrl,
-                      decoration: const InputDecoration(labelText: 'Ürün Adı *'),
+                      decoration: const InputDecoration(
+                        labelText: 'Ürün Adı *',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: priceCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Fiyat (TL)'),
+                      decoration: const InputDecoration(
+                        labelText: 'Fiyat (TL)',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -269,20 +319,41 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       value: selectedCategory,
-                      decoration: const InputDecoration(labelText: 'Ürün Kategorisi'),
-                      items: productCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                      onChanged: (v) => setDialogState(() => selectedCategory = v!),
+                      decoration: const InputDecoration(
+                        labelText: 'Ürün Kategorisi',
+                      ),
+                      items:
+                          productCategories
+                              .map(
+                                (c) =>
+                                    DropdownMenuItem(value: c, child: Text(c)),
+                              )
+                              .toList(),
+                      onChanged:
+                          (v) => setDialogState(() => selectedCategory = v!),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       value: selectedStatus,
-                      decoration: const InputDecoration(labelText: 'Stok Durumu'),
+                      decoration: const InputDecoration(
+                        labelText: 'Stok Durumu',
+                      ),
                       items: const [
-                        DropdownMenuItem(value: 'Mevcut', child: Text('Mevcut')),
-                        DropdownMenuItem(value: 'Son birkaç adet', child: Text('Son birkaç adet')),
-                        DropdownMenuItem(value: 'Tükendi', child: Text('Tükendi')),
+                        DropdownMenuItem(
+                          value: 'Mevcut',
+                          child: Text('Mevcut'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Son birkaç adet',
+                          child: Text('Son birkaç adet'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Tükendi',
+                          child: Text('Tükendi'),
+                        ),
                       ],
-                      onChanged: (v) => setDialogState(() => selectedStatus = v!),
+                      onChanged:
+                          (v) => setDialogState(() => selectedStatus = v!),
                     ),
                   ],
                 ),
@@ -290,7 +361,10 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Vazgeç', style: TextStyle(color: mutedText)),
+                  child: const Text(
+                    'Vazgeç',
+                    style: TextStyle(color: mutedText),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () {

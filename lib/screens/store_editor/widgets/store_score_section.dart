@@ -105,7 +105,9 @@ class VisibilityBoostIcon extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withAlpha((0.84 * 255).round()),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFF4D00).withAlpha((0.14 * 255).round())),
+        border: Border.all(
+          color: const Color(0xFFFF4D00).withAlpha((0.14 * 255).round()),
+        ),
       ),
       child: const Icon(
         Icons.travel_explore_rounded,
@@ -186,33 +188,36 @@ class GoogleVisibilityCta extends StatelessWidget {
               ],
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: primaryColor.withAlpha((0.18 * 255).round())),
+            border: Border.all(
+              color: primaryColor.withAlpha((0.18 * 255).round()),
+            ),
           ),
-          child: isNarrow
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const VisibilityBoostIcon(),
-                        const SizedBox(width: 10),
-                        Expanded(child: textContent),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Align(alignment: Alignment.centerRight, child: action),
-                  ],
-                )
-              : Row(
-                  children: [
-                    const VisibilityBoostIcon(),
-                    const SizedBox(width: 12),
-                    Expanded(child: textContent),
-                    const SizedBox(width: 12),
-                    action,
-                  ],
-                ),
+          child:
+              isNarrow
+                  ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const VisibilityBoostIcon(),
+                          const SizedBox(width: 10),
+                          Expanded(child: textContent),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Align(alignment: Alignment.centerRight, child: action),
+                    ],
+                  )
+                  : Row(
+                    children: [
+                      const VisibilityBoostIcon(),
+                      const SizedBox(width: 12),
+                      Expanded(child: textContent),
+                      const SizedBox(width: 12),
+                      action,
+                    ],
+                  ),
         );
       },
     );
@@ -390,7 +395,10 @@ Future<void> showStoreScoreSheet({
                       borderRadius: BorderRadius.circular(15),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: inputBg,
                           borderRadius: BorderRadius.circular(15),
@@ -405,7 +413,11 @@ Future<void> showStoreScoreSheet({
                                 color: tone.withAlpha((0.1 * 255).round()),
                                 borderRadius: BorderRadius.circular(9),
                               ),
-                              child: Icon(Icons.checklist_rounded, color: tone, size: 15),
+                              child: Icon(
+                                Icons.checklist_rounded,
+                                color: tone,
+                                size: 15,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(

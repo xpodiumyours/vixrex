@@ -2574,7 +2574,8 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
                 const SizedBox(height: 20),
                 _buildDangerZoneTile(
                   title: 'Vitrini Sil',
-                  subtitle: 'Mevcut vitrininizi ve tüm yerel verilerinizi kalıcı olarak kaldırır.',
+                  subtitle:
+                      'Mevcut vitrininizi ve tüm yerel verilerinizi kalıcı olarak kaldırır.',
                   isLoading: _isDeleting,
                   onTap: _isDeleting ? null : _showDeleteVitrinConfirmation,
                   icon: Icons.delete_outline_rounded,
@@ -2583,9 +2584,13 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
                   const SizedBox(height: 12),
                   _buildDangerZoneTile(
                     title: 'Hesabımı ve Tüm Verilerimi Sil',
-                    subtitle: 'Kullanıcı kaydınızı, vitrinlerinizi ve tüm Supabase verilerinizi temizler.',
+                    subtitle:
+                        'Kullanıcı kaydınızı, vitrinlerinizi ve tüm Supabase verilerinizi temizler.',
                     isLoading: _isDeletingAccount,
-                    onTap: _isDeletingAccount ? null : _showDeleteAccountConfirmation,
+                    onTap:
+                        _isDeletingAccount
+                            ? null
+                            : _showDeleteAccountConfirmation,
                     icon: Icons.person_remove_outlined,
                   ),
                 ],
@@ -2633,20 +2638,17 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
                     color: const Color(0xFFFEF2F2),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.redAccent,
-                          ),
-                        )
-                      : Icon(
-                          icon,
-                          color: Colors.redAccent,
-                          size: 20,
-                        ),
+                  child:
+                      isLoading
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.redAccent,
+                            ),
+                          )
+                          : Icon(icon, color: Colors.redAccent, size: 20),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -4809,7 +4811,8 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
         ),
       ),
     );
-  }}
+  }
+}
 
 class _EditorGalleryItem {
   final String id;

@@ -56,11 +56,15 @@ class StorePublishService {
         return StorePublishResult(publicPath: '/v/$slug', wasUpdated: true);
       }
 
-      throw StorePublishException(_messageForPostgrestError(error, data.isStore));
+      throw StorePublishException(
+        _messageForPostgrestError(error, data.isStore),
+      );
     } on StorePublishException {
       rethrow;
     } catch (error) {
-      throw StorePublishException(_messageForUnexpectedError(error, data.isStore));
+      throw StorePublishException(
+        _messageForUnexpectedError(error, data.isStore),
+      );
     }
   }
 
@@ -80,7 +84,9 @@ class StorePublishService {
         },
       );
     } on PostgrestException catch (error) {
-      throw StorePublishException(_messageForPostgrestError(error, data.isStore));
+      throw StorePublishException(
+        _messageForPostgrestError(error, data.isStore),
+      );
     }
   }
 

@@ -6,8 +6,7 @@ import 'dart:math';
 /// Hem store hem vitrin akışlarında kullanılır.
 abstract final class TokenGenerator {
   static const int _tokenLength = 24;
-  static const String _chars =
-      'abcdefghijklmnopqrstuvwxyz0123456789';
+  static const String _chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
   /// 24 karakterlik rastgele bir edit token üretir.
   ///

@@ -27,9 +27,10 @@ class EditorGalleryItem {
 
   factory EditorGalleryItem.fromStoreItem(StoreGalleryItem item) {
     return EditorGalleryItem(
-      id: item.id.isEmpty
-          ? DateTime.now().microsecondsSinceEpoch.toString()
-          : item.id,
+      id:
+          item.id.isEmpty
+              ? DateTime.now().microsecondsSinceEpoch.toString()
+              : item.id,
       imageUrl: item.imageUrl,
       title: item.title,
       description: item.description,

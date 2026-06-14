@@ -56,7 +56,7 @@ class VitrinView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (publicMode) {
-      injectStoreJsonLd(storeData);
+      injectStoreJsonLd(storeData, publicUrl: publicLink);
     }
     final preset = vitrinThemePresetFor(storeData.theme);
     final themeData = _getThemeData(preset);
@@ -1220,7 +1220,8 @@ class VitrinView extends StatelessWidget {
             _ModernLinkItem(
               icon: Icons.contact_page_rounded,
               title: 'Kişilerime Ekle',
-              subtitle: 'Tek dokunuşla tüm iletişim bilgilerini rehberine kaydet',
+              subtitle:
+                  'Tek dokunuşla tüm iletişim bilgilerini rehberine kaydet',
               color: Colors.teal.shade500,
               radius: radius,
               compact: isCompact,
@@ -1234,7 +1235,8 @@ class VitrinView extends StatelessWidget {
                   (ctx) => _ModernLinkItem(
                     icon: Icons.contact_page_rounded,
                     title: 'Kişilerime Ekle',
-                    subtitle: 'Tek dokunuşla tüm iletişim bilgilerini rehberine kaydet',
+                    subtitle:
+                        'Tek dokunuşla tüm iletişim bilgilerini rehberine kaydet',
                     color: Colors.teal.shade500,
                     radius: radius,
                     compact: isCompact,
@@ -1311,9 +1313,10 @@ class VitrinView extends StatelessWidget {
     final phone = storeData.whatsapp.trim();
     final address = storeData.address.trim();
     final website = storeData.website.trim();
-    final bio = storeData.corporateBio.trim().isNotEmpty
-        ? storeData.corporateBio.trim()
-        : storeData.description.trim();
+    final bio =
+        storeData.corporateBio.trim().isNotEmpty
+            ? storeData.corporateBio.trim()
+            : storeData.description.trim();
 
     final card = StringBuffer();
     card.writeln('BEGIN:VCARD');
@@ -1329,7 +1332,9 @@ class VitrinView extends StatelessWidget {
       card.writeln('URL;TYPE=WORK:$website');
     }
     if (address.isNotEmpty) {
-      final escapedAddress = address.replaceAll(',', '\\,').replaceAll('\n', ' ');
+      final escapedAddress = address
+          .replaceAll(',', '\\,')
+          .replaceAll('\n', ' ');
       card.writeln('ADR;TYPE=WORK:;;$escapedAddress;;;;');
     }
     if (bio.isNotEmpty) {
@@ -1350,10 +1355,7 @@ class VitrinView extends StatelessWidget {
     );
 
     try {
-      final didLaunch = await launchUrl(
-        uri,
-        mode: LaunchMode.platformDefault,
-      );
+      final didLaunch = await launchUrl(uri, mode: LaunchMode.platformDefault);
       if (!didLaunch && context.mounted) {
         await _copyVCardToClipboard(context);
       }

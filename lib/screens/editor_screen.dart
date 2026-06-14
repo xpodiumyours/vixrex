@@ -401,10 +401,8 @@ class _EditorScreenState extends State<EditorScreen>
         _locationStatusMessage = 'Adres çözümleniyor...';
       });
 
-      final geoAddress = await const LocationService().getAddressFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
+      final geoAddress = await const LocationService()
+          .getAddressFromCoordinates(position.latitude, position.longitude);
 
       if (!mounted) return;
 

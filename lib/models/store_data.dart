@@ -59,7 +59,6 @@ class Product {
   }
 }
 
-
 class MarketplaceLink {
   String id;
   String platform; // 'Trendyol', 'Hepsiburada', 'N11', 'Diğer'
@@ -123,6 +122,7 @@ class StoreData {
   String address;
   String theme;
   String status;
+
   /// Esnaf modu flag'i. [PreviewScreen] tarafından kullanıldığı için kaldırılamaz.
   bool isEsnafMode;
   String? logoUrl;
@@ -222,26 +222,25 @@ class StoreData {
       address: _getString(json, 'address') ?? '',
       theme: _getString(json, 'theme') ?? 'Premium',
       status: _getString(json, 'status') ?? 'Açık',
-      isEsnafMode: (json['isEsnafMode'] ?? json['is_esnaf_mode'] ?? true) as bool,
+      isEsnafMode:
+          (json['isEsnafMode'] ?? json['is_esnaf_mode'] ?? true) as bool,
       logoUrl: _getString(json, 'logoUrl', 'logo_url'),
-      products: (json['products'] as List?)
-          ?.map((e) => Product.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      products:
+          (json['products'] as List?)
+              ?.map((e) => Product.fromJson(e as Map<String, dynamic>))
+              .toList(),
       marketplaceLinks:
           ((json['marketplaceLinks'] ?? json['marketplace_links']) as List?)
               ?.map((e) => MarketplaceLink.fromJson(e as Map<String, dynamic>))
               .toList(),
-      corporateBio:
-          _getString(json, 'corporateBio', 'corporate_bio') ?? '',
+      corporateBio: _getString(json, 'corporateBio', 'corporate_bio') ?? '',
       referencesLink:
           _getString(json, 'referencesLink', 'references_link') ?? '',
-      shelfImageUrl:
-          _getString(json, 'shelfImageUrl', 'shelf_image_url') ?? '',
+      shelfImageUrl: _getString(json, 'shelfImageUrl', 'shelf_image_url') ?? '',
       galleryItems: parsedGalleryItems,
       isStore: (json['is_store'] ?? json['isStore'] ?? false) as bool,
       kategori: _getString(json, 'kategori', 'category') ?? '',
-      workingHours:
-          _getString(json, 'workingHours', 'working_hours') ?? '',
+      workingHours: _getString(json, 'workingHours', 'working_hours') ?? '',
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       locationAccuracyMeters:
@@ -251,8 +250,7 @@ class StoreData {
       locationConsentAt: _parseDateTime(
         json['locationConsentAt'] ?? json['location_consent_at'],
       ),
-      locationSource:
-          _getString(json, 'locationSource', 'location_source'),
+      locationSource: _getString(json, 'locationSource', 'location_source'),
     );
   }
 

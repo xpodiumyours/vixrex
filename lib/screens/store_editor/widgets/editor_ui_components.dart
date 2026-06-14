@@ -138,9 +138,16 @@ class EditorTextField extends StatelessWidget {
           controller: controller,
           initialValue: controller == null ? initial : null,
           maxLines: maxLines,
-          style: const TextStyle(fontSize: 14, color: Color(0xFF111827), fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF111827),
+            fontWeight: FontWeight.w600,
+          ),
           decoration: InputDecoration(
-            prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: mutedText, size: 18) : null,
+            prefixIcon:
+                prefixIcon != null
+                    ? Icon(prefixIcon, color: mutedText, size: 18)
+                    : null,
             suffixIcon: suffixIcon,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -235,12 +242,10 @@ class EditorDropdown extends StatelessWidget {
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
-          items: items.map((String val) {
-            return DropdownMenuItem<String>(
-              value: val,
-              child: Text(val),
-            );
-          }).toList(),
+          items:
+              items.map((String val) {
+                return DropdownMenuItem<String>(value: val, child: Text(val));
+              }).toList(),
           onChanged: onChanged,
         ),
       ],
@@ -273,21 +278,28 @@ class ScoreTargetAnchor extends StatelessWidget {
       curve: Curves.easeOutCubic,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isHighlighted ? primaryColor.withAlpha((0.08 * 255).round()) : Colors.transparent,
+        color:
+            isHighlighted
+                ? primaryColor.withAlpha((0.08 * 255).round())
+                : Colors.transparent,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isHighlighted ? primaryColor.withAlpha((0.42 * 255).round()) : Colors.transparent,
+          color:
+              isHighlighted
+                  ? primaryColor.withAlpha((0.42 * 255).round())
+                  : Colors.transparent,
           width: 1.4,
         ),
-        boxShadow: isHighlighted
-            ? [
-                BoxShadow(
-                  color: primaryColor.withAlpha((0.16 * 255).round()),
-                  blurRadius: 22,
-                  offset: const Offset(0, 10),
-                ),
-              ]
-            : null,
+        boxShadow:
+            isHighlighted
+                ? [
+                  BoxShadow(
+                    color: primaryColor.withAlpha((0.16 * 255).round()),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
+                  ),
+                ]
+                : null,
       ),
       child: child,
     );

@@ -89,4 +89,3 @@ class StoreShelfUploadService {
     return 'jpg';
   }
 }
-

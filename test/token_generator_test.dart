@@ -11,8 +11,11 @@ void main() {
     test('generate() contains only lowercase letters and digits', () {
       final token = TokenGenerator.generate();
       final validChars = RegExp(r'^[a-z0-9]+$');
-      expect(validChars.hasMatch(token), isTrue,
-          reason: 'Token "$token" içinde geçersiz karakter var');
+      expect(
+        validChars.hasMatch(token),
+        isTrue,
+        reason: 'Token "$token" içinde geçersiz karakter var',
+      );
     });
 
     test('generate() produces different tokens each call', () {

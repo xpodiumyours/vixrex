@@ -76,7 +76,10 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
                       decoration: BoxDecoration(
                         color: const Color(0xFFF1F5F9),
                         shape: BoxShape.circle,
-                        border: Border.all(color: primaryColor.withAlpha((0.16 * 255).round()), width: 3),
+                        border: Border.all(
+                          color: primaryColor.withAlpha((0.16 * 255).round()),
+                          width: 3,
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withAlpha((0.05 * 255).round()),
@@ -85,17 +88,29 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
                           ),
                         ],
                       ),
-                      child: controller.logoBytes != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(45),
-                              child: Image.memory(controller.logoBytes!, fit: BoxFit.cover),
-                            )
-                          : (data.logoUrl != null && data.logoUrl!.isNotEmpty
+                      child:
+                          controller.logoBytes != null
                               ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(45),
-                                  child: Image.network(data.logoUrl!, fit: BoxFit.cover),
-                                )
-                              : const Icon(Icons.storefront_rounded, color: mutedText, size: 36)),
+                                borderRadius: BorderRadius.circular(45),
+                                child: Image.memory(
+                                  controller.logoBytes!,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                              : (data.logoUrl != null &&
+                                      data.logoUrl!.isNotEmpty
+                                  ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(45),
+                                    child: Image.network(
+                                      data.logoUrl!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                  : const Icon(
+                                    Icons.storefront_rounded,
+                                    color: mutedText,
+                                    size: 36,
+                                  )),
                     ),
                     Container(
                       padding: const EdgeInsets.all(6),
@@ -134,9 +149,10 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
 
   Widget _buildGalleryStudio() {
     final controller = widget.controller;
-    final selectedItem = controller.galleryItems.isEmpty
-        ? null
-        : controller.galleryItems[controller.selectedGalleryIndex];
+    final selectedItem =
+        controller.galleryItems.isEmpty
+            ? null
+            : controller.galleryItems[controller.selectedGalleryIndex];
 
     return Container(
       width: double.infinity,
@@ -364,7 +380,10 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
                   top: 10,
                   left: 10,
                   child: _GalleryPill(
-                    label: isCover ? 'Kapak' : '${controller.selectedGalleryIndex + 1}. fotoğraf',
+                    label:
+                        isCover
+                            ? 'Kapak'
+                            : '${controller.selectedGalleryIndex + 1}. fotoğraf',
                     icon: isCover ? Icons.star_rounded : Icons.image_rounded,
                   ),
                 ),
@@ -380,17 +399,27 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
                         _buildGalleryToolbarButton(
                           label: 'Kapak yap',
                           icon: Icons.star_rounded,
-                          onPressed: () => controller.makeGalleryCover(controller.selectedGalleryIndex),
+                          onPressed:
+                              () => controller.makeGalleryCover(
+                                controller.selectedGalleryIndex,
+                              ),
                         ),
                       _buildGalleryToolbarButton(
                         label: 'Değiştir',
                         icon: Icons.swap_horiz_rounded,
-                        onPressed: () => controller.replaceGalleryPhoto(context, controller.selectedGalleryIndex),
+                        onPressed:
+                            () => controller.replaceGalleryPhoto(
+                              context,
+                              controller.selectedGalleryIndex,
+                            ),
                       ),
                       _buildGalleryToolbarButton(
                         label: 'Sil',
                         icon: Icons.close_rounded,
-                        onPressed: () => controller.removeGalleryPhoto(controller.selectedGalleryIndex),
+                        onPressed:
+                            () => controller.removeGalleryPhoto(
+                              controller.selectedGalleryIndex,
+                            ),
                       ),
                     ],
                   ),
@@ -497,7 +526,8 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 420 ? 3 : 2;
         const gap = 9.0;
-        final tileWidth = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        final tileWidth =
+            (constraints.maxWidth - gap * (columns - 1)) / columns;
         final children = <Widget>[
           ...List.generate(
             controller.galleryItems.length,
@@ -532,15 +562,16 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
             color: isSelected ? primaryColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: primaryColor.withAlpha((0.18 * 255).round()),
-                    blurRadius: 14,
-                    offset: const Offset(0, 7),
-                  ),
-                ]
-              : null,
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: primaryColor.withAlpha((0.18 * 255).round()),
+                      blurRadius: 14,
+                      offset: const Offset(0, 7),
+                    ),
+                  ]
+                  : null,
         ),
         child: AspectRatio(
           aspectRatio: 1,

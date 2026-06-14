@@ -45,7 +45,7 @@ void main() {
       // Tap category and select business type to advance to Step 2
       await tester.tap(find.text('Giyim & Butik'));
       await tester.pumpAndSettle();
-      
+
       // Select business type dropdown option
       await tester.ensureVisible(find.byType(DropdownButton<String>));
       await tester.pumpAndSettle();

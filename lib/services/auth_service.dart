@@ -54,11 +54,12 @@ class AuthService {
     if (user == null) return null;
 
     try {
-      final response = await Supabase.instance.client
-          .from('stores')
-          .select()
-          .eq('user_id', user.id)
-          .maybeSingle();
+      final response =
+          await Supabase.instance.client
+              .from('stores')
+              .select()
+              .eq('user_id', user.id)
+              .maybeSingle();
 
       if (response != null) {
         return StoreData.fromJson(response);
@@ -82,4 +83,3 @@ class AuthService {
     }
   }
 }
-

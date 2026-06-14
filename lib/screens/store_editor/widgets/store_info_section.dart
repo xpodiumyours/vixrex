@@ -466,4 +466,5 @@ class _StoreInfoSectionState extends State<StoreInfoSection> {
         ],
       ),
     );
-  }}
+  }
+}

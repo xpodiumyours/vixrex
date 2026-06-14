@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class SeoChecklistCard extends StatelessWidget {
   final String storeSlug;
 
-  const SeoChecklistCard({
-    super.key,
-    required this.storeSlug,
-  });
+  const SeoChecklistCard({super.key, required this.storeSlug});
 
   static const Color primaryColor = Color(0xFFFF4D00);
   static const Color secondaryColor = Color(0xFFB200FF);
@@ -17,22 +14,26 @@ class SeoChecklistCard extends StatelessWidget {
       {
         'icon': Icons.map_rounded,
         'title': 'Harita & Konum Entegrasyonu',
-        'subtitle': 'Dükkan adresiniz ve konum koordinatlarınız, Google Haritalar standartlarına tam uyumlu olarak işlenir.',
+        'subtitle':
+            'Dükkan adresiniz ve konum koordinatlarınız, Google Haritalar standartlarına tam uyumlu olarak işlenir.',
       },
       {
         'icon': Icons.qr_code_scanner_rounded,
         'title': 'Akıllı Arama Kartı Yapısı',
-        'subtitle': 'Ürünleriniz, Google botlarının dükkanınızı doğrudan listeleyebileceği yapılandırılmış veri (JSON-LD) formatında sunulur.',
+        'subtitle':
+            'Ürünleriniz, Google botlarının dükkanınızı doğrudan listeleyebileceği yapılandırılmış veri (JSON-LD) formatında sunulur.',
       },
       {
         'icon': Icons.bolt_rounded,
         'title': 'Hız & Performans Optimizasyonu',
-        'subtitle': 'Yüklediğiniz fotoğraflar kalitesi bozulmadan sıkıştırılır. Hızlı açılan sayfalar aramalarda daha üst sıralara taşınır.',
+        'subtitle':
+            'Yüklediğiniz fotoğraflar kalitesi bozulmadan sıkıştırılır. Hızlı açılan sayfalar aramalarda daha üst sıralara taşınır.',
       },
       {
         'icon': Icons.rocket_launch_rounded,
         'title': 'Sosyal Paylaşım Hızlandırıcı',
-        'subtitle': 'Vitrin linkinizi WhatsApp veya Instagram\'da paylaştığınızda, Google botlarına tarama yapması için otomatik teknik sinyal gönderilir.',
+        'subtitle':
+            'Vitrin linkinizi WhatsApp veya Instagram\'da paylaştığınızda, Google botlarına tarama yapması için otomatik teknik sinyal gönderilir.',
       },
     ];
 
@@ -110,9 +111,7 @@ class SeoChecklistCard extends StatelessWidget {
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: primaryColor.withValues(alpha: 0.1),
-              ),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.1)),
             ),
             child: Row(
               children: [
@@ -227,9 +226,9 @@ class SeoChecklistCard extends StatelessWidget {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF10B981).withValues(
-                                      alpha: 0.08,
-                                    ),
+                                    color: const Color(
+                                      0xFF10B981,
+                                    ).withValues(alpha: 0.08),
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
                                   ),
