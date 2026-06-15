@@ -3,15 +3,28 @@ import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/my_vitrin_screen.dart';
 
 class HomeShellScreen extends StatefulWidget {
-  const HomeShellScreen({super.key});
+  final int initialIndex;
+  final String? initialVitrinName;
+
+  const HomeShellScreen({
+    super.key,
+    this.initialIndex = 1,
+    this.initialVitrinName,
+  });
 
   @override
   State<HomeShellScreen> createState() => _HomeShellScreenState();
 }
 
 class _HomeShellScreenState extends State<HomeShellScreen> {
-  int _selectedIndex = 1;
+  late int _selectedIndex;
   int _exploreRefreshKey = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex.clamp(0, 1);
+  }
 
   void _openExplore() {
     setState(() {
@@ -29,6 +42,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final pages = [
       ExploreScreen(key: ValueKey(_exploreRefreshKey)),
       MyVitrinScreen(
+        initialName: widget.initialVitrinName,
         onPublished: _handleVitrinPublished,
         onOpenExplore: _openExplore,
       ),

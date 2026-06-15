@@ -14,10 +14,16 @@ import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/utils/token_generator.dart';
 
 class MyVitrinScreen extends StatefulWidget {
+  final String? initialName;
   final VoidCallback? onPublished;
   final VoidCallback? onOpenExplore;
 
-  const MyVitrinScreen({super.key, this.onPublished, this.onOpenExplore});
+  const MyVitrinScreen({
+    super.key,
+    this.initialName,
+    this.onPublished,
+    this.onOpenExplore,
+  });
 
   @override
   State<MyVitrinScreen> createState() => _MyVitrinScreenState();
@@ -67,6 +73,10 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
       final savedData = await _storage.loadVitrinData();
       final publishedInfo = await _storage.loadPublishedVitrinInfo();
       final data = savedData ?? StoreData(isEsnafMode: false, isStore: false);
+      final initialName = widget.initialName?.trim() ?? '';
+      if (data.name.trim().isEmpty && initialName.isNotEmpty) {
+        data.name = initialName;
+      }
 
       if (!mounted) return;
       setState(() {
@@ -75,7 +85,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         _nameController.text =
             _data.name.trim().isNotEmpty
                 ? _data.name
-                : (publishedInfo?.name ?? '');
+                : (publishedInfo?.name ?? initialName);
         _whatsappController.text = _data.whatsapp;
         _descriptionController.text = _data.description;
         _coverUrl = _data.coverImageUrl;

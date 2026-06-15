@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_vitrin_route_config.dart';
 import 'package:vitrinx/screens/home_shell_screen.dart';
+import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/legal_screen.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
 
@@ -64,7 +65,11 @@ class VitrinXApp extends StatelessWidget {
       return PublicVitrinScreen(slug: slug);
     }
 
-    return const HomeShellScreen();
+    if (_isHomeShellRoute(Uri.base.path)) {
+      return const HomeShellScreen();
+    }
+
+    return const LandingScreen();
   }
 
   Route<dynamic> _generateRoute(RouteSettings settings) {
@@ -88,9 +93,21 @@ class VitrinXApp extends StatelessWidget {
       );
     }
 
+    if (_isHomeShellRoute(routeName)) {
+      return MaterialPageRoute(
+        builder: (_) => const HomeShellScreen(),
+        settings: settings,
+      );
+    }
+
     return MaterialPageRoute(
-      builder: (_) => const HomeShellScreen(),
+      builder: (_) => const LandingScreen(),
       settings: settings,
     );
+  }
+
+  bool _isHomeShellRoute(String routeName) {
+    final path = Uri.tryParse(routeName)?.path ?? routeName;
+    return path == '/app' || path == '/home';
   }
 }

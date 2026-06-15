@@ -8,8 +8,8 @@ import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/screens/store_editor_screen.dart';
 import 'package:vitrinx/screens/vitrin_editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
-import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/auth_screen.dart';
+import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/auth_service.dart';
@@ -375,8 +375,19 @@ class _LandingScreenState extends State<LandingScreen>
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VitrinEditorScreen(initialStoreName: name),
+        builder:
+            (_) => HomeShellScreen(initialIndex: 1, initialVitrinName: name),
       ),
+    );
+    if (mounted) {
+      _loadSavedVitrinState();
+    }
+  }
+
+  Future<void> _navigateToExploreApp() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeShellScreen(initialIndex: 0)),
     );
     if (mounted) {
       _loadSavedVitrinState();
@@ -613,10 +624,7 @@ class _LandingScreenState extends State<LandingScreen>
               if (isDesktop)
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ExploreScreen()),
-                    );
+                    _navigateToExploreApp();
                   },
                   icon: const Icon(Icons.explore_rounded, size: 16),
                   label: const Text(
@@ -639,10 +647,7 @@ class _LandingScreenState extends State<LandingScreen>
               else
                 IconButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ExploreScreen()),
-                    );
+                    _navigateToExploreApp();
                   },
                   icon: const Icon(Icons.explore_rounded, size: 18),
                   color: darkAccent,
@@ -963,10 +968,7 @@ class _LandingScreenState extends State<LandingScreen>
       ),
       OutlinedButton.icon(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ExploreScreen()),
-          );
+          _navigateToExploreApp();
         },
         icon: const Icon(Icons.explore_rounded, size: 18, color: darkAccent),
         label: const Text(

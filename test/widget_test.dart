@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vitrinx/main.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/home_shell_screen.dart';
+import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/my_vitrin_screen.dart';
 import 'package:vitrinx/screens/store_editor_screen.dart';
 import 'package:vitrinx/screens/vitrin_editor_screen.dart';
@@ -11,7 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 void main() {
-  testWidgets('VitrinX ana ekranı Keşfet ve Vitrinim yapısını gösterir', (
+  testWidgets('VitrinX ilk açılışta karşılama ekranını gösterir', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -20,14 +21,30 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.byType(HomeShellScreen), findsOneWidget);
+    expect(find.byType(LandingScreen), findsOneWidget);
+    expect(find.text('VitrinX Oluştur'), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets('HomeShell Vitrinim hızlı yayın ekranını gösterir', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await tester.pumpWidget(
+      const MaterialApp(home: HomeShellScreen(initialIndex: 1)),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
     expect(find.text('Keşfet'), findsOneWidget);
     expect(find.text('Vitrinim'), findsOneWidget);
     expect(find.text('Vitrinini 30 saniyede yayına al'), findsOneWidget);
     expect(find.text('Vitrinimi Yayına Al'), findsOneWidget);
   });
 
-  testWidgets('Geçersiz route ana ekrana düşer', (WidgetTester tester) async {
+  testWidgets('Geçersiz route karşılama ekranına düşer', (
+    WidgetTester tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
 
     await tester.pumpWidget(const VitrinXApp());
@@ -38,7 +55,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.byType(HomeShellScreen), findsAtLeastNWidgets(1));
+    expect(find.byType(LandingScreen), findsAtLeastNWidgets(1));
   });
 
   testWidgets('Mobil editörde canlı önizleme sekmesi gösterilmez', (
