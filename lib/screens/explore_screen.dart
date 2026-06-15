@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
+import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -79,12 +80,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
     });
   }
 
+  String? _localPublishedSlug;
+
   Future<void> _loadStores() async {
     setState(() {
       _isLoading = true;
       _loadErrorMessage = null;
     });
     try {
+      final prefs = await SharedPreferences.getInstance();
+      _localPublishedSlug = prefs.getString(LocalStorageKeys.lastPublishedSlug);
+
       final client = Supabase.instance.client;
       debugPrint('[Explore] Supabase stores sorgusu başlıyor...');
       final response = await client
@@ -97,7 +103,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
         '[Explore] Supabase stores sorgusu başarılı. Kayıt sayısı: ${data.length}',
       );
       setState(() {
-        _allStores = data.map((json) => StoreData.fromJson(json)).toList();
+        final List<StoreData> loadedStores =
+            data.map((json) => StoreData.fromJson(json)).toList();
+        if (_localPublishedSlug != null && _localPublishedSlug!.isNotEmpty) {
+          final int index = loadedStores.indexWhere(
+            (store) => store.slug == _localPublishedSlug,
+          );
+          if (index != -1) {
+            final ownStore = loadedStores.removeAt(index);
+            loadedStores.insert(0, ownStore);
+          }
+        }
+        _allStores = loadedStores;
         _isLoading = false;
       });
     } on PostgrestException catch (e) {
@@ -134,6 +151,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         businessType: 'Giyim & Butik',
         whatsapp: '0555 123 45 67',
         address: 'Bahariye Cad. No:12, Kadıköy, İstanbul',
+        slug: 'aymira-giyim',
         shelfImageUrl:
             'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=500&q=80',
         isStore: true,
@@ -146,6 +164,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         businessType: 'Gıda & Fırın',
         whatsapp: '0555 234 56 78',
         address: 'Şair Nedim Cad. No:45, Beşiktaş, İstanbul',
+        slug: 'lezzet-duragi',
         shelfImageUrl:
             'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=500&q=80',
         isStore: true,
@@ -157,6 +176,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         businessType: 'Dekorasyon',
         whatsapp: '0555 345 67 89',
         address: 'Moda Cad. No:89, Kadıköy, İstanbul',
+        slug: 'elit-aksesuar',
         shelfImageUrl:
             'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=500&q=80',
         isStore: false,
@@ -556,21 +576,29 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget _buildStoreCard(StoreData store) {
     final isFavorited = _favoritedStoreNames.contains(store.name);
     final hasImage = store.shelfImageUrl.isNotEmpty;
+    final isOwnStore =
+        _localPublishedSlug != null &&
+        _localPublishedSlug!.isNotEmpty &&
+        store.slug == _localPublishedSlug;
 
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: cardBorder, width: 1),
+        side:
+            isOwnStore
+                ? const BorderSide(color: Color(0xFFFF4D00), width: 2.5)
+                : const BorderSide(color: cardBorder, width: 1),
       ),
       clipBehavior: Clip.antiAlias,
       color: Colors.white,
       child: InkWell(
         onTap: () {
           // Open public vitrin page
-          final slug = const StorePublishPayloadBuilder().generateSlug(
-            store.name,
-          );
+          final slug =
+              store.slug.isNotEmpty
+                  ? store.slug
+                  : const StorePublishPayloadBuilder().generateSlug(store.name);
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: slug)),
@@ -618,6 +646,40 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       ),
                     ),
                   ),
+                  if (isOwnStore)
+                    Positioned(
+                      bottom: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF4D00),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Senin vitrinin',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   // Favorite button
                   Positioned(
                     top: 6,

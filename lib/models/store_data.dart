@@ -122,6 +122,7 @@ class StoreData {
   String address;
   String theme;
   String status;
+  String slug;
 
   /// Esnaf modu flag'i. [PreviewScreen] tarafından kullanıldığı için kaldırılamaz.
   bool isEsnafMode;
@@ -158,6 +159,7 @@ class StoreData {
     this.address = '',
     this.theme = 'Premium',
     this.status = 'Açık',
+    this.slug = '',
     this.isEsnafMode = true,
     this.logoUrl,
     List<Product>? products,
@@ -188,6 +190,7 @@ class StoreData {
     'address': address,
     'theme': theme,
     'status': status,
+    'slug': slug,
     'isEsnafMode': isEsnafMode,
     'logoUrl': logoUrl,
     'products': products.map((e) => e.toJson()).toList(),
@@ -222,6 +225,7 @@ class StoreData {
       address: _getString(json, 'address') ?? '',
       theme: _getString(json, 'theme') ?? 'Premium',
       status: _getString(json, 'status') ?? 'Açık',
+      slug: _getString(json, 'slug') ?? '',
       isEsnafMode:
           (json['isEsnafMode'] ?? json['is_esnaf_mode'] ?? true) as bool,
       logoUrl: _getString(json, 'logoUrl', 'logo_url'),
@@ -266,6 +270,7 @@ class StoreData {
     String? address,
     String? theme,
     String? status,
+    String? slug,
     bool? isEsnafMode,
     String? logoUrl,
     List<Product>? products,
@@ -293,6 +298,7 @@ class StoreData {
       address: address ?? this.address,
       theme: theme ?? this.theme,
       status: status ?? this.status,
+      slug: slug ?? this.slug,
       isEsnafMode: isEsnafMode ?? this.isEsnafMode,
       logoUrl: logoUrl ?? this.logoUrl,
       products: products ?? List.of(this.products),

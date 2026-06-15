@@ -60,6 +60,29 @@ class StorePublishService {
 
     try {
       client = supabaseClient ?? Supabase.instance.client;
+      if (editToken.trim().isNotEmpty) {
+        try {
+          final existingByToken =
+              await client
+                  .from('stores')
+                  .select('slug')
+                  .eq('edit_token', editToken)
+                  .maybeSingle();
+
+          if (existingByToken != null) {
+            await _updateStoreWithToken(client, data, slug, editToken);
+            _notifyGoogleIndexing(slug);
+            return StorePublishResult(
+              publicPath: '/v/$slug',
+              slug: slug,
+              wasUpdated: true,
+            );
+          }
+        } on PostgrestException catch (error) {
+          debugPrint('Store token lookup skipped: ${error.message}');
+        }
+      }
+
       final existingStore =
           await client
               .from('stores')
@@ -74,19 +97,31 @@ class StorePublishService {
         }
         await client.from('stores').insert(payload);
         _notifyGoogleIndexing(slug);
-        return StorePublishResult(publicPath: '/v/$slug', wasUpdated: false);
+        return StorePublishResult(
+          publicPath: '/v/$slug',
+          slug: slug,
+          wasUpdated: false,
+        );
       }
 
       await _updateStoreWithToken(client, data, slug, editToken);
       _notifyGoogleIndexing(slug);
-      return StorePublishResult(publicPath: '/v/$slug', wasUpdated: true);
+      return StorePublishResult(
+        publicPath: '/v/$slug',
+        slug: slug,
+        wasUpdated: true,
+      );
     } on PostgrestException catch (error) {
       if (_isDuplicateSlugError(error)) {
         debugPrint(
           'Store slug already exists after select, trying token update.',
         );
         await _updateStoreWithToken(client, data, slug, editToken);
-        return StorePublishResult(publicPath: '/v/$slug', wasUpdated: true);
+        return StorePublishResult(
+          publicPath: '/v/$slug',
+          slug: slug,
+          wasUpdated: true,
+        );
       }
 
       throw StorePublishException(
@@ -193,10 +228,12 @@ class StorePublishService {
 
 class StorePublishResult {
   final String publicPath;
+  final String slug;
   final bool wasUpdated;
 
   const StorePublishResult({
     required this.publicPath,
+    required this.slug,
     required this.wasUpdated,
   });
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_vitrin_route_config.dart';
-import 'package:vitrinx/screens/landing_screen.dart';
+import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/screens/legal_screen.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
 
@@ -64,7 +64,7 @@ class VitrinXApp extends StatelessWidget {
       return PublicVitrinScreen(slug: slug);
     }
 
-    return const LandingScreen();
+    return const HomeShellScreen();
   }
 
   Route<dynamic> _generateRoute(RouteSettings settings) {
@@ -89,7 +89,7 @@ class VitrinXApp extends StatelessWidget {
     }
 
     return MaterialPageRoute(
-      builder: (_) => const LandingScreen(),
+      builder: (_) => const HomeShellScreen(),
       settings: settings,
     );
   }

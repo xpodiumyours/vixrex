@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
+import 'package:vitrinx/services/local_storage_keys.dart';
 
 void main() {
   testWidgets('ExploreScreen renders successfully and has correct items', (
@@ -69,5 +70,20 @@ void main() {
     // Verify only favorited store posts are displayed (Aymira Giyim is favorited, Lezzet Durağı is not)
     expect(find.text('Aymira Giyim'), findsAtLeastNWidgets(1));
     expect(find.text('Lezzet Durağı'), findsNothing);
+  });
+
+  testWidgets('ExploreScreen kendi vitrini etiketi gösterir', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'favorite_stores': <String>[],
+      LocalStorageKeys.lastPublishedSlug: 'aymira-giyim',
+    });
+
+    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Senin vitrinin'), findsOneWidget);
   });
 }

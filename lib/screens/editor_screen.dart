@@ -17,6 +17,7 @@ import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_publish_validator.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
@@ -499,6 +500,12 @@ class _EditorScreenState extends State<EditorScreen>
         editToken: editToken,
       );
       final publicLink = _buildFullPublicLink(publishResult.publicPath);
+      await const StoreLocalStorageService().savePublishedVitrinInfo(
+        slug: publishResult.slug,
+        publicLink: publicLink,
+        name: _data.name.trim(),
+        editToken: editToken,
+      );
       if (!mounted) return;
 
       final publishSnackMessage =
@@ -1114,8 +1121,8 @@ class _EditorScreenState extends State<EditorScreen>
       ),
       _VitrinScoreTask(
         points: 15,
-        isComplete: true,
-        suggestion: 'Pazaryeri linki isteğe bağlı',
+        isComplete: _hasCompleteMarketplaceLink(data),
+        suggestion: 'Pazaryeri veya harici link ekle (isteğe bağlı)',
         target: _VitrinScoreTarget.marketplace,
       ),
       _VitrinScoreTask(

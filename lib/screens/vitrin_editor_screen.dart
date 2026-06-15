@@ -17,6 +17,7 @@ import 'package:vitrinx/services/store_publish_payload_builder.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_publish_validator.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
@@ -24,6 +25,8 @@ import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/widgets/google_business_guide_card.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
+import 'package:vitrinx/screens/explore_screen.dart';
+import 'package:vitrinx/screens/public_vitrin_screen.dart';
 import 'package:vitrinx/services/auth_service.dart';
 
 class VitrinEditorScreen extends StatefulWidget {
@@ -35,10 +38,8 @@ class VitrinEditorScreen extends StatefulWidget {
   State<VitrinEditorScreen> createState() => _VitrinEditorScreenState();
 }
 
-class _VitrinEditorScreenState extends State<VitrinEditorScreen>
-    with SingleTickerProviderStateMixin {
+class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TabController _mobileTabController;
   final StoreData _data = StoreData(isEsnafMode: false, isStore: false);
   bool _isLoading = true;
   bool _isPublishing = false;
@@ -143,14 +144,12 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
         widget.initialStoreName!.trim().isNotEmpty) {
       _data.name = widget.initialStoreName!.trim();
     }
-    _mobileTabController = TabController(length: 2, vsync: this);
     _loadSavedData();
   }
 
   @override
   void dispose() {
     _viewCountDebounce?.cancel();
-    _mobileTabController.dispose();
     _addressCtrl.dispose();
     for (final item in _galleryItems) {
       item.dispose();
@@ -461,12 +460,16 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
         editToken: editToken,
       );
       final publicLink = _buildFullPublicLink(publishResult.publicPath);
+      await const StoreLocalStorageService().savePublishedVitrinInfo(
+        slug: publishResult.slug,
+        publicLink: publicLink,
+        name: _data.name.trim(),
+        editToken: editToken,
+      );
       if (!mounted) return;
 
       final publishSnackMessage =
-          publishResult.wasUpdated
-              ? 'Vitrininiz güncellendi.'
-              : 'Vitrin linkiniz hazırlandı.';
+          'Vitrininiz yayında! Keşfet sayfasında en üstte yerini aldı.';
       setState(() {
         _publishedLink = publicLink;
         _existingVitrinToken = editToken;
@@ -526,6 +529,23 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
     );
   }
 
+  void _openPublishedVitrin() {
+    final link = _publishedLink;
+    if (link == null || link.trim().isEmpty) return;
+
+    final segments =
+        Uri.tryParse(
+          link,
+        )?.pathSegments.where((segment) => segment.isNotEmpty).toList();
+    final slug = segments == null || segments.isEmpty ? null : segments.last;
+    if (slug == null || slug.trim().isEmpty) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: slug)),
+    );
+  }
+
   Future<void> _deleteVitrin() async {
     if (_isDeleting) return;
     setState(() => _isDeleting = true);
@@ -539,9 +559,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
         debugPrint('[Editor] Vitrin veritabanından silindi ✓');
       }
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(LocalStorageKeys.vitrinEditToken);
-      await prefs.remove(LocalStorageKeys.vitrinData);
+      await const StoreLocalStorageService().clearVitrinData();
 
       if (!mounted) return;
 
@@ -654,6 +672,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
       await prefs.remove(LocalStorageKeys.vitrinData);
       await prefs.remove(LocalStorageKeys.storeEditToken);
       await prefs.remove(LocalStorageKeys.storeData);
+      await const StoreLocalStorageService().clearPublishedVitrinInfo();
 
       // Perform the account deletion backend logic
       await const AuthService().deleteAccount();
@@ -1186,8 +1205,8 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
       ),
       _VitrinScoreTask(
         points: 15,
-        isComplete: true,
-        suggestion: 'Pazaryeri linki isteğe bağlı',
+        isComplete: _hasCompleteMarketplaceLink(data),
+        suggestion: 'Pazaryeri veya harici link ekle (isteğe bağlı)',
         target: _VitrinScoreTarget.marketplace,
       ),
       _VitrinScoreTask(
@@ -1241,10 +1260,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
   }
 
   Future<void> _focusMobileEditTab() async {
-    if (_mobileTabController.index != 0) {
-      _mobileTabController.animateTo(0);
-      await Future<void>.delayed(const Duration(milliseconds: 280));
-    }
+    await Future<void>.delayed(Duration.zero);
   }
 
   Future<void> _handleScoreTaskCompleteTap(
@@ -2099,56 +2115,13 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
             final isWide = constraints.maxWidth > 900;
 
             if (!isWide) {
-              return DefaultTabController(
-                length: 2,
-                child: Column(
-                  children: [
-                    Container(
-                      decoration: const BoxDecoration(
-                        color: Color.fromRGBO(22, 22, 36, 0.88),
-                        border: Border(bottom: BorderSide(color: cardBorder)),
-                      ),
-                      child: TabBar(
-                        controller: _mobileTabController,
-                        labelColor: primaryColor,
-                        unselectedLabelColor: mutedText,
-                        indicatorColor: primaryColor,
-                        tabs: const [
-                          Tab(text: 'Düzenle'),
-                          Tab(text: 'Yayınla'),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: TabBarView(
-                        controller: _mobileTabController,
-                        children: [
-                          SingleChildScrollView(
-                            padding: const EdgeInsets.all(16),
-                            child: Center(
-                              child: Container(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 800,
-                                ),
-                                child: _buildForm(),
-                              ),
-                            ),
-                          ),
-                          SingleChildScrollView(
-                            padding: const EdgeInsets.all(16),
-                            child: Center(
-                              child: Container(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 800,
-                                ),
-                                child: _buildPublishPanel(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 800),
+                    child: _buildForm(),
+                  ),
                 ),
               );
             }
@@ -2258,7 +2231,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showDesktopPublishCard) ...[
-            _buildPublishPanel(compact: true, includeBottomSpacing: false),
+            _buildPublishPanel(includeBottomSpacing: false),
           ],
           SizedBox(height: showDesktopPublishCard ? 24 : 0),
           _buildEditCard(
@@ -2689,51 +2662,18 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
     );
   }
 
-  Widget _buildPublishPanel({
-    bool compact = false,
-    bool includeBottomSpacing = true,
-  }) {
-    final checklist = _buildPublishChecklistItems();
-    final panelChildren =
-        compact
-            ? <Widget>[
-              _buildPublishCard(
-                children: [
-                  _buildPublishIntro(),
-                  const SizedBox(height: 18),
-                  _buildPublishSectionTitle('Yayın öncesi kontrol'),
-                  const SizedBox(height: 10),
-                  ...checklist.map(_buildPublishChecklistRow),
-                  const SizedBox(height: 10),
-                  _buildPublishSectionTitle('Bu link nerede kullanılabilir?'),
-                  const SizedBox(height: 10),
-                  _buildPublishUsageList(),
-                  const SizedBox(height: 16),
-                  _buildPublishActionArea(),
-                ],
-              ),
-            ]
-            : <Widget>[
-              _buildPublishCard(children: [_buildPublishIntro()]),
-              const SizedBox(height: 16),
-              _buildPublishCard(
-                children: [
-                  _buildPublishSectionTitle('Yayın öncesi kontrol'),
-                  const SizedBox(height: 10),
-                  ...checklist.map(_buildPublishChecklistRow),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildPublishCard(
-                children: [
-                  _buildPublishSectionTitle('Bu link nerede kullanılabilir?'),
-                  const SizedBox(height: 10),
-                  _buildPublishUsageList(),
-                  const SizedBox(height: 16),
-                  _buildPublishActionArea(),
-                ],
-              ),
-            ];
+  Widget _buildPublishPanel({bool includeBottomSpacing = true}) {
+    final panelChildren = <Widget>[
+      _buildPublishCard(
+        children: [
+          _buildPublishIntro(),
+          const SizedBox(height: 14),
+          _buildPublishUsageList(),
+          const SizedBox(height: 16),
+          _buildPublishActionArea(),
+        ],
+      ),
+    ];
 
     if (includeBottomSpacing) {
       panelChildren.add(const SizedBox(height: 100));
@@ -2771,7 +2711,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Vitrininizi yayınlayın',
+          'Vitrinimi Yayına Al',
           style: TextStyle(
             color: darkText,
             fontSize: 24,
@@ -2783,7 +2723,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
         _gradientUnderline(width: 64),
         const SizedBox(height: 8),
         Text(
-          'VitrinX linkiniz hazır olduğunda müşteriler bu adrese girerek canlı vitrininizi görebilecek.',
+          'Sadece vitrin adın zorunlu. Linkin oluşur, Keşfet’te görünürsün.',
           style: TextStyle(
             color: softText.withValues(alpha: 0.8),
             fontSize: 12,
@@ -2861,14 +2801,14 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
                     )
                     : Text(
                       _publishedLink == null
-                          ? 'Vitrin linkini oluştur'
+                          ? 'Vitrinimi Yayına Al'
                           : 'Vitrini güncelle',
                     ),
           ),
         ),
         const SizedBox(height: 10),
         Text(
-          'Galeri fotoğrafları Supabase Storage’a yüklenir ve public vitrinde görünür.',
+          'Vitrininiz yayınlandığında public linkiniz oluşur ve Keşfet sayfasında görünür.',
           style: TextStyle(
             color: mutedText,
             fontSize: 10.5,
@@ -2913,35 +2853,17 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
             children: [
               Expanded(
                 child: Text(
-                  'Hazırlanan vitrin linki',
+                  'Vitrininiz yayında! Keşfet sayfasında en üstte yerini aldı.',
                   style: TextStyle(
-                    color: const Color(0xFF5EEAD4),
-                    fontSize: 11,
+                    color: const Color(0xFF0D9488),
+                    fontSize: 12,
                     fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: () => _copyPublishedLink('Vitrin linki kopyalandı.'),
-                tooltip: 'Linki kopyala',
-                icon: Icon(
-                  Icons.copy_rounded,
-                  color: Colors.teal.shade800,
-                  size: 17,
-                ),
-                style: IconButton.styleFrom(
-                  backgroundColor: const Color.fromRGBO(255, 255, 255, 0.08),
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(32, 32),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  side: const BorderSide(
-                    color: Color.fromRGBO(45, 212, 191, 0.22),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             link,
             maxLines: 1,
@@ -2951,6 +2873,49 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
               fontSize: 13,
               fontWeight: FontWeight.w900,
             ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ExploreScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.explore_rounded, size: 16),
+                  label: const Text('Keşfet’te Gör'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed:
+                      () => _copyPublishedLink('Vitrin linki kopyalandı.'),
+                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  label: const Text('Linki Kopyala'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryColor,
+                    side: const BorderSide(color: primaryColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           _buildPublishedQrBlock(link),
@@ -3077,41 +3042,6 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
     );
   }
 
-  List<_PublishChecklistItem> _buildPublishChecklistItems() {
-    final hasMarketplaceLink = _hasCompleteMarketplaceLink(_data);
-
-    return [
-      _PublishChecklistItem(
-        isReady: _data.name.trim().isNotEmpty,
-        readyText: 'Mağaza adı hazır',
-        missingText: 'Mağaza adı eksik',
-      ),
-      _PublishChecklistItem(
-        isReady: _data.whatsapp.trim().isNotEmpty,
-        readyText: 'WhatsApp iletişimi hazır',
-        missingText: 'WhatsApp eklenmemiş',
-      ),
-      _PublishChecklistItem(
-        isReady: _data.description.trim().isNotEmpty,
-        readyText: 'Kısa açıklama hazır',
-        missingText: 'Kısa açıklama eksik',
-      ),
-      _PublishChecklistItem(
-        isReady: true,
-        readyText:
-            hasMarketplaceLink
-                ? 'Pazaryeri linki hazır'
-                : 'Pazaryeri linki isteğe bağlı',
-        missingText: '',
-      ),
-      _PublishChecklistItem(
-        isReady: _data.address.trim().isNotEmpty,
-        readyText: 'Adres bilgisi hazır',
-        missingText: 'Adres bilgisi eksik',
-      ),
-    ];
-  }
-
   Widget _buildPublishCard({required List<Widget> children}) {
     return Container(
       width: double.infinity,
@@ -3120,50 +3050,6 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,
-      ),
-    );
-  }
-
-  Widget _buildPublishSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        color: darkText,
-        fontSize: 15,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 0,
-      ),
-    );
-  }
-
-  Widget _buildPublishChecklistRow(_PublishChecklistItem item) {
-    final color = item.isReady ? const Color(0xFF2DD4BF) : mutedText;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 9),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            item.isReady
-                ? Icons.check_circle_rounded
-                : Icons.info_outline_rounded,
-            color: color,
-            size: 16,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              item.isReady ? item.readyText : item.missingText,
-              style: TextStyle(
-                color: softText.withValues(alpha: 0.88),
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                height: 1.3,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -4791,20 +4677,21 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen>
             const SizedBox(width: 12),
             Expanded(
               child: _buildGradientButton(
-                label: 'Vitrini Aç',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => PreviewScreen(
-                            storeData: _data,
-                            previewGalleryItems: _galleryPreviewItems(),
-                          ),
-                    ),
-                  );
-                },
-                icon: Icons.share_outlined,
+                label: _publishedLink == null ? 'Yayına Al' : 'Vitrini Aç',
+                onPressed:
+                    _isPublishing
+                        ? null
+                        : () {
+                          if (_publishedLink == null) {
+                            _publishStore();
+                          } else {
+                            _openPublishedVitrin();
+                          }
+                        },
+                icon:
+                    _publishedLink == null
+                        ? Icons.publish_rounded
+                        : Icons.share_outlined,
                 expand: true,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
@@ -5023,17 +4910,5 @@ class _VitrinScoreTask {
     required this.isComplete,
     required this.suggestion,
     required this.target,
-  });
-}
-
-class _PublishChecklistItem {
-  final bool isReady;
-  final String readyText;
-  final String missingText;
-
-  const _PublishChecklistItem({
-    required this.isReady,
-    required this.readyText,
-    required this.missingText,
   });
 }

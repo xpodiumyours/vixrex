@@ -5,6 +5,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 
+class PublishedVitrinInfo {
+  final String slug;
+  final String publicLink;
+  final String name;
+  final String editToken;
+
+  const PublishedVitrinInfo({
+    required this.slug,
+    required this.publicLink,
+    required this.name,
+    required this.editToken,
+  });
+
+  bool get isComplete =>
+      slug.trim().isNotEmpty &&
+      publicLink.trim().isNotEmpty &&
+      editToken.trim().isNotEmpty;
+}
+
 /// Mağaza ve vitrin verilerinin yerel depolamaya yazılması/okunmasını
 /// merkezi olarak yöneten servis.
 ///
@@ -83,6 +102,7 @@ class StoreLocalStorageService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(LocalStorageKeys.vitrinData);
     await prefs.remove(LocalStorageKeys.vitrinEditToken);
+    await clearPublishedVitrinInfo();
   }
 
   // ── Legacy Destek ─────────────────────────────────────────────────────
@@ -103,6 +123,50 @@ class StoreLocalStorageService {
   Future<void> clearLegacyVitrinData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(LocalStorageKeys.vitrinData);
+  }
+
+  // ── Published Vitrin Details ───────────────────────────────────────────
+
+  /// Yayınlanan vitrin bilgilerini yerel depoya kaydeder.
+  Future<void> savePublishedVitrinInfo({
+    required String slug,
+    required String publicLink,
+    required String name,
+    required String editToken,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(LocalStorageKeys.lastPublishedSlug, slug);
+    await prefs.setString(LocalStorageKeys.lastPublishedLink, publicLink);
+    await prefs.setString(LocalStorageKeys.lastPublishedName, name);
+    await prefs.setString(LocalStorageKeys.lastPublishedEditToken, editToken);
+  }
+
+  /// Kayıtlı en son yayınlanan vitrin slug'ını okur. Yoksa `null` döner.
+  Future<String?> loadLastPublishedSlug() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(LocalStorageKeys.lastPublishedSlug);
+  }
+
+  /// Kayitli yayinlanmis vitrin bilgisini okur. Eksikse `null` doner.
+  Future<PublishedVitrinInfo?> loadPublishedVitrinInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final info = PublishedVitrinInfo(
+      slug: prefs.getString(LocalStorageKeys.lastPublishedSlug) ?? '',
+      publicLink: prefs.getString(LocalStorageKeys.lastPublishedLink) ?? '',
+      name: prefs.getString(LocalStorageKeys.lastPublishedName) ?? '',
+      editToken: prefs.getString(LocalStorageKeys.lastPublishedEditToken) ?? '',
+    );
+
+    return info.isComplete ? info : null;
+  }
+
+  /// Yayınlanan vitrin işaretlerini temizler.
+  Future<void> clearPublishedVitrinInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(LocalStorageKeys.lastPublishedSlug);
+    await prefs.remove(LocalStorageKeys.lastPublishedLink);
+    await prefs.remove(LocalStorageKeys.lastPublishedName);
+    await prefs.remove(LocalStorageKeys.lastPublishedEditToken);
   }
 
   // ── Private ───────────────────────────────────────────────────────────

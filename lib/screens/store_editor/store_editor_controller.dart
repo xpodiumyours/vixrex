@@ -15,6 +15,7 @@ import 'package:vitrinx/services/store_publish_payload_builder.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_publish_validator.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
@@ -432,6 +433,12 @@ class StoreEditorController extends ChangeNotifier {
       );
 
       final publicLink = _buildFullPublicLink(publishResult.publicPath);
+      await const StoreLocalStorageService().savePublishedVitrinInfo(
+        slug: publishResult.slug,
+        publicLink: publicLink,
+        name: data.name.trim(),
+        editToken: editToken,
+      );
 
       final publishSnackMessage =
           publishResult.wasUpdated

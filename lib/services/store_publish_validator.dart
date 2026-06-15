@@ -13,24 +13,10 @@ class StorePublishValidator {
   }
 
   String? validateVitrin(StoreData data) {
-    final missingItems = <String>[];
-
     if (data.name.trim().isEmpty) {
-      missingItems.add('mağaza adı');
+      return 'Vitrinini yayına almak için vitrin adı yazman yeterli.';
     }
-    if (data.whatsapp.trim().isEmpty) {
-      missingItems.add('WhatsApp numarası');
-    }
-    if (data.description.trim().isEmpty) {
-      missingItems.add('kısa açıklama');
-    }
-    if (data.address.trim().isEmpty) {
-      missingItems.add('adres bilgisi');
-    }
-
-    if (missingItems.isEmpty) return null;
-
-    return 'Vitrin yayınlanmadan önce şu alanları tamamlayın: ${missingItems.join(', ')}.';
+    return null;
   }
 
   String? validateStore(StoreData data) {

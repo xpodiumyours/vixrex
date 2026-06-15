@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/screens/vitrin_editor_screen.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 
@@ -20,11 +22,13 @@ class PublicVitrinScreen extends StatefulWidget {
 
 class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
   late final Future<StoreData?> _storeFuture;
+  late final Future<bool> _isOwnerFuture;
 
   @override
   void initState() {
     super.initState();
     _storeFuture = _fetchStore();
+    _isOwnerFuture = _isOwnedByThisDevice();
   }
 
   Future<StoreData?> _fetchStore() async {
@@ -117,6 +121,14 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
     }
 
     return source == null ? 'direct' : 'unknown';
+  }
+
+  Future<bool> _isOwnedByThisDevice() async {
+    final info =
+        await const StoreLocalStorageService().loadPublishedVitrinInfo();
+    if (info == null) return false;
+    return info.slug.trim() == widget.slug.trim() &&
+        info.editToken.trim().isNotEmpty;
   }
 
   List<MarketplaceLink> _parseMarketplaceLinks(Object? rawLinks) {
@@ -233,12 +245,24 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
           '/v/${Uri.encodeComponent(widget.slug)}',
         );
 
-        return _PublicVitrinShell(
-          child: VitrinView(
-            storeData: storeData,
-            publicMode: true,
-            publicLink: publicLink,
-          ),
+        return FutureBuilder<bool>(
+          future: _isOwnerFuture,
+          builder: (context, ownerSnapshot) {
+            return _PublicVitrinShell(
+              showOwnerBar: ownerSnapshot.data == true,
+              onEdit: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const VitrinEditorScreen()),
+                );
+              },
+              child: VitrinView(
+                storeData: storeData,
+                publicMode: true,
+                publicLink: publicLink,
+              ),
+            );
+          },
         );
       },
     );
@@ -247,8 +271,14 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
 
 class _PublicVitrinShell extends StatelessWidget {
   final Widget child;
+  final bool showOwnerBar;
+  final VoidCallback? onEdit;
 
-  const _PublicVitrinShell({required this.child});
+  const _PublicVitrinShell({
+    required this.child,
+    this.showOwnerBar = false,
+    this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -282,7 +312,13 @@ class _PublicVitrinShell extends StatelessWidget {
                                 ]
                                 : null,
                       ),
-                      child: child,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (showOwnerBar) _PublicOwnerBar(onEdit: onEdit),
+                          child,
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -290,6 +326,56 @@ class _PublicVitrinShell extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _PublicOwnerBar extends StatelessWidget {
+  final VoidCallback? onEdit;
+
+  const _PublicOwnerBar({required this.onEdit});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF111827),
+        border: Border(bottom: BorderSide(color: Color(0x1FFFFFFF))),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.verified_user_rounded,
+            color: Colors.white,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Bu senin vitrinin',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          TextButton.icon(
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_rounded, size: 15),
+            label: const Text('Düzenle'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: const Color(0x33FFFFFF),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              minimumSize: const Size(0, 0),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+        ],
       ),
     );
   }
