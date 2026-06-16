@@ -357,8 +357,8 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     final whatsapp = _whatsappController.text.trim();
     final address = _addressController.text.trim();
 
+
     // Validate required fields
-    bool hasError = false;
     setState(() {
       _nameError = name.isEmpty ? 'İşletme adı zorunludur' : null;
       _whatsappError = whatsapp.isEmpty ? 'WhatsApp numarası zorunludur' : null;
