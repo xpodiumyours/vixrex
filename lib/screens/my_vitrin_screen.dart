@@ -702,7 +702,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           children: [
             Expanded(
               child: Text(
-                hasPublished ? 'Vitrini Düzenle' : 'Vitrinini Yayına Al',
+                'VitrinX Oluştur',
                 style: const TextStyle(
                   color: darkText,
                   fontSize: 24,
