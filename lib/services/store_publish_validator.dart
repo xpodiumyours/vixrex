@@ -13,8 +13,20 @@ class StorePublishValidator {
   }
 
   String? validateVitrin(StoreData data) {
+    final missing = <String>[];
+
     if (data.name.trim().isEmpty) {
-      return 'Vitrinini yayına almak için vitrin adı yazman yeterli.';
+      missing.add('işletme adı');
+    }
+    if (data.whatsapp.trim().isEmpty) {
+      missing.add('WhatsApp numarası');
+    }
+    if (data.address.trim().isEmpty) {
+      missing.add('konum / adres');
+    }
+
+    if (missing.isNotEmpty) {
+      return 'Lütfen şu zorunlu alanları doldurun: ${missing.join(', ')}.';
     }
     return null;
   }

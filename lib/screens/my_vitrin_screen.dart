@@ -2,10 +2,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
-import 'package:vitrinx/screens/vitrin_editor_screen.dart';
+import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
@@ -13,6 +15,34 @@ import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/utils/token_generator.dart';
 
+// ─── Gallery item helper ───────────────────────────────────────────────────
+class _GalleryItem {
+  String id;
+  Uint8List? bytes;
+  String imageUrl;
+  String extension;
+  String contentType;
+
+  _GalleryItem({
+    required this.id,
+    this.bytes,
+    required this.imageUrl,
+    this.extension = 'jpg',
+    this.contentType = 'image/jpeg',
+  });
+
+  bool get hasLocalBytes => bytes != null;
+  bool get hasUrl => imageUrl.trim().isNotEmpty;
+
+  static _GalleryItem fromStoreItem(StoreGalleryItem item) => _GalleryItem(
+    id: item.id,
+    imageUrl: item.imageUrl,
+  );
+
+  StoreGalleryItem toStoreItem() => StoreGalleryItem(id: id, imageUrl: imageUrl);
+}
+
+// ─── Main Widget ──────────────────────────────────────────────────────────
 class MyVitrinScreen extends StatefulWidget {
   final String? initialName;
   final VoidCallback? onPublished;
@@ -30,6 +60,7 @@ class MyVitrinScreen extends StatefulWidget {
 }
 
 class _MyVitrinScreenState extends State<MyVitrinScreen> {
+  // ─── Colors ─────────────────────────────────────────────────────────────
   static const Color primaryColor = Color(0xFFFF4D00);
   static const Color bgColor = Color(0xFFF6F8FC);
   static const Color darkText = Color(0xFF111827);
@@ -37,23 +68,87 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
   static const Color softText = Color(0xFF334155);
   static const Color cardBorder = Color.fromRGBO(15, 23, 42, 0.10);
   static const Color inputBg = Color(0xFFF1F5F9);
+  static const Color dangerColor = Color(0xFFDC2626);
 
+  // ─── Services ───────────────────────────────────────────────────────────
   final _storage = const StoreLocalStorageService();
+
+  // ─── Controllers ────────────────────────────────────────────────────────
   final _nameController = TextEditingController();
   final _whatsappController = TextEditingController();
+  final _addressController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _instagramController = TextEditingController();
+  final _websiteController = TextEditingController();
 
+  // ─── State ──────────────────────────────────────────────────────────────
   StoreData _data = StoreData(isEsnafMode: false, isStore: false);
   PublishedVitrinInfo? _publishedInfo;
+
+  // Cover photo
   Uint8List? _coverBytes;
   String? _coverUrl;
   String? _coverFileName;
   String _coverExtension = 'jpg';
   String _coverContentType = 'image/jpeg';
+
+  // Gallery
+  final List<_GalleryItem> _galleryItems = [];
+  static const int _maxGalleryPhotos = 12;
+
+  // Marketplace links
+  final List<MarketplaceLink> _marketplaceLinks = [];
+
+  // Location
+  double? _latitude;
+  double? _longitude;
+  double? _locationAccuracyMeters;
+  bool _isLocating = false;
+  String? _locationStatusMessage;
+
+  // Category / status
+  String _selectedKategori = 'Diğer';
+  String _selectedStatus = 'Açık';
+
+  static const List<String> _categories = [
+    'Giyim & Butik',
+    'Gıda & Fırın',
+    'Kozmetik',
+    'Dekorasyon',
+    'Elektronik',
+    'Kırtasiye',
+    'Kafe / Lokanta',
+    'Kuaför',
+    'Diğer',
+  ];
+
+  static const List<String> _statuses = [
+    'Açık',
+    'Bugün kampanya var',
+    'Yeni ürünler geldi',
+    'Stok sınırlı',
+    'Kapalı',
+  ];
+
+  static const List<String> _platformOptions = [
+    'Trendyol',
+    'Hepsiburada',
+    'N11',
+    'Amazon',
+    'Çiçeksepeti',
+    'Shopier',
+    'Diğer',
+  ];
+
+  // UI state
   String? _nameError;
+  String? _whatsappError;
+  String? _addressError;
   bool _isLoading = true;
   bool _isPublishing = false;
+  bool _isDeleting = false;
 
+  // ─── Lifecycle ──────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
@@ -64,10 +159,14 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
   void dispose() {
     _nameController.dispose();
     _whatsappController.dispose();
+    _addressController.dispose();
     _descriptionController.dispose();
+    _instagramController.dispose();
+    _websiteController.dispose();
     super.dispose();
   }
 
+  // ─── Data Loading ────────────────────────────────────────────────────────
   Future<void> _loadState() async {
     try {
       final savedData = await _storage.loadVitrinData();
@@ -83,12 +182,34 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         _data = data..isStore = false;
         _publishedInfo = publishedInfo;
         _nameController.text =
-            _data.name.trim().isNotEmpty
-                ? _data.name
+            data.name.trim().isNotEmpty
+                ? data.name
                 : (publishedInfo?.name ?? initialName);
-        _whatsappController.text = _data.whatsapp;
-        _descriptionController.text = _data.description;
-        _coverUrl = _data.coverImageUrl;
+        _whatsappController.text = data.whatsapp;
+        _addressController.text = data.address;
+        _descriptionController.text = data.description;
+        _instagramController.text = data.instagram;
+        _websiteController.text = data.website;
+        _coverUrl = data.shelfImageUrl.trim().isNotEmpty
+            ? data.shelfImageUrl
+            : data.coverImageUrl;
+        _selectedKategori =
+            data.kategori.trim().isEmpty ? 'Diğer' : data.kategori;
+        _selectedStatus = data.status.trim().isEmpty ? 'Açık' : data.status;
+        _latitude = data.latitude;
+        _longitude = data.longitude;
+        _locationAccuracyMeters = data.locationAccuracyMeters;
+
+        _galleryItems.clear();
+        _galleryItems.addAll(
+          data.displayGalleryItems
+              .take(_maxGalleryPhotos)
+              .map(_GalleryItem.fromStoreItem),
+        );
+
+        _marketplaceLinks.clear();
+        _marketplaceLinks.addAll(data.marketplaceLinks);
+
         _isLoading = false;
       });
     } catch (error) {
@@ -98,6 +219,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     }
   }
 
+  // ─── Cover Photo ─────────────────────────────────────────────────────────
   Future<void> _pickCoverPhoto() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
@@ -112,9 +234,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     );
 
     if (!validation.isValid || file.bytes == null) {
-      _showSnackBar(
-        'Fotoğraf eklenemedi. JPG, PNG veya WEBP ve en fazla 15 MB olmalı.',
-      );
+      _showSnackBar('Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.');
       return;
     }
 
@@ -126,25 +246,139 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     });
   }
 
+  // ─── Gallery ─────────────────────────────────────────────────────────────
+  Future<void> _pickGalleryPhotos() async {
+    final remaining = _maxGalleryPhotos - _galleryItems.length;
+    if (remaining <= 0) {
+      _showSnackBar('En fazla $_maxGalleryPhotos galeri fotoğrafı eklenebilir.');
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    var rejected = 0;
+    final newItems = <_GalleryItem>[];
+    for (final file in result.files.take(remaining)) {
+      final validation = GalleryImageFileValidator.validate(
+        bytes: file.bytes,
+        reportedSize: file.size,
+      );
+      if (!validation.isValid || file.bytes == null) {
+        rejected++;
+        continue;
+      }
+      newItems.add(
+        _GalleryItem(
+          id: '${DateTime.now().microsecondsSinceEpoch}_${newItems.length}',
+          bytes: file.bytes,
+          imageUrl: '',
+          extension: validation.fileInfo!.extension,
+          contentType: validation.fileInfo!.contentType,
+        ),
+      );
+    }
+
+    setState(() => _galleryItems.addAll(newItems));
+    if (rejected > 0) {
+      _showSnackBar('$rejected fotoğraf eklenemedi. Geçerli format: JPG, PNG, WEBP, maks 15 MB.');
+    }
+  }
+
+  void _removeGalleryItem(int index) {
+    if (index < 0 || index >= _galleryItems.length) return;
+    setState(() => _galleryItems.removeAt(index));
+  }
+
+  // ─── Location ─────────────────────────────────────────────────────────────
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLocating = true;
+      _locationStatusMessage = 'Konum aranıyor...';
+    });
+
+    final result = await const LocationService().getCurrentLocation();
+    if (!mounted) return;
+
+    if (!result.isSuccess && !result.hasApproximatePosition) {
+      setState(() {
+        _isLocating = false;
+        _locationStatusMessage = result.errorMessage;
+      });
+      return;
+    }
+
+    final position = result.position ?? result.approximatePosition!;
+    setState(() {
+      _latitude = position.latitude;
+      _longitude = position.longitude;
+      _locationAccuracyMeters = position.accuracy;
+      _locationStatusMessage = 'Adres çözümleniyor...';
+    });
+
+    final geoAddress = await const LocationService().getAddressFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLocating = false;
+      _locationStatusMessage = LocationService.buildAccuracyMessage(position.accuracy);
+      if (geoAddress != null && geoAddress.isNotEmpty) {
+        _addressController.text = geoAddress;
+      }
+    });
+  }
+
+  // ─── Marketplace Links ────────────────────────────────────────────────────
+  void _addMarketplaceLink() {
+    setState(() {
+      _marketplaceLinks.add(
+        MarketplaceLink(id: DateTime.now().millisecondsSinceEpoch.toString()),
+      );
+    });
+  }
+
+  void _removeMarketplaceLink(int index) {
+    setState(() => _marketplaceLinks.removeAt(index));
+  }
+
+  // ─── Publish ─────────────────────────────────────────────────────────────
   Future<void> _publishVitrin() async {
     if (_isPublishing) return;
 
     final name = _nameController.text.trim();
-    if (name.isEmpty) {
-      setState(() => _nameError = 'Vitrin adı zorunludur');
-      _showSnackBar('Vitrinini yayına almak için sadece ad yazman yeterli.');
+    final whatsapp = _whatsappController.text.trim();
+    final address = _addressController.text.trim();
+
+    // Validate required fields
+    bool hasError = false;
+    setState(() {
+      _nameError = name.isEmpty ? 'İşletme adı zorunludur' : null;
+      _whatsappError = whatsapp.isEmpty ? 'WhatsApp numarası zorunludur' : null;
+      _addressError = address.isEmpty ? 'Konum / adres bilgisi zorunludur' : null;
+    });
+
+    if (name.isEmpty || whatsapp.isEmpty || address.isEmpty) {
+      _showSnackBar('Lütfen zorunlu alanları doldurun: ad, WhatsApp ve konum.');
       return;
     }
 
     setState(() {
       _isPublishing = true;
-      _nameError = null;
     });
 
     try {
       final slug = const StorePublishPayloadBuilder().generateSlug(name);
       var coverUrl = _coverUrl?.trim() ?? '';
 
+      // Upload cover
       if (_coverBytes != null) {
         try {
           coverUrl = await const StoreShelfUploadService().uploadShelfImage(
@@ -153,24 +387,58 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             fileExtension: _coverExtension,
             contentType: _coverContentType,
           );
-        } catch (error) {
-          debugPrint('Cover upload skipped: $error');
-          _showSnackBar('Fotoğraf yüklenemedi ama vitrin yayını devam ediyor.');
+        } catch (_) {
+          _showSnackBar('Kapak fotoğrafı yüklenemedi, vitrin yayını devam ediyor.');
           coverUrl = _coverUrl?.trim() ?? '';
         }
       }
 
+      // Upload gallery
+      final uploadService = const StoreShelfUploadService();
+      var galleryFailures = 0;
+      for (final item in _galleryItems) {
+        if (item.hasLocalBytes) {
+          try {
+            final url = await uploadService.uploadGalleryImage(
+              item.bytes!,
+              slug,
+              fileExtension: item.extension,
+              contentType: item.contentType,
+            );
+            item.imageUrl = url;
+            item.bytes = null;
+          } catch (_) {
+            galleryFailures++;
+          }
+        }
+      }
+      if (galleryFailures > 0) {
+        _showSnackBar('$galleryFailures galeri fotoğrafı yüklenemedi.');
+      }
+
+      final publishedGallery = _galleryItems
+          .where((i) => i.hasUrl)
+          .take(_maxGalleryPhotos)
+          .map((i) => i.toStoreItem())
+          .toList();
+
       final data =
           _data
             ..name = name
-            ..whatsapp = _whatsappController.text.trim()
+            ..whatsapp = whatsapp
+            ..address = address
             ..description = _descriptionController.text.trim()
+            ..instagram = _instagramController.text.trim()
+            ..website = _websiteController.text.trim()
+            ..kategori = _selectedKategori
+            ..status = _selectedStatus
             ..isStore = false
             ..shelfImageUrl = coverUrl
-            ..galleryItems =
-                coverUrl.isEmpty
-                    ? <StoreGalleryItem>[]
-                    : [StoreGalleryItem(id: 'cover', imageUrl: coverUrl)];
+            ..galleryItems = publishedGallery
+            ..marketplaceLinks = List.from(_marketplaceLinks)
+            ..latitude = _latitude
+            ..longitude = _longitude
+            ..locationAccuracyMeters = _locationAccuracyMeters;
 
       await _storage.saveVitrinData(data);
       final editToken = await _loadOrCreateEditToken();
@@ -200,29 +468,106 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         _coverBytes = null;
         _coverFileName = null;
       });
+
       widget.onPublished?.call();
-      _showSnackBar('Vitrinin yayında! Keşfet’te görünürsün.');
+      _showSnackBar('Vitrinin yayında! Keşfet\'te görünürsün.');
     } catch (error) {
-      debugPrint('My vitrin publish error: $error');
+      debugPrint('Publish error: $error');
       if (!mounted) return;
       _showSnackBar(
         error is StorePublishException
             ? error.message
-            : 'Vitrin yayına alınamadı. Supabase ayarlarını kontrol edin.',
+            : 'Vitrin yayına alınamadı. Lütfen tekrar deneyin.',
       );
     } finally {
-      if (mounted) {
-        setState(() => _isPublishing = false);
-      }
+      if (mounted) setState(() => _isPublishing = false);
     }
   }
 
-  Future<String> _loadOrCreateEditToken() async {
-    final savedToken = await _storage.loadVitrinEditToken();
-    if (savedToken != null && savedToken.trim().isNotEmpty) {
-      return savedToken;
-    }
+  // ─── Delete Vitrin ────────────────────────────────────────────────────────
+  Future<void> _deleteVitrin() async {
+    if (_isDeleting) return;
+    setState(() => _isDeleting = true);
 
+    try {
+      final token = _publishedInfo?.editToken;
+      if (token != null && token.trim().isNotEmpty) {
+        final client = Supabase.instance.client;
+        await client.from('stores').delete().eq('edit_token', token);
+      }
+      await _storage.clearVitrinData();
+
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LandingScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      debugPrint('Delete error: $e');
+      if (!mounted) return;
+      _showSnackBar('Vitrin silinirken bir hata oluştu.');
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: dangerColor, size: 22),
+            SizedBox(width: 8),
+            Text(
+              'Vitrini Sil',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 17,
+                color: darkText,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Bu işlem geri alınamaz. Vitrininiz kalıcı olarak silinecektir.',
+          style: TextStyle(color: softText, fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Vazgeç',
+              style: TextStyle(fontWeight: FontWeight.bold, color: mutedText),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteVitrin();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: dangerColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Sil', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+  Future<String> _loadOrCreateEditToken() async {
+    final saved = await _storage.loadVitrinEditToken();
+    if (saved != null && saved.trim().isNotEmpty) return saved;
     final token = TokenGenerator.generate();
     await _storage.saveVitrinEditToken(token);
     return token;
@@ -234,17 +579,6 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     await Clipboard.setData(ClipboardData(text: link));
     if (!mounted) return;
     _showSnackBar('Vitrin linki kopyalandı.');
-  }
-
-  Future<void> _openEditor() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const VitrinEditorScreen()),
-    );
-    if (mounted) {
-      await _loadState();
-      widget.onPublished?.call();
-    }
   }
 
   void _openPublicVitrin() {
@@ -259,7 +593,6 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
   void _showQrSheet() {
     final link = _publishedInfo?.publicLink;
     if (link == null || link.trim().isEmpty) return;
-
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -267,50 +600,49 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'QR Göster',
-                style: TextStyle(
-                  color: darkText,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'QR Kod',
+              style: TextStyle(
+                color: darkText,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
               ),
-              const SizedBox(height: 16),
-              Container(
-                width: 220,
-                height: 220,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: cardBorder),
-                ),
-                child: QrImageView(
-                  data: link,
-                  version: QrVersions.auto,
-                  errorCorrectionLevel: QrErrorCorrectLevel.M,
-                ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: 220,
+              height: 220,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: cardBorder),
               ),
-              const SizedBox(height: 16),
-              Text(
-                link,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: mutedText,
-                  fontWeight: FontWeight.w700,
-                ),
+              child: QrImageView(
+                data: link,
+                version: QrVersions.auto,
+                errorCorrectionLevel: QrErrorCorrectLevel.M,
               ),
-            ],
-          ),
-        );
-      },
+            ),
+            const SizedBox(height: 12),
+            Text(
+              link,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: mutedText,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -323,6 +655,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
       );
   }
 
+  // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -332,7 +665,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
       );
     }
 
-    final hasPublishedVitrin = _publishedInfo?.isComplete == true;
+    final hasPublished = _publishedInfo?.isComplete == true;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -348,10 +681,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 680),
-                  child:
-                      hasPublishedVitrin
-                          ? _buildPublishedView()
-                          : _buildSetupView(),
+                  child: _buildContent(hasPublished),
                 ),
               ),
             );
@@ -361,111 +691,718 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
-  Widget _buildSetupView() {
+  Widget _buildContent(bool hasPublished) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        const Text(
-          'Vitrinini 30 saniyede yayına al',
-          style: TextStyle(
+
+        // ── Header ──────────────────────────────────────────────────────
+        Text(
+          hasPublished ? 'Vitrini Düzenle' : 'Vitrinini 30 saniyede yayına al',
+          style: const TextStyle(
             color: darkText,
-            fontSize: 28,
+            fontSize: 26,
             fontWeight: FontWeight.w900,
-            height: 1.12,
-            letterSpacing: 0,
+            height: 1.15,
           ),
         ),
-        const SizedBox(height: 10),
-        const Text(
-          'İşletme adını yaz, bir fotoğraf ekle, linkin ve QR kodun hazır olsun.',
-          style: TextStyle(
+        const SizedBox(height: 8),
+        Text(
+          hasPublished
+              ? 'Düzenledikten sonra kaydet, linkin ve QR kodun güncellenir.'
+              : 'Ad, WhatsApp ve konumunu gir — vitrin hazır. Diğer detayları sonra ekleyebilirsin.',
+          style: const TextStyle(
             color: mutedText,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
             height: 1.4,
           ),
         ),
-        const SizedBox(height: 22),
-        _buildSetupCard(),
-      ],
-    );
-  }
+        const SizedBox(height: 20),
 
-  Widget _buildSetupCard() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildTextField(
-            label: 'İşletme / vitrin adı',
-            controller: _nameController,
-            hint: 'Örn: Aymira Butik',
-            icon: Icons.storefront_rounded,
-            errorText: _nameError,
-            required: true,
-          ),
-          const SizedBox(height: 16),
-          _buildCoverPicker(),
-          const SizedBox(height: 16),
-          _buildTextField(
-            label: 'WhatsApp',
-            controller: _whatsappController,
-            hint: '05xx xxx xx xx',
-            icon: Icons.chat_bubble_rounded,
-            keyboardType: TextInputType.phone,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            label: 'Kısa açıklama',
-            controller: _descriptionController,
-            hint: 'Bugün vitrinde ne var?',
-            icon: Icons.notes_rounded,
-            maxLines: 3,
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 54,
-            child: ElevatedButton.icon(
-              onPressed: _isPublishing ? null : _publishVitrin,
-              icon:
-                  _isPublishing
-                      ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                      : const Icon(Icons.rocket_launch_rounded, size: 19),
-              label: Text(
-                _isPublishing ? 'Yayına alınıyor...' : 'Vitrinimi Yayına Al',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
+        // ── Main Form Card ───────────────────────────────────────────────
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: _cardDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Zorunlu alanlar başlığı
+              _sectionLabel('Zorunlu Bilgiler'),
+              const SizedBox(height: 12),
+
+              _buildTextField(
+                label: 'İşletme / Vitrin Adı',
+                controller: _nameController,
+                hint: 'Örn: Aymira Butik',
+                icon: Icons.storefront_rounded,
+                errorText: _nameError,
+                required: true,
+              ),
+              const SizedBox(height: 14),
+
+              _buildTextField(
+                label: 'WhatsApp Numarası',
+                controller: _whatsappController,
+                hint: '05xx xxx xx xx',
+                icon: Icons.chat_bubble_rounded,
+                keyboardType: TextInputType.phone,
+                errorText: _whatsappError,
+                required: true,
+              ),
+              const SizedBox(height: 14),
+
+              _buildLocationField(),
+              const SizedBox(height: 22),
+
+              // İsteğe bağlı başlığı
+              _sectionLabel('İsteğe Bağlı (Sonra Eklenebilir)'),
+              const SizedBox(height: 12),
+
+              _buildCoverPicker(),
+              const SizedBox(height: 14),
+
+              _buildTextField(
+                label: 'Kısa Açıklama',
+                controller: _descriptionController,
+                hint: 'Bugün vitrinde ne var? Kısa bir tanıtım yaz.',
+                icon: Icons.notes_rounded,
+                maxLines: 3,
+              ),
+              const SizedBox(height: 14),
+
+              _buildDropdown(
+                label: 'Kategori',
+                value: _selectedKategori,
+                items: _categories,
+                icon: Icons.category_rounded,
+                onChanged: (val) => setState(() => _selectedKategori = val ?? 'Diğer'),
+              ),
+              const SizedBox(height: 14),
+
+              _buildDropdown(
+                label: 'Vitrin Durumu',
+                value: _selectedStatus,
+                items: _statuses,
+                icon: Icons.info_outline_rounded,
+                onChanged: (val) => setState(() => _selectedStatus = val ?? 'Açık'),
+              ),
+              const SizedBox(height: 14),
+
+              _buildTextField(
+                label: 'Instagram',
+                controller: _instagramController,
+                hint: '@kullanici_adi veya profil linki',
+                icon: Icons.camera_alt_rounded,
+                keyboardType: TextInputType.url,
+              ),
+              const SizedBox(height: 14),
+
+              _buildTextField(
+                label: 'Website',
+                controller: _websiteController,
+                hint: 'https://...',
+                icon: Icons.language_rounded,
+                keyboardType: TextInputType.url,
+              ),
+              const SizedBox(height: 14),
+
+              _buildGallerySection(),
+              const SizedBox(height: 14),
+
+              _buildMarketplaceSection(),
+              const SizedBox(height: 24),
+
+              // ── Publish Button ─────────────────────────────────────────
+              SizedBox(
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed: _isPublishing ? null : _publishVitrin,
+                  icon:
+                      _isPublishing
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : Icon(
+                            hasPublished
+                                ? Icons.cloud_upload_rounded
+                                : Icons.rocket_launch_rounded,
+                            size: 19,
+                          ),
+                  label: Text(
+                    _isPublishing
+                        ? 'Yayına alınıyor...'
+                        : hasPublished
+                        ? 'Değişiklikleri Kaydet & Yayına Al'
+                        : 'Vitrinimi Yayına Al',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+              const SizedBox(height: 8),
+              Text(
+                hasPublished
+                    ? 'Mevcut linkin korunur, Keşfet görünümün güncellenir.'
+                    : 'Linkin oluşur, Keşfet\'te görünürsün.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: mutedText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Published Summary Card ────────────────────────────────────────
+        if (hasPublished) ...[
+          const SizedBox(height: 16),
+          _buildPublishedSummary(),
+          const SizedBox(height: 16),
+          _buildActionButtons(),
+        ],
+
+        // ── Danger Zone ────────────────────────────────────────────────────
+        if (hasPublished) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton.icon(
+              onPressed: _isDeleting ? null : _showDeleteConfirmation,
+              icon: const Icon(Icons.delete_outline_rounded, size: 16, color: dangerColor),
+              label: const Text(
+                'Vitrini Sil',
+                style: TextStyle(
+                  color: dangerColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          const Text(
-            'Linkin oluşur, Keşfet’te görünürsün.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
+          const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+
+  // ─── Location Field ───────────────────────────────────────────────────────
+  Widget _buildLocationField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Konum / Adres',
+              style: TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Text(
+              ' *',
+              style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _addressController,
+          style: const TextStyle(
+            color: darkText,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.location_on_rounded, color: mutedText, size: 18),
+            hintText: 'Mahalle, cadde, ilçe/il — veya GPS ile al',
+            hintStyle: TextStyle(
+              color: mutedText.withValues(alpha: 0.62),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            filled: true,
+            fillColor: inputBg,
+            errorText: _addressError,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: primaryColor, width: 1.4),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 40,
+          child: OutlinedButton.icon(
+            onPressed: _isLocating ? null : _getCurrentLocation,
+            icon:
+                _isLocating
+                    ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: primaryColor,
+                      ),
+                    )
+                    : const Icon(Icons.my_location_rounded, size: 16, color: primaryColor),
+            label: Text(
+              _isLocating ? 'Konum alınıyor...' : '📡 GPS ile Konumumu Al',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: primaryColor,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: primaryColor),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+            ),
+          ),
+        ),
+        if (_locationStatusMessage != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            _locationStatusMessage!,
+            style: const TextStyle(
               color: mutedText,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        if (_latitude != null && _longitude != null) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, size: 13, color: Color(0xFF10B981)),
+              const SizedBox(width: 4),
+              Text(
+                'Koordinat kaydedildi (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})',
+                style: const TextStyle(
+                  color: Color(0xFF047857),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ─── Gallery Section ──────────────────────────────────────────────────────
+  Widget _buildGallerySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Galeri Fotoğrafları',
+              style: TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              '${_galleryItems.length}/$_maxGalleryPhotos',
+              style: const TextStyle(
+                color: mutedText,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_galleryItems.isNotEmpty)
+          SizedBox(
+            height: 90,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _galleryItems.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                if (index == _galleryItems.length) {
+                  // Add button
+                  return _galleryItems.length < _maxGalleryPhotos
+                      ? _galleryAddButton()
+                      : const SizedBox.shrink();
+                }
+                final item = _galleryItems[index];
+                return _galleryThumb(item, index);
+              },
+            ),
+          )
+        else
+          _galleryEmptyState(),
+      ],
+    );
+  }
+
+  Widget _galleryEmptyState() {
+    return InkWell(
+      onTap: _pickGalleryPhotos,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: inputBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_photo_alternate_rounded, color: primaryColor, size: 22),
+            SizedBox(width: 8),
+            Text(
+              'Galeri fotoğrafı ekle',
+              style: TextStyle(
+                color: darkText,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _galleryAddButton() {
+    return InkWell(
+      onTap: _pickGalleryPhotos,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 80,
+        height: 90,
+        decoration: BoxDecoration(
+          color: inputBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_rounded, color: primaryColor, size: 24),
+            SizedBox(height: 4),
+            Text(
+              'Ekle',
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _galleryThumb(_GalleryItem item, int index) {
+    Widget imageWidget;
+    if (item.hasLocalBytes) {
+      imageWidget = Image.memory(item.bytes!, fit: BoxFit.cover);
+    } else if (item.hasUrl) {
+      imageWidget = Image.network(
+        item.imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_rounded, color: mutedText),
+      );
+    } else {
+      imageWidget = const Icon(Icons.image_rounded, color: mutedText);
+    }
+
+    return Stack(
+      children: [
+        Container(
+          width: 80,
+          height: 90,
+          decoration: BoxDecoration(
+            color: inputBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: imageWidget,
+        ),
+        Positioned(
+          top: 2,
+          right: 2,
+          child: GestureDetector(
+            onTap: () => _removeGalleryItem(index),
+            child: Container(
+              width: 22,
+              height: 22,
+              decoration: const BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close_rounded, size: 14, color: Colors.white),
+            ),
+          ),
+        ),
+        if (index == 0)
+          Positioned(
+            bottom: 3,
+            left: 3,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: primaryColor,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'Kapak',
+                style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ─── Marketplace Section ──────────────────────────────────────────────────
+  Widget _buildMarketplaceSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Pazar Yeri Linkleri',
+              style: TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: _addMarketplaceLink,
+              icon: const Icon(Icons.add_rounded, size: 16, color: primaryColor),
+              label: const Text(
+                'Ekle',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
+        if (_marketplaceLinks.isEmpty)
+          Text(
+            'Trendyol, Hepsiburada gibi linkleri buraya ekleyebilirsiniz.',
+            style: TextStyle(
+              color: mutedText.withValues(alpha: 0.7),
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        for (int i = 0; i < _marketplaceLinks.length; i++) ...[
+          const SizedBox(height: 8),
+          _buildMarketplaceLinkRow(i),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMarketplaceLinkRow(int index) {
+    final link = _marketplaceLinks[index];
+    return Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: DropdownButtonFormField<String>(
+            value: _platformOptions.contains(link.platform) ? link.platform : null,
+            hint: const Text('Platform', style: TextStyle(fontSize: 13)),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: inputBg,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: cardBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: cardBorder),
+              ),
+            ),
+            items: _platformOptions
+                .map((p) => DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(fontSize: 13))))
+                .toList(),
+            onChanged: (val) {
+              setState(() => _marketplaceLinks[index].platform = val ?? '');
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 3,
+          child: TextField(
+            onChanged: (val) => _marketplaceLinks[index].url = val,
+            style: const TextStyle(fontSize: 13, color: darkText, fontWeight: FontWeight.w700),
+            decoration: InputDecoration(
+              hintText: 'https://...',
+              hintStyle: TextStyle(
+                color: mutedText.withValues(alpha: 0.6),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              filled: true,
+              fillColor: inputBg,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: cardBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: cardBorder),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        IconButton(
+          onPressed: () => _removeMarketplaceLink(index),
+          icon: const Icon(Icons.close_rounded, size: 18, color: mutedText),
+          style: IconButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: const Size(28, 28),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Published Summary ────────────────────────────────────────────────────
+  Widget _buildPublishedSummary() {
+    final info = _publishedInfo!;
+    final cover = _coverUrl?.trim() ?? '';
+
+    return Container(
+      decoration: _cardDecoration(),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Cover image area
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child:
+                cover.isNotEmpty
+                    ? Image.network(
+                      cover,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _coverPlaceholder(),
+                    )
+                    : _coverPlaceholder(),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFFDF5),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Text(
+                        '✅ Keşfet\'te yayında',
+                        style: TextStyle(
+                          color: Color(0xFF047857),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: widget.onOpenExplore,
+                      icon: const Icon(Icons.travel_explore_rounded, size: 18),
+                      color: primaryColor,
+                      tooltip: 'Keşfet\'te Gör',
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFF4EF),
+                        minimumSize: const Size(36, 36),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  info.name.trim().isNotEmpty ? info.name : 'Vitrinim',
+                  style: const TextStyle(
+                    color: darkText,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  info.publicLink,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: primaryColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -473,177 +1410,30 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
-  Widget _buildPublishedView() {
-    final info = _publishedInfo!;
-    final cover = _coverUrl?.trim() ?? '';
-    final name =
-        _data.name.trim().isNotEmpty ? _data.name.trim() : info.name.trim();
-    final description = _data.description.trim();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Vitrinin yayında',
-                    style: TextStyle(
-                      color: darkText,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      height: 1.12,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Linkin, QR kodun ve Keşfet görünürlüğün hazır.',
-                    style: TextStyle(
-                      color: mutedText,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              onPressed: widget.onOpenExplore,
-              icon: const Icon(Icons.travel_explore_rounded),
-              color: primaryColor,
-              tooltip: 'Keşfet',
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
-                side: const BorderSide(color: cardBorder),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        Container(
-          decoration: _cardDecoration(),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child:
-                    cover.isNotEmpty
-                        ? Image.network(
-                          cover,
-                          fit: BoxFit.cover,
-                          errorBuilder:
-                              (context, error, stackTrace) =>
-                                  _buildCoverPlaceholder(),
-                        )
-                        : _buildCoverPlaceholder(),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFFDF5),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'Keşfet’te yayında',
-                        style: TextStyle(
-                          color: Color(0xFF047857),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      name.isEmpty ? 'Vitrinim' : name,
-                      style: const TextStyle(
-                        color: darkText,
-                        fontSize: 21,
-                        fontWeight: FontWeight.w900,
-                        height: 1.2,
-                      ),
-                    ),
-                    if (description.isNotEmpty) ...[
-                      const SizedBox(height: 7),
-                      Text(
-                        description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: mutedText,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    Text(
-                      info.publicLink,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: primaryColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildPublishedActions(),
-      ],
-    );
-  }
-
-  Widget _buildPublishedActions() {
+  Widget _buildActionButtons() {
     return LayoutBuilder(
       builder: (context, constraints) {
         final buttonWidth =
             constraints.maxWidth < 520
                 ? constraints.maxWidth
                 : (constraints.maxWidth - 10) / 2;
-
         return Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
-            _buildActionButton(
-              width: buttonWidth,
-              label: 'Vitrini Düzenle',
-              icon: Icons.edit_rounded,
-              onPressed: _openEditor,
-            ),
-            _buildActionButton(
+            _actionButton(
               width: buttonWidth,
               label: 'Yayındaki Vitrini Aç',
               icon: Icons.open_in_new_rounded,
               onPressed: _openPublicVitrin,
             ),
-            _buildActionButton(
+            _actionButton(
               width: buttonWidth,
               label: 'Linki Kopyala',
               icon: Icons.copy_rounded,
               onPressed: _copyLink,
             ),
-            _buildActionButton(
+            _actionButton(
               width: buttonWidth,
               label: 'QR Göster',
               icon: Icons.qr_code_2_rounded,
@@ -655,7 +1445,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
-  Widget _buildActionButton({
+  Widget _actionButton({
     required double width,
     required String label,
     required IconData icon,
@@ -665,7 +1455,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
       width: width,
       child: OutlinedButton.icon(
         onPressed: onPressed,
-        icon: Icon(icon, size: 18),
+        icon: Icon(icon, size: 17),
         label: Text(
           label,
           maxLines: 1,
@@ -676,7 +1466,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           foregroundColor: darkText,
           backgroundColor: Colors.white,
           side: const BorderSide(color: cardBorder),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -685,6 +1475,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
+  // ─── Cover Picker ─────────────────────────────────────────────────────────
   Widget _buildCoverPicker() {
     final hasCover =
         _coverBytes != null || (_coverUrl?.trim().isNotEmpty ?? false);
@@ -693,7 +1484,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Kapak fotoğrafı',
+          'Kapak Fotoğrafı',
           style: TextStyle(
             color: softText,
             fontSize: 12,
@@ -705,7 +1496,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           onTap: _pickCoverPhoto,
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            height: 150,
+            height: 140,
             decoration: BoxDecoration(
               color: inputBg,
               borderRadius: BorderRadius.circular(16),
@@ -723,14 +1514,12 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                           Image.network(
                             _coverUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder:
-                                (context, error, stackTrace) =>
-                                    _buildCoverPlaceholder(),
+                            errorBuilder: (_, __, ___) => _coverPlaceholder(),
                           ),
                         Positioned(
                           right: 10,
                           bottom: 10,
-                          child: _coverBadge(
+                          child: _badge(
                             _coverFileName == null
                                 ? 'Fotoğrafı değiştir'
                                 : _coverFileName!,
@@ -738,30 +1527,30 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                         ),
                       ],
                     )
-                    : Column(
+                    : const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
+                      children: [
                         Icon(
                           Icons.add_photo_alternate_rounded,
                           color: primaryColor,
-                          size: 34,
+                          size: 32,
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: 6),
                         Text(
-                          'Fotoğraf ekle',
+                          'Kapak fotoğrafı ekle',
                           style: TextStyle(
                             color: darkText,
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        SizedBox(height: 3),
                         Text(
-                          'İsteğe bağlı',
+                          'İsteğe bağlı — sonra da eklenebilir',
                           style: TextStyle(
                             color: mutedText,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -772,10 +1561,25 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
-  Widget _coverBadge(String text) {
+  Widget _coverPlaceholder() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFEFE7), Color(0xFFF8FAFC)],
+        ),
+      ),
+      child: const Center(
+        child: Icon(Icons.storefront_rounded, color: primaryColor, size: 38),
+      ),
+    );
+  }
+
+  Widget _badge(String text) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 220),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.66),
         borderRadius: BorderRadius.circular(999),
@@ -793,21 +1597,62 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
-  Widget _buildCoverPlaceholder() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFFFEFE7), Color(0xFFF8FAFC)],
+  // ─── Dropdown ─────────────────────────────────────────────────────────────
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required IconData icon,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: softText,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-      ),
-      child: const Center(
-        child: Icon(Icons.storefront_rounded, color: primaryColor, size: 38),
-      ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: items.contains(value) ? value : items.first,
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: mutedText, size: 18),
+            filled: true,
+            fillColor: inputBg,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+          ),
+          items: items
+              .map((item) => DropdownMenuItem(
+                    value: item,
+                    child: Text(
+                      item,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: darkText,
+                      ),
+                    ),
+                  ))
+              .toList(),
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 
+  // ─── Text Field ───────────────────────────────────────────────────────────
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
@@ -851,12 +1696,21 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             fontSize: 14,
             fontWeight: FontWeight.w700,
           ),
+          onChanged: (_) {
+            if (errorText != null) {
+              setState(() {
+                _nameError = null;
+                _whatsappError = null;
+                _addressError = null;
+              });
+            }
+          },
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: mutedText, size: 18),
             hintText: hint,
             hintStyle: TextStyle(
               color: mutedText.withValues(alpha: 0.62),
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
             filled: true,
@@ -881,6 +1735,26 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+  Widget _sectionLabel(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: softText,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 
