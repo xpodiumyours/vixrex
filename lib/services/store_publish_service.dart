@@ -55,11 +55,15 @@ class StorePublishService {
       throw StorePublishException(validationMessage);
     }
 
-    final slug = payloadBuilder.generateSlug(data.name);
+    final initialSlug = data.slug.trim().isNotEmpty
+        ? data.slug.trim()
+        : payloadBuilder.generateSlug(data.name);
     late final SupabaseClient client;
+    var slug = initialSlug;
 
     try {
       client = supabaseClient ?? Supabase.instance.client;
+
       if (editToken.trim().isNotEmpty) {
         try {
           final existingByToken =
@@ -70,6 +74,10 @@ class StorePublishService {
                   .maybeSingle();
 
           if (existingByToken != null) {
+            final dbSlug = (existingByToken['slug'] as String?)?.trim() ?? '';
+            if (dbSlug.isNotEmpty) {
+              slug = dbSlug;
+            }
             await _updateStoreWithToken(client, data, slug, editToken);
             _notifyGoogleIndexing(slug);
             return StorePublishResult(

@@ -106,10 +106,11 @@ void main() {
       expect(validator.validateVitrin(data), isNotNull);
     });
 
-    test('missing whatsapp still passes', () {
+    test('missing whatsapp returns error', () {
       final data = validVitrin();
       data.whatsapp = '';
-      expect(validator.validateVitrin(data), isNull);
+      expect(validator.validateVitrin(data), isNotNull);
+      expect(validator.validateVitrin(data), contains('WhatsApp'));
     });
 
     test('missing description still passes', () {
@@ -118,10 +119,11 @@ void main() {
       expect(validator.validateVitrin(data), isNull);
     });
 
-    test('missing address still passes', () {
+    test('missing address returns error', () {
       final data = validVitrin();
       data.address = '';
-      expect(validator.validateVitrin(data), isNull);
+      expect(validator.validateVitrin(data), isNotNull);
+      expect(validator.validateVitrin(data), contains('konum'));
     });
 
     test('no marketplace links still passes', () {
@@ -146,13 +148,13 @@ void main() {
       expect(validator.validateVitrin(data), isNull);
     });
 
-    test('error message only asks for vitrin name', () {
+    test('error message asks for missing fields', () {
       final data = validVitrin();
       data.name = '';
       data.whatsapp = '';
       final msg = validator.validateVitrin(data)!;
-      expect(msg, contains('vitrin adı'));
-      expect(msg, isNot(contains('WhatsApp')));
+      expect(msg, contains('işletme adı'));
+      expect(msg, contains('WhatsApp'));
     });
   });
 }

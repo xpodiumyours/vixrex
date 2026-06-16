@@ -38,7 +38,7 @@ void main() {
 
     expect(find.text('Keşfet'), findsOneWidget);
     expect(find.text('Vitrinim'), findsOneWidget);
-    expect(find.text('Vitrinini 30 saniyede yayına al'), findsOneWidget);
+    expect(find.text('VitrinX Oluştur'), findsAtLeastNWidgets(1));
     expect(find.text('Vitrinimi Yayına Al'), findsOneWidget);
   });
 
@@ -101,7 +101,7 @@ void main() {
     },
   );
 
-  testWidgets('Vitrinim yayınlanmış vitrinin aksiyonlarını gösterir', (
+  testWidgets('Vitrinim yayınlanmış vitrini aynı sayfada düzenletir', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({
@@ -119,7 +119,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('Vitrini Düzenle'), findsOneWidget);
+    expect(find.text('VitrinX Oluştur'), findsAtLeastNWidgets(1));
+    expect(find.text('Değişiklikleri Kaydet & Yayına Al'), findsOneWidget);
+    expect(find.text('İşletme / VitrinX Adı'), findsOneWidget);
     expect(find.text('Yayındaki Vitrini Aç'), findsOneWidget);
     expect(find.text('Linki Kopyala'), findsOneWidget);
     expect(find.text('QR Göster'), findsOneWidget);

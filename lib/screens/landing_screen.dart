@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/screens/store_editor_screen.dart';
-import 'package:vitrinx/screens/vitrin_editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/auth_screen.dart';
 import 'package:vitrinx/screens/home_shell_screen.dart';
@@ -283,7 +282,9 @@ class _LandingScreenState extends State<LandingScreen>
             if (!mounted) return;
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const VitrinEditorScreen()),
+              MaterialPageRoute(
+                builder: (_) => const HomeShellScreen(initialIndex: 1),
+              ),
             );
             return;
           }
@@ -399,7 +400,7 @@ class _LandingScreenState extends State<LandingScreen>
 
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const VitrinEditorScreen()),
+      MaterialPageRoute(builder: (_) => const HomeShellScreen(initialIndex: 1)),
     );
     if (mounted) {
       _loadSavedVitrinState();
