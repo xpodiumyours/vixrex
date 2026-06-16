@@ -698,14 +698,43 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         const SizedBox(height: 8),
 
         // ── Header ──────────────────────────────────────────────────────
-        Text(
-          hasPublished ? 'Vitrini Düzenle' : 'Vitrinini 30 saniyede yayına al',
-          style: const TextStyle(
-            color: darkText,
-            fontSize: 26,
-            fontWeight: FontWeight.w900,
-            height: 1.15,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                hasPublished ? 'Vitrini Düzenle' : 'Vitrinini Yayına Al',
+                style: const TextStyle(
+                  color: darkText,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  height: 1.15,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: primaryColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.storefront_rounded, color: Colors.white, size: 13),
+                  SizedBox(width: 4),
+                  Text(
+                    'VitrinX ile',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Text(
@@ -714,12 +743,12 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               : 'Ad, WhatsApp ve konumunu gir — vitrin hazır. Diğer detayları sonra ekleyebilirsin.',
           style: const TextStyle(
             color: mutedText,
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
             height: 1.4,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         // ── Main Form Card ───────────────────────────────────────────────
         Container(
@@ -728,12 +757,17 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Zorunlu alanlar başlığı
-              _sectionLabel('Zorunlu Bilgiler'),
-              const SizedBox(height: 12),
+                    // ── Kapak Fotoğrafı ──────────────────────────────────
+              _buildCoverPicker(),
+              const SizedBox(height: 10),
 
+              // ── Galeri (kapak altında, kompakt) ─────────────────
+              _buildCompactGalleryRow(),
+              const SizedBox(height: 18),
+
+              // ── Zorunlu Alanlar (* ile işaretli) ─────────────────
               _buildTextField(
-                label: 'İşletme / Vitrin Adı',
+                label: 'İşletme / VitrinX Adı',
                 controller: _nameController,
                 hint: 'Örn: Aymira Butik',
                 icon: Icons.storefront_rounded,
@@ -754,15 +788,9 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               const SizedBox(height: 14),
 
               _buildLocationField(),
-              const SizedBox(height: 22),
-
-              // İsteğe bağlı başlığı
-              _sectionLabel('İsteğe Bağlı (Sonra Eklenebilir)'),
-              const SizedBox(height: 12),
-
-              _buildCoverPicker(),
               const SizedBox(height: 14),
 
+              // ── İsteğe Bağlı Alanlar ─────────────────────────────
               _buildTextField(
                 label: 'Kısa Açıklama',
                 controller: _descriptionController,
@@ -806,9 +834,6 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                 icon: Icons.language_rounded,
                 keyboardType: TextInputType.url,
               ),
-              const SizedBox(height: 14),
-
-              _buildGallerySection(),
               const SizedBox(height: 14),
 
               _buildMarketplaceSection(),
@@ -1019,182 +1044,6 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             ],
           ),
         ],
-      ],
-    );
-  }
-
-  // ─── Gallery Section ──────────────────────────────────────────────────────
-  Widget _buildGallerySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Galeri Fotoğrafları',
-              style: TextStyle(
-                color: softText,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              '${_galleryItems.length}/$_maxGalleryPhotos',
-              style: const TextStyle(
-                color: mutedText,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        if (_galleryItems.isNotEmpty)
-          SizedBox(
-            height: 90,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _galleryItems.length + 1,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                if (index == _galleryItems.length) {
-                  // Add button
-                  return _galleryItems.length < _maxGalleryPhotos
-                      ? _galleryAddButton()
-                      : const SizedBox.shrink();
-                }
-                final item = _galleryItems[index];
-                return _galleryThumb(item, index);
-              },
-            ),
-          )
-        else
-          _galleryEmptyState(),
-      ],
-    );
-  }
-
-  Widget _galleryEmptyState() {
-    return InkWell(
-      onTap: _pickGalleryPhotos,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: inputBg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cardBorder),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_photo_alternate_rounded, color: primaryColor, size: 22),
-            SizedBox(width: 8),
-            Text(
-              'Galeri fotoğrafı ekle',
-              style: TextStyle(
-                color: darkText,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _galleryAddButton() {
-    return InkWell(
-      onTap: _pickGalleryPhotos,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 80,
-        height: 90,
-        decoration: BoxDecoration(
-          color: inputBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cardBorder),
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_rounded, color: primaryColor, size: 24),
-            SizedBox(height: 4),
-            Text(
-              'Ekle',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _galleryThumb(_GalleryItem item, int index) {
-    Widget imageWidget;
-    if (item.hasLocalBytes) {
-      imageWidget = Image.memory(item.bytes!, fit: BoxFit.cover);
-    } else if (item.hasUrl) {
-      imageWidget = Image.network(
-        item.imageUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_rounded, color: mutedText),
-      );
-    } else {
-      imageWidget = const Icon(Icons.image_rounded, color: mutedText);
-    }
-
-    return Stack(
-      children: [
-        Container(
-          width: 80,
-          height: 90,
-          decoration: BoxDecoration(
-            color: inputBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cardBorder),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: imageWidget,
-        ),
-        Positioned(
-          top: 2,
-          right: 2,
-          child: GestureDetector(
-            onTap: () => _removeGalleryItem(index),
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: const BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.close_rounded, size: 14, color: Colors.white),
-            ),
-          ),
-        ),
-        if (index == 0)
-          Positioned(
-            bottom: 3,
-            left: 3,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              decoration: BoxDecoration(
-                color: primaryColor,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Text(
-                'Kapak',
-                style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
-              ),
-            ),
-          ),
       ],
     );
   }
@@ -1495,68 +1344,227 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         InkWell(
           onTap: _pickCoverPhoto,
           borderRadius: BorderRadius.circular(16),
-          child: Container(
-            height: 140,
-            decoration: BoxDecoration(
-              color: inputBg,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: cardBorder),
+          child: AspectRatio(
+            aspectRatio: 16 / 7,
+            child: Container(
+              decoration: BoxDecoration(
+                color: inputBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: cardBorder),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child:
+                  hasCover
+                      ? Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (_coverBytes != null)
+                            Image.memory(_coverBytes!, fit: BoxFit.cover)
+                          else
+                            Image.network(
+                              _coverUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _coverPlaceholder(),
+                            ),
+                          Positioned(
+                            right: 10,
+                            bottom: 10,
+                            child: _badge(
+                              _coverFileName == null
+                                  ? 'Fotoğrafı değiştir'
+                                  : _coverFileName!,
+                            ),
+                          ),
+                        ],
+                      )
+                      : const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_rounded,
+                            color: primaryColor,
+                            size: 30,
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Kapak fotoğrafı ekle',
+                            style: TextStyle(
+                              color: darkText,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'İsteğe bağlı — sonra da eklenebilir',
+                            style: TextStyle(
+                              color: mutedText,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
             ),
-            clipBehavior: Clip.antiAlias,
-            child:
-                hasCover
-                    ? Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (_coverBytes != null)
-                          Image.memory(_coverBytes!, fit: BoxFit.cover)
-                        else
-                          Image.network(
-                            _coverUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _coverPlaceholder(),
-                          ),
-                        Positioned(
-                          right: 10,
-                          bottom: 10,
-                          child: _badge(
-                            _coverFileName == null
-                                ? 'Fotoğrafı değiştir'
-                                : _coverFileName!,
-                          ),
-                        ),
-                      ],
-                    )
-                    : const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_photo_alternate_rounded,
-                          color: primaryColor,
-                          size: 32,
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          'Kapak fotoğrafı ekle',
-                          style: TextStyle(
-                            color: darkText,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        SizedBox(height: 3),
-                        Text(
-                          'İsteğe bağlı — sonra da eklenebilir',
-                          style: TextStyle(
-                            color: mutedText,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
           ),
         ),
+      ],
+    );
+  }
+
+  // ── Compact Gallery Row (kapak altında, yatay scroll) ─────────────────
+  Widget _buildCompactGalleryRow() {
+    const double thumbSize = 68.0;
+    final canAdd = _galleryItems.length < _maxGalleryPhotos;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Add button
+        if (canAdd)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: InkWell(
+              onTap: _pickGalleryPhotos,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                width: thumbSize,
+                height: thumbSize,
+                decoration: BoxDecoration(
+                  color: inputBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: cardBorder),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.add_photo_alternate_rounded,
+                        color: primaryColor, size: 22),
+                    const SizedBox(height: 3),
+                    Text(
+                      _galleryItems.isEmpty ? 'Galeri' : '+',
+                      style: const TextStyle(
+                        color: primaryColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        // Thumbnails
+        Expanded(
+          child: _galleryItems.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 22),
+                  child: Text(
+                    'Galeri fotoğrafı ekleyebilirsin',
+                    style: TextStyle(
+                      color: mutedText.withValues(alpha: 0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              : SizedBox(
+                  height: thumbSize,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _galleryItems.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 6),
+                    itemBuilder: (_, index) {
+                      final item = _galleryItems[index];
+                      Widget img;
+                      if (item.hasLocalBytes) {
+                        img = Image.memory(item.bytes!, fit: BoxFit.cover);
+                      } else if (item.hasUrl) {
+                        img = Image.network(
+                          item.imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.broken_image_rounded,
+                            color: mutedText,
+                            size: 20,
+                          ),
+                        );
+                      } else {
+                        img = const Icon(Icons.image_rounded,
+                            color: mutedText, size: 20);
+                      }
+
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: thumbSize,
+                            height: thumbSize,
+                            decoration: BoxDecoration(
+                              color: inputBg,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: cardBorder),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: img,
+                          ),
+                          if (index == 0)
+                            Positioned(
+                              bottom: 3,
+                              left: 3,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 4, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: primaryColor,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Kapak',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          Positioned(
+                            top: -4,
+                            right: -4,
+                            child: GestureDetector(
+                              onTap: () => _removeGalleryItem(index),
+                              child: Container(
+                                width: 20,
+                                height: 20,
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close_rounded,
+                                    size: 12, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+        ),
+        // Count badge
+        if (_galleryItems.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 8, top: 24),
+            child: Text(
+              '${_galleryItems.length}/$_maxGalleryPhotos',
+              style: const TextStyle(
+                color: mutedText,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -1735,26 +1743,6 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  // ─── Helpers ──────────────────────────────────────────────────────────────
-  Widget _sectionLabel(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: softText,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.5,
-        ),
-      ),
     );
   }
 
