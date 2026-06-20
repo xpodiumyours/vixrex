@@ -14,6 +14,7 @@ import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/utils/token_generator.dart';
+import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 
 // ─── Gallery item helper ───────────────────────────────────────────────────
 class _GalleryItem {
@@ -356,17 +357,25 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     final name = _nameController.text.trim();
     final whatsapp = _whatsappController.text.trim();
     final address = _addressController.text.trim();
-
+    final hasValidWhatsapp = WhatsAppLinkHelper.isValidTurkeyMobile(whatsapp);
 
     // Validate required fields
     setState(() {
       _nameError = name.isEmpty ? 'İşletme adı zorunludur' : null;
-      _whatsappError = whatsapp.isEmpty ? 'WhatsApp numarası zorunludur' : null;
+      _whatsappError = whatsapp.isEmpty
+          ? 'WhatsApp numarası zorunludur'
+          : hasValidWhatsapp
+              ? null
+              : WhatsAppLinkHelper.invalidNumberMessage;
       _addressError = address.isEmpty ? 'Konum / adres bilgisi zorunludur' : null;
     });
 
-    if (name.isEmpty || whatsapp.isEmpty || address.isEmpty) {
-      _showSnackBar('Lütfen zorunlu alanları doldurun: ad, WhatsApp ve konum.');
+    if (name.isEmpty || whatsapp.isEmpty || !hasValidWhatsapp || address.isEmpty) {
+      _showSnackBar(
+        whatsapp.isNotEmpty && !hasValidWhatsapp
+            ? WhatsAppLinkHelper.invalidNumberMessage
+            : 'Lütfen zorunlu alanları doldurun: ad, WhatsApp ve konum.',
+      );
       return;
     }
 
@@ -782,8 +791,15 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                 hint: '05xx xxx xx xx',
                 icon: Icons.chat_bubble_rounded,
                 keyboardType: TextInputType.phone,
-                errorText: _whatsappError,
+                errorText: _whatsappError ??
+                    (_whatsappController.text.trim().isNotEmpty &&
+                            !WhatsAppLinkHelper.isValidTurkeyMobile(
+                              _whatsappController.text,
+                            )
+                        ? WhatsAppLinkHelper.invalidNumberMessage
+                        : null),
                 required: true,
+                validateWhatsapp: true,
               ),
               const SizedBox(height: 14),
 
@@ -1670,6 +1686,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     int maxLines = 1,
     TextInputType? keyboardType,
     String? errorText,
+    bool validateWhatsapp = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1704,12 +1721,19 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             fontSize: 14,
             fontWeight: FontWeight.w700,
           ),
-          onChanged: (_) {
-            if (errorText != null) {
+          onChanged: (value) {
+            if (errorText != null || validateWhatsapp) {
               setState(() {
                 _nameError = null;
-                _whatsappError = null;
                 _addressError = null;
+                if (validateWhatsapp) {
+                  _whatsappError = value.trim().isEmpty ||
+                          WhatsAppLinkHelper.isValidTurkeyMobile(value)
+                      ? null
+                      : WhatsAppLinkHelper.invalidNumberMessage;
+                } else {
+                  _whatsappError = null;
+                }
               });
             }
           },

@@ -4,6 +4,10 @@ import 'package:vitrinx/models/store_data.dart';
 class AuthService {
   const AuthService();
 
+  static bool isDeleteConfirmationValid(String value) {
+    return value.trim() == 'SİL';
+  }
+
   /// Returns the currently authenticated user session.
   User? get currentUser {
     try {
@@ -40,7 +44,9 @@ class AuthService {
   /// Deletes the currently authenticated user's account and all their data.
   Future<void> deleteAccount() async {
     final user = currentUser;
-    if (user == null) return;
+    if (user == null) {
+      throw StateError('Hesap silmek için aktif oturum bulunamadı.');
+    }
 
     // Call the database RPC to delete the user account
     await Supabase.instance.client.rpc('delete_user_account');

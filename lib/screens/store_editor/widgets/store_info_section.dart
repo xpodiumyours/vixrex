@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import '../store_editor_controller.dart';
 import 'editor_ui_components.dart';
 
@@ -181,7 +182,16 @@ class _StoreInfoSectionState extends State<StoreInfoSection> {
                     initial: data.whatsapp,
                     prefixIcon: Icons.phone_rounded,
                     hintText: 'Örn: 05xx xxx xx xx',
-                    onChanged: (v) => data.whatsapp = v,
+                    errorText:
+                        data.whatsapp.trim().isNotEmpty &&
+                                !WhatsAppLinkHelper.isValidTurkeyMobile(
+                                  data.whatsapp,
+                                )
+                            ? WhatsAppLinkHelper.invalidNumberMessage
+                            : null,
+                    onChanged: (v) {
+                      setState(() => data.whatsapp = v);
+                    },
                   ),
                 ),
                 const SizedBox(height: 12),

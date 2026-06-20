@@ -60,6 +60,15 @@ void main() {
       expect(validator.validateStore(data), contains('telefon'));
     });
 
+    test('invalid whatsapp format returns error', () {
+      final data = validStore();
+      data.whatsapp = 'abc';
+      expect(
+        validator.validateStore(data),
+        'Geçerli bir Türkiye cep telefonu numarası girin. Örn: 0555 123 45 67',
+      );
+    });
+
     test('missing description returns error', () {
       final data = validStore();
       data.description = '';
@@ -111,6 +120,15 @@ void main() {
       data.whatsapp = '';
       expect(validator.validateVitrin(data), isNotNull);
       expect(validator.validateVitrin(data), contains('WhatsApp'));
+    });
+
+    test('invalid whatsapp format returns error', () {
+      final data = validVitrin();
+      data.whatsapp = '05x';
+      expect(
+        validator.validateVitrin(data),
+        'Geçerli bir Türkiye cep telefonu numarası girin. Örn: 0555 123 45 67',
+      );
     });
 
     test('missing description still passes', () {

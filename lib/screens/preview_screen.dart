@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
+import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 
 class PreviewScreen extends StatelessWidget {
@@ -12,6 +14,39 @@ class PreviewScreen extends StatelessWidget {
     required this.storeData,
     this.previewGalleryItems,
   });
+
+  Future<void> _openWhatsApp(BuildContext context) async {
+    final url = WhatsAppLinkHelper.buildGeneralUrl(
+      number: storeData.whatsapp,
+      storeName: storeData.name,
+    );
+    if (url == null) {
+      _showMessage(context, 'Geçerli bir WhatsApp numarası ekleyin.');
+      return;
+    }
+
+    try {
+      final didLaunch = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!didLaunch && context.mounted) {
+        _showMessage(context, 'WhatsApp açılamadı. Lütfen tekrar deneyin.');
+      }
+    } catch (_) {
+      if (context.mounted) {
+        _showMessage(context, 'WhatsApp açılamadı. Lütfen tekrar deneyin.');
+      }
+    }
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +73,7 @@ class PreviewScreen extends StatelessWidget {
       floatingActionButton:
           storeData.isEsnafMode
               ? FloatingActionButton.extended(
-                onPressed:
-                    () {}, // Handled inside VitrinView mockup if needed, or here for full screen
+                onPressed: () => _openWhatsApp(context),
                 backgroundColor: const Color(0xFF25D366),
                 elevation: 10,
                 icon: const Icon(Icons.chat, color: Colors.white),

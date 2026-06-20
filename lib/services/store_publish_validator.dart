@@ -1,4 +1,5 @@
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 
 class StorePublishValidator {
   const StorePublishValidator();
@@ -28,6 +29,9 @@ class StorePublishValidator {
     if (missing.isNotEmpty) {
       return 'Lütfen şu zorunlu alanları doldurun: ${missing.join(', ')}.';
     }
+    if (!WhatsAppLinkHelper.isValidTurkeyMobile(data.whatsapp)) {
+      return WhatsAppLinkHelper.invalidNumberMessage;
+    }
     return null;
   }
 
@@ -52,6 +56,9 @@ class StorePublishValidator {
 
     if (missingItems.isNotEmpty) {
       return 'Mağaza yayınlanmadan önce şu alanları tamamlayın: ${missingItems.join(', ')}.';
+    }
+    if (!WhatsAppLinkHelper.isValidTurkeyMobile(data.whatsapp)) {
+      return WhatsAppLinkHelper.invalidNumberMessage;
     }
 
     // Validate products if present

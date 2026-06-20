@@ -18,6 +18,7 @@ import 'package:vitrinx/screens/store_editor/widgets/store_products_section.dart
 import 'package:vitrinx/screens/store_editor/widgets/store_gallery_section.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/services/auth_service.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/screens/store_editor/widgets/store_score_section.dart';
@@ -486,22 +487,20 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
     setState(() => _isDeletingAccount = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
+      await const AuthService().deleteAccount();
 
-      // Clear local cache for store/vitrin token and data
+      final prefs = await SharedPreferences.getInstance();
       await prefs.remove(LocalStorageKeys.vitrinEditToken);
       await prefs.remove(LocalStorageKeys.vitrinData);
       await prefs.remove(LocalStorageKeys.storeEditToken);
       await prefs.remove(LocalStorageKeys.storeData);
-
-      // Perform the account deletion backend logic
-      await const AuthService().deleteAccount();
+      await const StoreLocalStorageService().clearPublishedVitrinInfo();
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Hesabınız ve tüm verileriniz başarıyla silindi.'),
+          content: Text('Hesabınız ve mağaza kayıtlarınız başarıyla silindi.'),
           behavior: SnackBarBehavior.floating,
           backgroundColor: Color(0xFF10B981),
         ),
@@ -529,71 +528,132 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
     }
   }
 
-  void _showDeleteAccountConfirmation() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Row(
-            children: [
-              Icon(
-                Icons.warning_amber_rounded,
-                color: Colors.redAccent,
-                size: 24,
-              ),
-              SizedBox(width: 10),
-              Text(
-                'Hesabımı Sil',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  color: darkText,
-                ),
-              ),
-            ],
-          ),
-          content: const Text(
-            'Bu işlem geri alınamaz. Hesabınız, oluşturduğunuz mağaza/vitrinler, ürünler ve yüklediğiniz tüm görseller kalıcı olarak silinecektir. Devam etmek istiyor musunuz?',
-            style: TextStyle(color: softText, fontSize: 14, height: 1.5),
-          ),
-          actionsPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Vazgeç',
-                style: TextStyle(fontWeight: FontWeight.bold, color: mutedText),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _deleteAccount();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                elevation: 0,
+  Future<void> _showDeleteAccountConfirmation() async {
+    final confirmationController = TextEditingController();
+
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              final canDelete = AuthService.isDeleteConfirmationValid(
+                confirmationController.text,
+              );
+
+              return AlertDialog(
+                backgroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-              ),
-              child: const Text(
-                'Hesabı Sil',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+                title: const Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.redAccent,
+                      size: 24,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      'Hesabımı Sil',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        color: darkText,
+                      ),
+                    ),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Bu işlem geri alınamaz. Hesabınız ve mağaza/vitrin kayıtlarınız kalıcı olarak silinir.',
+                      style: TextStyle(
+                        color: softText,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Onaylamak için SİL yazın.',
+                      style: TextStyle(
+                        color: darkText,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      key: const ValueKey(
+                        'store-delete-account-confirmation-input',
+                      ),
+                      controller: confirmationController,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.characters,
+                      onChanged: (_) => setDialogState(() {}),
+                      decoration: InputDecoration(
+                        hintText: 'SİL',
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                actionsPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text(
+                      'Vazgeç',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: mutedText,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    key: const ValueKey('store-delete-account-confirm-button'),
+                    onPressed:
+                        canDelete
+                            ? () {
+                              Navigator.pop(dialogContext);
+                              _deleteAccount();
+                            }
+                            : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.redAccent.withValues(
+                        alpha: 0.28,
+                      ),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Hesabı Sil',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      confirmationController.dispose();
+    }
   }
 
   // Replacing state handlers with controller methods
@@ -930,9 +990,9 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                 if (const AuthService().currentUser != null) ...[
                   const SizedBox(height: 12),
                   _buildDangerZoneTile(
-                    title: 'Hesabımı ve Tüm Verilerimi Sil',
+                    title: 'Hesabımı Kalıcı Olarak Sil',
                     subtitle:
-                        'Kullanıcı kaydınızı, mağaza/vitrinlerinizi ve tüm Supabase verilerinizi temizler.',
+                        'Kullanıcı hesabınızı ve bağlı mağaza/vitrin kayıtlarınızı kalıcı olarak siler.',
                     isLoading: _isDeletingAccount,
                     onTap:
                         _isDeletingAccount

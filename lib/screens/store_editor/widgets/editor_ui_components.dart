@@ -102,6 +102,7 @@ class EditorTextField extends StatelessWidget {
   final String? hintText;
   final TextEditingController? controller;
   final Widget? suffixIcon;
+  final String? errorText;
 
   const EditorTextField({
     super.key,
@@ -113,6 +114,7 @@ class EditorTextField extends StatelessWidget {
     this.hintText,
     this.controller,
     this.suffixIcon,
+    this.errorText,
   });
 
   @override
@@ -149,6 +151,7 @@ class EditorTextField extends StatelessWidget {
                     ? Icon(prefixIcon, color: mutedText, size: 18)
                     : null,
             suffixIcon: suffixIcon,
+            errorText: errorText,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: cardBorder),

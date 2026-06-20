@@ -1153,40 +1153,18 @@ class _LandingScreenState extends State<LandingScreen>
         mainAxisAlignment:
             isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 100,
-            height: 36,
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 0,
-                  child: _buildSocialProofAvatar(
-                    icon: Icons.checkroom_rounded,
-                    color: brandOrange,
-                  ),
-                ),
-                Positioned(
-                  left: 20,
-                  child: _buildSocialProofAvatar(
-                    icon: Icons.restaurant_menu_rounded,
-                    color: const Color(0xFFEA580C),
-                  ),
-                ),
-                Positioned(
-                  left: 40,
-                  child: _buildSocialProofAvatar(
-                    icon: Icons.content_cut_rounded,
-                    color: const Color(0xFFDB2777),
-                  ),
-                ),
-                Positioned(
-                  left: 60,
-                  child: _buildSocialProofAvatar(
-                    icon: Icons.build_circle_rounded,
-                    color: blueAccent,
-                  ),
-                ),
-              ],
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF1EB),
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: const Color(0xFFFFD8C7)),
+            ),
+            child: const Icon(
+              Icons.qr_code_2_rounded,
+              color: brandOrange,
+              size: 22,
             ),
           ),
           const SizedBox(width: 12),
@@ -1197,48 +1175,17 @@ class _LandingScreenState extends State<LandingScreen>
                       ? CrossAxisAlignment.start
                       : CrossAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(
-                      Icons.star_rounded,
-                      color: Color(0xFFFBBF24),
-                      size: 16,
-                    ),
-                    Icon(
-                      Icons.star_rounded,
-                      color: Color(0xFFFBBF24),
-                      size: 16,
-                    ),
-                    Icon(
-                      Icons.star_rounded,
-                      color: Color(0xFFFBBF24),
-                      size: 16,
-                    ),
-                    Icon(
-                      Icons.star_rounded,
-                      color: Color(0xFFFBBF24),
-                      size: 16,
-                    ),
-                    Icon(
-                      Icons.star_rounded,
-                      color: Color(0xFFFBBF24),
-                      size: 16,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      '4.9/5',
-                      style: TextStyle(
-                        color: darkAccent,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+                const Text(
+                  'Vitrinini hızlıca oluştur',
+                  style: TextStyle(
+                    color: darkAccent,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  '1.200\'den fazla esnaf ve butik VitrinX kullanıyor',
+                  'Paylaşılabilir linkin ve QR kodun hazır olsun.',
                   style: TextStyle(
                     color: Color(0xFF64748B),
                     fontWeight: FontWeight.w700,
@@ -1249,39 +1196,6 @@ class _LandingScreenState extends State<LandingScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSocialProofAvatar({
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 14),
-        ),
       ),
     );
   }

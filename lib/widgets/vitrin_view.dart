@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
+import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
 import 'package:vitrinx/services/seo_helper.dart';
 
@@ -69,7 +70,7 @@ class VitrinView extends StatelessWidget {
       _buildStoreIdentityBlock(preset),
       SizedBox(height: isEmbedded ? 16 : 28),
       if (_hasVisibleActions()) ...[
-        _buildPremiumActionButtons(radius),
+        _buildPremiumActionButtons(context, radius),
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
       if (publicMode && _aboutText().isNotEmpty) ...[
@@ -87,7 +88,7 @@ class VitrinView extends StatelessWidget {
         _buildProductsCatalogBlock(preset, radius),
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
-      _buildModernLinkHub(preset, radius),
+      _buildModernLinkHub(context, preset, radius),
       SizedBox(
         height:
             isEmbedded
@@ -451,9 +452,9 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildPremiumActionButtons(double radius) {
+  Widget _buildPremiumActionButtons(BuildContext context, double radius) {
     final isCompact = isEmbedded;
-    final actions = _buildVisibleActions(radius, isCompact);
+    final actions = _buildVisibleActions(context, radius, isCompact);
     final horizontalPadding = isCompact ? 18.0 : 24.0;
     final spacing = isCompact ? 8.0 : 12.0;
 
@@ -490,14 +491,18 @@ class VitrinView extends StatelessWidget {
   bool _hasVisibleActions() {
     if (!publicMode) return true;
 
-    return storeData.whatsapp.trim().isNotEmpty ||
+    return WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp) ||
         storeData.instagram.trim().isNotEmpty ||
         storeData.website.trim().isNotEmpty ||
         storeData.address.trim().isNotEmpty ||
         (storeData.latitude != null && storeData.longitude != null);
   }
 
-  List<Widget> _buildVisibleActions(double radius, bool isCompact) {
+  List<Widget> _buildVisibleActions(
+    BuildContext context,
+    double radius,
+    bool isCompact,
+  ) {
     if (!publicMode) {
       return [
         _ActionIconBtn(
@@ -533,7 +538,7 @@ class VitrinView extends StatelessWidget {
     }
 
     return [
-      if (storeData.whatsapp.trim().isNotEmpty)
+      if (WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp))
         _ActionIconBtn(
           label: 'WhatsApp',
           icon: Icons.chat_bubble_rounded,
@@ -541,7 +546,15 @@ class VitrinView extends StatelessWidget {
           radius: radius,
           compact: isCompact,
           emphasis: true,
-          onTap: () => _openExternalUrl(_buildWhatsAppUrl(storeData.whatsapp)),
+          onTap: () {
+            final url = WhatsAppLinkHelper.buildGeneralUrl(
+              number: storeData.whatsapp,
+              storeName: storeData.name,
+            );
+            if (url != null) {
+              _openExternalUrl(context, url);
+            }
+          },
         ),
       if (storeData.instagram.trim().isNotEmpty)
         _ActionIconBtn(
@@ -551,7 +564,10 @@ class VitrinView extends StatelessWidget {
           radius: radius,
           compact: isCompact,
           onTap:
-              () => _openExternalUrl(_buildInstagramUrl(storeData.instagram)),
+              () => _openExternalUrl(
+                context,
+                _buildInstagramUrl(storeData.instagram),
+              ),
         ),
       if (storeData.website.trim().isNotEmpty)
         _ActionIconBtn(
@@ -561,7 +577,10 @@ class VitrinView extends StatelessWidget {
           radius: radius,
           compact: isCompact,
           onTap:
-              () => _openExternalUrl(_normalizeExternalUrl(storeData.website)),
+              () => _openExternalUrl(
+                context,
+                _normalizeExternalUrl(storeData.website),
+              ),
         ),
       if (storeData.address.trim().isNotEmpty ||
           (storeData.latitude != null && storeData.longitude != null))
@@ -571,7 +590,8 @@ class VitrinView extends StatelessWidget {
           color: Colors.red.shade500,
           radius: radius,
           compact: isCompact,
-          onTap: () => _openExternalUrl(_buildMapsUrl(storeData.address)),
+          onTap:
+              () => _openExternalUrl(context, _buildMapsUrl(storeData.address)),
         ),
     ];
   }
@@ -990,7 +1010,9 @@ class VitrinView extends StatelessWidget {
                     ),
                   ],
                 ],
-                if (storeData.whatsapp.trim().isNotEmpty) ...[
+                if (WhatsAppLinkHelper.isValidTurkeyMobile(
+                  storeData.whatsapp,
+                )) ...[
                   SizedBox(height: isCompact ? 12 : 16),
                   _buildShelfWhatsAppButton(
                     context,
@@ -1163,7 +1185,11 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildModernLinkHub(VitrinThemePreset preset, double radius) {
+  Widget _buildModernLinkHub(
+    BuildContext context,
+    VitrinThemePreset preset,
+    double radius,
+  ) {
     final isCompact = isEmbedded;
     final visibleMarketplaceLinks =
         publicMode
@@ -1191,7 +1217,10 @@ class VitrinView extends StatelessWidget {
               preset: preset,
               onTap:
                   publicMode
-                      ? () => _openExternalUrl(_normalizeExternalUrl(link.url))
+                      ? () => _openExternalUrl(
+                        context,
+                        _normalizeExternalUrl(link.url),
+                      )
                       : null,
             ),
           ),
@@ -1256,6 +1285,7 @@ class VitrinView extends StatelessWidget {
               preset: preset,
               onTap:
                   () => _openExternalUrl(
+                    context,
                     _normalizeExternalUrl(storeData.referencesLink.trim()),
                   ),
             ),
@@ -1267,7 +1297,7 @@ class VitrinView extends StatelessWidget {
   /// vCard kartını göstermek için yeterli veri var mı?
   bool _hasVCardData() {
     if (storeData.name.trim().isEmpty) return false;
-    return storeData.whatsapp.trim().isNotEmpty ||
+    return WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp) ||
         storeData.instagram.trim().isNotEmpty ||
         storeData.website.trim().isNotEmpty ||
         storeData.address.trim().isNotEmpty;
@@ -1277,7 +1307,7 @@ class VitrinView extends StatelessWidget {
   String _buildVCardContactText() {
     final lines = <String>[
       'Mağaza: ${storeData.name.trim()}',
-      if (storeData.whatsapp.trim().isNotEmpty)
+      if (WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp))
         'WhatsApp: ${storeData.whatsapp.trim()}',
       if (storeData.instagram.trim().isNotEmpty)
         'Instagram: ${storeData.instagram.trim()}',
@@ -1310,7 +1340,7 @@ class VitrinView extends StatelessWidget {
   /// vCard (.vcf) dosya içeriğini standart formatta oluşturur.
   String _buildVCardFileContent() {
     final name = storeData.name.trim();
-    final phone = storeData.whatsapp.trim();
+    final phone = WhatsAppLinkHelper.normalizeTurkeyMobile(storeData.whatsapp);
     final address = storeData.address.trim();
     final website = storeData.website.trim();
     final bio =
@@ -1323,10 +1353,8 @@ class VitrinView extends StatelessWidget {
     card.writeln('VERSION:3.0');
     card.writeln('FN:$name');
     card.writeln('ORG:$name');
-    if (phone.isNotEmpty) {
-      // Clean phone number for tel: link, keeping only digits and plus
-      final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-      card.writeln('TEL;TYPE=CELL,VOICE:$cleanPhone');
+    if (phone != null) {
+      card.writeln('TEL;TYPE=CELL,VOICE:+$phone');
     }
     if (website.isNotEmpty) {
       card.writeln('URL;TYPE=WORK:$website');
@@ -1621,7 +1649,7 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Future<void> _openExternalUrl(String url) async {
+  Future<void> _openExternalUrl(BuildContext context, String url) async {
     final uri = Uri.tryParse(url);
     if (uri == null) return;
 
@@ -1631,11 +1659,26 @@ class VitrinView extends StatelessWidget {
         mode: LaunchMode.externalApplication,
       );
       if (!didLaunch) {
-        debugPrint('External link could not be opened: $url');
+        if (context.mounted) {
+          _showLinkError(context);
+        }
       }
-    } catch (error) {
-      debugPrint('External link open error: $error');
+    } catch (_) {
+      if (context.mounted) {
+        _showLinkError(context);
+      }
     }
+  }
+
+  void _showLinkError(BuildContext context) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Bağlantı açılamadı. Lütfen tekrar deneyin.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   String _normalizeExternalUrl(String value) {
@@ -1653,17 +1696,6 @@ class VitrinView extends StatelessWidget {
 
     final username = text.replaceFirst('@', '').replaceAll('/', '').trim();
     return 'https://instagram.com/$username';
-  }
-
-  String _buildWhatsAppUrl(String value) {
-    var number = value.replaceAll(RegExp(r'[^0-9]'), '');
-    if (number.startsWith('0') && number.length == 11) {
-      number = '90${number.substring(1)}';
-    } else if (number.startsWith('5') && number.length == 10) {
-      number = '90$number';
-    }
-
-    return 'https://wa.me/$number';
   }
 
   String _buildMapsUrl(String address) {
@@ -1777,12 +1809,14 @@ class VitrinView extends StatelessWidget {
               );
               return;
             }
-            final url = _buildWhatsAppInquiryUrl(
-              storeData.whatsapp,
-              storeData.name,
-              title,
+            final url = WhatsAppLinkHelper.buildInquiryUrl(
+              number: storeData.whatsapp,
+              storeName: storeData.name,
+              itemTitle: title,
             );
-            _openExternalUrl(url);
+            if (url != null) {
+              _openExternalUrl(context, url);
+            }
           },
           borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
           child: Padding(
@@ -1812,24 +1846,6 @@ class VitrinView extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _buildWhatsAppInquiryUrl(
-    String numberValue,
-    String storeName,
-    String itemTitle,
-  ) {
-    var number = numberValue.replaceAll(RegExp(r'[^0-9]'), '');
-    if (number.startsWith('0') && number.length == 11) {
-      number = '90${number.substring(1)}';
-    } else if (number.startsWith('5') && number.length == 10) {
-      number = '90$number';
-    }
-
-    final message =
-        "Merhaba! $storeName vitrininizdeki '$itemTitle' görseli hakkında bilgi alabilir miyim?";
-    final encodedMessage = Uri.encodeComponent(message);
-    return 'https://wa.me/$number?text=$encodedMessage';
   }
 }
 
