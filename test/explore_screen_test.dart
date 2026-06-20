@@ -104,4 +104,25 @@ void main() {
 
     expect(find.byType(ExploreScreen), findsOneWidget);
   });
+
+  testWidgets('WhatsApp hızlı mesaj seçenekleri güncel metinleri gösterir', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
+
+    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final whatsappButton = find.byIcon(Icons.chat_bubble_rounded).first;
+    await tester.ensureVisible(whatsappButton);
+    await tester.pumpAndSettle();
+    await tester.tap(whatsappButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hazır mesaj seçin:'), findsOneWidget);
+    expect(find.text('Ürün ve fiyat bilgisi'), findsOneWidget);
+    expect(find.text('Sipariş vermek istiyorum'), findsOneWidget);
+    expect(find.text('Adres ve çalışma saatleri'), findsOneWidget);
+  });
 }

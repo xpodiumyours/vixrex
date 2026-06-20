@@ -6,6 +6,7 @@ import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
+import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -211,14 +212,21 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _openWhatsApp(String whatsappNumber, String message) async {
-    var number = whatsappNumber.replaceAll(RegExp(r'[^0-9]'), '');
-    if (number.startsWith('0')) {
-      number = '90${number.substring(1)}';
-    } else if (!number.startsWith('90') && number.length == 10) {
-      number = '90$number';
+    final normalizedNumber = WhatsAppLinkHelper.normalizeTurkeyMobile(
+      whatsappNumber,
+    );
+    if (normalizedNumber == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Geçerli bir WhatsApp numarası bulunamadı.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
     }
     final encodedMessage = Uri.encodeComponent(message);
-    final url = 'https://wa.me/$number?text=$encodedMessage';
+    final url = 'https://wa.me/$normalizedNumber?text=$encodedMessage';
     final uri = Uri.parse(url);
 
     if (await canLaunchUrl(uri)) {
@@ -242,10 +250,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        final options = [
-          'Fiyatı ne kadar?',
-          'Stokta var mı?',
-          'Teslimat yapıyor musunuz?',
+        final storeName =
+            store.name.trim().isEmpty ? 'vitrininiz' : '${store.name.trim()} vitrininiz';
+        final options = <({String label, String message})>[
+          (
+            label: 'Ürün ve fiyat bilgisi',
+            message:
+                'Merhaba, $storeName hakkında ürün ve fiyat bilgisi almak istiyorum.',
+          ),
+          (
+            label: 'Sipariş vermek istiyorum',
+            message: 'Merhaba, $storeName üzerinden sipariş vermek istiyorum.',
+          ),
+          (
+            label: 'Adres ve çalışma saatleri',
+            message:
+                'Merhaba, $storeName için adres ve çalışma saatlerini öğrenmek istiyorum.',
+          ),
         ];
 
         return Padding(
@@ -283,7 +304,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         ),
                         const SizedBox(height: 2),
                         const Text(
-                          'Hızlı mesaj şablonu seçin:',
+                          'Hazır mesaj seçin:',
                           style: TextStyle(fontSize: 12, color: mutedText),
                         ),
                       ],
@@ -298,7 +319,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   child: OutlinedButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      _openWhatsApp(store.whatsapp, option);
+                      _openWhatsApp(store.whatsapp, option.message);
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
@@ -314,14 +335,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          option,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: softText,
+                        Expanded(
+                          child: Text(
+                            option.label,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: softText,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 12),
                         const Icon(
                           Icons.arrow_forward_ios_rounded,
                           size: 14,
