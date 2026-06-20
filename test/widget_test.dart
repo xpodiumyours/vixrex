@@ -5,7 +5,6 @@ import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/my_vitrin_screen.dart';
-import 'package:vitrinx/screens/store_editor_screen.dart';
 import 'package:vitrinx/screens/vitrin_editor_screen.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,50 +57,32 @@ void main() {
     expect(find.byType(LandingScreen), findsAtLeastNWidgets(1));
   });
 
-  testWidgets('Mobil editörde canlı önizleme sekmesi gösterilmez', (
-    WidgetTester tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({});
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    await tester.pumpWidget(const MaterialApp(home: StoreEditorScreen()));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Düzenle'), findsOneWidget);
-    expect(find.text('Yayınla'), findsOneWidget);
-    expect(find.text('Canlı Önizleme'), findsNothing);
-  });
-
   testWidgets(
-    'StoreEditorScreen kategori dropdown ve ürün kataloğu alanlarını içerir',
+    'Landing mağaza düzenleme butonunu yakında olarak pasif gösterir',
     (WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({});
-      await tester.pumpWidget(const MaterialApp(home: StoreEditorScreen()));
-      await tester.pumpAndSettle();
+      SharedPreferences.setMockInitialValues({
+        LocalStorageKeys.storeData: jsonEncode(
+          StoreData(name: 'Kayıtlı Mağaza', isStore: true).toJson(),
+        ),
+      });
 
-      expect(find.text('Kategori'), findsAtLeastNWidgets(1));
-      expect(find.text('Ürün Kataloğu'), findsOneWidget);
+      await tester.pumpWidget(const MaterialApp(home: LandingScreen()));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final buttonFinder = find.ancestor(
+        of: find.text('Mağazamı Düzenle · Yakında'),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is ElevatedButton,
+        ),
+      );
+      expect(buttonFinder, findsOneWidget);
+      final button = tester.widget<ElevatedButton>(
+        buttonFinder,
+      );
+      expect(button.onPressed, isNull);
     },
   );
-
-  testWidgets('StoreEditor kaydedilmemiş değişiklikte çıkış uyarısı gösterir', (
-    WidgetTester tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(const MaterialApp(home: StoreEditorScreen()));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextFormField).first, 'Yeni Mağaza');
-    await tester.pump();
-    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Değişiklikler kaydedilmedi'), findsOneWidget);
-    expect(find.text('Kaydetmeden Çık'), findsOneWidget);
-  });
 
   testWidgets(
     'VitrinEditorScreen kategori ve ürün kataloğunu içermez ama pazaryeri linklerini içerir',

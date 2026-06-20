@@ -12,7 +12,6 @@ Allow: /
 Allow: /v/
 Allow: /explore
 Disallow: /auth
-Disallow: /store-editor
 Disallow: /vitrin-editor
 Disallow: /api/
 

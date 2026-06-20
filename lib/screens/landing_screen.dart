@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/legal_config.dart';
-import 'package:vitrinx/screens/store_editor_screen.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/auth_screen.dart';
 import 'package:vitrinx/screens/home_shell_screen.dart';
@@ -25,7 +24,6 @@ class _LandingScreenState extends State<LandingScreen>
   late final AnimationController _animController;
   int _activeProfileIndex = 0;
   bool _hasSavedVitrin = false;
-  bool _hasSavedStore = false;
   bool _isCheckingSavedVitrin = true;
   final TextEditingController _storeNameController = TextEditingController();
 
@@ -252,10 +250,10 @@ class _LandingScreenState extends State<LandingScreen>
             }
 
             if (!mounted) return;
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const StoreEditorScreen()),
-            );
+            setState(() {
+              _hasSavedVitrin = false;
+              _isCheckingSavedVitrin = false;
+            });
             return;
           } else {
             await prefs.setString(
@@ -292,30 +290,16 @@ class _LandingScreenState extends State<LandingScreen>
       }
 
       final savedVitrinJson = prefs.getString(LocalStorageKeys.vitrinData);
-      final savedStoreJson = prefs.getString(LocalStorageKeys.storeData);
-      final legacyJson = prefs.getString(LocalStorageKeys.vitrinData);
       var hasSavedVitrin = false;
-      var hasSavedStore = false;
 
       final savedVitrin = _readSavedStoreData(savedVitrinJson);
       if (savedVitrin != null && !savedVitrin.isStore) {
         hasSavedVitrin = _hasMeaningfulSavedVitrin(savedVitrin);
       }
 
-      final savedStore = _readSavedStoreData(savedStoreJson);
-      if (savedStore != null && savedStore.isStore) {
-        hasSavedStore = _hasMeaningfulSavedVitrin(savedStore);
-      }
-
-      final legacyData = _readSavedStoreData(legacyJson);
-      if (legacyData != null && legacyData.isStore) {
-        hasSavedStore = _hasMeaningfulSavedVitrin(legacyData);
-      }
-
       if (!mounted) return;
       setState(() {
         _hasSavedVitrin = hasSavedVitrin;
-        _hasSavedStore = hasSavedStore;
         _isCheckingSavedVitrin = false;
       });
     } catch (error) {
@@ -323,7 +307,6 @@ class _LandingScreenState extends State<LandingScreen>
       if (!mounted) return;
       setState(() {
         _hasSavedVitrin = false;
-        _hasSavedStore = false;
         _isCheckingSavedVitrin = false;
       });
     }
@@ -401,36 +384,6 @@ class _LandingScreenState extends State<LandingScreen>
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const HomeShellScreen(initialIndex: 1)),
-    );
-    if (mounted) {
-      _loadSavedVitrinState();
-    }
-  }
-
-  Future<void> _navigateToSavedStore() async {
-    if (!_hasSavedStore || _isCheckingSavedVitrin) return;
-
-    final prefs = await SharedPreferences.getInstance();
-    final savedStoreJson = prefs.getString(LocalStorageKeys.storeData);
-    if (savedStoreJson == null || savedStoreJson.trim().isEmpty) {
-      final legacyJson = prefs.getString(LocalStorageKeys.vitrinData);
-      final legacyData = _readSavedStoreData(legacyJson);
-      if (legacyData != null && legacyData.isStore) {
-        await prefs.setString(LocalStorageKeys.storeData, legacyJson!);
-        final legacyToken = prefs.getString(LocalStorageKeys.vitrinEditToken);
-        if (legacyToken != null) {
-          await prefs.setString(LocalStorageKeys.storeEditToken, legacyToken);
-          await prefs.remove(LocalStorageKeys.vitrinEditToken);
-        }
-        await prefs.remove(LocalStorageKeys.vitrinData);
-      }
-    }
-
-    if (!mounted) return;
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const StoreEditorScreen()),
     );
     if (mounted) {
       _loadSavedVitrinState();
@@ -896,19 +849,12 @@ class _LandingScreenState extends State<LandingScreen>
 
   Widget _buildSecondaryActions({required bool isDesktop}) {
     final canOpenSavedVitrin = _hasSavedVitrin && !_isCheckingSavedVitrin;
-    final canOpenSavedStore = _hasSavedStore && !_isCheckingSavedVitrin;
     final savedVitrinLabel =
         _isCheckingSavedVitrin
             ? 'Kontrol ediliyor'
             : _hasSavedVitrin
-            ? 'Vitrinimi Düzenle'
+            ? 'VitrinX Düzenle'
             : 'Kayıtlı vitrin yok';
-    final savedStoreLabel =
-        _isCheckingSavedVitrin
-            ? 'Kontrol ediliyor'
-            : _hasSavedStore
-            ? 'Mağazamı Düzenle'
-            : 'Kayıtlı mağaza yok';
 
     final buttons = [
       ElevatedButton.icon(
@@ -939,21 +885,11 @@ class _LandingScreenState extends State<LandingScreen>
         ),
       ),
       ElevatedButton.icon(
-        onPressed:
-            canOpenSavedStore
-                ? () {
-                  _navigateToSavedStore();
-                }
-                : null,
-        icon: Icon(
-          canOpenSavedStore
-              ? Icons.storefront_rounded
-              : Icons.lock_outline_rounded,
-          size: 18,
-        ),
-        label: Text(
-          savedStoreLabel,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+        onPressed: null,
+        icon: const Icon(Icons.schedule_rounded, size: 18),
+        label: const Text(
+          'Mağazamı Düzenle · Yakında',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: darkAccent,

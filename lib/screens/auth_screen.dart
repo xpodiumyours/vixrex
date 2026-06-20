@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/store_editor_screen.dart';
 import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/services/auth_service.dart';
@@ -131,7 +130,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const StoreEditorScreen()),
+          MaterialPageRoute(builder: (_) => const LandingScreen()),
           (route) => false,
         );
       } else {
