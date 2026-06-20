@@ -1,8 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
 import 'package:vitrinx/services/store_publish_validator.dart';
@@ -18,34 +15,6 @@ class StorePublishService {
     this.supabaseClient,
   });
 
-  Future<void> _notifyGoogleIndexing(String slug) async {
-    try {
-      final apiUrl = PublicSiteConfig.buildPublicLink('/api/index-url');
-      if (!apiUrl.startsWith('http')) {
-        debugPrint('Skip Google Indexing: Invalid API endpoint origin.');
-        return;
-      }
-
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'slug': slug}),
-      );
-
-      if (response.statusCode != 200) {
-        debugPrint(
-          'Google Indexing API request failed: ${response.statusCode} - ${response.body}',
-        );
-      } else {
-        debugPrint(
-          'Google Indexing API successfully triggered for slug: $slug',
-        );
-      }
-    } catch (e) {
-      debugPrint('Error triggering Google Indexing API: $e');
-    }
-  }
-
   Future<StorePublishResult> publishStore(
     StoreData data, {
     required String editToken,
@@ -55,9 +24,10 @@ class StorePublishService {
       throw StorePublishException(validationMessage);
     }
 
-    final initialSlug = data.slug.trim().isNotEmpty
-        ? data.slug.trim()
-        : payloadBuilder.generateSlug(data.name);
+    final initialSlug =
+        data.slug.trim().isNotEmpty
+            ? data.slug.trim()
+            : payloadBuilder.generateSlug(data.name);
     late final SupabaseClient client;
     var slug = initialSlug;
 
@@ -79,7 +49,6 @@ class StorePublishService {
               slug = dbSlug;
             }
             await _updateStoreWithToken(client, data, slug, editToken);
-            _notifyGoogleIndexing(slug);
             return StorePublishResult(
               publicPath: '/v/$slug',
               slug: slug,
@@ -104,7 +73,6 @@ class StorePublishService {
           payload['user_id'] = client.auth.currentUser!.id;
         }
         await client.from('stores').insert(payload);
-        _notifyGoogleIndexing(slug);
         return StorePublishResult(
           publicPath: '/v/$slug',
           slug: slug,
@@ -113,7 +81,6 @@ class StorePublishService {
       }
 
       await _updateStoreWithToken(client, data, slug, editToken);
-      _notifyGoogleIndexing(slug);
       return StorePublishResult(
         publicPath: '/v/$slug',
         slug: slug,

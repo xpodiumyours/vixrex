@@ -62,180 +62,108 @@ export default async function handler(req, res) {
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const publicUrl = `${protocol}://${host}/v/${store.slug}`;
 
-    // 1. LocalBusiness JSON-LD Schema
-    const localBusiness = {
-      '@context': 'https://schema.org',
-      '@type': 'LocalBusiness',
-      'name': (store.name || '').trim(),
-      'description': (store.description || store.corporate_bio || '').trim(),
+    const storeName = (store.name || '').trim();
+    const storeDescription = (store.description || store.corporate_bio || '').trim();
+    const hasPhysicalLocation =
+      Boolean(store.address && store.address.trim()) &&
+      store.latitude != null &&
+      store.longitude != null;
+    const entityId = `${publicUrl}#business`;
+
+    let galleryItems = [];
+    try {
+      if (typeof store.gallery_items === 'string') {
+        galleryItems = JSON.parse(store.gallery_items);
+      } else if (Array.isArray(store.gallery_items)) {
+        galleryItems = store.gallery_items;
+      }
+    } catch (e) {}
+
+    const galleryCover =
+      galleryItems.length > 0 && galleryItems[0].imageUrl
+        ? galleryItems[0].imageUrl.trim()
+        : '';
+    const imageUrl =
+      (store.shelf_image_url || '').trim() ||
+      galleryCover ||
+      (store.logo_url || '').trim();
+    const phoneDigits = String(store.whatsapp || '').replace(/[^0-9]/g, '');
+    const normalizedPhone =
+      /^05\d{9}$/.test(phoneDigits)
+        ? `+90${phoneDigits.substring(1)}`
+        : /^5\d{9}$/.test(phoneDigits)
+          ? `+90${phoneDigits}`
+          : /^905\d{9}$/.test(phoneDigits)
+            ? `+${phoneDigits}`
+            : '';
+
+    const entity = {
+      '@type': hasPhysicalLocation ? 'LocalBusiness' : 'Organization',
+      '@id': entityId,
+      'name': storeName,
+      'url': publicUrl,
     };
 
-    if (store.address && store.address.trim().length > 0) {
-      const trimmedAddress = store.address.trim();
-      localBusiness['address'] = {
-        '@type': 'PostalAddress',
-        'streetAddress': trimmedAddress,
-      };
-
-      // Parse city/district from address for areaServed
-      const parts = trimmedAddress.split(',').map(p => p.trim()).filter(p => p.length > 0);
-      if (parts.length > 0) {
-        const city = parts[parts.length - 1];
-        localBusiness['areaServed'] = {
-          '@type': 'AdministrativeArea',
-          'name': city,
-        };
-      }
+    if (storeDescription) entity.description = storeDescription;
+    if (imageUrl) entity.image = imageUrl;
+    if (store.logo_url && store.logo_url.trim()) {
+      entity.logo = store.logo_url.trim();
     }
+    if (normalizedPhone) entity.telephone = normalizedPhone;
 
-    if (store.latitude != null && store.longitude != null) {
-      localBusiness['geo'] = {
+    if (hasPhysicalLocation) {
+      entity.address = {
+        '@type': 'PostalAddress',
+        'streetAddress': store.address.trim(),
+        'addressCountry': 'TR',
+      };
+      entity.geo = {
         '@type': 'GeoCoordinates',
         'latitude': store.latitude,
         'longitude': store.longitude,
       };
-      // hasMap Local SEO link
-      localBusiness['hasMap'] = `https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}`;
-    }
+      entity.hasMap = `https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}`;
 
-    if (store.whatsapp && store.whatsapp.trim().length > 0) {
-      localBusiness['telephone'] = store.whatsapp.trim();
-    }
-
-    if (store.logo_url && store.logo_url.trim().length > 0) {
-      localBusiness['logo'] = store.logo_url.trim();
-    }
-
-    // Cover image mapping
-    if (store.shelf_image_url && store.shelf_image_url.trim().length > 0) {
-      localBusiness['image'] = store.shelf_image_url.trim();
-    } else {
-      let galleryItems = [];
-      try {
-        if (typeof store.gallery_items === 'string') {
-          galleryItems = JSON.parse(store.gallery_items);
-        } else if (Array.isArray(store.gallery_items)) {
-          galleryItems = store.gallery_items;
-        }
-      } catch (e) {}
-
-      if (galleryItems.length > 0 && galleryItems[0].imageUrl) {
-        localBusiness['image'] = galleryItems[0].imageUrl.trim();
-      }
-    }
-
-    if (publicUrl) {
-      localBusiness['url'] = publicUrl;
-    }
-
-    // Working Hours
-    if (store.working_hours) {
-      const hoursRegex = /^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/;
-      const match = hoursRegex.exec(store.working_hours.trim());
-      if (match) {
-        localBusiness['openingHoursSpecification'] = {
-          '@type': 'OpeningHoursSpecification',
-          'dayOfWeek': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-          'opens': match[1],
-          'closes': match[2],
-        };
-      }
-    }
-
-    // 2. BreadcrumbList Schema
-    const breadcrumbList = {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      'itemListElement': [
-        {
-          '@type': 'ListItem',
-          'position': 1,
-          'name': 'VitrinX',
-          'item': `${protocol}://${host}/`,
-        },
-        {
-          '@type': 'ListItem',
-          'position': 2,
-          'name': store.kategori || 'Keşfet',
-          'item': `${protocol}://${host}/explore`,
-        },
-        {
-          '@type': 'ListItem',
-          'position': 3,
-          'name': (store.name || '').trim(),
-          'item': publicUrl,
-        },
-      ],
-    };
-
-    // Products Parser
-    let products = [];
-    try {
-      if (typeof store.products === 'string') {
-        products = JSON.parse(store.products);
-      } else if (Array.isArray(store.products)) {
-        products = store.products;
-      }
-    } catch (e) {}
-
-    const digitRegex = /\d/;
-    let hasNumericalPrice = false;
-    for (const product of products) {
-      if (product.price && digitRegex.test(product.price)) {
-        hasNumericalPrice = true;
-        break;
-      }
-    }
-
-    if (hasNumericalPrice) {
-      localBusiness['priceRange'] = '$$';
-    }
-
-    const productsList = [];
-    for (const product of products) {
-      const productSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'Product',
-        'name': (product.name || '').trim(),
-        'description': (product.description || '').trim(),
-      };
-
-      if (product.imagePath && product.imagePath.trim().length > 0) {
-        productSchema['image'] = product.imagePath.trim();
-      }
-
-      if (product.price && digitRegex.test(product.price)) {
-        const cleanPrice = product.price.replace(/[^0-9.,]/g, '').replace(',', '.');
-        if (cleanPrice.length > 0) {
-          const currency = product.price.includes('TL') || product.price.includes('₺') ? 'TRY' : 'USD';
-          productSchema['offers'] = {
-            '@type': 'Offer',
-            'price': cleanPrice,
-            'priceCurrency': currency,
-            'availability': product.stockStatus === 'Tükendi'
-              ? 'https://schema.org/OutOfStock'
-              : 'https://schema.org/InStock',
+      if (store.working_hours) {
+        const hoursMatch = /^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/.exec(
+          store.working_hours.trim(),
+        );
+        if (hoursMatch) {
+          entity.openingHoursSpecification = {
+            '@type': 'OpeningHoursSpecification',
+            'dayOfWeek': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+            'opens': hoursMatch[1],
+            'closes': hoursMatch[2],
           };
         }
       }
-      productsList.push(productSchema);
     }
 
-    // Always use @graph representation containing LocalBusiness and BreadcrumbList
+    const webPage = {
+      '@type': 'WebPage',
+      '@id': `${publicUrl}#webpage`,
+      'url': publicUrl,
+      'name': storeName ? `${storeName} | VitrinX` : 'VitrinX',
+      'about': { '@id': entityId },
+    };
+    if (storeDescription) webPage.description = storeDescription;
+    if (imageUrl) {
+      webPage.primaryImageOfPage = {
+        '@type': 'ImageObject',
+        'url': imageUrl,
+      };
+    }
+
     const jsonLdMap = {
       '@context': 'https://schema.org',
-      '@graph': [
-        localBusiness,
-        breadcrumbList,
-        ...productsList,
-      ],
+      '@graph': [entity, webPage],
     };
 
     const jsonLdString = JSON.stringify(jsonLdMap).replace(/</g, '\\u003c');
 
     const rawTitle = store.name ? `${store.name} - VitrinX` : 'VitrinX';
     const rawDesc = store.description || store.corporate_bio || 'Küçük işletmeler için dijital vitrin kartı.';
-    const shareImage = store.logo_url || store.shelf_image_url || `${protocol}://${host}/favicon.png`;
+    const shareImage = imageUrl || `${protocol}://${host}/favicon.png`;
 
     const title = escapeHtmlAttr(rawTitle);
     const description = escapeHtmlAttr(rawDesc);

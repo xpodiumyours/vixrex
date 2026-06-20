@@ -1536,30 +1536,30 @@ class _LandingScreenState extends State<LandingScreen>
     final List<Map<String, dynamic>> seoItems = [
       {
         'icon': Icons.map_rounded,
-        'title': 'Harita & Konum Entegrasyonu',
+        'title': 'Konum ve Yol Tarifi',
         'desc':
-            'Dükkan adresiniz ve konum koordinatlarınız, Google Haritalar standartlarına tam uyumlu olarak arka planda işlenir.',
+            'Konum izni verdiğinizde koordinatlarınız kaydedilir; müşteriler Google Maps yol tarifi bağlantısını açabilir.',
         'color': const Color(0xFFFF5A1F),
       },
       {
         'icon': Icons.qr_code_scanner_rounded,
-        'title': 'Akıllı Arama Kartı Yapısı',
+        'title': 'Arama Motoru Uyumlu Vitrin',
         'desc':
-            'Ürünleriniz, Google botlarının dükkanınızı doğrudan listeleyebileceği yapılandırılmış veri (JSON-LD) formatında sunulur.',
+            'Yayınlanan vitrin için canonical bağlantı, sitemap ve işletme bilgilerini açıklayan JSON-LD oluşturulur. Google görünürlüğü garanti edilmez.',
         'color': const Color(0xFF2563EB),
       },
       {
         'icon': Icons.bolt_rounded,
-        'title': 'Hız & Performans Optimizasyonu',
+        'title': 'Optimize Edilmiş Görseller',
         'desc':
-            'Yüklediğiniz fotoğraflar kalitesi bozulmadan sıkıştırılır. Hızlı açılan sayfalar aramalarda daha üst sıralara taşınır.',
+            'Büyük fotoğraflar yüklemeden önce boyutlandırılır ve dosya boyutu azaltılır; şeffaf PNG görseller korunur.',
         'color': const Color(0xFF10B981),
       },
       {
         'icon': Icons.rocket_launch_rounded,
-        'title': 'Sosyal Paylaşım Hızlandırıcı',
+        'title': 'Paylaşıma Hazır Bağlantı',
         'desc':
-            'Vitrin linkinizi WhatsApp veya Instagram\'da paylaştığınızda, Google botlarına dükkanınızı taraması için otomatik teknik sinyal gönderilir.',
+            'Vitrin bağlantısı cihazın paylaşım menüsüyle gönderilir; desteklenmeyen cihazlarda panoya kopyalanır.',
         'color': const Color(0xFFDB2777),
       },
     ];
@@ -1573,40 +1573,8 @@ class _LandingScreenState extends State<LandingScreen>
           constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0EA),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: const Color(0xFFFFDCD0)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      color: Color(0xFFFF5A1F),
-                      size: 14,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'ÜCRETSİZ PREMİUM ENTEGRASYON',
-                      style: TextStyle(
-                        color: Color(0xFFFF5A1F),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 10,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
               const Text(
-                'Google Arama Görünürlüğü',
+                'Arama ve Paylaşım Altyapısı',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
@@ -1617,7 +1585,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               const SizedBox(height: 16),
               const Text(
-                'Dükkanınızın internette ve Google Haritalar\'da kolayca bulunması için arka planda tüm ayarları otomatik yapıyoruz:',
+                'Yayınlanan vitrinin bağlantı, konum, görsel ve arama motoru altyapısını gerçek özelliklerle hazırlıyoruz.',
                 style: TextStyle(
                   fontSize: 16,
                   color: Color(0xFF475569),
@@ -1678,55 +1646,13 @@ class _LandingScreenState extends State<LandingScreen>
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              item['title'] as String,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w900,
-                                                color: Color(0xFF0F172A),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 3,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFECFDF5),
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                              border: Border.all(
-                                                color: const Color(0xFFA7F3D0),
-                                                width: 0.8,
-                                              ),
-                                            ),
-                                            child: const Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons
-                                                      .check_circle_outline_rounded,
-                                                  color: Color(0xFF059669),
-                                                  size: 10,
-                                                ),
-                                                SizedBox(width: 3),
-                                                Text(
-                                                  'Aktif',
-                                                  style: TextStyle(
-                                                    color: Color(0xFF059669),
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.w900,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
+                                      Text(
+                                        item['title'] as String,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                          color: Color(0xFF0F172A),
+                                        ),
                                       ),
                                       const SizedBox(height: 8),
                                       Text(

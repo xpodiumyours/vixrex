@@ -21,9 +21,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // limit=5000 is added to bypass Supabase's default 1000 row limit
     const supabaseResponse = await fetch(
-      `${supabaseUrl}/rest/v1/stores?select=slug&is_published=eq.true&limit=5000`,
+      `${supabaseUrl}/rest/v1/stores?select=slug,updated_at&is_published=eq.true&limit=5000`,
       {
         headers: {
           'apikey': supabaseKey,
@@ -46,8 +45,6 @@ export default async function handler(req, res) {
     // Main landing page
     xml += `  <url>\n`;
     xml += `    <loc>${protocol}://${host}/</loc>\n`;
-    xml += `    <changefreq>daily</changefreq>\n`;
-    xml += `    <priority>1.0</priority>\n`;
     xml += `  </url>\n`;
 
     // Active vitrins
@@ -56,8 +53,12 @@ export default async function handler(req, res) {
         const safeSlug = escapeXml(store.slug);
         xml += `  <url>\n`;
         xml += `    <loc>${protocol}://${host}/v/${safeSlug}</loc>\n`;
-        xml += `    <changefreq>daily</changefreq>\n`;
-        xml += `    <priority>0.8</priority>\n`;
+        if (store.updated_at) {
+          const updatedAt = new Date(store.updated_at);
+          if (!Number.isNaN(updatedAt.getTime())) {
+            xml += `    <lastmod>${updatedAt.toISOString()}</lastmod>\n`;
+          }
+        }
         xml += `  </url>\n`;
       }
     }

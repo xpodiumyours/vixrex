@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
@@ -1734,28 +1735,7 @@ class VitrinView extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () async {
-                await Clipboard.setData(ClipboardData(text: shareUrl));
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).clearSnackBars();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Row(
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline_rounded,
-                          color: Colors.white,
-                        ),
-                        SizedBox(width: 8),
-                        Text('Vitrin bağlantısı panoya kopyalandı!'),
-                      ],
-                    ),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: preset.accent,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              },
+              onTap: () => _shareVitrin(context, shareUrl, preset),
               child: Padding(
                 padding: EdgeInsets.all(isEmbedded ? 8.0 : 12.0),
                 child: Icon(
@@ -1767,6 +1747,54 @@ class VitrinView extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _shareVitrin(
+    BuildContext context,
+    String shareUrl,
+    VitrinThemePreset preset,
+  ) async {
+    final renderBox = context.findRenderObject() as RenderBox?;
+    final shareOrigin =
+        renderBox == null
+            ? null
+            : renderBox.localToGlobal(Offset.zero) & renderBox.size;
+    final storeName = storeData.name.trim();
+    final shareText =
+        storeName.isEmpty
+            ? 'VitrinX vitrini\n$shareUrl'
+            : '$storeName vitrini\n$shareUrl';
+
+    try {
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          text: shareText,
+          title: storeName.isEmpty ? 'VitrinX' : storeName,
+          sharePositionOrigin: shareOrigin,
+        ),
+      );
+      if (result.status != ShareResultStatus.unavailable) return;
+    } catch (_) {
+      // Desteklenmeyen cihazlarda bağlantı kopyalama yedeği kullanılır.
+    }
+
+    await Clipboard.setData(ClipboardData(text: shareUrl));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle_outline_rounded, color: Colors.white),
+            SizedBox(width: 8),
+            Text('Paylaşım desteklenmedi, bağlantı kopyalandı.'),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: preset.accent,
+        duration: const Duration(seconds: 2),
       ),
     );
   }

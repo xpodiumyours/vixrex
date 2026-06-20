@@ -5,7 +5,7 @@ import 'package:vitrinx/services/seo_schema_builder.dart';
 void main() {
   group('buildStoreSchemas', () {
     test(
-      'adds opening hours, public url, and breadcrumbs to LocalBusiness and @graph schema',
+      'adds Organization and WebPage when physical location is incomplete',
       () {
         final store = StoreData(
           name: 'Nova Kuafor',
@@ -20,82 +20,41 @@ void main() {
         );
 
         final graph = schemas['@graph'] as List;
-        final localBusiness = graph[0] as Map<String, dynamic>;
-        final breadcrumbList = graph[1] as Map<String, dynamic>;
+        final organization = graph[0] as Map<String, dynamic>;
+        final webPage = graph[1] as Map<String, dynamic>;
 
-        // Check LocalBusiness
-        expect(localBusiness['@type'], 'LocalBusiness');
-        expect(localBusiness['url'], 'https://vitrinx.app/v/nova-kuafor');
-        expect(
-          localBusiness['openingHoursSpecification'],
-          isA<Map<String, dynamic>>(),
-        );
-
-        final openingHours =
-            localBusiness['openingHoursSpecification'] as Map<String, dynamic>;
-        expect(openingHours['opens'], '09:00');
-        expect(openingHours['closes'], '20:00');
-
-        // Check BreadcrumbList
-        expect(breadcrumbList['@type'], 'BreadcrumbList');
-        final items = breadcrumbList['itemListElement'] as List;
-        expect(items.length, 3);
-        expect(items[0]['name'], 'VitrinX');
-        expect(items[1]['name'], 'Güzellik');
-        expect(items[2]['name'], 'Nova Kuafor');
-        expect(items[2]['item'], 'https://vitrinx.app/v/nova-kuafor');
+        expect(organization['@type'], 'Organization');
+        expect(organization['url'], 'https://vitrinx.app/v/nova-kuafor');
+        expect(organization.containsKey('openingHoursSpecification'), isFalse);
+        expect(webPage['@type'], 'WebPage');
+        expect(webPage['about']['@id'], contains('#business'));
       },
     );
 
-    test('does not add opening hours when working hour format is invalid', () {
-      final store = StoreData(
-        name: 'Nova Kuafor',
-        description: 'Yerel kuafor vitrini',
-        workingHours: 'sabah aksam',
-      );
-
-      final schemas = buildStoreSchemas(store);
-      final graph = schemas['@graph'] as List;
-      final localBusiness = graph[0] as Map<String, dynamic>;
-
-      expect(localBusiness.containsKey('openingHoursSpecification'), isFalse);
-    });
-
-    test('adds price range from numeric product prices', () {
-      final store = StoreData(
-        name: 'Nova Kuafor',
-        description: 'Yerel kuafor vitrini',
-        products: [
-          Product(id: 'p1', name: 'Sac kesimi', price: '250 TL'),
-          Product(id: 'p2', name: 'Boya', price: '1200 TL'),
-        ],
-      );
-
-      final schemas = buildStoreSchemas(store);
-      final graph = schemas['@graph'] as List;
-      final localBusiness = graph[0] as Map<String, dynamic>;
-
-      expect(localBusiness['priceRange'], r'$$');
-    });
-
-    test('adds hasMap and areaServed from coordinates and address', () {
+    test('adds LocalBusiness details when address and coordinates exist', () {
       final store = StoreData(
         name: 'Nova Kuafor',
         description: 'Yerel kuafor vitrini',
         address: 'Moda Cd. No:12, Kadikoy, Istanbul',
         latitude: 40.9876,
         longitude: 29.0123,
+        workingHours: '09:00 - 20:00',
       );
 
       final schemas = buildStoreSchemas(store);
       final graph = schemas['@graph'] as List;
       final localBusiness = graph[0] as Map<String, dynamic>;
 
+      expect(localBusiness['@type'], 'LocalBusiness');
       expect(localBusiness['hasMap'], contains('query=40.9876,29.0123'));
-      expect(localBusiness['areaServed']['name'], 'Istanbul');
+      expect(localBusiness['address']['addressCountry'], 'TR');
+      expect(
+        localBusiness['openingHoursSpecification'],
+        isA<Map<String, dynamic>>(),
+      );
     });
 
-    test('does not emit fake 0.00 offer for non-numeric product prices', () {
+    test('does not emit product schemas on a multi-product vitrin page', () {
       final store = StoreData(
         name: 'Nova Kuafor',
         description: 'Yerel kuafor vitrini',
@@ -106,26 +65,22 @@ void main() {
 
       final schemas = buildStoreSchemas(store);
       final graph = schemas['@graph'] as List;
-      final localBusiness = graph[0] as Map<String, dynamic>;
-      final productSchema =
-          graph[2] as Map<String, dynamic>; // graph[1] is breadcrumbs
-
-      expect(localBusiness.containsKey('priceRange'), isFalse);
-      expect(productSchema.containsKey('offers'), isFalse);
+      expect(
+        graph.where(
+          (item) => (item as Map<String, dynamic>)['@type'] == 'Product',
+        ),
+        isEmpty,
+      );
     });
 
-    test('does not add aggregateRating without real rating data', () {
-      final store = StoreData(
-        name: 'Nova Kuafor',
-        description: 'Yerel kuafor vitrini',
-        workingHours: '09:00-20:00',
-      );
+    test('normalizes a valid WhatsApp number for structured data', () {
+      final store = StoreData(name: 'Nova Kuafor', whatsapp: '0555 123 45 67');
 
       final schemas = buildStoreSchemas(store);
       final graph = schemas['@graph'] as List;
-      final localBusiness = graph[0] as Map<String, dynamic>;
+      final organization = graph[0] as Map<String, dynamic>;
 
-      expect(localBusiness.containsKey('aggregateRating'), isFalse);
+      expect(organization['telephone'], '+905551234567');
     });
   });
 }

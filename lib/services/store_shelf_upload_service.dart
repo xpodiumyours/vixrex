@@ -1,10 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vitrinx/services/image_optimization_service.dart';
 
 class StoreShelfUploadService {
-  const StoreShelfUploadService();
+  const StoreShelfUploadService({
+    this.imageOptimizationService = const ImageOptimizationService(),
+  });
 
   static const String _bucketName = 'shelf-images';
+  final ImageOptimizationService imageOptimizationService;
 
   /// Storage'a görsel yükler ve public URL döner.
   ///
@@ -16,18 +20,28 @@ class StoreShelfUploadService {
     String contentType = 'image/jpeg',
   }) async {
     final safeSlug = sanitizeSlug(slug);
-    final safeExtension = sanitizeExtension(fileExtension);
+    final optimizedImage = await imageOptimizationService.optimize(
+      bytes,
+      fileExtension: sanitizeExtension(fileExtension),
+      contentType: contentType,
+    );
     final path =
-        '$safeSlug/${DateTime.now().millisecondsSinceEpoch}.$safeExtension';
+        '$safeSlug/${DateTime.now().millisecondsSinceEpoch}.'
+        '${optimizedImage.extension}';
 
     try {
       final bucket = Supabase.instance.client.storage.from(_bucketName);
       await bucket.uploadBinary(
         path,
-        bytes,
-        fileOptions: FileOptions(contentType: contentType, upsert: false),
+        optimizedImage.bytes,
+        fileOptions: FileOptions(
+          contentType: optimizedImage.contentType,
+          upsert: false,
+        ),
       );
       return bucket.getPublicUrl(path);
+    } on ImageOptimizationException {
+      rethrow;
     } catch (error) {
       throw Exception('Raf fotoğrafı yüklenemedi: $error');
     }
