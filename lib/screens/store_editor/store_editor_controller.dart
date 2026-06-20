@@ -99,6 +99,7 @@ class StoreEditorController extends ChangeNotifier {
 
   // Controllers
   final TextEditingController addressCtrl = TextEditingController();
+  String? _savedStateSignature;
 
   static const int _maxGalleryPhotos = 12;
   static const int _maxGalleryPhotoBytes = GalleryImageFileValidator.maxBytes;
@@ -113,6 +114,42 @@ class StoreEditorController extends ChangeNotifier {
     data.name = value;
     _scheduleTodayViewCountRefresh();
     notifyListeners();
+  }
+
+  bool get hasUnsavedChanges =>
+      _savedStateSignature != null &&
+      _savedStateSignature != _buildStateSignature();
+
+  void _captureSavedState() {
+    _savedStateSignature = _buildStateSignature();
+  }
+
+  String _buildStateSignature() {
+    final state = <String, dynamic>{
+      'data': data.toJson(),
+      'address': addressCtrl.text,
+      'latitude': latitude,
+      'longitude': longitude,
+      'locationAccuracyMeters': locationAccuracyMeters,
+      'locationConsentAt': locationConsentAt?.toIso8601String(),
+      'locationSource': locationSource,
+      'kvkkConsent': kvkkConsent,
+      'logoBytes': logoBytes == null ? null : base64Encode(logoBytes!),
+      'gallery':
+          galleryItems
+              .map(
+                (item) => {
+                  'id': item.id,
+                  'imageUrl': item.imageUrl,
+                  'bytes':
+                      item.bytes == null ? null : base64Encode(item.bytes!),
+                  'title': item.titleController.text,
+                  'description': item.descriptionController.text,
+                },
+              )
+              .toList(),
+    };
+    return jsonEncode(state);
   }
 
   void _scheduleTodayViewCountRefresh() {
@@ -176,11 +213,13 @@ class StoreEditorController extends ChangeNotifier {
         addressCtrl.text = data.address;
       }
       isLoading = false;
+      _captureSavedState();
       notifyListeners();
       unawaited(refreshTodayViewCount(force: true));
     } catch (e) {
       debugPrint('Data load error: $e');
       isLoading = false;
+      _captureSavedState();
       notifyListeners();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -219,10 +258,12 @@ class StoreEditorController extends ChangeNotifier {
       data.locationConsentAt = locationConsentAt;
       data.locationSource = locationSource;
       data.isStore = true;
+      _syncPublishedGalleryData();
 
       final String jsonData = jsonEncode(data.toJson());
       await prefs.setString(LocalStorageKeys.storeData, jsonData);
 
+      _captureSavedState();
       notifyListeners();
 
       if (!context.mounted) return;
@@ -447,6 +488,7 @@ class StoreEditorController extends ChangeNotifier {
 
       publishedLink = publicLink;
       existingVitrinToken = editToken;
+      _captureSavedState();
       notifyListeners();
 
       unawaited(refreshTodayViewCount(force: true));

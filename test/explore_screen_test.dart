@@ -86,4 +86,22 @@ void main() {
 
     expect(find.text('Senin vitrinin'), findsOneWidget);
   });
+
+  testWidgets('fallback kartları örnek olarak işaretlenir ve açılmaz', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
+
+    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Örnek'), findsWidgets);
+    await tester.ensureVisible(find.text('Aymira Giyim'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Aymira Giyim'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ExploreScreen), findsOneWidget);
+  });
 }

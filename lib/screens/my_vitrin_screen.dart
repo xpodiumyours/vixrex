@@ -15,6 +15,7 @@ import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/utils/token_generator.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
+import 'package:vitrinx/widgets/gallery_delete_confirmation_dialog.dart';
 
 // ─── Gallery item helper ───────────────────────────────────────────────────
 class _GalleryItem {
@@ -290,8 +291,15 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     }
   }
 
-  void _removeGalleryItem(int index) {
+  Future<void> _removeGalleryItem(int index) async {
     if (index < 0 || index >= _galleryItems.length) return;
+
+    final confirmed = await showGalleryDeleteConfirmationDialog(
+      context,
+      isCover: index == 0,
+    );
+    if (!confirmed || !mounted) return;
+
     setState(() => _galleryItems.removeAt(index));
   }
 
@@ -711,7 +719,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           children: [
             Expanded(
               child: Text(
-                'VitrinX Oluştur',
+                hasPublished ? 'VitrinX Düzenle' : 'VitrinX Oluştur',
                 style: const TextStyle(
                   color: darkText,
                   fontSize: 24,

@@ -22,8 +22,10 @@ import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
-import 'package:vitrinx/widgets/vitrin_view.dart';
+import 'package:vitrinx/widgets/gallery_delete_confirmation_dialog.dart';
 import 'package:vitrinx/widgets/google_business_guide_card.dart';
+import 'package:vitrinx/widgets/unsaved_changes_dialog.dart';
+import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
@@ -58,6 +60,9 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
   Timer? _viewCountDebounce;
   _VitrinScoreTarget? _highlightedScoreTarget;
   int _scoreTargetHighlightToken = 0;
+  String? _savedStateSignature;
+  bool _allowPop = false;
+  bool _isExitDialogOpen = false;
 
   final Map<_VitrinScoreTarget, GlobalKey> _scoreTargetKeys = {
     _VitrinScoreTarget.storeName: GlobalKey(),
@@ -213,6 +218,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
           _replaceEditorGalleryItems(loadedData.displayGalleryItems);
           _isLoading = false;
         });
+        _captureSavedState();
         unawaited(_refreshTodayViewCount());
       } else {
         setState(() {
@@ -224,6 +230,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
           _addressCtrl.text = _data.address;
           _isLoading = false;
         });
+        _captureSavedState();
         unawaited(_refreshTodayViewCount());
       }
     } catch (e) {
@@ -231,6 +238,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
       if (!mounted) return;
 
       setState(() => _isLoading = false);
+      _captureSavedState();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
 
@@ -260,8 +268,10 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
       _data.locationSource = _locationSource;
 
       _data.isStore = false;
+      _syncPublishedGalleryData();
       final String jsonData = jsonEncode(_data.toJson());
       await prefs.setString(LocalStorageKeys.vitrinData, jsonData);
+      _captureSavedState();
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -474,6 +484,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
       setState(() {
         _publishedLink = publicLink;
         _existingVitrinToken = editToken;
+        _captureSavedState();
       });
       unawaited(_refreshTodayViewCount(force: true));
       ScaffoldMessenger.of(context).clearSnackBars();
@@ -592,6 +603,65 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
         setState(() => _isDeleting = false);
       }
     }
+  }
+
+  bool get _hasUnsavedChanges =>
+      _savedStateSignature != null &&
+      _savedStateSignature != _buildStateSignature();
+
+  void _captureSavedState() {
+    _savedStateSignature = _buildStateSignature();
+  }
+
+  String _buildStateSignature() {
+    return jsonEncode({
+      'data': _data.toJson(),
+      'address': _addressCtrl.text,
+      'latitude': _latitude,
+      'longitude': _longitude,
+      'locationAccuracyMeters': _locationAccuracyMeters,
+      'locationConsentAt': _locationConsentAt?.toIso8601String(),
+      'locationSource': _locationSource,
+      'kvkkConsent': _kvkkConsent,
+      'gallery':
+          _galleryItems
+              .map(
+                (item) => {
+                  'id': item.id,
+                  'imageUrl': item.imageUrl,
+                  'bytes':
+                      item.bytes == null ? null : base64Encode(item.bytes!),
+                  'title': item.titleController.text,
+                  'description': item.descriptionController.text,
+                },
+              )
+              .toList(),
+    });
+  }
+
+  Future<void> _requestExit() async {
+    if (_allowPop || !mounted) return;
+
+    if (!_hasUnsavedChanges) {
+      _exitEditor();
+      return;
+    }
+    if (_isExitDialogOpen) return;
+
+    _isExitDialogOpen = true;
+    final shouldExit = await showUnsavedChangesDialog(context);
+    _isExitDialogOpen = false;
+    if (shouldExit && mounted) {
+      _exitEditor();
+    }
+  }
+
+  void _exitEditor() {
+    if (!mounted) return;
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.pop(context);
+    });
   }
 
   void _showDeleteVitrinConfirmation() {
@@ -1115,8 +1185,14 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
     return '${DateTime.now().microsecondsSinceEpoch}_${random.nextInt(999999)}';
   }
 
-  void _removeGalleryPhoto(int index) {
+  Future<void> _removeGalleryPhoto(int index) async {
     if (index < 0 || index >= _galleryItems.length) return;
+
+    final confirmed = await showGalleryDeleteConfirmationDialog(
+      context,
+      isCover: index == 0,
+    );
+    if (!confirmed || !mounted) return;
 
     setState(() {
       final removedItem = _galleryItems.removeAt(index);
@@ -2063,9 +2139,14 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
 
     final isWide = MediaQuery.of(context).size.width > 900;
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _requestExit();
+      },
+      child: Scaffold(
+        backgroundColor: bgColor,
+        appBar: AppBar(
         backgroundColor: const Color.fromRGBO(255, 255, 255, 0.94),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -2078,7 +2159,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
             size: 20,
             color: darkText,
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: _requestExit,
         ),
         title:
             isWide
@@ -2168,7 +2249,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
                 ],
       ),
       bottomNavigationBar: !isWide ? _buildMobileBottomActions() : null,
-      body: _buildEditorBackdrop(
+        body: _buildEditorBackdrop(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth > 900;
@@ -2242,6 +2323,7 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
               ),
             );
           },
+        ),
         ),
       ),
     );

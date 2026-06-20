@@ -19,6 +19,7 @@ import 'package:vitrinx/screens/store_editor/widgets/store_gallery_section.dart'
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/services/auth_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
+import 'package:vitrinx/widgets/unsaved_changes_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/screens/store_editor/widgets/store_score_section.dart';
@@ -38,6 +39,8 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
   late final TabController _mobileTabController;
   late final StoreEditorController _controller;
   bool _isDeletingAccount = false;
+  bool _allowPop = false;
+  bool _isExitDialogOpen = false;
 
   final Map<StoreScoreTarget, GlobalKey> _scoreTargetKeys = {
     StoreScoreTarget.storeName: GlobalKey(),
@@ -663,6 +666,31 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
       _controller.copyPublishedLink(context, msg);
   Future<void> _deleteVitrin() => _controller.deleteVitrin(context);
 
+  Future<void> _requestExit() async {
+    if (_allowPop || !mounted) return;
+
+    if (!_controller.hasUnsavedChanges) {
+      _exitEditor();
+      return;
+    }
+    if (_isExitDialogOpen) return;
+
+    _isExitDialogOpen = true;
+    final shouldExit = await showUnsavedChangesDialog(context);
+    _isExitDialogOpen = false;
+    if (shouldExit && mounted) {
+      _exitEditor();
+    }
+  }
+
+  void _exitEditor() {
+    if (!mounted) return;
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.pop(context);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_controller.isLoading) {
@@ -673,9 +701,14 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
 
     final isWide = MediaQuery.of(context).size.width > 900;
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _requestExit();
+      },
+      child: Scaffold(
+        backgroundColor: bgColor,
+        appBar: AppBar(
         backgroundColor: const Color.fromRGBO(255, 255, 255, 0.94),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -688,7 +721,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
             size: 20,
             color: darkText,
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: _requestExit,
         ),
         title:
             isWide
@@ -779,7 +812,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
                 ],
       ),
       bottomNavigationBar: !isWide ? _buildMobileBottomActions() : null,
-      body: _buildEditorBackdrop(
+        body: _buildEditorBackdrop(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth > 900;
@@ -896,6 +929,7 @@ class _StoreEditorScreenState extends State<StoreEditorScreen>
               ),
             );
           },
+        ),
         ),
       ),
     );

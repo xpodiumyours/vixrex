@@ -87,6 +87,22 @@ void main() {
     },
   );
 
+  testWidgets('StoreEditor kaydedilmemiş değişiklikte çıkış uyarısı gösterir', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const MaterialApp(home: StoreEditorScreen()));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).first, 'Yeni Mağaza');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Değişiklikler kaydedilmedi'), findsOneWidget);
+    expect(find.text('Kaydetmeden Çık'), findsOneWidget);
+  });
+
   testWidgets(
     'VitrinEditorScreen kategori ve ürün kataloğunu içermez ama pazaryeri linklerini içerir',
     (WidgetTester tester) async {
@@ -119,7 +135,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('VitrinX Oluştur'), findsAtLeastNWidgets(1));
+    expect(find.text('VitrinX Düzenle'), findsOneWidget);
+    expect(find.text('VitrinX Oluştur'), findsNothing);
     expect(find.text('Değişiklikleri Kaydet & Yayına Al'), findsOneWidget);
     expect(find.text('İşletme / VitrinX Adı'), findsOneWidget);
     expect(find.text('Yayındaki Vitrini Aç'), findsOneWidget);

@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:vitrinx/widgets/gallery_delete_confirmation_dialog.dart';
+
 import '../editor_gallery_item.dart';
 import '../store_editor_controller.dart';
 import 'editor_ui_components.dart';
@@ -30,6 +32,19 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
     end: Alignment.bottomRight,
     colors: [primaryColor, secondaryColor],
   );
+
+  Future<void> _confirmGalleryRemoval(int index) async {
+    final controller = widget.controller;
+    if (index < 0 || index >= controller.galleryItems.length) return;
+
+    final confirmed = await showGalleryDeleteConfirmationDialog(
+      context,
+      isCover: index == 0,
+    );
+    if (!confirmed || !mounted) return;
+
+    controller.removeGalleryPhoto(index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -417,7 +432,7 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
                         label: 'Sil',
                         icon: Icons.close_rounded,
                         onPressed:
-                            () => controller.removeGalleryPhoto(
+                            () => _confirmGalleryRemoval(
                               controller.selectedGalleryIndex,
                             ),
                       ),
@@ -595,7 +610,7 @@ class _StoreGallerySectionState extends State<StoreGallerySection> {
                 right: 5,
                 top: 5,
                 child: GestureDetector(
-                  onTap: () => controller.removeGalleryPhoto(index),
+                  onTap: () => _confirmGalleryRemoval(index),
                   child: Container(
                     width: 24,
                     height: 24,

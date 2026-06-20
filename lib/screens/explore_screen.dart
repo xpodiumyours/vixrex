@@ -21,6 +21,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   String? _loadErrorMessage;
   String _selectedCategory = 'Tümü';
   bool _onlyFavorites = false;
+  bool _showingExampleStores = false;
   List<String> _favoritedStoreNames = [];
 
   // Theme Colors
@@ -115,6 +116,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           }
         }
         _allStores = loadedStores;
+        _showingExampleStores = false;
         _isLoading = false;
       });
     } on PostgrestException catch (e) {
@@ -125,8 +127,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
       debugPrint('  hint   : ${e.hint}');
       setState(() {
         _allStores = _getMockStores();
+        _showingExampleStores = true;
         _loadErrorMessage =
-            'Keşfet verisi Supabase tarafından okunamadı. Konsol loglarını kontrol edin.';
+            'Canlı vitrinler yüklenemedi. Aşağıdaki kartlar tıklanamayan örneklerdir.';
         _isLoading = false;
       });
     } catch (e) {
@@ -134,8 +137,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
       debugPrint('[Explore] VitrinX listesi yüklenemedi: $e');
       setState(() {
         _allStores = _getMockStores();
+        _showingExampleStores = true;
         _loadErrorMessage =
-            'Keşfet verisi yüklenemedi. Geçici örnek liste gösteriliyor.';
+            'Canlı vitrinler yüklenemedi. Aşağıdaki kartlar tıklanamayan örneklerdir.';
         _isLoading = false;
       });
     }
@@ -511,7 +515,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             ),
                         itemCount: stores.length,
                         itemBuilder: (context, index) {
-                          return _buildStoreCard(stores[index]);
+                          return _buildStoreCard(
+                            stores[index],
+                            isExample: _showingExampleStores,
+                          );
                         },
                       ),
             ),
@@ -526,14 +533,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
+        color: const Color(0xFFFFE8D9),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.24)),
+        border: Border.all(color: primaryColor, width: 1.4),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, size: 18, color: primaryColor),
+          const Icon(Icons.warning_amber_rounded, size: 22, color: primaryColor),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -573,7 +580,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  Widget _buildStoreCard(StoreData store) {
+  Widget _buildStoreCard(StoreData store, {required bool isExample}) {
     final isFavorited = _favoritedStoreNames.contains(store.name);
     final hasImage = store.shelfImageUrl.isNotEmpty;
     final isOwnStore =
@@ -593,17 +600,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
       clipBehavior: Clip.antiAlias,
       color: Colors.white,
       child: InkWell(
-        onTap: () {
-          // Open public vitrin page
-          final slug =
-              store.slug.isNotEmpty
-                  ? store.slug
-                  : const StorePublishPayloadBuilder().generateSlug(store.name);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: slug)),
-          );
-        },
+        onTap:
+            isExample
+                ? null
+                : () {
+                  final slug =
+                      store.slug.isNotEmpty
+                          ? store.slug
+                          : const StorePublishPayloadBuilder().generateSlug(
+                            store.name,
+                          );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PublicVitrinScreen(slug: slug),
+                    ),
+                  );
+                },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -646,6 +659,30 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       ),
                     ),
                   ),
+                  if (isExample)
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: primaryColor),
+                        ),
+                        child: const Text(
+                          'Örnek',
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
                   if (isOwnStore)
                     Positioned(
                       bottom: 10,

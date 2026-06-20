@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/vitrin_editor_screen.dart';
+import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
@@ -251,9 +251,11 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
             return _PublicVitrinShell(
               showOwnerBar: ownerSnapshot.data == true,
               onEdit: () {
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (_) => const VitrinEditorScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const HomeShellScreen(initialIndex: 1),
+                  ),
                 );
               },
               child: VitrinView(
@@ -312,11 +314,22 @@ class _PublicVitrinShell extends StatelessWidget {
                                 ]
                                 : null,
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                      child: Stack(
+                        clipBehavior: Clip.none,
                         children: [
-                          if (showOwnerBar) _PublicOwnerBar(onEdit: onEdit),
-                          child,
+                          Padding(
+                            padding: EdgeInsets.only(
+                              top: showOwnerBar ? 72 : 0,
+                            ),
+                            child: child,
+                          ),
+                          if (showOwnerBar)
+                            Positioned(
+                              top: 12,
+                              left: 12,
+                              right: 12,
+                              child: _PublicOwnerBar(onEdit: onEdit),
+                            ),
                         ],
                       ),
                     ),
@@ -340,39 +353,77 @@ class _PublicOwnerBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Color(0xFF111827),
-        border: Border(bottom: BorderSide(color: Color(0x1FFFFFFF))),
+      constraints: const BoxConstraints(minHeight: 48),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x1F0F172A)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 18,
+            offset: const Offset(0, 7),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.verified_user_rounded,
-            color: Colors.white,
-            size: 16,
-          ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text(
-              'Bu senin vitrinin',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-              ),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: const BoxDecoration(
+              color: Color(0xFFEAFBF1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_rounded,
+              color: Color(0xFF059669),
+              size: 18,
             ),
           ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Vitrinin yayında',
+                  style: TextStyle(
+                    color: Color(0xFF111827),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 1),
+                Text(
+                  'Yalnızca sen bu alanı görürsün',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
           TextButton.icon(
             onPressed: onEdit,
             icon: const Icon(Icons.edit_rounded, size: 15),
             label: const Text('Düzenle'),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: const Color(0x33FFFFFF),
+              foregroundColor: const Color(0xFF111827),
+              backgroundColor: const Color(0xFFF1F5F9),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              minimumSize: const Size(0, 0),
+              minimumSize: const Size(0, 36),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],
