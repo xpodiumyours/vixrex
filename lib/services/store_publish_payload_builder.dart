@@ -37,9 +37,10 @@ class StorePublishPayloadBuilder {
   }
 
   Map<String, dynamic> toStoreUpdateMap(StoreData data) {
-    final shelfImageUrl = data.shelfImageUrl.trim().isNotEmpty
-        ? data.shelfImageUrl.trim()
-        : data.coverImageUrl.trim();
+    final shelfImageUrl =
+        data.shelfImageUrl.trim().isNotEmpty
+            ? data.shelfImageUrl.trim()
+            : data.coverImageUrl.trim();
 
     return <String, dynamic>{
       'name': data.name.trim(),

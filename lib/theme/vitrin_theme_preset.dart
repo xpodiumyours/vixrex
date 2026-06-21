@@ -37,7 +37,7 @@ const VitrinThemePreset sadeVitrinTheme = VitrinThemePreset(
   surfaceSoft: Color(0xFFF1F5F9),
   textPrimary: Color(0xFF111827),
   textSecondary: Color(0xFF475569),
-  accent: Color(0xFFFF5A1F),
+  accent: Color(0xFF10D8D8),
   buttonText: Color(0xFFFFFFFF),
   border: Color(0xFFD9E2EC),
   qrBackground: Color(0xFFFFFFFF),

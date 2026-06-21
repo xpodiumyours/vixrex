@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/legal_config.dart';
+import 'package:vitrinx/theme/app_colors.dart';
 
 enum LegalPageType {
   privacy,
@@ -59,7 +60,7 @@ enum LegalPageType {
       case LegalPageType.terms:
         return const Color(0xFF3B82F6); // Royal blue
       case LegalPageType.dataDeletion:
-        return const Color(0xFFFF5A1F); // Brand orange
+        return AppColors.brandOrange; // Brand orange
     }
   }
 }
@@ -81,12 +82,12 @@ class LegalScreen extends StatelessWidget {
     final sections = _sectionsFor(type);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.bgLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        foregroundColor: const Color(0xFF0F172A),
+        foregroundColor: AppColors.darkTextAlt,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.maybePop(context),

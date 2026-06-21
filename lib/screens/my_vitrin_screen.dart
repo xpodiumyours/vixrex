@@ -16,6 +16,7 @@ import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/utils/token_generator.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/gallery_delete_confirmation_dialog.dart';
+import 'package:vitrinx/theme/app_colors.dart';
 
 // ─── Gallery item helper ───────────────────────────────────────────────────
 class _GalleryItem {
@@ -36,12 +37,11 @@ class _GalleryItem {
   bool get hasLocalBytes => bytes != null;
   bool get hasUrl => imageUrl.trim().isNotEmpty;
 
-  static _GalleryItem fromStoreItem(StoreGalleryItem item) => _GalleryItem(
-    id: item.id,
-    imageUrl: item.imageUrl,
-  );
+  static _GalleryItem fromStoreItem(StoreGalleryItem item) =>
+      _GalleryItem(id: item.id, imageUrl: item.imageUrl);
 
-  StoreGalleryItem toStoreItem() => StoreGalleryItem(id: id, imageUrl: imageUrl);
+  StoreGalleryItem toStoreItem() =>
+      StoreGalleryItem(id: id, imageUrl: imageUrl);
 }
 
 // ─── Main Widget ──────────────────────────────────────────────────────────
@@ -63,13 +63,13 @@ class MyVitrinScreen extends StatefulWidget {
 
 class _MyVitrinScreenState extends State<MyVitrinScreen> {
   // ─── Colors ─────────────────────────────────────────────────────────────
-  static const Color primaryColor = Color(0xFFFF4D00);
-  static const Color bgColor = Color(0xFFF6F8FC);
-  static const Color darkText = Color(0xFF111827);
-  static const Color mutedText = Color(0xFF64748B);
-  static const Color softText = Color(0xFF334155);
-  static const Color cardBorder = Color.fromRGBO(15, 23, 42, 0.10);
-  static const Color inputBg = Color(0xFFF1F5F9);
+  static const Color primaryColor = AppColors.primary;
+  static const Color bgColor = AppColors.bgEditor;
+  static const Color darkText = AppColors.darkText;
+  static const Color mutedText = AppColors.mutedText;
+  static const Color softText = AppColors.softText;
+  static const Color cardBorder = AppColors.cardBorderDark;
+  static const Color inputBg = AppColors.inputBg;
   static const Color dangerColor = Color(0xFFDC2626);
 
   // ─── Services ───────────────────────────────────────────────────────────
@@ -192,9 +192,10 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         _descriptionController.text = data.description;
         _instagramController.text = data.instagram;
         _websiteController.text = data.website;
-        _coverUrl = data.shelfImageUrl.trim().isNotEmpty
-            ? data.shelfImageUrl
-            : data.coverImageUrl;
+        _coverUrl =
+            data.shelfImageUrl.trim().isNotEmpty
+                ? data.shelfImageUrl
+                : data.coverImageUrl;
         _selectedKategori =
             data.kategori.trim().isEmpty ? 'Diğer' : data.kategori;
         _selectedStatus = data.status.trim().isEmpty ? 'Açık' : data.status;
@@ -252,7 +253,9 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
   Future<void> _pickGalleryPhotos() async {
     final remaining = _maxGalleryPhotos - _galleryItems.length;
     if (remaining <= 0) {
-      _showSnackBar('En fazla $_maxGalleryPhotos galeri fotoğrafı eklenebilir.');
+      _showSnackBar(
+        'En fazla $_maxGalleryPhotos galeri fotoğrafı eklenebilir.',
+      );
       return;
     }
 
@@ -287,7 +290,9 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
 
     setState(() => _galleryItems.addAll(newItems));
     if (rejected > 0) {
-      _showSnackBar('$rejected fotoğraf eklenemedi. Geçerli format: JPG, PNG, WEBP, maks 15 MB.');
+      _showSnackBar(
+        '$rejected fotoğraf eklenemedi. Geçerli format: JPG, PNG, WEBP, maks 15 MB.',
+      );
     }
   }
 
@@ -338,7 +343,9 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
 
     setState(() {
       _isLocating = false;
-      _locationStatusMessage = LocationService.buildAccuracyMessage(position.accuracy);
+      _locationStatusMessage = LocationService.buildAccuracyMessage(
+        position.accuracy,
+      );
       if (geoAddress != null && geoAddress.isNotEmpty) {
         _addressController.text = geoAddress;
       }
@@ -370,15 +377,20 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     // Validate required fields
     setState(() {
       _nameError = name.isEmpty ? 'İşletme adı zorunludur' : null;
-      _whatsappError = whatsapp.isEmpty
-          ? 'WhatsApp numarası zorunludur'
-          : hasValidWhatsapp
+      _whatsappError =
+          whatsapp.isEmpty
+              ? 'WhatsApp numarası zorunludur'
+              : hasValidWhatsapp
               ? null
               : WhatsAppLinkHelper.invalidNumberMessage;
-      _addressError = address.isEmpty ? 'Konum / adres bilgisi zorunludur' : null;
+      _addressError =
+          address.isEmpty ? 'Konum / adres bilgisi zorunludur' : null;
     });
 
-    if (name.isEmpty || whatsapp.isEmpty || !hasValidWhatsapp || address.isEmpty) {
+    if (name.isEmpty ||
+        whatsapp.isEmpty ||
+        !hasValidWhatsapp ||
+        address.isEmpty) {
       _showSnackBar(
         whatsapp.isNotEmpty && !hasValidWhatsapp
             ? WhatsAppLinkHelper.invalidNumberMessage
@@ -405,7 +417,9 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             contentType: _coverContentType,
           );
         } catch (_) {
-          _showSnackBar('Kapak fotoğrafı yüklenemedi, vitrin yayını devam ediyor.');
+          _showSnackBar(
+            'Kapak fotoğrafı yüklenemedi, vitrin yayını devam ediyor.',
+          );
           coverUrl = _coverUrl?.trim() ?? '';
         }
       }
@@ -433,11 +447,12 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         _showSnackBar('$galleryFailures galeri fotoğrafı yüklenemedi.');
       }
 
-      final publishedGallery = _galleryItems
-          .where((i) => i.hasUrl)
-          .take(_maxGalleryPhotos)
-          .map((i) => i.toStoreItem())
-          .toList();
+      final publishedGallery =
+          _galleryItems
+              .where((i) => i.hasUrl)
+              .take(_maxGalleryPhotos)
+              .map((i) => i.toStoreItem())
+              .toList();
 
       final data =
           _data
@@ -532,52 +547,61 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
   void _showDeleteConfirmation() {
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: dangerColor, size: 22),
-            SizedBox(width: 8),
-            Text(
-              'Vitrini Sil',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 17,
-                color: darkText,
+      builder:
+          (ctx) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: dangerColor, size: 22),
+                SizedBox(width: 8),
+                Text(
+                  'Vitrini Sil',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 17,
+                    color: darkText,
+                  ),
+                ),
+              ],
+            ),
+            content: const Text(
+              'Bu işlem geri alınamaz. Vitrininiz kalıcı olarak silinecektir.',
+              style: TextStyle(color: softText, fontSize: 14, height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text(
+                  'Vazgeç',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: mutedText,
+                  ),
+                ),
               ),
-            ),
-          ],
-        ),
-        content: const Text(
-          'Bu işlem geri alınamaz. Vitrininiz kalıcı olarak silinecektir.',
-          style: TextStyle(color: softText, fontSize: 14, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Vazgeç',
-              style: TextStyle(fontWeight: FontWeight.bold, color: mutedText),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _deleteVitrin();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: dangerColor,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _deleteVitrin();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: dangerColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'Sil',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            child: const Text('Sil', style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -617,49 +641,50 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'QR Kod',
-              style: TextStyle(
-                color: darkText,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-              ),
+      builder:
+          (_) => Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'QR Kod',
+                  style: TextStyle(
+                    color: darkText,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 220,
+                  height: 220,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: cardBorder),
+                  ),
+                  child: QrImageView(
+                    data: link,
+                    version: QrVersions.auto,
+                    errorCorrectionLevel: QrErrorCorrectLevel.M,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  link,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: mutedText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Container(
-              width: 220,
-              height: 220,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: cardBorder),
-              ),
-              child: QrImageView(
-                data: link,
-                version: QrVersions.auto,
-                errorCorrectionLevel: QrErrorCorrectLevel.M,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              link,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: mutedText,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -774,7 +799,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-                    // ── Kapak Fotoğrafı ──────────────────────────────────
+              // ── Kapak Fotoğrafı ──────────────────────────────────
               _buildCoverPicker(),
               const SizedBox(height: 10),
 
@@ -799,7 +824,8 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                 hint: '05xx xxx xx xx',
                 icon: Icons.chat_bubble_rounded,
                 keyboardType: TextInputType.phone,
-                errorText: _whatsappError ??
+                errorText:
+                    _whatsappError ??
                     (_whatsappController.text.trim().isNotEmpty &&
                             !WhatsAppLinkHelper.isValidTurkeyMobile(
                               _whatsappController.text,
@@ -829,7 +855,8 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                 value: _selectedKategori,
                 items: _categories,
                 icon: Icons.category_rounded,
-                onChanged: (val) => setState(() => _selectedKategori = val ?? 'Diğer'),
+                onChanged:
+                    (val) => setState(() => _selectedKategori = val ?? 'Diğer'),
               ),
               const SizedBox(height: 14),
 
@@ -838,7 +865,8 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                 value: _selectedStatus,
                 items: _statuses,
                 icon: Icons.info_outline_rounded,
-                onChanged: (val) => setState(() => _selectedStatus = val ?? 'Açık'),
+                onChanged:
+                    (val) => setState(() => _selectedStatus = val ?? 'Açık'),
               ),
               const SizedBox(height: 14),
 
@@ -935,7 +963,11 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           Center(
             child: TextButton.icon(
               onPressed: _isDeleting ? null : _showDeleteConfirmation,
-              icon: const Icon(Icons.delete_outline_rounded, size: 16, color: dangerColor),
+              icon: const Icon(
+                Icons.delete_outline_rounded,
+                size: 16,
+                color: dangerColor,
+              ),
               label: const Text(
                 'Vitrini Sil',
                 style: TextStyle(
@@ -969,7 +1001,10 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             ),
             const Text(
               ' *',
-              style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900),
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ],
         ),
@@ -982,7 +1017,11 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             fontWeight: FontWeight.w700,
           ),
           decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.location_on_rounded, color: mutedText, size: 18),
+            prefixIcon: const Icon(
+              Icons.location_on_rounded,
+              color: mutedText,
+              size: 18,
+            ),
             hintText: 'Mahalle, cadde, ilçe/il — veya GPS ile al',
             hintStyle: TextStyle(
               color: mutedText.withValues(alpha: 0.62),
@@ -1004,7 +1043,10 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(color: primaryColor, width: 1.4),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -1022,7 +1064,11 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                         color: primaryColor,
                       ),
                     )
-                    : const Icon(Icons.my_location_rounded, size: 16, color: primaryColor),
+                    : const Icon(
+                      Icons.my_location_rounded,
+                      size: 16,
+                      color: primaryColor,
+                    ),
             label: Text(
               _isLocating ? 'Konum alınıyor...' : '📡 GPS ile Konumumu Al',
               style: const TextStyle(
@@ -1055,7 +1101,11 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.check_circle_rounded, size: 13, color: Color(0xFF10B981)),
+              const Icon(
+                Icons.check_circle_rounded,
+                size: 13,
+                color: Color(0xFF10B981),
+              ),
               const SizedBox(width: 4),
               Text(
                 'Koordinat kaydedildi (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})',
@@ -1090,7 +1140,11 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             const Spacer(),
             TextButton.icon(
               onPressed: _addMarketplaceLink,
-              icon: const Icon(Icons.add_rounded, size: 16, color: primaryColor),
+              icon: const Icon(
+                Icons.add_rounded,
+                size: 16,
+                color: primaryColor,
+              ),
               label: const Text(
                 'Ekle',
                 style: TextStyle(
@@ -1131,12 +1185,16 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         Expanded(
           flex: 2,
           child: DropdownButtonFormField<String>(
-            value: _platformOptions.contains(link.platform) ? link.platform : null,
+            value:
+                _platformOptions.contains(link.platform) ? link.platform : null,
             hint: const Text('Platform', style: TextStyle(fontSize: 13)),
             decoration: InputDecoration(
               filled: true,
               fillColor: inputBg,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 10,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: cardBorder),
@@ -1146,9 +1204,15 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                 borderSide: const BorderSide(color: cardBorder),
               ),
             ),
-            items: _platformOptions
-                .map((p) => DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(fontSize: 13))))
-                .toList(),
+            items:
+                _platformOptions
+                    .map(
+                      (p) => DropdownMenuItem(
+                        value: p,
+                        child: Text(p, style: const TextStyle(fontSize: 13)),
+                      ),
+                    )
+                    .toList(),
             onChanged: (val) {
               setState(() => _marketplaceLinks[index].platform = val ?? '');
             },
@@ -1159,7 +1223,11 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           flex: 3,
           child: TextField(
             onChanged: (val) => _marketplaceLinks[index].url = val,
-            style: const TextStyle(fontSize: 13, color: darkText, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: 13,
+              color: darkText,
+              fontWeight: FontWeight.w700,
+            ),
             decoration: InputDecoration(
               hintText: 'https://...',
               hintStyle: TextStyle(
@@ -1169,7 +1237,10 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               ),
               filled: true,
               fillColor: inputBg,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 10,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: cardBorder),
@@ -1226,7 +1297,10 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEFFDF5),
                         borderRadius: BorderRadius.circular(999),
@@ -1462,8 +1536,11 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.add_photo_alternate_rounded,
-                        color: primaryColor, size: 22),
+                    const Icon(
+                      Icons.add_photo_alternate_rounded,
+                      color: primaryColor,
+                      size: 22,
+                    ),
                     const SizedBox(height: 3),
                     Text(
                       _galleryItems.isEmpty ? 'Galeri' : '+',
@@ -1480,101 +1557,111 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           ),
         // Thumbnails
         Expanded(
-          child: _galleryItems.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 22),
-                  child: Text(
-                    'Galeri fotoğrafı ekleyebilirsin',
-                    style: TextStyle(
-                      color: mutedText.withValues(alpha: 0.7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+          child:
+              _galleryItems.isEmpty
+                  ? Padding(
+                    padding: const EdgeInsets.only(top: 22),
+                    child: Text(
+                      'Galeri fotoğrafı ekleyebilirsin',
+                      style: TextStyle(
+                        color: mutedText.withValues(alpha: 0.7),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                )
-              : SizedBox(
-                  height: thumbSize,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _galleryItems.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 6),
-                    itemBuilder: (_, index) {
-                      final item = _galleryItems[index];
-                      Widget img;
-                      if (item.hasLocalBytes) {
-                        img = Image.memory(item.bytes!, fit: BoxFit.cover);
-                      } else if (item.hasUrl) {
-                        img = Image.network(
-                          item.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.broken_image_rounded,
+                  )
+                  : SizedBox(
+                    height: thumbSize,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _galleryItems.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 6),
+                      itemBuilder: (_, index) {
+                        final item = _galleryItems[index];
+                        Widget img;
+                        if (item.hasLocalBytes) {
+                          img = Image.memory(item.bytes!, fit: BoxFit.cover);
+                        } else if (item.hasUrl) {
+                          img = Image.network(
+                            item.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (_, __, ___) => const Icon(
+                                  Icons.broken_image_rounded,
+                                  color: mutedText,
+                                  size: 20,
+                                ),
+                          );
+                        } else {
+                          img = const Icon(
+                            Icons.image_rounded,
                             color: mutedText,
                             size: 20,
-                          ),
-                        );
-                      } else {
-                        img = const Icon(Icons.image_rounded,
-                            color: mutedText, size: 20);
-                      }
+                          );
+                        }
 
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: thumbSize,
-                            height: thumbSize,
-                            decoration: BoxDecoration(
-                              color: inputBg,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: cardBorder),
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: thumbSize,
+                              height: thumbSize,
+                              decoration: BoxDecoration(
+                                color: inputBg,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: cardBorder),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: img,
                             ),
-                            clipBehavior: Clip.antiAlias,
-                            child: img,
-                          ),
-                          if (index == 0)
-                            Positioned(
-                              bottom: 3,
-                              left: 3,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: primaryColor,
-                                  borderRadius: BorderRadius.circular(4),
+                            if (index == 0)
+                              Positioned(
+                                bottom: 3,
+                                left: 3,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'Kapak',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
                                 ),
-                                child: const Text(
-                                  'Kapak',
-                                  style: TextStyle(
+                              ),
+                            Positioned(
+                              top: -4,
+                              right: -4,
+                              child: GestureDetector(
+                                onTap: () => _removeGalleryItem(index),
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close_rounded,
+                                    size: 12,
                                     color: Colors.white,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
                             ),
-                          Positioned(
-                            top: -4,
-                            right: -4,
-                            child: GestureDetector(
-                              onTap: () => _removeGalleryItem(index),
-                              child: Container(
-                                width: 20,
-                                height: 20,
-                                decoration: const BoxDecoration(
-                                  color: Colors.black54,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.close_rounded,
-                                    size: 12, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
         ),
         // Count badge
         if (_galleryItems.isNotEmpty)
@@ -1655,7 +1742,10 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             prefixIcon: Icon(icon, color: mutedText, size: 18),
             filled: true,
             fillColor: inputBg,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(color: cardBorder),
@@ -1665,19 +1755,22 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               borderSide: const BorderSide(color: cardBorder),
             ),
           ),
-          items: items
-              .map((item) => DropdownMenuItem(
-                    value: item,
-                    child: Text(
-                      item,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: darkText,
+          items:
+              items
+                  .map(
+                    (item) => DropdownMenuItem(
+                      value: item,
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: darkText,
+                        ),
                       ),
                     ),
-                  ))
-              .toList(),
+                  )
+                  .toList(),
           onChanged: onChanged,
         ),
       ],
@@ -1735,10 +1828,11 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                 _nameError = null;
                 _addressError = null;
                 if (validateWhatsapp) {
-                  _whatsappError = value.trim().isEmpty ||
-                          WhatsAppLinkHelper.isValidTurkeyMobile(value)
-                      ? null
-                      : WhatsAppLinkHelper.invalidNumberMessage;
+                  _whatsappError =
+                      value.trim().isEmpty ||
+                              WhatsAppLinkHelper.isValidTurkeyMobile(value)
+                          ? null
+                          : WhatsAppLinkHelper.invalidNumberMessage;
                 } else {
                   _whatsappError = null;
                 }

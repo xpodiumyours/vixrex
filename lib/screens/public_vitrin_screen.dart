@@ -9,6 +9,7 @@ import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
+import 'package:vitrinx/theme/app_colors.dart';
 
 class PublicVitrinScreen extends StatefulWidget {
   final String slug;
@@ -462,7 +463,7 @@ class _PublicVitrinStateView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
-                  child: Icon(icon, color: const Color(0xFFFF5A1F), size: 26),
+                  child: Icon(icon, color: AppColors.brandOrange, size: 26),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -482,7 +483,7 @@ class _PublicVitrinStateView extends StatelessWidget {
                     height: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFFFF5A1F),
+                      color: AppColors.brandOrange,
                     ),
                   ),
                 ],

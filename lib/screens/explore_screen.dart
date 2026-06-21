@@ -7,6 +7,7 @@ import 'package:vitrinx/screens/public_vitrin_screen.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
+import 'package:vitrinx/theme/app_colors.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -25,14 +26,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _showingExampleStores = false;
   List<String> _favoritedStoreNames = [];
 
-  // Theme Colors
-  static const Color primaryColor = Color(0xFFFF4D00);
-  static const Color bgColor = Color(0xFFF6F8FC);
-  static const Color cardBorder = Color.fromRGBO(15, 23, 42, 0.10);
-  static const Color inputBg = Color(0xFFF1F5F9);
-  static const Color darkText = Color(0xFF111827);
-  static const Color mutedText = Color(0xFF64748B);
-  static const Color softText = Color(0xFF334155);
+  // Theme Colors from AppColors
+  static const Color primaryColor = AppColors.primary;
+  static const Color bgColor = AppColors.bgEditor;
+  static const Color cardBorder = AppColors.border;
+  static const Color inputBg = AppColors.inputBg;
+  static const Color darkText = AppColors.darkText;
+  static const Color mutedText = AppColors.mutedText;
+  static const Color softText = AppColors.softText;
 
   final List<String> _categories = const [
     'Tümü',
@@ -251,7 +252,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ),
       builder: (context) {
         final storeName =
-            store.name.trim().isEmpty ? 'vitrininiz' : '${store.name.trim()} vitrininiz';
+            store.name.trim().isEmpty
+                ? 'vitrininiz'
+                : '${store.name.trim()} vitrininiz';
         final options = <({String label, String message})>[
           (
             label: 'Ürün ve fiyat bilgisi',
@@ -566,7 +569,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.warning_amber_rounded, size: 22, color: primaryColor),
+          const Icon(
+            Icons.warning_amber_rounded,
+            size: 22,
+            color: primaryColor,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -620,7 +627,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         borderRadius: BorderRadius.circular(20),
         side:
             isOwnStore
-                ? const BorderSide(color: Color(0xFFFF4D00), width: 2.5)
+                ? const BorderSide(color: primaryColor, width: 2.5)
                 : const BorderSide(color: cardBorder, width: 1),
       ),
       clipBehavior: Clip.antiAlias,
@@ -719,7 +726,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFF4D00),
+                          color: primaryColor,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Row(
@@ -845,7 +852,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFFFEBE3), Color(0xFFFFF2EC)],
+          colors: [AppColors.surfaceSoft, AppColors.blueSurface],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

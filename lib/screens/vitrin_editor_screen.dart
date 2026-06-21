@@ -2147,183 +2147,186 @@ class _VitrinEditorScreenState extends State<VitrinEditorScreen> {
       child: Scaffold(
         backgroundColor: bgColor,
         appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(255, 255, 255, 0.94),
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        foregroundColor: darkText,
-        shape: const Border(bottom: BorderSide(color: cardBorder)),
-        centerTitle: false,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 20,
-            color: darkText,
+          backgroundColor: const Color.fromRGBO(255, 255, 255, 0.94),
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          foregroundColor: darkText,
+          shape: const Border(bottom: BorderSide(color: cardBorder)),
+          centerTitle: false,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 20,
+              color: darkText,
+            ),
+            onPressed: _requestExit,
           ),
-          onPressed: _requestExit,
-        ),
-        title:
-            isWide
-                ? Row(
-                  children: [
-                    const Text(
-                      'Vitrin Düzenle',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: darkText,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      'VITRINX',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: primaryColor.withValues(alpha: 0.62),
-                        fontSize: 12,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                  ],
-                )
-                : const Text(
-                  'Vitrin Düzenle',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: darkText,
-                    fontSize: 17,
-                  ),
-                ),
-        actions:
-            isWide
-                ? [
-                  _buildTodayViewBadge(),
-                  _buildVitrinScoreBadge(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: _buildGradientButton(
-                      label: 'Kaydet',
-                      onPressed: _saveData,
-                      icon: Icons.cloud_done_outlined,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 11,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                      horizontal: 12.0,
-                    ),
-                    child: _buildGradientButton(
-                      label: 'Önizle & Paylaş',
-                      icon: Icons.visibility_rounded,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (_) => PreviewScreen(
-                                  storeData: _data,
-                                  previewGalleryItems: _galleryPreviewItems(),
-                                ),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Önizle & Paylaş',
+          title:
+              isWide
+                  ? Row(
+                    children: [
+                      const Text(
+                        'Vitrin Düzenle',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w900,
+                          color: darkText,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'VITRINX',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: primaryColor.withValues(alpha: 0.62),
+                          fontSize: 12,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ],
+                  )
+                  : const Text(
+                    'Vitrin Düzenle',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: darkText,
+                      fontSize: 17,
+                    ),
+                  ),
+          actions:
+              isWide
+                  ? [
+                    _buildTodayViewBadge(),
+                    _buildVitrinScoreBadge(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: _buildGradientButton(
+                        label: 'Kaydet',
+                        onPressed: _saveData,
+                        icon: Icons.cloud_done_outlined,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 11,
                         ),
                       ),
                     ),
-                  ),
-                ]
-                : [
-                  _buildTodayViewBadge(compact: true),
-                  _buildVitrinScoreBadge(),
-                ],
-      ),
-      bottomNavigationBar: !isWide ? _buildMobileBottomActions() : null,
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8.0,
+                        horizontal: 12.0,
+                      ),
+                      child: _buildGradientButton(
+                        label: 'Önizle & Paylaş',
+                        icon: Icons.visibility_rounded,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => PreviewScreen(
+                                    storeData: _data,
+                                    previewGalleryItems: _galleryPreviewItems(),
+                                  ),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Önizle & Paylaş',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ]
+                  : [
+                    _buildTodayViewBadge(compact: true),
+                    _buildVitrinScoreBadge(),
+                  ],
+        ),
+        bottomNavigationBar: !isWide ? _buildMobileBottomActions() : null,
         body: _buildEditorBackdrop(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 900;
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 900;
 
-            if (!isWide) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 800),
-                    child: _buildForm(),
+              if (!isWide) {
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 800),
+                      child: _buildForm(),
+                    ),
                   ),
-                ),
-              );
-            }
+                );
+              }
 
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Container(
-                  width: min(constraints.maxWidth - 48, 1360),
-                  height: max(0, constraints.maxHeight - 48),
-                  clipBehavior: Clip.antiAlias,
-                  decoration: _studioFrameDecoration(),
-                  child: Column(
-                    children: [
-                      _buildStudioTopBar(),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: SingleChildScrollView(
-                                padding: const EdgeInsets.fromLTRB(
-                                  34,
-                                  30,
-                                  28,
-                                  34,
-                                ),
-                                child: Center(
-                                  child: Container(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: 780,
-                                    ),
-                                    child: _buildForm(
-                                      showDesktopPublishCard: true,
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Container(
+                    width: min(constraints.maxWidth - 48, 1360),
+                    height: max(0, constraints.maxHeight - 48),
+                    clipBehavior: Clip.antiAlias,
+                    decoration: _studioFrameDecoration(),
+                    child: Column(
+                      children: [
+                        _buildStudioTopBar(),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 5,
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    34,
+                                    30,
+                                    28,
+                                    34,
+                                  ),
+                                  child: Center(
+                                    child: Container(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 780,
+                                      ),
+                                      child: _buildForm(
+                                        showDesktopPublishCard: true,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const VerticalDivider(width: 1, color: cardBorder),
-                            Expanded(
-                              flex: 4,
-                              child: LayoutBuilder(
-                                builder: (context, previewConstraints) {
-                                  return Center(
-                                    child: _buildLivePreviewMockup(
-                                      previewConstraints,
-                                    ),
-                                  );
-                                },
+                              const VerticalDivider(
+                                width: 1,
+                                color: cardBorder,
                               ),
-                            ),
-                          ],
+                              Expanded(
+                                flex: 4,
+                                child: LayoutBuilder(
+                                  builder: (context, previewConstraints) {
+                                    return Center(
+                                      child: _buildLivePreviewMockup(
+                                        previewConstraints,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          ),
         ),
       ),
     );

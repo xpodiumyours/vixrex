@@ -11,6 +11,7 @@ import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/auth_service.dart';
+import 'package:vitrinx/theme/app_colors.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -28,12 +29,12 @@ class _LandingScreenState extends State<LandingScreen>
   final TextEditingController _storeNameController = TextEditingController();
 
   // Modern Color Palette
-  static const Color brandOrange = Color(0xFFFF5A1F);
-  static const Color darkAccent = Color(0xFF0F172A);
-  static const Color lightBg = Color(0xFFF8FAFC);
-  static const Color mint = Color(0xFF10B981);
-  static const Color blueAccent = Color(0xFF2563EB);
-  static const Color pinkAccent = Color(0xFFFB7185);
+  static const Color brandOrange = AppColors.brandOrange;
+  static const Color darkAccent = AppColors.darkTextAlt;
+  static const Color lightBg = AppColors.bgLight;
+  static const Color mint = AppColors.success;
+  static const Color blueAccent = AppColors.secondary;
+  static const Color pinkAccent = AppColors.pinkAccent;
 
   static const List<_HeroDemoProfile> _heroDemoProfiles = [
     _HeroDemoProfile(
@@ -1475,7 +1476,7 @@ class _LandingScreenState extends State<LandingScreen>
         'title': 'Konum ve Yol Tarifi',
         'desc':
             'Konum izni verdiğinizde koordinatlarınız kaydedilir; müşteriler Google Maps yol tarifi bağlantısını açabilir.',
-        'color': const Color(0xFFFF5A1F),
+        'color': AppColors.brandOrange,
       },
       {
         'icon': Icons.qr_code_scanner_rounded,
@@ -1972,7 +1973,7 @@ class _PhoneMockup extends StatelessWidget {
             offset: const Offset(0, 20),
           ),
           BoxShadow(
-            color: const Color(0xFFFF5A1F).withValues(alpha: 0.2),
+            color: AppColors.brandOrange.withValues(alpha: 0.2),
             blurRadius: 80,
             offset: const Offset(-20, 20),
           ),

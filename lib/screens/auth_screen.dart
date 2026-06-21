@@ -8,6 +8,7 @@ import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/services/auth_service.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
+import 'package:vitrinx/theme/app_colors.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -25,9 +26,9 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  static const Color brandOrange = Color(0xFFFF5A1F);
-  static const Color darkAccent = Color(0xFF0F172A);
-  static const Color lightBg = Color(0xFFF8FAFC);
+  static const Color brandOrange = AppColors.brandOrange;
+  static const Color darkAccent = AppColors.darkTextAlt;
+  static const Color lightBg = AppColors.bgLight;
 
   @override
   void dispose() {

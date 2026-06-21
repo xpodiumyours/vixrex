@@ -72,14 +72,10 @@ void main() {
 
       final buttonFinder = find.ancestor(
         of: find.text('Mağazamı Düzenle · Yakında'),
-        matching: find.byWidgetPredicate(
-          (widget) => widget is ElevatedButton,
-        ),
+        matching: find.byWidgetPredicate((widget) => widget is ElevatedButton),
       );
       expect(buttonFinder, findsOneWidget);
-      final button = tester.widget<ElevatedButton>(
-        buttonFinder,
-      );
+      final button = tester.widget<ElevatedButton>(buttonFinder);
       expect(button.onPressed, isNull);
     },
   );
