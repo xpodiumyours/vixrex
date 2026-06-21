@@ -40,7 +40,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
         await Supabase.instance.client
             .from('stores')
             .select(
-              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,latitude,longitude,location_accuracy_meters,location_consent_at,location_source,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published,is_store,products',
+              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,latitude,longitude,location_accuracy_meters,location_consent_at,location_source,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published,is_store,products,offerings,kategori,working_hours',
             )
             .eq('slug', widget.slug)
             .eq('is_published', true)
@@ -86,7 +86,30 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       galleryItems: _parseGalleryItems(data['gallery_items']),
       marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),
       products: _parseProducts(data['products']),
+      offerings: _parseOfferings(data['offerings']),
+      kategori: _readString(data['kategori']),
+      workingHours: _readString(data['working_hours']),
     );
+  }
+
+  List<StoreOffering> _parseOfferings(Object? rawOfferings) {
+    try {
+      final decodedOfferings =
+          rawOfferings is String ? jsonDecode(rawOfferings) : rawOfferings;
+      if (decodedOfferings is! List) return [];
+
+      return decodedOfferings
+          .whereType<Map>()
+          .map(
+            (o) => StoreOffering.fromJson(Map<String, dynamic>.from(o)),
+          )
+          .where((o) => o.title.trim().isNotEmpty)
+          .take(6)
+          .toList();
+    } catch (error) {
+      debugPrint('Offerings parse error: $error');
+      return [];
+    }
   }
 
   String _readString(Object? value, {String fallback = ''}) {
@@ -145,6 +168,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
               id: UniqueKey().toString(),
               platform: _readString(link['platform']),
               url: _readString(link['url']),
+              subtitle: _readString(link['subtitle'] ?? ''),
             ),
           )
           .where(

@@ -61,23 +61,75 @@ class Product {
 
 class MarketplaceLink {
   String id;
-  String platform; // 'Trendyol', 'Hepsiburada', 'N11', 'Diğer'
+  String platform; // 'Trendyol', 'Hepsiburada', 'N11', 'Diğer', ya da özel başlık
   String url;
+
+  /// Bağlantı kartının altında gösterilen kısa açıklama (isteğe bağlı).
+  String subtitle;
 
   MarketplaceLink({
     required this.id,
     this.platform = 'Trendyol',
     this.url = '',
+    this.subtitle = '',
   });
 
-  Map<String, dynamic> toJson() => {'id': id, 'platform': platform, 'url': url};
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'platform': platform,
+    'url': url,
+    'subtitle': subtitle,
+  };
 
   factory MarketplaceLink.fromJson(Map<String, dynamic> json) =>
       MarketplaceLink(
         id: json['id'] ?? '',
         platform: json['platform'] ?? 'Trendyol',
         url: json['url'] ?? '',
+        subtitle: (json['subtitle'] ?? '').toString(),
       );
+}
+
+class StoreOffering {
+  String id;
+  String title;
+  String description;
+  String price;
+
+  StoreOffering({
+    required this.id,
+    this.title = '',
+    this.description = '',
+    this.price = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'price': price,
+  };
+
+  factory StoreOffering.fromJson(Map<String, dynamic> json) => StoreOffering(
+    id: (json['id'] ?? '').toString(),
+    title: (json['title'] ?? '').toString(),
+    description: (json['description'] ?? '').toString(),
+    price: (json['price'] ?? '').toString(),
+  );
+
+  StoreOffering copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? price,
+  }) {
+    return StoreOffering(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      price: price ?? this.price,
+    );
+  }
 }
 
 class StoreGalleryItem {
@@ -138,6 +190,7 @@ class StoreData {
   String referencesLink;
   String shelfImageUrl;
   List<StoreGalleryItem> galleryItems;
+  List<StoreOffering> offerings;
   bool isStore;
   String kategori;
   String workingHours;
@@ -168,6 +221,7 @@ class StoreData {
     this.referencesLink = '',
     this.shelfImageUrl = '',
     List<StoreGalleryItem>? galleryItems,
+    List<StoreOffering>? offerings,
     this.isStore = false,
     this.kategori = '',
     this.workingHours = '',
@@ -178,7 +232,8 @@ class StoreData {
     this.locationSource,
   }) : products = products ?? [],
        marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')],
-       galleryItems = galleryItems ?? [];
+       galleryItems = galleryItems ?? [],
+       offerings = offerings ?? [];
 
   Map<String, dynamic> toJson() => {
     'name': name,
@@ -199,6 +254,7 @@ class StoreData {
     'referencesLink': referencesLink,
     'shelfImageUrl': shelfImageUrl,
     'galleryItems': galleryItems.map((e) => e.toJson()).toList(),
+    'offerings': offerings.map((e) => e.toJson()).toList(),
     'isStore': isStore,
     'kategori': kategori,
     'workingHours': workingHours,
@@ -212,6 +268,9 @@ class StoreData {
   factory StoreData.fromJson(Map<String, dynamic> json) {
     final parsedGalleryItems = _parseGalleryItems(
       json['galleryItems'] ?? json['gallery_items'],
+    );
+    final parsedOfferings = _parseOfferings(
+      json['offerings'],
     );
 
     return StoreData(
@@ -242,6 +301,7 @@ class StoreData {
           _getString(json, 'referencesLink', 'references_link') ?? '',
       shelfImageUrl: _getString(json, 'shelfImageUrl', 'shelf_image_url') ?? '',
       galleryItems: parsedGalleryItems,
+      offerings: parsedOfferings,
       isStore: (json['is_store'] ?? json['isStore'] ?? false) as bool,
       kategori: _getString(json, 'kategori', 'category') ?? '',
       workingHours: _getString(json, 'workingHours', 'working_hours') ?? '',
@@ -279,6 +339,7 @@ class StoreData {
     String? referencesLink,
     String? shelfImageUrl,
     List<StoreGalleryItem>? galleryItems,
+    List<StoreOffering>? offerings,
     bool? isStore,
     String? kategori,
     String? workingHours,
@@ -307,6 +368,7 @@ class StoreData {
       referencesLink: referencesLink ?? this.referencesLink,
       shelfImageUrl: shelfImageUrl ?? this.shelfImageUrl,
       galleryItems: galleryItems ?? List.of(this.galleryItems),
+      offerings: offerings ?? List.of(this.offerings),
       isStore: isStore ?? this.isStore,
       kategori: kategori ?? this.kategori,
       workingHours: workingHours ?? this.workingHours,
@@ -346,6 +408,19 @@ class StoreData {
         )
         .where((item) => item.imageUrl.trim().isNotEmpty)
         .take(12)
+        .toList();
+  }
+
+  static List<StoreOffering> _parseOfferings(Object? rawItems) {
+    if (rawItems is! List) return [];
+
+    return rawItems
+        .whereType<Map>()
+        .map(
+          (item) => StoreOffering.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .where((item) => item.title.trim().isNotEmpty)
+        .take(6)
         .toList();
   }
 
@@ -421,6 +496,20 @@ class StoreData {
           title: 'Kombin tamamlayıcıları',
           description:
               'Günlük stile eşlik eden tamamlayıcı parçalar ve mağaza düzeni.',
+        ),
+      ],
+      offerings: [
+        StoreOffering(
+          id: 'demo-offering-1',
+          title: 'Yeni Sezon Elbiseler',
+          description: 'Şık ve rahat günlük elbise alternatifleri.',
+          price: 'Mağazada sorunuz',
+        ),
+        StoreOffering(
+          id: 'demo-offering-2',
+          title: 'Kombin Ürünleri',
+          description: 'Mevsimlik ceket ve pantolon takımları.',
+          price: 'Mağazada sorunuz',
         ),
       ],
       marketplaceLinks: [

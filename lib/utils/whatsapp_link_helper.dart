@@ -1,3 +1,5 @@
+import '../config/business_category_config.dart';
+
 class WhatsAppLinkHelper {
   const WhatsAppLinkHelper._();
 
@@ -42,6 +44,24 @@ class WhatsAppLinkHelper {
     return _buildUrl(normalized, message);
   }
 
+  static String? buildCategoryGeneralUrl({
+    required String number,
+    required String storeName,
+    required String categoryId,
+  }) {
+    final normalized = normalizeTurkeyMobile(number);
+    if (normalized == null) return null;
+
+    final config = BusinessCategoryConfig.categories.firstWhere(
+      (c) => c.id == categoryId || c.label == categoryId,
+      orElse: () => BusinessCategoryConfig.categories.firstWhere((c) => c.id == 'diger'),
+    );
+
+    final cleanName = storeName.trim().isEmpty ? 'işletmeniz' : storeName.trim();
+    final message = config.whatsappTemplate.replaceAll('{storeName}', cleanName);
+    return _buildUrl(normalized, message);
+  }
+
   static String? buildInquiryUrl({
     required String number,
     required String storeName,
@@ -56,6 +76,38 @@ class WhatsAppLinkHelper {
         itemTitle.trim().isEmpty ? 'vitrin görseli' : itemTitle.trim();
     final message =
         "Merhaba, $cleanName vitrininizdeki '$cleanTitle' hakkında bilgi almak istiyorum.";
+    return _buildUrl(normalized, message);
+  }
+
+  static String? buildCategoryOfferingUrl({
+    required String number,
+    required String storeName,
+    required String offeringTitle,
+    required String categoryId,
+  }) {
+    final normalized = normalizeTurkeyMobile(number);
+    if (normalized == null) return null;
+
+    final config = BusinessCategoryConfig.categories.firstWhere(
+      (c) => c.id == categoryId || c.label == categoryId,
+      orElse: () => BusinessCategoryConfig.categories.firstWhere((c) => c.id == 'diger'),
+    );
+
+    final cleanName = storeName.trim().isEmpty ? 'işletmeniz' : storeName.trim();
+    final cleanTitle = offeringTitle.trim();
+
+    String action = 'hakkında bilgi almak';
+    if (config.ctaLabel.contains('Sipariş')) {
+      action = 'siparişi vermek';
+    } else if (config.ctaLabel.contains('Randevu')) {
+      action = 'randevusu oluşturmak';
+    } else if (config.ctaLabel.contains('Servis')) {
+      action = 'servis talebi oluşturmak';
+    } else if (config.ctaLabel.contains('Teklif')) {
+      action = 'teklifi almak';
+    }
+
+    final message = "Merhaba, $cleanName. '$cleanTitle' $action istiyorum.";
     return _buildUrl(normalized, message);
   }
 

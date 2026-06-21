@@ -407,7 +407,10 @@ class _LandingScreenState extends State<LandingScreen>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PreviewScreen(storeData: activeProfile.toStoreData()),
+        builder: (_) => PreviewScreen(
+          storeData: activeProfile.toStoreData(),
+          isDemo: true,
+        ),
       ),
     );
   }
@@ -1928,6 +1931,54 @@ class _HeroDemoProfile {
         (e) => StoreGalleryItem(id: 'gallery-${e.key}', imageUrl: e.value),
       ),
     ];
+
+    List<StoreOffering> parsedOfferings = [];
+    String mappedKategori = 'Diğer';
+    double? lat;
+    double? lng;
+    String phone = '05551234567';
+    String web = '';
+    String addr = 'Atatürk Cad. No:24, Şişli, İstanbul';
+
+    if (name.contains('Aymira')) {
+      mappedKategori = 'Giyim & Butik';
+      lat = 41.0606;
+      lng = 28.9878;
+      web = 'aymiragiyim.com';
+      parsedOfferings = [
+        StoreOffering(id: '1', title: 'Elbise Seçenekleri', description: 'Yeni sezon özel tasarım elbiseler', price: 'Mağazada sorunuz'),
+        StoreOffering(id: '2', title: 'Triko & Hırka', description: 'Farklı renk ve beden alternatifleriyle', price: 'Mağazada sorunuz'),
+        StoreOffering(id: '3', title: 'Yeni Sezon Ceket', description: 'Şık ve modern günlük ceketler', price: 'Mağazada sorunuz'),
+      ];
+    } else if (name.contains('Lezzet')) {
+      mappedKategori = 'Kafe / Lokanta';
+      lat = 41.0422;
+      lng = 29.0084;
+      web = 'lezzetduragi.com';
+      parsedOfferings = [
+        StoreOffering(id: '1', title: 'Günün Menüsü', description: 'Ana yemek + çorba + içecek menüsü', price: '120 TL'),
+        StoreOffering(id: '2', title: 'Ev Yapımı Mantı', description: 'Yoğurtlu ve tereyağlı soslu el yapımı mantı', price: '95 TL'),
+      ];
+    } else if (name.contains('Nova')) {
+      mappedKategori = 'Kuaför';
+      lat = 41.0370;
+      lng = 28.9850;
+      web = 'novakuafor.com';
+      parsedOfferings = [
+        StoreOffering(id: '1', title: 'Saç Kesimi & Tasarım', description: 'Yıkama ve fön dahil komple saç tasarımı', price: '180 TL'),
+        StoreOffering(id: '2', title: 'Saç Boyama & Keratin', description: 'Saç yapısına özel organik keratin bakımı', price: '450 TL'),
+      ];
+    } else if (name.contains('TeknoFix')) {
+      mappedKategori = 'Teknik Servis';
+      lat = 41.0150;
+      lng = 28.9740;
+      web = 'teknofix.com';
+      parsedOfferings = [
+        StoreOffering(id: '1', title: 'Telefon Ekran Değişimi', description: '30 dakikada hızlı ekran değişimi ve garanti', price: 'Mağazada sorunuz'),
+        StoreOffering(id: '2', title: 'Batarya Değişimi', description: 'Yüksek kapasiteli batarya yenilemesi', price: 'Mağazada sorunuz'),
+      ];
+    }
+
     return StoreData(
       name: name,
       businessType: category,
@@ -1935,7 +1986,14 @@ class _HeroDemoProfile {
       status: status,
       theme: 'Premium',
       isEsnafMode: true,
+      whatsapp: phone,
+      website: web,
+      address: addr,
+      latitude: lat,
+      longitude: lng,
+      kategori: mappedKategori,
       galleryItems: galleryItems,
+      offerings: parsedOfferings,
       marketplaceLinks:
           links
               .asMap()
@@ -1944,7 +2002,8 @@ class _HeroDemoProfile {
                 (e) => MarketplaceLink(
                   id: '${e.key}',
                   platform: e.value.title,
-                  url: '',
+                  url: e.value.title == 'Trendyol' ? 'trendyol.com/magaza/demo' : 'google.com',
+                  subtitle: e.value.subtitle,
                 ),
               )
               .toList(),

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
+import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
@@ -100,6 +101,8 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
 
   // Marketplace links
   final List<MarketplaceLink> _marketplaceLinks = [];
+  final Set<String> _customPlatformLinkIds = {};
+  final List<StoreOffering> _offerings = [];
 
   // Location
   double? _latitude;
@@ -112,17 +115,8 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
   String _selectedKategori = 'Diğer';
   String _selectedStatus = 'Açık';
 
-  static const List<String> _categories = [
-    'Giyim & Butik',
-    'Gıda & Fırın',
-    'Kozmetik',
-    'Dekorasyon',
-    'Elektronik',
-    'Kırtasiye',
-    'Kafe / Lokanta',
-    'Kuaför',
-    'Diğer',
-  ];
+  static final List<String> _categories =
+      BusinessCategoryConfig.categories.map((c) => c.label).toList();
 
   static const List<String> _statuses = [
     'Açık',
@@ -139,7 +133,11 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     'Amazon',
     'Çiçeksepeti',
     'Shopier',
+    'Google İşletme',
+    'Instagram',
+    'WhatsApp',
     'Diğer',
+    'Özel...', // Serbest metin girişi
   ];
 
   // UI state
@@ -212,6 +210,14 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
 
         _marketplaceLinks.clear();
         _marketplaceLinks.addAll(data.marketplaceLinks);
+        _customPlatformLinkIds.clear();
+        for (final link in _marketplaceLinks) {
+          if (!_platformOptions.contains(link.platform) && link.platform.isNotEmpty) {
+            _customPlatformLinkIds.add(link.id);
+          }
+        }
+        _offerings.clear();
+        _offerings.addAll(data.offerings);
 
         _isLoading = false;
       });
@@ -467,7 +473,24 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             ..isStore = false
             ..shelfImageUrl = coverUrl
             ..galleryItems = publishedGallery
-            ..marketplaceLinks = List.from(_marketplaceLinks)
+            ..offerings = _offerings
+            ..marketplaceLinks =
+                _marketplaceLinks.map((link) {
+                  var url = link.url.trim();
+                  if (url.isNotEmpty &&
+                      !url.startsWith('http://') &&
+                      !url.startsWith('https://') &&
+                      !url.startsWith('tel:') &&
+                      !url.startsWith('mailto:')) {
+                    url = 'https://$url';
+                  }
+                  return MarketplaceLink(
+                    id: link.id,
+                    platform: link.platform,
+                    url: url,
+                    subtitle: link.subtitle,
+                  );
+                }).toList()
             ..latitude = _latitude
             ..longitude = _longitude
             ..locationAccuracyMeters = _locationAccuracyMeters;
@@ -860,6 +883,9 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               ),
               const SizedBox(height: 14),
 
+              _buildOfferingsSection(),
+              const SizedBox(height: 14),
+
               _buildDropdown(
                 label: 'Vitrin Durumu',
                 value: _selectedStatus,
@@ -1130,7 +1156,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         Row(
           children: [
             const Text(
-              'Pazar Yeri Linkleri',
+              'Bağlantılar',
               style: TextStyle(
                 color: softText,
                 fontSize: 12,
@@ -1163,7 +1189,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         ),
         if (_marketplaceLinks.isEmpty)
           Text(
-            'Trendyol, Hepsiburada gibi linkleri buraya ekleyebilirsiniz.',
+            'Trendyol, Instagram gibi linkleri veya özel bağlantıları buraya ekleyebilirsiniz.',
             style: TextStyle(
               color: mutedText.withValues(alpha: 0.7),
               fontSize: 12,
@@ -1180,60 +1206,150 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
 
   Widget _buildMarketplaceLinkRow(int index) {
     final link = _marketplaceLinks[index];
-    return Row(
+    final isCustom = _customPlatformLinkIds.contains(link.id) ||
+        link.platform == 'Özel...' ||
+        (!_platformOptions.contains(link.platform) && link.platform.isNotEmpty);
+    final dropdownValue =
+        isCustom
+            ? 'Özel...'
+            : (_platformOptions.contains(link.platform) ? link.platform : null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 2,
-          child: DropdownButtonFormField<String>(
-            value:
-                _platformOptions.contains(link.platform) ? link.platform : null,
-            hint: const Text('Platform', style: TextStyle(fontSize: 13)),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: inputBg,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 10,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: cardBorder),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: cardBorder),
+        Row(
+          children: [
+            // Platform seçici
+            Expanded(
+              flex: 2,
+              child: DropdownButtonFormField<String>(
+                value: dropdownValue,
+                hint: const Text('Platform', style: TextStyle(fontSize: 13)),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: inputBg,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: cardBorder),
+                  ),
+                ),
+                items:
+                    _platformOptions
+                        .map(
+                          (p) => DropdownMenuItem(
+                            value: p,
+                            child: Text(
+                              p,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    if (val == 'Özel...') {
+                      link.platform = 'Özel...';
+                      _customPlatformLinkIds.add(link.id);
+                    } else {
+                      link.platform = val ?? '';
+                      _customPlatformLinkIds.remove(link.id);
+                    }
+                  });
+                },
               ),
             ),
-            items:
-                _platformOptions
-                    .map(
-                      (p) => DropdownMenuItem(
-                        value: p,
-                        child: Text(p, style: const TextStyle(fontSize: 13)),
-                      ),
-                    )
-                    .toList(),
-            onChanged: (val) {
-              setState(() => _marketplaceLinks[index].platform = val ?? '');
-            },
-          ),
+            const SizedBox(width: 8),
+            // URL alanı
+            Expanded(
+              flex: 3,
+              child: TextFormField(
+                key: ValueKey('${link.id}-url'),
+                initialValue: link.url,
+                onChanged: (val) => _marketplaceLinks[index].url = val,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: darkText,
+                  fontWeight: FontWeight.w700,
+                ),
+                decoration: InputDecoration(
+                  hintText: () {
+                    final p = link.platform.toLowerCase();
+                    if (p.contains('trendyol')) {
+                      return 'trendyol.com/magaza/...';
+                    }
+                    if (p.contains('hepsiburada')) {
+                      return 'hepsiburada.com/magaza/...';
+                    }
+                    if (p.contains('instagram')) return 'instagram.com/...';
+                    if (p.contains('google')) return 'g.page/...';
+                    if (p.contains('whatsapp')) return 'wa.me/...';
+                    return 'https://...';
+                  }(),
+                  hintStyle: TextStyle(
+                    color: mutedText.withValues(alpha: 0.6),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  filled: true,
+                  fillColor: inputBg,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: cardBorder),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            IconButton(
+              onPressed: () => _removeMarketplaceLink(index),
+              icon: const Icon(Icons.close_rounded, size: 18, color: mutedText),
+              style: IconButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(28, 28),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          flex: 3,
-          child: TextField(
-            onChanged: (val) => _marketplaceLinks[index].url = val,
+        // Özel... modu: platform başlığı metin alanı
+        if (isCustom) ...[
+          const SizedBox(height: 6),
+          TextFormField(
+            key: ValueKey('${link.id}-platform'),
+            initialValue: link.platform == 'Özel...' ? '' : link.platform,
+            onChanged: (val) => setState(() => _marketplaceLinks[index].platform = val.trim()),
             style: const TextStyle(
               fontSize: 13,
               color: darkText,
               fontWeight: FontWeight.w700,
             ),
             decoration: InputDecoration(
-              hintText: 'https://...',
+              hintText: 'Bağlantı başlığı (ör. Randevu al)',
               hintStyle: TextStyle(
                 color: mutedText.withValues(alpha: 0.6),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
+              ),
+              prefixIcon: Icon(
+                Icons.edit_rounded,
+                size: 16,
+                color: primaryColor.withValues(alpha: 0.7),
               ),
               filled: true,
               fillColor: inputBg,
@@ -1247,22 +1363,269 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: cardBorder),
+                borderSide: BorderSide(
+                  color: primaryColor.withValues(alpha: 0.4),
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 6),
-        IconButton(
-          onPressed: () => _removeMarketplaceLink(index),
-          icon: const Icon(Icons.close_rounded, size: 18, color: mutedText),
-          style: IconButton.styleFrom(
-            padding: EdgeInsets.zero,
-            minimumSize: const Size(28, 28),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ],
+        // Kısa açıklama (isteğe bağlı)
+        const SizedBox(height: 6),
+        TextFormField(
+          key: ValueKey('${link.id}-subtitle'),
+          initialValue: link.subtitle,
+          onChanged: (val) => _marketplaceLinks[index].subtitle = val.trim(),
+          style: const TextStyle(
+            fontSize: 12,
+            color: darkText,
+            fontWeight: FontWeight.w600,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Kısa açıklama (isteğe bağlı)',
+            hintStyle: TextStyle(
+              color: mutedText.withValues(alpha: 0.5),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            filled: true,
+            fillColor: inputBg,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 8,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildOfferingsSection() {
+    final config = BusinessCategoryConfig.fromCategoryLabel(_selectedKategori);
+    final sectionTitle = config.sectionTitle;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              sectionTitle,
+              style: const TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Spacer(),
+            if (_offerings.length < 6)
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _offerings.add(
+                      StoreOffering(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        title: '',
+                        description: '',
+                        price: '',
+                      ),
+                    );
+                  });
+                },
+                icon: const Icon(Icons.add_rounded, size: 16, color: primaryColor),
+                label: const Text(
+                  'Ekle',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        if (config.suggestedOfferings.isNotEmpty && _offerings.length < 6) ...[
+          const Text(
+            'Önerilenler (Eklemek için dokunun):',
+            style: TextStyle(
+              color: mutedText,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: config.suggestedOfferings.map((sug) {
+              return ActionChip(
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: cardBorder),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                label: Text(
+                  '${config.emoji} ${sug.title}',
+                  style: const TextStyle(fontSize: 11, color: darkText, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  if (_offerings.length >= 6) {
+                    _showSnackBar('En fazla 6 adet hizmet ekleyebilirsiniz.');
+                    return;
+                  }
+                  final trimmedTitle = sug.title.trim().toLowerCase();
+                  final isDuplicate = _offerings.any(
+                    (o) => o.title.trim().toLowerCase() == trimmedTitle,
+                  );
+                  if (isDuplicate) {
+                    _showSnackBar('Bu hizmet zaten eklenmiş.');
+                    return;
+                  }
+                  setState(() {
+                    _offerings.add(
+                      StoreOffering(
+                        id: '${DateTime.now().millisecondsSinceEpoch}_${sug.title.hashCode}',
+                        title: sug.title,
+                        description: sug.description,
+                        price: sug.price,
+                      ),
+                    );
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (_offerings.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              'Henüz eklenmiş hizmet veya öne çıkan bulunmuyor. Müşterilerinize sunduğunuz hizmetleri veya ürünleri buradan ekleyebilirsiniz (en fazla 6 adet).',
+              style: TextStyle(
+                color: mutedText.withValues(alpha: 0.7),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        for (int i = 0; i < _offerings.length; i++) ...[
+          _buildOfferingRow(i),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildOfferingRow(int index) {
+    final offering = _offerings[index];
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: inputBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextFormField(
+                  key: ValueKey('${offering.id}-title'),
+                  initialValue: offering.title,
+                  onChanged: (val) => offering.title = val,
+                  maxLength: 60,
+                  buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+                  style: const TextStyle(fontSize: 13, color: darkText, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    hintText: 'Hizmet / Ürün Adı (örn: Saç Kesimi)',
+                    hintStyle: TextStyle(
+                      color: mutedText.withValues(alpha: 0.6),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: TextFormField(
+                  key: ValueKey('${offering.id}-price'),
+                  initialValue: offering.price,
+                  onChanged: (val) => offering.price = val,
+                  maxLength: 30,
+                  buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+                  style: const TextStyle(fontSize: 13, color: primaryColor, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    hintText: 'Fiyat (örn: 150 TL)',
+                    hintStyle: TextStyle(
+                      color: mutedText.withValues(alpha: 0.6),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _offerings.removeAt(index);
+                  });
+                },
+                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: dangerColor),
+                style: IconButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(28, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 1, color: cardBorder),
+          TextFormField(
+            key: ValueKey('${offering.id}-desc'),
+            initialValue: offering.description,
+            onChanged: (val) => offering.description = val,
+            maxLength: 120,
+            buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 12, color: softText, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              hintText: 'Kısa açıklama (örn: Yıkama ve fön dahil hizmet)',
+              hintStyle: TextStyle(
+                color: mutedText.withValues(alpha: 0.5),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              border: InputBorder.none,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -140,13 +140,13 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
     _Category('Diğer', '🏪', Color(0xFF64748B)),
   ];
 
-  final Map<String, List<String>> _businessTypesByCategory = const {
+  static const Map<String, List<String>> _businessTypesByCategory = {
     'Giyim & Butik': [
       'Kadın Giyim Butiği',
       'Erkek Giyim Butiği',
-      'Ayakkabı & Çanta',
-      'Aksesuar & Takı',
-      'Diğer Butik',
+      'Ayakkabı / Çanta',
+      'Aksesuar / Takı',
+      'Diğer Giyim',
     ],
     'Gıda & Fırın': [
       'Fırın / Unlu Mamüller',
@@ -162,9 +162,10 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       'Diğer Kozmetik',
     ],
     'Dekorasyon': [
-      'Ev Dekorasyonu & Mobilya',
-      'Çiçekçi & Peyzaj',
-      'Züccaciye',
+      'Ev Tekstili / Perde',
+      'Züccaciye / Hediyelik',
+      'Mobilya / Aksesuar',
+      'Çiçek / Organizasyon',
       'Diğer Dekorasyon',
     ],
     'Elektronik': [
@@ -174,15 +175,15 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
       'Diğer Elektronik',
     ],
     'Kırtasiye': [
-      'Kitabevi & Kırtasiye',
-      'Hobi & Oyuncak',
+      'Kitap & Kırtasiye',
+      'Oyuncak & Hobi',
       'Ofis Malzemeleri',
       'Diğer Kırtasiye',
     ],
     'Diğer': [
       'Yerel Esnaf',
       'Hizmet İşletmesi',
-      'Atölye / Üretim',
+      'El Emeği / Tasarım',
       'Diğer İşletme',
     ],
   };

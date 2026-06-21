@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
@@ -35,15 +36,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   static const Color mutedText = AppColors.mutedText;
   static const Color softText = AppColors.softText;
 
-  final List<String> _categories = const [
+  final List<String> _categories = [
     'Tümü',
-    'Giyim & Butik',
-    'Gıda & Fırın',
-    'Kozmetik',
-    'Dekorasyon',
-    'Elektronik',
-    'Kırtasiye',
-    'Diğer',
+    ...BusinessCategoryConfig.categories.map((c) => c.label),
   ];
 
   @override

@@ -150,6 +150,7 @@ void main() {
             id: '1',
             platform: ' Trendyol ',
             url: ' https://trendyol.com/magaza ',
+            subtitle: ' Alt Başlık ',
           ),
           MarketplaceLink(id: '2', platform: ' Hepsiburada ', url: ''),
           MarketplaceLink(id: '3', platform: '', url: 'https://example.com'),
@@ -159,8 +160,34 @@ void main() {
       final links = builder.marketplaceLinksToJson(data);
 
       expect(links, [
-        {'platform': 'Trendyol', 'url': 'https://trendyol.com/magaza'},
+        {
+          'platform': 'Trendyol',
+          'url': 'https://trendyol.com/magaza',
+          'subtitle': 'Alt Başlık',
+        },
       ]);
+    });
+  });
+
+  group('StorePublishPayloadBuilder offerings', () {
+    test('hizmetleri trimler, bos basliklari atlar ve en fazla 6 adet dondurur', () {
+      final data = StoreData(
+        offerings: [
+          StoreOffering(id: '1', title: ' Kesim ', description: ' Hizmet ', price: ' 100 TL '),
+          StoreOffering(id: '2', title: '', description: '', price: ''),
+          ...List.generate(7, (i) => StoreOffering(id: 'offering-${i+3}', title: 'Hizmet ${i+3}', description: 'Açıklama')),
+        ],
+      );
+
+      final items = builder.offeringsToJson(data);
+
+      expect(items, hasLength(6));
+      expect(items.first, {
+        'id': '1',
+        'title': 'Kesim',
+        'description': 'Hizmet',
+        'price': '100 TL',
+      });
     });
   });
 }

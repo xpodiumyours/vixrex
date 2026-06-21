@@ -70,6 +70,7 @@ class StorePublishPayloadBuilder {
       'location_consent_at': data.locationConsentAt?.toIso8601String(),
       'location_source': data.locationSource,
       'products': productsToJson(data),
+      'offerings': offeringsToJson(data),
     };
   }
 
@@ -84,6 +85,21 @@ class StorePublishPayloadBuilder {
             'imagePath': p.imagePath?.trim(),
             'category': p.category.trim(),
             'stockStatus': p.stockStatus.trim(),
+          },
+        )
+        .toList();
+  }
+
+  List<Map<String, dynamic>> offeringsToJson(StoreData data) {
+    return data.offerings
+        .where((o) => o.title.trim().isNotEmpty)
+        .take(6)
+        .map(
+          (o) => {
+            'id': o.id.trim(),
+            'title': o.title.trim(),
+            'description': o.description.trim(),
+            'price': o.price.trim(),
           },
         )
         .toList();
@@ -104,14 +120,18 @@ class StorePublishPayloadBuilder {
         .toList();
   }
 
-  List<Map<String, String>> marketplaceLinksToJson(StoreData data) {
+  List<Map<String, dynamic>> marketplaceLinksToJson(StoreData data) {
     return data.marketplaceLinks
         .where(
           (link) =>
               link.platform.trim().isNotEmpty && link.url.trim().isNotEmpty,
         )
         .map(
-          (link) => {'platform': link.platform.trim(), 'url': link.url.trim()},
+          (link) => {
+            'platform': link.platform.trim(),
+            'url': link.url.trim(),
+            'subtitle': link.subtitle.trim(),
+          },
         )
         .toList();
   }

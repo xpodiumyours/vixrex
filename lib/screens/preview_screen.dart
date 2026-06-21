@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
@@ -8,34 +9,49 @@ import 'package:vitrinx/widgets/vitrin_view.dart';
 class PreviewScreen extends StatelessWidget {
   final StoreData storeData;
   final List<VitrinGalleryPreviewItem>? previewGalleryItems;
+  final bool isDemo;
 
   const PreviewScreen({
     super.key,
     required this.storeData,
     this.previewGalleryItems,
+    this.isDemo = false,
   });
 
   Future<void> _openWhatsApp(BuildContext context) async {
-    final url = WhatsAppLinkHelper.buildGeneralUrl(
-      number: storeData.whatsapp,
-      storeName: storeData.name,
-    );
-    if (url == null) {
-      _showMessage(context, 'Geçerli bir WhatsApp numarası ekleyin.');
+    final rawNumber = storeData.whatsapp;
+    if (!WhatsAppLinkHelper.isValidTurkeyMobile(rawNumber)) {
+      _showMessage(
+        context,
+        'Geçerli bir Türkiye cep telefonu numarası girin. Örn: 0555 123 45 67',
+      );
       return;
     }
 
-    try {
-      final didLaunch = await launchUrl(
-        Uri.parse(url),
-        mode: LaunchMode.externalApplication,
+    if (isDemo) {
+      _showMessage(
+        context,
+        "Müşterileriniz bu butona bastığında '$rawNumber' numaralı WhatsApp hattınıza yönlendirilir.",
       );
-      if (!didLaunch && context.mounted) {
-        _showMessage(context, 'WhatsApp açılamadı. Lütfen tekrar deneyin.');
-      }
-    } catch (_) {
-      if (context.mounted) {
-        _showMessage(context, 'WhatsApp açılamadı. Lütfen tekrar deneyin.');
+    } else {
+      final config = BusinessCategoryConfig.fromCategoryLabel(storeData.kategori);
+      final url = WhatsAppLinkHelper.buildCategoryGeneralUrl(
+        number: rawNumber,
+        storeName: storeData.name,
+        categoryId: config.id,
+      );
+
+      if (url != null) {
+        final uri = Uri.tryParse(url);
+        if (uri != null) {
+          try {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          } catch (_) {
+            if (context.mounted) {
+              _showMessage(context, 'WhatsApp bağlantısı açılamadı.');
+            }
+          }
+        }
       }
     }
   }

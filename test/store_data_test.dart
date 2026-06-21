@@ -83,4 +83,56 @@ void main() {
       expect(fromJsonStore.locationSource, 'geolocator');
     });
   });
+
+  group('StoreOffering and StoreData offerings round-trip', () {
+    test('StoreOffering toJson ve fromJson round-trip', () {
+      final offering = StoreOffering(id: 'off-1', title: 'Hizmet', description: 'Açıklama', price: '100 TL');
+      final json = offering.toJson();
+      final decoded = StoreOffering.fromJson(json);
+
+      expect(decoded.id, 'off-1');
+      expect(decoded.title, 'Hizmet');
+      expect(decoded.description, 'Açıklama');
+      expect(decoded.price, '100 TL');
+    });
+
+    test('StoreData offerings serialization works correctly', () {
+      final store = StoreData(
+        name: 'Hizmet Vitrini',
+        offerings: [
+          StoreOffering(id: 'off-1', title: 'Hizmet 1', description: 'Açıklama 1', price: '100 TL'),
+        ],
+      );
+
+      final json = store.toJson();
+      final decoded = StoreData.fromJson(json);
+
+      expect(decoded.offerings, hasLength(1));
+      expect(decoded.offerings.first.id, 'off-1');
+      expect(decoded.offerings.first.title, 'Hizmet 1');
+      expect(decoded.offerings.first.description, 'Açıklama 1');
+      expect(decoded.offerings.first.price, '100 TL');
+    });
+
+    test('StoreData.fromJson parses public Supabase fields (offerings, kategori, workingHours) and limits offerings', () {
+      final dbPayload = {
+        'name': 'Test Mağaza',
+        'kategori': 'Giyim & Butik',
+        'working_hours': '09:00 - 18:00',
+        'offerings': [
+          {'id': 'off-1', 'title': 'Hizmet 1', 'description': 'Açıklama 1', 'price': '100 TL'},
+          {'id': 'off-2', 'title': '   ', 'description': 'Açıklama 2', 'price': '200 TL'},
+          ...List.generate(7, (i) => {'id': 'off-${i+3}', 'title': 'Hizmet ${i+3}', 'description': 'Açıklama'}),
+        ]
+      };
+
+      final decoded = StoreData.fromJson(dbPayload);
+
+      expect(decoded.kategori, 'Giyim & Butik');
+      expect(decoded.workingHours, '09:00 - 18:00');
+      expect(decoded.offerings, hasLength(6));
+      expect(decoded.offerings.first.title, 'Hizmet 1');
+      expect(decoded.offerings.any((o) => o.title.trim().isEmpty), isFalse);
+    });
+  });
 }

@@ -51,9 +51,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DropdownButton<String>));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Diğer Butik').last);
+      await tester.ensureVisible(find.text('Diğer Giyim').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Diğer Butik').last);
+      await tester.tap(find.text('Diğer Giyim').last);
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('İleri'));

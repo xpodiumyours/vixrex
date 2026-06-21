@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
@@ -83,6 +84,10 @@ class VitrinView extends StatelessWidget {
       ],
       if (hasGalleryMedia) ...[
         _buildShelfImageCard(preset, galleryItems),
+        SizedBox(height: isEmbedded ? 16 : 30),
+      ],
+      if (storeData.offerings.isNotEmpty) ...[
+        _buildOfferingsBlock(preset, radius),
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
       if (storeData.isStore && storeData.products.isNotEmpty) ...[
@@ -313,6 +318,7 @@ class VitrinView extends StatelessWidget {
     final storeName = storeData.name.trim();
     final businessType = storeData.businessType.trim();
     final status = storeData.status.trim();
+    final workingHours = storeData.workingHours.trim();
     final titleText =
         storeName.isNotEmpty
             ? storeName
@@ -378,6 +384,36 @@ class VitrinView extends StatelessWidget {
                     ),
                   ),
                 if (shouldShowStatus) StatusChip(status: status),
+              ],
+            ),
+          ],
+          // Çalışma saatleri — sadece doluysa göster
+          if (workingHours.isNotEmpty) ...[
+            SizedBox(height: isEmbedded ? 8 : 12),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.schedule_rounded,
+                  size: isEmbedded ? 12 : 15,
+                  color: preset.textSecondary,
+                ),
+                SizedBox(width: isEmbedded ? 4 : 5),
+                Flexible(
+                  child: Text(
+                    workingHours,
+                    textAlign: TextAlign.center,
+                    maxLines: isEmbedded ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: isEmbedded ? 11 : 13,
+                      color: preset.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
               ],
             ),
           ],
@@ -504,14 +540,28 @@ class VitrinView extends StatelessWidget {
     double radius,
     bool isCompact,
   ) {
+    final config = BusinessCategoryConfig.fromCategoryLabel(storeData.kategori);
+    final ctaLabel = config.ctaLabel;
+
     if (!publicMode) {
       return [
         _ActionIconBtn(
-          label: 'WhatsApp',
+          label: ctaLabel,
           icon: Icons.chat_bubble_rounded,
           color: const Color(0xFF25D366),
           radius: radius,
           compact: isCompact,
+          onTap: () {
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  "Müşteriler bu butona bastığında WhatsApp'tan '$ctaLabel' talebi gönderir.",
+                ),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
         ),
         _ActionIconBtn(
           label: 'Instagram',
@@ -519,6 +569,17 @@ class VitrinView extends StatelessWidget {
           color: const Color(0xFFE1306C),
           radius: radius,
           compact: isCompact,
+          onTap: () {
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Müşteriler bu butona bastığında Instagram profilinize yönlendirilir.",
+                ),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
         ),
         if (storeData.website.isNotEmpty)
           _ActionIconBtn(
@@ -527,13 +588,35 @@ class VitrinView extends StatelessWidget {
             color: Colors.blue.shade600,
             radius: radius,
             compact: isCompact,
+            onTap: () {
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    "Müşteriler bu butona bastığında web sitenize yönlendirilir.",
+                  ),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
           ),
         _ActionIconBtn(
-          label: 'Adres',
+          label: 'Yol Tarifi',
           icon: Icons.location_on_rounded,
           color: Colors.red.shade500,
           radius: radius,
           compact: isCompact,
+          onTap: () {
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Müşteriler bu butona bastığında Google Haritalar'dan yol tarifi alır.",
+                ),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
         ),
       ];
     }
@@ -541,16 +624,17 @@ class VitrinView extends StatelessWidget {
     return [
       if (WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp))
         _ActionIconBtn(
-          label: 'WhatsApp',
+          label: ctaLabel,
           icon: Icons.chat_bubble_rounded,
           color: const Color(0xFF25D366),
           radius: radius,
           compact: isCompact,
           emphasis: true,
           onTap: () {
-            final url = WhatsAppLinkHelper.buildGeneralUrl(
+            final url = WhatsAppLinkHelper.buildCategoryGeneralUrl(
               number: storeData.whatsapp,
               storeName: storeData.name,
+              categoryId: config.id,
             );
             if (url != null) {
               _openExternalUrl(context, url);
@@ -586,7 +670,7 @@ class VitrinView extends StatelessWidget {
       if (storeData.address.trim().isNotEmpty ||
           (storeData.latitude != null && storeData.longitude != null))
         _ActionIconBtn(
-          label: 'Adres',
+          label: 'Yol Tarifi',
           icon: Icons.location_on_rounded,
           color: Colors.red.shade500,
           radius: radius,
@@ -1211,18 +1295,35 @@ class VitrinView extends StatelessWidget {
             (link) => _ModernLinkItem(
               icon: _getPlatformIcon(link.platform),
               title: link.platform,
-              subtitle: link.url.isEmpty ? 'Mağazamızı ziyaret edin' : link.url,
+              // Önce kullanıcının eklediği subtitle; yoksa URL'yi göster
+              subtitle:
+                  link.subtitle.trim().isNotEmpty
+                      ? link.subtitle.trim()
+                      : link.url.isEmpty
+                      ? 'Bağlantıyı ziyaret et'
+                      : link.url,
               color: _getPlatformColor(link.platform),
               radius: radius,
               compact: isCompact,
               preset: preset,
-              onTap:
-                  publicMode
-                      ? () => _openExternalUrl(
-                        context,
-                        _normalizeExternalUrl(link.url),
-                      )
-                      : null,
+              onTap: () {
+                if (!publicMode) {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        "Müşteriler bu bağlantıya bastığında '${link.platform}' sayfasına yönlendirilir.",
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
+                _openExternalUrl(
+                  context,
+                  _normalizeExternalUrl(link.url),
+                );
+              },
             ),
           ),
 
@@ -1396,37 +1497,83 @@ class VitrinView extends StatelessWidget {
   }
 
   IconData _getPlatformIcon(String platform) {
-    switch (platform) {
-      case 'Trendyol':
-        return Icons.shopping_bag_rounded;
-      case 'Hepsiburada':
-        return Icons.shopping_cart_rounded;
-      case 'N11':
-        return Icons.store_rounded;
-      case 'Amazon':
-        return Icons.cloud_done_rounded;
-      case 'Shopier':
-        return Icons.sell_rounded;
-      default:
-        return Icons.link_rounded;
+    final p = platform.toLowerCase().trim();
+    // E-ticaret platformları
+    if (p == 'trendyol') return Icons.shopping_bag_rounded;
+    if (p == 'hepsiburada') return Icons.shopping_cart_rounded;
+    if (p == 'n11') return Icons.store_rounded;
+    if (p == 'amazon') return Icons.cloud_done_rounded;
+    if (p == 'shopier') return Icons.sell_rounded;
+    if (p.contains('çiçeksepeti')) return Icons.local_florist_rounded;
+    // Sosyal & harita
+    if (p.contains('instagram')) return Icons.camera_alt_rounded;
+    if (p.contains('whatsapp')) return Icons.chat_bubble_rounded;
+    if (p.contains('google')) return Icons.verified_rounded;
+    if (p.contains('youtube')) return Icons.play_circle_rounded;
+    if (p.contains('facebook') || p.contains('meta')) {
+      return Icons.people_alt_rounded;
     }
+    if (p.contains('tiktok')) return Icons.music_note_rounded;
+    if (p.contains('twitter') || p.contains('x.com')) {
+      return Icons.alternate_email_rounded;
+    }
+    // İş kategorileri — Türkçe anahtar kelimeler
+    if (p.contains('randevu')) return Icons.event_available_rounded;
+    if (p.contains('menü') || p.contains('menu') || p.contains('günün')) {
+      return Icons.local_dining_rounded;
+    }
+    if (p.contains('paket') || p.contains('teslimat') || p.contains('servis')) {
+      return Icons.delivery_dining_rounded;
+    }
+    if (p.contains('teknik') || p.contains('onarım') || p.contains('tamir')) {
+      return Icons.construction_rounded;
+    }
+    if (p.contains('hizmet') || p.contains('bakım')) return Icons.spa_rounded;
+    if (p.contains('kataloğ') || p.contains('catalog') || p.contains('ürün')) {
+      return Icons.auto_stories_rounded;
+    }
+    if (p.contains('konum') || p.contains('adres') || p.contains('harita')) {
+      return Icons.location_on_rounded;
+    }
+    if (p.contains('web') || p.contains('site')) return Icons.language_rounded;
+    if (p.contains('telefon') || p.contains('ara') || p.contains('call')) {
+      return Icons.phone_rounded;
+    }
+    if (p.contains('e-posta') || p.contains('mail') || p.contains('e‑posta')) {
+      return Icons.email_rounded;
+    }
+    return Icons.link_rounded;
   }
 
   Color _getPlatformColor(String platform) {
-    switch (platform) {
-      case 'Trendyol':
-        return const Color(0xFFF27A1A);
-      case 'Hepsiburada':
-        return const Color(0xFFFF6000);
-      case 'N11':
-        return const Color(0xFFE11D48);
-      case 'Amazon':
-        return const Color(0xFF232F3E);
-      case 'Shopier':
-        return const Color(0xFFDB2777);
-      default:
-        return const Color(0xFF4B5563);
+    final p = platform.toLowerCase().trim();
+    if (p == 'trendyol') return const Color(0xFFF27A1A);
+    if (p == 'hepsiburada') return const Color(0xFFFF6000);
+    if (p == 'n11') return const Color(0xFFE11D48);
+    if (p == 'amazon') return const Color(0xFF232F3E);
+    if (p == 'shopier') return const Color(0xFFDB2777);
+    if (p.contains('çiçeksepeti')) return const Color(0xFFDB2777);
+    if (p.contains('instagram')) return const Color(0xFFE1306C);
+    if (p.contains('whatsapp')) return const Color(0xFF25D366);
+    if (p.contains('google')) return const Color(0xFF4285F4);
+    if (p.contains('youtube')) return const Color(0xFFFF0000);
+    if (p.contains('facebook') || p.contains('meta')) {
+      return const Color(0xFF1877F2);
     }
+    if (p.contains('randevu')) return const Color(0xFF10B981);
+    if (p.contains('menü') || p.contains('menu') || p.contains('günün')) {
+      return const Color(0xFFEA580C);
+    }
+    if (p.contains('paket') || p.contains('teslimat')) {
+      return const Color(0xFF10B981);
+    }
+    if (p.contains('servis') || p.contains('teknik') || p.contains('tamir')) {
+      return const Color(0xFF2563EB);
+    }
+    if (p.contains('hizmet') || p.contains('bakım')) {
+      return const Color(0xFFDB2777);
+    }
+    return const Color(0xFF4B5563);
   }
 
   Widget _buildPremiumIdentityCard(
@@ -1651,8 +1798,16 @@ class VitrinView extends StatelessWidget {
   }
 
   Future<void> _openExternalUrl(BuildContext context, String url) async {
-    final uri = Uri.tryParse(url);
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return;
+
+    final uri = Uri.tryParse(trimmed);
     if (uri == null) return;
+
+    final scheme = uri.scheme.toLowerCase();
+    if (scheme != 'http' && scheme != 'https') {
+      return;
+    }
 
     try {
       final didLaunch = await launchUrl(
@@ -1683,11 +1838,27 @@ class VitrinView extends StatelessWidget {
   }
 
   String _normalizeExternalUrl(String value) {
+    return VitrinView.normalizeExternalUrl(value);
+  }
+
+  static String normalizeExternalUrl(String value) {
     final text = value.trim();
-    if (text.startsWith('http://') || text.startsWith('https://')) {
-      return text;
+    if (text.isEmpty) return '';
+
+    final uri = Uri.tryParse(text);
+    if (uri == null) return '';
+
+    if (uri.hasScheme) {
+      final scheme = uri.scheme.toLowerCase();
+      if (scheme == 'http' || scheme == 'https') {
+        return text;
+      }
+      return '';
     }
 
+    if (!text.contains('.')) {
+      return '';
+    }
     return 'https://$text';
   }
 
@@ -1701,9 +1872,9 @@ class VitrinView extends StatelessWidget {
 
   String _buildMapsUrl(String address) {
     if (storeData.latitude != null && storeData.longitude != null) {
-      return Uri.https('www.google.com', '/maps/search/', {
+      return Uri.https('www.google.com', '/maps/dir/', {
         'api': '1',
-        'query': '${storeData.latitude},${storeData.longitude}',
+        'destination': '${storeData.latitude},${storeData.longitude}',
       }).toString();
     }
     return Uri.https('www.google.com', '/maps/search/', {
@@ -1871,6 +2042,160 @@ class VitrinView extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOfferingsBlock(VitrinThemePreset preset, double radius) {
+    final isCompact = isEmbedded;
+    final config = BusinessCategoryConfig.fromCategoryLabel(storeData.kategori);
+    final sectionTitle = config.sectionTitle;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(isCompact ? 16 : 22),
+        decoration: BoxDecoration(
+          color: preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.98),
+          borderRadius: BorderRadius.circular(isCompact ? 16 : 24),
+          border: Border.all(
+            color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
+            width: isCompact ? 1 : 1.3,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: preset.isDark ? 0.12 : 0.045,
+              ),
+              blurRadius: isCompact ? 12 : 24,
+              offset: Offset(0, isCompact ? 3 : 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  config.icon,
+                  color: preset.accent,
+                  size: isCompact ? 18 : 22,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  sectionTitle,
+                  style: TextStyle(
+                    color: preset.textPrimary,
+                    fontSize: isCompact ? 14 : 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: storeData.offerings.length,
+              separatorBuilder:
+                  (context, index) => Divider(
+                    color: preset.border.withValues(alpha: 0.5),
+                    height: 24,
+                  ),
+              itemBuilder: (context, index) {
+                final offering = storeData.offerings[index];
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  offering.title,
+                                  style: TextStyle(
+                                    color: preset.textPrimary,
+                                    fontSize: isCompact ? 13 : 14,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              if (offering.price.trim().isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Text(
+                                  offering.price.trim(),
+                                  style: TextStyle(
+                                    color: preset.accent,
+                                    fontSize: isCompact ? 12 : 13,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (offering.description.trim().isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              offering.description.trim(),
+                              style: TextStyle(
+                                color: preset.textSecondary,
+                                fontSize: isCompact ? 11 : 12,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp)) ...[
+                      const SizedBox(width: 12),
+                      IconButton(
+                        onPressed: () {
+                          if (!publicMode) {
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Müşteriler bu butona bastığında WhatsApp'tan '${offering.title}' talebinde bulunabilir.",
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                            return;
+                          }
+                          final url = WhatsAppLinkHelper.buildCategoryOfferingUrl(
+                            number: storeData.whatsapp,
+                            storeName: storeData.name,
+                            offeringTitle: offering.title,
+                            categoryId: config.id,
+                          );
+                          if (url != null) {
+                            _openExternalUrl(context, url);
+                          }
+                        },
+                        icon: const Icon(Icons.chat_bubble_rounded, size: 18),
+                        color: const Color(0xFF25D366),
+                        tooltip: config.ctaLabel,
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFEFFDF5),
+                          minimumSize: const Size(36, 36),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
