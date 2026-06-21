@@ -55,7 +55,7 @@ class VitrinXApp extends StatelessWidget {
           shadow: Colors.black12,
         ),
         scaffoldBackgroundColor: AppColors.bgEditor,
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: AppColors.surface,
           elevation: 0,
           shape: RoundedRectangleBorder(
