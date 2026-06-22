@@ -2,15 +2,20 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/config/business_category_config.dart';
+import 'package:vitrinx/config/turkey_cities_config.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/screens/blog_editor_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
+import 'package:vitrinx/screens/booking_management_screen.dart';
 import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/store_publish_payload_builder.dart';
+import 'package:vitrinx/services/revalidation_service.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
@@ -18,6 +23,7 @@ import 'package:vitrinx/utils/token_generator.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/gallery_delete_confirmation_dialog.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+
 
 // ─── Gallery item helper ───────────────────────────────────────────────────
 class _GalleryItem {
@@ -83,10 +89,27 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
   final _descriptionController = TextEditingController();
   final _instagramController = TextEditingController();
   final _websiteController = TextEditingController();
+  final _googleBusinessLinkController = TextEditingController();
 
   // ─── State ──────────────────────────────────────────────────────────────
   StoreData _data = StoreData(isEsnafMode: false, isStore: false);
   PublishedVitrinInfo? _publishedInfo;
+
+  // Location and Google link
+  String? _selectedProvinceCode;
+  String? _selectedProvinceName;
+  String? _selectedDistrictCode;
+  String? _selectedDistrictName;
+  String? _provinceError;
+  String? _districtError;
+  String? _googleLinkError;
+
+  bool _googleBusinessCreated = false;
+  bool _isQrCodeHung = false;
+
+  // Blog articles
+  List<Map<String, dynamic>> _articles = [];
+  bool _isLoadingArticles = false;
 
   // Cover photo
   Uint8List? _coverBytes;
@@ -114,6 +137,24 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
   // Category / status
   String _selectedKategori = 'Diğer';
   String _selectedStatus = 'Açık';
+
+  // Booking settings state
+  bool _bookingIsEnabled = false;
+  int _bookingCapacity = 1;
+  Map<String, dynamic> _bookingWorkingHours = {
+    '1': {'start': '09:00', 'end': '19:00', 'active': true},
+    '2': {'start': '09:00', 'end': '19:00', 'active': true},
+    '3': {'start': '09:00', 'end': '19:00', 'active': true},
+    '4': {'start': '09:00', 'end': '19:00', 'active': true},
+    '5': {'start': '09:00', 'end': '19:00', 'active': true},
+    '6': {'start': '09:00', 'end': '16:00', 'active': true},
+    '7': {'start': '00:00', 'end': '00:00', 'active': false},
+  };
+  Map<String, dynamic> _bookingLunchBreak = {
+    'start': '12:00',
+    'end': '13:00',
+    'active': true,
+  };
 
   static final List<String> _categories =
       BusinessCategoryConfig.categories.map((c) => c.label).toList();
@@ -163,6 +204,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     _descriptionController.dispose();
     _instagramController.dispose();
     _websiteController.dispose();
+    _googleBusinessLinkController.dispose();
     super.dispose();
   }
 
@@ -175,6 +217,57 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
       final initialName = widget.initialName?.trim() ?? '';
       if (data.name.trim().isEmpty && initialName.isNotEmpty) {
         data.name = initialName;
+      }
+
+      bool bookingIsEnabled = false;
+      int bookingCapacity = 1;
+      Map<String, dynamic> bookingWorkingHours = {
+        '1': {'start': '09:00', 'end': '19:00', 'active': true},
+        '2': {'start': '09:00', 'end': '19:00', 'active': true},
+        '3': {'start': '09:00', 'end': '19:00', 'active': true},
+        '4': {'start': '09:00', 'end': '19:00', 'active': true},
+        '5': {'start': '09:00', 'end': '19:00', 'active': true},
+        '6': {'start': '09:00', 'end': '16:00', 'active': true},
+        '7': {'start': '00:00', 'end': '00:00', 'active': false},
+      };
+      Map<String, dynamic> bookingLunchBreak = {
+        'start': '12:00',
+        'end': '13:00',
+        'active': true,
+      };
+
+      bool googleBusinessCreated = false;
+      bool isQrCodeHung = false;
+
+      if (publishedInfo?.slug != null && publishedInfo!.slug.isNotEmpty) {
+        try {
+          final client = Supabase.instance.client;
+          final settingsRes = await client
+              .from('booking_settings')
+              .select()
+              .eq('store_slug', publishedInfo.slug)
+              .maybeSingle();
+          if (settingsRes != null) {
+            bookingIsEnabled = (settingsRes['is_enabled'] ?? false) as bool;
+            bookingCapacity = (settingsRes['capacity'] ?? 1) as int;
+            if (settingsRes['working_hours'] != null) {
+              bookingWorkingHours = Map<String, dynamic>.from(settingsRes['working_hours'] as Map);
+            }
+            if (settingsRes['lunch_break'] != null) {
+              bookingLunchBreak = Map<String, dynamic>.from(settingsRes['lunch_break'] as Map);
+            }
+          }
+        } catch (e) {
+          debugPrint('Booking settings load error: $e');
+        }
+
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          googleBusinessCreated = prefs.getBool('google_business_created_${publishedInfo.slug}') ?? false;
+          isQrCodeHung = prefs.getBool('is_qr_code_hung_${publishedInfo.slug}') ?? false;
+        } catch (e) {
+          debugPrint('Checklist load error: $e');
+        }
       }
 
       if (!mounted) return;
@@ -190,6 +283,14 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         _descriptionController.text = data.description;
         _instagramController.text = data.instagram;
         _websiteController.text = data.website;
+        _googleBusinessLinkController.text = data.googleBusinessLink;
+        _selectedProvinceCode = data.provinceCode.isNotEmpty ? data.provinceCode : null;
+        _selectedProvinceName = data.provinceName.isNotEmpty ? data.provinceName : null;
+        _selectedDistrictCode = data.districtCode.isNotEmpty ? data.districtCode : null;
+        _selectedDistrictName = data.districtName.isNotEmpty ? data.districtName : null;
+        _googleBusinessCreated = googleBusinessCreated;
+        _isQrCodeHung = isQrCodeHung;
+
         _coverUrl =
             data.shelfImageUrl.trim().isNotEmpty
                 ? data.shelfImageUrl
@@ -203,9 +304,9 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
 
         _galleryItems.clear();
         _galleryItems.addAll(
-          data.displayGalleryItems
-              .take(_maxGalleryPhotos)
-              .map(_GalleryItem.fromStoreItem),
+            data.displayGalleryItems
+                .take(_maxGalleryPhotos)
+                .map(_GalleryItem.fromStoreItem),
         );
 
         _marketplaceLinks.clear();
@@ -219,12 +320,46 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         _offerings.clear();
         _offerings.addAll(data.offerings);
 
+        _bookingIsEnabled = bookingIsEnabled;
+        _bookingCapacity = bookingCapacity;
+        _bookingWorkingHours = bookingWorkingHours;
+        _bookingLunchBreak = bookingLunchBreak;
+
         _isLoading = false;
       });
+
+      if (publishedInfo?.slug != null && publishedInfo!.slug.isNotEmpty) {
+        _fetchArticles();
+      }
     } catch (error) {
       debugPrint('MyVitrinScreen load error: $error');
       if (!mounted) return;
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchArticles() async {
+    final slug = _publishedInfo?.slug ?? _data.slug;
+    if (slug.isEmpty) return;
+    setState(() => _isLoadingArticles = true);
+    try {
+      final client = Supabase.instance.client;
+      final res = await client
+          .from('store_articles')
+          .select()
+          .eq('store_slug', slug)
+          .order('created_at', ascending: false);
+      if (mounted) {
+        setState(() {
+          _articles = List<Map<String, dynamic>>.from(res as List);
+          _isLoadingArticles = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching articles: $e');
+      if (mounted) {
+        setState(() => _isLoadingArticles = false);
+      }
     }
   }
 
@@ -354,8 +489,56 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
       );
       if (geoAddress != null && geoAddress.isNotEmpty) {
         _addressController.text = geoAddress;
+        _addressError = null;
+
+        // Auto-detect Province and District
+        final normalizedAddress = _normalizeTurkish(geoAddress);
+        Province? matchedProvince;
+        for (final province in turkeyProvinces) {
+          final normalizedProvince = _normalizeTurkish(province.name);
+          if (normalizedAddress.contains(normalizedProvince)) {
+            matchedProvince = province;
+            break;
+          }
+        }
+
+        if (matchedProvince != null) {
+          _selectedProvinceCode = matchedProvince.code;
+          _selectedProvinceName = matchedProvince.name;
+          _provinceError = null;
+
+          final districts = turkeyDistricts[matchedProvince.code] ?? [];
+          String? matchedDistrict;
+          for (final district in districts) {
+            final normalizedDistrict = _normalizeTurkish(district);
+            if (normalizedAddress.contains(normalizedDistrict)) {
+              matchedDistrict = district;
+              break;
+            }
+          }
+          if (matchedDistrict != null) {
+            _selectedDistrictCode = matchedDistrict;
+            _selectedDistrictName = matchedDistrict;
+            _districtError = null;
+          } else {
+            _selectedDistrictCode = null;
+            _selectedDistrictName = null;
+          }
+        }
       }
     });
+  }
+
+  String _normalizeTurkish(String text) {
+    return text
+        .toLowerCase()
+        .replaceAll('i', 'i')
+        .replaceAll('ı', 'i')
+        .replaceAll('ğ', 'g')
+        .replaceAll('ü', 'u')
+        .replaceAll('ş', 's')
+        .replaceAll('ö', 'o')
+        .replaceAll('ç', 'c');
   }
 
   // ─── Marketplace Links ────────────────────────────────────────────────────
@@ -378,7 +561,17 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     final name = _nameController.text.trim();
     final whatsapp = _whatsappController.text.trim();
     final address = _addressController.text.trim();
+    final googleLink = _googleBusinessLinkController.text.trim();
     final hasValidWhatsapp = WhatsAppLinkHelper.isValidTurkeyMobile(whatsapp);
+
+    bool isGoogleLinkValid = true;
+    if (googleLink.isNotEmpty) {
+      final googleRegex = RegExp(r'^https:\/\/(www\.)?(search\.google\.com|g\.page|maps\.google\.com|maps\.app\.goo\.gl)\/.*$');
+      isGoogleLinkValid = googleRegex.hasMatch(googleLink);
+    }
+
+    final provinceOk = _selectedProvinceCode != null;
+    final districtOk = _selectedDistrictName != null;
 
     // Validate required fields
     setState(() {
@@ -391,16 +584,24 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               : WhatsAppLinkHelper.invalidNumberMessage;
       _addressError =
           address.isEmpty ? 'Konum / adres bilgisi zorunludur' : null;
+      _provinceError = _selectedProvinceCode == null ? 'İl seçimi zorunludur' : null;
+      _districtError = _selectedDistrictName == null ? 'İlçe seçimi zorunludur' : null;
+      _googleLinkError = isGoogleLinkValid ? null : 'Lütfen geçerli bir Google Haritalar veya Google Yorum bağlantısı girin.';
     });
 
     if (name.isEmpty ||
         whatsapp.isEmpty ||
         !hasValidWhatsapp ||
-        address.isEmpty) {
+        address.isEmpty ||
+        !provinceOk ||
+        !districtOk ||
+        !isGoogleLinkValid) {
       _showSnackBar(
-        whatsapp.isNotEmpty && !hasValidWhatsapp
+        !isGoogleLinkValid
+            ? 'Lütfen Google Yorum bağlantısını doğru formatta girin.'
+            : whatsapp.isNotEmpty && !hasValidWhatsapp
             ? WhatsAppLinkHelper.invalidNumberMessage
-            : 'Lütfen zorunlu alanları doldurun: ad, WhatsApp ve konum.',
+            : 'Lütfen zorunlu alanları doldurun: ad, WhatsApp, il, ilçe ve adres.',
       );
       return;
     }
@@ -468,6 +669,11 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             ..description = _descriptionController.text.trim()
             ..instagram = _instagramController.text.trim()
             ..website = _websiteController.text.trim()
+            ..googleBusinessLink = googleLink
+            ..provinceCode = _selectedProvinceCode ?? ''
+            ..provinceName = _selectedProvinceName ?? ''
+            ..districtCode = _selectedDistrictCode ?? ''
+            ..districtName = _selectedDistrictName ?? ''
             ..kategori = _selectedKategori
             ..status = _selectedStatus
             ..isStore = false
@@ -503,6 +709,20 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
       );
       final publicLink = PublicSiteConfig.buildPublicLink(result.publicPath);
 
+      // Save booking settings to Supabase
+      try {
+        final client = Supabase.instance.client;
+        await client.from('booking_settings').upsert({
+          'store_slug': result.slug,
+          'is_enabled': _bookingIsEnabled,
+          'capacity': _bookingCapacity,
+          'working_hours': _bookingWorkingHours,
+          'lunch_break': _bookingLunchBreak,
+        });
+      } catch (e) {
+        debugPrint('Booking settings save error: $e');
+      }
+
       await _storage.savePublishedVitrinInfo(
         slug: result.slug,
         publicLink: publicLink,
@@ -523,6 +743,9 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         _coverBytes = null;
         _coverFileName = null;
       });
+
+      // Next.js ISR önbelleğini arka planda temizle (hata kullanıcıyı etkilemez)
+      const RevalidationService().revalidateStore(result.slug);
 
       widget.onPublished?.call();
       _showSnackBar('Vitrinin yayında! Keşfet\'te görünürsün.');
@@ -651,6 +874,17 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: slug)),
+    );
+  }
+
+  void _openBookingManagement() {
+    final slug = _publishedInfo?.slug ?? _data.slug;
+    if (slug.isEmpty) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BookingManagementScreen(storeSlug: slug),
+      ),
     );
   }
 
@@ -886,6 +1120,8 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               _buildOfferingsSection(),
               const SizedBox(height: 14),
 
+              _buildBookingSettingsSection(),
+
               _buildDropdown(
                 label: 'Vitrin Durumu',
                 value: _selectedStatus,
@@ -911,6 +1147,16 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                 hint: 'https://...',
                 icon: Icons.language_rounded,
                 keyboardType: TextInputType.url,
+              ),
+              const SizedBox(height: 14),
+
+              _buildTextField(
+                label: 'Google Yorum Bağlantısı',
+                controller: _googleBusinessLinkController,
+                hint: 'https://search.google.com/local/writereview?placeid=...',
+                icon: Icons.rate_review_rounded,
+                keyboardType: TextInputType.url,
+                errorText: _googleLinkError,
               ),
               const SizedBox(height: 14),
 
@@ -981,6 +1227,10 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           _buildPublishedSummary(),
           const SizedBox(height: 16),
           _buildActionButtons(),
+          const SizedBox(height: 16),
+          _buildBlogManagementCard(),
+          const SizedBox(height: 16),
+          _buildVisibilityChecklistCard(),
         ],
 
         // ── Danger Zone ────────────────────────────────────────────────────
@@ -1011,14 +1261,141 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
   }
 
   // ─── Location Field ───────────────────────────────────────────────────────
+  // ─── Location Field ───────────────────────────────────────────────────────
   Widget _buildLocationField() {
+    final districts = _selectedProvinceCode != null
+        ? (turkeyDistricts[_selectedProvinceCode] ?? [])
+        : <String>[];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Dropdown: İl
         Row(
           children: [
             const Text(
-              'Konum / Adres',
+              'İl',
+              style: TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Text(
+              ' *',
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _selectedProvinceCode,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.map_rounded, color: mutedText, size: 18),
+            filled: true,
+            fillColor: inputBg,
+            errorText: _provinceError,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+          ),
+          hint: const Text('İl Seçiniz', style: TextStyle(fontSize: 14, color: mutedText)),
+          items: turkeyProvinces.map((p) {
+            return DropdownMenuItem<String>(
+              value: p.code,
+              child: Text(
+                p.name,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: darkText),
+              ),
+            );
+          }).toList(),
+          onChanged: (val) {
+            setState(() {
+              _selectedProvinceCode = val;
+              _selectedProvinceName = val != null ? turkeyProvinces.firstWhere((p) => p.code == val).name : '';
+              _selectedDistrictCode = null;
+              _selectedDistrictName = null;
+              _provinceError = null;
+            });
+          },
+        ),
+        const SizedBox(height: 14),
+
+        // Dropdown: İlçe
+        Row(
+          children: [
+            const Text(
+              'İlçe',
+              style: TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Text(
+              ' *',
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _selectedDistrictName,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.location_city_rounded, color: mutedText, size: 18),
+            filled: true,
+            fillColor: inputBg,
+            errorText: _districtError,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+          ),
+          hint: const Text('İlçe Seçiniz', style: TextStyle(fontSize: 14, color: mutedText)),
+          disabledHint: const Text('Önce İl Seçiniz', style: TextStyle(fontSize: 14, color: mutedText)),
+          items: districts.map((d) {
+            return DropdownMenuItem<String>(
+              value: d,
+              child: Text(
+                d,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: darkText),
+              ),
+            );
+          }).toList(),
+          onChanged: _selectedProvinceCode == null
+              ? null
+              : (val) {
+                  setState(() {
+                    _selectedDistrictCode = val;
+                    _selectedDistrictName = val;
+                    _districtError = null;
+                  });
+                },
+        ),
+        const SizedBox(height: 14),
+
+        // Detailed Address Field
+        Row(
+          children: [
+            const Text(
+              'Açık Adres (Mahalle, Cadde, Sokak, No)',
               style: TextStyle(
                 color: softText,
                 fontSize: 12,
@@ -1048,7 +1425,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               color: mutedText,
               size: 18,
             ),
-            hintText: 'Mahalle, cadde, ilçe/il — veya GPS ile al',
+            hintText: 'Örn: Atatürk Mah. Fatih Cad. No:12 D:4',
             hintStyle: TextStyle(
               color: mutedText.withValues(alpha: 0.62),
               fontSize: 13,
@@ -1145,6 +1522,366 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildVisibilityChecklistCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.checklist_rounded, color: primaryColor, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Google Görünürlük Kontrol Listesi',
+                style: TextStyle(
+                  color: darkText,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Arama motorlarında ve Google Haritalar\'da üst sıralara çıkmak için aşağıdaki adımları tamamlayın:',
+            style: TextStyle(
+              color: mutedText.withValues(alpha: 0.8),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          CheckboxListTile(
+            value: _googleBusinessCreated,
+            title: const Text(
+              'Google Benim İşletmem profilinizi oluşturup tüm bilgilerinizi eksiksiz doldurdunuz mu?',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: darkText),
+            ),
+            activeColor: primaryColor,
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            onChanged: (val) async {
+              setState(() {
+                _googleBusinessCreated = val ?? false;
+              });
+              final slug = _publishedInfo?.slug ?? _data.slug;
+              if (slug.isNotEmpty) {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('google_business_created_$slug', _googleBusinessCreated);
+              }
+            },
+          ),
+          CheckboxListTile(
+            value: _isQrCodeHung,
+            title: const Text(
+              'Google Yorum QR kodunu dükkanınızda müşterilerinizin görebileceği bir yere astınız mı?',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: darkText),
+            ),
+            activeColor: primaryColor,
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            onChanged: (val) async {
+              setState(() {
+                _isQrCodeHung = val ?? false;
+              });
+              final slug = _publishedInfo?.slug ?? _data.slug;
+              if (slug.isNotEmpty) {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('is_qr_code_hung_$slug', _isQrCodeHung);
+              }
+            },
+          ),
+          if (_googleBusinessLinkController.text.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: _showGoogleReviewQrSheet,
+              icon: const Icon(Icons.qr_code_2_rounded, size: 18),
+              label: const Text(
+                'Google Yorum QR Kodu Göster',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primaryColor,
+                side: const BorderSide(color: primaryColor),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBlogManagementCard() {
+    final slug = _publishedInfo?.slug ?? _data.slug;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.edit_note_rounded, color: primaryColor, size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    '✍️ Blog Yönetimi',
+                    style: TextStyle(
+                      color: darkText,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlogEditorScreen(storeSlug: slug),
+                    ),
+                  );
+                  if (result == true) {
+                    _fetchArticles();
+                  }
+                },
+                icon: const Icon(Icons.add_rounded, size: 16, color: primaryColor),
+                label: const Text(
+                  'Yeni Yazı',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Google\'da görünürlüğünüzü ve organik trafiğinizi artırmak için SEO uyumlu blog yazıları yayınlayın.',
+            style: TextStyle(
+              color: mutedText.withValues(alpha: 0.8),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (_isLoadingArticles)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: CircularProgressIndicator(color: primaryColor),
+              ),
+            )
+          else if (_articles.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Text(
+                'Henüz eklenmiş blog yazısı bulunmuyor.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: mutedText.withValues(alpha: 0.6),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _articles.length,
+              separatorBuilder: (_, __) => const Divider(color: cardBorder, height: 16),
+              itemBuilder: (context, index) {
+                final art = _articles[index];
+                final title = art['title'] ?? '';
+                final status = art['status'] ?? 'draft';
+                final cover = art['cover_image_url'] as String?;
+
+                String statusText = 'Taslak';
+                Color badgeBg = Colors.grey.shade100;
+                Color badgeText = Colors.grey.shade700;
+
+                if (status == 'review') {
+                  statusText = 'Onay Bekliyor';
+                  badgeBg = Colors.amber.shade50;
+                  badgeText = Colors.amber.shade800;
+                } else if (status == 'published') {
+                  statusText = 'Yayında';
+                  badgeBg = const Color(0xFFEFFDF5);
+                  badgeText = const Color(0xFF047857);
+                } else if (status == 'rejected') {
+                  statusText = 'Reddedildi';
+                  badgeBg = const Color(0xFFFEF2F2);
+                  badgeText = const Color(0xFFDC2626);
+                }
+
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: inputBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: cover != null && cover.isNotEmpty
+                        ? Image.network(cover, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.article_rounded, color: mutedText))
+                        : const Icon(Icons.article_rounded, color: mutedText),
+                  ),
+                  title: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: darkText),
+                  ),
+                  subtitle: Row(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: badgeBg,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          statusText,
+                          style: TextStyle(fontSize: 10, color: badgeText, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'SEO Skoru: ${art['seo_score'] ?? 0}',
+                          style: const TextStyle(fontSize: 10, color: mutedText, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: mutedText),
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlogEditorScreen(
+                          storeSlug: slug,
+                          initialArticle: art,
+                        ),
+                      ),
+                    );
+                    if (result == true) {
+                      _fetchArticles();
+                    }
+                  },
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showGoogleReviewQrSheet() {
+    final link = _googleBusinessLinkController.text.trim();
+    if (link.isEmpty) {
+      _showSnackBar('Lütfen önce Google Yorum Bağlantısı girin ve vitrininizi kaydedin.');
+      return;
+    }
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder:
+          (_) => Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Google Yorum QR Kodu',
+                  style: TextStyle(
+                    color: darkText,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFCA5A5)),
+                  ),
+                  child: const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Google politikaları gereği yorum karşılığında indirim, hediye veya ödül teklif etmek yasaktır. Lütfen QR kodunu yalnızca memnun müşterilerinizi yönlendirmek için kullanın.',
+                          style: TextStyle(
+                            color: Color(0xFF991B1B),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 220,
+                  height: 220,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: cardBorder),
+                  ),
+                  child: QrImageView(
+                    data: link,
+                    version: QrVersions.auto,
+                    errorCorrectionLevel: QrErrorCorrectLevel.M,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  link,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: mutedText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
     );
   }
 
@@ -1500,6 +2237,8 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                         title: sug.title,
                         description: sug.description,
                         price: sug.price,
+                        durationMinutes: sug.durationMinutes,
+                        isBookable: sug.isBookable,
                       ),
                     );
                   });
@@ -1624,6 +2363,305 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               border: InputBorder.none,
             ),
           ),
+          const Divider(height: 1, color: cardBorder),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const SizedBox(width: 8),
+              const Icon(Icons.calendar_today_rounded, size: 14, color: mutedText),
+              const SizedBox(width: 4),
+              const Text(
+                'Randevuya Açık',
+                style: TextStyle(fontSize: 12, color: softText, fontWeight: FontWeight.w600),
+              ),
+              Switch(
+                value: offering.isBookable,
+                activeColor: primaryColor,
+                onChanged: (val) {
+                  setState(() {
+                    offering.isBookable = val;
+                  });
+                },
+              ),
+              const Spacer(),
+              if (offering.isBookable) ...[
+                const Icon(Icons.timer_rounded, size: 14, color: mutedText),
+                const SizedBox(width: 4),
+                DropdownButton<int>(
+                  value: offering.durationMinutes,
+                  items: [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
+                    return DropdownMenuItem<int>(
+                      value: val,
+                      child: Text(
+                        '$val dk',
+                        style: const TextStyle(fontSize: 12, color: darkText, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      if (val != null) {
+                        offering.durationMinutes = val;
+                      }
+                    });
+                  },
+                  underline: const SizedBox(),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingSettingsSection() {
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: ExpansionTile(
+        title: const Text(
+          '📅 Randevu Ayarları',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+            color: darkText,
+          ),
+        ),
+        subtitle: Text(
+          _bookingIsEnabled ? 'Aktif · Kapasite: $_bookingCapacity kişi' : 'Pasif',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: _bookingIsEnabled ? primaryColor : mutedText,
+          ),
+        ),
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: 8, bottom: 8),
+        shape: const Border(),
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Randevu Alınabilsin',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: softText),
+              ),
+              const Spacer(),
+              Switch(
+                value: _bookingIsEnabled,
+                activeColor: primaryColor,
+                onChanged: (val) {
+                  setState(() {
+                    _bookingIsEnabled = val;
+                  });
+                },
+              ),
+            ],
+          ),
+          if (_bookingIsEnabled) ...[
+            const Divider(color: cardBorder),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text(
+                  'Aynı Anda Kapasite',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: softText),
+                ),
+                const Spacer(),
+                DropdownButton<int>(
+                  value: _bookingCapacity,
+                  items: [1, 2, 3, 4, 5].map((int val) {
+                    return DropdownMenuItem<int>(
+                      value: val,
+                      child: Text(
+                        '$val kişi',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: darkText),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      if (val != null) {
+                        _bookingCapacity = val;
+                      }
+                    });
+                  },
+                ),
+              ],
+            ),
+            const Divider(color: cardBorder),
+            const SizedBox(height: 8),
+            const Text(
+              'Öğle Arası Saatleri',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: softText),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _bookingLunchBreak['start'] ?? '12:00',
+                    decoration: const InputDecoration(labelText: 'Başlangıç', isDense: true),
+                    items: ['11:00', '11:30', '12:00', '12:30', '13:00', '13:30'].map((String val) {
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(val, style: const TextStyle(fontSize: 12)),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        if (val != null) {
+                          _bookingLunchBreak['start'] = val;
+                        }
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _bookingLunchBreak['end'] ?? '13:00',
+                    decoration: const InputDecoration(labelText: 'Bitiş', isDense: true),
+                    items: ['12:00', '12:30', '13:00', '13:30', '14:00', '14:30'].map((String val) {
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(val, style: const TextStyle(fontSize: 12)),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        if (val != null) {
+                          _bookingLunchBreak['end'] = val;
+                        }
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text('Aktif', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                Checkbox(
+                  value: _bookingLunchBreak['active'] ?? true,
+                  activeColor: primaryColor,
+                  onChanged: (val) {
+                    setState(() {
+                      _bookingLunchBreak['active'] = val ?? false;
+                    });
+                  },
+                ),
+              ],
+            ),
+            const Divider(color: cardBorder),
+            const SizedBox(height: 8),
+            const Text(
+              'Çalışma Gün ve Saatleri',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: softText),
+            ),
+            const SizedBox(height: 8),
+            for (String day in ['1', '2', '3', '4', '5', '6', '7']) ...[
+              _buildDayRow(day),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayRow(String day) {
+    final dayNames = {
+      '1': 'Pazartesi',
+      '2': 'Salı',
+      '3': 'Çarşamba',
+      '4': 'Perşembe',
+      '5': 'Cuma',
+      '6': 'Cumartesi',
+      '7': 'Pazar',
+    };
+    final dayHours = _bookingWorkingHours[day] ?? {'start': '09:00', 'end': '19:00', 'active': true};
+    final isActive = dayHours['active'] ?? false;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(
+              dayNames[day]!,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isActive ? darkText : mutedText,
+              ),
+            ),
+          ),
+          Checkbox(
+            value: isActive,
+            activeColor: primaryColor,
+            onChanged: (val) {
+              setState(() {
+                dayHours['active'] = val ?? false;
+                _bookingWorkingHours[day] = dayHours;
+              });
+            },
+          ),
+          if (isActive) ...[
+            const SizedBox(width: 8),
+            Expanded(
+              child: DropdownButton<String>(
+                value: dayHours['start'] ?? '09:00',
+                items: ['07:00', '08:00', '08:30', '09:00', '09:30', '10:00'].map((String val) {
+                  return DropdownMenuItem<String>(
+                    value: val,
+                    child: Text(val, style: const TextStyle(fontSize: 11)),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    if (val != null) {
+                      dayHours['start'] = val;
+                      _bookingWorkingHours[day] = dayHours;
+                    }
+                  });
+                },
+                underline: const SizedBox(),
+              ),
+            ),
+            const Text('-', style: TextStyle(color: mutedText)),
+            Expanded(
+              child: DropdownButton<String>(
+                value: dayHours['end'] ?? '19:00',
+                items: ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'].map((String val) {
+                  return DropdownMenuItem<String>(
+                    value: val,
+                    child: Text(val, style: const TextStyle(fontSize: 11)),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    if (val != null) {
+                      dayHours['end'] = val;
+                      _bookingWorkingHours[day] = dayHours;
+                    }
+                  });
+                },
+                underline: const SizedBox(),
+              ),
+            ),
+          ] else ...[
+            const Expanded(
+              child: Text(
+                'Kapalı',
+                style: TextStyle(fontSize: 12, color: mutedText, fontStyle: FontStyle.italic),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1731,6 +2769,13 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
           spacing: 10,
           runSpacing: 10,
           children: [
+            if (_bookingIsEnabled)
+              _actionButton(
+                width: buttonWidth,
+                label: 'Randevuları Yönet',
+                icon: Icons.calendar_month_rounded,
+                onPressed: _openBookingManagement,
+              ),
             _actionButton(
               width: buttonWidth,
               label: 'Yayındaki Vitrini Aç',

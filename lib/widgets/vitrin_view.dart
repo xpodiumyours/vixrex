@@ -9,6 +9,7 @@ import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
+import 'package:vitrinx/widgets/booking_wizard_sheet.dart';
 import 'package:vitrinx/services/seo_helper.dart';
 
 class VitrinGalleryPreviewItem {
@@ -71,6 +72,9 @@ class VitrinView extends StatelessWidget {
       SizedBox(height: isEmbedded ? 14 : 24),
       _buildStoreIdentityBlock(preset),
       SizedBox(height: isEmbedded ? 16 : 28),
+      _buildBookingCTAButton(context, preset, radius),
+      if (storeData.bookingSettings?.isEnabled == true)
+        SizedBox(height: isEmbedded ? 16 : 30),
       if (_hasVisibleActions()) ...[
         _buildPremiumActionButtons(context, radius),
         SizedBox(height: isEmbedded ? 16 : 30),
@@ -489,6 +493,59 @@ class VitrinView extends StatelessWidget {
     );
   }
 
+  Widget _buildBookingCTAButton(BuildContext context, VitrinThemePreset preset, double radius) {
+    final hasBooking = storeData.bookingSettings?.isEnabled == true;
+    if (!hasBooking) return const SizedBox();
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isEmbedded ? 18.0 : 24.0),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            if (!publicMode) {
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Müşteriler bu butona basarak randevu alabilirler.'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              return;
+            }
+            _openBookingWizard(context);
+          },
+          icon: const Icon(Icons.calendar_month_rounded, size: 20),
+          label: const Text(
+            'Randevu Al',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: preset.accent,
+            foregroundColor: preset.buttonText,
+            elevation: 0.5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openBookingWizard(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => BookingWizardSheet(storeData: storeData),
+    );
+  }
+
   Widget _buildPremiumActionButtons(BuildContext context, double radius) {
     final isCompact = isEmbedded;
     final actions = _buildVisibleActions(context, radius, isCompact);
@@ -531,6 +588,7 @@ class VitrinView extends StatelessWidget {
     return WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp) ||
         storeData.instagram.trim().isNotEmpty ||
         storeData.website.trim().isNotEmpty ||
+        storeData.googleBusinessLink.trim().isNotEmpty ||
         storeData.address.trim().isNotEmpty ||
         (storeData.latitude != null && storeData.longitude != null);
   }
@@ -618,6 +676,25 @@ class VitrinView extends StatelessWidget {
             );
           },
         ),
+        if (storeData.googleBusinessLink.isNotEmpty)
+          _ActionIconBtn(
+            label: 'Yorum Yap',
+            icon: Icons.star_rate_rounded,
+            color: Colors.amber.shade700,
+            radius: radius,
+            compact: isCompact,
+            onTap: () {
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    "Müşteriler bu butona bastığında Google yorum sayfanıza yönlendirilir.",
+                  ),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
       ];
     }
 
@@ -665,6 +742,19 @@ class VitrinView extends StatelessWidget {
               () => _openExternalUrl(
                 context,
                 _normalizeExternalUrl(storeData.website),
+              ),
+        ),
+      if (storeData.googleBusinessLink.trim().isNotEmpty)
+        _ActionIconBtn(
+          label: 'Google\'da Yorum Yap',
+          icon: Icons.star_rate_rounded,
+          color: Colors.amber.shade700,
+          radius: radius,
+          compact: isCompact,
+          onTap:
+              () => _openExternalUrl(
+                context,
+                _normalizeExternalUrl(storeData.googleBusinessLink),
               ),
         ),
       if (storeData.address.trim().isNotEmpty ||

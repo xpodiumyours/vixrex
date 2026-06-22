@@ -31,9 +31,11 @@ class BusinessCategoryConfig {
       emoji: '🛍',
       icon: Icons.checkroom_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Elbise Seçenekleri', description: 'Yeni sezon özel tasarım elbiseler'),
-        SuggestedOffering(title: 'Triko & Hırka', description: 'Farklı renk ve beden alternatifleriyle'),
-        SuggestedOffering(title: 'Yeni Sezon Ceket', description: 'Şık ve modern günlük ceketler'),
+        SuggestedOffering(title: 'Yeni Sezon Elbiseler', description: 'Farklı beden ve renk seçenekleriyle özel tasarım elbiseler'),
+        SuggestedOffering(title: 'Triko, Hırka & Kazak', description: 'Kışlık ve mevsimlik kaliteli triko modeller'),
+        SuggestedOffering(title: 'Ceket & Kaban Modelleri', description: 'Şık ve modern günlük veya klasik dış giyim'),
+        SuggestedOffering(title: 'Kişiye Özel Kombin Danışmanlığı', description: 'Tarzınıza özel kıyafet kombin önerileri'),
+        SuggestedOffering(title: 'Aksesuar & Çanta Çeşitleri', description: 'Şık kombin tamamlayıcı aksesuarlar ve çantalar'),
       ],
     ),
     BusinessCategoryConfig(
@@ -45,9 +47,11 @@ class BusinessCategoryConfig {
       emoji: '🍞',
       icon: Icons.bakery_dining_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Sıcak Ekmek & Pide', description: 'Taş fırından taze çıkmış sıcak lezzetler'),
-        SuggestedOffering(title: 'Günün Çorbası', description: 'Ev yapımı sıcak günün çorbası'),
-        SuggestedOffering(title: 'Ekşi Mayalı Ekmek', description: 'Doğal ekşi mayalı özel üretim ekmek'),
+        SuggestedOffering(title: 'Doğal Ekşi Mayalı Ekmek', description: 'Taş fırında geleneksel yöntemlerle pişirilmiş ekmek'),
+        SuggestedOffering(title: 'Taş Fırından Sıcak Simit & Pide', description: 'Sabah saatlerinde taze çıkan hamur işleri'),
+        SuggestedOffering(title: 'Butik Doğum Günü Pastası', description: 'Özel günleriniz için siparişe özel tasarım pastalar'),
+        SuggestedOffering(title: 'Ev Yapımı Mantı & Hamur İşleri', description: 'Anne eli lezzetinde el açması mantı ve börekler'),
+        SuggestedOffering(title: 'Günün Sıcak Çorbası & Yemek', description: 'Ev yapımı sıcak günün çorbası ve sulu yemek alternatifi'),
       ],
     ),
     BusinessCategoryConfig(
@@ -59,8 +63,10 @@ class BusinessCategoryConfig {
       emoji: '💄',
       icon: Icons.face_retouching_natural_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Cilt Bakımı', description: 'Derinlemesine temizleme ve nemlendirme maskeleri'),
-        SuggestedOffering(title: 'Makyaj Danışmanlığı', description: 'Yüz tipinize özel profesyonel makyaj'),
+        SuggestedOffering(title: 'Profesyonel Cilt Analizi', description: 'Cilt tipinize en uygun bakım ürünlerinin belirlenmesi'),
+        SuggestedOffering(title: 'Doğal / Organik Makyaj Ürünleri', description: 'Cilde zarar vermeyen bitkisel içerikli makyaj malzemeleri'),
+        SuggestedOffering(title: 'Dökülme Karşıtı Saç Serumları', description: 'Dökülme karşıtı ve uzatıcı profesyonel saç serumları'),
+        SuggestedOffering(title: 'Özel Kalıcı Parfümler', description: 'Teninize en uygun kokuların seçimi ve satışı'),
       ],
     ),
     BusinessCategoryConfig(
@@ -72,8 +78,10 @@ class BusinessCategoryConfig {
       emoji: '🪴',
       icon: Icons.local_florist_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'İç Mekan Bitki Tasarımı', description: 'Ev ve ofisler için canlı bitki yerleşimi'),
-        SuggestedOffering(title: 'Özel Gün Çiçek Aranjmanı', description: 'Söz, nişan ve kutlamalara özel buketler'),
+        SuggestedOffering(title: 'İç Mekan Salon Bitkileri', description: 'Ev ve ofis ortamları için canlı yeşil bitki yerleşimi'),
+        SuggestedOffering(title: 'Özel Gün Çiçek Aranjmanı', description: 'Söz, nişan ve kutlamalara özel şık çiçek buketleri'),
+        SuggestedOffering(title: 'El Yapımı Seramik Saksı & Obje', description: 'El yapımı seramik saksılar ve modern ev aksesuarları'),
+        SuggestedOffering(title: 'Yapay Çiçek / Teraryum Tasarımı', description: 'Bakım gerektirmeyen şık cam fanus tasarımları'),
       ],
     ),
     BusinessCategoryConfig(
@@ -85,8 +93,10 @@ class BusinessCategoryConfig {
       emoji: '📱',
       icon: Icons.devices_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Telefon Aksesuarları', description: 'Kılıf, ekran koruyucu ve şarj kabloları'),
-        SuggestedOffering(title: 'Bluetooth Kulaklık', description: 'Yüksek ses kaliteli kablosuz modeller'),
+        SuggestedOffering(title: 'Telefon Kılıfı & Ekran Koruyucu', description: 'Kılıf, ekran koruyucu ve hızlı şarj setleri'),
+        SuggestedOffering(title: 'Bluetooth Kablosuz Kulaklık', description: 'Aktif gürültü engelleyici (ANC) özellikli kulaklıklar'),
+        SuggestedOffering(title: 'Akıllı Saat & Spor Bileklik', description: 'Adım sayar ve sağlık takibi yapan modern saatler'),
+        SuggestedOffering(title: 'Yüksek Kapasiteli Powerbank', description: 'Taşınabilir şarj bataryaları ve dayanıklı kablolar'),
       ],
     ),
     BusinessCategoryConfig(
@@ -98,8 +108,10 @@ class BusinessCategoryConfig {
       emoji: '📚',
       icon: Icons.menu_book_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Okul Hazırlık Seti', description: 'Temel kırtasiye ve defter ihtiyaç paketi'),
-        SuggestedOffering(title: 'Hobi Boyama Seti', description: 'Akrilik ve sulu boya başlangıç setleri'),
+        SuggestedOffering(title: 'Okul & Kırtasiye Başlangıç Seti', description: 'Defter, kalem, silgi ve boyaları içeren temel okul paketi'),
+        SuggestedOffering(title: 'Akrilik Boya & Sanatsal Hobi Seti', description: 'Resim yapmaya yeni başlayanlar için boya ve fırça seti'),
+        SuggestedOffering(title: 'Haftalık/Aylık Planner & Ajanda', description: 'Haftalık ve aylık planlama yapabileceğiniz şık defterler'),
+        SuggestedOffering(title: 'Ofis Kırtasiye İhtiyaçları', description: 'Klasör, zımba, dosya ve fotokopi kağıtları paketi'),
       ],
     ),
     BusinessCategoryConfig(
@@ -111,8 +123,11 @@ class BusinessCategoryConfig {
       emoji: '☕',
       icon: Icons.restaurant_menu_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Günün Menüsü', description: 'Ana yemek + çorba + içecek menüsü'),
-        SuggestedOffering(title: 'Ev Yapımı Mantı', description: 'Yoğurtlu ve tereyağlı soslu el yapımı mantı'),
+        SuggestedOffering(title: 'Zengin Serpme Kahvaltı (2 Kişilik)', description: 'Yöresel ürünlerle donatılmış sıcak kahvaltı tabağı'),
+        SuggestedOffering(title: 'Günün Sıcak Çorbası', description: 'Her gün taze pişirilen ev yapımı sıcak çorba'),
+        SuggestedOffering(title: 'Hamburger & Patates Sepeti', description: 'Özel ev yapımı köfte ve soslarla hazırlanan burger'),
+        SuggestedOffering(title: 'Yeni Nesil Soğuk/Sıcak Kahve', description: 'Yeni nesil kahve çekirdekleriyle hazırlanan içecekler'),
+        SuggestedOffering(title: 'Izgara Köfte Menüsü', description: 'Pilav, patates kızartması ve salata eşliğinde ızgara köfte'),
       ],
     ),
     BusinessCategoryConfig(
@@ -124,8 +139,13 @@ class BusinessCategoryConfig {
       emoji: '✂️',
       icon: Icons.content_cut_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Saç Kesimi & Tasarım', description: 'Yıkama ve fön dahil komple saç tasarımı'),
-        SuggestedOffering(title: 'Saç Boyama & Keratin', description: 'Saç yapısına özel organik keratin bakımı'),
+        SuggestedOffering(title: 'Saç Kesimi & Yıkama', description: 'Yüz hattınıza özel modern saç tasarımı ve yıkama', durationMinutes: 45, isBookable: true),
+        SuggestedOffering(title: 'Fön Çekimi (Düz/Kırık/Maşa)', description: 'Profesyonel fön işlemi ve şekillendirme', durationMinutes: 30, isBookable: true),
+        SuggestedOffering(title: 'Saç Boyama (Dip veya Komple)', description: 'Kaliteli profesyonel saç boyama uygulaması', durationMinutes: 120, isBookable: true),
+        SuggestedOffering(title: 'Keratin Bakımı & Fönü', description: 'Yıpranmış saçlar için besleyici keratin yüklemesi', durationMinutes: 90, isBookable: true),
+        SuggestedOffering(title: 'Medikal Cilt Bakımı', description: 'Derinlemesine gözenek temizliği, nemlendirme ve maske', durationMinutes: 60, isBookable: true),
+        SuggestedOffering(title: 'Manikür & Pedikür', description: 'Profesyonel el ve ayak tırnak bakımı', durationMinutes: 60, isBookable: true),
+        SuggestedOffering(title: 'Profesyonel Gece Makyajı', description: 'Özel gün, nişan ve gece davetlerine uygun makyaj', durationMinutes: 45, isBookable: true),
       ],
     ),
     BusinessCategoryConfig(
@@ -137,8 +157,11 @@ class BusinessCategoryConfig {
       emoji: '🔧',
       icon: Icons.construction_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Telefon Ekran Değişimi', description: '30 dakikada hızlı ekran değişimi ve garanti'),
-        SuggestedOffering(title: 'Batarya Değişimi', description: 'Yüksek kapasiteli batarya yenilemesi'),
+        SuggestedOffering(title: 'Telefon Ekran Değişimi', description: 'Hızlı ve orijinal yedek parça ile ekran yenileme', durationMinutes: 45, isBookable: true),
+        SuggestedOffering(title: 'Batarya & Pil Yenileme', description: 'Pil sağlığı düşmüş cihazlar için yeni batarya montajı', durationMinutes: 30, isBookable: true),
+        SuggestedOffering(title: 'Anakart & Donanım Onarımı', description: 'Sıvı teması veya şarj entegresi arızalarının tamiri', durationMinutes: 60, isBookable: true),
+        SuggestedOffering(title: 'Laptop Temizlik & Fan Bakımı', description: 'Fan temizliği ve termal macun değişimi', durationMinutes: 60, isBookable: true),
+        SuggestedOffering(title: 'Yazılım Kurulumu / Format', description: 'Format atma, işletim sistemi kurulumu ve veri yedekleme', durationMinutes: 45, isBookable: true),
       ],
     ),
     BusinessCategoryConfig(
@@ -150,7 +173,8 @@ class BusinessCategoryConfig {
       emoji: '🏪',
       icon: Icons.storefront_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Özel Hizmet Danışmanlığı', description: 'İhtiyaçlarınıza özel detaylı bilgi'),
+        SuggestedOffering(title: 'Genel Bilgi & Danışmanlık', description: 'Hizmet detaylarımız hakkında yüz yüze veya online görüşme', durationMinutes: 30, isBookable: true),
+        SuggestedOffering(title: 'Özel Hizmet Talebi', description: 'İşletmemizden talep etmek istediğiniz özel işler', durationMinutes: 30, isBookable: true),
       ],
     ),
   ];
@@ -186,10 +210,14 @@ class SuggestedOffering {
   final String title;
   final String description;
   final String price;
+  final int durationMinutes;
+  final bool isBookable;
 
   const SuggestedOffering({
     required this.title,
     this.description = '',
     this.price = '',
+    this.durationMinutes = 30,
+    this.isBookable = false,
   });
 }

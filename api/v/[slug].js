@@ -167,7 +167,7 @@ export default async function handler(req, res) {
 
     const title = escapeHtmlAttr(rawTitle);
     const description = escapeHtmlAttr(rawDesc);
-    const imageUrl = escapeHtmlAttr(shareImage);
+    const escapedImageUrl = escapeHtmlAttr(shareImage);
 
     // 2. Dynamic HTML Shell with Social Share Meta Tags
     const html = `<!DOCTYPE html>
@@ -183,7 +183,7 @@ export default async function handler(req, res) {
   <meta property="og:type" content="profile">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${imageUrl}">
+  <meta property="og:image" content="${escapedImageUrl}">
   <meta property="og:url" content="${publicUrl}">
   <meta property="og:site_name" content="VitrinX">
 
@@ -191,7 +191,7 @@ export default async function handler(req, res) {
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${imageUrl}">
+  <meta name="twitter:image" content="${escapedImageUrl}">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">

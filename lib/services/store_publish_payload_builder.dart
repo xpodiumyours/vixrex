@@ -63,6 +63,11 @@ class StorePublishPayloadBuilder {
       'is_store': data.isStore,
       'kategori': data.kategori,
       'working_hours': data.workingHours.trim(),
+      'province_code': data.provinceCode.trim(),
+      'province_name': data.provinceName.trim(),
+      'district_code': data.districtCode.trim(),
+      'district_name': data.districtName.trim(),
+      'google_business_link': data.googleBusinessLink.trim(),
       'logo_url': data.logoUrl,
       'latitude': data.latitude,
       'longitude': data.longitude,
@@ -100,6 +105,8 @@ class StorePublishPayloadBuilder {
             'title': o.title.trim(),
             'description': o.description.trim(),
             'price': o.price.trim(),
+            'durationMinutes': o.durationMinutes,
+            'isBookable': o.isBookable,
           },
         )
         .toList();

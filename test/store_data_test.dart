@@ -134,5 +134,58 @@ void main() {
       expect(decoded.offerings.first.title, 'Hizmet 1');
       expect(decoded.offerings.any((o) => o.title.trim().isEmpty), isFalse);
     });
+
+    test('StoreOffering has default durationMinutes and isBookable, and serializes/deserializes them', () {
+      final offering = StoreOffering(
+        id: 'off-test',
+        title: 'Cilt Bakımı',
+        durationMinutes: 45,
+        isBookable: true,
+      );
+
+      final json = offering.toJson();
+      expect(json['durationMinutes'], 45);
+      expect(json['isBookable'], true);
+
+      final decoded = StoreOffering.fromJson(json);
+      expect(decoded.durationMinutes, 45);
+      expect(decoded.isBookable, true);
+    });
+
+    test('BookingSettings serializes and deserializes correctly', () {
+      final settings = BookingSettings(
+        isEnabled: true,
+        capacity: 2,
+        workingHours: {
+          '1': {'start': '08:00', 'end': '20:00', 'active': true},
+        },
+      );
+
+      final json = settings.toJson();
+      expect(json['is_enabled'], true);
+      expect(json['capacity'], 2);
+      expect(json['working_hours']['1']['start'], '08:00');
+
+      final decoded = BookingSettings.fromJson(json);
+      expect(decoded.isEnabled, true);
+      expect(decoded.capacity, 2);
+      expect(decoded.workingHours['1']['start'], '08:00');
+    });
+
+    test('StoreData manages bookingSettings field', () {
+      final store = StoreData(
+        name: 'Güzellik Salonu',
+        bookingSettings: BookingSettings(isEnabled: true, capacity: 3),
+      );
+
+      final json = store.toJson();
+      expect(json['bookingSettings'], isNotNull);
+      expect(json['bookingSettings']['is_enabled'], true);
+
+      final decoded = StoreData.fromJson(json);
+      expect(decoded.bookingSettings, isNotNull);
+      expect(decoded.bookingSettings!.isEnabled, true);
+      expect(decoded.bookingSettings!.capacity, 3);
+    });
   });
 }

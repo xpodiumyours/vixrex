@@ -111,6 +111,37 @@ class WhatsAppLinkHelper {
     return _buildUrl(normalized, message);
   }
 
+  static const String appointmentConfirmTemplate =
+      'Merhaba [İsim], [Tarih] saat [Saat] için [Hizmet] randevunuz onaylanmıştır. Teşekkür ederiz. Vitrinimiz: [Link]';
+
+  static const String appointmentRejectTemplate =
+      'Merhaba [İsim], [Tarih] saat [Saat] için talep ettiğiniz [Hizmet] randevunuz maalesef uygun olmadığımız için onaylanamamıştır.';
+
+  static const String appointmentRescheduleTemplate =
+      'Merhaba [İsim], talep ettiğiniz [Hizmet] randevu saati uygun olmadığı için yeni bir tarih belirlemek üzere bizimle iletişime geçebilirsiniz.';
+
+  static String? buildAppointmentMessageUrl({
+    required String number,
+    required String template,
+    required String customerName,
+    required String dateStr,
+    required String timeStr,
+    required String serviceTitle,
+    required String link,
+  }) {
+    final normalized = normalizeTurkeyMobile(number);
+    if (normalized == null) return null;
+
+    final message = template
+        .replaceAll('[İsim]', customerName.trim())
+        .replaceAll('[Tarih]', dateStr.trim())
+        .replaceAll('[Saat]', timeStr.trim())
+        .replaceAll('[Hizmet]', serviceTitle.trim())
+        .replaceAll('[Link]', link.trim());
+
+    return _buildUrl(normalized, message);
+  }
+
   static String _buildUrl(String normalizedNumber, String message) {
     return Uri.https('wa.me', '/$normalizedNumber', {
       'text': message,

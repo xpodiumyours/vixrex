@@ -187,6 +187,8 @@ void main() {
         'title': 'Kesim',
         'description': 'Hizmet',
         'price': '100 TL',
+        'durationMinutes': 30,
+        'isBookable': false,
       });
     });
   });

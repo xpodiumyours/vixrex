@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/home_shell_screen.dart';
+import 'package:vitrinx/screens/appointment_tracker_screen.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
@@ -14,8 +15,14 @@ import 'package:vitrinx/theme/app_colors.dart';
 class PublicVitrinScreen extends StatefulWidget {
   final String slug;
   final StoreData? mockStoreData;
+  final bool bypassTracker;
 
-  const PublicVitrinScreen({super.key, required this.slug, this.mockStoreData});
+  const PublicVitrinScreen({
+    super.key,
+    required this.slug,
+    this.mockStoreData,
+    this.bypassTracker = false,
+  });
 
   @override
   State<PublicVitrinScreen> createState() => _PublicVitrinScreenState();
@@ -32,6 +39,20 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
     _isOwnerFuture = _isOwnedByThisDevice();
   }
 
+  String? _getFragmentToken() {
+    try {
+      final fragment = Uri.base.fragment;
+      if (fragment.contains('randevu_token=')) {
+        final reg = RegExp(r'randevu_token=([^&]+)');
+        final match = reg.firstMatch(fragment);
+        if (match != null) {
+          return match.group(1);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<StoreData?> _fetchStore() async {
     if (widget.mockStoreData != null) {
       return widget.mockStoreData;
@@ -40,7 +61,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
         await Supabase.instance.client
             .from('stores')
             .select(
-              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,latitude,longitude,location_accuracy_meters,location_consent_at,location_source,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published,is_store,products,offerings,kategori,working_hours',
+              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,latitude,longitude,location_accuracy_meters,location_consent_at,location_source,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published,is_store,products,offerings,kategori,working_hours,booking_settings(is_enabled,capacity,working_hours,lunch_break)',
             )
             .eq('slug', widget.slug)
             .eq('is_published', true)
@@ -62,6 +83,18 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       data['corporate_bio'],
       fallback: description,
     );
+
+    final rawBooking = data['booking_settings'];
+    dynamic bookingMap;
+    if (rawBooking is List && rawBooking.isNotEmpty) {
+      bookingMap = rawBooking.first;
+    } else if (rawBooking is Map) {
+      bookingMap = rawBooking;
+    }
+
+    final bookingSettings = bookingMap != null
+        ? BookingSettings.fromJson(Map<String, dynamic>.from(bookingMap))
+        : null;
 
     return StoreData(
       name: _readString(data['name']),
@@ -89,6 +122,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       offerings: _parseOfferings(data['offerings']),
       kategori: _readString(data['kategori']),
       workingHours: _readString(data['working_hours']),
+      bookingSettings: bookingSettings,
     );
   }
 
@@ -239,6 +273,12 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.bypassTracker) {
+      final token = _getFragmentToken();
+      if (token != null) {
+        return AppointmentTrackerScreen(token: token, storeSlug: widget.slug);
+      }
+    }
     return FutureBuilder<StoreData?>(
       future: _storeFuture,
       builder: (context, snapshot) {

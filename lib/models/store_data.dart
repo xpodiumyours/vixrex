@@ -95,12 +95,16 @@ class StoreOffering {
   String title;
   String description;
   String price;
+  int durationMinutes; // Dakika cinsinden (varsayılan 30, 15-240 arası)
+  bool isBookable;    // Randevuya açık mı?
 
   StoreOffering({
     required this.id,
     this.title = '',
     this.description = '',
     this.price = '',
+    this.durationMinutes = 30,
+    this.isBookable = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -108,6 +112,8 @@ class StoreOffering {
     'title': title,
     'description': description,
     'price': price,
+    'durationMinutes': durationMinutes,
+    'isBookable': isBookable,
   };
 
   factory StoreOffering.fromJson(Map<String, dynamic> json) => StoreOffering(
@@ -115,6 +121,8 @@ class StoreOffering {
     title: (json['title'] ?? '').toString(),
     description: (json['description'] ?? '').toString(),
     price: (json['price'] ?? '').toString(),
+    durationMinutes: (json['durationMinutes'] ?? json['duration_minutes'] ?? 30) as int,
+    isBookable: (json['isBookable'] ?? json['is_bookable'] ?? false) as bool,
   );
 
   StoreOffering copyWith({
@@ -122,12 +130,16 @@ class StoreOffering {
     String? title,
     String? description,
     String? price,
+    int? durationMinutes,
+    bool? isBookable,
   }) {
     return StoreOffering(
       id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,
       price: price ?? this.price,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
+      isBookable: isBookable ?? this.isBookable,
     );
   }
 }
@@ -195,12 +207,20 @@ class StoreData {
   String kategori;
   String workingHours;
 
+  // Google ve Yerel SEO Alanları
+  String provinceCode;
+  String provinceName;
+  String districtCode;
+  String districtName;
+  String googleBusinessLink;
+
   // Konum ve KVKK Alanları
   double? latitude;
   double? longitude;
   double? locationAccuracyMeters;
   DateTime? locationConsentAt;
   String? locationSource;
+  BookingSettings? bookingSettings;
 
   StoreData({
     this.name = '',
@@ -225,11 +245,17 @@ class StoreData {
     this.isStore = false,
     this.kategori = '',
     this.workingHours = '',
+    this.provinceCode = '',
+    this.provinceName = '',
+    this.districtCode = '',
+    this.districtName = '',
+    this.googleBusinessLink = '',
     this.latitude,
     this.longitude,
     this.locationAccuracyMeters,
     this.locationConsentAt,
     this.locationSource,
+    this.bookingSettings,
   }) : products = products ?? [],
        marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')],
        galleryItems = galleryItems ?? [],
@@ -258,11 +284,17 @@ class StoreData {
     'isStore': isStore,
     'kategori': kategori,
     'workingHours': workingHours,
+    'province_code': provinceCode,
+    'province_name': provinceName,
+    'district_code': districtCode,
+    'district_name': districtName,
+    'google_business_link': googleBusinessLink,
     'latitude': latitude,
     'longitude': longitude,
     'locationAccuracyMeters': locationAccuracyMeters,
     'locationConsentAt': locationConsentAt?.toIso8601String(),
     'locationSource': locationSource,
+    'bookingSettings': bookingSettings?.toJson(),
   };
 
   factory StoreData.fromJson(Map<String, dynamic> json) {
@@ -305,6 +337,11 @@ class StoreData {
       isStore: (json['is_store'] ?? json['isStore'] ?? false) as bool,
       kategori: _getString(json, 'kategori', 'category') ?? '',
       workingHours: _getString(json, 'workingHours', 'working_hours') ?? '',
+      provinceCode: _getString(json, 'provinceCode', 'province_code') ?? '',
+      provinceName: _getString(json, 'provinceName', 'province_name') ?? '',
+      districtCode: _getString(json, 'districtCode', 'district_code') ?? '',
+      districtName: _getString(json, 'districtName', 'district_name') ?? '',
+      googleBusinessLink: _getString(json, 'googleBusinessLink', 'google_business_link') ?? '',
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       locationAccuracyMeters:
@@ -315,6 +352,9 @@ class StoreData {
         json['locationConsentAt'] ?? json['location_consent_at'],
       ),
       locationSource: _getString(json, 'locationSource', 'location_source'),
+      bookingSettings: json['bookingSettings'] != null || json['booking_settings'] != null
+          ? BookingSettings.fromJson(Map<String, dynamic>.from((json['bookingSettings'] ?? json['booking_settings']) as Map))
+          : null,
     );
   }
 
@@ -343,11 +383,17 @@ class StoreData {
     bool? isStore,
     String? kategori,
     String? workingHours,
+    String? provinceCode,
+    String? provinceName,
+    String? districtCode,
+    String? districtName,
+    String? googleBusinessLink,
     double? latitude,
     double? longitude,
     double? locationAccuracyMeters,
     DateTime? locationConsentAt,
     String? locationSource,
+    BookingSettings? bookingSettings,
   }) {
     return StoreData(
       name: name ?? this.name,
@@ -372,12 +418,18 @@ class StoreData {
       isStore: isStore ?? this.isStore,
       kategori: kategori ?? this.kategori,
       workingHours: workingHours ?? this.workingHours,
+      provinceCode: provinceCode ?? this.provinceCode,
+      provinceName: provinceName ?? this.provinceName,
+      districtCode: districtCode ?? this.districtCode,
+      districtName: districtName ?? this.districtName,
+      googleBusinessLink: googleBusinessLink ?? this.googleBusinessLink,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       locationAccuracyMeters:
           locationAccuracyMeters ?? this.locationAccuracyMeters,
       locationConsentAt: locationConsentAt ?? this.locationConsentAt,
       locationSource: locationSource ?? this.locationSource,
+      bookingSettings: bookingSettings ?? this.bookingSettings,
     );
   }
 
@@ -545,6 +597,57 @@ class StoreData {
           description: 'Raflarda bulunan rahat ve sezonluk kombin seçenekleri.',
         ),
       ],
+    );
+  }
+}
+
+class BookingSettings {
+  bool isEnabled;
+  int capacity;
+  Map<String, dynamic> workingHours;
+  Map<String, dynamic> lunchBreak;
+
+  BookingSettings({
+    this.isEnabled = false,
+    this.capacity = 1,
+    Map<String, dynamic>? workingHours,
+    Map<String, dynamic>? lunchBreak,
+  }) : workingHours = workingHours ?? {
+         '1': {'start': '09:00', 'end': '19:00', 'active': true},
+         '2': {'start': '09:00', 'end': '19:00', 'active': true},
+         '3': {'start': '09:00', 'end': '19:00', 'active': true},
+         '4': {'start': '09:00', 'end': '19:00', 'active': true},
+         '5': {'start': '09:00', 'end': '19:00', 'active': true},
+         '6': {'start': '09:00', 'end': '16:00', 'active': true},
+         '7': {'start': '00:00', 'end': '00:00', 'active': false},
+       },
+       lunchBreak = lunchBreak ?? {
+         'start': '12:00',
+         'end': '13:00',
+         'active': true,
+       };
+
+  Map<String, dynamic> toJson() => {
+    'is_enabled': isEnabled,
+    'capacity': capacity,
+    'working_hours': workingHours,
+    'lunch_break': lunchBreak,
+  };
+
+  factory BookingSettings.fromJson(Map<String, dynamic> json) {
+    return BookingSettings(
+      isEnabled: (json['is_enabled'] ?? json['isEnabled'] ?? false) as bool,
+      capacity: (json['capacity'] ?? 1) as int,
+      workingHours: json['working_hours'] != null
+          ? Map<String, dynamic>.from(json['working_hours'] as Map)
+          : (json['workingHours'] != null
+              ? Map<String, dynamic>.from(json['workingHours'] as Map)
+              : {}),
+      lunchBreak: json['lunch_break'] != null
+          ? Map<String, dynamic>.from(json['lunch_break'] as Map)
+          : (json['lunchBreak'] != null
+              ? Map<String, dynamic>.from(json['lunchBreak'] as Map)
+              : {}),
     );
   }
 }
