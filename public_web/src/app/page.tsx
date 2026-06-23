@@ -19,61 +19,43 @@ const getStoreCount = unstable_cache(
 const whyItems = [
   {
     icon: "bolt",
-    title: "Dakikalar içinde hazır",
-    description: "Bilgilerinizi ekleyin ve vitrininizi yayınlayın.",
+    title: "Dakikalar içinde yayına alın",
+    description: "Temel bilgilerinizi ekleyin ve vitrininizi oluşturun.",
   },
   {
-    icon: "code",
-    title: "Teknik bilgi gerekmez",
-    description: "Kod, hosting veya SSL ayarıyla uğraşmayın.",
+    icon: "contact",
+    title: "Müşteriler size doğrudan ulaşsın",
+    description:
+      "WhatsApp, adres ve yol tarifi seçeneklerini tek yerde sunun.",
   },
   {
-    icon: "chat",
-    title: "WhatsApp ile doğrudan iletişim",
-    description: "Müşterileriniz aracı olmadan size ulaşsın.",
+    icon: "share",
+    title: "Her kanalda aynı vitrini paylaşın",
+    description:
+      "Linkinizi sosyal medyada, QR kodunuzu işletmenizde kullanın.",
   },
   {
-    icon: "qr",
-    title: "Link ve QR ile paylaşım",
-    description: "Sosyal medya, kartvizit, paket ve işletme içinde paylaşın.",
-  },
-  {
-    icon: "percent",
-    title: "Satıştan komisyon yok",
-    description: "Müşterilerinizle doğrudan iletişim kurun.",
-  },
-  {
-    icon: "globe",
-    title: "Ayrı web sitesi kurmadan başlayın",
-    description: "Domain, hosting veya ajans süreci beklemeyin.",
+    icon: "edit",
+    title: "Bilgilerinizi panelden güncelleyin",
+    description:
+      "Fotoğraf, ürün, hizmet ve iletişim bilgilerinizi istediğiniz zaman düzenleyin.",
   },
 ] as const;
 
-const comparisonItems = [
-  {
-    classic: "Hazırlık günler veya haftalar sürebilir",
-    vitrinx: "Dakikalar içinde başlanabilir",
-  },
-  {
-    classic: "Domain, hosting ve SSL yönetimi gerekir",
-    vitrinx: "Teknik altyapı hazır gelir",
-  },
-  {
-    classic: "WhatsApp ve QR ayrıca eklenir",
-    vitrinx: "WhatsApp, link ve QR hazırdır",
-  },
-  {
-    classic: "Güncelleme teknik destek gerektirebilir",
-    vitrinx: "Bilgiler panelden düzenlenir",
-  },
-  {
-    classic: "Kurulum ve bakım maliyetleri oluşabilir",
-    vitrinx: "Ayrı web sitesi kurmadan başlanabilir",
-  },
-  {
-    classic: "Pazaryeri komisyonu olabilir",
-    vitrinx: "VitrinX satıştan komisyon almaz",
-  },
+const separateSetupItems = [
+  "Domain ve hosting",
+  "Teknik ayarlar",
+  "WhatsApp bağlantısı",
+  "QR ve paylaşım süreci",
+  "İçerik güncelleme desteği",
+] as const;
+
+const vitrinxSetupItems = [
+  "İşletme bilgileri ve fotoğraflar",
+  "Ürünler ve hizmetler",
+  "WhatsApp, adres, link ve QR",
+  "Panelden kolay güncelleme",
+  "Müşteriyle doğrudan iletişim",
 ] as const;
 
 const trustItems = [
@@ -99,7 +81,14 @@ const steps = [
   },
 ] as const;
 
-type GlyphKind = (typeof whyItems)[number]["icon"];
+type GlyphKind =
+  | "bolt"
+  | "contact"
+  | "share"
+  | "edit"
+  | "chat"
+  | "qr"
+  | "globe";
 
 function CheckIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
@@ -121,11 +110,24 @@ function CheckIcon({ className = "h-4 w-4" }: { className?: string }) {
 function FeatureGlyph({ kind }: { kind: GlyphKind }) {
   const paths: Record<GlyphKind, React.ReactNode> = {
     bolt: <path d="m13 2-8 12h7l-1 8 8-12h-7l1-8Z" />,
-    code: (
+    contact: (
       <>
-        <path d="m8 9-3 3 3 3" />
-        <path d="m16 9 3 3-3 3" />
-        <path d="m14 5-4 14" />
+        <path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+        <path d="M9 7h6M9 17h6M10 11h4" />
+      </>
+    ),
+    share: (
+      <>
+        <circle cx="18" cy="5" r="3" />
+        <circle cx="6" cy="12" r="3" />
+        <circle cx="18" cy="19" r="3" />
+        <path d="m8.6 10.6 6.8-4.2M8.6 13.4l6.8 4.2" />
+      </>
+    ),
+    edit: (
+      <>
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
       </>
     ),
     chat: (
@@ -140,13 +142,6 @@ function FeatureGlyph({ kind }: { kind: GlyphKind }) {
         <rect x="15" y="3" width="6" height="6" rx="1" />
         <rect x="3" y="15" width="6" height="6" rx="1" />
         <path d="M15 15h2v2h-2zM19 15h2M19 19h2v2h-2zM15 19v2" />
-      </>
-    ),
-    percent: (
-      <>
-        <path d="m19 5-14 14" />
-        <circle cx="7" cy="7" r="2" />
-        <circle cx="17" cy="17" r="2" />
       </>
     ),
     globe: (
@@ -170,6 +165,75 @@ function FeatureGlyph({ kind }: { kind: GlyphKind }) {
     >
       {paths[kind]}
     </svg>
+  );
+}
+
+function SetupPanel({
+  label,
+  items,
+  footer,
+  highlighted,
+}: {
+  label: string;
+  items: readonly string[];
+  footer: string;
+  highlighted: boolean;
+}) {
+  return (
+    <article
+      className={
+        highlighted
+          ? "rounded-[28px] border border-[#10D8D8]/30 bg-gradient-to-br from-[#0F172A] to-[#0B6670] p-6 text-white shadow-[0_22px_55px_rgba(11,102,112,0.22)] sm:p-7"
+          : "rounded-[28px] border border-[#DCE7EA] bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)] dark:border-[#243141] dark:bg-[#131A22] sm:p-7"
+      }
+    >
+      <p
+        className={`text-sm font-extrabold ${
+          highlighted
+            ? "text-[#65E7E7]"
+            : "text-[#64748B] dark:text-[#94A3B8]"
+        }`}
+      >
+        {label}
+      </p>
+      <ul className="mt-6 space-y-3.5">
+        {items.map((item) => (
+          <li key={item} className="flex items-center gap-3">
+            <span
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                highlighted
+                  ? "bg-white/10 text-[#65E7E7]"
+                  : "bg-[#F1F5F9] text-[#64748B] dark:bg-[#1B242F] dark:text-[#94A3B8]"
+              }`}
+            >
+              {highlighted ? (
+                <CheckIcon className="h-4 w-4" />
+              ) : (
+                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              )}
+            </span>
+            <span
+              className={`text-sm leading-6 ${
+                highlighted
+                  ? "font-bold text-white"
+                  : "font-semibold text-[#334155] dark:text-[#CBD5E1]"
+              }`}
+            >
+              {item}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div
+        className={`mt-5 rounded-2xl border px-4 py-3 text-center text-xs font-extrabold leading-5 ${
+          highlighted
+            ? "border-white/10 bg-white/10 text-[#BFF7F7]"
+            : "border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] dark:border-[#243141] dark:bg-[#1B242F] dark:text-[#94A3B8]"
+        }`}
+      >
+        {footer}
+      </div>
+    </article>
   );
 }
 
@@ -364,23 +428,27 @@ export default async function HomePage() {
               Dijital vitrininizi kolayca hazırlayın
             </h2>
             <p className="mt-4 text-base leading-7 text-[#64748B] dark:text-[#94A3B8]">
-              Teknik kurulumla uğraşmadan işletmenizi müşterileriniz için
-              erişilebilir hale getirin.
+              Müşterilerinizin ihtiyaç duyduğu bilgileri tek vitrinde toplayın,
+              panelden yönetin ve istediğiniz yerde paylaşın.
             </p>
           </div>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {whyItems.map((item) => (
               <article
                 key={item.title}
-                className="rounded-[22px] border border-[#E2E8F0] bg-[#F8FAFC] p-5 transition-transform duration-200 hover:-translate-y-1 dark:border-[#243141] dark:bg-[#131A22]"
+                className="flex items-start gap-4 rounded-[22px] border border-[#E2E8F0] bg-[#F8FAFC] p-4 transition-transform duration-200 dark:border-[#243141] dark:bg-[#131A22] sm:block sm:p-5 lg:hover:-translate-y-1"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#10D8D8]/10 text-[#0EA8B0]">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#10D8D8]/10 text-[#0EA8B0]">
                   <FeatureGlyph kind={item.icon} />
                 </div>
-                <h3 className="mt-4 text-lg font-extrabold">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-[#64748B] dark:text-[#94A3B8]">
-                  {item.description}
-                </p>
+                <div>
+                  <h3 className="text-base font-extrabold leading-6 sm:mt-4 sm:text-lg">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-6 text-[#64748B] dark:text-[#94A3B8] sm:mt-2">
+                    {item.description}
+                  </p>
+                </div>
               </article>
             ))}
           </div>
@@ -388,55 +456,46 @@ export default async function HomePage() {
       </section>
 
       <section className="bg-[#F1F5F9] px-5 py-20 dark:bg-[#10161D] sm:px-8 md:py-24">
-        <div className="mx-auto w-full max-w-5xl">
+        <div className="mx-auto w-full max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              İşletmenizi dijitale taşımanın kolay yolu
+              Dijital vitrininiz için gerekenler tek yerde
             </h2>
             <p className="mt-4 text-base leading-7 text-[#64748B] dark:text-[#94A3B8]">
-              Web sitesi farklı ihtiyaçlar için güçlü bir çözüm olabilir.
-              VitrinX, hızlı ve teknik yük olmadan dijital vitrin oluşturmak
-              isteyen işletmeler için hazırlanmıştır.
+              Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme
+              bilgilerinizi VitrinX’e ekleyin ve paylaşmaya başlayın.
             </p>
           </div>
 
-          <div className="mt-12 overflow-hidden rounded-[28px] border border-[#DCE7EA] bg-white shadow-[0_20px_55px_rgba(15,23,42,0.08)] dark:border-[#243141] dark:bg-[#131A22]">
-            <div className="hidden grid-cols-2 gap-8 border-b border-[#E2E8F0] bg-[#F8FAFC] px-6 py-4 text-xs font-extrabold md:grid dark:border-[#243141] dark:bg-[#1B242F]">
-              <span className="text-[#64748B] dark:text-[#94A3B8]">
-                Geleneksel web sitesi süreci
-              </span>
-              <span className="text-[#0EA8B0] dark:text-[#10D8D8]">
-                VitrinX ile başlangıç
-              </span>
-            </div>
-            {comparisonItems.map((item, index) => (
-              <div
-                key={item.classic}
-                className={`grid gap-4 px-5 py-5 md:grid-cols-2 md:gap-8 md:px-6 ${
-                  index < comparisonItems.length - 1
-                    ? "border-b border-[#E2E8F0] dark:border-[#243141]"
-                    : ""
-                }`}
-              >
-                <div>
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#94A3B8] md:hidden">
-                    Web sitesi süreci
-                  </span>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-[#64748B] dark:text-[#94A3B8] md:mt-0">
-                    {item.classic}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#0EA8B0] md:hidden">
-                    VitrinX
-                  </span>
-                  <p className="mt-1 flex items-start gap-2 text-sm font-extrabold leading-6 md:mt-0">
-                    <CheckIcon className="mt-1 h-4 w-4 shrink-0 text-[#10B981]" />
-                    {item.vitrinx}
-                  </p>
-                </div>
+          <div className="mt-12 grid items-center gap-5 lg:grid-cols-[1fr_auto_1fr]">
+            <SetupPanel
+              label="Ayrı ayrı kurulum"
+              items={separateSetupItems}
+              footer="Birden fazla araç ve işlem"
+              highlighted={false}
+            />
+            <div className="flex justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#DCE7EA] bg-white text-[#0EA8B0] shadow-[0_10px_24px_rgba(15,23,42,0.09)] dark:border-[#243141] dark:bg-[#131A22]">
+                <svg
+                  className="h-5 w-5 rotate-90 lg:rotate-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
               </div>
-            ))}
+            </div>
+            <SetupPanel
+              label="VitrinX ile"
+              items={vitrinxSetupItems}
+              footer="Tek panel, tek link, doğrudan iletişim"
+              highlighted
+            />
           </div>
         </div>
       </section>

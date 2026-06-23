@@ -1316,7 +1316,7 @@ class _LandingScreenState extends State<LandingScreen>
     return Container(
       width: double.infinity,
       color: lightBg,
-      padding: const EdgeInsets.fromLTRB(24, 48, 24, 80),
+      padding: const EdgeInsets.fromLTRB(24, 48, 24, 72),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
@@ -1334,7 +1334,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               const SizedBox(height: 20),
               const Text(
-                'Teknik kurulumla uğraşmadan işletmenizi müşterileriniz için erişilebilir hale getirin.',
+                'Müşterilerinizin ihtiyaç duyduğu bilgileri tek vitrinde toplayın, panelden yönetin ve istediğiniz yerde paylaşın.',
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.black54,
@@ -1342,61 +1342,58 @@ class _LandingScreenState extends State<LandingScreen>
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 64),
+              const SizedBox(height: 48),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final isDesktop = constraints.maxWidth > 980;
+                  final isDesktop = constraints.maxWidth > 1040;
                   final isTablet = constraints.maxWidth > 680;
                   final cardWidth =
                       isDesktop
-                          ? (constraints.maxWidth - 48) / 3
+                          ? (constraints.maxWidth - 54) / 4
                           : isTablet
-                          ? (constraints.maxWidth - 24) / 2
+                          ? (constraints.maxWidth - 18) / 2
                           : constraints.maxWidth;
                   return Wrap(
-                    spacing: 24,
-                    runSpacing: 24,
+                    spacing: 18,
+                    runSpacing: 18,
                     alignment: WrapAlignment.center,
                     children:
                         [
-                          _HoverFeatureCard(
+                          _LandingValueCard(
                             icon: Icons.bolt_rounded,
                             color: brandOrange,
-                            title: 'Dakikalar içinde hazır',
+                            title: 'Dakikalar içinde yayına alın',
                             desc:
-                                'Bilgilerinizi ekleyin ve vitrininizi yayınlayın.',
+                                'Temel bilgilerinizi ekleyin ve vitrininizi oluşturun.',
+                            isHorizontal: !isTablet,
+                            enableHover: isDesktop,
                           ),
-                          _HoverFeatureCard(
-                            icon: Icons.code_off_rounded,
-                            color: blueAccent,
-                            title: 'Teknik bilgi gerekmez',
-                            desc: 'Kod, hosting veya SSL ayarıyla uğraşmayın.',
-                          ),
-                          _HoverFeatureCard(
-                            icon: Icons.chat_bubble_rounded,
+                          _LandingValueCard(
+                            icon: Icons.contact_phone_rounded,
                             color: mint,
-                            title: 'WhatsApp ile doğrudan iletişim',
-                            desc: 'Müşterileriniz aracı olmadan size ulaşsın.',
+                            title: 'Müşteriler size doğrudan ulaşsın',
+                            desc:
+                                'WhatsApp, adres ve yol tarifi seçeneklerini tek yerde sunun.',
+                            isHorizontal: !isTablet,
+                            enableHover: isDesktop,
                           ),
-                          _HoverFeatureCard(
-                            icon: Icons.qr_code_2_rounded,
+                          _LandingValueCard(
+                            icon: Icons.share_rounded,
                             color: pinkAccent,
-                            title: 'Link ve QR ile paylaşım',
+                            title: 'Her kanalda aynı vitrini paylaşın',
                             desc:
-                                'Sosyal medya, kartvizit, paket ve işletme içinde paylaşın.',
+                                'Linkinizi sosyal medyada, QR kodunuzu işletmenizde kullanın.',
+                            isHorizontal: !isTablet,
+                            enableHover: isDesktop,
                           ),
-                          _HoverFeatureCard(
-                            icon: Icons.percent_rounded,
-                            color: const Color(0xFF8B5CF6),
-                            title: 'Satıştan komisyon yok',
-                            desc: 'Müşterilerinizle doğrudan iletişim kurun.',
-                          ),
-                          _HoverFeatureCard(
-                            icon: Icons.language_rounded,
-                            color: const Color(0xFFF59E0B),
-                            title: 'Ayrı web sitesi kurmadan başlayın',
+                          _LandingValueCard(
+                            icon: Icons.edit_note_rounded,
+                            color: blueAccent,
+                            title: 'Bilgilerinizi panelden güncelleyin',
                             desc:
-                                'Domain, hosting veya ajans süreci beklemeyin.',
+                                'Fotoğraf, ürün, hizmet ve iletişim bilgilerinizi istediğiniz zaman düzenleyin.',
+                            isHorizontal: !isTablet,
+                            enableHover: isDesktop,
                           ),
                         ].map((widget) => SizedBox(width: cardWidth, child: widget)).toList(),
                   );
@@ -1410,31 +1407,19 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Widget _buildComparisonSection(BuildContext context) {
-    const comparisonItems = [
-      (
-        classic: 'Hazırlık günler veya haftalar sürebilir',
-        vitrinx: 'Dakikalar içinde başlanabilir',
-      ),
-      (
-        classic: 'Domain, hosting ve SSL yönetimi gerekir',
-        vitrinx: 'Teknik altyapı hazır gelir',
-      ),
-      (
-        classic: 'WhatsApp ve QR ayrıca eklenir',
-        vitrinx: 'WhatsApp, link ve QR hazırdır',
-      ),
-      (
-        classic: 'Güncelleme teknik destek gerektirebilir',
-        vitrinx: 'Bilgiler panelden düzenlenir',
-      ),
-      (
-        classic: 'Kurulum ve bakım maliyetleri oluşabilir',
-        vitrinx: 'Ayrı web sitesi kurmadan başlanabilir',
-      ),
-      (
-        classic: 'Pazaryeri komisyonu olabilir',
-        vitrinx: 'VitrinX satıştan komisyon almaz',
-      ),
+    const separateSetupItems = [
+      (Icons.language_rounded, 'Domain ve hosting'),
+      (Icons.tune_rounded, 'Teknik ayarlar'),
+      (Icons.chat_bubble_outline_rounded, 'WhatsApp bağlantısı'),
+      (Icons.qr_code_2_rounded, 'QR ve paylaşım süreci'),
+      (Icons.support_agent_rounded, 'İçerik güncelleme desteği'),
+    ];
+    const vitrinxSetupItems = [
+      (Icons.storefront_rounded, 'İşletme bilgileri ve fotoğraflar'),
+      (Icons.inventory_2_rounded, 'Ürünler ve hizmetler'),
+      (Icons.hub_rounded, 'WhatsApp, adres, link ve QR'),
+      (Icons.edit_note_rounded, 'Panelden kolay güncelleme'),
+      (Icons.forum_rounded, 'Müşteriyle doğrudan iletişim'),
     ];
 
     return Container(
@@ -1447,7 +1432,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'İşletmenizi dijitale taşımanın kolay yolu',
+                'Dijital vitrininiz için gerekenler tek yerde',
                 style: TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -1458,7 +1443,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               const SizedBox(height: 16),
               const Text(
-                'Web sitesi farklı ihtiyaçlar için güçlü bir çözüm olabilir. VitrinX ise hızlı, sade ve teknik yük olmadan dijital vitrin oluşturmak isteyen işletmeler için hazırlanmıştır.',
+                'Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme bilgilerinizi VitrinX’e ekleyin ve paylaşmaya başlayın.',
                 style: TextStyle(
                   fontSize: 16,
                   color: Color(0xFF475569),
@@ -1469,67 +1454,65 @@ class _LandingScreenState extends State<LandingScreen>
               const SizedBox(height: 48),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final isDesktop = constraints.maxWidth > 760;
-                  return Container(
+                  final isDesktop = constraints.maxWidth > 820;
+                  final separatePanel = _buildSetupPanel(
+                    label: 'Ayrı ayrı kurulum',
+                    items: separateSetupItems,
+                    footer: 'Birden fazla araç ve işlem',
+                    highlighted: false,
+                  );
+                  final vitrinxPanel = _buildSetupPanel(
+                    label: 'VitrinX ile',
+                    items: vitrinxSetupItems,
+                    footer: 'Tek panel, tek link, doğrudan iletişim',
+                    highlighted: true,
+                  );
+                  final direction = Container(
+                    width: 46,
+                    height: 46,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
+                      shape: BoxShape.circle,
                       border: Border.all(color: const Color(0xFFDCE7EA)),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color.fromRGBO(15, 23, 42, 0.05),
-                          blurRadius: 28,
-                          offset: Offset(0, 14),
+                          color: Color.fromRGBO(15, 23, 42, 0.08),
+                          blurRadius: 16,
+                          offset: Offset(0, 8),
                         ),
                       ],
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
+                    child: Icon(
+                      isDesktop
+                          ? Icons.arrow_forward_rounded
+                          : Icons.arrow_downward_rounded,
+                      color: brandOrange,
+                    ),
+                  );
+
+                  if (isDesktop) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        if (isDesktop)
-                          Container(
-                            color: const Color(0xFFF8FAFC),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 18,
-                            ),
-                            child: const Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'Geleneksel web sitesi süreci',
-                                    style: TextStyle(
-                                      color: Color(0xFF64748B),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 28),
-                                Expanded(
-                                  child: Text(
-                                    'VitrinX ile başlangıç',
-                                    style: TextStyle(
-                                      color: brandOrange,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ...comparisonItems.asMap().entries.map(
-                          (entry) => _buildComparisonRow(
-                            classic: entry.value.classic,
-                            vitrinx: entry.value.vitrinx,
-                            isDesktop: isDesktop,
-                            showDivider:
-                                entry.key != comparisonItems.length - 1,
-                          ),
+                        Expanded(child: separatePanel),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                          child: direction,
                         ),
+                        Expanded(child: vitrinxPanel),
                       ],
-                    ),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      separatePanel,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        child: direction,
+                      ),
+                      vitrinxPanel,
+                    ],
                   );
                 },
               ),
@@ -1540,114 +1523,129 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildComparisonRow({
-    required String classic,
-    required String vitrinx,
-    required bool isDesktop,
-    required bool showDivider,
+  Widget _buildSetupPanel({
+    required String label,
+    required List<(IconData, String)> items,
+    required String footer,
+    required bool highlighted,
   }) {
-    final divider =
-        showDivider
-            ? const BorderSide(color: Color(0xFFE2E8F0))
-            : BorderSide.none;
-
-    if (isDesktop) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        decoration: BoxDecoration(border: Border(bottom: divider)),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(
-                classic,
-                style: const TextStyle(
-                  color: Color(0xFF64748B),
-                  fontSize: 14,
-                  height: 1.45,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+    return Container(
+      padding: const EdgeInsets.all(26),
+      decoration: BoxDecoration(
+        color: highlighted ? null : Colors.white,
+        gradient:
+            highlighted
+                ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0F172A), Color(0xFF0B6670)],
+                )
+                : null,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color:
+              highlighted
+                  ? const Color.fromRGBO(16, 216, 216, 0.32)
+                  : const Color(0xFFDCE7EA),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color:
+                highlighted
+                    ? const Color.fromRGBO(11, 102, 112, 0.2)
+                    : const Color.fromRGBO(15, 23, 42, 0.06),
+            blurRadius: highlighted ? 34 : 24,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: highlighted ? brandOrange : const Color(0xFF64748B),
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.2,
             ),
-            const SizedBox(width: 28),
-            Expanded(
+          ),
+          const SizedBox(height: 22),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.check_circle_rounded, color: mint, size: 19),
-                  const SizedBox(width: 10),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color:
+                          highlighted
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      highlighted ? Icons.check_rounded : item.$1,
+                      size: 19,
+                      color:
+                          highlighted
+                              ? const Color(0xFF65E7E7)
+                              : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      vitrinx,
-                      style: const TextStyle(
-                        color: darkAccent,
+                      item.$2,
+                      style: TextStyle(
+                        color:
+                            highlighted
+                                ? Colors.white
+                                : const Color(0xFF334155),
                         fontSize: 14,
-                        height: 1.45,
-                        fontWeight: FontWeight.w900,
+                        height: 1.35,
+                        fontWeight:
+                            highlighted ? FontWeight.w800 : FontWeight.w700,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(border: Border(bottom: divider)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Web sitesi süreci',
-            style: TextStyle(
-              color: Color(0xFF94A3B8),
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.4,
-            ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            classic,
-            style: const TextStyle(
-              color: Color(0xFF64748B),
-              fontSize: 14,
-              height: 1.4,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'VitrinX',
-            style: TextStyle(
-              color: brandOrange,
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.check_circle_rounded, color: mint, size: 19),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  vitrinx,
-                  style: const TextStyle(
-                    color: darkAccent,
-                    fontSize: 14,
-                    height: 1.4,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
+          const SizedBox(height: 4),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+            decoration: BoxDecoration(
+              color:
+                  highlighted
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color:
+                    highlighted
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : const Color(0xFFE2E8F0),
               ),
-            ],
+            ),
+            child: Text(
+              footer,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color:
+                    highlighted
+                        ? const Color(0xFFBFF7F7)
+                        : const Color(0xFF64748B),
+                fontSize: 12,
+                height: 1.35,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ),
         ],
       ),
@@ -2575,79 +2573,108 @@ class _PhoneMockup extends StatelessWidget {
   }
 }
 
-class _HoverFeatureCard extends StatefulWidget {
+class _LandingValueCard extends StatefulWidget {
   final IconData icon;
   final Color color;
   final String title;
   final String desc;
+  final bool isHorizontal;
+  final bool enableHover;
 
-  const _HoverFeatureCard({
+  const _LandingValueCard({
     required this.icon,
     required this.color,
     required this.title,
     required this.desc,
+    required this.isHorizontal,
+    required this.enableHover,
   });
 
   @override
-  State<_HoverFeatureCard> createState() => _HoverFeatureCardState();
+  State<_LandingValueCard> createState() => _LandingValueCardState();
 }
 
-class _HoverFeatureCardState extends State<_HoverFeatureCard> {
+class _LandingValueCardState extends State<_LandingValueCard> {
   bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
+    final isLifted = widget.enableHover && _isHovered;
+    final icon = Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: widget.color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Icon(widget.icon, color: widget.color, size: 24),
+    );
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          widget.title,
+          style: const TextStyle(
+            fontSize: 17,
+            height: 1.2,
+            fontWeight: FontWeight.w900,
+            color: _LandingScreenState.darkAccent,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          widget.desc,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFF64748B),
+            height: 1.45,
+          ),
+        ),
+      ],
+    );
+
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter:
+          widget.enableHover ? (_) => setState(() => _isHovered = true) : null,
+      onExit:
+          widget.enableHover ? (_) => setState(() => _isHovered = false) : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        transform: Matrix4.translationValues(0, _isHovered ? -5 : 0, 0),
-        padding: const EdgeInsets.all(20),
+        curve: Curves.easeOut,
+        transform: Matrix4.translationValues(0, isLifted ? -4 : 0, 0),
+        constraints: BoxConstraints(minHeight: widget.isHorizontal ? 0 : 188),
+        padding:
+            widget.isHorizontal
+                ? const EdgeInsets.symmetric(horizontal: 18, vertical: 17)
+                : const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
             BoxShadow(
-              color: widget.color.withValues(alpha: _isHovered ? 0.15 : 0.05),
-              blurRadius: _isHovered ? 30 : 10,
-              offset: Offset(0, _isHovered ? 15 : 5),
+              color: widget.color.withValues(alpha: isLifted ? 0.13 : 0.04),
+              blurRadius: isLifted ? 26 : 12,
+              offset: Offset(0, isLifted ? 12 : 6),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: widget.color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(widget.icon, color: widget.color, size: 24),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              widget.title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                color: _LandingScreenState.darkAccent,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.desc,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF64748B),
-                height: 1.45,
-              ),
-            ),
-          ],
-        ),
+        child:
+            widget.isHorizontal
+                ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    icon,
+                    const SizedBox(width: 15),
+                    Expanded(child: content),
+                  ],
+                )
+                : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [icon, const SizedBox(height: 18), content],
+                ),
       ),
     );
   }
