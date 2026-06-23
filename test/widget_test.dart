@@ -57,28 +57,22 @@ void main() {
     expect(find.byType(LandingScreen), findsAtLeastNWidgets(1));
   });
 
-  testWidgets(
-    'Landing mağaza düzenleme butonunu yakında olarak pasif gösterir',
-    (WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({
-        LocalStorageKeys.storeData: jsonEncode(
-          StoreData(name: 'Kayıtlı Mağaza', isStore: true).toJson(),
-        ),
-      });
+  testWidgets('Landing pasif yakında butonlarını göstermez', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      LocalStorageKeys.storeData: jsonEncode(
+        StoreData(name: 'Kayıtlı İşletme', isStore: true).toJson(),
+      ),
+    });
 
-      await tester.pumpWidget(const MaterialApp(home: LandingScreen()));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpWidget(const MaterialApp(home: LandingScreen()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
-      final buttonFinder = find.ancestor(
-        of: find.text('Mağazamı Düzenle · Yakında'),
-        matching: find.byWidgetPredicate((widget) => widget is ElevatedButton),
-      );
-      expect(buttonFinder, findsOneWidget);
-      final button = tester.widget<ElevatedButton>(buttonFinder);
-      expect(button.onPressed, isNull);
-    },
-  );
+    expect(find.textContaining('Yakında'), findsNothing);
+    expect(find.text('Vitrinleri Keşfet'), findsAtLeastNWidgets(1));
+  });
 
   testWidgets(
     'VitrinEditorScreen kategori ve ürün kataloğunu içermez ama pazaryeri linklerini içerir',

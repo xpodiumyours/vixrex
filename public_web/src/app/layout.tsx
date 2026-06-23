@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "VitrinX - Küçük İşletmeler İçin Dijital Vitrin",
-  description: "İşletmenizin ürünlerini sergileyin, online randevu alın ve Google görünürlüğünüzü artırın.",
+  title: "VitrinX | İşletmenizin Dijital Vitrini",
+  description:
+    "İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrin linkinde toplayın ve QR kodla paylaşın.",
   metadataBase: new URL("https://vitrinx.app"),
 };
 
