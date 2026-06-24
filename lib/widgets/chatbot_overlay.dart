@@ -1,14 +1,42 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:vitrinx/config/chatbot_config.dart';
 import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/services/chatbot_service.dart';
+import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
 // ─── Robot Rozet (Sol Kenar) ─────────────────────────────────────────────────
 class ChatbotBadge extends StatefulWidget {
-  const ChatbotBadge({super.key});
+  /// Anlık vitrin snapshot'ı. null ise genel karşılama gösterilir.
+  final XrexProfileSnapshot? snapshot;
+
+  /// Vitrinim sekmesine git callback'i.
+  final VoidCallback? onNavigateToVitrim;
+
+  /// Keşfet sekmesine git callback'i.
+  final VoidCallback? onNavigateToExplore;
+
+  /// Public linki kopyala callback'i.
+  final VoidCallback? onCopyLink;
+
+  /// QR bottom sheet callback'i.
+  final VoidCallback? onShowQr;
+
+  /// WhatsApp paylaşım callback'i.
+  final VoidCallback? onShareWhatsapp;
+
+  const ChatbotBadge({
+    super.key,
+    this.snapshot,
+    this.onNavigateToVitrim,
+    this.onNavigateToExplore,
+    this.onCopyLink,
+    this.onShowQr,
+    this.onShareWhatsapp,
+  });
 
   @override
   State<ChatbotBadge> createState() => _ChatbotBadgeState();
@@ -64,7 +92,15 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   }
 
   void _openChat(BuildContext context) {
-    XrexOverlay.show(context);
+    XrexOverlay.show(
+      context,
+      snapshot: widget.snapshot,
+      onNavigateToVitrim: widget.onNavigateToVitrim,
+      onNavigateToExplore: widget.onNavigateToExplore,
+      onCopyLink: widget.onCopyLink,
+      onShowQr: widget.onShowQr,
+      onShareWhatsapp: widget.onShareWhatsapp,
+    );
   }
 
   @override
@@ -245,10 +281,28 @@ class _RobotFacePainter extends CustomPainter {
 class XrexOverlay {
   static OverlayEntry? _entry;
 
-  static void show(BuildContext context) {
+  /// [snapshot] varsa Xrex kişiselleştirilmiş karşılama gösterir.
+  /// Callback'ler action butonlarını ilgili ekrana bağlar.
+  static void show(
+    BuildContext context, {
+    XrexProfileSnapshot? snapshot,
+    VoidCallback? onNavigateToVitrim,
+    VoidCallback? onNavigateToExplore,
+    VoidCallback? onCopyLink,
+    VoidCallback? onShowQr,
+    VoidCallback? onShareWhatsapp,
+  }) {
     if (_entry != null) return;
     _entry = OverlayEntry(
-      builder: (_) => _XrexPanelWrapper(onClose: close),
+      builder: (_) => _XrexPanelWrapper(
+        onClose: close,
+        snapshot: snapshot,
+        onNavigateToVitrim: onNavigateToVitrim,
+        onNavigateToExplore: onNavigateToExplore,
+        onCopyLink: onCopyLink,
+        onShowQr: onShowQr,
+        onShareWhatsapp: onShareWhatsapp,
+      ),
     );
     Overlay.of(context).insert(_entry!);
   }
@@ -261,7 +315,22 @@ class XrexOverlay {
 
 class _XrexPanelWrapper extends StatefulWidget {
   final VoidCallback onClose;
-  const _XrexPanelWrapper({required this.onClose});
+  final XrexProfileSnapshot? snapshot;
+  final VoidCallback? onNavigateToVitrim;
+  final VoidCallback? onNavigateToExplore;
+  final VoidCallback? onCopyLink;
+  final VoidCallback? onShowQr;
+  final VoidCallback? onShareWhatsapp;
+
+  const _XrexPanelWrapper({
+    required this.onClose,
+    this.snapshot,
+    this.onNavigateToVitrim,
+    this.onNavigateToExplore,
+    this.onCopyLink,
+    this.onShowQr,
+    this.onShareWhatsapp,
+  });
 
   @override
   State<_XrexPanelWrapper> createState() => _XrexPanelWrapperState();
@@ -306,14 +375,10 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
       color: Colors.transparent,
       child: Stack(
         children: [
-          // Arka plan blur
           GestureDetector(
             onTap: _close,
-            child: Container(
-              color: AppColors.darkText.withAlpha(40),
-            ),
+            child: Container(color: AppColors.darkText.withAlpha(40)),
           ),
-          // Panel
           SlideTransition(
             position: _slideAnim,
             child: Align(
@@ -321,7 +386,15 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
               child: SizedBox(
                 width: panelWidth,
                 height: double.infinity,
-                child: _XrexPanel(onClose: _close),
+                child: _XrexPanel(
+                  onClose: _close,
+                  snapshot: widget.snapshot,
+                  onNavigateToVitrim: widget.onNavigateToVitrim,
+                  onNavigateToExplore: widget.onNavigateToExplore,
+                  onCopyLink: widget.onCopyLink,
+                  onShowQr: widget.onShowQr,
+                  onShareWhatsapp: widget.onShareWhatsapp,
+                ),
               ),
             ),
           ),
@@ -334,7 +407,22 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
 // ─── Panel İçeriği ───────────────────────────────────────────────────────────
 class _XrexPanel extends StatefulWidget {
   final VoidCallback onClose;
-  const _XrexPanel({required this.onClose});
+  final XrexProfileSnapshot? snapshot;
+  final VoidCallback? onNavigateToVitrim;
+  final VoidCallback? onNavigateToExplore;
+  final VoidCallback? onCopyLink;
+  final VoidCallback? onShowQr;
+  final VoidCallback? onShareWhatsapp;
+
+  const _XrexPanel({
+    required this.onClose,
+    this.snapshot,
+    this.onNavigateToVitrim,
+    this.onNavigateToExplore,
+    this.onCopyLink,
+    this.onShowQr,
+    this.onShareWhatsapp,
+  });
 
   @override
   State<_XrexPanel> createState() => _XrexPanelState();
@@ -379,8 +467,13 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
       if (mounted) setState(() => _cursorVisible = !_cursorVisible);
     });
 
-    // Karşılama mesajı
-    _addBotMessage(ChatbotConfig.welcomeMessage);
+    // Karşılama mesajı: snapshot varsa kişiselleştirilmiş, yoksa genel
+    final snapshot = widget.snapshot;
+    if (snapshot != null) {
+      _addBotMessage(_service.respondWithSnapshot(snapshot));
+    } else {
+      _addBotMessage(ChatbotConfig.welcomeMessage);
+    }
   }
 
   @override
@@ -416,6 +509,12 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
   }
 
   void _onQuickReply(QuickReply reply) {
+    // Action routing: navigasyon aksiyonu varsa önce callback'i çağır
+    if (reply.action != XrexAction.none) {
+      _handleAction(reply.action);
+      return;
+    }
+
     final userMsg = ChatMessage.user(reply.label);
     setState(() {
       _messages.add(userMsg);
@@ -427,6 +526,41 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
       if (!mounted) return;
       setState(() => _isTyping = false);
       _addBotMessage(_service.respondToPayload(reply.payload));
+    });
+  }
+
+  /// Aksiyona göre ilgili callback'i çağırır ve paneli kapatır.
+  void _handleAction(XrexAction action) {
+    // Callback referanslarını önceden al (panel kapandıktan sonra widget
+    // unmount olabilir, bu yüzden doğrudan widget'a erişemeyiz)
+    final onVitrim   = widget.onNavigateToVitrim;
+    final onExplore  = widget.onNavigateToExplore;
+    final onCopy     = widget.onCopyLink;
+    final onQr       = widget.onShowQr;
+    final onWhatsapp = widget.onShareWhatsapp;
+
+    // onClose void döndürür — Future.delayed ile animasyon süresini bekle
+    widget.onClose();
+    Future.delayed(const Duration(milliseconds: 320), () {
+      switch (action) {
+        case XrexAction.openVitrim:
+          onVitrim?.call();
+          break;
+        case XrexAction.openExplore:
+          onExplore?.call();
+          break;
+        case XrexAction.copyLink:
+          onCopy?.call();
+          break;
+        case XrexAction.showQr:
+          onQr?.call();
+          break;
+        case XrexAction.shareWhatsapp:
+          onWhatsapp?.call();
+          break;
+        case XrexAction.none:
+          break;
+      }
     });
   }
 
@@ -647,30 +781,38 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: lines.map((line) {
-                if (line.isEmpty) return const SizedBox(height: 4);
-                final isCursor = !_isTyping && lines.last == line;
-                return RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: line,
-                        style: const TextStyle(
-                          color: AppColors.darkText,
-                          fontSize: 12.5,
-                          height: 1.5,
-                          fontFamily: 'monospace',
+              children: [
+                ...lines.map((line) {
+                  if (line.isEmpty) return const SizedBox(height: 4);
+                  final isCursor = !_isTyping && lines.last == line;
+                  return RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: line,
+                          style: const TextStyle(
+                            color: AppColors.darkText,
+                            fontSize: 12.5,
+                            height: 1.5,
+                            fontFamily: 'monospace',
+                          ),
                         ),
-                      ),
-                      if (isCursor && _cursorVisible)
-                        const TextSpan(
-                          text: ' ▌',
-                          style: TextStyle(color: AppColors.primary, fontSize: 12),
-                        ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                        if (isCursor && _cursorVisible)
+                          const TextSpan(
+                            text: ' ▌',
+                            style: TextStyle(color: AppColors.primary, fontSize: 12),
+                          ),
+                      ],
+                    ),
+                  );
+                }),
+                // ── [İyileştirme #1] Skor çubuğu ────────────────────────
+                if (msg.snapshotScore != null) ...
+                  [
+                    const SizedBox(height: 10),
+                    _XrexScoreBar(score: msg.snapshotScore!),
+                  ],
+              ],
             ),
           ),
         ),
@@ -823,6 +965,94 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
   }
 }
 
+// ─── [İyileştirme #1] Animasyonlu Skor Çubuğu ───────────────────────────────
+class _XrexScoreBar extends StatefulWidget {
+  final int score; // 0–100
+  const _XrexScoreBar({required this.score});
+
+  @override
+  State<_XrexScoreBar> createState() => _XrexScoreBarState();
+}
+
+class _XrexScoreBarState extends State<_XrexScoreBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _fillAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _fillAnim = Tween<double>(begin: 0, end: widget.score / 100)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Color _barColor(int score) {
+    if (score >= 80) return const Color(0xFF22C55E); // yeşil
+    if (score >= 50) return const Color(0xFFF59E0B); // sarı
+    return const Color(0xFFEF4444);                  // kırmızı
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _barColor(widget.score);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Vitrin skoru',
+              style: TextStyle(
+                color: AppColors.mutedText,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            AnimatedBuilder(
+              animation: _fillAnim,
+              builder: (_, __) => Text(
+                '%${(widget.score * _fillAnim.value).round()}',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: AnimatedBuilder(
+            animation: _fillAnim,
+            builder: (_, __) => LinearProgressIndicator(
+              value: _fillAnim.value,
+              minHeight: 6,
+              backgroundColor: AppColors.border,
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ignore_for_file: unused_element
 // Kullanılmayan math import uyarısını bastır
 final _mathRef = math.pi;
+// Kullanılmayan services import uyarısını bastır
+final _servicesRef = HapticFeedback.selectionClick;

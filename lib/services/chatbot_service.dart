@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/config/chatbot_config.dart';
 import 'package:vitrinx/models/chat_message.dart';
+import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 
 /// Xrex chatbot servis katmanı.
 /// Kural tabanlı, tamamen offline çalışır.
@@ -27,6 +28,12 @@ class ChatbotService {
   /// Quick Reply payload'ına göre yanıt döner.
   ChatMessage respondToPayload(String payload) {
     return ChatbotConfig.responseFor(payload);
+  }
+
+  /// Vitrin snapshot'ına göre kişiselleştirilmiş karşılama mesajı döner.
+  /// [İyileştirme #2] Önceliklendirilmiş eksik alan sıralaması ile.
+  ChatMessage respondWithSnapshot(XrexProfileSnapshot snapshot) {
+    return ChatbotConfig.snapshotWelcome(snapshot);
   }
 
   /// Kullanıcı daha önce karşılandı mı?

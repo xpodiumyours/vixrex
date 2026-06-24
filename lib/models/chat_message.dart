@@ -9,6 +9,9 @@ class ChatMessage {
   final List<QuickReply> quickReplies;
   final ChatMessageType type;
 
+  /// Snapshot tabanlı mesajsa skor çubuğu gösterilir.
+  final int? snapshotScore;
+
   const ChatMessage({
     required this.id,
     required this.text,
@@ -16,12 +19,14 @@ class ChatMessage {
     required this.timestamp,
     this.quickReplies = const [],
     this.type = ChatMessageType.text,
+    this.snapshotScore,
   });
 
   factory ChatMessage.bot(
     String text, {
     List<QuickReply> quickReplies = const [],
     ChatMessageType type = ChatMessageType.text,
+    int? snapshotScore,
   }) {
     return ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -30,6 +35,7 @@ class ChatMessage {
       timestamp: DateTime.now(),
       quickReplies: quickReplies,
       type: type,
+      snapshotScore: snapshotScore,
     );
   }
 
@@ -45,11 +51,30 @@ class ChatMessage {
 
 enum ChatMessageType { text, loading, system }
 
+// ─── Type-safe Xrex Aksiyonları ──────────────────────────────────────────────
+/// Quick Reply butonlarının tetikleyebileceği navigasyon aksiyonları.
+enum XrexAction {
+  openVitrim,       // Vitrinim sekmesine git
+  copyLink,         // Public linki panoya kopyala
+  shareWhatsapp,    // WhatsApp paylaşım ekranı
+  showQr,           // QR bottom sheet
+  openExplore,      // Keşfet sekmesi
+  none,             // Sadece mesaj tetikler, navigasyon yok
+}
+
 /// Hızlı cevap butonu modeli.
 @immutable
 class QuickReply {
   final String label;
   final String payload;
 
-  const QuickReply({required this.label, required this.payload});
+  /// Aksiyona yönlendirme için type-safe alan.
+  /// Default [XrexAction.none] — geriye uyumlu.
+  final XrexAction action;
+
+  const QuickReply({
+    required this.label,
+    required this.payload,
+    this.action = XrexAction.none,
+  });
 }

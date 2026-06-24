@@ -1,4 +1,5 @@
 import 'package:vitrinx/models/chat_message.dart';
+import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 
 /// Xrex — VitrinX'in yapay zeka destekli asistan chatbot'u.
 /// Tüm yanıtlar Türkçedir. API bağlantısı yoktur; kural tabanlı çalışır.
@@ -7,7 +8,7 @@ abstract final class ChatbotConfig {
   static const String botSubtitle = 'VitrinX Asistanı';
   static const String systemStatus = 'AKTİF';
 
-  // ─── Karşılama Mesajı ────────────────────────────────────────────────────
+  // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
   static ChatMessage get welcomeMessage => ChatMessage.bot(
         'Merhaba! Ben **$botName**, VitrinX\'in dijital asistanıyım. 👋\n\n'
         'Dijital vitrin oluşturmanıza, ürünlerinizi paylaşmanıza ve\n'
@@ -15,6 +16,129 @@ abstract final class ChatbotConfig {
         'Size nasıl yardımcı olayım?',
         quickReplies: mainMenuReplies,
       );
+
+  // ─── Snapshot Tabanlı Karşılama Mesajları ────────────────────────────────
+
+  /// Vitrin durumuna göre kişiselleştirilmiş karşılama mesajı üretir.
+  static ChatMessage snapshotWelcome(XrexProfileSnapshot snapshot) {
+    if (snapshot.isPublished) {
+      return _publishedMessage(snapshot);
+    } else if (snapshot.isReadyToPublish) {
+      return _readyToPublishMessage(snapshot);
+    } else if (snapshot.healthScore >= 50) {
+      return _halfwayMessage(snapshot);
+    } else {
+      return _incompleteMessage(snapshot);
+    }
+  }
+
+  static ChatMessage _incompleteMessage(XrexProfileSnapshot snapshot) {
+    final missing = snapshot.prioritizedMissing;
+    final top3 = missing.take(3).toList();
+    final rest = missing.length > 3 ? missing.length - 3 : 0;
+
+    final namePrefix = snapshot.nameCompleted ? '' : 'İşletme adını gir, ';
+    final missingList = top3
+        .map((f) => '  • ${f.label}')
+        .join('\n');
+    final restText = rest > 0 ? '\n  ...ve $rest alan daha' : '';
+
+    return ChatMessage.bot(
+      'Merhaba! Vitrinin %${snapshot.healthScore} hazır. 🔧\n\n'
+      '${namePrefix}Yayına çıkmak için eksikler:\n'
+      '$missingList$restText\n\n'
+      'Hangisinden başlayalım?',
+      quickReplies: [
+        const QuickReply(
+          label: '▶ Vitrinim\'e Git',
+          payload: 'goto_vitrim',
+          action: XrexAction.openVitrim,
+        ),
+        ...top3.take(2).map((f) => QuickReply(
+          label: '> ${f.label} Ekle',
+          payload: 'goto_vitrim',
+          action: XrexAction.openVitrim,
+        )),
+        const QuickReply(label: '> Nasıl Yapılır?', payload: 'vitrin_kurulum'),
+      ],
+      snapshotScore: snapshot.healthScore,
+    );
+  }
+
+  static ChatMessage _halfwayMessage(XrexProfileSnapshot snapshot) {
+    final missing = snapshot.prioritizedMissing;
+    final top2 = missing.take(2).toList();
+
+    final missingList = top2.map((f) => '  • ${f.label}').join('\n');
+
+    return ChatMessage.bot(
+      'Harika gidiyorsun! Vitrininin %${snapshot.healthScore} hazır. 💪\n\n'
+      'Yayına çıkmak için ${missing.length} adım kaldı:\n'
+      '$missingList${missing.length > 2 ? '\n  ...ve ${missing.length - 2} alan daha' : ''}\n\n'
+      'Hızlıca tamamlayalım mı?',
+      quickReplies: [
+        const QuickReply(
+          label: '▶ Vitrinim\'e Git',
+          payload: 'goto_vitrim',
+          action: XrexAction.openVitrim,
+        ),
+        const QuickReply(label: '> Yardım Al', payload: 'vitrin_kurulum'),
+        const QuickReply(label: '> Ana Menü', payload: 'merhaba'),
+      ],
+      snapshotScore: snapshot.healthScore,
+    );
+  }
+
+  static ChatMessage _readyToPublishMessage(XrexProfileSnapshot snapshot) {
+    return ChatMessage.bot(
+      'Süper! Vitrininin %${snapshot.healthScore} hazır, yayına çıkmak için\n'
+      'artık sadece "Yayınla" butonuna basman yeterli! 🚀\n\n'
+      'Vitrinim sekmesine gidip yayınlayabilirsin.',
+      quickReplies: [
+        const QuickReply(
+          label: '▶ Vitrinim\'e Git & Yayınla',
+          payload: 'goto_vitrim',
+          action: XrexAction.openVitrim,
+        ),
+        const QuickReply(label: '> QR & Link Hakkında', payload: 'qr'),
+        const QuickReply(label: '> Ana Menü', payload: 'merhaba'),
+      ],
+      snapshotScore: snapshot.healthScore,
+    );
+  }
+
+  static ChatMessage _publishedMessage(XrexProfileSnapshot snapshot) {
+    return ChatMessage.bot(
+      'Vitrinin yayında! 🎉 Artık müşterilerin seni bulabilir.\n\n'
+      'Şimdi sıra paylaşımda — linkinizi QR kodunuzu\n'
+      've WhatsApp\'ınızı aktif kullanın.',
+      quickReplies: [
+        const QuickReply(
+          label: '▶ Linki Kopyala',
+          payload: 'copy_link',
+          action: XrexAction.copyLink,
+        ),
+        const QuickReply(
+          label: '▶ QR Kodu Göster',
+          payload: 'show_qr',
+          action: XrexAction.showQr,
+        ),
+        const QuickReply(
+          label: '▶ WhatsApp\'ta Paylaş',
+          payload: 'share_whatsapp',
+          action: XrexAction.shareWhatsapp,
+        ),
+        const QuickReply(
+          label: '> Keşfet\'te Gör',
+          payload: 'goto_explore',
+          action: XrexAction.openExplore,
+        ),
+      ],
+      snapshotScore: snapshot.healthScore,
+    );
+  }
+
+
 
   // ─── Ana Menü Quick Reply'ları ───────────────────────────────────────────
   static const List<QuickReply> mainMenuReplies = [
