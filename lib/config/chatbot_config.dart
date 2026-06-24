@@ -32,6 +32,17 @@ abstract final class ChatbotConfig {
     }
   }
 
+  static XrexAction _actionForField(XrexMissingField field) {
+    switch (field) {
+      case XrexMissingField.whatsapp:    return XrexAction.scrollToWhatsapp;
+      case XrexMissingField.address:     return XrexAction.scrollToAddress;
+      case XrexMissingField.cover:       return XrexAction.scrollToCover;
+      case XrexMissingField.gallery:     return XrexAction.scrollToGallery;
+      case XrexMissingField.description: return XrexAction.scrollToDesc;
+      case XrexMissingField.products:    return XrexAction.scrollToProducts;
+    }
+  }
+
   static ChatMessage _incompleteMessage(XrexProfileSnapshot snapshot) {
     final missing = snapshot.prioritizedMissing;
     final top3 = missing.take(3).toList();
@@ -49,15 +60,15 @@ abstract final class ChatbotConfig {
       '$missingList$restText\n\n'
       'Hangisinden başlayalım?',
       quickReplies: [
-        const QuickReply(
+        QuickReply(
           label: '▶ Vitrinim\'e Git',
           payload: 'goto_vitrim',
-          action: XrexAction.openVitrim,
+          action: snapshot.nameCompleted ? XrexAction.openVitrim : XrexAction.scrollToName,
         ),
         ...top3.take(2).map((f) => QuickReply(
           label: '> ${f.label} Ekle',
           payload: 'goto_vitrim',
-          action: XrexAction.openVitrim,
+          action: _actionForField(f),
         )),
         const QuickReply(label: '> Nasıl Yapılır?', payload: 'vitrin_kurulum'),
       ],
@@ -77,11 +88,11 @@ abstract final class ChatbotConfig {
       '$missingList${missing.length > 2 ? '\n  ...ve ${missing.length - 2} alan daha' : ''}\n\n'
       'Hızlıca tamamlayalım mı?',
       quickReplies: [
-        const QuickReply(
-          label: '▶ Vitrinim\'e Git',
+        ...top2.map((f) => QuickReply(
+          label: '▶ ${f.label} Ekle',
           payload: 'goto_vitrim',
-          action: XrexAction.openVitrim,
-        ),
+          action: _actionForField(f),
+        )),
         const QuickReply(label: '> Yardım Al', payload: 'vitrin_kurulum'),
         const QuickReply(label: '> Ana Menü', payload: 'merhaba'),
       ],

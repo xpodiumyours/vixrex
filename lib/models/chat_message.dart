@@ -59,6 +59,13 @@ enum XrexAction {
   shareWhatsapp,    // WhatsApp paylaşım ekranı
   showQr,           // QR bottom sheet
   openExplore,      // Keşfet sekmesi
+  scrollToCover,    // Kapak fotoğrafına git
+  scrollToGallery,  // Galeriye git
+  scrollToName,     // İşletme adına git
+  scrollToWhatsapp, // WhatsApp alanına git
+  scrollToAddress,  // Adrese git
+  scrollToDesc,     // Açıklamaya git
+  scrollToProducts, // Ürün/Hizmet alanına git
   none,             // Sadece mesaj tetikler, navigasyon yok
 }
 

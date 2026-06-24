@@ -28,6 +28,9 @@ class ChatbotBadge extends StatefulWidget {
   /// WhatsApp paylaşım callback'i.
   final VoidCallback? onShareWhatsapp;
 
+  /// Sayfa içi kaydırma callback'i.
+  final void Function(XrexAction)? onScrollToAction;
+
   const ChatbotBadge({
     super.key,
     this.snapshot,
@@ -36,6 +39,7 @@ class ChatbotBadge extends StatefulWidget {
     this.onCopyLink,
     this.onShowQr,
     this.onShareWhatsapp,
+    this.onScrollToAction,
   });
 
   @override
@@ -100,6 +104,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
       onCopyLink: widget.onCopyLink,
       onShowQr: widget.onShowQr,
       onShareWhatsapp: widget.onShareWhatsapp,
+      onScrollToAction: widget.onScrollToAction,
     );
   }
 
@@ -291,6 +296,7 @@ class XrexOverlay {
     VoidCallback? onCopyLink,
     VoidCallback? onShowQr,
     VoidCallback? onShareWhatsapp,
+    void Function(XrexAction)? onScrollToAction,
   }) {
     if (_entry != null) return;
     _entry = OverlayEntry(
@@ -302,6 +308,7 @@ class XrexOverlay {
         onCopyLink: onCopyLink,
         onShowQr: onShowQr,
         onShareWhatsapp: onShareWhatsapp,
+        onScrollToAction: onScrollToAction,
       ),
     );
     Overlay.of(context).insert(_entry!);
@@ -321,6 +328,7 @@ class _XrexPanelWrapper extends StatefulWidget {
   final VoidCallback? onCopyLink;
   final VoidCallback? onShowQr;
   final VoidCallback? onShareWhatsapp;
+  final void Function(XrexAction)? onScrollToAction;
 
   const _XrexPanelWrapper({
     required this.onClose,
@@ -330,6 +338,7 @@ class _XrexPanelWrapper extends StatefulWidget {
     this.onCopyLink,
     this.onShowQr,
     this.onShareWhatsapp,
+    this.onScrollToAction,
   });
 
   @override
@@ -394,6 +403,7 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
                   onCopyLink: widget.onCopyLink,
                   onShowQr: widget.onShowQr,
                   onShareWhatsapp: widget.onShareWhatsapp,
+                  onScrollToAction: widget.onScrollToAction,
                 ),
               ),
             ),
@@ -413,6 +423,7 @@ class _XrexPanel extends StatefulWidget {
   final VoidCallback? onCopyLink;
   final VoidCallback? onShowQr;
   final VoidCallback? onShareWhatsapp;
+  final void Function(XrexAction)? onScrollToAction;
 
   const _XrexPanel({
     required this.onClose,
@@ -422,6 +433,7 @@ class _XrexPanel extends StatefulWidget {
     this.onCopyLink,
     this.onShowQr,
     this.onShareWhatsapp,
+    this.onScrollToAction,
   });
 
   @override
@@ -538,6 +550,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
     final onCopy     = widget.onCopyLink;
     final onQr       = widget.onShowQr;
     final onWhatsapp = widget.onShareWhatsapp;
+    final onScroll   = widget.onScrollToAction;
 
     // onClose void döndürür — Future.delayed ile animasyon süresini bekle
     widget.onClose();
@@ -557,6 +570,15 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
           break;
         case XrexAction.shareWhatsapp:
           onWhatsapp?.call();
+          break;
+        case XrexAction.scrollToCover:
+        case XrexAction.scrollToGallery:
+        case XrexAction.scrollToName:
+        case XrexAction.scrollToWhatsapp:
+        case XrexAction.scrollToAddress:
+        case XrexAction.scrollToDesc:
+        case XrexAction.scrollToProducts:
+          onScroll?.call(action);
           break;
         case XrexAction.none:
           break;

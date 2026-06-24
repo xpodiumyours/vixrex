@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:vitrinx/models/chat_message.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
@@ -65,10 +66,24 @@ class MyVitrinScreen extends StatefulWidget {
   });
 
   @override
-  State<MyVitrinScreen> createState() => _MyVitrinScreenState();
+  State<MyVitrinScreen> createState() => MyVitrinScreenState();
 }
 
-class _MyVitrinScreenState extends State<MyVitrinScreen> {
+class MyVitrinScreenState extends State<MyVitrinScreen> {
+  // Keys for Scroll-to-Section
+  final GlobalKey _coverPhotoKey = GlobalKey();
+  final GlobalKey _galleryKey = GlobalKey();
+  final GlobalKey _nameKey = GlobalKey();
+  final GlobalKey _whatsappKey = GlobalKey();
+  final GlobalKey _addressKey = GlobalKey();
+  final GlobalKey _descriptionKey = GlobalKey();
+  final GlobalKey _productsKey = GlobalKey();
+
+  // FocusNodes
+  final FocusNode _nameFocusNode = FocusNode();
+  final FocusNode _whatsappFocusNode = FocusNode();
+  final FocusNode _descriptionFocusNode = FocusNode();
+
   // ─── Colors ─────────────────────────────────────────────────────────────
   static const Color primaryColor = AppColors.primary;
   static const Color bgColor = AppColors.bgEditor;
@@ -205,7 +220,60 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     _instagramController.dispose();
     _websiteController.dispose();
     _googleBusinessLinkController.dispose();
+    _nameFocusNode.dispose();
+    _whatsappFocusNode.dispose();
+    _descriptionFocusNode.dispose();
     super.dispose();
+  }
+
+  /// Xrex aksiyonuna göre ilgili forma otomatik kaydırır ve odaklanır.
+  void scrollToXrexAction(XrexAction action) {
+    GlobalKey? key;
+    FocusNode? focus;
+
+    switch (action) {
+      case XrexAction.scrollToCover:
+        key = _coverPhotoKey;
+        break;
+      case XrexAction.scrollToGallery:
+        key = _galleryKey;
+        break;
+      case XrexAction.scrollToName:
+        key = _nameKey;
+        focus = _nameFocusNode;
+        break;
+      case XrexAction.scrollToWhatsapp:
+        key = _whatsappKey;
+        focus = _whatsappFocusNode;
+        break;
+      case XrexAction.scrollToAddress:
+        key = _addressKey;
+        break;
+      case XrexAction.scrollToDesc:
+        key = _descriptionKey;
+        focus = _descriptionFocusNode;
+        break;
+      case XrexAction.scrollToProducts:
+        key = _productsKey;
+        break;
+      default:
+        return;
+    }
+
+    final context = key.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+
+    if (focus != null) {
+      Future.delayed(const Duration(milliseconds: 550), () {
+        focus?.requestFocus();
+      });
+    }
   }
 
   // ─── Data Loading ────────────────────────────────────────────────────────
@@ -1057,53 +1125,65 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ── Kapak Fotoğrafı ──────────────────────────────────
-              _buildCoverPicker(),
+              KeyedSubtree(key: _coverPhotoKey, child: _buildCoverPicker()),
               const SizedBox(height: 10),
 
               // ── Galeri (kapak altında, kompakt) ─────────────────
-              _buildCompactGalleryRow(),
+              KeyedSubtree(key: _galleryKey, child: _buildCompactGalleryRow()),
               const SizedBox(height: 18),
 
               // ── Zorunlu Alanlar (* ile işaretli) ─────────────────
-              _buildTextField(
-                label: 'İşletme / VitrinX Adı',
-                controller: _nameController,
-                hint: 'Örn: Aymira Butik',
-                icon: Icons.storefront_rounded,
-                errorText: _nameError,
-                required: true,
+              KeyedSubtree(
+                key: _nameKey,
+                child: _buildTextField(
+                  label: 'İşletme / VitrinX Adı',
+                  controller: _nameController,
+                  focusNode: _nameFocusNode,
+                  hint: 'Örn: Aymira Butik',
+                  icon: Icons.storefront_rounded,
+                  errorText: _nameError,
+                  required: true,
+                ),
               ),
               const SizedBox(height: 14),
 
-              _buildTextField(
-                label: 'WhatsApp Numarası',
-                controller: _whatsappController,
-                hint: '05xx xxx xx xx',
-                icon: Icons.chat_bubble_rounded,
-                keyboardType: TextInputType.phone,
-                errorText:
-                    _whatsappError ??
-                    (_whatsappController.text.trim().isNotEmpty &&
-                            !WhatsAppLinkHelper.isValidTurkeyMobile(
-                              _whatsappController.text,
-                            )
-                        ? WhatsAppLinkHelper.invalidNumberMessage
-                        : null),
-                required: true,
-                validateWhatsapp: true,
+              KeyedSubtree(
+                key: _whatsappKey,
+                child: _buildTextField(
+                  label: 'WhatsApp Numarası',
+                  controller: _whatsappController,
+                  focusNode: _whatsappFocusNode,
+                  hint: '05xx xxx xx xx',
+                  icon: Icons.chat_bubble_rounded,
+                  keyboardType: TextInputType.phone,
+                  errorText:
+                      _whatsappError ??
+                      (_whatsappController.text.trim().isNotEmpty &&
+                              !WhatsAppLinkHelper.isValidTurkeyMobile(
+                                _whatsappController.text,
+                              )
+                          ? WhatsAppLinkHelper.invalidNumberMessage
+                          : null),
+                  required: true,
+                  validateWhatsapp: true,
+                ),
               ),
               const SizedBox(height: 14),
 
-              _buildLocationField(),
+              KeyedSubtree(key: _addressKey, child: _buildLocationField()),
               const SizedBox(height: 14),
 
               // ── İsteğe Bağlı Alanlar ─────────────────────────────
-              _buildTextField(
-                label: 'Kısa Açıklama',
-                controller: _descriptionController,
-                hint: 'Bugün vitrinde ne var? Kısa bir tanıtım yaz.',
-                icon: Icons.notes_rounded,
-                maxLines: 3,
+              KeyedSubtree(
+                key: _descriptionKey,
+                child: _buildTextField(
+                  label: 'Kısa Açıklama',
+                  controller: _descriptionController,
+                  focusNode: _descriptionFocusNode,
+                  hint: 'Bugün vitrinde ne var? Kısa bir tanıtım yaz.',
+                  icon: Icons.notes_rounded,
+                  maxLines: 3,
+                ),
               ),
               const SizedBox(height: 14),
 
@@ -1117,7 +1197,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
               ),
               const SizedBox(height: 14),
 
-              _buildOfferingsSection(),
+              KeyedSubtree(key: _productsKey, child: _buildOfferingsSection()),
               const SizedBox(height: 14),
 
               _buildBookingSettingsSection(),
@@ -3196,6 +3276,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
     TextInputType? keyboardType,
     String? errorText,
     bool validateWhatsapp = false,
+    FocusNode? focusNode,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3223,6 +3304,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
+          focusNode: focusNode,
           maxLines: maxLines,
           keyboardType: keyboardType,
           style: const TextStyle(
