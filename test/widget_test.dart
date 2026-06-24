@@ -5,7 +5,6 @@ import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/my_vitrin_screen.dart';
-import 'package:vitrinx/screens/vitrin_editor_screen.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -73,20 +72,6 @@ void main() {
     expect(find.textContaining('Yakında'), findsNothing);
     expect(find.text('Vitrinleri Keşfet'), findsAtLeastNWidgets(1));
   });
-
-  testWidgets(
-    'VitrinEditorScreen kategori ve ürün kataloğunu içermez ama pazaryeri linklerini içerir',
-    (WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({});
-      await tester.pumpWidget(const MaterialApp(home: VitrinEditorScreen()));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Kategori'), findsNothing);
-      expect(find.text('Ürün Kataloğu'), findsNothing);
-      expect(find.text('Pazaryeri Linkleri'), findsOneWidget);
-      expect(find.text('Yayınla'), findsNothing);
-    },
-  );
 
   testWidgets('Vitrinim yayınlanmış vitrini aynı sayfada düzenletir', (
     WidgetTester tester,

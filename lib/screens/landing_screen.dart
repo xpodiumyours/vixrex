@@ -12,6 +12,7 @@ import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/auth_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/widgets/chatbot_overlay.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -229,6 +230,9 @@ class _LandingScreenState extends State<LandingScreen>
         if (store != null) {
           if (!mounted) return;
           if (store.isStore) {
+            // isStore: true olan hesaplar için Store editor ekranı
+            // planlanmaktadır (StoreSetupScreen kaldırıldı). Şimdilik
+            // token ve veri önbelleğe alınıp LandingScreen'de bırakılır.
             await prefs.setString(
               LocalStorageKeys.storeData,
               jsonEncode(store.toJson()),
@@ -409,19 +413,31 @@ class _LandingScreenState extends State<LandingScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: brandOrange,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeroSection(context),
-            _buildValueBandSection(context),
-            _buildFeaturesSection(context),
-            _buildComparisonSection(context),
-            _buildTrustBandSection(context),
-            _buildStepsSection(context),
-            _buildBottomCTA(context),
-            _buildFooter(),
-          ],
-        ),
+      body: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHeroSection(context),
+                _buildValueBandSection(context),
+                _buildFeaturesSection(context),
+                _buildComparisonSection(context),
+                _buildTrustBandSection(context),
+                _buildStepsSection(context),
+                _buildBottomCTA(context),
+                _buildFooter(),
+              ],
+            ),
+          ),
+          // Xrex: Sol kenarda yüzen robot rozeti
+          const Positioned(
+            left: 4,
+            top: 0,
+            bottom: 0,
+            child: Center(child: ChatbotBadge()),
+          ),
+        ],
       ),
     );
   }

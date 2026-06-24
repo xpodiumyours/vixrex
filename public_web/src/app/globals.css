@@ -92,27 +92,46 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
 }
 
+/* Kayan Bildirim Çubuğu Animasyonu */
+@keyframes ticker {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ticker-content {
+  display: inline-block;
+  animation: ticker 30s linear infinite;
+}
+
 .btn-primary {
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   color: #FFFFFF;
   font-weight: 600;
-  padding: 12px 24px;
-  border-radius: var(--radius-md);
+  padding: 12px 26px;
+  border-radius: 14px;
   border: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 12px rgba(16, 216, 216, 0.2);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(16, 216, 216, 0.15);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 0.95rem;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 216, 216, 0.35);
-  opacity: 0.95;
+  box-shadow: 0 8px 20px rgba(16, 216, 216, 0.28);
 }
 
 .btn-primary:active {
@@ -124,14 +143,14 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-dark);
   border: 1px solid var(--border);
   font-weight: 600;
-  padding: 12px 24px;
-  border-radius: var(--radius-md);
+  padding: 12px 26px;
+  border-radius: 14px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   font-size: 0.95rem;
 }
 

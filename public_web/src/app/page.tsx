@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import InteractiveDemo from "./InteractiveDemo";
 
 export const revalidate = 600;
 
@@ -16,68 +17,42 @@ const getStoreCount = unstable_cache(
   { tags: ["homepage"], revalidate: 600 },
 );
 
-const whyItems = [
-  {
-    icon: "bolt",
-    title: "Dakikalar içinde yayına alın",
-    description: "Temel bilgilerinizi ekleyin ve vitrininizi oluşturun.",
-  },
-  {
-    icon: "contact",
-    title: "Müşteriler size doğrudan ulaşsın",
-    description:
-      "WhatsApp, adres ve yol tarifi seçeneklerini tek yerde sunun.",
-  },
-  {
-    icon: "share",
-    title: "Her kanalda aynı vitrini paylaşın",
-    description:
-      "Linkinizi sosyal medyada, QR kodunuzu işletmenizde kullanın.",
-  },
-  {
-    icon: "edit",
-    title: "Bilgilerinizi panelden güncelleyin",
-    description:
-      "Fotoğraf, ürün, hizmet ve iletişim bilgilerinizi istediğiniz zaman düzenleyin.",
-  },
-] as const;
-
 const separateSetupItems = [
-  "Domain ve hosting",
-  "Teknik ayarlar",
-  "WhatsApp bağlantısı",
-  "QR ve paylaşım süreci",
-  "İçerik güncelleme desteği",
+  "Domain ücreti ve yıllık hosting maliyetleri",
+  "DNS yönlendirme ve teknik kurulum karmaşası",
+  "Yazılım güncelleme ve bakım masrafları",
+  "WhatsApp ve harita entegrasyonu uğraşları",
+  "Fiyat değişimi için günlerce teknik destek beklemek",
 ] as const;
 
 const vitrinxSetupItems = [
-  "İşletme bilgileri ve fotoğraflar",
-  "Ürünler ve hizmetler",
-  "WhatsApp, adres, link ve QR",
-  "Panelden kolay güncelleme",
-  "Müşteriyle doğrudan iletişim",
+  "Sadece işletme bilgilerinizi ekleyin",
+  "Ürün ve hizmetlerinizi kolayca listeleyin",
+  "WhatsApp ve Google Haritalar entegrasyonu hazır",
+  "Ziyaretçileriniz için otomatik QR kod üretilsin",
+  "Bilgileri istediğiniz an cepten güncelleyin",
 ] as const;
 
 const trustItems = [
-  "Kredi kartı gerekmez",
-  "Satıştan komisyon alınmaz",
-  "Kodsuz kurulum",
-  "Link ve QR kod hazırdır",
-  "WhatsApp ile doğrudan iletişim",
+  "Kredi Kartı Gerekmez",
+  "Komisyon Yok",
+  "Teknik Altyapı Hazır Gelir",
+  "Link & QR Kodunuz Anında Üretilir",
+  "Müşteriyle Doğrudan WhatsApp Bağlantısı",
 ] as const;
 
 const steps = [
   {
-    title: "Bilgilerinizi ekleyin",
-    description: "İşletme adı, açıklama, WhatsApp ve adres bilgilerinizi girin.",
+    title: "1. Profilinizi Oluşturun",
+    description: "İşletme adı, WhatsApp hattınız ve adres bilgilerinizi saniyeler içinde girin.",
   },
   {
-    title: "Vitrininizi hazırlayın",
-    description: "Fotoğraflarınızı, ürünlerinizi ve hizmetlerinizi ekleyin.",
+    title: "2. Ürünlerinizi Ekleyin",
+    description: "Fotoğraf, ürün ve hizmetlerinizi açıklama ve fiyatlarıyla birlikte listeleyin.",
   },
   {
-    title: "Müşterilerinizle paylaşın",
-    description: "Vitrin linkinizi veya QR kodunuzu paylaşın.",
+    title: "3. Hemen Paylaşın",
+    description: "Dijital vitrin linkinizi veya QR kodunuzu müşterilerinizle paylaşmaya başlayın.",
   },
 ] as const;
 
@@ -245,8 +220,18 @@ export default async function HomePage() {
     console.error("Error fetching store count:", error);
   }
 
+  // Ticker text
+  const tickerText = "Domain Ücreti Yok • Hosting Ücreti Yok • Karmaşık Kodlama Yok • Kurulum Beklemek Yok • Sadece 2 Dakikada Profesyonel Vitrin Altyapınız Hazır • ";
+
   return (
     <div className="min-h-screen overflow-hidden bg-[#FFFBF7] text-[#182028] dark:bg-[#0B0F13] dark:text-[#F1F5F9]">
+      {/* Kayan Bildirim Çubuğu (Top Ticker Banner) */}
+      <div className="w-full bg-[#0F172A] text-white py-2.5 text-xs font-bold border-b border-[#10D8D8]/20 ticker-wrap relative z-50">
+        <div className="ticker-content">
+          {Array(10).fill(tickerText).join("")}
+        </div>
+      </div>
+
       <section className="relative">
         <div className="pointer-events-none absolute left-[-12%] top-[8%] h-[320px] w-[320px] rounded-full bg-[#10D8D8]/15 blur-[110px] dark:bg-[#10D8D8]/8" />
         <div className="pointer-events-none absolute right-[-10%] top-[18%] h-[420px] w-[420px] rounded-full bg-[#38A0E4]/15 blur-[130px] dark:bg-[#38A0E4]/8" />
@@ -281,22 +266,20 @@ export default async function HomePage() {
 
         <main className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-12 px-5 pb-20 pt-10 sm:px-8 md:grid-cols-[1.08fr_0.92fr] md:pb-28 md:pt-16">
           <div className="flex flex-col items-center text-center md:items-start md:text-left">
-            <span className="mb-7 inline-flex rounded-full border border-[#10D8D8]/25 bg-[#10D8D8]/10 px-4 py-2 text-xs font-extrabold tracking-[0.16em] text-[#0EA8B0] dark:text-[#10D8D8]">
-              İŞLETMENİZ İÇİN DİJİTAL VİTRİN
+            <span className="mb-7 inline-flex rounded-full border border-[#10D8D8]/25 bg-[#10D8D8]/10 px-4 py-2 text-xs font-bold tracking-[0.16em] text-[#0EA8B0] dark:text-[#10D8D8]">
+              İŞLETMELER İÇİN YENİ NESİL DİJİTALLEŞME
             </span>
             <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-[-0.035em] sm:text-5xl lg:text-6xl">
-              İşletmenizin dijital vitrini dakikalar içinde hazır
+              Dükkanınız için tek linkte hazır dijital vitrin
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-[#475569] dark:text-[#CBD5E1] sm:text-lg sm:leading-8">
-              İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi,
-              adresinizi ve WhatsApp iletişiminizi tek vitrinde toplayın.
-              Linkinizi ve QR kodunuzu müşterilerinizle kolayca paylaşın.
+              Kapsamlı ve maliyetli bir web sitesi yaptırmak yerine; ürünlerinizi, WhatsApp sipariş hattınızı, adresinizi ve QR kodunuzu tek bir profesyonel vitrinde toplayın.
             </p>
 
             {displayCount >= 5 ? (
               <div className="mt-5 flex items-center gap-2 rounded-full border border-[#D0E4E8] bg-white/75 px-4 py-2 text-xs font-bold text-[#475569] dark:border-[#243141] dark:bg-[#131A22]/75 dark:text-[#CBD5E1]">
                 <span className="h-2 w-2 rounded-full bg-[#10B981]" />
-                VitrinX’te {displayCount} işletme vitrini yayında
+                VitrinX altyapısıyla {displayCount} işletme yayında
               </div>
             ) : null}
 
@@ -320,9 +303,9 @@ export default async function HomePage() {
               </label>
               <button
                 type="submit"
-                className="btn-primary min-h-14 rounded-2xl px-7 font-extrabold"
+                className="btn-primary min-h-14 rounded-2xl px-7 font-semibold"
               >
-                VitrinX Oluştur
+                Ücretsiz Vitrin Aç
                 <svg
                   width="18"
                   height="18"
@@ -340,7 +323,7 @@ export default async function HomePage() {
             </form>
 
             <div className="mt-5 flex flex-wrap justify-center gap-2 md:justify-start">
-              {["Kredi kartı gerekmez", "Teknik bilgi gerekmez", "Komisyon yok", "Link ve QR hazır"].map(
+              {["Komisyon Yok", "Kodsuz Tasarım", "Hazır Link & QR"].map(
                 (badge) => (
                   <span
                     key={badge}
@@ -362,7 +345,7 @@ export default async function HomePage() {
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#0EA8B0]">
                     Dijital vitrininiz
                   </p>
-                  <h2 className="mt-1 text-2xl font-extrabold">Tek linkte hazır</h2>
+                  <h2 className="mt-1 text-2xl font-bold">Tek linkte hazır</h2>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#10D8D8]/12 text-[#0EA8B0]">
                   <FeatureGlyph kind="globe" />
@@ -370,10 +353,10 @@ export default async function HomePage() {
               </div>
               <div className="mt-5 grid grid-cols-2 gap-3">
                 {[
-                  ["qr", "Link ve QR"],
-                  ["chat", "WhatsApp"],
-                  ["globe", "Adres ve bilgiler"],
-                  ["bolt", "Ürün ve hizmetler"],
+                  ["qr", "Link ve QR Kod"],
+                  ["chat", "WhatsApp İletişim"],
+                  ["globe", "Adres ve Konum"],
+                  ["bolt", "Hizmet Kataloğu"],
                 ].map(([icon, label]) => (
                   <div
                     key={label}
@@ -382,96 +365,41 @@ export default async function HomePage() {
                     <div className="text-[#0EA8B0]">
                       <FeatureGlyph kind={icon as GlyphKind} />
                     </div>
-                    <p className="mt-3 text-sm font-extrabold">{label}</p>
+                    <p className="mt-3 text-sm font-semibold">{label}</p>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#10D8D8]/10 p-4 text-sm font-bold text-[#0B7F86] dark:text-[#65E7E7]">
+              <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#10D8D8]/10 p-4 text-sm font-semibold text-[#0B7F86] dark:text-[#65E7E7]">
                 <CheckIcon className="h-5 w-5 shrink-0" />
-                Müşterileriniz size doğrudan ulaşır.
+                Müşterileriniz doğrudan size ulaşır.
               </div>
             </div>
           </div>
         </main>
       </section>
 
-      <section className="bg-[#F4F5F8] px-5 py-16 dark:bg-[#10161D] sm:px-8 md:py-20">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-8 text-center md:flex-row md:text-left">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Müşterileriniz ihtiyaç duyduğu her bilgiye tek linkten ulaşsın
-            </h2>
-            <p className="mt-4 text-base leading-7 text-[#64748B] dark:text-[#94A3B8]">
-              Vitrin linkinizi WhatsApp, sosyal medya, Google İşletme, kartvizit,
-              paket veya işletme içi QR kod üzerinden paylaşın.
-            </p>
-          </div>
-          <div className="flex max-w-md flex-wrap justify-center gap-2 md:justify-end">
-            {["WhatsApp", "Sosyal medya", "Google İşletme", "QR kod", "Vitrin linki"].map(
-              (channel) => (
-                <span
-                  key={channel}
-                  className="rounded-full border border-[#D0E4E8] bg-white px-4 py-2.5 text-xs font-extrabold text-[#334155] dark:border-[#243141] dark:bg-[#131A22] dark:text-[#CBD5E1]"
-                >
-                  {channel}
-                </span>
-              ),
-            )}
-          </div>
-        </div>
+      {/* İnteraktif Simülatör & Kanal Sekmeleri */}
+      <section className="bg-white dark:bg-[#0B0F13] border-y border-[#E2E8F0] dark:border-[#243141]">
+        <InteractiveDemo />
       </section>
 
-      <section className="bg-white px-5 py-20 dark:bg-[#0B0F13] sm:px-8 md:py-24">
-        <div className="mx-auto w-full max-w-6xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Dijital vitrininizi kolayca hazırlayın
-            </h2>
-            <p className="mt-4 text-base leading-7 text-[#64748B] dark:text-[#94A3B8]">
-              Müşterilerinizin ihtiyaç duyduğu bilgileri tek vitrinde toplayın,
-              panelden yönetin ve istediğiniz yerde paylaşın.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {whyItems.map((item) => (
-              <article
-                key={item.title}
-                className="flex items-start gap-4 rounded-[22px] border border-[#E2E8F0] bg-[#F8FAFC] p-4 transition-transform duration-200 dark:border-[#243141] dark:bg-[#131A22] sm:block sm:p-5 lg:hover:-translate-y-1"
-              >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#10D8D8]/10 text-[#0EA8B0]">
-                  <FeatureGlyph kind={item.icon} />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold leading-6 sm:mt-4 sm:text-lg">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1.5 text-sm leading-6 text-[#64748B] dark:text-[#94A3B8] sm:mt-2">
-                    {item.description}
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
+      {/* Karşılaştırma Bölümü (Klasik Site vs VitrinX) */}
       <section className="bg-[#F1F5F9] px-5 py-20 dark:bg-[#10161D] sm:px-8 md:py-24">
         <div className="mx-auto w-full max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Dijital vitrininiz için gerekenler tek yerde
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Dijital vitrininiz için gereken her şey tek yerde
             </h2>
-            <p className="mt-4 text-base leading-7 text-[#64748B] dark:text-[#94A3B8]">
-              Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme
-              bilgilerinizi VitrinX’e ekleyin ve paylaşmaya başlayın.
+            <p className="mt-4 text-base text-[#64748B] dark:text-[#94A3B8]">
+              Ayrı ayrı karmaşık sistemlerle ve gizli maliyetlerle uğraşmayı bırakın. VitrinX size hazır bir ekosistem sunar.
             </p>
           </div>
 
           <div className="mt-12 grid items-center gap-5 lg:grid-cols-[1fr_auto_1fr]">
             <SetupPanel
-              label="Ayrı ayrı kurulum"
+              label="KLASİK WEB SİTESİ SÜRECİ"
               items={separateSetupItems}
-              footer="Birden fazla araç ve işlem"
+              footer="Yüksek maliyet, karmaşık yönetim"
               highlighted={false}
             />
             <div className="flex justify-center">
@@ -491,23 +419,85 @@ export default async function HomePage() {
               </div>
             </div>
             <SetupPanel
-              label="VitrinX ile"
+              label="VITRINX AKILLI VİTRİN"
               items={vitrinxSetupItems}
-              footer="Tek panel, tek link, doğrudan iletişim"
+              footer="Tek tıkla kurulum, anında canlıda"
               highlighted
             />
           </div>
         </div>
       </section>
 
-      <section className="bg-white px-5 py-14 dark:bg-[#0B0F13] sm:px-8">
+      {/* 6'lı Premium Özellik Izgarası */}
+      <section className="bg-white px-5 py-20 dark:bg-[#0B0F13] sm:px-8 md:py-24">
+        <div className="mx-auto w-full max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              İşletmenizin değerini gösteren özellikler
+            </h2>
+            <p className="mt-4 text-base text-[#64748B] dark:text-[#94A3B8]">
+              Dijital dünyada profesyonelce yer alabilmeniz için optimize edilmiş modern araçlar.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                icon: "globe",
+                title: "Tek Linkte Toplayın",
+                desc: "İletişim, konum, sosyal medya ve ürün kataloğu tek bir profesyonel link altında.",
+              },
+              {
+                icon: "share",
+                title: "Görsel Vitrininiz",
+                desc: "Ürün, hizmet veya dükkan fotoğraflarınızı müşterilerinize en hızlı şekilde gösterin.",
+              },
+              {
+                icon: "chat",
+                title: "WhatsApp ile Doğrudan Sipariş",
+                desc: "Arada hiçbir aracı veya komisyon olmadan doğrudan müşterilerinizden sipariş alın.",
+              },
+              {
+                icon: "contact",
+                title: "Harita & Yol Tarifi",
+                desc: "Müşterileriniz tek tıkla işletmenizin konumunu görüp yol tarifi başlatabilir.",
+              },
+              {
+                icon: "bolt",
+                title: "Arama Motoru (SEO) Dostu",
+                desc: "Otomatik sitemap ve yapılandırılmış şema yapısıyla Google aramalarında öne çıkın.",
+              },
+              {
+                icon: "qr",
+                title: "Hızlı QR Kod Sistemi",
+                desc: "Mağazanıza, masalarınıza veya paketlerinize koyabileceğiniz özel QR kodunuz saniyeler içinde hazır.",
+              },
+            ].map((item) => (
+              <article
+                key={item.title}
+                className="rounded-[22px] border border-[#E2E8F0] bg-[#F8FAFC] p-6 transition-all duration-200 hover:shadow-lg dark:border-[#243141] dark:bg-[#131A22]"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#10D8D8]/10 text-[#0EA8B0] mb-4">
+                  <FeatureGlyph kind={item.icon as GlyphKind} />
+                </div>
+                <h3 className="text-lg font-bold">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#64748B] dark:text-[#94A3B8]">
+                  {item.desc}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Avantajlar / Trust Items */}
+      <section className="bg-[#F8FAFC] dark:bg-[#10161D] px-5 py-14 sm:px-8 border-y border-[#E2E8F0] dark:border-[#243141]">
         <div className="mx-auto w-full max-w-6xl text-center">
-          <h2 className="text-2xl font-extrabold sm:text-3xl">Başlarken sürpriz yok</h2>
+          <h2 className="text-2xl font-bold sm:text-3xl">Başlarken Sürpriz Yok</h2>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             {trustItems.map((item) => (
               <span
                 key={item}
-                className="inline-flex items-center gap-2 rounded-full border border-[#DCE7EA] bg-[#F8FAFC] px-4 py-3 text-xs font-extrabold text-[#334155] dark:border-[#243141] dark:bg-[#131A22] dark:text-[#CBD5E1]"
+                className="inline-flex items-center gap-2 rounded-full border border-[#DCE7EA] bg-white px-4 py-3 text-xs font-bold text-[#334155] dark:border-[#243141] dark:bg-[#131A22] dark:text-[#CBD5E1]"
               >
                 <CheckIcon className="h-4 w-4 text-[#10B981]" />
                 {item}
@@ -517,18 +507,19 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-[#F8FAFC] px-5 py-20 dark:bg-[#10161D] sm:px-8 md:py-24">
+      {/* Adımlar */}
+      <section className="bg-white px-5 py-20 dark:bg-[#0B0F13] sm:px-8 md:py-24">
         <div className="mx-auto w-full max-w-5xl">
-          <h2 className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl">
+          <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
             Üç adımda vitrininiz hazır
           </h2>
           <div className="mt-12 grid gap-8 md:grid-cols-3">
             {steps.map((step, index) => (
               <div key={step.title} className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#10D8D8]/35 bg-[#10D8D8]/8 text-xl font-extrabold text-[#0EA8B0]">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#10D8D8]/35 bg-[#10D8D8]/8 text-xl font-bold text-[#0EA8B0]">
                   {index + 1}
                 </div>
-                <h3 className="mt-5 text-lg font-extrabold">{step.title}</h3>
+                <h3 className="mt-5 text-lg font-bold">{step.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-[#64748B] dark:text-[#94A3B8]">
                   {step.description}
                 </p>
@@ -538,24 +529,25 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* CTA */}
       <section className="bg-gradient-to-br from-[#0F172A] via-[#0B6670] to-[#10D8D8] px-5 py-20 text-white sm:px-8 md:py-24">
         <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-          <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
+          <h2 className="text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
             İşletmenizi tek linkte müşterilerinizle buluşturun
           </h2>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
-            VitrinX’inizi oluşturun; linkinizi, QR kodunuzu ve WhatsApp
-            iletişiminizi paylaşmaya başlayın.
+          <p className="mt-5 max-w-2xl text-base text-white/80 sm:text-lg">
+            Hemen kaydolun, vitrin linkinizi ve QR kodunuzu oluşturup dakikalar içinde paylaşmaya başlayın.
           </p>
           <Link
             href="https://app.vitrinx.app"
-            className="mt-9 inline-flex min-h-14 items-center justify-center rounded-2xl bg-[#10D8D8] px-8 text-base font-extrabold text-white shadow-[0_14px_35px_rgba(16,216,216,0.28)] transition-transform hover:-translate-y-1"
+            className="mt-9 inline-flex min-h-14 items-center justify-center rounded-2xl bg-[#10D8D8] px-8 text-base font-bold text-white shadow-[0_14px_35px_rgba(16,216,216,0.28)] transition-transform hover:-translate-y-1"
           >
-            VitrinX Oluştur
+            Hemen Vitrinini Aç
           </Link>
         </div>
       </section>
 
+      {/* Footer */}
       <footer className="border-t border-[#D0E4E8] bg-white px-5 py-10 dark:border-[#243141] dark:bg-[#0B0F13] sm:px-8">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
           <div>

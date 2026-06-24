@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/screens/blog_moderation_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/my_vitrin_screen.dart';
+import 'package:vitrinx/widgets/chatbot_overlay.dart';
 
 class HomeShellScreen extends StatefulWidget {
   final int initialIndex;
@@ -83,7 +84,21 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     ];
 
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: pages),
+      body: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          IndexedStack(index: _selectedIndex, children: pages),
+          // Xrex: Sol kenarda yüzen robot rozeti
+          Positioned(
+            left: 4,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: const ChatbotBadge(),
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {

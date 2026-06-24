@@ -1840,7 +1840,7 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Google politikaları gereği yorum karşılığında indirim, hediye veya ödül teklif etmek yasaktır. Lütfen QR kodunu yalnızca memnun müşterilerinizi yönlendirmek için kullanın.',
+                          'Google politikaları gereği yorum karşılığında ödül veya hediye teklif edilmesi yasaktır. Lütfen QR kodunu müşterilerinizden tarafsız ve organik geri bildirimler almak üzere kullanın.',
                           style: TextStyle(
                             color: Color(0xFF991B1B),
                             fontSize: 12,

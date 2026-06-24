@@ -103,6 +103,9 @@ class _AuthScreenState extends State<AuthScreen> {
     if (store != null) {
       // Cache details in SharedPreferences and redirect to the appropriate editor screen
       if (store.isStore) {
+        // isStore: true olan hesaplar için Store editor ekranı
+        // planlanmaktadır. Şimdilik token kaydedilip LandingScreen'e
+        // yönlendirilmektedir.
         await prefs.setString(
           LocalStorageKeys.storeData,
           jsonEncode(store.toJson()),
