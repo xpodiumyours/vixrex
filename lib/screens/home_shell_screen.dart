@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vitrinx/models/chat_message.dart';
+import 'package:vitrinx/services/chatbot_service.dart';
 import 'package:vitrinx/screens/blog_moderation_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/my_vitrin_screen.dart';
@@ -61,10 +62,16 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final snapshot = await _snapshotLoader.load();
     final storage = const StoreLocalStorageService();
     final publishedInfo = await storage.loadPublishedVitrinInfo();
+    
+    // Geçmiş sohbeti yerel depolamadan yükle
+    final history = await ChatbotService().loadHistory();
+
     if (mounted) {
       setState(() {
         _xrexSnapshot = snapshot;
         _publishedInfo = publishedInfo;
+        _xrexChatMessages.clear();
+        _xrexChatMessages.addAll(history);
       });
     }
   }

@@ -47,6 +47,34 @@ class ChatMessage {
       timestamp: DateTime.now(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'text': text,
+        'isBot': isBot,
+        'timestamp': timestamp.toIso8601String(),
+        'type': type.name,
+        'snapshotScore': snapshotScore,
+        'quickReplies': quickReplies.map((r) => r.toJson()).toList(),
+      };
+
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    final repliesJson = json['quickReplies'] as List<dynamic>? ?? [];
+    return ChatMessage(
+      id: json['id'] as String,
+      text: json['text'] as String,
+      isBot: json['isBot'] as bool,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      type: ChatMessageType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => ChatMessageType.text,
+      ),
+      snapshotScore: json['snapshotScore'] as int?,
+      quickReplies: repliesJson
+          .map((r) => QuickReply.fromJson(r as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }
 
 enum ChatMessageType { text, loading, system }
@@ -84,4 +112,21 @@ class QuickReply {
     required this.payload,
     this.action = XrexAction.none,
   });
+
+  Map<String, dynamic> toJson() => {
+        'label': label,
+        'payload': payload,
+        'action': action.name,
+      };
+
+  factory QuickReply.fromJson(Map<String, dynamic> json) {
+    return QuickReply(
+      label: json['label'] as String,
+      payload: json['payload'] as String,
+      action: XrexAction.values.firstWhere(
+        (e) => e.name == json['action'],
+        orElse: () => XrexAction.none,
+      ),
+    );
+  }
 }

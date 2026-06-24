@@ -517,6 +517,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
 
   void _addBotMessage(ChatMessage msg) {
     setState(() => _messages.add(msg));
+    _service.saveHistory(_messages);
     Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
   }
 
@@ -527,6 +528,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
       _messages.add(userMsg);
       _isTyping = true;
     });
+    _service.saveHistory(_messages);
     _inputCtrl.clear();
     _scrollToBottom();
 
@@ -549,6 +551,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
       _messages.add(userMsg);
       _isTyping = true;
     });
+    _service.saveHistory(_messages);
     _scrollToBottom();
 
     Future.delayed(const Duration(milliseconds: 600), () {

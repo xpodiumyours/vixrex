@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/config/chatbot_config.dart';
 import 'package:vitrinx/models/chat_message.dart';
@@ -64,5 +65,39 @@ class ChatbotService {
         .replaceAll('Ş', 's')
         .replaceAll('Ö', 'o')
         .replaceAll('Ç', 'c');
+  }
+
+  static const String _historyKey = 'xrex_chat_history';
+
+  /// Sohbet geçmişini kaydeder.
+  Future<void> saveHistory(List<ChatMessage> history) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonList = history.map((m) => m.toJson()).toList();
+      await prefs.setString(_historyKey, jsonEncode(jsonList));
+    } catch (_) {}
+  }
+
+  /// Sohbet geçmişini yükler.
+  Future<List<ChatMessage>> loadHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = prefs.getString(_historyKey);
+      if (jsonStr == null || jsonStr.isEmpty) return [];
+      final decoded = jsonDecode(jsonStr) as List<dynamic>;
+      return decoded
+          .map((item) => ChatMessage.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Geçmişi temizler.
+  Future<void> clearHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_historyKey);
+    } catch (_) {}
   }
 }
