@@ -493,14 +493,28 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
 
     // Sohbet geçmişini başlat/bağla
     _messages = widget.chatHistory ?? [];
-    if (_messages.isEmpty) {
-      final snapshot = widget.snapshot;
-      if (snapshot != null) {
-        _messages.add(_service.respondWithSnapshot(snapshot));
-      } else {
-        _messages.add(ChatbotConfig.welcomeMessage);
+    
+    final snap = widget.snapshot;
+    if (snap != null) {
+      final lastMsg = _messages.isNotEmpty ? _messages.last : null;
+      final isLastMsgPublished = lastMsg?.text.contains('yayında') == true || lastMsg?.text.contains('yayınla') == false;
+      
+      if (_messages.isEmpty ||
+          lastMsg == null ||
+          !lastMsg.isBot ||
+          lastMsg.snapshotScore != snap.healthScore ||
+          isLastMsgPublished != snap.isPublished) {
+        
+        _messages.add(_service.respondWithSnapshot(snap));
+        _service.saveHistory(_messages);
       }
     } else {
+      if (_messages.isEmpty) {
+        _messages.add(ChatbotConfig.welcomeMessage);
+      }
+    }
+
+    if (_messages.isNotEmpty) {
       Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
     }
   }
