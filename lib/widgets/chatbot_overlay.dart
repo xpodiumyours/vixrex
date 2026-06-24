@@ -31,9 +31,13 @@ class ChatbotBadge extends StatefulWidget {
   /// Sayfa içi kaydırma callback'i.
   final void Function(XrexAction)? onScrollToAction;
 
+  /// Sohbet geçmişi listesi.
+  final List<ChatMessage>? chatHistory;
+
   const ChatbotBadge({
     super.key,
     this.snapshot,
+    this.chatHistory,
     this.onNavigateToVitrim,
     this.onNavigateToExplore,
     this.onCopyLink,
@@ -99,6 +103,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
     XrexOverlay.show(
       context,
       snapshot: widget.snapshot,
+      chatHistory: widget.chatHistory,
       onNavigateToVitrim: widget.onNavigateToVitrim,
       onNavigateToExplore: widget.onNavigateToExplore,
       onCopyLink: widget.onCopyLink,
@@ -291,6 +296,7 @@ class XrexOverlay {
   static void show(
     BuildContext context, {
     XrexProfileSnapshot? snapshot,
+    List<ChatMessage>? chatHistory,
     VoidCallback? onNavigateToVitrim,
     VoidCallback? onNavigateToExplore,
     VoidCallback? onCopyLink,
@@ -303,6 +309,7 @@ class XrexOverlay {
       builder: (_) => _XrexPanelWrapper(
         onClose: close,
         snapshot: snapshot,
+        chatHistory: chatHistory,
         onNavigateToVitrim: onNavigateToVitrim,
         onNavigateToExplore: onNavigateToExplore,
         onCopyLink: onCopyLink,
@@ -323,6 +330,7 @@ class XrexOverlay {
 class _XrexPanelWrapper extends StatefulWidget {
   final VoidCallback onClose;
   final XrexProfileSnapshot? snapshot;
+  final List<ChatMessage>? chatHistory;
   final VoidCallback? onNavigateToVitrim;
   final VoidCallback? onNavigateToExplore;
   final VoidCallback? onCopyLink;
@@ -333,6 +341,7 @@ class _XrexPanelWrapper extends StatefulWidget {
   const _XrexPanelWrapper({
     required this.onClose,
     this.snapshot,
+    this.chatHistory,
     this.onNavigateToVitrim,
     this.onNavigateToExplore,
     this.onCopyLink,
@@ -398,6 +407,7 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
                 child: _XrexPanel(
                   onClose: _close,
                   snapshot: widget.snapshot,
+                  chatHistory: widget.chatHistory,
                   onNavigateToVitrim: widget.onNavigateToVitrim,
                   onNavigateToExplore: widget.onNavigateToExplore,
                   onCopyLink: widget.onCopyLink,
@@ -418,6 +428,7 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
 class _XrexPanel extends StatefulWidget {
   final VoidCallback onClose;
   final XrexProfileSnapshot? snapshot;
+  final List<ChatMessage>? chatHistory;
   final VoidCallback? onNavigateToVitrim;
   final VoidCallback? onNavigateToExplore;
   final VoidCallback? onCopyLink;
@@ -428,6 +439,7 @@ class _XrexPanel extends StatefulWidget {
   const _XrexPanel({
     required this.onClose,
     this.snapshot,
+    this.chatHistory,
     this.onNavigateToVitrim,
     this.onNavigateToExplore,
     this.onCopyLink,
@@ -442,7 +454,7 @@ class _XrexPanel extends StatefulWidget {
 
 class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
   final ChatbotService _service = ChatbotService();
-  final List<ChatMessage> _messages = [];
+  late final List<ChatMessage> _messages;
   final TextEditingController _inputCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
 
@@ -479,12 +491,17 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
       if (mounted) setState(() => _cursorVisible = !_cursorVisible);
     });
 
-    // Karşılama mesajı: snapshot varsa kişiselleştirilmiş, yoksa genel
-    final snapshot = widget.snapshot;
-    if (snapshot != null) {
-      _addBotMessage(_service.respondWithSnapshot(snapshot));
+    // Sohbet geçmişini başlat/bağla
+    _messages = widget.chatHistory ?? [];
+    if (_messages.isEmpty) {
+      final snapshot = widget.snapshot;
+      if (snapshot != null) {
+        _messages.add(_service.respondWithSnapshot(snapshot));
+      } else {
+        _messages.add(ChatbotConfig.welcomeMessage);
+      }
     } else {
-      _addBotMessage(ChatbotConfig.welcomeMessage);
+      Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
     }
   }
 

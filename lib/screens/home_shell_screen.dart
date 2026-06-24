@@ -30,6 +30,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   int _exploreRefreshKey = 0;
   final _myVitrinKey = GlobalKey<MyVitrinScreenState>();
 
+  // Chat History
+  final List<ChatMessage> _xrexChatMessages = [];
+
   // ── Xrex Snapshot ─────────────────────────────────────────────────────────
   XrexProfileSnapshot? _xrexSnapshot;
   PublishedVitrinInfo? _publishedInfo;
@@ -290,6 +293,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
             child: Center(
               child: ChatbotBadge(
                 snapshot: _xrexSnapshot,
+                chatHistory: _xrexChatMessages,
                 onNavigateToVitrim: _xrexNavigateToVitrim,
                 onNavigateToExplore: _openExplore,
                 onCopyLink: _xrexCopyLink,
