@@ -729,6 +729,13 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               .map((i) => i.toStoreItem())
               .toList();
 
+      if (_selectedKategori != 'Kuaför') {
+        _bookingIsEnabled = false;
+        for (final offering in _offerings) {
+          offering.isBookable = false;
+        }
+      }
+
       final data =
           _data
             ..name = name
@@ -1192,15 +1199,27 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 value: _selectedKategori,
                 items: _categories,
                 icon: Icons.category_rounded,
-                onChanged:
-                    (val) => setState(() => _selectedKategori = val ?? 'Diğer'),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedKategori = val ?? 'Diğer';
+                    if (_selectedKategori != 'Kuaför') {
+                      _bookingIsEnabled = false;
+                      for (final offering in _offerings) {
+                        offering.isBookable = false;
+                      }
+                    }
+                  });
+                },
               ),
               const SizedBox(height: 14),
 
               KeyedSubtree(key: _productsKey, child: _buildOfferingsSection()),
               const SizedBox(height: 14),
 
-              _buildBookingSettingsSection(),
+              if (_selectedKategori == 'Kuaför') ...[
+                _buildBookingSettingsSection(),
+                const SizedBox(height: 14),
+              ],
 
               _buildDropdown(
                 label: 'Vitrin Durumu',
@@ -2443,54 +2462,56 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               border: InputBorder.none,
             ),
           ),
-          const Divider(height: 1, color: cardBorder),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const SizedBox(width: 8),
-              const Icon(Icons.calendar_today_rounded, size: 14, color: mutedText),
-              const SizedBox(width: 4),
-              const Text(
-                'Randevuya Açık',
-                style: TextStyle(fontSize: 12, color: softText, fontWeight: FontWeight.w600),
-              ),
-              Switch(
-                value: offering.isBookable,
-                activeColor: primaryColor,
-                onChanged: (val) {
-                  setState(() {
-                    offering.isBookable = val;
-                  });
-                },
-              ),
-              const Spacer(),
-              if (offering.isBookable) ...[
-                const Icon(Icons.timer_rounded, size: 14, color: mutedText),
+          if (_selectedKategori == 'Kuaför') ...[
+            const Divider(height: 1, color: cardBorder),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const SizedBox(width: 8),
+                const Icon(Icons.calendar_today_rounded, size: 14, color: mutedText),
                 const SizedBox(width: 4),
-                DropdownButton<int>(
-                  value: offering.durationMinutes,
-                  items: [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
-                    return DropdownMenuItem<int>(
-                      value: val,
-                      child: Text(
-                        '$val dk',
-                        style: const TextStyle(fontSize: 12, color: darkText, fontWeight: FontWeight.bold),
-                      ),
-                    );
-                  }).toList(),
+                const Text(
+                  'Randevuya Açık',
+                  style: TextStyle(fontSize: 12, color: softText, fontWeight: FontWeight.w600),
+                ),
+                Switch(
+                  value: offering.isBookable,
+                  activeColor: primaryColor,
                   onChanged: (val) {
                     setState(() {
-                      if (val != null) {
-                        offering.durationMinutes = val;
-                      }
+                      offering.isBookable = val;
                     });
                   },
-                  underline: const SizedBox(),
                 ),
-                const SizedBox(width: 8),
+                const Spacer(),
+                if (offering.isBookable) ...[
+                  const Icon(Icons.timer_rounded, size: 14, color: mutedText),
+                  const SizedBox(width: 4),
+                  DropdownButton<int>(
+                    value: offering.durationMinutes,
+                    items: [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
+                      return DropdownMenuItem<int>(
+                        value: val,
+                        child: Text(
+                          '$val dk',
+                          style: const TextStyle(fontSize: 12, color: darkText, fontWeight: FontWeight.bold),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        if (val != null) {
+                          offering.durationMinutes = val;
+                        }
+                      });
+                    },
+                    underline: const SizedBox(),
+                  ),
+                  const SizedBox(width: 8),
+                ],
               ],
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );

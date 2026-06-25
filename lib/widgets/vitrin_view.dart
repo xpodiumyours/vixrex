@@ -494,7 +494,8 @@ class VitrinView extends StatelessWidget {
   }
 
   Widget _buildBookingCTAButton(BuildContext context, VitrinThemePreset preset, double radius) {
-    final hasBooking = storeData.bookingSettings?.isEnabled == true;
+    final isKuafor = storeData.kategori == 'Kuaför';
+    final hasBooking = storeData.bookingSettings?.isEnabled == true && isKuafor;
     if (!hasBooking) return const SizedBox();
 
     return Padding(
