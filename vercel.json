@@ -1,23 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "bash vercel-build.sh",
-  "redirects": [
-    {
-      "source": "/v/:slug((?!.*\\.).*)",
-      "destination": "https://vitrinx.app/v/:slug",
-      "permanent": true
-    },
-    {
-      "source": "/sitemap.xml",
-      "destination": "https://vitrinx.app/sitemap.xml",
-      "permanent": true
-    },
-    {
-      "source": "/robots.txt",
-      "destination": "https://vitrinx.app/robots.txt",
-      "permanent": true
-    }
-  ],
   "outputDirectory": "build/web",
   "headers": [
     {
