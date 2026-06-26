@@ -170,7 +170,7 @@ class VitrinView extends StatelessWidget {
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
       if (storeData.offerings.isNotEmpty) ...[
-        _buildOfferingsBlock(preset, radius),
+        _buildOfferingsBlock(context, preset, radius),
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
       if (storeData.isStore && storeData.products.isNotEmpty) ...[
@@ -205,27 +205,27 @@ class VitrinView extends StatelessWidget {
     final hasGalleryMedia = galleryItems.isNotEmpty;
 
     return [
-      _buildModernHeader(context, preset, radius, galleryItems),
-      const SizedBox(height: 18),
-      _buildStoreIdentityBlock(preset),
-      const SizedBox(height: 18),
+      _buildPublicProfileHero(
+        context,
+        preset,
+        radius,
+        galleryItems,
+        desktop: false,
+      ),
+      const SizedBox(height: 14),
       _buildBookingCTAButton(context, preset, radius),
       if (storeData.bookingSettings?.isEnabled == true)
         const SizedBox(height: 16),
-      if (_hasVisibleActions()) ...[
-        _buildPremiumActionButtons(context, radius),
-        const SizedBox(height: 18),
-      ],
       if (storeData.isStore && storeData.products.isNotEmpty) ...[
         _buildProductsCatalogBlock(preset, radius),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
       ],
       if (storeData.offerings.isNotEmpty) ...[
-        _buildOfferingsBlock(preset, radius),
-        const SizedBox(height: 18),
+        _buildOfferingsBlock(context, preset, radius),
+        const SizedBox(height: 14),
       ],
       _buildCompactProfileTools(context, preset),
-      const SizedBox(height: 18),
+      const SizedBox(height: 14),
       if (_aboutText().isNotEmpty) ...[
         _buildAboutCard(preset),
         const SizedBox(height: 18),
@@ -259,7 +259,16 @@ class VitrinView extends StatelessWidget {
 
     return Column(
       children: [
-        _buildModernHeader(context, preset, radius, galleryItems),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: _buildPublicProfileHero(
+            context,
+            preset,
+            radius,
+            galleryItems,
+            desktop: true,
+          ),
+        ),
         const SizedBox(height: 22),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -270,21 +279,15 @@ class VitrinView extends StatelessWidget {
                 flex: 7,
                 child: Column(
                   children: [
-                    _buildStoreIdentityBlock(preset),
-                    const SizedBox(height: 20),
                     _buildBookingCTAButton(context, preset, radius),
                     if (storeData.bookingSettings?.isEnabled == true)
                       const SizedBox(height: 18),
-                    if (_hasVisibleActions()) ...[
-                      _buildPremiumActionButtons(context, radius),
-                      const SizedBox(height: 22),
-                    ],
                     if (storeData.isStore && storeData.products.isNotEmpty) ...[
                       _buildProductsCatalogBlock(preset, radius),
                       const SizedBox(height: 22),
                     ],
                     if (storeData.offerings.isNotEmpty) ...[
-                      _buildOfferingsBlock(preset, radius),
+                      _buildOfferingsBlock(context, preset, radius),
                       const SizedBox(height: 22),
                     ],
                     if (_aboutText().isNotEmpty) _buildAboutCard(preset),
@@ -382,6 +385,370 @@ class VitrinView extends StatelessWidget {
       filterQuality: FilterQuality.medium,
       errorBuilder: errorBuilder,
     );
+  }
+
+  Widget _buildPublicProfileHero(
+    BuildContext context,
+    VitrinThemePreset preset,
+    double radius,
+    List<VitrinGalleryPreviewItem> galleryItems, {
+    required bool desktop,
+  }) {
+    final heroItem = galleryItems.isEmpty ? null : galleryItems.first;
+    final heroHeight = desktop ? 376.0 : 168.0;
+    final avatarSize = desktop ? 116.0 : 92.0;
+    final actions = _buildVisibleActions(context, radius, true);
+    final description = _publicHeroDescription();
+
+    final cover = Stack(
+      fit: StackFit.expand,
+      children: [
+        if (heroItem != null)
+          _buildGalleryImage(
+            heroItem,
+            errorBuilder: (_, __, ___) => _buildHeaderFallbackSurface(preset),
+          )
+        else
+          _buildHeaderFallbackSurface(preset),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: desktop ? Alignment.centerLeft : Alignment.topCenter,
+              end: desktop ? Alignment.centerRight : Alignment.bottomCenter,
+              colors: [
+                Colors.black.withValues(alpha: desktop ? 0.62 : 0.10),
+                Colors.black.withValues(alpha: desktop ? 0.34 : 0.24),
+                preset.background.withValues(alpha: desktop ? 0.72 : 0.66),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+
+    if (desktop) {
+      return Container(
+        height: heroHeight,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: preset.border.withValues(alpha: 0.72),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.22),
+              blurRadius: 34,
+              offset: const Offset(0, 16),
+            ),
+          ],
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            cover,
+            Positioned(
+              top: 22,
+              right: 22,
+              child: _buildShareButton(context, preset),
+            ),
+            Positioned(
+              left: 38,
+              right: 38,
+              bottom: 34,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildPublicAvatar(preset, avatarSize),
+                  const SizedBox(width: 22),
+                  Expanded(
+                    child: _buildPublicHeroText(
+                      preset,
+                      description,
+                      desktop: true,
+                    ),
+                  ),
+                  if (actions.isNotEmpty) ...[
+                    const SizedBox(width: 28),
+                    SizedBox(
+                      width: 360,
+                      child: _buildPublicHeroActionGrid(actions),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: preset.background,
+        border: Border(
+          bottom: BorderSide(
+            color: preset.border.withValues(alpha: 0.58),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: heroHeight,
+                child: cover,
+              ),
+              Positioned(
+                top: 14,
+                right: 16,
+                child: _buildShareButton(context, preset),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: -avatarSize / 2,
+                child: Center(child: _buildPublicAvatar(preset, avatarSize)),
+              ),
+            ],
+          ),
+          SizedBox(height: avatarSize / 2 + 18),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 22),
+            child: _buildPublicHeroText(preset, description, desktop: false),
+          ),
+          if (actions.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: _buildPublicHeroActionGrid(actions),
+            ),
+          ],
+          const SizedBox(height: 22),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPublicHeroText(
+    VitrinThemePreset preset,
+    String description, {
+    required bool desktop,
+  }) {
+    final storeName = storeData.name.trim();
+    final businessType = storeData.businessType.trim();
+    final status = storeData.status.trim();
+    final titleText = storeName.isEmpty ? 'Dijital Vitrin' : storeName;
+
+    return Column(
+      crossAxisAlignment:
+          desktop ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      children: [
+        Text(
+          titleText,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: desktop ? TextAlign.start : TextAlign.center,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: desktop ? 34 : 31,
+            fontWeight: FontWeight.w900,
+            height: 1.04,
+            letterSpacing: 0,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: desktop ? WrapAlignment.start : WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            if (businessType.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.16),
+                  ),
+                ),
+                child: Text(
+                  businessType.toUpperCase(),
+                  style: TextStyle(
+                    color: preset.accent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+            if (status.isNotEmpty) StatusChip(status: status),
+          ],
+        ),
+        if (description.isNotEmpty) ...[
+          const SizedBox(height: 13),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: desktop ? 520 : 350),
+            child: Text(
+              description,
+              maxLines: desktop ? 3 : 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: desktop ? TextAlign.start : TextAlign.center,
+              style: TextStyle(
+                color: preset.textSecondary,
+                fontSize: desktop ? 14 : 13,
+                fontWeight: FontWeight.w600,
+                height: 1.45,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPublicHeroActionGrid(List<Widget> actions) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth =
+            constraints.hasBoundedWidth ? constraints.maxWidth : 340.0;
+        final spacing = availableWidth < 340 ? 9.0 : 12.0;
+        final itemWidth =
+            actions.length == 1
+                ? availableWidth
+                : (availableWidth - spacing) / 2;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children:
+              actions
+                  .map(
+                    (action) => SizedBox(
+                      width: itemWidth.clamp(132.0, availableWidth).toDouble(),
+                      child: action,
+                    ),
+                  )
+                  .toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildPublicAvatar(VitrinThemePreset preset, double size) {
+    final logoUrl = storeData.logoUrl?.trim() ?? '';
+
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(size > 100 ? 4 : 3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: preset.background,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.86),
+          width: size > 100 ? 2.6 : 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.30),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ClipOval(
+        child:
+            logoUrl.isNotEmpty
+                ? Image.network(
+                  logoUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder:
+                      (_, __, ___) => _buildAvatarFallback(preset, size),
+                )
+                : _buildAvatarFallback(preset, size),
+      ),
+    );
+  }
+
+  Widget _buildAvatarFallback(VitrinThemePreset preset, double size) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            preset.surfaceSoft.withValues(alpha: 0.96),
+            preset.surface.withValues(alpha: 0.96),
+            preset.background,
+          ],
+        ),
+      ),
+      child: Center(
+        child: Text(
+          _storeInitials(),
+          maxLines: 1,
+          overflow: TextOverflow.fade,
+          softWrap: false,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: size * 0.32,
+            fontWeight: FontWeight.w900,
+            height: 1,
+            letterSpacing: 0,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _storeInitials() {
+    final words =
+        storeData.name
+            .trim()
+            .split(RegExp(r'\s+'))
+            .where((word) => word.isNotEmpty)
+            .toList();
+    if (words.isEmpty) return 'VX';
+    if (words.length == 1) {
+      final initials =
+          words.first.runes.take(2).map(String.fromCharCode).join();
+      return initials.toUpperCase();
+    }
+    return words
+        .take(2)
+        .map((word) => String.fromCharCode(word.runes.first))
+        .join()
+        .toUpperCase();
+  }
+
+  String _publicHeroDescription() {
+    final description = storeData.description.trim();
+    if (description.isNotEmpty) return description;
+
+    final bio = storeData.corporateBio.trim();
+    if (bio.isNotEmpty) return bio;
+
+    if (storeData.products.isNotEmpty) {
+      return 'Ürünleri, iletişim kanalları ve konumu tek dijital vitrinde.';
+    }
+    if (storeData.offerings.isNotEmpty) {
+      return 'Öne çıkan hizmetleri, iletişim kanalları ve konumu tek profilde.';
+    }
+    return '';
   }
 
   Widget _buildModernHeader(
@@ -1767,34 +2134,41 @@ class VitrinView extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: isEmbedded ? 18 : 24),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: preset.surface.withValues(alpha: preset.isDark ? 0.78 : 0.98),
-          borderRadius: BorderRadius.circular(20),
+          color: preset.surface.withValues(alpha: preset.isDark ? 0.72 : 0.98),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: preset.border.withValues(alpha: preset.isDark ? 0.72 : 0.72),
           ),
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 420;
+            final maxColumns = constraints.maxWidth < 360 ? 3 : 4;
+            final columns =
+                tools.length < maxColumns ? tools.length : maxColumns;
+            final spacing = constraints.maxWidth < 360 ? 6.0 : 8.0;
             final itemWidth =
-                isNarrow ? (constraints.maxWidth - 10) / 2 : 150.0;
+                columns <= 1
+                    ? constraints.maxWidth
+                    : (constraints.maxWidth - (spacing * (columns - 1))) /
+                        columns;
 
             return Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: spacing,
+              runSpacing: spacing,
               children:
                   tools
                       .map(
                         (tool) => SizedBox(
                           width:
                               itemWidth
-                                  .clamp(132.0, constraints.maxWidth)
+                                  .clamp(76.0, constraints.maxWidth)
                                   .toDouble(),
                           child: _CompactProfileTool(
                             data: tool,
                             preset: preset,
+                            dense: true,
                           ),
                         ),
                       )
@@ -2457,19 +2831,25 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildOfferingsBlock(VitrinThemePreset preset, double radius) {
+  Widget _buildOfferingsBlock(
+    BuildContext context,
+    VitrinThemePreset preset,
+    double radius,
+  ) {
     final isCompact = isEmbedded;
     final config = BusinessCategoryConfig.fromCategoryLabel(storeData.kategori);
     final sectionTitle = config.sectionTitle;
+    final visibleOfferings =
+        publicMode ? storeData.offerings.take(6).toList() : storeData.offerings;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all(isCompact ? 16 : 22),
+        padding: EdgeInsets.all(isCompact ? 14 : 18),
         decoration: BoxDecoration(
           color: preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.98),
-          borderRadius: BorderRadius.circular(isCompact ? 16 : 24),
+          borderRadius: BorderRadius.circular(isCompact ? 16 : 22),
           border: Border.all(
             color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
             width: isCompact ? 1 : 1.3,
@@ -2503,112 +2883,194 @@ class VitrinView extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
+                const Spacer(),
+                if (storeData.offerings.length > visibleOfferings.length)
+                  Text(
+                    '+${storeData.offerings.length - visibleOfferings.length}',
+                    style: TextStyle(
+                      color: preset.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
               ],
             ),
-            const SizedBox(height: 16),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: storeData.offerings.length,
-              separatorBuilder:
-                  (context, index) => Divider(
-                    color: preset.border.withValues(alpha: 0.5),
-                    height: 24,
-                  ),
-              itemBuilder: (context, index) {
-                final offering = storeData.offerings[index];
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  offering.title,
-                                  style: TextStyle(
-                                    color: preset.textPrimary,
-                                    fontSize: isCompact ? 13 : 14,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              if (offering.price.trim().isNotEmpty) ...[
-                                const SizedBox(width: 8),
-                                Text(
-                                  offering.price.trim(),
-                                  style: TextStyle(
-                                    color: preset.accent,
-                                    fontSize: isCompact ? 12 : 13,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ],
-                            ],
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 620;
+                if (!isWide) {
+                  return SizedBox(
+                    height: isCompact ? 142 : 154,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: visibleOfferings.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      itemBuilder:
+                          (context, index) => _buildOfferingPreviewCard(
+                            context,
+                            visibleOfferings[index],
+                            config,
+                            preset,
+                            width: isCompact ? 178 : 196,
                           ),
-                          if (offering.description.trim().isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              offering.description.trim(),
-                              style: TextStyle(
-                                color: preset.textSecondary,
-                                fontSize: isCompact ? 11 : 12,
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
                     ),
-                    if (WhatsAppLinkHelper.isValidTurkeyMobile(
-                      storeData.whatsapp,
-                    )) ...[
-                      const SizedBox(width: 12),
-                      IconButton(
-                        onPressed: () {
-                          if (!publicMode) {
-                            ScaffoldMessenger.of(context).clearSnackBars();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "Müşteriler bu butona bastığında WhatsApp'tan '${offering.title}' talebinde bulunabilir.",
-                                ),
-                                behavior: SnackBarBehavior.floating,
-                                duration: const Duration(seconds: 3),
-                              ),
-                            );
-                            return;
-                          }
-                          final url =
-                              WhatsAppLinkHelper.buildCategoryOfferingUrl(
-                                number: storeData.whatsapp,
-                                storeName: storeData.name,
-                                offeringTitle: offering.title,
-                                categoryId: config.id,
-                              );
-                          if (url != null) {
-                            _openExternalUrl(context, url);
-                          }
-                        },
-                        icon: const Icon(Icons.chat_bubble_rounded, size: 18),
-                        color: const Color(0xFF25D366),
-                        tooltip: config.ctaLabel,
-                        style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFEFFDF5),
-                          minimumSize: const Size(36, 36),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                    ],
-                  ],
+                  );
+                }
+
+                final cardWidth = (constraints.maxWidth - 24) / 3;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children:
+                      visibleOfferings
+                          .map(
+                            (offering) => _buildOfferingPreviewCard(
+                              context,
+                              offering,
+                              config,
+                              preset,
+                              width: cardWidth,
+                            ),
+                          )
+                          .toList(),
                 );
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOfferingPreviewCard(
+    BuildContext context,
+    StoreOffering offering,
+    BusinessCategoryConfig config,
+    VitrinThemePreset preset, {
+    required double width,
+  }) {
+    final title = offering.title.trim().isEmpty ? 'Öne çıkan' : offering.title;
+    final description = offering.description.trim();
+    final price = offering.price.trim();
+    final canMessage = WhatsAppLinkHelper.isValidTurkeyMobile(
+      storeData.whatsapp,
+    );
+
+    return SizedBox(
+      width: width,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap:
+              canMessage
+                  ? () {
+                    if (!publicMode) {
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            "Müşteriler bu karta bastığında WhatsApp'tan '$title' talebinde bulunabilir.",
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                      return;
+                    }
+
+                    final url = WhatsAppLinkHelper.buildCategoryOfferingUrl(
+                      number: storeData.whatsapp,
+                      storeName: storeData.name,
+                      offeringTitle: title,
+                      categoryId: config.id,
+                    );
+                    if (url != null) _openExternalUrl(context, url);
+                  }
+                  : null,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: preset.surfaceSoft.withValues(
+                alpha: preset.isDark ? 0.56 : 0.58,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: preset.border.withValues(
+                  alpha: preset.isDark ? 0.72 : 0.7,
+                ),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: preset.accent.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(11),
+                        border: Border.all(
+                          color: preset.accent.withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Icon(config.icon, color: preset.accent, size: 17),
+                    ),
+                    const Spacer(),
+                    if (price.isNotEmpty)
+                      Text(
+                        price,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: preset.accent,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      )
+                    else if (canMessage)
+                      Icon(
+                        Icons.chat_bubble_rounded,
+                        color: const Color(0xFF25D366),
+                        size: 17,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: preset.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    height: 1.18,
+                    letterSpacing: 0,
+                  ),
+                ),
+                if (description.isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  Text(
+                    description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: preset.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      height: 1.28,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -2634,8 +3096,13 @@ class _CompactProfileToolData {
 class _CompactProfileTool extends StatelessWidget {
   final _CompactProfileToolData data;
   final VitrinThemePreset preset;
+  final bool dense;
 
-  const _CompactProfileTool({required this.data, required this.preset});
+  const _CompactProfileTool({
+    required this.data,
+    required this.preset,
+    this.dense = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2643,62 +3110,94 @@ class _CompactProfileTool extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: data.onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(dense ? 12 : 14),
         child: Ink(
-          padding: const EdgeInsets.all(10),
+          height: dense ? 70 : null,
+          padding: EdgeInsets.all(dense ? 8 : 10),
           decoration: BoxDecoration(
             color: data.color.withValues(alpha: preset.isDark ? 0.12 : 0.08),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(dense ? 12 : 14),
             border: Border.all(
               color: data.color.withValues(alpha: preset.isDark ? 0.26 : 0.18),
             ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: data.color.withValues(
-                    alpha: preset.isDark ? 0.18 : 0.12,
+          child:
+              dense
+                  ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: data.color.withValues(
+                            alpha: preset.isDark ? 0.18 : 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Icon(data.icon, color: data.color, size: 16),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        data.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: preset.textPrimary,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ],
+                  )
+                  : Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: data.color.withValues(
+                            alpha: preset.isDark ? 0.18 : 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        child: Icon(data.icon, color: data.color, size: 18),
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              data.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: preset.textPrimary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              data.subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: preset.textSecondary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Icon(data.icon, color: data.color, size: 18),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      data.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: preset.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      data.subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: preset.textSecondary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -2768,12 +3267,16 @@ class _ActionIconBtn extends StatelessWidget {
               children: [
                 Icon(icon, size: compact ? 15 : 20, color: foregroundColor),
                 SizedBox(width: compact ? 7 : 10),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: compact ? 11 : 13,
-                    fontWeight: FontWeight.w800,
-                    color: foregroundColor,
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact ? 11 : 13,
+                      fontWeight: FontWeight.w800,
+                      color: foregroundColor,
+                    ),
                   ),
                 ),
               ],
