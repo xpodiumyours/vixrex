@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
@@ -1162,7 +1163,7 @@ class VitrinView extends StatelessWidget {
   }) {
     final config = BusinessCategoryConfig.fromCategoryLabel(storeData.kategori);
     final ctaLabel = config.ctaLabel;
-    final profileActionColor = actionColor ?? const Color(0xFF38A0E4);
+    final profileActionColor = actionColor ?? AppColors.primary;
 
     if (!publicMode) {
       return [
@@ -3212,7 +3213,12 @@ class _ActionIconBtn extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         emphasis ? color : color.withValues(alpha: isDark ? 0.18 : 0.09);
-    final foregroundColor = emphasis ? Colors.white : color;
+    final foregroundColor =
+        emphasis && color.computeLuminance() > 0.42
+            ? const Color(0xFF04151F)
+            : emphasis
+            ? Colors.white
+            : color;
     final borderColor =
         emphasis
             ? color.withValues(alpha: isDark ? 0.38 : 0.22)

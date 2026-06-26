@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vitrinx/theme/app_colors.dart';
 
 class VitrinThemePreset {
   final String name;
@@ -37,7 +38,7 @@ const VitrinThemePreset sadeVitrinTheme = VitrinThemePreset(
   surfaceSoft: Color(0xFFF1F5F9),
   textPrimary: Color(0xFF111827),
   textSecondary: Color(0xFF475569),
-  accent: Color(0xFF10D8D8),
+  accent: AppColors.primary,
   buttonText: Color(0xFFFFFFFF),
   border: Color(0xFFD9E2EC),
   qrBackground: Color(0xFFFFFFFF),
@@ -49,14 +50,14 @@ const Map<String, VitrinThemePreset> vitrinThemePresets = {
   'Sade': sadeVitrinTheme,
   'Premium': VitrinThemePreset(
     name: 'Premium',
-    background: Color(0xFF071322),
-    surface: Color(0xFF0E1B2E),
-    surfaceSoft: Color(0xFF162A42),
+    background: Color(0xFF061824),
+    surface: Color(0xFF0B2532),
+    surfaceSoft: Color(0xFF103748),
     textPrimary: Color(0xFFF8FAFC),
-    textSecondary: Color(0xFFC4D1E3),
-    accent: Color(0xFF38A0E4),
-    buttonText: Color(0xFFFFFFFF),
-    border: Color(0xFF25415F),
+    textSecondary: Color(0xFFC7E7EA),
+    accent: AppColors.primary,
+    buttonText: Color(0xFF04151F),
+    border: Color(0xFF1E5966),
     qrBackground: Color(0xFFFFFFFF),
     qrForeground: Color(0xFF0F172A),
     isDark: true,
