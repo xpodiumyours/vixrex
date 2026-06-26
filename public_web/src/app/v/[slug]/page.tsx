@@ -25,14 +25,6 @@ interface ProductItem {
   stockStatus?: string;
 }
 
-interface OfferingItem {
-  id?: string;
-  title: string;
-  description?: string;
-  price?: string;
-  durationMinutes?: number;
-}
-
 interface MarketplaceLinkItem {
   id?: string;
   platform: string;
@@ -140,7 +132,6 @@ export default async function StorePage(props: PageProps) {
 
   const galleryItems = safeParseJson<GalleryItem>(store.gallery_items);
   const products = safeParseJson<ProductItem>(store.products);
-  const offerings = safeParseJson<OfferingItem>(store.offerings);
   const marketplaceLinks = safeParseJson<MarketplaceLinkItem>(store.marketplace_links);
 
   const publicUrl = `https://vitrinx.app/v/${store.slug}`;
@@ -174,7 +165,6 @@ export default async function StorePage(props: PageProps) {
     store.corporate_bio ||
     "Ürünleri, iletişim bilgileri ve konumu tek dijital vitrinde inceleyin.";
   const featuredProducts = products.slice(0, 6);
-  const featuredOfferings = offerings.slice(0, 6);
 
   const categoryLower = (store.kategori || "").toLowerCase();
   let businessType = "LocalBusiness";
@@ -187,24 +177,6 @@ export default async function StorePage(props: PageProps) {
   ) {
     businessType = "BeautySalon";
   }
-
-  const serviceSchemas = offerings.map((offering) => ({
-    "@type": "Service",
-    "@id": `https://vitrinx.app/v/${store.slug}#service-${offering.id}`,
-    name: offering.title,
-    description: offering.description || undefined,
-    provider: {
-      "@type": businessType,
-      "@id": `https://vitrinx.app/v/${store.slug}#business`,
-    },
-    offers: offering.price
-      ? {
-          "@type": "Offer",
-          price: offering.price.replace(/[^0-9.]/g, "") || "0.00",
-          priceCurrency: "TRY",
-        }
-      : undefined,
-  }));
 
   const breadcrumbSchema = {
     "@type": "BreadcrumbList",
@@ -260,7 +232,6 @@ export default async function StorePage(props: PageProps) {
         description: store.description || store.corporate_bio,
       },
       breadcrumbSchema,
-      ...serviceSchemas,
     ],
   };
 
@@ -466,36 +437,6 @@ export default async function StorePage(props: PageProps) {
                 </div>
               )}
 
-              {featuredOfferings.length > 0 && (
-                <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4 sm:p-5">
-                  <h2 className="mb-3 text-base font-black text-white">Hizmetler</h2>
-                  <div className="divide-y divide-[#25415F]">
-                    {featuredOfferings.map((offering: OfferingItem, i: number) => (
-                      <div key={offering.id || i} className="flex items-center justify-between gap-4 py-3">
-                        <div className="min-w-0">
-                          <h3 className="truncate text-sm font-black text-white">{offering.title}</h3>
-                          {offering.description && (
-                            <p className="mt-1 line-clamp-1 text-xs font-semibold text-[#9DB2C8]">
-                              {offering.description}
-                            </p>
-                          )}
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <div className="text-sm font-black text-[#7BC7FF]">
-                            {offering.price || "Fiyat sorun"}
-                          </div>
-                          {offering.durationMinutes ? (
-                            <div className="text-[10px] font-bold text-[#9DB2C8]">
-                              {offering.durationMinutes} dk
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {store.corporate_bio && (
                 <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-5">
                   <h2 className="mb-3 text-base font-black text-white">Hakkımızda</h2>
@@ -510,12 +451,14 @@ export default async function StorePage(props: PageProps) {
               <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4">
                 <h2 className="mb-3 text-base font-black text-white">Profil Araçları</h2>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-[#25415F] bg-[#162A42] p-3">
-                    <div className="text-sm font-black text-white">Katalog</div>
-                    <div className="mt-1 text-[11px] font-bold text-[#9DB2C8]">
-                      {products.length || offerings.length} kayıt
+                  {products.length > 0 && (
+                    <div className="rounded-2xl border border-[#25415F] bg-[#162A42] p-3">
+                      <div className="text-sm font-black text-white">Katalog</div>
+                      <div className="mt-1 text-[11px] font-bold text-[#9DB2C8]">
+                        {products.length} ürün
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div className="rounded-2xl border border-[#25415F] bg-[#162A42] p-3">
                     <div className="text-sm font-black text-white">vCard</div>
                     <div className="mt-1 text-[11px] font-bold text-[#9DB2C8]">Rehber bilgileri</div>

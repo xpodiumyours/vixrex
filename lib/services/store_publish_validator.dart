@@ -17,7 +17,7 @@ class StorePublishValidator {
     'instagram',
     'whatsapp',
     'diğer',
-    'diger'
+    'diger',
   };
 
   // Legacy validate method for compatibility/tests
@@ -33,7 +33,9 @@ class StorePublishValidator {
     for (final link in data.marketplaceLinks) {
       final trimmedUrl = link.url.trim();
       final platformLower = link.platform.trim().toLowerCase();
-      final isCustom = platformLower.isNotEmpty && !_standardPlatforms.contains(platformLower);
+      final isCustom =
+          platformLower.isNotEmpty &&
+          !_standardPlatforms.contains(platformLower);
 
       if (isCustom && trimmedUrl.isEmpty) {
         return 'Geçersiz web adresi formatı. Lütfen geçerli bir web sitesi veya sosyal medya linki girin.';
@@ -56,11 +58,11 @@ class StorePublishValidator {
     }
 
     if (data.offerings.length > 6) {
-      return 'En fazla 6 adet hizmet veya öne çıkan ekleyebilirsiniz.';
+      return 'En fazla 6 adet randevu hizmeti ekleyebilirsiniz.';
     }
     for (final offering in data.offerings) {
       if (offering.title.trim().isEmpty) {
-        return 'Hizmet veya öne çıkan başlığı boş olamaz.';
+        return 'Randevu hizmeti başlığı boş olamaz.';
       }
       if (offering.title.trim().length > 60) {
         return 'Hizmet başlığı en fazla 60 karakter olabilir.';

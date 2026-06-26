@@ -4,65 +4,79 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/screens/my_vitrin_screen.dart';
 
 void main() {
-  testWidgets('Aynı hizmet önerisinin tekrar eklenmesini engeller ve uyarı gösterir', (
-    WidgetTester tester,
-  ) async {
+  Future<void> pumpEditor(WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: MyVitrinScreen(),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: MyVitrinScreen()));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
+  }
 
-    final chipFinder = find.text('🏪 Genel Bilgi & Danışmanlık');
-    expect(chipFinder, findsOneWidget);
+  Future<void> selectKuaforAndEnableBooking(WidgetTester tester) async {
+    final categoryFinder = find.text('Diğer').first;
+    await tester.ensureVisible(categoryFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(categoryFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kuaför').last);
+    await tester.pumpAndSettle();
 
+    final bookingTitle = find.textContaining('Randevu Ayarları');
+    await tester.ensureVisible(bookingTitle);
+    await tester.tap(bookingTitle);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Switch).last);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('Profil formunda Öne Çıkanlar bölümü gösterilmez', (
+    WidgetTester tester,
+  ) async {
+    await pumpEditor(tester);
+
+    expect(find.text('Öne Çıkanlar'), findsNothing);
+    expect(find.text('Menüden Öne Çıkanlar'), findsNothing);
+    expect(find.text('Randevu Hizmetleri'), findsNothing);
+  });
+
+  testWidgets('Randevu hizmeti önerisi eklenir ve tekrar eklenemez', (
+    WidgetTester tester,
+  ) async {
+    await pumpEditor(tester);
+    await selectKuaforAndEnableBooking(tester);
+
+    expect(find.text('Randevu Hizmetleri'), findsOneWidget);
+
+    final chipFinder = find.textContaining('Saç Kesimi & Yıkama').first;
     await tester.ensureVisible(chipFinder);
     await tester.tap(chipFinder);
     await tester.pump();
 
-    expect(find.text('Genel Bilgi & Danışmanlık'), findsOneWidget);
+    expect(find.text('Saç Kesimi & Yıkama'), findsOneWidget);
 
     await tester.tap(chipFinder);
     await tester.pump();
 
     expect(find.text('Bu hizmet zaten eklenmiş.'), findsOneWidget);
-    expect(find.text('Genel Bilgi & Danışmanlık'), findsOneWidget);
   });
 
-  testWidgets('Öneri çipine dokunulduğunda duration ve isBookable şablon değerlerini doğru eşler', (
+  testWidgets('Randevu hizmeti önerisi süre bilgisini korur', (
     WidgetTester tester,
   ) async {
-    SharedPreferences.setMockInitialValues({});
+    await pumpEditor(tester);
+    await selectKuaforAndEnableBooking(tester);
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: MyVitrinScreen(),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-
-    // Tap on the default suggestion "Genel Bilgi & Danışmanlık"
-    final chipFinder = find.text('🏪 Genel Bilgi & Danışmanlık');
+    final chipFinder = find.textContaining('Saç Kesimi & Yıkama').first;
     await tester.ensureVisible(chipFinder);
     await tester.tap(chipFinder);
     await tester.pump();
 
-    // The suggested template Genel Bilgi & Danışmanlık has durationMinutes = 30 and isBookable = true
-    // Verify that the "Randevuya Açık" switch is turned ON (true)
-    final switchFinder = find.byType(Switch);
-    expect(switchFinder, findsOneWidget);
-    final switchWidget = tester.widget<Switch>(switchFinder);
-    expect(switchWidget.value, isTrue);
-
-    // Verify that the duration dropdown has value = 30
-    final dropdownFinder = find.byType(DropdownButton<int>);
-    expect(dropdownFinder, findsOneWidget);
-    final dropdownWidget = tester.widget<DropdownButton<int>>(dropdownFinder);
-    expect(dropdownWidget.value, 30);
+    final dropdownValues =
+        tester
+            .widgetList<DropdownButton<int>>(find.byType(DropdownButton<int>))
+            .map((dropdown) => dropdown.value)
+            .toList();
+    expect(dropdownValues, contains(45));
   });
 }

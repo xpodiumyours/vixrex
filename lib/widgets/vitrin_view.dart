@@ -170,10 +170,6 @@ class VitrinView extends StatelessWidget {
         _buildShelfImageCard(preset, galleryItems),
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
-      if (storeData.offerings.isNotEmpty) ...[
-        _buildOfferingsBlock(context, preset, radius),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ],
       if (storeData.isStore && storeData.products.isNotEmpty) ...[
         _buildProductsCatalogBlock(preset, radius),
         SizedBox(height: isEmbedded ? 16 : 30),
@@ -219,10 +215,6 @@ class VitrinView extends StatelessWidget {
         const SizedBox(height: 16),
       if (storeData.isStore && storeData.products.isNotEmpty) ...[
         _buildProductsCatalogBlock(preset, radius),
-        const SizedBox(height: 14),
-      ],
-      if (storeData.offerings.isNotEmpty) ...[
-        _buildOfferingsBlock(context, preset, radius),
         const SizedBox(height: 14),
       ],
       _buildCompactProfileTools(context, preset),
@@ -285,10 +277,6 @@ class VitrinView extends StatelessWidget {
                       const SizedBox(height: 18),
                     if (storeData.isStore && storeData.products.isNotEmpty) ...[
                       _buildProductsCatalogBlock(preset, radius),
-                      const SizedBox(height: 22),
-                    ],
-                    if (storeData.offerings.isNotEmpty) ...[
-                      _buildOfferingsBlock(context, preset, radius),
                       const SizedBox(height: 22),
                     ],
                     if (_aboutText().isNotEmpty) _buildAboutCard(preset),
@@ -750,9 +738,6 @@ class VitrinView extends StatelessWidget {
 
     if (storeData.products.isNotEmpty) {
       return 'Ürünleri, iletişim kanalları ve konumu tek dijital vitrinde.';
-    }
-    if (storeData.offerings.isNotEmpty) {
-      return 'Öne çıkan hizmetleri, iletişim kanalları ve konumu tek profilde.';
     }
     return '';
   }
@@ -2095,14 +2080,11 @@ class VitrinView extends StatelessWidget {
     VitrinThemePreset preset,
   ) {
     final tools = <_CompactProfileToolData>[
-      if (storeData.products.isNotEmpty || storeData.offerings.isNotEmpty)
+      if (storeData.products.isNotEmpty)
         _CompactProfileToolData(
           icon: Icons.auto_stories_rounded,
           title: 'Katalog',
-          subtitle:
-              storeData.products.isNotEmpty
-                  ? '${storeData.products.length} ürün'
-                  : '${storeData.offerings.length} hizmet',
+          subtitle: '${storeData.products.length} ürün',
           color: preset.accent,
           onTap: () {
             ScaffoldMessenger.of(context).clearSnackBars();
@@ -2807,251 +2789,6 @@ class VitrinView extends StatelessWidget {
                     fontSize: 12,
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOfferingsBlock(
-    BuildContext context,
-    VitrinThemePreset preset,
-    double radius,
-  ) {
-    final isCompact = isEmbedded;
-    final config = BusinessCategoryConfig.fromCategoryLabel(storeData.kategori);
-    final sectionTitle = config.sectionTitle;
-    final visibleOfferings =
-        publicMode ? storeData.offerings.take(6).toList() : storeData.offerings;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(isCompact ? 14 : 18),
-        decoration: BoxDecoration(
-          color: preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.98),
-          borderRadius: BorderRadius.circular(isCompact ? 16 : 22),
-          border: Border.all(
-            color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
-            width: isCompact ? 1 : 1.3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(
-                alpha: preset.isDark ? 0.12 : 0.045,
-              ),
-              blurRadius: isCompact ? 12 : 24,
-              offset: Offset(0, isCompact ? 3 : 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  config.icon,
-                  color: preset.accent,
-                  size: isCompact ? 18 : 22,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  sectionTitle,
-                  style: TextStyle(
-                    color: preset.textPrimary,
-                    fontSize: isCompact ? 14 : 16,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const Spacer(),
-                if (storeData.offerings.length > visibleOfferings.length)
-                  Text(
-                    '+${storeData.offerings.length - visibleOfferings.length}',
-                    style: TextStyle(
-                      color: preset.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 620;
-                if (!isWide) {
-                  return SizedBox(
-                    height: isCompact ? 142 : 154,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: visibleOfferings.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 10),
-                      itemBuilder:
-                          (context, index) => _buildOfferingPreviewCard(
-                            context,
-                            visibleOfferings[index],
-                            config,
-                            preset,
-                            width: isCompact ? 178 : 196,
-                          ),
-                    ),
-                  );
-                }
-
-                final cardWidth = (constraints.maxWidth - 24) / 3;
-                return Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children:
-                      visibleOfferings
-                          .map(
-                            (offering) => _buildOfferingPreviewCard(
-                              context,
-                              offering,
-                              config,
-                              preset,
-                              width: cardWidth,
-                            ),
-                          )
-                          .toList(),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOfferingPreviewCard(
-    BuildContext context,
-    StoreOffering offering,
-    BusinessCategoryConfig config,
-    VitrinThemePreset preset, {
-    required double width,
-  }) {
-    final title = offering.title.trim().isEmpty ? 'Öne çıkan' : offering.title;
-    final description = offering.description.trim();
-    final price = offering.price.trim();
-    final canMessage = WhatsAppLinkHelper.isValidTurkeyMobile(
-      storeData.whatsapp,
-    );
-
-    return SizedBox(
-      width: width,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap:
-              canMessage
-                  ? () {
-                    if (!publicMode) {
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            "Müşteriler bu karta bastığında WhatsApp'tan '$title' talebinde bulunabilir.",
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 3),
-                        ),
-                      );
-                      return;
-                    }
-
-                    final url = WhatsAppLinkHelper.buildCategoryOfferingUrl(
-                      number: storeData.whatsapp,
-                      storeName: storeData.name,
-                      offeringTitle: title,
-                      categoryId: config.id,
-                    );
-                    if (url != null) _openExternalUrl(context, url);
-                  }
-                  : null,
-          borderRadius: BorderRadius.circular(16),
-          child: Ink(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: preset.surfaceSoft.withValues(
-                alpha: preset.isDark ? 0.56 : 0.58,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: preset.border.withValues(
-                  alpha: preset.isDark ? 0.72 : 0.7,
-                ),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: preset.accent.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(11),
-                        border: Border.all(
-                          color: preset.accent.withValues(alpha: 0.18),
-                        ),
-                      ),
-                      child: Icon(config.icon, color: preset.accent, size: 17),
-                    ),
-                    const Spacer(),
-                    if (price.isNotEmpty)
-                      Text(
-                        price,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: preset.accent,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      )
-                    else if (canMessage)
-                      Icon(
-                        Icons.chat_bubble_rounded,
-                        color: preset.accent,
-                        size: 17,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: preset.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    height: 1.18,
-                    letterSpacing: 0,
-                  ),
-                ),
-                if (description.isNotEmpty) ...[
-                  const SizedBox(height: 5),
-                  Text(
-                    description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: preset.textSecondary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      height: 1.28,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),

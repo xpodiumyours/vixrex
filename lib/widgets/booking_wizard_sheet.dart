@@ -356,7 +356,10 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: isSelected ? 1.6 : 1),
           ),
-          child: ListTile(
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             title: Text(
               srv.title,
@@ -392,6 +395,7 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
                 _errorMsg = null;
               });
             },
+            ),
           ),
         );
       }).toList(),

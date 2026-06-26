@@ -678,6 +678,20 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       return;
     }
 
+    final shouldPublishBooking =
+        _selectedKategori == 'Kuaför' && _bookingIsEnabled;
+    final bookingServices =
+        _offerings
+            .where((offering) => offering.title.trim().isNotEmpty)
+            .take(6)
+            .map((offering) => offering.copyWith(isBookable: true))
+            .toList();
+
+    if (shouldPublishBooking && bookingServices.isEmpty) {
+      _showSnackBar('Randevu açıkken en az bir randevu hizmeti eklemelisiniz.');
+      return;
+    }
+
     setState(() {
       _isPublishing = true;
     });
@@ -738,6 +752,12 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         for (final offering in _offerings) {
           offering.isBookable = false;
         }
+      } else if (_bookingIsEnabled) {
+        for (final offering in _offerings) {
+          if (offering.title.trim().isNotEmpty) {
+            offering.isBookable = true;
+          }
+        }
       }
 
       final data =
@@ -758,7 +778,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             ..isStore = false
             ..shelfImageUrl = coverUrl
             ..galleryItems = publishedGallery
-            ..offerings = _offerings
+            ..offerings = shouldPublishBooking ? bookingServices : []
             ..marketplaceLinks =
                 _marketplaceLinks.map((link) {
                   var url = link.url.trim();
@@ -1274,11 +1294,11 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               ),
               const SizedBox(height: 14),
 
-              KeyedSubtree(key: _productsKey, child: _buildOfferingsSection()),
-              const SizedBox(height: 14),
-
               if (_selectedKategori == 'Kuaför') ...[
-                _buildBookingSettingsSection(),
+                KeyedSubtree(
+                  key: _productsKey,
+                  child: _buildBookingSettingsSection(),
+                ),
                 const SizedBox(height: 14),
               ],
 
@@ -1848,10 +1868,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         (_latitude != null && _longitude != null);
     final hasGoogleReview =
         _googleBusinessLinkController.text.trim().isNotEmpty;
-    final hasOfferings = _offerings.any(
-      (item) =>
-          item.title.trim().isNotEmpty || item.description.trim().isNotEmpty,
-    );
+    final hasProfileDescription = _descriptionController.text.trim().isNotEmpty;
     final publishedArticles =
         _articles
             .where((article) => article['status']?.toString() == 'published')
@@ -1863,12 +1880,12 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           hasWebLink,
           hasLocation,
           hasGoogleReview,
-          hasOfferings,
+          hasProfileDescription,
           hasPublishedArticle,
         ].where((value) => value).length;
 
     final hasCoreInfo =
-        hasPublished && hasWebLink && hasLocation && hasOfferings;
+        hasPublished && hasWebLink && hasLocation && hasProfileDescription;
     final isReady = hasCoreInfo && hasGoogleReview;
     final statusLabel =
         isReady
@@ -1893,7 +1910,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             ? 'Temel bilgiler tamam. Güncel içerik ekledikçe görünürlük güçlenir.'
             : hasCoreInfo
             ? 'Temel bilgiler hazır. Google yorum linki ve içerik eklemek vitrini güçlendirir.'
-            : 'Google için önce yayın linki, adres/konum ve ürün/hizmet bilgilerini tamamla.';
+            : 'Google için önce yayın linki, adres/konum ve kısa açıklamayı tamamla.';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -2029,9 +2046,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   ),
                   _buildVisibilityCheckTile(
                     width: tileWidth,
-                    icon: Icons.inventory_2_rounded,
-                    title: 'Ürün/hizmet girildi',
-                    isComplete: hasOfferings,
+                    icon: Icons.notes_rounded,
+                    title: 'Kısa açıklama',
+                    isComplete: hasProfileDescription,
                   ),
                   _buildVisibilityCheckTile(
                     width: tileWidth,
@@ -2619,18 +2636,17 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
-  Widget _buildOfferingsSection() {
+  Widget _buildBookingServicesSection() {
     final config = BusinessCategoryConfig.fromCategoryLabel(_selectedKategori);
-    final sectionTitle = config.sectionTitle;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(
-              sectionTitle,
-              style: const TextStyle(
+            const Text(
+              'Randevu Hizmetleri',
+              style: TextStyle(
                 color: softText,
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
@@ -2647,6 +2663,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                         title: '',
                         description: '',
                         price: '',
+                        isBookable: true,
                       ),
                     );
                   });
@@ -2678,7 +2695,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         const SizedBox(height: 6),
         if (config.suggestedOfferings.isNotEmpty && _offerings.length < 6) ...[
           const Text(
-            'Önerilenler (Eklemek için dokunun):',
+            'Hazır hizmetler (eklemek için dokunun):',
             style: TextStyle(
               color: mutedText,
               fontSize: 11,
@@ -2729,7 +2746,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                             description: sug.description,
                             price: sug.price,
                             durationMinutes: sug.durationMinutes,
-                            isBookable: sug.isBookable,
+                            isBookable: true,
                           ),
                         );
                       });
@@ -2743,7 +2760,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 8.0),
             child: Text(
-              'Henüz eklenmiş hizmet veya öne çıkan bulunmuyor. Müşterilerinize sunduğunuz hizmetleri veya ürünleri buradan ekleyebilirsiniz (en fazla 6 adet).',
+              'Müşterinin randevu alırken seçeceği hizmetleri ekleyin. Bu liste public profilde görünmez.',
               style: TextStyle(
                 color: mutedText.withValues(alpha: 0.7),
                 fontSize: 12,
@@ -2752,14 +2769,14 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             ),
           ),
         for (int i = 0; i < _offerings.length; i++) ...[
-          _buildOfferingRow(i),
+          _buildBookingServiceRow(i),
           const SizedBox(height: 10),
         ],
       ],
     );
   }
 
-  Widget _buildOfferingRow(int index) {
+  Widget _buildBookingServiceRow(int index) {
     final offering = _offerings[index];
     return Container(
       padding: const EdgeInsets.all(10),
@@ -2793,7 +2810,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Hizmet / Ürün Adı (örn: Saç Kesimi)',
+                    hintText: 'Randevu hizmeti (örn: Saç Kesimi)',
                     hintStyle: TextStyle(
                       color: mutedText.withValues(alpha: 0.6),
                       fontSize: 13,
@@ -2897,69 +2914,51 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               border: InputBorder.none,
             ),
           ),
-          if (_selectedKategori == 'Kuaför') ...[
-            const Divider(height: 1, color: cardBorder),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.calendar_today_rounded,
-                  size: 14,
-                  color: mutedText,
+          const Divider(height: 1, color: cardBorder),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const SizedBox(width: 8),
+              const Icon(Icons.timer_rounded, size: 14, color: mutedText),
+              const SizedBox(width: 4),
+              const Text(
+                'Süre',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: softText,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(width: 4),
-                const Text(
-                  'Randevuya Açık',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: softText,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Switch(
-                  value: offering.isBookable,
-                  activeColor: primaryColor,
-                  onChanged: (val) {
-                    setState(() {
-                      offering.isBookable = val;
-                    });
-                  },
-                ),
-                const Spacer(),
-                if (offering.isBookable) ...[
-                  const Icon(Icons.timer_rounded, size: 14, color: mutedText),
-                  const SizedBox(width: 4),
-                  DropdownButton<int>(
-                    value: offering.durationMinutes,
-                    items:
-                        [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
-                          return DropdownMenuItem<int>(
-                            value: val,
-                            child: Text(
-                              '$val dk',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: darkText,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                    onChanged: (val) {
-                      setState(() {
-                        if (val != null) {
-                          offering.durationMinutes = val;
-                        }
-                      });
-                    },
-                    underline: const SizedBox(),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ],
-            ),
-          ],
+              ),
+              const Spacer(),
+              DropdownButton<int>(
+                value: offering.durationMinutes,
+                items:
+                    [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
+                      return DropdownMenuItem<int>(
+                        value: val,
+                        child: Text(
+                          '$val dk',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: darkText,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    if (val != null) {
+                      offering.durationMinutes = val;
+                    }
+                    offering.isBookable = true;
+                  });
+                },
+                underline: const SizedBox(),
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
         ],
       ),
     );
@@ -3020,6 +3019,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             ],
           ),
           if (_bookingIsEnabled) ...[
+            const Divider(color: cardBorder),
+            const SizedBox(height: 8),
+            _buildBookingServicesSection(),
             const Divider(color: cardBorder),
             const SizedBox(height: 8),
             Row(
