@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vitrinx/models/chat_message.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/config/turkey_cities_config.dart';
@@ -103,7 +104,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   final _addressController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _instagramController = TextEditingController();
-  final _websiteController = TextEditingController();
   final _googleBusinessLinkController = TextEditingController();
 
   // ─── State ──────────────────────────────────────────────────────────────
@@ -218,7 +218,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _addressController.dispose();
     _descriptionController.dispose();
     _instagramController.dispose();
-    _websiteController.dispose();
     _googleBusinessLinkController.dispose();
     _nameFocusNode.dispose();
     _whatsappFocusNode.dispose();
@@ -350,7 +349,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         _addressController.text = data.address;
         _descriptionController.text = data.description;
         _instagramController.text = data.instagram;
-        _websiteController.text = data.website;
         _googleBusinessLinkController.text = data.googleBusinessLink;
         _selectedProvinceCode = data.provinceCode.isNotEmpty ? data.provinceCode : null;
         _selectedProvinceName = data.provinceName.isNotEmpty ? data.provinceName : null;
@@ -743,7 +741,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             ..address = address
             ..description = _descriptionController.text.trim()
             ..instagram = _instagramController.text.trim()
-            ..website = _websiteController.text.trim()
+            ..website = ''
             ..googleBusinessLink = googleLink
             ..provinceCode = _selectedProvinceCode ?? ''
             ..provinceName = _selectedProvinceName ?? ''
@@ -941,6 +939,34 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     await Clipboard.setData(ClipboardData(text: link));
     if (!mounted) return;
     _showSnackBar('Vitrin linki kopyalandı.');
+  }
+
+  Future<void> _openPublicWebsiteLink() async {
+    final link = _publishedInfo?.publicLink.trim();
+    if (link == null || link.isEmpty) {
+      _showSnackBar('Önce vitrini yayınla, özel web linki oluşsun.');
+      return;
+    }
+
+    final uri = Uri.tryParse(link);
+    if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
+      _showSnackBar('Vitrin linki açılamadı.');
+      return;
+    }
+
+    try {
+      final didLaunch = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!didLaunch && mounted) {
+        _showSnackBar('Tarayıcı açılamadı, linki kopyalayabilirsin.');
+      }
+    } catch (_) {
+      if (mounted) {
+        _showSnackBar('Tarayıcı açılamadı, linki kopyalayabilirsin.');
+      }
+    }
   }
 
   void _openPublicVitrin() {
@@ -1240,13 +1266,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               ),
               const SizedBox(height: 14),
 
-              _buildTextField(
-                label: 'Website',
-                controller: _websiteController,
-                hint: 'https://...',
-                icon: Icons.language_rounded,
-                keyboardType: TextInputType.url,
-              ),
+              _buildPublicWebsiteLinkCard(),
               const SizedBox(height: 14),
 
               _buildTextField(
@@ -1355,6 +1375,118 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           ),
           const SizedBox(height: 12),
         ],
+      ],
+    );
+  }
+
+  Widget _buildPublicWebsiteLinkCard() {
+    final publicLink = _publishedInfo?.publicLink.trim();
+    final hasPublicLink = publicLink != null && publicLink.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Website',
+          style: TextStyle(
+            color: softText,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: inputBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.language_rounded,
+                      color: primaryColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'VitrinX Web Linki',
+                          style: TextStyle(
+                            color: darkText,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          hasPublicLink
+                              ? publicLink
+                              : 'Yayınladıktan sonra özel web linkin burada oluşur.',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: hasPublicLink ? primaryColor : mutedText,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: hasPublicLink ? _openPublicWebsiteLink : null,
+                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                    label: const Text('Tarayıcıda Aç'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: primaryColor,
+                      side: const BorderSide(color: primaryColor),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: hasPublicLink ? _copyLink : null,
+                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    label: const Text('Linki Kopyala'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: darkText,
+                      side: const BorderSide(color: cardBorder),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

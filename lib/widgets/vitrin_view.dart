@@ -588,10 +588,19 @@ class VitrinView extends StatelessWidget {
 
     return WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp) ||
         storeData.instagram.trim().isNotEmpty ||
-        storeData.website.trim().isNotEmpty ||
+        _publicWebsiteActionUrl().isNotEmpty ||
         storeData.googleBusinessLink.trim().isNotEmpty ||
         storeData.address.trim().isNotEmpty ||
         (storeData.latitude != null && storeData.longitude != null);
+  }
+
+  String _publicWebsiteActionUrl() {
+    final generatedLink = publicLink?.trim() ?? '';
+    final normalizedGeneratedLink = _normalizeExternalUrl(generatedLink);
+    if (publicMode && normalizedGeneratedLink.isNotEmpty) {
+      return normalizedGeneratedLink;
+    }
+    return _normalizeExternalUrl(storeData.website);
   }
 
   List<Widget> _buildVisibleActions(
@@ -732,9 +741,9 @@ class VitrinView extends StatelessWidget {
                 _buildInstagramUrl(storeData.instagram),
               ),
         ),
-      if (storeData.website.trim().isNotEmpty)
+      if (_publicWebsiteActionUrl().isNotEmpty)
         _ActionIconBtn(
-          label: 'Web',
+          label: 'Web Sitesi',
           icon: Icons.language_rounded,
           color: Colors.blue.shade600,
           radius: radius,
@@ -742,7 +751,7 @@ class VitrinView extends StatelessWidget {
           onTap:
               () => _openExternalUrl(
                 context,
-                _normalizeExternalUrl(storeData.website),
+                _publicWebsiteActionUrl(),
               ),
         ),
       if (storeData.googleBusinessLink.trim().isNotEmpty)
