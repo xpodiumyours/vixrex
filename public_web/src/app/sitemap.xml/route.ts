@@ -18,6 +18,19 @@ export async function GET() {
       .eq("status", "published");
 
     const baseUrl = "https://vitrinx.app";
+    const articleLastModByStore = new Map<string, string>();
+
+    if (articles) {
+      for (const article of articles) {
+        const lastMod = article.updated_at
+          ? new Date(article.updated_at).toISOString()
+          : new Date().toISOString();
+        const currentLastMod = articleLastModByStore.get(article.store_slug);
+        if (!currentLastMod || lastMod > currentLastMod) {
+          articleLastModByStore.set(article.store_slug, lastMod);
+        }
+      }
+    }
     
     // Start sitemap XML
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -28,23 +41,27 @@ export async function GET() {
     <priority>1.0</priority>
   </url>`;
 
-    // Add stores + their blog list pages
+    // Add stores + blog list pages only when they have published articles
     if (stores) {
       for (const store of stores) {
         const lastMod = store.updated_at ? new Date(store.updated_at).toISOString() : new Date().toISOString();
+        const blogLastMod = articleLastModByStore.get(store.slug);
         xml += `
   <url>
     <loc>${baseUrl}/v/${store.slug}</loc>
     <lastmod>${lastMod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>
+  </url>`;
+        if (blogLastMod) {
+          xml += `
   <url>
     <loc>${baseUrl}/v/${store.slug}/yazilar</loc>
-    <lastmod>${lastMod}</lastmod>
+    <lastmod>${blogLastMod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`;
+        }
       }
     }
 

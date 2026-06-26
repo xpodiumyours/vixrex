@@ -44,10 +44,10 @@ const getBlogData = (slug: string) =>
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
   const data = await getBlogData(params.slug);
-  if (!data) return {};
+  if (!data || data.articles.length === 0) return {};
 
-  const title = `${data.store.name} Yazıları - VitrinX`;
-  const description = `${data.store.name} işletmesinin güncel blog yazıları, duyuruları ve haberleri.`;
+  const title = `${data.store.name} İçerik ve Duyurular - VitrinX`;
+  const description = `${data.store.name} işletmesinin güncel yazıları, duyuruları ve rehberleri.`;
 
   return {
     title,
@@ -64,6 +64,7 @@ export default async function BlogIndexPage(props: PageProps) {
   if (!data) notFound();
 
   const { store, articles } = data;
+  if (articles.length === 0) notFound();
 
   const formatDateTR = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("tr-TR", {
@@ -112,7 +113,7 @@ export default async function BlogIndexPage(props: PageProps) {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             {store.name} Vitrini
           </Link>
-          <h1 className="text-sm font-extrabold">İşletme Yazıları</h1>
+          <h1 className="text-sm font-extrabold">İçerik ve Duyurular</h1>
         </div>
 
       {/* Hero Header */}
@@ -121,57 +122,51 @@ export default async function BlogIndexPage(props: PageProps) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={store.logo_url} alt={store.name} className="w-16 h-16 rounded-full mx-auto border object-cover mb-3" />
         )}
-        <h2 className="text-2xl font-extrabold">{store.name} Blogu</h2>
+        <h2 className="text-2xl font-extrabold">{store.name} Yazıları</h2>
         <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">Güncel paylaşımlar, rehberler ve duyurular.</p>
       </div>
 
       {/* Articles Grid List */}
-      {articles.length > 0 ? (
-        <div className="grid gap-4">
-          {articles.map((article) => (
-            <Link 
-              key={article.id} 
-              href={`/v/${store.slug}/yazilar/${article.slug}`} 
-              className="card bg-white dark:bg-[#131A22] hover:border-[#10D8D8] border border-[#D0E4E8] dark:border-[#243141] p-5 flex flex-col md:flex-row gap-5 transition-all hover:-translate-y-0.5"
-            >
-              {article.cover_image_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img 
-                  src={article.cover_image_url} 
-                  alt={article.title} 
-                  className="w-full md:w-32 aspect-video md:aspect-square object-cover rounded-xl border border-slate-100 dark:border-slate-800 shrink-0" 
-                />
-              )}
-              <div className="flex-1 flex flex-col justify-between py-0.5 space-y-3">
-                <div className="space-y-1.5">
-                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#38A0E4]">
-                    {article.article_type || "Paylaşım"}
-                  </span>
-                  <h3 className="font-extrabold text-base leading-snug hover:text-[#10D8D8]">
-                    {article.title}
-                  </h3>
-                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8] leading-relaxed line-clamp-2">
-                    {article.summary || article.content.substring(0, 150)}
-                  </p>
-                </div>
-                
-                <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold pt-1 border-t border-slate-50 dark:border-slate-900">
-                  <span>{formatDateTR(article.published_at || article.created_at)}</span>
-                  {article.target_city && (
-                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full font-bold">
-                      {article.target_city}
-                    </span>
-                  )}
-                </div>
+      <div className="grid gap-4">
+        {articles.map((article) => (
+          <Link
+            key={article.id}
+            href={`/v/${store.slug}/yazilar/${article.slug}`}
+            className="card bg-white dark:bg-[#131A22] hover:border-[#10D8D8] border border-[#D0E4E8] dark:border-[#243141] p-5 flex flex-col md:flex-row gap-5 transition-all hover:-translate-y-0.5"
+          >
+            {article.cover_image_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={article.cover_image_url}
+                alt={article.title}
+                className="w-full md:w-32 aspect-video md:aspect-square object-cover rounded-xl border border-slate-100 dark:border-slate-800 shrink-0"
+              />
+            )}
+            <div className="flex-1 flex flex-col justify-between py-0.5 space-y-3">
+              <div className="space-y-1.5">
+                <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#38A0E4]">
+                  {article.article_type || "Paylaşım"}
+                </span>
+                <h3 className="font-extrabold text-base leading-snug hover:text-[#10D8D8]">
+                  {article.title}
+                </h3>
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] leading-relaxed line-clamp-2">
+                  {article.summary || article.content.substring(0, 150)}
+                </p>
               </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="card text-center py-12 text-[#64748B] bg-white dark:bg-[#131A22]">
-          Henüz yayınlanmış bir yazı bulunmuyor.
-        </div>
-      )}
+
+              <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold pt-1 border-t border-slate-50 dark:border-slate-900">
+                <span>{formatDateTR(article.published_at || article.created_at)}</span>
+                {article.target_city && (
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full font-bold">
+                    {article.target_city}
+                  </span>
+                )}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
       </div>
     </>
   );

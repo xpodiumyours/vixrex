@@ -294,7 +294,7 @@ export default async function StorePage(props: PageProps) {
                       href={`/v/${store.slug}/yazilar`}
                       className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-extrabold text-white/90"
                     >
-                      Yazılar
+                      İçerikler
                     </Link>
                   )}
                   <span
@@ -627,7 +627,7 @@ export default async function StorePage(props: PageProps) {
               {articles.length > 0 && (
                 <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <h2 className="text-base font-black text-white">Son Yazılar</h2>
+                    <h2 className="text-base font-black text-white">İçerik ve Duyurular</h2>
                     <Link href={`/v/${store.slug}/yazilar`} className="text-xs font-black text-[#7BC7FF]">
                       Tümünü Gör
                     </Link>

@@ -186,7 +186,7 @@ export default async function ArticleDetailPage(props: PageProps) {
         <div className="flex justify-between items-center bg-white dark:bg-[#131A22] border border-[#D0E4E8] dark:border-[#243141] rounded-2xl p-4 shadow-sm text-xs font-bold">
           <Link href={`/v/${article.store.slug}/yazilar`} className="text-[#64748B] hover:text-[#10D8D8] flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            Tüm Yazılar
+            Tüm İçerikler
           </Link>
           <Link href={`/v/${article.store.slug}`} className="text-[#38A0E4] hover:text-[#10D8D8]">
             {article.store.name} Vitrini
@@ -250,7 +250,7 @@ export default async function ArticleDetailPage(props: PageProps) {
             )}
             <div>
               <div className="text-xs font-bold">{article.store.name}</div>
-              <div className="text-[10px] text-slate-400 font-semibold">Vitrin Sahibi & Yazar</div>
+              <div className="text-[10px] text-slate-400 font-semibold">Vitrin Sahibi ve Yazar</div>
             </div>
           </div>
           <Link href={`/v/${article.store.slug}`} className="btn-secondary px-4 py-2 text-[10px] rounded-lg">

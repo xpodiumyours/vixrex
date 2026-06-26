@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vitrinx/models/chat_message.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/public_site_config.dart';
@@ -26,7 +25,6 @@ import 'package:vitrinx/utils/token_generator.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/gallery_delete_confirmation_dialog.dart';
 import 'package:vitrinx/theme/app_colors.dart';
-
 
 // ─── Gallery item helper ───────────────────────────────────────────────────
 class _GalleryItem {
@@ -120,9 +118,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   String? _provinceError;
   String? _districtError;
   String? _googleLinkError;
-
-  bool _googleBusinessCreated = false;
-  bool _isQrCodeHung = false;
 
   // Blog articles
   List<Map<String, dynamic>> _articles = [];
@@ -306,37 +301,31 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         'active': true,
       };
 
-      bool googleBusinessCreated = false;
-      bool isQrCodeHung = false;
-
       if (publishedInfo?.slug != null && publishedInfo!.slug.isNotEmpty) {
         try {
           final client = Supabase.instance.client;
-          final settingsRes = await client
-              .from('booking_settings')
-              .select()
-              .eq('store_slug', publishedInfo.slug)
-              .maybeSingle();
+          final settingsRes =
+              await client
+                  .from('booking_settings')
+                  .select()
+                  .eq('store_slug', publishedInfo.slug)
+                  .maybeSingle();
           if (settingsRes != null) {
             bookingIsEnabled = (settingsRes['is_enabled'] ?? false) as bool;
             bookingCapacity = (settingsRes['capacity'] ?? 1) as int;
             if (settingsRes['working_hours'] != null) {
-              bookingWorkingHours = Map<String, dynamic>.from(settingsRes['working_hours'] as Map);
+              bookingWorkingHours = Map<String, dynamic>.from(
+                settingsRes['working_hours'] as Map,
+              );
             }
             if (settingsRes['lunch_break'] != null) {
-              bookingLunchBreak = Map<String, dynamic>.from(settingsRes['lunch_break'] as Map);
+              bookingLunchBreak = Map<String, dynamic>.from(
+                settingsRes['lunch_break'] as Map,
+              );
             }
           }
         } catch (e) {
           debugPrint('Booking settings load error: $e');
-        }
-
-        try {
-          final prefs = await SharedPreferences.getInstance();
-          googleBusinessCreated = prefs.getBool('google_business_created_${publishedInfo.slug}') ?? false;
-          isQrCodeHung = prefs.getBool('is_qr_code_hung_${publishedInfo.slug}') ?? false;
-        } catch (e) {
-          debugPrint('Checklist load error: $e');
         }
       }
 
@@ -357,12 +346,14 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 ? publishedInfo!.publicLink
                 : data.website;
         _googleBusinessLinkController.text = data.googleBusinessLink;
-        _selectedProvinceCode = data.provinceCode.isNotEmpty ? data.provinceCode : null;
-        _selectedProvinceName = data.provinceName.isNotEmpty ? data.provinceName : null;
-        _selectedDistrictCode = data.districtCode.isNotEmpty ? data.districtCode : null;
-        _selectedDistrictName = data.districtName.isNotEmpty ? data.districtName : null;
-        _googleBusinessCreated = googleBusinessCreated;
-        _isQrCodeHung = isQrCodeHung;
+        _selectedProvinceCode =
+            data.provinceCode.isNotEmpty ? data.provinceCode : null;
+        _selectedProvinceName =
+            data.provinceName.isNotEmpty ? data.provinceName : null;
+        _selectedDistrictCode =
+            data.districtCode.isNotEmpty ? data.districtCode : null;
+        _selectedDistrictName =
+            data.districtName.isNotEmpty ? data.districtName : null;
 
         _coverUrl =
             data.shelfImageUrl.trim().isNotEmpty
@@ -377,16 +368,17 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
 
         _galleryItems.clear();
         _galleryItems.addAll(
-            data.displayGalleryItems
-                .take(_maxGalleryPhotos)
-                .map(_GalleryItem.fromStoreItem),
+          data.displayGalleryItems
+              .take(_maxGalleryPhotos)
+              .map(_GalleryItem.fromStoreItem),
         );
 
         _marketplaceLinks.clear();
         _marketplaceLinks.addAll(data.marketplaceLinks);
         _customPlatformLinkIds.clear();
         for (final link in _marketplaceLinks) {
-          if (!_platformOptions.contains(link.platform) && link.platform.isNotEmpty) {
+          if (!_platformOptions.contains(link.platform) &&
+              link.platform.isNotEmpty) {
             _customPlatformLinkIds.add(link.id);
           }
         }
@@ -639,7 +631,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
 
     bool isGoogleLinkValid = true;
     if (googleLink.isNotEmpty) {
-      final googleRegex = RegExp(r'^https:\/\/(www\.)?(search\.google\.com|g\.page|maps\.google\.com|maps\.app\.goo\.gl)\/.*$');
+      final googleRegex = RegExp(
+        r'^https:\/\/(www\.)?(search\.google\.com|g\.page|maps\.google\.com|maps\.app\.goo\.gl)\/.*$',
+      );
       isGoogleLinkValid = googleRegex.hasMatch(googleLink);
     }
 
@@ -657,9 +651,14 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               : WhatsAppLinkHelper.invalidNumberMessage;
       _addressError =
           address.isEmpty ? 'Konum / adres bilgisi zorunludur' : null;
-      _provinceError = _selectedProvinceCode == null ? 'İl seçimi zorunludur' : null;
-      _districtError = _selectedDistrictName == null ? 'İlçe seçimi zorunludur' : null;
-      _googleLinkError = isGoogleLinkValid ? null : 'Lütfen geçerli bir Google Haritalar veya Google Yorum bağlantısı girin.';
+      _provinceError =
+          _selectedProvinceCode == null ? 'İl seçimi zorunludur' : null;
+      _districtError =
+          _selectedDistrictName == null ? 'İlçe seçimi zorunludur' : null;
+      _googleLinkError =
+          isGoogleLinkValid
+              ? null
+              : 'Lütfen geçerli bir Google Haritalar veya Google Yorum bağlantısı girin.';
     });
 
     if (name.isEmpty ||
@@ -1383,9 +1382,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           const SizedBox(height: 16),
           _buildActionButtons(),
           const SizedBox(height: 16),
-          _buildBlogManagementCard(),
-          const SizedBox(height: 16),
-          _buildVisibilityChecklistCard(),
+          _buildVisibilityHubCard(),
         ],
 
         // ── Danger Zone ────────────────────────────────────────────────────
@@ -1516,9 +1513,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   // ─── Location Field ───────────────────────────────────────────────────────
   // ─── Location Field ───────────────────────────────────────────────────────
   Widget _buildLocationField() {
-    final districts = _selectedProvinceCode != null
-        ? (turkeyDistricts[_selectedProvinceCode] ?? [])
-        : <String>[];
+    final districts =
+        _selectedProvinceCode != null
+            ? (turkeyDistricts[_selectedProvinceCode] ?? [])
+            : <String>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1547,11 +1545,18 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         DropdownButtonFormField<String>(
           value: _selectedProvinceCode,
           decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.map_rounded, color: mutedText, size: 18),
+            prefixIcon: const Icon(
+              Icons.map_rounded,
+              color: mutedText,
+              size: 18,
+            ),
             filled: true,
             fillColor: inputBg,
             errorText: _provinceError,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(color: cardBorder),
@@ -1561,20 +1566,31 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               borderSide: const BorderSide(color: cardBorder),
             ),
           ),
-          hint: const Text('İl Seçiniz', style: TextStyle(fontSize: 14, color: mutedText)),
-          items: turkeyProvinces.map((p) {
-            return DropdownMenuItem<String>(
-              value: p.code,
-              child: Text(
-                p.name,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: darkText),
-              ),
-            );
-          }).toList(),
+          hint: const Text(
+            'İl Seçiniz',
+            style: TextStyle(fontSize: 14, color: mutedText),
+          ),
+          items:
+              turkeyProvinces.map((p) {
+                return DropdownMenuItem<String>(
+                  value: p.code,
+                  child: Text(
+                    p.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: darkText,
+                    ),
+                  ),
+                );
+              }).toList(),
           onChanged: (val) {
             setState(() {
               _selectedProvinceCode = val;
-              _selectedProvinceName = val != null ? turkeyProvinces.firstWhere((p) => p.code == val).name : '';
+              _selectedProvinceName =
+                  val != null
+                      ? turkeyProvinces.firstWhere((p) => p.code == val).name
+                      : '';
               _selectedDistrictCode = null;
               _selectedDistrictName = null;
               _provinceError = null;
@@ -1607,11 +1623,18 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         DropdownButtonFormField<String>(
           value: _selectedDistrictName,
           decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.location_city_rounded, color: mutedText, size: 18),
+            prefixIcon: const Icon(
+              Icons.location_city_rounded,
+              color: mutedText,
+              size: 18,
+            ),
             filled: true,
             fillColor: inputBg,
             errorText: _districtError,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(color: cardBorder),
@@ -1621,26 +1644,38 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               borderSide: const BorderSide(color: cardBorder),
             ),
           ),
-          hint: const Text('İlçe Seçiniz', style: TextStyle(fontSize: 14, color: mutedText)),
-          disabledHint: const Text('Önce İl Seçiniz', style: TextStyle(fontSize: 14, color: mutedText)),
-          items: districts.map((d) {
-            return DropdownMenuItem<String>(
-              value: d,
-              child: Text(
-                d,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: darkText),
-              ),
-            );
-          }).toList(),
-          onChanged: _selectedProvinceCode == null
-              ? null
-              : (val) {
-                  setState(() {
-                    _selectedDistrictCode = val;
-                    _selectedDistrictName = val;
-                    _districtError = null;
-                  });
-                },
+          hint: const Text(
+            'İlçe Seçiniz',
+            style: TextStyle(fontSize: 14, color: mutedText),
+          ),
+          disabledHint: const Text(
+            'Önce İl Seçiniz',
+            style: TextStyle(fontSize: 14, color: mutedText),
+          ),
+          items:
+              districts.map((d) {
+                return DropdownMenuItem<String>(
+                  value: d,
+                  child: Text(
+                    d,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: darkText,
+                    ),
+                  ),
+                );
+              }).toList(),
+          onChanged:
+              _selectedProvinceCode == null
+                  ? null
+                  : (val) {
+                    setState(() {
+                      _selectedDistrictCode = val;
+                      _selectedDistrictName = val;
+                      _districtError = null;
+                    });
+                  },
         ),
         const SizedBox(height: 14),
 
@@ -1778,101 +1813,87 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
-  Widget _buildVisibilityChecklistCard() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.checklist_rounded, color: primaryColor, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Google Görünürlük Kontrol Listesi',
-                style: TextStyle(
-                  color: darkText,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Arama motorlarında ve Google Haritalar\'da üst sıralara çıkmak için aşağıdaki adımları tamamlayın:',
-            style: TextStyle(
-              color: mutedText.withValues(alpha: 0.8),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              height: 1.4,
+  Future<void> _openBlogEditor({Map<String, dynamic>? initialArticle}) async {
+    final slug = _publishedInfo?.slug ?? _data.slug;
+    if (slug.trim().isEmpty) {
+      _showSnackBar('Önce vitrini yayına almanız gerekir.');
+      return;
+    }
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => BlogEditorScreen(
+              storeSlug: slug,
+              initialArticle: initialArticle,
             ),
-          ),
-          const SizedBox(height: 14),
-          CheckboxListTile(
-            value: _googleBusinessCreated,
-            title: const Text(
-              'Google Benim İşletmem profilinizi oluşturup tüm bilgilerinizi eksiksiz doldurdunuz mu?',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: darkText),
-            ),
-            activeColor: primaryColor,
-            controlAffinity: ListTileControlAffinity.leading,
-            contentPadding: EdgeInsets.zero,
-            onChanged: (val) async {
-              setState(() {
-                _googleBusinessCreated = val ?? false;
-              });
-              final slug = _publishedInfo?.slug ?? _data.slug;
-              if (slug.isNotEmpty) {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('google_business_created_$slug', _googleBusinessCreated);
-              }
-            },
-          ),
-          CheckboxListTile(
-            value: _isQrCodeHung,
-            title: const Text(
-              'Google Yorum QR kodunu dükkanınızda müşterilerinizin görebileceği bir yere astınız mı?',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: darkText),
-            ),
-            activeColor: primaryColor,
-            controlAffinity: ListTileControlAffinity.leading,
-            contentPadding: EdgeInsets.zero,
-            onChanged: (val) async {
-              setState(() {
-                _isQrCodeHung = val ?? false;
-              });
-              final slug = _publishedInfo?.slug ?? _data.slug;
-              if (slug.isNotEmpty) {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('is_qr_code_hung_$slug', _isQrCodeHung);
-              }
-            },
-          ),
-          if (_googleBusinessLinkController.text.trim().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: _showGoogleReviewQrSheet,
-              icon: const Icon(Icons.qr_code_2_rounded, size: 18),
-              label: const Text(
-                'Google Yorum QR Kodu Göster',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primaryColor,
-                side: const BorderSide(color: primaryColor),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ],
-        ],
       ),
     );
+
+    if (result == true) {
+      await _fetchArticles();
+    }
   }
 
-  Widget _buildBlogManagementCard() {
-    final slug = _publishedInfo?.slug ?? _data.slug;
+  Widget _buildVisibilityHubCard() {
+    final publicLink =
+        (_publishedInfo?.publicLink.trim().isNotEmpty == true)
+            ? _publishedInfo!.publicLink.trim()
+            : _websiteController.text.trim();
+    final hasPublished = _publishedInfo?.isComplete == true;
+    final hasWebLink = publicLink.isNotEmpty;
+    final hasLocation =
+        _addressController.text.trim().isNotEmpty ||
+        (_latitude != null && _longitude != null);
+    final hasGoogleReview =
+        _googleBusinessLinkController.text.trim().isNotEmpty;
+    final hasOfferings = _offerings.any(
+      (item) =>
+          item.title.trim().isNotEmpty || item.description.trim().isNotEmpty,
+    );
+    final publishedArticles =
+        _articles
+            .where((article) => article['status']?.toString() == 'published')
+            .toList();
+    final hasPublishedArticle = publishedArticles.isNotEmpty;
+    final completedCount =
+        [
+          hasPublished,
+          hasWebLink,
+          hasLocation,
+          hasGoogleReview,
+          hasOfferings,
+          hasPublishedArticle,
+        ].where((value) => value).length;
+
+    final hasCoreInfo =
+        hasPublished && hasWebLink && hasLocation && hasOfferings;
+    final isReady = hasCoreInfo && hasGoogleReview;
+    final statusLabel =
+        isReady
+            ? 'Hazır'
+            : hasCoreInfo
+            ? 'Geliştirilebilir'
+            : 'Eksik bilgi var';
+    final statusColor =
+        isReady
+            ? const Color(0xFF047857)
+            : hasCoreInfo
+            ? const Color(0xFFB45309)
+            : const Color(0xFFDC2626);
+    final statusBg =
+        isReady
+            ? const Color(0xFFEFFDF5)
+            : hasCoreInfo
+            ? const Color(0xFFFFF7ED)
+            : const Color(0xFFFEF2F2);
+    final helperText =
+        isReady
+            ? 'Temel bilgiler tamam. Güncel içerik ekledikçe görünürlük güçlenir.'
+            : hasCoreInfo
+            ? 'Temel bilgiler hazır. Google yorum linki ve içerik eklemek vitrini güçlendirir.'
+            : 'Google için önce yayın linki, adres/konum ve ürün/hizmet bilgilerini tamamla.';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -1881,41 +1902,41 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.edit_note_rounded, color: primaryColor, size: 22),
-                  SizedBox(width: 8),
-                  Text(
-                    '✍️ Blog Yönetimi',
-                    style: TextStyle(
-                      color: darkText,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
+              const Icon(
+                Icons.travel_explore_rounded,
+                color: primaryColor,
+                size: 20,
               ),
-              TextButton.icon(
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BlogEditorScreen(storeSlug: slug),
-                    ),
-                  );
-                  if (result == true) {
-                    _fetchArticles();
-                  }
-                },
-                icon: const Icon(Icons.add_rounded, size: 16, color: primaryColor),
-                label: const Text(
-                  'Yeni Yazı',
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Google Görünürlük',
                   style: TextStyle(
-                    color: primaryColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    color: darkText,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
@@ -1923,7 +1944,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Google\'da görünürlüğünüzü ve organik trafiğinizi artırmak için SEO uyumlu blog yazıları yayınlayın.',
+            'Vitrin bilgilerinden otomatik hazırlanır. Sıralama garantisi vermez; doğru bilgi, erişilebilir sayfa ve güncel içerik görünürlüğü destekler.',
             style: TextStyle(
               color: mutedText.withValues(alpha: 0.8),
               fontSize: 12,
@@ -1931,122 +1952,312 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               height: 1.4,
             ),
           ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: inputBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: cardBorder),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: primaryColor,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '$completedCount/6 kontrol tamamlandı. $helperText',
+                    style: const TextStyle(
+                      color: darkText,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 520;
+              final tileWidth =
+                  isNarrow
+                      ? constraints.maxWidth
+                      : (constraints.maxWidth - 16) / 3;
+
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.public_rounded,
+                    title: 'Vitrin yayında',
+                    isComplete: hasPublished,
+                  ),
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.link_rounded,
+                    title: 'Web linki hazır',
+                    isComplete: hasWebLink,
+                  ),
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.place_rounded,
+                    title: 'Adres veya konum',
+                    isComplete: hasLocation,
+                  ),
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.rate_review_rounded,
+                    title: 'Google yorum linki',
+                    isComplete: hasGoogleReview,
+                  ),
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.inventory_2_rounded,
+                    title: 'Ürün/hizmet girildi',
+                    isComplete: hasOfferings,
+                  ),
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.article_rounded,
+                    title: 'Yayında içerik',
+                    isComplete: hasPublishedArticle,
+                  ),
+                ],
+              );
+            },
+          ),
           const SizedBox(height: 14),
-          if (_isLoadingArticles)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0),
-                child: CircularProgressIndicator(color: primaryColor),
-              ),
-            )
-          else if (_articles.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Text(
-                'Henüz eklenmiş blog yazısı bulunmuyor.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: mutedText.withValues(alpha: 0.6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  fontStyle: FontStyle.italic,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (hasGoogleReview)
+                OutlinedButton.icon(
+                  onPressed: _showGoogleReviewQrSheet,
+                  icon: const Icon(Icons.qr_code_2_rounded, size: 16),
+                  label: const Text(
+                    'Yorum QR kodu',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryColor,
+                    side: const BorderSide(color: primaryColor),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                )
+              else
+                _buildVisibilityHintChip(
+                  icon: Icons.rate_review_rounded,
+                  text: 'Google yorum linki ekle',
+                ),
+              TextButton.icon(
+                onPressed: () => _openBlogEditor(),
+                icon: const Icon(
+                  Icons.add_rounded,
+                  size: 16,
+                  color: primaryColor,
+                ),
+                label: const Text(
+                  'Yeni Yazı',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _articles.length,
-              separatorBuilder: (_, __) => const Divider(color: cardBorder, height: 16),
-              itemBuilder: (context, index) {
-                final art = _articles[index];
-                final title = art['title'] ?? '';
-                final status = art['status'] ?? 'draft';
-                final cover = art['cover_image_url'] as String?;
-
-                String statusText = 'Taslak';
-                Color badgeBg = Colors.grey.shade100;
-                Color badgeText = Colors.grey.shade700;
-
-                if (status == 'review') {
-                  statusText = 'Onay Bekliyor';
-                  badgeBg = Colors.amber.shade50;
-                  badgeText = Colors.amber.shade800;
-                } else if (status == 'published') {
-                  statusText = 'Yayında';
-                  badgeBg = const Color(0xFFEFFDF5);
-                  badgeText = const Color(0xFF047857);
-                } else if (status == 'rejected') {
-                  statusText = 'Reddedildi';
-                  badgeBg = const Color(0xFFFEF2F2);
-                  badgeText = const Color(0xFFDC2626);
-                }
-
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: inputBg,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: cardBorder),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: cover != null && cover.isNotEmpty
-                        ? Image.network(cover, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.article_rounded, color: mutedText))
-                        : const Icon(Icons.article_rounded, color: mutedText),
-                  ),
-                  title: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: darkText),
-                  ),
-                  subtitle: Row(
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: badgeBg,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          statusText,
-                          style: TextStyle(fontSize: 10, color: badgeText, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'SEO Skoru: ${art['seo_score'] ?? 0}',
-                          style: const TextStyle(fontSize: 10, color: mutedText, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                  trailing: const Icon(Icons.chevron_right_rounded, color: mutedText),
-                  onTap: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => BlogEditorScreen(
-                          storeSlug: slug,
-                          initialArticle: art,
-                        ),
-                      ),
-                    );
-                    if (result == true) {
-                      _fetchArticles();
-                    }
-                  },
-                );
-              },
+            ],
+          ),
+          if (_isLoadingArticles) ...[
+            const SizedBox(height: 12),
+            const LinearProgressIndicator(
+              minHeight: 2,
+              color: primaryColor,
+              backgroundColor: Color(0xFFE5E7EB),
             ),
+          ] else if (publishedArticles.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            const Text(
+              'İçerik ve Duyurular',
+              style: TextStyle(
+                color: darkText,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...publishedArticles.take(2).map(_buildArticleSummaryRow),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildVisibilityCheckTile({
+    required double width,
+    required IconData icon,
+    required String title,
+    required bool isComplete,
+  }) {
+    final color = isComplete ? const Color(0xFF047857) : mutedText;
+
+    return SizedBox(
+      width: width,
+      child: Container(
+        height: 46,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: isComplete ? const Color(0xFFEFFDF5) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isComplete ? const Color(0xFFBBF7D0) : cardBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isComplete ? const Color(0xFF065F46) : darkText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Icon(
+              isComplete
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: color,
+              size: 15,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVisibilityHintChip({
+    required IconData icon,
+    required String text,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: const Color(0xFFB45309)),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              color: Color(0xFF9A3412),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArticleSummaryRow(Map<String, dynamic> article) {
+    final title = article['title']?.toString().trim() ?? '';
+    final seoScore = article['seo_score'] ?? 0;
+
+    return InkWell(
+      onTap: () => _openBlogEditor(initialArticle: article),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.article_rounded,
+                color: primaryColor,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title.isEmpty ? 'Yayınlanan yazı' : title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: darkText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'SEO $seoScore',
+              style: const TextStyle(
+                color: mutedText,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2054,7 +2265,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   void _showGoogleReviewQrSheet() {
     final link = _googleBusinessLinkController.text.trim();
     if (link.isEmpty) {
-      _showSnackBar('Lütfen önce Google Yorum Bağlantısı girin ve vitrininizi kaydedin.');
+      _showSnackBar(
+        'Lütfen önce Google Yorum Bağlantısı girin ve vitrininizi kaydedin.',
+      );
       return;
     }
     showModalBottomSheet<void>(
@@ -2089,7 +2302,11 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 20),
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: Color(0xFFDC2626),
+                        size: 20,
+                      ),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -2196,7 +2413,8 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
 
   Widget _buildMarketplaceLinkRow(int index) {
     final link = _marketplaceLinks[index];
-    final isCustom = _customPlatformLinkIds.contains(link.id) ||
+    final isCustom =
+        _customPlatformLinkIds.contains(link.id) ||
         link.platform == 'Özel...' ||
         (!_platformOptions.contains(link.platform) && link.platform.isNotEmpty);
     final dropdownValue =
@@ -2323,7 +2541,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           TextFormField(
             key: ValueKey('${link.id}-platform'),
             initialValue: link.platform == 'Özel...' ? '' : link.platform,
-            onChanged: (val) => setState(() => _marketplaceLinks[index].platform = val.trim()),
+            onChanged:
+                (val) => setState(
+                  () => _marketplaceLinks[index].platform = val.trim(),
+                ),
             style: const TextStyle(
               fontSize: 13,
               color: darkText,
@@ -2430,7 +2651,11 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                     );
                   });
                 },
-                icon: const Icon(Icons.add_rounded, size: 16, color: primaryColor),
+                icon: const Icon(
+                  Icons.add_rounded,
+                  size: 16,
+                  color: primaryColor,
+                ),
                 label: const Text(
                   'Ekle',
                   style: TextStyle(
@@ -2440,7 +2665,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -2461,43 +2689,53 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: config.suggestedOfferings.map((sug) {
-              return ActionChip(
-                backgroundColor: Colors.white,
-                side: const BorderSide(color: cardBorder),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                label: Text(
-                  '${config.emoji} ${sug.title}',
-                  style: const TextStyle(fontSize: 11, color: darkText, fontWeight: FontWeight.bold),
-                ),
-                onPressed: () {
-                  if (_offerings.length >= 6) {
-                    _showSnackBar('En fazla 6 adet hizmet ekleyebilirsiniz.');
-                    return;
-                  }
-                  final trimmedTitle = sug.title.trim().toLowerCase();
-                  final isDuplicate = _offerings.any(
-                    (o) => o.title.trim().toLowerCase() == trimmedTitle,
-                  );
-                  if (isDuplicate) {
-                    _showSnackBar('Bu hizmet zaten eklenmiş.');
-                    return;
-                  }
-                  setState(() {
-                    _offerings.add(
-                      StoreOffering(
-                        id: '${DateTime.now().millisecondsSinceEpoch}_${sug.title.hashCode}',
-                        title: sug.title,
-                        description: sug.description,
-                        price: sug.price,
-                        durationMinutes: sug.durationMinutes,
-                        isBookable: sug.isBookable,
+            children:
+                config.suggestedOfferings.map((sug) {
+                  return ActionChip(
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: cardBorder),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    label: Text(
+                      '${config.emoji} ${sug.title}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: darkText,
+                        fontWeight: FontWeight.bold,
                       ),
-                    );
-                  });
-                },
-              );
-            }).toList(),
+                    ),
+                    onPressed: () {
+                      if (_offerings.length >= 6) {
+                        _showSnackBar(
+                          'En fazla 6 adet hizmet ekleyebilirsiniz.',
+                        );
+                        return;
+                      }
+                      final trimmedTitle = sug.title.trim().toLowerCase();
+                      final isDuplicate = _offerings.any(
+                        (o) => o.title.trim().toLowerCase() == trimmedTitle,
+                      );
+                      if (isDuplicate) {
+                        _showSnackBar('Bu hizmet zaten eklenmiş.');
+                        return;
+                      }
+                      setState(() {
+                        _offerings.add(
+                          StoreOffering(
+                            id:
+                                '${DateTime.now().millisecondsSinceEpoch}_${sug.title.hashCode}',
+                            title: sug.title,
+                            description: sug.description,
+                            price: sug.price,
+                            durationMinutes: sug.durationMinutes,
+                            isBookable: sug.isBookable,
+                          ),
+                        );
+                      });
+                    },
+                  );
+                }).toList(),
           ),
           const SizedBox(height: 10),
         ],
@@ -2542,8 +2780,18 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   initialValue: offering.title,
                   onChanged: (val) => offering.title = val,
                   maxLength: 60,
-                  buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
-                  style: const TextStyle(fontSize: 13, color: darkText, fontWeight: FontWeight.bold),
+                  buildCounter:
+                      (
+                        context, {
+                        required currentLength,
+                        required isFocused,
+                        maxLength,
+                      }) => null,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: darkText,
+                    fontWeight: FontWeight.bold,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Hizmet / Ürün Adı (örn: Saç Kesimi)',
                     hintStyle: TextStyle(
@@ -2552,7 +2800,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
                     border: InputBorder.none,
                   ),
                 ),
@@ -2565,8 +2816,18 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   initialValue: offering.price,
                   onChanged: (val) => offering.price = val,
                   maxLength: 30,
-                  buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
-                  style: const TextStyle(fontSize: 13, color: primaryColor, fontWeight: FontWeight.bold),
+                  buildCounter:
+                      (
+                        context, {
+                        required currentLength,
+                        required isFocused,
+                        maxLength,
+                      }) => null,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Fiyat (örn: 150 TL)',
                     hintStyle: TextStyle(
@@ -2575,7 +2836,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
                     border: InputBorder.none,
                   ),
                 ),
@@ -2586,7 +2850,11 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                     _offerings.removeAt(index);
                   });
                 },
-                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: dangerColor),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: dangerColor,
+                ),
                 style: IconButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(28, 28),
@@ -2601,9 +2869,19 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             initialValue: offering.description,
             onChanged: (val) => offering.description = val,
             maxLength: 120,
-            buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => null,
             maxLines: 2,
-            style: const TextStyle(fontSize: 12, color: softText, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 12,
+              color: softText,
+              fontWeight: FontWeight.w600,
+            ),
             decoration: InputDecoration(
               hintText: 'Kısa açıklama (örn: Yıkama ve fön dahil hizmet)',
               hintStyle: TextStyle(
@@ -2612,7 +2890,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 fontWeight: FontWeight.w500,
               ),
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 8,
+              ),
               border: InputBorder.none,
             ),
           ),
@@ -2622,11 +2903,19 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             Row(
               children: [
                 const SizedBox(width: 8),
-                const Icon(Icons.calendar_today_rounded, size: 14, color: mutedText),
+                const Icon(
+                  Icons.calendar_today_rounded,
+                  size: 14,
+                  color: mutedText,
+                ),
                 const SizedBox(width: 4),
                 const Text(
                   'Randevuya Açık',
-                  style: TextStyle(fontSize: 12, color: softText, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: softText,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Switch(
                   value: offering.isBookable,
@@ -2643,15 +2932,20 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   const SizedBox(width: 4),
                   DropdownButton<int>(
                     value: offering.durationMinutes,
-                    items: [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
-                      return DropdownMenuItem<int>(
-                        value: val,
-                        child: Text(
-                          '$val dk',
-                          style: const TextStyle(fontSize: 12, color: darkText, fontWeight: FontWeight.bold),
-                        ),
-                      );
-                    }).toList(),
+                    items:
+                        [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
+                          return DropdownMenuItem<int>(
+                            value: val,
+                            child: Text(
+                              '$val dk',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: darkText,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          );
+                        }).toList(),
                     onChanged: (val) {
                       setState(() {
                         if (val != null) {
@@ -2672,7 +2966,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   }
 
   Widget _buildBookingSettingsSection() {
-
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(12),
@@ -2691,7 +2984,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           ),
         ),
         subtitle: Text(
-          _bookingIsEnabled ? 'Aktif · Kapasite: $_bookingCapacity kişi' : 'Pasif',
+          _bookingIsEnabled
+              ? 'Aktif · Kapasite: $_bookingCapacity kişi'
+              : 'Pasif',
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
@@ -2706,7 +3001,11 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             children: [
               const Text(
                 'Randevu Alınabilsin',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: softText),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: softText,
+                ),
               ),
               const Spacer(),
               Switch(
@@ -2727,20 +3026,29 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               children: [
                 const Text(
                   'Aynı Anda Kapasite',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: softText),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: softText,
+                  ),
                 ),
                 const Spacer(),
                 DropdownButton<int>(
                   value: _bookingCapacity,
-                  items: [1, 2, 3, 4, 5].map((int val) {
-                    return DropdownMenuItem<int>(
-                      value: val,
-                      child: Text(
-                        '$val kişi',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: darkText),
-                      ),
-                    );
-                  }).toList(),
+                  items:
+                      [1, 2, 3, 4, 5].map((int val) {
+                        return DropdownMenuItem<int>(
+                          value: val,
+                          child: Text(
+                            '$val kişi',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: darkText,
+                            ),
+                          ),
+                        );
+                      }).toList(),
                   onChanged: (val) {
                     setState(() {
                       if (val != null) {
@@ -2755,7 +3063,11 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             const SizedBox(height: 8),
             const Text(
               'Öğle Arası Saatleri',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: softText),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: softText,
+              ),
             ),
             const SizedBox(height: 6),
             Row(
@@ -2763,13 +3075,27 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _bookingLunchBreak['start'] ?? '12:00',
-                    decoration: const InputDecoration(labelText: 'Başlangıç', isDense: true),
-                    items: ['11:00', '11:30', '12:00', '12:30', '13:00', '13:30'].map((String val) {
-                      return DropdownMenuItem<String>(
-                        value: val,
-                        child: Text(val, style: const TextStyle(fontSize: 12)),
-                      );
-                    }).toList(),
+                    decoration: const InputDecoration(
+                      labelText: 'Başlangıç',
+                      isDense: true,
+                    ),
+                    items:
+                        [
+                          '11:00',
+                          '11:30',
+                          '12:00',
+                          '12:30',
+                          '13:00',
+                          '13:30',
+                        ].map((String val) {
+                          return DropdownMenuItem<String>(
+                            value: val,
+                            child: Text(
+                              val,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          );
+                        }).toList(),
                     onChanged: (val) {
                       setState(() {
                         if (val != null) {
@@ -2783,13 +3109,27 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _bookingLunchBreak['end'] ?? '13:00',
-                    decoration: const InputDecoration(labelText: 'Bitiş', isDense: true),
-                    items: ['12:00', '12:30', '13:00', '13:30', '14:00', '14:30'].map((String val) {
-                      return DropdownMenuItem<String>(
-                        value: val,
-                        child: Text(val, style: const TextStyle(fontSize: 12)),
-                      );
-                    }).toList(),
+                    decoration: const InputDecoration(
+                      labelText: 'Bitiş',
+                      isDense: true,
+                    ),
+                    items:
+                        [
+                          '12:00',
+                          '12:30',
+                          '13:00',
+                          '13:30',
+                          '14:00',
+                          '14:30',
+                        ].map((String val) {
+                          return DropdownMenuItem<String>(
+                            value: val,
+                            child: Text(
+                              val,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          );
+                        }).toList(),
                     onChanged: (val) {
                       setState(() {
                         if (val != null) {
@@ -2800,7 +3140,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Text('Aktif', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Aktif',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
                 Checkbox(
                   value: _bookingLunchBreak['active'] ?? true,
                   activeColor: primaryColor,
@@ -2816,7 +3159,11 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             const SizedBox(height: 8),
             const Text(
               'Çalışma Gün ve Saatleri',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: softText),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: softText,
+              ),
             ),
             const SizedBox(height: 8),
             for (String day in ['1', '2', '3', '4', '5', '6', '7']) ...[
@@ -2838,7 +3185,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       '6': 'Cumartesi',
       '7': 'Pazar',
     };
-    final dayHours = _bookingWorkingHours[day] ?? {'start': '09:00', 'end': '19:00', 'active': true};
+    final dayHours =
+        _bookingWorkingHours[day] ??
+        {'start': '09:00', 'end': '19:00', 'active': true};
     final isActive = dayHours['active'] ?? false;
 
     return Padding(
@@ -2871,12 +3220,15 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             Expanded(
               child: DropdownButton<String>(
                 value: dayHours['start'] ?? '09:00',
-                items: ['07:00', '08:00', '08:30', '09:00', '09:30', '10:00'].map((String val) {
-                  return DropdownMenuItem<String>(
-                    value: val,
-                    child: Text(val, style: const TextStyle(fontSize: 11)),
-                  );
-                }).toList(),
+                items:
+                    ['07:00', '08:00', '08:30', '09:00', '09:30', '10:00'].map((
+                      String val,
+                    ) {
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(val, style: const TextStyle(fontSize: 11)),
+                      );
+                    }).toList(),
                 onChanged: (val) {
                   setState(() {
                     if (val != null) {
@@ -2892,12 +3244,22 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             Expanded(
               child: DropdownButton<String>(
                 value: dayHours['end'] ?? '19:00',
-                items: ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'].map((String val) {
-                  return DropdownMenuItem<String>(
-                    value: val,
-                    child: Text(val, style: const TextStyle(fontSize: 11)),
-                  );
-                }).toList(),
+                items:
+                    [
+                      '16:00',
+                      '17:00',
+                      '18:00',
+                      '19:00',
+                      '20:00',
+                      '21:00',
+                      '22:00',
+                      '23:00',
+                    ].map((String val) {
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(val, style: const TextStyle(fontSize: 11)),
+                      );
+                    }).toList(),
                 onChanged: (val) {
                   setState(() {
                     if (val != null) {
@@ -2913,7 +3275,11 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             const Expanded(
               child: Text(
                 'Kapalı',
-                style: TextStyle(fontSize: 12, color: mutedText, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: mutedText,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           ],
