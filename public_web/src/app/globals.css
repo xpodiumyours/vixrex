@@ -7,17 +7,17 @@
   --font-outfit: 'Outfit', sans-serif;
   
   /* Brand Palette (Light Mode Default) */
-  --primary: #10D8D8;
-  --primary-dark: #0EA8B0;
+  --primary: #38A0E4;
+  --primary-dark: #1E6FA8;
   --secondary: #38A0E4;
-  --bg-app: #F4F5F8;
-  --surface: #FFFFFF;
-  --surface-soft: #F0F8F8;
-  --text-dark: #182028;
-  --text-soft: #475569;
-  --text-muted: #64748B;
-  --border: #D0E4E8;
-  --border-focus: #A0D8D8;
+  --bg-app: #071322;
+  --surface: #0E1B2E;
+  --surface-soft: #162A42;
+  --text-dark: #F8FAFC;
+  --text-soft: #C4D1E3;
+  --text-muted: #8FA6BE;
+  --border: #25415F;
+  --border-focus: #38A0E4;
   --success: #10B981;
   --danger: #EF4444;
   --warning: #F59E0B;
@@ -32,13 +32,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-app: #0B0F13;
-    --surface: #131A22;
-    --surface-soft: #1B242F;
+    --bg-app: #071322;
+    --surface: #0E1B2E;
+    --surface-soft: #162A42;
     --text-dark: #F1F5F9;
-    --text-soft: #CBD5E1;
-    --text-muted: #94A3B8;
-    --border: #243141;
+    --text-soft: #C4D1E3;
+    --text-muted: #8FA6BE;
+    --border: #25415F;
     --border-focus: #38A0E4;
   }
 }

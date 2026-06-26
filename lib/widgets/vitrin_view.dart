@@ -66,78 +66,33 @@ class VitrinView extends StatelessWidget {
     final themeData = _getThemeData(preset);
     final radius = isEmbedded ? 24.0 : 40.0;
     final galleryItems = _effectiveGalleryItems();
-    final hasGalleryMedia = galleryItems.isNotEmpty;
-    final children = <Widget>[
-      _buildModernHeader(context, preset, radius, galleryItems),
-      SizedBox(height: isEmbedded ? 14 : 24),
-      _buildStoreIdentityBlock(preset),
-      SizedBox(height: isEmbedded ? 16 : 28),
-      _buildBookingCTAButton(context, preset, radius),
-      if (storeData.bookingSettings?.isEnabled == true)
-        SizedBox(height: isEmbedded ? 16 : 30),
-      if (_hasVisibleActions()) ...[
-        _buildPremiumActionButtons(context, radius),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ],
-      if (publicMode && _aboutText().isNotEmpty) ...[
-        _buildAboutCard(preset),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ] else if (!publicMode) ...[
-        _buildProfessionalBio(preset),
-        SizedBox(height: isEmbedded ? 16 : 48),
-      ],
-      if (hasGalleryMedia) ...[
-        _buildShelfImageCard(preset, galleryItems),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ],
-      if (storeData.offerings.isNotEmpty) ...[
-        _buildOfferingsBlock(preset, radius),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ],
-      if (storeData.isStore && storeData.products.isNotEmpty) ...[
-        _buildProductsCatalogBlock(preset, radius),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ],
-      _buildModernLinkHub(context, preset, radius),
-      SizedBox(
-        height:
-            isEmbedded
-                ? 18
-                : publicMode
-                ? 24
-                : 64,
-      ),
-      if (!publicMode) ...[
-        _buildPremiumIdentityCard(context, preset, radius),
-        SizedBox(height: isEmbedded ? 18 : 64),
-      ],
-      if (publicMode && (publicLink?.isNotEmpty ?? false)) ...[
-        _buildPublicQrCard(publicLink!, preset),
-        const SizedBox(height: 24),
-      ],
-      _buildModernFooter(preset),
-      SizedBox(
-        height:
-            isEmbedded
-                ? 36
-                : publicMode
-                ? 48
-                : 120,
-      ),
-    ];
-
     final content =
-        isEmbedded
-            ? ListView(
-              padding: EdgeInsets.zero,
-              physics: const ClampingScrollPhysics(),
-              children: children,
+        publicMode && !isEmbedded
+            ? LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktop = constraints.maxWidth >= 860;
+                return isDesktop
+                    ? _buildPublicDesktopLayout(
+                      context,
+                      preset,
+                      radius,
+                      galleryItems,
+                    )
+                    : Column(
+                      children: _buildPublicMobileChildren(
+                        context,
+                        preset,
+                        radius,
+                        galleryItems,
+                      ),
+                    );
+              },
             )
-            : publicMode
-            ? Column(children: children)
-            : SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(children: children),
+            : _buildDefaultScrollableContent(
+              context,
+              preset,
+              radius,
+              galleryItems,
             );
 
     return Theme(
@@ -155,6 +110,215 @@ class VitrinView extends StatelessWidget {
                 extendBodyBehindAppBar: true,
                 body: content,
               ),
+    );
+  }
+
+  Widget _buildDefaultScrollableContent(
+    BuildContext context,
+    VitrinThemePreset preset,
+    double radius,
+    List<VitrinGalleryPreviewItem> galleryItems,
+  ) {
+    final children = _buildDefaultChildren(
+      context,
+      preset,
+      radius,
+      galleryItems,
+    );
+
+    return isEmbedded
+        ? ListView(
+          padding: EdgeInsets.zero,
+          physics: const ClampingScrollPhysics(),
+          children: children,
+        )
+        : SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(children: children),
+        );
+  }
+
+  List<Widget> _buildDefaultChildren(
+    BuildContext context,
+    VitrinThemePreset preset,
+    double radius,
+    List<VitrinGalleryPreviewItem> galleryItems,
+  ) {
+    final hasGalleryMedia = galleryItems.isNotEmpty;
+
+    return [
+      _buildModernHeader(context, preset, radius, galleryItems),
+      SizedBox(height: isEmbedded ? 14 : 24),
+      _buildStoreIdentityBlock(preset),
+      SizedBox(height: isEmbedded ? 16 : 28),
+      _buildBookingCTAButton(context, preset, radius),
+      if (storeData.bookingSettings?.isEnabled == true)
+        SizedBox(height: isEmbedded ? 16 : 30),
+      if (_hasVisibleActions()) ...[
+        _buildPremiumActionButtons(context, radius),
+        SizedBox(height: isEmbedded ? 16 : 30),
+      ],
+      if (!publicMode) ...[
+        _buildProfessionalBio(preset),
+        SizedBox(height: isEmbedded ? 16 : 48),
+      ] else if (_aboutText().isNotEmpty) ...[
+        _buildAboutCard(preset),
+        SizedBox(height: isEmbedded ? 16 : 30),
+      ],
+      if (hasGalleryMedia) ...[
+        _buildShelfImageCard(preset, galleryItems),
+        SizedBox(height: isEmbedded ? 16 : 30),
+      ],
+      if (storeData.offerings.isNotEmpty) ...[
+        _buildOfferingsBlock(preset, radius),
+        SizedBox(height: isEmbedded ? 16 : 30),
+      ],
+      if (storeData.isStore && storeData.products.isNotEmpty) ...[
+        _buildProductsCatalogBlock(preset, radius),
+        SizedBox(height: isEmbedded ? 16 : 30),
+      ],
+      if (publicMode) ...[
+        _buildCompactProfileTools(context, preset),
+        SizedBox(height: isEmbedded ? 16 : 24),
+      ],
+      _buildModernLinkHub(context, preset, radius),
+      SizedBox(height: isEmbedded ? 18 : 64),
+      if (!publicMode) ...[
+        _buildPremiumIdentityCard(context, preset, radius),
+        SizedBox(height: isEmbedded ? 18 : 64),
+      ],
+      if (publicMode && (publicLink?.isNotEmpty ?? false)) ...[
+        _buildPublicQrCard(publicLink!, preset),
+        SizedBox(height: isEmbedded ? 18 : 24),
+      ],
+      _buildModernFooter(preset),
+      SizedBox(height: isEmbedded ? 36 : 120),
+    ];
+  }
+
+  List<Widget> _buildPublicMobileChildren(
+    BuildContext context,
+    VitrinThemePreset preset,
+    double radius,
+    List<VitrinGalleryPreviewItem> galleryItems,
+  ) {
+    final hasGalleryMedia = galleryItems.isNotEmpty;
+
+    return [
+      _buildModernHeader(context, preset, radius, galleryItems),
+      const SizedBox(height: 18),
+      _buildStoreIdentityBlock(preset),
+      const SizedBox(height: 18),
+      _buildBookingCTAButton(context, preset, radius),
+      if (storeData.bookingSettings?.isEnabled == true)
+        const SizedBox(height: 16),
+      if (_hasVisibleActions()) ...[
+        _buildPremiumActionButtons(context, radius),
+        const SizedBox(height: 18),
+      ],
+      if (storeData.isStore && storeData.products.isNotEmpty) ...[
+        _buildProductsCatalogBlock(preset, radius),
+        const SizedBox(height: 18),
+      ],
+      if (storeData.offerings.isNotEmpty) ...[
+        _buildOfferingsBlock(preset, radius),
+        const SizedBox(height: 18),
+      ],
+      _buildCompactProfileTools(context, preset),
+      const SizedBox(height: 18),
+      if (_aboutText().isNotEmpty) ...[
+        _buildAboutCard(preset),
+        const SizedBox(height: 18),
+      ],
+      _buildModernLinkHub(context, preset, radius),
+      if (storeData.marketplaceLinks.any((link) => link.url.trim().isNotEmpty))
+        const SizedBox(height: 18),
+      if (hasGalleryMedia) ...[
+        _buildShelfImageCard(preset, galleryItems),
+        const SizedBox(height: 18),
+      ],
+      if (publicLink?.isNotEmpty ?? false) ...[
+        _buildPublicQrCard(publicLink!, preset),
+        const SizedBox(height: 22),
+      ],
+      _buildModernFooter(preset),
+      const SizedBox(height: 48),
+    ];
+  }
+
+  Widget _buildPublicDesktopLayout(
+    BuildContext context,
+    VitrinThemePreset preset,
+    double radius,
+    List<VitrinGalleryPreviewItem> galleryItems,
+  ) {
+    final hasGalleryMedia = galleryItems.isNotEmpty;
+    final hasSideLinks = storeData.marketplaceLinks.any(
+      (link) => link.url.trim().isNotEmpty,
+    );
+
+    return Column(
+      children: [
+        _buildModernHeader(context, preset, radius, galleryItems),
+        const SizedBox(height: 22),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 7,
+                child: Column(
+                  children: [
+                    _buildStoreIdentityBlock(preset),
+                    const SizedBox(height: 20),
+                    _buildBookingCTAButton(context, preset, radius),
+                    if (storeData.bookingSettings?.isEnabled == true)
+                      const SizedBox(height: 18),
+                    if (_hasVisibleActions()) ...[
+                      _buildPremiumActionButtons(context, radius),
+                      const SizedBox(height: 22),
+                    ],
+                    if (storeData.isStore && storeData.products.isNotEmpty) ...[
+                      _buildProductsCatalogBlock(preset, radius),
+                      const SizedBox(height: 22),
+                    ],
+                    if (storeData.offerings.isNotEmpty) ...[
+                      _buildOfferingsBlock(preset, radius),
+                      const SizedBox(height: 22),
+                    ],
+                    if (_aboutText().isNotEmpty) _buildAboutCard(preset),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              SizedBox(
+                width: 360,
+                child: Column(
+                  children: [
+                    _buildCompactProfileTools(context, preset),
+                    if (publicLink?.isNotEmpty ?? false) ...[
+                      const SizedBox(height: 16),
+                      _buildPublicQrCard(publicLink!, preset),
+                    ],
+                    if (hasSideLinks) ...[
+                      const SizedBox(height: 16),
+                      _buildModernLinkHub(context, preset, radius),
+                    ],
+                    if (hasGalleryMedia) ...[
+                      const SizedBox(height: 16),
+                      _buildShelfImageCard(preset, galleryItems),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 30),
+        _buildModernFooter(preset),
+        const SizedBox(height: 56),
+      ],
     );
   }
 
@@ -493,9 +657,12 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildBookingCTAButton(BuildContext context, VitrinThemePreset preset, double radius) {
-    final isKuafor = storeData.kategori == 'Kuaför';
-    final hasBooking = storeData.bookingSettings?.isEnabled == true && isKuafor;
+  Widget _buildBookingCTAButton(
+    BuildContext context,
+    VitrinThemePreset preset,
+    double radius,
+  ) {
+    final hasBooking = storeData.bookingSettings?.isEnabled == true;
     if (!hasBooking) return const SizedBox();
 
     return Padding(
@@ -509,7 +676,9 @@ class VitrinView extends StatelessWidget {
               ScaffoldMessenger.of(context).clearSnackBars();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Müşteriler bu butona basarak randevu alabilirler.'),
+                  content: Text(
+                    'Müşteriler bu butona basarak randevu alabilirler.',
+                  ),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -572,7 +741,8 @@ class VitrinView extends StatelessWidget {
                 actions
                     .map(
                       (action) => SizedBox(
-                        width: itemWidth.clamp(112.0, availableWidth),
+                        width:
+                            itemWidth.clamp(112.0, availableWidth).toDouble(),
                         child: action,
                       ),
                     )
@@ -748,11 +918,7 @@ class VitrinView extends StatelessWidget {
           color: Colors.blue.shade600,
           radius: radius,
           compact: isCompact,
-          onTap:
-              () => _openExternalUrl(
-                context,
-                _publicWebsiteActionUrl(),
-              ),
+          onTap: () => _openExternalUrl(context, _publicWebsiteActionUrl()),
         ),
       if (storeData.googleBusinessLink.trim().isNotEmpty)
         _ActionIconBtn(
@@ -783,14 +949,17 @@ class VitrinView extends StatelessWidget {
 
   Widget _buildProductsCatalogBlock(VitrinThemePreset preset, double radius) {
     final isCompact = isEmbedded;
+    final visibleProducts =
+        publicMode ? storeData.products.take(6).toList() : storeData.products;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all(isCompact ? 16 : 22),
+        padding: EdgeInsets.all(isCompact ? 14 : 18),
         decoration: BoxDecoration(
           color: preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.98),
-          borderRadius: BorderRadius.circular(isCompact ? 16 : 24),
+          borderRadius: BorderRadius.circular(isCompact ? 16 : 22),
           border: Border.all(
             color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
             width: isCompact ? 1 : 1.3,
@@ -816,136 +985,210 @@ class VitrinView extends StatelessWidget {
                   size: isCompact ? 18 : 22,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Ürün Kataloğu',
-                  style: TextStyle(
-                    color: preset.textPrimary,
-                    fontSize: isCompact ? 14 : 16,
-                    fontWeight: FontWeight.w900,
+                Expanded(
+                  child: Text(
+                    'Öne Çıkan Ürünler',
+                    style: TextStyle(
+                      color: preset.textPrimary,
+                      fontSize: isCompact ? 14 : 16,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
+                if (storeData.products.length > visibleProducts.length)
+                  Text(
+                    '+${storeData.products.length - visibleProducts.length}',
+                    style: TextStyle(
+                      color: preset.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
               ],
             ),
-            const SizedBox(height: 16),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: storeData.products.length,
-              separatorBuilder:
-                  (context, index) => Divider(
-                    color: preset.border.withValues(alpha: 0.5),
-                    height: 24,
-                  ),
-              itemBuilder: (context, index) {
-                final product = storeData.products[index];
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (product.imagePath != null &&
-                        product.imagePath!.trim().isNotEmpty) ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          product.imagePath!.trim(),
-                          width: isCompact ? 60 : 70,
-                          height: isCompact ? 60 : 70,
-                          fit: BoxFit.cover,
-                          errorBuilder:
-                              (c, e, s) => Container(
-                                width: isCompact ? 60 : 70,
-                                height: isCompact ? 60 : 70,
-                                color: preset.border.withValues(alpha: 0.3),
-                                child: Icon(
-                                  Icons.shopping_bag_outlined,
-                                  color: preset.textSecondary,
-                                ),
-                              ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  product.name,
-                                  style: TextStyle(
-                                    color: preset.textPrimary,
-                                    fontSize: isCompact ? 13 : 14,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              _buildProductStockBadge(
-                                product.stockStatus,
-                                preset,
-                              ),
-                            ],
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 620;
+                if (!isWide) {
+                  return SizedBox(
+                    height: isCompact ? 184 : 202,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: visibleProducts.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      itemBuilder:
+                          (context, index) => _buildProductPreviewCard(
+                            context,
+                            visibleProducts[index],
+                            preset,
+                            width: isCompact ? 146 : 164,
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              if (product.category.isNotEmpty &&
-                                  product.category != 'Tümü' &&
-                                  product.category != 'Genel') ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: preset.accent.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    product.category,
-                                    style: TextStyle(
-                                      color: preset.accent,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                              ],
-                              Text(
-                                product.price.trim().isEmpty
-                                    ? 'Fiyat Belirtilmemiş'
-                                    : product.price,
-                                style: TextStyle(
-                                  color: preset.textPrimary,
-                                  fontSize: isCompact ? 12 : 13,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (product.description.trim().isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              product.description,
-                              style: TextStyle(
-                                color: preset.textSecondary,
-                                fontSize: isCompact ? 11 : 12,
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
                     ),
-                  ],
+                  );
+                }
+
+                final cardWidth = (constraints.maxWidth - 24) / 3;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children:
+                      visibleProducts
+                          .map(
+                            (product) => _buildProductPreviewCard(
+                              context,
+                              product,
+                              preset,
+                              width: cardWidth,
+                            ),
+                          )
+                          .toList(),
                 );
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductPreviewCard(
+    BuildContext context,
+    Product product,
+    VitrinThemePreset preset, {
+    required double width,
+  }) {
+    final imageUrl = product.imagePath?.trim() ?? '';
+    final hasImage = imageUrl.isNotEmpty;
+    final price =
+        product.price.trim().isEmpty ? 'Fiyat sorun' : product.price.trim();
+
+    return SizedBox(
+      width: width,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            if (!publicMode) {
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    "Müşteriler bu karta bastığında '${product.name}' hakkında WhatsApp'tan bilgi isteyebilir.",
+                  ),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              return;
+            }
+
+            final url = WhatsAppLinkHelper.buildInquiryUrl(
+              number: storeData.whatsapp,
+              storeName: storeData.name,
+              itemTitle: product.name,
+            );
+            if (url != null) _openExternalUrl(context, url);
+          },
+          child: Ink(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: preset.surfaceSoft.withValues(
+                alpha: preset.isDark ? 0.62 : 0.58,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: preset.border.withValues(
+                  alpha: preset.isDark ? 0.72 : 0.68,
+                ),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AspectRatio(
+                  aspectRatio: 1.25,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child:
+                        hasImage
+                            ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) =>
+                                      _buildProductImageFallback(preset),
+                            )
+                            : _buildProductImageFallback(preset),
+                  ),
+                ),
+                const SizedBox(height: 9),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        product.name.trim().isEmpty
+                            ? 'Ürün'
+                            : product.name.trim(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: preset.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    _buildProductStockBadge(product.stockStatus, preset),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  price,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: preset.accent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+                if (product.description.trim().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    product.description.trim(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: preset.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductImageFallback(VitrinThemePreset preset) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: preset.border.withValues(alpha: preset.isDark ? 0.18 : 0.28),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.shopping_bag_outlined,
+          color: preset.textSecondary,
+          size: 26,
         ),
       ),
     );
@@ -971,6 +1214,8 @@ class VitrinView extends StatelessWidget {
       ),
       child: Text(
         text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: color,
           fontSize: 9,
@@ -1419,10 +1664,7 @@ class VitrinView extends StatelessWidget {
                   );
                   return;
                 }
-                _openExternalUrl(
-                  context,
-                  _normalizeExternalUrl(link.url),
-                );
+                _openExternalUrl(context, _normalizeExternalUrl(link.url));
               },
             ),
           ),
@@ -1459,39 +1701,107 @@ class VitrinView extends StatelessWidget {
               preset: preset,
             ),
           ],
-
-          if (publicMode && _hasVCardData())
-            Builder(
-              builder:
-                  (ctx) => _ModernLinkItem(
-                    icon: Icons.contact_page_rounded,
-                    title: 'Kişilerime Ekle',
-                    subtitle:
-                        'Tek dokunuşla tüm iletişim bilgilerini rehberine kaydet',
-                    color: Colors.teal.shade500,
-                    radius: radius,
-                    compact: isCompact,
-                    preset: preset,
-                    onTap: () => _downloadVCard(ctx),
-                  ),
-            ),
-
-          if (publicMode && storeData.referencesLink.trim().isNotEmpty)
-            _ModernLinkItem(
-              icon: Icons.verified_rounded,
-              title: 'Referanslarımız',
-              subtitle: 'Müşteri yorumları ve referanslarımız',
-              color: Colors.indigo.shade400,
-              radius: radius,
-              compact: isCompact,
-              preset: preset,
-              onTap:
-                  () => _openExternalUrl(
-                    context,
-                    _normalizeExternalUrl(storeData.referencesLink.trim()),
-                  ),
-            ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCompactProfileTools(
+    BuildContext context,
+    VitrinThemePreset preset,
+  ) {
+    final tools = <_CompactProfileToolData>[
+      if (storeData.products.isNotEmpty || storeData.offerings.isNotEmpty)
+        _CompactProfileToolData(
+          icon: Icons.auto_stories_rounded,
+          title: 'Katalog',
+          subtitle:
+              storeData.products.isNotEmpty
+                  ? '${storeData.products.length} ürün'
+                  : '${storeData.offerings.length} hizmet',
+          color: preset.accent,
+          onTap: () {
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Katalog ürünleri bu sayfada görüntüleniyor.'),
+                behavior: SnackBarBehavior.floating,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          },
+        ),
+      if (_hasVCardData())
+        _CompactProfileToolData(
+          icon: Icons.contact_page_rounded,
+          title: 'vCard',
+          subtitle: 'Rehbere kaydet',
+          color: const Color(0xFF14B8A6),
+          onTap: () => _downloadVCard(context),
+        ),
+      if (storeData.referencesLink.trim().isNotEmpty)
+        _CompactProfileToolData(
+          icon: Icons.verified_rounded,
+          title: 'Referanslar',
+          subtitle: 'Yorumları gör',
+          color: const Color(0xFF818CF8),
+          onTap:
+              () => _openExternalUrl(
+                context,
+                _normalizeExternalUrl(storeData.referencesLink.trim()),
+              ),
+        ),
+      if (publicLink?.isNotEmpty ?? false)
+        _CompactProfileToolData(
+          icon: Icons.qr_code_2_rounded,
+          title: 'QR Paylaş',
+          subtitle: 'Linki gönder',
+          color: const Color(0xFF38A0E4),
+          onTap: () => _shareVitrin(context, publicLink!, preset),
+        ),
+    ];
+
+    if (tools.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isEmbedded ? 18 : 24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: preset.surface.withValues(alpha: preset.isDark ? 0.78 : 0.98),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: preset.border.withValues(alpha: preset.isDark ? 0.72 : 0.72),
+          ),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 420;
+            final itemWidth =
+                isNarrow ? (constraints.maxWidth - 10) / 2 : 150.0;
+
+            return Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children:
+                  tools
+                      .map(
+                        (tool) => SizedBox(
+                          width:
+                              itemWidth
+                                  .clamp(132.0, constraints.maxWidth)
+                                  .toDouble(),
+                          child: _CompactProfileTool(
+                            data: tool,
+                            preset: preset,
+                          ),
+                        ),
+                      )
+                      .toList(),
+            );
+          },
+        ),
       ),
     );
   }
@@ -2254,7 +2564,9 @@ class VitrinView extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp)) ...[
+                    if (WhatsAppLinkHelper.isValidTurkeyMobile(
+                      storeData.whatsapp,
+                    )) ...[
                       const SizedBox(width: 12),
                       IconButton(
                         onPressed: () {
@@ -2271,12 +2583,13 @@ class VitrinView extends StatelessWidget {
                             );
                             return;
                           }
-                          final url = WhatsAppLinkHelper.buildCategoryOfferingUrl(
-                            number: storeData.whatsapp,
-                            storeName: storeData.name,
-                            offeringTitle: offering.title,
-                            categoryId: config.id,
-                          );
+                          final url =
+                              WhatsAppLinkHelper.buildCategoryOfferingUrl(
+                                number: storeData.whatsapp,
+                                storeName: storeData.name,
+                                offeringTitle: offering.title,
+                                categoryId: config.id,
+                              );
                           if (url != null) {
                             _openExternalUrl(context, url);
                           }
@@ -2296,6 +2609,96 @@ class VitrinView extends StatelessWidget {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CompactProfileToolData {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _CompactProfileToolData({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    this.onTap,
+  });
+}
+
+class _CompactProfileTool extends StatelessWidget {
+  final _CompactProfileToolData data;
+  final VitrinThemePreset preset;
+
+  const _CompactProfileTool({required this.data, required this.preset});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: data.onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: data.color.withValues(alpha: preset.isDark ? 0.12 : 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: data.color.withValues(alpha: preset.isDark ? 0.26 : 0.18),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: data.color.withValues(
+                    alpha: preset.isDark ? 0.18 : 0.12,
+                  ),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(data.icon, color: data.color, size: 18),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: preset.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      data.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: preset.textSecondary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

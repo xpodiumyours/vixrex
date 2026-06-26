@@ -92,9 +92,10 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       bookingMap = rawBooking;
     }
 
-    final bookingSettings = bookingMap != null
-        ? BookingSettings.fromJson(Map<String, dynamic>.from(bookingMap))
-        : null;
+    final bookingSettings =
+        bookingMap != null
+            ? BookingSettings.fromJson(Map<String, dynamic>.from(bookingMap))
+            : null;
 
     return StoreData(
       name: _readString(data['name']),
@@ -134,9 +135,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
 
       return decodedOfferings
           .whereType<Map>()
-          .map(
-            (o) => StoreOffering.fromJson(Map<String, dynamic>.from(o)),
-          )
+          .map((o) => StoreOffering.fromJson(Map<String, dynamic>.from(o)))
           .where((o) => o.title.trim().isNotEmpty)
           .take(6)
           .toList();
@@ -350,7 +349,7 @@ class _PublicVitrinShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEFF4F8),
+      backgroundColor: const Color(0xFF071322),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -363,7 +362,7 @@ class _PublicVitrinShell extends StatelessWidget {
               ),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 500),
+                  constraints: BoxConstraints(maxWidth: isDesktop ? 1180 : 500),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(isDesktop ? 28 : 0),
                     child: DecoratedBox(
