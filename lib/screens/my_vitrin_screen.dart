@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:vitrinx/models/chat_message.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -104,6 +105,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   final _addressController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _instagramController = TextEditingController();
+  final _websiteController = TextEditingController();
   final _googleBusinessLinkController = TextEditingController();
 
   // ─── State ──────────────────────────────────────────────────────────────
@@ -218,6 +220,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _addressController.dispose();
     _descriptionController.dispose();
     _instagramController.dispose();
+    _websiteController.dispose();
     _googleBusinessLinkController.dispose();
     _nameFocusNode.dispose();
     _whatsappFocusNode.dispose();
@@ -349,6 +352,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         _addressController.text = data.address;
         _descriptionController.text = data.description;
         _instagramController.text = data.instagram;
+        _websiteController.text =
+            publishedInfo?.publicLink.trim().isNotEmpty == true
+                ? publishedInfo!.publicLink
+                : data.website;
         _googleBusinessLinkController.text = data.googleBusinessLink;
         _selectedProvinceCode = data.provinceCode.isNotEmpty ? data.provinceCode : null;
         _selectedProvinceName = data.provinceName.isNotEmpty ? data.provinceName : null;
@@ -812,6 +819,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           name: data.name,
           editToken: editToken,
         );
+        _websiteController.text = publicLink;
         _coverUrl = coverUrl;
         _coverBytes = null;
         _coverFileName = null;
@@ -944,7 +952,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   Future<void> _openPublicWebsiteLink() async {
     final link = _publishedInfo?.publicLink.trim();
     if (link == null || link.isEmpty) {
-      _showSnackBar('Önce vitrini yayınla, özel web linki oluşsun.');
+      _showSnackBar(
+        'Vitrininizi yayına aldığınızda size özel web linkiniz oluşacak. Hazırsanız "Vitrinimi Yayına Al" butonuyla linki oluşturalım.',
+      );
       return;
     }
 
@@ -967,6 +977,32 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         _showSnackBar('Tarayıcı açılamadı, linki kopyalayabilirsin.');
       }
     }
+  }
+
+  Future<void> _sharePublicWebsiteLink() async {
+    final link = _publishedInfo?.publicLink.trim();
+    if (link == null || link.isEmpty) {
+      _showSnackBar(
+        'Vitrininizi yayına aldığınızda size özel web linkiniz oluşacak. Hazırsanız "Vitrinimi Yayına Al" butonuyla linki oluşturalım.',
+      );
+      return;
+    }
+
+    try {
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          text: 'VitrinX web linkim:\n$link',
+          title: 'VitrinX Web Linki',
+        ),
+      );
+      if (result.status != ShareResultStatus.unavailable) return;
+    } catch (_) {
+      // Paylaşım desteklenmeyen cihazlarda kopyalama yedeği kullanılır.
+    }
+
+    await Clipboard.setData(ClipboardData(text: link));
+    if (!mounted) return;
+    _showSnackBar('Paylaşım açılamadı, link panoya kopyalandı.');
   }
 
   void _openPublicVitrin() {
@@ -1395,96 +1431,82 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: inputBg,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: cardBorder),
+        TextField(
+          controller: _websiteController,
+          keyboardType: TextInputType.url,
+          style: const TextStyle(
+            color: darkText,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.language_rounded,
-                      color: primaryColor,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          decoration: InputDecoration(
+            prefixIcon: IconButton(
+              tooltip: 'Web linkini aç',
+              onPressed: _openPublicWebsiteLink,
+              icon: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.language_rounded,
+                  color: primaryColor,
+                  size: 18,
+                ),
+              ),
+            ),
+            suffixIcon:
+                hasPublicLink
+                    ? Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'VitrinX Web Linki',
-                          style: TextStyle(
-                            color: darkText,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
+                        IconButton(
+                          tooltip: 'Linki kopyala',
+                          onPressed: _copyLink,
+                          icon: const Icon(
+                            Icons.copy_rounded,
+                            color: mutedText,
+                            size: 18,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          hasPublicLink
-                              ? publicLink
-                              : 'Yayınladıktan sonra özel web linkin burada oluşur.',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: hasPublicLink ? primaryColor : mutedText,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                        IconButton(
+                          tooltip: 'Linki paylaş',
+                          onPressed: _sharePublicWebsiteLink,
+                          icon: const Icon(
+                            Icons.ios_share_rounded,
+                            color: primaryColor,
+                            size: 18,
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: hasPublicLink ? _openPublicWebsiteLink : null,
-                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                    label: const Text('Tarayıcıda Aç'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: primaryColor,
-                      side: const BorderSide(color: primaryColor),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: hasPublicLink ? _copyLink : null,
-                    icon: const Icon(Icons.copy_rounded, size: 16),
-                    label: const Text('Linki Kopyala'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: darkText,
-                      side: const BorderSide(color: cardBorder),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                    )
+                    : null,
+            hintText: 'Yayına aldığınızda özel web linkiniz burada oluşur.',
+            hintStyle: TextStyle(
+              color: mutedText.withValues(alpha: 0.62),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            filled: true,
+            fillColor: inputBg,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: primaryColor, width: 1.4),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
           ),
         ),
       ],
