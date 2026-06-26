@@ -155,7 +155,7 @@ class VitrinView extends StatelessWidget {
       if (storeData.bookingSettings?.isEnabled == true)
         SizedBox(height: isEmbedded ? 16 : 30),
       if (_hasVisibleActions()) ...[
-        _buildPremiumActionButtons(context, radius),
+        _buildPremiumActionButtons(context, preset, radius),
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
       if (!publicMode) ...[
@@ -397,7 +397,12 @@ class VitrinView extends StatelessWidget {
     final heroItem = galleryItems.isEmpty ? null : galleryItems.first;
     final heroHeight = desktop ? 376.0 : 168.0;
     final avatarSize = desktop ? 116.0 : 92.0;
-    final actions = _buildVisibleActions(context, radius, true);
+    final actions = _buildVisibleActions(
+      context,
+      radius,
+      true,
+      actionColor: preset.accent,
+    );
     final description = _publicHeroDescription();
 
     final cover = Stack(
@@ -1083,9 +1088,18 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildPremiumActionButtons(BuildContext context, double radius) {
+  Widget _buildPremiumActionButtons(
+    BuildContext context,
+    VitrinThemePreset preset,
+    double radius,
+  ) {
     final isCompact = isEmbedded;
-    final actions = _buildVisibleActions(context, radius, isCompact);
+    final actions = _buildVisibleActions(
+      context,
+      radius,
+      isCompact,
+      actionColor: preset.accent,
+    );
     final horizontalPadding = isCompact ? 18.0 : 24.0;
     final spacing = isCompact ? 8.0 : 12.0;
 
@@ -1143,17 +1157,19 @@ class VitrinView extends StatelessWidget {
   List<Widget> _buildVisibleActions(
     BuildContext context,
     double radius,
-    bool isCompact,
-  ) {
+    bool isCompact, {
+    Color? actionColor,
+  }) {
     final config = BusinessCategoryConfig.fromCategoryLabel(storeData.kategori);
     final ctaLabel = config.ctaLabel;
+    final profileActionColor = actionColor ?? const Color(0xFF38A0E4);
 
     if (!publicMode) {
       return [
         _ActionIconBtn(
           label: ctaLabel,
           icon: Icons.chat_bubble_rounded,
-          color: const Color(0xFF25D366),
+          color: profileActionColor,
           radius: radius,
           compact: isCompact,
           onTap: () {
@@ -1171,7 +1187,7 @@ class VitrinView extends StatelessWidget {
         _ActionIconBtn(
           label: 'Instagram',
           icon: Icons.camera_rounded,
-          color: const Color(0xFFE1306C),
+          color: profileActionColor,
           radius: radius,
           compact: isCompact,
           onTap: () {
@@ -1190,7 +1206,7 @@ class VitrinView extends StatelessWidget {
           _ActionIconBtn(
             label: 'Web',
             icon: Icons.language_rounded,
-            color: Colors.blue.shade600,
+            color: profileActionColor,
             radius: radius,
             compact: isCompact,
             onTap: () {
@@ -1208,7 +1224,7 @@ class VitrinView extends StatelessWidget {
         _ActionIconBtn(
           label: 'Yol Tarifi',
           icon: Icons.location_on_rounded,
-          color: Colors.red.shade500,
+          color: profileActionColor,
           radius: radius,
           compact: isCompact,
           onTap: () {
@@ -1227,7 +1243,7 @@ class VitrinView extends StatelessWidget {
           _ActionIconBtn(
             label: 'Yorum Yap',
             icon: Icons.star_rate_rounded,
-            color: Colors.amber.shade700,
+            color: profileActionColor,
             radius: radius,
             compact: isCompact,
             onTap: () {
@@ -1250,7 +1266,7 @@ class VitrinView extends StatelessWidget {
         _ActionIconBtn(
           label: ctaLabel,
           icon: Icons.chat_bubble_rounded,
-          color: const Color(0xFF25D366),
+          color: profileActionColor,
           radius: radius,
           compact: isCompact,
           emphasis: true,
@@ -1269,7 +1285,7 @@ class VitrinView extends StatelessWidget {
         _ActionIconBtn(
           label: 'Instagram',
           icon: Icons.camera_rounded,
-          color: const Color(0xFFE1306C),
+          color: profileActionColor,
           radius: radius,
           compact: isCompact,
           onTap:
@@ -1282,7 +1298,7 @@ class VitrinView extends StatelessWidget {
         _ActionIconBtn(
           label: 'Web Sitesi',
           icon: Icons.language_rounded,
-          color: Colors.blue.shade600,
+          color: profileActionColor,
           radius: radius,
           compact: isCompact,
           onTap: () => _openExternalUrl(context, _publicWebsiteActionUrl()),
@@ -1291,7 +1307,7 @@ class VitrinView extends StatelessWidget {
         _ActionIconBtn(
           label: 'Google\'da Yorum Yap',
           icon: Icons.star_rate_rounded,
-          color: Colors.amber.shade700,
+          color: profileActionColor,
           radius: radius,
           compact: isCompact,
           onTap:
@@ -1305,7 +1321,7 @@ class VitrinView extends StatelessWidget {
         _ActionIconBtn(
           label: 'Yol Tarifi',
           icon: Icons.location_on_rounded,
-          color: Colors.red.shade500,
+          color: profileActionColor,
           radius: radius,
           compact: isCompact,
           onTap:
@@ -2014,7 +2030,7 @@ class VitrinView extends StatelessWidget {
                       : link.url.isEmpty
                       ? 'Bağlantıyı ziyaret et'
                       : link.url,
-              color: _getPlatformColor(link.platform),
+              color: preset.accent,
               radius: radius,
               compact: isCompact,
               preset: preset,
@@ -2103,7 +2119,7 @@ class VitrinView extends StatelessWidget {
           icon: Icons.contact_page_rounded,
           title: 'vCard',
           subtitle: 'Rehbere kaydet',
-          color: const Color(0xFF14B8A6),
+          color: preset.accent,
           onTap: () => _downloadVCard(context),
         ),
       if (storeData.referencesLink.trim().isNotEmpty)
@@ -2111,7 +2127,7 @@ class VitrinView extends StatelessWidget {
           icon: Icons.verified_rounded,
           title: 'Referanslar',
           subtitle: 'Yorumları gör',
-          color: const Color(0xFF818CF8),
+          color: preset.accent,
           onTap:
               () => _openExternalUrl(
                 context,
@@ -2123,7 +2139,7 @@ class VitrinView extends StatelessWidget {
           icon: Icons.qr_code_2_rounded,
           title: 'QR Paylaş',
           subtitle: 'Linki gönder',
-          color: const Color(0xFF38A0E4),
+          color: preset.accent,
           onTap: () => _shareVitrin(context, publicLink!, preset),
         ),
     ];
@@ -2327,37 +2343,6 @@ class VitrinView extends StatelessWidget {
       return Icons.email_rounded;
     }
     return Icons.link_rounded;
-  }
-
-  Color _getPlatformColor(String platform) {
-    final p = platform.toLowerCase().trim();
-    if (p == 'trendyol') return const Color(0xFFF27A1A);
-    if (p == 'hepsiburada') return const Color(0xFFFF6000);
-    if (p == 'n11') return const Color(0xFFE11D48);
-    if (p == 'amazon') return const Color(0xFF232F3E);
-    if (p == 'shopier') return const Color(0xFFDB2777);
-    if (p.contains('çiçeksepeti')) return const Color(0xFFDB2777);
-    if (p.contains('instagram')) return const Color(0xFFE1306C);
-    if (p.contains('whatsapp')) return const Color(0xFF25D366);
-    if (p.contains('google')) return const Color(0xFF4285F4);
-    if (p.contains('youtube')) return const Color(0xFFFF0000);
-    if (p.contains('facebook') || p.contains('meta')) {
-      return const Color(0xFF1877F2);
-    }
-    if (p.contains('randevu')) return const Color(0xFF10B981);
-    if (p.contains('menü') || p.contains('menu') || p.contains('günün')) {
-      return const Color(0xFFEA580C);
-    }
-    if (p.contains('paket') || p.contains('teslimat')) {
-      return const Color(0xFF10B981);
-    }
-    if (p.contains('servis') || p.contains('teknik') || p.contains('tamir')) {
-      return const Color(0xFF2563EB);
-    }
-    if (p.contains('hizmet') || p.contains('bakım')) {
-      return const Color(0xFFDB2777);
-    }
-    return const Color(0xFF4B5563);
   }
 
   Widget _buildPremiumIdentityCard(
@@ -2767,12 +2752,10 @@ class VitrinView extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0x1A25D366),
+        color: preset.accent.withValues(alpha: preset.isDark ? 0.14 : 0.10),
         borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
         border: Border.all(
-          color: const Color(
-            0xFF25D366,
-          ).withValues(alpha: isDark ? 0.35 : 0.22),
+          color: preset.accent.withValues(alpha: isDark ? 0.35 : 0.22),
         ),
       ),
       child: Material(
@@ -2807,9 +2790,9 @@ class VitrinView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.chat_bubble_outline_rounded,
-                  color: Color(0xFF25D366),
+                  color: preset.accent,
                   size: 16,
                 ),
                 const SizedBox(width: 8),
@@ -2817,8 +2800,8 @@ class VitrinView extends StatelessWidget {
                   isCompact
                       ? 'Görseldeki Ürünü Sor'
                       : 'Fotoğraftaki Ürünü WhatsApp\'tan Sor',
-                  style: const TextStyle(
-                    color: Color(0xFF25D366),
+                  style: TextStyle(
+                    color: preset.accent,
                     fontWeight: FontWeight.w900,
                     fontSize: 12,
                   ),
@@ -3035,7 +3018,7 @@ class VitrinView extends StatelessWidget {
                     else if (canMessage)
                       Icon(
                         Icons.chat_bubble_rounded,
-                        color: const Color(0xFF25D366),
+                        color: preset.accent,
                         size: 17,
                       ),
                   ],
