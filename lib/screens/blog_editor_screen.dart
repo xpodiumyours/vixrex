@@ -4,8 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/turkey_cities_config.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
-import 'package:vitrinx/services/store_publish_payload_builder.dart';
-import 'package:vitrinx/services/revalidation_service.dart';
+import 'package:vitrinx/services/store_publish_service.dart';
+import 'package:vitrinx/services/seo_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
 class BlogEditorScreen extends StatefulWidget {
@@ -264,7 +264,7 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
       }
 
       // Next.js ISR önbelleğini arka planda temizle
-      const RevalidationService().revalidateAll(
+      const SeoService().revalidateAll(
         storeSlug: widget.storeSlug,
         articleSlug: finalSlug,
       );

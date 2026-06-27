@@ -4,15 +4,14 @@ import 'dart:convert';
 import 'dart:html' as html;
 
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/seo_schema_builder.dart';
+import 'package:vitrinx/services/seo_service.dart';
 
 void injectStoreJsonLdImpl(StoreData store, {String? publicUrl}) {
   try {
     final existing = html.document.getElementById('vitrinx-jsonld-schema');
     existing?.remove();
 
-    final schemas = buildStoreSchemas(store, publicUrl: publicUrl);
-
+    final schemas = SeoService.buildStoreSchemas(store, publicUrl: publicUrl);
     final script =
         html.ScriptElement()
           ..id = 'vitrinx-jsonld-schema'

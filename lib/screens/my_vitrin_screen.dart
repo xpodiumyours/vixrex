@@ -11,14 +11,9 @@ import 'package:vitrinx/config/instagram_sync_config.dart';
 import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/config/turkey_cities_config.dart';
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/blog_editor_screen.dart';
-import 'package:vitrinx/screens/landing_screen.dart';
-import 'package:vitrinx/screens/public_vitrin_screen.dart';
-import 'package:vitrinx/screens/booking_management_screen.dart';
 import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
-import 'package:vitrinx/services/store_publish_payload_builder.dart';
-import 'package:vitrinx/services/revalidation_service.dart';
+import 'package:vitrinx/services/seo_service.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
@@ -27,6 +22,8 @@ import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/gallery_delete_confirmation_dialog.dart';
 import 'package:vitrinx/widgets/instagram_sync_section.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/controllers/store_editor_controller.dart';
+import 'package:vitrinx/config/app_router.dart';
 
 // ─── Gallery item helper ───────────────────────────────────────────────────
 class _GalleryItem {
@@ -203,6 +200,8 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   bool _isPublishing = false;
   bool _isDeleting = false;
 
+  late final StoreEditorController _controller;
+
   // ─── Lifecycle ──────────────────────────────────────────────────────────
   @override
   void initState() {
@@ -278,105 +277,41 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   // ─── Data Loading ────────────────────────────────────────────────────────
   Future<void> _loadState() async {
     try {
-      final savedData = await _storage.loadVitrinData();
-      final publishedInfo = await _storage.loadPublishedVitrinInfo();
-      final data = savedData ?? StoreData(isEsnafMode: false, isStore: false);
-      final initialName = widget.initialName?.trim() ?? '';
-      if (data.name.trim().isEmpty && initialName.isNotEmpty) {
-        data.name = initialName;
-      }
-
-      bool bookingIsEnabled = false;
-      int bookingCapacity = 1;
-      Map<String, dynamic> bookingWorkingHours = {
-        '1': {'start': '09:00', 'end': '19:00', 'active': true},
-        '2': {'start': '09:00', 'end': '19:00', 'active': true},
-        '3': {'start': '09:00', 'end': '19:00', 'active': true},
-        '4': {'start': '09:00', 'end': '19:00', 'active': true},
-        '5': {'start': '09:00', 'end': '19:00', 'active': true},
-        '6': {'start': '09:00', 'end': '16:00', 'active': true},
-        '7': {'start': '00:00', 'end': '00:00', 'active': false},
-      };
-      Map<String, dynamic> bookingLunchBreak = {
-        'start': '12:00',
-        'end': '13:00',
-        'active': true,
-      };
-
-      if (publishedInfo?.slug != null && publishedInfo!.slug.isNotEmpty) {
-        try {
-          final client = Supabase.instance.client;
-          final settingsRes =
-              await client
-                  .from('booking_settings')
-                  .select()
-                  .eq('store_slug', publishedInfo.slug)
-                  .maybeSingle();
-          if (settingsRes != null) {
-            bookingIsEnabled = (settingsRes['is_enabled'] ?? false) as bool;
-            bookingCapacity = (settingsRes['capacity'] ?? 1) as int;
-            if (settingsRes['working_hours'] != null) {
-              bookingWorkingHours = Map<String, dynamic>.from(
-                settingsRes['working_hours'] as Map,
-              );
-            }
-            if (settingsRes['lunch_break'] != null) {
-              bookingLunchBreak = Map<String, dynamic>.from(
-                settingsRes['lunch_break'] as Map,
-              );
-            }
-          }
-        } catch (e) {
-          debugPrint('Booking settings load error: $e');
-        }
-      }
+      _controller = StoreEditorController();
+      await _controller.initialize(widget.initialName);
 
       if (!mounted) return;
       setState(() {
-        _data = data..isStore = false;
-        _publishedInfo = publishedInfo;
-        _nameController.text =
-            data.name.trim().isNotEmpty
-                ? data.name
-                : (publishedInfo?.name ?? initialName);
-        _whatsappController.text = data.whatsapp;
-        _addressController.text = data.address;
-        _descriptionController.text = data.description;
-        _instagramController.text = data.instagram;
-        _websiteController.text =
-            publishedInfo?.publicLink.trim().isNotEmpty == true
-                ? publishedInfo!.publicLink
-                : data.website;
-        _googleBusinessLinkController.text = data.googleBusinessLink;
-        _selectedProvinceCode =
-            data.provinceCode.isNotEmpty ? data.provinceCode : null;
-        _selectedProvinceName =
-            data.provinceName.isNotEmpty ? data.provinceName : null;
-        _selectedDistrictCode =
-            data.districtCode.isNotEmpty ? data.districtCode : null;
-        _selectedDistrictName =
-            data.districtName.isNotEmpty ? data.districtName : null;
+        _data = _controller.data;
+        _publishedInfo = _controller.publishedInfo;
+        _nameController.text = _data.name;
+        _whatsappController.text = _data.whatsapp;
+        _addressController.text = _data.address;
+        _descriptionController.text = _data.description;
+        _instagramController.text = _data.instagram;
+        _websiteController.text = _publishedInfo?.publicLink ?? _data.website;
+        _googleBusinessLinkController.text = _data.googleBusinessLink;
+        _selectedProvinceCode = _controller.selectedProvinceCode;
+        _selectedProvinceName = _controller.selectedProvinceName;
+        _selectedDistrictCode = _controller.selectedDistrictCode;
+        _selectedDistrictName = _controller.selectedDistrictName;
 
-        _coverUrl =
-            data.shelfImageUrl.trim().isNotEmpty
-                ? data.shelfImageUrl
-                : data.coverImageUrl;
-        _selectedKategori =
-            data.kategori.trim().isEmpty ? 'Diğer' : data.kategori;
-        _selectedStatus = data.status.trim().isEmpty ? 'Açık' : data.status;
-        _latitude = data.latitude;
-        _longitude = data.longitude;
-        _locationAccuracyMeters = data.locationAccuracyMeters;
+        _coverUrl = _controller.coverUrl;
+        _selectedKategori = _controller.selectedKategori;
+        _selectedStatus = _controller.selectedStatus;
+        _latitude = _controller.latitude;
+        _longitude = _controller.longitude;
+        _locationAccuracyMeters = _controller.locationAccuracyMeters;
 
         _galleryItems.clear();
         _galleryItems.addAll(
-          data.displayGalleryItems
+          _data.displayGalleryItems
               .take(_maxGalleryPhotos)
               .map(_GalleryItem.fromStoreItem),
         );
 
         _marketplaceLinks.clear();
-        _marketplaceLinks.addAll(data.marketplaceLinks);
+        _marketplaceLinks.addAll(_data.marketplaceLinks);
         _customPlatformLinkIds.clear();
         for (final link in _marketplaceLinks) {
           if (!_platformOptions.contains(link.platform) &&
@@ -385,21 +320,21 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           }
         }
         _offerings.clear();
-        _offerings.addAll(data.offerings);
+        _offerings.addAll(_data.offerings);
 
-        _bookingIsEnabled = bookingIsEnabled;
-        _bookingCapacity = bookingCapacity;
-        _bookingWorkingHours = bookingWorkingHours;
-        _bookingLunchBreak = bookingLunchBreak;
+        _bookingIsEnabled = _controller.bookingIsEnabled;
+        _bookingCapacity = _controller.bookingCapacity;
+        _bookingWorkingHours = _controller.bookingWorkingHours;
+        _bookingLunchBreak = _controller.bookingLunchBreak;
 
         _isLoading = false;
       });
 
-      if (publishedInfo?.slug != null && publishedInfo!.slug.isNotEmpty) {
+      if (_publishedInfo?.slug != null && _publishedInfo!.slug.isNotEmpty) {
         _fetchArticles();
       }
-    } catch (error) {
-      debugPrint('MyVitrinScreen load error: $error');
+    } catch (e) {
+      debugPrint('MyVitrinScreen load error: $e');
       if (!mounted) return;
       setState(() => _isLoading = false);
     }
@@ -847,7 +782,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       });
 
       // Next.js ISR önbelleğini arka planda temizle (hata kullanıcıyı etkilemez)
-      const RevalidationService().revalidateStore(result.slug);
+      const SeoService().revalidateStore(result.slug);
 
       widget.onPublished?.call();
       _showSnackBar('Vitrinin yayında! Keşfet\'te görünürsün.');
@@ -870,19 +805,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     setState(() => _isDeleting = true);
 
     try {
-      final token = _publishedInfo?.editToken;
-      if (token != null && token.trim().isNotEmpty) {
-        final client = Supabase.instance.client;
-        await client.from('stores').delete().eq('edit_token', token);
-      }
-      await _storage.clearVitrinData();
-
+      await _controller.deleteVitrin();
       if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LandingScreen()),
-        (route) => false,
-      );
+      AppRouter.navigateToLanding(context);
     } catch (e) {
       debugPrint('Delete error: $e');
       if (!mounted) return;
@@ -1049,21 +974,13 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   void _openPublicVitrin() {
     final slug = _publishedInfo?.slug;
     if (slug == null || slug.trim().isEmpty) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: slug)),
-    );
+    Navigator.pushNamed(context, '/v/$slug');
   }
 
   void _openBookingManagement() {
     final slug = _publishedInfo?.slug ?? _data.slug;
     if (slug.isEmpty) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BookingManagementScreen(storeSlug: slug),
-      ),
-    );
+    AppRouter.navigateToBookingManagement(context, slug: slug);
   }
 
   void _showQrSheet() {
@@ -1873,15 +1790,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       return;
     }
 
-    final result = await Navigator.push(
+    final result = await AppRouter.navigateToBlogEditor(
       context,
-      MaterialPageRoute(
-        builder:
-            (_) => BlogEditorScreen(
-              storeSlug: slug,
-              initialArticle: initialArticle,
-            ),
-      ),
+      slug: slug,
+      article: initialArticle,
     );
 
     if (result == true) {

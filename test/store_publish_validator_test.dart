@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/services/store_publish_validator.dart';
+import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 
@@ -180,7 +180,13 @@ void main() {
   group('StorePublishValidator offerings and URL safety', () {
     test('rejects unsafe schemes in marketplace links', () {
       final data = validVitrin();
-      for (final scheme in ['javascript:alert(1)', 'data:text/html,123', 'file:///etc/passwd', 'tel:05551234567', 'mailto:test@example.com']) {
+      for (final scheme in [
+        'javascript:alert(1)',
+        'data:text/html,123',
+        'file:///etc/passwd',
+        'tel:05551234567',
+        'mailto:test@example.com',
+      ]) {
         data.marketplaceLinks = [
           MarketplaceLink(id: '1', platform: 'Trendyol', url: scheme),
         ];
@@ -198,7 +204,10 @@ void main() {
 
     test('rejects too many offerings (>6)', () {
       final data = validVitrin();
-      data.offerings = List.generate(7, (i) => StoreOffering(id: '$i', title: 'Hizmet $i'));
+      data.offerings = List.generate(
+        7,
+        (i) => StoreOffering(id: '$i', title: 'Hizmet $i'),
+      );
       expect(validator.validateVitrin(data), contains('En fazla 6 adet'));
     });
 
@@ -216,21 +225,40 @@ void main() {
       expect(validator.validateVitrin(data), contains('başlığı en fazla 60'));
 
       // Description limit (120)
-      data.offerings = [StoreOffering(id: '1', title: 'Hizmet', description: 'B' * 121)];
-      expect(validator.validateVitrin(data), contains('açıklaması en fazla 120'));
+      data.offerings = [
+        StoreOffering(id: '1', title: 'Hizmet', description: 'B' * 121),
+      ];
+      expect(
+        validator.validateVitrin(data),
+        contains('açıklaması en fazla 120'),
+      );
 
       // Price limit (30)
-      data.offerings = [StoreOffering(id: '1', title: 'Hizmet', price: 'C' * 31)];
+      data.offerings = [
+        StoreOffering(id: '1', title: 'Hizmet', price: 'C' * 31),
+      ];
       expect(validator.validateVitrin(data), contains('fiyatı en fazla 30'));
     });
   });
 
   group('VitrinView.normalizeExternalUrl normalization and safety', () {
     test('allows valid http/https schemes (case-insensitive)', () {
-      expect(VitrinView.normalizeExternalUrl('http://example.com'), 'http://example.com');
-      expect(VitrinView.normalizeExternalUrl('https://example.com'), 'https://example.com');
-      expect(VitrinView.normalizeExternalUrl('HTTPS://example.com'), 'HTTPS://example.com');
-      expect(VitrinView.normalizeExternalUrl('HTTP://example.com'), 'HTTP://example.com');
+      expect(
+        VitrinView.normalizeExternalUrl('http://example.com'),
+        'http://example.com',
+      );
+      expect(
+        VitrinView.normalizeExternalUrl('https://example.com'),
+        'https://example.com',
+      );
+      expect(
+        VitrinView.normalizeExternalUrl('HTTPS://example.com'),
+        'HTTPS://example.com',
+      );
+      expect(
+        VitrinView.normalizeExternalUrl('HTTP://example.com'),
+        'HTTP://example.com',
+      );
     });
 
     test('rejects unsafe schemes', () {
@@ -242,8 +270,14 @@ void main() {
     });
 
     test('adds https:// scheme for valid domains without scheme', () {
-      expect(VitrinView.normalizeExternalUrl('google.com'), 'https://google.com');
-      expect(VitrinView.normalizeExternalUrl('www.example.org'), 'https://www.example.org');
+      expect(
+        VitrinView.normalizeExternalUrl('google.com'),
+        'https://google.com',
+      );
+      expect(
+        VitrinView.normalizeExternalUrl('www.example.org'),
+        'https://www.example.org',
+      );
     });
 
     test('rejects text without dot as domain', () {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/services/revalidation_service.dart';
+import 'package:vitrinx/services/seo_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
 /// Yönetici moderasyon ekranı.
@@ -77,7 +77,7 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
       // Trigger ISR revalidation so public page updates immediately
       if (newStatus == 'published') {
         final storeSlug = article['store_slug']?.toString() ?? '';
-        const RevalidationService().revalidateStore(storeSlug);
+        const SeoService().revalidateStore(storeSlug);
       }
 
       if (!mounted) return;

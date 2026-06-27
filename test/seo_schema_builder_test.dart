@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/seo_schema_builder.dart';
+import 'package:vitrinx/services/seo_service.dart';
 
 void main() {
   group('buildStoreSchemas', () {
@@ -14,7 +14,7 @@ void main() {
           kategori: 'Güzellik',
         );
 
-        final schemas = buildStoreSchemas(
+        final schemas = SeoService.buildStoreSchemas(
           store,
           publicUrl: 'https://vitrinx.app/v/nova-kuafor',
         );
@@ -41,7 +41,7 @@ void main() {
         workingHours: '09:00 - 20:00',
       );
 
-      final schemas = buildStoreSchemas(store);
+      final schemas = SeoService.buildStoreSchemas(store);
       final graph = schemas['@graph'] as List;
       final localBusiness = graph[0] as Map<String, dynamic>;
 
@@ -63,7 +63,7 @@ void main() {
         ],
       );
 
-      final schemas = buildStoreSchemas(store);
+      final schemas = SeoService.buildStoreSchemas(store);
       final graph = schemas['@graph'] as List;
       expect(
         graph.where(
@@ -76,7 +76,7 @@ void main() {
     test('normalizes a valid WhatsApp number for structured data', () {
       final store = StoreData(name: 'Nova Kuafor', whatsapp: '0555 123 45 67');
 
-      final schemas = buildStoreSchemas(store);
+      final schemas = SeoService.buildStoreSchemas(store);
       final graph = schemas['@graph'] as List;
       final organization = graph[0] as Map<String, dynamic>;
 
