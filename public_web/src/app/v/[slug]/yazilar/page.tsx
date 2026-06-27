@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 
 export const revalidate = 300; // Enable 5-minute ISR
 
@@ -65,6 +66,7 @@ export default async function BlogIndexPage(props: PageProps) {
 
   const { store, articles } = data;
   if (articles.length === 0) notFound();
+  const siteUrl = getSiteUrl();
 
   const formatDateTR = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("tr-TR", {
@@ -83,19 +85,19 @@ export default async function BlogIndexPage(props: PageProps) {
         "@type": "ListItem",
         "position": 1,
         "name": "Ana Sayfa",
-        "item": "https://vitrinx.app"
+        "item": siteUrl
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": store.name,
-        "item": `https://vitrinx.app/v/${store.slug}`
+        "item": buildSiteUrl(`/v/${store.slug}`)
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": "Yazılar",
-        "item": `https://vitrinx.app/v/${store.slug}/yazilar`
+        "item": buildSiteUrl(`/v/${store.slug}/yazilar`)
       }
     ]
   };

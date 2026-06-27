@@ -11,6 +11,7 @@ import {
   safeParseJson,
   type ProductItem,
 } from "@/lib/products";
+import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 
 export const revalidate = 300;
 
@@ -101,7 +102,8 @@ export default async function ProductDetailPage(props: PageProps) {
   if (!data) notFound();
 
   const { store, product, productSlug } = data;
-  const publicUrl = `https://vitrinx.app/v/${store.slug}/urun/${productSlug}`;
+  const siteUrl = getSiteUrl();
+  const publicUrl = buildSiteUrl(`/v/${store.slug}/urun/${productSlug}`);
   const storeUrl = `/v/${store.slug}`;
   const phoneDigits = normalizeWhatsappDigits(store.whatsapp);
   const whatsappUrl = phoneDigits
@@ -160,13 +162,13 @@ export default async function ProductDetailPage(props: PageProps) {
         "@type": "ListItem",
         position: 1,
         name: "Ana Sayfa",
-        item: "https://vitrinx.app",
+        item: siteUrl,
       },
       {
         "@type": "ListItem",
         position: 2,
         name: store.name,
-        item: `https://vitrinx.app/v/${store.slug}`,
+        item: buildSiteUrl(`/v/${store.slug}`),
       },
       {
         "@type": "ListItem",

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { getSiteUrl } from "@/lib/siteUrl";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "VitrinX | İşletmenizin Dijital Vitrini",
   description:
     "İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrin linkinde toplayın ve QR kodla paylaşın.",
-  metadataBase: new URL("https://vitrinx.app"),
+  metadataBase: new URL(getSiteUrl()),
 };
 
 export default function RootLayout({

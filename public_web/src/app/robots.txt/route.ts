@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { buildSiteUrl } from "@/lib/siteUrl";
 
 export function GET() {
   const robots = `User-agent: *
@@ -6,7 +7,7 @@ Allow: /
 Disallow: /v/*/randevu/*
 Disallow: /api/*
 
-Sitemap: https://vitrinx.app/sitemap.xml`;
+Sitemap: ${buildSiteUrl("/sitemap.xml")}`;
 
   return new NextResponse(robots, {
     headers: {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { buildSiteUrl, getSiteUrl, isExternalHttpUrl } from "@/lib/siteUrl";
 
 export const revalidate = 300; // Enable 5-minute ISR
 
@@ -16,7 +17,7 @@ function sanitizeExternalLinks(htmlContent: string): string {
   
   // Replace standard anchor tags targeting external URLs with nofollow ugc attributes
   return htmlContent.replace(/<a\s+([^>]*?)href="([^"]+?)"([^>]*?)>/gi, (match, prefix, href, suffix) => {
-    const isExternal = href.startsWith("http") && !href.includes("vitrinx.app") && !href.includes("localhost");
+    const isExternal = isExternalHttpUrl(href);
     if (isExternal) {
       if (/rel=/i.test(match)) {
         // Append ugc and nofollow to existing rel
@@ -101,6 +102,10 @@ export default async function ArticleDetailPage(props: PageProps) {
   if (!article) notFound();
 
   const formattedHtml = formatContent(article.content);
+  const siteUrl = getSiteUrl();
+  const articleUrl = buildSiteUrl(
+    `/v/${article.store.slug}/yazilar/${article.slug}`
+  );
 
   const formatDateTR = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("tr-TR", {
@@ -116,7 +121,7 @@ export default async function ArticleDetailPage(props: PageProps) {
     "@type": "BlogPosting",
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://vitrinx.app/v/${article.store.slug}/yazilar/${article.slug}`,
+      "@id": articleUrl,
     },
     "headline": article.title,
     "image": article.cover_image_url,
@@ -133,7 +138,7 @@ export default async function ArticleDetailPage(props: PageProps) {
       "name": "VitrinX",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://vitrinx.app/favicon.png",
+        "url": buildSiteUrl("/favicon.png"),
       },
     },
   };
@@ -147,25 +152,25 @@ export default async function ArticleDetailPage(props: PageProps) {
         "@type": "ListItem",
         "position": 1,
         "name": "Ana Sayfa",
-        "item": "https://vitrinx.app"
+        "item": siteUrl
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": article.store.name,
-        "item": `https://vitrinx.app/v/${article.store.slug}`
+        "item": buildSiteUrl(`/v/${article.store.slug}`)
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": "Yazılar",
-        "item": `https://vitrinx.app/v/${article.store.slug}/yazilar`
+        "item": buildSiteUrl(`/v/${article.store.slug}/yazilar`)
       },
       {
         "@type": "ListItem",
         "position": 4,
         "name": article.title,
-        "item": `https://vitrinx.app/v/${article.store.slug}/yazilar/${article.slug}`
+        "item": articleUrl
       }
     ]
   };

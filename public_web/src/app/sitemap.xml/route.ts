@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { getProductUrlSlug, safeParseJson, type ProductItem } from "@/lib/products";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 export const revalidate = 300;
 
@@ -40,7 +41,7 @@ function escapeXml(value: string) {
 export async function GET() {
   try {
     const { stores, articles } = await getSitemapData();
-    const baseUrl = "https://vitrinx.app";
+    const baseUrl = getSiteUrl();
     const articleLastModByStore = new Map<string, string>();
 
     if (articles) {

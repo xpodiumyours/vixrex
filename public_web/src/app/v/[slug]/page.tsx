@@ -11,6 +11,7 @@ import {
   safeParseJson,
   type ProductItem,
 } from "@/lib/products";
+import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 
 export const revalidate = 300;
 
@@ -108,7 +109,8 @@ export default async function StorePage(props: PageProps) {
   const visibleProducts = products.filter((product) => product.name?.trim());
   const marketplaceLinks = safeParseJson<MarketplaceLinkItem>(store.marketplace_links);
 
-  const publicUrl = `https://vitrinx.app/v/${store.slug}`;
+  const siteUrl = getSiteUrl();
+  const publicUrl = buildSiteUrl(`/v/${store.slug}`);
   const heroImage =
     store.shelf_image_url || galleryItems[0]?.imageUrl || store.logo_url || "";
   const hasPhysicalLocation =
@@ -151,13 +153,13 @@ export default async function StorePage(props: PageProps) {
 
   const breadcrumbSchema = {
     "@type": "BreadcrumbList",
-    "@id": `https://vitrinx.app/v/${store.slug}#breadcrumb`,
+    "@id": `${publicUrl}#breadcrumb`,
     itemListElement: [
       {
         "@type": "ListItem",
         position: 1,
         name: "Ana Sayfa",
-        item: "https://vitrinx.app",
+        item: siteUrl,
       },
       {
         "@type": "ListItem",
@@ -173,7 +175,7 @@ export default async function StorePage(props: PageProps) {
     "@graph": [
       {
         "@type": businessType,
-        "@id": `https://vitrinx.app/v/${store.slug}#business`,
+        "@id": `${publicUrl}#business`,
         name: store.name,
         description: store.description || store.corporate_bio,
         image: store.shelf_image_url || galleryItems[0]?.imageUrl || store.logo_url,
@@ -197,7 +199,7 @@ export default async function StorePage(props: PageProps) {
       },
       {
         "@type": "WebPage",
-        "@id": `https://vitrinx.app/v/${store.slug}#webpage`,
+        "@id": `${publicUrl}#webpage`,
         url: publicUrl,
         name: `${store.name} | VitrinX`,
         description: store.description || store.corporate_bio,
@@ -206,14 +208,16 @@ export default async function StorePage(props: PageProps) {
         ? [
             {
               "@type": "ItemList",
-              "@id": `https://vitrinx.app/v/${store.slug}#products`,
+              "@id": `${publicUrl}#products`,
               name: `${store.name} ürünleri`,
               itemListElement: visibleProducts.slice(0, 12).map((product, index) => {
                 const productIndex = products.indexOf(product);
                 return {
                   "@type": "ListItem",
                   position: index + 1,
-                  url: `https://vitrinx.app/v/${store.slug}/urun/${getProductUrlSlug(product, productIndex)}`,
+                  url: buildSiteUrl(
+                    `/v/${store.slug}/urun/${getProductUrlSlug(product, productIndex)}`
+                  ),
                   name: product.name,
                 };
               }),
