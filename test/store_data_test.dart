@@ -86,7 +86,12 @@ void main() {
 
   group('StoreOffering and StoreData offerings round-trip', () {
     test('StoreOffering toJson ve fromJson round-trip', () {
-      final offering = StoreOffering(id: 'off-1', title: 'Hizmet', description: 'Açıklama', price: '100 TL');
+      final offering = StoreOffering(
+        id: 'off-1',
+        title: 'Hizmet',
+        description: 'Açıklama',
+        price: '100 TL',
+      );
       final json = offering.toJson();
       final decoded = StoreOffering.fromJson(json);
 
@@ -100,7 +105,12 @@ void main() {
       final store = StoreData(
         name: 'Hizmet Vitrini',
         offerings: [
-          StoreOffering(id: 'off-1', title: 'Hizmet 1', description: 'Açıklama 1', price: '100 TL'),
+          StoreOffering(
+            id: 'off-1',
+            title: 'Hizmet 1',
+            description: 'Açıklama 1',
+            price: '100 TL',
+          ),
         ],
       );
 
@@ -114,43 +124,66 @@ void main() {
       expect(decoded.offerings.first.price, '100 TL');
     });
 
-    test('StoreData.fromJson parses public Supabase fields (offerings, kategori, workingHours) and limits offerings', () {
-      final dbPayload = {
-        'name': 'Test Mağaza',
-        'kategori': 'Giyim & Butik',
-        'working_hours': '09:00 - 18:00',
-        'offerings': [
-          {'id': 'off-1', 'title': 'Hizmet 1', 'description': 'Açıklama 1', 'price': '100 TL'},
-          {'id': 'off-2', 'title': '   ', 'description': 'Açıklama 2', 'price': '200 TL'},
-          ...List.generate(7, (i) => {'id': 'off-${i+3}', 'title': 'Hizmet ${i+3}', 'description': 'Açıklama'}),
-        ]
-      };
+    test(
+      'StoreData.fromJson parses public Supabase fields (offerings, kategori, workingHours) and limits offerings',
+      () {
+        final dbPayload = {
+          'name': 'Test Mağaza',
+          'kategori': 'Giyim & Butik',
+          'working_hours': '09:00 - 18:00',
+          'offerings': [
+            {
+              'id': 'off-1',
+              'title': 'Hizmet 1',
+              'description': 'Açıklama 1',
+              'price': '100 TL',
+            },
+            {
+              'id': 'off-2',
+              'title': '   ',
+              'description': 'Açıklama 2',
+              'price': '200 TL',
+            },
+            ...List.generate(
+              7,
+              (i) => {
+                'id': 'off-${i + 3}',
+                'title': 'Hizmet ${i + 3}',
+                'description': 'Açıklama',
+              },
+            ),
+          ],
+        };
 
-      final decoded = StoreData.fromJson(dbPayload);
+        final decoded = StoreData.fromJson(dbPayload);
 
-      expect(decoded.kategori, 'Giyim & Butik');
-      expect(decoded.workingHours, '09:00 - 18:00');
-      expect(decoded.offerings, hasLength(6));
-      expect(decoded.offerings.first.title, 'Hizmet 1');
-      expect(decoded.offerings.any((o) => o.title.trim().isEmpty), isFalse);
-    });
+        expect(decoded.kategori, 'Giyim & Butik');
+        expect(decoded.workingHours, '09:00 - 18:00');
+        expect(decoded.offerings, hasLength(6));
+        expect(decoded.offerings.first.title, 'Hizmet 1');
+        expect(decoded.offerings.any((o) => o.title.trim().isEmpty), isFalse);
+      },
+    );
 
-    test('StoreOffering has default durationMinutes and isBookable, and serializes/deserializes them', () {
-      final offering = StoreOffering(
-        id: 'off-test',
-        title: 'Cilt Bakımı',
-        durationMinutes: 45,
-        isBookable: true,
-      );
+    test(
+      'StoreOffering has default durationMinutes and isBookable, and serializes/deserializes them',
+      () {
+        final offering = StoreOffering(
+          id: 'off-test',
+          title: 'Cilt Bakımı',
+          durationMinutes: 45,
+          isBookable: true,
+        );
 
-      final json = offering.toJson();
-      expect(json['durationMinutes'], 45);
-      expect(json['isBookable'], true);
+        final json = offering.toJson();
+        expect(json['durationMinutes'], 45);
+        expect(json['isBookable'], true);
 
-      final decoded = StoreOffering.fromJson(json);
-      expect(decoded.durationMinutes, 45);
-      expect(decoded.isBookable, true);
-    });
+        final decoded = StoreOffering.fromJson(json);
+        expect(decoded.durationMinutes, 45);
+        expect(decoded.isBookable, true);
+      },
+    );
 
     test('BookingSettings serializes and deserializes correctly', () {
       final settings = BookingSettings(

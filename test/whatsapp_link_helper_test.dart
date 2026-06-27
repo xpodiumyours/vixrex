@@ -83,48 +83,51 @@ void main() {
       );
     });
 
-    test('randevu onay, ret ve tarih güncelleme şablonlarını doğru şekilde doldurur ve URL üretir', () {
-      final confirmUrl = WhatsAppLinkHelper.buildAppointmentMessageUrl(
-        number: '0555 123 45 67',
-        template: WhatsAppLinkHelper.appointmentConfirmTemplate,
-        customerName: 'Ahmet Ozan',
-        dateStr: '22.06.2026',
-        timeStr: '14:30',
-        serviceTitle: 'Saç Kesimi',
-        link: 'https://vitrinx.com/v/nova-kuafor',
-      );
-      expect(
-        Uri.parse(confirmUrl!).queryParameters['text'],
-        'Merhaba Ahmet Ozan, 22.06.2026 saat 14:30 için Saç Kesimi randevunuz onaylanmıştır. Teşekkür ederiz. Vitrinimiz: https://vitrinx.com/v/nova-kuafor',
-      );
+    test(
+      'randevu onay, ret ve tarih güncelleme şablonlarını doğru şekilde doldurur ve URL üretir',
+      () {
+        final confirmUrl = WhatsAppLinkHelper.buildAppointmentMessageUrl(
+          number: '0555 123 45 67',
+          template: WhatsAppLinkHelper.appointmentConfirmTemplate,
+          customerName: 'Ahmet Ozan',
+          dateStr: '22.06.2026',
+          timeStr: '14:30',
+          serviceTitle: 'Saç Kesimi',
+          link: 'https://vitrinx.com/v/nova-kuafor',
+        );
+        expect(
+          Uri.parse(confirmUrl!).queryParameters['text'],
+          'Merhaba Ahmet Ozan, 22.06.2026 saat 14:30 için Saç Kesimi randevunuz onaylanmıştır. Teşekkür ederiz. Vitrinimiz: https://vitrinx.com/v/nova-kuafor',
+        );
 
-      final rejectUrl = WhatsAppLinkHelper.buildAppointmentMessageUrl(
-        number: '0555 123 45 67',
-        template: WhatsAppLinkHelper.appointmentRejectTemplate,
-        customerName: 'Ahmet Ozan',
-        dateStr: '22.06.2026',
-        timeStr: '14:30',
-        serviceTitle: 'Saç Kesimi',
-        link: 'https://vitrinx.com/v/nova-kuafor',
-      );
-      expect(
-        Uri.parse(rejectUrl!).queryParameters['text'],
-        'Merhaba Ahmet Ozan, 22.06.2026 saat 14:30 için talep ettiğiniz Saç Kesimi randevunuz maalesef uygun olmadığımız için onaylanamamıştır.',
-      );
+        final rejectUrl = WhatsAppLinkHelper.buildAppointmentMessageUrl(
+          number: '0555 123 45 67',
+          template: WhatsAppLinkHelper.appointmentRejectTemplate,
+          customerName: 'Ahmet Ozan',
+          dateStr: '22.06.2026',
+          timeStr: '14:30',
+          serviceTitle: 'Saç Kesimi',
+          link: 'https://vitrinx.com/v/nova-kuafor',
+        );
+        expect(
+          Uri.parse(rejectUrl!).queryParameters['text'],
+          'Merhaba Ahmet Ozan, 22.06.2026 saat 14:30 için talep ettiğiniz Saç Kesimi randevunuz maalesef uygun olmadığımız için onaylanamamıştır.',
+        );
 
-      final rescheduleUrl = WhatsAppLinkHelper.buildAppointmentMessageUrl(
-        number: '0555 123 45 67',
-        template: WhatsAppLinkHelper.appointmentRescheduleTemplate,
-        customerName: 'Ahmet Ozan',
-        dateStr: '22.06.2026',
-        timeStr: '14:30',
-        serviceTitle: 'Saç Kesimi',
-        link: 'https://vitrinx.com/v/nova-kuafor',
-      );
-      expect(
-        Uri.parse(rescheduleUrl!).queryParameters['text'],
-        'Merhaba Ahmet Ozan, talep ettiğiniz Saç Kesimi randevu saati uygun olmadığı için yeni bir tarih belirlemek üzere bizimle iletişime geçebilirsiniz.',
-      );
-    });
+        final rescheduleUrl = WhatsAppLinkHelper.buildAppointmentMessageUrl(
+          number: '0555 123 45 67',
+          template: WhatsAppLinkHelper.appointmentRescheduleTemplate,
+          customerName: 'Ahmet Ozan',
+          dateStr: '22.06.2026',
+          timeStr: '14:30',
+          serviceTitle: 'Saç Kesimi',
+          link: 'https://vitrinx.com/v/nova-kuafor',
+        );
+        expect(
+          Uri.parse(rescheduleUrl!).queryParameters['text'],
+          'Merhaba Ahmet Ozan, talep ettiğiniz Saç Kesimi randevu saati uygun olmadığı için yeni bir tarih belirlemek üzere bizimle iletişime geçebilirsiniz.',
+        );
+      },
+    );
   });
 }

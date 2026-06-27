@@ -34,54 +34,57 @@ void main() {
             isBookable: false,
           ),
         ],
-        bookingSettings: BookingSettings(
-          isEnabled: true,
-          capacity: 2,
-        ),
+        bookingSettings: BookingSettings(isEnabled: true, capacity: 2),
       );
     });
 
-    testWidgets('Sadece randevuya açık (isBookable: true) hizmetleri listeler', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return ElevatedButton(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      builder: (_) => BookingWizardSheet(storeData: mockStoreData),
-                    );
-                  },
-                  child: const Text('Randevu Al'),
-                );
-              },
+    testWidgets(
+      'Sadece randevuya açık (isBookable: true) hizmetleri listeler',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) {
+                  return ElevatedButton(
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder:
+                            (_) => BookingWizardSheet(storeData: mockStoreData),
+                      );
+                    },
+                    child: const Text('Randevu Al'),
+                  );
+                },
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      // Open the sheet
-      await tester.tap(find.text('Randevu Al'));
-      await tester.pumpAndSettle();
+        // Open the sheet
+        await tester.tap(find.text('Randevu Al'));
+        await tester.pumpAndSettle();
 
-      // Check step header and title
-      expect(find.text('Hizmet Seçimi'), findsOneWidget);
-      expect(find.text('1/4'), findsOneWidget);
+        // Check step header and title
+        expect(find.text('Hizmet Seçimi'), findsOneWidget);
+        expect(find.text('1/4'), findsOneWidget);
 
-      // Verify bookable service is listed
-      expect(find.text('Fön Çekimi'), findsOneWidget);
-      expect(find.text('150 TL'), findsOneWidget);
-      expect(find.text('30 dk'), findsOneWidget);
+        // Verify bookable service is listed
+        expect(find.text('Fön Çekimi'), findsOneWidget);
+        expect(find.text('150 TL'), findsOneWidget);
+        expect(find.text('30 dk'), findsOneWidget);
 
-      // Verify non-bookable service is NOT listed
-      expect(find.text('Saç Boyama'), findsNothing);
-    });
+        // Verify non-bookable service is NOT listed
+        expect(find.text('Saç Boyama'), findsNothing);
+      },
+    );
   });
 
   group('Appointment Tracker Screen Widget Tests', () {
-    testWidgets('Supabase başlatılmamışken takip ekranı hata mesajı verir', (WidgetTester tester) async {
+    testWidgets('Supabase başlatılmamışken takip ekranı hata mesajı verir', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: AppointmentTrackerScreen(
@@ -94,37 +97,43 @@ void main() {
       await tester.pump();
 
       // Assert error fallback UI is shown
-      expect(find.text('Randevu detayları yüklenirken bir hata oluştu.'), findsOneWidget);
+      expect(
+        find.text('Randevu detayları yüklenirken bir hata oluştu.'),
+        findsOneWidget,
+      );
       expect(find.text('Vitrine Dön'), findsOneWidget);
     });
   });
 
   group('Booking CTA Button Visibility Tests', () {
-    testWidgets('Kategori Kuaför veya Kozmetik olmasa dahi randevu sistemi aktifse Randevu Al butonu gösterilir', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: VitrinView(
-                storeData: StoreData(
-                  name: 'Teknik Servis Mağazası',
-                  kategori: 'teknik_servis',
-                  bookingSettings: BookingSettings(
-                    isEnabled: true,
+    testWidgets(
+      'Kategori Kuaför veya Kozmetik olmasa dahi randevu sistemi aktifse Randevu Al butonu gösterilir',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: VitrinView(
+                  storeData: StoreData(
+                    name: 'Teknik Servis Mağazası',
+                    kategori: 'teknik_servis',
+                    bookingSettings: BookingSettings(isEnabled: true),
                   ),
+                  publicMode: true,
                 ),
-                publicMode: true,
               ),
             ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
 
-      expect(find.text('Randevu Al'), findsOneWidget);
-    });
+        expect(find.text('Randevu Al'), findsOneWidget);
+      },
+    );
 
-    testWidgets('Randevu sistemi kapalıyken Randevu Al butonu gizlenir', (WidgetTester tester) async {
+    testWidgets('Randevu sistemi kapalıyken Randevu Al butonu gizlenir', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -133,9 +142,7 @@ void main() {
                 storeData: StoreData(
                   name: 'Teknik Servis Mağazası',
                   kategori: 'teknik_servis',
-                  bookingSettings: BookingSettings(
-                    isEnabled: false,
-                  ),
+                  bookingSettings: BookingSettings(isEnabled: false),
                 ),
                 publicMode: true,
               ),

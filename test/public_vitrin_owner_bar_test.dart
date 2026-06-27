@@ -32,7 +32,8 @@ void main() {
     expect(find.text('Düzenle'), findsOneWidget);
 
     await tester.tap(find.text('Düzenle'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
 
     expect(find.byType(HomeShellScreen), findsOneWidget);
     expect(find.text('VitrinX Düzenle'), findsOneWidget);
