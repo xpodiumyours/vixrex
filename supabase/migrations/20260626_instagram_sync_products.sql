@@ -64,23 +64,40 @@ alter table public.store_instagram_connections enable row level security;
 alter table public.store_instagram_tokens enable row level security;
 alter table public.store_instagram_imports enable row level security;
 
+create or replace function public.set_store_instagram_updated_at()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  new.updated_at = pg_catalog.now();
+  return new;
+end;
+$$;
+
+revoke all on function public.set_store_instagram_updated_at()
+  from public, anon, authenticated;
+grant execute on function public.set_store_instagram_updated_at()
+  to service_role;
+
 drop trigger if exists trg_store_instagram_connections_updated_at
   on public.store_instagram_connections;
 create trigger trg_store_instagram_connections_updated_at
 before update on public.store_instagram_connections
-for each row execute function public.set_updated_at();
+for each row execute function public.set_store_instagram_updated_at();
 
 drop trigger if exists trg_store_instagram_tokens_updated_at
   on public.store_instagram_tokens;
 create trigger trg_store_instagram_tokens_updated_at
 before update on public.store_instagram_tokens
-for each row execute function public.set_updated_at();
+for each row execute function public.set_store_instagram_updated_at();
 
 drop trigger if exists trg_store_instagram_imports_updated_at
   on public.store_instagram_imports;
 create trigger trg_store_instagram_imports_updated_at
 before update on public.store_instagram_imports
-for each row execute function public.set_updated_at();
+for each row execute function public.set_store_instagram_updated_at();
 
 drop policy if exists "Owners can read own Instagram connection"
   on public.store_instagram_connections;
