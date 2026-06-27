@@ -202,12 +202,14 @@ SUPABASE_SERVICE_ROLE_KEY=SERVER_ONLY_KEY
 REVALIDATION_SECRET=GUCLU_RASTGELE_DEGER
 TURNSTILE_SECRET_KEY=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:8080
 INSTAGRAM_CLIENT_ID=
 INSTAGRAM_CLIENT_SECRET=
 INSTAGRAM_REDIRECT_URI=http://localhost:3000/api/instagram/callback
 INSTAGRAM_SCOPES=instagram_business_basic
 INSTAGRAM_STATE_SECRET=
 INSTAGRAM_TOKEN_ENCRYPTION_KEY=
+INSTAGRAM_ALLOWED_ORIGINS=http://localhost:8080
 ```
 
 `.env.local` dosyası ve gerçek anahtarlar Git'e eklenmemelidir.
@@ -230,7 +232,7 @@ Public web uygulaması varsayılan olarak `http://localhost:3000` adresinde
 | `SUPABASE_URL` | Evet | Supabase proje adresi |
 | `SUPABASE_PUBLISHABLE_KEY` | Evet | İstemcide kullanılan publishable/anon anahtarı |
 | `PUBLIC_SITE_URL` | Üretimde | Public vitrin adresi, örneğin `https://vitrinx.app` |
-| `REVALIDATION_SECRET` | Revalidation kullanılacaksa | Next.js önbellek yenileme isteğini doğrular |
+| `INSTAGRAM_SYNC_ENABLED` | Instagram hazır olduğunda | Migration ve public API kurulumu bitince `true` yapılır |
 | `LEGAL_PRIVACY_EMAIL` | Hayır | Gizlilik ve veri silme iletişim adresi |
 
 Flutter değişkenleri çalışma veya build sırasında `--dart-define` ile
@@ -247,15 +249,22 @@ olarak Dart koduna aktarılacağı anlamına gelmez.
 | `REVALIDATION_SECRET` | Önerilir | Server-to-server `/api/revalidate` isteklerini doğrular |
 | `TURNSTILE_SECRET_KEY` | Hayır | İçerik bildirimlerinde bot doğrulaması |
 | `NEXT_PUBLIC_SITE_URL` | Üretimde | Public Next.js adresi |
+| `NEXT_PUBLIC_APP_URL` | Üretimde | Flutter uygulama adresi, örneğin `https://app.vitrinx.app` |
 | `INSTAGRAM_CLIENT_ID` | Instagram bağlantısında | Meta uygulama kimliği |
 | `INSTAGRAM_CLIENT_SECRET` | Instagram bağlantısında | Server-only Meta uygulama anahtarı |
 | `INSTAGRAM_REDIRECT_URI` | Instagram bağlantısında | Meta panelindeki OAuth callback adresi |
 | `INSTAGRAM_SCOPES` | Instagram bağlantısında | Bu akış için `instagram_business_basic` |
 | `INSTAGRAM_STATE_SECRET` | Instagram bağlantısında | OAuth state imzası için server-only anahtar |
 | `INSTAGRAM_TOKEN_ENCRYPTION_KEY` | Instagram bağlantısında | Token şifrelemek için 32 baytlık anahtar |
+| `INSTAGRAM_ALLOWED_ORIGINS` | Instagram bağlantısında | Flutter web origin listesi; birden fazlaysa virgülle ayrılır |
 
 > Gerçek anahtarları README, kaynak kod, commit veya ekran görüntülerine
 > eklemeyin.
+
+Instagram Login kısa ömürlü token'ı callback route'unda server tarafında
+60 günlük token'a çevirir. Token, bitimine 7 gün kaldığında ve en az 24 saatlik
+olduğunda kullanım sırasında yenilenir. Süresi geçmiş token yenilenemez;
+kullanıcının hesabı yeniden bağlaması gerekir.
 
 ## Supabase kurulumu
 

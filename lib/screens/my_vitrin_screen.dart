@@ -7,6 +7,7 @@ import 'package:vitrinx/models/chat_message.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/public_site_config.dart';
+import 'package:vitrinx/config/instagram_sync_config.dart';
 import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/config/turkey_cities_config.dart';
 import 'package:vitrinx/models/store_data.dart';
@@ -24,6 +25,7 @@ import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/utils/token_generator.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/gallery_delete_confirmation_dialog.dart';
+import 'package:vitrinx/widgets/instagram_sync_section.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
 // ─── Gallery item helper ───────────────────────────────────────────────────
@@ -960,6 +962,26 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     return token;
   }
 
+  Future<void> _handleInstagramProductImported(Product product) async {
+    final existingIndex = _data.products.indexWhere(
+      (item) =>
+          item.id == product.id ||
+          (product.sourceMediaId?.isNotEmpty == true &&
+              item.sourceMediaId == product.sourceMediaId),
+    );
+
+    setState(() {
+      if (existingIndex >= 0) {
+        _data.products[existingIndex] = product;
+      } else {
+        _data.products.insert(0, product);
+      }
+    });
+    await _storage.saveVitrinData(_data);
+    if (!mounted) return;
+    _showSnackBar('${product.name} vitrininize eklendi.');
+  }
+
   Future<void> _copyLink() async {
     final link = _publishedInfo?.publicLink;
     if (link == null || link.trim().isEmpty) return;
@@ -1320,6 +1342,17 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 keyboardType: TextInputType.url,
               ),
               const SizedBox(height: 14),
+
+              if (hasPublished && InstagramSyncConfig.enabled) ...[
+                InstagramSyncSection(
+                  storeSlug: _publishedInfo!.slug,
+                  editToken: _publishedInfo!.editToken,
+                  defaultCategory: _selectedKategori,
+                  onProductImported: _handleInstagramProductImported,
+                  onMessage: _showSnackBar,
+                ),
+                const SizedBox(height: 14),
+              ],
 
               _buildPublicWebsiteLinkCard(),
               const SizedBox(height: 14),
