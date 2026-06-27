@@ -198,8 +198,16 @@ Bu komut `public_web` projesinin Node.js paketlerini indirir.
 ```env
 SUPABASE_URL=https://PROJE.supabase.co
 SUPABASE_PUBLISHABLE_KEY=PUBLIC_KEY
+SUPABASE_SERVICE_ROLE_KEY=SERVER_ONLY_KEY
 REVALIDATION_SECRET=GUCLU_RASTGELE_DEGER
 TURNSTILE_SECRET_KEY=
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+INSTAGRAM_CLIENT_ID=
+INSTAGRAM_CLIENT_SECRET=
+INSTAGRAM_REDIRECT_URI=http://localhost:3000/api/instagram/callback
+INSTAGRAM_SCOPES=instagram_business_basic
+INSTAGRAM_STATE_SECRET=
+INSTAGRAM_TOKEN_ENCRYPTION_KEY=
 ```
 
 `.env.local` dosyası ve gerçek anahtarlar Git'e eklenmemelidir.
@@ -235,8 +243,16 @@ olarak Dart koduna aktarılacağı anlamına gelmez.
 |---|---:|---|
 | `SUPABASE_URL` | Evet | Supabase proje adresi |
 | `SUPABASE_PUBLISHABLE_KEY` | Evet | Public Supabase anahtarı |
-| `REVALIDATION_SECRET` | Önerilir | `/api/revalidate` isteklerini doğrular |
+| `SUPABASE_SERVICE_ROLE_KEY` | Instagram bağlantısında | Yalnızca server route'larında kullanılan yönetici anahtarı |
+| `REVALIDATION_SECRET` | Önerilir | Server-to-server `/api/revalidate` isteklerini doğrular |
 | `TURNSTILE_SECRET_KEY` | Hayır | İçerik bildirimlerinde bot doğrulaması |
+| `NEXT_PUBLIC_SITE_URL` | Üretimde | Public Next.js adresi |
+| `INSTAGRAM_CLIENT_ID` | Instagram bağlantısında | Meta uygulama kimliği |
+| `INSTAGRAM_CLIENT_SECRET` | Instagram bağlantısında | Server-only Meta uygulama anahtarı |
+| `INSTAGRAM_REDIRECT_URI` | Instagram bağlantısında | Meta panelindeki OAuth callback adresi |
+| `INSTAGRAM_SCOPES` | Instagram bağlantısında | Bu akış için `instagram_business_basic` |
+| `INSTAGRAM_STATE_SECRET` | Instagram bağlantısında | OAuth state imzası için server-only anahtar |
+| `INSTAGRAM_TOKEN_ENCRYPTION_KEY` | Instagram bağlantısında | Token şifrelemek için 32 baytlık anahtar |
 
 > Gerçek anahtarları README, kaynak kod, commit veya ekran görüntülerine
 > eklemeyin.
@@ -517,14 +533,15 @@ TURNSTILE_SECRET_KEY
 
 ### Revalidation notu
 
-Flutter tarafındaki `RevalidationService`, `REVALIDATION_SECRET` değerini
-`--dart-define` üzerinden bekler. Mevcut `vercel-build.sh` yalnızca
-`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` ve `PUBLIC_SITE_URL` değerlerini
-Flutter build'e aktarır.
+`/api/revalidate`, `x-revalidate-secret` başlığını Next.js projesindeki
+`REVALIDATION_SECRET` ile karşılaştırır. Server-to-server tetikleyicide kullanılan
+değer ile Next.js Vercel ortamındaki değer birebir aynı olmalıdır.
 
-Revalidation kullanılacaksa build scriptinin ayrı ve kontrollü bir değişiklikle
-`REVALIDATION_SECRET` değerini de aktarması gerekir. Yalnızca Vercel ortam
-değişkeni eklemek mevcut script ile yeterli değildir.
+Ortak secret Flutter web bundle'ına gömülmemelidir; `--dart-define` değerleri
+istemci JavaScript'i içinde okunabilir. Instagram import route'u revalidation'ı
+zaten server tarafında doğrudan tetikler. Diğer güncellemeler için 300 saniyelik
+ISR fallback korunur; Flutter'dan anlık tetikleme gerekiyorsa kullanıcı oturumunu
+doğrulayan ayrı bir server endpoint'i kullanılmalıdır.
 
 ## Kontrol listesi
 
@@ -581,7 +598,8 @@ Public web projesinin üretim build'ini kontrol eder.
   uygulamanın 15 MB doğrulamasıyla ayrıca eşleştirilmelidir.
 - Flutter ve Next.js deployment'ları ayrı Vercel projeleri olarak
   yapılandırılmalıdır.
-- `REVALIDATION_SECRET`, mevcut Flutter Vercel build scriptine aktarılmaz.
+- `public_web`, ayrı bir Next.js Vercel projesi olarak bağlanmadan API route'ları
+  üretimde çalışmaz.
 - README kurulumu açıklar; mevcut migration veya build sorunlarını otomatik
   olarak düzeltmez.
 - VitrinX ödeme veya tam e-ticaret altyapısı sağlamaz.

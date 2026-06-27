@@ -170,26 +170,80 @@ void main() {
   });
 
   group('StorePublishPayloadBuilder offerings', () {
-    test('hizmetleri trimler, bos basliklari atlar ve en fazla 6 adet dondurur', () {
+    test(
+      'hizmetleri trimler, bos basliklari atlar ve en fazla 6 adet dondurur',
+      () {
+        final data = StoreData(
+          offerings: [
+            StoreOffering(
+              id: '1',
+              title: ' Kesim ',
+              description: ' Hizmet ',
+              price: ' 100 TL ',
+            ),
+            StoreOffering(id: '2', title: '', description: '', price: ''),
+            ...List.generate(
+              7,
+              (i) => StoreOffering(
+                id: 'offering-${i + 3}',
+                title: 'Hizmet ${i + 3}',
+                description: 'Açıklama',
+              ),
+            ),
+          ],
+        );
+
+        final items = builder.offeringsToJson(data);
+
+        expect(items, hasLength(6));
+        expect(items.first, {
+          'id': '1',
+          'title': 'Kesim',
+          'description': 'Hizmet',
+          'price': '100 TL',
+          'durationMinutes': 30,
+          'isBookable': false,
+        });
+      },
+    );
+  });
+
+  group('StorePublishPayloadBuilder products', () {
+    test('ürünlere SEO slug ve kaynak alanlarını ekler', () {
       final data = StoreData(
-        offerings: [
-          StoreOffering(id: '1', title: ' Kesim ', description: ' Hizmet ', price: ' 100 TL '),
-          StoreOffering(id: '2', title: '', description: '', price: ''),
-          ...List.generate(7, (i) => StoreOffering(id: 'offering-${i+3}', title: 'Hizmet ${i+3}', description: 'Açıklama')),
+        products: [
+          Product(
+            id: ' ig-1789 ',
+            name: ' Şık Triko Hırka ',
+            price: ' 750 TL ',
+            description: ' Yeni sezon triko ',
+            category: ' Triko ',
+            source: ' instagram ',
+            sourceMediaId: ' 1789 ',
+            sourcePermalink: ' https://instagram.com/p/demo ',
+            importedAt: ' 2026-06-26T10:00:00Z ',
+          ),
         ],
       );
 
-      final items = builder.offeringsToJson(data);
+      final products = builder.productsToJson(data);
 
-      expect(items, hasLength(6));
-      expect(items.first, {
-        'id': '1',
-        'title': 'Kesim',
-        'description': 'Hizmet',
-        'price': '100 TL',
-        'durationMinutes': 30,
-        'isBookable': false,
-      });
+      expect(products, [
+        {
+          'id': 'ig-1789',
+          'name': 'Şık Triko Hırka',
+          'price': '750 TL',
+          'description': 'Yeni sezon triko',
+          'imagePath': null,
+          'category': 'Triko',
+          'stockStatus': 'Mevcut',
+          'slug': 'sik-triko-hirka-ig-1789',
+          'source': 'instagram',
+          'sourceMediaId': '1789',
+          'sourcePermalink': 'https://instagram.com/p/demo',
+          'importedAt': '2026-06-26T10:00:00Z',
+        },
+      ]);
     });
   });
 }

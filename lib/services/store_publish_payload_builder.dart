@@ -80,19 +80,53 @@ class StorePublishPayloadBuilder {
   }
 
   List<Map<String, dynamic>> productsToJson(StoreData data) {
-    return data.products
-        .map(
-          (p) => {
-            'id': p.id.trim(),
-            'name': p.name.trim(),
-            'price': p.price.trim(),
-            'description': p.description.trim(),
-            'imagePath': p.imagePath?.trim(),
-            'category': p.category.trim(),
-            'stockStatus': p.stockStatus.trim(),
-          },
-        )
-        .toList();
+    return data.products.asMap().entries.map((entry) {
+      final index = entry.key;
+      final p = entry.value;
+      final slug = _resolveProductSlug(p, index);
+      final item = <String, dynamic>{
+        'id': p.id.trim(),
+        'name': p.name.trim(),
+        'price': p.price.trim(),
+        'description': p.description.trim(),
+        'imagePath': p.imagePath?.trim(),
+        'category': p.category.trim(),
+        'stockStatus': p.stockStatus.trim(),
+        'slug': slug,
+      };
+
+      void putOptional(String key, String? value) {
+        final trimmed = value?.trim();
+        if (trimmed != null && trimmed.isNotEmpty) {
+          item[key] = trimmed;
+        }
+      }
+
+      putOptional('source', p.source);
+      putOptional('sourceMediaId', p.sourceMediaId);
+      putOptional('sourcePermalink', p.sourcePermalink);
+      putOptional('importedAt', p.importedAt);
+
+      return item;
+    }).toList();
+  }
+
+  String _resolveProductSlug(Product product, int index) {
+    final explicitSlug = product.slug?.trim();
+    if (explicitSlug != null && explicitSlug.isNotEmpty) {
+      return generateSlug(explicitSlug);
+    }
+
+    final nameSlug = generateSlug(
+      product.name.trim().isNotEmpty ? product.name.trim() : 'urun',
+    );
+    final idSlug = generateSlug(product.id.trim());
+
+    if (idSlug.isNotEmpty && idSlug != 'magazaniz') {
+      return '$nameSlug-$idSlug';
+    }
+
+    return '$nameSlug-${index + 1}';
   }
 
   List<Map<String, dynamic>> offeringsToJson(StoreData data) {

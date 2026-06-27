@@ -431,7 +431,7 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
 
                     // Article Type dropdown
                     DropdownButtonFormField<String>(
-                      value: _articleType,
+                      initialValue: _articleType,
                       decoration: const InputDecoration(
                         labelText: 'Yazı Türü',
                         filled: true,
@@ -467,7 +467,7 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
 
                     // Target City dropdown / autocomplete
                     DropdownButtonFormField<String>(
-                      value: _cityController.text.isEmpty ? null : turkeyProvinces.any((p) => p.name == _cityController.text) ? _cityController.text : null,
+                      initialValue: _cityController.text.isEmpty ? null : turkeyProvinces.any((p) => p.name == _cityController.text) ? _cityController.text : null,
                       decoration: const InputDecoration(
                         labelText: 'Hedef Şehir (Yerel SEO)',
                         filled: true,

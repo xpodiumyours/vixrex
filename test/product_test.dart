@@ -66,6 +66,11 @@ void main() {
         'imagePath': 'https://example.com/img.jpg',
         'category': 'Elektronik',
         'stockStatus': 'Son birkaç adet',
+        'slug': 'urun-slug',
+        'source': 'instagram',
+        'sourceMediaId': '1789',
+        'sourcePermalink': 'https://instagram.com/p/demo',
+        'importedAt': '2026-06-26T10:00:00Z',
       });
       expect(p.id, 'abc');
       expect(p.name, 'Ürün');
@@ -74,6 +79,11 @@ void main() {
       expect(p.imagePath, 'https://example.com/img.jpg');
       expect(p.category, 'Elektronik');
       expect(p.stockStatus, 'Son birkaç adet');
+      expect(p.slug, 'urun-slug');
+      expect(p.source, 'instagram');
+      expect(p.sourceMediaId, '1789');
+      expect(p.sourcePermalink, 'https://instagram.com/p/demo');
+      expect(p.importedAt, '2026-06-26T10:00:00Z');
     });
 
     test('uses defaults for missing fields', () {
@@ -101,6 +111,11 @@ void main() {
         imagePath: 'https://cdn.example.com/dress.jpg',
         category: 'Giyim',
         stockStatus: 'Tükendi',
+        slug: 'elbise-p42',
+        source: 'instagram',
+        sourceMediaId: 'media-42',
+        sourcePermalink: 'https://instagram.com/p/42',
+        importedAt: '2026-06-26T10:00:00Z',
       );
       final json = original.toJson();
       final restored = Product.fromJson(json);
@@ -112,6 +127,11 @@ void main() {
       expect(restored.imagePath, original.imagePath);
       expect(restored.category, original.category);
       expect(restored.stockStatus, original.stockStatus);
+      expect(restored.slug, original.slug);
+      expect(restored.source, original.source);
+      expect(restored.sourceMediaId, original.sourceMediaId);
+      expect(restored.sourcePermalink, original.sourcePermalink);
+      expect(restored.importedAt, original.importedAt);
     });
   });
 }

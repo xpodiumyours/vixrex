@@ -3,6 +3,14 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import {
+  deriveCollections,
+  getProductUrlSlug,
+  normalizeExternalUrl,
+  normalizeWhatsappDigits,
+  safeParseJson,
+  type ProductItem,
+} from "@/lib/products";
 
 export const revalidate = 300;
 
@@ -16,46 +24,11 @@ interface GalleryItem {
   title?: string;
 }
 
-interface ProductItem {
-  id?: string;
-  name: string;
-  description?: string;
-  price?: string;
-  imagePath?: string;
-  stockStatus?: string;
-}
-
 interface MarketplaceLinkItem {
   id?: string;
   platform: string;
   url: string;
   subtitle?: string;
-}
-
-function safeParseJson<T>(value: unknown): T[] {
-  if (!value) return [];
-  if (Array.isArray(value)) return value as T[];
-  if (typeof value === "string") {
-    try {
-      return JSON.parse(value) as T[];
-    } catch {
-      return [];
-    }
-  }
-  return [];
-}
-
-function normalizeWhatsappDigits(value: unknown): string {
-  const digits = String(value || "").replace(/[^0-9]/g, "");
-  if (digits.startsWith("0") && digits.length === 11) return `90${digits.slice(1)}`;
-  if (digits.startsWith("5") && digits.length === 10) return `90${digits}`;
-  return digits;
-}
-
-function normalizeExternalUrl(value: unknown): string | null {
-  const url = String(value || "").trim();
-  if (!url) return null;
-  return url.startsWith("http") ? url : `https://${url}`;
 }
 
 async function _getStoreData(slug: string) {
@@ -94,7 +67,7 @@ const getStoreData = (slug: string) =>
   unstable_cache(
     () => _getStoreData(slug),
     [`store-${slug}`],
-    { tags: [`store-${slug}`], revalidate: 300 }
+    { tags: [`store-${slug}`, `products-${slug}`], revalidate: 300 }
   )();
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
@@ -132,6 +105,7 @@ export default async function StorePage(props: PageProps) {
 
   const galleryItems = safeParseJson<GalleryItem>(store.gallery_items);
   const products = safeParseJson<ProductItem>(store.products);
+  const visibleProducts = products.filter((product) => product.name?.trim());
   const marketplaceLinks = safeParseJson<MarketplaceLinkItem>(store.marketplace_links);
 
   const publicUrl = `https://vitrinx.app/v/${store.slug}`;
@@ -145,10 +119,6 @@ export default async function StorePage(props: PageProps) {
   const whatsappActionUrl = waBaseUrl
     ? `${waBaseUrl}?text=${encodeURIComponent(`Merhaba, ${store.name} vitrininiz hakkında bilgi almak istiyorum.`)}`
     : null;
-  const productWhatsappUrl = (productName: string) =>
-    waBaseUrl
-      ? `${waBaseUrl}?text=${encodeURIComponent(`Merhaba, ${store.name} vitrininizdeki '${productName}' hakkında bilgi almak istiyorum.`)}`
-      : null;
   const instagramValue = String(store.instagram || "").trim();
   const instagramUrl = instagramValue
     ? `https://instagram.com/${instagramValue.replace("@", "").replace("/", "")}`
@@ -164,7 +134,8 @@ export default async function StorePage(props: PageProps) {
     store.description ||
     store.corporate_bio ||
     "Ürünleri, iletişim bilgileri ve konumu tek dijital vitrinde inceleyin.";
-  const featuredProducts = products.slice(0, 6);
+  const featuredProducts = visibleProducts.slice(0, 6);
+  const collections = deriveCollections(visibleProducts);
 
   const categoryLower = (store.kategori || "").toLowerCase();
   let businessType = "LocalBusiness";
@@ -231,6 +202,24 @@ export default async function StorePage(props: PageProps) {
         name: `${store.name} | VitrinX`,
         description: store.description || store.corporate_bio,
       },
+      ...(visibleProducts.length > 0
+        ? [
+            {
+              "@type": "ItemList",
+              "@id": `https://vitrinx.app/v/${store.slug}#products`,
+              name: `${store.name} ürünleri`,
+              itemListElement: visibleProducts.slice(0, 12).map((product, index) => {
+                const productIndex = products.indexOf(product);
+                return {
+                  "@type": "ListItem",
+                  position: index + 1,
+                  url: `https://vitrinx.app/v/${store.slug}/urun/${getProductUrlSlug(product, productIndex)}`,
+                  name: product.name,
+                };
+              }),
+            },
+          ]
+        : []),
       breadcrumbSchema,
     ],
   };
@@ -366,19 +355,44 @@ export default async function StorePage(props: PageProps) {
 
           <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div className="flex flex-col gap-5">
+              {collections.length > 0 && (
+                <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h2 className="text-base font-black text-white">Öne Çıkan Koleksiyonlar</h2>
+                    <span className="text-xs font-extrabold text-[#9DB2C8]">
+                      {visibleProducts.length} ürün
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {collections.map((collection) => (
+                      <div
+                        key={collection.name}
+                        className="rounded-2xl border border-[#25415F] bg-[#13243A] px-4 py-3"
+                      >
+                        <div className="text-sm font-black text-white">{collection.name}</div>
+                        <div className="mt-1 text-[11px] font-bold text-[#7BC7FF]">
+                          {collection.count} ürün
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {featuredProducts.length > 0 && (
                 <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:p-5">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <h2 className="text-base font-black text-white">Öne Çıkan Ürünler</h2>
-                    {products.length > featuredProducts.length && (
+                    {visibleProducts.length > featuredProducts.length && (
                       <span className="text-xs font-extrabold text-[#9DB2C8]">
-                        +{products.length - featuredProducts.length} ürün
+                        +{visibleProducts.length - featuredProducts.length} ürün
                       </span>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                     {featuredProducts.map((product: ProductItem, i: number) => {
-                      const inquiryUrl = productWhatsappUrl(product.name);
+                      const productIndex = products.indexOf(product);
+                      const productUrl = `/v/${store.slug}/urun/${getProductUrlSlug(product, productIndex)}`;
                       const card = (
                         <>
                           <div className="aspect-[1.2] overflow-hidden rounded-xl bg-[#162A42]">
@@ -412,25 +426,21 @@ export default async function StorePage(props: PageProps) {
                                 </span>
                               )}
                             </div>
+                            <div className="mt-3 rounded-xl border border-[#38A0E4]/30 bg-[#38A0E4]/12 px-3 py-2 text-center text-[11px] font-black text-[#B9E1FF]">
+                              Detay ve İletişim
+                            </div>
                           </div>
                         </>
                       );
 
-                      return inquiryUrl ? (
+                      return (
                         <Link
                           key={product.id || i}
-                          href={inquiryUrl}
+                          href={productUrl}
                           className="rounded-2xl border border-[#25415F] bg-[#13243A] p-2 transition hover:border-[#38A0E4]/70"
                         >
                           {card}
                         </Link>
-                      ) : (
-                        <div
-                          key={product.id || i}
-                          className="rounded-2xl border border-[#25415F] bg-[#13243A] p-2"
-                        >
-                          {card}
-                        </div>
                       );
                     })}
                   </div>
@@ -439,7 +449,7 @@ export default async function StorePage(props: PageProps) {
 
               {store.corporate_bio && (
                 <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-5">
-                  <h2 className="mb-3 text-base font-black text-white">Hakkımızda</h2>
+                  <h2 className="mb-3 text-base font-black text-white">Dükkan Hikayesi</h2>
                   <p className="whitespace-pre-wrap text-sm font-semibold leading-7 text-[#C4D1E3]">
                     {store.corporate_bio}
                   </p>

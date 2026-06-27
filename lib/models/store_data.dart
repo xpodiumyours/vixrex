@@ -6,6 +6,11 @@ class Product {
   String? imagePath;
   String category;
   String stockStatus; // 'Mevcut', 'Tükendi', 'Son birkaç adet'
+  String? slug;
+  String? source;
+  String? sourceMediaId;
+  String? sourcePermalink;
+  String? importedAt;
 
   Product({
     required this.id,
@@ -15,17 +20,39 @@ class Product {
     this.imagePath,
     this.category = 'Tümü',
     this.stockStatus = 'Mevcut',
+    this.slug,
+    this.source,
+    this.sourceMediaId,
+    this.sourcePermalink,
+    this.importedAt,
   });
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'price': price,
-    'description': description,
-    'imagePath': imagePath,
-    'category': category,
-    'stockStatus': stockStatus,
-  };
+  Map<String, dynamic> toJson() {
+    final json = <String, dynamic>{
+      'id': id,
+      'name': name,
+      'price': price,
+      'description': description,
+      'imagePath': imagePath,
+      'category': category,
+      'stockStatus': stockStatus,
+    };
+
+    void putOptional(String key, String? value) {
+      final trimmed = value?.trim();
+      if (trimmed != null && trimmed.isNotEmpty) {
+        json[key] = trimmed;
+      }
+    }
+
+    putOptional('slug', slug);
+    putOptional('source', source);
+    putOptional('sourceMediaId', sourceMediaId);
+    putOptional('sourcePermalink', sourcePermalink);
+    putOptional('importedAt', importedAt);
+
+    return json;
+  }
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
     id: (json['id'] ?? '').toString(),
@@ -35,6 +62,35 @@ class Product {
     imagePath: json['imagePath'] as String?,
     category: (json['category'] ?? 'Tümü').toString(),
     stockStatus: (json['stockStatus'] ?? 'Mevcut').toString(),
+    slug:
+        (json['slug'] ?? '').toString().trim().isEmpty
+            ? null
+            : json['slug'].toString(),
+    source:
+        (json['source'] ?? '').toString().trim().isEmpty
+            ? null
+            : json['source'].toString(),
+    sourceMediaId:
+        (json['sourceMediaId'] ?? json['source_media_id'] ?? '')
+                .toString()
+                .trim()
+                .isEmpty
+            ? null
+            : (json['sourceMediaId'] ?? json['source_media_id']).toString(),
+    sourcePermalink:
+        (json['sourcePermalink'] ?? json['source_permalink'] ?? '')
+                .toString()
+                .trim()
+                .isEmpty
+            ? null
+            : (json['sourcePermalink'] ?? json['source_permalink']).toString(),
+    importedAt:
+        (json['importedAt'] ?? json['imported_at'] ?? '')
+                .toString()
+                .trim()
+                .isEmpty
+            ? null
+            : (json['importedAt'] ?? json['imported_at']).toString(),
   );
 
   /// Mevcut ürünün bir kopyasını, belirtilen alanlar güncellenmiş şekilde döner.
@@ -46,6 +102,11 @@ class Product {
     String? imagePath,
     String? category,
     String? stockStatus,
+    String? slug,
+    String? source,
+    String? sourceMediaId,
+    String? sourcePermalink,
+    String? importedAt,
   }) {
     return Product(
       id: id ?? this.id,
@@ -55,13 +116,19 @@ class Product {
       imagePath: imagePath ?? this.imagePath,
       category: category ?? this.category,
       stockStatus: stockStatus ?? this.stockStatus,
+      slug: slug ?? this.slug,
+      source: source ?? this.source,
+      sourceMediaId: sourceMediaId ?? this.sourceMediaId,
+      sourcePermalink: sourcePermalink ?? this.sourcePermalink,
+      importedAt: importedAt ?? this.importedAt,
     );
   }
 }
 
 class MarketplaceLink {
   String id;
-  String platform; // 'Trendyol', 'Hepsiburada', 'N11', 'Diğer', ya da özel başlık
+  // 'Trendyol', 'Hepsiburada', 'N11', 'Diğer', ya da özel başlık
+  String platform;
   String url;
 
   /// Bağlantı kartının altında gösterilen kısa açıklama (isteğe bağlı).
@@ -96,7 +163,7 @@ class StoreOffering {
   String description;
   String price;
   int durationMinutes; // Dakika cinsinden (varsayılan 30, 15-240 arası)
-  bool isBookable;    // Randevuya açık mı?
+  bool isBookable; // Randevuya açık mı?
 
   StoreOffering({
     required this.id,
@@ -121,7 +188,8 @@ class StoreOffering {
     title: (json['title'] ?? '').toString(),
     description: (json['description'] ?? '').toString(),
     price: (json['price'] ?? '').toString(),
-    durationMinutes: (json['durationMinutes'] ?? json['duration_minutes'] ?? 30) as int,
+    durationMinutes:
+        (json['durationMinutes'] ?? json['duration_minutes'] ?? 30) as int,
     isBookable: (json['isBookable'] ?? json['is_bookable'] ?? false) as bool,
   );
 
@@ -301,9 +369,7 @@ class StoreData {
     final parsedGalleryItems = _parseGalleryItems(
       json['galleryItems'] ?? json['gallery_items'],
     );
-    final parsedOfferings = _parseOfferings(
-      json['offerings'],
-    );
+    final parsedOfferings = _parseOfferings(json['offerings']);
 
     return StoreData(
       name: _getString(json, 'name') ?? '',
@@ -341,7 +407,8 @@ class StoreData {
       provinceName: _getString(json, 'provinceName', 'province_name') ?? '',
       districtCode: _getString(json, 'districtCode', 'district_code') ?? '',
       districtName: _getString(json, 'districtName', 'district_name') ?? '',
-      googleBusinessLink: _getString(json, 'googleBusinessLink', 'google_business_link') ?? '',
+      googleBusinessLink:
+          _getString(json, 'googleBusinessLink', 'google_business_link') ?? '',
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       locationAccuracyMeters:
@@ -352,9 +419,14 @@ class StoreData {
         json['locationConsentAt'] ?? json['location_consent_at'],
       ),
       locationSource: _getString(json, 'locationSource', 'location_source'),
-      bookingSettings: json['bookingSettings'] != null || json['booking_settings'] != null
-          ? BookingSettings.fromJson(Map<String, dynamic>.from((json['bookingSettings'] ?? json['booking_settings']) as Map))
-          : null,
+      bookingSettings:
+          json['bookingSettings'] != null || json['booking_settings'] != null
+              ? BookingSettings.fromJson(
+                Map<String, dynamic>.from(
+                  (json['bookingSettings'] ?? json['booking_settings']) as Map,
+                ),
+              )
+              : null,
     );
   }
 
@@ -468,9 +540,7 @@ class StoreData {
 
     return rawItems
         .whereType<Map>()
-        .map(
-          (item) => StoreOffering.fromJson(Map<String, dynamic>.from(item)),
-        )
+        .map((item) => StoreOffering.fromJson(Map<String, dynamic>.from(item)))
         .where((item) => item.title.trim().isNotEmpty)
         .take(6)
         .toList();
@@ -612,20 +682,19 @@ class BookingSettings {
     this.capacity = 1,
     Map<String, dynamic>? workingHours,
     Map<String, dynamic>? lunchBreak,
-  }) : workingHours = workingHours ?? {
-         '1': {'start': '09:00', 'end': '19:00', 'active': true},
-         '2': {'start': '09:00', 'end': '19:00', 'active': true},
-         '3': {'start': '09:00', 'end': '19:00', 'active': true},
-         '4': {'start': '09:00', 'end': '19:00', 'active': true},
-         '5': {'start': '09:00', 'end': '19:00', 'active': true},
-         '6': {'start': '09:00', 'end': '16:00', 'active': true},
-         '7': {'start': '00:00', 'end': '00:00', 'active': false},
-       },
-       lunchBreak = lunchBreak ?? {
-         'start': '12:00',
-         'end': '13:00',
-         'active': true,
-       };
+  }) : workingHours =
+           workingHours ??
+           {
+             '1': {'start': '09:00', 'end': '19:00', 'active': true},
+             '2': {'start': '09:00', 'end': '19:00', 'active': true},
+             '3': {'start': '09:00', 'end': '19:00', 'active': true},
+             '4': {'start': '09:00', 'end': '19:00', 'active': true},
+             '5': {'start': '09:00', 'end': '19:00', 'active': true},
+             '6': {'start': '09:00', 'end': '16:00', 'active': true},
+             '7': {'start': '00:00', 'end': '00:00', 'active': false},
+           },
+       lunchBreak =
+           lunchBreak ?? {'start': '12:00', 'end': '13:00', 'active': true};
 
   Map<String, dynamic> toJson() => {
     'is_enabled': isEnabled,
@@ -638,16 +707,18 @@ class BookingSettings {
     return BookingSettings(
       isEnabled: (json['is_enabled'] ?? json['isEnabled'] ?? false) as bool,
       capacity: (json['capacity'] ?? 1) as int,
-      workingHours: json['working_hours'] != null
-          ? Map<String, dynamic>.from(json['working_hours'] as Map)
-          : (json['workingHours'] != null
-              ? Map<String, dynamic>.from(json['workingHours'] as Map)
-              : {}),
-      lunchBreak: json['lunch_break'] != null
-          ? Map<String, dynamic>.from(json['lunch_break'] as Map)
-          : (json['lunchBreak'] != null
-              ? Map<String, dynamic>.from(json['lunchBreak'] as Map)
-              : {}),
+      workingHours:
+          json['working_hours'] != null
+              ? Map<String, dynamic>.from(json['working_hours'] as Map)
+              : (json['workingHours'] != null
+                  ? Map<String, dynamic>.from(json['workingHours'] as Map)
+                  : {}),
+      lunchBreak:
+          json['lunch_break'] != null
+              ? Map<String, dynamic>.from(json['lunch_break'] as Map)
+              : (json['lunchBreak'] != null
+                  ? Map<String, dynamic>.from(json['lunchBreak'] as Map)
+                  : {}),
     );
   }
 }

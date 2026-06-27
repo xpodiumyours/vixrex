@@ -1563,7 +1563,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedProvinceCode,
+          initialValue: _selectedProvinceCode,
           decoration: InputDecoration(
             prefixIcon: const Icon(
               Icons.map_rounded,
@@ -1641,7 +1641,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedDistrictName,
+          initialValue: _selectedDistrictName,
           decoration: InputDecoration(
             prefixIcon: const Icon(
               Icons.location_city_rounded,
@@ -2448,7 +2448,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             Expanded(
               flex: 2,
               child: DropdownButtonFormField<String>(
-                value: dropdownValue,
+                initialValue: dropdownValue,
                 hint: const Text('Platform', style: TextStyle(fontSize: 13)),
                 decoration: InputDecoration(
                   filled: true,
@@ -3009,7 +3009,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               const Spacer(),
               Switch(
                 value: _bookingIsEnabled,
-                activeColor: primaryColor,
+                activeThumbColor: primaryColor,
                 onChanged: (val) {
                   setState(() {
                     _bookingIsEnabled = val;
@@ -3076,7 +3076,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _bookingLunchBreak['start'] ?? '12:00',
+                    initialValue: _bookingLunchBreak['start'] ?? '12:00',
                     decoration: const InputDecoration(
                       labelText: 'Başlangıç',
                       isDense: true,
@@ -3110,7 +3110,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _bookingLunchBreak['end'] ?? '13:00',
+                    initialValue: _bookingLunchBreak['end'] ?? '13:00',
                     decoration: const InputDecoration(
                       labelText: 'Bitiş',
                       isDense: true,
@@ -3768,7 +3768,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: items.contains(value) ? value : items.first,
+          initialValue: items.contains(value) ? value : items.first,
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: mutedText, size: 18),
             filled: true,

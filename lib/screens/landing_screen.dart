@@ -1104,7 +1104,7 @@ class _LandingScreenState extends State<LandingScreen>
                     ..setEntry(3, 2, 0.001)
                     ..rotateY(-0.1)
                     ..rotateX(0.05)
-                    ..translate(0.0, floatOffset, 0.0),
+                    ..translateByDouble(0.0, floatOffset, 0.0, 0.0),
               alignment: Alignment.center,
               child: Stack(
                 clipBehavior: Clip.none,

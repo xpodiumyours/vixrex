@@ -268,14 +268,14 @@ class _StoreProductsSectionState extends State<StoreProductsSection> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: selectedCategory,
+                      initialValue: selectedCategory,
                       decoration: const InputDecoration(labelText: 'Ürün Kategorisi'),
                       items: productCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                       onChanged: (v) => setDialogState(() => selectedCategory = v!),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: selectedStatus,
+                      initialValue: selectedStatus,
                       decoration: const InputDecoration(labelText: 'Stok Durumu'),
                       items: const [
                         DropdownMenuItem(value: 'Mevcut', child: Text('Mevcut')),
