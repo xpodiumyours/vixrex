@@ -56,14 +56,9 @@ export async function GET() {
       }
     }
     
-    // Start sitemap XML
+    // Public web kökü Flutter landing'e yönlenir; sitemap yalnız içerik URL'lerini taşır.
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>${baseUrl}</loc>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>`;
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
 
     // Add stores + blog list pages only when they have published articles
     if (stores) {
