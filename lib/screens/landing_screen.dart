@@ -6,13 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
-import 'package:vitrinx/screens/auth_screen.dart';
-import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/auth_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/widgets/chatbot_overlay.dart';
+import 'package:vitrinx/config/app_router.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -283,12 +282,7 @@ class _LandingScreenState extends State<LandingScreen>
             }
 
             if (!mounted) return;
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const HomeShellScreen(initialIndex: 1),
-              ),
-            );
+            AppRouter.navigateToHomeShell(context, initialIndex: 1);
             return;
           }
         }
@@ -361,38 +355,20 @@ class _LandingScreenState extends State<LandingScreen>
 
   Future<void> _navigateToEditor() async {
     final name = _storeNameController.text;
-    await Navigator.push(
+    AppRouter.navigateToHomeShell(
       context,
-      MaterialPageRoute(
-        builder:
-            (_) => HomeShellScreen(initialIndex: 1, initialVitrinName: name),
-      ),
+      initialIndex: 1,
+      initialVitrinName: name,
     );
-    if (mounted) {
-      _loadSavedVitrinState();
-    }
   }
 
   Future<void> _navigateToExploreApp() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeShellScreen(initialIndex: 0)),
-    );
-    if (mounted) {
-      _loadSavedVitrinState();
-    }
+    AppRouter.navigateToHomeShell(context, initialIndex: 0);
   }
 
   Future<void> _navigateToSavedVitrin() async {
     if (!_hasSavedVitrin || _isCheckingSavedVitrin) return;
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeShellScreen(initialIndex: 1)),
-    );
-    if (mounted) {
-      _loadSavedVitrinState();
-    }
+    AppRouter.navigateToHomeShell(context, initialIndex: 1);
   }
 
   void _navigateToPreview() {
@@ -674,10 +650,7 @@ class _LandingScreenState extends State<LandingScreen>
                 if (isDesktop)
                   ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const AuthScreen()),
-                      ).then((_) {
+                      AppRouter.navigateToAuth(context).then((_) {
                         if (mounted) {
                           setState(() {});
                           _loadSavedVitrinState();
@@ -708,10 +681,7 @@ class _LandingScreenState extends State<LandingScreen>
                 else
                   IconButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const AuthScreen()),
-                      ).then((_) {
+                      AppRouter.navigateToAuth(context).then((_) {
                         if (mounted) {
                           setState(() {});
                           _loadSavedVitrinState();

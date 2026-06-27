@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/config/public_vitrin_route_config.dart';
-import 'package:vitrinx/screens/home_shell_screen.dart';
-import 'package:vitrinx/screens/landing_screen.dart';
-import 'package:vitrinx/screens/legal_screen.dart';
-import 'package:vitrinx/screens/public_vitrin_screen.dart';
+import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
 Future<void> main() async {
@@ -39,9 +35,7 @@ class VitrinXApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initialHome = _buildInitialHome();
-
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'VitrinX',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -134,66 +128,7 @@ class VitrinXApp extends StatelessWidget {
           }),
         ),
       ),
-      home: initialHome,
-      onGenerateRoute: _generateRoute,
+      routerConfig: AppRouter.router,
     );
-  }
-
-  Widget _buildInitialHome() {
-    final legalType = LegalScreen.typeFromRoute(Uri.base.path);
-    if (legalType != null) {
-      return LegalScreen(type: legalType);
-    }
-
-    final slug = PublicVitrinRouteConfig.publicSlugFromUri(Uri.base);
-
-    if (slug != null) {
-      return PublicVitrinScreen(slug: slug);
-    }
-
-    if (_isHomeShellRoute(Uri.base.path)) {
-      return const HomeShellScreen();
-    }
-
-    return const LandingScreen();
-  }
-
-  Route<dynamic> _generateRoute(RouteSettings settings) {
-    final routeName = settings.name ?? '/';
-    final legalType = LegalScreen.typeFromRoute(routeName);
-    if (legalType != null) {
-      return MaterialPageRoute(
-        builder: (_) => LegalScreen(type: legalType),
-        settings: settings,
-      );
-    }
-
-    final slug = PublicVitrinRouteConfig.publicSlugFromUri(
-      Uri.parse(routeName),
-    );
-
-    if (slug != null) {
-      return MaterialPageRoute(
-        builder: (_) => PublicVitrinScreen(slug: slug),
-        settings: settings,
-      );
-    }
-
-    if (_isHomeShellRoute(routeName)) {
-      return MaterialPageRoute(
-        builder: (_) => const HomeShellScreen(),
-        settings: settings,
-      );
-    }
-
-    return MaterialPageRoute(
-      builder: (_) => const LandingScreen(),
-      settings: settings,
-    );
-  }
-
-  bool _isHomeShellRoute(String routeName) {
-    final path = Uri.tryParse(routeName)?.path ?? routeName;
-    return path == '/app' || path == '/home';
   }
 }

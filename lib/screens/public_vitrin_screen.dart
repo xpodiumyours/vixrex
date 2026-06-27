@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/screens/appointment_tracker_screen.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/config/app_router.dart';
 
 class PublicVitrinScreen extends StatefulWidget {
   final String slug;
@@ -315,12 +315,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
             return _PublicVitrinShell(
               showOwnerBar: ownerSnapshot.data == true,
               onEdit: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const HomeShellScreen(initialIndex: 1),
-                  ),
-                );
+                AppRouter.navigateToHomeShell(context, initialIndex: 1);
               },
               child: VitrinView(
                 storeData: storeData,

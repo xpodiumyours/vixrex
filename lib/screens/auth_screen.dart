@@ -4,11 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/home_shell_screen.dart';
-import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/services/auth_service.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/config/app_router.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -132,11 +131,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
         if (!mounted) return;
 
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const LandingScreen()),
-          (route) => false,
-        );
+        AppRouter.navigateToLanding(context);
       } else {
         await prefs.setString(
           LocalStorageKeys.vitrinData,
@@ -163,21 +158,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
         if (!mounted) return;
 
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const HomeShellScreen(initialIndex: 1),
-          ),
-          (route) => false,
-        );
+        AppRouter.navigateToHomeShell(context, initialIndex: 1);
       }
     } else {
       // No store found, go back to LandingScreen which will let them create one
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LandingScreen()),
-        (route) => false,
-      );
+      AppRouter.navigateToLanding(context);
     }
   }
 

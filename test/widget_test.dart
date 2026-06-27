@@ -8,6 +8,7 @@ import 'package:vitrinx/screens/my_vitrin_screen.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:vitrinx/config/app_router.dart';
 
 void main() {
   testWidgets('VitrinX ilk açılışta karşılama ekranını gösterir', (
@@ -48,8 +49,7 @@ void main() {
     await tester.pumpWidget(const VitrinXApp());
     await tester.pump();
 
-    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
-    navigator.pushNamed('/gecersiz-route');
+    AppRouter.router.go('/gecersiz-route');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
