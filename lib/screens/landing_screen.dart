@@ -1410,7 +1410,7 @@ class _LandingScreenState extends State<LandingScreen>
     return Container(
       width: double.infinity,
       color: AppColors.bgEditor,
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 88, horizontal: 24),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
@@ -1523,7 +1523,7 @@ class _LandingScreenState extends State<LandingScreen>
                 ? const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.darkText, Color(0xFF0B6670)],
+                  colors: [AppColors.bgEditor, Color(0xFF0B6670)],
                 )
                 : null,
         borderRadius: BorderRadius.circular(28),
@@ -1569,7 +1569,7 @@ class _LandingScreenState extends State<LandingScreen>
                       color:
                           highlighted
                               ? Colors.white.withValues(alpha: 0.1)
-                              : AppColors.surfaceSoft,
+                              : AppColors.bgEditor,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -1609,7 +1609,7 @@ class _LandingScreenState extends State<LandingScreen>
               color:
                   highlighted
                       ? Colors.white.withValues(alpha: 0.1)
-                      : AppColors.bgLight,
+                      : AppColors.surfaceSoft,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color:
@@ -1836,7 +1836,7 @@ class _LandingScreenState extends State<LandingScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.bgEditor, AppColors.primaryDark],
+          colors: [AppColors.bgEditor, brandOrange],
         ),
       ),
       child: Center(
@@ -1848,7 +1848,7 @@ class _LandingScreenState extends State<LandingScreen>
                 'Ä°ÅŸletmenizi tek linkte mÃ¼ÅŸterilerinizle buluÅŸturun',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.bgLight,
+                  color: AppColors.surfaceSoft,
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
                   height: 1.2,
@@ -2161,7 +2161,7 @@ class _PhoneMockup extends StatelessWidget {
       height: 640,
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(40),
         border: Border.all(color: Colors.white24, width: 8),
         boxShadow: [
           BoxShadow(
@@ -2208,7 +2208,7 @@ class _PhoneMockup extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: const BoxDecoration(
-                            color: AppColors.bgLight,
+                            color: AppColors.surfaceSoft,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
@@ -2245,7 +2245,7 @@ class _PhoneMockup extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.darkText,
+                          color: AppColors.bgEditor,
                         ),
                       ),
                     ),
@@ -2342,7 +2342,7 @@ class _PhoneMockup extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.bgLight,
+                  color: AppColors.surfaceSoft,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.black12),
                 ),
@@ -2357,7 +2357,7 @@ class _PhoneMockup extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 13,
-                            color: AppColors.darkText,
+                            color: AppColors.bgEditor,
                           ),
                         ),
                         const SizedBox(height: 3),
@@ -2411,7 +2411,7 @@ class _PhoneMockup extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.bgLight,
+        color: AppColors.surfaceSoft,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black12),
       ),
@@ -2439,7 +2439,7 @@ class _PhoneMockup extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
-                    color: AppColors.darkText,
+                    color: AppColors.bgEditor,
                   ),
                 ),
               ),
@@ -2519,7 +2519,7 @@ class _PhoneMockup extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.bgLight,
+        color: AppColors.surfaceSoft,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black12),
       ),
