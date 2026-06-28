@@ -1,4 +1,3 @@
-import 'package:vitrinx/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -205,7 +204,7 @@ class GoogleBusinessGuideCard extends StatelessWidget {
           margin: const EdgeInsets.only(top: 2),
           child: const Icon(
             Icons.check_circle_rounded,
-            color: AppColors.success, // Emerald 500
+            color: Color(0xFF10B981), // Emerald 500
             size: 15,
           ),
         ),

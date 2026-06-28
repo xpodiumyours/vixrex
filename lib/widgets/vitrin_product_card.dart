@@ -1,4 +1,3 @@
-import 'package:vitrinx/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class VitrinProductCard extends StatelessWidget {
@@ -138,7 +137,7 @@ class VitrinProductCard extends StatelessWidget {
                         child: const Icon(
                           Icons.chat,
                           size: 14,
-                          color: AppColors.success,
+                          color: Color(0xFF25D366),
                         ),
                       ),
                     ),

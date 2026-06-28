@@ -136,12 +136,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.15),
+                      color: const Color(0xFF25D366).withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.chat_bubble_rounded,
-                      color: AppColors.success,
+                      color: Color(0xFF25D366),
                       size: 20,
                     ),
                   ),

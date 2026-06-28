@@ -69,13 +69,13 @@ enum LegalPageType {
   Color get accentColor {
     switch (this) {
       case LegalPageType.privacy:
-        return AppColors.success; // Mint green
+        return const Color(0xFF10B981); // Mint green
       case LegalPageType.terms:
         return const Color(0xFF3B82F6); // Royal blue
       case LegalPageType.consent:
         return const Color(0xFF7C3AED);
       case LegalPageType.dataDeletion:
-        return AppColors.primary; // Brand orange
+        return AppColors.brandOrange; // Brand orange
     }
   }
 }
@@ -742,7 +742,7 @@ class _EmailContactCardState extends State<_EmailContactCard> {
               ),
               secondChild: const Icon(
                 Icons.check_circle_rounded,
-                color: AppColors.success,
+                color: Color(0xFF10B981),
                 size: 18,
               ),
             ),

@@ -1,4 +1,3 @@
-import 'package:vitrinx/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class StatusChip extends StatelessWidget {
@@ -34,8 +33,8 @@ class StatusChip extends StatelessWidget {
         icon = Icons.warning_amber;
         break;
       default:
-        bgColor = AppColors.primary.withValues(alpha: 0.12);
-        textColor = AppColors.primary;
+        bgColor = const Color(0xFFFF5A1F).withValues(alpha: 0.12);
+        textColor = const Color(0xFFFF5A1F);
         icon = Icons.campaign_rounded;
     }
 

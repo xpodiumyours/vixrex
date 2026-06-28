@@ -25,7 +25,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  static const Color primary = AppColors.primary;
+  static const Color brandOrange = AppColors.brandOrange;
   static const Color darkAccent = AppColors.darkTextAlt;
   static const Color lightBg = AppColors.bgLight;
 
@@ -245,12 +245,12 @@ class _AuthScreenState extends State<AuthScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: primary.withValues(alpha: 0.15),
+                              color: brandOrange.withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.storefront_rounded,
-                              color: primary,
+                              color: brandOrange,
                               size: 28,
                             ),
                           ),
@@ -306,7 +306,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
-                              color: primary,
+                              color: brandOrange,
                               width: 2,
                             ),
                           ),
@@ -350,7 +350,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
-                              color: primary,
+                              color: brandOrange,
                               width: 2,
                             ),
                           ),
@@ -371,7 +371,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       ElevatedButton(
                         onPressed: _isLoading ? null : _submit,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
+                          backgroundColor: brandOrange,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -414,7 +414,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               ? 'Hesabınız yok mu? Hemen kayıt olun'
                               : 'Zaten hesabınız var mı? Giriş yapın',
                           style: const TextStyle(
-                            color: primary,
+                            color: brandOrange,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -464,7 +464,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return TextButton(
       onPressed: () => Navigator.pushNamed(context, routePath),
       style: TextButton.styleFrom(
-        foregroundColor: primary,
+        foregroundColor: brandOrange,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         minimumSize: const Size(0, 32),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,

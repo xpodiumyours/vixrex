@@ -139,7 +139,7 @@ const Map<String, VitrinThemePreset> vitrinThemePresets = {
     surfaceSoft: Color(0xFFFFE8C7),
     textPrimary: Color(0xFF2B1B08),
     textSecondary: Color(0xFF7A4D1C),
-    accent: AppColors.primary,
+    accent: Color(0xFFEA580C),
     buttonText: Color(0xFFFFFFFF),
     border: Color(0xFFF3D4AA),
     qrBackground: Color(0xFFFFFFFF),

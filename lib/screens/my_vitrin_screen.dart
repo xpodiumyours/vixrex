@@ -2065,7 +2065,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               const Icon(
                 Icons.check_circle_rounded,
                 size: 13,
-                color: AppColors.success,
+                color: Color(0xFF10B981),
               ),
               const SizedBox(width: 4),
               Text(

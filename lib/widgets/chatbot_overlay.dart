@@ -1112,7 +1112,7 @@ class _XrexScoreBarState extends State<_XrexScoreBar>
   Color _barColor(int score) {
     if (score >= 80) return const Color(0xFF22C55E); // yeşil
     if (score >= 50) return const Color(0xFFF59E0B); // sarı
-    return AppColors.error;                  // kırmızı
+    return const Color(0xFFEF4444);                  // kırmızı
   }
 
   @override
