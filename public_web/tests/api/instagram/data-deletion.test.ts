@@ -140,4 +140,75 @@ describe("POST /api/meta/data-deletion", () => {
     expect(revalidateTag).toHaveBeenCalledWith("products-user-store", "max");
     expect(revalidateTag).toHaveBeenCalledWith("sitemap", "max");
   });
+
+  it("returns 400 for invalid/malformed signature", async () => {
+    const payload = {
+      user_id: "meta_user_123",
+      algorithm: "HMAC-SHA256",
+    };
+    const signedRequest = createSignedRequest(payload, "wrong_secret");
+
+    const req = new NextRequest("http://localhost/api/meta/data-deletion", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ signed_request: signedRequest }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("Signature verification failed");
+  });
+
+  it("generates different confirmation codes for subsequent calls", async () => {
+    const payload = {
+      user_id: "meta_user_123",
+      algorithm: "HMAC-SHA256",
+    };
+    const signedRequest = createSignedRequest(payload, "my_app_secret");
+
+    vi.spyOn(mockBuilder, "eq")
+      .mockResolvedValueOnce({
+        data: [{ id: "conn-123", store_slug: "user-store" }],
+        error: null,
+      } as any) // req 1 connections select
+      .mockResolvedValueOnce({
+        data: [{ product_slug: "p1" }],
+        error: null,
+      } as any) // req 1 imports select
+      .mockImplementationOnce(() => mockBuilder) // req 1 stores select
+      .mockImplementationOnce(() => mockBuilder) // req 1 stores update
+      .mockImplementationOnce(() => mockBuilder) // req 1 imports delete
+      .mockImplementationOnce(() => mockBuilder) // req 1 tokens delete
+      .mockImplementationOnce(() => mockBuilder) // req 1 connections status update
+      .mockResolvedValueOnce({
+        data: [{ id: "conn-123", store_slug: "user-store" }],
+        error: null,
+      } as any) // req 2 connections select
+      .mockResolvedValueOnce({
+        data: [{ product_slug: "p1" }],
+        error: null,
+      } as any) // req 2 imports select
+      .mockImplementation(() => mockBuilder); // all other calls
+
+    const req1 = new NextRequest("http://localhost/api/meta/data-deletion", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ signed_request: signedRequest }),
+    });
+    const res1 = await POST(req1);
+    const json1 = await res1.json();
+
+    const req2 = new NextRequest("http://localhost/api/meta/data-deletion", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ signed_request: signedRequest }),
+    });
+    const res2 = await POST(req2);
+    const json2 = await res2.json();
+
+    expect(json1.confirmation_code).toBeDefined();
+    expect(json2.confirmation_code).toBeDefined();
+    expect(json1.confirmation_code).not.toBe(json2.confirmation_code);
+  });
 });

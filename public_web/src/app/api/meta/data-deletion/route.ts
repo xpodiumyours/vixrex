@@ -52,12 +52,16 @@ export async function POST(req: NextRequest) {
     }
 
     const appSecret = process.env.INSTAGRAM_CLIENT_SECRET || "";
+    if (!appSecret) {
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+    }
+
     const expectedSig = crypto
       .createHmac("sha256", appSecret)
       .update(payload)
       .digest();
 
-    if (!crypto.timingSafeEqual(sig, expectedSig)) {
+    if (sig.length !== expectedSig.length || !crypto.timingSafeEqual(sig, expectedSig)) {
       return NextResponse.json({ error: "Signature verification failed" }, { status: 400 });
     }
 
@@ -68,6 +72,7 @@ export async function POST(req: NextRequest) {
 
     const admin = getSupabaseAdmin();
     const confirmationCode = crypto.randomBytes(16).toString("hex");
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin;
 
     // Fetch active Instagram connections matching this Meta User ID
     const { data: connections, error: connError } = await admin
@@ -89,7 +94,7 @@ export async function POST(req: NextRequest) {
       });
 
       return NextResponse.json({
-        url: `https://vitrinx.app/data-deletion/status/${confirmationCode}`,
+        url: `${siteUrl}/data-deletion/status/${confirmationCode}`,
         confirmation_code: confirmationCode,
       });
     }
@@ -180,7 +185,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      url: `https://vitrinx.app/data-deletion/status/${confirmationCode}`,
+      url: `${siteUrl}/data-deletion/status/${confirmationCode}`,
       confirmation_code: confirmationCode,
     });
   } catch (error) {

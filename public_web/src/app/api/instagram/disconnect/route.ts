@@ -40,8 +40,20 @@ export async function POST(req: NextRequest) {
         await admin.from("store_instagram_tokens").delete().eq("connection_id", connection.id);
 
         // 2. Filter out products with source = 'instagram'
-        if (store && Array.isArray(store.products)) {
-          const nextProducts = store.products.filter(
+        let products = store.products;
+        if (!products || !Array.isArray(products)) {
+          const { data: storeData } = await admin
+            .from("stores")
+            .select("products")
+            .eq("slug", store.slug)
+            .maybeSingle();
+          if (storeData && Array.isArray(storeData.products)) {
+            products = storeData.products;
+          }
+        }
+
+        if (Array.isArray(products)) {
+          const nextProducts = products.filter(
             (prod: any) => prod?.source !== "instagram"
           );
           const { error: storeUpdateError } = await admin
