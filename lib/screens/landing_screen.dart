@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -39,9 +39,9 @@ class _LandingScreenState extends State<LandingScreen>
   static const List<_HeroDemoProfile> _heroDemoProfiles = [
     _HeroDemoProfile(
       name: 'Aymira Giyim',
-      category: 'KadÄ±n giyim / butik',
-      status: 'AÃ§Ä±k',
-      description: 'Yeni sezon reyonlarÄ± ve maÄŸaza fotoÄŸraflarÄ± tek vitrinde.',
+      category: 'Kadın giyim / butik',
+      status: 'Açık',
+      description: 'Yeni sezon reyonları ve mağaza fotoğrafları tek vitrinde.',
       icon: Icons.checkroom_rounded,
       accentColor: Color(0xFFFF5A1F),
       badgeIcon: Icons.photo_library_rounded,
@@ -55,13 +55,13 @@ class _LandingScreenState extends State<LandingScreen>
       links: [
         _HeroDemoLink(
           'Vitrin galerisi',
-          'Raf ve reyon fotoÄŸraflarÄ±',
+          'Raf ve reyon fotoğrafları',
           Icons.photo_library_rounded,
           Color(0xFFFF5A1F),
         ),
         _HeroDemoLink(
           'Trendyol',
-          'MaÄŸazayÄ± ziyaret edin',
+          'Mağazayı ziyaret edin',
           Icons.shopping_bag_rounded,
           Color(0xFFF27A1A),
         ),
@@ -75,14 +75,14 @@ class _LandingScreenState extends State<LandingScreen>
       ],
     ),
     _HeroDemoProfile(
-      name: 'Lezzet DuraÄŸÄ±',
+      name: 'Lezzet Durağı',
       category: 'Kafe / restoran',
-      status: 'AÃ§Ä±k',
-      description: 'MenÃ¼, konum ve WhatsApp sipariÅŸ bilgileri tek ekranda.',
+      status: 'Açık',
+      description: 'Menü, konum ve WhatsApp sipariş bilgileri tek ekranda.',
       icon: Icons.restaurant_menu_rounded,
       accentColor: Color(0xFFEA580C),
       badgeIcon: Icons.menu_book_rounded,
-      badgeText: 'MenÃ¼',
+      badgeText: 'Menü',
       secondaryBadgeIcon: Icons.directions_rounded,
       secondaryBadgeText: 'Yol tarifi',
       actions: [
@@ -91,14 +91,14 @@ class _LandingScreenState extends State<LandingScreen>
       ],
       links: [
         _HeroDemoLink(
-          'GÃ¼nÃ¼n menÃ¼sÃ¼',
-          'SÄ±cak yemek ve tatlÄ±lar',
+          'Günün menüsü',
+          'Sıcak yemek ve tatlılar',
           Icons.local_dining_rounded,
           Color(0xFFEA580C),
         ),
         _HeroDemoLink(
           'Paket servis',
-          'WhatsApp ile sipariÅŸ',
+          'WhatsApp ile sipariş',
           Icons.delivery_dining_rounded,
           Color(0xFF10B981),
         ),
@@ -112,10 +112,10 @@ class _LandingScreenState extends State<LandingScreen>
       ],
     ),
     _HeroDemoProfile(
-      name: 'Nova KuafÃ¶r',
-      category: 'KuafÃ¶r / gÃ¼zellik',
-      status: 'AÃ§Ä±k',
-      description: 'Randevu, hizmetler ve sosyal medya baÄŸlantÄ±larÄ± hazÄ±r.',
+      name: 'Nova Kuaför',
+      category: 'Kuaför / güzellik',
+      status: 'Açık',
+      description: 'Randevu, hizmetler ve sosyal medya bağlantıları hazır.',
       icon: Icons.content_cut_rounded,
       accentColor: Color(0xFFDB2777),
       badgeIcon: Icons.calendar_month_rounded,
@@ -129,13 +129,13 @@ class _LandingScreenState extends State<LandingScreen>
       links: [
         _HeroDemoLink(
           'Hizmetler',
-          'Kesim, boya ve bakÄ±m',
+          'Kesim, boya ve bakım',
           Icons.spa_rounded,
           Color(0xFFDB2777),
         ),
         _HeroDemoLink(
           'Randevu al',
-          'WhatsApp ile hÄ±zlÄ± iletiÅŸim',
+          'WhatsApp ile hızlı iletişim',
           Icons.event_available_rounded,
           Color(0xFF10B981),
         ),
@@ -151,8 +151,8 @@ class _LandingScreenState extends State<LandingScreen>
     _HeroDemoProfile(
       name: 'TeknoFix',
       category: 'Telefon teknik servis',
-      status: 'AÃ§Ä±k',
-      description: 'Servis talebi, adres ve gÃ¼venilir iletiÅŸim tek vitrinde.',
+      status: 'Açık',
+      description: 'Servis talebi, adres ve güvenilir iletişim tek vitrinde.',
       icon: Icons.build_circle_rounded,
       accentColor: Color(0xFF2563EB),
       badgeIcon: Icons.chat_bubble_rounded,
@@ -165,14 +165,14 @@ class _LandingScreenState extends State<LandingScreen>
       ],
       links: [
         _HeroDemoLink(
-          'Servis kaydÄ±',
-          'Ekran, batarya ve bakÄ±m',
+          'Servis kaydı',
+          'Ekran, batarya ve bakım',
           Icons.construction_rounded,
           Color(0xFF2563EB),
         ),
         _HeroDemoLink(
-          'Google yorumlarÄ±',
-          'MÃ¼ÅŸteri gÃ¼veni',
+          'Google yorumları',
+          'Müşteri güveni',
           Icons.verified_rounded,
           Color(0xFF6366F1),
         ),
@@ -229,9 +229,9 @@ class _LandingScreenState extends State<LandingScreen>
         if (store != null) {
           if (!mounted) return;
           if (store.isStore) {
-            // isStore: true olan hesaplar iÃ§in Store editor ekranÄ±
-            // planlanmaktadÄ±r (StoreSetupScreen kaldÄ±rÄ±ldÄ±). Åimdilik
-            // token ve veri Ã¶nbelleÄŸe alÄ±nÄ±p LandingScreen'de bÄ±rakÄ±lÄ±r.
+            // isStore: true olan hesaplar için Store editor ekranı
+            // planlanmaktadır (StoreSetupScreen kaldırıldı). Şimdilik
+            // token ve veri önbelleğe alınıp LandingScreen'de bırakılır.
             await prefs.setString(
               LocalStorageKeys.storeData,
               jsonEncode(store.toJson()),
@@ -406,7 +406,7 @@ class _LandingScreenState extends State<LandingScreen>
               ],
             ),
           ),
-          // Xrex: SaÄŸ alt kÃ¶ÅŸede yÃ¼zen robot rozeti
+          // Xrex: Sağ alt köşede yüzen robot rozeti
           const Positioned(
             right: 16,
             bottom: 16,
@@ -568,7 +568,7 @@ class _LandingScreenState extends State<LandingScreen>
                   },
                   icon: const Icon(Icons.explore_rounded, size: 16),
                   label: const Text(
-                    'Vitrinleri KeÅŸfet',
+                    'Vitrinleri Keşfet',
                     style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -617,7 +617,7 @@ class _LandingScreenState extends State<LandingScreen>
                       color: darkAccent,
                     ),
                     label: const Text(
-                      'Ã‡Ä±kÄ±ÅŸ Yap',
+                      'Çıkış Yap',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
@@ -658,7 +658,7 @@ class _LandingScreenState extends State<LandingScreen>
                     },
                     icon: const Icon(Icons.login_rounded, size: 16),
                     label: const Text(
-                      'GiriÅŸ Yap',
+                      'Giriş Yap',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
@@ -743,7 +743,7 @@ class _LandingScreenState extends State<LandingScreen>
               border: Border.all(color: brandOrange.withValues(alpha: 0.3)),
             ),
             child: const Text(
-              'Ä°ÅLETMENÄ°Z Ä°Ã‡Ä°N DÄ°JÄ°TAL VÄ°TRÄ°N',
+              'İŞLETMENİZ İÇİN DİJİTAL VİTRİN',
               style: TextStyle(
                 color: brandOrange,
                 fontWeight: FontWeight.w900,
@@ -754,7 +754,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           const SizedBox(height: 32),
           Text(
-            'Ä°ÅŸletmenizin dijital vitrini dakikalar iÃ§inde hazÄ±r',
+            'İşletmenizin dijital vitrini dakikalar içinde hazır',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: TextStyle(
               color: darkAccent,
@@ -766,7 +766,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           const SizedBox(height: 24),
           Text(
-            'Ä°ÅŸletme bilgilerinizi, fotoÄŸraflarÄ±nÄ±zÄ±, Ã¼rÃ¼n ve hizmetlerinizi, adresinizi ve WhatsApp iletiÅŸiminizi tek vitrinde toplayÄ±n. Linkinizi ve QR kodunuzu mÃ¼ÅŸterilerinizle kolayca paylaÅŸÄ±n.',
+            'İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrinde toplayın. Linkinizi ve QR kodunuzu müşterilerinizle kolayca paylaşın.',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: const TextStyle(
               color: AppColors.mutedText,
@@ -789,10 +789,10 @@ class _LandingScreenState extends State<LandingScreen>
 
   Widget _buildHeroTrustChips({required bool isDesktop}) {
     final items = [
-      'Kredi kartÄ± gerekmez',
+      'Kredi kartı gerekmez',
       'Teknik bilgi gerekmez',
       'Komisyon yok',
-      'Link ve QR hazÄ±r',
+      'Link ve QR hazır',
     ];
 
     return Wrap(
@@ -837,7 +837,7 @@ class _LandingScreenState extends State<LandingScreen>
           onPressed: _navigateToSavedVitrin,
           icon: const Icon(Icons.edit_rounded, size: 18),
           label: const Text(
-            'VitrinX DÃ¼zenle',
+            'VitrinX Düzenle',
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
           ),
           style: ElevatedButton.styleFrom(
@@ -856,7 +856,7 @@ class _LandingScreenState extends State<LandingScreen>
         },
         icon: const Icon(Icons.explore_rounded, size: 18, color: darkAccent),
         label: const Text(
-          'Vitrinleri KeÅŸfet',
+          'Vitrinleri Keşfet',
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 14,
@@ -968,7 +968,7 @@ class _LandingScreenState extends State<LandingScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'VitrinX OluÅŸtur',
+                  'VitrinX Oluştur',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                 ),
                 SizedBox(width: 8),
@@ -1029,7 +1029,7 @@ class _LandingScreenState extends State<LandingScreen>
                       : CrossAxisAlignment.center,
               children: [
                 const Text(
-                  'Tek linkte hazÄ±r dijital vitrin',
+                  'Tek linkte hazır dijital vitrin',
                   style: TextStyle(
                     color: darkAccent,
                     fontWeight: FontWeight.w900,
@@ -1038,7 +1038,7 @@ class _LandingScreenState extends State<LandingScreen>
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  'QR kod ve WhatsApp iletiÅŸimi paylaÅŸmaya hazÄ±r olsun.',
+                  'QR kod ve WhatsApp iletişimi paylaşmaya hazır olsun.',
                   style: TextStyle(
                     color: AppColors.mutedText,
                     fontWeight: FontWeight.w700,
@@ -1221,7 +1221,7 @@ class _LandingScreenState extends State<LandingScreen>
                         : CrossAxisAlignment.center,
                 children: [
                   Text(
-                    'MÃ¼ÅŸterileriniz ihtiyaÃ§ duyduÄŸu her bilgiye tek linkten ulaÅŸsÄ±n',
+                    'Müşterileriniz ihtiyaç duyduğu her bilgiye tek linkten ulaşsın',
                     textAlign: isDesktop ? TextAlign.left : TextAlign.center,
                     style: const TextStyle(
                       color: darkAccent,
@@ -1232,7 +1232,7 @@ class _LandingScreenState extends State<LandingScreen>
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    'Vitrin linkinizi WhatsApp, sosyal medya, Google Ä°ÅŸletme, kartvizit, paket veya iÅŸletme iÃ§i QR kod Ã¼zerinden paylaÅŸÄ±n.',
+                    'Vitrin linkinizi WhatsApp, sosyal medya, Google İşletme, kartvizit, paket veya işletme içi QR kod üzerinden paylaşın.',
                     textAlign: isDesktop ? TextAlign.left : TextAlign.center,
                     style: const TextStyle(
                       color: AppColors.mutedText,
@@ -1250,7 +1250,7 @@ class _LandingScreenState extends State<LandingScreen>
                     const [
                       'WhatsApp',
                       'Sosyal medya',
-                      'Google Ä°ÅŸletme',
+                      'Google İşletme',
                       'QR kod',
                       'Vitrin linki',
                     ].map((text) {
@@ -1308,7 +1308,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'Dijital vitrininizi kolayca hazÄ±rlayÄ±n',
+                'Dijital vitrininizi kolayca hazırlayın',
                 style: TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -1319,7 +1319,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               const SizedBox(height: 20),
               const Text(
-                'MÃ¼ÅŸterilerinizin ihtiyaÃ§ duyduÄŸu bilgileri tek vitrinde toplayÄ±n, panelden yÃ¶netin ve istediÄŸiniz yerde paylaÅŸÄ±n.',
+                'Müşterilerinizin ihtiyaç duyduğu bilgileri tek vitrinde toplayın, panelden yönetin ve istediğiniz yerde paylaşın.',
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.black54,
@@ -1347,36 +1347,36 @@ class _LandingScreenState extends State<LandingScreen>
                           _LandingValueCard(
                             icon: Icons.bolt_rounded,
                             color: brandOrange,
-                            title: 'Dakikalar iÃ§inde yayÄ±na alÄ±n',
+                            title: 'Dakikalar içinde yayına alın',
                             desc:
-                                'Temel bilgilerinizi ekleyin ve vitrininizi oluÅŸturun.',
+                                'Temel bilgilerinizi ekleyin ve vitrininizi oluşturun.',
                             isHorizontal: !isTablet,
                             enableHover: isDesktop,
                           ),
                           _LandingValueCard(
                             icon: Icons.contact_phone_rounded,
                             color: mint,
-                            title: 'MÃ¼ÅŸteriler size doÄŸrudan ulaÅŸsÄ±n',
+                            title: 'Müşteriler size doğrudan ulaşsın',
                             desc:
-                                'WhatsApp, adres ve yol tarifi seÃ§eneklerini tek yerde sunun.',
+                                'WhatsApp, adres ve yol tarifi seçeneklerini tek yerde sunun.',
                             isHorizontal: !isTablet,
                             enableHover: isDesktop,
                           ),
                           _LandingValueCard(
                             icon: Icons.share_rounded,
                             color: pinkAccent,
-                            title: 'Her kanalda aynÄ± vitrini paylaÅŸÄ±n',
+                            title: 'Her kanalda aynı vitrini paylaşın',
                             desc:
-                                'Linkinizi sosyal medyada, QR kodunuzu iÅŸletmenizde kullanÄ±n.',
+                                'Linkinizi sosyal medyada, QR kodunuzu işletmenizde kullanın.',
                             isHorizontal: !isTablet,
                             enableHover: isDesktop,
                           ),
                           _LandingValueCard(
                             icon: Icons.edit_note_rounded,
                             color: blueAccent,
-                            title: 'Bilgilerinizi panelden gÃ¼ncelleyin',
+                            title: 'Bilgilerinizi panelden güncelleyin',
                             desc:
-                                'FotoÄŸraf, Ã¼rÃ¼n, hizmet ve iletiÅŸim bilgilerinizi istediÄŸiniz zaman dÃ¼zenleyin.',
+                                'Fotoğraf, ürün, hizmet ve iletişim bilgilerinizi istediğiniz zaman düzenleyin.',
                             isHorizontal: !isTablet,
                             enableHover: isDesktop,
                           ),
@@ -1395,16 +1395,16 @@ class _LandingScreenState extends State<LandingScreen>
     const separateSetupItems = [
       (Icons.language_rounded, 'Domain ve hosting'),
       (Icons.tune_rounded, 'Teknik ayarlar'),
-      (Icons.chat_bubble_outline_rounded, 'WhatsApp baÄŸlantÄ±sÄ±'),
-      (Icons.qr_code_2_rounded, 'QR ve paylaÅŸÄ±m sÃ¼reci'),
-      (Icons.support_agent_rounded, 'Ä°Ã§erik gÃ¼ncelleme desteÄŸi'),
+      (Icons.chat_bubble_outline_rounded, 'WhatsApp bağlantısı'),
+      (Icons.qr_code_2_rounded, 'QR ve paylaşım süreci'),
+      (Icons.support_agent_rounded, 'İçerik güncelleme desteği'),
     ];
     const vitrinxSetupItems = [
-      (Icons.storefront_rounded, 'Ä°ÅŸletme bilgileri ve fotoÄŸraflar'),
-      (Icons.inventory_2_rounded, 'ÃœrÃ¼nler ve hizmetler'),
+      (Icons.storefront_rounded, 'İşletme bilgileri ve fotoğraflar'),
+      (Icons.inventory_2_rounded, 'Ürünler ve hizmetler'),
       (Icons.hub_rounded, 'WhatsApp, adres, link ve QR'),
-      (Icons.edit_note_rounded, 'Panelden kolay gÃ¼ncelleme'),
-      (Icons.forum_rounded, 'MÃ¼ÅŸteriyle doÄŸrudan iletiÅŸim'),
+      (Icons.edit_note_rounded, 'Panelden kolay güncelleme'),
+      (Icons.forum_rounded, 'Müşteriyle doğrudan iletişim'),
     ];
 
     return Container(
@@ -1417,7 +1417,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'Dijital vitrininiz iÃ§in gerekenler tek yerde',
+                'Dijital vitrininiz için gerekenler tek yerde',
                 style: TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -1428,7 +1428,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               const SizedBox(height: 16),
               const Text(
-                'AraÃ§larÄ± ve kurulumlarÄ± ayrÄ± ayrÄ± yÃ¶netmek yerine iÅŸletme bilgilerinizi VitrinXâ€™e ekleyin ve paylaÅŸmaya baÅŸlayÄ±n.',
+                'Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme bilgilerinizi VitrinX’e ekleyin ve paylaşmaya başlayın.',
                 style: TextStyle(
                   fontSize: 16,
                   color: AppColors.mutedText,
@@ -1441,15 +1441,15 @@ class _LandingScreenState extends State<LandingScreen>
                 builder: (context, constraints) {
                   final isDesktop = constraints.maxWidth > 820;
                   final separatePanel = _buildSetupPanel(
-                    label: 'AyrÄ± ayrÄ± kurulum',
+                    label: 'Ayrı ayrı kurulum',
                     items: separateSetupItems,
-                    footer: 'Birden fazla araÃ§ ve iÅŸlem',
+                    footer: 'Birden fazla araç ve işlem',
                     highlighted: false,
                   );
                   final vitrinxPanel = _buildSetupPanel(
                     label: 'VitrinX ile',
                     items: vitrinxSetupItems,
-                    footer: 'Tek panel, tek link, doÄŸrudan iletiÅŸim',
+                    footer: 'Tek panel, tek link, doğrudan iletişim',
                     highlighted: true,
                   );
                   final direction = Container(
@@ -1639,11 +1639,11 @@ class _LandingScreenState extends State<LandingScreen>
 
   Widget _buildTrustBandSection(BuildContext context) {
     const items = [
-      (Icons.credit_card_off_rounded, 'Kredi kartÄ± gerekmez'),
-      (Icons.percent_rounded, 'SatÄ±ÅŸtan komisyon alÄ±nmaz'),
+      (Icons.credit_card_off_rounded, 'Kredi kartı gerekmez'),
+      (Icons.percent_rounded, 'Satıştan komisyon alınmaz'),
       (Icons.code_off_rounded, 'Kodsuz kurulum'),
-      (Icons.qr_code_2_rounded, 'Link ve QR kod hazÄ±rdÄ±r'),
-      (Icons.chat_bubble_rounded, 'WhatsApp ile doÄŸrudan iletiÅŸim'),
+      (Icons.qr_code_2_rounded, 'Link ve QR kod hazırdır'),
+      (Icons.chat_bubble_rounded, 'WhatsApp ile doğrudan iletişim'),
     ];
 
     return Container(
@@ -1656,7 +1656,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'BaÅŸlarken sÃ¼rpriz yok',
+                'Başlarken sürpriz yok',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: darkAccent,
@@ -1721,7 +1721,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'ÃœÃ§ adÄ±mda vitrininiz hazÄ±r',
+                'Üç adımda vitrininiz hazır',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
@@ -1738,17 +1738,17 @@ class _LandingScreenState extends State<LandingScreen>
                     _buildStepTimeline(
                       1,
                       'Bilgilerinizi ekleyin',
-                      'Ä°ÅŸletme adÄ±, aÃ§Ä±klama, WhatsApp ve adres bilgilerinizi girin.',
+                      'İşletme adı, açıklama, WhatsApp ve adres bilgilerinizi girin.',
                     ),
                     _buildStepTimeline(
                       2,
-                      'Vitrininizi hazÄ±rlayÄ±n',
-                      'FotoÄŸraflarÄ±nÄ±zÄ±, Ã¼rÃ¼nlerinizi ve hizmetlerinizi ekleyin.',
+                      'Vitrininizi hazırlayın',
+                      'Fotoğraflarınızı, ürünlerinizi ve hizmetlerinizi ekleyin.',
                     ),
                     _buildStepTimeline(
                       3,
-                      'MÃ¼ÅŸterilerinizle paylaÅŸÄ±n',
-                      'Vitrin linkinizi veya QR kodunuzu paylaÅŸÄ±n.',
+                      'Müşterilerinizle paylaşın',
+                      'Vitrin linkinizi veya QR kodunuzu paylaşın.',
                     ),
                   ];
 
@@ -1845,7 +1845,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'Ä°ÅŸletmenizi tek linkte mÃ¼ÅŸterilerinizle buluÅŸturun',
+                'İşletmenizi tek linkte müşterilerinizle buluşturun',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.surfaceSoft,
@@ -1857,7 +1857,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               const SizedBox(height: 24),
               const Text(
-                'VitrinXâ€™inizi oluÅŸturun; linkinizi, QR kodunuzu ve WhatsApp iletiÅŸiminizi paylaÅŸmaya baÅŸlayÄ±n.',
+                'VitrinX’inizi oluşturun; linkinizi, QR kodunuzu ve WhatsApp iletişiminizi paylaşmaya başlayın.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.border,
@@ -1881,7 +1881,7 @@ class _LandingScreenState extends State<LandingScreen>
                   elevation: 10,
                 ),
                 child: const Text(
-                  'VitrinX OluÅŸtur',
+                  'VitrinX Oluştur',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                 ),
               ),
@@ -1910,7 +1910,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           const SizedBox(height: 16),
           const Text(
-            'Ä°ÅŸletmenizin paylaÅŸÄ±labilir dijital vitrini',
+            'İşletmenizin paylaşılabilir dijital vitrini',
             style: TextStyle(
               color: AppColors.mutedText,
               fontSize: 14,
@@ -1924,11 +1924,11 @@ class _LandingScreenState extends State<LandingScreen>
             runSpacing: 8,
             children: [
               _buildFooterLegalLink(
-                label: 'KVKK ve Gizlilik PolitikasÄ±',
+                label: 'KVKK ve Gizlilik Politikası',
                 routePath: LegalConfig.privacyPath,
               ),
               _buildFooterLegalLink(
-                label: 'KullanÄ±m ÅartlarÄ±',
+                label: 'Kullanım Şartları',
                 routePath: LegalConfig.termsPath,
               ),
               _buildFooterLegalLink(
@@ -2023,12 +2023,12 @@ class _HeroDemoProfile {
     ];
 
     List<StoreOffering> parsedOfferings = [];
-    String mappedKategori = 'DiÄŸer';
+    String mappedKategori = 'Diğer';
     double? lat;
     double? lng;
     String phone = '05551234567';
     String web = '';
-    String addr = 'AtatÃ¼rk Cad. No:24, ÅiÅŸli, Ä°stanbul';
+    String addr = 'Atatürk Cad. No:24, Şişli, İstanbul';
 
     if (name.contains('Aymira')) {
       mappedKategori = 'Giyim & Butik';
@@ -2038,21 +2038,21 @@ class _HeroDemoProfile {
       parsedOfferings = [
         StoreOffering(
           id: '1',
-          title: 'Elbise SeÃ§enekleri',
-          description: 'Yeni sezon Ã¶zel tasarÄ±m elbiseler',
-          price: 'MaÄŸazada sorunuz',
+          title: 'Elbise Seçenekleri',
+          description: 'Yeni sezon özel tasarım elbiseler',
+          price: 'Mağazada sorunuz',
         ),
         StoreOffering(
           id: '2',
-          title: 'Triko & HÄ±rka',
-          description: 'FarklÄ± renk ve beden alternatifleriyle',
-          price: 'MaÄŸazada sorunuz',
+          title: 'Triko & Hırka',
+          description: 'Farklı renk ve beden alternatifleriyle',
+          price: 'Mağazada sorunuz',
         ),
         StoreOffering(
           id: '3',
           title: 'Yeni Sezon Ceket',
-          description: 'ÅÄ±k ve modern gÃ¼nlÃ¼k ceketler',
-          price: 'MaÄŸazada sorunuz',
+          description: 'Şık ve modern günlük ceketler',
+          price: 'Mağazada sorunuz',
         ),
       ];
     } else if (name.contains('Lezzet')) {
@@ -2063,33 +2063,33 @@ class _HeroDemoProfile {
       parsedOfferings = [
         StoreOffering(
           id: '1',
-          title: 'GÃ¼nÃ¼n MenÃ¼sÃ¼',
-          description: 'Ana yemek + Ã§orba + iÃ§ecek menÃ¼sÃ¼',
+          title: 'Günün Menüsü',
+          description: 'Ana yemek + çorba + içecek menüsü',
           price: '120 TL',
         ),
         StoreOffering(
           id: '2',
-          title: 'Ev YapÄ±mÄ± MantÄ±',
-          description: 'YoÄŸurtlu ve tereyaÄŸlÄ± soslu el yapÄ±mÄ± mantÄ±',
+          title: 'Ev Yapımı Mantı',
+          description: 'Yoğurtlu ve tereyağlı soslu el yapımı mantı',
           price: '95 TL',
         ),
       ];
     } else if (name.contains('Nova')) {
-      mappedKategori = 'KuafÃ¶r';
+      mappedKategori = 'Kuaför';
       lat = 41.0370;
       lng = 28.9850;
       web = 'novakuafor.com';
       parsedOfferings = [
         StoreOffering(
           id: '1',
-          title: 'SaÃ§ Kesimi & TasarÄ±m',
-          description: 'YÄ±kama ve fÃ¶n dahil komple saÃ§ tasarÄ±mÄ±',
+          title: 'Saç Kesimi & Tasarım',
+          description: 'Yıkama ve fön dahil komple saç tasarımı',
           price: '180 TL',
         ),
         StoreOffering(
           id: '2',
-          title: 'SaÃ§ Boyama & Keratin',
-          description: 'SaÃ§ yapÄ±sÄ±na Ã¶zel organik keratin bakÄ±mÄ±',
+          title: 'Saç Boyama & Keratin',
+          description: 'Saç yapısına özel organik keratin bakımı',
           price: '450 TL',
         ),
       ];
@@ -2101,15 +2101,15 @@ class _HeroDemoProfile {
       parsedOfferings = [
         StoreOffering(
           id: '1',
-          title: 'Telefon Ekran DeÄŸiÅŸimi',
-          description: '30 dakikada hÄ±zlÄ± ekran deÄŸiÅŸimi ve garanti',
-          price: 'MaÄŸazada sorunuz',
+          title: 'Telefon Ekran Değişimi',
+          description: '30 dakikada hızlı ekran değişimi ve garanti',
+          price: 'Mağazada sorunuz',
         ),
         StoreOffering(
           id: '2',
-          title: 'Batarya DeÄŸiÅŸimi',
-          description: 'YÃ¼ksek kapasiteli batarya yenilemesi',
-          price: 'MaÄŸazada sorunuz',
+          title: 'Batarya Değişimi',
+          description: 'Yüksek kapasiteli batarya yenilemesi',
+          price: 'Mağazada sorunuz',
         ),
       ];
     }
@@ -2353,7 +2353,7 @@ class _PhoneMockup extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Vitrin hazÄ±r',
+                          'Vitrin hazır',
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 13,
@@ -2362,7 +2362,7 @@ class _PhoneMockup extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          '${profile.links.length} baÄŸlantÄ±',
+                          '${profile.links.length} bağlantı',
                           style: const TextStyle(
                             color: Colors.black54,
                             fontSize: 10,
@@ -2389,7 +2389,7 @@ class _PhoneMockup extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Bu vitrin VitrinX ile oluÅŸturuldu',
+                'Bu vitrin VitrinX ile oluşturuldu',
                 style: TextStyle(
                   fontSize: 11,
                   color: Colors.black45,
