@@ -406,12 +406,11 @@ class _LandingScreenState extends State<LandingScreen>
               ],
             ),
           ),
-          // Xrex: Sol kenarda yüzen robot rozeti
+          // Xrex: Sağ alt köşede yüzen robot rozeti
           const Positioned(
-            left: 4,
-            top: 0,
-            bottom: 0,
-            child: Center(child: ChatbotBadge()),
+            right: 16,
+            bottom: 16,
+            child: ChatbotBadge(),
           ),
         ],
       ),

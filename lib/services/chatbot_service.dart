@@ -10,29 +10,28 @@ class ChatbotService {
   static const String _greetedKey = 'xrex_greeted';
 
   /// Kullanıcının mesajını analiz edip yanıt döner.
-  ChatMessage respond(String input) {
+  ChatMessage respond(String input, [XrexProfileSnapshot? snapshot]) {
     final normalized = _normalize(input);
 
     // Intent eşleştirme
     for (final intent in ChatbotConfig.intents) {
       for (final keyword in intent.keywords) {
         if (normalized.contains(_normalize(keyword))) {
-          return ChatbotConfig.responseFor(intent.payload);
+          return ChatbotConfig.responseFor(intent.payload, snapshot);
         }
       }
     }
 
     // Eşleşme bulunamadı
-    return ChatbotConfig.responseFor('default');
+    return ChatbotConfig.responseFor('default', snapshot);
   }
 
   /// Quick Reply payload'ına göre yanıt döner.
-  ChatMessage respondToPayload(String payload) {
-    return ChatbotConfig.responseFor(payload);
+  ChatMessage respondToPayload(String payload, [XrexProfileSnapshot? snapshot]) {
+    return ChatbotConfig.responseFor(payload, snapshot);
   }
 
   /// Vitrin snapshot'ına göre kişiselleştirilmiş karşılama mesajı döner.
-  /// [İyileştirme #2] Önceliklendirilmiş eksik alan sıralaması ile.
   ChatMessage respondWithSnapshot(XrexProfileSnapshot snapshot) {
     return ChatbotConfig.snapshotWelcome(snapshot);
   }

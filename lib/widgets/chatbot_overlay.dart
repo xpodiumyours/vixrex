@@ -367,7 +367,7 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
       duration: const Duration(milliseconds: 300),
     );
     _slideAnim = Tween<Offset>(
-      begin: const Offset(-1.0, 0),
+      begin: const Offset(1.0, 0),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
     _slideController.forward();
@@ -387,7 +387,8 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final panelWidth = screenWidth * 0.82;
+    final isDesktop = screenWidth > 600;
+    final panelWidth = isDesktop ? 400.0 : screenWidth;
 
     return Material(
       color: Colors.transparent,
@@ -400,7 +401,7 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
           SlideTransition(
             position: _slideAnim,
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: Alignment.centerRight,
               child: SizedBox(
                 width: panelWidth,
                 height: double.infinity,
@@ -497,13 +498,20 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
     final snap = widget.snapshot;
     if (snap != null) {
       final lastMsg = _messages.isNotEmpty ? _messages.last : null;
-      final isLastMsgPublished = lastMsg?.text.contains('yayında') == true || lastMsg?.text.contains('yayınla') == false;
+      
+      String currentSnapKey;
+      if (snap.isPublished) {
+        currentSnapKey = 'published';
+      } else if (snap.isReadyToPublish) {
+        currentSnapKey = 'ready';
+      } else {
+        currentSnapKey = 'incomplete_${snap.nextMissingField.name}';
+      }
       
       if (_messages.isEmpty ||
           lastMsg == null ||
           !lastMsg.isBot ||
-          lastMsg.snapshotScore != snap.healthScore ||
-          isLastMsgPublished != snap.isPublished) {
+          lastMsg.snapshotStateKey != currentSnapKey) {
         
         _messages.add(_service.respondWithSnapshot(snap));
         _service.saveHistory(_messages);
@@ -610,6 +618,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
         case XrexAction.scrollToName:
         case XrexAction.scrollToWhatsapp:
         case XrexAction.scrollToAddress:
+        case XrexAction.scrollToLegal:
         case XrexAction.scrollToDesc:
         case XrexAction.scrollToProducts:
           onScroll?.call(action);
@@ -630,6 +639,40 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
         );
       }
     });
+  }
+
+  Future<void> _clearHistory() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Sohbeti Temizle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        content: const Text('Tüm konuşma geçmişini silmek istediğinize emin misiniz?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('İptal', style: TextStyle(color: AppColors.mutedText)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(c, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              elevation: 0,
+            ),
+            child: const Text('Temizle', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _service.clearHistory();
+      setState(() {
+        _messages.clear();
+        _messages.add(ChatbotConfig.welcomeMessage);
+      });
+      _scrollToBottom();
+    }
   }
 
   @override
@@ -724,6 +767,19 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
             ),
           ),
           const Spacer(),
+          GestureDetector(
+            onTap: _clearHistory,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Text('Temizle', style: TextStyle(fontSize: 10, color: AppColors.mutedText, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: widget.onClose,
             child: Container(

@@ -9,7 +9,10 @@ class ChatMessage {
   final List<QuickReply> quickReplies;
   final ChatMessageType type;
 
-  /// Snapshot tabanlı mesajsa skor çubuğu gösterilir.
+  /// Snapshot tabanlı mesajsa durumu tutar (gereksiz tekrarları önlemek için).
+  final String? snapshotStateKey;
+
+  /// Geriye uyumluluk için eski puan.
   final int? snapshotScore;
 
   const ChatMessage({
@@ -19,15 +22,17 @@ class ChatMessage {
     required this.timestamp,
     this.quickReplies = const [],
     this.type = ChatMessageType.text,
+    this.snapshotStateKey,
     this.snapshotScore,
   });
 
   factory ChatMessage.bot(
     String text, {
-    List<QuickReply> quickReplies = const [],
-    ChatMessageType type = ChatMessageType.text,
-    int? snapshotScore,
-  }) {
+      List<QuickReply> quickReplies = const [],
+      ChatMessageType type = ChatMessageType.text,
+      String? snapshotStateKey,
+      int? snapshotScore,
+    }) {
     return ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       text: text,
@@ -35,6 +40,7 @@ class ChatMessage {
       timestamp: DateTime.now(),
       quickReplies: quickReplies,
       type: type,
+      snapshotStateKey: snapshotStateKey,
       snapshotScore: snapshotScore,
     );
   }
@@ -54,6 +60,7 @@ class ChatMessage {
         'isBot': isBot,
         'timestamp': timestamp.toIso8601String(),
         'type': type.name,
+        'snapshotStateKey': snapshotStateKey,
         'snapshotScore': snapshotScore,
         'quickReplies': quickReplies.map((r) => r.toJson()).toList(),
       };
@@ -69,6 +76,7 @@ class ChatMessage {
         (e) => e.name == json['type'],
         orElse: () => ChatMessageType.text,
       ),
+      snapshotStateKey: json['snapshotStateKey'] as String?,
       snapshotScore: json['snapshotScore'] as int?,
       quickReplies: repliesJson
           .map((r) => QuickReply.fromJson(r as Map<String, dynamic>))
@@ -92,6 +100,7 @@ enum XrexAction {
   scrollToName,     // İşletme adına git
   scrollToWhatsapp, // WhatsApp alanına git
   scrollToAddress,  // Adrese git
+  scrollToLegal,    // Yasal onaylara git
   scrollToDesc,     // Açıklamaya git
   scrollToProducts, // Ürün/Hizmet alanına git
   none,             // Sadece mesaj tetikler, navigasyon yok

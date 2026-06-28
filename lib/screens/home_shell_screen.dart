@@ -292,22 +292,19 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         clipBehavior: Clip.none,
         children: [
           IndexedStack(index: _selectedIndex, children: pages),
-          // Xrex: Sol kenarda yüzen robot rozeti — snapshot + callback'lerle
+          // Xrex: Sağ alt köşede yüzen robot rozeti
           Positioned(
-            left: 4,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: ChatbotBadge(
-                snapshot: _xrexSnapshot,
-                chatHistory: _xrexChatMessages,
-                onNavigateToVitrim: _xrexNavigateToVitrim,
-                onNavigateToExplore: _openExplore,
-                onCopyLink: _xrexCopyLink,
-                onShowQr: _xrexShowQr,
-                onShareWhatsapp: _xrexShareWhatsapp,
-                onScrollToAction: _xrexScrollToAction,
-              ),
+            right: 16,
+            bottom: 16,
+            child: ChatbotBadge(
+              snapshot: _xrexSnapshot,
+              chatHistory: _xrexChatMessages,
+              onNavigateToVitrim: _xrexNavigateToVitrim,
+              onNavigateToExplore: _openExplore,
+              onCopyLink: _xrexCopyLink,
+              onShowQr: _xrexShowQr,
+              onShareWhatsapp: _xrexShareWhatsapp,
+              onScrollToAction: _xrexScrollToAction,
             ),
           ),
         ],
