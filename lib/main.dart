@@ -54,10 +54,12 @@ class VitrinXApp extends StatelessWidget {
       title: 'VitrinX',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        brightness: Brightness.dark,
         useMaterial3: true,
         fontFamily: 'Helvetica',
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
+          brightness: Brightness.dark,
           primary: AppColors.primary,
           secondary: AppColors.secondary,
           surface: AppColors.surface,
@@ -94,7 +96,7 @@ class VitrinXApp extends StatelessWidget {
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            foregroundColor: Colors.black,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
