@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/app_router.dart';
@@ -5,8 +6,22 @@ import 'package:vitrinx/theme/app_colors.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  _setupGlobalErrorHandler();
   await _initializeSupabase();
   runApp(const VitrinXApp());
+}
+
+void _setupGlobalErrorHandler() {
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint(
+      '[GlobalError] Captured Flutter Error: ${details.exceptionAsString()}',
+    );
+  };
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    debugPrint('[GlobalError] Captured Platform/Async Error: $error');
+    return true;
+  };
 }
 
 Future<void> _initializeSupabase() async {
