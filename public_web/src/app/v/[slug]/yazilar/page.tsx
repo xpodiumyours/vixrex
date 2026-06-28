@@ -122,7 +122,7 @@ export default async function BlogIndexPage(props: PageProps) {
       <div className="text-center py-6 space-y-2">
         {store.logo_url && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={store.logo_url} alt={store.name} className="w-16 h-16 rounded-full mx-auto border object-cover mb-3" />
+          <img src={store.logo_url} alt={store.name} className="w-16 h-16 rounded-full mx-auto border object-contain bg-white mb-3" />
         )}
         <h2 className="text-2xl font-extrabold">{store.name} Yazıları</h2>
         <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">Güncel paylaşımlar, rehberler ve duyurular.</p>

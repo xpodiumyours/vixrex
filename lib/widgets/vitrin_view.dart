@@ -669,7 +669,7 @@ class VitrinView extends StatelessWidget {
             logoUrl.isNotEmpty
                 ? Image.network(
                   logoUrl,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   errorBuilder:
                       (_, __, ___) => _buildAvatarFallback(preset, size),
                 )
@@ -1477,7 +1477,7 @@ class VitrinView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AspectRatio(
-                  aspectRatio: 1.25,
+                  aspectRatio: 1.0,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child:

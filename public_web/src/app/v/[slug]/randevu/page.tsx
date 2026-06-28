@@ -47,7 +47,7 @@ export default async function BookingPage(props: PageProps) {
         </div>
         {data.store.logo_url && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={data.store.logo_url} alt="Logo" className="w-10 h-10 rounded-full border object-cover" />
+          <img src={data.store.logo_url} alt="Logo" className="w-10 h-10 rounded-full border object-contain bg-white" />
         )}
       </div>
 

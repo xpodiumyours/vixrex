@@ -281,7 +281,7 @@ export default async function StorePage(props: PageProps) {
                       <img
                         src={store.logo_url}
                         alt={`${store.name} logo`}
-                        className="h-24 w-24 rounded-full border-2 border-white/60 object-cover shadow-2xl"
+                        className="h-24 w-24 rounded-full border-2 border-white/60 object-contain shadow-2xl bg-white"
                       />
                     ) : (
                       <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-white/60 bg-[#071322] text-4xl font-black text-[#CFE8FF] shadow-2xl">
@@ -399,7 +399,7 @@ export default async function StorePage(props: PageProps) {
                       const productUrl = `/v/${store.slug}/urun/${getProductUrlSlug(product, productIndex)}`;
                       const card = (
                         <>
-                          <div className="aspect-[1.2] overflow-hidden rounded-xl bg-[#162A42]">
+                          <div className="aspect-square overflow-hidden rounded-xl bg-[#162A42]">
                             {product.imagePath ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img

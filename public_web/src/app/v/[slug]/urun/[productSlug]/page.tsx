@@ -193,7 +193,7 @@ export default async function ProductDetailPage(props: PageProps) {
       <main className="min-h-screen bg-[#071322] px-3 py-4 text-white sm:px-6 sm:py-8">
         <section className="mx-auto grid w-full max-w-[1120px] gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
           <div className="overflow-hidden rounded-[28px] border border-[#25415F] bg-[#0E1B2E] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
-            <div className="aspect-[4/3] bg-[#13243A]">
+            <div className="aspect-square bg-[#13243A]">
               {image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

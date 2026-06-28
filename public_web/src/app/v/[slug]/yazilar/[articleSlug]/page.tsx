@@ -247,7 +247,7 @@ export default async function ArticleDetailPage(props: PageProps) {
           <div className="flex items-center gap-3">
             {article.store.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={article.store.logo_url} alt="Logo" className="w-10 h-10 rounded-full object-cover border" />
+              <img src={article.store.logo_url} alt="Logo" className="w-10 h-10 rounded-full object-contain border bg-white" />
             ) : (
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#10D8D8] to-[#38A0E4] text-white flex items-center justify-center font-bold text-base">
                 {article.store.name[0].toUpperCase()}
