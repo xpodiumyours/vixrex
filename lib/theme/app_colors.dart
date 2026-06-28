@@ -7,16 +7,16 @@ import 'package:flutter/material.dart';
 abstract final class AppColors {
   // ── Marka Renkleri (Turkuaz - Mavi) ───────────────────────────────────
   /// Ana turkuaz marka rengi.
-  static const Color primary = Color(0xFF10D8D8);
+  static const Color primary = Color(0xFF00E5FF);
 
   /// Koyu turuncu yerine koyu turkuaz tonu.
-  static const Color primaryDark = Color(0xFF0EA8B0);
+  static const Color primaryDark = Color(0xFF0891B2);
 
   /// İkincil marka rengi (mavi).
-  static const Color secondary = Color(0xFF38A0E4);
+  static const Color secondary = Color(0xFF8B5CF6);
 
   /// Karşılama ve giriş ekranlarında kullanılan eski turuncu yerine turkuaz.
-  static const Color brandOrange = Color(0xFF10D8D8);
+  static const Color brandOrange = Color(0xFFA855F7);
 
   /// Ana CTA gradient (soldan sağa: turkuaz → mavi).
   static const LinearGradient ctaGradient = LinearGradient(
@@ -27,48 +27,48 @@ abstract final class AppColors {
 
   // ── Arka Plan Renkleri ────────────────────────────────────────────────
   /// Sayfa arka planı (editör ve explore ekranlarında).
-  static const Color bgEditor = Color(0xFFF4F5F8);
+  static const Color bgEditor = Color(0xFF020617);
 
   /// Sayfa arka planı (setup ve landing ekranlarında, biraz daha beyaz).
-  static const Color bgLight = Color(0xFFF4F5F8);
+  static const Color bgLight = Color(0xFF0F172A);
 
   /// Input alanı arka planı.
-  static const Color inputBg = Color(0xFFF1F5F9);
+  static const Color inputBg = Color(0xFF0F172A);
 
   /// Açık turkuaz/mavi yüzeyler.
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceSoft = Color(0xFFF0F8F8);
-  static const Color turquoiseSurface = Color(0xFFC8F4F4);
-  static const Color blueSurface = Color(0xFFC0E4F4);
+  static const Color surface = Color(0xFF111827);
+  static const Color surfaceSoft = Color(0xFF1E293B);
+  static const Color turquoiseSurface = Color(0xFF083344);
+  static const Color blueSurface = Color(0xFF1E1B4B);
 
   // ── Metin Renkleri ────────────────────────────────────────────────────
   /// Başlık ve ana içerik metni (koyu lacivert/siyah).
-  static const Color darkText = Color(0xFF182028);
-  static const Color darkTextAlt = Color(0xFF182028);
+  static const Color darkText = Color(0xFFF8FAFC);
+  static const Color darkTextAlt = Color(0xFFE2E8F0);
 
   /// İkincil / yardımcı metin (muted).
-  static const Color mutedText = Color(0xFF64748B);
+  static const Color mutedText = Color(0xFF94A3B8);
 
   /// Orta ton metin (açıklama satırları).
-  static const Color softText = Color(0xFF475569);
+  static const Color softText = Color(0xFFCBD5E1);
 
   // ── Kenarlık & Gölge ─────────────────────────────────────────────────
   /// Kart/kutu kenarlığı.
-  static const Color border = Color(0xFFD0E4E8);
-  static const Color focusedBorder = Color(0xFFA0D8D8);
-  static const Color cardBorderDark = Color(0xFFD0E4E8);
-  static const Color cardBorderLight = Color(0xFFD0E4E8);
+  static const Color border = Color(0xFF334155);
+  static const Color focusedBorder = Color(0xFF00E5FF);
+  static const Color cardBorderDark = Color(0xFF475569);
+  static const Color cardBorderLight = Color(0xFF334155);
 
   // ── Durum Renkleri ───────────────────────────────────────────────────
   /// Başarı / yeşil.
-  static const Color success = Color(0xFF10B981);
+  static const Color success = Color(0xFF22C55E);
 
   /// Bilgi / mavi.
-  static const Color info = Color(0xFF2563EB);
+  static const Color info = Color(0xFF38BDF8);
 
   /// Uyarı tonu.
-  static const Color pinkAccent = Color(0xFFFB7185);
+  static const Color pinkAccent = Color(0xFFA855F7);
 
   /// Disabled / pasif rengi.
-  static const Color disabled = Color(0xFFCBD5E1);
+  static const Color disabled = Color(0xFF475569);
 }
