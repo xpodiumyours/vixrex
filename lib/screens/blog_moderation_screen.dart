@@ -160,7 +160,7 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle_outline_rounded, size: 64, color: Color(0xFF10B981)),
+            Icon(Icons.check_circle_outline_rounded, size: 64, color: AppColors.success),
             SizedBox(height: 16),
             Text(
               'İncelenecek yazı yok',
@@ -314,7 +314,7 @@ class _ArticleReviewCard extends StatelessWidget {
                     icon: const Icon(Icons.check_rounded, size: 16),
                     label: const Text('Yayınla'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
+                      backgroundColor: AppColors.success,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -339,10 +339,10 @@ class _SeoScoreBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = score >= 70
-        ? const Color(0xFF10B981)
+        ? AppColors.success
         : score >= 40
             ? const Color(0xFFF59E0B)
-            : const Color(0xFFEF4444);
+            : AppColors.error;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

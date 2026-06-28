@@ -1,3 +1,4 @@
+import 'package:vitrinx/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/business_category_config.dart';
@@ -90,7 +91,7 @@ class PreviewScreen extends StatelessWidget {
           storeData.isEsnafMode
               ? FloatingActionButton.extended(
                 onPressed: () => _openWhatsApp(context),
-                backgroundColor: const Color(0xFF25D366),
+                backgroundColor: AppColors.success,
                 elevation: 10,
                 icon: const Icon(Icons.chat, color: Colors.white),
                 label: const Text(

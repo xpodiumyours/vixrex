@@ -29,7 +29,7 @@ class _LandingScreenState extends State<LandingScreen>
   final TextEditingController _storeNameController = TextEditingController();
 
   // Modern Color Palette
-  static const Color brandOrange = AppColors.brandOrange;
+  static const Color primary = AppColors.primary;
   static const Color darkAccent = AppColors.darkTextAlt;
   static const Color lightBg = AppColors.bgLight;
   static const Color mint = AppColors.success;
@@ -43,27 +43,27 @@ class _LandingScreenState extends State<LandingScreen>
       status: 'Açık',
       description: 'Yeni sezon reyonları ve mağaza fotoğrafları tek vitrinde.',
       icon: Icons.checkroom_rounded,
-      accentColor: Color(0xFFFF5A1F),
+      accentColor: AppColors.primary,
       badgeIcon: Icons.photo_library_rounded,
       badgeText: 'Galeri',
       secondaryBadgeIcon: Icons.qr_code_2_rounded,
       secondaryBadgeText: 'QR kod',
       actions: [
-        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
-        _HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
+        _HeroDemoAction(Icons.chat_bubble_rounded, AppColors.success),
+        _HeroDemoAction(Icons.camera_alt_rounded, AppColors.primary),
       ],
       links: [
         _HeroDemoLink(
           'Vitrin galerisi',
           'Raf ve reyon fotoğrafları',
           Icons.photo_library_rounded,
-          Color(0xFFFF5A1F),
+          AppColors.primary,
         ),
         _HeroDemoLink(
           'Trendyol',
           'Mağazayı ziyaret edin',
           Icons.shopping_bag_rounded,
-          Color(0xFFF27A1A),
+          AppColors.primary,
         ),
       ],
       coverImageUrl:
@@ -80,27 +80,27 @@ class _LandingScreenState extends State<LandingScreen>
       status: 'Açık',
       description: 'Menü, konum ve WhatsApp sipariş bilgileri tek ekranda.',
       icon: Icons.restaurant_menu_rounded,
-      accentColor: Color(0xFFEA580C),
+      accentColor: AppColors.primary,
       badgeIcon: Icons.menu_book_rounded,
       badgeText: 'Menü',
       secondaryBadgeIcon: Icons.directions_rounded,
       secondaryBadgeText: 'Yol tarifi',
       actions: [
-        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
-        _HeroDemoAction(Icons.location_on_rounded, Color(0xFFEF4444)),
+        _HeroDemoAction(Icons.chat_bubble_rounded, AppColors.success),
+        _HeroDemoAction(Icons.location_on_rounded, AppColors.error),
       ],
       links: [
         _HeroDemoLink(
           'Günün menüsü',
           'Sıcak yemek ve tatlılar',
           Icons.local_dining_rounded,
-          Color(0xFFEA580C),
+          AppColors.primary,
         ),
         _HeroDemoLink(
           'Paket servis',
           'WhatsApp ile sipariş',
           Icons.delivery_dining_rounded,
-          Color(0xFF10B981),
+          AppColors.success,
         ),
       ],
       coverImageUrl:
@@ -117,27 +117,27 @@ class _LandingScreenState extends State<LandingScreen>
       status: 'Açık',
       description: 'Randevu, hizmetler ve sosyal medya bağlantıları hazır.',
       icon: Icons.content_cut_rounded,
-      accentColor: Color(0xFFDB2777),
+      accentColor: AppColors.primary,
       badgeIcon: Icons.calendar_month_rounded,
       badgeText: 'Randevu',
       secondaryBadgeIcon: Icons.camera_alt_rounded,
       secondaryBadgeText: 'Instagram',
       actions: [
-        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
-        _HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
+        _HeroDemoAction(Icons.chat_bubble_rounded, AppColors.success),
+        _HeroDemoAction(Icons.camera_alt_rounded, AppColors.primary),
       ],
       links: [
         _HeroDemoLink(
           'Hizmetler',
           'Kesim, boya ve bakım',
           Icons.spa_rounded,
-          Color(0xFFDB2777),
+          AppColors.primary,
         ),
         _HeroDemoLink(
           'Randevu al',
           'WhatsApp ile hızlı iletişim',
           Icons.event_available_rounded,
-          Color(0xFF10B981),
+          AppColors.success,
         ),
       ],
       coverImageUrl:
@@ -154,27 +154,27 @@ class _LandingScreenState extends State<LandingScreen>
       status: 'Açık',
       description: 'Servis talebi, adres ve güvenilir iletişim tek vitrinde.',
       icon: Icons.build_circle_rounded,
-      accentColor: Color(0xFF2563EB),
+      accentColor: AppColors.info,
       badgeIcon: Icons.chat_bubble_rounded,
       badgeText: 'WhatsApp',
       secondaryBadgeIcon: Icons.location_on_rounded,
       secondaryBadgeText: 'Konum',
       actions: [
-        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
-        _HeroDemoAction(Icons.phone_android_rounded, Color(0xFF2563EB)),
+        _HeroDemoAction(Icons.chat_bubble_rounded, AppColors.success),
+        _HeroDemoAction(Icons.phone_android_rounded, AppColors.info),
       ],
       links: [
         _HeroDemoLink(
           'Servis kaydı',
           'Ekran, batarya ve bakım',
           Icons.construction_rounded,
-          Color(0xFF2563EB),
+          AppColors.info,
         ),
         _HeroDemoLink(
           'Google yorumları',
           'Müşteri güveni',
           Icons.verified_rounded,
-          Color(0xFF6366F1),
+          AppColors.primary,
         ),
       ],
       coverImageUrl:
@@ -388,7 +388,7 @@ class _LandingScreenState extends State<LandingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: brandOrange,
+      backgroundColor: primary,
       body: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -442,7 +442,7 @@ class _LandingScreenState extends State<LandingScreen>
                       top: 100 + sinVal * 30,
                       left: -100 + cosVal * 40,
                       child: _buildMeshGlow(
-                        brandOrange.withValues(alpha: 0.3),
+                        primary.withValues(alpha: 0.3),
                         300,
                       ),
                     ),
@@ -538,12 +538,12 @@ class _LandingScreenState extends State<LandingScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: brandOrange.withValues(alpha: 0.15),
+                  color: primary.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.storefront_rounded,
-                  color: brandOrange,
+                  color: primary,
                   size: 20,
                 ),
               ),
@@ -665,7 +665,7 @@ class _LandingScreenState extends State<LandingScreen>
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: brandOrange,
+                      backgroundColor: primary,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(
@@ -690,7 +690,7 @@ class _LandingScreenState extends State<LandingScreen>
                     icon: const Icon(Icons.login_rounded, size: 18),
                     color: Colors.white,
                     style: IconButton.styleFrom(
-                      backgroundColor: brandOrange,
+                      backgroundColor: primary,
                       padding: const EdgeInsets.all(10),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -738,14 +738,14 @@ class _LandingScreenState extends State<LandingScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: brandOrange.withValues(alpha: 0.15),
+              color: primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: brandOrange.withValues(alpha: 0.3)),
+              border: Border.all(color: primary.withValues(alpha: 0.3)),
             ),
             child: const Text(
               'İŞLETMENİZ İÇİN DİJİTAL VİTRİN',
               style: TextStyle(
-                color: brandOrange,
+                color: primary,
                 fontWeight: FontWeight.w900,
                 fontSize: 11,
                 letterSpacing: 1.5,
@@ -841,7 +841,7 @@ class _LandingScreenState extends State<LandingScreen>
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: brandOrange,
+            backgroundColor: primary,
             foregroundColor: Colors.white,
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -942,7 +942,7 @@ class _LandingScreenState extends State<LandingScreen>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: brandOrange.withValues(
+                color: primary.withValues(
                   alpha:
                       0.24 +
                       0.16 * math.sin(_animController.value * math.pi * 2),
@@ -956,7 +956,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: ElevatedButton(
             onPressed: _navigateToEditor,
             style: ElevatedButton.styleFrom(
-              backgroundColor: brandOrange,
+              backgroundColor: primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
               shape: RoundedRectangleBorder(
@@ -1016,7 +1016,7 @@ class _LandingScreenState extends State<LandingScreen>
             ),
             child: const Icon(
               Icons.qr_code_2_rounded,
-              color: brandOrange,
+              color: primary,
               size: 22,
             ),
           ),
@@ -1142,7 +1142,7 @@ class _LandingScreenState extends State<LandingScreen>
                   width: isActive ? 24 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: isActive ? brandOrange : AppColors.border,
+                    color: isActive ? primary : AppColors.border,
                     borderRadius: BorderRadius.circular(99),
                   ),
                 );
@@ -1346,7 +1346,7 @@ class _LandingScreenState extends State<LandingScreen>
                         [
                           _LandingValueCard(
                             icon: Icons.bolt_rounded,
-                            color: brandOrange,
+                            color: primary,
                             title: 'Dakikalar içinde yayına alın',
                             desc:
                                 'Temel bilgilerinizi ekleyin ve vitrininizi oluşturun.',
@@ -1471,7 +1471,7 @@ class _LandingScreenState extends State<LandingScreen>
                       isDesktop
                           ? Icons.arrow_forward_rounded
                           : Icons.arrow_downward_rounded,
-                      color: brandOrange,
+                      color: primary,
                     ),
                   );
 
@@ -1550,7 +1550,7 @@ class _LandingScreenState extends State<LandingScreen>
           Text(
             label,
             style: TextStyle(
-              color: highlighted ? brandOrange : AppColors.mutedText,
+              color: highlighted ? primary : AppColors.mutedText,
               fontSize: 13,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.2,
@@ -1687,7 +1687,7 @@ class _LandingScreenState extends State<LandingScreen>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(item.$1, color: brandOrange, size: 18),
+                                Icon(item.$1, color: primary, size: 18),
                                 const SizedBox(width: 8),
                                 Text(
                                   item.$2,
@@ -1783,10 +1783,10 @@ class _LandingScreenState extends State<LandingScreen>
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: brandOrange.withValues(alpha: 0.1),
+            color: primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
             border: Border.all(
-              color: brandOrange.withValues(alpha: 0.3),
+              color: primary.withValues(alpha: 0.3),
               width: 2,
             ),
           ),
@@ -1794,7 +1794,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Text(
             '$step',
             style: const TextStyle(
-              color: brandOrange,
+              color: primary,
               fontSize: 24,
               fontWeight: FontWeight.w900,
             ),
@@ -1836,7 +1836,7 @@ class _LandingScreenState extends State<LandingScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.bgEditor, brandOrange],
+          colors: [AppColors.bgEditor, primary],
         ),
       ),
       child: Center(
@@ -1869,7 +1869,7 @@ class _LandingScreenState extends State<LandingScreen>
               ElevatedButton(
                 onPressed: _navigateToEditor,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: brandOrange,
+                  backgroundColor: primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 40,
@@ -1904,7 +1904,7 @@ class _LandingScreenState extends State<LandingScreen>
             style: TextStyle(
               fontWeight: FontWeight.w900,
               letterSpacing: 8,
-              color: brandOrange.withValues(alpha: 0.8),
+              color: primary.withValues(alpha: 0.8),
               fontSize: 16,
             ),
           ),
@@ -2170,7 +2170,7 @@ class _PhoneMockup extends StatelessWidget {
             offset: const Offset(0, 20),
           ),
           BoxShadow(
-            color: AppColors.brandOrange.withValues(alpha: 0.2),
+            color: AppColors.primary.withValues(alpha: 0.2),
             blurRadius: 80,
             offset: const Offset(-20, 20),
           ),
@@ -2256,7 +2256,7 @@ class _PhoneMockup extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        color: AppColors.success.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -2264,7 +2264,7 @@ class _PhoneMockup extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 8,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF10B981),
+                          color: AppColors.success,
                         ),
                       ),
                     ),

@@ -226,7 +226,7 @@ class VitrinStoreCard extends StatelessWidget {
                             padding: EdgeInsets.zero,
                             icon: const Icon(
                               Icons.chat_bubble_rounded,
-                              color: Color(0xFF25D366),
+                              color: AppColors.success,
                               size: 18,
                             ),
                             onPressed: onWhatsAppPressed,
