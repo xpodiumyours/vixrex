@@ -83,6 +83,33 @@ void main() {
       expect(product.sourceMediaId, '123');
     });
 
+    test('product null veya Map değilse INSTAGRAM_PRODUCT_INVALID hatası fırlatır', () async {
+      final service = InstagramSyncService(
+        originOverride: 'https://vitrinx.app',
+        httpClient: MockClient((request) async {
+          return http.Response(
+            jsonEncode({'product': 'not-a-map'}),
+            200,
+          );
+        }),
+      );
+
+      expect(
+        () => service.importProduct(
+          storeSlug: 'aymira-butik',
+          editToken: 'secret-token',
+          mediaId: '123',
+        ),
+        throwsA(
+          isA<InstagramSyncException>().having(
+            (error) => error.code,
+            'code',
+            'INSTAGRAM_PRODUCT_INVALID',
+          ),
+        ),
+      );
+    });
+
     test('sunucu hata kodunu kullanıcı mesajına dönüştürür', () async {
       final service = InstagramSyncService(
         originOverride: 'https://vitrinx.app',
