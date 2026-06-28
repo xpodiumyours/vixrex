@@ -49,6 +49,15 @@ void main() {
             url: ' https://trendyol.com/magaza ',
           ),
         ],
+        privacyNoticeAcknowledged: true,
+        privacyNoticeVersion: 'privacy-v1',
+        privacyNoticeHash: 'privacy-hash',
+        termsAccepted: true,
+        termsVersion: 'terms-v1',
+        termsHash: 'terms-hash',
+        publicationConsentAccepted: true,
+        publicationConsentVersion: 'consent-v1',
+        publicationConsentHash: 'consent-hash',
       );
 
       final payload = builder.toStoreUpdateMap(data);
@@ -66,6 +75,11 @@ void main() {
       expect(payload['references_link'], 'https://example.com/referans');
       expect(payload['shelf_image_url'], 'https://example.com/cover.jpg');
       expect(payload['is_published'], isTrue);
+      expect(payload['privacy_notice_acknowledged'], isTrue);
+      expect(payload['privacy_notice_version'], 'privacy-v1');
+      expect(payload['terms_accepted'], isTrue);
+      expect(payload['publication_consent_accepted'], isTrue);
+      expect(payload['publication_consent_version'], 'consent-v1');
     });
 
     test('insert payload slug ve edit token ekler', () {

@@ -422,8 +422,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       const SizedBox(height: 10),
                       Text(
                         _isLogin
-                            ? 'Giriş yaparak VitrinX kullanım şartlarını, gizlilik ve KVKK politikasını kabul etmiş olursunuz.'
-                            : 'Kayıt olarak VitrinX kullanım şartlarını, gizlilik ve KVKK politikasını kabul etmiş olursunuz.',
+                            ? 'Giriş yapmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.'
+                            : 'Kayıt olmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Color(0xFF64748B),

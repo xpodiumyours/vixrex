@@ -40,6 +40,16 @@ void main() {
     expect(find.text('Randevu Hizmetleri'), findsNothing);
   });
 
+  testWidgets('Yasal yayınlama paneli gösterilir', (WidgetTester tester) async {
+    await pumpEditor(tester);
+
+    expect(find.text('Yasal Bilgilendirme ve Yayınlama Onayı'), findsOneWidget);
+    expect(
+      find.textContaining('resmî unvan ve adres bilgileri'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('Randevu hizmeti önerisi eklenir ve tekrar eklenemez', (
     WidgetTester tester,
   ) async {

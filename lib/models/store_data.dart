@@ -290,6 +290,21 @@ class StoreData {
   String? locationSource;
   BookingSettings? bookingSettings;
 
+  // Yasal belge ve kamuya yayınlama beyanları
+  bool privacyNoticeAcknowledged;
+  DateTime? privacyNoticeAcknowledgedAt;
+  String privacyNoticeVersion;
+  String privacyNoticeHash;
+  bool termsAccepted;
+  DateTime? termsAcceptedAt;
+  String termsVersion;
+  String termsHash;
+  bool publicationConsentAccepted;
+  DateTime? publicationConsentAcceptedAt;
+  DateTime? publicationConsentWithdrawnAt;
+  String publicationConsentVersion;
+  String publicationConsentHash;
+
   StoreData({
     this.name = '',
     this.businessType = 'Butik',
@@ -324,6 +339,19 @@ class StoreData {
     this.locationConsentAt,
     this.locationSource,
     this.bookingSettings,
+    this.privacyNoticeAcknowledged = false,
+    this.privacyNoticeAcknowledgedAt,
+    this.privacyNoticeVersion = '',
+    this.privacyNoticeHash = '',
+    this.termsAccepted = false,
+    this.termsAcceptedAt,
+    this.termsVersion = '',
+    this.termsHash = '',
+    this.publicationConsentAccepted = false,
+    this.publicationConsentAcceptedAt,
+    this.publicationConsentWithdrawnAt,
+    this.publicationConsentVersion = '',
+    this.publicationConsentHash = '',
   }) : products = products ?? [],
        marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')],
        galleryItems = galleryItems ?? [],
@@ -363,6 +391,22 @@ class StoreData {
     'locationConsentAt': locationConsentAt?.toIso8601String(),
     'locationSource': locationSource,
     'bookingSettings': bookingSettings?.toJson(),
+    'privacyNoticeAcknowledged': privacyNoticeAcknowledged,
+    'privacyNoticeAcknowledgedAt':
+        privacyNoticeAcknowledgedAt?.toIso8601String(),
+    'privacyNoticeVersion': privacyNoticeVersion,
+    'privacyNoticeHash': privacyNoticeHash,
+    'termsAccepted': termsAccepted,
+    'termsAcceptedAt': termsAcceptedAt?.toIso8601String(),
+    'termsVersion': termsVersion,
+    'termsHash': termsHash,
+    'publicationConsentAccepted': publicationConsentAccepted,
+    'publicationConsentAcceptedAt':
+        publicationConsentAcceptedAt?.toIso8601String(),
+    'publicationConsentWithdrawnAt':
+        publicationConsentWithdrawnAt?.toIso8601String(),
+    'publicationConsentVersion': publicationConsentVersion,
+    'publicationConsentHash': publicationConsentHash,
   };
 
   factory StoreData.fromJson(Map<String, dynamic> json) {
@@ -427,6 +471,54 @@ class StoreData {
                 ),
               )
               : null,
+      privacyNoticeAcknowledged:
+          (json['privacyNoticeAcknowledged'] ??
+                  json['privacy_notice_acknowledged'] ??
+                  false)
+              as bool,
+      privacyNoticeAcknowledgedAt: _parseDateTime(
+        json['privacyNoticeAcknowledgedAt'] ??
+            json['privacy_notice_acknowledged_at'],
+      ),
+      privacyNoticeVersion:
+          _getString(json, 'privacyNoticeVersion', 'privacy_notice_version') ??
+          '',
+      privacyNoticeHash:
+          _getString(json, 'privacyNoticeHash', 'privacy_notice_hash') ?? '',
+      termsAccepted:
+          (json['termsAccepted'] ?? json['terms_accepted'] ?? false) as bool,
+      termsAcceptedAt: _parseDateTime(
+        json['termsAcceptedAt'] ?? json['terms_accepted_at'],
+      ),
+      termsVersion: _getString(json, 'termsVersion', 'terms_version') ?? '',
+      termsHash: _getString(json, 'termsHash', 'terms_hash') ?? '',
+      publicationConsentAccepted:
+          (json['publicationConsentAccepted'] ??
+                  json['publication_consent_accepted'] ??
+                  false)
+              as bool,
+      publicationConsentAcceptedAt: _parseDateTime(
+        json['publicationConsentAcceptedAt'] ??
+            json['publication_consent_accepted_at'],
+      ),
+      publicationConsentWithdrawnAt: _parseDateTime(
+        json['publicationConsentWithdrawnAt'] ??
+            json['publication_consent_withdrawn_at'],
+      ),
+      publicationConsentVersion:
+          _getString(
+            json,
+            'publicationConsentVersion',
+            'publication_consent_version',
+          ) ??
+          '',
+      publicationConsentHash:
+          _getString(
+            json,
+            'publicationConsentHash',
+            'publication_consent_hash',
+          ) ??
+          '',
     );
   }
 
@@ -466,6 +558,19 @@ class StoreData {
     DateTime? locationConsentAt,
     String? locationSource,
     BookingSettings? bookingSettings,
+    bool? privacyNoticeAcknowledged,
+    DateTime? privacyNoticeAcknowledgedAt,
+    String? privacyNoticeVersion,
+    String? privacyNoticeHash,
+    bool? termsAccepted,
+    DateTime? termsAcceptedAt,
+    String? termsVersion,
+    String? termsHash,
+    bool? publicationConsentAccepted,
+    DateTime? publicationConsentAcceptedAt,
+    DateTime? publicationConsentWithdrawnAt,
+    String? publicationConsentVersion,
+    String? publicationConsentHash,
   }) {
     return StoreData(
       name: name ?? this.name,
@@ -502,6 +607,26 @@ class StoreData {
       locationConsentAt: locationConsentAt ?? this.locationConsentAt,
       locationSource: locationSource ?? this.locationSource,
       bookingSettings: bookingSettings ?? this.bookingSettings,
+      privacyNoticeAcknowledged:
+          privacyNoticeAcknowledged ?? this.privacyNoticeAcknowledged,
+      privacyNoticeAcknowledgedAt:
+          privacyNoticeAcknowledgedAt ?? this.privacyNoticeAcknowledgedAt,
+      privacyNoticeVersion: privacyNoticeVersion ?? this.privacyNoticeVersion,
+      privacyNoticeHash: privacyNoticeHash ?? this.privacyNoticeHash,
+      termsAccepted: termsAccepted ?? this.termsAccepted,
+      termsAcceptedAt: termsAcceptedAt ?? this.termsAcceptedAt,
+      termsVersion: termsVersion ?? this.termsVersion,
+      termsHash: termsHash ?? this.termsHash,
+      publicationConsentAccepted:
+          publicationConsentAccepted ?? this.publicationConsentAccepted,
+      publicationConsentAcceptedAt:
+          publicationConsentAcceptedAt ?? this.publicationConsentAcceptedAt,
+      publicationConsentWithdrawnAt:
+          publicationConsentWithdrawnAt ?? this.publicationConsentWithdrawnAt,
+      publicationConsentVersion:
+          publicationConsentVersion ?? this.publicationConsentVersion,
+      publicationConsentHash:
+          publicationConsentHash ?? this.publicationConsentHash,
     );
   }
 

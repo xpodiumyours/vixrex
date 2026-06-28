@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/legal_config.dart';
+import 'package:vitrinx/models/legal_document.dart';
+import 'package:vitrinx/services/legal_document_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/theme/app_text_styles.dart';
 
 enum LegalPageType {
   privacy,
   terms,
+  consent,
   dataDeletion;
 
   String get routePath {
@@ -15,6 +20,8 @@ enum LegalPageType {
         return LegalConfig.privacyPath;
       case LegalPageType.terms:
         return LegalConfig.termsPath;
+      case LegalPageType.consent:
+        return LegalConfig.consentPath;
       case LegalPageType.dataDeletion:
         return LegalConfig.dataDeletionPath;
     }
@@ -26,6 +33,8 @@ enum LegalPageType {
         return 'Gizlilik ve KVKK Politikası';
       case LegalPageType.terms:
         return 'Kullanım Şartları';
+      case LegalPageType.consent:
+        return 'Açık Rıza Beyanı';
       case LegalPageType.dataDeletion:
         return 'Hesap ve Veri Silme';
     }
@@ -37,6 +46,8 @@ enum LegalPageType {
         return 'VitrinX içinde kişisel verilerin KVKK kapsamında nasıl işlendiğini açıklar.';
       case LegalPageType.terms:
         return 'VitrinX kullanırken geçerli olan temel kuralları ve sorumlulukları açıklar.';
+      case LegalPageType.consent:
+        return 'Vitrin bilgilerinizin kamuya açık yayınlanmasına ilişkin açık rıza beyanını açıklar.';
       case LegalPageType.dataDeletion:
         return 'Hesap, vitrin ve mağaza verilerinizin silinmesini nasıl talep edeceğinizi açıklar.';
     }
@@ -48,6 +59,8 @@ enum LegalPageType {
         return Icons.security_rounded;
       case LegalPageType.terms:
         return Icons.gavel_rounded;
+      case LegalPageType.consent:
+        return Icons.fact_check_rounded;
       case LegalPageType.dataDeletion:
         return Icons.delete_sweep_rounded;
     }
@@ -59,28 +72,96 @@ enum LegalPageType {
         return const Color(0xFF10B981); // Mint green
       case LegalPageType.terms:
         return const Color(0xFF3B82F6); // Royal blue
+      case LegalPageType.consent:
+        return const Color(0xFF7C3AED);
       case LegalPageType.dataDeletion:
         return AppColors.brandOrange; // Brand orange
     }
   }
 }
 
-class LegalScreen extends StatelessWidget {
-  const LegalScreen({super.key, required this.type});
-
+class LegalScreen extends StatefulWidget {
   final LegalPageType type;
+  final SupabaseClient? supabaseClient;
+  final LegalDocumentService? documentService;
+
+  const LegalScreen({
+    super.key,
+    required this.type,
+    this.supabaseClient,
+    this.documentService,
+  });
 
   static LegalPageType? typeFromRoute(String routeName) {
+    final normalized = routeName.trim().split('?').first;
     for (final value in LegalPageType.values) {
-      if (value.routePath == routeName) return value;
+      if (value.routePath == normalized ||
+          '/legal/${value.name}' == normalized) {
+        return value;
+      }
     }
     return null;
   }
 
   @override
-  Widget build(BuildContext context) {
-    final sections = _sectionsFor(type);
+  State<LegalScreen> createState() => _LegalScreenState();
+}
 
+class _LegalScreenState extends State<LegalScreen> {
+  List<_LegalSectionData> _sections = [];
+  LegalDocument? _document;
+  bool _isLoading = true;
+  String? _loadError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSections();
+  }
+
+  Future<void> _loadSections() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _loadError = null;
+      });
+    }
+
+    try {
+      final service =
+          widget.documentService ??
+          LegalDocumentService(supabaseClient: widget.supabaseClient);
+      final document = await service.loadActiveDocument(widget.type.name);
+      if (!mounted) return;
+      setState(() {
+        _document = document;
+        _sections = document.sections
+            .map(
+              (section) =>
+                  _LegalSectionData(title: section.title, body: section.body),
+            )
+            .toList(growable: false);
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading legal docs from Supabase: $e');
+      debugPrint(
+        'Stale local legal fallback is disabled '
+        '(${_sectionsFor(widget.type).length} legacy sections ignored).',
+      );
+      if (!mounted) return;
+      setState(() {
+        _document = null;
+        _sections = [];
+        _loadError =
+            'Güncel yasal belge yüklenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       appBar: AppBar(
@@ -93,7 +174,7 @@ class LegalScreen extends StatelessWidget {
           onPressed: () => Navigator.maybePop(context),
         ),
         title: Text(
-          type.title,
+          widget.type.title,
           style: const TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 18,
@@ -112,7 +193,7 @@ class LegalScreen extends StatelessWidget {
                 width: 260,
                 height: 260,
                 decoration: BoxDecoration(
-                  color: type.accentColor.withValues(alpha: 0.06),
+                  color: widget.type.accentColor.withValues(alpha: 0.06),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -130,45 +211,51 @@ class LegalScreen extends StatelessWidget {
               ),
             ),
             // Page content
-            SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 820),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _Header(type: type),
-                      const SizedBox(height: 24),
-                      for (final section in sections) ...[
-                        _LegalSection(
-                          section: section,
-                          accentColor: type.accentColor,
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator(strokeWidth: 2.5))
+            else if (_loadError != null)
+              _LegalLoadError(message: _loadError!, onRetry: _loadSections)
+            else
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 820),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _Header(
+                          type: widget.type,
+                          title: _document!.title,
+                          subtitle: _document!.subtitle,
                         ),
-                        const SizedBox(height: 16),
-                      ],
-                      const SizedBox(height: 8),
-                      _EmailContactCard(accentColor: type.accentColor),
-                      const SizedBox(height: 24),
-                      Center(
-                        child: Text(
-                          'Son güncelleme: 12 Haziran 2026',
-                          style: TextStyle(
-                            color: const Color(
-                              0xFF0F172A,
-                            ).withValues(alpha: 0.45),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                        const SizedBox(height: 24),
+                        for (final section in _sections) ...[
+                          _LegalSection(
+                            section: section,
+                            accentColor: widget.type.accentColor,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        const SizedBox(height: 8),
+                        _EmailContactCard(accentColor: widget.type.accentColor),
+                        const SizedBox(height: 24),
+                        Center(
+                          child: Text(
+                            'Sürüm: ${_document?.version ?? '-'}',
+                            style: AppTextStyles.labelSmall,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
-                    ],
+                        const SizedBox(height: 32),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -263,6 +350,19 @@ class LegalScreen extends StatelessWidget {
                 'Şartlar, içerik şikayeti veya hesap talepleri için bizimle iletişim kurabilirsiniz. Hızlı kopyalama panelini aşağıda bulabilirsiniz.',
           ),
         ];
+      case LegalPageType.consent:
+        return const [
+          _LegalSectionData(
+            title: 'Yayınlama Açık Rızası',
+            body:
+                'Vitrin bilgilerimin VitrinX üzerindeki dijital vitrinimde müşterilere açık şekilde yayınlanmasına açık rıza veriyorum.',
+          ),
+          _LegalSectionData(
+            title: 'Geri Çekme',
+            body:
+                'Açık rızamı geri çekerek vitrinimi yayından kaldırabileceğimi biliyorum.',
+          ),
+        ];
       case LegalPageType.dataDeletion:
         return const [
           _LegalSectionData(
@@ -305,10 +405,57 @@ class LegalScreen extends StatelessWidget {
   }
 }
 
+class _LegalLoadError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _LegalLoadError({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.cloud_off_rounded,
+                color: AppColors.mutedText,
+                size: 42,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.body,
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Tekrar Dene'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _Header extends StatelessWidget {
-  const _Header({required this.type});
+  const _Header({
+    required this.type,
+    required this.title,
+    required this.subtitle,
+  });
 
   final LegalPageType type;
+  final String title;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -357,7 +504,7 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            type.title,
+            title,
             style: const TextStyle(
               color: Color(0xFF0F172A),
               fontSize: 30,
@@ -368,7 +515,7 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            type.subtitle,
+            subtitle,
             style: const TextStyle(
               color: Color(0xFF475569),
               fontSize: 15,

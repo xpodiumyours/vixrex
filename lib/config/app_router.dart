@@ -8,12 +8,14 @@ import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/legal_screen.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
+import 'package:vitrinx/config/legal_config.dart';
 
 class AppRouter {
   static const String landing = '/';
   static const String app = '/app';
   static const String home = '/home';
   static const String auth = '/auth';
+  static const String consent = LegalConfig.consentPath;
 
   static final GoRouter router = GoRouter(
     initialLocation: landing,
@@ -63,6 +65,27 @@ class AppRouter {
           final slug = state.pathParameters['slug'] ?? '';
           return PublicVitrinScreen(slug: slug);
         },
+      ),
+      GoRoute(
+        path: LegalConfig.privacyPath,
+        builder:
+            (context, state) => const LegalScreen(type: LegalPageType.privacy),
+      ),
+      GoRoute(
+        path: LegalConfig.termsPath,
+        builder:
+            (context, state) => const LegalScreen(type: LegalPageType.terms),
+      ),
+      GoRoute(
+        path: LegalConfig.consentPath,
+        builder:
+            (context, state) => const LegalScreen(type: LegalPageType.consent),
+      ),
+      GoRoute(
+        path: LegalConfig.dataDeletionPath,
+        builder:
+            (context, state) =>
+                const LegalScreen(type: LegalPageType.dataDeletion),
       ),
       GoRoute(
         path: '/legal/:type',
@@ -132,6 +155,20 @@ class AppRouter {
       return Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
+    }
+  }
+
+  static Future<dynamic> navigateToLegal(
+    BuildContext context,
+    LegalPageType type,
+  ) {
+    try {
+      return context.push(type.routePath);
+    } catch (_) {
+      return Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => LegalScreen(type: type)),
       );
     }
   }

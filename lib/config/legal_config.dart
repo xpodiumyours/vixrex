@@ -2,9 +2,24 @@ class LegalConfig {
   const LegalConfig._();
 
   static const String appName = 'VitrinX';
-  static const String ownerName = 'Xpodiumyours';
+  static const String ownerName = String.fromEnvironment(
+    'LEGAL_DATA_CONTROLLER_TITLE',
+    defaultValue: 'Xpodiumyours',
+  );
   static const String companyName = ownerName;
   static const String productOwnershipText = '$appName, $ownerName ürünüdür.';
+  static const String dataControllerAddress = String.fromEnvironment(
+    'LEGAL_DATA_CONTROLLER_ADDRESS',
+    defaultValue: '',
+  );
+  static const String mersisNumber = String.fromEnvironment(
+    'LEGAL_MERSIS_NUMBER',
+    defaultValue: '',
+  );
+  static const String taxNumber = String.fromEnvironment(
+    'LEGAL_TAX_NUMBER',
+    defaultValue: '',
+  );
   static const String privacyEmail = String.fromEnvironment(
     'LEGAL_PRIVACY_EMAIL',
     defaultValue: 'privacy@vitrinx.app',
@@ -16,9 +31,16 @@ class LegalConfig {
 
   static const String privacyPath = '/privacy';
   static const String termsPath = '/terms';
+  static const String consentPath = '/consent';
   static const String dataDeletionPath = '/data-deletion';
 
   static String get privacyUrl => '$publicSiteUrl$privacyPath';
   static String get termsUrl => '$publicSiteUrl$termsPath';
+  static String get consentUrl => '$publicSiteUrl$consentPath';
   static String get dataDeletionUrl => '$publicSiteUrl$dataDeletionPath';
+
+  static bool get hasCompleteDataControllerIdentity =>
+      ownerName.trim().isNotEmpty &&
+      dataControllerAddress.trim().isNotEmpty &&
+      privacyEmail.trim().isNotEmpty;
 }

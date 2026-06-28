@@ -104,6 +104,11 @@ class StorePublishValidator {
       return extraValidation;
     }
 
+    final legalValidation = _validateLegalAcceptance(data);
+    if (legalValidation != null) {
+      return legalValidation;
+    }
+
     return null;
   }
 
@@ -145,6 +150,30 @@ class StorePublishValidator {
       return extraValidation;
     }
 
+    final legalValidation = _validateLegalAcceptance(data);
+    if (legalValidation != null) {
+      return legalValidation;
+    }
+
+    return null;
+  }
+
+  String? _validateLegalAcceptance(StoreData data) {
+    if (!data.privacyNoticeAcknowledged ||
+        data.privacyNoticeVersion.trim().isEmpty ||
+        data.privacyNoticeHash.trim().isEmpty) {
+      return 'Yayınlamak için Aydınlatma Metni hakkında bilgilendirildiğinizi onaylamalısınız.';
+    }
+    if (!data.termsAccepted ||
+        data.termsVersion.trim().isEmpty ||
+        data.termsHash.trim().isEmpty) {
+      return 'Yayınlamak için Kullanım Şartları’nı kabul etmelisiniz.';
+    }
+    if (!data.publicationConsentAccepted ||
+        data.publicationConsentVersion.trim().isEmpty ||
+        data.publicationConsentHash.trim().isEmpty) {
+      return 'Vitrininizi yayınlamak için açık rıza vermelisiniz.';
+    }
     return null;
   }
 }
@@ -225,6 +254,15 @@ class StorePublishPayloadBuilder {
       'location_source': data.locationSource,
       'products': productsToJson(data),
       'offerings': offeringsToJson(data),
+      'privacy_notice_acknowledged': data.privacyNoticeAcknowledged,
+      'privacy_notice_version': data.privacyNoticeVersion.trim(),
+      'privacy_notice_hash': data.privacyNoticeHash.trim(),
+      'terms_accepted': data.termsAccepted,
+      'terms_version': data.termsVersion.trim(),
+      'terms_hash': data.termsHash.trim(),
+      'publication_consent_accepted': data.publicationConsentAccepted,
+      'publication_consent_version': data.publicationConsentVersion.trim(),
+      'publication_consent_hash': data.publicationConsentHash.trim(),
     };
   }
 
@@ -456,6 +494,31 @@ class StorePublishService {
     }
   }
 
+  Future<void> withdrawPublicationConsent({
+    required String slug,
+    required String editToken,
+  }) async {
+    if (slug.trim().isEmpty || editToken.trim().isEmpty) {
+      throw const StorePublishException(
+        'Yayındaki vitrin bilgileri eksik olduğu için rıza geri çekilemedi.',
+      );
+    }
+
+    try {
+      final client = supabaseClient ?? Supabase.instance.client;
+      await client.rpc(
+        'withdraw_store_publication_consent',
+        params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
+      );
+    } on PostgrestException catch (error) {
+      throw StorePublishException(_messageForPostgrestError(error, false));
+    } catch (_) {
+      throw const StorePublishException(
+        'Yayınlama rızası geri çekilemedi. Lütfen tekrar deneyin.',
+      );
+    }
+  }
+
   String _messageForPostgrestError(PostgrestException error, bool isStore) {
     final searchableText =
         [
@@ -471,6 +534,19 @@ class StorePublishService {
       return isStore
           ? 'Bu mağaza başka bir cihazdan oluşturulmuş olabilir.'
           : 'Bu vitrin başka bir cihazdan oluşturulmuş olabilir.';
+    }
+
+    if (searchableText.contains('privacy_notice_required') ||
+        searchableText.contains('privacy_notice_version_invalid')) {
+      return 'Güncel Aydınlatma Metni hakkında bilgilendirildiğinizi onaylamalısınız.';
+    }
+    if (searchableText.contains('terms_acceptance_required') ||
+        searchableText.contains('terms_version_invalid')) {
+      return 'Güncel Kullanım Şartları’nı kabul etmelisiniz.';
+    }
+    if (searchableText.contains('publication_consent_required') ||
+        searchableText.contains('publication_consent_version_invalid')) {
+      return 'Vitrininizi yayınlamak için güncel açık rıza beyanını onaylamalısınız.';
     }
 
     if (searchableText.contains('update_store_with_token') ||

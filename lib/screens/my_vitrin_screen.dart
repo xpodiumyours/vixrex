@@ -11,6 +11,9 @@ import 'package:vitrinx/config/instagram_sync_config.dart';
 import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/config/turkey_cities_config.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/models/legal_document.dart';
+import 'package:vitrinx/screens/legal_screen.dart';
+import 'package:vitrinx/services/legal_document_service.dart';
 import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/seo_service.dart';
@@ -22,8 +25,10 @@ import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/gallery_delete_confirmation_dialog.dart';
 import 'package:vitrinx/widgets/instagram_sync_section.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/theme/app_text_styles.dart';
 import 'package:vitrinx/controllers/store_editor_controller.dart';
 import 'package:vitrinx/config/app_router.dart';
+import 'package:vitrinx/config/legal_config.dart';
 
 // ─── Gallery item helper ───────────────────────────────────────────────────
 class _GalleryItem {
@@ -56,12 +61,14 @@ class MyVitrinScreen extends StatefulWidget {
   final String? initialName;
   final VoidCallback? onPublished;
   final VoidCallback? onOpenExplore;
+  final LegalDocumentService? legalDocumentService;
 
   const MyVitrinScreen({
     super.key,
     this.initialName,
     this.onPublished,
     this.onOpenExplore,
+    this.legalDocumentService,
   });
 
   @override
@@ -199,6 +206,14 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   bool _isLoading = true;
   bool _isPublishing = false;
   bool _isDeleting = false;
+  bool _isWithdrawingConsent = false;
+
+  PublishingLegalDocuments? _legalDocuments;
+  bool _isLoadingLegalDocuments = true;
+  String? _legalDocumentsError;
+  bool _privacyNoticeAcknowledged = false;
+  bool _termsAccepted = false;
+  bool _publicationConsentAccepted = false;
 
   late final StoreEditorController _controller;
 
@@ -333,12 +348,69 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       if (_publishedInfo?.slug != null && _publishedInfo!.slug.isNotEmpty) {
         _fetchArticles();
       }
+      await _loadLegalDocuments();
     } catch (e) {
       debugPrint('MyVitrinScreen load error: $e');
       if (!mounted) return;
       setState(() => _isLoading = false);
+      await _loadLegalDocuments();
     }
   }
+
+  Future<void> _loadLegalDocuments() async {
+    if (!mounted) return;
+    if (!LegalConfig.hasCompleteDataControllerIdentity) {
+      setState(() {
+        _legalDocuments = null;
+        _legalDocumentsError = 'Yasal işletme bilgileri henüz tamamlanmadı.';
+        _isLoadingLegalDocuments = false;
+      });
+      return;
+    }
+    setState(() {
+      _isLoadingLegalDocuments = true;
+      _legalDocumentsError = null;
+    });
+
+    try {
+      final service =
+          widget.legalDocumentService ?? const LegalDocumentService();
+      final documents = await service.loadPublishingDocuments();
+      if (!mounted) return;
+      setState(() {
+        _legalDocuments = documents;
+        _privacyNoticeAcknowledged =
+            _data.privacyNoticeAcknowledged &&
+            _data.privacyNoticeVersion == documents.privacy.version &&
+            _data.privacyNoticeHash == documents.privacy.contentHash;
+        _termsAccepted =
+            _data.termsAccepted &&
+            _data.termsVersion == documents.terms.version &&
+            _data.termsHash == documents.terms.contentHash;
+        _publicationConsentAccepted =
+            _data.publicationConsentAccepted &&
+            _data.publicationConsentVersion == documents.consent.version &&
+            _data.publicationConsentHash == documents.consent.contentHash;
+        _isLoadingLegalDocuments = false;
+      });
+    } catch (e) {
+      debugPrint('Legal documents load error: $e');
+      if (!mounted) return;
+      setState(() {
+        _legalDocuments = null;
+        _legalDocumentsError =
+            'Güncel yasal belgeler yüklenemedi. Yayınlamadan önce tekrar deneyin.';
+        _isLoadingLegalDocuments = false;
+      });
+    }
+  }
+
+  bool get _isLegalPublishReady =>
+      LegalConfig.hasCompleteDataControllerIdentity &&
+      _legalDocuments?.isComplete == true &&
+      _privacyNoticeAcknowledged &&
+      _termsAccepted &&
+      _publicationConsentAccepted;
 
   Future<void> _fetchArticles() async {
     final slug = _publishedInfo?.slug ?? _data.slug;
@@ -560,6 +632,28 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   Future<void> _publishVitrin() async {
     if (_isPublishing) return;
 
+    if (!LegalConfig.hasCompleteDataControllerIdentity) {
+      _showSnackBar(
+        'Yasal işletme bilgileri tamamlanmadan vitrin yayınlanamaz.',
+      );
+      return;
+    }
+    if (_legalDocuments == null) {
+      _showSnackBar(
+        _legalDocumentsError ??
+            'Güncel yasal belgeler yüklenmeden vitrin yayınlanamaz.',
+      );
+      return;
+    }
+    if (!_privacyNoticeAcknowledged ||
+        !_termsAccepted ||
+        !_publicationConsentAccepted) {
+      _showSnackBar(
+        'Yayınlamak için yasal bilgilendirme ve onayları tamamlayın.',
+      );
+      return;
+    }
+
     final name = _nameController.text.trim();
     final whatsapp = _whatsappController.text.trim();
     final address = _addressController.text.trim();
@@ -735,7 +829,16 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 }).toList()
             ..latitude = _latitude
             ..longitude = _longitude
-            ..locationAccuracyMeters = _locationAccuracyMeters;
+            ..locationAccuracyMeters = _locationAccuracyMeters
+            ..privacyNoticeAcknowledged = _privacyNoticeAcknowledged
+            ..privacyNoticeVersion = _legalDocuments!.privacy.version
+            ..privacyNoticeHash = _legalDocuments!.privacy.contentHash
+            ..termsAccepted = _termsAccepted
+            ..termsVersion = _legalDocuments!.terms.version
+            ..termsHash = _legalDocuments!.terms.contentHash
+            ..publicationConsentAccepted = _publicationConsentAccepted
+            ..publicationConsentVersion = _legalDocuments!.consent.version
+            ..publicationConsentHash = _legalDocuments!.consent.contentHash;
 
       await _storage.saveVitrinData(data);
       final editToken = await _loadOrCreateEditToken();
@@ -800,6 +903,63 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   }
 
   // ─── Delete Vitrin ────────────────────────────────────────────────────────
+  Future<void> _withdrawPublicationConsent() async {
+    final info = _publishedInfo;
+    if (info == null || _isWithdrawingConsent) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Vitrini Yayından Kaldır'),
+            content: const Text(
+              'Yayınlama rızanız geri çekilecek ve vitrininiz herkese açık görünümden kaldırılacak. Yerel taslağınız silinmeyecek.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Vazgeç'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('Yayından Kaldır'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isWithdrawingConsent = true);
+    try {
+      await const StorePublishService().withdrawPublicationConsent(
+        slug: info.slug,
+        editToken: info.editToken,
+      );
+      _data.publicationConsentAccepted = false;
+      _data.publicationConsentWithdrawnAt = DateTime.now().toUtc();
+      await _storage.saveVitrinData(_data);
+      await _storage.clearPublishedVitrinInfo();
+      if (!mounted) return;
+      setState(() {
+        _publishedInfo = null;
+        _websiteController.clear();
+        _publicationConsentAccepted = false;
+      });
+      _showSnackBar(
+        'Yayınlama rızanız geri çekildi ve vitrininiz yayından kaldırıldı.',
+      );
+    } catch (error) {
+      if (!mounted) return;
+      _showSnackBar(
+        error is StorePublishException
+            ? error.message
+            : 'Vitrin yayından kaldırılamadı. Lütfen tekrar deneyin.',
+      );
+    } finally {
+      if (mounted) setState(() => _isWithdrawingConsent = false);
+    }
+  }
+
   Future<void> _deleteVitrin() async {
     if (_isDeleting) return;
     setState(() => _isDeleting = true);
@@ -1287,11 +1447,17 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               _buildMarketplaceSection(),
               const SizedBox(height: 24),
 
+              _buildLegalConsentSection(),
+              const SizedBox(height: 16),
+
               // ── Publish Button ─────────────────────────────────────────
               SizedBox(
                 height: 54,
                 child: ElevatedButton.icon(
-                  onPressed: _isPublishing ? null : _publishVitrin,
+                  onPressed:
+                      _isPublishing || !_isLegalPublishReady
+                          ? null
+                          : _publishVitrin,
                   icon:
                       _isPublishing
                           ? const SizedBox(
@@ -1360,6 +1526,19 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           const SizedBox(height: 8),
           Center(
             child: TextButton.icon(
+              onPressed:
+                  _isWithdrawingConsent ? null : _withdrawPublicationConsent,
+              icon: const Icon(Icons.visibility_off_outlined, size: 16),
+              label: Text(
+                _isWithdrawingConsent
+                    ? 'Yayından kaldırılıyor...'
+                    : 'Yayınlama Rızasını Geri Çek',
+                style: AppTextStyles.labelBold,
+              ),
+            ),
+          ),
+          Center(
+            child: TextButton.icon(
               onPressed: _isDeleting ? null : _showDeleteConfirmation,
               icon: const Icon(
                 Icons.delete_outline_rounded,
@@ -1379,6 +1558,127 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           const SizedBox(height: 12),
         ],
       ],
+    );
+  }
+
+  Widget _buildLegalConsentSection() {
+    final canAccept =
+        !_isLoadingLegalDocuments &&
+        _legalDocuments != null &&
+        LegalConfig.hasCompleteDataControllerIdentity;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.verified_user_outlined, color: primaryColor, size: 21),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Yasal Bilgilendirme ve Yayınlama Onayı',
+                  style: AppTextStyles.subTitle,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.',
+            style: AppTextStyles.caption,
+          ),
+          if (!LegalConfig.hasCompleteDataControllerIdentity) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Xpodiumyours resmî unvan ve adres bilgileri tamamlanmadığı için yayınlama geçici olarak kapalıdır.',
+              style: AppTextStyles.errorText,
+            ),
+          ] else if (_isLoadingLegalDocuments) ...[
+            const SizedBox(height: 14),
+            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ] else if (_legalDocumentsError != null) ...[
+            const SizedBox(height: 12),
+            Text(_legalDocumentsError!, style: AppTextStyles.errorText),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: _loadLegalDocuments,
+                icon: const Icon(Icons.refresh_rounded, size: 17),
+                label: const Text('Belgeleri Tekrar Yükle'),
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          CheckboxListTile(
+            key: const ValueKey('privacy-notice-checkbox'),
+            value: _privacyNoticeAcknowledged,
+            onChanged:
+                canAccept
+                    ? (value) => setState(
+                      () => _privacyNoticeAcknowledged = value ?? false,
+                    )
+                    : null,
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: const Text(
+              'Aydınlatma Metni’ni okudum ve bilgilendirildim.',
+              style: AppTextStyles.formLabel,
+            ),
+          ),
+          _legalLink(label: 'Aydınlatma Metni', type: LegalPageType.privacy),
+          CheckboxListTile(
+            key: const ValueKey('terms-checkbox'),
+            value: _termsAccepted,
+            onChanged:
+                canAccept
+                    ? (value) => setState(() => _termsAccepted = value ?? false)
+                    : null,
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: const Text(
+              'Kullanım Şartları’nı kabul ediyorum.',
+              style: AppTextStyles.formLabel,
+            ),
+          ),
+          _legalLink(label: 'Kullanım Şartları', type: LegalPageType.terms),
+          CheckboxListTile(
+            key: const ValueKey('publication-consent-checkbox'),
+            value: _publicationConsentAccepted,
+            onChanged:
+                canAccept
+                    ? (value) => setState(
+                      () => _publicationConsentAccepted = value ?? false,
+                    )
+                    : null,
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: const Text(
+              'Verilerimin dijital vitrinimde kamuya açık yayınlanmasına açık rıza veriyorum.',
+              style: AppTextStyles.formLabel,
+            ),
+          ),
+          _legalLink(label: 'Açık Rıza Beyanı', type: LegalPageType.consent),
+        ],
+      ),
+    );
+  }
+
+  Widget _legalLink({required String label, required LegalPageType type}) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        onPressed: () => AppRouter.navigateToLegal(context, type),
+        icon: const Icon(Icons.open_in_new_rounded, size: 15),
+        label: Text(label),
+      ),
     );
   }
 

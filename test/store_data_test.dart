@@ -2,6 +2,36 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vitrinx/models/store_data.dart';
 
 void main() {
+  group('StoreData legal acceptance round-trip', () {
+    test('legal acknowledgement fields are serialized and restored', () {
+      final acceptedAt = DateTime.utc(2026, 6, 28, 12);
+      final store = StoreData(
+        privacyNoticeAcknowledged: true,
+        privacyNoticeAcknowledgedAt: acceptedAt,
+        privacyNoticeVersion: 'privacy-v1',
+        privacyNoticeHash: 'privacy-hash',
+        termsAccepted: true,
+        termsAcceptedAt: acceptedAt,
+        termsVersion: 'terms-v1',
+        termsHash: 'terms-hash',
+        publicationConsentAccepted: true,
+        publicationConsentAcceptedAt: acceptedAt,
+        publicationConsentVersion: 'consent-v1',
+        publicationConsentHash: 'consent-hash',
+      );
+
+      final restored = StoreData.fromJson(store.toJson());
+
+      expect(restored.privacyNoticeAcknowledged, isTrue);
+      expect(restored.privacyNoticeAcknowledgedAt, acceptedAt);
+      expect(restored.privacyNoticeVersion, 'privacy-v1');
+      expect(restored.termsAccepted, isTrue);
+      expect(restored.termsVersion, 'terms-v1');
+      expect(restored.publicationConsentAccepted, isTrue);
+      expect(restored.publicationConsentVersion, 'consent-v1');
+    });
+  });
+
   group('StoreData gallery fallback', () {
     test('galleryItems boşsa shelfImageUrl kapak olarak kullanılır', () {
       final store = StoreData(shelfImageUrl: 'https://example.com/cover.jpg');

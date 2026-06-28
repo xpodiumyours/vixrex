@@ -13,6 +13,15 @@ StoreData validStore({List<Product>? products}) {
     kategori: 'Giyim & Butik',
     isStore: true,
     products: products ?? [],
+    privacyNoticeAcknowledged: true,
+    privacyNoticeVersion: 'privacy-v1',
+    privacyNoticeHash: 'privacy-hash',
+    termsAccepted: true,
+    termsVersion: 'terms-v1',
+    termsHash: 'terms-hash',
+    publicationConsentAccepted: true,
+    publicationConsentVersion: 'consent-v1',
+    publicationConsentHash: 'consent-hash',
   );
 }
 
@@ -25,6 +34,15 @@ StoreData validVitrin() {
     address: 'Test Mahalle',
     isStore: false,
     marketplaceLinks: [],
+    privacyNoticeAcknowledged: true,
+    privacyNoticeVersion: 'privacy-v1',
+    privacyNoticeHash: 'privacy-hash',
+    termsAccepted: true,
+    termsVersion: 'terms-v1',
+    termsHash: 'terms-hash',
+    publicationConsentAccepted: true,
+    publicationConsentVersion: 'consent-v1',
+    publicationConsentHash: 'consent-hash',
   );
 }
 
@@ -174,6 +192,23 @@ void main() {
       final msg = validator.validateVitrin(data)!;
       expect(msg, contains('işletme adı'));
       expect(msg, contains('WhatsApp'));
+    });
+  });
+
+  group('StorePublishValidator legal acceptance', () {
+    test('rejects missing privacy acknowledgement', () {
+      final data = validVitrin()..privacyNoticeAcknowledged = false;
+      expect(validator.validateVitrin(data), contains('Aydınlatma Metni'));
+    });
+
+    test('rejects missing terms acceptance', () {
+      final data = validVitrin()..termsAccepted = false;
+      expect(validator.validateVitrin(data), contains('Kullanım Şartları'));
+    });
+
+    test('rejects missing publication consent', () {
+      final data = validVitrin()..publicationConsentAccepted = false;
+      expect(validator.validateVitrin(data), contains('açık rıza'));
     });
   });
 

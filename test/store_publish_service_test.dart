@@ -146,6 +146,15 @@ void main() {
       address: 'Test Adresi',
       whatsapp: '905555555555',
       description: 'Açıklama',
+      privacyNoticeAcknowledged: true,
+      privacyNoticeVersion: 'privacy-v1',
+      privacyNoticeHash: 'privacy-hash',
+      termsAccepted: true,
+      termsVersion: 'terms-v1',
+      termsHash: 'terms-hash',
+      publicationConsentAccepted: true,
+      publicationConsentVersion: 'consent-v1',
+      publicationConsentHash: 'consent-hash',
     );
   });
 
@@ -232,5 +241,23 @@ void main() {
         );
       },
     );
+  });
+
+  group('StorePublishService publication consent withdrawal', () {
+    test('withdraw RPC is called with slug and edit token', () async {
+      await service.withdrawPublicationConsent(
+        slug: 'test-magazasi',
+        editToken: 'edit-token-12345678901234567890',
+      );
+
+      expect(
+        fakeClient.rpcCalls.last['fn'],
+        'withdraw_store_publication_consent',
+      );
+      expect(fakeClient.rpcCalls.last['params'], {
+        'p_slug': 'test-magazasi',
+        'p_edit_token': 'edit-token-12345678901234567890',
+      });
+    });
   });
 }
