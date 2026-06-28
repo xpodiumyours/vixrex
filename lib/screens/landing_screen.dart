@@ -1649,7 +1649,7 @@ class _LandingScreenState extends State<LandingScreen>
 
     return Container(
       width: double.infinity,
-      color: Colors.white,
+      color: AppColors.bgLight,
       padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
       child: Center(
         child: ConstrainedBox(
@@ -1679,10 +1679,10 @@ class _LandingScreenState extends State<LandingScreen>
                               vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: AppColors.surface,
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
-                                color: const Color(0xFFDCE7EA),
+                                color: AppColors.border,
                               ),
                             ),
                             child: Row(
@@ -1693,7 +1693,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 Text(
                                   item.$2,
                                   style: const TextStyle(
-                                    color: Color(0xFF334155),
+                                    color: AppColors.darkText,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800,
                                   ),
@@ -1714,7 +1714,7 @@ class _LandingScreenState extends State<LandingScreen>
   Widget _buildStepsSection(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: Color(0xFFF8FAFC),
+      color: AppColors.bgLight,
       padding: const EdgeInsets.symmetric(vertical: 76, horizontal: 24),
       child: Center(
         child: ConstrainedBox(
@@ -1896,7 +1896,7 @@ class _LandingScreenState extends State<LandingScreen>
   Widget _buildFooter() {
     return Container(
       width: double.infinity,
-      color: Color(0xFFF8FAFC),
+      color: AppColors.bgEditor,
       padding: const EdgeInsets.symmetric(vertical: 60),
       child: Column(
         children: [
@@ -2605,7 +2605,7 @@ class _LandingValueCardState extends State<_LandingValueCard> {
             fontSize: 17,
             height: 1.2,
             fontWeight: FontWeight.w900,
-            color: _LandingScreenState.darkAccent,
+            color: AppColors.darkText,
           ),
         ),
         const SizedBox(height: 8),
@@ -2613,7 +2613,7 @@ class _LandingValueCardState extends State<_LandingValueCard> {
           widget.desc,
           style: const TextStyle(
             fontSize: 13,
-            color: Color(0xFF64748B),
+            color: AppColors.mutedText,
             height: 1.45,
           ),
         ),
@@ -2635,9 +2635,9 @@ class _LandingValueCardState extends State<_LandingValueCard> {
                 ? const EdgeInsets.symmetric(horizontal: 18, vertical: 17)
                 : const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
               color: widget.color.withValues(alpha: isLifted ? 0.13 : 0.04),
