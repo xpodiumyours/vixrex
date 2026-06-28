@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -39,9 +39,9 @@ class _LandingScreenState extends State<LandingScreen>
   static const List<_HeroDemoProfile> _heroDemoProfiles = [
     _HeroDemoProfile(
       name: 'Aymira Giyim',
-      category: 'Kadın giyim / butik',
-      status: 'Açık',
-      description: 'Yeni sezon reyonları ve mağaza fotoğrafları tek vitrinde.',
+      category: 'KadÄ±n giyim / butik',
+      status: 'AÃ§Ä±k',
+      description: 'Yeni sezon reyonlarÄ± ve maÄŸaza fotoÄŸraflarÄ± tek vitrinde.',
       icon: Icons.checkroom_rounded,
       accentColor: Color(0xFFFF5A1F),
       badgeIcon: Icons.photo_library_rounded,
@@ -55,13 +55,13 @@ class _LandingScreenState extends State<LandingScreen>
       links: [
         _HeroDemoLink(
           'Vitrin galerisi',
-          'Raf ve reyon fotoğrafları',
+          'Raf ve reyon fotoÄŸraflarÄ±',
           Icons.photo_library_rounded,
           Color(0xFFFF5A1F),
         ),
         _HeroDemoLink(
           'Trendyol',
-          'Mağazayı ziyaret edin',
+          'MaÄŸazayÄ± ziyaret edin',
           Icons.shopping_bag_rounded,
           Color(0xFFF27A1A),
         ),
@@ -75,14 +75,14 @@ class _LandingScreenState extends State<LandingScreen>
       ],
     ),
     _HeroDemoProfile(
-      name: 'Lezzet Durağı',
+      name: 'Lezzet DuraÄŸÄ±',
       category: 'Kafe / restoran',
-      status: 'Açık',
-      description: 'Menü, konum ve WhatsApp sipariş bilgileri tek ekranda.',
+      status: 'AÃ§Ä±k',
+      description: 'MenÃ¼, konum ve WhatsApp sipariÅŸ bilgileri tek ekranda.',
       icon: Icons.restaurant_menu_rounded,
       accentColor: Color(0xFFEA580C),
       badgeIcon: Icons.menu_book_rounded,
-      badgeText: 'Menü',
+      badgeText: 'MenÃ¼',
       secondaryBadgeIcon: Icons.directions_rounded,
       secondaryBadgeText: 'Yol tarifi',
       actions: [
@@ -91,14 +91,14 @@ class _LandingScreenState extends State<LandingScreen>
       ],
       links: [
         _HeroDemoLink(
-          'Günün menüsü',
-          'Sıcak yemek ve tatlılar',
+          'GÃ¼nÃ¼n menÃ¼sÃ¼',
+          'SÄ±cak yemek ve tatlÄ±lar',
           Icons.local_dining_rounded,
           Color(0xFFEA580C),
         ),
         _HeroDemoLink(
           'Paket servis',
-          'WhatsApp ile sipariş',
+          'WhatsApp ile sipariÅŸ',
           Icons.delivery_dining_rounded,
           Color(0xFF10B981),
         ),
@@ -112,10 +112,10 @@ class _LandingScreenState extends State<LandingScreen>
       ],
     ),
     _HeroDemoProfile(
-      name: 'Nova Kuaför',
-      category: 'Kuaför / güzellik',
-      status: 'Açık',
-      description: 'Randevu, hizmetler ve sosyal medya bağlantıları hazır.',
+      name: 'Nova KuafÃ¶r',
+      category: 'KuafÃ¶r / gÃ¼zellik',
+      status: 'AÃ§Ä±k',
+      description: 'Randevu, hizmetler ve sosyal medya baÄŸlantÄ±larÄ± hazÄ±r.',
       icon: Icons.content_cut_rounded,
       accentColor: Color(0xFFDB2777),
       badgeIcon: Icons.calendar_month_rounded,
@@ -129,13 +129,13 @@ class _LandingScreenState extends State<LandingScreen>
       links: [
         _HeroDemoLink(
           'Hizmetler',
-          'Kesim, boya ve bakım',
+          'Kesim, boya ve bakÄ±m',
           Icons.spa_rounded,
           Color(0xFFDB2777),
         ),
         _HeroDemoLink(
           'Randevu al',
-          'WhatsApp ile hızlı iletişim',
+          'WhatsApp ile hÄ±zlÄ± iletiÅŸim',
           Icons.event_available_rounded,
           Color(0xFF10B981),
         ),
@@ -151,8 +151,8 @@ class _LandingScreenState extends State<LandingScreen>
     _HeroDemoProfile(
       name: 'TeknoFix',
       category: 'Telefon teknik servis',
-      status: 'Açık',
-      description: 'Servis talebi, adres ve güvenilir iletişim tek vitrinde.',
+      status: 'AÃ§Ä±k',
+      description: 'Servis talebi, adres ve gÃ¼venilir iletiÅŸim tek vitrinde.',
       icon: Icons.build_circle_rounded,
       accentColor: Color(0xFF2563EB),
       badgeIcon: Icons.chat_bubble_rounded,
@@ -165,14 +165,14 @@ class _LandingScreenState extends State<LandingScreen>
       ],
       links: [
         _HeroDemoLink(
-          'Servis kaydı',
-          'Ekran, batarya ve bakım',
+          'Servis kaydÄ±',
+          'Ekran, batarya ve bakÄ±m',
           Icons.construction_rounded,
           Color(0xFF2563EB),
         ),
         _HeroDemoLink(
-          'Google yorumları',
-          'Müşteri güveni',
+          'Google yorumlarÄ±',
+          'MÃ¼ÅŸteri gÃ¼veni',
           Icons.verified_rounded,
           Color(0xFF6366F1),
         ),
@@ -229,9 +229,9 @@ class _LandingScreenState extends State<LandingScreen>
         if (store != null) {
           if (!mounted) return;
           if (store.isStore) {
-            // isStore: true olan hesaplar için Store editor ekranı
-            // planlanmaktadır (StoreSetupScreen kaldırıldı). Şimdilik
-            // token ve veri önbelleğe alınıp LandingScreen'de bırakılır.
+            // isStore: true olan hesaplar iÃ§in Store editor ekranÄ±
+            // planlanmaktadÄ±r (StoreSetupScreen kaldÄ±rÄ±ldÄ±). Åimdilik
+            // token ve veri Ã¶nbelleÄŸe alÄ±nÄ±p LandingScreen'de bÄ±rakÄ±lÄ±r.
             await prefs.setString(
               LocalStorageKeys.storeData,
               jsonEncode(store.toJson()),
@@ -406,7 +406,7 @@ class _LandingScreenState extends State<LandingScreen>
               ],
             ),
           ),
-          // Xrex: Sağ alt köşede yüzen robot rozeti
+          // Xrex: SaÄŸ alt kÃ¶ÅŸede yÃ¼zen robot rozeti
           const Positioned(
             right: 16,
             bottom: 16,
@@ -424,7 +424,7 @@ class _LandingScreenState extends State<LandingScreen>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFFFBF7), Color(0xFFF6F8FF)],
+          colors: [AppColors.bgEditor, AppColors.bgLight],
         ),
       ),
       child: Stack(
@@ -568,7 +568,7 @@ class _LandingScreenState extends State<LandingScreen>
                   },
                   icon: const Icon(Icons.explore_rounded, size: 16),
                   label: const Text(
-                    'Vitrinleri Keşfet',
+                    'Vitrinleri KeÅŸfet',
                     style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -596,7 +596,7 @@ class _LandingScreenState extends State<LandingScreen>
                     padding: const EdgeInsets.all(10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      side: const BorderSide(color: AppColors.border),
                     ),
                   ),
                 ),
@@ -617,7 +617,7 @@ class _LandingScreenState extends State<LandingScreen>
                       color: darkAccent,
                     ),
                     label: const Text(
-                      'Çıkış Yap',
+                      'Ã‡Ä±kÄ±ÅŸ Yap',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
@@ -641,7 +641,7 @@ class _LandingScreenState extends State<LandingScreen>
                       padding: const EdgeInsets.all(10),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
-                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        side: const BorderSide(color: AppColors.border),
                       ),
                     ),
                   ),
@@ -658,7 +658,7 @@ class _LandingScreenState extends State<LandingScreen>
                     },
                     icon: const Icon(Icons.login_rounded, size: 16),
                     label: const Text(
-                      'Giriş Yap',
+                      'GiriÅŸ Yap',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
@@ -743,7 +743,7 @@ class _LandingScreenState extends State<LandingScreen>
               border: Border.all(color: brandOrange.withValues(alpha: 0.3)),
             ),
             child: const Text(
-              'İŞLETMENİZ İÇİN DİJİTAL VİTRİN',
+              'Ä°ÅLETMENÄ°Z Ä°Ã‡Ä°N DÄ°JÄ°TAL VÄ°TRÄ°N',
               style: TextStyle(
                 color: brandOrange,
                 fontWeight: FontWeight.w900,
@@ -754,7 +754,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           const SizedBox(height: 32),
           Text(
-            'İşletmenizin dijital vitrini dakikalar içinde hazır',
+            'Ä°ÅŸletmenizin dijital vitrini dakikalar iÃ§inde hazÄ±r',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: TextStyle(
               color: darkAccent,
@@ -766,10 +766,10 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           const SizedBox(height: 24),
           Text(
-            'İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrinde toplayın. Linkinizi ve QR kodunuzu müşterilerinizle kolayca paylaşın.',
+            'Ä°ÅŸletme bilgilerinizi, fotoÄŸraflarÄ±nÄ±zÄ±, Ã¼rÃ¼n ve hizmetlerinizi, adresinizi ve WhatsApp iletiÅŸiminizi tek vitrinde toplayÄ±n. Linkinizi ve QR kodunuzu mÃ¼ÅŸterilerinizle kolayca paylaÅŸÄ±n.',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF475569),
+              color: AppColors.mutedText,
               fontSize: 17,
               height: 1.55,
             ),
@@ -789,10 +789,10 @@ class _LandingScreenState extends State<LandingScreen>
 
   Widget _buildHeroTrustChips({required bool isDesktop}) {
     final items = [
-      'Kredi kartı gerekmez',
+      'Kredi kartÄ± gerekmez',
       'Teknik bilgi gerekmez',
       'Komisyon yok',
-      'Link ve QR hazır',
+      'Link ve QR hazÄ±r',
     ];
 
     return Wrap(
@@ -806,7 +806,7 @@ class _LandingScreenState extends State<LandingScreen>
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppColors.border),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -816,7 +816,7 @@ class _LandingScreenState extends State<LandingScreen>
                   Text(
                     text,
                     style: const TextStyle(
-                      color: Color(0xFF334155),
+                      color: AppColors.darkTextAlt,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
@@ -837,7 +837,7 @@ class _LandingScreenState extends State<LandingScreen>
           onPressed: _navigateToSavedVitrin,
           icon: const Icon(Icons.edit_rounded, size: 18),
           label: const Text(
-            'VitrinX Düzenle',
+            'VitrinX DÃ¼zenle',
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
           ),
           style: ElevatedButton.styleFrom(
@@ -856,7 +856,7 @@ class _LandingScreenState extends State<LandingScreen>
         },
         icon: const Icon(Icons.explore_rounded, size: 18, color: darkAccent),
         label: const Text(
-          'Vitrinleri Keşfet',
+          'Vitrinleri KeÅŸfet',
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 14,
@@ -896,14 +896,14 @@ class _LandingScreenState extends State<LandingScreen>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+          border: Border.all(color: AppColors.border, width: 1.5),
         ),
         child: Row(
           children: [
             const Text(
               'vitrinx.app/',
               style: TextStyle(
-                color: Color(0xFF64748B),
+                color: AppColors.mutedText,
                 fontWeight: FontWeight.w700,
                 fontSize: 15,
               ),
@@ -920,7 +920,7 @@ class _LandingScreenState extends State<LandingScreen>
                 decoration: const InputDecoration(
                   hintText: 'isletmeniz',
                   hintStyle: TextStyle(
-                    color: Color(0xFF94A3B8),
+                    color: AppColors.mutedText,
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),
@@ -968,7 +968,7 @@ class _LandingScreenState extends State<LandingScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'VitrinX Oluştur',
+                  'VitrinX OluÅŸtur',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                 ),
                 SizedBox(width: 8),
@@ -1029,7 +1029,7 @@ class _LandingScreenState extends State<LandingScreen>
                       : CrossAxisAlignment.center,
               children: [
                 const Text(
-                  'Tek linkte hazır dijital vitrin',
+                  'Tek linkte hazÄ±r dijital vitrin',
                   style: TextStyle(
                     color: darkAccent,
                     fontWeight: FontWeight.w900,
@@ -1038,9 +1038,9 @@ class _LandingScreenState extends State<LandingScreen>
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  'QR kod ve WhatsApp iletişimi paylaşmaya hazır olsun.',
+                  'QR kod ve WhatsApp iletiÅŸimi paylaÅŸmaya hazÄ±r olsun.',
                   style: TextStyle(
-                    color: Color(0xFF64748B),
+                    color: AppColors.mutedText,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -1142,7 +1142,7 @@ class _LandingScreenState extends State<LandingScreen>
                   width: isActive ? 24 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: isActive ? brandOrange : const Color(0xFFCBD5E1),
+                    color: isActive ? brandOrange : AppColors.border,
                     borderRadius: BorderRadius.circular(99),
                   ),
                 );
@@ -1221,7 +1221,7 @@ class _LandingScreenState extends State<LandingScreen>
                         : CrossAxisAlignment.center,
                 children: [
                   Text(
-                    'Müşterileriniz ihtiyaç duyduğu her bilgiye tek linkten ulaşsın',
+                    'MÃ¼ÅŸterileriniz ihtiyaÃ§ duyduÄŸu her bilgiye tek linkten ulaÅŸsÄ±n',
                     textAlign: isDesktop ? TextAlign.left : TextAlign.center,
                     style: const TextStyle(
                       color: darkAccent,
@@ -1232,10 +1232,10 @@ class _LandingScreenState extends State<LandingScreen>
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    'Vitrin linkinizi WhatsApp, sosyal medya, Google İşletme, kartvizit, paket veya işletme içi QR kod üzerinden paylaşın.',
+                    'Vitrin linkinizi WhatsApp, sosyal medya, Google Ä°ÅŸletme, kartvizit, paket veya iÅŸletme iÃ§i QR kod Ã¼zerinden paylaÅŸÄ±n.',
                     textAlign: isDesktop ? TextAlign.left : TextAlign.center,
                     style: const TextStyle(
-                      color: Color(0xFF64748B),
+                      color: AppColors.mutedText,
                       fontSize: 16,
                       height: 1.55,
                     ),
@@ -1250,7 +1250,7 @@ class _LandingScreenState extends State<LandingScreen>
                     const [
                       'WhatsApp',
                       'Sosyal medya',
-                      'Google İşletme',
+                      'Google Ä°ÅŸletme',
                       'QR kod',
                       'Vitrin linki',
                     ].map((text) {
@@ -1262,12 +1262,12 @@ class _LandingScreenState extends State<LandingScreen>
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Text(
                           text,
                           style: const TextStyle(
-                            color: Color(0xFF334155),
+                            color: AppColors.darkTextAlt,
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
                           ),
@@ -1308,7 +1308,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'Dijital vitrininizi kolayca hazırlayın',
+                'Dijital vitrininizi kolayca hazÄ±rlayÄ±n',
                 style: TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -1319,7 +1319,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               const SizedBox(height: 20),
               const Text(
-                'Müşterilerinizin ihtiyaç duyduğu bilgileri tek vitrinde toplayın, panelden yönetin ve istediğiniz yerde paylaşın.',
+                'MÃ¼ÅŸterilerinizin ihtiyaÃ§ duyduÄŸu bilgileri tek vitrinde toplayÄ±n, panelden yÃ¶netin ve istediÄŸiniz yerde paylaÅŸÄ±n.',
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.black54,
@@ -1347,36 +1347,36 @@ class _LandingScreenState extends State<LandingScreen>
                           _LandingValueCard(
                             icon: Icons.bolt_rounded,
                             color: brandOrange,
-                            title: 'Dakikalar içinde yayına alın',
+                            title: 'Dakikalar iÃ§inde yayÄ±na alÄ±n',
                             desc:
-                                'Temel bilgilerinizi ekleyin ve vitrininizi oluşturun.',
+                                'Temel bilgilerinizi ekleyin ve vitrininizi oluÅŸturun.',
                             isHorizontal: !isTablet,
                             enableHover: isDesktop,
                           ),
                           _LandingValueCard(
                             icon: Icons.contact_phone_rounded,
                             color: mint,
-                            title: 'Müşteriler size doğrudan ulaşsın',
+                            title: 'MÃ¼ÅŸteriler size doÄŸrudan ulaÅŸsÄ±n',
                             desc:
-                                'WhatsApp, adres ve yol tarifi seçeneklerini tek yerde sunun.',
+                                'WhatsApp, adres ve yol tarifi seÃ§eneklerini tek yerde sunun.',
                             isHorizontal: !isTablet,
                             enableHover: isDesktop,
                           ),
                           _LandingValueCard(
                             icon: Icons.share_rounded,
                             color: pinkAccent,
-                            title: 'Her kanalda aynı vitrini paylaşın',
+                            title: 'Her kanalda aynÄ± vitrini paylaÅŸÄ±n',
                             desc:
-                                'Linkinizi sosyal medyada, QR kodunuzu işletmenizde kullanın.',
+                                'Linkinizi sosyal medyada, QR kodunuzu iÅŸletmenizde kullanÄ±n.',
                             isHorizontal: !isTablet,
                             enableHover: isDesktop,
                           ),
                           _LandingValueCard(
                             icon: Icons.edit_note_rounded,
                             color: blueAccent,
-                            title: 'Bilgilerinizi panelden güncelleyin',
+                            title: 'Bilgilerinizi panelden gÃ¼ncelleyin',
                             desc:
-                                'Fotoğraf, ürün, hizmet ve iletişim bilgilerinizi istediğiniz zaman düzenleyin.',
+                                'FotoÄŸraf, Ã¼rÃ¼n, hizmet ve iletiÅŸim bilgilerinizi istediÄŸiniz zaman dÃ¼zenleyin.',
                             isHorizontal: !isTablet,
                             enableHover: isDesktop,
                           ),
@@ -1395,29 +1395,29 @@ class _LandingScreenState extends State<LandingScreen>
     const separateSetupItems = [
       (Icons.language_rounded, 'Domain ve hosting'),
       (Icons.tune_rounded, 'Teknik ayarlar'),
-      (Icons.chat_bubble_outline_rounded, 'WhatsApp bağlantısı'),
-      (Icons.qr_code_2_rounded, 'QR ve paylaşım süreci'),
-      (Icons.support_agent_rounded, 'İçerik güncelleme desteği'),
+      (Icons.chat_bubble_outline_rounded, 'WhatsApp baÄŸlantÄ±sÄ±'),
+      (Icons.qr_code_2_rounded, 'QR ve paylaÅŸÄ±m sÃ¼reci'),
+      (Icons.support_agent_rounded, 'Ä°Ã§erik gÃ¼ncelleme desteÄŸi'),
     ];
     const vitrinxSetupItems = [
-      (Icons.storefront_rounded, 'İşletme bilgileri ve fotoğraflar'),
-      (Icons.inventory_2_rounded, 'Ürünler ve hizmetler'),
+      (Icons.storefront_rounded, 'Ä°ÅŸletme bilgileri ve fotoÄŸraflar'),
+      (Icons.inventory_2_rounded, 'ÃœrÃ¼nler ve hizmetler'),
       (Icons.hub_rounded, 'WhatsApp, adres, link ve QR'),
-      (Icons.edit_note_rounded, 'Panelden kolay güncelleme'),
-      (Icons.forum_rounded, 'Müşteriyle doğrudan iletişim'),
+      (Icons.edit_note_rounded, 'Panelden kolay gÃ¼ncelleme'),
+      (Icons.forum_rounded, 'MÃ¼ÅŸteriyle doÄŸrudan iletiÅŸim'),
     ];
 
     return Container(
       width: double.infinity,
-      color: const Color(0xFFF1F5F9),
-      padding: const EdgeInsets.symmetric(vertical: 88, horizontal: 24),
+      color: AppColors.bgEditor,
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
               const Text(
-                'Dijital vitrininiz için gerekenler tek yerde',
+                'Dijital vitrininiz iÃ§in gerekenler tek yerde',
                 style: TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -1428,10 +1428,10 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               const SizedBox(height: 16),
               const Text(
-                'Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme bilgilerinizi VitrinX’e ekleyin ve paylaşmaya başlayın.',
+                'AraÃ§larÄ± ve kurulumlarÄ± ayrÄ± ayrÄ± yÃ¶netmek yerine iÅŸletme bilgilerinizi VitrinXâ€™e ekleyin ve paylaÅŸmaya baÅŸlayÄ±n.',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Color(0xFF475569),
+                  color: AppColors.mutedText,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -1441,15 +1441,15 @@ class _LandingScreenState extends State<LandingScreen>
                 builder: (context, constraints) {
                   final isDesktop = constraints.maxWidth > 820;
                   final separatePanel = _buildSetupPanel(
-                    label: 'Ayrı ayrı kurulum',
+                    label: 'AyrÄ± ayrÄ± kurulum',
                     items: separateSetupItems,
-                    footer: 'Birden fazla araç ve işlem',
+                    footer: 'Birden fazla araÃ§ ve iÅŸlem',
                     highlighted: false,
                   );
                   final vitrinxPanel = _buildSetupPanel(
                     label: 'VitrinX ile',
                     items: vitrinxSetupItems,
-                    footer: 'Tek panel, tek link, doğrudan iletişim',
+                    footer: 'Tek panel, tek link, doÄŸrudan iletiÅŸim',
                     highlighted: true,
                   );
                   final direction = Container(
@@ -1523,7 +1523,7 @@ class _LandingScreenState extends State<LandingScreen>
                 ? const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF0F172A), Color(0xFF0B6670)],
+                  colors: [AppColors.darkText, Color(0xFF0B6670)],
                 )
                 : null,
         borderRadius: BorderRadius.circular(28),
@@ -1550,7 +1550,7 @@ class _LandingScreenState extends State<LandingScreen>
           Text(
             label,
             style: TextStyle(
-              color: highlighted ? brandOrange : const Color(0xFF64748B),
+              color: highlighted ? brandOrange : AppColors.mutedText,
               fontSize: 13,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.2,
@@ -1569,7 +1569,7 @@ class _LandingScreenState extends State<LandingScreen>
                       color:
                           highlighted
                               ? Colors.white.withValues(alpha: 0.1)
-                              : const Color(0xFFF1F5F9),
+                              : AppColors.surfaceSoft,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -1578,7 +1578,7 @@ class _LandingScreenState extends State<LandingScreen>
                       color:
                           highlighted
                               ? const Color(0xFF65E7E7)
-                              : const Color(0xFF64748B),
+                              : AppColors.mutedText,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1589,7 +1589,7 @@ class _LandingScreenState extends State<LandingScreen>
                         color:
                             highlighted
                                 ? Colors.white
-                                : const Color(0xFF334155),
+                                : AppColors.darkTextAlt,
                         fontSize: 14,
                         height: 1.35,
                         fontWeight:
@@ -1609,13 +1609,13 @@ class _LandingScreenState extends State<LandingScreen>
               color:
                   highlighted
                       ? Colors.white.withValues(alpha: 0.1)
-                      : const Color(0xFFF8FAFC),
+                      : AppColors.bgLight,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color:
                     highlighted
                         ? Colors.white.withValues(alpha: 0.12)
-                        : const Color(0xFFE2E8F0),
+                        : AppColors.border,
               ),
             ),
             child: Text(
@@ -1625,7 +1625,7 @@ class _LandingScreenState extends State<LandingScreen>
                 color:
                     highlighted
                         ? const Color(0xFFBFF7F7)
-                        : const Color(0xFF64748B),
+                        : AppColors.mutedText,
                 fontSize: 12,
                 height: 1.35,
                 fontWeight: FontWeight.w900,
@@ -1639,11 +1639,11 @@ class _LandingScreenState extends State<LandingScreen>
 
   Widget _buildTrustBandSection(BuildContext context) {
     const items = [
-      (Icons.credit_card_off_rounded, 'Kredi kartı gerekmez'),
-      (Icons.percent_rounded, 'Satıştan komisyon alınmaz'),
+      (Icons.credit_card_off_rounded, 'Kredi kartÄ± gerekmez'),
+      (Icons.percent_rounded, 'SatÄ±ÅŸtan komisyon alÄ±nmaz'),
       (Icons.code_off_rounded, 'Kodsuz kurulum'),
-      (Icons.qr_code_2_rounded, 'Link ve QR kod hazırdır'),
-      (Icons.chat_bubble_rounded, 'WhatsApp ile doğrudan iletişim'),
+      (Icons.qr_code_2_rounded, 'Link ve QR kod hazÄ±rdÄ±r'),
+      (Icons.chat_bubble_rounded, 'WhatsApp ile doÄŸrudan iletiÅŸim'),
     ];
 
     return Container(
@@ -1656,7 +1656,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'Başlarken sürpriz yok',
+                'BaÅŸlarken sÃ¼rpriz yok',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: darkAccent,
@@ -1721,7 +1721,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'Üç adımda vitrininiz hazır',
+                'ÃœÃ§ adÄ±mda vitrininiz hazÄ±r',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
@@ -1738,17 +1738,17 @@ class _LandingScreenState extends State<LandingScreen>
                     _buildStepTimeline(
                       1,
                       'Bilgilerinizi ekleyin',
-                      'İşletme adı, açıklama, WhatsApp ve adres bilgilerinizi girin.',
+                      'Ä°ÅŸletme adÄ±, aÃ§Ä±klama, WhatsApp ve adres bilgilerinizi girin.',
                     ),
                     _buildStepTimeline(
                       2,
-                      'Vitrininizi hazırlayın',
-                      'Fotoğraflarınızı, ürünlerinizi ve hizmetlerinizi ekleyin.',
+                      'Vitrininizi hazÄ±rlayÄ±n',
+                      'FotoÄŸraflarÄ±nÄ±zÄ±, Ã¼rÃ¼nlerinizi ve hizmetlerinizi ekleyin.',
                     ),
                     _buildStepTimeline(
                       3,
-                      'Müşterilerinizle paylaşın',
-                      'Vitrin linkinizi veya QR kodunuzu paylaşın.',
+                      'MÃ¼ÅŸterilerinizle paylaÅŸÄ±n',
+                      'Vitrin linkinizi veya QR kodunuzu paylaÅŸÄ±n.',
                     ),
                   ];
 
@@ -1817,7 +1817,7 @@ class _LandingScreenState extends State<LandingScreen>
             description,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF64748B),
+              color: AppColors.mutedText,
               fontSize: 14,
               height: 1.45,
               fontWeight: FontWeight.w600,
@@ -1836,7 +1836,7 @@ class _LandingScreenState extends State<LandingScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0F172A), brandOrange],
+          colors: [AppColors.bgEditor, AppColors.primaryDark],
         ),
       ),
       child: Center(
@@ -1845,10 +1845,10 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'İşletmenizi tek linkte müşterilerinizle buluşturun',
+                'Ä°ÅŸletmenizi tek linkte mÃ¼ÅŸterilerinizle buluÅŸturun',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0xFFF8FAFC),
+                  color: AppColors.bgLight,
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
                   height: 1.2,
@@ -1857,10 +1857,10 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               const SizedBox(height: 24),
               const Text(
-                'VitrinX’inizi oluşturun; linkinizi, QR kodunuzu ve WhatsApp iletişiminizi paylaşmaya başlayın.',
+                'VitrinXâ€™inizi oluÅŸturun; linkinizi, QR kodunuzu ve WhatsApp iletiÅŸiminizi paylaÅŸmaya baÅŸlayÄ±n.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0xFFE2E8F0),
+                  color: AppColors.border,
                   fontSize: 18,
                   height: 1.5,
                 ),
@@ -1881,7 +1881,7 @@ class _LandingScreenState extends State<LandingScreen>
                   elevation: 10,
                 ),
                 child: const Text(
-                  'VitrinX Oluştur',
+                  'VitrinX OluÅŸtur',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                 ),
               ),
@@ -1910,9 +1910,9 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           const SizedBox(height: 16),
           const Text(
-            'İşletmenizin paylaşılabilir dijital vitrini',
+            'Ä°ÅŸletmenizin paylaÅŸÄ±labilir dijital vitrini',
             style: TextStyle(
-              color: Color(0xFF64748B),
+              color: AppColors.mutedText,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -1924,11 +1924,11 @@ class _LandingScreenState extends State<LandingScreen>
             runSpacing: 8,
             children: [
               _buildFooterLegalLink(
-                label: 'KVKK ve Gizlilik Politikası',
+                label: 'KVKK ve Gizlilik PolitikasÄ±',
                 routePath: LegalConfig.privacyPath,
               ),
               _buildFooterLegalLink(
-                label: 'Kullanım Şartları',
+                label: 'KullanÄ±m ÅartlarÄ±',
                 routePath: LegalConfig.termsPath,
               ),
               _buildFooterLegalLink(
@@ -1949,7 +1949,7 @@ class _LandingScreenState extends State<LandingScreen>
     return TextButton(
       onPressed: () => Navigator.pushNamed(context, routePath),
       style: TextButton.styleFrom(
-        foregroundColor: const Color(0xFF475569),
+        foregroundColor: AppColors.mutedText,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
       child: Text(
@@ -2023,12 +2023,12 @@ class _HeroDemoProfile {
     ];
 
     List<StoreOffering> parsedOfferings = [];
-    String mappedKategori = 'Diğer';
+    String mappedKategori = 'DiÄŸer';
     double? lat;
     double? lng;
     String phone = '05551234567';
     String web = '';
-    String addr = 'Atatürk Cad. No:24, Şişli, İstanbul';
+    String addr = 'AtatÃ¼rk Cad. No:24, ÅiÅŸli, Ä°stanbul';
 
     if (name.contains('Aymira')) {
       mappedKategori = 'Giyim & Butik';
@@ -2038,21 +2038,21 @@ class _HeroDemoProfile {
       parsedOfferings = [
         StoreOffering(
           id: '1',
-          title: 'Elbise Seçenekleri',
-          description: 'Yeni sezon özel tasarım elbiseler',
-          price: 'Mağazada sorunuz',
+          title: 'Elbise SeÃ§enekleri',
+          description: 'Yeni sezon Ã¶zel tasarÄ±m elbiseler',
+          price: 'MaÄŸazada sorunuz',
         ),
         StoreOffering(
           id: '2',
-          title: 'Triko & Hırka',
-          description: 'Farklı renk ve beden alternatifleriyle',
-          price: 'Mağazada sorunuz',
+          title: 'Triko & HÄ±rka',
+          description: 'FarklÄ± renk ve beden alternatifleriyle',
+          price: 'MaÄŸazada sorunuz',
         ),
         StoreOffering(
           id: '3',
           title: 'Yeni Sezon Ceket',
-          description: 'Şık ve modern günlük ceketler',
-          price: 'Mağazada sorunuz',
+          description: 'ÅÄ±k ve modern gÃ¼nlÃ¼k ceketler',
+          price: 'MaÄŸazada sorunuz',
         ),
       ];
     } else if (name.contains('Lezzet')) {
@@ -2063,33 +2063,33 @@ class _HeroDemoProfile {
       parsedOfferings = [
         StoreOffering(
           id: '1',
-          title: 'Günün Menüsü',
-          description: 'Ana yemek + çorba + içecek menüsü',
+          title: 'GÃ¼nÃ¼n MenÃ¼sÃ¼',
+          description: 'Ana yemek + Ã§orba + iÃ§ecek menÃ¼sÃ¼',
           price: '120 TL',
         ),
         StoreOffering(
           id: '2',
-          title: 'Ev Yapımı Mantı',
-          description: 'Yoğurtlu ve tereyağlı soslu el yapımı mantı',
+          title: 'Ev YapÄ±mÄ± MantÄ±',
+          description: 'YoÄŸurtlu ve tereyaÄŸlÄ± soslu el yapÄ±mÄ± mantÄ±',
           price: '95 TL',
         ),
       ];
     } else if (name.contains('Nova')) {
-      mappedKategori = 'Kuaför';
+      mappedKategori = 'KuafÃ¶r';
       lat = 41.0370;
       lng = 28.9850;
       web = 'novakuafor.com';
       parsedOfferings = [
         StoreOffering(
           id: '1',
-          title: 'Saç Kesimi & Tasarım',
-          description: 'Yıkama ve fön dahil komple saç tasarımı',
+          title: 'SaÃ§ Kesimi & TasarÄ±m',
+          description: 'YÄ±kama ve fÃ¶n dahil komple saÃ§ tasarÄ±mÄ±',
           price: '180 TL',
         ),
         StoreOffering(
           id: '2',
-          title: 'Saç Boyama & Keratin',
-          description: 'Saç yapısına özel organik keratin bakımı',
+          title: 'SaÃ§ Boyama & Keratin',
+          description: 'SaÃ§ yapÄ±sÄ±na Ã¶zel organik keratin bakÄ±mÄ±',
           price: '450 TL',
         ),
       ];
@@ -2101,15 +2101,15 @@ class _HeroDemoProfile {
       parsedOfferings = [
         StoreOffering(
           id: '1',
-          title: 'Telefon Ekran Değişimi',
-          description: '30 dakikada hızlı ekran değişimi ve garanti',
-          price: 'Mağazada sorunuz',
+          title: 'Telefon Ekran DeÄŸiÅŸimi',
+          description: '30 dakikada hÄ±zlÄ± ekran deÄŸiÅŸimi ve garanti',
+          price: 'MaÄŸazada sorunuz',
         ),
         StoreOffering(
           id: '2',
-          title: 'Batarya Değişimi',
-          description: 'Yüksek kapasiteli batarya yenilemesi',
-          price: 'Mağazada sorunuz',
+          title: 'Batarya DeÄŸiÅŸimi',
+          description: 'YÃ¼ksek kapasiteli batarya yenilemesi',
+          price: 'MaÄŸazada sorunuz',
         ),
       ];
     }
@@ -2160,8 +2160,8 @@ class _PhoneMockup extends StatelessWidget {
       width: 320,
       height: 640,
       decoration: BoxDecoration(
-        color: Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(40),
+        color: AppColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(color: Colors.white24, width: 8),
         boxShadow: [
           BoxShadow(
@@ -2208,7 +2208,7 @@ class _PhoneMockup extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: const BoxDecoration(
-                            color: Color(0xFFF8FAFC),
+                            color: AppColors.bgLight,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
@@ -2245,7 +2245,7 @@ class _PhoneMockup extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A),
+                          color: AppColors.darkText,
                         ),
                       ),
                     ),
@@ -2295,7 +2295,7 @@ class _PhoneMockup extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        color: Color(0xFF475569),
+                        color: AppColors.mutedText,
                         fontSize: 12,
                         height: 1.35,
                         fontWeight: FontWeight.w700,
@@ -2342,7 +2342,7 @@ class _PhoneMockup extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF8FAFC),
+                  color: AppColors.bgLight,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.black12),
                 ),
@@ -2353,16 +2353,16 @@ class _PhoneMockup extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Vitrin hazır',
+                          'Vitrin hazÄ±r',
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 13,
-                            color: Color(0xFF0F172A),
+                            color: AppColors.darkText,
                           ),
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          '${profile.links.length} bağlantı',
+                          '${profile.links.length} baÄŸlantÄ±',
                           style: const TextStyle(
                             color: Colors.black54,
                             fontSize: 10,
@@ -2389,7 +2389,7 @@ class _PhoneMockup extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Bu vitrin VitrinX ile oluşturuldu',
+                'Bu vitrin VitrinX ile oluÅŸturuldu',
                 style: TextStyle(
                   fontSize: 11,
                   color: Colors.black45,
@@ -2411,7 +2411,7 @@ class _PhoneMockup extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.bgLight,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black12),
       ),
@@ -2439,7 +2439,7 @@ class _PhoneMockup extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
-                    color: Color(0xFF0F172A),
+                    color: AppColors.darkText,
                   ),
                 ),
               ),
@@ -2519,7 +2519,7 @@ class _PhoneMockup extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.bgLight,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black12),
       ),
