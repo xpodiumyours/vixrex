@@ -8,6 +8,11 @@ import {
   slugifyTR,
   type ProductItem,
 } from "@/lib/products";
+import {
+  buildInstagramGraphUrl,
+  normalizeStoreAuth,
+  trimToEmpty,
+} from "@/lib/instagramRouteUtils";
 import { sanitizeInstagramMedia } from "@/lib/instagram";
 import { getConnectedInstagramAccess, revalidateProductTargets } from "@/lib/instagramServer";
 import {
@@ -127,9 +132,8 @@ async function uploadInstagramMedia(args: {
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as ImportBody;
-    const storeSlug = body.storeSlug?.trim() || "";
-    const editToken = body.editToken?.trim() || "";
-    const mediaId = body.mediaId?.trim() || "";
+    const { storeSlug, editToken } = normalizeStoreAuth(body);
+    const mediaId = trimToEmpty(body.mediaId);
 
     if (!mediaId) {
       return instagramJson(
@@ -140,7 +144,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { admin, store, connection, accessToken } = await getConnectedInstagramAccess(storeSlug, editToken);
-    const mediaUrl = new URL(`${process.env.INSTAGRAM_GRAPH_BASE_URL || "https://graph.instagram.com"}/${mediaId}`);
+    const mediaUrl = buildInstagramGraphUrl(`/${mediaId}`);
     mediaUrl.searchParams.set("fields", "id,caption,media_type,media_url,permalink,timestamp");
     mediaUrl.searchParams.set("access_token", accessToken);
 

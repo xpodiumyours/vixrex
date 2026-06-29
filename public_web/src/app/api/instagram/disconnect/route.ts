@@ -6,6 +6,7 @@ import {
   safeParseJson,
   type ProductItem,
 } from "@/lib/products";
+import { normalizeStoreAuth } from "@/lib/instagramRouteUtils";
 import {
   instagramErrorStatus,
   instagramJson,
@@ -24,8 +25,7 @@ interface DisconnectBody {
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as DisconnectBody;
-    const storeSlug = body.storeSlug?.trim() || "";
-    const editToken = body.editToken?.trim() || "";
+    const { storeSlug, editToken } = normalizeStoreAuth(body);
     const mode = body.mode || "A";
     const store = await verifyStoreEditToken(storeSlug, editToken);
     const admin = getSupabaseAdmin();

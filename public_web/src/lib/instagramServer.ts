@@ -1,6 +1,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { decryptSecret, encryptSecret, sha256 } from "@/lib/instagram";
+import { buildInstagramGraphUrl } from "@/lib/instagramRouteUtils";
 
 export interface EditableStoreRow {
   slug: string;
@@ -39,10 +40,6 @@ interface InstagramTokenResponse {
   };
 }
 
-function getInstagramGraphBaseUrl() {
-  return process.env.INSTAGRAM_GRAPH_BASE_URL || "https://graph.instagram.com";
-}
-
 function expiresAtFromSeconds(expiresIn?: number) {
   return expiresIn
     ? new Date(Date.now() + expiresIn * 1000).toISOString()
@@ -63,7 +60,7 @@ export async function exchangeForLongLivedInstagramToken(
   const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET;
   if (!clientSecret) throw new Error("INSTAGRAM_CLIENT_ENV_MISSING");
 
-  const url = new URL(`${getInstagramGraphBaseUrl()}/access_token`);
+  const url = buildInstagramGraphUrl("/access_token");
   url.searchParams.set("grant_type", "ig_exchange_token");
   url.searchParams.set("client_secret", clientSecret);
   url.searchParams.set("access_token", shortLivedAccessToken);
@@ -75,7 +72,7 @@ export async function exchangeForLongLivedInstagramToken(
 }
 
 async function refreshLongLivedInstagramToken(accessToken: string) {
-  const url = new URL(`${getInstagramGraphBaseUrl()}/refresh_access_token`);
+  const url = buildInstagramGraphUrl("/refresh_access_token");
   url.searchParams.set("grant_type", "ig_refresh_token");
   url.searchParams.set("access_token", accessToken);
 

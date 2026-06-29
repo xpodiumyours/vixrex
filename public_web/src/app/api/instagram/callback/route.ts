@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeInstagramState, encryptSecret } from "@/lib/instagram";
+import { buildInstagramGraphUrl, getPublicSiteOrigin } from "@/lib/instagramRouteUtils";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { exchangeForLongLivedInstagramToken } from "@/lib/instagramServer";
 
@@ -23,7 +24,7 @@ interface InstagramProfileResponse {
 }
 
 function callbackRedirect(req: NextRequest, returnTo: string, status: string) {
-  const url = new URL(returnTo || "/", process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin);
+  const url = new URL(returnTo || "/", getPublicSiteOrigin(req));
   url.searchParams.set("instagram", status);
   return NextResponse.redirect(url);
 }
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
     const admin = getSupabaseAdmin();
     const redirectUri =
       process.env.INSTAGRAM_REDIRECT_URI ||
-      `${process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin}/api/instagram/callback`;
+      `${getPublicSiteOrigin(req)}/api/instagram/callback`;
 
     const { data: connection, error: connectionError } = await admin
       .from("store_instagram_connections")
@@ -86,10 +87,10 @@ export async function GET(req: NextRequest) {
       tokenJson.access_token,
     );
     const accessToken = longLivedToken.access_token!;
-    const profileResponse = await fetch(
-      `${process.env.INSTAGRAM_GRAPH_BASE_URL || "https://graph.instagram.com"}/me?fields=id,username,account_type&access_token=${encodeURIComponent(accessToken)}`,
-      { cache: "no-store" },
-    );
+    const profileUrl = buildInstagramGraphUrl("/me");
+    profileUrl.searchParams.set("fields", "id,username,account_type");
+    profileUrl.searchParams.set("access_token", accessToken);
+    const profileResponse = await fetch(profileUrl, { cache: "no-store" });
     const profileJson = profileResponse.ok
       ? ((await profileResponse.json()) as InstagramProfileResponse)
       : {};

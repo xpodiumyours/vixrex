@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { sanitizeInstagramMedia } from "@/lib/instagram";
+import { buildInstagramGraphUrl, normalizeStoreAuth } from "@/lib/instagramRouteUtils";
 import { getConnectedInstagramAccess } from "@/lib/instagramServer";
 import {
   instagramErrorStatus,
@@ -22,10 +23,9 @@ export async function POST(req: NextRequest) {
       storeSlug?: string;
       editToken?: string;
     };
-    const storeSlug = body.storeSlug?.trim() || "";
-    const editToken = body.editToken?.trim() || "";
+    const { storeSlug, editToken } = normalizeStoreAuth(body);
     const { accessToken } = await getConnectedInstagramAccess(storeSlug, editToken);
-    const mediaUrl = new URL(`${process.env.INSTAGRAM_GRAPH_BASE_URL || "https://graph.instagram.com"}/me/media`);
+    const mediaUrl = buildInstagramGraphUrl("/me/media");
     mediaUrl.searchParams.set(
       "fields",
       "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp",

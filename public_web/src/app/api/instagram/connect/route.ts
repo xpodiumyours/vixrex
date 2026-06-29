@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 import crypto from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { encodeInstagramState, getInstagramScopes, sha256 } from "@/lib/instagram";
+import {
+  getPublicSiteOrigin,
+  normalizeStoreAuth,
+  trimToEmpty,
+} from "@/lib/instagramRouteUtils";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import {
   instagramErrorStatus,
@@ -35,7 +40,7 @@ async function createAuthorizationUrl(args: {
   const scopes = getInstagramScopes();
   const redirectUri =
     process.env.INSTAGRAM_REDIRECT_URI ||
-    `${process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin}/api/instagram/callback`;
+    `${getPublicSiteOrigin(req)}/api/instagram/callback`;
 
   const state = encodeInstagramState({
     storeSlug: store.slug,
@@ -77,9 +82,8 @@ export async function POST(req: NextRequest) {
       editToken?: string;
       returnTo?: string;
     };
-    const storeSlug = body.storeSlug?.trim() || "";
-    const editToken = body.editToken?.trim() || "";
-    const returnTo = safeReturnTo(body.returnTo?.trim() || null, storeSlug);
+    const { storeSlug, editToken } = normalizeStoreAuth(body);
+    const returnTo = safeReturnTo(trimToEmpty(body.returnTo) || null, storeSlug);
     const authUrl = await createAuthorizationUrl({
       req,
       storeSlug,

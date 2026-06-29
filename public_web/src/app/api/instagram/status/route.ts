@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { normalizeStoreAuth } from "@/lib/instagramRouteUtils";
 import {
   getConnectedInstagramAccess,
   verifyStoreEditToken,
@@ -18,8 +19,7 @@ export async function POST(req: NextRequest) {
       storeSlug?: string;
       editToken?: string;
     };
-    const storeSlug = body.storeSlug?.trim() || "";
-    const editToken = body.editToken?.trim() || "";
+    const { storeSlug, editToken } = normalizeStoreAuth(body);
     const store = await verifyStoreEditToken(storeSlug, editToken);
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
