@@ -11,6 +11,7 @@ import 'package:vitrinx/screens/my_vitrin_screen.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 import 'package:vitrinx/widgets/chatbot_overlay.dart';
+import 'package:vitrinx/theme/app_colors.dart';
 
 class HomeShellScreen extends StatefulWidget {
   final int initialIndex;
@@ -156,7 +157,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -172,7 +173,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -181,27 +182,27 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
+                    color: AppColors.darkText,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Müşterileriniz bu QR kodu okutarak vitrininize hızlıca ulaşabilir.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: AppColors.mutedText,
                   ),
                 ),
                 const SizedBox(height: 24),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.white, // Keep QR white background for scan reliability
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -229,8 +230,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                   icon: const Icon(Icons.copy_rounded),
                   label: const Text('Linki Kopyala'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF4F46E5),
-                    side: const BorderSide(color: Color(0xFFE5E7EB)),
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.border),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

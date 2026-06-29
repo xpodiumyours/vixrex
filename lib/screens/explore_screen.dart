@@ -246,7 +246,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 fontSize: 20,
               ),
             ),
-            backgroundColor: Colors.white,
+            backgroundColor: bgColor,
             elevation: 0,
             iconTheme: const IconThemeData(color: darkText),
             actions: [
@@ -262,7 +262,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               children: [
                 // Header / Subtitle
                 Container(
-                  color: Colors.white,
+                  color: bgColor,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 8,
@@ -278,7 +278,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 ),
                 // Search Input
                 Container(
-                  color: Colors.white,
+                  color: bgColor,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 12,
@@ -325,7 +325,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 // Filter Categories Bar
                 Container(
                   height: 52,
-                  color: Colors.white,
+                  color: bgColor,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(

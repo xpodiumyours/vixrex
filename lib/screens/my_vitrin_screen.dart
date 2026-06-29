@@ -4152,12 +4152,12 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(22),
       border: Border.all(color: cardBorder),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
+          color: Colors.black.withValues(alpha: 0.25),
           blurRadius: 24,
           offset: const Offset(0, 12),
         ),
