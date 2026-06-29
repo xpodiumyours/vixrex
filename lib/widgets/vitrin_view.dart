@@ -1357,7 +1357,7 @@ class VitrinView extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Öne Çıkan Ürünler',
+                    'Ürünler',
                     style: TextStyle(
                       color: preset.textPrimary,
                       fontSize: isCompact ? 14 : 16,
