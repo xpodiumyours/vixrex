@@ -3,25 +3,13 @@ import { NextRequest } from "next/server";
 import { POST } from "@/app/api/meta/data-deletion/route";
 import crypto from "crypto";
 import { revalidateTag } from "next/cache";
+import {
+  createSupabaseMockBuilder,
+  type QueryResult,
+  type StorageListResult,
+} from "../../helpers/createSupabaseMockBuilder";
 
-const mockResult = { data: null, error: null };
-type QueryResult<T> = { data: T; error: null };
-type StorageListResult = { data: Array<{ name: string }>; error: null };
-const mockBuilder = {
-  from: vi.fn().mockReturnThis(),
-  select: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  delete: vi.fn().mockReturnThis(),
-  update: vi.fn().mockReturnThis(),
-  maybeSingle: vi.fn().mockImplementation(() => Promise.resolve(mockResult)),
-  insert: vi.fn().mockImplementation(() => Promise.resolve(mockResult)),
-  then: vi.fn().mockImplementation((resolve) => resolve(mockResult)),
-  storage: {
-    from: vi.fn().mockReturnThis(),
-    list: vi.fn().mockResolvedValue({ data: [], error: null }),
-    remove: vi.fn().mockResolvedValue({ data: [], error: null }),
-  },
-};
+const mockBuilder = createSupabaseMockBuilder();
 
 vi.mock("@/lib/supabaseAdmin", () => {
   return { getSupabaseAdmin: () => mockBuilder };

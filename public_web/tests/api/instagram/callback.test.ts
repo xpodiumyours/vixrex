@@ -3,18 +3,13 @@ import { NextRequest } from "next/server";
 import { GET } from "@/app/api/instagram/callback/route";
 import { decodeInstagramState } from "@/lib/instagram";
 import { exchangeForLongLivedInstagramToken } from "@/lib/instagramServer";
+import {
+  createSupabaseMockBuilder,
+  type QueryResult,
+} from "../../helpers/createSupabaseMockBuilder";
 
-const mockResult = { data: null, error: null };
-type MaybeSingleResult<T> = { data: T; error: null };
-const mockBuilder = {
-  from: vi.fn().mockReturnThis(),
-  select: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  update: vi.fn().mockReturnThis(),
-  upsert: vi.fn().mockImplementation(() => Promise.resolve(mockResult)),
-  maybeSingle: vi.fn().mockImplementation(() => Promise.resolve(mockResult)),
-  then: vi.fn().mockImplementation((resolve) => resolve(mockResult)),
-};
+type MaybeSingleResult<T> = QueryResult<T>;
+const mockBuilder = createSupabaseMockBuilder();
 
 vi.mock("@/lib/supabaseAdmin", () => {
   return { getSupabaseAdmin: () => mockBuilder };

@@ -3,24 +3,12 @@ import { NextRequest } from "next/server";
 import { POST } from "@/app/api/instagram/import/route";
 import { getConnectedInstagramAccess } from "@/lib/instagramServer";
 import { sanitizeInstagramMedia } from "@/lib/instagram";
+import { createSupabaseMockBuilder } from "../../helpers/createSupabaseMockBuilder";
 
-const mockResult = { data: null, error: null };
 type ConnectedInstagramAccess = Awaited<
   ReturnType<typeof getConnectedInstagramAccess>
 >;
-const mockBuilder = {
-  from: vi.fn().mockReturnThis(),
-  select: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  update: vi.fn().mockReturnThis(),
-  upsert: vi.fn().mockImplementation(() => Promise.resolve(mockResult)),
-  then: vi.fn().mockImplementation((resolve) => resolve(mockResult)),
-  storage: {
-    from: vi.fn().mockReturnThis(),
-    upload: vi.fn().mockResolvedValue({ error: null }),
-    getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: "http://storage/img.jpg" } }),
-  },
-};
+const mockBuilder = createSupabaseMockBuilder();
 
 vi.mock("@/lib/supabaseAdmin", () => {
   return { getSupabaseAdmin: () => mockBuilder };
