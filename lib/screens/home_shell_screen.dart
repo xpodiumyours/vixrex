@@ -77,7 +77,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final snapshot = await _snapshotLoader.load();
     final storage = const StoreLocalStorageService();
     final publishedInfo = await storage.loadPublishedVitrinInfo();
-    
+
     // Geçmiş sohbeti yerel depolamadan yükle
     final history = await ChatbotService().loadHistory();
 
@@ -129,12 +129,21 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final link = _publishedInfo?.publicLink;
     if (link == null || link.isEmpty) return;
 
-    final storeName = _xrexSnapshot?.nameCompleted == true ? 'vitrinimi' : 'dijital vitrinimi';
-    final message = 'Merhaba! Tasarladığım $storeName incelemek için linke tıklayabilirsiniz: $link';
-    final whatsappUrl = Uri.parse('https://api.whatsapp.com/send?text=${Uri.encodeComponent(message)}');
+    final storeName =
+        _xrexSnapshot?.nameCompleted == true
+            ? 'vitrinimi'
+            : 'dijital vitrinimi';
+    final message =
+        'Merhaba! Tasarladığım $storeName incelemek için linke tıklayabilirsiniz: $link';
+    final whatsappUrl = Uri.parse(
+      'https://api.whatsapp.com/send?text=${Uri.encodeComponent(message)}',
+    );
 
     try {
-      final launched = await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        whatsappUrl,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched && mounted) {
         Clipboard.setData(ClipboardData(text: link));
         ScaffoldMessenger.of(context).showSnackBar(
@@ -162,7 +171,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     if (link == null || link.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('QR kodunu göstermek için önce vitrininizi yayınlamalısınız!'),
+          content: Text(
+            'QR kodunu göstermek için önce vitrininizi yayınlamalısınız!',
+          ),
           duration: Duration(seconds: 3),
         ),
       );
@@ -203,16 +214,15 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                 const Text(
                   'Müşterileriniz bu QR kodu okutarak vitrininize hızlıca ulaşabilir.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.mutedText,
-                  ),
+                  style: TextStyle(fontSize: 14, color: AppColors.mutedText),
                 ),
                 const SizedBox(height: 24),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white, // Keep QR white background for scan reliability
+                    color:
+                        Colors
+                            .white, // Keep QR white background for scan reliability
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -249,7 +259,10 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -289,12 +302,12 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       const NavigationDestination(
         icon: Icon(Icons.storefront_outlined),
         selectedIcon: Icon(Icons.storefront_rounded),
-        label: 'Store',
+        label: 'Vitrinim',
       ),
       const NavigationDestination(
         icon: Icon(Icons.travel_explore_outlined),
         selectedIcon: Icon(Icons.travel_explore_rounded),
-        label: 'Discover',
+        label: 'Keşfet',
       ),
       const NavigationDestination(
         icon: Icon(Icons.assistant_outlined),
@@ -304,7 +317,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       const NavigationDestination(
         icon: Icon(Icons.person_outline_rounded),
         selectedIcon: Icon(Icons.person_rounded),
-        label: 'Profile',
+        label: 'Profil',
       ),
       if (isAdmin)
         const NavigationDestination(
@@ -343,7 +356,11 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
           indicatorColor: AppColors.primary.withAlpha(40),
           labelTextStyle: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold);
+              return const TextStyle(
+                color: AppColors.primary,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              );
             }
             return const TextStyle(color: AppColors.mutedText, fontSize: 11);
           }),

@@ -10,7 +10,7 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: AppColors.bgEditor,
       appBar: AppBar(
         title: const Text(
-          'Profile',
+          'Profil',
           style: TextStyle(
             color: AppColors.darkText,
             fontWeight: FontWeight.w900,
@@ -44,7 +44,11 @@ class ProfileScreen extends StatelessWidget {
                         color: AppColors.surfaceSoft,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person_outline_rounded, color: AppColors.primary, size: 26),
+                      child: const Icon(
+                        Icons.person_outline_rounded,
+                        color: AppColors.primary,
+                        size: 26,
+                      ),
                     ),
                     const SizedBox(width: 14),
                     const Expanded(
@@ -96,14 +100,21 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceSoft,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.link_rounded, color: AppColors.primary, size: 16),
+                          Icon(
+                            Icons.link_rounded,
+                            color: AppColors.primary,
+                            size: 16,
+                          ),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -138,7 +149,11 @@ class ProfileScreen extends StatelessWidget {
                         color: AppColors.primary.withAlpha(20),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.qr_code_2_rounded, color: AppColors.primary, size: 24),
+                      child: const Icon(
+                        Icons.qr_code_2_rounded,
+                        color: AppColors.primary,
+                        size: 24,
+                      ),
                     ),
                     const SizedBox(width: 14),
                     const Expanded(
@@ -165,7 +180,11 @@ class ProfileScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.mutedText, size: 12),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: AppColors.mutedText,
+                      size: 12,
+                    ),
                   ],
                 ),
               ),
@@ -173,9 +192,15 @@ class ProfileScreen extends StatelessWidget {
               // Ayarlar / Profil / Kullanım Kartları
               _buildProfileOption(Icons.settings_outlined, 'Uygulama Ayarları'),
               const SizedBox(height: 10),
-              _buildProfileOption(Icons.help_outline_rounded, 'Kullanım Bilgisi & Destek'),
+              _buildProfileOption(
+                Icons.help_outline_rounded,
+                'Kullanım Bilgisi & Destek',
+              ),
               const SizedBox(height: 10),
-              _buildProfileOption(Icons.shield_outlined, 'Gizlilik ve Güvenlik politikası'),
+              _buildProfileOption(
+                Icons.shield_outlined,
+                'Gizlilik ve Güvenlik politikası',
+              ),
             ],
           ),
         ),
@@ -205,7 +230,11 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-          const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.mutedText, size: 12),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            color: AppColors.mutedText,
+            size: 12,
+          ),
         ],
       ),
     );

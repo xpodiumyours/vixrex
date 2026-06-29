@@ -11,7 +11,7 @@ class XrexScreen extends StatelessWidget {
       backgroundColor: AppColors.bgEditor,
       appBar: AppBar(
         title: const Text(
-          'X-rex AI',
+          'X-rex Yapay Zekâ',
           style: TextStyle(
             color: AppColors.darkText,
             fontWeight: FontWeight.w900,
@@ -35,7 +35,10 @@ class XrexScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColors.surfaceSoft,
-                  border: Border.all(color: AppColors.primary.withAlpha(80), width: 2),
+                  border: Border.all(
+                    color: AppColors.primary.withAlpha(80),
+                    width: 2,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primary.withAlpha(40),
@@ -68,7 +71,7 @@ class XrexScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               const Text(
-                'VitrinX AI Asistanı',
+                'VitrinX Yapay Zekâ Asistanı',
                 style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 14,
@@ -104,13 +107,15 @@ class XrexScreen extends StatelessWidget {
                     _buildSuggestionCard(
                       icon: Icons.edit_note_outlined,
                       title: 'Mağaza açıklamanı iyileştir',
-                      subtitle: 'Yapay zeka ile dikkat çekici bir açıklama yaz.',
+                      subtitle:
+                          'Yapay zekâ ile dikkat çekici bir açıklama yaz.',
                     ),
                     const SizedBox(height: 12),
                     _buildSuggestionCard(
                       icon: Icons.style_outlined,
                       title: 'Ürün kartı önerileri hazırla',
-                      subtitle: 'Ürünlerinin sunumunu ve fiyatlarını değerlendir.',
+                      subtitle:
+                          'Ürünlerinin sunumunu ve fiyatlarını değerlendir.',
                     ),
                   ],
                 ),
@@ -169,7 +174,11 @@ class XrexScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.mutedText, size: 12),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            color: AppColors.mutedText,
+            size: 12,
+          ),
         ],
       ),
     );
