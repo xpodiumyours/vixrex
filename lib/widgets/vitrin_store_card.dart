@@ -16,7 +16,6 @@ class VitrinStoreCard extends StatelessWidget {
   static const Color cardBorder = AppColors.border;
   static const Color darkText = AppColors.darkText;
   static const Color mutedText = AppColors.mutedText;
-  static const Color softText = AppColors.softText;
 
   const VitrinStoreCard({
     super.key,
@@ -32,20 +31,30 @@ class VitrinStoreCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = store.shelfImageUrl.isNotEmpty;
+    final status = store.status.trim();
+    final isOpen = status.isEmpty || status.toLowerCase() == 'açık';
+    final location =
+        store.districtName.trim().isNotEmpty
+            ? store.districtName.trim()
+            : store.provinceName.trim().isNotEmpty
+            ? store.provinceName.trim()
+            : store.address.trim().isNotEmpty
+            ? store.address.trim()
+            : 'Konum belirtilmedi';
 
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isOwnStore ? primaryColor.withValues(alpha: 0.8) : cardBorder,
           width: isOwnStore ? 2.0 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.22),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
           if (isOwnStore)
             BoxShadow(
@@ -56,260 +65,232 @@ class VitrinStoreCard extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: isExample ? null : onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Shelf image or placeholder with aspect ratio to prevent grid squishing
-            AspectRatio(
-              aspectRatio: 1.65,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (hasImage)
-                    Image.network(
-                      store.shelfImageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder:
-                          (context, error, stackTrace) =>
-                              _buildImagePlaceholder(),
-                    )
-                  else
-                    _buildImagePlaceholder(),
-                  
-                  // Bottom gradient overlay
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            AppColors.surface.withValues(alpha: 0.85),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // combined Row for Category and Example badges to prevent overlaps
-                  Positioned(
-                    top: 12,
-                    left: 12,
-                    right: 52, // Space for the favorite button (36px width + padding)
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface.withValues(alpha: 0.85),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: primaryColor.withValues(alpha: 0.35),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              'VitrinX${store.kategori.isNotEmpty ? " • ${store.kategori}" : ""}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: AppColors.darkText,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (isExample) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: primaryColor.withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: primaryColor, width: 1),
-                            ),
-                            child: const Text(
-                              'Örnek',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                  if (isOwnStore)
-                    Positioned(
-                      bottom: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.primary, AppColors.secondary],
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle_rounded,
-                              color: Colors.white,
-                              size: 12,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Senin vitrinin',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  // Favorite button (Glassmorphism circle)
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceSoft.withValues(alpha: 0.85),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.border,
-                          width: 1.2,
-                        ),
-                      ),
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: Icon(
-                          isFavorited
-                              ? Icons.favorite_rounded
-                              : Icons.favorite_border_rounded,
-                          size: 18,
-                          color: isFavorited ? Colors.redAccent : AppColors.mutedText,
-                        ),
-                        onPressed: onFavoritePressed,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Info content - fits dynamically
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isExample ? null : onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 3,
+                child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    Text(
-                      store.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 15,
-                        color: AppColors.darkText,
+                    if (hasImage)
+                      Image.network(
+                        store.shelfImageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (context, error, stackTrace) =>
+                                _buildImagePlaceholder(),
+                      )
+                    else
+                      _buildImagePlaceholder(),
+
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              AppColors.surface.withValues(alpha: 0.85),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      store.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.mutedText,
-                        height: 1.35,
-                        fontWeight: FontWeight.w500,
+
+                    if (isExample)
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: _buildImageBadge('Örnek'),
                       ),
-                    ),
-                    const Spacer(),
-                    // Action Buttons & Address
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 11,
-                          color: AppColors.primary,
+
+                    if (isOwnStore)
+                      Positioned(
+                        bottom: 10,
+                        left: 10,
+                        child: _buildImageBadge(
+                          'Senin vitrinin',
+                          highlighted: true,
                         ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            store.address,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.mutedText,
-                            ),
+                      ),
+
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceSoft.withValues(alpha: 0.85),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.border,
+                            width: 1.2,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        // WhatsApp Button (circular siber container)
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF25D366).withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFF25D366).withValues(alpha: 0.35),
-                              width: 1,
-                            ),
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: Icon(
+                            isFavorited
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            size: 20,
+                            color:
+                                isFavorited
+                                    ? Colors.redAccent
+                                    : AppColors.mutedText,
                           ),
-                          child: IconButton(
-                            padding: EdgeInsets.zero,
-                            icon: const Icon(
-                              Icons.chat_bubble_rounded,
-                              color: Color(0xFF25D366),
-                              size: 16,
-                            ),
-                            onPressed: onWhatsAppPressed,
-                          ),
+                          onPressed: onFavoritePressed,
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                flex: 3,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 9, 8, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              store.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                                color: AppColors.darkText,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color:
+                                  isOpen ? AppColors.success : AppColors.error,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isOpen ? 'Açık' : 'Kapalı',
+                            style: TextStyle(
+                              color:
+                                  isOpen ? AppColors.success : AppColors.error,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        store.kategori.trim().isEmpty
+                            ? 'Dijital vitrin'
+                            : store.kategori.trim(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 13,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              location,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.mutedText,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFF25D366,
+                              ).withValues(alpha: 0.13),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(
+                                  0xFF25D366,
+                                ).withValues(alpha: 0.35),
+                                width: 1,
+                              ),
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(
+                                Icons.chat_bubble_rounded,
+                                color: Color(0xFF25D366),
+                                size: 18,
+                              ),
+                              onPressed: onWhatsAppPressed,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageBadge(String label, {bool highlighted = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color:
+            highlighted
+                ? AppColors.primary
+                : AppColors.surface.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color:
+              highlighted
+                  ? AppColors.primary
+                  : AppColors.primary.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: highlighted ? AppColors.bgEditor : AppColors.darkText,
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
