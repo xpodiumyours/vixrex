@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { revalidateTag } from "next/cache";
+import {
+  retainManualProducts,
+  safeParseJson,
+  type ProductItem,
+} from "@/lib/products";
 
 export const runtime = "nodejs";
 
@@ -116,10 +121,11 @@ export async function POST(req: NextRequest) {
         .eq("slug", connection.store_slug)
         .maybeSingle();
 
-      if (store && Array.isArray(store.products)) {
+      if (Array.isArray(store?.products)) {
         // Remove products where source is 'instagram' OR matches the imported slugs
-        const nextProducts = store.products.filter(
-          (prod: any) => prod?.source !== "instagram" && !importedSlugs.includes(prod?.slug)
+        const nextProducts = retainManualProducts(
+          safeParseJson<ProductItem>(store.products),
+          importedSlugs,
         );
 
         await admin

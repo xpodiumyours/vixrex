@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/instagram/status/route";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyStoreEditToken, getConnectedInstagramAccess } from "@/lib/instagramServer";
 
 const mockResult = { data: null, error: null };
+type MaybeSingleResult<T> = { data: T; error: null };
+type ConnectedInstagramAccess = Awaited<
+  ReturnType<typeof getConnectedInstagramAccess>
+>;
 const mockBuilder = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
@@ -34,7 +37,7 @@ describe("POST /api/instagram/status", () => {
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({
       data: { status: "disconnected" },
       error: null,
-    } as any);
+    } as MaybeSingleResult<{ status: string }>);
 
     const req = new NextRequest("http://localhost/api/instagram/status", {
       method: "POST",
@@ -55,15 +58,20 @@ describe("POST /api/instagram/status", () => {
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({
       data: { status: "connected", username: "tester", account_type: "PERSONAL", expires_at: "2026-12-31" },
       error: null,
-    } as any);
+    } as MaybeSingleResult<{
+      status: string;
+      username: string;
+      account_type: string;
+      expires_at: string;
+    }>);
 
     vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
       admin: mockBuilder,
       store: mockStore,
-      connection: { id: "conn-1" } as any,
+      connection: { id: "conn-1", store_slug: "test-store", status: "connected" },
       accessToken: "llt-1",
       expiresAt: "2026-12-31",
-    } as any);
+    } as ConnectedInstagramAccess);
 
     const req = new NextRequest("http://localhost/api/instagram/status", {
       method: "POST",

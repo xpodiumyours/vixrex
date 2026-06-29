@@ -125,3 +125,16 @@ export function buildInstagramProductDescription(args: {
 
   return `${args.storeName} vitrini için Instagram'dan aktarılan ${args.productName}. Ürün detayı, beden, renk ve stok bilgisi için WhatsApp üzerinden bilgi alabilirsiniz.`;
 }
+
+export function retainManualProducts(
+  products: ProductItem[],
+  importedSlugs: readonly string[] = [],
+): ProductItem[] {
+  const importedSlugSet = new Set(importedSlugs.filter(Boolean));
+
+  return products.filter((product) => {
+    if (product.source === "instagram") return false;
+    if (!product.slug) return true;
+    return !importedSlugSet.has(product.slug);
+  });
+}

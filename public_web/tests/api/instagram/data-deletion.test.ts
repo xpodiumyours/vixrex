@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/meta/data-deletion/route";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import crypto from "crypto";
 import { revalidateTag } from "next/cache";
 
 const mockResult = { data: null, error: null };
+type QueryResult<T> = { data: T; error: null };
+type StorageListResult = { data: Array<{ name: string }>; error: null };
 const mockBuilder = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
@@ -69,11 +70,11 @@ describe("POST /api/meta/data-deletion", () => {
       .mockResolvedValueOnce({
         data: [{ id: "conn-123", store_slug: "user-store" }],
         error: null,
-      } as any) // connections select eq
+      } as QueryResult<Array<{ id: string; store_slug: string }>>) // connections select eq
       .mockResolvedValueOnce({
         data: [{ product_slug: "p1" }],
         error: null,
-      } as any) // imports select eq
+      } as QueryResult<Array<{ product_slug: string }>>) // imports select eq
       .mockImplementation(() => mockBuilder);
 
     // Mock finding store products
@@ -85,13 +86,13 @@ describe("POST /api/meta/data-deletion", () => {
         ],
       },
       error: null,
-    } as any);
+    } as QueryResult<{ products: Array<{ slug: string; source: string }> }>);
 
     // Mock storage files listing
     vi.spyOn(mockBuilder.storage, "list").mockResolvedValue({
       data: [{ name: "img.jpg" }],
       error: null,
-    } as any);
+    } as StorageListResult);
 
     const req = new NextRequest("http://localhost/api/meta/data-deletion", {
       method: "POST",
@@ -171,11 +172,11 @@ describe("POST /api/meta/data-deletion", () => {
       .mockResolvedValueOnce({
         data: [{ id: "conn-123", store_slug: "user-store" }],
         error: null,
-      } as any) // req 1 connections select
+      } as QueryResult<Array<{ id: string; store_slug: string }>>) // req 1 connections select
       .mockResolvedValueOnce({
         data: [{ product_slug: "p1" }],
         error: null,
-      } as any) // req 1 imports select
+      } as QueryResult<Array<{ product_slug: string }>>) // req 1 imports select
       .mockImplementationOnce(() => mockBuilder) // req 1 stores select
       .mockImplementationOnce(() => mockBuilder) // req 1 stores update
       .mockImplementationOnce(() => mockBuilder) // req 1 imports delete
@@ -184,11 +185,11 @@ describe("POST /api/meta/data-deletion", () => {
       .mockResolvedValueOnce({
         data: [{ id: "conn-123", store_slug: "user-store" }],
         error: null,
-      } as any) // req 2 connections select
+      } as QueryResult<Array<{ id: string; store_slug: string }>>) // req 2 connections select
       .mockResolvedValueOnce({
         data: [{ product_slug: "p1" }],
         error: null,
-      } as any) // req 2 imports select
+      } as QueryResult<Array<{ product_slug: string }>>) // req 2 imports select
       .mockImplementation(() => mockBuilder); // all other calls
 
     const req1 = new NextRequest("http://localhost/api/meta/data-deletion", {

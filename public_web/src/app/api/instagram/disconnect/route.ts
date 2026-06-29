@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import {
+  retainManualProducts,
+  safeParseJson,
+  type ProductItem,
+} from "@/lib/products";
+import {
   instagramErrorStatus,
   instagramJson,
   instagramOptions,
@@ -40,22 +45,22 @@ export async function POST(req: NextRequest) {
         await admin.from("store_instagram_tokens").delete().eq("connection_id", connection.id);
 
         // 2. Filter out products with source = 'instagram'
-        let products = store.products;
-        if (!products || !Array.isArray(products)) {
+        let products = Array.isArray(store.products)
+          ? safeParseJson<ProductItem>(store.products)
+          : null;
+        if (!products) {
           const { data: storeData } = await admin
             .from("stores")
             .select("products")
             .eq("slug", store.slug)
             .maybeSingle();
-          if (storeData && Array.isArray(storeData.products)) {
-            products = storeData.products;
+          if (Array.isArray(storeData?.products)) {
+            products = safeParseJson<ProductItem>(storeData.products);
           }
         }
 
-        if (Array.isArray(products)) {
-          const nextProducts = products.filter(
-            (prod: any) => prod?.source !== "instagram"
-          );
+        if (products) {
+          const nextProducts = retainManualProducts(products);
           const { error: storeUpdateError } = await admin
             .from("stores")
             .update({

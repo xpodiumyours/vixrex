@@ -5,6 +5,9 @@ import { getConnectedInstagramAccess } from "@/lib/instagramServer";
 import { sanitizeInstagramMedia } from "@/lib/instagram";
 
 const mockResult = { data: null, error: null };
+type ConnectedInstagramAccess = Awaited<
+  ReturnType<typeof getConnectedInstagramAccess>
+>;
 const mockBuilder = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
@@ -51,11 +54,11 @@ describe("POST /api/instagram/import", () => {
 
   it("rejects non-IMAGE media types (422)", async () => {
     vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      admin: mockBuilder as any,
+      admin: mockBuilder,
       store: { slug: "test-store", products: [] },
       connection: { id: "conn-1" },
       accessToken: "llt-1",
-    } as any);
+    } as ConnectedInstagramAccess);
 
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",
@@ -82,11 +85,11 @@ describe("POST /api/instagram/import", () => {
 
   it("rejects images larger than 6MB (422)", async () => {
     vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      admin: mockBuilder as any,
+      admin: mockBuilder,
       store: { slug: "test-store", products: [] },
       connection: { id: "conn-1" },
       accessToken: "llt-1",
-    } as any);
+    } as ConnectedInstagramAccess);
 
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",
@@ -121,11 +124,11 @@ describe("POST /api/instagram/import", () => {
 
   it("successfully imports an image product and saves it in store products array", async () => {
     vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      admin: mockBuilder as any,
+      admin: mockBuilder,
       store: { slug: "test-store", name: "My Store", products: [] },
       connection: { id: "conn-1" },
       accessToken: "llt-1",
-    } as any);
+    } as ConnectedInstagramAccess);
 
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",
