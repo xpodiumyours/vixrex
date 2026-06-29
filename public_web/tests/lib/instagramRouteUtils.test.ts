@@ -3,14 +3,14 @@ import {
   buildInstagramGraphUrl,
   getPublicSiteOrigin,
   normalizeStoreAuth,
-  trimToEmpty,
+  trimOrEmpty,
 } from "@/lib/instagramRouteUtils";
 
 describe("instagramRouteUtils", () => {
   it("trims nullable string values to empty strings", () => {
-    expect(trimToEmpty("  abc  ")).toBe("abc");
-    expect(trimToEmpty("   ")).toBe("");
-    expect(trimToEmpty(null)).toBe("");
+    expect(trimOrEmpty("  abc  ")).toBe("abc");
+    expect(trimOrEmpty("   ")).toBe("");
+    expect(trimOrEmpty(null)).toBe("");
   });
 
   it("normalizes store auth request bodies", () => {

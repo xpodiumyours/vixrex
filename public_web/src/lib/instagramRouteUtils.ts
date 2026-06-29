@@ -7,14 +7,14 @@ export interface StoreAuthBody {
   editToken?: string;
 }
 
-export function trimToEmpty(value: string | null | undefined) {
+export function trimOrEmpty(value: string | null | undefined) {
   return value?.trim() || "";
 }
 
 export function normalizeStoreAuth(body: StoreAuthBody) {
   return {
-    storeSlug: trimToEmpty(body.storeSlug),
-    editToken: trimToEmpty(body.editToken),
+    storeSlug: trimOrEmpty(body.storeSlug),
+    editToken: trimOrEmpty(body.editToken),
   };
 }
 

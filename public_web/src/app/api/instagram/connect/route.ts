@@ -5,7 +5,7 @@ import { encodeInstagramState, getInstagramScopes, sha256 } from "@/lib/instagra
 import {
   getPublicSiteOrigin,
   normalizeStoreAuth,
-  trimToEmpty,
+  trimOrEmpty,
 } from "@/lib/instagramRouteUtils";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import {
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       returnTo?: string;
     };
     const { storeSlug, editToken } = normalizeStoreAuth(body);
-    const returnTo = safeReturnTo(trimToEmpty(body.returnTo) || null, storeSlug);
+    const returnTo = safeReturnTo(trimOrEmpty(body.returnTo) || null, storeSlug);
     const authUrl = await createAuthorizationUrl({
       req,
       storeSlug,

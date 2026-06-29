@@ -11,7 +11,7 @@ import {
 import {
   buildInstagramGraphUrl,
   normalizeStoreAuth,
-  trimToEmpty,
+  trimOrEmpty,
 } from "@/lib/instagramRouteUtils";
 import { sanitizeInstagramMedia } from "@/lib/instagram";
 import { getConnectedInstagramAccess, revalidateProductTargets } from "@/lib/instagramServer";
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as ImportBody;
     const { storeSlug, editToken } = normalizeStoreAuth(body);
-    const mediaId = trimToEmpty(body.mediaId);
+    const mediaId = trimOrEmpty(body.mediaId);
 
     if (!mediaId) {
       return instagramJson(
