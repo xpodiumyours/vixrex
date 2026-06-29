@@ -407,11 +407,7 @@ class _LandingScreenState extends State<LandingScreen>
             ),
           ),
           // Xrex: Sağ alt köşede yüzen robot rozeti
-          const Positioned(
-            right: 16,
-            bottom: 16,
-            child: ChatbotBadge(),
-          ),
+          const Positioned(right: 16, bottom: 16, child: ChatbotBadge()),
         ],
       ),
     );
@@ -592,7 +588,7 @@ class _LandingScreenState extends State<LandingScreen>
                   icon: const Icon(Icons.explore_rounded, size: 18),
                   color: darkAccent,
                   style: IconButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.8),
+                    backgroundColor: AppColors.surfaceSoft,
                     padding: const EdgeInsets.all(10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -637,7 +633,7 @@ class _LandingScreenState extends State<LandingScreen>
                     icon: const Icon(Icons.logout_rounded, size: 18),
                     color: darkAccent,
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.8),
+                      backgroundColor: AppColors.surfaceSoft,
                       padding: const EdgeInsets.all(10),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -894,7 +890,7 @@ class _LandingScreenState extends State<LandingScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surfaceSoft,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.border, width: 1.5),
         ),
@@ -1067,14 +1063,8 @@ class _LandingScreenState extends State<LandingScreen>
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Transform(
-              transform:
-                  Matrix4.identity()
-                    ..setEntry(3, 2, 0.001)
-                    ..rotateY(-0.1)
-                    ..rotateX(0.05)
-                    ..translateByDouble(0.0, floatOffset, 0.0, 0.0),
-              alignment: Alignment.center,
+            Transform.translate(
+              offset: Offset(0, floatOffset),
               child: Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
@@ -1162,10 +1152,10 @@ class _LandingScreenState extends State<LandingScreen>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.82),
+            color: AppColors.surface.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.92),
+              color: AppColors.primary.withValues(alpha: 0.28),
               width: 1.2,
             ),
             boxShadow: [
@@ -1260,7 +1250,7 @@ class _LandingScreenState extends State<LandingScreen>
                           vertical: 11,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surfaceSoft,
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(color: AppColors.border),
                         ),
@@ -1456,14 +1446,16 @@ class _LandingScreenState extends State<LandingScreen>
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surfaceSoft,
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFDCE7EA)),
-                      boxShadow: const [
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.35),
+                      ),
+                      boxShadow: [
                         BoxShadow(
-                          color: Color.fromRGBO(15, 23, 42, 0.08),
+                          color: Colors.black.withValues(alpha: 0.22),
                           blurRadius: 16,
-                          offset: Offset(0, 8),
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
@@ -1517,28 +1509,28 @@ class _LandingScreenState extends State<LandingScreen>
     return Container(
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        color: highlighted ? null : Colors.white,
+        color: highlighted ? null : AppColors.surface,
         gradient:
             highlighted
                 ? const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.bgEditor, Color(0xFF0B6670)],
+                  colors: [AppColors.surface, AppColors.turquoiseSurface],
                 )
                 : null,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color:
               highlighted
-                  ? const Color.fromRGBO(16, 216, 216, 0.32)
-                  : const Color(0xFFDCE7EA),
+                  ? AppColors.primary.withValues(alpha: 0.38)
+                  : AppColors.border,
         ),
         boxShadow: [
           BoxShadow(
             color:
                 highlighted
-                    ? const Color.fromRGBO(11, 102, 112, 0.2)
-                    : const Color.fromRGBO(15, 23, 42, 0.06),
+                    ? AppColors.primary.withValues(alpha: 0.14)
+                    : Colors.black.withValues(alpha: 0.2),
             blurRadius: highlighted ? 34 : 24,
             offset: const Offset(0, 16),
           ),
@@ -1587,9 +1579,7 @@ class _LandingScreenState extends State<LandingScreen>
                       item.$2,
                       style: TextStyle(
                         color:
-                            highlighted
-                                ? Colors.white
-                                : AppColors.darkTextAlt,
+                            highlighted ? Colors.white : AppColors.darkTextAlt,
                         fontSize: 14,
                         height: 1.35,
                         fontWeight:
@@ -1623,9 +1613,7 @@ class _LandingScreenState extends State<LandingScreen>
               textAlign: TextAlign.center,
               style: TextStyle(
                 color:
-                    highlighted
-                        ? const Color(0xFFBFF7F7)
-                        : AppColors.mutedText,
+                    highlighted ? const Color(0xFFBFF7F7) : AppColors.mutedText,
                 fontSize: 12,
                 height: 1.35,
                 fontWeight: FontWeight.w900,
@@ -1680,9 +1668,7 @@ class _LandingScreenState extends State<LandingScreen>
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: AppColors.border,
-                              ),
+                              border: Border.all(color: AppColors.border),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
