@@ -145,7 +145,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
                   // Robot yüzü
                   CustomPaint(
                     size: const Size(52, 52),
-                    painter: _RobotFacePainter(blinking: _blinking),
+                    painter: _DragonFacePainter(blinking: _blinking),
                   ),
                   // Scan line
                   Positioned(
@@ -186,105 +186,105 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   }
 }
 
-// ─── Robot Yüzü CustomPainter ────────────────────────────────────────────────
-class _RobotFacePainter extends CustomPainter {
+// ─── Siber Ejderha (Cyber Dragon) CustomPainter ──────────────────────────────
+class _DragonFacePainter extends CustomPainter {
   final bool blinking;
-  const _RobotFacePainter({required this.blinking});
+  const _DragonFacePainter({required this.blinking});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
+    final w = size.width;
+    final h = size.height;
 
-    // Arka plan
-    canvas.drawCircle(
-      Offset(cx, cy),
-      size.width / 2,
-      Paint()..color = const Color(0xFFF4F5F8),
-    );
+    // 1. Dış Arka Plan (OLED Uyumlu Cam Efekti)
+    final bgPaint = Paint()..color = const Color(0xFF1E222B);
+    canvas.drawCircle(Offset(w / 2, h / 2), w / 2, bgPaint);
 
-    // Kafa kutusu
-    final faceRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(cx, cy), width: 30, height: 26),
-      const Radius.circular(6),
-    );
-    canvas.drawRRect(
-      faceRect,
-      Paint()
-        ..color = const Color(0xFFE2ECF0)
-        ..style = PaintingStyle.fill,
-    );
-    canvas.drawRRect(
-      faceRect,
-      Paint()
-        ..color = AppColors.primary.withAlpha(80)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
-    );
+    // 2. Siber Ejderha Kafa Yapısı (Vektörel Path Çizimi)
+    final dragonPath = Path();
+    // Ense / Boyun başlangıcı
+    dragonPath.moveTo(w * 0.25, h * 0.75);
+    // Çene altı
+    dragonPath.lineTo(w * 0.40, h * 0.70);
+    // Alt çene ucu
+    dragonPath.lineTo(w * 0.65, h * 0.72);
+    // Ağız çizgisi
+    dragonPath.lineTo(w * 0.75, h * 0.55);
+    // Üst gaga / burun ucu
+    dragonPath.lineTo(w * 0.72, h * 0.45);
+    // Alın / Göz üstü
+    dragonPath.lineTo(w * 0.50, h * 0.30);
+    // Ana Boynuz (Üst)
+    dragonPath.lineTo(w * 0.15, h * 0.18);
+    dragonPath.lineTo(w * 0.35, h * 0.35);
+    // İkincil Boynuz (Alt)
+    dragonPath.lineTo(w * 0.10, h * 0.38);
+    dragonPath.lineTo(w * 0.30, h * 0.45);
+    // Ense birleşim
+    dragonPath.lineTo(w * 0.25, h * 0.75);
+    dragonPath.close();
 
-    // Anten
-    final antennaPaint = Paint()
-      ..color = AppColors.primaryDark
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(cx, cy - 13), Offset(cx, cy - 19), antennaPaint);
-    canvas.drawCircle(Offset(cx, cy - 20), 2, Paint()..color = AppColors.primary);
+    // Vektör Gradients (Metalik Karbon Zırh)
+    final armorPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFF2D323F), Color(0xFF12141C)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(Rect.fromLTWH(0, 0, w, h))
+      ..style = PaintingStyle.fill;
 
-    // Gözler
-    final eyePaint = Paint()..color = AppColors.primary;
-    final eyeHeight = blinking ? 1.0 : 5.0;
+    canvas.drawPath(dragonPath, armorPaint);
 
-    // Sol göz
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(cx - 6, cy - 1),
-          width: 7,
-          height: eyeHeight,
-        ),
-        const Radius.circular(2),
-      ),
-      eyePaint,
-    );
-    // Sağ göz
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(cx + 6, cy - 1),
-          width: 7,
-          height: eyeHeight,
-        ),
-        const Radius.circular(2),
-      ),
-      eyePaint,
-    );
+    // Siber Kenar Detayları (Elektrik Mavisi Zırh Çizgileri)
+    final linePaint = Paint()
+      ..color = AppColors.primary.withAlpha(120)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawPath(dragonPath, linePaint);
 
-    // Göz içi ışıltı
+    // 3. Parıldayan Göz (Elektrik Mavisi LED Core)
+    final eyeCenter = Offset(w * 0.52, h * 0.48);
+    final double eyeRadius = blinking ? 0.8 : 4.0;
+    
+    final eyePaint = Paint()
+      ..color = AppColors.primary
+      ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 2);
+    
+    // Göz çevresi siber halka
+    final eyeRingPaint = Paint()
+      ..color = AppColors.secondary.withAlpha(90)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    
     if (!blinking) {
-      canvas.drawCircle(
-        Offset(cx - 4.5, cy - 2),
-        1,
-        Paint()..color = Colors.white.withAlpha(180),
-      );
-      canvas.drawCircle(
-        Offset(cx + 7.5, cy - 2),
-        1,
-        Paint()..color = Colors.white.withAlpha(180),
+      canvas.drawCircle(eyeCenter, 6.0, eyeRingPaint);
+      canvas.drawCircle(eyeCenter, eyeRadius, eyePaint);
+      // Göz içi parlama noktası
+      canvas.drawCircle(Offset(eyeCenter.dx - 1.2, eyeCenter.dy - 1.2), 0.8, Paint()..color = Colors.white);
+    } else {
+      // Göz kapalıyken siber çizgi
+      canvas.drawLine(
+        Offset(eyeCenter.dx - 3, eyeCenter.dy),
+        Offset(eyeCenter.dx + 3, eyeCenter.dy),
+        Paint()..color = AppColors.primary..strokeWidth = 1.0
       );
     }
 
-    // Ağız (küçük çizgi)
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx, cy + 6), width: 10, height: 2),
-        const Radius.circular(1),
-      ),
-      Paint()..color = AppColors.primaryDark.withAlpha(120),
-    );
+    // 4. Siber Ense Plakaları (Ekstra Kalite Detayı)
+    final platePath = Path();
+    platePath.moveTo(w * 0.28, h * 0.52);
+    platePath.lineTo(w * 0.18, h * 0.58);
+    platePath.lineTo(w * 0.26, h * 0.62);
+    
+    final platePaint = Paint()
+      ..color = AppColors.secondary.withAlpha(150)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawPath(platePath, platePaint);
   }
 
   @override
-  bool shouldRepaint(_RobotFacePainter old) => old.blinking != blinking;
+  bool shouldRepaint(_DragonFacePainter old) => old.blinking != blinking;
 }
 
 // ─── Xrex Overlay Panel ──────────────────────────────────────────────────────
@@ -812,7 +812,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
                     children: [
                       CustomPaint(
                         size: const Size(44, 44),
-                        painter: _RobotFacePainter(blinking: _blinking),
+                        painter: _DragonFacePainter(blinking: _blinking),
                       ),
                       Positioned(
                         top: 22 + (_scanAnim.value * 22),

@@ -2394,7 +2394,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     required String title,
     required bool isComplete,
   }) {
-    final color = isComplete ? const Color(0xFF047857) : mutedText;
+    final color = isComplete ? AppColors.success : mutedText;
 
     return SizedBox(
       width: width,
@@ -2402,10 +2402,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         height: 46,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: isComplete ? const Color(0xFFEFFDF5) : Colors.white,
+          color: isComplete ? AppColors.success.withAlpha(30) : AppColors.surfaceSoft,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isComplete ? const Color(0xFFBBF7D0) : cardBorder,
+            color: isComplete ? AppColors.success.withAlpha(80) : cardBorder,
           ),
         ),
         child: Row(
@@ -2418,7 +2418,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isComplete ? const Color(0xFF065F46) : darkText,
+                  color: isComplete ? AppColors.success : darkText,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ),
@@ -2444,19 +2444,19 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
+        color: AppColors.primary.withAlpha(25),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFED7AA)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: const Color(0xFFB45309)),
+          Icon(icon, size: 15, color: AppColors.primary),
           const SizedBox(width: 6),
           Text(
             text,
-            style: TextStyle(
-              color: Color(0xFF9A3412),
+            style: const TextStyle(
+              color: AppColors.darkText,
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
