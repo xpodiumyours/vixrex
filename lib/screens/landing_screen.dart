@@ -30,7 +30,6 @@ class _LandingScreenState extends State<LandingScreen>
 
   // Modern Color Palette
   static const Color brandBlue = AppColors.primary;
-  static const Color darkAccent = AppColors.landingDarkAccent;
   static const Color mint = AppColors.landingMint;
   static const Color blueAccent = AppColors.landingBlueAccent;
   static const Color pinkAccent = AppColors.landingPinkAccent;
@@ -548,7 +547,7 @@ class _LandingScreenState extends State<LandingScreen>
               const Text(
                 'VitrinX',
                 style: TextStyle(
-                  color: darkAccent,
+                  color: AppColors.darkText,
                   fontWeight: FontWeight.w900,
                   fontSize: 20,
                   letterSpacing: -0.5,
@@ -590,7 +589,7 @@ class _LandingScreenState extends State<LandingScreen>
                     _navigateToExploreApp();
                   },
                   icon: const Icon(Icons.explore_rounded, size: 18),
-                  color: darkAccent,
+                  color: AppColors.darkText,
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.surfaceSoft,
                     padding: const EdgeInsets.all(10),
@@ -614,14 +613,14 @@ class _LandingScreenState extends State<LandingScreen>
                     icon: const Icon(
                       Icons.logout_rounded,
                       size: 16,
-                      color: darkAccent,
+                      color: AppColors.darkText,
                     ),
                     label: const Text(
                       'Çıkış Yap',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
-                        color: darkAccent,
+                        color: AppColors.darkText,
                       ),
                     ),
                   )
@@ -635,7 +634,7 @@ class _LandingScreenState extends State<LandingScreen>
                       }
                     },
                     icon: const Icon(Icons.logout_rounded, size: 18),
-                    color: darkAccent,
+                    color: AppColors.darkText,
                     style: IconButton.styleFrom(
                       backgroundColor: AppColors.surfaceSoft,
                       padding: const EdgeInsets.all(10),
@@ -854,17 +853,21 @@ class _LandingScreenState extends State<LandingScreen>
         onPressed: () {
           _navigateToExploreApp();
         },
-        icon: const Icon(Icons.explore_rounded, size: 18, color: darkAccent),
+        icon: const Icon(
+          Icons.explore_rounded,
+          size: 18,
+          color: AppColors.darkText,
+        ),
         label: const Text(
           'Vitrinleri Keşfet',
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 14,
-            color: darkAccent,
+            color: AppColors.darkText,
           ),
         ),
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: darkAccent, width: 1.5),
+          side: const BorderSide(color: AppColors.darkTextAlt, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -913,7 +916,7 @@ class _LandingScreenState extends State<LandingScreen>
               child: TextField(
                 controller: _storeNameController,
                 style: const TextStyle(
-                  color: darkAccent,
+                  color: AppColors.darkText,
                   fontWeight: FontWeight.w900,
                   fontSize: 15,
                 ),
@@ -1031,7 +1034,7 @@ class _LandingScreenState extends State<LandingScreen>
                 const Text(
                   'Tek linkte hazır dijital vitrin',
                   style: TextStyle(
-                    color: darkAccent,
+                    color: AppColors.darkText,
                     fontWeight: FontWeight.w900,
                     fontSize: 13,
                   ),
@@ -1187,7 +1190,7 @@ class _LandingScreenState extends State<LandingScreen>
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 12,
-                  color: darkAccent,
+                  color: AppColors.darkText,
                 ),
               ),
             ],
@@ -1316,7 +1319,7 @@ class _LandingScreenState extends State<LandingScreen>
                 'Müşterilerinizin ihtiyaç duyduğu bilgileri tek vitrinde toplayın, panelden yönetin ve istediğiniz yerde paylaşın.',
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.black54,
+                  color: AppColors.darkTextAlt,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -1651,7 +1654,7 @@ class _LandingScreenState extends State<LandingScreen>
                 'Başlarken sürpriz yok',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: darkAccent,
+                  color: AppColors.darkText,
                   fontSize: 30,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1715,7 +1718,7 @@ class _LandingScreenState extends State<LandingScreen>
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
-                  color: darkAccent,
+                  color: AppColors.darkText,
                   letterSpacing: 0,
                 ),
                 textAlign: TextAlign.center,
@@ -1797,7 +1800,7 @@ class _LandingScreenState extends State<LandingScreen>
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: darkAccent,
+            color: AppColors.darkText,
           ),
         ),
         const SizedBox(height: 10),
