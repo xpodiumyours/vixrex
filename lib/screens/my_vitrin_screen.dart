@@ -1136,7 +1136,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   void _openPublicVitrin() {
     final slug = _publishedInfo?.slug;
     if (slug == null || slug.trim().isEmpty) return;
-    Navigator.pushNamed(context, '/v/$slug');
+    AppRouter.navigateToPublicVitrin(context, slug);
   }
 
   void _openBookingManagement() {

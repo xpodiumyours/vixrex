@@ -462,7 +462,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Widget _buildLegalLink(String label, String routePath) {
     return TextButton(
-      onPressed: () => Navigator.pushNamed(context, routePath),
+      onPressed: () => AppRouter.push(context, routePath),
       style: TextButton.styleFrom(
         foregroundColor: brandOrange,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

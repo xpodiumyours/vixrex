@@ -1947,7 +1947,7 @@ class _LandingScreenState extends State<LandingScreen>
     required String routePath,
   }) {
     return TextButton(
-      onPressed: () => Navigator.pushNamed(context, routePath),
+      onPressed: () => AppRouter.push(context, routePath),
       style: TextButton.styleFrom(
         foregroundColor: AppColors.mutedText,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

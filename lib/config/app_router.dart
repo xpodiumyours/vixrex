@@ -205,4 +205,23 @@ class AppRouter {
       ),
     );
   }
+
+  static void navigateToPublicVitrin(BuildContext context, String slug) {
+    try {
+      context.push('/v/$slug');
+    } catch (_) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: slug)),
+      );
+    }
+  }
+
+  static void push(BuildContext context, String path) {
+    try {
+      context.push(path);
+    } catch (_) {
+      // Fallback for isolated testing/errors
+    }
+  }
 }

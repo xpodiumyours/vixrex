@@ -9,6 +9,7 @@ import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/repositories/explore_repository.dart';
 import 'package:vitrinx/controllers/explore_controller.dart';
 import 'package:vitrinx/widgets/vitrin_store_card.dart';
+import 'package:vitrinx/config/app_router.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -441,7 +442,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                           ? store.slug
                                           : const StorePublishPayloadBuilder()
                                               .generateSlug(store.name);
-                                  Navigator.pushNamed(context, '/v/$slug');
+                                  AppRouter.navigateToPublicVitrin(context, slug);
                                 },
                                 onFavoritePressed:
                                     () =>
