@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
@@ -121,8 +122,13 @@ export default async function BlogIndexPage(props: PageProps) {
       {/* Hero Header */}
       <div className="text-center py-6 space-y-2">
         {store.logo_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={store.logo_url} alt={store.name} className="w-16 h-16 rounded-full mx-auto border object-contain bg-white mb-3" />
+          <Image
+            src={store.logo_url}
+            alt={store.name}
+            width={64}
+            height={64}
+            className="w-16 h-16 rounded-full mx-auto border object-contain bg-white mb-3"
+          />
         )}
         <h2 className="text-2xl font-extrabold">{store.name} Yazıları</h2>
         <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">Güncel paylaşımlar, rehberler ve duyurular.</p>
@@ -137,10 +143,11 @@ export default async function BlogIndexPage(props: PageProps) {
             className="card bg-white dark:bg-[#131A22] hover:border-[#10D8D8] border border-[#D0E4E8] dark:border-[#243141] p-5 flex flex-col md:flex-row gap-5 transition-all hover:-translate-y-0.5"
           >
             {article.cover_image_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={article.cover_image_url}
                 alt={article.title}
+                width={128}
+                height={128}
                 className="w-full md:w-32 aspect-video md:aspect-square object-cover rounded-xl border border-slate-100 dark:border-slate-800 shrink-0"
               />
             )}

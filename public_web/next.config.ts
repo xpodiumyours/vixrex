@@ -23,6 +23,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  images: {
+    remotePatterns: [
+      // Supabase Storage (project-specific subdomain)
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+      // QR code generation service
+      {
+        protocol: "https",
+        hostname: "api.qrserver.com",
+        pathname: "/v1/create-qr-code/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
