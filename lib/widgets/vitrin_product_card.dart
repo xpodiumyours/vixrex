@@ -23,173 +23,230 @@ class VitrinProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final hasImage = imagePath != null && imagePath!.isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceSoft : Colors.white,
-        borderRadius:
-            (theme.cardTheme.shape as RoundedRectangleBorder?)?.borderRadius ??
-            BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isDark ? AppColors.border : const Color(0x08000000),
+          color: AppColors.border,
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.05),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AspectRatio(
             aspectRatio: 1.2,
-            child: ClipRRect(
-              borderRadius: BorderRadius.vertical(
-                top:
-                    ((theme.cardTheme.shape as RoundedRectangleBorder?)
-                                ?.borderRadius
-                            as BorderRadius?)
-                        ?.topLeft ??
-                    const Radius.circular(16),
-              ),
-              child: Stack(
-                children: [
-                  Container(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (hasImage)
+                  Image.network(
+                    imagePath!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(),
+                  )
+                else
+                  _buildImagePlaceholder(),
+
+                // Bottom gradient overlay
+                Positioned.fill(
+                  child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: isDark 
-                            ? [const Color(0xFF12151C), const Color(0xFF1E222B)]
-                            : [Colors.grey.shade100, Colors.grey.shade50],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.image_outlined,
-                        size: 38,
-                        color: AppColors.primary.withValues(alpha: 0.25),
-                      ),
-                    ),
-                  ),
-                  // Siber Onay/Aktif Göstergesi (Sağ Alt Köşe)
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.secondary.withValues(alpha: 0.4),
-                            blurRadius: 6,
-                            spreadRadius: 1,
-                          ),
+                        colors: [
+                          Colors.transparent,
+                          AppColors.surface.withValues(alpha: 0.8),
                         ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.check,
-                          color: Colors.black,
-                          size: 11,
-                          weight: 900,
-                        ),
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+
+                // Siber Onay/Aktif Göstergesi (Sağ Alt Köşe)
+                Positioned(
+                  bottom: 10,
+                  right: 10,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.secondary.withValues(alpha: 0.5),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.check_rounded,
+                        color: Colors.black,
+                        size: 12,
+                        weight: 900,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      category.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.secondary,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    if (stockStatus != 'Mevcut')
-                      Text(
-                        stockStatus.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
-                          color:
-                              stockStatus == 'Tükendi'
-                                  ? AppColors.error
-                                  : AppColors.primary,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          category.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.secondary,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Tooltip(
-                  message: description,
-                  child: Text(
+                      if (stockStatus != 'Mevcut')
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: (stockStatus == 'Tükendi' ? AppColors.error : AppColors.primary).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: stockStatus == 'Tükendi' ? AppColors.error : AppColors.primary,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Text(
+                            stockStatus.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w900,
+                              color: stockStatus == 'Tükendi' ? AppColors.error : AppColors.primary,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                       color: AppColors.darkText,
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      price,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
+                  const SizedBox(height: 3),
+                  Expanded(
+                    child: Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.mutedText,
+                        height: 1.3,
                       ),
                     ),
-                    InkWell(
-                      onTap: onWhatsAppTap,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-                        ),
-                        child: Icon(
-                          Icons.chat,
-                          size: 13,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        price,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
                           color: AppColors.primary,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      InkWell(
+                        onTap: onWhatsAppTap,
+                        borderRadius: BorderRadius.circular(99),
+                        child: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.35),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.chat_bubble_rounded,
+                            size: 13,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.surfaceSoft, AppColors.bgEditor],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.image_outlined,
+              size: 34,
+              color: AppColors.primary.withValues(alpha: 0.25),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Görsel yok',
+              style: TextStyle(
+                color: AppColors.mutedText.withValues(alpha: 0.8),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
