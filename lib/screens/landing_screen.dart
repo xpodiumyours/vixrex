@@ -568,12 +568,15 @@ class _LandingScreenState extends State<LandingScreen>
                     style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: darkAccent,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.surfaceSoft,
+                    foregroundColor: AppColors.primary,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
+                    ),
+                    side: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.45),
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
