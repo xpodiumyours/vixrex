@@ -1,26 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/meta/data-deletion/route";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import crypto from "crypto";
 import { revalidateTag } from "next/cache";
 
-const mockResult = { data: null, error: null };
+const mockResult: { data: unknown; error: null } = { data: null, error: null };
 const mockBuilder = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
+  eq: vi.fn<unknown[], unknown>(),
   delete: vi.fn().mockReturnThis(),
   update: vi.fn().mockReturnThis(),
   maybeSingle: vi.fn().mockImplementation(() => Promise.resolve(mockResult)),
   insert: vi.fn().mockImplementation(() => Promise.resolve(mockResult)),
-  then: vi.fn().mockImplementation((resolve) => resolve(mockResult)),
+  then: vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => resolve(mockResult)),
   storage: {
     from: vi.fn().mockReturnThis(),
-    list: vi.fn().mockResolvedValue({ data: [], error: null }),
+    list: vi.fn().mockResolvedValue({ data: [] as { name: string }[], error: null }),
     remove: vi.fn().mockResolvedValue({ data: [], error: null }),
   },
 };
+// Default eq behaviour: return mockBuilder so query chains work
+mockBuilder.eq.mockReturnValue(mockBuilder);
 
 vi.mock("@/lib/supabaseAdmin", () => {
   return { getSupabaseAdmin: () => mockBuilder };
@@ -69,11 +70,11 @@ describe("POST /api/meta/data-deletion", () => {
       .mockResolvedValueOnce({
         data: [{ id: "conn-123", store_slug: "user-store" }],
         error: null,
-      } as any) // connections select eq
+      }) // connections select eq
       .mockResolvedValueOnce({
         data: [{ product_slug: "p1" }],
         error: null,
-      } as any) // imports select eq
+      }) // imports select eq
       .mockImplementation(() => mockBuilder);
 
     // Mock finding store products
@@ -85,13 +86,13 @@ describe("POST /api/meta/data-deletion", () => {
         ],
       },
       error: null,
-    } as any);
+    });
 
     // Mock storage files listing
     vi.spyOn(mockBuilder.storage, "list").mockResolvedValue({
       data: [{ name: "img.jpg" }],
       error: null,
-    } as any);
+    });
 
     const req = new NextRequest("http://localhost/api/meta/data-deletion", {
       method: "POST",
@@ -171,11 +172,11 @@ describe("POST /api/meta/data-deletion", () => {
       .mockResolvedValueOnce({
         data: [{ id: "conn-123", store_slug: "user-store" }],
         error: null,
-      } as any) // req 1 connections select
+      }) // req 1 connections select
       .mockResolvedValueOnce({
         data: [{ product_slug: "p1" }],
         error: null,
-      } as any) // req 1 imports select
+      }) // req 1 imports select
       .mockImplementationOnce(() => mockBuilder) // req 1 stores select
       .mockImplementationOnce(() => mockBuilder) // req 1 stores update
       .mockImplementationOnce(() => mockBuilder) // req 1 imports delete
@@ -184,11 +185,11 @@ describe("POST /api/meta/data-deletion", () => {
       .mockResolvedValueOnce({
         data: [{ id: "conn-123", store_slug: "user-store" }],
         error: null,
-      } as any) // req 2 connections select
+      }) // req 2 connections select
       .mockResolvedValueOnce({
         data: [{ product_slug: "p1" }],
         error: null,
-      } as any) // req 2 imports select
+      }) // req 2 imports select
       .mockImplementation(() => mockBuilder); // all other calls
 
     const req1 = new NextRequest("http://localhost/api/meta/data-deletion", {

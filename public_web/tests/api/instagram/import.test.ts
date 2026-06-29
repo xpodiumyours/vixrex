@@ -4,6 +4,8 @@ import { POST } from "@/app/api/instagram/import/route";
 import { getConnectedInstagramAccess } from "@/lib/instagramServer";
 import { sanitizeInstagramMedia } from "@/lib/instagram";
 
+type AccessContext = Awaited<ReturnType<typeof getConnectedInstagramAccess>>;
+
 const mockResult = { data: null, error: null };
 const mockBuilder = {
   from: vi.fn().mockReturnThis(),
@@ -51,11 +53,11 @@ describe("POST /api/instagram/import", () => {
 
   it("rejects non-IMAGE media types (422)", async () => {
     vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      admin: mockBuilder as any,
+      admin: mockBuilder,
       store: { slug: "test-store", products: [] },
-      connection: { id: "conn-1" },
+      connection: { id: "conn-1", store_slug: "test-store", status: "connected" },
       accessToken: "llt-1",
-    } as any);
+    } as unknown as AccessContext);
 
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",
@@ -82,11 +84,11 @@ describe("POST /api/instagram/import", () => {
 
   it("rejects images larger than 6MB (422)", async () => {
     vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      admin: mockBuilder as any,
+      admin: mockBuilder,
       store: { slug: "test-store", products: [] },
-      connection: { id: "conn-1" },
+      connection: { id: "conn-1", store_slug: "test-store", status: "connected" },
       accessToken: "llt-1",
-    } as any);
+    } as unknown as AccessContext);
 
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",
@@ -121,11 +123,11 @@ describe("POST /api/instagram/import", () => {
 
   it("successfully imports an image product and saves it in store products array", async () => {
     vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      admin: mockBuilder as any,
+      admin: mockBuilder,
       store: { slug: "test-store", name: "My Store", products: [] },
-      connection: { id: "conn-1" },
+      connection: { id: "conn-1", store_slug: "test-store", status: "connected" },
       accessToken: "llt-1",
-    } as any);
+    } as unknown as AccessContext);
 
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",

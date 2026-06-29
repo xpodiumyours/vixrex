@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
         if (Array.isArray(products)) {
           const nextProducts = products.filter(
-            (prod: any) => prod?.source !== "instagram"
+            (prod: Record<string, unknown>) => prod?.source !== "instagram"
           );
           const { error: storeUpdateError } = await admin
             .from("stores")
