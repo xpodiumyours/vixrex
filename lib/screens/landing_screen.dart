@@ -2160,9 +2160,16 @@ class _PhoneMockup extends StatelessWidget {
       width: 320,
       height: 640,
       decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF26313B), AppColors.surface],
+        ),
         borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: Colors.white24, width: 8),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.55),
+          width: 3,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
@@ -2208,11 +2215,11 @@ class _PhoneMockup extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: const BoxDecoration(
-                            color: AppColors.surfaceSoft,
+                            color: AppColors.surface,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black12,
+                                color: AppColors.primary,
                                 blurRadius: 8,
                                 offset: Offset(0, 4),
                               ),
@@ -2245,7 +2252,7 @@ class _PhoneMockup extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.bgEditor,
+                          color: AppColors.darkText,
                         ),
                       ),
                     ),
@@ -2342,9 +2349,9 @@ class _PhoneMockup extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceSoft,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.black12),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2357,14 +2364,14 @@ class _PhoneMockup extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 13,
-                            color: AppColors.bgEditor,
+                            color: AppColors.darkText,
                           ),
                         ),
                         const SizedBox(height: 3),
                         Text(
                           '${profile.links.length} bağlantı',
                           style: const TextStyle(
-                            color: Colors.black54,
+                            color: AppColors.mutedText,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                           ),
@@ -2392,7 +2399,7 @@ class _PhoneMockup extends StatelessWidget {
                 'Bu vitrin VitrinX ile oluşturuldu',
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.black45,
+                  color: AppColors.mutedText,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -2411,9 +2418,9 @@ class _PhoneMockup extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2439,7 +2446,7 @@ class _PhoneMockup extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
-                    color: AppColors.bgEditor,
+                    color: AppColors.darkText,
                   ),
                 ),
               ),
@@ -2519,9 +2526,9 @@ class _PhoneMockup extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -2547,7 +2554,10 @@ class _PhoneMockup extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.black54, fontSize: 10),
+                  style: const TextStyle(
+                    color: AppColors.mutedText,
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),
