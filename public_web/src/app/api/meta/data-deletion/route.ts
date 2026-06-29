@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
       if (store && Array.isArray(store.products)) {
         // Remove products where source is 'instagram' OR matches the imported slugs
         const nextProducts = store.products.filter(
-          (prod: any) => prod?.source !== "instagram" && !importedSlugs.includes(prod?.slug)
+          (prod: Record<string, unknown>) => prod?.source !== "instagram" && !importedSlugs.includes(prod?.slug as string)
         );
 
         await admin

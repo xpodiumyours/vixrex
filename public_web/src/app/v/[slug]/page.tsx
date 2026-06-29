@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import {
@@ -239,11 +240,13 @@ export default async function StorePage(props: PageProps) {
         <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-5 animate-fade-in">
           <section className="relative overflow-hidden rounded-[28px] border border-[#25415F] bg-[#0E1B2E] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
             {heroImage && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={heroImage}
                 alt={`${store.name} vitrin görseli`}
+                fill
                 className="absolute inset-0 h-full w-full object-cover opacity-55"
+                sizes="100vw"
+                priority
               />
             )}
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,19,34,0.96),rgba(7,19,34,0.78),rgba(7,19,34,0.48))]" />
@@ -277,10 +280,11 @@ export default async function StorePage(props: PageProps) {
                 <div className="flex flex-col items-start gap-5">
                   <div className="flex items-center gap-4">
                     {store.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={store.logo_url}
                         alt={`${store.name} logo`}
+                        width={96}
+                        height={96}
                         className="h-24 w-24 rounded-full border-2 border-white/60 object-contain shadow-2xl bg-white"
                       />
                     ) : (
@@ -401,10 +405,11 @@ export default async function StorePage(props: PageProps) {
                         <>
                           <div className="aspect-square overflow-hidden rounded-xl bg-[#162A42]">
                             {product.imagePath ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
+                              <Image
                                 src={product.imagePath}
                                 alt={product.name}
+                                width={300}
+                                height={300}
                                 className="h-full w-full object-cover"
                               />
                             ) : (
@@ -499,11 +504,11 @@ export default async function StorePage(props: PageProps) {
               <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4">
                 <div className="flex items-center gap-4">
                   <div className="rounded-2xl bg-white p-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(publicUrl)}`}
                       alt={`${store.name} QR kodu`}
-                      className="h-[112px] w-[112px]"
+                      width={112}
+                      height={112}
                     />
                   </div>
                   <div className="min-w-0">
@@ -569,10 +574,11 @@ export default async function StorePage(props: PageProps) {
                   <div className="grid grid-cols-3 gap-2">
                     {galleryItems.slice(0, 6).map((item: GalleryItem, i: number) => (
                       <div key={item.id || i} className="aspect-square overflow-hidden rounded-xl bg-[#162A42]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={item.imageUrl}
                           alt={item.title || "Vitrin görseli"}
+                          width={200}
+                          height={200}
                           className="h-full w-full object-cover"
                         />
                       </div>

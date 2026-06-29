@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import {
@@ -195,11 +196,13 @@ export default async function ProductDetailPage(props: PageProps) {
           <div className="overflow-hidden rounded-[28px] border border-[#25415F] bg-[#0E1B2E] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
             <div className="aspect-square bg-[#13243A]">
               {image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={image}
                   alt={product.name}
+                  width={800}
+                  height={800}
                   className="h-full w-full object-cover"
+                  priority
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-sm font-black text-[#9DB2C8]">

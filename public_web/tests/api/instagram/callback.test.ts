@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { GET } from "@/app/api/instagram/callback/route";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { decodeInstagramState } from "@/lib/instagram";
 import { exchangeForLongLivedInstagramToken } from "@/lib/instagramServer";
 
-const mockResult = { data: null, error: null };
+const mockResult: { data: unknown; error: null } = { data: null, error: null };
 const mockBuilder = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
@@ -52,7 +51,7 @@ describe("GET /api/instagram/callback", () => {
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({
       data: { id: "connection-uuid", store_slug: "test-store", state_nonce: "test-nonce", status: "pending" },
       error: null,
-    } as any);
+    } as { data: { id: string; store_slug: string; state_nonce: string; status: string }; error: null });
 
     // Mock fetch for token exchange and profile API
     const mockTokenExchange = {

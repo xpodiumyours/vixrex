@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { safeParseJson } from "@/lib/products";
 
 interface Offering {
   id: string;
@@ -49,17 +50,7 @@ export default function BookingWizardClient({ store }: BookingWizardClientProps)
   const [successData, setSuccessData] = useState<{ appointmentId: string; token: string } | null>(null);
 
   // Parse offerings
-  const rawOfferings: Offering[] = Array.isArray(store.offerings)
-    ? store.offerings
-    : typeof store.offerings === "string"
-    ? (() => {
-        try {
-          return JSON.parse(store.offerings);
-        } catch {
-          return [];
-        }
-      })()
-    : [];
+  const rawOfferings = safeParseJson<Offering>(store.offerings);
 
   // Filter bookable offerings. Fallback to all if none are marked bookable
   const bookableServices = rawOfferings.filter(o => o.isBookable !== false);

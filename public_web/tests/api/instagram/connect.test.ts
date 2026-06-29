@@ -1,10 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/instagram/connect/route";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { verifyStoreEditToken } from "@/lib/instagramServer";
 
-const mockResult = { data: null, error: null };
+const mockResult: { data: unknown; error: null } = { data: null, error: null };
 const mockBuilder = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
