@@ -61,9 +61,9 @@ class VitrinStoreCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Shelf image or placeholder
-            Expanded(
-              flex: 5,
+            // Shelf image or placeholder with aspect ratio to prevent grid squishing
+            AspectRatio(
+              aspectRatio: 1.65,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -94,58 +94,65 @@ class VitrinStoreCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Kategori ve Tip badge on image
+                  // combined Row for Category and Example badges to prevent overlaps
                   Positioned(
                     top: 12,
                     left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.35),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        'VitrinX${store.kategori.isNotEmpty ? " • ${store.kategori}" : ""}',
-                        style: const TextStyle(
-                          color: AppColors.darkText,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  if (isExample)
-                    Positioned(
-                      top: 12,
-                      right: 50, // Shift left so it doesn't overlap favorite button
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: primaryColor, width: 1),
-                        ),
-                        child: const Text(
-                          'Örnek',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
+                    right: 52, // Space for the favorite button (36px width + padding)
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface.withValues(alpha: 0.85),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: primaryColor.withValues(alpha: 0.35),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              'VitrinX${store.kategori.isNotEmpty ? " • ${store.kategori}" : ""}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.darkText,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        if (isExample) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: primaryColor, width: 1),
+                            ),
+                            child: const Text(
+                              'Örnek',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
+                  ),
 
                   if (isOwnStore)
                     Positioned(
@@ -221,9 +228,9 @@ class VitrinStoreCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Info content
+            
+            // Info content - fits dynamically
             Expanded(
-              flex: 4,
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Column(
