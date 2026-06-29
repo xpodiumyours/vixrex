@@ -984,7 +984,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -1151,7 +1151,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1277,12 +1277,12 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.storefront_rounded, color: Colors.white, size: 13),
+                  Icon(Icons.storefront_rounded, color: Colors.black, size: 13),
                   SizedBox(width: 4),
                   Text(
                     'VitrinX ile',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
@@ -1471,7 +1471,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: Colors.black,
                             ),
                           )
                           : Icon(
@@ -1576,7 +1576,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: cardBorder),
       ),
@@ -2150,12 +2150,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             : hasCoreInfo
             ? const Color(0xFFB45309)
             : const Color(0xFFDC2626);
-    final statusBg =
-        isReady
-            ? const Color(0xFFEFFDF5)
-            : hasCoreInfo
-            ? const Color(0xFFFFF7ED)
-            : const Color(0xFFFEF2F2);
+    final statusBg = statusColor.withValues(alpha: 0.12);
     final helperText =
         isReady
             ? 'Temel bilgiler tamam. Güncel içerik ekledikçe görünürlük güçlenir.'
@@ -2408,7 +2403,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         height: 46,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: isComplete ? AppColors.success.withAlpha(30) : AppColors.surfaceSoft,
+          color:
+              isComplete
+                  ? AppColors.success.withAlpha(30)
+                  : AppColors.surfaceSoft,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isComplete ? AppColors.success.withAlpha(80) : cardBorder,
@@ -2483,7 +2481,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surfaceSoft,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: cardBorder),
         ),
@@ -2541,7 +2539,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -2563,16 +2561,18 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF2F2),
+                    color: AppColors.error.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFFCA5A5)),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.35),
+                    ),
                   ),
                   child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
                         Icons.warning_amber_rounded,
-                        color: Color(0xFFDC2626),
+                        color: AppColors.error,
                         size: 20,
                       ),
                       SizedBox(width: 8),
@@ -2580,7 +2580,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                         child: Text(
                           'Google politikaları gereği yorum karşılığında ödül veya hediye teklif edilmesi yasaktır. Lütfen QR kodunu müşterilerinizden tarafsız ve organik geri bildirimler almak üzere kullanın.',
                           style: TextStyle(
-                            color: Color(0xFF991B1B),
+                            color: AppColors.darkTextAlt,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             height: 1.4,
@@ -2960,13 +2960,18 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
             children:
                 config.suggestedOfferings.map((sug) {
                   return ActionChip(
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.surfaceSoft,
                     side: const BorderSide(color: cardBorder),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
+                    avatar: const Icon(
+                      Icons.add_circle_outline_rounded,
+                      color: primaryColor,
+                      size: 16,
+                    ),
                     label: Text(
-                      '${config.emoji} ${sug.title}',
+                      'Ekle: ${sug.title}',
                       style: const TextStyle(
                         fontSize: 11,
                         color: darkText,
@@ -3220,18 +3225,24 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cardBorder),
       ),
       child: ExpansionTile(
-        title: const Text(
-          '📅 Randevu Ayarları',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
-            color: darkText,
-          ),
+        title: const Row(
+          children: [
+            Icon(Icons.calendar_month_rounded, color: primaryColor, size: 18),
+            SizedBox(width: 8),
+            Text(
+              'Randevu Ayarları',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: darkText,
+              ),
+            ),
+          ],
         ),
         subtitle: Text(
           _bookingIsEnabled
@@ -3577,16 +3588,30 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFFDF5),
+                        color: AppColors.success.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        '✅ Keşfet\'te yayında',
-                        style: TextStyle(
-                          color: Color(0xFF047857),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                        border: Border.all(
+                          color: AppColors.success.withValues(alpha: 0.3),
                         ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: AppColors.success,
+                            size: 14,
+                          ),
+                          SizedBox(width: 5),
+                          Text(
+                            'Keşfet\'te yayında',
+                            style: TextStyle(
+                              color: AppColors.success,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const Spacer(),
@@ -3596,7 +3621,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                       color: primaryColor,
                       tooltip: 'Keşfet\'te Gör',
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFF4EF),
+                        backgroundColor: primaryColor.withValues(alpha: 0.12),
                         minimumSize: const Size(36, 36),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -3693,7 +3718,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: darkText,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surfaceSoft,
           side: const BorderSide(color: cardBorder),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           shape: RoundedRectangleBorder(
@@ -3912,7 +3937,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                                   child: const Text(
                                     'Kapak',
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: Colors.black,
                                       fontSize: 8,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -3968,7 +3993,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFFFEFE7), Color(0xFFF8FAFC)],
+          colors: [AppColors.surfaceSoft, AppColors.bgEditor],
         ),
       ),
       child: const Center(
@@ -4170,8 +4195,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       ],
     );
   }
-
-
 
   void _showProductManagementPlaceholder() {
     showModalBottomSheet(
