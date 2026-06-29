@@ -415,11 +415,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           : GridView.builder(
                             padding: const EdgeInsets.all(16),
                             gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: MediaQuery.sizeOf(context).width >= 1100
+                                      ? 3
+                                      : MediaQuery.sizeOf(context).width >= 650
+                                          ? 2
+                                          : 1,
                                   crossAxisSpacing: 12,
                                   mainAxisSpacing: 12,
-                                  childAspectRatio: 0.72,
+                                  childAspectRatio: MediaQuery.sizeOf(context).width >= 650
+                                      ? 0.78
+                                      : 0.95,
                                 ),
                             itemCount: stores.length,
                             itemBuilder: (context, index) {

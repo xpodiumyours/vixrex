@@ -33,17 +33,29 @@ class VitrinStoreCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasImage = store.shelfImageUrl.isNotEmpty;
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side:
-            isOwnStore
-                ? const BorderSide(color: primaryColor, width: 2.5)
-                : const BorderSide(color: cardBorder, width: 1),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isOwnStore ? primaryColor.withValues(alpha: 0.8) : cardBorder,
+          width: isOwnStore ? 2.0 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+          if (isOwnStore)
+            BoxShadow(
+              color: primaryColor.withValues(alpha: 0.15),
+              blurRadius: 12,
+              spreadRadius: 1,
+            ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
-      color: Colors.white,
       child: InkWell(
         onTap: isExample ? null : onTap,
         child: Column(
@@ -65,65 +77,96 @@ class VitrinStoreCard extends StatelessWidget {
                     )
                   else
                     _buildImagePlaceholder(),
+                  
+                  // Bottom gradient overlay
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            AppColors.surface.withValues(alpha: 0.85),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ),
+
                   // Kategori ve Tip badge on image
                   Positioned(
-                    top: 10,
-                    left: 10,
+                    top: 12,
+                    left: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 10,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: AppColors.surface.withValues(alpha: 0.85),
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.35),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         'VitrinX${store.kategori.isNotEmpty ? " • ${store.kategori}" : ""}',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.darkText,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
+
                   if (isExample)
                     Positioned(
-                      top: 10,
-                      right: 10,
+                      top: 12,
+                      right: 50, // Shift left so it doesn't overlap favorite button
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
+                          horizontal: 10,
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: primaryColor.withValues(alpha: 0.25),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: primaryColor),
+                          border: Border.all(color: primaryColor, width: 1),
                         ),
                         child: const Text(
                           'Örnek',
                           style: TextStyle(
-                            color: primaryColor,
+                            color: Colors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                       ),
                     ),
+
                   if (isOwnStore)
                     Positioned(
-                      bottom: 10,
-                      left: 10,
+                      bottom: 12,
+                      left: 12,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 10,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: primaryColor,
+                          gradient: const LinearGradient(
+                            colors: [AppColors.primary, AppColors.secondary],
+                          ),
                           borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                            ),
+                          ],
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
@@ -146,16 +189,21 @@ class VitrinStoreCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  // Favorite button
+
+                  // Favorite button (Glassmorphism circle)
                   Positioned(
-                    top: 6,
-                    right: 6,
+                    top: 10,
+                    right: 10,
                     child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceSoft.withValues(alpha: 0.85),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.border,
+                          width: 1.2,
+                        ),
                       ),
                       child: IconButton(
                         padding: EdgeInsets.zero,
@@ -164,7 +212,7 @@ class VitrinStoreCard extends StatelessWidget {
                               ? Icons.favorite_rounded
                               : Icons.favorite_border_rounded,
                           size: 18,
-                          color: isFavorited ? Colors.redAccent : mutedText,
+                          color: isFavorited ? Colors.redAccent : AppColors.mutedText,
                         ),
                         onPressed: onFavoritePressed,
                       ),
@@ -177,7 +225,7 @@ class VitrinStoreCard extends StatelessWidget {
             Expanded(
               flex: 4,
               child: Padding(
-                padding: const EdgeInsets.all(10.0),
+                padding: const EdgeInsets.all(12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -187,25 +235,32 @@ class VitrinStoreCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 14,
-                        color: darkText,
+                        fontSize: 15,
+                        color: AppColors.darkText,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       store.description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 11,
-                        color: mutedText,
-                        height: 1.3,
+                        color: AppColors.mutedText,
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const Spacer(),
-                    // Action Buttons (WhatsApp)
+                    // Action Buttons & Address
                     Row(
                       children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 11,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             store.address,
@@ -214,20 +269,29 @@ class VitrinStoreCard extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: softText,
+                              color: AppColors.mutedText,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        SizedBox(
+                        const SizedBox(width: 8),
+                        // WhatsApp Button (circular siber container)
+                        Container(
                           width: 32,
                           height: 32,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF25D366).withValues(alpha: 0.35),
+                              width: 1,
+                            ),
+                          ),
                           child: IconButton(
                             padding: EdgeInsets.zero,
                             icon: const Icon(
                               Icons.chat_bubble_rounded,
                               color: Color(0xFF25D366),
-                              size: 18,
+                              size: 16,
                             ),
                             onPressed: onWhatsAppPressed,
                           ),
@@ -248,13 +312,31 @@ class VitrinStoreCard extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.surfaceSoft, AppColors.blueSurface],
+          colors: [AppColors.surfaceSoft, AppColors.bgEditor],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      child: const Center(
-        child: Icon(Icons.storefront_outlined, color: primaryColor, size: 32),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.storefront_outlined,
+              color: AppColors.primary,
+              size: 34,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Kapak görseli bekleniyor',
+              style: TextStyle(
+                color: AppColors.mutedText.withValues(alpha: 0.8),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
