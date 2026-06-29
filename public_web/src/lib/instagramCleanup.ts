@@ -14,7 +14,7 @@ export async function loadStoreProducts(
   admin: SupabaseClient,
   args: {
     storeSlug: string;
-    products?: unknown;
+    products?: ProductItem[] | null;
     allowStoreFetchFallback?: boolean;
   },
 ) {

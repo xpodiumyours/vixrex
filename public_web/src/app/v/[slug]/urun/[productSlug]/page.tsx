@@ -30,7 +30,7 @@ interface StoreRow {
   address?: string;
   logo_url?: string;
   shelf_image_url?: string;
-  products?: unknown;
+  products?: ProductItem[] | null;
   is_published?: boolean;
 }
 

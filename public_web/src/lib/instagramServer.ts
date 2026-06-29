@@ -2,13 +2,14 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { decryptSecret, encryptSecret, sha256 } from "@/lib/instagram";
 import { buildInstagramGraphUrl } from "@/lib/instagramRouteUtils";
+import type { ProductItem } from "@/lib/products";
 
 export interface EditableStoreRow {
   slug: string;
   name: string;
   user_id?: string | null;
   edit_token?: string;
-  products?: unknown;
+  products?: ProductItem[] | null;
   whatsapp?: string;
   instagram?: string;
   is_published?: boolean;
