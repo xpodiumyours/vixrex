@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { fromBase64Url } from "@/lib/instagram";
 import {
   loadStoreProducts,
   markInstagramConnectionDisconnected,
@@ -10,22 +11,6 @@ import {
 } from "@/lib/instagramCleanup";
 
 export const runtime = "nodejs";
-
-function base64urlDecodeBuf(str: string): Buffer {
-  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
-  while (base64.length % 4) {
-    base64 += "=";
-  }
-  return Buffer.from(base64, "base64");
-}
-
-function base64urlDecode(str: string): string {
-  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
-  while (base64.length % 4) {
-    base64 += "=";
-  }
-  return Buffer.from(base64, "base64").toString("utf8");
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -50,8 +35,8 @@ export async function POST(req: NextRequest) {
     }
 
     const [encodedSig, payload] = parts;
-    const sig = base64urlDecodeBuf(encodedSig);
-    const data = JSON.parse(base64urlDecode(payload));
+    const sig = fromBase64Url(encodedSig);
+    const data = JSON.parse(fromBase64Url(payload).toString("utf8"));
 
     if (data.algorithm !== "HMAC-SHA256") {
       return NextResponse.json({ error: "Unsupported algorithm" }, { status: 400 });

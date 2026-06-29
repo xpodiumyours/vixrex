@@ -43,7 +43,7 @@ function base64Url(input: string | Buffer) {
     .replace(/=+$/g, "");
 }
 
-function fromBase64Url(input: string) {
+export function fromBase64Url(input: string) {
   const padded = input.padEnd(input.length + ((4 - (input.length % 4)) % 4), "=");
   return Buffer.from(padded.replace(/-/g, "+").replace(/_/g, "/"), "base64");
 }
