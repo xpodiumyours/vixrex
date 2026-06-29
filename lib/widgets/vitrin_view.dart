@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -66,7 +67,7 @@ class VitrinView extends StatelessWidget {
     }
     final preset = vitrinThemePresetFor(storeData.theme);
     final themeData = _getThemeData(preset);
-    final radius = isEmbedded ? 24.0 : 40.0;
+    final radius = isEmbedded ? AppColors.radius24 : AppColors.radius40;
     final galleryItems = _effectiveGalleryItems();
     final content =
         publicMode && !isEmbedded
@@ -150,9 +151,9 @@ class VitrinView extends StatelessWidget {
 
     return [
       _buildModernHeader(context, preset, radius, galleryItems),
-      SizedBox(height: isEmbedded ? 14 : 24),
+      SizedBox(height: isEmbedded ? AppColors.spacing16 : AppColors.spacing24),
       _buildStoreIdentityBlock(preset),
-      SizedBox(height: isEmbedded ? 16 : 28),
+      SizedBox(height: isEmbedded ? AppColors.spacing16 : AppColors.spacing30),
       _buildBookingCTAButton(context, preset, radius),
       if (storeData.bookingSettings?.isEnabled == true)
         SizedBox(height: isEmbedded ? 16 : 30),
@@ -1365,7 +1366,8 @@ class VitrinView extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (storeData.products.isNotEmpty && storeData.products.length > visibleProducts.length)
+                if (storeData.products.isNotEmpty &&
+                    storeData.products.length > visibleProducts.length)
                   Text(
                     '+${storeData.products.length - visibleProducts.length}',
                     style: TextStyle(
@@ -1380,11 +1382,16 @@ class VitrinView extends StatelessWidget {
             if (storeData.products.isEmpty)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 32,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   color: preset.surfaceSoft.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: preset.border.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: preset.border.withValues(alpha: 0.5),
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1439,7 +1446,9 @@ class VitrinView extends StatelessWidget {
                               stockStatus: product.stockStatus,
                               onWhatsAppTap: () {
                                 if (!publicMode) {
-                                  ScaffoldMessenger.of(context).clearSnackBars();
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).clearSnackBars();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
@@ -1456,7 +1465,9 @@ class VitrinView extends StatelessWidget {
                                   storeName: storeData.name,
                                   itemTitle: product.name,
                                 );
-                                if (url != null) _openExternalUrl(context, url);
+                                if (url != null) {
+                                  unawaited(_openExternalUrl(context, url));
+                                }
                               },
                             ),
                           );
@@ -1469,43 +1480,51 @@ class VitrinView extends StatelessWidget {
                   return Wrap(
                     spacing: 12,
                     runSpacing: 12,
-                    children: visibleProducts
-                        .map(
-                          (product) => SizedBox(
-                            width: cardWidth,
-                            height: 250,
-                            child: VitrinProductCard(
-                              name: product.name,
-                              price: product.price,
-                              category: product.category,
-                              description: product.description,
-                              imagePath: product.imagePath,
-                              stockStatus: product.stockStatus,
-                              onWhatsAppTap: () {
-                                if (!publicMode) {
-                                  ScaffoldMessenger.of(context).clearSnackBars();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Müşteriler bu karta bastığında '${product.name}' hakkında WhatsApp'tan bilgi isteyebilir.",
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                  return;
-                                }
+                    children:
+                        visibleProducts
+                            .map(
+                              (product) => SizedBox(
+                                width: cardWidth,
+                                height: 250,
+                                child: VitrinProductCard(
+                                  name: product.name,
+                                  price: product.price,
+                                  category: product.category,
+                                  description: product.description,
+                                  imagePath: product.imagePath,
+                                  stockStatus: product.stockStatus,
+                                  onWhatsAppTap: () {
+                                    if (!publicMode) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).clearSnackBars();
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            "Müşteriler bu karta bastığında '${product.name}' hakkında WhatsApp'tan bilgi isteyebilir.",
+                                          ),
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                      return;
+                                    }
 
-                                final url = WhatsAppLinkHelper.buildInquiryUrl(
-                                  number: storeData.whatsapp,
-                                  storeName: storeData.name,
-                                  itemTitle: product.name,
-                                );
-                                if (url != null) _openExternalUrl(context, url);
-                              },
-                            ),
-                          ),
-                        )
-                        .toList(),
+                                    final url =
+                                        WhatsAppLinkHelper.buildInquiryUrl(
+                                          number: storeData.whatsapp,
+                                          storeName: storeData.name,
+                                          itemTitle: product.name,
+                                        );
+                                    if (url != null) {
+                                      unawaited(_openExternalUrl(context, url));
+                                    }
+                                  },
+                                ),
+                              ),
+                            )
+                            .toList(),
                   );
                 },
               ),
@@ -1514,8 +1533,6 @@ class VitrinView extends StatelessWidget {
       ),
     );
   }
-
-
 
   Widget _buildShelfImageCard(
     VitrinThemePreset preset,
@@ -2472,8 +2489,8 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Future<void> _openExternalUrl(BuildContext context, String url) async {
-    final trimmed = url.trim();
+  Future<void> _openExternalUrl(BuildContext context, String? url) async {
+    final trimmed = (url ?? '').trim();
     if (trimmed.isEmpty) return;
 
     final uri = Uri.tryParse(trimmed);

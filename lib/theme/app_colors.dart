@@ -16,6 +16,36 @@ abstract final class AppColors {
   /// Marka turuncusunun kaldırılmasıyla birleşen elektrik mavisi.
   static const Color brandOrange = Color(0xFF00F0FF);
 
+  /// Landing ekranı için ortak marka renkleri.
+  static const Color landingBrandOrange = Color(0xFFFF5A1F);
+  static const Color landingDarkAccent = Color(0xFF0F172A);
+  static const Color landingLightBg = Color(0xFFF8FAFC);
+  static const Color landingMint = Color(0xFF10B981);
+  static const Color landingBlueAccent = Color(0xFF2563EB);
+  static const Color landingPinkAccent = Color(0xFFFB7185);
+
+  /// Genel boşluk ve yuvarlaklık sabitleri.
+  static const double spacing4 = 4;
+  static const double spacing8 = 8;
+  static const double spacing12 = 12;
+  static const double spacing16 = 16;
+  static const double spacing20 = 20;
+  static const double spacing24 = 24;
+  static const double spacing30 = 30;
+  static const double spacing32 = 32;
+  static const double spacing40 = 40;
+  static const double spacing60 = 60;
+  static const double spacing80 = 80;
+  static const double spacing100 = 100;
+  static const double spacing120 = 120;
+
+  static const double radius12 = 12;
+  static const double radius16 = 16;
+  static const double radius20 = 20;
+  static const double radius24 = 24;
+  static const double radius30 = 30;
+  static const double radius40 = 40;
+
   /// Ana CTA gradient (soldan sağa: Elektrik Mavisi → Neon Turkuaz).
   static const LinearGradient ctaGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -53,10 +83,10 @@ abstract final class AppColors {
   // ── Kenarlık & Gölge (Mat Siber Çizgiler) ───────────────────────────────────
   /// Standart kenarlık (Siber Mat Çizgi).
   static const Color border = Color(0xFF2B313E);
-  
+
   /// Odaklanmış kenarlık (Elektrik Mavisi).
   static const Color focusedBorder = Color(0xFF00F0FF);
-  
+
   static const Color cardBorderDark = Color(0xFF2B313E);
   static const Color cardBorderLight = Color(0xFF3F3F46);
 
@@ -77,10 +107,10 @@ abstract final class AppColors {
   static const Color bottomBarBg = Color(0xFF0D0E12);
   static const Color bottomBarActive = Color(0xFF00F0FF);
   static const Color bottomBarInactive = Color(0xFFA1A1AA);
-  
+
   /// Şeffaf ve Cam efekti renkleri
   static const Color glassOverlay = Color(0x990D0E12);
   static const Color shadowColor = Color(0x66000000);
-  
+
   static const Color disabled = Color(0xFF52525B);
 }

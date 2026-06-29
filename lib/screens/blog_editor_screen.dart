@@ -24,7 +24,7 @@ class BlogEditorScreen extends StatefulWidget {
 
 class _BlogEditorScreenState extends State<BlogEditorScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers
   final _titleController = TextEditingController();
   final _summaryController = TextEditingController();
@@ -38,10 +38,10 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
   Uint8List? _coverBytes;
   String _coverExtension = 'jpg';
   String _coverContentType = 'image/jpeg';
-  
+
   bool _isSaving = false;
   bool _isUploadingCover = false;
-  
+
   // SEO Scores
   int _seoScore = 0;
   List<String> _seoRecommendations = [];
@@ -49,7 +49,7 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Load initial values if editing
     if (widget.initialArticle != null) {
       final art = widget.initialArticle!;
@@ -68,7 +68,7 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
     _contentController.addListener(_updateSeoAnalysis);
     _topicController.addListener(_updateSeoAnalysis);
     _cityController.addListener(_updateSeoAnalysis);
-    
+
     _updateSeoAnalysis();
   }
 
@@ -86,7 +86,7 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
   void _updateSeoAnalysis() {
     int score = 0;
     final recs = <String>[];
-    
+
     final title = _titleController.text.trim();
     final summary = _summaryController.text.trim();
     final content = _contentController.text.trim();
@@ -98,10 +98,14 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
       recs.add("• Başlık ekleyin (Tavsiye: 30-60 karakter)");
     } else if (title.length < 30) {
       score += 10;
-      recs.add("• Başlık çok kısa (${title.length} karakter). Arama motorları için en az 30 karakter yapın.");
+      recs.add(
+        "• Başlık çok kısa (${title.length} karakter). Arama motorları için en az 30 karakter yapın.",
+      );
     } else if (title.length > 60) {
       score += 10;
-      recs.add("• Başlık çok uzun (${title.length} karakter). 60 karakteri aşmamalıdır.");
+      recs.add(
+        "• Başlık çok uzun (${title.length} karakter). 60 karakteri aşmamalıdır.",
+      );
     } else {
       score += 20;
     }
@@ -111,10 +115,14 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
       recs.add("• Kısa özet yazın (Tavsiye: 80-160 karakter)");
     } else if (summary.length < 80) {
       score += 10;
-      recs.add("• Özet çok kısa (${summary.length} karakter). En az 80 karakter yapın.");
+      recs.add(
+        "• Özet çok kısa (${summary.length} karakter). En az 80 karakter yapın.",
+      );
     } else if (summary.length > 160) {
       score += 10;
-      recs.add("• Özet çok uzun (${summary.length} karakter). 160 karakteri aşmamalıdır.");
+      recs.add(
+        "• Özet çok uzun (${summary.length} karakter). 160 karakteri aşmamalıdır.",
+      );
     } else {
       score += 20;
     }
@@ -125,10 +133,14 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
       recs.add("• İçerik metni yazın (En az 300 kelime)");
     } else if (words < 150) {
       score += 5;
-      recs.add("• İçerik çok yetersiz ($words kelime). En az 300 kelime olmalı.");
+      recs.add(
+        "• İçerik çok yetersiz ($words kelime). En az 300 kelime olmalı.",
+      );
     } else if (words < 300) {
       score += 12;
-      recs.add("• İçerik geliştirilebilir ($words kelime). En az 300 kelime önerilir.");
+      recs.add(
+        "• İçerik geliştirilebilir ($words kelime). En az 300 kelime önerilir.",
+      );
     } else {
       score += 20;
     }
@@ -142,21 +154,29 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
 
     // 5. SEO Topic check (Max 15 pts)
     if (topic.isNotEmpty) {
-      if (title.toLowerCase().contains(topic) || content.toLowerCase().contains(topic)) {
+      if (title.toLowerCase().contains(topic) ||
+          content.toLowerCase().contains(topic)) {
         score += 10;
       } else {
-        recs.add("• Hedef kelimeyi ('$topic') başlıkta veya yazının içinde geçirin.");
+        recs.add(
+          "• Hedef kelimeyi ('$topic') başlıkta veya yazının içinde geçirin.",
+        );
       }
     } else {
-      recs.add("• Arama motorlarında öne çıkmak için hedef anahtar kelime belirleyin.");
+      recs.add(
+        "• Arama motorlarında öne çıkmak için hedef anahtar kelime belirleyin.",
+      );
     }
 
     // 6. Target City check (Max 10 pts)
     if (city.isNotEmpty) {
-      if (title.toLowerCase().contains(city) || content.toLowerCase().contains(city)) {
+      if (title.toLowerCase().contains(city) ||
+          content.toLowerCase().contains(city)) {
         score += 10;
       } else {
-        recs.add("• Yerel aramalarda çıkmak için hedef şehri ('$city') başlık veya içerikte kullanın.");
+        recs.add(
+          "• Yerel aramalarda çıkmak için hedef şehri ('$city') başlık veya içerikte kullanın.",
+        );
       }
     }
 
@@ -182,9 +202,10 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
       setState(() {
         _coverBytes = file.bytes;
         _coverExtension = file.extension ?? 'jpg';
-        _coverContentType = _coverExtension == 'png' ? 'image/png' : 'image/jpeg';
+        _coverContentType =
+            _coverExtension == 'png' ? 'image/png' : 'image/jpeg';
       });
-      
+
       _updateSeoAnalysis();
     } catch (e) {
       _showSnackBar('Görsel seçilirken hata oluştu.');
@@ -226,12 +247,14 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
       String finalSlug;
       if (widget.initialArticle != null) {
         // Düzenleme: slug değiştirme (URL kırılmasını önle)
-        finalSlug = (widget.initialArticle!['slug'] as String?)?.trim() ?? cleanSlug;
+        finalSlug =
+            (widget.initialArticle!['slug'] as String?)?.trim() ?? cleanSlug;
       } else {
         // Yeni yazı: slug boşsa timestamp suffix ekle
-        finalSlug = cleanSlug.isNotEmpty
-            ? cleanSlug
-            : 'yazi-${DateTime.now().millisecondsSinceEpoch}';
+        finalSlug =
+            cleanSlug.isNotEmpty
+                ? cleanSlug
+                : 'yazi-${DateTime.now().millisecondsSinceEpoch}';
       }
 
       // 3. Prepare database save payload
@@ -247,19 +270,26 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
         'seo_score': _seoScore,
         'seo_errors': _seoRecommendations,
         'slug': finalSlug,
-        'status': targetStatus, // 'draft' or 'published' (trigger shifts to 'review' if not trusted)
+        'status':
+            targetStatus, // 'draft' or 'published' (trigger shifts to 'review' if not trusted)
       };
 
       if (widget.initialArticle == null) {
         // Create new article
         await client.from('store_articles').insert(payload);
-        _showSnackBar(targetStatus == 'published'
-            ? 'Yazı yayına gönderildi! (Güvenilir yazar değilseniz önce moderatör incelemesine alınır)'
-            : 'Yazı taslak olarak kaydedildi.');
+        _showSnackBar(
+          targetStatus == 'published'
+              ? 'Yazı yayına gönderildi! (Güvenilir yazar değilseniz önce moderatör incelemesine alınır)'
+              : 'Yazı taslak olarak kaydedildi.',
+        );
       } else {
         // Update existing (slug'ı payload'dan çıkar — URL değişmesin)
-        final updatePayload = Map<String, dynamic>.from(payload)..remove('slug');
-        await client.from('store_articles').update(updatePayload).eq('id', widget.initialArticle!['id']);
+        final updatePayload = Map<String, dynamic>.from(payload)
+          ..remove('slug');
+        await client
+            .from('store_articles')
+            .update(updatePayload)
+            .eq('id', widget.initialArticle!['id']);
         _showSnackBar('Değişiklikler başarıyla kaydedildi.');
       }
 
@@ -299,70 +329,93 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
       backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text(isEdit ? 'Yazıyı Düzenle' : 'Yeni Blog Yazısı', 
-          style: const TextStyle(fontWeight: FontWeight.w900, color: darkText, fontSize: 18)),
+        title: Text(
+          isEdit ? 'Yazıyı Düzenle' : 'Yeni Blog Yazısı',
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            color: darkText,
+            fontSize: 18,
+          ),
+        ),
         centerTitle: false,
         actions: [
           if (_isSaving)
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              padding: EdgeInsets.symmetric(horizontal: AppColors.spacing16),
               child: Center(
                 child: SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: primaryColor,
+                  ),
                 ),
               ),
             )
           else ...[
             TextButton(
               onPressed: () => _saveArticle('draft'),
-              child: const Text('Taslak Kaydet', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Taslak Kaydet',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             Padding(
-              padding: const EdgeInsets.only(right: 8.0),
+              padding: const EdgeInsets.only(right: AppColors.spacing8),
               child: ElevatedButton(
                 onPressed: () => _saveArticle('published'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppColors.radius12),
+                  ),
                 ),
-                child: const Text('Yayınla', style: TextStyle(fontWeight: FontWeight.w800)),
+                child: const Text(
+                  'Yayınla',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
             ),
-          ]
+          ],
         ],
       ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppColors.spacing16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Real-time SEO score panel
               _buildSeoAnalysisCard(),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppColors.spacing16),
 
               // Title, Summary & Content Inputs card
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppColors.spacing16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(AppColors.radius20),
                   border: Border.all(color: cardBorder),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Makale İçeriği', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                    const SizedBox(height: 14),
+                    const Text(
+                      'Makale İçeriği',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: AppColors.spacing16),
 
                     // Cover image picker
                     _buildCoverPickerWidget(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppColors.spacing16),
 
                     // Title
                     TextFormField(
@@ -375,9 +428,13 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                         fillColor: inputBg,
                         border: OutlineInputBorder(borderSide: BorderSide.none),
                       ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Başlık zorunludur' : null,
+                      validator:
+                          (v) =>
+                              v == null || v.trim().isEmpty
+                                  ? 'Başlık zorunludur'
+                                  : null,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppColors.spacing12),
 
                     // Summary
                     TextFormField(
@@ -386,14 +443,19 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                       maxLength: 200,
                       decoration: const InputDecoration(
                         labelText: 'Yazı Özeti (Meta Açıklaması) *',
-                        hintText: 'Arama sonuçlarında başlığın altında çıkacak kısa özet...',
+                        hintText:
+                            'Arama sonuçlarında başlığın altında çıkacak kısa özet...',
                         filled: true,
                         fillColor: inputBg,
                         border: OutlineInputBorder(borderSide: BorderSide.none),
                       ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Özet zorunludur' : null,
+                      validator:
+                          (v) =>
+                              v == null || v.trim().isEmpty
+                                  ? 'Özet zorunludur'
+                                  : null,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppColors.spacing12),
 
                     // Content
                     TextFormField(
@@ -402,32 +464,43 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                       keyboardType: TextInputType.multiline,
                       decoration: const InputDecoration(
                         labelText: 'Makale Metni (İçerik) *',
-                        hintText: 'Makalenizi buraya yazın. Arama motorları en az 300 kelimelik zengin içerikleri ödüllendirir...',
+                        hintText:
+                            'Makalenizi buraya yazın. Arama motorları en az 300 kelimelik zengin içerikleri ödüllendirir...',
                         filled: true,
                         fillColor: inputBg,
                         border: OutlineInputBorder(borderSide: BorderSide.none),
                         alignLabelWithHint: true,
                       ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'İçerik zorunludur' : null,
+                      validator:
+                          (v) =>
+                              v == null || v.trim().isEmpty
+                                  ? 'İçerik zorunludur'
+                                  : null,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppColors.spacing16),
 
               // Target SEO Configuration card
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppColors.spacing16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(AppColors.radius20),
                   border: Border.all(color: cardBorder),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('SEO & Hedefleme Parametreleri', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                    const SizedBox(height: 14),
+                    const Text(
+                      'SEO & Hedefleme Parametreleri',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: AppColors.spacing16),
 
                     // Article Type dropdown
                     DropdownButtonFormField<String>(
@@ -439,9 +512,18 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                         border: OutlineInputBorder(borderSide: BorderSide.none),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'standard', child: Text('Standart Rehber / Blog')),
-                        DropdownMenuItem(value: 'news', child: Text('Duyuru / Haber')),
-                        DropdownMenuItem(value: 'promotion', child: Text('Kampanya / Promosyon')),
+                        DropdownMenuItem(
+                          value: 'standard',
+                          child: Text('Standart Rehber / Blog'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'news',
+                          child: Text('Duyuru / Haber'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'promotion',
+                          child: Text('Kampanya / Promosyon'),
+                        ),
                       ],
                       onChanged: (val) {
                         if (val != null) {
@@ -450,7 +532,7 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                         }
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppColors.spacing12),
 
                     // Target Topic
                     TextFormField(
@@ -463,11 +545,18 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                         border: OutlineInputBorder(borderSide: BorderSide.none),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppColors.spacing12),
 
                     // Target City dropdown / autocomplete
                     DropdownButtonFormField<String>(
-                      initialValue: _cityController.text.isEmpty ? null : turkeyProvinces.any((p) => p.name == _cityController.text) ? _cityController.text : null,
+                      initialValue:
+                          _cityController.text.isEmpty
+                              ? null
+                              : turkeyProvinces.any(
+                                (p) => p.name == _cityController.text,
+                              )
+                              ? _cityController.text
+                              : null,
                       decoration: const InputDecoration(
                         labelText: 'Hedef Şehir (Yerel SEO)',
                         filled: true,
@@ -475,12 +564,13 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                         border: OutlineInputBorder(borderSide: BorderSide.none),
                       ),
                       hint: const Text('Şehir Seçiniz'),
-                      items: turkeyProvinces.map((Province p) {
-                        return DropdownMenuItem<String>(
-                          value: p.name,
-                          child: Text(p.name),
-                        );
-                      }).toList(),
+                      items:
+                          turkeyProvinces.map((Province p) {
+                            return DropdownMenuItem<String>(
+                              value: p.name,
+                              child: Text(p.name),
+                            );
+                          }).toList(),
                       onChanged: (val) {
                         if (val != null) {
                           setState(() => _cityController.text = val);
@@ -491,7 +581,7 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: AppColors.spacing40),
             ],
           ),
         ),
@@ -500,50 +590,80 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
   }
 
   Widget _buildCoverPickerWidget() {
-    final hasCover = _coverBytes != null || (_coverImageUrl != null && _coverImageUrl!.isNotEmpty);
+    final hasCover =
+        _coverBytes != null ||
+        (_coverImageUrl != null && _coverImageUrl!.isNotEmpty);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Kapak Fotoğrafı', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.softText)),
-        const SizedBox(height: 6),
+        const Text(
+          'Kapak Fotoğrafı',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+            color: AppColors.softText,
+          ),
+        ),
+        const SizedBox(height: AppColors.spacing8),
         InkWell(
           onTap: _pickCoverPhoto,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppColors.radius12),
           child: AspectRatio(
             aspectRatio: 16 / 7,
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.inputBg,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppColors.radius12),
                 border: Border.all(color: AppColors.cardBorderDark),
               ),
               clipBehavior: Clip.antiAlias,
-              child: _isUploadingCover
-                  ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
-                    )
-                  : hasCover
-                      ? Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            _coverBytes != null
-                                ? Image.memory(_coverBytes!, fit: BoxFit.cover)
-                                : Image.network(_coverImageUrl!, fit: BoxFit.cover),
-                            Container(color: Colors.black38),
-                            const Center(
-                              child: Icon(Icons.photo_library_rounded, color: Colors.white, size: 28),
-                            ),
-                          ],
-                        )
-                      : const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_photo_alternate_rounded, color: AppColors.mutedText, size: 28),
-                            SizedBox(height: 6),
-                            Text('Fotoğraf Seç', style: TextStyle(fontSize: 11, color: AppColors.mutedText, fontWeight: FontWeight.bold)),
-                          ],
+              child:
+                  _isUploadingCover
+                      ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
                         ),
+                      )
+                      : hasCover
+                      ? Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _coverBytes != null
+                              ? Image.memory(_coverBytes!, fit: BoxFit.cover)
+                              : Image.network(
+                                _coverImageUrl!,
+                                fit: BoxFit.cover,
+                              ),
+                          Container(color: Colors.black38),
+                          const Center(
+                            child: Icon(
+                              Icons.photo_library_rounded,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                        ],
+                      )
+                      : const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_rounded,
+                            color: AppColors.mutedText,
+                            size: 28,
+                          ),
+                          SizedBox(height: AppColors.spacing8),
+                          Text(
+                            'Fotoğraf Seç',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.mutedText,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
             ),
           ),
         ),
@@ -560,10 +680,10 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppColors.spacing16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppColors.radius20),
         border: Border.all(color: AppColors.cardBorderDark),
       ),
       child: Column(
@@ -574,54 +694,93 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.analytics_rounded, color: AppColors.primary, size: 20),
+                  Icon(
+                    Icons.analytics_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                   SizedBox(width: 8),
-                  Text('Canlı SEO Analizi', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                  Text(
+                    'Canlı SEO Analizi',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                  ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppColors.spacing12,
+                  vertical: AppColors.spacing8,
+                ),
                 decoration: BoxDecoration(
                   color: scoreColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppColors.radius20),
                   border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   'Skor: $_seoScore / 100',
-                  style: TextStyle(color: scoreColor, fontWeight: FontWeight.w800, fontSize: 12),
+                  style: TextStyle(
+                    color: scoreColor,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppColors.spacing12),
           if (_seoRecommendations.isEmpty)
             const Row(
               children: [
                 Icon(Icons.check_circle_rounded, color: Colors.green, size: 16),
                 SizedBox(width: 6),
-                Text('Harika! Yazınız mükemmel şekilde optimize edildi.', 
-                  style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
+                Text(
+                  'Harika! Yazınız mükemmel şekilde optimize edildi.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             )
           else ...[
-            const Text('Geliştirme Tavsiyeleri:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.softText)),
-            const SizedBox(height: 6),
-            ..._seoRecommendations.take(3).map((rec) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2.0),
-              child: Text(
-                rec,
-                style: const TextStyle(fontSize: 11, color: AppColors.mutedText, fontWeight: FontWeight.w500),
+            const Text(
+              'Geliştirme Tavsiyeleri:',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: AppColors.softText,
               ),
-            )),
+            ),
+            const SizedBox(height: AppColors.spacing8),
+            ..._seoRecommendations
+                .take(3)
+                .map(
+                  (rec) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2.0),
+                    child: Text(
+                      rec,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.mutedText,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
             if (_seoRecommendations.length > 3)
               Padding(
                 padding: const EdgeInsets.only(top: 2.0),
                 child: Text(
                   've ${_seoRecommendations.length - 3} tavsiye daha var...',
-                  style: const TextStyle(fontSize: 10, color: AppColors.mutedText, fontStyle: FontStyle.italic),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.mutedText,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
-          ]
+          ],
         ],
       ),
     );

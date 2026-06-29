@@ -29,12 +29,12 @@ class _LandingScreenState extends State<LandingScreen>
   final TextEditingController _storeNameController = TextEditingController();
 
   // Modern Color Palette
-  static const Color brandOrange = AppColors.brandOrange;
-  static const Color darkAccent = AppColors.darkTextAlt;
-  static const Color lightBg = AppColors.bgLight;
-  static const Color mint = AppColors.success;
-  static const Color blueAccent = AppColors.secondary;
-  static const Color pinkAccent = AppColors.pinkAccent;
+  static const Color brandOrange = AppColors.landingBrandOrange;
+  static const Color darkAccent = AppColors.landingDarkAccent;
+  static const Color lightBg = AppColors.landingLightBg;
+  static const Color mint = AppColors.landingMint;
+  static const Color blueAccent = AppColors.landingBlueAccent;
+  static const Color pinkAccent = AppColors.landingPinkAccent;
 
   static const List<_HeroDemoProfile> _heroDemoProfiles = [
     _HeroDemoProfile(
@@ -503,7 +503,9 @@ class _LandingScreenState extends State<LandingScreen>
                                   : Column(
                                     children: [
                                       _buildHeroContent(isDesktop: false),
-                                      const SizedBox(height: 40),
+                                      const SizedBox(
+                                        height: AppColors.spacing40,
+                                      ),
                                       _buildHeroMockup(),
                                     ],
                                   ),
@@ -523,8 +525,8 @@ class _LandingScreenState extends State<LandingScreen>
   Widget _buildTopNavBar(BuildContext context, bool isDesktop) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 40 : 20,
-        vertical: 16,
+        horizontal: isDesktop ? AppColors.spacing40 : AppColors.spacing20,
+        vertical: AppColors.spacing16,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -738,7 +740,7 @@ class _LandingScreenState extends State<LandingScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: brandOrange.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(AppColors.radius30),
               border: Border.all(color: brandOrange.withValues(alpha: 0.3)),
             ),
             child: const Text(

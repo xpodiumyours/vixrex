@@ -28,11 +28,8 @@ class VitrinProductCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: AppColors.border,
-          width: 1.2,
-        ),
+        borderRadius: BorderRadius.circular(AppColors.radius24),
+        border: Border.all(color: AppColors.border, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
@@ -54,7 +51,9 @@ class VitrinProductCard extends StatelessWidget {
                   Image.network(
                     imagePath!,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(),
+                    errorBuilder:
+                        (context, error, stackTrace) =>
+                            _buildImagePlaceholder(),
                   )
                 else
                   _buildImagePlaceholder(),
@@ -77,11 +76,11 @@ class VitrinProductCard extends StatelessWidget {
 
                 // Siber Onay/Aktif Göstergesi (Sağ Alt Köşe)
                 Positioned(
-                  bottom: 10,
-                  right: 10,
+                  bottom: AppColors.spacing12,
+                  right: AppColors.spacing12,
                   child: Container(
-                    width: 20,
-                    height: 20,
+                    width: AppColors.spacing20,
+                    height: AppColors.spacing20,
                     decoration: BoxDecoration(
                       color: AppColors.secondary,
                       shape: BoxShape.circle,
@@ -109,7 +108,7 @@ class VitrinProductCard extends StatelessWidget {
 
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppColors.spacing12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -131,12 +130,23 @@ class VitrinProductCard extends StatelessWidget {
                       ),
                       if (stockStatus != 'Mevcut')
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppColors.spacing8,
+                            vertical: AppColors.spacing4,
+                          ),
                           decoration: BoxDecoration(
-                            color: (stockStatus == 'Tükendi' ? AppColors.error : AppColors.primary).withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
+                            color: (stockStatus == 'Tükendi'
+                                    ? AppColors.error
+                                    : AppColors.primary)
+                                .withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(
+                              AppColors.spacing4,
+                            ),
                             border: Border.all(
-                              color: stockStatus == 'Tükendi' ? AppColors.error : AppColors.primary,
+                              color:
+                                  stockStatus == 'Tükendi'
+                                      ? AppColors.error
+                                      : AppColors.primary,
                               width: 0.8,
                             ),
                           ),
@@ -145,13 +155,16 @@ class VitrinProductCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 8,
                               fontWeight: FontWeight.w900,
-                              color: stockStatus == 'Tükendi' ? AppColors.error : AppColors.primary,
+                              color:
+                                  stockStatus == 'Tükendi'
+                                      ? AppColors.error
+                                      : AppColors.primary,
                             ),
                           ),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppColors.spacing8),
                   Text(
                     name,
                     maxLines: 1,
@@ -162,7 +175,7 @@ class VitrinProductCard extends StatelessWidget {
                       color: AppColors.darkText,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: AppColors.spacing4),
                   Expanded(
                     child: Text(
                       description,
@@ -175,7 +188,7 @@ class VitrinProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppColors.spacing8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -191,7 +204,7 @@ class VitrinProductCard extends StatelessWidget {
                         onTap: onWhatsAppTap,
                         borderRadius: BorderRadius.circular(99),
                         child: Container(
-                          padding: const EdgeInsets.all(7),
+                          padding: const EdgeInsets.all(AppColors.spacing8),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
