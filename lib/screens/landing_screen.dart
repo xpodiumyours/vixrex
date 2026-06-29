@@ -769,7 +769,7 @@ class _LandingScreenState extends State<LandingScreen>
             'İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrinde toplayın. Linkinizi ve QR kodunuzu müşterilerinizle kolayca paylaşın.',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: const TextStyle(
-              color: AppColors.mutedText,
+              color: AppColors.darkTextAlt,
               fontSize: 17,
               height: 1.55,
             ),
@@ -804,7 +804,7 @@ class _LandingScreenState extends State<LandingScreen>
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: AppColors.surfaceSoft,
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: AppColors.border),
               ),
@@ -816,7 +816,7 @@ class _LandingScreenState extends State<LandingScreen>
                   Text(
                     text,
                     style: const TextStyle(
-                      color: AppColors.darkTextAlt,
+                      color: AppColors.darkText,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
@@ -1010,13 +1010,13 @@ class _LandingScreenState extends State<LandingScreen>
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF1EB),
+              color: AppColors.surfaceSoft,
               borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: const Color(0xFFFFD8C7)),
+              border: Border.all(color: AppColors.border),
             ),
             child: const Icon(
               Icons.qr_code_2_rounded,
-              color: brandOrange,
+              color: AppColors.primary,
               size: 22,
             ),
           ),
@@ -1040,7 +1040,7 @@ class _LandingScreenState extends State<LandingScreen>
                 const Text(
                   'QR kod ve WhatsApp iletişimi paylaşmaya hazır olsun.',
                   style: TextStyle(
-                    color: AppColors.mutedText,
+                    color: AppColors.darkTextAlt,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
