@@ -6,7 +6,7 @@ import { exchangeForLongLivedInstagramToken } from "@/lib/instagramServer";
 
 export const runtime = "nodejs";
 
-interface InstagramTokenResponse {
+interface OAuthTokenResponse {
   access_token?: string;
   user_id?: number | string;
   token_type?: string;
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
         body: tokenBody,
       }
     );
-    const tokenJson = (await tokenResponse.json()) as InstagramTokenResponse;
+    const tokenJson = (await tokenResponse.json()) as OAuthTokenResponse;
 
     if (!tokenResponse.ok || !tokenJson.access_token) {
       throw new Error(
