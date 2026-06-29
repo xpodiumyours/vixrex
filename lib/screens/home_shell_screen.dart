@@ -8,6 +8,8 @@ import 'package:vitrinx/services/chatbot_service.dart';
 import 'package:vitrinx/screens/blog_moderation_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
 import 'package:vitrinx/screens/my_vitrin_screen.dart';
+import 'package:vitrinx/screens/xrex_screen.dart';
+import 'package:vitrinx/screens/profile_screen.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 import 'package:vitrinx/widgets/chatbot_overlay.dart';
@@ -53,7 +55,19 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialIndex.clamp(0, _isAdmin ? 2 : 1);
+    // Safely map initialIndex:
+    // Old 0 (Explore) -> New 1 (Discover)
+    // Old 1 (MyVitrin) -> New 0 (Store)
+    // Old 2 (Moderation) -> New 4 (Moderation)
+    if (widget.initialIndex == 0) {
+      _selectedIndex = 1;
+    } else if (widget.initialIndex == 1) {
+      _selectedIndex = 0;
+    } else if (widget.initialIndex == 2 && _isAdmin) {
+      _selectedIndex = 4;
+    } else {
+      _selectedIndex = 0; // Default to Store
+    }
     _loadXrexSnapshot();
   }
 
@@ -81,7 +95,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
 
   void _openExplore() {
     setState(() {
-      _selectedIndex = 0;
+      _selectedIndex = 1; // Discover
       _exploreRefreshKey++;
     });
   }
@@ -95,7 +109,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   // ── Xrex Action Callbacks ─────────────────────────────────────────────────
 
   void _xrexNavigateToVitrim() {
-    setState(() => _selectedIndex = 1);
+    setState(() => _selectedIndex = 0); // Store
   }
 
   void _xrexCopyLink() {
@@ -248,7 +262,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   }
 
   void _xrexScrollToAction(XrexAction action) {
-    setState(() => _selectedIndex = 1);
+    setState(() => _selectedIndex = 0); // Store
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _myVitrinKey.currentState?.scrollToXrexAction(action);
     });
@@ -259,26 +273,38 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final isAdmin = _isAdmin;
 
     final pages = [
-      ExploreScreen(key: ValueKey(_exploreRefreshKey)),
       MyVitrinScreen(
         key: _myVitrinKey,
         initialName: widget.initialVitrinName,
         onPublished: _handleVitrinPublished,
         onOpenExplore: _openExplore,
       ),
+      ExploreScreen(key: ValueKey(_exploreRefreshKey)),
+      const XrexScreen(),
+      const ProfileScreen(),
       if (isAdmin) const BlogModerationScreen(),
     ];
 
     final destinations = [
       const NavigationDestination(
-        icon: Icon(Icons.travel_explore_outlined),
-        selectedIcon: Icon(Icons.travel_explore_rounded),
-        label: 'Keşfet',
-      ),
-      const NavigationDestination(
         icon: Icon(Icons.storefront_outlined),
         selectedIcon: Icon(Icons.storefront_rounded),
-        label: 'Vitrinim',
+        label: 'Store',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.travel_explore_outlined),
+        selectedIcon: Icon(Icons.travel_explore_rounded),
+        label: 'Discover',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.assistant_outlined),
+        selectedIcon: Icon(Icons.assistant_rounded),
+        label: 'X-rex',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.person_outline_rounded),
+        selectedIcon: Icon(Icons.person_rounded),
+        label: 'Profile',
       ),
       if (isAdmin)
         const NavigationDestination(
@@ -293,30 +319,57 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         clipBehavior: Clip.none,
         children: [
           IndexedStack(index: _selectedIndex, children: pages),
-          // Xrex: Sağ alt köşede yüzen robot rozeti
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: ChatbotBadge(
-              snapshot: _xrexSnapshot,
-              chatHistory: _xrexChatMessages,
-              onNavigateToVitrim: _xrexNavigateToVitrim,
-              onNavigateToExplore: _openExplore,
-              onCopyLink: _xrexCopyLink,
-              onShowQr: _xrexShowQr,
-              onShareWhatsapp: _xrexShareWhatsapp,
-              onScrollToAction: _xrexScrollToAction,
+          // Xrex: Sağ alt köşede yüzen robot rozeti (sadece X-rex tabında değilken gösterilir)
+          if (_selectedIndex != 2)
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: ChatbotBadge(
+                snapshot: _xrexSnapshot,
+                chatHistory: _xrexChatMessages,
+                onNavigateToVitrim: _xrexNavigateToVitrim,
+                onNavigateToExplore: _openExplore,
+                onCopyLink: _xrexCopyLink,
+                onShowQr: _xrexShowQr,
+                onShareWhatsapp: _xrexShareWhatsapp,
+                onScrollToAction: _xrexScrollToAction,
+              ),
             ),
-          ),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() => _selectedIndex = index);
-        },
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: destinations,
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          backgroundColor: AppColors.bgEditor,
+          indicatorColor: AppColors.primary.withAlpha(40),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold);
+            }
+            return const TextStyle(color: AppColors.mutedText, fontSize: 11);
+          }),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const IconThemeData(color: AppColors.primary);
+            }
+            return const IconThemeData(color: AppColors.mutedText);
+          }),
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            border: Border(
+              top: BorderSide(color: AppColors.border, width: 0.8),
+            ),
+          ),
+          child: NavigationBar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) {
+              setState(() => _selectedIndex = index);
+            },
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: destinations,
+            height: 65,
+          ),
+        ),
       ),
     );
   }

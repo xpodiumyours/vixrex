@@ -145,7 +145,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
                   // Robot yüzü
                   CustomPaint(
                     size: const Size(52, 52),
-                    painter: _DragonFacePainter(blinking: _blinking),
+                    painter: DragonFacePainter(blinking: _blinking),
                   ),
                   // Scan line
                   Positioned(
@@ -187,9 +187,9 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
 }
 
 // ─── Siber Ejderha (Cyber Dragon) CustomPainter ──────────────────────────────
-class _DragonFacePainter extends CustomPainter {
+class DragonFacePainter extends CustomPainter {
   final bool blinking;
-  const _DragonFacePainter({required this.blinking});
+  const DragonFacePainter({required this.blinking});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -312,7 +312,7 @@ class _DragonFacePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DragonFacePainter old) => old.blinking != blinking;
+  bool shouldRepaint(DragonFacePainter old) => old.blinking != blinking;
 }
 
 // ─── Xrex Overlay Panel ──────────────────────────────────────────────────────
@@ -840,7 +840,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
                     children: [
                       CustomPaint(
                         size: const Size(44, 44),
-                        painter: _DragonFacePainter(blinking: _blinking),
+                        painter: DragonFacePainter(blinking: _blinking),
                       ),
                       Positioned(
                         top: 22 + (_scanAnim.value * 22),
