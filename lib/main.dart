@@ -1,15 +1,28 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(_systemUiOverlayStyle);
   _setupGlobalErrorHandler();
   await _initializeSupabase();
   runApp(const VitrinXApp());
 }
+
+const SystemUiOverlayStyle _systemUiOverlayStyle = SystemUiOverlayStyle(
+  statusBarColor: AppColors.bgEditor,
+  statusBarIconBrightness: Brightness.light,
+  statusBarBrightness: Brightness.dark,
+  systemNavigationBarColor: AppColors.bgEditor,
+  systemNavigationBarDividerColor: AppColors.bgEditor,
+  systemNavigationBarIconBrightness: Brightness.light,
+  systemStatusBarContrastEnforced: false,
+  systemNavigationBarContrastEnforced: false,
+);
 
 void _setupGlobalErrorHandler() {
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -66,6 +79,13 @@ class VitrinXApp extends StatelessWidget {
           shadow: Colors.black12,
         ),
         scaffoldBackgroundColor: AppColors.bgEditor,
+        disabledColor: AppColors.disabled,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.bgEditor,
+          foregroundColor: AppColors.darkText,
+          elevation: 0,
+          systemOverlayStyle: _systemUiOverlayStyle,
+        ),
         cardTheme: CardThemeData(
           color: AppColors.surface,
           elevation: 0,
@@ -97,6 +117,8 @@ class VitrinXApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.black,
+            disabledBackgroundColor: AppColors.surfaceSoft,
+            disabledForegroundColor: AppColors.mutedText,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -106,6 +128,7 @@ class VitrinXApp extends StatelessWidget {
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primary,
+            disabledForegroundColor: AppColors.disabled,
             side: const BorderSide(color: AppColors.primary),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -120,6 +143,8 @@ class VitrinXApp extends StatelessWidget {
           selectedColor: AppColors.primary,
           secondarySelectedColor: AppColors.primary,
           labelStyle: const TextStyle(color: AppColors.darkText),
+          secondaryLabelStyle: const TextStyle(color: Colors.black),
+          checkmarkColor: Colors.black,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: const BorderSide(color: AppColors.border),
@@ -129,20 +154,57 @@ class VitrinXApp extends StatelessWidget {
           indicatorColor: AppColors.turquoiseSurface,
           iconTheme: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return const IconThemeData(color: AppColors.primaryDark);
+              return const IconThemeData(color: AppColors.primary);
             }
             return const IconThemeData(color: AppColors.mutedText);
           }),
           labelTextStyle: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
               return const TextStyle(
-                color: AppColors.primaryDark,
+                color: AppColors.primary,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               );
             }
             return const TextStyle(color: AppColors.mutedText, fontSize: 12);
           }),
+        ),
+        checkboxTheme: CheckboxThemeData(
+          fillColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return AppColors.surfaceSoft;
+            }
+            if (states.contains(WidgetState.selected)) {
+              return AppColors.primary;
+            }
+            return AppColors.surfaceSoft;
+          }),
+          checkColor: const WidgetStatePropertyAll(Colors.black),
+          side: const BorderSide(color: AppColors.border, width: 1.5),
+        ),
+        dialogTheme: const DialogThemeData(
+          backgroundColor: AppColors.surface,
+          surfaceTintColor: Colors.transparent,
+          titleTextStyle: TextStyle(
+            color: AppColors.darkText,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+          contentTextStyle: TextStyle(
+            color: AppColors.darkTextAlt,
+            fontSize: 14,
+            height: 1.45,
+          ),
+        ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: AppColors.surface,
+          modalBackgroundColor: AppColors.surface,
+          surfaceTintColor: Colors.transparent,
+          dragHandleColor: AppColors.mutedText,
+        ),
+        dividerTheme: const DividerThemeData(
+          color: AppColors.border,
+          thickness: 1,
         ),
       ),
       routerConfig: AppRouter.router,

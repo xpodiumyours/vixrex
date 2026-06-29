@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vitrinx/theme/app_colors.dart';
 
 /// VitrinX uygulamasının merkezi tipografi stilleri.
 ///
@@ -11,7 +12,7 @@ abstract final class AppTextStyles {
   static const TextStyle displayTitle = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w900,
-    color: Color(0xFF0F172A),
+    color: AppColors.darkText,
     height: 1.2,
   );
 
@@ -19,14 +20,14 @@ abstract final class AppTextStyles {
   static const TextStyle sectionTitle = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w900,
-    color: Color(0xFF0F172A),
+    color: AppColors.darkText,
   );
 
   /// Alt bölüm başlığı.
   static const TextStyle subTitle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w800,
-    color: Color(0xFF111827),
+    color: AppColors.darkText,
   );
 
   // ── Gövde Metni ───────────────────────────────────────────────────────
@@ -35,7 +36,7 @@ abstract final class AppTextStyles {
   static const TextStyle body = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
-    color: Color(0xFF334155),
+    color: AppColors.darkTextAlt,
     height: 1.5,
   );
 
@@ -43,7 +44,7 @@ abstract final class AppTextStyles {
   static const TextStyle caption = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.normal,
-    color: Color(0xFF64748B),
+    color: AppColors.mutedText,
     height: 1.4,
   );
 
@@ -53,21 +54,21 @@ abstract final class AppTextStyles {
   static const TextStyle labelBold = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.bold,
-    color: Color(0xFF0F172A),
+    color: AppColors.darkText,
   );
 
   /// Küçük etiket (chip, badge).
   static const TextStyle labelSmall = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w600,
-    color: Color(0xFF64748B),
+    color: AppColors.mutedText,
   );
 
-  /// Birincil CTA buton metni (beyaz zemin üzerine).
+  /// Birincil CTA buton metni (elektrik mavisi zemin üzerine).
   static const TextStyle ctaButton = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w900,
-    color: Colors.white,
+    color: Colors.black,
     letterSpacing: 0.3,
   );
 
@@ -77,13 +78,13 @@ abstract final class AppTextStyles {
   static const TextStyle formLabel = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w700,
-    color: Color(0xFF334155),
+    color: AppColors.darkTextAlt,
   );
 
   /// Hata mesajı.
   static const TextStyle errorText = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w600,
-    color: Colors.redAccent,
+    color: AppColors.error,
   );
 }
