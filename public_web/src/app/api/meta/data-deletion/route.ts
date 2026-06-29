@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { revalidateTag } from "next/cache";
 import {
-  retainManualProducts,
-  safeParseJson,
-  type ProductItem,
-} from "@/lib/products";
+  loadStoreProducts,
+  markInstagramConnectionDisconnected,
+  persistRetainedProducts,
+  removeInstagramStorageFiles,
+  revalidateInstagramCleanup,
+} from "@/lib/instagramCleanup";
 
 export const runtime = "nodejs";
 
@@ -121,20 +122,18 @@ export async function POST(req: NextRequest) {
         .eq("slug", connection.store_slug)
         .maybeSingle();
 
-      if (Array.isArray(store?.products)) {
-        // Remove products where source is 'instagram' OR matches the imported slugs
-        const nextProducts = retainManualProducts(
-          safeParseJson<ProductItem>(store.products),
-          importedSlugs,
-        );
+      const products = await loadStoreProducts(admin, {
+        storeSlug: connection.store_slug,
+        products: store?.products,
+      });
 
-        await admin
-          .from("stores")
-          .update({
-            products: nextProducts,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("slug", connection.store_slug);
+      if (products) {
+        // Remove products where source is 'instagram' OR matches the imported slugs
+        await persistRetainedProducts(admin, {
+          storeSlug: connection.store_slug,
+          products,
+          importedSlugs,
+        });
       }
 
       // 2. Delete imports
@@ -150,34 +149,17 @@ export async function POST(req: NextRequest) {
         .eq("connection_id", connection.id);
 
       // 4. Delete files from Storage under /{storeSlug}/instagram/
-      const { data: files, error: listError } = await admin.storage
-        .from("shelf-images")
-        .list(`${connection.store_slug}/instagram`, { limit: 1000 });
-
-      if (!listError && files && files.length > 0) {
-        const pathsToRemove = files.map((file) => `${connection.store_slug}/instagram/${file.name}`);
-        const { error: removeError } = await admin.storage
-          .from("shelf-images")
-          .remove(pathsToRemove);
-        if (removeError) {
-          console.error("Failed to remove storage files during Meta data-deletion:", removeError);
-        }
-      }
+      await removeInstagramStorageFiles(
+        admin,
+        connection.store_slug,
+        "Meta data-deletion",
+      );
 
       // 5. Update connection status
-      await admin
-        .from("store_instagram_connections")
-        .update({
-          status: "disconnected",
-          state_nonce: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", connection.id);
+      await markInstagramConnectionDisconnected(admin, connection.id);
 
       // 6. Trigger revalidation
-      revalidateTag(`store-${connection.store_slug}`, "max");
-      revalidateTag(`products-${connection.store_slug}`, "max");
-      revalidateTag("sitemap", "max");
+      revalidateInstagramCleanup(connection.store_slug);
 
       // 7. Log completion
       await admin.from("meta_data_deletion_requests").insert({
