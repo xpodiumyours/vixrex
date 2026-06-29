@@ -1026,33 +1026,42 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
   Widget _buildQuickReplies(List<QuickReply> replies) {
     return Container(
       color: AppColors.bgEditor,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: replies.map((r) {
-            return Padding(
-              padding: const EdgeInsets.only(right: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: SizedBox(
+        height: 44,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          itemCount: replies.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 6),
+          itemBuilder: (context, index) {
+            final r = replies[index];
+            return Semantics(
+              button: true,
+              label: r.label,
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () => _onQuickReply(r),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  constraints: const BoxConstraints(minHeight: 44),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
                     gradient: AppColors.ctaGradient,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     r.label,
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
               ),
             );
-          }).toList(),
+          },
         ),
       ),
     );

@@ -10,7 +10,7 @@ abstract final class ChatbotConfig {
 
   // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
   static ChatMessage get welcomeMessage => ChatMessage.bot(
-        'Merhaba! Ben **$botName**, VitrinX\'in dijital asistanıyım. 👋\n\n'
+        'Merhaba! Ben $botName, VitrinX\'in dijital asistanıyım.\n\n'
         'Dijital vitrin oluşturmanıza, ürünlerinizi paylaşmanıza ve\n'
         'müşterilerinize ulaşmanıza yardımcı olabilirim.\n\n'
         'Size nasıl yardımcı olayım?',

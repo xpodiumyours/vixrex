@@ -174,10 +174,21 @@ class XrexScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(
-            Icons.arrow_forward_ios_rounded,
-            color: AppColors.mutedText,
-            size: 12,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceSoft,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Text(
+              'Yakında',
+              style: TextStyle(
+                color: AppColors.mutedText,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
