@@ -196,9 +196,24 @@ class _DragonFacePainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // 1. Dış Arka Plan (OLED Uyumlu Cam Efekti)
-    final bgPaint = Paint()..color = const Color(0xFF1E222B);
+    // 1. Dış Arka Plan (Elektrik Mavisi Siber Halka & Degrade)
+    final bgPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppColors.primary.withAlpha(50),
+          const Color(0xFF0F1219),
+        ],
+        center: const Alignment(0.1, 0.1),
+        radius: 0.8,
+      ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawCircle(Offset(w / 2, h / 2), w / 2, bgPaint);
+
+    // Dış ince elektrik mavi çember halkası
+    final outerRing = Paint()
+      ..color = AppColors.primary.withAlpha(80)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawCircle(Offset(w / 2, h / 2), w / 2 - 0.5, outerRing);
 
     // 2. Siber Ejderha Kafa Yapısı (Vektörel Path Çizimi)
     final dragonPath = Path();
@@ -224,10 +239,16 @@ class _DragonFacePainter extends CustomPainter {
     dragonPath.lineTo(w * 0.25, h * 0.75);
     dragonPath.close();
 
-    // Vektör Gradients (Metalik Karbon Zırh)
+    // Vektör Gradients (Parlak Krom / Titanyum Metalik Zırh)
     final armorPaint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFF2D323F), Color(0xFF12141C)],
+        colors: [
+          Color(0xFFF1F5F9), // Parlak gümüş/titanyum
+          Color(0xFF94A3B8), // Metalik gri
+          Color(0xFF334155), // Koyu karbon
+          Color(0xFF0F172A), // Kömür gölgesi
+        ],
+        stops: [0.0, 0.4, 0.8, 1.0],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ).createShader(Rect.fromLTWH(0, 0, w, h))
@@ -235,32 +256,32 @@ class _DragonFacePainter extends CustomPainter {
 
     canvas.drawPath(dragonPath, armorPaint);
 
-    // Siber Kenar Detayları (Elektrik Mavisi Zırh Çizgileri)
+    // Siber Kenar Detayları (Elektrik Mavisi Zırh Çizgileri - Kontrast İçin Parlak)
     final linePaint = Paint()
-      ..color = AppColors.primary.withAlpha(120)
+      ..color = AppColors.primary
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..strokeWidth = 1.0;
     canvas.drawPath(dragonPath, linePaint);
 
     // 3. Parıldayan Göz (Elektrik Mavisi LED Core)
     final eyeCenter = Offset(w * 0.52, h * 0.48);
-    final double eyeRadius = blinking ? 0.8 : 4.0;
+    final double eyeRadius = blinking ? 0.8 : 3.5;
     
     final eyePaint = Paint()
       ..color = AppColors.primary
-      ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 2);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 2.5);
     
-    // Göz çevresi siber halka
+    // Göz çevresi siber halka (Glowing cyan)
     final eyeRingPaint = Paint()
-      ..color = AppColors.secondary.withAlpha(90)
+      ..color = AppColors.secondary
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+      ..strokeWidth = 0.8;
     
     if (!blinking) {
-      canvas.drawCircle(eyeCenter, 6.0, eyeRingPaint);
+      canvas.drawCircle(eyeCenter, 5.5, eyeRingPaint);
       canvas.drawCircle(eyeCenter, eyeRadius, eyePaint);
       // Göz içi parlama noktası
-      canvas.drawCircle(Offset(eyeCenter.dx - 1.2, eyeCenter.dy - 1.2), 0.8, Paint()..color = Colors.white);
+      canvas.drawCircle(Offset(eyeCenter.dx - 1.0, eyeCenter.dy - 1.0), 0.7, Paint()..color = Colors.white);
     } else {
       // Göz kapalıyken siber çizgi
       canvas.drawLine(
@@ -270,17 +291,24 @@ class _DragonFacePainter extends CustomPainter {
       );
     }
 
-    // 4. Siber Ense Plakaları (Ekstra Kalite Detayı)
+    // 4. Siber Ense Plakaları & Elektrik Devreleri (Ekstra Kalite Detayı)
     final platePath = Path();
     platePath.moveTo(w * 0.28, h * 0.52);
     platePath.lineTo(w * 0.18, h * 0.58);
     platePath.lineTo(w * 0.26, h * 0.62);
     
     final platePaint = Paint()
-      ..color = AppColors.secondary.withAlpha(150)
+      ..color = AppColors.secondary
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     canvas.drawPath(platePath, platePaint);
+
+    // Ağız arasından sızan enerji parıltısı (Laser line)
+    final laserPaint = Paint()
+      ..color = AppColors.primary
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawLine(Offset(w * 0.66, h * 0.58), Offset(w * 0.72, h * 0.57), laserPaint);
   }
 
   @override
