@@ -109,20 +109,16 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
         animation: Listenable.merge([_pulseController, _scanController]),
         builder: (context, child) {
           return Container(
-            width: 68,
-            height: 68,
+            width: 84,
+            height: 84,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.surface,
-              border: Border.all(
-                color: AppColors.primary.withAlpha((255 * _pulseAnim.value).round()),
-                width: 2,
-              ),
+              color: Colors.transparent,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withAlpha((255 * 0.35 * _pulseAnim.value).round()),
-                  blurRadius: 12,
-                  spreadRadius: 2,
+                  color: AppColors.primary.withAlpha((255 * 0.25 * _pulseAnim.value).round()),
+                  blurRadius: 16,
+                  spreadRadius: 4,
                 ),
               ],
             ),
@@ -133,13 +129,13 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
                   // Robot yüzü
                   Image.asset(
                     'assets/images/xrex_mascot.png',
-                    width: 68,
-                    height: 68,
+                    width: 84,
+                    height: 84,
                     fit: BoxFit.cover,
                   ),
                   // Scan line
                   Positioned(
-                    top: 34 + (_scanAnim.value * 34),
+                    top: 42 + (_scanAnim.value * 42),
                     left: 0,
                     right: 0,
                     child: Container(
@@ -810,20 +806,20 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
             children: [
               // Robot mini avatar
               SizedBox(
-                width: 56,
-                height: 56,
+                width: 68,
+                height: 68,
                 child: ClipOval(
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Image.asset(
                         'assets/images/xrex_mascot.png',
-                        width: 56,
-                        height: 56,
+                        width: 68,
+                        height: 68,
                         fit: BoxFit.cover,
                       ),
                       Positioned(
-                        top: 28 + (_scanAnim.value * 28),
+                        top: 34 + (_scanAnim.value * 34),
                         left: 0,
                         right: 0,
                         child: Container(

@@ -29,20 +29,16 @@ class XrexScreen extends StatelessWidget {
               const SizedBox(height: 20),
               // Siber Ejderha Avatar / İkon Alanı
               Container(
-                width: 160,
-                height: 160,
+                width: 200,
+                height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.surfaceSoft,
-                  border: Border.all(
-                    color: AppColors.primary.withAlpha(80),
-                    width: 2,
-                  ),
+                  color: Colors.transparent,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withAlpha(40),
-                      blurRadius: 20,
-                      spreadRadius: 2,
+                      color: AppColors.primary.withAlpha(30),
+                      blurRadius: 24,
+                      spreadRadius: 4,
                     ),
                   ],
                 ),
@@ -52,8 +48,8 @@ class XrexScreen extends StatelessWidget {
                     children: [
                       Image.asset(
                         'assets/images/xrex_mascot.png',
-                        width: 160,
-                        height: 160,
+                        width: 200,
+                        height: 200,
                         fit: BoxFit.cover,
                       ),
                     ],
