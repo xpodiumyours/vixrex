@@ -8,6 +8,11 @@ import 'package:vitrinx/widgets/chatbot_overlay.dart';
 
 void main() {
   testWidgets('X-rex ekranı Türkçe başlıkları gösterir', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1920);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(const MaterialApp(home: XrexScreen()));
 
     expect(find.text('X-rex Yapay Zekâ'), findsOneWidget);

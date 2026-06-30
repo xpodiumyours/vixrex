@@ -109,8 +109,8 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
         animation: Listenable.merge([_pulseController, _scanController]),
         builder: (context, child) {
           return Container(
-            width: 52,
-            height: 52,
+            width: 68,
+            height: 68,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.surface,
@@ -133,13 +133,13 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
                   // Robot yüzü
                   Image.asset(
                     'assets/images/xrex_mascot.png',
-                    width: 52,
-                    height: 52,
+                    width: 68,
+                    height: 68,
                     fit: BoxFit.cover,
                   ),
                   // Scan line
                   Positioned(
-                    top: 26 + (_scanAnim.value * 26),
+                    top: 34 + (_scanAnim.value * 34),
                     left: 0,
                     right: 0,
                     child: Container(
@@ -810,20 +810,20 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
             children: [
               // Robot mini avatar
               SizedBox(
-                width: 44,
-                height: 44,
+                width: 56,
+                height: 56,
                 child: ClipOval(
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Image.asset(
                         'assets/images/xrex_mascot.png',
-                        width: 44,
-                        height: 44,
+                        width: 56,
+                        height: 56,
                         fit: BoxFit.cover,
                       ),
                       Positioned(
-                        top: 22 + (_scanAnim.value * 22),
+                        top: 28 + (_scanAnim.value * 28),
                         left: 0,
                         right: 0,
                         child: Container(
