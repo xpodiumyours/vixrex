@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/config/turkey_cities_config.dart';
+import 'package:vitrinx/models/article_entry.dart';
+import 'package:vitrinx/models/booking_schedule.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/seo_service.dart';
@@ -9,6 +11,7 @@ import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/utils/token_generator.dart';
+import 'package:vitrinx/utils/turkish_normalizer.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'editor_gallery_item.dart';
 
@@ -125,23 +128,11 @@ class StoreEditorController extends ChangeNotifier {
   int _bookingCapacity = 1;
   int get bookingCapacity => _bookingCapacity;
 
-  Map<String, dynamic> _bookingWorkingHours = {
-    '1': {'start': '09:00', 'end': '19:00', 'active': true},
-    '2': {'start': '09:00', 'end': '19:00', 'active': true},
-    '3': {'start': '09:00', 'end': '19:00', 'active': true},
-    '4': {'start': '09:00', 'end': '19:00', 'active': true},
-    '5': {'start': '09:00', 'end': '19:00', 'active': true},
-    '6': {'start': '09:00', 'end': '16:00', 'active': true},
-    '7': {'start': '00:00', 'end': '00:00', 'active': false},
-  };
-  Map<String, dynamic> get bookingWorkingHours => _bookingWorkingHours;
+  BookingWorkingHours _bookingWorkingHours = BookingWorkingHours();
+  Map<String, dynamic> get bookingWorkingHours => _bookingWorkingHours.toJson();
 
-  Map<String, dynamic> _bookingLunchBreak = {
-    'start': '12:00',
-    'end': '13:00',
-    'active': true,
-  };
-  Map<String, dynamic> get bookingLunchBreak => _bookingLunchBreak;
+  BookingLunchBreak _bookingLunchBreak = const BookingLunchBreak();
+  Map<String, dynamic> get bookingLunchBreak => _bookingLunchBreak.toJson();
 
   // Validation Errors
   String? _nameError;
@@ -163,8 +154,8 @@ class StoreEditorController extends ChangeNotifier {
   String? get googleLinkError => _googleLinkError;
 
   // Blog Articles
-  List<Map<String, dynamic>> _articles = [];
-  List<Map<String, dynamic>> get articles => _articles;
+  List<ArticleEntry> _articles = [];
+  List<ArticleEntry> get articles => _articles;
 
   bool _isLoadingArticles = false;
   bool get isLoadingArticles => _isLoadingArticles;
@@ -183,27 +174,16 @@ class StoreEditorController extends ChangeNotifier {
       if (data.name.trim().isEmpty) {
         if (name.isNotEmpty) {
           data.name = name;
-        } else if (publishedInfo?.name != null && publishedInfo!.name.trim().isNotEmpty) {
+        } else if (publishedInfo?.name != null &&
+            publishedInfo!.name.trim().isNotEmpty) {
           data.name = publishedInfo.name;
         }
       }
 
       bool bookingIsEnabled = false;
       int bookingCapacity = 1;
-      Map<String, dynamic> bookingWorkingHours = {
-        '1': {'start': '09:00', 'end': '19:00', 'active': true},
-        '2': {'start': '09:00', 'end': '19:00', 'active': true},
-        '3': {'start': '09:00', 'end': '19:00', 'active': true},
-        '4': {'start': '09:00', 'end': '19:00', 'active': true},
-        '5': {'start': '09:00', 'end': '19:00', 'active': true},
-        '6': {'start': '09:00', 'end': '16:00', 'active': true},
-        '7': {'start': '00:00', 'end': '00:00', 'active': false},
-      };
-      Map<String, dynamic> bookingLunchBreak = {
-        'start': '12:00',
-        'end': '13:00',
-        'active': true,
-      };
+      var bookingWorkingHours = BookingWorkingHours();
+      var bookingLunchBreak = const BookingLunchBreak();
 
       if (publishedInfo?.slug != null && publishedInfo!.slug.isNotEmpty) {
         try {
@@ -217,13 +197,13 @@ class StoreEditorController extends ChangeNotifier {
             bookingIsEnabled = (settingsRes['is_enabled'] ?? false) as bool;
             bookingCapacity = (settingsRes['capacity'] ?? 1) as int;
             if (settingsRes['working_hours'] != null) {
-              bookingWorkingHours = Map<String, dynamic>.from(
-                settingsRes['working_hours'] as Map,
+              bookingWorkingHours = BookingWorkingHours.fromJson(
+                Map<String, dynamic>.from(settingsRes['working_hours'] as Map),
               );
             }
             if (settingsRes['lunch_break'] != null) {
-              bookingLunchBreak = Map<String, dynamic>.from(
-                settingsRes['lunch_break'] as Map,
+              bookingLunchBreak = BookingLunchBreak.fromJson(
+                Map<String, dynamic>.from(settingsRes['lunch_break'] as Map),
               );
             }
           }
@@ -315,7 +295,14 @@ class StoreEditorController extends ChangeNotifier {
           .select()
           .eq('store_slug', slug)
           .order('created_at', ascending: false);
-      _articles = List<Map<String, dynamic>>.from(res as List);
+      _articles =
+          (res as List)
+              .whereType<Map>()
+              .map(
+                (item) =>
+                    ArticleEntry.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList();
     } catch (e) {
       debugPrint('Error fetching articles: $e');
     } finally {
@@ -405,12 +392,12 @@ class StoreEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateBookingWorkingHours(Map<String, dynamic> hours) {
+  void updateBookingWorkingHours(BookingWorkingHours hours) {
     _bookingWorkingHours = hours;
     notifyListeners();
   }
 
-  void updateBookingLunchBreak(Map<String, dynamic> lunch) {
+  void updateBookingLunchBreak(BookingLunchBreak lunch) {
     _bookingLunchBreak = lunch;
     notifyListeners();
   }
@@ -524,10 +511,10 @@ class StoreEditorController extends ChangeNotifier {
       _data.address = geoAddress;
       _addressError = null;
 
-      final normalizedAddress = _normalizeText(geoAddress);
+      final normalizedAddress = normalizeTurkish(geoAddress);
       Province? matchedProvince;
       for (final province in turkeyProvinces) {
-        final normalizedProvince = _normalizeText(province.name);
+        final normalizedProvince = normalizeTurkish(province.name);
         if (normalizedAddress.contains(normalizedProvince)) {
           matchedProvince = province;
           break;
@@ -542,7 +529,7 @@ class StoreEditorController extends ChangeNotifier {
         final districts = turkeyDistricts[matchedProvince.code] ?? [];
         String? matchedDistrict;
         for (final district in districts) {
-          final normalizedDistrict = _normalizeText(district);
+          final normalizedDistrict = normalizeTurkish(district);
           if (normalizedAddress.contains(normalizedDistrict)) {
             matchedDistrict = district;
             break;
@@ -559,18 +546,6 @@ class StoreEditorController extends ChangeNotifier {
       }
     }
     notifyListeners();
-  }
-
-  String _normalizeText(String text) {
-    return text
-        .toLowerCase()
-        .replaceAll('i', 'i')
-        .replaceAll('ı', 'i')
-        .replaceAll('ğ', 'g')
-        .replaceAll('ü', 'u')
-        .replaceAll('ş', 's')
-        .replaceAll('ö', 'o')
-        .replaceAll('ç', 'c');
   }
 
   Future<void> saveLocally() async {
@@ -761,8 +736,8 @@ class StoreEditorController extends ChangeNotifier {
           'store_slug': result.slug,
           'is_enabled': _bookingIsEnabled,
           'capacity': _bookingCapacity,
-          'working_hours': _bookingWorkingHours,
-          'lunch_break': _bookingLunchBreak,
+          'working_hours': _bookingWorkingHours.toJson(),
+          'lunch_break': _bookingLunchBreak.toJson(),
         });
       } catch (e) {
         debugPrint('Booking settings save error: $e');
