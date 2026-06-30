@@ -29,6 +29,11 @@ class XrexScreen extends StatelessWidget {
       snapshot: snapshot,
       hasShared: hasShared,
     );
+    final qualityReport = XrexGuidanceService.qualityReportFor(
+      snapshot: snapshot,
+      hasShared: hasShared,
+    );
+    final nextQualityStep = qualityReport.nextImprovement;
     final isRecommendationDismissed =
         dismissedRecommendationId == recommendation.id;
     final screenSize = MediaQuery.sizeOf(context);
@@ -131,7 +136,7 @@ class XrexScreen extends StatelessWidget {
                       _buildRecommendationCard(recommendation),
                     const SizedBox(height: 24),
                     const Text(
-                      'Yakında',
+                      'Vitrin araçları',
                       style: TextStyle(
                         color: AppColors.mutedText,
                         fontSize: 12,
@@ -142,21 +147,28 @@ class XrexScreen extends StatelessWidget {
                     _buildSuggestionCard(
                       icon: Icons.analytics_outlined,
                       title: 'Vitrin kaliteni analiz et',
-                      subtitle: 'Eksik alanları ve puanını optimize et.',
+                      subtitle: nextQualityStep == null
+                          ? 'Puanın 100/100 • Tüm kalite adımları tamamlandı.'
+                          : 'Puanın ${qualityReport.score}/100 • Öncelik: ${nextQualityStep.label}',
+                      onTap: () => _showQualityReport(context, qualityReport),
                     ),
                     const SizedBox(height: 12),
                     _buildSuggestionCard(
                       icon: Icons.edit_note_outlined,
                       title: 'Mağaza açıklamanı iyileştir',
-                      subtitle:
-                          'Yapay zekâ ile dikkat çekici bir açıklama yaz.',
+                      subtitle: snapshot?.descriptionCompleted == true
+                          ? 'Açıklaman hazır. İstersen güncelleyebilirsin.'
+                          : 'İşletmeni anlatan kısa bir açıklama ekle.',
+                      onTap: () => onAction(XrexAction.scrollToDesc),
                     ),
                     const SizedBox(height: 12),
                     _buildSuggestionCard(
                       icon: Icons.style_outlined,
                       title: 'Ürün kartı önerileri hazırla',
-                      subtitle:
-                          'Ürünlerinin sunumunu ve fiyatlarını değerlendir.',
+                      subtitle: snapshot?.catalogCompleted == true
+                          ? 'Ürün ve hizmetlerini gözden geçir.'
+                          : 'İlk ürününü veya hizmetini ekle.',
+                      onTap: () => onAction(XrexAction.scrollToProducts),
                     ),
                   ],
                 ),
@@ -348,67 +360,195 @@ class XrexScreen extends StatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withAlpha(20),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: AppColors.primary, size: 20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.darkText,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppColors.mutedText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Icon(icon, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: AppColors.darkText,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: AppColors.mutedText,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceSoft,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: const Text(
-              'Yakında',
-              style: TextStyle(
+              ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right_rounded,
                 color: AppColors.mutedText,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
+                size: 22,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showQualityReport(
+    BuildContext context,
+    XrexQualityReport report,
+  ) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        final next = report.nextImprovement;
+        return SafeArea(
+          child: FractionallySizedBox(
+            heightFactor: 0.82,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Vitrin kalite özeti',
+                          style: TextStyle(
+                            color: AppColors.darkText,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${report.score}/100',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    next == null
+                        ? 'Tüm kalite adımları tamamlandı.'
+                        : 'Öncelikli eksik: ${next.label}',
+                    style: const TextStyle(
+                      color: AppColors.mutedText,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: report.items.length,
+                      separatorBuilder: (_, __) =>
+                          const Divider(color: AppColors.border, height: 1),
+                      itemBuilder: (context, index) {
+                        final item = report.items[index];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            item.completed
+                                ? Icons.check_circle_rounded
+                                : Icons.radio_button_unchecked_rounded,
+                            color: item.completed
+                                ? AppColors.primary
+                                : AppColors.mutedText,
+                          ),
+                          title: Text(
+                            item.label,
+                            style: const TextStyle(
+                              color: AppColors.darkText,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          trailing: Text(
+                            '${item.completed ? item.points : 0}/${item.points}',
+                            style: TextStyle(
+                              color: item.completed
+                                  ? AppColors.primary
+                                  : AppColors.mutedText,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          onTap: item.completed
+                              ? null
+                              : () {
+                                  Navigator.pop(sheetContext);
+                                  onAction(item.action);
+                                },
+                        );
+                      },
+                    ),
+                  ),
+                  if (next != null) ...[
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        onAction(next.action);
+                      },
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                      label: Text('${next.label} alanını aç'),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

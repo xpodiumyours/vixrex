@@ -447,6 +447,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
             selectedIndex: _selectedIndex,
             onDestinationSelected: (index) {
               setState(() => _selectedIndex = index);
+              if (index == 2) _loadXrexSnapshot();
             },
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             destinations: destinations,

@@ -43,6 +43,10 @@ class XrexProfileSnapshot {
   final bool whatsappCompleted;
   final bool addressCompleted;
   final bool legalCompleted;
+  final bool coverCompleted;
+  final bool galleryCompleted;
+  final bool descriptionCompleted;
+  final bool catalogCompleted;
   final bool isPublished;
 
   const XrexProfileSnapshot({
@@ -50,6 +54,10 @@ class XrexProfileSnapshot {
     required this.whatsappCompleted,
     required this.addressCompleted,
     required this.legalCompleted,
+    required this.coverCompleted,
+    required this.galleryCompleted,
+    required this.descriptionCompleted,
+    required this.catalogCompleted,
     required this.isPublished,
   });
 
@@ -77,12 +85,20 @@ class XrexProfileSnapshot {
                     data.publicationConsentHash.trim().isNotEmpty;
 
     final isPublished = publishedInfo != null && publishedInfo.isComplete;
+    final coverCompleted = data.shelfImageUrl.trim().isNotEmpty;
+    final galleryCompleted = data.galleryItems.isNotEmpty;
+    final descriptionCompleted = data.description.trim().isNotEmpty;
+    final catalogCompleted = data.products.isNotEmpty || data.offerings.isNotEmpty;
 
     return XrexProfileSnapshot(
       nameCompleted:     nameOk,
       whatsappCompleted: whatsappOk,
       addressCompleted:  addressOk,
       legalCompleted:    legalOk,
+      coverCompleted: coverCompleted,
+      galleryCompleted: galleryCompleted,
+      descriptionCompleted: descriptionCompleted,
+      catalogCompleted: catalogCompleted,
       isPublished:       isPublished,
     );
   }
