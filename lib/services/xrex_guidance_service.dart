@@ -178,6 +178,20 @@ abstract final class XrexGuidanceService {
     return XrexQualityReport(score: score, items: items);
   }
 
+  static String _buttonLabelForId(String id) {
+    switch (id) {
+      case 'name':        return 'İşletme Adı Ekle';
+      case 'whatsapp':    return 'WhatsApp Ekle';
+      case 'address':     return 'Adres Ekle';
+      case 'legal':       return 'Onayları İncele';
+      case 'cover':       return 'Kapak Görseli Ekle';
+      case 'description': return 'Açıklama Ekle';
+      case 'products':    return 'Ürün Ekle';
+      case 'gallery':     return 'Fotoğraf Ekle';
+      default:            return 'Beni götür';
+    }
+  }
+
   static XrexRecommendation _improvementRecommendation(
     XrexQualityReport report,
   ) {
@@ -198,7 +212,7 @@ abstract final class XrexGuidanceService {
       title: '${next.label} adımını geliştir',
       description:
           'Vitrin puanın ${report.score}/100. En önemli eksik: ${next.label}.',
-      buttonLabel: 'Beni götür',
+      buttonLabel: _buttonLabelForId(next.id),
       action: next.action,
     );
   }
@@ -210,7 +224,7 @@ abstract final class XrexGuidanceService {
           phase: XrexJourneyPhase.setup,
           title: 'İşletme adını ekle',
           description: 'Müşterilerinin seni tanıması için işletme adını tamamla.',
-          buttonLabel: 'Beni götür',
+          buttonLabel: 'İşletme Adı Ekle',
           action: XrexAction.scrollToName,
         ),
       XrexNextStep.whatsapp => const XrexRecommendation(
@@ -218,7 +232,7 @@ abstract final class XrexGuidanceService {
           phase: XrexJourneyPhase.setup,
           title: 'WhatsApp numaranı ekle',
           description: 'Müşterilerinin sana doğrudan ulaşabilmesini sağla.',
-          buttonLabel: 'Beni götür',
+          buttonLabel: 'WhatsApp Ekle',
           action: XrexAction.scrollToWhatsapp,
         ),
       XrexNextStep.address => const XrexRecommendation(
@@ -226,7 +240,7 @@ abstract final class XrexGuidanceService {
           phase: XrexJourneyPhase.setup,
           title: 'Adresini ve konumunu tamamla',
           description: 'Müşterilerinin işletmeni kolayca bulmasına yardımcı ol.',
-          buttonLabel: 'Beni götür',
+          buttonLabel: 'Adres Ekle',
           action: XrexAction.scrollToAddress,
         ),
       XrexNextStep.legal => const XrexRecommendation(
@@ -234,7 +248,7 @@ abstract final class XrexGuidanceService {
           phase: XrexJourneyPhase.setup,
           title: 'Yayınlama onaylarını tamamla',
           description: 'Vitrinini güvenli şekilde yayınlamak için onayları incele.',
-          buttonLabel: 'Beni götür',
+          buttonLabel: 'Onayları İncele',
           action: XrexAction.scrollToLegal,
         ),
       XrexNextStep.publish => const XrexRecommendation(

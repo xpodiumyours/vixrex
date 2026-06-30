@@ -119,6 +119,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 700));
 
-    expect(find.text('Beni götür'), findsOneWidget);
+    expect(find.text('İşletme Adı Ekle'), findsOneWidget);
   });
 }
