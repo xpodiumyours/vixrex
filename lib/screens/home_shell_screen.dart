@@ -40,6 +40,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   // ── Xrex Snapshot ─────────────────────────────────────────────────────────
   XrexProfileSnapshot? _xrexSnapshot;
   PublishedVitrinInfo? _publishedInfo;
+  bool _xrexHasShared = false;
+  String? _dismissedXrexRecommendationId;
   final _snapshotLoader = const XrexSnapshotLoader();
 
   /// Mevcut kullanıcının yönetici olup olmadığını kontrol eder.
@@ -79,12 +81,18 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final publishedInfo = await storage.loadPublishedVitrinInfo();
 
     // Geçmiş sohbeti yerel depolamadan yükle
-    final history = await ChatbotService().loadHistory();
+    final chatbotService = ChatbotService();
+    final history = await chatbotService.loadHistory();
+    final hasShared = await chatbotService.hasSharedVitrin();
+    final dismissedRecommendationId =
+        await chatbotService.loadDismissedRecommendationId();
 
     if (mounted) {
       setState(() {
         _xrexSnapshot = snapshot;
         _publishedInfo = publishedInfo;
+        _xrexHasShared = hasShared;
+        _dismissedXrexRecommendationId = dismissedRecommendationId;
         _xrexChatMessages.clear();
         _xrexChatMessages.addAll(history);
       });
@@ -116,6 +124,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final link = _publishedInfo?.publicLink;
     if (link != null && link.isNotEmpty) {
       Clipboard.setData(ClipboardData(text: link));
+      _markXrexShared();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Link panoya kopyalandı!'),
@@ -128,6 +137,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   Future<void> _xrexShareWhatsapp() async {
     final link = _publishedInfo?.publicLink;
     if (link == null || link.isEmpty) return;
+
+    await _markXrexShared();
 
     final storeName =
         _xrexSnapshot?.nameCompleted == true
@@ -179,6 +190,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       );
       return;
     }
+
+    _markXrexShared();
 
     showModalBottomSheet(
       context: context,
@@ -281,6 +294,50 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     });
   }
 
+  Future<void> _markXrexShared() async {
+    await ChatbotService().markVitrinShared();
+    if (!mounted) return;
+    setState(() => _xrexHasShared = true);
+  }
+
+  Future<void> _dismissXrexRecommendation(String recommendationId) async {
+    await ChatbotService().dismissRecommendation(recommendationId);
+    if (!mounted) return;
+    setState(() => _dismissedXrexRecommendationId = recommendationId);
+  }
+
+  void _handleXrexAction(XrexAction action) {
+    switch (action) {
+      case XrexAction.openVitrim:
+        _xrexNavigateToVitrim();
+        break;
+      case XrexAction.copyLink:
+        _xrexCopyLink();
+        break;
+      case XrexAction.shareWhatsapp:
+        _xrexShareWhatsapp();
+        break;
+      case XrexAction.showQr:
+        _xrexShowQr();
+        break;
+      case XrexAction.openExplore:
+        _openExplore();
+        break;
+      case XrexAction.scrollToCover:
+      case XrexAction.scrollToGallery:
+      case XrexAction.scrollToName:
+      case XrexAction.scrollToWhatsapp:
+      case XrexAction.scrollToAddress:
+      case XrexAction.scrollToLegal:
+      case XrexAction.scrollToDesc:
+      case XrexAction.scrollToProducts:
+        _xrexScrollToAction(action);
+        break;
+      case XrexAction.none:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAdmin = _isAdmin;
@@ -293,7 +350,13 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         onOpenExplore: _openExplore,
       ),
       ExploreScreen(key: ValueKey(_exploreRefreshKey)),
-      const XrexScreen(),
+      XrexScreen(
+        snapshot: _xrexSnapshot,
+        hasShared: _xrexHasShared,
+        dismissedRecommendationId: _dismissedXrexRecommendationId,
+        onAction: _handleXrexAction,
+        onDismissRecommendation: _dismissXrexRecommendation,
+      ),
       const ProfileScreen(),
       if (isAdmin) const BlogModerationScreen(),
     ];
