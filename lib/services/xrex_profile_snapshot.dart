@@ -12,6 +12,14 @@ enum XrexNextStep {
   share,
 }
 
+/// X-rex'in kullanıcıya göstereceği rehberlik aşaması.
+enum XrexJourneyPhase {
+  setup,
+  publish,
+  share,
+  improve,
+}
+
 extension XrexNextStepLabel on XrexNextStep {
   String get label {
     switch (this) {
@@ -29,6 +37,8 @@ extension XrexNextStepLabel on XrexNextStep {
 /// Vitrin durumunun kullanıcı dostu özeti.
 /// Güvenlik: editToken, userId, session bilgisi içermez.
 class XrexProfileSnapshot {
+  static const int requiredStepCount = 4;
+
   final bool nameCompleted;
   final bool whatsappCompleted;
   final bool addressCompleted;
@@ -92,6 +102,23 @@ class XrexProfileSnapshot {
   // ── Yardımcılar ───────────────────────────────────────────────────────────
 
   bool get isReadyToPublish => nameCompleted && whatsappCompleted && addressCompleted && legalCompleted && !isPublished;
+
+  bool get areRequiredFieldsCompleted =>
+      nameCompleted && whatsappCompleted && addressCompleted && legalCompleted;
+
+  int get completedRequiredStepCount => [
+        nameCompleted,
+        whatsappCompleted,
+        addressCompleted,
+        legalCompleted,
+      ].where((completed) => completed).length;
+
+  XrexJourneyPhase journeyPhase({required bool hasShared}) {
+    if (!areRequiredFieldsCompleted) return XrexJourneyPhase.setup;
+    if (!isPublished) return XrexJourneyPhase.publish;
+    if (!hasShared) return XrexJourneyPhase.share;
+    return XrexJourneyPhase.improve;
+  }
 }
 
 // ─── Snapshot Servis ─────────────────────────────────────────────────────────

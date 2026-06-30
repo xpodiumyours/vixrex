@@ -8,6 +8,9 @@ import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 /// Kural tabanlı, tamamen offline çalışır.
 class ChatbotService {
   static const String _greetedKey = 'xrex_greeted';
+  static const String _sharedMilestoneKey = 'xrex_vitrin_shared';
+  static const String _dismissedRecommendationKey =
+      'xrex_dismissed_recommendation';
 
   /// Kullanıcının mesajını analiz edip yanıt döner.
   ChatMessage respond(String input, [XrexProfileSnapshot? snapshot]) {
@@ -46,6 +49,26 @@ class ChatbotService {
   Future<void> markGreeted() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_greetedKey, true);
+  }
+
+  Future<bool> hasSharedVitrin() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_sharedMilestoneKey) ?? false;
+  }
+
+  Future<void> markVitrinShared() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_sharedMilestoneKey, true);
+  }
+
+  Future<String?> loadDismissedRecommendationId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_dismissedRecommendationKey);
+  }
+
+  Future<void> dismissRecommendation(String recommendationId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_dismissedRecommendationKey, recommendationId);
   }
 
   /// Türkçe karakter normalizasyonu + küçük harf.
