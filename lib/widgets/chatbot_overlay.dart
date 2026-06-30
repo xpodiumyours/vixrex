@@ -352,6 +352,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
   bool _cursorVisible = true;
   Timer? _cursorTimer;
   bool _isTyping = false;
+  bool _hasShared = false;
 
   @override
   void initState() {
@@ -371,37 +372,50 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
 
     // Sohbet geçmişini başlat/bağla
     _messages = widget.chatHistory ?? [];
-    
-    final snap = widget.snapshot;
-    if (snap != null) {
-      final lastMsg = _messages.isNotEmpty ? _messages.last : null;
-      
-      String currentSnapKey;
-      if (snap.isPublished) {
-        currentSnapKey = 'published';
-      } else if (snap.isReadyToPublish) {
-        currentSnapKey = 'ready';
-      } else {
-        currentSnapKey = 'incomplete_${snap.nextMissingField.name}';
-      }
-      
-      if (_messages.isEmpty ||
-          lastMsg == null ||
-          !lastMsg.isBot ||
-          lastMsg.snapshotStateKey != currentSnapKey) {
-        
-        _messages.add(_service.respondWithSnapshot(snap));
-        _service.saveHistory(_messages);
-      }
-    } else {
-      if (_messages.isEmpty) {
-        _messages.add(ChatbotConfig.welcomeMessage);
-      }
-    }
+    _initializeGuidance();
 
     if (_messages.isNotEmpty) {
       Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
     }
+  }
+
+  Future<void> _initializeGuidance() async {
+    final snap = widget.snapshot;
+    if (snap == null) {
+      if (_messages.isEmpty && mounted) {
+        setState(() => _messages.add(ChatbotConfig.welcomeMessage));
+      }
+      return;
+    }
+
+    final hasShared = await _service.hasSharedVitrin();
+    final dismissedRecommendationId =
+        await _service.loadDismissedRecommendationId();
+    if (!mounted) return;
+
+    _hasShared = hasShared;
+    final guidanceMessage = _service.respondWithSnapshot(
+      snap,
+      hasShared: hasShared,
+    );
+    final currentStateKey = guidanceMessage.snapshotStateKey;
+
+    if (dismissedRecommendationId == currentStateKey) {
+      if (_messages.isEmpty) {
+        setState(() => _messages.add(ChatbotConfig.welcomeMessage));
+      }
+      return;
+    }
+
+    final alreadyAdded = _messages.any(
+      (message) =>
+          message.isBot && message.snapshotStateKey == currentStateKey,
+    );
+    if (alreadyAdded) return;
+
+    setState(() => _messages.add(guidanceMessage));
+    _service.saveHistory(_messages);
+    Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
   }
 
   @override
@@ -433,7 +447,9 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
       setState(() => _isTyping = false);
-      _addBotMessage(_service.respond(text.trim()));
+      _addBotMessage(
+        _service.respond(text.trim(), widget.snapshot, _hasShared),
+      );
     });
   }
 
@@ -455,7 +471,13 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
       setState(() => _isTyping = false);
-      _addBotMessage(_service.respondToPayload(reply.payload));
+      _addBotMessage(
+        _service.respondToPayload(
+          reply.payload,
+          widget.snapshot,
+          _hasShared,
+        ),
+      );
     });
   }
 
@@ -543,11 +565,8 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
 
     if (confirm == true) {
       await _service.clearHistory();
-      setState(() {
-        _messages.clear();
-        _messages.add(ChatbotConfig.welcomeMessage);
-      });
-      _scrollToBottom();
+      setState(() => _messages.clear());
+      await _initializeGuidance();
     }
   }
 

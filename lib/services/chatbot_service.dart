@@ -13,30 +13,41 @@ class ChatbotService {
       'xrex_dismissed_recommendation';
 
   /// Kullanıcının mesajını analiz edip yanıt döner.
-  ChatMessage respond(String input, [XrexProfileSnapshot? snapshot]) {
+  ChatMessage respond(
+    String input, [
+    XrexProfileSnapshot? snapshot,
+    bool hasShared = false,
+  ]) {
     final normalized = _normalize(input);
 
     // Intent eşleştirme
     for (final intent in ChatbotConfig.intents) {
       for (final keyword in intent.keywords) {
         if (normalized.contains(_normalize(keyword))) {
-          return ChatbotConfig.responseFor(intent.payload, snapshot);
+          return ChatbotConfig.responseFor(intent.payload, snapshot, hasShared);
         }
       }
     }
 
     // Eşleşme bulunamadı
-    return ChatbotConfig.responseFor('default', snapshot);
+    return ChatbotConfig.responseFor('default', snapshot, hasShared);
   }
 
   /// Quick Reply payload'ına göre yanıt döner.
-  ChatMessage respondToPayload(String payload, [XrexProfileSnapshot? snapshot]) {
-    return ChatbotConfig.responseFor(payload, snapshot);
+  ChatMessage respondToPayload(
+    String payload, [
+    XrexProfileSnapshot? snapshot,
+    bool hasShared = false,
+  ]) {
+    return ChatbotConfig.responseFor(payload, snapshot, hasShared);
   }
 
   /// Vitrin snapshot'ına göre kişiselleştirilmiş karşılama mesajı döner.
-  ChatMessage respondWithSnapshot(XrexProfileSnapshot snapshot) {
-    return ChatbotConfig.snapshotWelcome(snapshot);
+  ChatMessage respondWithSnapshot(
+    XrexProfileSnapshot snapshot, {
+    required bool hasShared,
+  }) {
+    return ChatbotConfig.snapshotWelcome(snapshot, hasShared: hasShared);
   }
 
   /// Kullanıcı daha önce karşılandı mı?
