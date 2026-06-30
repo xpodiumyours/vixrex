@@ -753,7 +753,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           const SizedBox(height: 32),
           Text(
-            'İşletmenizin dijital vitrini dakikalar içinde hazır',
+            'Vitrininizi kurun, yayınlayın ve müşterilerinize duyurun',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: TextStyle(
               color: AppColors.darkText,
@@ -765,7 +765,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           const SizedBox(height: 24),
           Text(
-            'İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrinde toplayın. Linkinizi ve QR kodunuzu müşterilerinizle kolayca paylaşın.',
+            'İşletme bilgilerinizi tek vitrinde toplayın, yayına alın ve linkinizi müşterilerinizle kolayca paylaşın.',
             textAlign: isDesktop ? TextAlign.left : TextAlign.center,
             style: const TextStyle(
               color: AppColors.darkTextAlt,
@@ -1714,7 +1714,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Column(
             children: [
               const Text(
-                'Üç adımda vitrininiz hazır',
+                'Üç adımda dijital vitrininiz hazır',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
@@ -1730,18 +1730,18 @@ class _LandingScreenState extends State<LandingScreen>
                   final steps = [
                     _buildStepTimeline(
                       1,
-                      'Bilgilerinizi ekleyin',
-                      'İşletme adı, açıklama, WhatsApp ve adres bilgilerinizi girin.',
+                      'Vitrininizi kurun',
+                      'İşletme bilgilerinizi, görsellerinizi, ürün ve hizmetlerinizi ekleyin.',
                     ),
                     _buildStepTimeline(
                       2,
-                      'Vitrininizi hazırlayın',
-                      'Fotoğraflarınızı, ürünlerinizi ve hizmetlerinizi ekleyin.',
+                      'Yayınlayın',
+                      'Bilgilerinizi kontrol edin; vitrin linkinizi ve QR kodunuzu hazır edin.',
                     ),
                     _buildStepTimeline(
                       3,
-                      'Müşterilerinizle paylaşın',
-                      'Vitrin linkinizi veya QR kodunuzu paylaşın.',
+                      'Müşterilerinize duyurun',
+                      'Linkinizi WhatsApp, sosyal medya veya işletmenizdeki QR kod ile paylaşın.',
                     ),
                   ];
 

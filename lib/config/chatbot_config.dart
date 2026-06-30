@@ -2,19 +2,18 @@ import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/services/xrex_guidance_service.dart';
 import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 
-/// Xrex — VitrinX'in yapay zeka destekli asistan chatbot'u.
+/// Xrex — VitrinX'in kural tabanlı kullanıcı rehberi.
 /// Tüm yanıtlar Türkçedir. API bağlantısı yoktur; kural tabanlı çalışır.
 abstract final class ChatbotConfig {
   static const String botName = 'Xrex';
-  static const String botSubtitle = 'VitrinX Asistanı';
+  static const String botSubtitle = 'VitrinX Rehberi';
   static const String systemStatus = 'AKTİF';
 
   // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
   static ChatMessage get welcomeMessage => ChatMessage.bot(
-        'Merhaba! Ben $botName, VitrinX\'in dijital asistanıyım.\n\n'
-        'Dijital vitrin oluşturmanıza, ürünlerinizi paylaşmanıza ve\n'
-        'müşterilerinize ulaşmanıza yardımcı olabilirim.\n\n'
-        'Size nasıl yardımcı olayım?',
+        'Merhaba! Ben $botName, VitrinX rehberiyim.\n\n'
+        'Vitrinini kurman, yayınlaman ve müşterilerine duyurman için sıradaki doğru adımı gösteririm.\n\n'
+        'Nasıl yardımcı olayım?',
         quickReplies: mainMenuReplies(null),
       );
 
@@ -131,7 +130,7 @@ abstract final class ChatbotConfig {
 
       case 'vitrinx_info':
         return ChatMessage.bot(
-          'VitrinX, işletmeni link ve QR ile paylaşılabilir dijital vitrine dönüştürür. Ürün, hizmet, konum, WhatsApp ve randevu bilgilerini tek sayfada toplar.',
+          'VitrinX ile işletme bilgilerini tek yerde toplar, vitrinini yayınlar ve link, QR veya WhatsApp ile müşterilerine duyurursun.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
         

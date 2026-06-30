@@ -54,7 +54,7 @@ class XrexScreen extends StatelessWidget {
       backgroundColor: AppColors.bgEditor,
       appBar: AppBar(
         title: const Text(
-          'X-rex Yapay Zekâ',
+          'X-rex Rehber',
           style: TextStyle(
             color: AppColors.darkText,
             fontWeight: FontWeight.w900,
@@ -107,7 +107,7 @@ class XrexScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               const Text(
-                'VitrinX Yapay Zekâ Asistanı',
+                'VitrinX Rehberi',
                 style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 14,
@@ -118,7 +118,7 @@ class XrexScreen extends StatelessWidget {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  'Vitrininizi, mağaza kartlarınızı ve ürün sunumlarınızı optimize etmek için buradayım.',
+                  'Vitrinini kurman, yayınlaman ve müşterilerine duyurman için sıradaki doğru adımı gösteririm.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.mutedText,
