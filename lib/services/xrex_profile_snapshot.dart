@@ -160,10 +160,26 @@ class XrexSnapshotLoader {
     StoreLocalStorageService? storage,
   }) : _storage = storage ?? const StoreLocalStorageService();
 
-  Future<XrexProfileSnapshot?> load() async {
+  Future<XrexProfileSnapshot> load() async {
     final vitrinData = await _storage.loadVitrinData();
-    if (vitrinData == null) return null;
     final publishedInfo = await _storage.loadPublishedVitrinInfo();
+    if (vitrinData == null) {
+      return const XrexProfileSnapshot(
+        nameCompleted: false,
+        whatsappCompleted: false,
+        addressCompleted: false,
+        legalCompleted: false,
+        coverCompleted: false,
+        galleryCompleted: false,
+        descriptionCompleted: false,
+        catalogCompleted: false,
+        isPublished: false,
+        storeName: '',
+        category: '',
+        district: '',
+        publicLink: '',
+      );
+    }
     return XrexProfileSnapshot.from(vitrinData, publishedInfo);
   }
 }
