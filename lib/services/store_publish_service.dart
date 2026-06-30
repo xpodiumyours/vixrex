@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/publish/publish_error_translator.dart';
+import 'package:vitrinx/services/publish/publish_repository.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 
 class StorePublishValidator {
@@ -215,10 +217,9 @@ class StorePublishPayloadBuilder {
   }
 
   Map<String, dynamic> toStoreUpdateMap(StoreData data) {
-    final shelfImageUrl =
-        data.shelfImageUrl.trim().isNotEmpty
-            ? data.shelfImageUrl.trim()
-            : data.coverImageUrl.trim();
+    final shelfImageUrl = data.shelfImageUrl.trim().isNotEmpty
+        ? data.shelfImageUrl.trim()
+        : data.coverImageUrl.trim();
 
     return <String, dynamic>{
       'name': data.name.trim(),
@@ -369,11 +370,15 @@ class StorePublishService {
   final StorePublishPayloadBuilder payloadBuilder;
   final StorePublishValidator validator;
   final SupabaseClient? supabaseClient;
+  final PublishRepository repository;
+  final PublishErrorTranslator errorTranslator;
 
   const StorePublishService({
     this.payloadBuilder = const StorePublishPayloadBuilder(),
     this.validator = const StorePublishValidator(),
     this.supabaseClient,
+    this.repository = const PublishRepository(),
+    this.errorTranslator = const PublishErrorTranslator(),
   });
 
   Future<StorePublishResult> publishStore(
@@ -385,10 +390,9 @@ class StorePublishService {
       throw StorePublishException(validationMessage);
     }
 
-    final initialSlug =
-        data.slug.trim().isNotEmpty
-            ? data.slug.trim()
-            : payloadBuilder.generateSlug(data.name);
+    final initialSlug = data.slug.trim().isNotEmpty
+        ? data.slug.trim()
+        : payloadBuilder.generateSlug(data.name);
     late final SupabaseClient client;
     var slug = initialSlug;
 
@@ -397,19 +401,23 @@ class StorePublishService {
 
       if (editToken.trim().isNotEmpty) {
         try {
-          final existingByToken =
-              await client
-                  .from('stores')
-                  .select('slug')
-                  .eq('edit_token', editToken)
-                  .maybeSingle();
+          final existingByToken = await repository.findStoreByToken(
+            client,
+            editToken,
+          );
 
           if (existingByToken != null) {
-            final dbSlug = (existingByToken['slug'] as String?)?.trim() ?? '';
+            final dbSlug = existingByToken.trim();
             if (dbSlug.isNotEmpty) {
               slug = dbSlug;
             }
-            await _updateStoreWithToken(client, data, slug, editToken);
+            await repository.updateStoreWithToken(
+              client,
+              data,
+              slug,
+              editToken,
+              payloadBuilder,
+            );
             return StorePublishResult(
               publicPath: '/v/$slug',
               slug: slug,
@@ -421,19 +429,14 @@ class StorePublishService {
         }
       }
 
-      final existingStore =
-          await client
-              .from('stores')
-              .select('slug')
-              .eq('slug', slug)
-              .maybeSingle();
+      final existingStore = await repository.findStoreBySlug(client, slug);
 
-      if (existingStore == null) {
+      if (!existingStore) {
         final payload = payloadBuilder.toStoreInsertMap(data, slug, editToken);
         if (client.auth.currentUser != null) {
           payload['user_id'] = client.auth.currentUser!.id;
         }
-        await client.from('stores').insert(payload);
+        await repository.insertStore(client, payload);
         return StorePublishResult(
           publicPath: '/v/$slug',
           slug: slug,
@@ -441,18 +444,30 @@ class StorePublishService {
         );
       }
 
-      await _updateStoreWithToken(client, data, slug, editToken);
+      await repository.updateStoreWithToken(
+        client,
+        data,
+        slug,
+        editToken,
+        payloadBuilder,
+      );
       return StorePublishResult(
         publicPath: '/v/$slug',
         slug: slug,
         wasUpdated: true,
       );
     } on PostgrestException catch (error) {
-      if (_isDuplicateSlugError(error)) {
+      if (errorTranslator.isDuplicateSlugError(error)) {
         debugPrint(
           'Store slug already exists after select, trying token update.',
         );
-        await _updateStoreWithToken(client, data, slug, editToken);
+        await repository.updateStoreWithToken(
+          client,
+          data,
+          slug,
+          editToken,
+          payloadBuilder,
+        );
         return StorePublishResult(
           publicPath: '/v/$slug',
           slug: slug,
@@ -461,35 +476,13 @@ class StorePublishService {
       }
 
       throw StorePublishException(
-        _messageForPostgrestError(error, data.isStore),
+        errorTranslator.messageForPostgrestError(error, data.isStore),
       );
     } on StorePublishException {
       rethrow;
     } catch (error) {
       throw StorePublishException(
-        _messageForUnexpectedError(error, data.isStore),
-      );
-    }
-  }
-
-  Future<void> _updateStoreWithToken(
-    SupabaseClient client,
-    StoreData data,
-    String slug,
-    String editToken,
-  ) async {
-    try {
-      await client.rpc(
-        'update_store_with_token',
-        params: {
-          'p_slug': slug,
-          'p_edit_token': editToken,
-          'p_store': payloadBuilder.toStoreUpdateMap(data),
-        },
-      );
-    } on PostgrestException catch (error) {
-      throw StorePublishException(
-        _messageForPostgrestError(error, data.isStore),
+        errorTranslator.messageForUnexpectedError(error, data.isStore),
       );
     }
   }
@@ -506,97 +499,16 @@ class StorePublishService {
 
     try {
       final client = supabaseClient ?? Supabase.instance.client;
-      await client.rpc(
-        'withdraw_store_publication_consent',
-        params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
-      );
+      await repository.withdrawConsent(client, slug, editToken);
     } on PostgrestException catch (error) {
-      throw StorePublishException(_messageForPostgrestError(error, false));
+      throw StorePublishException(
+        errorTranslator.messageForPostgrestError(error, false),
+      );
     } catch (_) {
       throw const StorePublishException(
         'Yayınlama rızası geri çekilemedi. Lütfen tekrar deneyin.',
       );
     }
-  }
-
-  String _messageForPostgrestError(PostgrestException error, bool isStore) {
-    final searchableText =
-        [
-          error.message,
-          error.code,
-          error.details?.toString(),
-          error.hint,
-          error.toString(),
-        ].whereType<String>().join(' ').toLowerCase();
-
-    if (searchableText.contains('edit_token_mismatch') ||
-        searchableText.contains('edit token mismatch')) {
-      return isStore
-          ? 'Bu mağaza başka bir cihazdan oluşturulmuş olabilir.'
-          : 'Bu vitrin başka bir cihazdan oluşturulmuş olabilir.';
-    }
-
-    if (searchableText.contains('privacy_notice_required') ||
-        searchableText.contains('privacy_notice_version_invalid')) {
-      return 'Güncel Aydınlatma Metni hakkında bilgilendirildiğinizi onaylamalısınız.';
-    }
-    if (searchableText.contains('terms_acceptance_required') ||
-        searchableText.contains('terms_version_invalid')) {
-      return 'Güncel Kullanım Şartları’nı kabul etmelisiniz.';
-    }
-    if (searchableText.contains('publication_consent_required') ||
-        searchableText.contains('publication_consent_version_invalid')) {
-      return 'Vitrininizi yayınlamak için güncel açık rıza beyanını onaylamalısınız.';
-    }
-
-    if (searchableText.contains('update_store_with_token') ||
-        searchableText.contains('could not find the function')) {
-      return 'Güncelleme altyapısı Supabase tarafında henüz kurulmamış.';
-    }
-
-    if (searchableText.contains('row-level security') ||
-        searchableText.contains('permission denied') ||
-        searchableText.contains('violates row-level security')) {
-      return isStore
-          ? 'Mağaza güncelleme izni Supabase tarafında eksik görünüyor.'
-          : 'Vitrin güncelleme izni Supabase tarafında eksik görünüyor.';
-    }
-
-    return isStore
-        ? 'Mağaza yayınlanamadı: ${error.message}'
-        : 'Vitrin yayınlanamadı: ${error.message}';
-  }
-
-  String _messageForUnexpectedError(Object error, bool isStore) {
-    final searchableText = error.toString().toLowerCase();
-
-    if (searchableText.contains('supabase') &&
-        (searchableText.contains('initialize') ||
-            searchableText.contains('not initialized') ||
-            searchableText.contains('has not been initialized') ||
-            searchableText.contains('instance'))) {
-      return 'Supabase bağlantı bilgileri eksik. Uygulamayı SUPABASE_URL ve SUPABASE_PUBLISHABLE_KEY değerleriyle başlatın.';
-    }
-
-    return isStore
-        ? 'Mağaza yayınlanamadı: $error'
-        : 'Vitrin yayınlanamadı: $error';
-  }
-
-  bool _isDuplicateSlugError(PostgrestException error) {
-    final searchableText =
-        [
-          error.message,
-          error.code,
-          error.details?.toString(),
-          error.hint,
-          error.toString(),
-        ].whereType<String>().join(' ').toLowerCase();
-
-    return searchableText.contains('stores_slug_key') ||
-        searchableText.contains('duplicate key') ||
-        searchableText.contains('23505') ||
-        searchableText.contains('409');
   }
 }
 
