@@ -14,31 +14,33 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(MaterialApp(
-      home: XrexScreen(
-        snapshot: const XrexProfileSnapshot(
-          nameCompleted: true,
-          whatsappCompleted: true,
-          addressCompleted: true,
-          legalCompleted: true,
-          coverCompleted: true,
-          galleryCompleted: true,
-          descriptionCompleted: true,
-          catalogCompleted: true,
-          isPublished: true,
-          storeName: 'Test Mağazası',
-          category: 'Kategori',
-          district: 'İlçe',
-          publicLink: 'https://vitrinx.com/test',
+    await tester.pumpWidget(
+      MaterialApp(
+        home: XrexScreen(
+          snapshot: const XrexProfileSnapshot(
+            nameCompleted: true,
+            whatsappCompleted: true,
+            addressCompleted: true,
+            legalCompleted: true,
+            coverCompleted: true,
+            galleryCompleted: true,
+            descriptionCompleted: true,
+            catalogCompleted: true,
+            isPublished: true,
+            storeName: 'Test Mağazası',
+            category: 'Kategori',
+            district: 'İlçe',
+            publicLink: 'https://vitrinx.com/test',
+          ),
+          hasShared: false,
+          dismissedRecommendationId: null,
+          onAction: (_) {},
+          onDismissRecommendation: (_) {},
+          onCopyPromotionText: (_) {},
+          onSharePromotionText: (_) {},
         ),
-        hasShared: false,
-        dismissedRecommendationId: null,
-        onAction: (_) {},
-        onDismissRecommendation: (_) {},
-        onCopyPromotionText: (_) {},
-        onSharePromotionText: (_) {},
       ),
-    ));
+    );
 
     expect(find.text('X-rex Rehber'), findsOneWidget);
     expect(find.text('X-rex'), findsOneWidget);
@@ -78,47 +80,46 @@ void main() {
     expect(find.text('VitrinX Kullanıcısı'), findsOneWidget);
   });
 
-  testWidgets('X-rex chatbot overlay shows guided step when snapshot is incomplete', (tester) async {
-    XrexOverlay.close();
-    addTearDown(XrexOverlay.close);
-    SharedPreferences.setMockInitialValues({});
-    tester.view.physicalSize = const Size(800, 1200);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'X-rex chatbot overlay shows guided step when snapshot is incomplete',
+    (tester) async {
+      XrexOverlay.close();
+      addTearDown(XrexOverlay.close);
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    const mockSnapshot = XrexProfileSnapshot(
-      nameCompleted: false,
-      whatsappCompleted: false,
-      addressCompleted: false,
-      legalCompleted: false,
-      coverCompleted: false,
-      galleryCompleted: false,
-      descriptionCompleted: false,
-      catalogCompleted: false,
-      isPublished: false,
-      storeName: '',
-      category: '',
-      district: '',
-      publicLink: '',
-    );
+      const mockSnapshot = XrexProfileSnapshot(
+        nameCompleted: false,
+        whatsappCompleted: false,
+        addressCompleted: false,
+        legalCompleted: false,
+        coverCompleted: false,
+        galleryCompleted: false,
+        descriptionCompleted: false,
+        catalogCompleted: false,
+        isPublished: false,
+        storeName: '',
+        category: '',
+        district: '',
+        publicLink: '',
+      );
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: ChatbotBadge(
-              snapshot: mockSnapshot,
-            ),
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Center(child: ChatbotBadge(snapshot: mockSnapshot)),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.tap(find.byType(ChatbotBadge));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 700));
+      await tester.tap(find.byType(ChatbotBadge));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
 
-    expect(find.text('İşletme Adı Ekle'), findsOneWidget);
-  });
+      expect(find.text('İşletme Adı Ekle'), findsOneWidget);
+    },
+  );
 }

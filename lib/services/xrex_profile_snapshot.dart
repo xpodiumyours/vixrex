@@ -3,32 +3,26 @@ import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 
 // ─── Eksik alan enum'u ────────────────────────────────────────────────────────
-enum XrexNextStep {
-  name,
-  whatsapp,
-  address,
-  legal,
-  publish,
-  share,
-}
+enum XrexNextStep { name, whatsapp, address, legal, publish, share }
 
 /// X-rex'in kullanıcıya göstereceği rehberlik aşaması.
-enum XrexJourneyPhase {
-  setup,
-  publish,
-  share,
-  improve,
-}
+enum XrexJourneyPhase { setup, publish, share, improve }
 
 extension XrexNextStepLabel on XrexNextStep {
   String get label {
     switch (this) {
-      case XrexNextStep.name:     return 'İşletme adı';
-      case XrexNextStep.whatsapp: return 'WhatsApp numarası';
-      case XrexNextStep.address:  return 'Adres / konum';
-      case XrexNextStep.legal:    return 'Yasal yayınlama onayları';
-      case XrexNextStep.publish:  return 'Yayınla';
-      case XrexNextStep.share:    return 'Paylaşım';
+      case XrexNextStep.name:
+        return 'İşletme adı';
+      case XrexNextStep.whatsapp:
+        return 'WhatsApp numarası';
+      case XrexNextStep.address:
+        return 'Adres / konum';
+      case XrexNextStep.legal:
+        return 'Yasal yayınlama onayları';
+      case XrexNextStep.publish:
+        return 'Yayınla';
+      case XrexNextStep.share:
+        return 'Paylaşım';
     }
   }
 }
@@ -75,43 +69,48 @@ class XrexProfileSnapshot {
     StoreData data,
     PublishedVitrinInfo? publishedInfo,
   ) {
-    final nameOk     = data.name.trim().isNotEmpty;
-    final whatsappOk = data.whatsapp.trim().isNotEmpty &&
-                       WhatsAppLinkHelper.isValidTurkeyMobile(data.whatsapp);
-    final addressOk  = data.address.trim().isNotEmpty &&
-                       data.provinceName.trim().isNotEmpty &&
-                       data.districtName.trim().isNotEmpty;
-    
-    final legalOk = data.privacyNoticeAcknowledged &&
-                    data.privacyNoticeVersion.trim().isNotEmpty &&
-                    data.privacyNoticeHash.trim().isNotEmpty &&
-                    data.termsAccepted &&
-                    data.termsVersion.trim().isNotEmpty &&
-                    data.termsHash.trim().isNotEmpty &&
-                    data.publicationConsentAccepted &&
-                    data.publicationConsentVersion.trim().isNotEmpty &&
-                    data.publicationConsentHash.trim().isNotEmpty;
+    final nameOk = data.name.trim().isNotEmpty;
+    final whatsappOk =
+        data.whatsapp.trim().isNotEmpty &&
+        WhatsAppLinkHelper.isValidTurkeyMobile(data.whatsapp);
+    final addressOk =
+        data.address.trim().isNotEmpty &&
+        data.provinceName.trim().isNotEmpty &&
+        data.districtName.trim().isNotEmpty;
+
+    final legalOk =
+        data.privacyNoticeAcknowledged &&
+        data.privacyNoticeVersion.trim().isNotEmpty &&
+        data.privacyNoticeHash.trim().isNotEmpty &&
+        data.termsAccepted &&
+        data.termsVersion.trim().isNotEmpty &&
+        data.termsHash.trim().isNotEmpty &&
+        data.publicationConsentAccepted &&
+        data.publicationConsentVersion.trim().isNotEmpty &&
+        data.publicationConsentHash.trim().isNotEmpty;
 
     final isPublished = publishedInfo != null && publishedInfo.isComplete;
     final coverCompleted = data.shelfImageUrl.trim().isNotEmpty;
     final galleryCompleted = data.galleryItems.isNotEmpty;
     final descriptionCompleted = data.description.trim().isNotEmpty;
-    final catalogCompleted = data.products.isNotEmpty || data.offerings.isNotEmpty;
+    final catalogCompleted =
+        data.products.isNotEmpty || data.offerings.isNotEmpty;
 
     return XrexProfileSnapshot(
-      nameCompleted:     nameOk,
+      nameCompleted: nameOk,
       whatsappCompleted: whatsappOk,
-      addressCompleted:  addressOk,
-      legalCompleted:    legalOk,
+      addressCompleted: addressOk,
+      legalCompleted: legalOk,
       coverCompleted: coverCompleted,
       galleryCompleted: galleryCompleted,
       descriptionCompleted: descriptionCompleted,
       catalogCompleted: catalogCompleted,
-      isPublished:       isPublished,
+      isPublished: isPublished,
       storeName: data.name.trim(),
-      category: data.kategori.trim().isNotEmpty
-          ? data.kategori.trim()
-          : data.businessType.trim(),
+      category:
+          data.kategori.trim().isNotEmpty
+              ? data.kategori.trim()
+              : data.businessType.trim(),
       district: data.districtName.trim(),
       publicLink: publishedInfo?.publicLink.trim() ?? '',
     );
@@ -121,22 +120,28 @@ class XrexProfileSnapshot {
 
   /// Yalnızca ilk eksik alanı döndürür.
   XrexNextStep get nextMissingField {
-    if (!nameCompleted)     return XrexNextStep.name;
+    if (!nameCompleted) return XrexNextStep.name;
     if (!whatsappCompleted) return XrexNextStep.whatsapp;
-    if (!addressCompleted)  return XrexNextStep.address;
-    if (!legalCompleted)    return XrexNextStep.legal;
-    if (!isPublished)       return XrexNextStep.publish;
+    if (!addressCompleted) return XrexNextStep.address;
+    if (!legalCompleted) return XrexNextStep.legal;
+    if (!isPublished) return XrexNextStep.publish;
     return XrexNextStep.share;
   }
 
   // ── Yardımcılar ───────────────────────────────────────────────────────────
 
-  bool get isReadyToPublish => nameCompleted && whatsappCompleted && addressCompleted && legalCompleted && !isPublished;
+  bool get isReadyToPublish =>
+      nameCompleted &&
+      whatsappCompleted &&
+      addressCompleted &&
+      legalCompleted &&
+      !isPublished;
 
   bool get areRequiredFieldsCompleted =>
       nameCompleted && whatsappCompleted && addressCompleted && legalCompleted;
 
-  int get completedRequiredStepCount => [
+  int get completedRequiredStepCount =>
+      [
         nameCompleted,
         whatsappCompleted,
         addressCompleted,
@@ -156,9 +161,8 @@ class XrexProfileSnapshot {
 class XrexSnapshotLoader {
   final StoreLocalStorageService _storage;
 
-  const XrexSnapshotLoader({
-    StoreLocalStorageService? storage,
-  }) : _storage = storage ?? const StoreLocalStorageService();
+  const XrexSnapshotLoader({StoreLocalStorageService? storage})
+    : _storage = storage ?? const StoreLocalStorageService();
 
   Future<XrexProfileSnapshot> load() async {
     final vitrinData = await _storage.loadVitrinData();
