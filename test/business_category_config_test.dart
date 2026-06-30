@@ -83,6 +83,19 @@ void main() {
       expect(categoryRestoran.id, 'kafe_lokanta');
     });
 
+    test('fromCategoryLabel is tolerant to English-character Turkish inputs (normalization)', () {
+      // Test exact matches without Turkish characters
+      expect(BusinessCategoryConfig.fromCategoryLabel('kuafor').id, 'kuafor');
+      expect(BusinessCategoryConfig.fromCategoryLabel('gida').id, 'gida');
+      expect(BusinessCategoryConfig.fromCategoryLabel('firin').id, 'firin');
+      
+      // Test partial/keyword matches without Turkish characters
+      expect(BusinessCategoryConfig.fromCategoryLabel('kuafor salonu').id, 'kuafor');
+      expect(BusinessCategoryConfig.fromCategoryLabel('ozel egitim dersleri').id, 'egitim_ders');
+      expect(BusinessCategoryConfig.fromCategoryLabel('saglik yasam koçu').id, 'saglik_yasam');
+      expect(BusinessCategoryConfig.fromCategoryLabel('oto yikama servisi').id, 'oto_arac');
+    });
+
     test('all category labels map back to themselves', () {
       for (final category in BusinessCategoryConfig.categories) {
         final mapped = BusinessCategoryConfig.fromCategoryLabel(category.label);

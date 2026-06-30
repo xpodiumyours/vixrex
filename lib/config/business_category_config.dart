@@ -312,12 +312,30 @@ class BusinessCategoryConfig {
     ),
   ];
 
+  static String _normalizeTurkish(String text) {
+    return text
+        .replaceAll('ı', 'i')
+        .replaceAll('ş', 's')
+        .replaceAll('ç', 'c')
+        .replaceAll('ğ', 'g')
+        .replaceAll('ü', 'u')
+        .replaceAll('ö', 'o');
+  }
+
   static BusinessCategoryConfig fromCategoryLabel(String label) {
     final cleanLabel = label.trim().toLowerCase();
 
     // 1. Try exact match (case-insensitive) against category labels or IDs first
     for (final category in categories) {
       if (category.label.toLowerCase() == cleanLabel || category.id == cleanLabel) {
+        return category;
+      }
+    }
+    
+    // Also try exact match with normalized values to catch "kuafor" matching exactly the ID "kuafor" or matching a normalized label
+    final normalizedLabel = _normalizeTurkish(cleanLabel);
+    for (final category in categories) {
+      if (_normalizeTurkish(category.label.toLowerCase()) == normalizedLabel || _normalizeTurkish(category.id) == normalizedLabel) {
         return category;
       }
     }
@@ -356,7 +374,8 @@ class BusinessCategoryConfig {
     };
 
     for (final entry in keywordMappings.entries) {
-      if (cleanLabel.contains(entry.key)) {
+      final normalizedKey = _normalizeTurkish(entry.key);
+      if (normalizedLabel.contains(normalizedKey)) {
         return categories.firstWhere((c) => c.id == entry.value);
       }
     }
