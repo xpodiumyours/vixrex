@@ -314,16 +314,22 @@ class BusinessCategoryConfig {
 
   static BusinessCategoryConfig fromCategoryLabel(String label) {
     final cleanLabel = label.trim().toLowerCase();
+
+    // 1. Try exact match (case-insensitive) against category labels or IDs first
+    for (final category in categories) {
+      if (category.label.toLowerCase() == cleanLabel || category.id == cleanLabel) {
+        return category;
+      }
+    }
     
-    // Alias mappings to preserve legacy category names and handle edge cases:
+    // 2. Fallback to keyword mappings for partial/heuristic matching:
+    // (Specific/distinctive terms are placed first; generic terms like 'hizmet' or 'servis' are last)
     const keywordMappings = {
       'kafe': 'kafe_lokanta',
       'restoran': 'kafe_lokanta',
       'lokanta': 'kafe_lokanta',
       'kuaför': 'kuafor',
       'güzellik': 'kuafor',
-      'teknik': 'teknik_servis',
-      'servis': 'teknik_servis',
       'giyim & butik': 'giyim',
       'giyim': 'giyim',
       'butik': 'butik',
@@ -333,8 +339,6 @@ class BusinessCategoryConfig {
       'evcil hayvan': 'pet_shop_veteriner',
       'veteriner': 'pet_shop_veteriner',
       'pet': 'pet_shop_veteriner',
-      'danışmanlık': 'hizmet_danismanlik',
-      'hizmet': 'hizmet_danismanlik',
       'eğitim': 'egitim_ders',
       'ders': 'egitim_ders',
       'temizlik': 'ev_temizlik',
@@ -345,6 +349,10 @@ class BusinessCategoryConfig {
       'oto': 'oto_arac',
       'araç': 'oto_arac',
       'araba': 'oto_arac',
+      'teknik': 'teknik_servis',
+      'danışmanlık': 'hizmet_danismanlik',
+      'servis': 'teknik_servis',
+      'hizmet': 'hizmet_danismanlik',
     };
 
     for (final entry in keywordMappings.entries) {
@@ -354,8 +362,7 @@ class BusinessCategoryConfig {
     }
     
     return categories.firstWhere(
-      (c) => c.label.toLowerCase() == cleanLabel || c.id == cleanLabel,
-      orElse: () => categories.firstWhere((c) => c.id == 'diger'),
+      (c) => c.id == 'diger',
     );
   }
 }

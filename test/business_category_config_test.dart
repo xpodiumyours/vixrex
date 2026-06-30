@@ -83,6 +83,13 @@ void main() {
       expect(categoryRestoran.id, 'kafe_lokanta');
     });
 
+    test('all category labels map back to themselves', () {
+      for (final category in BusinessCategoryConfig.categories) {
+        final mapped = BusinessCategoryConfig.fromCategoryLabel(category.label);
+        expect(mapped.id, category.id, reason: 'Failed for label: ${category.label}');
+      }
+    });
+
     test('all 19 categories are configured with valid fields', () {
       expect(BusinessCategoryConfig.categories, hasLength(19));
       for (final category in BusinessCategoryConfig.categories) {
