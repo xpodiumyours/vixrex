@@ -1050,6 +1050,30 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   }
 
   Future<void> _handleInstagramProductImported(Product product) async {
+    var category = _data.productCategories.where(
+      (item) =>
+          item.name.trim().toLowerCase() ==
+          product.category.trim().toLowerCase(),
+    );
+    if (category.isEmpty) {
+      final created = ProductCategory(
+        id: 'category-${DateTime.now().microsecondsSinceEpoch}',
+        name:
+            product.category.trim().isEmpty ||
+                    product.category.trim().toLowerCase() == 'tümü'
+                ? 'Genel'
+                : product.category.trim(),
+        sortOrder: _data.productCategories.length,
+      );
+      _data.productCategories.add(created);
+      category = [created];
+    }
+    product.categoryId = category.first.id;
+    product.category = category.first.name;
+    if (product.imagePath?.trim().isNotEmpty == true &&
+        product.imageUrls.isEmpty) {
+      product.imageUrls = [product.imagePath!.trim()];
+    }
     final existingIndex = _data.products.indexWhere(
       (item) =>
           item.id == product.id ||
@@ -4197,6 +4221,12 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   }
 
   void _showProductManagementPlaceholder() {
+    final storeSlug =
+        _data.slug.trim().isNotEmpty
+            ? _data.slug.trim()
+            : const StorePublishPayloadBuilder().generateSlug(
+              _nameController.text.trim(),
+            );
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
@@ -4207,7 +4237,17 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       builder: (context) {
         return ProductManagementSheet(
           products: _data.products,
+          categories: _data.productCategories,
+          storeSlug: storeSlug,
           showMessage: _showPlaceholderSnackBar,
+          onCatalogChanged: (products, categories) async {
+            if (!mounted) return;
+            setState(() {
+              _data.products = products;
+              _data.productCategories = categories;
+            });
+            await _storage.saveVitrinData(_data);
+          },
         );
       },
     );

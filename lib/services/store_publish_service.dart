@@ -143,6 +143,12 @@ class StorePublishValidator {
       if (product.name.trim().isEmpty) {
         return 'Eklenen tüm ürünlerin adı zorunludur.';
       }
+      if (product.category.trim().isEmpty) {
+        return 'Eklenen tüm ürünlerin kategorisi zorunludur.';
+      }
+      if (product.displayImageUrls.length > 4) {
+        return 'Bir ürüne en fazla 4 görsel eklenebilir.';
+      }
     }
 
     final extraValidation = _validateLinksAndOfferings(data);
@@ -253,6 +259,7 @@ class StorePublishPayloadBuilder {
       'location_consent_at': data.locationConsentAt?.toIso8601String(),
       'location_source': data.locationSource,
       'products': productsToJson(data),
+      'product_categories': productCategoriesToJson(data),
       'offerings': offeringsToJson(data),
       'privacy_notice_acknowledged': data.privacyNoticeAcknowledged,
       'privacy_notice_version': data.privacyNoticeVersion.trim(),
@@ -276,9 +283,12 @@ class StorePublishPayloadBuilder {
         'name': p.name.trim(),
         'price': p.price.trim(),
         'description': p.description.trim(),
-        'imagePath': p.imagePath?.trim(),
+        'imagePath': p.primaryImageUrl,
+        'imageUrls': p.displayImageUrls,
+        'categoryId': p.categoryId.trim(),
         'category': p.category.trim(),
         'stockStatus': p.stockStatus.trim(),
+        'isVisible': p.isVisible,
         'slug': slug,
       };
 
@@ -296,6 +306,25 @@ class StorePublishPayloadBuilder {
 
       return item;
     }).toList();
+  }
+
+  List<Map<String, dynamic>> productCategoriesToJson(StoreData data) {
+    return data.productCategories
+        .asMap()
+        .entries
+        .map((entry) {
+          final category = entry.value;
+          return {
+            'id': category.id.trim(),
+            'name': category.name.trim(),
+            'sortOrder': entry.key,
+          };
+        })
+        .where((item) {
+          return (item['id'] as String).isNotEmpty &&
+              (item['name'] as String).isNotEmpty;
+        })
+        .toList();
   }
 
   String _resolveProductSlug(Product product, int index) {

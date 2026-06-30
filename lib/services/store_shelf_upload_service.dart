@@ -62,6 +62,21 @@ class StoreShelfUploadService {
     );
   }
 
+  Future<String> uploadProductImage(
+    Uint8List bytes,
+    String slug,
+    String productId, {
+    String fileExtension = 'jpg',
+    String contentType = 'image/jpeg',
+  }) {
+    return uploadShelfImage(
+      bytes,
+      '${sanitizeSlug(slug)}/products/${sanitizeSlug(productId)}',
+      fileExtension: fileExtension,
+      contentType: contentType,
+    );
+  }
+
   /// Slug'ı güvenli hale getirir: başındaki/sonundaki slash'ları temizler.
   /// Boş string gelirse `'magazaniz'` döner.
   ///

@@ -4,8 +4,11 @@ class Product {
   String price;
   String description;
   String? imagePath;
+  List<String> imageUrls;
+  String categoryId;
   String category;
   String stockStatus; // 'Mevcut', 'Tükendi', 'Son birkaç adet'
+  bool isVisible;
   String? slug;
   String? source;
   String? sourceMediaId;
@@ -18,14 +21,39 @@ class Product {
     this.price = '',
     this.description = '',
     this.imagePath,
+    List<String>? imageUrls,
+    this.categoryId = '',
     this.category = 'Tümü',
     this.stockStatus = 'Mevcut',
+    this.isVisible = true,
     this.slug,
     this.source,
     this.sourceMediaId,
     this.sourcePermalink,
     this.importedAt,
-  });
+  }) : imageUrls = _normalizeImageUrls(imageUrls, imagePath);
+
+  static List<String> _normalizeImageUrls(
+    List<String>? imageUrls,
+    String? legacyImagePath,
+  ) {
+    final values = <String>[
+      ...?imageUrls,
+      if (legacyImagePath != null) legacyImagePath,
+    ];
+    return values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toSet()
+        .take(4)
+        .toList();
+  }
+
+  List<String> get displayImageUrls =>
+      _normalizeImageUrls(imageUrls, imagePath);
+
+  String? get primaryImageUrl =>
+      displayImageUrls.isEmpty ? null : displayImageUrls.first;
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{
@@ -33,9 +61,12 @@ class Product {
       'name': name,
       'price': price,
       'description': description,
-      'imagePath': imagePath,
+      'imagePath': primaryImageUrl,
+      'imageUrls': displayImageUrls,
+      'categoryId': categoryId,
       'category': category,
       'stockStatus': stockStatus,
+      'isVisible': isVisible,
     };
 
     void putOptional(String key, String? value) {
@@ -59,9 +90,16 @@ class Product {
     name: (json['name'] ?? '').toString(),
     price: (json['price'] ?? '').toString(),
     description: (json['description'] ?? '').toString(),
-    imagePath: json['imagePath'] as String?,
+    imagePath: (json['imagePath'] ?? json['image_path']) as String?,
+    imageUrls:
+        ((json['imageUrls'] ?? json['image_urls']) as List?)
+            ?.map((item) => item.toString())
+            .toList(),
+    categoryId: (json['categoryId'] ?? json['category_id'] ?? '').toString(),
     category: (json['category'] ?? 'Tümü').toString(),
-    stockStatus: (json['stockStatus'] ?? 'Mevcut').toString(),
+    stockStatus:
+        (json['stockStatus'] ?? json['stock_status'] ?? 'Mevcut').toString(),
+    isVisible: (json['isVisible'] ?? json['is_visible'] ?? true) as bool,
     slug:
         (json['slug'] ?? '').toString().trim().isEmpty
             ? null
@@ -100,8 +138,11 @@ class Product {
     String? price,
     String? description,
     String? imagePath,
+    List<String>? imageUrls,
+    String? categoryId,
     String? category,
     String? stockStatus,
+    bool? isVisible,
     String? slug,
     String? source,
     String? sourceMediaId,
@@ -114,13 +155,42 @@ class Product {
       price: price ?? this.price,
       description: description ?? this.description,
       imagePath: imagePath ?? this.imagePath,
+      imageUrls: imageUrls ?? List.of(this.imageUrls),
+      categoryId: categoryId ?? this.categoryId,
       category: category ?? this.category,
       stockStatus: stockStatus ?? this.stockStatus,
+      isVisible: isVisible ?? this.isVisible,
       slug: slug ?? this.slug,
       source: source ?? this.source,
       sourceMediaId: sourceMediaId ?? this.sourceMediaId,
       sourcePermalink: sourcePermalink ?? this.sourcePermalink,
       importedAt: importedAt ?? this.importedAt,
+    );
+  }
+}
+
+class ProductCategory {
+  String id;
+  String name;
+  int sortOrder;
+
+  ProductCategory({
+    required this.id,
+    required this.name,
+    this.sortOrder = 0,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'sortOrder': sortOrder,
+  };
+
+  factory ProductCategory.fromJson(Map<String, dynamic> json) {
+    return ProductCategory(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      sortOrder: (json['sortOrder'] ?? json['sort_order'] ?? 0) as int,
     );
   }
 }
@@ -260,6 +330,7 @@ class StoreData {
   bool isEsnafMode;
   String? logoUrl;
   List<Product> products;
+  List<ProductCategory> productCategories;
   List<MarketplaceLink> marketplaceLinks;
 
   // Kurumsal Mod Özel Alanları
@@ -319,6 +390,7 @@ class StoreData {
     this.isEsnafMode = true,
     this.logoUrl,
     List<Product>? products,
+    List<ProductCategory>? productCategories,
     List<MarketplaceLink>? marketplaceLinks,
     this.corporateBio = '',
     this.referencesLink = '',
@@ -353,6 +425,7 @@ class StoreData {
     this.publicationConsentVersion = '',
     this.publicationConsentHash = '',
   }) : products = products ?? [],
+       productCategories = productCategories ?? [],
        marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')],
        galleryItems = galleryItems ?? [],
        offerings = offerings ?? [];
@@ -371,6 +444,7 @@ class StoreData {
     'isEsnafMode': isEsnafMode,
     'logoUrl': logoUrl,
     'products': products.map((e) => e.toJson()).toList(),
+    'productCategories': productCategories.map((e) => e.toJson()).toList(),
     'marketplaceLinks': marketplaceLinks.map((e) => e.toJson()).toList(),
     'corporateBio': corporateBio,
     'referencesLink': referencesLink,
@@ -414,6 +488,16 @@ class StoreData {
       json['galleryItems'] ?? json['gallery_items'],
     );
     final parsedOfferings = _parseOfferings(json['offerings']);
+    final parsedProducts =
+        (json['products'] as List?)
+            ?.whereType<Map>()
+            .map((item) => Product.fromJson(Map<String, dynamic>.from(item)))
+            .toList() ??
+        <Product>[];
+    final parsedProductCategories = _parseProductCategories(
+      json['productCategories'] ?? json['product_categories'],
+      parsedProducts,
+    );
 
     return StoreData(
       name: _getString(json, 'name') ?? '',
@@ -430,10 +514,8 @@ class StoreData {
       isEsnafMode:
           (json['isEsnafMode'] ?? json['is_esnaf_mode'] ?? true) as bool,
       logoUrl: _getString(json, 'logoUrl', 'logo_url'),
-      products:
-          (json['products'] as List?)
-              ?.map((e) => Product.fromJson(e as Map<String, dynamic>))
-              .toList(),
+      products: parsedProducts,
+      productCategories: parsedProductCategories,
       marketplaceLinks:
           ((json['marketplaceLinks'] ?? json['marketplace_links']) as List?)
               ?.map((e) => MarketplaceLink.fromJson(e as Map<String, dynamic>))
@@ -538,6 +620,7 @@ class StoreData {
     bool? isEsnafMode,
     String? logoUrl,
     List<Product>? products,
+    List<ProductCategory>? productCategories,
     List<MarketplaceLink>? marketplaceLinks,
     String? corporateBio,
     String? referencesLink,
@@ -586,6 +669,8 @@ class StoreData {
       isEsnafMode: isEsnafMode ?? this.isEsnafMode,
       logoUrl: logoUrl ?? this.logoUrl,
       products: products ?? List.of(this.products),
+      productCategories:
+          productCategories ?? List.of(this.productCategories),
       marketplaceLinks: marketplaceLinks ?? List.of(this.marketplaceLinks),
       corporateBio: corporateBio ?? this.corporateBio,
       referencesLink: referencesLink ?? this.referencesLink,
@@ -669,6 +754,62 @@ class StoreData {
         .where((item) => item.title.trim().isNotEmpty)
         .take(6)
         .toList();
+  }
+
+  static List<ProductCategory> _parseProductCategories(
+    Object? rawItems,
+    List<Product> products,
+  ) {
+    final parsed =
+        rawItems is List
+            ? rawItems
+                .whereType<Map>()
+                .map(
+                  (item) => ProductCategory.fromJson(
+                    Map<String, dynamic>.from(item),
+                  ),
+                )
+                .where(
+                  (category) =>
+                      category.id.trim().isNotEmpty &&
+                      category.name.trim().isNotEmpty,
+                )
+                .toList()
+            : <ProductCategory>[];
+
+    if (parsed.isEmpty) {
+      final labels = <String>[];
+      for (final product in products) {
+        final label = product.category.trim();
+        if (label.isEmpty || label.toLowerCase() == 'tümü') continue;
+        if (!labels.any(
+          (existing) => existing.toLowerCase() == label.toLowerCase(),
+        )) {
+          labels.add(label);
+        }
+      }
+      for (var index = 0; index < labels.length; index++) {
+        parsed.add(
+          ProductCategory(
+            id: 'legacy-category-${index + 1}',
+            name: labels[index],
+            sortOrder: index,
+          ),
+        );
+      }
+    }
+
+    parsed.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    for (final product in products) {
+      if (product.categoryId.trim().isNotEmpty) continue;
+      final match = parsed.where(
+        (category) =>
+            category.name.trim().toLowerCase() ==
+            product.category.trim().toLowerCase(),
+      );
+      if (match.isNotEmpty) product.categoryId = match.first.id;
+    }
+    return parsed;
   }
 
   List<StoreGalleryItem> get displayGalleryItems {

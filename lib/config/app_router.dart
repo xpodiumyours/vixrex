@@ -8,6 +8,7 @@ import 'package:vitrinx/screens/home_shell_screen.dart';
 import 'package:vitrinx/screens/landing_screen.dart';
 import 'package:vitrinx/screens/legal_screen.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
+import 'package:vitrinx/screens/public_product_screen.dart';
 import 'package:vitrinx/config/legal_config.dart';
 
 class AppRouter {
@@ -58,6 +59,15 @@ class AppRouter {
       GoRoute(
         path: home,
         builder: (context, state) => const HomeShellScreen(initialIndex: 0),
+      ),
+      GoRoute(
+        path: '/v/:slug/urun/:productSlug',
+        builder: (context, state) {
+          return PublicProductScreen(
+            storeSlug: state.pathParameters['slug'] ?? '',
+            productSlug: state.pathParameters['productSlug'] ?? '',
+          );
+        },
       ),
       GoRoute(
         path: '/v/:slug',
@@ -213,6 +223,27 @@ class AppRouter {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: slug)),
+      );
+    }
+  }
+
+  static void navigateToPublicProduct(
+    BuildContext context, {
+    required String storeSlug,
+    required String productSlug,
+  }) {
+    final path = '/v/$storeSlug/urun/$productSlug';
+    try {
+      context.push(path);
+    } catch (_) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PublicProductScreen(
+            storeSlug: storeSlug,
+            productSlug: productSlug,
+          ),
+        ),
       );
     }
   }

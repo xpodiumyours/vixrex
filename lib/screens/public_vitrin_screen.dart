@@ -98,6 +98,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
             : null;
 
     return StoreData(
+      slug: widget.slug,
       name: _readString(data['name']),
       businessType: _readString(data['business_type']),
       description: description,
@@ -223,25 +224,8 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
 
       return decodedProducts
           .whereType<Map>()
-          .map(
-            (p) => Product(
-              id: _readString(p['id']),
-              name: _readString(p['name']),
-              price: _readString(p['price']),
-              description: _readString(p['description']),
-              category: _readString(p['category'], fallback: 'Genel'),
-              stockStatus: _readString(
-                p['stockStatus'] ?? p['stock_status'],
-                fallback: 'Mevcut',
-              ),
-              imagePath:
-                  p['imagePath'] != null
-                      ? _readString(p['imagePath'])
-                      : (p['image_path'] != null
-                          ? _readString(p['image_path'])
-                          : null),
-            ),
-          )
+          .map((p) => Product.fromJson(Map<String, dynamic>.from(p)))
+          .where((product) => product.isVisible)
           .toList();
     } catch (error) {
       debugPrint('Products parse error: $error');

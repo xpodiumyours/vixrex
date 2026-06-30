@@ -1,24 +1,227 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/screens/product_category_management_screen.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/widgets/product/product_editor_sheet.dart';
 import 'package:vitrinx/widgets/product/xrex_catalog_assistant_section.dart';
 
-class ProductManagementSheet extends StatelessWidget {
-  final List<Product> products;
-  final Function(String message) showMessage;
+typedef ProductCatalogChanged =
+    Future<void> Function(
+      List<Product> products,
+      List<ProductCategory> categories,
+    );
 
+class ProductManagementSheet extends StatefulWidget {
   const ProductManagementSheet({
     super.key,
     required this.products,
+    required this.categories,
+    required this.storeSlug,
     required this.showMessage,
+    required this.onCatalogChanged,
   });
+
+  final List<Product> products;
+  final List<ProductCategory> categories;
+  final String storeSlug;
+  final ValueChanged<String> showMessage;
+  final ProductCatalogChanged onCatalogChanged;
+
+  @override
+  State<ProductManagementSheet> createState() => _ProductManagementSheetState();
+}
+
+class _ProductManagementSheetState extends State<ProductManagementSheet> {
+  late List<Product> _products;
+  late List<ProductCategory> _categories;
+  final _searchController = TextEditingController();
+  String _selectedCategoryId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _products = List.of(widget.products);
+    _categories = List.of(widget.categories);
+    _ensureCategories();
+    _searchController.addListener(_refresh);
+  }
+
+  void _ensureCategories() {
+    for (final product in _products) {
+      final label = product.category.trim();
+      if (label.isEmpty || label.toLowerCase() == 'tümü') continue;
+      var match = _categories.where(
+        (item) => item.name.trim().toLowerCase() == label.toLowerCase(),
+      );
+      if (match.isEmpty) {
+        final category = ProductCategory(
+          id:
+              'category-${DateTime.now().microsecondsSinceEpoch}-${_categories.length}',
+          name: label,
+          sortOrder: _categories.length,
+        );
+        _categories.add(category);
+        match = [category];
+      }
+      if (product.categoryId.trim().isEmpty) {
+        product.categoryId = match.first.id;
+      }
+    }
+    if (_categories.isEmpty) {
+      _categories.add(
+        ProductCategory(id: 'category-general', name: 'Genel', sortOrder: 0),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController
+      ..removeListener(_refresh)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _refresh() {
+    if (mounted) setState(() {});
+  }
+
+  List<Product> get _filteredProducts {
+    final query = _searchController.text.trim().toLowerCase();
+    return _products.where((product) {
+      final matchesCategory =
+          _selectedCategoryId.isEmpty ||
+          product.categoryId == _selectedCategoryId;
+      final matchesQuery =
+          query.isEmpty ||
+          product.name.toLowerCase().contains(query) ||
+          product.description.toLowerCase().contains(query);
+      return matchesCategory && matchesQuery;
+    }).toList();
+  }
+
+  Future<void> _persist() async {
+    for (var index = 0; index < _categories.length; index++) {
+      _categories[index].sortOrder = index;
+    }
+    await widget.onCatalogChanged(List.of(_products), List.of(_categories));
+  }
+
+  Future<void> _openEditor([Product? product]) async {
+    final result = await showModalBottomSheet<Product>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: AppColors.surface,
+      builder:
+          (_) => ProductEditorSheet(
+            product: product,
+            categories: _categories,
+            storeSlug: widget.storeSlug,
+          ),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      final index = _products.indexWhere((item) => item.id == result.id);
+      if (index < 0) {
+        _products.insert(0, result);
+      } else {
+        _products[index] = result;
+      }
+    });
+    await _persist();
+    widget.showMessage(
+      product == null ? 'Ürün taslağa eklendi.' : 'Ürün güncellendi.',
+    );
+  }
+
+  Future<void> _openCategories() async {
+    final result = await Navigator.push<ProductCategoryManagementResult>(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => ProductCategoryManagementScreen(
+              categories: _categories,
+              products: _products,
+            ),
+      ),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _categories = List.of(result.categories);
+      _products = List.of(result.products);
+      if (!_categories.any((item) => item.id == _selectedCategoryId)) {
+        _selectedCategoryId = '';
+      }
+    });
+    await _persist();
+    widget.showMessage('Ürün kategorileri güncellendi.');
+  }
+
+  Future<void> _duplicate(Product product) async {
+    final now = DateTime.now().microsecondsSinceEpoch.toString();
+    final copy = Product(
+      id: now,
+      name: '${product.name} (Kopya)',
+      price: product.price,
+      description: product.description,
+      imagePath: product.primaryImageUrl,
+      imageUrls: product.displayImageUrls,
+      categoryId: product.categoryId,
+      category: product.category,
+      stockStatus: product.stockStatus,
+      isVisible: false,
+      slug: null,
+    );
+    setState(() {
+      final index = _products.indexOf(product);
+      _products.insert(index < 0 ? 0 : index + 1, copy);
+    });
+    await _persist();
+    widget.showMessage('Ürün kopyalandı ve gizli taslak olarak eklendi.');
+  }
+
+  Future<void> _delete(Product product) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Ürünü Sil'),
+            content: Text('${product.name} taslaktan silinecek.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Vazgeç'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('Sil'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _products.removeWhere((item) => item.id == product.id));
+    await _persist();
+    widget.showMessage(
+      'Ürün taslaktan silindi. Değişikliği yayınlamayı unutmayın.',
+    );
+  }
+
+  Future<void> _toggleVisibility(Product product, bool value) async {
+    setState(() => product.isVisible = value);
+    await _persist();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final filtered = _filteredProducts;
+    final canReorder =
+        _searchController.text.trim().isEmpty && _selectedCategoryId.isEmpty;
     return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.8,
+      height: MediaQuery.sizeOf(context).height * 0.88,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -34,13 +237,12 @@ class ProductManagementSheet extends StatelessWidget {
               ),
             ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Ürün Yönetimi',
                         style: TextStyle(
                           fontSize: 20,
@@ -48,72 +250,112 @@ class ProductManagementSheet extends StatelessWidget {
                           color: AppColors.darkText,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Vitrininde sergilenecek ürünleri buradan yöneteceksin.',
+                      Text(
+                        'Ürünlerini ve kategorilerini tek yerden yönet.',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.mutedText,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    '${products.length} Ürün',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                TextButton.icon(
+                  onPressed: _openCategories,
+                  icon: const Icon(Icons.category_outlined, size: 18),
+                  label: const Text('Kategoriler'),
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             XrexCatalogAssistantSection(
-              onActionTap: () => showMessage('X-rex katalog çıkarma özelliği bir sonraki aşamada aktif edilecek.'),
+              onActionTap:
+                  () => widget.showMessage(
+                    'X-rex katalog çıkarma özelliği sonraki aşamada aktif edilecek.',
+                  ),
             ),
-            const SizedBox(height: 18),
-            Expanded(
-              child: products.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.separated(
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: products.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-                        return _buildProductItem(product);
-                      },
+            const SizedBox(height: 14),
+            TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                hintText: 'Ürün ara...',
+                prefixIcon: Icon(Icons.search_rounded),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  ChoiceChip(
+                    label: const Text('Tümü'),
+                    selected: _selectedCategoryId.isEmpty,
+                    onSelected: (_) => setState(() => _selectedCategoryId = ''),
+                  ),
+                  const SizedBox(width: 8),
+                  ..._categories.map(
+                    (category) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(category.name),
+                        selected: _selectedCategoryId == category.id,
+                        onSelected:
+                            (_) => setState(
+                              () => _selectedCategoryId = category.id,
+                            ),
+                      ),
                     ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
+            Expanded(
+              child:
+                  _products.isEmpty
+                      ? _buildEmptyState()
+                      : filtered.isEmpty
+                      ? const Center(
+                        child: Text('Aramana uygun ürün bulunamadı.'),
+                      )
+                      : canReorder
+                      ? ReorderableListView.builder(
+                        itemCount: _products.length,
+                        onReorder: (oldIndex, newIndex) async {
+                          setState(() {
+                            if (newIndex > oldIndex) newIndex--;
+                            final item = _products.removeAt(oldIndex);
+                            _products.insert(newIndex, item);
+                          });
+                          await _persist();
+                        },
+                        itemBuilder:
+                            (_, index) => Padding(
+                              key: ValueKey(_products[index].id),
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _buildProductItem(_products[index]),
+                            ),
+                      )
+                      : ListView.separated(
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder:
+                            (_, index) => _buildProductItem(filtered[index]),
+                      ),
+            ),
+            const SizedBox(height: 12),
             ElevatedButton.icon(
-              onPressed: () {
-                showMessage('Ürün ekleme özelliği bir sonraki pakette aktif edilecek.');
-              },
+              onPressed: () => _openEditor(),
               icon: const Icon(Icons.add_rounded, size: 18),
               label: const Text(
                 'Yeni Ürün Ekle',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                style: TextStyle(fontWeight: FontWeight.w900),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                minimumSize: const Size.fromHeight(50),
               ),
             ),
           ],
@@ -123,48 +365,34 @@ class ProductManagementSheet extends StatelessWidget {
   }
 
   Widget _buildEmptyState() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceSoft,
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border),
-          ),
-          child: const Icon(
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
             Icons.shopping_bag_outlined,
             color: AppColors.primary,
-            size: 38,
+            size: 42,
           ),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Henüz ürün yok',
-          style: TextStyle(
-            color: AppColors.darkText,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
+          const SizedBox(height: 12),
+          const Text(
+            'Henüz ürün yok',
+            style: TextStyle(fontWeight: FontWeight.w800),
           ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'İlk ürün ekleme özelliği bir sonraki adımda aktif edilecek.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: AppColors.mutedText,
-            fontSize: 12,
+          const SizedBox(height: 4),
+          const Text(
+            'İlk ürününü ekleyerek kataloğunu oluştur.',
+            style: TextStyle(color: AppColors.mutedText, fontSize: 12),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildProductItem(Product product) {
-    final hasImage = product.imagePath != null && product.imagePath!.isNotEmpty;
+    final image = product.primaryImageUrl;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,
         borderRadius: BorderRadius.circular(16),
@@ -175,18 +403,19 @@ class ProductManagementSheet extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: SizedBox(
-              width: 52,
-              height: 52,
-              child: hasImage
-                  ? Image.network(
-                      product.imagePath!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildItemFallback(),
-                    )
-                  : _buildItemFallback(),
+              width: 58,
+              height: 58,
+              child:
+                  image == null
+                      ? _imageFallback()
+                      : Image.network(
+                        image,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _imageFallback(),
+                      ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,79 +424,59 @@ class ProductManagementSheet extends StatelessWidget {
                   product.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${product.category} • ${product.price.trim().isEmpty ? 'Fiyat belirtilmedi' : product.price}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: AppColors.darkText,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                    color: AppColors.mutedText,
+                    fontSize: 11,
                   ),
                 ),
                 const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Text(
-                      product.price.trim().isEmpty ? 'Fiyat yok' : product.price,
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        product.category,
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+                Text(
+                  product.isVisible ? 'Vitrinde görünüyor' : 'Gizli taslak',
+                  style: TextStyle(
+                    color:
+                        product.isVisible
+                            ? AppColors.success
+                            : AppColors.mutedText,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit_note_rounded, color: AppColors.mutedText, size: 20),
-                onPressed: () {
-                  showMessage('Düzenleme özelliği bir sonraki pakette aktif edilecek.');
-                },
-                tooltip: 'Düzenle',
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                onPressed: () {
-                  showMessage('Silme özelliği bir sonraki pakette aktif edilecek.');
-                },
-                tooltip: 'Sil',
-              ),
-            ],
+          Switch.adaptive(
+            value: product.isVisible,
+            onChanged: (value) => _toggleVisibility(product, value),
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'edit') _openEditor(product);
+              if (value == 'duplicate') _duplicate(product);
+              if (value == 'delete') _delete(product);
+            },
+            itemBuilder:
+                (_) => const [
+                  PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+                  PopupMenuItem(value: 'duplicate', child: Text('Çoğalt')),
+                  PopupMenuItem(value: 'delete', child: Text('Sil')),
+                ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildItemFallback() {
+  Widget _imageFallback() {
     return Container(
       color: AppColors.surface,
-      child: const Center(
-        child: Icon(
-          Icons.shopping_bag_outlined,
-          color: AppColors.primary,
-          size: 20,
-        ),
-      ),
+      child: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary),
     );
   }
 }

@@ -12,6 +12,7 @@ import {
   type ProductItem,
 } from "@/lib/products";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
+import ProductCatalog from "./ProductCatalog";
 
 export const revalidate = 300;
 
@@ -106,7 +107,9 @@ export default async function StorePage(props: PageProps) {
 
   const galleryItems = safeParseJson<GalleryItem>(store.gallery_items);
   const products = safeParseJson<ProductItem>(store.products);
-  const visibleProducts = products.filter((product) => product.name?.trim());
+  const visibleProducts = products.filter(
+    (product) => product.name?.trim() && product.isVisible !== false
+  );
   const marketplaceLinks = safeParseJson<MarketplaceLinkItem>(store.marketplace_links);
 
   const siteUrl = getSiteUrl();
@@ -136,7 +139,6 @@ export default async function StorePage(props: PageProps) {
     store.description ||
     store.corporate_bio ||
     "Ürünleri, iletişim bilgileri ve konumu tek dijital vitrinde inceleyin.";
-  const featuredProducts = visibleProducts.slice(0, 6);
   const collections = deriveCollections(visibleProducts);
 
   const categoryLower = (store.kategori || "").toLowerCase();
@@ -383,72 +385,8 @@ export default async function StorePage(props: PageProps) {
                 </div>
               )}
 
-              {featuredProducts.length > 0 && (
-                <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:p-5">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <h2 className="text-base font-black text-white">Öne Çıkan Ürünler</h2>
-                    {visibleProducts.length > featuredProducts.length && (
-                      <span className="text-xs font-extrabold text-[#9DB2C8]">
-                        +{visibleProducts.length - featuredProducts.length} ürün
-                      </span>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                    {featuredProducts.map((product: ProductItem, i: number) => {
-                      const productIndex = products.indexOf(product);
-                      const productUrl = `/v/${store.slug}/urun/${getProductUrlSlug(product, productIndex)}`;
-                      const card = (
-                        <>
-                          <div className="aspect-square overflow-hidden rounded-xl bg-[#162A42]">
-                            {product.imagePath ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={product.imagePath}
-                                alt={product.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-xs font-black text-[#9DB2C8]">
-                                Ürün
-                              </div>
-                            )}
-                          </div>
-                          <div className="mt-3 min-w-0">
-                            <h3 className="truncate text-sm font-black text-white">{product.name}</h3>
-                            {product.description && (
-                              <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#9DB2C8]">
-                                {product.description}
-                              </p>
-                            )}
-                            <div className="mt-2 flex items-center justify-between gap-2">
-                              <span className="truncate text-xs font-black text-[#7BC7FF]">
-                                {product.price || "Fiyat sorun"}
-                              </span>
-                              {product.stockStatus && (
-                                <span className="rounded-full bg-emerald-400/12 px-2 py-0.5 text-[10px] font-extrabold text-emerald-200">
-                                  {product.stockStatus}
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-3 rounded-xl border border-[#38A0E4]/30 bg-[#38A0E4]/12 px-3 py-2 text-center text-[11px] font-black text-[#B9E1FF]">
-                              Detay ve İletişim
-                            </div>
-                          </div>
-                        </>
-                      );
-
-                      return (
-                        <Link
-                          key={product.id || i}
-                          href={productUrl}
-                          className="rounded-2xl border border-[#25415F] bg-[#13243A] p-2 transition hover:border-[#38A0E4]/70"
-                        >
-                          {card}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
+              {visibleProducts.length > 0 && (
+                <ProductCatalog storeSlug={store.slug} products={visibleProducts} />
               )}
 
               {store.corporate_bio && (
@@ -465,11 +403,11 @@ export default async function StorePage(props: PageProps) {
               <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4">
                 <h2 className="mb-3 text-base font-black text-white">Profil Araçları</h2>
                 <div className="grid grid-cols-2 gap-3">
-                  {products.length > 0 && (
+                  {visibleProducts.length > 0 && (
                     <div className="rounded-2xl border border-[#25415F] bg-[#162A42] p-3">
                       <div className="text-sm font-black text-white">Katalog</div>
                       <div className="mt-1 text-[11px] font-bold text-[#9DB2C8]">
-                        {products.length} ürün
+                        {visibleProducts.length} ürün
                       </div>
                     </div>
                   )}

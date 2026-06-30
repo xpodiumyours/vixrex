@@ -8,6 +8,7 @@ class VitrinProductCard extends StatelessWidget {
   final String description;
   final String? imagePath;
   final String stockStatus;
+  final VoidCallback? onTap;
   final VoidCallback? onWhatsAppTap;
 
   const VitrinProductCard({
@@ -18,6 +19,7 @@ class VitrinProductCard extends StatelessWidget {
     required this.description,
     this.imagePath,
     this.stockStatus = 'Mevcut',
+    this.onTap,
     this.onWhatsAppTap,
   });
 
@@ -25,7 +27,9 @@ class VitrinProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasImage = imagePath != null && imagePath!.isNotEmpty;
 
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppColors.radius24),
@@ -227,6 +231,7 @@ class VitrinProductCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

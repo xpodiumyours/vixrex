@@ -6,7 +6,9 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/business_category_config.dart';
+import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
@@ -1320,10 +1322,36 @@ class VitrinView extends StatelessWidget {
 
   Widget _buildProductsCatalogBlock(VitrinThemePreset preset, double radius) {
     final isCompact = isEmbedded;
-    final visibleProducts =
-        publicMode ? storeData.products.take(6).toList() : storeData.products;
+    final allProducts =
+        storeData.products.where((product) => product.isVisible).toList();
+    var selectedCategory = '';
+    var visibleLimit = 12;
 
-    return Padding(
+    return StatefulBuilder(
+      builder: (context, setCatalogState) {
+        final categories = <String>[];
+        for (final product in allProducts) {
+          final label = product.category.trim();
+          if (label.isNotEmpty &&
+              !categories.any(
+                (item) => item.toLowerCase() == label.toLowerCase(),
+              )) {
+            categories.add(label);
+          }
+        }
+        final filteredProducts =
+            selectedCategory.isEmpty
+                ? allProducts
+                : allProducts
+                    .where(
+                      (product) =>
+                          product.category.trim().toLowerCase() ==
+                          selectedCategory.toLowerCase(),
+                    )
+                    .toList();
+        final visibleProducts = filteredProducts.take(visibleLimit).toList();
+
+        return Padding(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
       child: Container(
         width: double.infinity,
@@ -1366,10 +1394,9 @@ class VitrinView extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (storeData.products.isNotEmpty &&
-                    storeData.products.length > visibleProducts.length)
+                if (filteredProducts.length > visibleProducts.length)
                   Text(
-                    '+${storeData.products.length - visibleProducts.length}',
+                    '+${filteredProducts.length - visibleProducts.length}',
                     style: TextStyle(
                       color: preset.textSecondary,
                       fontSize: 12,
@@ -1379,7 +1406,42 @@ class VitrinView extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-            if (storeData.products.isEmpty)
+            if (categories.length > 1) ...[
+              SizedBox(
+                height: 38,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Tümü'),
+                      selected: selectedCategory.isEmpty,
+                      onSelected:
+                          (_) => setCatalogState(() {
+                            selectedCategory = '';
+                            visibleLimit = 12;
+                          }),
+                    ),
+                    const SizedBox(width: 8),
+                    ...categories.map(
+                      (category) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(category),
+                          selected: selectedCategory == category,
+                          onSelected:
+                              (_) => setCatalogState(() {
+                                selectedCategory = category;
+                                visibleLimit = 12;
+                              }),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (allProducts.isEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
@@ -1426,24 +1488,34 @@ class VitrinView extends StatelessWidget {
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth >= 620;
                   if (!isWide) {
-                    return SizedBox(
-                      height: 250,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
+                    return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: visibleProducts.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                              childAspectRatio: 0.64,
+                            ),
                         itemBuilder: (context, index) {
                           final product = visibleProducts[index];
-                          return SizedBox(
-                            width: 175,
-                            child: VitrinProductCard(
+                          return VitrinProductCard(
                               name: product.name,
                               price: product.price,
                               category: product.category,
                               description: product.description,
-                              imagePath: product.imagePath,
+                              imagePath: product.primaryImageUrl,
                               stockStatus: product.stockStatus,
+                              onTap:
+                                  publicMode
+                                      ? () => _openProductDetail(
+                                        context,
+                                        product,
+                                        allProducts.indexOf(product),
+                                      )
+                                      : null,
                               onWhatsAppTap: () {
                                 if (!publicMode) {
                                   ScaffoldMessenger.of(
@@ -1469,14 +1541,14 @@ class VitrinView extends StatelessWidget {
                                   unawaited(_openExternalUrl(context, url));
                                 }
                               },
-                            ),
-                          );
+                            );
                         },
-                      ),
                     );
                   }
 
-                  final cardWidth = (constraints.maxWidth - 24) / 3;
+                  final columns = constraints.maxWidth >= 1000 ? 4 : 3;
+                  final cardWidth =
+                      (constraints.maxWidth - (12 * (columns - 1))) / columns;
                   return Wrap(
                     spacing: 12,
                     runSpacing: 12,
@@ -1491,8 +1563,16 @@ class VitrinView extends StatelessWidget {
                                   price: product.price,
                                   category: product.category,
                                   description: product.description,
-                                  imagePath: product.imagePath,
+                                  imagePath: product.primaryImageUrl,
                                   stockStatus: product.stockStatus,
+                                  onTap:
+                                      publicMode
+                                          ? () => _openProductDetail(
+                                            context,
+                                            product,
+                                            allProducts.indexOf(product),
+                                          )
+                                          : null,
                                   onWhatsAppTap: () {
                                     if (!publicMode) {
                                       ScaffoldMessenger.of(
@@ -1528,9 +1608,40 @@ class VitrinView extends StatelessWidget {
                   );
                 },
               ),
+            if (filteredProducts.length > visibleProducts.length) ...[
+              const SizedBox(height: 14),
+              Center(
+                child: OutlinedButton.icon(
+                  onPressed:
+                      () => setCatalogState(() => visibleLimit += 12),
+                  icon: const Icon(Icons.expand_more_rounded),
+                  label: const Text('Daha fazla göster'),
+                ),
+              ),
+            ],
           ],
         ),
       ),
+        );
+      },
+    );
+  }
+
+  void _openProductDetail(
+    BuildContext context,
+    Product product,
+    int index,
+  ) {
+    final builder = const StorePublishPayloadBuilder();
+    final explicit = product.slug?.trim() ?? '';
+    final productSlug =
+        explicit.isNotEmpty
+            ? builder.generateSlug(explicit)
+            : '${builder.generateSlug(product.name)}-${builder.generateSlug(product.id).replaceAll('magazaniz', '${index + 1}')}';
+    AppRouter.navigateToPublicProduct(
+      context,
+      storeSlug: storeData.slug,
+      productSlug: productSlug,
     );
   }
 

@@ -5,12 +5,25 @@ export interface ProductItem {
   description?: string;
   price?: string;
   imagePath?: string;
+  imageUrls?: string[];
+  categoryId?: string;
   category?: string;
   stockStatus?: string;
+  isVisible?: boolean;
   source?: string;
   sourceMediaId?: string;
   sourcePermalink?: string;
   importedAt?: string;
+}
+
+export function getProductImages(product: ProductItem): string[] {
+  return Array.from(
+    new Set(
+      [...(Array.isArray(product.imageUrls) ? product.imageUrls : []), product.imagePath || ""]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+    )
+  ).slice(0, 4);
 }
 
 export interface ProductCollection {

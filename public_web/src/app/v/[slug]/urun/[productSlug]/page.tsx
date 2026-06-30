@@ -5,6 +5,7 @@ import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import {
   findProductBySlug,
+  getProductImages,
   getProductUrlSlug,
   normalizeExternalUrl,
   normalizeWhatsappDigits,
@@ -48,7 +49,7 @@ async function _getProductData(slug: string, productSlug: string) {
 
   const products = safeParseJson<ProductItem>(store.products);
   const product = findProductBySlug(products, productSlug);
-  if (!product || !product.name?.trim()) {
+  if (!product || !product.name?.trim() || product.isVisible === false) {
     return null;
   }
 
@@ -79,7 +80,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const description =
     product.description ||
     `${store.name} vitrindeki ${product.name} için detay ve iletişim bilgileri.`;
-  const image = product.imagePath || store.shelf_image_url || store.logo_url || "";
+  const image =
+    getProductImages(product)[0] || store.shelf_image_url || store.logo_url || "";
 
   return {
     title,
@@ -116,7 +118,10 @@ export default async function ProductDetailPage(props: PageProps) {
     ? `https://instagram.com/${instagramValue.replace("@", "").replace("/", "")}`
     : null;
   const sourceUrl = normalizeExternalUrl(product.sourcePermalink);
-  const image = product.imagePath || store.shelf_image_url || store.logo_url || "";
+  const productImages = getProductImages(product);
+  const fallbackImage = store.shelf_image_url || store.logo_url || "";
+  const images = productImages.length > 0 ? productImages : fallbackImage ? [fallbackImage] : [];
+  const image = images[0] || "";
   const productDescription =
     product.description ||
     store.description ||
@@ -132,7 +137,7 @@ export default async function ProductDetailPage(props: PageProps) {
     "@id": `${publicUrl}#product`,
     name: product.name,
     description: productDescription,
-    image: image || undefined,
+    image: images.length > 0 ? images : undefined,
     brand: {
       "@type": "Brand",
       name: store.name,
@@ -192,21 +197,33 @@ export default async function ProductDetailPage(props: PageProps) {
 
       <main className="min-h-screen bg-[#071322] px-3 py-4 text-white sm:px-6 sm:py-8">
         <section className="mx-auto grid w-full max-w-[1120px] gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="overflow-hidden rounded-[28px] border border-[#25415F] bg-[#0E1B2E] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
-            <div className="aspect-square bg-[#13243A]">
-              {image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={image}
-                  alt={product.name}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-black text-[#9DB2C8]">
-                  Ürün görseli
-                </div>
-              )}
-            </div>
+          <div className="overflow-hidden rounded-[28px] border border-[#25415F] bg-[#0E1B2E] p-3 shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
+            {images.length > 0 ? (
+              <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto">
+                {images.map((imageUrl, index) => (
+                  <div
+                    key={imageUrl}
+                    className="aspect-square min-w-full snap-center overflow-hidden rounded-[22px] bg-[#13243A]"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imageUrl}
+                      alt={`${product.name} görsel ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex aspect-square items-center justify-center rounded-[22px] bg-[#13243A] text-sm font-black text-[#9DB2C8]">
+                Ürün görseli bekleniyor
+              </div>
+            )}
+            {images.length > 1 && (
+              <div className="mt-3 text-center text-xs font-bold text-[#9DB2C8]">
+                {images.length} görsel • Kaydırarak inceleyin
+              </div>
+            )}
           </div>
 
           <aside className="flex flex-col gap-4 rounded-[28px] border border-[#25415F] bg-[#0E1B2E]/95 p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:p-6">
