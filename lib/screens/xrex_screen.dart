@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/widgets/chatbot_overlay.dart';
 
 class XrexScreen extends StatelessWidget {
   const XrexScreen({super.key});

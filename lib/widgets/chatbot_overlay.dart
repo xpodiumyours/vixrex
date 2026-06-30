@@ -56,8 +56,6 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   late AnimationController _scanController;
   late Animation<double> _pulseAnim;
   late Animation<double> _scanAnim;
-  bool _blinking = false;
-  Timer? _blinkTimer;
 
   @override
   void initState() {
@@ -80,22 +78,12 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
     _scanAnim = Tween<double>(begin: -1.0, end: 1.0).animate(
       CurvedAnimation(parent: _scanController, curve: Curves.linear),
     );
-
-    // Göz kırpma
-    _blinkTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!mounted) return;
-      setState(() => _blinking = true);
-      Future.delayed(const Duration(milliseconds: 150), () {
-        if (mounted) setState(() => _blinking = false);
-      });
-    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     _scanController.dispose();
-    _blinkTimer?.cancel();
     super.dispose();
   }
 
@@ -491,8 +479,6 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
 
   late AnimationController _scanController;
   late Animation<double> _scanAnim;
-  bool _blinking = false;
-  Timer? _blinkTimer;
   bool _cursorVisible = true;
   Timer? _cursorTimer;
   bool _isTyping = false;
@@ -507,15 +493,6 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
       duration: const Duration(seconds: 3),
     )..repeat();
     _scanAnim = Tween<double>(begin: -1.0, end: 1.0).animate(_scanController);
-
-    // Göz kırpma
-    _blinkTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!mounted) return;
-      setState(() => _blinking = true);
-      Future.delayed(const Duration(milliseconds: 150), () {
-        if (mounted) setState(() => _blinking = false);
-      });
-    });
 
     // İmleç
     _cursorTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
@@ -560,7 +537,6 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
   @override
   void dispose() {
     _scanController.dispose();
-    _blinkTimer?.cancel();
     _cursorTimer?.cancel();
     _inputCtrl.dispose();
     _scrollCtrl.dispose();
