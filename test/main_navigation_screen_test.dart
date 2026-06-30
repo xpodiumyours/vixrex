@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vitrinx/config/chatbot_config.dart';
 import 'package:vitrinx/screens/profile_screen.dart';
 import 'package:vitrinx/screens/xrex_screen.dart';
+import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 import 'package:vitrinx/widgets/chatbot_overlay.dart';
 
 void main() {
@@ -13,11 +14,35 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: XrexScreen()));
+    await tester.pumpWidget(MaterialApp(
+      home: XrexScreen(
+        snapshot: const XrexProfileSnapshot(
+          nameCompleted: true,
+          whatsappCompleted: true,
+          addressCompleted: true,
+          legalCompleted: true,
+          coverCompleted: true,
+          galleryCompleted: true,
+          descriptionCompleted: true,
+          catalogCompleted: true,
+          isPublished: true,
+          storeName: 'Test Mağazası',
+          category: 'Kategori',
+          district: 'İlçe',
+          publicLink: 'https://vitrinx.com/test',
+        ),
+        hasShared: false,
+        dismissedRecommendationId: null,
+        onAction: (_) {},
+        onDismissRecommendation: (_) {},
+        onCopyPromotionText: (_) {},
+        onSharePromotionText: (_) {},
+      ),
+    ));
 
-    expect(find.text('X-rex Yapay Zekâ'), findsOneWidget);
-    expect(find.text('VitrinX Yapay Zekâ Asistanı'), findsOneWidget);
-    expect(find.text('Yakında'), findsNWidgets(3));
+    expect(find.text('X-rex Rehber'), findsOneWidget);
+    expect(find.text('X-rex'), findsOneWidget);
+    expect(find.text('VitrinX Rehberi'), findsOneWidget);
   });
 
   test('X-rex karşılama metni düz ve desteklenen karakterlerden oluşur', () {
