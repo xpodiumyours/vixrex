@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
+const double _xrexHeroMinSize = 150;
+const double _xrexHeroMaxSize = 200;
+
 class XrexScreen extends StatelessWidget {
   const XrexScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final heightBasedSize = screenSize.height * 0.24;
+    final widthBasedSize = screenSize.width * 0.56;
+    final availableSize =
+        heightBasedSize < widthBasedSize ? heightBasedSize : widthBasedSize;
+    final mascotSize = availableSize
+        .clamp(_xrexHeroMinSize, _xrexHeroMaxSize)
+        .toDouble();
+
     return Scaffold(
       backgroundColor: AppColors.bgEditor,
       appBar: AppBar(
@@ -29,8 +41,8 @@ class XrexScreen extends StatelessWidget {
               const SizedBox(height: 20),
               // Siber Ejderha Avatar / İkon Alanı
               Container(
-                width: 200,
-                height: 200,
+                width: mascotSize,
+                height: mascotSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.transparent,
@@ -43,16 +55,11 @@ class XrexScreen extends StatelessWidget {
                   ],
                 ),
                 child: ClipOval(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/xrex_mascot.png',
-                        width: 200,
-                        height: 200,
-                        fit: BoxFit.cover,
-                      ),
-                    ],
+                  child: Image.asset(
+                    'assets/images/xrex_mascot.png',
+                    width: mascotSize,
+                    height: mascotSize,
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),

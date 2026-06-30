@@ -335,17 +335,20 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
           // Xrex: Sağ alt köşede yüzen robot rozeti (sadece X-rex tabında değilken gösterilir)
           if (_selectedIndex != 2)
             Positioned(
-              right: 16,
-              bottom: 16,
-              child: ChatbotBadge(
-                snapshot: _xrexSnapshot,
-                chatHistory: _xrexChatMessages,
-                onNavigateToVitrim: _xrexNavigateToVitrim,
-                onNavigateToExplore: _openExplore,
-                onCopyLink: _xrexCopyLink,
-                onShowQr: _xrexShowQr,
-                onShareWhatsapp: _xrexShareWhatsapp,
-                onScrollToAction: _xrexScrollToAction,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                minimum: const EdgeInsets.only(right: 16, bottom: 16),
+                child: ChatbotBadge(
+                  snapshot: _xrexSnapshot,
+                  chatHistory: _xrexChatMessages,
+                  onNavigateToVitrim: _xrexNavigateToVitrim,
+                  onNavigateToExplore: _openExplore,
+                  onCopyLink: _xrexCopyLink,
+                  onShowQr: _xrexShowQr,
+                  onShareWhatsapp: _xrexShareWhatsapp,
+                  onScrollToAction: _xrexScrollToAction,
+                ),
               ),
             ),
         ],

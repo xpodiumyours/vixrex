@@ -1,14 +1,15 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:vitrinx/config/chatbot_config.dart';
 import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/services/chatbot_service.dart';
 import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
-// ─── Robot Rozet (Sol Kenar) ─────────────────────────────────────────────────
+const double _xrexBadgeSize = 84;
+const double _xrexPanelAvatarSize = 68;
+
+// ─── Yüzen Robot Rozeti ──────────────────────────────────────────────────────
 class ChatbotBadge extends StatefulWidget {
   /// Anlık vitrin snapshot'ı. null ise genel karşılama gösterilir.
   final XrexProfileSnapshot? snapshot;
@@ -107,10 +108,16 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
       onTap: () => _openChat(context),
       child: AnimatedBuilder(
         animation: Listenable.merge([_pulseController, _scanController]),
-        builder: (context, child) {
+        child: Image.asset(
+          'assets/images/xrex_mascot.png',
+          width: _xrexBadgeSize,
+          height: _xrexBadgeSize,
+          fit: BoxFit.cover,
+        ),
+        builder: (context, mascot) {
           return Container(
-            width: 84,
-            height: 84,
+            width: _xrexBadgeSize,
+            height: _xrexBadgeSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
@@ -126,16 +133,12 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Robot yüzü
-                  Image.asset(
-                    'assets/images/xrex_mascot.png',
-                    width: 84,
-                    height: 84,
-                    fit: BoxFit.cover,
-                  ),
+                  mascot!,
                   // Scan line
                   Positioned(
-                    top: 42 + (_scanAnim.value * 42),
+                    top:
+                        (_xrexBadgeSize / 2) +
+                        (_scanAnim.value * (_xrexBadgeSize / 2)),
                     left: 0,
                     right: 0,
                     child: Container(
@@ -171,8 +174,6 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
     );
   }
 }
-
-
 
 // ─── Xrex Overlay Panel ──────────────────────────────────────────────────────
 class XrexOverlay {
@@ -670,7 +671,13 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
   Widget _buildAvatar() {
     return AnimatedBuilder(
       animation: _scanController,
-      builder: (context, _) {
+      child: Image.asset(
+        'assets/images/xrex_mascot.png',
+        width: _xrexPanelAvatarSize,
+        height: _xrexPanelAvatarSize,
+        fit: BoxFit.cover,
+      ),
+      builder: (context, mascot) {
         return Container(
           color: AppColors.bgEditor,
           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -679,20 +686,17 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
             children: [
               // Robot mini avatar
               SizedBox(
-                width: 68,
-                height: 68,
+                width: _xrexPanelAvatarSize,
+                height: _xrexPanelAvatarSize,
                 child: ClipOval(
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Image.asset(
-                        'assets/images/xrex_mascot.png',
-                        width: 68,
-                        height: 68,
-                        fit: BoxFit.cover,
-                      ),
+                      mascot!,
                       Positioned(
-                        top: 34 + (_scanAnim.value * 34),
+                        top:
+                            (_xrexPanelAvatarSize / 2) +
+                            (_scanAnim.value * (_xrexPanelAvatarSize / 2)),
                         left: 0,
                         right: 0,
                         child: Container(
@@ -1048,9 +1052,3 @@ class _XrexScoreBarState extends State<_XrexScoreBar>
     );
   }
 }
-
-// ignore_for_file: unused_element
-// Kullanılmayan math import uyarısını bastır
-final _mathRef = math.pi;
-// Kullanılmayan services import uyarısını bastır
-final _servicesRef = HapticFeedback.selectionClick;
