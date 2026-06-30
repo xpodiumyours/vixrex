@@ -23,35 +23,63 @@ class BusinessCategoryConfig {
 
   static const List<BusinessCategoryConfig> categories = [
     BusinessCategoryConfig(
-      id: 'giyim_butik',
-      label: 'Giyim & Butik',
-      sectionTitle: 'Öne Çıkanlar',
+      id: 'giyim',
+      label: 'Giyim',
+      sectionTitle: 'Yeni Sezon',
       ctaLabel: 'Ürün Sor',
       whatsappTemplate: 'Merhaba, {storeName}. Ürünleriniz hakkında bilgi almak istiyorum.',
-      emoji: '🛍',
+      emoji: '👕',
       icon: Icons.checkroom_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Yeni Sezon Elbiseler', description: 'Farklı beden ve renk seçenekleriyle özel tasarım elbiseler'),
-        SuggestedOffering(title: 'Triko, Hırka & Kazak', description: 'Kışlık ve mevsimlik kaliteli triko modeller'),
-        SuggestedOffering(title: 'Ceket & Kaban Modelleri', description: 'Şık ve modern günlük veya klasik dış giyim'),
-        SuggestedOffering(title: 'Kişiye Özel Kombin Danışmanlığı', description: 'Tarzınıza özel kıyafet kombin önerileri'),
-        SuggestedOffering(title: 'Aksesuar & Çanta Çeşitleri', description: 'Şık kombin tamamlayıcı aksesuarlar ve çantalar'),
+        SuggestedOffering(title: 'Yeni Sezon Günlük Giyim', description: 'Mevsimlik mont, ceket, pantolon seçenekleri'),
+        SuggestedOffering(title: 'Basic & Rahat Kombinler', description: 'Günlük pamuklu t-shirt ve sweat modelleri'),
+        SuggestedOffering(title: 'Dış Giyim & Kaban Modelleri', description: 'Şık trençkot ve mont alternatifleri'),
+        SuggestedOffering(title: 'Spor Giyim ve Aktif Yaşam', description: 'Eşofman takımları, spor tayt ve büstiyerler'),
       ],
     ),
     BusinessCategoryConfig(
-      id: 'gida_firin',
-      label: 'Gıda & Fırın',
+      id: 'butik',
+      label: 'Butik',
+      sectionTitle: 'Özel Tasarımlar',
+      ctaLabel: 'Ürün Sor',
+      whatsappTemplate: 'Merhaba, {storeName}. Özel tasarım / butik ürünleriniz hakkında bilgi almak istiyorum.',
+      emoji: '🛍',
+      icon: Icons.local_mall_rounded,
+      suggestedOfferings: [
+        SuggestedOffering(title: 'Kişiye Özel Tasarım Elbiseler', description: 'Özel gün ve davetler için sınırlı üretim tasarımlar'),
+        SuggestedOffering(title: 'Butik Takı & Aksesuar Serisi', description: 'El yapımı kolyeler, küpeler ve tasarım çantalar'),
+        SuggestedOffering(title: 'Sınırlı Sayıda Özel Koleksiyonlar', description: 'Sezonluk özel kumaş ve dikim ürünler'),
+        SuggestedOffering(title: 'Tarz & Kombin Danışmanlığı', description: 'Müşterinin stiline uygun kombin öneri hizmeti'),
+      ],
+    ),
+    BusinessCategoryConfig(
+      id: 'gida',
+      label: 'Gıda',
+      sectionTitle: 'Taze Ürünler',
+      ctaLabel: 'Sipariş Talebi',
+      whatsappTemplate: 'Merhaba, {storeName}. Taze gıda ürünleriniz için sipariş talebi oluşturmak istiyorum.',
+      emoji: '🍎',
+      icon: Icons.local_grocery_store_rounded,
+      suggestedOfferings: [
+        SuggestedOffering(title: 'Organik & Taze Sebze/Meyve', description: 'Yerel üreticilerden doğrudan temin edilen taze gıdalar'),
+        SuggestedOffering(title: 'Şarküteri & Yöresel Ürünler', description: 'Özel peynir, zeytin ve doğal kahvaltılık çeşitleri'),
+        SuggestedOffering(title: 'Doğal Ev Yapımı Soslar & Reçeller', description: 'Katkısız, geleneksel yöntemlerle hazırlanan kavanozlar'),
+        SuggestedOffering(title: 'Sağlıklı Atıştırmalık & Kuru Meyveler', description: 'Diyet ve ketojenik beslenmeye uygun kuruyemiş setleri'),
+      ],
+    ),
+    BusinessCategoryConfig(
+      id: 'firin',
+      label: 'Fırın',
       sectionTitle: 'Bugün Neler Var?',
       ctaLabel: 'Sipariş Talebi',
-      whatsappTemplate: 'Merhaba, {storeName}. Paket servis sipariş talebi oluşturmak istiyorum.',
+      whatsappTemplate: 'Merhaba, {storeName}. Taze unlu mamulleriniz için sipariş vermek istiyorum.',
       emoji: '🍞',
       icon: Icons.bakery_dining_rounded,
       suggestedOfferings: [
-        SuggestedOffering(title: 'Doğal Ekşi Mayalı Ekmek', description: 'Taş fırında geleneksel yöntemlerle pişirilmiş ekmek'),
-        SuggestedOffering(title: 'Taş Fırından Sıcak Simit & Pide', description: 'Sabah saatlerinde taze çıkan hamur işleri'),
-        SuggestedOffering(title: 'Butik Doğum Günü Pastası', description: 'Özel günleriniz için siparişe özel tasarım pastalar'),
-        SuggestedOffering(title: 'Ev Yapımı Mantı & Hamur İşleri', description: 'Anne eli lezzetinde el açması mantı ve börekler'),
-        SuggestedOffering(title: 'Günün Sıcak Çorbası & Yemek', description: 'Ev yapımı sıcak günün çorbası ve sulu yemek alternatifi'),
+        SuggestedOffering(title: 'Ekşi Mayalı Taş Fırın Ekmeği', description: 'Geleneksel uzun fermantasyon ekmekler'),
+        SuggestedOffering(title: 'Taze Çıkan Simit, Poğaça & Börek', description: 'Sabah saatlerinde sıcak servis edilen unlu mamuller'),
+        SuggestedOffering(title: 'Butik Pasta & Tatlı Tasarımı', description: 'Doğum günleri ve özel kutlamalar için sipariş üzeri pastalar'),
+        SuggestedOffering(title: 'Günlük Taze Kurabiye & Makaronlar', description: 'Çay ve kahve yanına tatlı/tuzlu kurabiye tepsileri'),
       ],
     ),
     BusinessCategoryConfig(
@@ -165,6 +193,111 @@ class BusinessCategoryConfig {
       ],
     ),
     BusinessCategoryConfig(
+      id: 'hizmet_danismanlik',
+      label: 'Hizmet & Danışmanlık',
+      sectionTitle: 'Hizmetler',
+      ctaLabel: 'Teklif Al',
+      whatsappTemplate: 'Merhaba, {storeName}. Danışmanlık / profesyonel hizmetleriniz hakkında bilgi almak istiyorum.',
+      emoji: '💼',
+      icon: Icons.business_center_rounded,
+      suggestedOfferings: [
+        SuggestedOffering(title: 'Mali Müşavirlik & Muhasebe', description: 'Gelir-gider takibi, vergi süreçleri ve finansal planlama'),
+        SuggestedOffering(title: 'Hukuki Danışmanlık', description: 'Sözleşme hazırlama, hukuki danışma ve dava analizi'),
+        SuggestedOffering(title: 'Proje / Marka Yönetimi', description: 'Marka konumlandırma ve kurumsal proje yönetim danışmanlığı'),
+        SuggestedOffering(title: 'CV & Kariyer Koçluğu', description: 'CV hazırlama, mülakat simülasyonu ve kariyer hedefleri'),
+      ],
+    ),
+    BusinessCategoryConfig(
+      id: 'egitim_ders',
+      label: 'Eğitim & Ders',
+      sectionTitle: 'Eğitimler',
+      ctaLabel: 'Bilgi Al',
+      whatsappTemplate: 'Merhaba, {storeName}. Ders programlarınız ve eğitim ücretleriniz hakkında bilgi almak istiyorum.',
+      emoji: '🎓',
+      icon: Icons.school_rounded,
+      suggestedOfferings: [
+        SuggestedOffering(title: 'Birebir Özel Matematik Dersi', description: 'İlkokul, ortaokul veya lise düzeyinde okula takviye özel ders'),
+        SuggestedOffering(title: 'İngilizce Pratik Seansları', description: 'Akıcı konuşma ve dil pratiği odaklı birebir görüşmeler'),
+        SuggestedOffering(title: 'Sınav Hazırlık Koçluğu', description: 'LGS, YKS veya KPSS hazırlık süreçleri için haftalık takip ve planlama'),
+        SuggestedOffering(title: 'Online Yazılım Eğitimi', description: 'Sıfırdan programlama dilleri ve web geliştirme dersleri'),
+      ],
+    ),
+    BusinessCategoryConfig(
+      id: 'ev_temizlik',
+      label: 'Ev & Temizlik',
+      sectionTitle: 'Hizmetler',
+      ctaLabel: 'Rezervasyon Yap',
+      whatsappTemplate: 'Merhaba, {storeName}. Ev / ofis temizliği hizmetiniz için rezervasyon yaptırmak istiyorum.',
+      emoji: '🧹',
+      icon: Icons.clean_hands_rounded,
+      suggestedOfferings: [
+        SuggestedOffering(title: 'Detaylı Ev Temizliği', description: 'Günlük veya haftalık dip köşe ev temizliği hizmeti'),
+        SuggestedOffering(title: 'Koltuk & Halı Yıkama', description: 'Yerinde profesyonel makinelerle koltuk ve halı yıkama'),
+        SuggestedOffering(title: 'İnşaat Sonrası Temizlik', description: 'Yeni teslim alınan boş dairelerin inşaat artığı temizliği'),
+        SuggestedOffering(title: 'Dezenfeksiyon Hizmeti', description: 'Ev veya iş yerleri için özel ilaçlama ve dezenfeksiyon'),
+      ],
+    ),
+    BusinessCategoryConfig(
+      id: 'spor_fitness',
+      label: 'Spor & Fitness',
+      sectionTitle: 'Programlar',
+      ctaLabel: 'Randevu Al',
+      whatsappTemplate: 'Merhaba, {storeName}. Spor salonu / antrenman programlarınız hakkında bilgi almak istiyorum.',
+      emoji: '🏋️‍♂️',
+      icon: Icons.fitness_center_rounded,
+      suggestedOfferings: [
+        SuggestedOffering(title: 'Birebir Personal Trainer (PT)', description: 'Kişisel hedeflerinize uygun özel eğitmen eşliğinde antrenman'),
+        SuggestedOffering(title: 'Kişiye Özel Beslenme Programı', description: 'Kilo alma, verme veya kas kütlesi artırmaya yönelik liste'),
+        SuggestedOffering(title: 'Online Pilates Seansı', description: 'Ev konforunda canlı bağlantı ile pilates dersleri'),
+        SuggestedOffering(title: 'Fonksiyonel Antrenman', description: 'Güç, denge ve dayanıklılık odaklı yüksek yoğunluklu grup dersi'),
+      ],
+    ),
+    BusinessCategoryConfig(
+      id: 'pet_shop_veteriner',
+      label: 'Pet Shop & Veteriner',
+      sectionTitle: 'Hizmetler',
+      ctaLabel: 'Bilgi Al',
+      whatsappTemplate: 'Merhaba, {storeName}. Pet shop ürünleriniz veya veteriner/klinik hizmetleriniz hakkında bilgi almak istiyorum.',
+      emoji: '🐾',
+      icon: Icons.pets_rounded,
+      suggestedOfferings: [
+        SuggestedOffering(title: 'Kaliteli Mama & Aksesuar Satışı', description: 'Kedi, köpek ve diğer evcil hayvanlar için premium mamalar'),
+        SuggestedOffering(title: 'Pet Kuaför & Banyo Hizmeti', description: 'Tüy kesimi, banyo ve tırnak kesimi gibi bakım işlemleri'),
+        SuggestedOffering(title: 'Kedi/Köpek Pansiyonu', description: 'Seyahatlerinizde güvenle bırakabileceğiniz konaklama alanı'),
+        SuggestedOffering(title: 'Veteriner Hekim Muayenesi', description: 'Aşı takibi, sağlık muayenesi ve tahlil işlemleri'),
+      ],
+    ),
+    BusinessCategoryConfig(
+      id: 'saglik_yasam',
+      label: 'Sağlık & Yaşam',
+      sectionTitle: 'Hizmetler',
+      ctaLabel: 'Randevu Al',
+      whatsappTemplate: 'Merhaba, {storeName}. Sağlık, beslenme veya terapi randevusu almak istiyorum.',
+      emoji: '🏥',
+      icon: Icons.medical_services_rounded,
+      suggestedOfferings: [
+        SuggestedOffering(title: 'Diyetisyen Seansı & Takibi', description: 'Kişiye özel beslenme analizi ve haftalık vücut ölçümü'),
+        SuggestedOffering(title: 'Fizyoterapi Seansı', description: 'Bel, boyun ve kas ağrıları için rehabilitasyon seansları'),
+        SuggestedOffering(title: 'Klinik Psikolog Görüşmesi', description: 'Bireysel terapi ve psikolojik danışmanlık hizmetleri'),
+        SuggestedOffering(title: 'Sağlıklı Yaşam Danışmanlığı', description: 'Bütünsel sağlık, uyku düzeni ve alışkanlık yönetimi koçluğu'),
+      ],
+    ),
+    BusinessCategoryConfig(
+      id: 'oto_arac',
+      label: 'Oto & Araç Hizmetleri',
+      sectionTitle: 'Hizmetler',
+      ctaLabel: 'Randevu Al',
+      whatsappTemplate: 'Merhaba, {storeName}. Aracım için servis / bakım randevusu almak istiyorum.',
+      emoji: '🚗',
+      icon: Icons.directions_car_filled_rounded,
+      suggestedOfferings: [
+        SuggestedOffering(title: 'Detaylı Oto Yıkama & Kuaför', description: 'İç-dış detaylı temizlik, motor yıkama ve pasta cila'),
+        SuggestedOffering(title: 'Periyodik Araç Bakımı', description: 'Motor yağı, filtre değişimleri ve genel araç kontrolü'),
+        SuggestedOffering(title: 'Lastik Değişimi & Rot-Balans', description: 'Sezonluk lastik değişimi ve rot-balans ayarı'),
+        SuggestedOffering(title: 'Oto Ekspertiz Raporu', description: 'İkinci el araç alım satımı öncesi detaylı ekspertiz incelemesi'),
+      ],
+    ),
+    BusinessCategoryConfig(
       id: 'diger',
       label: 'Diğer',
       sectionTitle: 'Hizmetler',
@@ -183,20 +316,41 @@ class BusinessCategoryConfig {
     final cleanLabel = label.trim().toLowerCase();
     
     // Alias mappings to preserve legacy category names and handle edge cases:
-    if (cleanLabel.contains('kafe') || cleanLabel.contains('restoran') || cleanLabel.contains('lokanta')) {
-      return categories.firstWhere((c) => c.id == 'kafe_lokanta');
-    }
-    if (cleanLabel.contains('kuaför') || cleanLabel.contains('güzellik')) {
-      return categories.firstWhere((c) => c.id == 'kuafor');
-    }
-    if (cleanLabel.contains('teknik') || cleanLabel.contains('servis')) {
-      return categories.firstWhere((c) => c.id == 'teknik_servis');
-    }
-    if (cleanLabel.contains('giyim') || cleanLabel.contains('butik')) {
-      return categories.firstWhere((c) => c.id == 'giyim_butik');
-    }
-    if (cleanLabel.contains('gıda') || cleanLabel.contains('fırın')) {
-      return categories.firstWhere((c) => c.id == 'gida_firin');
+    const keywordMappings = {
+      'kafe': 'kafe_lokanta',
+      'restoran': 'kafe_lokanta',
+      'lokanta': 'kafe_lokanta',
+      'kuaför': 'kuafor',
+      'güzellik': 'kuafor',
+      'teknik': 'teknik_servis',
+      'servis': 'teknik_servis',
+      'giyim & butik': 'giyim',
+      'giyim': 'giyim',
+      'butik': 'butik',
+      'gıda & fırın': 'gida',
+      'gıda': 'gida',
+      'fırın': 'firin',
+      'evcil hayvan': 'pet_shop_veteriner',
+      'veteriner': 'pet_shop_veteriner',
+      'pet': 'pet_shop_veteriner',
+      'danışmanlık': 'hizmet_danismanlik',
+      'hizmet': 'hizmet_danismanlik',
+      'eğitim': 'egitim_ders',
+      'ders': 'egitim_ders',
+      'temizlik': 'ev_temizlik',
+      'spor': 'spor_fitness',
+      'fitness': 'spor_fitness',
+      'sağlık': 'saglik_yasam',
+      'yaşam': 'saglik_yasam',
+      'oto': 'oto_arac',
+      'araç': 'oto_arac',
+      'araba': 'oto_arac',
+    };
+
+    for (final entry in keywordMappings.entries) {
+      if (cleanLabel.contains(entry.key)) {
+        return categories.firstWhere((c) => c.id == entry.value);
+      }
     }
     
     return categories.firstWhere(

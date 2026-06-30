@@ -59,14 +59,14 @@ void main() {
       expect(screenRep.isBookable, true);
     });
 
-    test('Giyim & Butik has suggestions that are not bookable by default', () {
+    test('Giyim has suggestions that are not bookable by default', () {
       final clothing = BusinessCategoryConfig.categories.firstWhere(
-        (c) => c.id == 'giyim_butik',
+        (c) => c.id == 'giyim',
       );
 
       expect(clothing.suggestedOfferings, isNotEmpty);
       final dress = clothing.suggestedOfferings.firstWhere(
-        (o) => o.title == 'Yeni Sezon Elbiseler',
+        (o) => o.title == 'Yeni Sezon Günlük Giyim',
       );
       expect(dress.isBookable, false);
     });
@@ -81,6 +81,20 @@ void main() {
         'Restoran',
       );
       expect(categoryRestoran.id, 'kafe_lokanta');
+    });
+
+    test('all 19 categories are configured with valid fields', () {
+      expect(BusinessCategoryConfig.categories, hasLength(19));
+      for (final category in BusinessCategoryConfig.categories) {
+        expect(category.id, isNotEmpty);
+        expect(category.label, isNotEmpty);
+        expect(category.emoji, isNotEmpty);
+        expect(category.sectionTitle, isNotEmpty);
+        expect(category.ctaLabel, isNotEmpty);
+        expect(category.whatsappTemplate, isNotEmpty);
+        expect(category.whatsappTemplate, contains('{storeName}'));
+        expect(category.suggestedOfferings, isNotEmpty);
+      }
     });
   });
 }

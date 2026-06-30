@@ -2024,7 +2024,7 @@ class _HeroDemoProfile {
     String addr = 'Atatürk Cad. No:24, Şişli, İstanbul';
 
     if (name.contains('Aymira')) {
-      mappedKategori = 'Giyim & Butik';
+      mappedKategori = 'Giyim';
       lat = 41.0606;
       lng = 28.9878;
       web = 'aymiragiyim.com';

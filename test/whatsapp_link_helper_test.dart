@@ -47,7 +47,7 @@ void main() {
       final url = WhatsAppLinkHelper.buildCategoryGeneralUrl(
         number: '0555 123 45 67',
         storeName: 'Aymira Butik',
-        categoryId: 'giyim_butik',
+        categoryId: 'giyim',
       );
 
       final uri = Uri.parse(url!);
@@ -58,12 +58,12 @@ void main() {
     });
 
     test('buildCategoryOfferingUrl doğru eylemi ekler', () {
-      // Sipariş Talebi eylemi test edelim (gida_firin)
+      // Sipariş Talebi eylemi test edelim (gida)
       final urlGida = WhatsAppLinkHelper.buildCategoryOfferingUrl(
         number: '0555 123 45 67',
         storeName: 'Lezzet Durağı',
         offeringTitle: 'Sıcak Ekmek',
-        categoryId: 'gida_firin',
+        categoryId: 'gida',
       );
       expect(
         Uri.parse(urlGida!).queryParameters['text'],

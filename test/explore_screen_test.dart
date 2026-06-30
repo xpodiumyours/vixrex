@@ -23,7 +23,7 @@ void main() {
 
     // Verify category chips exist
     expect(find.text('Tümü'), findsAtLeastNWidgets(1));
-    expect(find.text('Giyim & Butik'), findsAtLeastNWidgets(1));
+    expect(find.text('Giyim'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('ExploreScreen search and filters work correctly', (

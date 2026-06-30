@@ -136,8 +136,8 @@ class ExploreController extends ChangeNotifier {
         name: 'Aymira Giyim',
         description:
             'Sezonun en trend kadın kıyafetleri ve tasarım kombinleri.',
-        kategori: 'Giyim & Butik',
-        businessType: 'Giyim & Butik',
+        kategori: 'Giyim',
+        businessType: 'Giyim',
         whatsapp: '0555 123 45 67',
         address: 'Bahariye Cad. No:12, Kadıköy, İstanbul',
         slug: 'aymira-giyim',
@@ -149,8 +149,8 @@ class ExploreController extends ChangeNotifier {
         name: 'Lezzet Durağı',
         description:
             'Taze kahveler, kruvasanlar ve el yapımı ekşi mayalı ekmekler.',
-        kategori: 'Gıda & Fırın',
-        businessType: 'Gıda & Fırın',
+        kategori: 'Gıda',
+        businessType: 'Gıda',
         whatsapp: '0555 234 56 78',
         address: 'Şair Nedim Cad. No:45, Beşiktaş, İstanbul',
         slug: 'lezzet-duragi',
