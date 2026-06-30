@@ -51,9 +51,11 @@ class XrexScreen extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      CustomPaint(
-                        size: const Size(100, 100),
-                        painter: DragonFacePainter(blinking: false),
+                      Image.asset(
+                        'assets/images/xrex_mascot.png',
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
                       ),
                     ],
                   ),

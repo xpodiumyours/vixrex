@@ -143,9 +143,11 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
                 alignment: Alignment.center,
                 children: [
                   // Robot yüzü
-                  CustomPaint(
-                    size: const Size(52, 52),
-                    painter: DragonFacePainter(blinking: _blinking),
+                  Image.asset(
+                    'assets/images/xrex_mascot.png',
+                    width: 52,
+                    height: 52,
+                    fit: BoxFit.cover,
                   ),
                   // Scan line
                   Positioned(
@@ -838,9 +840,11 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      CustomPaint(
-                        size: const Size(44, 44),
-                        painter: DragonFacePainter(blinking: _blinking),
+                      Image.asset(
+                        'assets/images/xrex_mascot.png',
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
                       ),
                       Positioned(
                         top: 22 + (_scanAnim.value * 22),
