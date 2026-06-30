@@ -12,6 +12,7 @@ import 'package:vitrinx/screens/xrex_screen.dart';
 import 'package:vitrinx/screens/profile_screen.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/xrex_profile_snapshot.dart';
+import 'package:vitrinx/services/xrex_promotion_service.dart';
 import 'package:vitrinx/widgets/chatbot_overlay.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
@@ -138,16 +139,31 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final link = _publishedInfo?.publicLink;
     if (link == null || link.isEmpty) return;
 
-    await _markXrexShared();
+    final snapshot = _xrexSnapshot;
+    final message = snapshot == null
+        ? 'Merhaba! Dijital vitrinimi incelemek için bağlantıyı kullanabilirsiniz: $link'
+        : XrexPromotionService.draftsFor(snapshot)[1].text;
+    await _xrexSharePromotionText(message);
+  }
 
-    final storeName =
-        _xrexSnapshot?.nameCompleted == true
-            ? 'vitrinimi'
-            : 'dijital vitrinimi';
-    final message =
-        'Merhaba! Tasarladığım $storeName incelemek için linke tıklayabilirsiniz: $link';
+  void _xrexCopyPromotionText(String text) {
+    if (text.trim().isEmpty) return;
+    Clipboard.setData(ClipboardData(text: text.trim()));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Tanıtım metni panoya kopyalandı!'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _xrexSharePromotionText(String message) async {
+    final normalizedMessage = message.trim();
+    if (normalizedMessage.isEmpty) return;
+
+    await _markXrexShared();
     final whatsappUrl = Uri.parse(
-      'https://api.whatsapp.com/send?text=${Uri.encodeComponent(message)}',
+      'https://api.whatsapp.com/send?text=${Uri.encodeComponent(normalizedMessage)}',
     );
 
     try {
@@ -156,20 +172,20 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         mode: LaunchMode.externalApplication,
       );
       if (!launched && mounted) {
-        Clipboard.setData(ClipboardData(text: link));
+        Clipboard.setData(ClipboardData(text: normalizedMessage));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('WhatsApp açılamadı, link panoya kopyalandı!'),
+            content: Text('WhatsApp açılamadı, metin panoya kopyalandı!'),
             duration: Duration(seconds: 3),
           ),
         );
       }
     } catch (_) {
       if (mounted) {
-        Clipboard.setData(ClipboardData(text: link));
+        Clipboard.setData(ClipboardData(text: normalizedMessage));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Hata oluştu, link panoya kopyalandı!'),
+            content: Text('Hata oluştu, metin panoya kopyalandı!'),
             duration: Duration(seconds: 3),
           ),
         );
@@ -356,6 +372,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         dismissedRecommendationId: _dismissedXrexRecommendationId,
         onAction: _handleXrexAction,
         onDismissRecommendation: _dismissXrexRecommendation,
+        onCopyPromotionText: _xrexCopyPromotionText,
+        onSharePromotionText: _xrexSharePromotionText,
       ),
       const ProfileScreen(),
       if (isAdmin) const BlogModerationScreen(),

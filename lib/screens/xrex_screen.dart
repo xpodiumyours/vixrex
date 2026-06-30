@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/services/xrex_guidance_service.dart';
+import 'package:vitrinx/services/xrex_promotion_service.dart';
 import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
@@ -13,6 +14,8 @@ class XrexScreen extends StatelessWidget {
   final String? dismissedRecommendationId;
   final ValueChanged<XrexAction> onAction;
   final ValueChanged<String> onDismissRecommendation;
+  final ValueChanged<String> onCopyPromotionText;
+  final ValueChanged<String> onSharePromotionText;
 
   const XrexScreen({
     super.key,
@@ -21,6 +24,8 @@ class XrexScreen extends StatelessWidget {
     required this.dismissedRecommendationId,
     required this.onAction,
     required this.onDismissRecommendation,
+    required this.onCopyPromotionText,
+    required this.onSharePromotionText,
   });
 
   @override
@@ -169,6 +174,21 @@ class XrexScreen extends StatelessWidget {
                           ? 'Ürün ve hizmetlerini gözden geçir.'
                           : 'İlk ürününü veya hizmetini ekle.',
                       onTap: () => onAction(XrexAction.scrollToProducts),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSuggestionCard(
+                      icon: Icons.campaign_outlined,
+                      title: 'Tanıtım paketi hazırla',
+                      subtitle: snapshot?.isPublished == true
+                          ? 'Düzenlenebilir paylaşım metinleri oluştur.'
+                          : 'Tanıtım metni için önce vitrinini yayınla.',
+                      onTap: () {
+                        if (snapshot?.isPublished == true) {
+                          _showPromotionPackage(context);
+                        } else {
+                          onAction(XrexAction.openVitrim);
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -550,5 +570,124 @@ class XrexScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _showPromotionPackage(BuildContext context) async {
+    final drafts = XrexPromotionService.draftsFor(snapshot);
+    var selectedIndex = 1;
+    final controller = TextEditingController(text: drafts[selectedIndex].text);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  12,
+                  20,
+                  20 + MediaQuery.viewInsetsOf(context).bottom,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppColors.border,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      const Text(
+                        'X-rex tanıtım paketi',
+                        style: TextStyle(
+                          color: AppColors.darkText,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Bir ton seç, metni düzenle ve hazır olduğunda paylaş.',
+                        style: TextStyle(
+                          color: AppColors.mutedText,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: List.generate(drafts.length, (index) {
+                          final draft = drafts[index];
+                          return ChoiceChip(
+                            label: Text(draft.label),
+                            selected: selectedIndex == index,
+                            onSelected: (_) {
+                              setSheetState(() {
+                                selectedIndex = index;
+                                controller.text = draft.text;
+                              });
+                            },
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: controller,
+                        minLines: 5,
+                        maxLines: 8,
+                        maxLength: 600,
+                        style: const TextStyle(color: AppColors.darkText),
+                        decoration: const InputDecoration(
+                          labelText: 'Tanıtım metni',
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          final text = controller.text.trim();
+                          if (text.isEmpty) return;
+                          Navigator.pop(sheetContext);
+                          onCopyPromotionText(text);
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 18),
+                        label: const Text('Metni kopyala'),
+                      ),
+                      const SizedBox(height: 8),
+                      FilledButton.icon(
+                        onPressed: () {
+                          final text = controller.text.trim();
+                          if (text.isEmpty) return;
+                          Navigator.pop(sheetContext);
+                          onSharePromotionText(text);
+                        },
+                        icon: const Icon(Icons.send_rounded, size: 18),
+                        label: const Text('WhatsApp’ta paylaş'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    controller.dispose();
   }
 }

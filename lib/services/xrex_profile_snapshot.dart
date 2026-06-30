@@ -48,6 +48,10 @@ class XrexProfileSnapshot {
   final bool descriptionCompleted;
   final bool catalogCompleted;
   final bool isPublished;
+  final String storeName;
+  final String category;
+  final String district;
+  final String publicLink;
 
   const XrexProfileSnapshot({
     required this.nameCompleted,
@@ -59,6 +63,10 @@ class XrexProfileSnapshot {
     required this.descriptionCompleted,
     required this.catalogCompleted,
     required this.isPublished,
+    required this.storeName,
+    required this.category,
+    required this.district,
+    required this.publicLink,
   });
 
   // ── Factory ───────────────────────────────────────────────────────────────
@@ -100,6 +108,12 @@ class XrexProfileSnapshot {
       descriptionCompleted: descriptionCompleted,
       catalogCompleted: catalogCompleted,
       isPublished:       isPublished,
+      storeName: data.name.trim(),
+      category: data.kategori.trim().isNotEmpty
+          ? data.kategori.trim()
+          : data.businessType.trim(),
+      district: data.districtName.trim(),
+      publicLink: publishedInfo?.publicLink.trim() ?? '',
     );
   }
 
