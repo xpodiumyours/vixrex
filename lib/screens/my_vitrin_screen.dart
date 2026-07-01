@@ -3,27 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:vitrinx/models/chat_message.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/config/instagram_sync_config.dart';
 import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/config/turkey_cities_config.dart';
-import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/models/legal_document.dart';
-import 'package:vitrinx/screens/my_vitrin/action_buttons_section.dart';
-import 'package:vitrinx/screens/my_vitrin/booking_settings_section.dart';
-import 'package:vitrinx/screens/my_vitrin/business_info_form_section.dart';
-import 'package:vitrinx/screens/my_vitrin/cover_gallery_section.dart';
-import 'package:vitrinx/screens/my_vitrin/cover_picker_section.dart';
-import 'package:vitrinx/screens/my_vitrin/gallery_row_section.dart';
-import 'package:vitrinx/screens/my_vitrin/marketplace_section.dart';
-import 'package:vitrinx/screens/my_vitrin/public_website_link_section.dart';
-import 'package:vitrinx/screens/my_vitrin/publish_legal_approval_section.dart';
-import 'package:vitrinx/screens/my_vitrin/published_summary_section.dart';
-import 'package:vitrinx/screens/my_vitrin/product_management_entry_section.dart';
-import 'package:vitrinx/screens/my_vitrin/visibility_hub_section.dart';
+import 'package:vitrinx/screens/legal_screen.dart';
 import 'package:vitrinx/services/legal_document_service.dart';
 import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
@@ -43,7 +32,32 @@ import 'package:vitrinx/widgets/product/product_management_entry_card.dart';
 import 'package:vitrinx/widgets/product/product_management_sheet.dart';
 import 'package:vitrinx/config/legal_config.dart';
 
-// GalleryItem is defined in gallery_row_section.dart
+// ─── Gallery item helper ───────────────────────────────────────────────────
+class _GalleryItem {
+  String id;
+  Uint8List? bytes;
+  String imageUrl;
+  String extension;
+  String contentType;
+
+  _GalleryItem({
+    required this.id,
+    this.bytes,
+    required this.imageUrl,
+    this.extension = 'jpg',
+    this.contentType = 'image/jpeg',
+  });
+
+  bool get hasLocalBytes => bytes != null;
+  bool get hasUrl => imageUrl.trim().isNotEmpty;
+
+  static _GalleryItem fromStoreItem(StoreGalleryItem item) =>
+      _GalleryItem(id: item.id, imageUrl: item.imageUrl);
+
+  StoreGalleryItem toStoreItem() =>
+      StoreGalleryItem(id: id, imageUrl: imageUrl);
+}
+
 // ─── Main Widget ──────────────────────────────────────────────────────────
 class MyVitrinScreen extends StatefulWidget {
   final String? initialName;
@@ -125,7 +139,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   String _coverContentType = 'image/jpeg';
 
   // Gallery
-  final List<GalleryItem> _galleryItems = [];
+  final List<_GalleryItem> _galleryItems = [];
   static const int _maxGalleryPhotos = 12;
 
   // Marketplace links
@@ -310,7 +324,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         _galleryItems.addAll(
           _data.displayGalleryItems
               .take(_maxGalleryPhotos)
-              .map(GalleryItem.fromStoreItem),
+              .map(_GalleryItem.fromStoreItem),
         );
 
         _marketplaceLinks.clear();
@@ -470,7 +484,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     if (result == null || result.files.isEmpty) return;
 
     var rejected = 0;
-    final newItems = <GalleryItem>[];
+    final newItems = <_GalleryItem>[];
     for (final file in result.files.take(remaining)) {
       final validation = GalleryImageFileValidator.validate(
         bytes: file.bytes,
@@ -481,7 +495,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         continue;
       }
       newItems.add(
-        GalleryItem(
+        _GalleryItem(
           id: '${DateTime.now().microsecondsSinceEpoch}_${newItems.length}',
           bytes: file.bytes,
           imageUrl: '',
@@ -1323,26 +1337,18 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              CoverGallerySection(
-                coverPhotoKey: _coverPhotoKey,
-                coverPicker: CoverPickerSection(
-                  coverBytes: _coverBytes,
-                  coverUrl: _coverUrl,
-                  coverFileName: _coverFileName,
-                  onPickCoverPhoto: _pickCoverPhoto,
-                ),
-                galleryKey: _galleryKey,
-                compactGalleryRow: GalleryRowSection(
-                  galleryItems: _galleryItems,
-                  maxGalleryPhotos: _maxGalleryPhotos,
-                  onPickGalleryPhotos: _pickGalleryPhotos,
-                  onRemoveGalleryItem: _removeGalleryItem,
-                ),
-              ),
+              // ── Kapak Fotoğrafı ──────────────────────────────────
+              KeyedSubtree(key: _coverPhotoKey, child: _buildCoverPicker()),
+              const SizedBox(height: 10),
 
-              BusinessInfoFormSection(
-                nameKey: _nameKey,
-                nameField: _buildTextField(
+              // ── Galeri (kapak altında, kompakt) ─────────────────
+              KeyedSubtree(key: _galleryKey, child: _buildCompactGalleryRow()),
+              const SizedBox(height: 18),
+
+              // ── Zorunlu Alanlar (* ile işaretli) ─────────────────
+              KeyedSubtree(
+                key: _nameKey,
+                child: _buildTextField(
                   label: 'İşletme / VitrinX Adı',
                   controller: _nameController,
                   focusNode: _nameFocusNode,
@@ -1351,8 +1357,12 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   errorText: _nameError,
                   required: true,
                 ),
-                whatsappKey: _whatsappKey,
-                whatsappField: _buildTextField(
+              ),
+              const SizedBox(height: 14),
+
+              KeyedSubtree(
+                key: _whatsappKey,
+                child: _buildTextField(
                   label: 'WhatsApp Numarası',
                   controller: _whatsappController,
                   focusNode: _whatsappFocusNode,
@@ -1370,39 +1380,16 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   required: true,
                   validateWhatsapp: true,
                 ),
-                locationKey: _addressKey,
-                selectedProvinceCode: _selectedProvinceCode,
-                selectedDistrictName: _selectedDistrictName,
-                provinceError: _provinceError,
-                districtError: _districtError,
-                addressError: _addressError,
-                locationStatusMessage: _locationStatusMessage,
-                latitude: _latitude,
-                longitude: _longitude,
-                isLocating: _isLocating,
-                addressController: _addressController,
-                onProvinceChanged: (val) {
-                  setState(() {
-                    _selectedProvinceCode = val;
-                    _selectedProvinceName =
-                        val != null
-                            ? turkeyProvinces.firstWhere((p) => p.code == val).name
-                            : '';
-                    _selectedDistrictCode = null;
-                    _selectedDistrictName = null;
-                    _provinceError = null;
-                  });
-                },
-                onDistrictChanged: (val) {
-                  setState(() {
-                    _selectedDistrictCode = val;
-                    _selectedDistrictName = val;
-                    _districtError = null;
-                  });
-                },
-                onGetCurrentLocation: _getCurrentLocation,
-                descriptionKey: _descriptionKey,
-                descriptionField: _buildTextField(
+              ),
+              const SizedBox(height: 14),
+
+              KeyedSubtree(key: _addressKey, child: _buildLocationField()),
+              const SizedBox(height: 14),
+
+              // ── İsteğe Bağlı Alanlar ─────────────────────────────
+              KeyedSubtree(
+                key: _descriptionKey,
+                child: _buildTextField(
                   label: 'Kısa Açıklama',
                   controller: _descriptionController,
                   focusNode: _descriptionFocusNode,
@@ -1410,57 +1397,54 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   icon: Icons.notes_rounded,
                   maxLines: 3,
                 ),
-                categoryDropdown: _buildDropdown(
-                  label: 'Kategori',
-                  value: _selectedKategori,
-                  items: _categories,
-                  icon: Icons.category_rounded,
-                  onChanged: (val) {
-                    setState(() {
-                      _selectedKategori = val ?? 'Diğer';
-                      if (_selectedKategori != 'Kuaför') {
-                        _bookingIsEnabled = false;
-                        for (final offering in _offerings) {
-                          offering.isBookable = false;
-                        }
-                      }
-                    });
-                  },
-                ),
-                selectedKategori: _selectedKategori,
-                productsKey: _productsKey,
-                bookingSettingsSection:
-                    _selectedKategori == 'Kuaför'
-                        ? BookingSettingsSection(
-                            bookingIsEnabled: _bookingIsEnabled,
-                            bookingCapacity: _bookingCapacity,
-                            bookingLunchBreak: _bookingLunchBreak,
-                            bookingWorkingHours: _bookingWorkingHours,
-                            offerings: _offerings,
-                            selectedKategori: _selectedKategori,
-                            onBookingEnabledChanged: (val) => setState(() => _bookingIsEnabled = val),
-                            onCapacityChanged: (val) => setState(() => _bookingCapacity = val),
-                            onChanged: () => setState(() {}),
-                            onShowMessage: _showSnackBar,
-                          )
-                        : null,
-                statusDropdown: _buildDropdown(
-                  label: 'Vitrin Durumu',
-                  value: _selectedStatus,
-                  items: _statuses,
-                  icon: Icons.info_outline_rounded,
-                  onChanged:
-                      (val) => setState(() => _selectedStatus = val ?? 'Açık'),
-                ),
-                instagramField: _buildTextField(
-                  label: 'Instagram',
-                  controller: _instagramController,
-                  hint: '@kullanici_adi veya profil linki',
-                  icon: Icons.camera_alt_rounded,
-                  keyboardType: TextInputType.url,
-                ),
               ),
-              ProductManagementEntrySection(
+              const SizedBox(height: 14),
+
+              _buildDropdown(
+                label: 'Kategori',
+                value: _selectedKategori,
+                items: _categories,
+                icon: Icons.category_rounded,
+                onChanged: (val) {
+                  setState(() {
+                    _selectedKategori = val ?? 'Diğer';
+                    if (_selectedKategori != 'Kuaför') {
+                      _bookingIsEnabled = false;
+                      for (final offering in _offerings) {
+                        offering.isBookable = false;
+                      }
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 14),
+
+              if (_selectedKategori == 'Kuaför') ...[
+                KeyedSubtree(
+                  key: _productsKey,
+                  child: _buildBookingSettingsSection(),
+                ),
+                const SizedBox(height: 14),
+              ],
+
+              _buildDropdown(
+                label: 'Vitrin Durumu',
+                value: _selectedStatus,
+                items: _statuses,
+                icon: Icons.info_outline_rounded,
+                onChanged:
+                    (val) => setState(() => _selectedStatus = val ?? 'Açık'),
+              ),
+              const SizedBox(height: 14),
+
+              _buildTextField(
+                label: 'Instagram',
+                controller: _instagramController,
+                hint: '@kullanici_adi veya profil linki',
+                icon: Icons.camera_alt_rounded,
+                keyboardType: TextInputType.url,
+              ),
+              ProductManagementEntryCard(
                 productCount: _data.products.length,
                 onTap: _showProductManagementPlaceholder,
               ),
@@ -1477,13 +1461,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 const SizedBox(height: 14),
               ],
 
-              PublicWebsiteLinkSection(
-                publicLink: _publishedInfo?.publicLink.trim(),
-                websiteController: _websiteController,
-                onOpenLink: _openPublicWebsiteLink,
-                onCopyLink: _copyLink,
-                onShareLink: _sharePublicWebsiteLink,
-              ),
+              _buildPublicWebsiteLinkCard(),
               const SizedBox(height: 14),
 
               _buildTextField(
@@ -1496,54 +1474,68 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               ),
               const SizedBox(height: 14),
 
-              MarketplaceSection(
-                marketplaceLinks: _marketplaceLinks,
-                customPlatformLinkIds: _customPlatformLinkIds,
-                platformOptions: _platformOptions,
-                onAddMarketplaceLink: _addMarketplaceLink,
-                onRemoveMarketplaceLink: _removeMarketplaceLink,
-                onPlatformChanged: (index, val) {
-                  setState(() {
-                    final link = _marketplaceLinks[index];
-                    if (val == 'Özel...') {
-                      link.platform = 'Özel...';
-                      _customPlatformLinkIds.add(link.id);
-                    } else {
-                      link.platform = val ?? '';
-                      _customPlatformLinkIds.remove(link.id);
-                    }
-                  });
-                },
-                onUrlChanged: (index, val) => _marketplaceLinks[index].url = val,
-                onCustomPlatformChanged:
-                    (index, val) => setState(
-                      () => _marketplaceLinks[index].platform = val.trim(),
-                    ),
-                onSubtitleChanged:
-                    (index, val) => _marketplaceLinks[index].subtitle = val.trim(),
-              ),
+              _buildMarketplaceSection(),
               const SizedBox(height: 24),
 
-              PublishLegalApprovalSection(
-                isLoadingLegalDocuments: _isLoadingLegalDocuments,
-                legalDocuments: _legalDocuments,
-                legalDocumentsError: _legalDocumentsError,
-                privacyNoticeAcknowledged: _privacyNoticeAcknowledged,
-                termsAccepted: _termsAccepted,
-                publicationConsentAccepted: _publicationConsentAccepted,
-                isPublishing: _isPublishing,
-                isLegalPublishReady: _isLegalPublishReady,
-                hasPublished: hasPublished,
-                onLoadLegalDocuments: _loadLegalDocuments,
-                onPrivacyNoticeChanged:
-                    (value) => setState(() => _privacyNoticeAcknowledged = value),
-                onTermsAcceptedChanged:
-                    (value) => setState(() => _termsAccepted = value),
-                onPublicationConsentChanged:
-                    (value) => setState(() => _publicationConsentAccepted = value),
-                onOpenLegalPage:
-                    (type) => AppRouter.navigateToLegal(context, type),
-                onPublish: _publishVitrin,
+              _buildLegalConsentSection(),
+              const SizedBox(height: 16),
+
+              // ── Publish Button ─────────────────────────────────────────
+              SizedBox(
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed:
+                      _isPublishing || !_isLegalPublishReady
+                          ? null
+                          : _publishVitrin,
+                  icon:
+                      _isPublishing
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
+                          )
+                          : Icon(
+                            hasPublished
+                                ? Icons.cloud_upload_rounded
+                                : Icons.rocket_launch_rounded,
+                            size: 19,
+                          ),
+                  label: Text(
+                    _isPublishing
+                        ? 'Yayına alınıyor...'
+                        : hasPublished
+                        ? 'Değişiklikleri Kaydet & Yayına Al'
+                        : 'Vitrinimi Yayına Al',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                hasPublished
+                    ? 'Mevcut linkin korunur, Keşfet görünümün güncellenir.'
+                    : 'Linkin oluşur, Keşfet\'te görünürsün.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: mutedText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -1552,36 +1544,11 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         // ── Published Summary Card ────────────────────────────────────────
         if (hasPublished) ...[
           const SizedBox(height: 16),
-          PublishedSummarySection(
-            publishedInfo: _publishedInfo!,
-            coverUrl: _coverUrl,
-            onOpenExplore: widget.onOpenExplore,
-          ),
+          _buildPublishedSummary(),
           const SizedBox(height: 16),
-          ActionButtonsSection(
-            bookingIsEnabled: _bookingIsEnabled,
-            onOpenBookingManagement: _openBookingManagement,
-            onOpenPublicVitrin: _openPublicVitrin,
-            onCopyLink: _copyLink,
-            onShowQrSheet: _showQrSheet,
-          ),
+          _buildActionButtons(),
           const SizedBox(height: 16),
-          VisibilityHubSection(
-            publicLink:
-                (_publishedInfo?.publicLink.trim().isNotEmpty == true)
-                    ? _publishedInfo!.publicLink.trim()
-                    : _websiteController.text.trim(),
-            hasPublished: hasPublished,
-            addressText: _addressController.text.trim(),
-            hasLatLon: _latitude != null && _longitude != null,
-            googleBusinessLink: _googleBusinessLinkController.text.trim(),
-            descriptionText: _descriptionController.text.trim(),
-            isLoadingArticles: _isLoadingArticles,
-            articles: _articles,
-            onShowGoogleReviewQrSheet: _showGoogleReviewQrSheet,
-            onOpenBlogEditor: () => _openBlogEditor(),
-            onOpenBlogEditorWithArticle: (a) => _openBlogEditor(initialArticle: a),
-          ),
+          _buildVisibilityHubCard(),
         ],
 
         // ── Danger Zone ────────────────────────────────────────────────────
@@ -1624,6 +1591,528 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
+  Widget _buildLegalConsentSection() {
+    final canAccept =
+        !_isLoadingLegalDocuments &&
+        _legalDocuments != null &&
+        LegalConfig.hasCompleteDataControllerIdentity;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.verified_user_outlined, color: primaryColor, size: 21),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Yasal Bilgilendirme ve Yayınlama Onayı',
+                  style: AppTextStyles.subTitle,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.',
+            style: AppTextStyles.caption,
+          ),
+          if (!LegalConfig.hasCompleteDataControllerIdentity) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Xpodiumyours resmî unvan ve adres bilgileri tamamlanmadığı için yayınlama geçici olarak kapalıdır.',
+              style: AppTextStyles.errorText,
+            ),
+          ] else if (_isLoadingLegalDocuments) ...[
+            const SizedBox(height: 14),
+            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ] else if (_legalDocumentsError != null) ...[
+            const SizedBox(height: 12),
+            Text(_legalDocumentsError!, style: AppTextStyles.errorText),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: _loadLegalDocuments,
+                icon: const Icon(Icons.refresh_rounded, size: 17),
+                label: const Text('Belgeleri Tekrar Yükle'),
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          CheckboxListTile(
+            key: const ValueKey('privacy-notice-checkbox'),
+            value: _privacyNoticeAcknowledged,
+            onChanged:
+                canAccept
+                    ? (value) => setState(
+                      () => _privacyNoticeAcknowledged = value ?? false,
+                    )
+                    : null,
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: const Text(
+              'Aydınlatma Metni’ni okudum ve bilgilendirildim.',
+              style: AppTextStyles.formLabel,
+            ),
+          ),
+          _legalLink(label: 'Aydınlatma Metni', type: LegalPageType.privacy),
+          CheckboxListTile(
+            key: const ValueKey('terms-checkbox'),
+            value: _termsAccepted,
+            onChanged:
+                canAccept
+                    ? (value) => setState(() => _termsAccepted = value ?? false)
+                    : null,
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: const Text(
+              'Kullanım Şartları’nı kabul ediyorum.',
+              style: AppTextStyles.formLabel,
+            ),
+          ),
+          _legalLink(label: 'Kullanım Şartları', type: LegalPageType.terms),
+          CheckboxListTile(
+            key: const ValueKey('publication-consent-checkbox'),
+            value: _publicationConsentAccepted,
+            onChanged:
+                canAccept
+                    ? (value) => setState(
+                      () => _publicationConsentAccepted = value ?? false,
+                    )
+                    : null,
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: const Text(
+              'Verilerimin dijital vitrinimde kamuya açık yayınlanmasına açık rıza veriyorum.',
+              style: AppTextStyles.formLabel,
+            ),
+          ),
+          _legalLink(label: 'Açık Rıza Beyanı', type: LegalPageType.consent),
+        ],
+      ),
+    );
+  }
+
+  Widget _legalLink({required String label, required LegalPageType type}) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        onPressed: () => AppRouter.navigateToLegal(context, type),
+        icon: const Icon(Icons.open_in_new_rounded, size: 15),
+        label: Text(label),
+      ),
+    );
+  }
+
+  Widget _buildPublicWebsiteLinkCard() {
+    final publicLink = _publishedInfo?.publicLink.trim();
+    final hasPublicLink = publicLink != null && publicLink.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Website',
+          style: TextStyle(
+            color: softText,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _websiteController,
+          keyboardType: TextInputType.url,
+          style: const TextStyle(
+            color: darkText,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+          decoration: InputDecoration(
+            prefixIcon: IconButton(
+              tooltip: 'Web linkini aç',
+              onPressed: _openPublicWebsiteLink,
+              icon: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.language_rounded,
+                  color: primaryColor,
+                  size: 18,
+                ),
+              ),
+            ),
+            suffixIcon:
+                hasPublicLink
+                    ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Linki kopyala',
+                          onPressed: _copyLink,
+                          icon: const Icon(
+                            Icons.copy_rounded,
+                            color: mutedText,
+                            size: 18,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Linki paylaş',
+                          onPressed: _sharePublicWebsiteLink,
+                          icon: const Icon(
+                            Icons.ios_share_rounded,
+                            color: primaryColor,
+                            size: 18,
+                          ),
+                        ),
+                      ],
+                    )
+                    : null,
+            hintText: 'Yayına aldığınızda özel web linkiniz burada oluşur.',
+            hintStyle: TextStyle(
+              color: mutedText.withValues(alpha: 0.62),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            filled: true,
+            fillColor: inputBg,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: primaryColor, width: 1.4),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Location Field ───────────────────────────────────────────────────────
+  // ─── Location Field ───────────────────────────────────────────────────────
+  Widget _buildLocationField() {
+    final districts =
+        _selectedProvinceCode != null
+            ? (turkeyDistricts[_selectedProvinceCode] ?? [])
+            : <String>[];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Dropdown: İl
+        Row(
+          children: [
+            const Text(
+              'İl',
+              style: TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Text(
+              ' *',
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: _selectedProvinceCode,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(
+              Icons.map_rounded,
+              color: mutedText,
+              size: 18,
+            ),
+            filled: true,
+            fillColor: inputBg,
+            errorText: _provinceError,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+          ),
+          hint: const Text(
+            'İl Seçiniz',
+            style: TextStyle(fontSize: 14, color: mutedText),
+          ),
+          items:
+              turkeyProvinces.map((p) {
+                return DropdownMenuItem<String>(
+                  value: p.code,
+                  child: Text(
+                    p.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: darkText,
+                    ),
+                  ),
+                );
+              }).toList(),
+          onChanged: (val) {
+            setState(() {
+              _selectedProvinceCode = val;
+              _selectedProvinceName =
+                  val != null
+                      ? turkeyProvinces.firstWhere((p) => p.code == val).name
+                      : '';
+              _selectedDistrictCode = null;
+              _selectedDistrictName = null;
+              _provinceError = null;
+            });
+          },
+        ),
+        const SizedBox(height: 14),
+
+        // Dropdown: İlçe
+        Row(
+          children: [
+            const Text(
+              'İlçe',
+              style: TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Text(
+              ' *',
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: _selectedDistrictName,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(
+              Icons.location_city_rounded,
+              color: mutedText,
+              size: 18,
+            ),
+            filled: true,
+            fillColor: inputBg,
+            errorText: _districtError,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+          ),
+          hint: const Text(
+            'İlçe Seçiniz',
+            style: TextStyle(fontSize: 14, color: mutedText),
+          ),
+          disabledHint: const Text(
+            'Önce İl Seçiniz',
+            style: TextStyle(fontSize: 14, color: mutedText),
+          ),
+          items:
+              districts.map((d) {
+                return DropdownMenuItem<String>(
+                  value: d,
+                  child: Text(
+                    d,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: darkText,
+                    ),
+                  ),
+                );
+              }).toList(),
+          onChanged:
+              _selectedProvinceCode == null
+                  ? null
+                  : (val) {
+                    setState(() {
+                      _selectedDistrictCode = val;
+                      _selectedDistrictName = val;
+                      _districtError = null;
+                    });
+                  },
+        ),
+        const SizedBox(height: 14),
+
+        // Detailed Address Field
+        Row(
+          children: [
+            const Text(
+              'Açık Adres (Mahalle, Cadde, Sokak, No)',
+              style: TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Text(
+              ' *',
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _addressController,
+          style: const TextStyle(
+            color: darkText,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(
+              Icons.location_on_rounded,
+              color: mutedText,
+              size: 18,
+            ),
+            hintText: 'Örn: Atatürk Mah. Fatih Cad. No:12 D:4',
+            hintStyle: TextStyle(
+              color: mutedText.withValues(alpha: 0.62),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            filled: true,
+            fillColor: inputBg,
+            errorText: _addressError,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: primaryColor, width: 1.4),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 40,
+          child: OutlinedButton.icon(
+            onPressed: _isLocating ? null : _getCurrentLocation,
+            icon:
+                _isLocating
+                    ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: primaryColor,
+                      ),
+                    )
+                    : const Icon(
+                      Icons.my_location_rounded,
+                      size: 16,
+                      color: primaryColor,
+                    ),
+            label: Text(
+              _isLocating ? 'Konum alınıyor...' : '📡 GPS ile Konumumu Al',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: primaryColor,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: primaryColor),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+            ),
+          ),
+        ),
+        if (_locationStatusMessage != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            _locationStatusMessage!,
+            style: const TextStyle(
+              color: mutedText,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        if (_latitude != null && _longitude != null) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(
+                Icons.check_circle_rounded,
+                size: 13,
+                color: Color(0xFF10B981),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Koordinat kaydedildi (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})',
+                style: const TextStyle(
+                  color: Color(0xFF047857),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
   Future<void> _openBlogEditor({Map<String, dynamic>? initialArticle}) async {
     final slug = _publishedInfo?.slug ?? _data.slug;
     if (slug.trim().isEmpty) {
@@ -1642,6 +2131,427 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     }
   }
 
+  Widget _buildVisibilityHubCard() {
+    final publicLink =
+        (_publishedInfo?.publicLink.trim().isNotEmpty == true)
+            ? _publishedInfo!.publicLink.trim()
+            : _websiteController.text.trim();
+    final hasPublished = _publishedInfo?.isComplete == true;
+    final hasWebLink = publicLink.isNotEmpty;
+    final hasLocation =
+        _addressController.text.trim().isNotEmpty ||
+        (_latitude != null && _longitude != null);
+    final hasGoogleReview =
+        _googleBusinessLinkController.text.trim().isNotEmpty;
+    final hasProfileDescription = _descriptionController.text.trim().isNotEmpty;
+    final publishedArticles =
+        _articles
+            .where((article) => article['status']?.toString() == 'published')
+            .toList();
+    final hasPublishedArticle = publishedArticles.isNotEmpty;
+    final completedCount =
+        [
+          hasPublished,
+          hasWebLink,
+          hasLocation,
+          hasGoogleReview,
+          hasProfileDescription,
+          hasPublishedArticle,
+        ].where((value) => value).length;
+
+    final hasCoreInfo =
+        hasPublished && hasWebLink && hasLocation && hasProfileDescription;
+    final isReady = hasCoreInfo && hasGoogleReview;
+    final statusLabel =
+        isReady
+            ? 'Hazır'
+            : hasCoreInfo
+            ? 'Geliştirilebilir'
+            : 'Eksik bilgi var';
+    final statusColor =
+        isReady
+            ? const Color(0xFF047857)
+            : hasCoreInfo
+            ? const Color(0xFFB45309)
+            : const Color(0xFFDC2626);
+    final statusBg = statusColor.withValues(alpha: 0.12);
+    final helperText =
+        isReady
+            ? 'Temel bilgiler tamam. Güncel içerik ekledikçe görünürlük güçlenir.'
+            : hasCoreInfo
+            ? 'Temel bilgiler hazır. Google yorum linki ve içerik eklemek vitrini güçlendirir.'
+            : 'Google için önce yayın linki, adres/konum ve kısa açıklamayı tamamla.';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.travel_explore_rounded,
+                color: primaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Google Görünürlük',
+                  style: TextStyle(
+                    color: darkText,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Vitrin bilgilerinden otomatik hazırlanır. Sıralama garantisi vermez; doğru bilgi, erişilebilir sayfa ve güncel içerik görünürlüğü destekler.',
+            style: TextStyle(
+              color: mutedText.withValues(alpha: 0.8),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: inputBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: cardBorder),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: primaryColor,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '$completedCount/6 kontrol tamamlandı. $helperText',
+                    style: const TextStyle(
+                      color: darkText,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 520;
+              final tileWidth =
+                  isNarrow
+                      ? constraints.maxWidth
+                      : (constraints.maxWidth - 16) / 3;
+
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.public_rounded,
+                    title: 'Vitrin yayında',
+                    isComplete: hasPublished,
+                  ),
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.link_rounded,
+                    title: 'Web linki hazır',
+                    isComplete: hasWebLink,
+                  ),
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.place_rounded,
+                    title: 'Adres veya konum',
+                    isComplete: hasLocation,
+                  ),
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.rate_review_rounded,
+                    title: 'Google yorum linki',
+                    isComplete: hasGoogleReview,
+                  ),
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.notes_rounded,
+                    title: 'Kısa açıklama',
+                    isComplete: hasProfileDescription,
+                  ),
+                  _buildVisibilityCheckTile(
+                    width: tileWidth,
+                    icon: Icons.article_rounded,
+                    title: 'Yayında içerik',
+                    isComplete: hasPublishedArticle,
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (hasGoogleReview)
+                OutlinedButton.icon(
+                  onPressed: _showGoogleReviewQrSheet,
+                  icon: const Icon(Icons.qr_code_2_rounded, size: 16),
+                  label: const Text(
+                    'Yorum QR kodu',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryColor,
+                    side: const BorderSide(color: primaryColor),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                )
+              else
+                _buildVisibilityHintChip(
+                  icon: Icons.rate_review_rounded,
+                  text: 'Google yorum linki ekle',
+                ),
+              TextButton.icon(
+                onPressed: () => _openBlogEditor(),
+                icon: const Icon(
+                  Icons.add_rounded,
+                  size: 16,
+                  color: primaryColor,
+                ),
+                label: const Text(
+                  'Yeni Yazı',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
+          if (_isLoadingArticles) ...[
+            const SizedBox(height: 12),
+            const LinearProgressIndicator(
+              minHeight: 2,
+              color: primaryColor,
+              backgroundColor: Color(0xFFE5E7EB),
+            ),
+          ] else if (publishedArticles.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            const Text(
+              'İçerik ve Duyurular',
+              style: TextStyle(
+                color: darkText,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...publishedArticles.take(2).map(_buildArticleSummaryRow),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVisibilityCheckTile({
+    required double width,
+    required IconData icon,
+    required String title,
+    required bool isComplete,
+  }) {
+    final color = isComplete ? AppColors.success : mutedText;
+
+    return SizedBox(
+      width: width,
+      child: Container(
+        height: 46,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color:
+              isComplete
+                  ? AppColors.success.withAlpha(30)
+                  : AppColors.surfaceSoft,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isComplete ? AppColors.success.withAlpha(80) : cardBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isComplete ? AppColors.success : darkText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Icon(
+              isComplete
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: color,
+              size: 15,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVisibilityHintChip({
+    required IconData icon,
+    required String text,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withAlpha(25),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: AppColors.primary),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: AppColors.darkText,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArticleSummaryRow(Map<String, dynamic> article) {
+    final title = article['title']?.toString().trim() ?? '';
+    final seoScore = article['seo_score'] ?? 0;
+
+    return InkWell(
+      onTap: () => _openBlogEditor(initialArticle: article),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceSoft,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.article_rounded,
+                color: primaryColor,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title.isEmpty ? 'Yayınlanan yazı' : title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: darkText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'SEO $seoScore',
+              style: const TextStyle(
+                color: mutedText,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showGoogleReviewQrSheet() {
     final link = _googleBusinessLinkController.text.trim();
     if (link.isEmpty) {
@@ -1650,9 +2560,1494 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       );
       return;
     }
-    VisibilityHubSection.showGoogleReviewQrSheet(context, link);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder:
+          (_) => Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Google Yorum QR Kodu',
+                  style: TextStyle(
+                    color: darkText,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppColors.error,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Google politikaları gereği yorum karşılığında ödül veya hediye teklif edilmesi yasaktır. Lütfen QR kodunu müşterilerinizden tarafsız ve organik geri bildirimler almak üzere kullanın.',
+                          style: TextStyle(
+                            color: AppColors.darkTextAlt,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 220,
+                  height: 220,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: cardBorder),
+                  ),
+                  child: QrImageView(
+                    data: link,
+                    version: QrVersions.auto,
+                    errorCorrectionLevel: QrErrorCorrectLevel.M,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  link,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: mutedText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
   }
 
+  // ─── Marketplace Section ──────────────────────────────────────────────────
+  Widget _buildMarketplaceSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Bağlantılar',
+              style: TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: _addMarketplaceLink,
+              icon: const Icon(
+                Icons.add_rounded,
+                size: 16,
+                color: primaryColor,
+              ),
+              label: const Text(
+                'Ekle',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
+        if (_marketplaceLinks.isEmpty)
+          Text(
+            'Trendyol, Instagram gibi linkleri veya özel bağlantıları buraya ekleyebilirsiniz.',
+            style: TextStyle(
+              color: mutedText.withValues(alpha: 0.7),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        for (int i = 0; i < _marketplaceLinks.length; i++) ...[
+          const SizedBox(height: 8),
+          _buildMarketplaceLinkRow(i),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMarketplaceLinkRow(int index) {
+    final link = _marketplaceLinks[index];
+    final isCustom =
+        _customPlatformLinkIds.contains(link.id) ||
+        link.platform == 'Özel...' ||
+        (!_platformOptions.contains(link.platform) && link.platform.isNotEmpty);
+    final dropdownValue =
+        isCustom
+            ? 'Özel...'
+            : (_platformOptions.contains(link.platform) ? link.platform : null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            // Platform seçici
+            Expanded(
+              flex: 2,
+              child: DropdownButtonFormField<String>(
+                initialValue: dropdownValue,
+                hint: const Text('Platform', style: TextStyle(fontSize: 13)),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: inputBg,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: cardBorder),
+                  ),
+                ),
+                items:
+                    _platformOptions
+                        .map(
+                          (p) => DropdownMenuItem(
+                            value: p,
+                            child: Text(
+                              p,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    if (val == 'Özel...') {
+                      link.platform = 'Özel...';
+                      _customPlatformLinkIds.add(link.id);
+                    } else {
+                      link.platform = val ?? '';
+                      _customPlatformLinkIds.remove(link.id);
+                    }
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            // URL alanı
+            Expanded(
+              flex: 3,
+              child: TextFormField(
+                key: ValueKey('${link.id}-url'),
+                initialValue: link.url,
+                onChanged: (val) => _marketplaceLinks[index].url = val,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: darkText,
+                  fontWeight: FontWeight.w700,
+                ),
+                decoration: InputDecoration(
+                  hintText: () {
+                    final p = link.platform.toLowerCase();
+                    if (p.contains('trendyol')) {
+                      return 'trendyol.com/magaza/...';
+                    }
+                    if (p.contains('hepsiburada')) {
+                      return 'hepsiburada.com/magaza/...';
+                    }
+                    if (p.contains('instagram')) return 'instagram.com/...';
+                    if (p.contains('google')) return 'g.page/...';
+                    if (p.contains('whatsapp')) return 'wa.me/...';
+                    return 'https://...';
+                  }(),
+                  hintStyle: TextStyle(
+                    color: mutedText.withValues(alpha: 0.6),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  filled: true,
+                  fillColor: inputBg,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: cardBorder),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            IconButton(
+              onPressed: () => _removeMarketplaceLink(index),
+              icon: const Icon(Icons.close_rounded, size: 18, color: mutedText),
+              style: IconButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(28, 28),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
+        // Özel... modu: platform başlığı metin alanı
+        if (isCustom) ...[
+          const SizedBox(height: 6),
+          TextFormField(
+            key: ValueKey('${link.id}-platform'),
+            initialValue: link.platform == 'Özel...' ? '' : link.platform,
+            onChanged:
+                (val) => setState(
+                  () => _marketplaceLinks[index].platform = val.trim(),
+                ),
+            style: const TextStyle(
+              fontSize: 13,
+              color: darkText,
+              fontWeight: FontWeight.w700,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Bağlantı başlığı (ör. Randevu al)',
+              hintStyle: TextStyle(
+                color: mutedText.withValues(alpha: 0.6),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              prefixIcon: Icon(
+                Icons.edit_rounded,
+                size: 16,
+                color: primaryColor.withValues(alpha: 0.7),
+              ),
+              filled: true,
+              fillColor: inputBg,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: cardBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: primaryColor.withValues(alpha: 0.4),
+                ),
+              ),
+            ),
+          ),
+        ],
+        // Kısa açıklama (isteğe bağlı)
+        const SizedBox(height: 6),
+        TextFormField(
+          key: ValueKey('${link.id}-subtitle'),
+          initialValue: link.subtitle,
+          onChanged: (val) => _marketplaceLinks[index].subtitle = val.trim(),
+          style: const TextStyle(
+            fontSize: 12,
+            color: darkText,
+            fontWeight: FontWeight.w600,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Kısa açıklama (isteğe bağlı)',
+            hintStyle: TextStyle(
+              color: mutedText.withValues(alpha: 0.5),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            filled: true,
+            fillColor: inputBg,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 8,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: cardBorder),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBookingServicesSection() {
+    final config = BusinessCategoryConfig.fromCategoryLabel(_selectedKategori);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Randevu Hizmetleri',
+              style: TextStyle(
+                color: softText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Spacer(),
+            if (_offerings.length < 6)
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _offerings.add(
+                      StoreOffering(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        title: '',
+                        description: '',
+                        price: '',
+                        isBookable: true,
+                      ),
+                    );
+                  });
+                },
+                icon: const Icon(
+                  Icons.add_rounded,
+                  size: 16,
+                  color: primaryColor,
+                ),
+                label: const Text(
+                  'Ekle',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        if (config.suggestedOfferings.isNotEmpty && _offerings.length < 6) ...[
+          const Text(
+            'Hazır hizmetler (eklemek için dokunun):',
+            style: TextStyle(
+              color: mutedText,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children:
+                config.suggestedOfferings.map((sug) {
+                  return ActionChip(
+                    backgroundColor: AppColors.surfaceSoft,
+                    side: const BorderSide(color: cardBorder),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    avatar: const Icon(
+                      Icons.add_circle_outline_rounded,
+                      color: primaryColor,
+                      size: 16,
+                    ),
+                    label: Text(
+                      'Ekle: ${sug.title}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: darkText,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: () {
+                      if (_offerings.length >= 6) {
+                        _showSnackBar(
+                          'En fazla 6 adet hizmet ekleyebilirsiniz.',
+                        );
+                        return;
+                      }
+                      final trimmedTitle = sug.title.trim().toLowerCase();
+                      final isDuplicate = _offerings.any(
+                        (o) => o.title.trim().toLowerCase() == trimmedTitle,
+                      );
+                      if (isDuplicate) {
+                        _showSnackBar('Bu hizmet zaten eklenmiş.');
+                        return;
+                      }
+                      setState(() {
+                        _offerings.add(
+                          StoreOffering(
+                            id:
+                                '${DateTime.now().millisecondsSinceEpoch}_${sug.title.hashCode}',
+                            title: sug.title,
+                            description: sug.description,
+                            price: sug.price,
+                            durationMinutes: sug.durationMinutes,
+                            isBookable: true,
+                          ),
+                        );
+                      });
+                    },
+                  );
+                }).toList(),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (_offerings.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              'Müşterinin randevu alırken seçeceği hizmetleri ekleyin. Bu liste public profilde görünmez.',
+              style: TextStyle(
+                color: mutedText.withValues(alpha: 0.7),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        for (int i = 0; i < _offerings.length; i++) ...[
+          _buildBookingServiceRow(i),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildBookingServiceRow(int index) {
+    final offering = _offerings[index];
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: inputBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextFormField(
+                  key: ValueKey('${offering.id}-title'),
+                  initialValue: offering.title,
+                  onChanged: (val) => offering.title = val,
+                  maxLength: 60,
+                  buildCounter:
+                      (
+                        context, {
+                        required currentLength,
+                        required isFocused,
+                        maxLength,
+                      }) => null,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: darkText,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Randevu hizmeti (örn: Saç Kesimi)',
+                    hintStyle: TextStyle(
+                      color: mutedText.withValues(alpha: 0.6),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: TextFormField(
+                  key: ValueKey('${offering.id}-price'),
+                  initialValue: offering.price,
+                  onChanged: (val) => offering.price = val,
+                  maxLength: 30,
+                  buildCounter:
+                      (
+                        context, {
+                        required currentLength,
+                        required isFocused,
+                        maxLength,
+                      }) => null,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Fiyat (örn: 150 TL)',
+                    hintStyle: TextStyle(
+                      color: mutedText.withValues(alpha: 0.6),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _offerings.removeAt(index);
+                  });
+                },
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: dangerColor,
+                ),
+                style: IconButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(28, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 1, color: cardBorder),
+          TextFormField(
+            key: ValueKey('${offering.id}-desc'),
+            initialValue: offering.description,
+            onChanged: (val) => offering.description = val,
+            maxLength: 120,
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => null,
+            maxLines: 2,
+            style: const TextStyle(
+              fontSize: 12,
+              color: softText,
+              fontWeight: FontWeight.w600,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Kısa açıklama (örn: Yıkama ve fön dahil hizmet)',
+              hintStyle: TextStyle(
+                color: mutedText.withValues(alpha: 0.5),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 8,
+              ),
+              border: InputBorder.none,
+            ),
+          ),
+          const Divider(height: 1, color: cardBorder),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const SizedBox(width: 8),
+              const Icon(Icons.timer_rounded, size: 14, color: mutedText),
+              const SizedBox(width: 4),
+              const Text(
+                'Süre',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: softText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              DropdownButton<int>(
+                value: offering.durationMinutes,
+                items:
+                    [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
+                      return DropdownMenuItem<int>(
+                        value: val,
+                        child: Text(
+                          '$val dk',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: darkText,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    if (val != null) {
+                      offering.durationMinutes = val;
+                    }
+                    offering.isBookable = true;
+                  });
+                },
+                underline: const SizedBox(),
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingSettingsSection() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: ExpansionTile(
+        title: const Row(
+          children: [
+            Icon(Icons.calendar_month_rounded, color: primaryColor, size: 18),
+            SizedBox(width: 8),
+            Text(
+              'Randevu Ayarları',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: darkText,
+              ),
+            ),
+          ],
+        ),
+        subtitle: Text(
+          _bookingIsEnabled
+              ? 'Aktif · Kapasite: $_bookingCapacity kişi'
+              : 'Pasif',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: _bookingIsEnabled ? primaryColor : mutedText,
+          ),
+        ),
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: 8, bottom: 8),
+        shape: const Border(),
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Randevu Alınabilsin',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: softText,
+                ),
+              ),
+              const Spacer(),
+              Switch(
+                value: _bookingIsEnabled,
+                activeThumbColor: primaryColor,
+                onChanged: (val) {
+                  setState(() {
+                    _bookingIsEnabled = val;
+                  });
+                },
+              ),
+            ],
+          ),
+          if (_bookingIsEnabled) ...[
+            const Divider(color: cardBorder),
+            const SizedBox(height: 8),
+            _buildBookingServicesSection(),
+            const Divider(color: cardBorder),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text(
+                  'Aynı Anda Kapasite',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: softText,
+                  ),
+                ),
+                const Spacer(),
+                DropdownButton<int>(
+                  value: _bookingCapacity,
+                  items:
+                      [1, 2, 3, 4, 5].map((int val) {
+                        return DropdownMenuItem<int>(
+                          value: val,
+                          child: Text(
+                            '$val kişi',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: darkText,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      if (val != null) {
+                        _bookingCapacity = val;
+                      }
+                    });
+                  },
+                ),
+              ],
+            ),
+            const Divider(color: cardBorder),
+            const SizedBox(height: 8),
+            const Text(
+              'Öğle Arası Saatleri',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: softText,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _bookingLunchBreak['start'] ?? '12:00',
+                    decoration: const InputDecoration(
+                      labelText: 'Başlangıç',
+                      isDense: true,
+                    ),
+                    items:
+                        [
+                          '11:00',
+                          '11:30',
+                          '12:00',
+                          '12:30',
+                          '13:00',
+                          '13:30',
+                        ].map((String val) {
+                          return DropdownMenuItem<String>(
+                            value: val,
+                            child: Text(
+                              val,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        if (val != null) {
+                          _bookingLunchBreak['start'] = val;
+                        }
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _bookingLunchBreak['end'] ?? '13:00',
+                    decoration: const InputDecoration(
+                      labelText: 'Bitiş',
+                      isDense: true,
+                    ),
+                    items:
+                        [
+                          '12:00',
+                          '12:30',
+                          '13:00',
+                          '13:30',
+                          '14:00',
+                          '14:30',
+                        ].map((String val) {
+                          return DropdownMenuItem<String>(
+                            value: val,
+                            child: Text(
+                              val,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        if (val != null) {
+                          _bookingLunchBreak['end'] = val;
+                        }
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Aktif',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                Checkbox(
+                  value: _bookingLunchBreak['active'] ?? true,
+                  activeColor: primaryColor,
+                  onChanged: (val) {
+                    setState(() {
+                      _bookingLunchBreak['active'] = val ?? false;
+                    });
+                  },
+                ),
+              ],
+            ),
+            const Divider(color: cardBorder),
+            const SizedBox(height: 8),
+            const Text(
+              'Çalışma Gün ve Saatleri',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: softText,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (String day in ['1', '2', '3', '4', '5', '6', '7']) ...[
+              _buildDayRow(day),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayRow(String day) {
+    final dayNames = {
+      '1': 'Pazartesi',
+      '2': 'Salı',
+      '3': 'Çarşamba',
+      '4': 'Perşembe',
+      '5': 'Cuma',
+      '6': 'Cumartesi',
+      '7': 'Pazar',
+    };
+    final dayHours =
+        _bookingWorkingHours[day] ??
+        {'start': '09:00', 'end': '19:00', 'active': true};
+    final isActive = dayHours['active'] ?? false;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(
+              dayNames[day]!,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isActive ? darkText : mutedText,
+              ),
+            ),
+          ),
+          Checkbox(
+            value: isActive,
+            activeColor: primaryColor,
+            onChanged: (val) {
+              setState(() {
+                dayHours['active'] = val ?? false;
+                _bookingWorkingHours[day] = dayHours;
+              });
+            },
+          ),
+          if (isActive) ...[
+            const SizedBox(width: 8),
+            Expanded(
+              child: DropdownButton<String>(
+                value: dayHours['start'] ?? '09:00',
+                items:
+                    ['07:00', '08:00', '08:30', '09:00', '09:30', '10:00'].map((
+                      String val,
+                    ) {
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(val, style: const TextStyle(fontSize: 11)),
+                      );
+                    }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    if (val != null) {
+                      dayHours['start'] = val;
+                      _bookingWorkingHours[day] = dayHours;
+                    }
+                  });
+                },
+                underline: const SizedBox(),
+              ),
+            ),
+            const Text('-', style: TextStyle(color: mutedText)),
+            Expanded(
+              child: DropdownButton<String>(
+                value: dayHours['end'] ?? '19:00',
+                items:
+                    [
+                      '16:00',
+                      '17:00',
+                      '18:00',
+                      '19:00',
+                      '20:00',
+                      '21:00',
+                      '22:00',
+                      '23:00',
+                    ].map((String val) {
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(val, style: const TextStyle(fontSize: 11)),
+                      );
+                    }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    if (val != null) {
+                      dayHours['end'] = val;
+                      _bookingWorkingHours[day] = dayHours;
+                    }
+                  });
+                },
+                underline: const SizedBox(),
+              ),
+            ),
+          ] else ...[
+            const Expanded(
+              child: Text(
+                'Kapalı',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: mutedText,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ─── Published Summary ────────────────────────────────────────────────────
+  Widget _buildPublishedSummary() {
+    final info = _publishedInfo!;
+    final cover = _coverUrl?.trim() ?? '';
+
+    return Container(
+      decoration: _cardDecoration(),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Cover image area
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child:
+                cover.isNotEmpty
+                    ? Image.network(
+                      cover,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _coverPlaceholder(),
+                    )
+                    : _coverPlaceholder(),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: AppColors.success.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: AppColors.success,
+                            size: 14,
+                          ),
+                          SizedBox(width: 5),
+                          Text(
+                            'Keşfet\'te yayında',
+                            style: TextStyle(
+                              color: AppColors.success,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: widget.onOpenExplore,
+                      icon: const Icon(Icons.travel_explore_rounded, size: 18),
+                      color: primaryColor,
+                      tooltip: 'Keşfet\'te Gör',
+                      style: IconButton.styleFrom(
+                        backgroundColor: primaryColor.withValues(alpha: 0.12),
+                        minimumSize: const Size(36, 36),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  info.name.trim().isNotEmpty ? info.name : 'Vitrinim',
+                  style: const TextStyle(
+                    color: darkText,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  info.publicLink,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: primaryColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final buttonWidth =
+            constraints.maxWidth < 520
+                ? constraints.maxWidth
+                : (constraints.maxWidth - 10) / 2;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            if (_bookingIsEnabled)
+              _actionButton(
+                width: buttonWidth,
+                label: 'Randevuları Yönet',
+                icon: Icons.calendar_month_rounded,
+                onPressed: _openBookingManagement,
+              ),
+            _actionButton(
+              width: buttonWidth,
+              label: 'Yayındaki Vitrini Aç',
+              icon: Icons.open_in_new_rounded,
+              onPressed: _openPublicVitrin,
+            ),
+            _actionButton(
+              width: buttonWidth,
+              label: 'Linki Kopyala',
+              icon: Icons.copy_rounded,
+              onPressed: _copyLink,
+            ),
+            _actionButton(
+              width: buttonWidth,
+              label: 'QR Göster',
+              icon: Icons.qr_code_2_rounded,
+              onPressed: _showQrSheet,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _actionButton({
+    required double width,
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: width,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 17),
+        label: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: darkText,
+          backgroundColor: AppColors.surfaceSoft,
+          side: const BorderSide(color: cardBorder),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Cover Picker ─────────────────────────────────────────────────────────
+  Widget _buildCoverPicker() {
+    final hasCover =
+        _coverBytes != null || (_coverUrl?.trim().isNotEmpty ?? false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Kapak Fotoğrafı',
+          style: TextStyle(
+            color: softText,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: _pickCoverPhoto,
+          borderRadius: BorderRadius.circular(16),
+          child: AspectRatio(
+            aspectRatio: 16 / 7,
+            child: Container(
+              decoration: BoxDecoration(
+                color: inputBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: cardBorder),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child:
+                  hasCover
+                      ? Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (_coverBytes != null)
+                            Image.memory(_coverBytes!, fit: BoxFit.cover)
+                          else
+                            Image.network(
+                              _coverUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _coverPlaceholder(),
+                            ),
+                          Positioned(
+                            right: 10,
+                            bottom: 10,
+                            child: _badge(
+                              _coverFileName == null
+                                  ? 'Fotoğrafı değiştir'
+                                  : _coverFileName!,
+                            ),
+                          ),
+                        ],
+                      )
+                      : const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_rounded,
+                            color: primaryColor,
+                            size: 30,
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Kapak fotoğrafı ekle',
+                            style: TextStyle(
+                              color: darkText,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'İsteğe bağlı — sonra da eklenebilir',
+                            style: TextStyle(
+                              color: mutedText,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Compact Gallery Row (kapak altında, yatay scroll) ─────────────────
+  Widget _buildCompactGalleryRow() {
+    const double thumbSize = 68.0;
+    final canAdd = _galleryItems.length < _maxGalleryPhotos;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Add button
+        if (canAdd)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: InkWell(
+              onTap: _pickGalleryPhotos,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                width: thumbSize,
+                height: thumbSize,
+                decoration: BoxDecoration(
+                  color: inputBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: cardBorder),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.add_photo_alternate_rounded,
+                      color: primaryColor,
+                      size: 22,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _galleryItems.isEmpty ? 'Galeri' : '+',
+                      style: const TextStyle(
+                        color: primaryColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        // Thumbnails
+        Expanded(
+          child:
+              _galleryItems.isEmpty
+                  ? Padding(
+                    padding: const EdgeInsets.only(top: 22),
+                    child: Text(
+                      'Galeri fotoğrafı ekleyebilirsin',
+                      style: TextStyle(
+                        color: mutedText.withValues(alpha: 0.7),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                  : SizedBox(
+                    height: thumbSize,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _galleryItems.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 6),
+                      itemBuilder: (_, index) {
+                        final item = _galleryItems[index];
+                        Widget img;
+                        if (item.hasLocalBytes) {
+                          img = Image.memory(item.bytes!, fit: BoxFit.cover);
+                        } else if (item.hasUrl) {
+                          img = Image.network(
+                            item.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (_, __, ___) => const Icon(
+                                  Icons.broken_image_rounded,
+                                  color: mutedText,
+                                  size: 20,
+                                ),
+                          );
+                        } else {
+                          img = const Icon(
+                            Icons.image_rounded,
+                            color: mutedText,
+                            size: 20,
+                          );
+                        }
+
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: thumbSize,
+                              height: thumbSize,
+                              decoration: BoxDecoration(
+                                color: inputBg,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: cardBorder),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: img,
+                            ),
+                            if (index == 0)
+                              Positioned(
+                                bottom: 3,
+                                left: 3,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'Kapak',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            Positioned(
+                              top: -4,
+                              right: -4,
+                              child: GestureDetector(
+                                onTap: () => _removeGalleryItem(index),
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close_rounded,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+        ),
+        // Count badge
+        if (_galleryItems.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 8, top: 24),
+            child: Text(
+              '${_galleryItems.length}/$_maxGalleryPhotos',
+              style: const TextStyle(
+                color: mutedText,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _coverPlaceholder() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.surfaceSoft, AppColors.bgEditor],
+        ),
+      ),
+      child: const Center(
+        child: Icon(Icons.storefront_rounded, color: primaryColor, size: 38),
+      ),
+    );
+  }
+
+  Widget _badge(String text) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 220),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.66),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
+  // ─── Dropdown ─────────────────────────────────────────────────────────────
   Widget _buildDropdown({
     required String label,
     required String value,
