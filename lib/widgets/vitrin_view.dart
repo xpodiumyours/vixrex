@@ -15,31 +15,15 @@ import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
 import 'package:vitrinx/widgets/booking_wizard_sheet.dart';
 import 'package:vitrinx/services/seo_helper.dart';
-import 'package:vitrinx/widgets/vitrin_product_card.dart';
-
-class VitrinGalleryPreviewItem {
-  final String imageUrl;
-  final Uint8List? imageBytes;
-  final String title;
-  final String description;
-
-  const VitrinGalleryPreviewItem({
-    this.imageUrl = '',
-    this.imageBytes,
-    this.title = '',
-    this.description = '',
-  });
-
-  factory VitrinGalleryPreviewItem.fromStoreItem(StoreGalleryItem item) {
-    return VitrinGalleryPreviewItem(
-      imageUrl: item.imageUrl,
-      title: item.title,
-      description: item.description,
-    );
-  }
-
-  bool get hasImage => imageBytes != null || imageUrl.trim().isNotEmpty;
-}
+import 'package:vitrinx/utils/store_display_helper.dart';
+import 'package:vitrinx/utils/vcard_builder.dart';
+import 'package:vitrinx/utils/vitrin_url_helper.dart';
+import 'package:vitrinx/widgets/vitrin_view/action_icon_button.dart';
+import 'package:vitrinx/widgets/vitrin_view/compact_profile_tool.dart';
+import 'package:vitrinx/widgets/vitrin_view/modern_link_item.dart';
+import 'package:vitrinx/widgets/vitrin_view/product_catalog_block.dart';
+import 'package:vitrinx/widgets/vitrin_view/shelf_gallery_card.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_gallery_preview_item.dart';
 
 class VitrinView extends StatelessWidget {
   final StoreData storeData;
@@ -713,25 +697,8 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  String _storeInitials() {
-    final words =
-        storeData.name
-            .trim()
-            .split(RegExp(r'\s+'))
-            .where((word) => word.isNotEmpty)
-            .toList();
-    if (words.isEmpty) return 'VX';
-    if (words.length == 1) {
-      final initials =
-          words.first.runes.take(2).map(String.fromCharCode).join();
-      return initials.toUpperCase();
-    }
-    return words
-        .take(2)
-        .map((word) => String.fromCharCode(word.runes.first))
-        .join()
-        .toUpperCase();
-  }
+  String _storeInitials() =>
+      StoreDisplayHelper.storeInitials(storeData.name);
 
   String _publicHeroDescription() {
     final description = storeData.description.trim();
@@ -1135,14 +1102,11 @@ class VitrinView extends StatelessWidget {
         (storeData.latitude != null && storeData.longitude != null);
   }
 
-  String _publicWebsiteActionUrl() {
-    final generatedLink = publicLink?.trim() ?? '';
-    final normalizedGeneratedLink = _normalizeExternalUrl(generatedLink);
-    if (publicMode && normalizedGeneratedLink.isNotEmpty) {
-      return normalizedGeneratedLink;
-    }
-    return _normalizeExternalUrl(storeData.website);
-  }
+  String _publicWebsiteActionUrl() => VitrinUrlHelper.publicWebsiteActionUrl(
+        publicLink: publicLink,
+        publicMode: publicMode,
+        websiteUrl: storeData.website,
+      );
 
   List<Widget> _buildVisibleActions(
     BuildContext context,
@@ -1151,33 +1115,66 @@ class VitrinView extends StatelessWidget {
     Color? actionColor,
   }) {
     final config = BusinessCategoryConfig.fromCategoryLabel(storeData.kategori);
-    final ctaLabel = config.ctaLabel;
     final profileActionColor = actionColor ?? AppColors.primary;
+    return publicMode
+        ? _buildPublicActions(context, radius, isCompact, config, profileActionColor)
+        : _buildPreviewActions(context, radius, isCompact, config, profileActionColor);
+  }
 
-    if (!publicMode) {
-      return [
-        _ActionIconBtn(
-          label: ctaLabel,
-          icon: Icons.chat_bubble_rounded,
-          color: profileActionColor,
-          radius: radius,
-          compact: isCompact,
-          onTap: () {
-            ScaffoldMessenger.of(context).clearSnackBars();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  "Müşteriler bu butona bastığında WhatsApp'tan '$ctaLabel' talebi gönderir.",
-                ),
-                behavior: SnackBarBehavior.floating,
+  /// Returns action buttons for the preview / editing mode.
+  ///
+  /// Buttons show a SnackBar explaining what each button does to customers,
+  /// instead of performing the real action.
+  List<Widget> _buildPreviewActions(
+    BuildContext context,
+    double radius,
+    bool isCompact,
+    BusinessCategoryConfig config,
+    Color actionColor,
+  ) {
+    final ctaLabel = config.ctaLabel;
+    return [
+      ActionIconButton(
+        label: ctaLabel,
+        icon: Icons.chat_bubble_rounded,
+        color: actionColor,
+        radius: radius,
+        compact: isCompact,
+        onTap: () {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Müşteriler bu butona bastığında WhatsApp'tan '$ctaLabel' talebi gönderir.",
               ),
-            );
-          },
-        ),
-        _ActionIconBtn(
-          label: 'Instagram',
-          icon: Icons.camera_rounded,
-          color: profileActionColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+      ),
+      ActionIconButton(
+        label: 'Instagram',
+        icon: Icons.camera_rounded,
+        color: actionColor,
+        radius: radius,
+        compact: isCompact,
+        onTap: () {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "Müşteriler bu butona bastığında Instagram profilinize yönlendirilir.",
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+      ),
+      if (storeData.website.isNotEmpty)
+        ActionIconButton(
+          label: 'Web',
+          icon: Icons.language_rounded,
+          color: actionColor,
           radius: radius,
           compact: isCompact,
           onTap: () {
@@ -1185,36 +1182,36 @@ class VitrinView extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
-                  "Müşteriler bu butona bastığında Instagram profilinize yönlendirilir.",
+                  "Müşteriler bu butona bastığında web sitenize yönlendirilir.",
                 ),
                 behavior: SnackBarBehavior.floating,
               ),
             );
           },
         ),
-        if (storeData.website.isNotEmpty)
-          _ActionIconBtn(
-            label: 'Web',
-            icon: Icons.language_rounded,
-            color: profileActionColor,
-            radius: radius,
-            compact: isCompact,
-            onTap: () {
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    "Müşteriler bu butona bastığında web sitenize yönlendirilir.",
-                  ),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-          ),
-        _ActionIconBtn(
-          label: 'Yol Tarifi',
-          icon: Icons.location_on_rounded,
-          color: profileActionColor,
+      ActionIconButton(
+        label: 'Yol Tarifi',
+        icon: Icons.location_on_rounded,
+        color: actionColor,
+        radius: radius,
+        compact: isCompact,
+        onTap: () {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "Müşteriler bu butona bastığında Google Haritalar'dan yol tarifi alır.",
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+      ),
+      if (storeData.googleBusinessLink.isNotEmpty)
+        ActionIconButton(
+          label: 'Yorum Yap',
+          icon: Icons.star_rate_rounded,
+          color: actionColor,
           radius: radius,
           compact: isCompact,
           onTap: () {
@@ -1222,41 +1219,33 @@ class VitrinView extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
-                  "Müşteriler bu butona bastığında Google Haritalar'dan yol tarifi alır.",
+                  "Müşteriler bu butona bastığında Google yorum sayfanıza yönlendirilir.",
                 ),
                 behavior: SnackBarBehavior.floating,
               ),
             );
           },
         ),
-        if (storeData.googleBusinessLink.isNotEmpty)
-          _ActionIconBtn(
-            label: 'Yorum Yap',
-            icon: Icons.star_rate_rounded,
-            color: profileActionColor,
-            radius: radius,
-            compact: isCompact,
-            onTap: () {
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    "Müşteriler bu butona bastığında Google yorum sayfanıza yönlendirilir.",
-                  ),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-          ),
-      ];
-    }
+    ];
+  }
 
+  /// Returns action buttons for the public-facing vitrin.
+  ///
+  /// Each button navigates the visitor to the corresponding real URL or service.
+  List<Widget> _buildPublicActions(
+    BuildContext context,
+    double radius,
+    bool isCompact,
+    BusinessCategoryConfig config,
+    Color actionColor,
+  ) {
+    final ctaLabel = config.ctaLabel;
     return [
       if (WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp))
-        _ActionIconBtn(
+        ActionIconButton(
           label: ctaLabel,
           icon: Icons.chat_bubble_rounded,
-          color: profileActionColor,
+          color: actionColor,
           radius: radius,
           compact: isCompact,
           emphasis: true,
@@ -1272,10 +1261,10 @@ class VitrinView extends StatelessWidget {
           },
         ),
       if (storeData.instagram.trim().isNotEmpty)
-        _ActionIconBtn(
+        ActionIconButton(
           label: 'Instagram',
           icon: Icons.camera_rounded,
-          color: profileActionColor,
+          color: actionColor,
           radius: radius,
           compact: isCompact,
           onTap:
@@ -1285,19 +1274,19 @@ class VitrinView extends StatelessWidget {
               ),
         ),
       if (_publicWebsiteActionUrl().isNotEmpty)
-        _ActionIconBtn(
+        ActionIconButton(
           label: 'Web Sitesi',
           icon: Icons.language_rounded,
-          color: profileActionColor,
+          color: actionColor,
           radius: radius,
           compact: isCompact,
           onTap: () => _openExternalUrl(context, _publicWebsiteActionUrl()),
         ),
       if (storeData.googleBusinessLink.trim().isNotEmpty)
-        _ActionIconBtn(
+        ActionIconButton(
           label: 'Google\'da Yorum Yap',
           icon: Icons.star_rate_rounded,
-          color: profileActionColor,
+          color: actionColor,
           radius: radius,
           compact: isCompact,
           onTap:
@@ -1308,10 +1297,10 @@ class VitrinView extends StatelessWidget {
         ),
       if (storeData.address.trim().isNotEmpty ||
           (storeData.latitude != null && storeData.longitude != null))
-        _ActionIconBtn(
+        ActionIconButton(
           label: 'Yol Tarifi',
           icon: Icons.location_on_rounded,
-          color: profileActionColor,
+          color: actionColor,
           radius: radius,
           compact: isCompact,
           onTap:
@@ -1321,309 +1310,14 @@ class VitrinView extends StatelessWidget {
   }
 
   Widget _buildProductsCatalogBlock(VitrinThemePreset preset, double radius) {
-    final isCompact = isEmbedded;
-    final allProducts =
-        storeData.products.where((product) => product.isVisible).toList();
-    var selectedCategory = '';
-    var visibleLimit = 12;
-
-    return StatefulBuilder(
-      builder: (context, setCatalogState) {
-        final categories = <String>[];
-        for (final product in allProducts) {
-          final label = product.category.trim();
-          if (label.isNotEmpty &&
-              !categories.any(
-                (item) => item.toLowerCase() == label.toLowerCase(),
-              )) {
-            categories.add(label);
-          }
-        }
-        final filteredProducts =
-            selectedCategory.isEmpty
-                ? allProducts
-                : allProducts
-                    .where(
-                      (product) =>
-                          product.category.trim().toLowerCase() ==
-                          selectedCategory.toLowerCase(),
-                    )
-                    .toList();
-        final visibleProducts = filteredProducts.take(visibleLimit).toList();
-
-        return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(isCompact ? 14 : 18),
-        decoration: BoxDecoration(
-          color: preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.98),
-          borderRadius: BorderRadius.circular(isCompact ? 16 : 22),
-          border: Border.all(
-            color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
-            width: isCompact ? 1 : 1.3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(
-                alpha: preset.isDark ? 0.12 : 0.045,
-              ),
-              blurRadius: isCompact ? 12 : 24,
-              offset: Offset(0, isCompact ? 3 : 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.shopping_bag_rounded,
-                  color: preset.accent,
-                  size: isCompact ? 18 : 22,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Ürünler',
-                    style: TextStyle(
-                      color: preset.textPrimary,
-                      fontSize: isCompact ? 14 : 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                if (filteredProducts.length > visibleProducts.length)
-                  Text(
-                    '+${filteredProducts.length - visibleProducts.length}',
-                    style: TextStyle(
-                      color: preset.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            if (categories.length > 1) ...[
-              SizedBox(
-                height: 38,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Tümü'),
-                      selected: selectedCategory.isEmpty,
-                      onSelected:
-                          (_) => setCatalogState(() {
-                            selectedCategory = '';
-                            visibleLimit = 12;
-                          }),
-                    ),
-                    const SizedBox(width: 8),
-                    ...categories.map(
-                      (category) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(category),
-                          selected: selectedCategory == category,
-                          onSelected:
-                              (_) => setCatalogState(() {
-                                selectedCategory = category;
-                                visibleLimit = 12;
-                              }),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            if (allProducts.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 32,
-                  horizontal: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: preset.surfaceSoft.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: preset.border.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.shopping_bag_outlined,
-                      color: preset.accent,
-                      size: 32,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Ürünler yakında',
-                      style: TextStyle(
-                        color: preset.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Mağaza sahibi henüz ürün eklemedi.',
-                      style: TextStyle(
-                        color: preset.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth >= 620;
-                  if (!isWide) {
-                    return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: visibleProducts.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                              childAspectRatio: 0.64,
-                            ),
-                        itemBuilder: (context, index) {
-                          final product = visibleProducts[index];
-                          return VitrinProductCard(
-                              name: product.name,
-                              price: product.price,
-                              category: product.category,
-                              description: product.description,
-                              imagePath: product.primaryImageUrl,
-                              stockStatus: product.stockStatus,
-                              onTap:
-                                  publicMode
-                                      ? () => _openProductDetail(
-                                        context,
-                                        product,
-                                        allProducts.indexOf(product),
-                                      )
-                                      : null,
-                              onWhatsAppTap: () {
-                                if (!publicMode) {
-                                  ScaffoldMessenger.of(
-                                    context,
-                                  ).clearSnackBars();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Müşteriler bu karta bastığında '${product.name}' hakkında WhatsApp'tan bilgi isteyebilir.",
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final url = WhatsAppLinkHelper.buildInquiryUrl(
-                                  number: storeData.whatsapp,
-                                  storeName: storeData.name,
-                                  itemTitle: product.name,
-                                );
-                                if (url != null) {
-                                  unawaited(_openExternalUrl(context, url));
-                                }
-                              },
-                            );
-                        },
-                    );
-                  }
-
-                  final columns = constraints.maxWidth >= 1000 ? 4 : 3;
-                  final cardWidth =
-                      (constraints.maxWidth - (12 * (columns - 1))) / columns;
-                  return Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children:
-                        visibleProducts
-                            .map(
-                              (product) => SizedBox(
-                                width: cardWidth,
-                                height: 250,
-                                child: VitrinProductCard(
-                                  name: product.name,
-                                  price: product.price,
-                                  category: product.category,
-                                  description: product.description,
-                                  imagePath: product.primaryImageUrl,
-                                  stockStatus: product.stockStatus,
-                                  onTap:
-                                      publicMode
-                                          ? () => _openProductDetail(
-                                            context,
-                                            product,
-                                            allProducts.indexOf(product),
-                                          )
-                                          : null,
-                                  onWhatsAppTap: () {
-                                    if (!publicMode) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).clearSnackBars();
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            "Müşteriler bu karta bastığında '${product.name}' hakkında WhatsApp'tan bilgi isteyebilir.",
-                                          ),
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    final url =
-                                        WhatsAppLinkHelper.buildInquiryUrl(
-                                          number: storeData.whatsapp,
-                                          storeName: storeData.name,
-                                          itemTitle: product.name,
-                                        );
-                                    if (url != null) {
-                                      unawaited(_openExternalUrl(context, url));
-                                    }
-                                  },
-                                ),
-                              ),
-                            )
-                            .toList(),
-                  );
-                },
-              ),
-            if (filteredProducts.length > visibleProducts.length) ...[
-              const SizedBox(height: 14),
-              Center(
-                child: OutlinedButton.icon(
-                  onPressed:
-                      () => setCatalogState(() => visibleLimit += 12),
-                  icon: const Icon(Icons.expand_more_rounded),
-                  label: const Text('Daha fazla göster'),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-        );
-      },
+    return ProductCatalogBlock(
+      preset: preset,
+      radius: radius,
+      storeData: storeData,
+      publicMode: publicMode,
+      isEmbedded: isEmbedded,
+      onExternalUrl: _openExternalUrl,
+      onProductDetail: _openProductDetail,
     );
   }
 
@@ -1649,294 +1343,13 @@ class VitrinView extends StatelessWidget {
     VitrinThemePreset preset,
     List<VitrinGalleryPreviewItem> galleryItems,
   ) {
-    final isCompact = isEmbedded;
-    final cardRadius = isCompact ? 16.0 : 26.0;
-    var selectedIndex = 0;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 14 : 24),
-      child: StatefulBuilder(
-        builder: (context, setGalleryState) {
-          if (selectedIndex >= galleryItems.length) selectedIndex = 0;
-          final selectedItem = galleryItems[selectedIndex];
-          final selectedTitle = selectedItem.title.trim();
-          final selectedDescription = selectedItem.description.trim();
-          final shouldShowText =
-              selectedTitle.isNotEmpty || selectedDescription.isNotEmpty;
-
-          return Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(isCompact ? 10 : 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  preset.surface,
-                  preset.surfaceSoft.withValues(
-                    alpha: preset.isDark ? 0.38 : 0.5,
-                  ),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(cardRadius),
-              border: Border.all(
-                color: preset.border.withValues(
-                  alpha: preset.isDark ? 0.9 : 0.78,
-                ),
-                width: isCompact ? 1 : 1.3,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(
-                    alpha: preset.isDark ? 0.18 : 0.06,
-                  ),
-                  blurRadius: isCompact ? 14 : 28,
-                  offset: Offset(0, isCompact ? 4 : 10),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: isCompact ? 28 : 36,
-                      height: isCompact ? 28 : 36,
-                      decoration: BoxDecoration(
-                        color: preset.accent.withValues(
-                          alpha: preset.isDark ? 0.2 : 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(
-                          isCompact ? 11 : 13,
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.photo_library_rounded,
-                        color: preset.accent,
-                        size: isCompact ? 16 : 18,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Vitrin galerisi',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: preset.textPrimary,
-                              fontSize: isCompact ? 11 : 15,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0,
-                            ),
-                          ),
-                          Text(
-                            '${selectedIndex + 1} / ${galleryItems.length} seçili',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: preset.textSecondary,
-                              fontSize: isCompact ? 9 : 11,
-                              fontWeight: FontWeight.w600,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isCompact ? 8 : 10,
-                        vertical: isCompact ? 5 : 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: preset.accent.withValues(
-                          alpha: preset.isDark ? 0.18 : 0.1,
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: preset.accent.withValues(alpha: 0.18),
-                        ),
-                      ),
-                      child: Text(
-                        '${galleryItems.length} fotoğraf',
-                        style: TextStyle(
-                          color: preset.accent,
-                          fontSize: isCompact ? 9 : 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: isCompact ? 10 : 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(isCompact ? 12 : 20),
-                  child: AspectRatio(
-                    aspectRatio:
-                        isCompact
-                            ? 16 / 9
-                            : publicMode
-                            ? 16 / 9
-                            : 16 / 10,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _buildGalleryImage(
-                          selectedItem,
-                          errorBuilder:
-                              (_, __, ___) => Container(
-                                color: preset.surfaceSoft,
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  Icons.broken_image_outlined,
-                                  color: preset.textSecondary,
-                                  size: isCompact ? 26 : 32,
-                                ),
-                              ),
-                        ),
-                        Positioned(
-                          left: isCompact ? 8 : 12,
-                          top: isCompact ? 8 : 12,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isCompact ? 8 : 10,
-                              vertical: isCompact ? 5 : 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.48),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Text(
-                              selectedIndex == 0
-                                  ? 'Kapak'
-                                  : '${selectedIndex + 1}. fotoğraf',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: isCompact ? 9 : 10,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (shouldShowText) ...[
-                  SizedBox(height: isCompact ? 10 : 12),
-                  if (selectedTitle.isNotEmpty)
-                    Text(
-                      selectedTitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: preset.textPrimary,
-                        fontSize: isCompact ? 12 : 15,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0,
-                        height: 1.2,
-                      ),
-                    ),
-                  if (selectedDescription.isNotEmpty) ...[
-                    SizedBox(height: isCompact ? 4 : 6),
-                    Text(
-                      selectedDescription,
-                      maxLines: isCompact ? 2 : 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: preset.textSecondary,
-                        fontSize: isCompact ? 10 : 12,
-                        fontWeight: FontWeight.w600,
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
-                ],
-                if (WhatsAppLinkHelper.isValidTurkeyMobile(
-                  storeData.whatsapp,
-                )) ...[
-                  SizedBox(height: isCompact ? 12 : 16),
-                  _buildShelfWhatsAppButton(
-                    context,
-                    preset,
-                    selectedItem,
-                    isCompact,
-                  ),
-                ],
-                if (galleryItems.length > 1) ...[
-                  SizedBox(height: isCompact ? 10 : 14),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: List.generate(galleryItems.length, (index) {
-                        final item = galleryItems[index];
-                        final isSelected = selectedIndex == index;
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            right: index == galleryItems.length - 1 ? 0 : 8,
-                          ),
-                          child: GestureDetector(
-                            onTap:
-                                () => setGalleryState(
-                                  () => selectedIndex = index,
-                                ),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 160),
-                              width: isCompact ? 48 : 58,
-                              height: isCompact ? 48 : 58,
-                              padding: EdgeInsets.all(isSelected ? 2 : 0),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(
-                                  isCompact ? 12 : 15,
-                                ),
-                                border: Border.all(
-                                  color:
-                                      isSelected
-                                          ? preset.accent
-                                          : preset.border.withValues(
-                                            alpha: 0.72,
-                                          ),
-                                  width: isSelected ? 2 : 1,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                  isCompact ? 9 : 12,
-                                ),
-                                child: _buildGalleryImage(
-                                  item,
-                                  errorBuilder:
-                                      (_, __, ___) => Container(
-                                        color: preset.surfaceSoft,
-                                        alignment: Alignment.center,
-                                        child: Icon(
-                                          Icons.image_not_supported_outlined,
-                                          color: preset.textSecondary,
-                                          size: isCompact ? 16 : 18,
-                                        ),
-                                      ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          );
-        },
-      ),
+    return ShelfGalleryCard(
+      preset: preset,
+      galleryItems: galleryItems,
+      isEmbedded: isEmbedded,
+      publicMode: publicMode,
+      storeData: storeData,
+      onExternalUrl: _openExternalUrl,
     );
   }
 
@@ -2057,7 +1470,7 @@ class VitrinView extends StatelessWidget {
       child: Column(
         children: [
           ...visibleMarketplaceLinks.map(
-            (link) => _ModernLinkItem(
+            (link) => ModernLinkItem(
               icon: _getPlatformIcon(link.platform),
               title: link.platform,
               // Önce kullanıcının eklediği subtitle; yoksa URL'yi göster
@@ -2090,7 +1503,7 @@ class VitrinView extends StatelessWidget {
           ),
 
           if (!publicMode && storeData.marketplaceLinks.isEmpty)
-            _ModernLinkItem(
+            ModernLinkItem(
               icon: Icons.auto_stories_rounded,
               title: 'Dijital Katalog',
               subtitle: 'Geniş ürün ve hizmet yelpazesi',
@@ -2101,7 +1514,7 @@ class VitrinView extends StatelessWidget {
             ),
 
           if (!publicMode) ...[
-            _ModernLinkItem(
+            ModernLinkItem(
               icon: Icons.verified_rounded,
               title: 'Referanslarımız',
               subtitle: 'Güçlü çözüm ortaklıklarımız',
@@ -2110,7 +1523,7 @@ class VitrinView extends StatelessWidget {
               compact: isCompact,
               preset: preset,
             ),
-            _ModernLinkItem(
+            ModernLinkItem(
               icon: Icons.contact_page_rounded,
               title: 'Kişilerime Ekle',
               subtitle:
@@ -2130,9 +1543,9 @@ class VitrinView extends StatelessWidget {
     BuildContext context,
     VitrinThemePreset preset,
   ) {
-    final tools = <_CompactProfileToolData>[
+    final tools = <CompactProfileToolData>[
       if (storeData.products.isNotEmpty)
-        _CompactProfileToolData(
+        CompactProfileToolData(
           icon: Icons.auto_stories_rounded,
           title: 'Katalog',
           subtitle: '${storeData.products.length} ürün',
@@ -2149,7 +1562,7 @@ class VitrinView extends StatelessWidget {
           },
         ),
       if (_hasVCardData())
-        _CompactProfileToolData(
+        CompactProfileToolData(
           icon: Icons.contact_page_rounded,
           title: 'vCard',
           subtitle: 'Rehbere kaydet',
@@ -2157,7 +1570,7 @@ class VitrinView extends StatelessWidget {
           onTap: () => _downloadVCard(context),
         ),
       if (storeData.referencesLink.trim().isNotEmpty)
-        _CompactProfileToolData(
+        CompactProfileToolData(
           icon: Icons.verified_rounded,
           title: 'Referanslar',
           subtitle: 'Yorumları gör',
@@ -2169,7 +1582,7 @@ class VitrinView extends StatelessWidget {
               ),
         ),
       if (publicLink?.isNotEmpty ?? false)
-        _CompactProfileToolData(
+        CompactProfileToolData(
           icon: Icons.qr_code_2_rounded,
           title: 'QR Paylaş',
           subtitle: 'Linki gönder',
@@ -2215,7 +1628,7 @@ class VitrinView extends StatelessWidget {
                               itemWidth
                                   .clamp(76.0, constraints.maxWidth)
                                   .toDouble(),
-                          child: _CompactProfileTool(
+                          child: CompactProfileTool(
                             data: tool,
                             preset: preset,
                             dense: true,
@@ -2231,29 +1644,10 @@ class VitrinView extends StatelessWidget {
   }
 
   /// vCard kartını göstermek için yeterli veri var mı?
-  bool _hasVCardData() {
-    if (storeData.name.trim().isEmpty) return false;
-    return WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp) ||
-        storeData.instagram.trim().isNotEmpty ||
-        storeData.website.trim().isNotEmpty ||
-        storeData.address.trim().isNotEmpty;
-  }
+  bool _hasVCardData() => VCardBuilder.hasVCardData(storeData);
 
   /// Boş alanları atlayarak iletişim metnini oluşturur.
-  String _buildVCardContactText() {
-    final lines = <String>[
-      'Mağaza: ${storeData.name.trim()}',
-      if (WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp))
-        'WhatsApp: ${storeData.whatsapp.trim()}',
-      if (storeData.instagram.trim().isNotEmpty)
-        'Instagram: ${storeData.instagram.trim()}',
-      if (storeData.website.trim().isNotEmpty)
-        'Web: ${storeData.website.trim()}',
-      if (storeData.address.trim().isNotEmpty)
-        'Adres: ${storeData.address.trim()}',
-    ];
-    return lines.join('\n');
-  }
+  String _buildVCardContactText() => VCardBuilder.buildContactText(storeData);
 
   /// İletişim bilgilerini panoya kopyalar ve SnackBar gösterir.
   Future<void> _copyVCardToClipboard(BuildContext context) async {
@@ -2274,39 +1668,7 @@ class VitrinView extends StatelessWidget {
   }
 
   /// vCard (.vcf) dosya içeriğini standart formatta oluşturur.
-  String _buildVCardFileContent() {
-    final name = storeData.name.trim();
-    final phone = WhatsAppLinkHelper.normalizeTurkeyMobile(storeData.whatsapp);
-    final address = storeData.address.trim();
-    final website = storeData.website.trim();
-    final bio =
-        storeData.corporateBio.trim().isNotEmpty
-            ? storeData.corporateBio.trim()
-            : storeData.description.trim();
-
-    final card = StringBuffer();
-    card.writeln('BEGIN:VCARD');
-    card.writeln('VERSION:3.0');
-    card.writeln('FN:$name');
-    card.writeln('ORG:$name');
-    if (phone != null) {
-      card.writeln('TEL;TYPE=CELL,VOICE:+$phone');
-    }
-    if (website.isNotEmpty) {
-      card.writeln('URL;TYPE=WORK:$website');
-    }
-    if (address.isNotEmpty) {
-      final escapedAddress = address
-          .replaceAll(',', '\\,')
-          .replaceAll('\n', ' ');
-      card.writeln('ADR;TYPE=WORK:;;$escapedAddress;;;;');
-    }
-    if (bio.isNotEmpty) {
-      card.writeln('NOTE:$bio');
-    }
-    card.writeln('END:VCARD');
-    return card.toString();
-  }
+  String _buildVCardFileContent() => VCardBuilder.buildFileContent(storeData);
 
   /// vCard verisini cihaz seviyesinde dosya olarak indirir / açar.
   /// Başarısızlık durumunda otomatik olarak panoya kopyalama moduna düşer.
@@ -2640,51 +2002,20 @@ class VitrinView extends StatelessWidget {
       );
   }
 
-  String _normalizeExternalUrl(String value) {
-    return VitrinView.normalizeExternalUrl(value);
-  }
+  String _normalizeExternalUrl(String value) =>
+      VitrinUrlHelper.normalizeExternalUrl(value);
 
-  static String normalizeExternalUrl(String value) {
-    final text = value.trim();
-    if (text.isEmpty) return '';
+  static String normalizeExternalUrl(String value) =>
+      VitrinUrlHelper.normalizeExternalUrl(value);
 
-    final uri = Uri.tryParse(text);
-    if (uri == null) return '';
+  String _buildInstagramUrl(String value) =>
+      VitrinUrlHelper.buildInstagramUrl(value);
 
-    if (uri.hasScheme) {
-      final scheme = uri.scheme.toLowerCase();
-      if (scheme == 'http' || scheme == 'https') {
-        return text;
-      }
-      return '';
-    }
-
-    if (!text.contains('.')) {
-      return '';
-    }
-    return 'https://$text';
-  }
-
-  String _buildInstagramUrl(String value) {
-    final text = value.trim();
-    if (text.contains('instagram.com')) return _normalizeExternalUrl(text);
-
-    final username = text.replaceFirst('@', '').replaceAll('/', '').trim();
-    return 'https://instagram.com/$username';
-  }
-
-  String _buildMapsUrl(String address) {
-    if (storeData.latitude != null && storeData.longitude != null) {
-      return Uri.https('www.google.com', '/maps/dir/', {
-        'api': '1',
-        'destination': '${storeData.latitude},${storeData.longitude}',
-      }).toString();
-    }
-    return Uri.https('www.google.com', '/maps/search/', {
-      'api': '1',
-      'query': address.trim(),
-    }).toString();
-  }
+  String _buildMapsUrl(String address) => VitrinUrlHelper.buildMapsUrl(
+        address,
+        latitude: storeData.latitude,
+        longitude: storeData.longitude,
+      );
 
   Widget _buildShareButton(BuildContext context, VitrinThemePreset preset) {
     final slug = storeData.name.toLowerCase().replaceAll(
@@ -2769,431 +2100,6 @@ class VitrinView extends StatelessWidget {
         behavior: SnackBarBehavior.floating,
         backgroundColor: preset.accent,
         duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  Widget _buildShelfWhatsAppButton(
-    BuildContext context,
-    VitrinThemePreset preset,
-    VitrinGalleryPreviewItem item,
-    bool isCompact,
-  ) {
-    final title =
-        item.title.trim().isNotEmpty ? item.title.trim() : 'Vitrin Görseli';
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: preset.accent.withValues(alpha: preset.isDark ? 0.14 : 0.10),
-        borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-        border: Border.all(
-          color: preset.accent.withValues(alpha: isDark ? 0.35 : 0.22),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            if (!publicMode) {
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    "Müşteriler bu butona bastığında WhatsApp'tan '$title' hakkında bilgi sorabilir.",
-                  ),
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 3),
-                ),
-              );
-              return;
-            }
-            final url = WhatsAppLinkHelper.buildInquiryUrl(
-              number: storeData.whatsapp,
-              storeName: storeData.name,
-              itemTitle: title,
-            );
-            if (url != null) {
-              _openExternalUrl(context, url);
-            }
-          },
-          borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: isCompact ? 10 : 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  color: preset.accent,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  isCompact
-                      ? 'Görseldeki Ürünü Sor'
-                      : 'Fotoğraftaki Ürünü WhatsApp\'tan Sor',
-                  style: TextStyle(
-                    color: preset.accent,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CompactProfileToolData {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _CompactProfileToolData({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    this.onTap,
-  });
-}
-
-class _CompactProfileTool extends StatelessWidget {
-  final _CompactProfileToolData data;
-  final VitrinThemePreset preset;
-  final bool dense;
-
-  const _CompactProfileTool({
-    required this.data,
-    required this.preset,
-    this.dense = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: data.onTap,
-        borderRadius: BorderRadius.circular(dense ? 12 : 14),
-        child: Ink(
-          height: dense ? 70 : null,
-          padding: EdgeInsets.all(dense ? 8 : 10),
-          decoration: BoxDecoration(
-            color: data.color.withValues(alpha: preset.isDark ? 0.12 : 0.08),
-            borderRadius: BorderRadius.circular(dense ? 12 : 14),
-            border: Border.all(
-              color: data.color.withValues(alpha: preset.isDark ? 0.26 : 0.18),
-            ),
-          ),
-          child:
-              dense
-                  ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: data.color.withValues(
-                            alpha: preset.isDark ? 0.18 : 0.12,
-                          ),
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                        child: Icon(data.icon, color: data.color, size: 16),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        data.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: preset.textPrimary,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                    ],
-                  )
-                  : Row(
-                    children: [
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: data.color.withValues(
-                            alpha: preset.isDark ? 0.18 : 0.12,
-                          ),
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: Icon(data.icon, color: data.color, size: 18),
-                      ),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              data.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: preset.textPrimary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              data.subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: preset.textSecondary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionIconBtn extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final double radius;
-  final bool compact;
-  final bool emphasis;
-  final VoidCallback? onTap;
-
-  const _ActionIconBtn({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.radius,
-    this.compact = false,
-    this.emphasis = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final buttonRadius = compact ? 12.0 : 16.0;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        emphasis ? color : color.withValues(alpha: isDark ? 0.18 : 0.09);
-    final foregroundColor =
-        emphasis && color.computeLuminance() > 0.42
-            ? const Color(0xFF04151F)
-            : emphasis
-            ? Colors.white
-            : color;
-    final borderColor =
-        emphasis
-            ? color.withValues(alpha: isDark ? 0.38 : 0.22)
-            : color.withValues(alpha: isDark ? 0.22 : 0.12);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(buttonRadius),
-        border: Border.all(color: borderColor),
-        boxShadow:
-            emphasis
-                ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: isDark ? 0.22 : 0.18),
-                    blurRadius: compact ? 14 : 22,
-                    offset: Offset(0, compact ? 5 : 8),
-                  ),
-                ]
-                : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(buttonRadius),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 12 : 20,
-              vertical: compact ? 9 : 14,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Icon(icon, size: compact ? 15 : 20, color: foregroundColor),
-                SizedBox(width: compact ? 7 : 10),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: compact ? 11 : 13,
-                      fontWeight: FontWeight.w800,
-                      color: foregroundColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ModernLinkItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final double radius;
-  final bool compact;
-  final VitrinThemePreset preset;
-  final VoidCallback? onTap;
-
-  const _ModernLinkItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.radius,
-    required this.preset,
-    this.compact = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final effectiveColor =
-        preset.isDark && color.computeLuminance() < 0.35
-            ? preset.accent
-            : color;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: compact ? 10 : 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            preset.surface,
-            preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.36 : 0.5),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(compact ? 16 : 24),
-        border: Border.all(
-          color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
-          width: compact ? 1 : 1.3,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: preset.isDark ? 0.14 : 0.045),
-            blurRadius: compact ? 12 : 24,
-            offset: Offset(0, compact ? 3 : 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(compact ? 16 : 24),
-          child: Padding(
-            padding: EdgeInsets.all(compact ? 13 : 20),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(compact ? 9 : 13),
-                  decoration: BoxDecoration(
-                    color: effectiveColor.withValues(
-                      alpha: preset.isDark ? 0.2 : 0.11,
-                    ),
-                    borderRadius: BorderRadius.circular(compact ? 11 : 16),
-                    border: Border.all(
-                      color: effectiveColor.withValues(alpha: 0.08),
-                    ),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: effectiveColor,
-                    size: compact ? 18 : 22,
-                  ),
-                ),
-                SizedBox(width: compact ? 12 : 18),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: compact ? 14 : 16,
-                          color: preset.textPrimary,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                      SizedBox(height: compact ? 2 : 4),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: preset.textSecondary,
-                          fontSize: compact ? 10.5 : 12,
-                          fontWeight: FontWeight.w500,
-                          height: 1.35,
-                        ),
-                        maxLines: compact ? 1 : 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: compact ? 24 : 30,
-                  height: compact ? 24 : 30,
-                  decoration: BoxDecoration(
-                    color: preset.surfaceSoft.withValues(
-                      alpha: preset.isDark ? 0.38 : 0.72,
-                    ),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: preset.border.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: preset.textSecondary.withValues(alpha: 0.75),
-                    size: compact ? 10 : 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

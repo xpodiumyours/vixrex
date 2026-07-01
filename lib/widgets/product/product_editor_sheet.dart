@@ -16,15 +16,26 @@ class ProductEditorSheet extends StatefulWidget {
     this.product,
   });
 
+  /// Maximum number of images allowed per product.
+  static const int kMaxImages = 4;
+
   final List<ProductCategory> categories;
   final String storeSlug;
   final Product? product;
+
+  /// Resolves the initial category ID for a product given the available
+  /// categories. Exposed as a static method to allow unit testing.
+  static String resolveInitialCategoryId(
+    Product? product,
+    List<ProductCategory> categories,
+  ) => _ProductEditorSheetState._resolveInitialCategoryId(product, categories);
 
   @override
   State<ProductEditorSheet> createState() => _ProductEditorSheetState();
 }
 
 class _ProductEditorSheetState extends State<ProductEditorSheet> {
+  static const _maxImages = ProductEditorSheet.kMaxImages;
   static const _stockOptions = ['Mevcut', 'Son birkaç adet', 'Tükendi'];
 
   late final TextEditingController _nameController;
@@ -49,7 +60,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         (product?.displayImageUrls ?? const <String>[])
             .map((url) => _ProductImageDraft(url: url))
             .toList();
-    _categoryId = _resolveInitialCategoryId(product);
+    _categoryId = _resolveInitialCategoryId(product, widget.categories);
     _stockStatus =
         _stockOptions.contains(product?.stockStatus)
             ? product!.stockStatus
@@ -57,16 +68,19 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     _isVisible = product?.isVisible ?? true;
   }
 
-  String _resolveInitialCategoryId(Product? product) {
+  static String _resolveInitialCategoryId(
+    Product? product,
+    List<ProductCategory> categories,
+  ) {
     final explicit = product?.categoryId.trim() ?? '';
-    if (widget.categories.any((category) => category.id == explicit)) {
+    if (categories.any((category) => category.id == explicit)) {
       return explicit;
     }
     final label = product?.category.trim().toLowerCase() ?? '';
-    for (final category in widget.categories) {
+    for (final category in categories) {
       if (category.name.trim().toLowerCase() == label) return category.id;
     }
-    return widget.categories.isEmpty ? '' : widget.categories.first.id;
+    return categories.isEmpty ? '' : categories.first.id;
   }
 
   @override
@@ -78,9 +92,9 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   }
 
   Future<void> _pickImages() async {
-    final remaining = 4 - _images.length;
+    final remaining = _maxImages - _images.length;
     if (remaining <= 0) {
-      _showMessage('Bir ürüne en fazla 4 görsel eklenebilir.');
+      _showMessage('Bir ürüne en fazla $_maxImages görsel eklenebilir.');
       return;
     }
     final result = await FilePicker.platform.pickFiles(
@@ -165,27 +179,11 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         draft.bytes = null;
       }
 
-      final builder = const StorePublishPayloadBuilder();
-      final slug =
-          widget.product?.slug?.trim().isNotEmpty == true
-              ? widget.product!.slug!
-              : builder.generateSlug('$name-$productId');
-      final result = Product(
-        id: productId,
+      final result = _buildProductPayload(
+        productId: productId,
         name: name,
-        price: _priceController.text.trim(),
-        description: _descriptionController.text.trim(),
-        imagePath: uploadedUrls.isEmpty ? null : uploadedUrls.first,
+        category: category.first,
         imageUrls: uploadedUrls,
-        categoryId: category.first.id,
-        category: category.first.name,
-        stockStatus: _stockStatus,
-        isVisible: _isVisible,
-        slug: slug,
-        source: widget.product?.source,
-        sourceMediaId: widget.product?.sourceMediaId,
-        sourcePermalink: widget.product?.sourcePermalink,
-        importedAt: widget.product?.importedAt,
       );
       if (!mounted) return;
       Navigator.of(context).pop(result);
@@ -196,6 +194,36 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       );
       setState(() => _isSaving = false);
     }
+  }
+
+  Product _buildProductPayload({
+    required String productId,
+    required String name,
+    required ProductCategory category,
+    required List<String> imageUrls,
+  }) {
+    final builder = const StorePublishPayloadBuilder();
+    final slug =
+        widget.product?.slug?.trim().isNotEmpty == true
+            ? widget.product!.slug!
+            : builder.generateSlug('$name-$productId');
+    return Product(
+      id: productId,
+      name: name,
+      price: _priceController.text.trim(),
+      description: _descriptionController.text.trim(),
+      imagePath: imageUrls.isEmpty ? null : imageUrls.first,
+      imageUrls: imageUrls,
+      categoryId: category.id,
+      category: category.name,
+      stockStatus: _stockStatus,
+      isVisible: _isVisible,
+      slug: slug,
+      source: widget.product?.source,
+      sourceMediaId: widget.product?.sourceMediaId,
+      sourcePermalink: widget.product?.sourcePermalink,
+      importedAt: widget.product?.importedAt,
+    );
   }
 
   void _showMessage(String message) {
@@ -340,101 +368,109 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
               ),
             ),
             Text(
-              '${_images.length}/4',
+              '${_images.length}/$_maxImages',
               style: const TextStyle(color: AppColors.mutedText),
             ),
           ],
         ),
         const SizedBox(height: 10),
-        SizedBox(
-          height: 108,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _images.length + (_images.length < 4 ? 1 : 0),
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              if (index == _images.length) {
-                return InkWell(
-                  onTap: _isSaving ? null : _pickImages,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    width: 96,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceSoft,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_photo_alternate_outlined),
-                        SizedBox(height: 6),
-                        Text('Görsel ekle', style: TextStyle(fontSize: 11)),
-                      ],
-                    ),
-                  ),
-                );
-              }
-              final image = _images[index];
-              return SizedBox(
-                width: 96,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child:
-                            image.bytes != null
-                                ? Image.memory(image.bytes!, fit: BoxFit.cover)
-                                : Image.network(
-                                  image.url,
-                                  fit: BoxFit.cover,
-                                  errorBuilder:
-                                      (_, __, ___) => Container(
-                                        color: AppColors.surfaceSoft,
-                                        child: const Icon(
-                                          Icons.broken_image_outlined,
-                                        ),
-                                      ),
-                                ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 2,
-                      right: 2,
-                      child: IconButton.filled(
-                        visualDensity: VisualDensity.compact,
-                        onPressed:
-                            _isSaving
-                                ? null
-                                : () => setState(() => _images.removeAt(index)),
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                      ),
-                    ),
-                    Positioned(
-                      left: 2,
-                      right: 2,
-                      bottom: 2,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _moveButton(index, -1, Icons.chevron_left_rounded),
-                          _moveButton(index, 1, Icons.chevron_right_rounded),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
+        _buildImageGrid(),
         const SizedBox(height: 6),
         const Text(
           'İlk görsel ürün kapağıdır. Oklarla sıralayabilirsiniz.',
           style: TextStyle(color: AppColors.mutedText, fontSize: 11),
         ),
       ],
+    );
+  }
+
+  Widget _buildImageGrid() {
+    return SizedBox(
+      height: 108,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _images.length + (_images.length < _maxImages ? 1 : 0),
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          if (index == _images.length) {
+            return _buildAddImageButton();
+          }
+          final image = _images[index];
+          return SizedBox(
+            width: 96,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child:
+                        image.bytes != null
+                            ? Image.memory(image.bytes!, fit: BoxFit.cover)
+                            : Image.network(
+                              image.url,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) => Container(
+                                    color: AppColors.surfaceSoft,
+                                    child: const Icon(
+                                      Icons.broken_image_outlined,
+                                    ),
+                                  ),
+                            ),
+                  ),
+                ),
+                Positioned(
+                  top: 2,
+                  right: 2,
+                  child: IconButton.filled(
+                    visualDensity: VisualDensity.compact,
+                    onPressed:
+                        _isSaving
+                            ? null
+                            : () => setState(() => _images.removeAt(index)),
+                    icon: const Icon(Icons.close_rounded, size: 16),
+                  ),
+                ),
+                Positioned(
+                  left: 2,
+                  right: 2,
+                  bottom: 2,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _moveButton(index, -1, Icons.chevron_left_rounded),
+                      _moveButton(index, 1, Icons.chevron_right_rounded),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAddImageButton() {
+    return InkWell(
+      onTap: _isSaving ? null : _pickImages,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 96,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceSoft,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_photo_alternate_outlined),
+            SizedBox(height: 6),
+            Text('Görsel ekle', style: TextStyle(fontSize: 11)),
+          ],
+        ),
+      ),
     );
   }
 

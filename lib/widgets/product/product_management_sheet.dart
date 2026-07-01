@@ -27,6 +27,14 @@ class ProductManagementSheet extends StatefulWidget {
   final ValueChanged<String> showMessage;
   final ProductCatalogChanged onCatalogChanged;
 
+  /// Filters [products] by [query] (searches name and description) and
+  /// [categoryId]. Exposed as a static method to allow unit testing.
+  static List<Product> applyFilter(
+    List<Product> products,
+    String query,
+    String categoryId,
+  ) => _ProductManagementSheetState._applyFilter(products, query, categoryId);
+
   @override
   State<ProductManagementSheet> createState() => _ProductManagementSheetState();
 }
@@ -88,10 +96,17 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
 
   List<Product> get _filteredProducts {
     final query = _searchController.text.trim().toLowerCase();
-    return _products.where((product) {
+    return _applyFilter(_products, query, _selectedCategoryId);
+  }
+
+  static List<Product> _applyFilter(
+    List<Product> products,
+    String query,
+    String categoryId,
+  ) {
+    return products.where((product) {
       final matchesCategory =
-          _selectedCategoryId.isEmpty ||
-          product.categoryId == _selectedCategoryId;
+          categoryId.isEmpty || product.categoryId == categoryId;
       final matchesQuery =
           query.isEmpty ||
           product.name.toLowerCase().contains(query) ||
@@ -225,125 +240,11 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Row(
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ürün Yönetimi',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.darkText,
-                        ),
-                      ),
-                      Text(
-                        'Ürünlerini ve kategorilerini tek yerden yönet.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.mutedText,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _openCategories,
-                  icon: const Icon(Icons.category_outlined, size: 18),
-                  label: const Text('Kategoriler'),
-                ),
-              ],
-            ),
+            _buildHeader(),
             const SizedBox(height: 14),
-            XrexCatalogAssistantSection(
-              onActionTap:
-                  () => widget.showMessage(
-                    'X-rex katalog çıkarma özelliği sonraki aşamada aktif edilecek.',
-                  ),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Ürün ara...',
-                prefixIcon: Icon(Icons.search_rounded),
-              ),
-            ),
+            _buildFilterBar(),
             const SizedBox(height: 10),
-            SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  ChoiceChip(
-                    label: const Text('Tümü'),
-                    selected: _selectedCategoryId.isEmpty,
-                    onSelected: (_) => setState(() => _selectedCategoryId = ''),
-                  ),
-                  const SizedBox(width: 8),
-                  ..._categories.map(
-                    (category) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(category.name),
-                        selected: _selectedCategoryId == category.id,
-                        onSelected:
-                            (_) => setState(
-                              () => _selectedCategoryId = category.id,
-                            ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child:
-                  _products.isEmpty
-                      ? _buildEmptyState()
-                      : filtered.isEmpty
-                      ? const Center(
-                        child: Text('Aramana uygun ürün bulunamadı.'),
-                      )
-                      : canReorder
-                      ? ReorderableListView.builder(
-                        itemCount: _products.length,
-                        onReorder: (oldIndex, newIndex) async {
-                          setState(() {
-                            if (newIndex > oldIndex) newIndex--;
-                            final item = _products.removeAt(oldIndex);
-                            _products.insert(newIndex, item);
-                          });
-                          await _persist();
-                        },
-                        itemBuilder:
-                            (_, index) => Padding(
-                              key: ValueKey(_products[index].id),
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _buildProductItem(_products[index]),
-                            ),
-                      )
-                      : ListView.separated(
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
-                        itemBuilder:
-                            (_, index) => _buildProductItem(filtered[index]),
-                      ),
-            ),
+            Expanded(child: _buildProductList(filtered, canReorder)),
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: () => _openEditor(),
@@ -361,6 +262,136 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: AppColors.border,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Ürün Yönetimi',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.darkText,
+                    ),
+                  ),
+                  Text(
+                    'Ürünlerini ve kategorilerini tek yerden yönet.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.mutedText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _openCategories,
+              icon: const Icon(Icons.category_outlined, size: 18),
+              label: const Text('Kategoriler'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        XrexCatalogAssistantSection(
+          onActionTap:
+              () => widget.showMessage(
+                'X-rex katalog çıkarma özelliği sonraki aşamada aktif edilecek.',
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterBar() {
+    return Column(
+      children: [
+        TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Ürün ara...',
+            prefixIcon: Icon(Icons.search_rounded),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 40,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              ChoiceChip(
+                label: const Text('Tümü'),
+                selected: _selectedCategoryId.isEmpty,
+                onSelected: (_) => setState(() => _selectedCategoryId = ''),
+              ),
+              const SizedBox(width: 8),
+              ..._categories.map(
+                (category) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(category.name),
+                    selected: _selectedCategoryId == category.id,
+                    onSelected:
+                        (_) => setState(
+                          () => _selectedCategoryId = category.id,
+                        ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProductList(List<Product> filtered, bool canReorder) {
+    if (_products.isEmpty) return _buildEmptyState();
+    if (filtered.isEmpty) {
+      return const Center(child: Text('Aramana uygun ürün bulunamadı.'));
+    }
+    if (canReorder) {
+      return ReorderableListView.builder(
+        itemCount: _products.length,
+        onReorder: (oldIndex, newIndex) async {
+          setState(() {
+            if (newIndex > oldIndex) newIndex--;
+            final item = _products.removeAt(oldIndex);
+            _products.insert(newIndex, item);
+          });
+          await _persist();
+        },
+        itemBuilder:
+            (_, index) => Padding(
+              key: ValueKey(_products[index].id),
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildProductItem(_products[index]),
+            ),
+      );
+    }
+    return ListView.separated(
+      itemCount: filtered.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (_, index) => _buildProductItem(filtered[index]),
     );
   }
 
