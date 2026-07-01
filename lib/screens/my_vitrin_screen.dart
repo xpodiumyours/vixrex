@@ -41,6 +41,8 @@ import 'package:vitrinx/widgets/editor/publish_actions_section.dart';
 import 'package:vitrinx/widgets/editor/cover_picker_section.dart';
 import 'package:vitrinx/widgets/editor/common_form_fields.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_form_section.dart';
+import 'package:vitrinx/screens/my_vitrin/sections/vitrin_publish_section.dart';
+import 'package:vitrinx/screens/my_vitrin/sections/vitrin_danger_section.dart';
 
 // ─── Main Widget ──────────────────────────────────────────────────────────
 class MyVitrinScreen extends StatefulWidget {
@@ -1294,50 +1296,22 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           legalConsentSection: _buildLegalConsentSection(),
         ),
 
-        if (hasPublished) ...[
-          const SizedBox(height: 16),
-          _buildPublishedSummary(),
-          const SizedBox(height: 16),
-          _buildActionButtons(),
-          const SizedBox(height: 16),
-          _buildVisibilityHubCard(),
-        ],
+        if (hasPublished)
+          VitrinPublishSection(
+            publishedSummary: _buildPublishedSummary(),
+            actionButtons: _buildActionButtons(),
+            visibilityHubCard: _buildVisibilityHubCard(),
+          ),
 
-        if (hasPublished) ...[
-          const SizedBox(height: 8),
-          Center(
-            child: TextButton.icon(
-              onPressed:
-                  _isWithdrawingConsent ? null : _withdrawPublicationConsent,
-              icon: const Icon(Icons.visibility_off_outlined, size: 16),
-              label: Text(
-                _isWithdrawingConsent
-                    ? 'Yayından kaldırılıyor...'
-                    : 'Yayınlama Rızasını Geri Çek',
-                style: AppTextStyles.labelBold,
-              ),
-            ),
+        if (hasPublished)
+          VitrinDangerSection(
+            isWithdrawingConsent: _isWithdrawingConsent,
+            isDeleting: _isDeleting,
+            onWithdrawConsent: _withdrawPublicationConsent,
+            onShowDeleteConfirmation: _showDeleteConfirmation,
+            withdrawTextStyle: AppTextStyles.labelBold,
+            dangerColor: dangerColor,
           ),
-          Center(
-            child: TextButton.icon(
-              onPressed: _isDeleting ? null : _showDeleteConfirmation,
-              icon: const Icon(
-                Icons.delete_outline_rounded,
-                size: 16,
-                color: dangerColor,
-              ),
-              label: const Text(
-                'Vitrini Sil',
-                style: TextStyle(
-                  color: dangerColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
       ],
     );
   }
