@@ -15,6 +15,7 @@ import 'package:vitrinx/models/legal_document.dart';
 import 'package:vitrinx/screens/legal_screen.dart';
 import 'package:vitrinx/screens/my_vitrin/business_info_form_section.dart';
 import 'package:vitrinx/screens/my_vitrin/cover_gallery_section.dart';
+import 'package:vitrinx/screens/my_vitrin/publish_legal_approval_section.dart';
 import 'package:vitrinx/screens/my_vitrin/product_management_entry_section.dart';
 import 'package:vitrinx/services/legal_document_service.dart';
 import 'package:vitrinx/services/location_service.dart';
@@ -1460,64 +1461,62 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               _buildMarketplaceSection(),
               const SizedBox(height: 24),
 
-              _buildLegalConsentSection(),
-              const SizedBox(height: 16),
-
-              // ── Publish Button ─────────────────────────────────────────
-              SizedBox(
-                height: 54,
-                child: ElevatedButton.icon(
-                  onPressed:
-                      _isPublishing || !_isLegalPublishReady
-                          ? null
-                          : _publishVitrin,
-                  icon:
-                      _isPublishing
-                          ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.black,
+              PublishLegalApprovalSection(
+                legalConsentSection: _buildLegalConsentSection(),
+                publishButton: SizedBox(
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed:
+                        _isPublishing || !_isLegalPublishReady
+                            ? null
+                            : _publishVitrin,
+                    icon:
+                        _isPublishing
+                            ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black,
+                              ),
+                            )
+                            : Icon(
+                              hasPublished
+                                  ? Icons.cloud_upload_rounded
+                                  : Icons.rocket_launch_rounded,
+                              size: 19,
                             ),
-                          )
-                          : Icon(
-                            hasPublished
-                                ? Icons.cloud_upload_rounded
-                                : Icons.rocket_launch_rounded,
-                            size: 19,
-                          ),
-                  label: Text(
-                    _isPublishing
-                        ? 'Yayına alınıyor...'
-                        : hasPublished
-                        ? 'Değişiklikleri Kaydet & Yayına Al'
-                        : 'Vitrinimi Yayına Al',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
+                    label: Text(
+                      _isPublishing
+                          ? 'Yayına alınıyor...'
+                          : hasPublished
+                          ? 'Değişiklikleri Kaydet & Yayına Al'
+                          : 'Vitrinimi Yayına Al',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
                     ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                hasPublished
-                    ? 'Mevcut linkin korunur, Keşfet görünümün güncellenir.'
-                    : 'Linkin oluşur, Keşfet\'te görünürsün.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: mutedText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                publishHint: Text(
+                  hasPublished
+                      ? 'Mevcut linkin korunur, Keşfet görünümün güncellenir.'
+                      : 'Linkin oluşur, Keşfet\'te görünürsün.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: mutedText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
