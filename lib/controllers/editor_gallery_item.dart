@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/widgets/vitrin_view.dart';
+import 'package:vitrinx/models/vitrin_gallery_preview_item.dart';
 
 class EditorGalleryItem {
   final String id;
