@@ -13,6 +13,7 @@ import 'package:vitrinx/config/turkey_cities_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/models/legal_document.dart';
 import 'package:vitrinx/screens/legal_screen.dart';
+import 'package:vitrinx/screens/my_vitrin/business_info_form_section.dart';
 import 'package:vitrinx/screens/my_vitrin/cover_gallery_section.dart';
 import 'package:vitrinx/services/legal_document_service.dart';
 import 'package:vitrinx/services/location_service.dart';
@@ -1345,10 +1346,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                 compactGalleryRow: _buildCompactGalleryRow(),
               ),
 
-              // ── Zorunlu Alanlar (* ile işaretli) ─────────────────
-              KeyedSubtree(
-                key: _nameKey,
-                child: _buildTextField(
+              BusinessInfoFormSection(
+                nameKey: _nameKey,
+                nameField: _buildTextField(
                   label: 'İşletme / VitrinX Adı',
                   controller: _nameController,
                   focusNode: _nameFocusNode,
@@ -1357,12 +1357,8 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   errorText: _nameError,
                   required: true,
                 ),
-              ),
-              const SizedBox(height: 14),
-
-              KeyedSubtree(
-                key: _whatsappKey,
-                child: _buildTextField(
+                whatsappKey: _whatsappKey,
+                whatsappField: _buildTextField(
                   label: 'WhatsApp Numarası',
                   controller: _whatsappController,
                   focusNode: _whatsappFocusNode,
@@ -1380,16 +1376,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   required: true,
                   validateWhatsapp: true,
                 ),
-              ),
-              const SizedBox(height: 14),
-
-              KeyedSubtree(key: _addressKey, child: _buildLocationField()),
-              const SizedBox(height: 14),
-
-              // ── İsteğe Bağlı Alanlar ─────────────────────────────
-              KeyedSubtree(
-                key: _descriptionKey,
-                child: _buildTextField(
+                locationKey: _addressKey,
+                locationField: _buildLocationField(),
+                descriptionKey: _descriptionKey,
+                descriptionField: _buildTextField(
                   label: 'Kısa Açıklama',
                   controller: _descriptionController,
                   focusNode: _descriptionFocusNode,
@@ -1397,52 +1387,44 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   icon: Icons.notes_rounded,
                   maxLines: 3,
                 ),
-              ),
-              const SizedBox(height: 14),
-
-              _buildDropdown(
-                label: 'Kategori',
-                value: _selectedKategori,
-                items: _categories,
-                icon: Icons.category_rounded,
-                onChanged: (val) {
-                  setState(() {
-                    _selectedKategori = val ?? 'Diğer';
-                    if (_selectedKategori != 'Kuaför') {
-                      _bookingIsEnabled = false;
-                      for (final offering in _offerings) {
-                        offering.isBookable = false;
+                categoryDropdown: _buildDropdown(
+                  label: 'Kategori',
+                  value: _selectedKategori,
+                  items: _categories,
+                  icon: Icons.category_rounded,
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedKategori = val ?? 'Diğer';
+                      if (_selectedKategori != 'Kuaför') {
+                        _bookingIsEnabled = false;
+                        for (final offering in _offerings) {
+                          offering.isBookable = false;
+                        }
                       }
-                    }
-                  });
-                },
-              ),
-              const SizedBox(height: 14),
-
-              if (_selectedKategori == 'Kuaför') ...[
-                KeyedSubtree(
-                  key: _productsKey,
-                  child: _buildBookingSettingsSection(),
+                    });
+                  },
                 ),
-                const SizedBox(height: 14),
-              ],
-
-              _buildDropdown(
-                label: 'Vitrin Durumu',
-                value: _selectedStatus,
-                items: _statuses,
-                icon: Icons.info_outline_rounded,
-                onChanged:
-                    (val) => setState(() => _selectedStatus = val ?? 'Açık'),
-              ),
-              const SizedBox(height: 14),
-
-              _buildTextField(
-                label: 'Instagram',
-                controller: _instagramController,
-                hint: '@kullanici_adi veya profil linki',
-                icon: Icons.camera_alt_rounded,
-                keyboardType: TextInputType.url,
+                selectedKategori: _selectedKategori,
+                productsKey: _productsKey,
+                bookingSettingsSection:
+                    _selectedKategori == 'Kuaför'
+                        ? _buildBookingSettingsSection()
+                        : null,
+                statusDropdown: _buildDropdown(
+                  label: 'Vitrin Durumu',
+                  value: _selectedStatus,
+                  items: _statuses,
+                  icon: Icons.info_outline_rounded,
+                  onChanged:
+                      (val) => setState(() => _selectedStatus = val ?? 'Açık'),
+                ),
+                instagramField: _buildTextField(
+                  label: 'Instagram',
+                  controller: _instagramController,
+                  hint: '@kullanici_adi veya profil linki',
+                  icon: Icons.camera_alt_rounded,
+                  keyboardType: TextInputType.url,
+                ),
               ),
               ProductManagementEntryCard(
                 productCount: _data.products.length,
