@@ -527,214 +527,34 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   // ─── Publish ─────────────────────────────────────────────────────────────
   Future<void> _publishVitrin() async {
     if (_isPublishing) return;
+    if (!_validateLegalPublishRequirements()) return;
+    if (!_validateRequiredFields()) return;
 
-    if (!LegalConfig.hasCompleteDataControllerIdentity) {
-      _showSnackBar(
-        'Yasal işletme bilgileri tamamlanmadan vitrin yayınlanamaz.',
-      );
-      return;
-    }
-    if (_legalDocuments == null) {
-      _showSnackBar(
-        _legalDocumentsError ??
-            'Güncel yasal belgeler yüklenmeden vitrin yayınlanamaz.',
-      );
-      return;
-    }
-    if (!_privacyNoticeAcknowledged ||
-        !_termsAccepted ||
-        !_publicationConsentAccepted) {
-      _showSnackBar(
-        'Yayınlamak için yasal bilgilendirme ve onayları tamamlayın.',
-      );
-      return;
-    }
+    final bookingServices = _collectBookingServices();
+    if (!_validateBookingRequirements(bookingServices)) return;
 
-    final name = _nameController.text.trim();
-    final whatsapp = _whatsappController.text.trim();
-    final address = _addressController.text.trim();
-    final googleLink = _googleBusinessLinkController.text.trim();
-    final hasValidWhatsapp = WhatsAppLinkHelper.isValidTurkeyMobile(whatsapp);
-
-    bool isGoogleLinkValid = true;
-    if (googleLink.isNotEmpty) {
-      final googleRegex = RegExp(
-        r'^https:\/\/(www\.)?(search\.google\.com|g\.page|maps\.google\.com|maps\.app\.goo\.gl)\/.*$',
-      );
-      isGoogleLinkValid = googleRegex.hasMatch(googleLink);
-    }
-
-    final provinceOk = _selectedProvinceCode != null;
-    final districtOk = _selectedDistrictName != null;
-
-    // Validate required fields
-    setState(() {
-      _nameError = name.isEmpty ? 'İşletme adı zorunludur' : null;
-      _whatsappError =
-          whatsapp.isEmpty
-              ? 'WhatsApp numarası zorunludur'
-              : hasValidWhatsapp
-              ? null
-              : WhatsAppLinkHelper.invalidNumberMessage;
-      _addressError =
-          address.isEmpty ? 'Konum / adres bilgisi zorunludur' : null;
-      _provinceError =
-          _selectedProvinceCode == null ? 'İl seçimi zorunludur' : null;
-      _districtError =
-          _selectedDistrictName == null ? 'İlçe seçimi zorunludur' : null;
-      _googleLinkError =
-          isGoogleLinkValid
-              ? null
-              : 'Lütfen geçerli bir Google Haritalar veya Google Yorum bağlantısı girin.';
-    });
-
-    if (name.isEmpty ||
-        whatsapp.isEmpty ||
-        !hasValidWhatsapp ||
-        address.isEmpty ||
-        !provinceOk ||
-        !districtOk ||
-        !isGoogleLinkValid) {
-      _showSnackBar(
-        !isGoogleLinkValid
-            ? 'Lütfen Google Yorum bağlantısını doğru formatta girin.'
-            : whatsapp.isNotEmpty && !hasValidWhatsapp
-            ? WhatsAppLinkHelper.invalidNumberMessage
-            : 'Lütfen zorunlu alanları doldurun: ad, WhatsApp, il, ilçe ve adres.',
-      );
-      return;
-    }
-
-    final shouldPublishBooking =
-        _selectedKategori == 'Kuaför' && _bookingIsEnabled;
-    final bookingServices =
-        _offerings
-            .where((offering) => offering.title.trim().isNotEmpty)
-            .take(6)
-            .map((offering) => offering.copyWith(isBookable: true))
-            .toList();
-
-    if (shouldPublishBooking && bookingServices.isEmpty) {
-      _showSnackBar('Randevu açıkken en az bir randevu hizmeti eklemelisiniz.');
-      return;
-    }
-
-    setState(() {
-      _isPublishing = true;
-    });
+    setState(() => _isPublishing = true);
 
     try {
+      final name = _nameController.text.trim();
       final slug = const StorePublishPayloadBuilder().generateSlug(name);
-      var coverUrl = _coverUrl?.trim() ?? '';
-
-      // Upload cover
-      if (_coverBytes != null) {
-        try {
-          coverUrl = await const StoreShelfUploadService().uploadShelfImage(
-            _coverBytes!,
-            '$slug/cover',
-            fileExtension: _coverExtension,
-            contentType: _coverContentType,
-          );
-        } catch (_) {
-          _showSnackBar(
-            'Kapak fotoğrafı yüklenemedi, vitrin yayını devam ediyor.',
-          );
-          coverUrl = _coverUrl?.trim() ?? '';
-        }
-      }
-
-      // Upload gallery
-      final uploadService = const StoreShelfUploadService();
-      var galleryFailures = 0;
-      for (final item in _galleryItems) {
-        if (item.hasLocalBytes) {
-          try {
-            final url = await uploadService.uploadGalleryImage(
-              item.bytes!,
-              slug,
-              fileExtension: item.extension,
-              contentType: item.contentType,
-            );
-            item.imageUrl = url;
-            item.bytes = null;
-          } catch (_) {
-            galleryFailures++;
-          }
-        }
-      }
+      final coverUrl = await _uploadCoverIfNeeded(slug);
+      final galleryFailures = await _uploadGalleryIfNeeded(slug);
       if (galleryFailures > 0) {
         _showSnackBar('$galleryFailures galeri fotoğrafı yüklenemedi.');
       }
 
-      final publishedGallery =
-          _galleryItems
-              .where((i) => i.hasUrl)
-              .take(_maxGalleryPhotos)
-              .map((i) => StoreGalleryItem(id: i.id, imageUrl: i.imageUrl))
-              .toList();
-
-      if (_selectedKategori != 'Kuaför') {
-        _bookingIsEnabled = false;
-        for (final offering in _offerings) {
-          offering.isBookable = false;
-        }
-      } else if (_bookingIsEnabled) {
-        for (final offering in _offerings) {
-          if (offering.title.trim().isNotEmpty) {
-            offering.isBookable = true;
-          }
-        }
-      }
-
-      final data =
-          _data
-            ..name = name
-            ..whatsapp = whatsapp
-            ..address = address
-            ..description = _descriptionController.text.trim()
-            ..instagram = _instagramController.text.trim()
-            ..website = ''
-            ..googleBusinessLink = googleLink
-            ..provinceCode = _selectedProvinceCode ?? ''
-            ..provinceName = _selectedProvinceName ?? ''
-            ..districtCode = _selectedDistrictCode ?? ''
-            ..districtName = _selectedDistrictName ?? ''
-            ..kategori = _selectedKategori
-            ..status = _selectedStatus
-            ..isStore = false
-            ..shelfImageUrl = coverUrl
-            ..galleryItems = publishedGallery
-            ..offerings = shouldPublishBooking ? bookingServices : []
-            ..marketplaceLinks =
-                _marketplaceLinks.map((link) {
-                  var url = link.url.trim();
-                  if (url.isNotEmpty &&
-                      !url.startsWith('http://') &&
-                      !url.startsWith('https://') &&
-                      !url.startsWith('tel:') &&
-                      !url.startsWith('mailto:')) {
-                    url = 'https://$url';
-                  }
-                  return MarketplaceLink(
-                    id: link.id,
-                    platform: link.platform,
-                    url: url,
-                    subtitle: link.subtitle,
-                  );
-                }).toList()
-            ..latitude = _latitude
-            ..longitude = _longitude
-            ..locationAccuracyMeters = _locationAccuracyMeters
-            ..privacyNoticeAcknowledged = _privacyNoticeAcknowledged
-            ..privacyNoticeVersion = _legalDocuments!.privacy.version
-            ..privacyNoticeHash = _legalDocuments!.privacy.contentHash
-            ..termsAccepted = _termsAccepted
-            ..termsVersion = _legalDocuments!.terms.version
-            ..termsHash = _legalDocuments!.terms.contentHash
-            ..publicationConsentAccepted = _publicationConsentAccepted
-            ..publicationConsentVersion = _legalDocuments!.consent.version
-            ..publicationConsentHash = _legalDocuments!.consent.contentHash;
+      final publishedGallery = _buildPublishedGallery();
+      final publishableBookingServices = _applyBookingRules(bookingServices);
+      final data = _buildPublishStoreData(
+        name: name,
+        whatsapp: _whatsappController.text.trim(),
+        address: _addressController.text.trim(),
+        googleLink: _googleBusinessLinkController.text.trim(),
+        coverUrl: coverUrl,
+        publishedGallery: publishedGallery,
+        bookingServices: publishableBookingServices,
+      );
 
       await _storage.saveVitrinData(data);
       final editToken = await _loadOrCreateEditToken();
@@ -744,47 +564,20 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       );
       final publicLink = PublicSiteConfig.buildPublicLink(result.publicPath);
 
-      // Save booking settings to Supabase
-      try {
-        final client = Supabase.instance.client;
-        await client.from('booking_settings').upsert({
-          'store_slug': result.slug,
-          'is_enabled': _bookingIsEnabled,
-          'capacity': _bookingCapacity,
-          'working_hours': _bookingWorkingHours,
-          'lunch_break': _bookingLunchBreak,
-        });
-      } catch (e) {
-        debugPrint('Booking settings save error: $e');
-      }
+      await _saveBookingSettingsIfNeeded(result.slug);
 
-      await _storage.savePublishedVitrinInfo(
+      final didPersist = await _persistPublishedState(
+        data: data,
         slug: result.slug,
         publicLink: publicLink,
-        name: data.name,
         editToken: editToken,
+        coverUrl: coverUrl,
       );
+      if (!didPersist) return;
 
-      if (!mounted) return;
-      setState(() {
-        _data = data..slug = result.slug;
-        _publishedInfo = PublishedVitrinInfo(
-          slug: result.slug,
-          publicLink: publicLink,
-          name: data.name,
-          editToken: editToken,
-        );
-        _websiteController.text = publicLink;
-        _coverUrl = coverUrl;
-        _coverBytes = null;
-        _coverFileName = null;
-      });
-
-      // Next.js ISR önbelleğini arka planda temizle (hata kullanıcıyı etkilemez)
       const SeoService().revalidateStore(result.slug);
-
       widget.onPublished?.call();
-      _showSnackBar('Vitrinin yayında! Keşfet\'te görünürsün.');
+      _showSnackBar("Vitrinin yayında! Keşfet'te görünürsün.");
     } catch (error) {
       debugPrint('Publish error: $error');
       if (!mounted) return;
@@ -798,7 +591,307 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     }
   }
 
-  // ─── Delete Vitrin ────────────────────────────────────────────────────────
+  bool _validateLegalPublishRequirements() {
+    if (!LegalConfig.hasCompleteDataControllerIdentity) {
+      _showSnackBar(
+        'Yasal işletme bilgileri tamamlanmadan vitrin yayınlanamaz.',
+      );
+      return false;
+    }
+    if (_legalDocuments == null) {
+      _showSnackBar(
+        _legalDocumentsError ??
+            'Güncel yasal belgeler yüklenmeden vitrin yayınlanamaz.',
+      );
+      return false;
+    }
+    if (!_privacyNoticeAcknowledged ||
+        !_termsAccepted ||
+        !_publicationConsentAccepted) {
+      _showSnackBar(
+        'Yayınlamak için yasal bilgilendirme ve onayları tamamlayın.',
+      );
+      return false;
+    }
+    return true;
+  }
+
+  bool _validateRequiredFields() {
+    final name = _nameController.text.trim();
+    final whatsapp = _whatsappController.text.trim();
+    final address = _addressController.text.trim();
+    final googleLink = _googleBusinessLinkController.text.trim();
+    final whatsappError = _validateWhatsappField(whatsapp);
+    final googleLinkError = _validateGoogleReviewLink(googleLink);
+    final provinceError =
+        _selectedProvinceCode == null ? 'İl seçimi zorunludur' : null;
+    final districtError =
+        _selectedDistrictName == null ? 'İlçe seçimi zorunludur' : null;
+
+    setState(() {
+      _nameError = name.isEmpty ? 'İşletme adı zorunludur' : null;
+      _whatsappError = whatsappError;
+      _addressError =
+          address.isEmpty ? 'Konum / adres bilgisi zorunludur' : null;
+      _provinceError = provinceError;
+      _districtError = districtError;
+      _googleLinkError = googleLinkError;
+    });
+
+    final hasError =
+        name.isEmpty ||
+        whatsappError != null ||
+        address.isEmpty ||
+        provinceError != null ||
+        districtError != null ||
+        googleLinkError != null;
+    if (!hasError) return true;
+
+    _showSnackBar(
+      googleLinkError != null
+          ? 'Lütfen Google Yorum bağlantısını doğru formatta girin.'
+          : whatsapp.isNotEmpty && whatsappError != null
+              ? whatsappError
+              : 'Lütfen zorunlu alanları doldurun: ad, WhatsApp, il, ilçe ve adres.',
+    );
+    return false;
+  }
+
+  String? _validateWhatsappField(String value) {
+    if (value.trim().isEmpty) {
+      return 'WhatsApp numarası zorunludur';
+    }
+    return WhatsAppLinkHelper.isValidTurkeyMobile(value)
+        ? null
+        : WhatsAppLinkHelper.invalidNumberMessage;
+  }
+
+  String? _validateGoogleReviewLink(String value) {
+    if (value.trim().isEmpty) return null;
+
+    final googleRegex = RegExp(
+      r'^https:\/\/(www\.)?(search\.google\.com|g\.page|maps\.google\.com|maps\.app\.goo\.gl)\/.*$',
+    );
+    return googleRegex.hasMatch(value)
+        ? null
+        : 'Lütfen geçerli bir Google Haritalar veya Google Yorum bağlantısı girin.';
+  }
+
+  void _resetFieldErrorsOnInput(String value, {bool whatsapp = false}) {
+    setState(() {
+      _nameError = null;
+      _addressError = null;
+      _googleLinkError = null;
+      if (whatsapp) {
+        _whatsappError =
+            value.trim().isEmpty ||
+                    WhatsAppLinkHelper.isValidTurkeyMobile(value)
+                ? null
+                : WhatsAppLinkHelper.invalidNumberMessage;
+      } else {
+        _whatsappError = null;
+      }
+    });
+  }
+
+  List<StoreOffering> _collectBookingServices() {
+    return _offerings
+        .where((offering) => offering.title.trim().isNotEmpty)
+        .take(6)
+        .map((offering) => offering.copyWith(isBookable: true))
+        .toList();
+  }
+
+  bool _validateBookingRequirements(List<StoreOffering> bookingServices) {
+    final shouldPublishBooking =
+        _selectedKategori == 'Kuaför' && _bookingIsEnabled;
+    if (shouldPublishBooking && bookingServices.isEmpty) {
+      _showSnackBar('Randevu açıkken en az bir randevu hizmeti eklemelisiniz.');
+      return false;
+    }
+    return true;
+  }
+
+  Future<String> _uploadCoverIfNeeded(String slug) async {
+    var coverUrl = _coverUrl?.trim() ?? '';
+    if (_coverBytes == null) return coverUrl;
+
+    try {
+      coverUrl = await const StoreShelfUploadService().uploadShelfImage(
+        _coverBytes!,
+        '$slug/cover',
+        fileExtension: _coverExtension,
+        contentType: _coverContentType,
+      );
+    } catch (_) {
+      _showSnackBar(
+        'Kapak fotoğrafı yüklenemedi, vitrin yayını devam ediyor.',
+      );
+      coverUrl = _coverUrl?.trim() ?? '';
+    }
+    return coverUrl;
+  }
+
+  Future<int> _uploadGalleryIfNeeded(String slug) async {
+    final uploadService = const StoreShelfUploadService();
+    var galleryFailures = 0;
+
+    for (final item in _galleryItems) {
+      if (!item.hasLocalBytes) continue;
+      try {
+        final url = await uploadService.uploadGalleryImage(
+          item.bytes!,
+          slug,
+          fileExtension: item.extension,
+          contentType: item.contentType,
+        );
+        item.imageUrl = url;
+        item.bytes = null;
+      } catch (_) {
+        galleryFailures++;
+      }
+    }
+
+    return galleryFailures;
+  }
+
+  List<StoreGalleryItem> _buildPublishedGallery() {
+    return _galleryItems
+        .where((item) => item.hasUrl)
+        .take(_maxGalleryPhotos)
+        .map((item) => StoreGalleryItem(id: item.id, imageUrl: item.imageUrl))
+        .toList();
+  }
+
+  List<StoreOffering> _applyBookingRules(List<StoreOffering> bookingServices) {
+    if (_selectedKategori != 'Kuaför') {
+      _bookingIsEnabled = false;
+      for (final offering in _offerings) {
+        offering.isBookable = false;
+      }
+      return [];
+    }
+
+    if (_bookingIsEnabled) {
+      for (final offering in _offerings) {
+        if (offering.title.trim().isNotEmpty) {
+          offering.isBookable = true;
+        }
+      }
+      return bookingServices;
+    }
+
+    return [];
+  }
+
+  List<MarketplaceLink> _normalizeMarketplaceLinks() {
+    return _marketplaceLinks.map((link) {
+      var url = link.url.trim();
+      if (url.isNotEmpty &&
+          !url.startsWith('http://') &&
+          !url.startsWith('https://') &&
+          !url.startsWith('tel:') &&
+          !url.startsWith('mailto:')) {
+        url = 'https://$url';
+      }
+      return MarketplaceLink(
+        id: link.id,
+        platform: link.platform,
+        url: url,
+        subtitle: link.subtitle,
+      );
+    }).toList();
+  }
+
+  StoreData _buildPublishStoreData({
+    required String name,
+    required String whatsapp,
+    required String address,
+    required String googleLink,
+    required String coverUrl,
+    required List<StoreGalleryItem> publishedGallery,
+    required List<StoreOffering> bookingServices,
+  }) {
+    return _data
+      ..name = name
+      ..whatsapp = whatsapp
+      ..address = address
+      ..description = _descriptionController.text.trim()
+      ..instagram = _instagramController.text.trim()
+      ..website = ''
+      ..googleBusinessLink = googleLink
+      ..provinceCode = _selectedProvinceCode ?? ''
+      ..provinceName = _selectedProvinceName ?? ''
+      ..districtCode = _selectedDistrictCode ?? ''
+      ..districtName = _selectedDistrictName ?? ''
+      ..kategori = _selectedKategori
+      ..status = _selectedStatus
+      ..isStore = false
+      ..shelfImageUrl = coverUrl
+      ..galleryItems = publishedGallery
+      ..offerings = bookingServices
+      ..marketplaceLinks = _normalizeMarketplaceLinks()
+      ..latitude = _latitude
+      ..longitude = _longitude
+      ..locationAccuracyMeters = _locationAccuracyMeters
+      ..privacyNoticeAcknowledged = _privacyNoticeAcknowledged
+      ..privacyNoticeVersion = _legalDocuments!.privacy.version
+      ..privacyNoticeHash = _legalDocuments!.privacy.contentHash
+      ..termsAccepted = _termsAccepted
+      ..termsVersion = _legalDocuments!.terms.version
+      ..termsHash = _legalDocuments!.terms.contentHash
+      ..publicationConsentAccepted = _publicationConsentAccepted
+      ..publicationConsentVersion = _legalDocuments!.consent.version
+      ..publicationConsentHash = _legalDocuments!.consent.contentHash;
+  }
+
+  Future<void> _saveBookingSettingsIfNeeded(String slug) async {
+    try {
+      final client = Supabase.instance.client;
+      await client.from('booking_settings').upsert({
+        'store_slug': slug,
+        'is_enabled': _bookingIsEnabled,
+        'capacity': _bookingCapacity,
+        'working_hours': _bookingWorkingHours,
+        'lunch_break': _bookingLunchBreak,
+      });
+    } catch (e) {
+      debugPrint('Booking settings save error: $e');
+    }
+  }
+
+  Future<bool> _persistPublishedState({
+    required StoreData data,
+    required String slug,
+    required String publicLink,
+    required String editToken,
+    required String coverUrl,
+  }) async {
+    await _storage.savePublishedVitrinInfo(
+      slug: slug,
+      publicLink: publicLink,
+      name: data.name,
+      editToken: editToken,
+    );
+
+    if (!mounted) return false;
+
+    setState(() {
+      _data = data..slug = slug;
+      _publishedInfo = PublishedVitrinInfo(
+        slug: slug,
+        publicLink: publicLink,
+        name: data.name,
+        editToken: editToken,
+      );
+      _websiteController.text = publicLink;
+      _coverUrl = coverUrl;
+      _coverBytes = null;
+      _coverFileName = null;
+    });
+    return true;
+  }
+
   Future<void> _withdrawPublicationConsent() async {
     final info = _publishedInfo;
     if (info == null || _isWithdrawingConsent) return;
@@ -1639,19 +1732,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       focusNode: focusNode,
       onChanged: (value) {
         if (errorText != null || validateWhatsapp) {
-          setState(() {
-            _nameError = null;
-            _addressError = null;
-            if (validateWhatsapp) {
-              _whatsappError =
-                  value.trim().isEmpty ||
-                          WhatsAppLinkHelper.isValidTurkeyMobile(value)
-                      ? null
-                      : WhatsAppLinkHelper.invalidNumberMessage;
-            } else {
-              _whatsappError = null;
-            }
-          });
+          _resetFieldErrorsOnInput(value, whatsapp: validateWhatsapp);
         }
       },
     );
