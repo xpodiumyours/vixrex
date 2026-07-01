@@ -5,21 +5,19 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/business_category_config.dart';
-import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
 import 'package:vitrinx/services/seo_helper.dart';
-import 'package:vitrinx/widgets/vitrin_product_card.dart';
 import 'package:vitrinx/models/vitrin_gallery_preview_item.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_desktop_layout.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_mobile_layout.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_booking_cta.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_qr.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_footer.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_products_catalog.dart';
 
 class VitrinView extends StatelessWidget {
   final StoreData storeData;
@@ -77,7 +75,14 @@ class VitrinView extends StatelessWidget {
                           isEmbedded: isEmbedded,
                           publicMode: publicMode,
                         ),
-                        productsCatalog: _buildProductsCatalogBlock(preset, radius),
+                        productsCatalog: VitrinProductsCatalog(
+                          storeData: storeData,
+                          preset: preset,
+                          radius: radius,
+                          isEmbedded: isEmbedded,
+                          publicMode: publicMode,
+                          onOpenExternalUrl: _openExternalUrl,
+                        ),
                         profileTools: _buildCompactProfileTools(context, preset),
                         aboutCard: _buildAboutCard(preset),
                         linkHub: _buildModernLinkHub(context, preset, radius),
@@ -171,7 +176,14 @@ class VitrinView extends StatelessWidget {
       premiumActionButtons: _buildPremiumActionButtons(context, preset, radius),
       bioOrAbout: bioOrAbout,
       shelfImageCard: _buildShelfImageCard(preset, galleryItems),
-      productsCatalog: _buildProductsCatalogBlock(preset, radius),
+      productsCatalog: VitrinProductsCatalog(
+        storeData: storeData,
+        preset: preset,
+        radius: radius,
+        isEmbedded: isEmbedded,
+        publicMode: publicMode,
+        onOpenExternalUrl: _openExternalUrl,
+      ),
       profileTools: _buildCompactProfileTools(context, preset),
       linkHub: _buildModernLinkHub(context, preset, radius),
       premiumIdentityCard: _buildPremiumIdentityCard(context, preset, radius),
@@ -213,7 +225,14 @@ class VitrinView extends StatelessWidget {
         isEmbedded: isEmbedded,
         publicMode: publicMode,
       ),
-      productsCatalog: _buildProductsCatalogBlock(preset, radius),
+      productsCatalog: VitrinProductsCatalog(
+        storeData: storeData,
+        preset: preset,
+        radius: radius,
+        isEmbedded: isEmbedded,
+        publicMode: publicMode,
+        onOpenExternalUrl: _openExternalUrl,
+      ),
       aboutCard: _buildAboutCard(preset),
       profileTools: _buildCompactProfileTools(context, preset),
       qrCard: publicLink != null ? VitrinQrCard(url: publicLink!, preset: preset, isEmbedded: isEmbedded) : const SizedBox(),
@@ -1170,331 +1189,6 @@ class VitrinView extends StatelessWidget {
               () => _openExternalUrl(context, _buildMapsUrl(storeData.address)),
         ),
     ];
-  }
-
-  Widget _buildProductsCatalogBlock(VitrinThemePreset preset, double radius) {
-    final isCompact = isEmbedded;
-    final allProducts =
-        storeData.products.where((product) => product.isVisible).toList();
-    var selectedCategory = '';
-    var visibleLimit = 12;
-
-    return StatefulBuilder(
-      builder: (context, setCatalogState) {
-        final categories = <String>[];
-        for (final product in allProducts) {
-          final label = product.category.trim();
-          if (label.isNotEmpty &&
-              !categories.any(
-                (item) => item.toLowerCase() == label.toLowerCase(),
-              )) {
-            categories.add(label);
-          }
-        }
-        final filteredProducts =
-            selectedCategory.isEmpty
-                ? allProducts
-                : allProducts
-                    .where(
-                      (product) =>
-                          product.category.trim().toLowerCase() ==
-                          selectedCategory.toLowerCase(),
-                    )
-                    .toList();
-        final visibleProducts = filteredProducts.take(visibleLimit).toList();
-
-        return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(isCompact ? 14 : 18),
-        decoration: BoxDecoration(
-          color: preset.surface.withValues(alpha: preset.isDark ? 0.9 : 0.98),
-          borderRadius: BorderRadius.circular(isCompact ? 16 : 22),
-          border: Border.all(
-            color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
-            width: isCompact ? 1 : 1.3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(
-                alpha: preset.isDark ? 0.12 : 0.045,
-              ),
-              blurRadius: isCompact ? 12 : 24,
-              offset: Offset(0, isCompact ? 3 : 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.shopping_bag_rounded,
-                  color: preset.accent,
-                  size: isCompact ? 18 : 22,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Ürünler',
-                    style: TextStyle(
-                      color: preset.textPrimary,
-                      fontSize: isCompact ? 14 : 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                if (filteredProducts.length > visibleProducts.length)
-                  Text(
-                    '+${filteredProducts.length - visibleProducts.length}',
-                    style: TextStyle(
-                      color: preset.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            if (categories.length > 1) ...[
-              SizedBox(
-                height: 38,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Tümü'),
-                      selected: selectedCategory.isEmpty,
-                      onSelected:
-                          (_) => setCatalogState(() {
-                            selectedCategory = '';
-                            visibleLimit = 12;
-                          }),
-                    ),
-                    const SizedBox(width: 8),
-                    ...categories.map(
-                      (category) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(category),
-                          selected: selectedCategory == category,
-                          onSelected:
-                              (_) => setCatalogState(() {
-                                selectedCategory = category;
-                                visibleLimit = 12;
-                              }),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            if (allProducts.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 32,
-                  horizontal: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: preset.surfaceSoft.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: preset.border.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.shopping_bag_outlined,
-                      color: preset.accent,
-                      size: 32,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Ürünler yakında',
-                      style: TextStyle(
-                        color: preset.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Mağaza sahibi henüz ürün eklemedi.',
-                      style: TextStyle(
-                        color: preset.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth >= 620;
-                  if (!isWide) {
-                    return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: visibleProducts.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                              childAspectRatio: 0.64,
-                            ),
-                        itemBuilder: (context, index) {
-                          final product = visibleProducts[index];
-                          return VitrinProductCard(
-                              name: product.name,
-                              price: product.price,
-                              category: product.category,
-                              description: product.description,
-                              imagePath: product.primaryImageUrl,
-                              stockStatus: product.stockStatus,
-                              onTap:
-                                  publicMode
-                                      ? () => _openProductDetail(
-                                        context,
-                                        product,
-                                        allProducts.indexOf(product),
-                                      )
-                                      : null,
-                              onWhatsAppTap: () {
-                                if (!publicMode) {
-                                  ScaffoldMessenger.of(
-                                    context,
-                                  ).clearSnackBars();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Müşteriler bu karta bastığında '${product.name}' hakkında WhatsApp'tan bilgi isteyebilir.",
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final url = WhatsAppLinkHelper.buildInquiryUrl(
-                                  number: storeData.whatsapp,
-                                  storeName: storeData.name,
-                                  itemTitle: product.name,
-                                );
-                                if (url != null) {
-                                  unawaited(_openExternalUrl(context, url));
-                                }
-                              },
-                            );
-                        },
-                    );
-                  }
-
-                  final columns = constraints.maxWidth >= 1000 ? 4 : 3;
-                  final cardWidth =
-                      (constraints.maxWidth - (12 * (columns - 1))) / columns;
-                  return Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children:
-                        visibleProducts
-                            .map(
-                              (product) => SizedBox(
-                                width: cardWidth,
-                                height: 250,
-                                child: VitrinProductCard(
-                                  name: product.name,
-                                  price: product.price,
-                                  category: product.category,
-                                  description: product.description,
-                                  imagePath: product.primaryImageUrl,
-                                  stockStatus: product.stockStatus,
-                                  onTap:
-                                      publicMode
-                                          ? () => _openProductDetail(
-                                            context,
-                                            product,
-                                            allProducts.indexOf(product),
-                                          )
-                                          : null,
-                                  onWhatsAppTap: () {
-                                    if (!publicMode) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).clearSnackBars();
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            "Müşteriler bu karta bastığında '${product.name}' hakkında WhatsApp'tan bilgi isteyebilir.",
-                                          ),
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    final url =
-                                        WhatsAppLinkHelper.buildInquiryUrl(
-                                          number: storeData.whatsapp,
-                                          storeName: storeData.name,
-                                          itemTitle: product.name,
-                                        );
-                                    if (url != null) {
-                                      unawaited(_openExternalUrl(context, url));
-                                    }
-                                  },
-                                ),
-                              ),
-                            )
-                            .toList(),
-                  );
-                },
-              ),
-            if (filteredProducts.length > visibleProducts.length) ...[
-              const SizedBox(height: 14),
-              Center(
-                child: OutlinedButton.icon(
-                  onPressed:
-                      () => setCatalogState(() => visibleLimit += 12),
-                  icon: const Icon(Icons.expand_more_rounded),
-                  label: const Text('Daha fazla göster'),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-        );
-      },
-    );
-  }
-
-  void _openProductDetail(
-    BuildContext context,
-    Product product,
-    int index,
-  ) {
-    final builder = const StorePublishPayloadBuilder();
-    final explicit = product.slug?.trim() ?? '';
-    final productSlug =
-        explicit.isNotEmpty
-            ? builder.generateSlug(explicit)
-            : '${builder.generateSlug(product.name)}-${builder.generateSlug(product.id).replaceAll('magazaniz', '${index + 1}')}';
-    AppRouter.navigateToPublicProduct(
-      context,
-      storeSlug: storeData.slug,
-      productSlug: productSlug,
-    );
   }
 
   Widget _buildShelfImageCard(
