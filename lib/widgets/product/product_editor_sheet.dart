@@ -355,78 +355,9 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
             separatorBuilder: (_, __) => const SizedBox(width: 10),
             itemBuilder: (context, index) {
               if (index == _images.length) {
-                return InkWell(
-                  onTap: _isSaving ? null : _pickImages,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    width: 96,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceSoft,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_photo_alternate_outlined),
-                        SizedBox(height: 6),
-                        Text('Görsel ekle', style: TextStyle(fontSize: 11)),
-                      ],
-                    ),
-                  ),
-                );
+                return _buildAddImageTile();
               }
-              final image = _images[index];
-              return SizedBox(
-                width: 96,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child:
-                            image.bytes != null
-                                ? Image.memory(image.bytes!, fit: BoxFit.cover)
-                                : Image.network(
-                                  image.url,
-                                  fit: BoxFit.cover,
-                                  errorBuilder:
-                                      (_, __, ___) => Container(
-                                        color: AppColors.surfaceSoft,
-                                        child: const Icon(
-                                          Icons.broken_image_outlined,
-                                        ),
-                                      ),
-                                ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 2,
-                      right: 2,
-                      child: IconButton.filled(
-                        visualDensity: VisualDensity.compact,
-                        onPressed:
-                            _isSaving
-                                ? null
-                                : () => setState(() => _images.removeAt(index)),
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                      ),
-                    ),
-                    Positioned(
-                      left: 2,
-                      right: 2,
-                      bottom: 2,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _moveButton(index, -1, Icons.chevron_left_rounded),
-                          _moveButton(index, 1, Icons.chevron_right_rounded),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
+              return _buildImageTile(index);
             },
           ),
         ),
@@ -436,6 +367,81 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
           style: TextStyle(color: AppColors.mutedText, fontSize: 11),
         ),
       ],
+    );
+  }
+
+  Widget _buildAddImageTile() {
+    return InkWell(
+      onTap: _isSaving ? null : _pickImages,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 96,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceSoft,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_photo_alternate_outlined),
+            SizedBox(height: 6),
+            Text('Görsel ekle', style: TextStyle(fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageTile(int index) {
+    final image = _images[index];
+    return SizedBox(
+      width: 96,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child:
+                  image.bytes != null
+                      ? Image.memory(image.bytes!, fit: BoxFit.cover)
+                      : Image.network(
+                        image.url,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (_, __, ___) => Container(
+                              color: AppColors.surfaceSoft,
+                              child: const Icon(Icons.broken_image_outlined),
+                            ),
+                      ),
+            ),
+          ),
+          Positioned(
+            top: 2,
+            right: 2,
+            child: IconButton.filled(
+              visualDensity: VisualDensity.compact,
+              onPressed:
+                  _isSaving
+                      ? null
+                      : () => setState(() => _images.removeAt(index)),
+              icon: const Icon(Icons.close_rounded, size: 16),
+            ),
+          ),
+          Positioned(
+            left: 2,
+            right: 2,
+            bottom: 2,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _moveButton(index, -1, Icons.chevron_left_rounded),
+                _moveButton(index, 1, Icons.chevron_right_rounded),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

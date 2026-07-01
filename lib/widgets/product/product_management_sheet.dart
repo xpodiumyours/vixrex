@@ -213,6 +213,15 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     await _persist();
   }
 
+  Future<void> _reorderProducts(int oldIndex, int newIndex) async {
+    setState(() {
+      if (newIndex > oldIndex) newIndex--;
+      final item = _products.removeAt(oldIndex);
+      _products.insert(newIndex, item);
+    });
+    await _persist();
+  }
+
   @override
   Widget build(BuildContext context) {
     final filtered = _filteredProducts;
@@ -225,48 +234,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Row(
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ürün Yönetimi',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.darkText,
-                        ),
-                      ),
-                      Text(
-                        'Ürünlerini ve kategorilerini tek yerden yönet.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.mutedText,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _openCategories,
-                  icon: const Icon(Icons.category_outlined, size: 18),
-                  label: const Text('Kategoriler'),
-                ),
-              ],
-            ),
+            _buildSheetHandle(),
+            _buildHeader(),
             const SizedBox(height: 14),
             XrexCatalogAssistantSection(
               onActionTap:
@@ -275,91 +244,141 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
                   ),
             ),
             const SizedBox(height: 14),
-            TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Ürün ara...',
-                prefixIcon: Icon(Icons.search_rounded),
-              ),
-            ),
+            _buildFilters(),
             const SizedBox(height: 10),
-            SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  ChoiceChip(
-                    label: const Text('Tümü'),
-                    selected: _selectedCategoryId.isEmpty,
-                    onSelected: (_) => setState(() => _selectedCategoryId = ''),
-                  ),
-                  const SizedBox(width: 8),
-                  ..._categories.map(
-                    (category) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(category.name),
-                        selected: _selectedCategoryId == category.id,
-                        onSelected:
-                            (_) => setState(
-                              () => _selectedCategoryId = category.id,
-                            ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child:
-                  _products.isEmpty
-                      ? _buildEmptyState()
-                      : filtered.isEmpty
-                      ? const Center(
-                        child: Text('Aramana uygun ürün bulunamadı.'),
-                      )
-                      : canReorder
-                      ? ReorderableListView.builder(
-                        itemCount: _products.length,
-                        onReorder: (oldIndex, newIndex) async {
-                          setState(() {
-                            if (newIndex > oldIndex) newIndex--;
-                            final item = _products.removeAt(oldIndex);
-                            _products.insert(newIndex, item);
-                          });
-                          await _persist();
-                        },
-                        itemBuilder:
-                            (_, index) => Padding(
-                              key: ValueKey(_products[index].id),
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _buildProductItem(_products[index]),
-                            ),
-                      )
-                      : ListView.separated(
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
-                        itemBuilder:
-                            (_, index) => _buildProductItem(filtered[index]),
-                      ),
-            ),
+            Expanded(child: _buildProductList(filtered, canReorder)),
             const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: () => _openEditor(),
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text(
-                'Yeni Ürün Ekle',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
-                minimumSize: const Size.fromHeight(50),
-              ),
-            ),
+            _buildAddProductButton(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSheetHandle() {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: AppColors.border,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Ürün Yönetimi',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.darkText,
+                ),
+              ),
+              Text(
+                'Ürünlerini ve kategorilerini tek yerden yönet.',
+                style: TextStyle(fontSize: 12, color: AppColors.mutedText),
+              ),
+            ],
+          ),
+        ),
+        TextButton.icon(
+          onPressed: _openCategories,
+          icon: const Icon(Icons.category_outlined, size: 18),
+          label: const Text('Kategoriler'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilters() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Ürün ara...',
+            prefixIcon: Icon(Icons.search_rounded),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 40,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              ChoiceChip(
+                label: const Text('Tümü'),
+                selected: _selectedCategoryId.isEmpty,
+                onSelected: (_) => setState(() => _selectedCategoryId = ''),
+              ),
+              const SizedBox(width: 8),
+              ..._categories.map(
+                (category) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(category.name),
+                    selected: _selectedCategoryId == category.id,
+                    onSelected:
+                        (_) =>
+                            setState(() => _selectedCategoryId = category.id),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProductList(List<Product> filtered, bool canReorder) {
+    if (_products.isEmpty) return _buildEmptyState();
+    if (filtered.isEmpty) {
+      return const Center(child: Text('Aramana uygun ürün bulunamadı.'));
+    }
+    if (canReorder) {
+      return ReorderableListView.builder(
+        itemCount: _products.length,
+        onReorder: _reorderProducts,
+        itemBuilder:
+            (_, index) => Padding(
+              key: ValueKey(_products[index].id),
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildProductItem(_products[index]),
+            ),
+      );
+    }
+    return ListView.separated(
+      itemCount: filtered.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (_, index) => _buildProductItem(filtered[index]),
+    );
+  }
+
+  Widget _buildAddProductButton() {
+    return ElevatedButton.icon(
+      onPressed: () => _openEditor(),
+      icon: const Icon(Icons.add_rounded, size: 18),
+      label: const Text(
+        'Yeni Ürün Ekle',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.black,
+        minimumSize: const Size.fromHeight(50),
       ),
     );
   }
