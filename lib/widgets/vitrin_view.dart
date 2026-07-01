@@ -20,6 +20,7 @@ import 'package:vitrinx/widgets/vitrin_view/vitrin_footer.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_products_catalog.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_shelf_gallery.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_profile_tools.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_premium_identity_card.dart';
 
 class VitrinView extends StatelessWidget {
   final StoreData storeData;
@@ -208,7 +209,13 @@ class VitrinView extends StatelessWidget {
         onNormalizeExternalUrl: _normalizeExternalUrl,
       ),
       linkHub: _buildModernLinkHub(context, preset, radius),
-      premiumIdentityCard: _buildPremiumIdentityCard(context, preset, radius),
+      premiumIdentityCard: VitrinPremiumIdentityCard(
+        storeData: storeData,
+        preset: preset,
+        radius: radius,
+        isEmbedded: isEmbedded,
+        onSharePressed: publicLink != null ? () => _shareVitrin(context, publicLink!, preset) : null,
+      ),
       qrCard: publicLink != null ? VitrinQrCard(url: publicLink!, preset: preset, isEmbedded: isEmbedded) : const SizedBox(),
       footer: VitrinFooter(storeData: storeData, preset: preset, publicMode: publicMode),
       isEmbedded: isEmbedded,
@@ -1556,111 +1563,6 @@ class VitrinView extends StatelessWidget {
       return Icons.email_rounded;
     }
     return Icons.link_rounded;
-  }
-
-  Widget _buildPremiumIdentityCard(
-    BuildContext context,
-    VitrinThemePreset preset,
-    double radius,
-  ) {
-    final isCompact = isEmbedded;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(isCompact ? 18 : 28),
-        decoration: BoxDecoration(
-          color: preset.qrBackground,
-          borderRadius: BorderRadius.circular(isCompact ? 20 : radius),
-          border: Border.all(
-            color: preset.qrForeground.withValues(alpha: 0.14),
-            width: isCompact ? 1.5 : 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: isCompact ? 24 : 40,
-              offset: Offset(0, isCompact ? 8 : 15),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(isCompact ? 10 : 14),
-                  decoration: BoxDecoration(
-                    color: preset.qrForeground.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-                  ),
-                  child: Icon(
-                    Icons.qr_code_2_rounded,
-                    size: isCompact ? 34 : 54,
-                    color: preset.qrForeground,
-                  ),
-                ),
-                SizedBox(width: isCompact ? 14 : 24),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        storeData.name.isEmpty
-                            ? 'VitrinX Kart'
-                            : storeData.name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: isCompact ? 16 : 20,
-                          color: preset.qrForeground,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                      SizedBox(height: isCompact ? 4 : 6),
-                      Text(
-                        'TÜM BİLGİLERİM TEK QR İLE BURADA',
-                        style: TextStyle(
-                          fontSize: isCompact ? 8 : 10,
-                          color: preset.qrForeground.withValues(alpha: 0.72),
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: isCompact ? 0.8 : 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: isCompact ? 18 : 28),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.share_rounded, size: isCompact ? 16 : 20),
-                label: Text(
-                  'PROFİLİ PAYLAŞ',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: isCompact ? 11 : 13,
-                    letterSpacing: isCompact ? 1 : 1.5,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: preset.accent,
-                  foregroundColor: preset.buttonText,
-                  padding: EdgeInsets.symmetric(vertical: isCompact ? 12 : 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _openExternalUrl(BuildContext context, String? url) async {
