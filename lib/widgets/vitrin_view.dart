@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/business_category_config.dart';
@@ -13,10 +12,14 @@ import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 import 'package:vitrinx/widgets/status_chip.dart';
-import 'package:vitrinx/widgets/booking_wizard_sheet.dart';
 import 'package:vitrinx/services/seo_helper.dart';
 import 'package:vitrinx/widgets/vitrin_product_card.dart';
 import 'package:vitrinx/models/vitrin_gallery_preview_item.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_desktop_layout.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_mobile_layout.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_booking_cta.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_qr.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_footer.dart';
 
 class VitrinView extends StatelessWidget {
   final StoreData storeData;
@@ -60,14 +63,46 @@ class VitrinView extends StatelessWidget {
                       radius,
                       galleryItems,
                     )
-                    : Column(
-                      children: _buildPublicMobileChildren(
-                        context,
-                        preset,
-                        radius,
-                        galleryItems,
-                      ),
-                    );
+                    : VitrinMobileLayout(
+                        hero: _buildPublicProfileHero(
+                          context,
+                          preset,
+                          radius,
+                          galleryItems,
+                          desktop: false,
+                        ),
+                        bookingCTA: VitrinBookingCTA(
+                          storeData: storeData,
+                          preset: preset,
+                          isEmbedded: isEmbedded,
+                          publicMode: publicMode,
+                        ),
+                        productsCatalog: _buildProductsCatalogBlock(preset, radius),
+                        profileTools: _buildCompactProfileTools(context, preset),
+                        aboutCard: _buildAboutCard(preset),
+                        linkHub: _buildModernLinkHub(context, preset, radius),
+                        shelfImageCard: _buildShelfImageCard(preset, galleryItems),
+                        qrCard: publicLink != null
+                            ? VitrinQrCard(
+                              url: publicLink!,
+                              preset: preset,
+                              isEmbedded: isEmbedded,
+                            )
+                            : const SizedBox(),
+                        footer: VitrinFooter(
+                          storeData: storeData,
+                          preset: preset,
+                          publicMode: publicMode,
+                        ),
+                        isBookingEnabled: storeData.bookingSettings?.isEnabled == true,
+                        isStore: storeData.isStore,
+                        hasAboutText: _aboutText().isNotEmpty,
+                        hasMarketplaceLinks: storeData.marketplaceLinks.any(
+                          (link) => link.url.trim().isNotEmpty,
+                        ),
+                        hasGalleryMedia: galleryItems.isNotEmpty,
+                        hasQrCard: publicLink?.isNotEmpty ?? false,
+                      );
               },
             )
             : _buildDefaultScrollableContent(
@@ -101,123 +136,56 @@ class VitrinView extends StatelessWidget {
     double radius,
     List<VitrinGalleryPreviewItem> galleryItems,
   ) {
-    final children = _buildDefaultChildren(
-      context,
-      preset,
-      radius,
-      galleryItems,
-    );
-
-    return isEmbedded
-        ? ListView(
-          padding: EdgeInsets.zero,
-          physics: const ClampingScrollPhysics(),
-          children: children,
-        )
-        : SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(children: children),
-        );
-  }
-
-  List<Widget> _buildDefaultChildren(
-    BuildContext context,
-    VitrinThemePreset preset,
-    double radius,
-    List<VitrinGalleryPreviewItem> galleryItems,
-  ) {
     final hasGalleryMedia = galleryItems.isNotEmpty;
+    final hasBio = !publicMode;
+    final hasAbout = publicMode && _aboutText().isNotEmpty;
 
-    return [
-      _buildModernHeader(context, preset, radius, galleryItems),
-      SizedBox(height: isEmbedded ? AppColors.spacing16 : AppColors.spacing24),
-      _buildStoreIdentityBlock(preset),
-      SizedBox(height: isEmbedded ? AppColors.spacing16 : AppColors.spacing30),
-      _buildBookingCTAButton(context, preset, radius),
-      if (storeData.bookingSettings?.isEnabled == true)
-        SizedBox(height: isEmbedded ? 16 : 30),
-      if (_hasVisibleActions()) ...[
-        _buildPremiumActionButtons(context, preset, radius),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ],
-      if (!publicMode) ...[
-        _buildProfessionalBio(preset),
-        SizedBox(height: isEmbedded ? 16 : 48),
-      ] else if (_aboutText().isNotEmpty) ...[
-        _buildAboutCard(preset),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ],
-      if (hasGalleryMedia) ...[
-        _buildShelfImageCard(preset, galleryItems),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ],
-      if (storeData.isStore) ...[
-        _buildProductsCatalogBlock(preset, radius),
-        SizedBox(height: isEmbedded ? 16 : 30),
-      ],
-      if (publicMode) ...[
-        _buildCompactProfileTools(context, preset),
-        SizedBox(height: isEmbedded ? 16 : 24),
-      ],
-      _buildModernLinkHub(context, preset, radius),
-      SizedBox(height: isEmbedded ? 18 : 64),
-      if (!publicMode) ...[
-        _buildPremiumIdentityCard(context, preset, radius),
-        SizedBox(height: isEmbedded ? 18 : 64),
-      ],
-      if (publicMode && (publicLink?.isNotEmpty ?? false)) ...[
-        _buildPublicQrCard(publicLink!, preset),
-        SizedBox(height: isEmbedded ? 18 : 24),
-      ],
-      _buildModernFooter(preset),
-      SizedBox(height: isEmbedded ? 36 : 120),
-    ];
-  }
+    Widget bioOrAbout;
+    if (hasBio) {
+      bioOrAbout = Column(
+        children: [
+          _buildProfessionalBio(preset),
+          SizedBox(height: isEmbedded ? 16 : 48),
+        ],
+      );
+    } else if (hasAbout) {
+      bioOrAbout = Column(
+        children: [
+          _buildAboutCard(preset),
+          SizedBox(height: isEmbedded ? 16 : 30),
+        ],
+      );
+    } else {
+      bioOrAbout = const SizedBox();
+    }
 
-  List<Widget> _buildPublicMobileChildren(
-    BuildContext context,
-    VitrinThemePreset preset,
-    double radius,
-    List<VitrinGalleryPreviewItem> galleryItems,
-  ) {
-    final hasGalleryMedia = galleryItems.isNotEmpty;
-
-    return [
-      _buildPublicProfileHero(
-        context,
-        preset,
-        radius,
-        galleryItems,
-        desktop: false,
+    return VitrinDefaultLayout(
+      header: _buildModernHeader(context, preset, radius, galleryItems),
+      identityBlock: _buildStoreIdentityBlock(preset),
+      bookingCTA: VitrinBookingCTA(
+        storeData: storeData,
+        preset: preset,
+        isEmbedded: isEmbedded,
+        publicMode: publicMode,
       ),
-      const SizedBox(height: 14),
-      _buildBookingCTAButton(context, preset, radius),
-      if (storeData.bookingSettings?.isEnabled == true)
-        const SizedBox(height: 16),
-      if (storeData.isStore) ...[
-        _buildProductsCatalogBlock(preset, radius),
-        const SizedBox(height: 14),
-      ],
-      _buildCompactProfileTools(context, preset),
-      const SizedBox(height: 14),
-      if (_aboutText().isNotEmpty) ...[
-        _buildAboutCard(preset),
-        const SizedBox(height: 18),
-      ],
-      _buildModernLinkHub(context, preset, radius),
-      if (storeData.marketplaceLinks.any((link) => link.url.trim().isNotEmpty))
-        const SizedBox(height: 18),
-      if (hasGalleryMedia) ...[
-        _buildShelfImageCard(preset, galleryItems),
-        const SizedBox(height: 18),
-      ],
-      if (publicLink?.isNotEmpty ?? false) ...[
-        _buildPublicQrCard(publicLink!, preset),
-        const SizedBox(height: 22),
-      ],
-      _buildModernFooter(preset),
-      const SizedBox(height: 48),
-    ];
+      premiumActionButtons: _buildPremiumActionButtons(context, preset, radius),
+      bioOrAbout: bioOrAbout,
+      shelfImageCard: _buildShelfImageCard(preset, galleryItems),
+      productsCatalog: _buildProductsCatalogBlock(preset, radius),
+      profileTools: _buildCompactProfileTools(context, preset),
+      linkHub: _buildModernLinkHub(context, preset, radius),
+      premiumIdentityCard: _buildPremiumIdentityCard(context, preset, radius),
+      qrCard: publicLink != null ? VitrinQrCard(url: publicLink!, preset: preset, isEmbedded: isEmbedded) : const SizedBox(),
+      footer: VitrinFooter(storeData: storeData, preset: preset, publicMode: publicMode),
+      isEmbedded: isEmbedded,
+      isBookingEnabled: storeData.bookingSettings?.isEnabled == true,
+      hasVisibleActions: _hasVisibleActions(),
+      hasGalleryMedia: hasGalleryMedia,
+      isStore: storeData.isStore,
+      publicMode: publicMode,
+      hasQrCard: publicMode && (publicLink?.isNotEmpty ?? false),
+      showPremiumIdentityCard: !publicMode,
+    );
   }
 
   Widget _buildPublicDesktopLayout(
@@ -231,67 +199,33 @@ class VitrinView extends StatelessWidget {
       (link) => link.url.trim().isNotEmpty,
     );
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: _buildPublicProfileHero(
-            context,
-            preset,
-            radius,
-            galleryItems,
-            desktop: true,
-          ),
-        ),
-        const SizedBox(height: 22),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 7,
-                child: Column(
-                  children: [
-                    _buildBookingCTAButton(context, preset, radius),
-                    if (storeData.bookingSettings?.isEnabled == true)
-                      const SizedBox(height: 18),
-                    if (storeData.isStore) ...[
-                      _buildProductsCatalogBlock(preset, radius),
-                      const SizedBox(height: 22),
-                    ],
-                    if (_aboutText().isNotEmpty) _buildAboutCard(preset),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              SizedBox(
-                width: 360,
-                child: Column(
-                  children: [
-                    _buildCompactProfileTools(context, preset),
-                    if (publicLink?.isNotEmpty ?? false) ...[
-                      const SizedBox(height: 16),
-                      _buildPublicQrCard(publicLink!, preset),
-                    ],
-                    if (hasSideLinks) ...[
-                      const SizedBox(height: 16),
-                      _buildModernLinkHub(context, preset, radius),
-                    ],
-                    if (hasGalleryMedia) ...[
-                      const SizedBox(height: 16),
-                      _buildShelfImageCard(preset, galleryItems),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 30),
-        _buildModernFooter(preset),
-        const SizedBox(height: 56),
-      ],
+    return VitrinDesktopLayout(
+      hero: _buildPublicProfileHero(
+        context,
+        preset,
+        radius,
+        galleryItems,
+        desktop: true,
+      ),
+      bookingCTA: VitrinBookingCTA(
+        storeData: storeData,
+        preset: preset,
+        isEmbedded: isEmbedded,
+        publicMode: publicMode,
+      ),
+      productsCatalog: _buildProductsCatalogBlock(preset, radius),
+      aboutCard: _buildAboutCard(preset),
+      profileTools: _buildCompactProfileTools(context, preset),
+      qrCard: publicLink != null ? VitrinQrCard(url: publicLink!, preset: preset, isEmbedded: isEmbedded) : const SizedBox(),
+      linkHub: _buildModernLinkHub(context, preset, radius),
+      shelfImageCard: _buildShelfImageCard(preset, galleryItems),
+      footer: VitrinFooter(storeData: storeData, preset: preset, publicMode: publicMode),
+      hasSideLinks: hasSideLinks,
+      hasGalleryMedia: hasGalleryMedia,
+      isBookingEnabled: storeData.bookingSettings?.isEnabled == true,
+      isStore: storeData.isStore,
+      hasAboutText: _aboutText().isNotEmpty,
+      hasQrCard: publicLink?.isNotEmpty ?? false,
     );
   }
 
@@ -993,65 +927,6 @@ class VitrinView extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildBookingCTAButton(
-    BuildContext context,
-    VitrinThemePreset preset,
-    double radius,
-  ) {
-    final hasBooking = storeData.bookingSettings?.isEnabled == true;
-    if (!hasBooking) return const SizedBox();
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isEmbedded ? 18.0 : 24.0),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            if (!publicMode) {
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Müşteriler bu butona basarak randevu alabilirler.',
-                  ),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-              return;
-            }
-            _openBookingWizard(context);
-          },
-          icon: const Icon(Icons.calendar_month_rounded, size: 20),
-          label: const Text(
-            'Randevu Al',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: preset.accent,
-            foregroundColor: preset.buttonText,
-            elevation: 0.5,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openBookingWizard(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => BookingWizardSheet(storeData: storeData),
     );
   }
 
@@ -2458,122 +2333,6 @@ class VitrinView extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPublicQrCard(String url, VitrinThemePreset preset) {
-    final isCompact = isEmbedded;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(
-          horizontal: isCompact ? 18 : 22,
-          vertical: isCompact ? 18 : 22,
-        ),
-        decoration: BoxDecoration(
-          color: preset.qrBackground,
-          borderRadius: BorderRadius.circular(isCompact ? 18 : 24),
-          border: Border.all(
-            color: preset.qrForeground.withValues(alpha: 0.12),
-            width: isCompact ? 1 : 1.4,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.055),
-              blurRadius: isCompact ? 18 : 28,
-              offset: Offset(0, isCompact ? 5 : 10),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Text(
-              'Vitrin QR kodu',
-              style: TextStyle(
-                color: preset.qrForeground,
-                fontSize: isCompact ? 14 : 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0,
-              ),
-            ),
-            SizedBox(height: isCompact ? 4 : 6),
-            Text(
-              'Müşteriler bu kodu okutarak vitrininize ulaşabilir.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: preset.qrForeground.withValues(alpha: 0.62),
-                fontSize: isCompact ? 11 : 12,
-                fontWeight: FontWeight.w500,
-                height: 1.4,
-              ),
-            ),
-            SizedBox(height: isCompact ? 14 : 18),
-            Container(
-              padding: EdgeInsets.all(isCompact ? 10 : 12),
-              decoration: BoxDecoration(
-                color: preset.qrBackground,
-                borderRadius: BorderRadius.circular(isCompact ? 16 : 18),
-                border: Border.all(
-                  color: preset.qrForeground.withValues(alpha: 0.1),
-                ),
-              ),
-              child: QrImageView(
-                data: url,
-                version: QrVersions.auto,
-                size: isCompact ? 132 : 156,
-                backgroundColor: preset.qrBackground,
-                eyeStyle: QrEyeStyle(
-                  eyeShape: QrEyeShape.square,
-                  color: preset.qrForeground,
-                ),
-                dataModuleStyle: QrDataModuleStyle(
-                  dataModuleShape: QrDataModuleShape.square,
-                  color: preset.qrForeground,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModernFooter(VitrinThemePreset preset) {
-    return Column(
-      children: [
-        Text(
-          publicMode
-              ? 'Bu vitrin VitrinX ile oluşturuldu'
-              : 'vitrinx.app/${storeData.name.toLowerCase().replaceAll(' ', '-')}',
-          style: TextStyle(
-            fontSize: publicMode ? 12 : 14,
-            fontWeight: publicMode ? FontWeight.w700 : FontWeight.w800,
-            color: preset.textSecondary.withValues(
-              alpha: preset.isDark ? 0.86 : 0.78,
-            ),
-            letterSpacing: 0,
-          ),
-        ),
-        SizedBox(height: publicMode ? 26 : 48),
-        Container(
-          height: 1,
-          width: publicMode ? 34 : 50,
-          color: preset.border.withValues(alpha: publicMode ? 0.7 : 1),
-        ),
-        SizedBox(height: publicMode ? 18 : 24),
-        if (!publicMode)
-          Text(
-            'BU BİR VITRINX DİJİTAL KİMLİĞİDİR',
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-              color: preset.textSecondary.withValues(alpha: 0.72),
-              letterSpacing: 4,
-            ),
-          ),
-      ],
     );
   }
 
