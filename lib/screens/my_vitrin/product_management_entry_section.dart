@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/widgets/product_management_entry_card.dart';
+import 'package:vitrinx/widgets/product/product_management_entry_card.dart';
 
 class ProductManagementEntrySection extends StatelessWidget {
   final int productCount;
