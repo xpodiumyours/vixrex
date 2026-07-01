@@ -15,6 +15,7 @@ import 'package:vitrinx/models/legal_document.dart';
 import 'package:vitrinx/screens/legal_screen.dart';
 import 'package:vitrinx/screens/my_vitrin/business_info_form_section.dart';
 import 'package:vitrinx/screens/my_vitrin/cover_gallery_section.dart';
+import 'package:vitrinx/screens/my_vitrin/product_management_entry_section.dart';
 import 'package:vitrinx/services/legal_document_service.dart';
 import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
@@ -1426,7 +1427,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   keyboardType: TextInputType.url,
                 ),
               ),
-              ProductManagementEntryCard(
+              ProductManagementEntrySection(
                 productCount: _data.products.length,
                 onTap: _showProductManagementPlaceholder,
               ),
