@@ -40,6 +40,7 @@ import 'package:vitrinx/widgets/editor/marketplace_links_section.dart';
 import 'package:vitrinx/widgets/editor/publish_actions_section.dart';
 import 'package:vitrinx/widgets/editor/cover_picker_section.dart';
 import 'package:vitrinx/widgets/editor/common_form_fields.dart';
+import 'package:vitrinx/screens/my_vitrin/sections/vitrin_form_section.dart';
 
 // ─── Main Widget ──────────────────────────────────────────────────────────
 class MyVitrinScreen extends StatefulWidget {
@@ -1166,283 +1167,133 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 8),
-
-        // ── Header ──────────────────────────────────────────────────────
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                hasPublished ? 'VitrinX Düzenle' : 'VitrinX Oluştur',
-                style: const TextStyle(
-                  color: darkText,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  height: 1.15,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: primaryColor,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.storefront_rounded, color: Colors.black, size: 13),
-                  SizedBox(width: 4),
-                  Text(
-                    'VitrinX ile',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          hasPublished
-              ? 'Düzenledikten sonra kaydet, linkin ve QR kodun güncellenir.'
-              : 'Ad, WhatsApp ve konumunu gir — vitrin hazır. Diğer detayları sonra ekleyebilirsin.',
-          style: const TextStyle(
-            color: mutedText,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // ── Main Form Card ───────────────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: _cardDecoration(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Kapak Fotoğrafı ──────────────────────────────────
+        VitrinFormSection(
+          hasPublished: hasPublished,
+          isPublishing: _isPublishing,
+          isLegalPublishReady: _isLegalPublishReady,
+          cardDecoration: _cardDecoration(),
+          onPublish: _publishVitrin,
+          coverPicker:
               KeyedSubtree(key: _coverPhotoKey, child: _buildCoverPicker()),
-              const SizedBox(height: 10),
-
-              // ── Galeri (kapak altında, kompakt) ─────────────────
+          galleryRow:
               KeyedSubtree(key: _galleryKey, child: _buildCompactGalleryRow()),
-              const SizedBox(height: 18),
-
-              // ── Zorunlu Alanlar (* ile işaretli) ─────────────────
-              KeyedSubtree(
-                key: _nameKey,
-                child: _buildTextField(
-                  label: 'İşletme / VitrinX Adı',
-                  controller: _nameController,
-                  focusNode: _nameFocusNode,
-                  hint: 'Örn: Aymira Butik',
-                  icon: Icons.storefront_rounded,
-                  errorText: _nameError,
-                  required: true,
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              KeyedSubtree(
-                key: _whatsappKey,
-                child: _buildTextField(
-                  label: 'WhatsApp Numarası',
-                  controller: _whatsappController,
-                  focusNode: _whatsappFocusNode,
-                  hint: '05xx xxx xx xx',
-                  icon: Icons.chat_bubble_rounded,
-                  keyboardType: TextInputType.phone,
-                  errorText:
-                      _whatsappError ??
-                      (_whatsappController.text.trim().isNotEmpty &&
-                              !WhatsAppLinkHelper.isValidTurkeyMobile(
-                                _whatsappController.text,
-                              )
-                          ? WhatsAppLinkHelper.invalidNumberMessage
-                          : null),
-                  required: true,
-                  validateWhatsapp: true,
-                ),
-              ),
-              const SizedBox(height: 14),
-
+          nameField: KeyedSubtree(
+            key: _nameKey,
+            child: _buildTextField(
+              label: 'İşletme / VitrinX Adı',
+              controller: _nameController,
+              focusNode: _nameFocusNode,
+              hint: 'Örn: Aymira Butik',
+              icon: Icons.storefront_rounded,
+              errorText: _nameError,
+              required: true,
+            ),
+          ),
+          whatsappField: KeyedSubtree(
+            key: _whatsappKey,
+            child: _buildTextField(
+              label: 'WhatsApp Numarası',
+              controller: _whatsappController,
+              focusNode: _whatsappFocusNode,
+              hint: '05xx xxx xx xx',
+              icon: Icons.chat_bubble_rounded,
+              keyboardType: TextInputType.phone,
+              errorText:
+                  _whatsappError ??
+                  (_whatsappController.text.trim().isNotEmpty &&
+                          !WhatsAppLinkHelper.isValidTurkeyMobile(
+                            _whatsappController.text,
+                          )
+                      ? WhatsAppLinkHelper.invalidNumberMessage
+                      : null),
+              required: true,
+              validateWhatsapp: true,
+            ),
+          ),
+          locationField:
               KeyedSubtree(key: _addressKey, child: _buildLocationField()),
-              const SizedBox(height: 14),
-
-              // ── İsteğe Bağlı Alanlar ─────────────────────────────
-              KeyedSubtree(
-                key: _descriptionKey,
-                child: _buildTextField(
-                  label: 'Kısa Açıklama',
-                  controller: _descriptionController,
-                  focusNode: _descriptionFocusNode,
-                  hint: 'Bugün vitrinde ne var? Kısa bir tanıtım yaz.',
-                  icon: Icons.notes_rounded,
-                  maxLines: 3,
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              _buildDropdown(
-                label: 'Kategori',
-                value: _selectedKategori,
-                items: _categories,
-                icon: Icons.category_rounded,
-                onChanged: (val) {
-                  setState(() {
-                    _selectedKategori = val ?? 'Diğer';
-                    if (_selectedKategori != 'Kuaför') {
-                      _bookingIsEnabled = false;
-                      for (final offering in _offerings) {
-                        offering.isBookable = false;
-                      }
-                    }
-                  });
-                },
-              ),
-              const SizedBox(height: 14),
-
-              StoreThemePicker(
-                selectedTheme: _data.theme,
-                onThemeChanged: (val) {
-                  setState(() {
-                    _data.theme = val;
-                  });
-                },
-              ),
-              const SizedBox(height: 14),
-
-              if (_selectedKategori == 'Kuaför') ...[
-                KeyedSubtree(
+          descriptionField: KeyedSubtree(
+            key: _descriptionKey,
+            child: _buildTextField(
+              label: 'Kısa Açıklama',
+              controller: _descriptionController,
+              focusNode: _descriptionFocusNode,
+              hint: 'Bugün vitrinde ne var? Kısa bir tanıtım yaz.',
+              icon: Icons.notes_rounded,
+              maxLines: 3,
+            ),
+          ),
+          categoryField: _buildDropdown(
+            label: 'Kategori',
+            value: _selectedKategori,
+            items: _categories,
+            icon: Icons.category_rounded,
+            onChanged: (val) {
+              setState(() {
+                _selectedKategori = val ?? 'Diğer';
+                if (_selectedKategori != 'Kuaför') {
+                  _bookingIsEnabled = false;
+                  for (final offering in _offerings) {
+                    offering.isBookable = false;
+                  }
+                }
+              });
+            },
+          ),
+          themePicker: StoreThemePicker(
+            selectedTheme: _data.theme,
+            onThemeChanged: (val) {
+              setState(() {
+                _data.theme = val;
+              });
+            },
+          ),
+          bookingSettingsSection: _selectedKategori == 'Kuaför'
+              ? KeyedSubtree(
                   key: _productsKey,
                   child: _buildBookingSettingsSection(),
-                ),
-                const SizedBox(height: 14),
-              ],
-
-              _buildDropdown(
-                label: 'Vitrin Durumu',
-                value: _selectedStatus,
-                items: _statuses,
-                icon: Icons.info_outline_rounded,
-                onChanged:
-                    (val) => setState(() => _selectedStatus = val ?? 'Açık'),
-              ),
-              const SizedBox(height: 14),
-
-              _buildTextField(
-                label: 'Instagram',
-                controller: _instagramController,
-                hint: '@kullanici_adi veya profil linki',
-                icon: Icons.camera_alt_rounded,
-                keyboardType: TextInputType.url,
-              ),
-              ProductManagementEntryCard(
-                productCount: _data.products.length,
-                onTap: _showProductManagementPlaceholder,
-              ),
-              const SizedBox(height: 14),
-
-              if (hasPublished && InstagramSyncConfig.enabled) ...[
-                InstagramSyncSection(
+                )
+              : null,
+          statusField: _buildDropdown(
+            label: 'Vitrin Durumu',
+            value: _selectedStatus,
+            items: _statuses,
+            icon: Icons.info_outline_rounded,
+            onChanged: (val) => setState(() => _selectedStatus = val ?? 'Açık'),
+          ),
+          instagramField: _buildTextField(
+            label: 'Instagram',
+            controller: _instagramController,
+            hint: '@kullanici_adi veya profil linki',
+            icon: Icons.camera_alt_rounded,
+            keyboardType: TextInputType.url,
+          ),
+          productManagementCard: ProductManagementEntryCard(
+            productCount: _data.products.length,
+            onTap: _showProductManagementPlaceholder,
+          ),
+          instagramSyncSection: hasPublished && InstagramSyncConfig.enabled
+              ? InstagramSyncSection(
                   storeSlug: _publishedInfo!.slug,
                   editToken: _publishedInfo!.editToken,
                   defaultCategory: _selectedKategori,
                   onProductImported: _handleInstagramProductImported,
                   onMessage: _showSnackBar,
-                ),
-                const SizedBox(height: 14),
-              ],
-
-              _buildPublicWebsiteLinkCard(),
-              const SizedBox(height: 14),
-
-              _buildTextField(
-                label: 'Google Yorum Bağlantısı',
-                controller: _googleBusinessLinkController,
-                hint: 'https://search.google.com/local/writereview?placeid=...',
-                icon: Icons.rate_review_rounded,
-                keyboardType: TextInputType.url,
-                errorText: _googleLinkError,
-              ),
-              const SizedBox(height: 14),
-
-              _buildMarketplaceSection(),
-              const SizedBox(height: 24),
-
-              _buildLegalConsentSection(),
-              const SizedBox(height: 16),
-
-              // ── Publish Button ─────────────────────────────────────────
-              SizedBox(
-                height: 54,
-                child: ElevatedButton.icon(
-                  onPressed:
-                      _isPublishing || !_isLegalPublishReady
-                          ? null
-                          : _publishVitrin,
-                  icon:
-                      _isPublishing
-                          ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.black,
-                            ),
-                          )
-                          : Icon(
-                            hasPublished
-                                ? Icons.cloud_upload_rounded
-                                : Icons.rocket_launch_rounded,
-                            size: 19,
-                          ),
-                  label: Text(
-                    _isPublishing
-                        ? 'Yayına alınıyor...'
-                        : hasPublished
-                        ? 'Değişiklikleri Kaydet & Yayına Al'
-                        : 'Vitrinimi Yayına Al',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                hasPublished
-                    ? 'Mevcut linkin korunur, Keşfet görünümün güncellenir.'
-                    : 'Linkin oluşur, Keşfet\'te görünürsün.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: mutedText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+                )
+              : null,
+          publicWebsiteLinkCard: _buildPublicWebsiteLinkCard(),
+          googleReviewField: _buildTextField(
+            label: 'Google Yorum Bağlantısı',
+            controller: _googleBusinessLinkController,
+            hint: 'https://search.google.com/local/writereview?placeid=...',
+            icon: Icons.rate_review_rounded,
+            keyboardType: TextInputType.url,
+            errorText: _googleLinkError,
           ),
+          marketplaceSection: _buildMarketplaceSection(),
+          legalConsentSection: _buildLegalConsentSection(),
         ),
 
-        // ── Published Summary Card ────────────────────────────────────────
         if (hasPublished) ...[
           const SizedBox(height: 16),
           _buildPublishedSummary(),
@@ -1452,7 +1303,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           _buildVisibilityHubCard(),
         ],
 
-        // ── Danger Zone ────────────────────────────────────────────────────
         if (hasPublished) ...[
           const SizedBox(height: 8),
           Center(
