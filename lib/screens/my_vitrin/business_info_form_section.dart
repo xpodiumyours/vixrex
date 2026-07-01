@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vitrinx/screens/my_vitrin/location_section.dart';
 
 class BusinessInfoFormSection extends StatelessWidget {
   final GlobalKey nameKey;
@@ -43,7 +44,7 @@ class BusinessInfoFormSection extends StatelessWidget {
         const SizedBox(height: 14),
         KeyedSubtree(key: whatsappKey, child: whatsappField),
         const SizedBox(height: 14),
-        KeyedSubtree(key: locationKey, child: locationField),
+        LocationSection(locationKey: locationKey, locationField: locationField),
         const SizedBox(height: 14),
         KeyedSubtree(key: descriptionKey, child: descriptionField),
         const SizedBox(height: 14),
