@@ -25,6 +25,7 @@ class ProductEditorSheet extends StatefulWidget {
 }
 
 class _ProductEditorSheetState extends State<ProductEditorSheet> {
+  static const int _maxImages = 4;
   static const _stockOptions = ['Mevcut', 'Son birkaç adet', 'Tükendi'];
 
   late final TextEditingController _nameController;
@@ -78,9 +79,9 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   }
 
   Future<void> _pickImages() async {
-    final remaining = 4 - _images.length;
+    final remaining = _maxImages - _images.length;
     if (remaining <= 0) {
-      _showMessage('Bir ürüne en fazla 4 görsel eklenebilir.');
+      _showMessage('Bir ürüne en fazla $_maxImages görsel eklenebilir.');
       return;
     }
     final result = await FilePicker.platform.pickFiles(
@@ -340,7 +341,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
               ),
             ),
             Text(
-              '${_images.length}/4',
+              '${_images.length}/$_maxImages',
               style: const TextStyle(color: AppColors.mutedText),
             ),
           ],
@@ -350,7 +351,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
           height: 108,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: _images.length + (_images.length < 4 ? 1 : 0),
+            itemCount: _images.length + (_images.length < _maxImages ? 1 : 0),
             separatorBuilder: (_, __) => const SizedBox(width: 10),
             itemBuilder: (context, index) {
               if (index == _images.length) {
