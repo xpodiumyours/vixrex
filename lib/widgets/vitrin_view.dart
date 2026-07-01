@@ -18,31 +18,12 @@ import 'package:vitrinx/services/seo_helper.dart';
 import 'package:vitrinx/utils/store_display_helper.dart';
 import 'package:vitrinx/utils/vcard_builder.dart';
 import 'package:vitrinx/utils/vitrin_url_helper.dart';
-import 'package:vitrinx/widgets/vitrin_product_card.dart';
-
-class VitrinGalleryPreviewItem {
-  final String imageUrl;
-  final Uint8List? imageBytes;
-  final String title;
-  final String description;
-
-  const VitrinGalleryPreviewItem({
-    this.imageUrl = '',
-    this.imageBytes,
-    this.title = '',
-    this.description = '',
-  });
-
-  factory VitrinGalleryPreviewItem.fromStoreItem(StoreGalleryItem item) {
-    return VitrinGalleryPreviewItem(
-      imageUrl: item.imageUrl,
-      title: item.title,
-      description: item.description,
-    );
-  }
-
-  bool get hasImage => imageBytes != null || imageUrl.trim().isNotEmpty;
-}
+import 'package:vitrinx/widgets/vitrin_view/action_icon_button.dart';
+import 'package:vitrinx/widgets/vitrin_view/compact_profile_tool.dart';
+import 'package:vitrinx/widgets/vitrin_view/modern_link_item.dart';
+import 'package:vitrinx/widgets/vitrin_view/product_catalog_block.dart';
+import 'package:vitrinx/widgets/vitrin_view/shelf_gallery_card.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_gallery_preview_item.dart';
 
 class VitrinView extends StatelessWidget {
   final StoreData storeData;
@@ -1153,7 +1134,7 @@ class VitrinView extends StatelessWidget {
   ) {
     final ctaLabel = config.ctaLabel;
     return [
-      _ActionIconBtn(
+      ActionIconButton(
         label: ctaLabel,
         icon: Icons.chat_bubble_rounded,
         color: actionColor,
@@ -1171,7 +1152,7 @@ class VitrinView extends StatelessWidget {
           );
         },
       ),
-      _ActionIconBtn(
+      ActionIconButton(
         label: 'Instagram',
         icon: Icons.camera_rounded,
         color: actionColor,
@@ -1190,7 +1171,7 @@ class VitrinView extends StatelessWidget {
         },
       ),
       if (storeData.website.isNotEmpty)
-        _ActionIconBtn(
+        ActionIconButton(
           label: 'Web',
           icon: Icons.language_rounded,
           color: actionColor,
@@ -1208,7 +1189,7 @@ class VitrinView extends StatelessWidget {
             );
           },
         ),
-      _ActionIconBtn(
+      ActionIconButton(
         label: 'Yol Tarifi',
         icon: Icons.location_on_rounded,
         color: actionColor,
@@ -1227,7 +1208,7 @@ class VitrinView extends StatelessWidget {
         },
       ),
       if (storeData.googleBusinessLink.isNotEmpty)
-        _ActionIconBtn(
+        ActionIconButton(
           label: 'Yorum Yap',
           icon: Icons.star_rate_rounded,
           color: actionColor,
@@ -1261,7 +1242,7 @@ class VitrinView extends StatelessWidget {
     final ctaLabel = config.ctaLabel;
     return [
       if (WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp))
-        _ActionIconBtn(
+        ActionIconButton(
           label: ctaLabel,
           icon: Icons.chat_bubble_rounded,
           color: actionColor,
@@ -1280,7 +1261,7 @@ class VitrinView extends StatelessWidget {
           },
         ),
       if (storeData.instagram.trim().isNotEmpty)
-        _ActionIconBtn(
+        ActionIconButton(
           label: 'Instagram',
           icon: Icons.camera_rounded,
           color: actionColor,
@@ -1293,7 +1274,7 @@ class VitrinView extends StatelessWidget {
               ),
         ),
       if (_publicWebsiteActionUrl().isNotEmpty)
-        _ActionIconBtn(
+        ActionIconButton(
           label: 'Web Sitesi',
           icon: Icons.language_rounded,
           color: actionColor,
@@ -1302,7 +1283,7 @@ class VitrinView extends StatelessWidget {
           onTap: () => _openExternalUrl(context, _publicWebsiteActionUrl()),
         ),
       if (storeData.googleBusinessLink.trim().isNotEmpty)
-        _ActionIconBtn(
+        ActionIconButton(
           label: 'Google\'da Yorum Yap',
           icon: Icons.star_rate_rounded,
           color: actionColor,
@@ -1316,7 +1297,7 @@ class VitrinView extends StatelessWidget {
         ),
       if (storeData.address.trim().isNotEmpty ||
           (storeData.latitude != null && storeData.longitude != null))
-        _ActionIconBtn(
+        ActionIconButton(
           label: 'Yol Tarifi',
           icon: Icons.location_on_rounded,
           color: actionColor,
@@ -1329,7 +1310,7 @@ class VitrinView extends StatelessWidget {
   }
 
   Widget _buildProductsCatalogBlock(VitrinThemePreset preset, double radius) {
-    return _ProductCatalogBlock(
+    return ProductCatalogBlock(
       preset: preset,
       radius: radius,
       storeData: storeData,
@@ -1362,7 +1343,7 @@ class VitrinView extends StatelessWidget {
     VitrinThemePreset preset,
     List<VitrinGalleryPreviewItem> galleryItems,
   ) {
-    return _ShelfGalleryCard(
+    return ShelfGalleryCard(
       preset: preset,
       galleryItems: galleryItems,
       isEmbedded: isEmbedded,
@@ -1489,7 +1470,7 @@ class VitrinView extends StatelessWidget {
       child: Column(
         children: [
           ...visibleMarketplaceLinks.map(
-            (link) => _ModernLinkItem(
+            (link) => ModernLinkItem(
               icon: _getPlatformIcon(link.platform),
               title: link.platform,
               // Önce kullanıcının eklediği subtitle; yoksa URL'yi göster
@@ -1522,7 +1503,7 @@ class VitrinView extends StatelessWidget {
           ),
 
           if (!publicMode && storeData.marketplaceLinks.isEmpty)
-            _ModernLinkItem(
+            ModernLinkItem(
               icon: Icons.auto_stories_rounded,
               title: 'Dijital Katalog',
               subtitle: 'Geniş ürün ve hizmet yelpazesi',
@@ -1533,7 +1514,7 @@ class VitrinView extends StatelessWidget {
             ),
 
           if (!publicMode) ...[
-            _ModernLinkItem(
+            ModernLinkItem(
               icon: Icons.verified_rounded,
               title: 'Referanslarımız',
               subtitle: 'Güçlü çözüm ortaklıklarımız',
@@ -1542,7 +1523,7 @@ class VitrinView extends StatelessWidget {
               compact: isCompact,
               preset: preset,
             ),
-            _ModernLinkItem(
+            ModernLinkItem(
               icon: Icons.contact_page_rounded,
               title: 'Kişilerime Ekle',
               subtitle:
@@ -1562,9 +1543,9 @@ class VitrinView extends StatelessWidget {
     BuildContext context,
     VitrinThemePreset preset,
   ) {
-    final tools = <_CompactProfileToolData>[
+    final tools = <CompactProfileToolData>[
       if (storeData.products.isNotEmpty)
-        _CompactProfileToolData(
+        CompactProfileToolData(
           icon: Icons.auto_stories_rounded,
           title: 'Katalog',
           subtitle: '${storeData.products.length} ürün',
@@ -1581,7 +1562,7 @@ class VitrinView extends StatelessWidget {
           },
         ),
       if (_hasVCardData())
-        _CompactProfileToolData(
+        CompactProfileToolData(
           icon: Icons.contact_page_rounded,
           title: 'vCard',
           subtitle: 'Rehbere kaydet',
@@ -1589,7 +1570,7 @@ class VitrinView extends StatelessWidget {
           onTap: () => _downloadVCard(context),
         ),
       if (storeData.referencesLink.trim().isNotEmpty)
-        _CompactProfileToolData(
+        CompactProfileToolData(
           icon: Icons.verified_rounded,
           title: 'Referanslar',
           subtitle: 'Yorumları gör',
@@ -1601,7 +1582,7 @@ class VitrinView extends StatelessWidget {
               ),
         ),
       if (publicLink?.isNotEmpty ?? false)
-        _CompactProfileToolData(
+        CompactProfileToolData(
           icon: Icons.qr_code_2_rounded,
           title: 'QR Paylaş',
           subtitle: 'Linki gönder',
@@ -1647,7 +1628,7 @@ class VitrinView extends StatelessWidget {
                               itemWidth
                                   .clamp(76.0, constraints.maxWidth)
                                   .toDouble(),
-                          child: _CompactProfileTool(
+                          child: CompactProfileTool(
                             data: tool,
                             preset: preset,
                             dense: true,
@@ -2119,1071 +2100,6 @@ class VitrinView extends StatelessWidget {
         behavior: SnackBarBehavior.floating,
         backgroundColor: preset.accent,
         duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-}
-
-class _CompactProfileToolData {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _CompactProfileToolData({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    this.onTap,
-  });
-}
-
-class _CompactProfileTool extends StatelessWidget {
-  final _CompactProfileToolData data;
-  final VitrinThemePreset preset;
-  final bool dense;
-
-  const _CompactProfileTool({
-    required this.data,
-    required this.preset,
-    this.dense = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: data.onTap,
-        borderRadius: BorderRadius.circular(dense ? 12 : 14),
-        child: Ink(
-          height: dense ? 70 : null,
-          padding: EdgeInsets.all(dense ? 8 : 10),
-          decoration: BoxDecoration(
-            color: data.color.withValues(alpha: preset.isDark ? 0.12 : 0.08),
-            borderRadius: BorderRadius.circular(dense ? 12 : 14),
-            border: Border.all(
-              color: data.color.withValues(alpha: preset.isDark ? 0.26 : 0.18),
-            ),
-          ),
-          child:
-              dense
-                  ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: data.color.withValues(
-                            alpha: preset.isDark ? 0.18 : 0.12,
-                          ),
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                        child: Icon(data.icon, color: data.color, size: 16),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        data.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: preset.textPrimary,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                    ],
-                  )
-                  : Row(
-                    children: [
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: data.color.withValues(
-                            alpha: preset.isDark ? 0.18 : 0.12,
-                          ),
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: Icon(data.icon, color: data.color, size: 18),
-                      ),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              data.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: preset.textPrimary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              data.subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: preset.textSecondary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionIconBtn extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final double radius;
-  final bool compact;
-  final bool emphasis;
-  final VoidCallback? onTap;
-
-  const _ActionIconBtn({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.radius,
-    this.compact = false,
-    this.emphasis = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final buttonRadius = compact ? 12.0 : 16.0;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        emphasis ? color : color.withValues(alpha: isDark ? 0.18 : 0.09);
-    final foregroundColor =
-        emphasis && color.computeLuminance() > 0.42
-            ? const Color(0xFF04151F)
-            : emphasis
-            ? Colors.white
-            : color;
-    final borderColor =
-        emphasis
-            ? color.withValues(alpha: isDark ? 0.38 : 0.22)
-            : color.withValues(alpha: isDark ? 0.22 : 0.12);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(buttonRadius),
-        border: Border.all(color: borderColor),
-        boxShadow:
-            emphasis
-                ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: isDark ? 0.22 : 0.18),
-                    blurRadius: compact ? 14 : 22,
-                    offset: Offset(0, compact ? 5 : 8),
-                  ),
-                ]
-                : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(buttonRadius),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 12 : 20,
-              vertical: compact ? 9 : 14,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Icon(icon, size: compact ? 15 : 20, color: foregroundColor),
-                SizedBox(width: compact ? 7 : 10),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: compact ? 11 : 13,
-                      fontWeight: FontWeight.w800,
-                      color: foregroundColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ModernLinkItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final double radius;
-  final bool compact;
-  final VitrinThemePreset preset;
-  final VoidCallback? onTap;
-
-  const _ModernLinkItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.radius,
-    required this.preset,
-    this.compact = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final effectiveColor =
-        preset.isDark && color.computeLuminance() < 0.35
-            ? preset.accent
-            : color;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: compact ? 10 : 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            preset.surface,
-            preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.36 : 0.5),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(compact ? 16 : 24),
-        border: Border.all(
-          color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
-          width: compact ? 1 : 1.3,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: preset.isDark ? 0.14 : 0.045),
-            blurRadius: compact ? 12 : 24,
-            offset: Offset(0, compact ? 3 : 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(compact ? 16 : 24),
-          child: Padding(
-            padding: EdgeInsets.all(compact ? 13 : 20),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(compact ? 9 : 13),
-                  decoration: BoxDecoration(
-                    color: effectiveColor.withValues(
-                      alpha: preset.isDark ? 0.2 : 0.11,
-                    ),
-                    borderRadius: BorderRadius.circular(compact ? 11 : 16),
-                    border: Border.all(
-                      color: effectiveColor.withValues(alpha: 0.08),
-                    ),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: effectiveColor,
-                    size: compact ? 18 : 22,
-                  ),
-                ),
-                SizedBox(width: compact ? 12 : 18),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: compact ? 14 : 16,
-                          color: preset.textPrimary,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                      SizedBox(height: compact ? 2 : 4),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: preset.textSecondary,
-                          fontSize: compact ? 10.5 : 12,
-                          fontWeight: FontWeight.w500,
-                          height: 1.35,
-                        ),
-                        maxLines: compact ? 1 : 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: compact ? 24 : 30,
-                  height: compact ? 24 : 30,
-                  decoration: BoxDecoration(
-                    color: preset.surfaceSoft.withValues(
-                      alpha: preset.isDark ? 0.38 : 0.72,
-                    ),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: preset.border.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: preset.textSecondary.withValues(alpha: 0.75),
-                    size: compact ? 10 : 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// _ProductCatalogBlock — extracted StatefulWidget for the products catalog
-// ---------------------------------------------------------------------------
-
-class _ProductCatalogBlock extends StatefulWidget {
-  const _ProductCatalogBlock({
-    required this.preset,
-    required this.radius,
-    required this.storeData,
-    required this.publicMode,
-    required this.isEmbedded,
-    required this.onExternalUrl,
-    required this.onProductDetail,
-  });
-
-  final VitrinThemePreset preset;
-  final double radius;
-  final StoreData storeData;
-  final bool publicMode;
-  final bool isEmbedded;
-  final Future<void> Function(BuildContext, String?) onExternalUrl;
-  final void Function(BuildContext, Product, int) onProductDetail;
-
-  @override
-  State<_ProductCatalogBlock> createState() => _ProductCatalogBlockState();
-}
-
-class _ProductCatalogBlockState extends State<_ProductCatalogBlock> {
-  String _selectedCategory = '';
-  int _visibleLimit = 12;
-
-  void _onProductWhatsAppTap(BuildContext context, Product product) {
-    if (!widget.publicMode) {
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Müşteriler bu karta bastığında '${product.name}' hakkında WhatsApp'tan bilgi isteyebilir.",
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    final url = WhatsAppLinkHelper.buildInquiryUrl(
-      number: widget.storeData.whatsapp,
-      storeName: widget.storeData.name,
-      itemTitle: product.name,
-    );
-    if (url != null) {
-      unawaited(widget.onExternalUrl(context, url));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isCompact = widget.isEmbedded;
-    final allProducts =
-        widget.storeData.products
-            .where((product) => product.isVisible)
-            .toList();
-
-    final categories = <String>[];
-    for (final product in allProducts) {
-      final label = product.category.trim();
-      if (label.isNotEmpty &&
-          !categories.any(
-            (item) => item.toLowerCase() == label.toLowerCase(),
-          )) {
-        categories.add(label);
-      }
-    }
-    final filteredProducts =
-        _selectedCategory.isEmpty
-            ? allProducts
-            : allProducts
-                .where(
-                  (product) =>
-                      product.category.trim().toLowerCase() ==
-                      _selectedCategory.toLowerCase(),
-                )
-                .toList();
-    final visibleProducts = filteredProducts.take(_visibleLimit).toList();
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(isCompact ? 14 : 18),
-        decoration: BoxDecoration(
-          color: widget.preset.surface.withValues(
-            alpha: widget.preset.isDark ? 0.9 : 0.98,
-          ),
-          borderRadius: BorderRadius.circular(isCompact ? 16 : 22),
-          border: Border.all(
-            color: widget.preset.border.withValues(
-              alpha: widget.preset.isDark ? 0.9 : 0.78,
-            ),
-            width: isCompact ? 1 : 1.3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(
-                alpha: widget.preset.isDark ? 0.12 : 0.045,
-              ),
-              blurRadius: isCompact ? 12 : 24,
-              offset: Offset(0, isCompact ? 3 : 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.shopping_bag_rounded,
-                  color: widget.preset.accent,
-                  size: isCompact ? 18 : 22,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Ürünler',
-                    style: TextStyle(
-                      color: widget.preset.textPrimary,
-                      fontSize: isCompact ? 14 : 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                if (filteredProducts.length > visibleProducts.length)
-                  Text(
-                    '+${filteredProducts.length - visibleProducts.length}',
-                    style: TextStyle(
-                      color: widget.preset.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            if (categories.length > 1) ...[
-              SizedBox(
-                height: 38,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Tümü'),
-                      selected: _selectedCategory.isEmpty,
-                      onSelected:
-                          (_) => setState(() {
-                            _selectedCategory = '';
-                            _visibleLimit = 12;
-                          }),
-                    ),
-                    const SizedBox(width: 8),
-                    ...categories.map(
-                      (category) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(category),
-                          selected: _selectedCategory == category,
-                          onSelected:
-                              (_) => setState(() {
-                                _selectedCategory = category;
-                                _visibleLimit = 12;
-                              }),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            if (allProducts.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 32,
-                  horizontal: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: widget.preset.surfaceSoft.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: widget.preset.border.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.shopping_bag_outlined,
-                      color: widget.preset.accent,
-                      size: 32,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Ürünler yakında',
-                      style: TextStyle(
-                        color: widget.preset.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Mağaza sahibi henüz ürün eklemedi.',
-                      style: TextStyle(
-                        color: widget.preset.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth >= 620;
-                  if (!isWide) {
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: visibleProducts.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                            childAspectRatio: 0.64,
-                          ),
-                      itemBuilder: (context, index) {
-                        final product = visibleProducts[index];
-                        return VitrinProductCard(
-                          name: product.name,
-                          price: product.price,
-                          category: product.category,
-                          description: product.description,
-                          imagePath: product.primaryImageUrl,
-                          stockStatus: product.stockStatus,
-                          onTap:
-                              widget.publicMode
-                                  ? () => widget.onProductDetail(
-                                    context,
-                                    product,
-                                    allProducts.indexOf(product),
-                                  )
-                                  : null,
-                          onWhatsAppTap:
-                              () => _onProductWhatsAppTap(context, product),
-                        );
-                      },
-                    );
-                  }
-
-                  final columns = constraints.maxWidth >= 1000 ? 4 : 3;
-                  final cardWidth =
-                      (constraints.maxWidth - (12 * (columns - 1))) / columns;
-                  return Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children:
-                        visibleProducts
-                            .map(
-                              (product) => SizedBox(
-                                width: cardWidth,
-                                height: 250,
-                                child: VitrinProductCard(
-                                  name: product.name,
-                                  price: product.price,
-                                  category: product.category,
-                                  description: product.description,
-                                  imagePath: product.primaryImageUrl,
-                                  stockStatus: product.stockStatus,
-                                  onTap:
-                                      widget.publicMode
-                                          ? () => widget.onProductDetail(
-                                            context,
-                                            product,
-                                            allProducts.indexOf(product),
-                                          )
-                                          : null,
-                                  onWhatsAppTap:
-                                      () => _onProductWhatsAppTap(
-                                        context,
-                                        product,
-                                      ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                  );
-                },
-              ),
-            if (filteredProducts.length > visibleProducts.length) ...[
-              const SizedBox(height: 14),
-              Center(
-                child: OutlinedButton.icon(
-                  onPressed: () => setState(() => _visibleLimit += 12),
-                  icon: const Icon(Icons.expand_more_rounded),
-                  label: const Text('Daha fazla göster'),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// _ShelfGalleryCard — extracted StatefulWidget for the gallery shelf card
-// ---------------------------------------------------------------------------
-
-class _ShelfGalleryCard extends StatefulWidget {
-  const _ShelfGalleryCard({
-    required this.preset,
-    required this.galleryItems,
-    required this.isEmbedded,
-    required this.publicMode,
-    required this.storeData,
-    required this.onExternalUrl,
-  });
-
-  final VitrinThemePreset preset;
-  final List<VitrinGalleryPreviewItem> galleryItems;
-  final bool isEmbedded;
-  final bool publicMode;
-  final StoreData storeData;
-  final Future<void> Function(BuildContext, String?) onExternalUrl;
-
-  @override
-  State<_ShelfGalleryCard> createState() => _ShelfGalleryCardState();
-}
-
-class _ShelfGalleryCardState extends State<_ShelfGalleryCard> {
-  int _selectedIndex = 0;
-
-  static Widget _buildGalleryImage(
-    VitrinGalleryPreviewItem item, {
-    BoxFit fit = BoxFit.cover,
-    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder,
-  }) {
-    final imageBytes = item.imageBytes;
-    if (imageBytes != null) {
-      return Image.memory(
-        imageBytes,
-        width: double.infinity,
-        height: double.infinity,
-        fit: fit,
-        filterQuality: FilterQuality.medium,
-      );
-    }
-    return Image.network(
-      item.imageUrl.trim(),
-      width: double.infinity,
-      height: double.infinity,
-      fit: fit,
-      filterQuality: FilterQuality.medium,
-      errorBuilder: errorBuilder,
-    );
-  }
-
-  Widget _buildWhatsAppButton(
-    BuildContext context,
-    VitrinGalleryPreviewItem item,
-    bool isCompact,
-  ) {
-    final preset = widget.preset;
-    final title =
-        item.title.trim().isNotEmpty ? item.title.trim() : 'Vitrin Görseli';
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: preset.accent.withValues(alpha: preset.isDark ? 0.14 : 0.10),
-        borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-        border: Border.all(
-          color: preset.accent.withValues(alpha: isDark ? 0.35 : 0.22),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            if (!widget.publicMode) {
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    "Müşteriler bu butona bastığında WhatsApp'tan '$title' hakkında bilgi sorabilir.",
-                  ),
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 3),
-                ),
-              );
-              return;
-            }
-            final url = WhatsAppLinkHelper.buildInquiryUrl(
-              number: widget.storeData.whatsapp,
-              storeName: widget.storeData.name,
-              itemTitle: title,
-            );
-            if (url != null) {
-              widget.onExternalUrl(context, url);
-            }
-          },
-          borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: isCompact ? 10 : 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  color: preset.accent,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  isCompact
-                      ? 'Görseldeki Ürünü Sor'
-                      : "Fotoğraftaki Ürünü WhatsApp'tan Sor",
-                  style: TextStyle(
-                    color: preset.accent,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final preset = widget.preset;
-    final galleryItems = widget.galleryItems;
-    final isCompact = widget.isEmbedded;
-    final cardRadius = isCompact ? 16.0 : 26.0;
-
-    if (_selectedIndex >= galleryItems.length) _selectedIndex = 0;
-    final selectedItem = galleryItems[_selectedIndex];
-    final selectedTitle = selectedItem.title.trim();
-    final selectedDescription = selectedItem.description.trim();
-    final shouldShowText =
-        selectedTitle.isNotEmpty || selectedDescription.isNotEmpty;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 14 : 24),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(isCompact ? 10 : 16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              preset.surface,
-              preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.38 : 0.5),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(cardRadius),
-          border: Border.all(
-            color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
-            width: isCompact ? 1 : 1.3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(
-                alpha: preset.isDark ? 0.18 : 0.06,
-              ),
-              blurRadius: isCompact ? 14 : 28,
-              offset: Offset(0, isCompact ? 4 : 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: isCompact ? 28 : 36,
-                  height: isCompact ? 28 : 36,
-                  decoration: BoxDecoration(
-                    color: preset.accent.withValues(
-                      alpha: preset.isDark ? 0.2 : 0.12,
-                    ),
-                    borderRadius: BorderRadius.circular(isCompact ? 11 : 13),
-                  ),
-                  child: Icon(
-                    Icons.photo_library_rounded,
-                    color: preset.accent,
-                    size: isCompact ? 16 : 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Vitrin galerisi',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: preset.textPrimary,
-                          fontSize: isCompact ? 11 : 15,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                      Text(
-                        '${_selectedIndex + 1} / ${galleryItems.length} seçili',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: preset.textSecondary,
-                          fontSize: isCompact ? 9 : 11,
-                          fontWeight: FontWeight.w600,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isCompact ? 8 : 10,
-                    vertical: isCompact ? 5 : 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: preset.accent.withValues(
-                      alpha: preset.isDark ? 0.18 : 0.1,
-                    ),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: preset.accent.withValues(alpha: 0.18),
-                    ),
-                  ),
-                  child: Text(
-                    '${galleryItems.length} fotoğraf',
-                    style: TextStyle(
-                      color: preset.accent,
-                      fontSize: isCompact ? 9 : 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: isCompact ? 10 : 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(isCompact ? 12 : 20),
-              child: AspectRatio(
-                aspectRatio: isCompact
-                    ? 16 / 9
-                    : widget.publicMode
-                        ? 16 / 9
-                        : 16 / 10,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _buildGalleryImage(
-                      selectedItem,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: preset.surfaceSoft,
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.broken_image_outlined,
-                          color: preset.textSecondary,
-                          size: isCompact ? 26 : 32,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: isCompact ? 8 : 12,
-                      top: isCompact ? 8 : 12,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isCompact ? 8 : 10,
-                          vertical: isCompact ? 5 : 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.48),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Text(
-                          _selectedIndex == 0
-                              ? 'Kapak'
-                              : '${_selectedIndex + 1}. fotoğraf',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: isCompact ? 9 : 10,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (shouldShowText) ...[
-              SizedBox(height: isCompact ? 10 : 12),
-              if (selectedTitle.isNotEmpty)
-                Text(
-                  selectedTitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: preset.textPrimary,
-                    fontSize: isCompact ? 12 : 15,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
-                    height: 1.2,
-                  ),
-                ),
-              if (selectedDescription.isNotEmpty) ...[
-                SizedBox(height: isCompact ? 4 : 6),
-                Text(
-                  selectedDescription,
-                  maxLines: isCompact ? 2 : 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: preset.textSecondary,
-                    fontSize: isCompact ? 10 : 12,
-                    fontWeight: FontWeight.w600,
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ],
-            if (WhatsAppLinkHelper.isValidTurkeyMobile(
-              widget.storeData.whatsapp,
-            )) ...[
-              SizedBox(height: isCompact ? 12 : 16),
-              _buildWhatsAppButton(context, selectedItem, isCompact),
-            ],
-            if (galleryItems.length > 1) ...[
-              SizedBox(height: isCompact ? 10 : 14),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: List.generate(galleryItems.length, (index) {
-                    final item = galleryItems[index];
-                    final isSelected = _selectedIndex == index;
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        right: index == galleryItems.length - 1 ? 0 : 8,
-                      ),
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedIndex = index),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          width: isCompact ? 48 : 58,
-                          height: isCompact ? 48 : 58,
-                          padding: EdgeInsets.all(isSelected ? 2 : 0),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(
-                              isCompact ? 12 : 15,
-                            ),
-                            border: Border.all(
-                              color: isSelected
-                                  ? preset.accent
-                                  : preset.border.withValues(alpha: 0.72),
-                              width: isSelected ? 2 : 1,
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                              isCompact ? 9 : 12,
-                            ),
-                            child: _buildGalleryImage(
-                              item,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: preset.surfaceSoft,
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  Icons.image_not_supported_outlined,
-                                  color: preset.textSecondary,
-                                  size: isCompact ? 16 : 18,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
