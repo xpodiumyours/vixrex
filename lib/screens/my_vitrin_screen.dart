@@ -38,6 +38,8 @@ import 'package:vitrinx/widgets/editor/public_link_card.dart';
 import 'package:vitrinx/widgets/editor/visibility_hub_card.dart';
 import 'package:vitrinx/widgets/editor/marketplace_links_section.dart';
 import 'package:vitrinx/widgets/editor/publish_actions_section.dart';
+import 'package:vitrinx/widgets/editor/cover_picker_section.dart';
+import 'package:vitrinx/widgets/editor/common_form_fields.dart';
 
 // ─── Main Widget ──────────────────────────────────────────────────────────
 class MyVitrinScreen extends StatefulWidget {
@@ -1512,6 +1514,107 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
+  Widget _buildCoverPicker() {
+    return CoverPickerSection(
+      coverBytes: _coverBytes,
+      coverUrl: _coverUrl,
+      coverFileName: _coverFileName,
+      onTap: _pickCoverPhoto,
+    );
+  }
+
+  Widget _buildCompactGalleryRow() {
+    return GalleryEditorSection(
+      galleryItems: _galleryItems,
+      maxGalleryPhotos: _maxGalleryPhotos,
+      onPickPhotos: _pickGalleryPhotos,
+      onRemovePhoto: (index) => _removeGalleryItem(index),
+    );
+  }
+
+  Widget _buildLocationField() {
+    return LocationEditorSection(
+      selectedProvinceCode: _selectedProvinceCode,
+      selectedProvinceName: _selectedProvinceName,
+      selectedDistrictCode: _selectedDistrictCode,
+      selectedDistrictName: _selectedDistrictName,
+      provinceError: _provinceError,
+      districtError: _districtError,
+      addressError: _addressError,
+      addressController: _addressController,
+      latitude: _latitude,
+      longitude: _longitude,
+      locationAccuracyMeters: _locationAccuracyMeters,
+      locationStatusMessage: _locationStatusMessage,
+      isLocating: _isLocating,
+      onProvinceChanged: (code, name) {
+        setState(() {
+          _selectedProvinceCode = code;
+          _selectedProvinceName = name;
+          _selectedDistrictCode = null;
+          _selectedDistrictName = null;
+          _provinceError = null;
+        });
+      },
+      onDistrictChanged: (code, name) {
+        setState(() {
+          _selectedDistrictCode = code;
+          _selectedDistrictName = name;
+          _districtError = null;
+        });
+      },
+      onLocatingStateChanged: (locating) {
+        setState(() {
+          _isLocating = locating;
+        });
+      },
+      onLocationUpdated: ({
+        latitude,
+        longitude,
+        accuracy,
+        statusMessage,
+        address,
+        provinceCode,
+        provinceName,
+        districtCode,
+        districtName,
+      }) {
+        setState(() {
+          if (latitude != null) _latitude = latitude;
+          if (longitude != null) _longitude = longitude;
+          if (accuracy != null) _locationAccuracyMeters = accuracy;
+          if (statusMessage != null) _locationStatusMessage = statusMessage;
+          if (address != null) {
+            _addressController.text = address;
+            _addressError = null;
+          }
+          if (provinceCode != null) _selectedProvinceCode = provinceCode;
+          if (provinceName != null) _selectedProvinceName = provinceName;
+          if (districtCode != null) _selectedDistrictCode = districtCode;
+          if (districtName != null) _selectedDistrictName = districtName;
+        });
+      },
+    );
+  }
+
+  Future<void> _openBlogEditor({Map<String, dynamic>? initialArticle}) async {
+    final slug = _publishedInfo?.slug ?? _data.slug;
+    if (slug.trim().isEmpty) {
+      _showSnackBar('Önce vitrini yayına almanız gerekir.');
+      return;
+    }
+
+    final result = await AppRouter.navigateToBlogEditor(
+      context,
+      slug: slug,
+      article: initialArticle,
+    );
+
+    if (result == true) {
+      await _fetchArticles();
+    }
+  }
+
   Widget _buildPublicWebsiteLinkCard() {
     return PublicLinkCard(
       controller: _websiteController,
@@ -1669,6 +1772,64 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               setState(() => _marketplaceLinks[index].platform = value.trim()),
       onSubtitleChanged:
           (index, value) => _marketplaceLinks[index].subtitle = value.trim(),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required IconData icon,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return EditorDropdownField(
+      label: label,
+      value: value,
+      items: items,
+      icon: icon,
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool required = false,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? errorText,
+    bool validateWhatsapp = false,
+    FocusNode? focusNode,
+  }) {
+    return EditorTextField(
+      label: label,
+      controller: controller,
+      hint: hint,
+      icon: icon,
+      requiredField: required,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      errorText: errorText,
+      focusNode: focusNode,
+      onChanged: (value) {
+        if (errorText != null || validateWhatsapp) {
+          setState(() {
+            _nameError = null;
+            _addressError = null;
+            if (validateWhatsapp) {
+              _whatsappError =
+                  value.trim().isEmpty ||
+                          WhatsAppLinkHelper.isValidTurkeyMobile(value)
+                      ? null
+                      : WhatsAppLinkHelper.invalidNumberMessage;
+            } else {
+              _whatsappError = null;
+            }
+          });
+        }
+      },
     );
   }
 
