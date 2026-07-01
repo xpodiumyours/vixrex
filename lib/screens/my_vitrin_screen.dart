@@ -13,6 +13,7 @@ import 'package:vitrinx/config/turkey_cities_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/models/legal_document.dart';
 import 'package:vitrinx/screens/legal_screen.dart';
+import 'package:vitrinx/screens/my_vitrin/cover_gallery_section.dart';
 import 'package:vitrinx/services/legal_document_service.dart';
 import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
@@ -1337,13 +1338,12 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Kapak Fotoğrafı ──────────────────────────────────
-              KeyedSubtree(key: _coverPhotoKey, child: _buildCoverPicker()),
-              const SizedBox(height: 10),
-
-              // ── Galeri (kapak altında, kompakt) ─────────────────
-              KeyedSubtree(key: _galleryKey, child: _buildCompactGalleryRow()),
-              const SizedBox(height: 18),
+              CoverGallerySection(
+                coverPhotoKey: _coverPhotoKey,
+                coverPicker: _buildCoverPicker(),
+                galleryKey: _galleryKey,
+                compactGalleryRow: _buildCompactGalleryRow(),
+              ),
 
               // ── Zorunlu Alanlar (* ile işaretli) ─────────────────
               KeyedSubtree(
