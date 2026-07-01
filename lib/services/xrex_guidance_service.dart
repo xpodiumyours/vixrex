@@ -73,26 +73,26 @@ abstract final class XrexGuidanceService {
     return switch (phase) {
       XrexJourneyPhase.setup => _setupRecommendation(snapshot.nextMissingField),
       XrexJourneyPhase.publish => const XrexRecommendation(
-          id: 'publish_vitrin',
-          phase: XrexJourneyPhase.publish,
-          title: 'Vitrinin yayına hazır',
-          description:
-              'Zorunlu bilgiler tamamlandı. Vitrinini kontrol edip yayınlayabilirsin.',
-          buttonLabel: 'Yayınlamaya git',
-          action: XrexAction.openVitrim,
-        ),
+        id: 'publish_vitrin',
+        phase: XrexJourneyPhase.publish,
+        title: 'Vitrinin yayına hazır',
+        description:
+            'Zorunlu bilgiler tamamlandı. Vitrinini kontrol edip yayınlayabilirsin.',
+        buttonLabel: 'Yayınlamaya git',
+        action: XrexAction.openVitrim,
+      ),
       XrexJourneyPhase.share => const XrexRecommendation(
-          id: 'share_vitrin',
-          phase: XrexJourneyPhase.share,
-          title: 'Vitrinini müşterilerine duyur',
-          description:
-              'Yayındaki vitrininin bağlantısını WhatsApp üzerinden paylaş.',
-          buttonLabel: 'WhatsApp’ta paylaş',
-          action: XrexAction.shareWhatsapp,
-        ),
+        id: 'share_vitrin',
+        phase: XrexJourneyPhase.share,
+        title: 'Vitrinini müşterilerine duyur',
+        description:
+            'Yayındaki vitrininin bağlantısını WhatsApp üzerinden paylaş.',
+        buttonLabel: 'WhatsApp’ta paylaş',
+        action: XrexAction.shareWhatsapp,
+      ),
       XrexJourneyPhase.improve => _improvementRecommendation(
-          qualityReportFor(snapshot: snapshot, hasShared: hasShared),
-        ),
+        qualityReportFor(snapshot: snapshot, hasShared: hasShared),
+      ),
     };
   }
 
@@ -180,15 +180,24 @@ abstract final class XrexGuidanceService {
 
   static String _buttonLabelForId(String id) {
     switch (id) {
-      case 'name':        return 'İşletme Adı Ekle';
-      case 'whatsapp':    return 'WhatsApp Ekle';
-      case 'address':     return 'Adres Ekle';
-      case 'legal':       return 'Onayları İncele';
-      case 'cover':       return 'Kapak Görseli Ekle';
-      case 'description': return 'Açıklama Ekle';
-      case 'products':    return 'Ürün Ekle';
-      case 'gallery':     return 'Fotoğraf Ekle';
-      default:            return 'Beni götür';
+      case 'name':
+        return 'İşletme Adı Ekle';
+      case 'whatsapp':
+        return 'WhatsApp Ekle';
+      case 'address':
+        return 'Adres Ekle';
+      case 'legal':
+        return 'Onayları İncele';
+      case 'cover':
+        return 'Kapak Görseli Ekle';
+      case 'description':
+        return 'Açıklama Ekle';
+      case 'products':
+        return 'Ürün Ekle';
+      case 'gallery':
+        return 'Fotoğraf Ekle';
+      default:
+        return 'Beni götür';
     }
   }
 
@@ -220,53 +229,54 @@ abstract final class XrexGuidanceService {
   static XrexRecommendation _setupRecommendation(XrexNextStep step) {
     return switch (step) {
       XrexNextStep.name => const XrexRecommendation(
-          id: 'setup_name',
-          phase: XrexJourneyPhase.setup,
-          title: 'İşletme adını ekle',
-          description: 'Müşterilerinin seni tanıması için işletme adını tamamla.',
-          buttonLabel: 'İşletme Adı Ekle',
-          action: XrexAction.scrollToName,
-        ),
+        id: 'setup_name',
+        phase: XrexJourneyPhase.setup,
+        title: 'İşletme adını ekle',
+        description: 'Müşterilerinin seni tanıması için işletme adını tamamla.',
+        buttonLabel: 'İşletme Adı Ekle',
+        action: XrexAction.scrollToName,
+      ),
       XrexNextStep.whatsapp => const XrexRecommendation(
-          id: 'setup_whatsapp',
-          phase: XrexJourneyPhase.setup,
-          title: 'WhatsApp numaranı ekle',
-          description: 'Müşterilerinin sana doğrudan ulaşabilmesini sağla.',
-          buttonLabel: 'WhatsApp Ekle',
-          action: XrexAction.scrollToWhatsapp,
-        ),
+        id: 'setup_whatsapp',
+        phase: XrexJourneyPhase.setup,
+        title: 'WhatsApp numaranı ekle',
+        description: 'Müşterilerinin sana doğrudan ulaşabilmesini sağla.',
+        buttonLabel: 'WhatsApp Ekle',
+        action: XrexAction.scrollToWhatsapp,
+      ),
       XrexNextStep.address => const XrexRecommendation(
-          id: 'setup_address',
-          phase: XrexJourneyPhase.setup,
-          title: 'Adresini ve konumunu tamamla',
-          description: 'Müşterilerinin işletmeni kolayca bulmasına yardımcı ol.',
-          buttonLabel: 'Adres Ekle',
-          action: XrexAction.scrollToAddress,
-        ),
+        id: 'setup_address',
+        phase: XrexJourneyPhase.setup,
+        title: 'Adresini ve konumunu tamamla',
+        description: 'Müşterilerinin işletmeni kolayca bulmasına yardımcı ol.',
+        buttonLabel: 'Adres Ekle',
+        action: XrexAction.scrollToAddress,
+      ),
       XrexNextStep.legal => const XrexRecommendation(
-          id: 'setup_legal',
-          phase: XrexJourneyPhase.setup,
-          title: 'Yayınlama onaylarını tamamla',
-          description: 'Vitrinini güvenli şekilde yayınlamak için onayları incele.',
-          buttonLabel: 'Onayları İncele',
-          action: XrexAction.scrollToLegal,
-        ),
+        id: 'setup_legal',
+        phase: XrexJourneyPhase.setup,
+        title: 'Yayınlama onaylarını tamamla',
+        description:
+            'Vitrinini güvenli şekilde yayınlamak için onayları incele.',
+        buttonLabel: 'Onayları İncele',
+        action: XrexAction.scrollToLegal,
+      ),
       XrexNextStep.publish => const XrexRecommendation(
-          id: 'publish_vitrin',
-          phase: XrexJourneyPhase.publish,
-          title: 'Vitrinin yayına hazır',
-          description: 'Bilgilerini kontrol edip vitrinini yayınlayabilirsin.',
-          buttonLabel: 'Yayınlamaya git',
-          action: XrexAction.openVitrim,
-        ),
+        id: 'publish_vitrin',
+        phase: XrexJourneyPhase.publish,
+        title: 'Vitrinin yayına hazır',
+        description: 'Bilgilerini kontrol edip vitrinini yayınlayabilirsin.',
+        buttonLabel: 'Yayınlamaya git',
+        action: XrexAction.openVitrim,
+      ),
       XrexNextStep.share => const XrexRecommendation(
-          id: 'share_vitrin',
-          phase: XrexJourneyPhase.share,
-          title: 'Vitrinini müşterilerine duyur',
-          description: 'Yayındaki vitrininin bağlantısını paylaş.',
-          buttonLabel: 'Paylaş',
-          action: XrexAction.shareWhatsapp,
-        ),
+        id: 'share_vitrin',
+        phase: XrexJourneyPhase.share,
+        title: 'Vitrinini müşterilerine duyur',
+        description: 'Yayındaki vitrininin bağlantısını paylaş.',
+        buttonLabel: 'Paylaş',
+        action: XrexAction.shareWhatsapp,
+      ),
     };
   }
 }

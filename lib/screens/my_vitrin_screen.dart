@@ -9,12 +9,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/config/instagram_sync_config.dart';
 import 'package:vitrinx/config/business_category_config.dart';
-import 'package:vitrinx/config/turkey_cities_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/models/legal_document.dart';
 import 'package:vitrinx/screens/legal_screen.dart';
 import 'package:vitrinx/services/legal_document_service.dart';
-import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/seo_service.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
@@ -31,32 +29,10 @@ import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/widgets/product/product_management_entry_card.dart';
 import 'package:vitrinx/widgets/product/product_management_sheet.dart';
 import 'package:vitrinx/config/legal_config.dart';
-
-// ─── Gallery item helper ───────────────────────────────────────────────────
-class _GalleryItem {
-  String id;
-  Uint8List? bytes;
-  String imageUrl;
-  String extension;
-  String contentType;
-
-  _GalleryItem({
-    required this.id,
-    this.bytes,
-    required this.imageUrl,
-    this.extension = 'jpg',
-    this.contentType = 'image/jpeg',
-  });
-
-  bool get hasLocalBytes => bytes != null;
-  bool get hasUrl => imageUrl.trim().isNotEmpty;
-
-  static _GalleryItem fromStoreItem(StoreGalleryItem item) =>
-      _GalleryItem(id: item.id, imageUrl: item.imageUrl);
-
-  StoreGalleryItem toStoreItem() =>
-      StoreGalleryItem(id: id, imageUrl: imageUrl);
-}
+import 'package:vitrinx/widgets/editor/working_hours_editor.dart';
+import 'package:vitrinx/widgets/editor/location_editor_section.dart';
+import 'package:vitrinx/widgets/editor/store_theme_picker.dart';
+import 'package:vitrinx/widgets/editor/gallery_editor_section.dart';
 
 // ─── Main Widget ──────────────────────────────────────────────────────────
 class MyVitrinScreen extends StatefulWidget {
@@ -139,7 +115,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   String _coverContentType = 'image/jpeg';
 
   // Gallery
-  final List<_GalleryItem> _galleryItems = [];
+  final List<GalleryItem> _galleryItems = [];
   static const int _maxGalleryPhotos = 12;
 
   // Marketplace links
@@ -324,7 +300,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         _galleryItems.addAll(
           _data.displayGalleryItems
               .take(_maxGalleryPhotos)
-              .map(_GalleryItem.fromStoreItem),
+              .map((item) => GalleryItem(id: item.id, imageUrl: item.imageUrl)),
         );
 
         _marketplaceLinks.clear();
@@ -484,7 +460,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     if (result == null || result.files.isEmpty) return;
 
     var rejected = 0;
-    final newItems = <_GalleryItem>[];
+    final newItems = <GalleryItem>[];
     for (final file in result.files.take(remaining)) {
       final validation = GalleryImageFileValidator.validate(
         bytes: file.bytes,
@@ -495,7 +471,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         continue;
       }
       newItems.add(
-        _GalleryItem(
+        GalleryItem(
           id: '${DateTime.now().microsecondsSinceEpoch}_${newItems.length}',
           bytes: file.bytes,
           imageUrl: '',
@@ -523,98 +499,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     if (!confirmed || !mounted) return;
 
     setState(() => _galleryItems.removeAt(index));
-  }
-
-  // ─── Location ─────────────────────────────────────────────────────────────
-  Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isLocating = true;
-      _locationStatusMessage = 'Konum aranıyor...';
-    });
-
-    final result = await const LocationService().getCurrentLocation();
-    if (!mounted) return;
-
-    if (!result.isSuccess && !result.hasApproximatePosition) {
-      setState(() {
-        _isLocating = false;
-        _locationStatusMessage = result.errorMessage;
-      });
-      return;
-    }
-
-    final position = result.position ?? result.approximatePosition!;
-    setState(() {
-      _latitude = position.latitude;
-      _longitude = position.longitude;
-      _locationAccuracyMeters = position.accuracy;
-      _locationStatusMessage = 'Adres çözümleniyor...';
-    });
-
-    final geoAddress = await const LocationService().getAddressFromCoordinates(
-      position.latitude,
-      position.longitude,
-    );
-
-    if (!mounted) return;
-
-    setState(() {
-      _isLocating = false;
-      _locationStatusMessage = LocationService.buildAccuracyMessage(
-        position.accuracy,
-      );
-      if (geoAddress != null && geoAddress.isNotEmpty) {
-        _addressController.text = geoAddress;
-        _addressError = null;
-
-        // Auto-detect Province and District
-        final normalizedAddress = _normalizeTurkish(geoAddress);
-        Province? matchedProvince;
-        for (final province in turkeyProvinces) {
-          final normalizedProvince = _normalizeTurkish(province.name);
-          if (normalizedAddress.contains(normalizedProvince)) {
-            matchedProvince = province;
-            break;
-          }
-        }
-
-        if (matchedProvince != null) {
-          _selectedProvinceCode = matchedProvince.code;
-          _selectedProvinceName = matchedProvince.name;
-          _provinceError = null;
-
-          final districts = turkeyDistricts[matchedProvince.code] ?? [];
-          String? matchedDistrict;
-          for (final district in districts) {
-            final normalizedDistrict = _normalizeTurkish(district);
-            if (normalizedAddress.contains(normalizedDistrict)) {
-              matchedDistrict = district;
-              break;
-            }
-          }
-          if (matchedDistrict != null) {
-            _selectedDistrictCode = matchedDistrict;
-            _selectedDistrictName = matchedDistrict;
-            _districtError = null;
-          } else {
-            _selectedDistrictCode = null;
-            _selectedDistrictName = null;
-          }
-        }
-      }
-    });
-  }
-
-  String _normalizeTurkish(String text) {
-    return text
-        .toLowerCase()
-        .replaceAll('i', 'i')
-        .replaceAll('ı', 'i')
-        .replaceAll('ğ', 'g')
-        .replaceAll('ü', 'u')
-        .replaceAll('ş', 's')
-        .replaceAll('ö', 'o')
-        .replaceAll('ç', 'c');
   }
 
   // ─── Marketplace Links ────────────────────────────────────────────────────
@@ -777,7 +661,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           _galleryItems
               .where((i) => i.hasUrl)
               .take(_maxGalleryPhotos)
-              .map((i) => i.toStoreItem())
+              .map((i) => StoreGalleryItem(id: i.id, imageUrl: i.imageUrl))
               .toList();
 
       if (_selectedKategori != 'Kuaför') {
@@ -1419,6 +1303,16 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               ),
               const SizedBox(height: 14),
 
+              StoreThemePicker(
+                selectedTheme: _data.theme,
+                onThemeChanged: (val) {
+                  setState(() {
+                    _data.theme = val;
+                  });
+                },
+              ),
+              const SizedBox(height: 14),
+
               if (_selectedKategori == 'Kuaför') ...[
                 KeyedSubtree(
                   key: _productsKey,
@@ -1813,303 +1707,67 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   // ─── Location Field ───────────────────────────────────────────────────────
   // ─── Location Field ───────────────────────────────────────────────────────
   Widget _buildLocationField() {
-    final districts =
-        _selectedProvinceCode != null
-            ? (turkeyDistricts[_selectedProvinceCode] ?? [])
-            : <String>[];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Dropdown: İl
-        Row(
-          children: [
-            const Text(
-              'İl',
-              style: TextStyle(
-                color: softText,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const Text(
-              ' *',
-              style: TextStyle(
-                color: primaryColor,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _selectedProvinceCode,
-          decoration: InputDecoration(
-            prefixIcon: const Icon(
-              Icons.map_rounded,
-              color: mutedText,
-              size: 18,
-            ),
-            filled: true,
-            fillColor: inputBg,
-            errorText: _provinceError,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: cardBorder),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: cardBorder),
-            ),
-          ),
-          hint: const Text(
-            'İl Seçiniz',
-            style: TextStyle(fontSize: 14, color: mutedText),
-          ),
-          items:
-              turkeyProvinces.map((p) {
-                return DropdownMenuItem<String>(
-                  value: p.code,
-                  child: Text(
-                    p.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: darkText,
-                    ),
-                  ),
-                );
-              }).toList(),
-          onChanged: (val) {
-            setState(() {
-              _selectedProvinceCode = val;
-              _selectedProvinceName =
-                  val != null
-                      ? turkeyProvinces.firstWhere((p) => p.code == val).name
-                      : '';
-              _selectedDistrictCode = null;
-              _selectedDistrictName = null;
-              _provinceError = null;
-            });
-          },
-        ),
-        const SizedBox(height: 14),
-
-        // Dropdown: İlçe
-        Row(
-          children: [
-            const Text(
-              'İlçe',
-              style: TextStyle(
-                color: softText,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const Text(
-              ' *',
-              style: TextStyle(
-                color: primaryColor,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _selectedDistrictName,
-          decoration: InputDecoration(
-            prefixIcon: const Icon(
-              Icons.location_city_rounded,
-              color: mutedText,
-              size: 18,
-            ),
-            filled: true,
-            fillColor: inputBg,
-            errorText: _districtError,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: cardBorder),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: cardBorder),
-            ),
-          ),
-          hint: const Text(
-            'İlçe Seçiniz',
-            style: TextStyle(fontSize: 14, color: mutedText),
-          ),
-          disabledHint: const Text(
-            'Önce İl Seçiniz',
-            style: TextStyle(fontSize: 14, color: mutedText),
-          ),
-          items:
-              districts.map((d) {
-                return DropdownMenuItem<String>(
-                  value: d,
-                  child: Text(
-                    d,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: darkText,
-                    ),
-                  ),
-                );
-              }).toList(),
-          onChanged:
-              _selectedProvinceCode == null
-                  ? null
-                  : (val) {
-                    setState(() {
-                      _selectedDistrictCode = val;
-                      _selectedDistrictName = val;
-                      _districtError = null;
-                    });
-                  },
-        ),
-        const SizedBox(height: 14),
-
-        // Detailed Address Field
-        Row(
-          children: [
-            const Text(
-              'Açık Adres (Mahalle, Cadde, Sokak, No)',
-              style: TextStyle(
-                color: softText,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const Text(
-              ' *',
-              style: TextStyle(
-                color: primaryColor,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _addressController,
-          style: const TextStyle(
-            color: darkText,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
-          decoration: InputDecoration(
-            prefixIcon: const Icon(
-              Icons.location_on_rounded,
-              color: mutedText,
-              size: 18,
-            ),
-            hintText: 'Örn: Atatürk Mah. Fatih Cad. No:12 D:4',
-            hintStyle: TextStyle(
-              color: mutedText.withValues(alpha: 0.62),
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-            filled: true,
-            fillColor: inputBg,
-            errorText: _addressError,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: cardBorder),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: cardBorder),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: primaryColor, width: 1.4),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 40,
-          child: OutlinedButton.icon(
-            onPressed: _isLocating ? null : _getCurrentLocation,
-            icon:
-                _isLocating
-                    ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: primaryColor,
-                      ),
-                    )
-                    : const Icon(
-                      Icons.my_location_rounded,
-                      size: 16,
-                      color: primaryColor,
-                    ),
-            label: Text(
-              _isLocating ? 'Konum alınıyor...' : '📡 GPS ile Konumumu Al',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: primaryColor,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: primaryColor),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-            ),
-          ),
-        ),
-        if (_locationStatusMessage != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            _locationStatusMessage!,
-            style: const TextStyle(
-              color: mutedText,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-        if (_latitude != null && _longitude != null) ...[
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(
-                Icons.check_circle_rounded,
-                size: 13,
-                color: Color(0xFF10B981),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Koordinat kaydedildi (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})',
-                style: const TextStyle(
-                  color: Color(0xFF047857),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
+    return LocationEditorSection(
+      selectedProvinceCode: _selectedProvinceCode,
+      selectedProvinceName: _selectedProvinceName,
+      selectedDistrictCode: _selectedDistrictCode,
+      selectedDistrictName: _selectedDistrictName,
+      provinceError: _provinceError,
+      districtError: _districtError,
+      addressError: _addressError,
+      addressController: _addressController,
+      latitude: _latitude,
+      longitude: _longitude,
+      locationAccuracyMeters: _locationAccuracyMeters,
+      locationStatusMessage: _locationStatusMessage,
+      isLocating: _isLocating,
+      onProvinceChanged: (code, name) {
+        setState(() {
+          _selectedProvinceCode = code;
+          _selectedProvinceName = name;
+          _selectedDistrictCode = null;
+          _selectedDistrictName = null;
+          _provinceError = null;
+        });
+      },
+      onDistrictChanged: (code, name) {
+        setState(() {
+          _selectedDistrictCode = code;
+          _selectedDistrictName = name;
+          _districtError = null;
+        });
+      },
+      onLocatingStateChanged: (locating) {
+        setState(() {
+          _isLocating = locating;
+        });
+      },
+      onLocationUpdated: ({
+        latitude,
+        longitude,
+        accuracy,
+        statusMessage,
+        address,
+        provinceCode,
+        provinceName,
+        districtCode,
+        districtName,
+      }) {
+        setState(() {
+          if (latitude != null) _latitude = latitude;
+          if (longitude != null) _longitude = longitude;
+          if (accuracy != null) _locationAccuracyMeters = accuracy;
+          if (statusMessage != null) _locationStatusMessage = statusMessage;
+          if (address != null) {
+            _addressController.text = address;
+            _addressError = null;
+          }
+          if (provinceCode != null) _selectedProvinceCode = provinceCode;
+          if (provinceName != null) _selectedProvinceName = provinceName;
+          if (districtCode != null) _selectedDistrictCode = districtCode;
+          if (districtName != null) _selectedDistrictName = districtName;
+        });
+      },
     );
   }
 
@@ -2911,668 +2569,28 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     );
   }
 
-  Widget _buildBookingServicesSection() {
-    final config = BusinessCategoryConfig.fromCategoryLabel(_selectedKategori);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Randevu Hizmetleri',
-              style: TextStyle(
-                color: softText,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const Spacer(),
-            if (_offerings.length < 6)
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _offerings.add(
-                      StoreOffering(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        title: '',
-                        description: '',
-                        price: '',
-                        isBookable: true,
-                      ),
-                    );
-                  });
-                },
-                icon: const Icon(
-                  Icons.add_rounded,
-                  size: 16,
-                  color: primaryColor,
-                ),
-                label: const Text(
-                  'Ekle',
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        if (config.suggestedOfferings.isNotEmpty && _offerings.length < 6) ...[
-          const Text(
-            'Hazır hizmetler (eklemek için dokunun):',
-            style: TextStyle(
-              color: mutedText,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children:
-                config.suggestedOfferings.map((sug) {
-                  return ActionChip(
-                    backgroundColor: AppColors.surfaceSoft,
-                    side: const BorderSide(color: cardBorder),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    avatar: const Icon(
-                      Icons.add_circle_outline_rounded,
-                      color: primaryColor,
-                      size: 16,
-                    ),
-                    label: Text(
-                      'Ekle: ${sug.title}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: darkText,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    onPressed: () {
-                      if (_offerings.length >= 6) {
-                        _showSnackBar(
-                          'En fazla 6 adet hizmet ekleyebilirsiniz.',
-                        );
-                        return;
-                      }
-                      final trimmedTitle = sug.title.trim().toLowerCase();
-                      final isDuplicate = _offerings.any(
-                        (o) => o.title.trim().toLowerCase() == trimmedTitle,
-                      );
-                      if (isDuplicate) {
-                        _showSnackBar('Bu hizmet zaten eklenmiş.');
-                        return;
-                      }
-                      setState(() {
-                        _offerings.add(
-                          StoreOffering(
-                            id:
-                                '${DateTime.now().millisecondsSinceEpoch}_${sug.title.hashCode}',
-                            title: sug.title,
-                            description: sug.description,
-                            price: sug.price,
-                            durationMinutes: sug.durationMinutes,
-                            isBookable: true,
-                          ),
-                        );
-                      });
-                    },
-                  );
-                }).toList(),
-          ),
-          const SizedBox(height: 10),
-        ],
-        if (_offerings.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              'Müşterinin randevu alırken seçeceği hizmetleri ekleyin. Bu liste public profilde görünmez.',
-              style: TextStyle(
-                color: mutedText.withValues(alpha: 0.7),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        for (int i = 0; i < _offerings.length; i++) ...[
-          _buildBookingServiceRow(i),
-          const SizedBox(height: 10),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildBookingServiceRow(int index) {
-    final offering = _offerings[index];
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: inputBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextFormField(
-                  key: ValueKey('${offering.id}-title'),
-                  initialValue: offering.title,
-                  onChanged: (val) => offering.title = val,
-                  maxLength: 60,
-                  buildCounter:
-                      (
-                        context, {
-                        required currentLength,
-                        required isFocused,
-                        maxLength,
-                      }) => null,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: darkText,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Randevu hizmeti (örn: Saç Kesimi)',
-                    hintStyle: TextStyle(
-                      color: mutedText.withValues(alpha: 0.6),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  key: ValueKey('${offering.id}-price'),
-                  initialValue: offering.price,
-                  onChanged: (val) => offering.price = val,
-                  maxLength: 30,
-                  buildCounter:
-                      (
-                        context, {
-                        required currentLength,
-                        required isFocused,
-                        maxLength,
-                      }) => null,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Fiyat (örn: 150 TL)',
-                    hintStyle: TextStyle(
-                      color: mutedText.withValues(alpha: 0.6),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _offerings.removeAt(index);
-                  });
-                },
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  size: 18,
-                  color: dangerColor,
-                ),
-                style: IconButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(28, 28),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 1, color: cardBorder),
-          TextFormField(
-            key: ValueKey('${offering.id}-desc'),
-            initialValue: offering.description,
-            onChanged: (val) => offering.description = val,
-            maxLength: 120,
-            buildCounter:
-                (
-                  context, {
-                  required currentLength,
-                  required isFocused,
-                  maxLength,
-                }) => null,
-            maxLines: 2,
-            style: const TextStyle(
-              fontSize: 12,
-              color: softText,
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: InputDecoration(
-              hintText: 'Kısa açıklama (örn: Yıkama ve fön dahil hizmet)',
-              hintStyle: TextStyle(
-                color: mutedText.withValues(alpha: 0.5),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 8,
-              ),
-              border: InputBorder.none,
-            ),
-          ),
-          const Divider(height: 1, color: cardBorder),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const SizedBox(width: 8),
-              const Icon(Icons.timer_rounded, size: 14, color: mutedText),
-              const SizedBox(width: 4),
-              const Text(
-                'Süre',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: softText,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              DropdownButton<int>(
-                value: offering.durationMinutes,
-                items:
-                    [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
-                      return DropdownMenuItem<int>(
-                        value: val,
-                        child: Text(
-                          '$val dk',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: darkText,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                onChanged: (val) {
-                  setState(() {
-                    if (val != null) {
-                      offering.durationMinutes = val;
-                    }
-                    offering.isBookable = true;
-                  });
-                },
-                underline: const SizedBox(),
-              ),
-              const SizedBox(width: 8),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildBookingSettingsSection() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
-      child: ExpansionTile(
-        title: const Row(
-          children: [
-            Icon(Icons.calendar_month_rounded, color: primaryColor, size: 18),
-            SizedBox(width: 8),
-            Text(
-              'Randevu Ayarları',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-                color: darkText,
-              ),
-            ),
-          ],
-        ),
-        subtitle: Text(
-          _bookingIsEnabled
-              ? 'Aktif · Kapasite: $_bookingCapacity kişi'
-              : 'Pasif',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: _bookingIsEnabled ? primaryColor : mutedText,
-          ),
-        ),
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(top: 8, bottom: 8),
-        shape: const Border(),
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Randevu Alınabilsin',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: softText,
-                ),
-              ),
-              const Spacer(),
-              Switch(
-                value: _bookingIsEnabled,
-                activeThumbColor: primaryColor,
-                onChanged: (val) {
-                  setState(() {
-                    _bookingIsEnabled = val;
-                  });
-                },
-              ),
-            ],
-          ),
-          if (_bookingIsEnabled) ...[
-            const Divider(color: cardBorder),
-            const SizedBox(height: 8),
-            _buildBookingServicesSection(),
-            const Divider(color: cardBorder),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Text(
-                  'Aynı Anda Kapasite',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: softText,
-                  ),
-                ),
-                const Spacer(),
-                DropdownButton<int>(
-                  value: _bookingCapacity,
-                  items:
-                      [1, 2, 3, 4, 5].map((int val) {
-                        return DropdownMenuItem<int>(
-                          value: val,
-                          child: Text(
-                            '$val kişi',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: darkText,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                  onChanged: (val) {
-                    setState(() {
-                      if (val != null) {
-                        _bookingCapacity = val;
-                      }
-                    });
-                  },
-                ),
-              ],
-            ),
-            const Divider(color: cardBorder),
-            const SizedBox(height: 8),
-            const Text(
-              'Öğle Arası Saatleri',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: softText,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _bookingLunchBreak['start'] ?? '12:00',
-                    decoration: const InputDecoration(
-                      labelText: 'Başlangıç',
-                      isDense: true,
-                    ),
-                    items:
-                        [
-                          '11:00',
-                          '11:30',
-                          '12:00',
-                          '12:30',
-                          '13:00',
-                          '13:30',
-                        ].map((String val) {
-                          return DropdownMenuItem<String>(
-                            value: val,
-                            child: Text(
-                              val,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          );
-                        }).toList(),
-                    onChanged: (val) {
-                      setState(() {
-                        if (val != null) {
-                          _bookingLunchBreak['start'] = val;
-                        }
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _bookingLunchBreak['end'] ?? '13:00',
-                    decoration: const InputDecoration(
-                      labelText: 'Bitiş',
-                      isDense: true,
-                    ),
-                    items:
-                        [
-                          '12:00',
-                          '12:30',
-                          '13:00',
-                          '13:30',
-                          '14:00',
-                          '14:30',
-                        ].map((String val) {
-                          return DropdownMenuItem<String>(
-                            value: val,
-                            child: Text(
-                              val,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          );
-                        }).toList(),
-                    onChanged: (val) {
-                      setState(() {
-                        if (val != null) {
-                          _bookingLunchBreak['end'] = val;
-                        }
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Aktif',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-                Checkbox(
-                  value: _bookingLunchBreak['active'] ?? true,
-                  activeColor: primaryColor,
-                  onChanged: (val) {
-                    setState(() {
-                      _bookingLunchBreak['active'] = val ?? false;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const Divider(color: cardBorder),
-            const SizedBox(height: 8),
-            const Text(
-              'Çalışma Gün ve Saatleri',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: softText,
-              ),
-            ),
-            const SizedBox(height: 8),
-            for (String day in ['1', '2', '3', '4', '5', '6', '7']) ...[
-              _buildDayRow(day),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDayRow(String day) {
-    final dayNames = {
-      '1': 'Pazartesi',
-      '2': 'Salı',
-      '3': 'Çarşamba',
-      '4': 'Perşembe',
-      '5': 'Cuma',
-      '6': 'Cumartesi',
-      '7': 'Pazar',
-    };
-    final dayHours =
-        _bookingWorkingHours[day] ??
-        {'start': '09:00', 'end': '19:00', 'active': true};
-    final isActive = dayHours['active'] ?? false;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 90,
-            child: Text(
-              dayNames[day]!,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: isActive ? darkText : mutedText,
-              ),
-            ),
-          ),
-          Checkbox(
-            value: isActive,
-            activeColor: primaryColor,
-            onChanged: (val) {
-              setState(() {
-                dayHours['active'] = val ?? false;
-                _bookingWorkingHours[day] = dayHours;
-              });
-            },
-          ),
-          if (isActive) ...[
-            const SizedBox(width: 8),
-            Expanded(
-              child: DropdownButton<String>(
-                value: dayHours['start'] ?? '09:00',
-                items:
-                    ['07:00', '08:00', '08:30', '09:00', '09:30', '10:00'].map((
-                      String val,
-                    ) {
-                      return DropdownMenuItem<String>(
-                        value: val,
-                        child: Text(val, style: const TextStyle(fontSize: 11)),
-                      );
-                    }).toList(),
-                onChanged: (val) {
-                  setState(() {
-                    if (val != null) {
-                      dayHours['start'] = val;
-                      _bookingWorkingHours[day] = dayHours;
-                    }
-                  });
-                },
-                underline: const SizedBox(),
-              ),
-            ),
-            const Text('-', style: TextStyle(color: mutedText)),
-            Expanded(
-              child: DropdownButton<String>(
-                value: dayHours['end'] ?? '19:00',
-                items:
-                    [
-                      '16:00',
-                      '17:00',
-                      '18:00',
-                      '19:00',
-                      '20:00',
-                      '21:00',
-                      '22:00',
-                      '23:00',
-                    ].map((String val) {
-                      return DropdownMenuItem<String>(
-                        value: val,
-                        child: Text(val, style: const TextStyle(fontSize: 11)),
-                      );
-                    }).toList(),
-                onChanged: (val) {
-                  setState(() {
-                    if (val != null) {
-                      dayHours['end'] = val;
-                      _bookingWorkingHours[day] = dayHours;
-                    }
-                  });
-                },
-                underline: const SizedBox(),
-              ),
-            ),
-          ] else ...[
-            const Expanded(
-              child: Text(
-                'Kapalı',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: mutedText,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
+    return WorkingHoursEditor(
+      bookingIsEnabled: _bookingIsEnabled,
+      bookingCapacity: _bookingCapacity,
+      bookingWorkingHours: _bookingWorkingHours,
+      bookingLunchBreak: _bookingLunchBreak,
+      offerings: _offerings,
+      selectedKategori: _selectedKategori,
+      onBookingEnabledChanged: (val) {
+        setState(() {
+          _bookingIsEnabled = val;
+        });
+      },
+      onBookingCapacityChanged: (val) {
+        setState(() {
+          _bookingCapacity = val;
+        });
+      },
+      onStateChanged: () {
+        setState(() {});
+      },
+      showSnackBar: _showSnackBar,
     );
   }
 
