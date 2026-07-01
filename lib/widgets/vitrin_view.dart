@@ -21,6 +21,7 @@ import 'package:vitrinx/widgets/vitrin_view/vitrin_products_catalog.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_shelf_gallery.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_profile_tools.dart';
 import 'package:vitrinx/widgets/vitrin_view/vitrin_premium_identity_card.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_links_hub.dart';
 
 class VitrinView extends StatelessWidget {
   final StoreData storeData;
@@ -98,7 +99,16 @@ class VitrinView extends StatelessWidget {
                           onNormalizeExternalUrl: _normalizeExternalUrl,
                         ),
                         aboutCard: _buildAboutCard(preset),
-                        linkHub: _buildModernLinkHub(context, preset, radius),
+                        linkHub: VitrinLinksHub(
+                          storeData: storeData,
+                          preset: preset,
+                          radius: radius,
+                          isEmbedded: isEmbedded,
+                          publicMode: publicMode,
+                          onGetPlatformIcon: _getPlatformIcon,
+                          onOpenExternalUrl: _openExternalUrl,
+                          onNormalizeExternalUrl: _normalizeExternalUrl,
+                        ),
                         shelfImageCard: VitrinShelfGallery(preset: preset, galleryItems: galleryItems, isEmbedded: isEmbedded),
                         qrCard: publicLink != null
                             ? VitrinQrCard(
@@ -208,7 +218,16 @@ class VitrinView extends StatelessWidget {
         onOpenExternalUrl: _openExternalUrl,
         onNormalizeExternalUrl: _normalizeExternalUrl,
       ),
-      linkHub: _buildModernLinkHub(context, preset, radius),
+      linkHub: VitrinLinksHub(
+        storeData: storeData,
+        preset: preset,
+        radius: radius,
+        isEmbedded: isEmbedded,
+        publicMode: publicMode,
+        onGetPlatformIcon: _getPlatformIcon,
+        onOpenExternalUrl: _openExternalUrl,
+        onNormalizeExternalUrl: _normalizeExternalUrl,
+      ),
       premiumIdentityCard: VitrinPremiumIdentityCard(
         storeData: storeData,
         preset: preset,
@@ -275,7 +294,16 @@ class VitrinView extends StatelessWidget {
         onNormalizeExternalUrl: _normalizeExternalUrl,
       ),
       qrCard: publicLink != null ? VitrinQrCard(url: publicLink!, preset: preset, isEmbedded: isEmbedded) : const SizedBox(),
-      linkHub: _buildModernLinkHub(context, preset, radius),
+      linkHub: VitrinLinksHub(
+        storeData: storeData,
+        preset: preset,
+        radius: radius,
+        isEmbedded: isEmbedded,
+        publicMode: publicMode,
+        onGetPlatformIcon: _getPlatformIcon,
+        onOpenExternalUrl: _openExternalUrl,
+        onNormalizeExternalUrl: _normalizeExternalUrl,
+      ),
       shelfImageCard: VitrinShelfGallery(preset: preset, galleryItems: galleryItems, isEmbedded: isEmbedded),
       footer: VitrinFooter(storeData: storeData, preset: preset, publicMode: publicMode),
       hasSideLinks: hasSideLinks,
@@ -1325,97 +1353,6 @@ class VitrinView extends StatelessWidget {
     );
   }
 
-  Widget _buildModernLinkHub(
-    BuildContext context,
-    VitrinThemePreset preset,
-    double radius,
-  ) {
-    final isCompact = isEmbedded;
-    final visibleMarketplaceLinks =
-        publicMode
-            ? storeData.marketplaceLinks
-                .where(
-                  (link) =>
-                      link.platform.trim().isNotEmpty &&
-                      link.url.trim().isNotEmpty,
-                )
-                .toList()
-            : storeData.marketplaceLinks;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24),
-      child: Column(
-        children: [
-          ...visibleMarketplaceLinks.map(
-            (link) => _ModernLinkItem(
-              icon: _getPlatformIcon(link.platform),
-              title: link.platform,
-              // Önce kullanıcının eklediği subtitle; yoksa URL'yi göster
-              subtitle:
-                  link.subtitle.trim().isNotEmpty
-                      ? link.subtitle.trim()
-                      : link.url.isEmpty
-                      ? 'Bağlantıyı ziyaret et'
-                      : link.url,
-              color: preset.accent,
-              radius: radius,
-              compact: isCompact,
-              preset: preset,
-              onTap: () {
-                if (!publicMode) {
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        "Müşteriler bu bağlantıya bastığında '${link.platform}' sayfasına yönlendirilir.",
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                  return;
-                }
-                _openExternalUrl(context, _normalizeExternalUrl(link.url));
-              },
-            ),
-          ),
-
-          if (!publicMode && storeData.marketplaceLinks.isEmpty)
-            _ModernLinkItem(
-              icon: Icons.auto_stories_rounded,
-              title: 'Dijital Katalog',
-              subtitle: 'Geniş ürün ve hizmet yelpazesi',
-              color: Colors.blueGrey,
-              radius: radius,
-              compact: isCompact,
-              preset: preset,
-            ),
-
-          if (!publicMode) ...[
-            _ModernLinkItem(
-              icon: Icons.verified_rounded,
-              title: 'Referanslarımız',
-              subtitle: 'Güçlü çözüm ortaklıklarımız',
-              color: Colors.indigo.shade400,
-              radius: radius,
-              compact: isCompact,
-              preset: preset,
-            ),
-            _ModernLinkItem(
-              icon: Icons.contact_page_rounded,
-              title: 'Kişilerime Ekle',
-              subtitle:
-                  'Tek dokunuşla tüm iletişim bilgilerini rehberine kaydet',
-              color: Colors.teal.shade500,
-              radius: radius,
-              compact: isCompact,
-              preset: preset,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   /// vCard kartını göstermek için yeterli veri var mı?
   bool _hasVCardData() {
     if (storeData.name.trim().isEmpty) return false;
@@ -1827,136 +1764,3 @@ class _ActionIconBtn extends StatelessWidget {
   }
 }
 
-class _ModernLinkItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final double radius;
-  final bool compact;
-  final VitrinThemePreset preset;
-  final VoidCallback? onTap;
-
-  const _ModernLinkItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.radius,
-    required this.preset,
-    this.compact = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final effectiveColor =
-        preset.isDark && color.computeLuminance() < 0.35
-            ? preset.accent
-            : color;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: compact ? 10 : 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            preset.surface,
-            preset.surfaceSoft.withValues(alpha: preset.isDark ? 0.36 : 0.5),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(compact ? 16 : 24),
-        border: Border.all(
-          color: preset.border.withValues(alpha: preset.isDark ? 0.9 : 0.78),
-          width: compact ? 1 : 1.3,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: preset.isDark ? 0.14 : 0.045),
-            blurRadius: compact ? 12 : 24,
-            offset: Offset(0, compact ? 3 : 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(compact ? 16 : 24),
-          child: Padding(
-            padding: EdgeInsets.all(compact ? 13 : 20),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(compact ? 9 : 13),
-                  decoration: BoxDecoration(
-                    color: effectiveColor.withValues(
-                      alpha: preset.isDark ? 0.2 : 0.11,
-                    ),
-                    borderRadius: BorderRadius.circular(compact ? 11 : 16),
-                    border: Border.all(
-                      color: effectiveColor.withValues(alpha: 0.08),
-                    ),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: effectiveColor,
-                    size: compact ? 18 : 22,
-                  ),
-                ),
-                SizedBox(width: compact ? 12 : 18),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: compact ? 14 : 16,
-                          color: preset.textPrimary,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                      SizedBox(height: compact ? 2 : 4),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: preset.textSecondary,
-                          fontSize: compact ? 10.5 : 12,
-                          fontWeight: FontWeight.w500,
-                          height: 1.35,
-                        ),
-                        maxLines: compact ? 1 : 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: compact ? 24 : 30,
-                  height: compact ? 24 : 30,
-                  decoration: BoxDecoration(
-                    color: preset.surfaceSoft.withValues(
-                      alpha: preset.isDark ? 0.38 : 0.72,
-                    ),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: preset.border.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: preset.textSecondary.withValues(alpha: 0.75),
-                    size: compact ? 10 : 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
