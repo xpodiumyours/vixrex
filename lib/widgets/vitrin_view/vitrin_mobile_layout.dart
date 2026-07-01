@@ -10,7 +10,7 @@ class VitrinMobileLayout extends StatelessWidget {
   final Widget shelfImageCard;
   final Widget qrCard;
   final Widget footer;
-  
+
   final bool isBookingEnabled;
   final bool isStore;
   final bool hasAboutText;

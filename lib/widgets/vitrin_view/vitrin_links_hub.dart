@@ -5,7 +5,6 @@ import 'package:vitrinx/theme/vitrin_theme_preset.dart';
 class VitrinLinksHub extends StatelessWidget {
   final StoreData storeData;
   final VitrinThemePreset preset;
-  final double radius;
   final bool isEmbedded;
   final bool publicMode;
   final IconData Function(String) onGetPlatformIcon;
@@ -16,7 +15,6 @@ class VitrinLinksHub extends StatelessWidget {
     super.key,
     required this.storeData,
     required this.preset,
-    required this.radius,
     required this.isEmbedded,
     required this.publicMode,
     required this.onGetPlatformIcon,
@@ -51,7 +49,6 @@ class VitrinLinksHub extends StatelessWidget {
                       ? 'Bağlantıyı ziyaret et'
                       : link.url,
               color: preset.accent,
-              radius: radius,
               compact: isCompact,
               preset: preset,
               onTap: () {
@@ -77,7 +74,6 @@ class VitrinLinksHub extends StatelessWidget {
               title: 'Dijital Katalog',
               subtitle: 'Geniş ürün ve hizmet yelpazesi',
               color: Colors.blueGrey,
-              radius: radius,
               compact: isCompact,
               preset: preset,
             ),
@@ -87,7 +83,6 @@ class VitrinLinksHub extends StatelessWidget {
               title: 'Referanslarımız',
               subtitle: 'Güçlü çözüm ortaklıklarımız',
               color: Colors.indigo.shade400,
-              radius: radius,
               compact: isCompact,
               preset: preset,
             ),
@@ -97,7 +92,6 @@ class VitrinLinksHub extends StatelessWidget {
               subtitle:
                   'Tek dokunuşla tüm iletişim bilgilerini rehberine kaydet',
               color: Colors.teal.shade500,
-              radius: radius,
               compact: isCompact,
               preset: preset,
             ),
@@ -113,7 +107,6 @@ class _ModernLinkItem extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color color;
-  final double radius;
   final bool compact;
   final VitrinThemePreset preset;
   final VoidCallback? onTap;
@@ -123,7 +116,6 @@ class _ModernLinkItem extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.color,
-    required this.radius,
     required this.preset,
     this.compact = false,
     this.onTap,

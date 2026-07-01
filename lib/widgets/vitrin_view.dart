@@ -82,7 +82,6 @@ class VitrinView extends StatelessWidget {
                         productsCatalog: VitrinProductsCatalog(
                           storeData: storeData,
                           preset: preset,
-                          radius: radius,
                           isEmbedded: isEmbedded,
                           publicMode: publicMode,
                           onOpenExternalUrl: _openExternalUrl,
@@ -102,7 +101,6 @@ class VitrinView extends StatelessWidget {
                         linkHub: VitrinLinksHub(
                           storeData: storeData,
                           preset: preset,
-                          radius: radius,
                           isEmbedded: isEmbedded,
                           publicMode: publicMode,
                           onGetPlatformIcon: _getPlatformIcon,
@@ -202,7 +200,6 @@ class VitrinView extends StatelessWidget {
       productsCatalog: VitrinProductsCatalog(
         storeData: storeData,
         preset: preset,
-        radius: radius,
         isEmbedded: isEmbedded,
         publicMode: publicMode,
         onOpenExternalUrl: _openExternalUrl,
@@ -221,7 +218,6 @@ class VitrinView extends StatelessWidget {
       linkHub: VitrinLinksHub(
         storeData: storeData,
         preset: preset,
-        radius: radius,
         isEmbedded: isEmbedded,
         publicMode: publicMode,
         onGetPlatformIcon: _getPlatformIcon,
@@ -276,7 +272,6 @@ class VitrinView extends StatelessWidget {
       productsCatalog: VitrinProductsCatalog(
         storeData: storeData,
         preset: preset,
-        radius: radius,
         isEmbedded: isEmbedded,
         publicMode: publicMode,
         onOpenExternalUrl: _openExternalUrl,
@@ -297,7 +292,6 @@ class VitrinView extends StatelessWidget {
       linkHub: VitrinLinksHub(
         storeData: storeData,
         preset: preset,
-        radius: radius,
         isEmbedded: isEmbedded,
         publicMode: publicMode,
         onGetPlatformIcon: _getPlatformIcon,
@@ -1098,7 +1092,6 @@ class VitrinView extends StatelessWidget {
           label: ctaLabel,
           icon: Icons.chat_bubble_rounded,
           color: profileActionColor,
-          radius: radius,
           compact: isCompact,
           onTap: () {
             ScaffoldMessenger.of(context).clearSnackBars();
@@ -1116,7 +1109,6 @@ class VitrinView extends StatelessWidget {
           label: 'Instagram',
           icon: Icons.camera_rounded,
           color: profileActionColor,
-          radius: radius,
           compact: isCompact,
           onTap: () {
             ScaffoldMessenger.of(context).clearSnackBars();
@@ -1135,7 +1127,6 @@ class VitrinView extends StatelessWidget {
             label: 'Web',
             icon: Icons.language_rounded,
             color: profileActionColor,
-            radius: radius,
             compact: isCompact,
             onTap: () {
               ScaffoldMessenger.of(context).clearSnackBars();
@@ -1153,7 +1144,6 @@ class VitrinView extends StatelessWidget {
           label: 'Yol Tarifi',
           icon: Icons.location_on_rounded,
           color: profileActionColor,
-          radius: radius,
           compact: isCompact,
           onTap: () {
             ScaffoldMessenger.of(context).clearSnackBars();
@@ -1172,7 +1162,6 @@ class VitrinView extends StatelessWidget {
             label: 'Yorum Yap',
             icon: Icons.star_rate_rounded,
             color: profileActionColor,
-            radius: radius,
             compact: isCompact,
             onTap: () {
               ScaffoldMessenger.of(context).clearSnackBars();
@@ -1195,7 +1184,6 @@ class VitrinView extends StatelessWidget {
           label: ctaLabel,
           icon: Icons.chat_bubble_rounded,
           color: profileActionColor,
-          radius: radius,
           compact: isCompact,
           emphasis: true,
           onTap: () {
@@ -1214,7 +1202,6 @@ class VitrinView extends StatelessWidget {
           label: 'Instagram',
           icon: Icons.camera_rounded,
           color: profileActionColor,
-          radius: radius,
           compact: isCompact,
           onTap:
               () => _openExternalUrl(
@@ -1227,7 +1214,6 @@ class VitrinView extends StatelessWidget {
           label: 'Web Sitesi',
           icon: Icons.language_rounded,
           color: profileActionColor,
-          radius: radius,
           compact: isCompact,
           onTap: () => _openExternalUrl(context, _publicWebsiteActionUrl()),
         ),
@@ -1236,7 +1222,6 @@ class VitrinView extends StatelessWidget {
           label: 'Google\'da Yorum Yap',
           icon: Icons.star_rate_rounded,
           color: profileActionColor,
-          radius: radius,
           compact: isCompact,
           onTap:
               () => _openExternalUrl(
@@ -1250,7 +1235,6 @@ class VitrinView extends StatelessWidget {
           label: 'Yol Tarifi',
           icon: Icons.location_on_rounded,
           color: profileActionColor,
-          radius: radius,
           compact: isCompact,
           onTap:
               () => _openExternalUrl(context, _buildMapsUrl(storeData.address)),
@@ -1679,7 +1663,6 @@ class _ActionIconBtn extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
-  final double radius;
   final bool compact;
   final bool emphasis;
   final VoidCallback? onTap;
@@ -1688,7 +1671,6 @@ class _ActionIconBtn extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.color,
-    required this.radius,
     this.compact = false,
     this.emphasis = false,
     this.onTap,
