@@ -9,6 +9,7 @@ import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/config/instagram_sync_config.dart';
 import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/config/turkey_cities_config.dart';
+import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/models/legal_document.dart';
 import 'package:vitrinx/screens/my_vitrin/action_buttons_section.dart';
