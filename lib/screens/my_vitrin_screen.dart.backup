@@ -1,0 +1,5 @@
+// YEDEK: 2026-07-02 - Refactor öncesi my_vitrin_screen.dart
+// Bu dosya 1842 satırdı, monolit yapıdaydı.
+// Yeni yapı: my_vitrin/my_vitrin_screen.dart (scaffold only)
+//             my_vitrin/my_vitrin_state.dart (state yönetimi)
+//             controllers/store_editor_controller.dart (genişletilmiş)
