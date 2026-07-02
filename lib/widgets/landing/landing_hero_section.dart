@@ -156,8 +156,7 @@ class LandingHeroSection extends StatelessWidget {
   }
 
   Widget _buildTopNavBar(BuildContext context, bool isDesktop) {
-    final user = Supabase.instance.client.auth.currentUser;
-    final isUserLoggedIn = user != null;
+    final isUserLoggedIn = _isUserLoggedIn();
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -531,11 +530,75 @@ class LandingHeroSection extends StatelessWidget {
                   ),
                 ),
               ],
+              const SizedBox(height: 24),
+              _buildSecondaryActions(isDesktop: isDesktop),
             ],
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildSecondaryActions({required bool isDesktop}) {
+    final canOpenSavedVitrin = hasSavedVitrin && !isCheckingSavedVitrin;
+
+    final buttons = <Widget>[
+      if (canOpenSavedVitrin)
+        ElevatedButton.icon(
+          onPressed: onNavigateToSavedVitrin,
+          icon: const Icon(Icons.edit_rounded, size: 18),
+          label: const Text(
+            'VitrinX Düzenle',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: brandBlue,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+      OutlinedButton.icon(
+        onPressed: onNavigateToExploreApp,
+        icon: const Icon(
+          Icons.explore_rounded,
+          size: 18,
+          color: AppColors.darkText,
+        ),
+        label: const Text(
+          'Vitrinleri Keşfet',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 14,
+            color: AppColors.darkText,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: AppColors.darkTextAlt, width: 1.5),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    ];
+
+    return isDesktop
+        ? Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.start,
+            children: buttons,
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children:
+                buttons.expand((b) => [b, const SizedBox(height: 12)]).toList()
+                  ..removeLast(),
+          );
   }
 
   Widget _buildHeroMockup() {
@@ -687,5 +750,13 @@ class LandingHeroSection extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  bool _isUserLoggedIn() {
+    try {
+      return Supabase.instance.client.auth.currentUser != null;
+    } catch (_) {
+      return false;
+    }
   }
 }
