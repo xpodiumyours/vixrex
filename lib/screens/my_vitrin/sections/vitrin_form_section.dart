@@ -1,57 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:vitrinx/config/app_router.dart';
+import 'package:vitrinx/config/business_category_config.dart';
+import 'package:vitrinx/config/instagram_sync_config.dart';
+import 'package:vitrinx/config/legal_config.dart';
+import 'package:vitrinx/controllers/store_editor_controller.dart';
+import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
+import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/utils/gallery_image_file_validator.dart';
+import 'package:vitrinx/widgets/editor/common_form_fields.dart';
+import 'package:vitrinx/widgets/editor/cover_picker_section.dart';
+import 'package:vitrinx/widgets/editor/gallery_editor_section.dart';
+import 'package:vitrinx/widgets/editor/legal_consent_section.dart';
+import 'package:vitrinx/widgets/editor/location_editor_section.dart';
+import 'package:vitrinx/widgets/editor/marketplace_links_section.dart';
+import 'package:vitrinx/widgets/editor/public_link_card.dart';
+import 'package:vitrinx/widgets/editor/store_theme_picker.dart';
+import 'package:vitrinx/widgets/editor/working_hours_editor.dart';
+import 'package:vitrinx/widgets/instagram_sync_section.dart';
+import 'package:vitrinx/widgets/product/product_management_entry_card.dart';
+import 'package:vitrinx/widgets/product/product_management_sheet.dart';
 
 class VitrinFormSection extends StatelessWidget {
-  final bool hasPublished;
-  final bool isPublishing;
-  final bool isLegalPublishReady;
-  final BoxDecoration cardDecoration;
-  final VoidCallback onPublish;
-  final Widget coverPicker;
-  final Widget galleryRow;
-  final Widget nameField;
-  final Widget whatsappField;
-  final Widget locationField;
-  final Widget descriptionField;
-  final Widget categoryField;
-  final Widget themePicker;
-  final Widget? bookingSettingsSection;
-  final Widget statusField;
-  final Widget instagramField;
-  final Widget productManagementCard;
-  final Widget? instagramSyncSection;
-  final Widget publicWebsiteLinkCard;
-  final Widget googleReviewField;
-  final Widget marketplaceSection;
-  final Widget legalConsentSection;
+  final StoreEditorController controller;
+  final MyVitrinState state;
+  final Map<String, TextEditingController> textControllers;
+  final VoidCallback? onPublished;
+  final VoidCallback? onOpenExplore;
 
   const VitrinFormSection({
     super.key,
-    required this.hasPublished,
-    required this.isPublishing,
-    required this.isLegalPublishReady,
-    required this.cardDecoration,
-    required this.onPublish,
-    required this.coverPicker,
-    required this.galleryRow,
-    required this.nameField,
-    required this.whatsappField,
-    required this.locationField,
-    required this.descriptionField,
-    required this.categoryField,
-    required this.themePicker,
-    required this.bookingSettingsSection,
-    required this.statusField,
-    required this.instagramField,
-    required this.productManagementCard,
-    required this.instagramSyncSection,
-    required this.publicWebsiteLinkCard,
-    required this.googleReviewField,
-    required this.marketplaceSection,
-    required this.legalConsentSection,
+    required this.controller,
+    required this.state,
+    required this.textControllers,
+    this.onPublished,
+    this.onOpenExplore,
   });
+
+  static const _platformOptions = [
+    'Trendyol', 'Hepsiburada', 'N11', 'Amazon', 'Çiçeksepeti',
+    'Shopier', 'Google İşletme', 'Instagram', 'WhatsApp', 'Diğer', 'Özel...',
+  ];
+
+  TextEditingController get _name => textControllers['name']!;
+  TextEditingController get _whatsapp => textControllers['whatsapp']!;
+  TextEditingController get _address => textControllers['address']!;
+  TextEditingController get _desc => textControllers['description']!;
+  TextEditingController get _insta => textControllers['instagram']!;
+  TextEditingController get _web => textControllers['website']!;
+  TextEditingController get _google => textControllers['googleBusiness']!;
 
   @override
   Widget build(BuildContext context) {
+    final hasPublished = controller.publishedInfo?.isComplete == true;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -109,85 +115,303 @@ class VitrinFormSection extends StatelessWidget {
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(18),
-          decoration: cardDecoration,
+          decoration: _cardDecoration(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              coverPicker,
+              // Kapak
+              KeyedSubtree(
+                key: state.coverPhotoKey,
+                child: CoverPickerSection(
+                  coverBytes: controller.coverBytes,
+                  coverUrl: controller.coverUrl,
+                  coverFileName: controller.coverFileName,
+                  onTap: () => _pickCover(context),
+                ),
+              ),
               const SizedBox(height: 10),
-              galleryRow,
+
+              // Galeri
+              KeyedSubtree(
+                key: state.galleryKey,
+                child: GalleryEditorSection(
+                  galleryItems: controller.galleryItems,
+                  maxGalleryPhotos: controller.maxGalleryPhotos,
+                  onPickPhotos: () => _pickGallery(context),
+                  onRemovePhoto: controller.removeGalleryItem,
+                ),
+              ),
               const SizedBox(height: 18),
-              nameField,
+
+              // İsim
+              KeyedSubtree(
+                key: state.nameKey,
+                child: EditorTextField(
+                  label: 'İşletme / VitrinX Adı',
+                  controller: _name,
+                  focusNode: state.nameFocusNode,
+                  hint: 'Örn: Aymira Butik',
+                  icon: Icons.storefront_rounded,
+                  requiredField: true,
+                  errorText: controller.nameError,
+                  onChanged: (v) {
+                    controller.updateName(v);
+                    controller.clearValidationErrors();
+                  },
+                ),
+              ),
               const SizedBox(height: 14),
-              whatsappField,
+
+              // WhatsApp
+              KeyedSubtree(
+                key: state.whatsappKey,
+                child: EditorTextField(
+                  label: 'WhatsApp Numarası',
+                  controller: _whatsapp,
+                  focusNode: state.whatsappFocusNode,
+                  hint: '05xx xxx xx xx',
+                  icon: Icons.chat_bubble_rounded,
+                  keyboardType: TextInputType.phone,
+                  requiredField: true,
+                  errorText: controller.whatsappError,
+                  onChanged: (v) {
+                    controller.updateWhatsapp(v);
+                    controller.clearValidationErrors();
+                  },
+                ),
+              ),
               const SizedBox(height: 14),
-              locationField,
+
+              // Konum
+              KeyedSubtree(
+                key: state.addressKey,
+                child: LocationEditorSection(
+                  selectedProvinceCode: controller.selectedProvinceCode,
+                  selectedProvinceName: controller.selectedProvinceName,
+                  selectedDistrictCode: controller.selectedDistrictCode,
+                  selectedDistrictName: controller.selectedDistrictName,
+                  provinceError: controller.provinceError,
+                  districtError: controller.districtError,
+                  addressError: controller.addressError,
+                  addressController: _address,
+                  latitude: controller.latitude,
+                  longitude: controller.longitude,
+                  locationAccuracyMeters: controller.locationAccuracyMeters,
+                  locationStatusMessage: controller.locationStatusMessage,
+                  isLocating: controller.isLocating,
+                  onProvinceChanged: controller.selectProvince,
+                  onDistrictChanged: controller.selectDistrict,
+                  onLocatingStateChanged: (_) {},
+                  onLocationUpdated: ({
+                    latitude,
+                    longitude,
+                    accuracy,
+                    statusMessage,
+                    address,
+                    provinceCode,
+                    provinceName,
+                    districtCode,
+                    districtName,
+                  }) {
+                    if (address != null) _address.text = address;
+                    controller.selectProvince(provinceCode, provinceName);
+                    controller.selectDistrict(districtCode, districtName);
+                  },
+                ),
+              ),
               const SizedBox(height: 14),
-              descriptionField,
+
+              // Açıklama
+              KeyedSubtree(
+                key: state.descriptionKey,
+                child: EditorTextField(
+                  label: 'Kısa Açıklama',
+                  controller: _desc,
+                  focusNode: state.descriptionFocusNode,
+                  hint: 'Bugün vitrinde ne var? Kısa bir tanıtım yaz.',
+                  icon: Icons.notes_rounded,
+                  maxLines: 3,
+                  onChanged: (_) => controller.clearValidationErrors(),
+                ),
+              ),
               const SizedBox(height: 14),
-              categoryField,
+
+              // Kategori
+              EditorDropdownField(
+                label: 'Kategori',
+                value: controller.selectedKategori,
+                items: BusinessCategoryConfig.categories.map((c) => c.label).toList(),
+                icon: Icons.category_rounded,
+                onChanged: (val) => controller.selectCategory(val ?? 'Diğer'),
+              ),
               const SizedBox(height: 14),
-              themePicker,
+
+              // Tema
+              StoreThemePicker(
+                selectedTheme: controller.data.theme,
+                onThemeChanged: (val) => controller.data.theme = val,
+              ),
               const SizedBox(height: 14),
-              if (bookingSettingsSection != null) ...[
-                bookingSettingsSection!,
+
+              // Randevu (sadece Kuaför)
+              if (controller.selectedKategori == 'Kuaför') ...[
+                KeyedSubtree(
+                  key: state.productsKey,
+                  child: WorkingHoursEditor(
+                    bookingIsEnabled: controller.bookingIsEnabled,
+                    bookingCapacity: controller.bookingCapacity,
+                    bookingWorkingHours: controller.bookingWorkingHours,
+                    bookingLunchBreak: controller.bookingLunchBreak,
+                    offerings: controller.offerings,
+                    selectedKategori: controller.selectedKategori,
+                    onBookingEnabledChanged: controller.setBookingIsEnabled,
+                    onBookingCapacityChanged: controller.setBookingCapacity,
+                    onStateChanged: () {},
+                    showSnackBar: (msg) => state.showSnackBar(context, msg),
+                  ),
+                ),
                 const SizedBox(height: 14),
               ],
-              statusField,
+
+              // Durum
+              EditorDropdownField(
+                label: 'Vitrin Durumu',
+                value: controller.selectedStatus,
+                items: const ['Açık', 'Bugün kampanya var', 'Yeni ürünler geldi', 'Stok sınırlı', 'Kapalı'],
+                icon: Icons.info_outline_rounded,
+                onChanged: (val) => controller.selectStatus(val ?? 'Açık'),
+              ),
               const SizedBox(height: 14),
-              instagramField,
-              productManagementCard,
+
+              // Instagram
+              EditorTextField(
+                label: 'Instagram',
+                controller: _insta,
+                hint: '@kullanici_adi veya profil linki',
+                icon: Icons.camera_alt_rounded,
+                keyboardType: TextInputType.url,
+              ),
               const SizedBox(height: 14),
-              if (instagramSyncSection != null) ...[
-                instagramSyncSection!,
+
+              // Ürün Yönetimi
+              ProductManagementEntryCard(
+                productCount: controller.data.products.length,
+                onTap: () => _showProductSheet(context),
+              ),
+              const SizedBox(height: 14),
+
+              // Instagram Sync
+              if (hasPublished && InstagramSyncConfig.enabled) ...[
+                InstagramSyncSection(
+                  storeSlug: controller.publishedInfo!.slug,
+                  editToken: controller.publishedInfo!.editToken,
+                  defaultCategory: controller.selectedKategori,
+                  onProductImported: controller.updateProductImported,
+                  onMessage: (msg) => state.showSnackBar(context, msg),
+                ),
                 const SizedBox(height: 14),
               ],
-              publicWebsiteLinkCard,
+
+              // Public Link
+              PublicLinkCard(
+                controller: _web,
+                publicLink: controller.publishedInfo?.publicLink,
+                onOpenLink: () => _openLink(context),
+                onCopyLink: () => _copyLink(context),
+                onShareLink: () => _shareLink(context),
+              ),
               const SizedBox(height: 14),
-              googleReviewField,
+
+              // Google Yorum
+              EditorTextField(
+                label: 'Google Yorum Bağlantısı',
+                controller: _google,
+                hint: 'https://search.google.com/local/writereview?placeid=...',
+                icon: Icons.rate_review_rounded,
+                keyboardType: TextInputType.url,
+                errorText: controller.googleLinkError,
+                onChanged: (v) {
+                  controller.updateGoogleBusinessLink(v);
+                  controller.clearValidationErrors();
+                },
+              ),
               const SizedBox(height: 14),
-              marketplaceSection,
+
+              // Marketplace
+              MarketplaceLinksSection(
+                links: controller.marketplaceLinks,
+                customPlatformLinkIds: controller.customPlatformLinkIds,
+                platformOptions: _platformOptions,
+                onAddLink: () => controller.addMarketplaceLink(
+                  MarketplaceLink(id: DateTime.now().millisecondsSinceEpoch.toString()),
+                ),
+                onRemoveLink: controller.removeMarketplaceLink,
+                onPlatformChanged: (index, value) {
+                  final link = controller.marketplaceLinks[index];
+                  if (value == 'Özel...') {
+                    link.platform = 'Özel...';
+                    controller.toggleCustomPlatformLinkId(link.id, true);
+                  } else {
+                    link.platform = value ?? '';
+                    controller.toggleCustomPlatformLinkId(link.id, false);
+                  }
+                },
+                onUrlChanged: (index, value) => controller.marketplaceLinks[index].url = value,
+                onCustomPlatformChanged: (index, value) =>
+                    controller.marketplaceLinks[index].platform = value.trim(),
+                onSubtitleChanged: (index, value) =>
+                    controller.marketplaceLinks[index].subtitle = value.trim(),
+              ),
               const SizedBox(height: 24),
-              legalConsentSection,
+
+              // Yasal Onay
+              LegalConsentSection(
+                canAccept: !controller.isLoadingLegalDocuments &&
+                    controller.legalDocuments != null &&
+                    LegalConfig.hasCompleteDataControllerIdentity,
+                hasCompleteIdentity: LegalConfig.hasCompleteDataControllerIdentity,
+                isLoading: controller.isLoadingLegalDocuments,
+                errorText: controller.legalDocumentsError,
+                privacyNoticeAcknowledged: controller.privacyNoticeAcknowledged,
+                termsAccepted: controller.termsAccepted,
+                publicationConsentAccepted: controller.publicationConsentAccepted,
+                onPrivacyChanged: controller.setPrivacyNoticeAcknowledged,
+                onTermsChanged: controller.setTermsAccepted,
+                onPublicationChanged: controller.setPublicationConsentAccepted,
+                onReloadDocuments: () {},
+                onOpenLegalPage: (type) => AppRouter.navigateToLegal(context, type),
+              ),
               const SizedBox(height: 16),
+
+              // Yayınla Butonu
               SizedBox(
                 height: 54,
                 child: ElevatedButton.icon(
-                  onPressed:
-                      isPublishing || !isLegalPublishReady ? null : onPublish,
-                  icon: isPublishing
+                  onPressed: controller.isPublishing || !controller.isLegalPublishReady
+                      ? null
+                      : () => state.handlePublish(context, onPublished),
+                  icon: controller.isPublishing
                       ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.black,
-                          ),
+                          width: 18, height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                         )
                       : Icon(
-                          hasPublished
-                              ? Icons.cloud_upload_rounded
-                              : Icons.rocket_launch_rounded,
+                          hasPublished ? Icons.cloud_upload_rounded : Icons.rocket_launch_rounded,
                           size: 19,
                         ),
                   label: Text(
-                    isPublishing
+                    controller.isPublishing
                         ? 'Yayına alınıyor...'
                         : hasPublished
                             ? 'Değişiklikleri Kaydet & Yayına Al'
                             : 'Vitrinimi Yayına Al',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00F0FF),
-                    foregroundColor: Colors.white,
+                    foregroundColor: Colors.black,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                 ),
               ),
@@ -208,5 +432,123 @@ class VitrinFormSection extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  BoxDecoration _cardDecoration() => BoxDecoration(
+    color: AppColors.surface,
+    borderRadius: BorderRadius.circular(22),
+    border: Border.all(color: AppColors.cardBorderDark),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.25),
+        blurRadius: 24,
+        offset: const Offset(0, 12),
+      ),
+    ],
+  );
+
+  Future<void> _pickCover(BuildContext ctx) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image, withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.single;
+    final v = GalleryImageFileValidator.validate(
+      bytes: file.bytes, reportedSize: file.size,
+    );
+    if (!v.isValid || file.bytes == null) {
+      state.showSnackBar(ctx, 'Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.');
+      return;
+    }
+    controller.setCoverBytes(file.bytes!, file.name, v.fileInfo!.extension, v.fileInfo!.contentType);
+  }
+
+  Future<void> _pickGallery(BuildContext ctx) async {
+    final remaining = controller.maxGalleryPhotos - controller.galleryItems.length;
+    if (remaining <= 0) {
+      state.showSnackBar(ctx, 'En fazla ${controller.maxGalleryPhotos} galeri fotoğrafı eklenebilir.');
+      return;
+    }
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true, type: FileType.image, withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    var rejected = 0;
+    final newItems = <GalleryItem>[];
+    for (final file in result.files.take(remaining)) {
+      final v = GalleryImageFileValidator.validate(bytes: file.bytes, reportedSize: file.size);
+      if (!v.isValid || file.bytes == null) { rejected++; continue; }
+      newItems.add(GalleryItem(
+        id: '${DateTime.now().microsecondsSinceEpoch}_${newItems.length}',
+        bytes: file.bytes, imageUrl: '',
+        extension: v.fileInfo!.extension, contentType: v.fileInfo!.contentType,
+      ));
+    }
+    controller.setGalleryItems([...controller.galleryItems, ...newItems]);
+    if (rejected > 0) state.showSnackBar(ctx, '$rejected fotoğraf eklenemedi.');
+  }
+
+  void _showProductSheet(BuildContext ctx) {
+    final slug = controller.data.slug.trim().isNotEmpty
+        ? controller.data.slug.trim()
+        : const StorePublishPayloadBuilder().generateSlug(_name.text.trim());
+    showModalBottomSheet(
+      context: ctx, backgroundColor: AppColors.surface, isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => ProductManagementSheet(
+        products: controller.data.products,
+        categories: controller.data.productCategories,
+        storeSlug: slug,
+        showMessage: (msg) => state.showSnackBar(ctx, msg),
+        onCatalogChanged: (products, categories) {
+          controller.data.products = products;
+          controller.data.productCategories = categories;
+          controller.saveLocally();
+        },
+      ),
+    );
+  }
+
+  Future<void> _openLink(BuildContext ctx) async {
+    final link = controller.publishedInfo?.publicLink.trim();
+    if (link == null || link.isEmpty) {
+      state.showSnackBar(ctx, 'Vitrininizi yayına aldığınızda size özel web linkiniz oluşacak.');
+      return;
+    }
+    final uri = Uri.tryParse(link);
+    if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
+      state.showSnackBar(ctx, 'Vitrin linki açılamadı.'); return;
+    }
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && ctx.mounted) state.showSnackBar(ctx, 'Tarayıcı açılamadı.');
+    } catch (_) {
+      if (ctx.mounted) state.showSnackBar(ctx, 'Tarayıcı açılamadı.');
+    }
+  }
+
+  Future<void> _copyLink(BuildContext ctx) async {
+    final link = controller.publishedInfo?.publicLink;
+    if (link == null || link.trim().isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: link));
+    if (ctx.mounted) state.showSnackBar(ctx, 'Vitrin linki kopyalandı.');
+  }
+
+  Future<void> _shareLink(BuildContext ctx) async {
+    final link = controller.publishedInfo?.publicLink.trim();
+    if (link == null || link.isEmpty) {
+      state.showSnackBar(ctx, 'Vitrininizi yayına aldığınızda size özel web linkiniz oluşacak.');
+      return;
+    }
+    try {
+      final r = await SharePlus.instance.share(
+        ShareParams(text: 'VitrinX web linkim:\n$link', title: 'VitrinX Web Linki'),
+      );
+      if (r.status != ShareResultStatus.unavailable) return;
+    } catch (_) {}
+    await Clipboard.setData(ClipboardData(text: link));
+    if (ctx.mounted) state.showSnackBar(ctx, 'Paylaşım açılamadı, link kopyalandı.');
   }
 }
