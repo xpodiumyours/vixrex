@@ -1,15 +1,21 @@
 import 'dart:convert';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/config/legal_config.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
+import 'package:vitrinx/models/landing_demo_profile.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 import 'package:vitrinx/services/auth_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/widgets/landing/landing_hero_section.dart';
+import 'package:vitrinx/widgets/landing/landing_value_band.dart';
+import 'package:vitrinx/widgets/landing/landing_features_section.dart';
+import 'package:vitrinx/widgets/landing/landing_comparison_section.dart';
+import 'package:vitrinx/widgets/landing/landing_trust_band.dart';
+import 'package:vitrinx/widgets/landing/landing_steps_section.dart';
+import 'package:vitrinx/widgets/landing/landing_bottom_cta.dart';
 import 'package:vitrinx/widgets/chatbot_overlay.dart';
 import 'package:vitrinx/config/app_router.dart';
 
@@ -30,12 +36,9 @@ class _LandingScreenState extends State<LandingScreen>
 
   // Modern Color Palette
   static const Color brandBlue = AppColors.primary;
-  static const Color mint = AppColors.landingMint;
-  static const Color blueAccent = AppColors.landingBlueAccent;
-  static const Color pinkAccent = AppColors.landingPinkAccent;
 
-  static const List<_HeroDemoProfile> _heroDemoProfiles = [
-    _HeroDemoProfile(
+  static const List<HeroDemoProfile> _heroDemoProfiles = [
+    HeroDemoProfile(
       name: 'Aymira Giyim',
       category: 'Kadın giyim / butik',
       status: 'Açık',
@@ -47,17 +50,17 @@ class _LandingScreenState extends State<LandingScreen>
       secondaryBadgeIcon: Icons.qr_code_2_rounded,
       secondaryBadgeText: 'QR kod',
       actions: [
-        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
-        _HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
+        HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
+        HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
       ],
       links: [
-        _HeroDemoLink(
+        HeroDemoLink(
           'Vitrin galerisi',
           'Raf ve reyon fotoğrafları',
           Icons.photo_library_rounded,
           Color(0xFFFF5A1F),
         ),
-        _HeroDemoLink(
+        HeroDemoLink(
           'Trendyol',
           'Mağazayı ziyaret edin',
           Icons.shopping_bag_rounded,
@@ -72,7 +75,7 @@ class _LandingScreenState extends State<LandingScreen>
         'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=300&q=80',
       ],
     ),
-    _HeroDemoProfile(
+    HeroDemoProfile(
       name: 'Lezzet Durağı',
       category: 'Kafe / restoran',
       status: 'Açık',
@@ -84,17 +87,17 @@ class _LandingScreenState extends State<LandingScreen>
       secondaryBadgeIcon: Icons.directions_rounded,
       secondaryBadgeText: 'Yol tarifi',
       actions: [
-        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
-        _HeroDemoAction(Icons.location_on_rounded, Color(0xFFEF4444)),
+        HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
+        HeroDemoAction(Icons.location_on_rounded, Color(0xFFEF4444)),
       ],
       links: [
-        _HeroDemoLink(
+        HeroDemoLink(
           'Günün menüsü',
           'Sıcak yemek ve tatlılar',
           Icons.local_dining_rounded,
           Color(0xFFEA580C),
         ),
-        _HeroDemoLink(
+        HeroDemoLink(
           'Paket servis',
           'WhatsApp ile sipariş',
           Icons.delivery_dining_rounded,
@@ -109,7 +112,7 @@ class _LandingScreenState extends State<LandingScreen>
         'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=300&q=80',
       ],
     ),
-    _HeroDemoProfile(
+    HeroDemoProfile(
       name: 'Nova Kuaför',
       category: 'Kuaför / güzellik',
       status: 'Açık',
@@ -121,17 +124,17 @@ class _LandingScreenState extends State<LandingScreen>
       secondaryBadgeIcon: Icons.camera_alt_rounded,
       secondaryBadgeText: 'Instagram',
       actions: [
-        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
-        _HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
+        HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
+        HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
       ],
       links: [
-        _HeroDemoLink(
+        HeroDemoLink(
           'Hizmetler',
           'Kesim, boya ve bakım',
           Icons.spa_rounded,
           Color(0xFFDB2777),
         ),
-        _HeroDemoLink(
+        HeroDemoLink(
           'Randevu al',
           'WhatsApp ile hızlı iletişim',
           Icons.event_available_rounded,
@@ -146,7 +149,7 @@ class _LandingScreenState extends State<LandingScreen>
         'https://images.unsplash.com/photo-1634449571010-02389ed0f9b0?auto=format&fit=crop&w=300&q=80',
       ],
     ),
-    _HeroDemoProfile(
+    HeroDemoProfile(
       name: 'TeknoFix',
       category: 'Telefon teknik servis',
       status: 'Açık',
@@ -158,17 +161,17 @@ class _LandingScreenState extends State<LandingScreen>
       secondaryBadgeIcon: Icons.location_on_rounded,
       secondaryBadgeText: 'Konum',
       actions: [
-        _HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
-        _HeroDemoAction(Icons.phone_android_rounded, Color(0xFF2563EB)),
+        HeroDemoAction(Icons.chat_bubble_rounded, Color(0xFF25D366)),
+        HeroDemoAction(Icons.phone_android_rounded, Color(0xFF2563EB)),
       ],
       links: [
-        _HeroDemoLink(
+        HeroDemoLink(
           'Servis kaydı',
           'Ekran, batarya ve bakım',
           Icons.construction_rounded,
           Color(0xFF2563EB),
         ),
-        _HeroDemoLink(
+        HeroDemoLink(
           'Google yorumları',
           'Müşteri güveni',
           Icons.verified_rounded,
@@ -227,9 +230,6 @@ class _LandingScreenState extends State<LandingScreen>
         if (store != null) {
           if (!mounted) return;
           if (store.isStore) {
-            // isStore: true olan hesaplar için Store editor ekranı
-            // planlanmaktadır (StoreSetupScreen kaldırıldı). Şimdilik
-            // token ve veri önbelleğe alınıp LandingScreen'de bırakılır.
             await prefs.setString(
               LocalStorageKeys.storeData,
               jsonEncode(store.toJson()),
@@ -322,14 +322,6 @@ class _LandingScreenState extends State<LandingScreen>
     return null;
   }
 
-  bool get _isUserLoggedIn {
-    try {
-      return const AuthService().currentUser != null;
-    } catch (_) {
-      return false;
-    }
-  }
-
   bool _hasMeaningfulSavedVitrin(StoreData data) {
     final hasTextContent = [
       data.name,
@@ -393,14 +385,32 @@ class _LandingScreenState extends State<LandingScreen>
           SingleChildScrollView(
             child: Column(
               children: [
-                _buildHeroSection(context),
-                _buildValueBandSection(context),
-                _buildFeaturesSection(context),
-                _buildComparisonSection(context),
-                _buildTrustBandSection(context),
-                _buildStepsSection(context),
-                _buildBottomCTA(context),
-                _buildFooter(),
+                LandingHeroSection(
+                  animController: _animController,
+                  activeProfileIndex: _activeProfileIndex,
+                  hasSavedVitrin: _hasSavedVitrin,
+                  isCheckingSavedVitrin: _isCheckingSavedVitrin,
+                  storeNameController: _storeNameController,
+                  heroDemoProfiles: _heroDemoProfiles,
+                  onNavigateToExploreApp: _navigateToExploreApp,
+                  onNavigateToSavedVitrin: _navigateToSavedVitrin,
+                  onNavigateToPreview: _navigateToPreview,
+                  onNavigateToEditor: _navigateToEditor,
+                  onStateChanged: () {
+                    if (mounted) {
+                      setState(() {});
+                      _loadSavedVitrinState();
+                    }
+                  },
+                ),
+                const LandingValueBand(),
+                const LandingFeaturesSection(),
+                const LandingComparisonSection(),
+                const LandingTrustBand(),
+                const LandingStepsSection(),
+                LandingBottomCta(
+                  onNavigateToEditor: _navigateToEditor,
+                ),
               ],
             ),
           ),
@@ -410,7 +420,6 @@ class _LandingScreenState extends State<LandingScreen>
       ),
     );
   }
-
   Widget _buildHeroSection(BuildContext context) {
     return Container(
       width: double.infinity,
