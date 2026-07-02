@@ -636,6 +636,7 @@ class LandingHeroSection extends StatelessWidget {
                         child: PhoneMockup(
                           key: ValueKey(activeProfile.name),
                           profile: activeProfile,
+                          onPreviewTap: onNavigateToPreview,
                         ),
                       ),
                     ),

@@ -4,14 +4,23 @@ import 'package:vitrinx/theme/app_colors.dart';
 
 class PhoneMockup extends StatelessWidget {
   final HeroDemoProfile profile;
+  final VoidCallback? onPreviewTap;
 
-  const PhoneMockup({super.key, required this.profile});
+  const PhoneMockup({
+    super.key,
+    required this.profile,
+    this.onPreviewTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final scale = (constraints.maxHeight < 700) ? (constraints.maxHeight / 700).clamp(0.5, 1.0) : 1.0;
+        final scale =
+            constraints.maxHeight < 700
+                ? (constraints.maxHeight / 700).clamp(0.5, 1.0)
+                : 1.0;
+
         return Transform.scale(
           scale: scale,
           child: Container(
@@ -89,36 +98,40 @@ class PhoneMockup extends StatelessWidget {
                                       ),
                                     ),
                                     const Spacer(),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withValues(alpha: 0.3),
-                                        borderRadius: BorderRadius.circular(999),
-                                        border: Border.all(
-                                          color: Colors.white.withValues(alpha: 0.16),
+                                    InkWell(
+                                      onTap: onPreviewTap,
+                                      borderRadius: BorderRadius.circular(999),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
                                         ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            profile.badgeIcon,
-                                            color: profile.accentColor,
-                                            size: 14,
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(alpha: 0.3),
+                                          borderRadius: BorderRadius.circular(999),
+                                          border: Border.all(
+                                            color: Colors.white.withValues(alpha: 0.16),
                                           ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            profile.badgeText,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w800,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              profile.badgeIcon,
+                                              color: profile.accentColor,
+                                              size: 14,
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              profile.badgeText,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -183,7 +196,7 @@ class PhoneMockup extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 'Hakkında',
                                 style: TextStyle(
                                   color: AppColors.darkText,
@@ -194,7 +207,7 @@ class PhoneMockup extends StatelessWidget {
                               const SizedBox(height: 8),
                               Text(
                                 profile.description,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: AppColors.darkTextAlt,
                                   fontSize: 12,
                                   height: 1.5,
@@ -206,38 +219,136 @@ class PhoneMockup extends StatelessWidget {
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
-                                children: profile.actions.map((action) {
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: action.color.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          action.icon,
-                                          color: action.color,
-                                          size: 16,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          action.title ?? '',
-                                          style: TextStyle(
-                                            color: action.color,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
+                                children:
+                                    profile.actions.map((action) {
+                                      final title = action.title?.trim() ?? '';
+                                      return InkWell(
+                                        onTap: onPreviewTap,
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: action.color.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                action.icon,
+                                                color: action.color,
+                                                size: 16,
+                                              ),
+                                              if (title.isNotEmpty) ...[
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  title,
+                                                  style: TextStyle(
+                                                    color: action.color,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
+                                      );
+                                    }).toList(),
                               ),
+                              if (profile.links.isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'Bağlantılar',
+                                  style: TextStyle(
+                                    color: AppColors.darkText,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  child: Column(
+                                    children:
+                                        profile.links.take(2).map((link) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(bottom: 8),
+                                            child: InkWell(
+                                              onTap: onPreviewTap,
+                                              borderRadius: BorderRadius.circular(14),
+                                              child: Container(
+                                                width: double.infinity,
+                                                padding: const EdgeInsets.all(12),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.bgLight,
+                                                  borderRadius: BorderRadius.circular(14),
+                                                  border: Border.all(
+                                                    color: AppColors.border,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      width: 36,
+                                                      height: 36,
+                                                      decoration: BoxDecoration(
+                                                        color: link.color.withValues(
+                                                          alpha: 0.14,
+                                                        ),
+                                                        borderRadius: BorderRadius.circular(12),
+                                                      ),
+                                                      child: Icon(
+                                                        link.icon,
+                                                        color: link.color,
+                                                        size: 18,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            link.title,
+                                                            style: const TextStyle(
+                                                              color: AppColors.darkText,
+                                                              fontSize: 12,
+                                                              fontWeight: FontWeight.w800,
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                          const SizedBox(height: 2),
+                                                          Text(
+                                                            link.subtitle,
+                                                            style: const TextStyle(
+                                                              color: AppColors.mutedText,
+                                                              fontSize: 11,
+                                                              fontWeight: FontWeight.w600,
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    const Icon(
+                                                      Icons.arrow_forward_ios_rounded,
+                                                      size: 12,
+                                                      color: AppColors.mutedText,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
