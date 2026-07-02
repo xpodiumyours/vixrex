@@ -4,8 +4,9 @@ import 'package:vitrinx/models/store_data.dart';
 class HeroDemoAction {
   final IconData icon;
   final Color color;
+  final String? title;
 
-  const HeroDemoAction(this.icon, this.color);
+  const HeroDemoAction(this.icon, this.color, [this.title]);
 }
 
 class HeroDemoLink {

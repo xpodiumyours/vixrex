@@ -66,69 +66,75 @@ class VitrinView extends StatelessWidget {
                       galleryItems,
                     )
                     : VitrinMobileLayout(
-                        hero: _buildPublicProfileHero(
-                          context,
-                          preset,
-                          radius,
-                          galleryItems,
-                          desktop: false,
-                        ),
-                        bookingCTA: VitrinBookingCTA(
-                          storeData: storeData,
-                          preset: preset,
-                          isEmbedded: isEmbedded,
-                          publicMode: publicMode,
-                        ),
-                        productsCatalog: VitrinProductsCatalog(
-                          storeData: storeData,
-                          preset: preset,
-                          isEmbedded: isEmbedded,
-                          publicMode: publicMode,
-                          onOpenExternalUrl: _openExternalUrl,
-                        ),
-                        profileTools: VitrinProfileTools(
-                          storeData: storeData,
-                          preset: preset,
-                          isEmbedded: isEmbedded,
-                          publicLink: publicLink,
-                          hasVCardData: _hasVCardData(),
-                          onDownloadVCard: _downloadVCard,
-                          onShareVitrin: _shareVitrin,
-                          onOpenExternalUrl: _openExternalUrl,
-                          onNormalizeExternalUrl: _normalizeExternalUrl,
-                        ),
-                        aboutCard: _buildAboutCard(preset),
-                        linkHub: VitrinLinksHub(
-                          storeData: storeData,
-                          preset: preset,
-                          isEmbedded: isEmbedded,
-                          publicMode: publicMode,
-                          onGetPlatformIcon: _getPlatformIcon,
-                          onOpenExternalUrl: _openExternalUrl,
-                          onNormalizeExternalUrl: _normalizeExternalUrl,
-                        ),
-                        shelfImageCard: VitrinShelfGallery(preset: preset, galleryItems: galleryItems, isEmbedded: isEmbedded),
-                        qrCard: publicLink != null
-                            ? VitrinQrCard(
-                              url: publicLink!,
-                              preset: preset,
-                              isEmbedded: isEmbedded,
-                            )
-                            : const SizedBox(),
-                        footer: VitrinFooter(
-                          storeData: storeData,
-                          preset: preset,
-                          publicMode: publicMode,
-                        ),
-                        isBookingEnabled: storeData.bookingSettings?.isEnabled == true,
-                        isStore: storeData.isStore,
-                        hasAboutText: _aboutText().isNotEmpty,
-                        hasMarketplaceLinks: storeData.marketplaceLinks.any(
-                          (link) => link.url.trim().isNotEmpty,
-                        ),
-                        hasGalleryMedia: galleryItems.isNotEmpty,
-                        hasQrCard: publicLink?.isNotEmpty ?? false,
-                      );
+                      hero: _buildPublicProfileHero(
+                        context,
+                        preset,
+                        radius,
+                        galleryItems,
+                        desktop: false,
+                      ),
+                      bookingCTA: VitrinBookingCTA(
+                        storeData: storeData,
+                        preset: preset,
+                        isEmbedded: isEmbedded,
+                        publicMode: publicMode,
+                      ),
+                      productsCatalog: VitrinProductsCatalog(
+                        storeData: storeData,
+                        preset: preset,
+                        isEmbedded: isEmbedded,
+                        publicMode: publicMode,
+                        onOpenExternalUrl: _openExternalUrl,
+                      ),
+                      profileTools: VitrinProfileTools(
+                        storeData: storeData,
+                        preset: preset,
+                        isEmbedded: isEmbedded,
+                        publicLink: publicLink,
+                        hasVCardData: _hasVCardData(),
+                        onDownloadVCard: _downloadVCard,
+                        onShareVitrin: _shareVitrin,
+                        onOpenExternalUrl: _openExternalUrl,
+                        onNormalizeExternalUrl: _normalizeExternalUrl,
+                      ),
+                      aboutCard: _buildAboutCard(preset),
+                      linkHub: VitrinLinksHub(
+                        storeData: storeData,
+                        preset: preset,
+                        isEmbedded: isEmbedded,
+                        publicMode: publicMode,
+                        onGetPlatformIcon: _getPlatformIcon,
+                        onOpenExternalUrl: _openExternalUrl,
+                        onNormalizeExternalUrl: _normalizeExternalUrl,
+                      ),
+                      shelfImageCard: VitrinShelfGallery(
+                        preset: preset,
+                        galleryItems: galleryItems,
+                        isEmbedded: isEmbedded,
+                      ),
+                      qrCard:
+                          publicLink != null
+                              ? VitrinQrCard(
+                                url: publicLink!,
+                                preset: preset,
+                                isEmbedded: isEmbedded,
+                              )
+                              : const SizedBox(),
+                      footer: VitrinFooter(
+                        storeData: storeData,
+                        preset: preset,
+                        publicMode: publicMode,
+                      ),
+                      isBookingEnabled:
+                          storeData.bookingSettings?.isEnabled == true,
+                      isStore: storeData.isStore,
+                      hasAboutText: _aboutText().isNotEmpty,
+                      hasMarketplaceLinks: storeData.marketplaceLinks.any(
+                        (link) => link.url.trim().isNotEmpty,
+                      ),
+                      hasGalleryMedia: galleryItems.isNotEmpty,
+                      hasQrCard: publicLink?.isNotEmpty ?? false,
+                    );
               },
             )
             : _buildDefaultScrollableContent(
@@ -196,7 +202,11 @@ class VitrinView extends StatelessWidget {
       ),
       premiumActionButtons: _buildPremiumActionButtons(context, preset, radius),
       bioOrAbout: bioOrAbout,
-      shelfImageCard: VitrinShelfGallery(preset: preset, galleryItems: galleryItems, isEmbedded: isEmbedded),
+      shelfImageCard: VitrinShelfGallery(
+        preset: preset,
+        galleryItems: galleryItems,
+        isEmbedded: isEmbedded,
+      ),
       productsCatalog: VitrinProductsCatalog(
         storeData: storeData,
         preset: preset,
@@ -227,12 +237,26 @@ class VitrinView extends StatelessWidget {
       premiumIdentityCard: VitrinPremiumIdentityCard(
         storeData: storeData,
         preset: preset,
-        radius: radius,
         isEmbedded: isEmbedded,
-        onSharePressed: publicLink != null ? () => _shareVitrin(context, publicLink!, preset) : null,
+        onSharePressed:
+            publicLink != null
+                ? () => _shareVitrin(context, publicLink!, preset)
+                : null,
+        radius: radius,
       ),
-      qrCard: publicLink != null ? VitrinQrCard(url: publicLink!, preset: preset, isEmbedded: isEmbedded) : const SizedBox(),
-      footer: VitrinFooter(storeData: storeData, preset: preset, publicMode: publicMode),
+      qrCard:
+          publicLink != null
+              ? VitrinQrCard(
+                url: publicLink!,
+                preset: preset,
+                isEmbedded: isEmbedded,
+              )
+              : const SizedBox(),
+      footer: VitrinFooter(
+        storeData: storeData,
+        preset: preset,
+        publicMode: publicMode,
+      ),
       isEmbedded: isEmbedded,
       isBookingEnabled: storeData.bookingSettings?.isEnabled == true,
       hasVisibleActions: _hasVisibleActions(),
@@ -288,7 +312,14 @@ class VitrinView extends StatelessWidget {
         onOpenExternalUrl: _openExternalUrl,
         onNormalizeExternalUrl: _normalizeExternalUrl,
       ),
-      qrCard: publicLink != null ? VitrinQrCard(url: publicLink!, preset: preset, isEmbedded: isEmbedded) : const SizedBox(),
+      qrCard:
+          publicLink != null
+              ? VitrinQrCard(
+                url: publicLink!,
+                preset: preset,
+                isEmbedded: isEmbedded,
+              )
+              : const SizedBox(),
       linkHub: VitrinLinksHub(
         storeData: storeData,
         preset: preset,
@@ -298,8 +329,16 @@ class VitrinView extends StatelessWidget {
         onOpenExternalUrl: _openExternalUrl,
         onNormalizeExternalUrl: _normalizeExternalUrl,
       ),
-      shelfImageCard: VitrinShelfGallery(preset: preset, galleryItems: galleryItems, isEmbedded: isEmbedded),
-      footer: VitrinFooter(storeData: storeData, preset: preset, publicMode: publicMode),
+      shelfImageCard: VitrinShelfGallery(
+        preset: preset,
+        galleryItems: galleryItems,
+        isEmbedded: isEmbedded,
+      ),
+      footer: VitrinFooter(
+        storeData: storeData,
+        preset: preset,
+        publicMode: publicMode,
+      ),
       hasSideLinks: hasSideLinks,
       hasGalleryMedia: hasGalleryMedia,
       isBookingEnabled: storeData.bookingSettings?.isEnabled == true,
@@ -1659,6 +1698,7 @@ class VitrinView extends StatelessWidget {
     );
   }
 }
+
 class _ActionIconBtn extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -1745,4 +1785,3 @@ class _ActionIconBtn extends StatelessWidget {
     );
   }
 }
-
