@@ -27,12 +27,12 @@ class StoreEditorController extends ChangeNotifier {
     StoreShelfUploadService uploadService = const StoreShelfUploadService(),
     SeoService seoService = const SeoService(),
     SupabaseClient? supabaseClient,
-  }) : _storage = storage,
-       _locationService = locationService,
-       _publishService = publishService,
-       _uploadService = uploadService,
-       _seoService = seoService,
-       _supabaseClient = supabaseClient;
+  })  : _storage = storage,
+        _locationService = locationService,
+        _publishService = publishService,
+        _uploadService = uploadService,
+        _seoService = seoService,
+        _supabaseClient = supabaseClient;
 
   SupabaseClient get _client => _supabaseClient ?? Supabase.instance.client;
 
@@ -50,6 +50,9 @@ class StoreEditorController extends ChangeNotifier {
 
   bool _isDeleting = false;
   bool get isDeleting => _isDeleting;
+
+  bool _isWithdrawingConsent = false;
+  bool get isWithdrawingConsent => _isWithdrawingConsent;
 
   // Selected Province/District
   String? _selectedProvinceCode;
@@ -84,6 +87,7 @@ class StoreEditorController extends ChangeNotifier {
   final List<EditorGalleryItem> _galleryItems = [];
   List<EditorGalleryItem> get galleryItems => _galleryItems;
   static const int _maxGalleryPhotos = 12;
+  int get maxGalleryPhotos => _maxGalleryPhotos;
 
   // Marketplace links & Offerings
   final List<MarketplaceLink> _marketplaceLinks = [];
@@ -162,6 +166,25 @@ class StoreEditorController extends ChangeNotifier {
   String? _googleLinkError;
   String? get googleLinkError => _googleLinkError;
 
+  // Legal Documents
+  dynamic _legalDocuments;
+  dynamic get legalDocuments => _legalDocuments;
+
+  bool _isLoadingLegalDocuments = true;
+  bool get isLoadingLegalDocuments => _isLoadingLegalDocuments;
+
+  String? _legalDocumentsError;
+  String? get legalDocumentsError => _legalDocumentsError;
+
+  bool _privacyNoticeAcknowledged = false;
+  bool get privacyNoticeAcknowledged => _privacyNoticeAcknowledged;
+
+  bool _termsAccepted = false;
+  bool get termsAccepted => _termsAccepted;
+
+  bool _publicationConsentAccepted = false;
+  bool get publicationConsentAccepted => _publicationConsentAccepted;
+
   // Blog Articles
   List<Map<String, dynamic>> _articles = [];
   List<Map<String, dynamic>> get articles => _articles;
@@ -169,7 +192,15 @@ class StoreEditorController extends ChangeNotifier {
   bool _isLoadingArticles = false;
   bool get isLoadingArticles => _isLoadingArticles;
 
-  // ─── Actions ──────────────────────────────────────────────────────────────
+  // ─── Computed ────────────────────────────────────────────────────────────
+
+  bool get isLegalPublishReady =>
+      _legalDocuments != null &&
+      _privacyNoticeAcknowledged &&
+      _termsAccepted &&
+      _publicationConsentAccepted;
+
+  // ─── Actions ─────────────────────────────────────────────────────────────
 
   Future<void> initialize(String? initialName) async {
     _isLoading = true;
@@ -183,7 +214,8 @@ class StoreEditorController extends ChangeNotifier {
       if (data.name.trim().isEmpty) {
         if (name.isNotEmpty) {
           data.name = name;
-        } else if (publishedInfo?.name != null && publishedInfo!.name.trim().isNotEmpty) {
+        } else if (publishedInfo?.name != null &&
+            publishedInfo!.name.trim().isNotEmpty) {
           data.name = publishedInfo.name;
         }
       }
@@ -207,12 +239,11 @@ class StoreEditorController extends ChangeNotifier {
 
       if (publishedInfo?.slug != null && publishedInfo!.slug.isNotEmpty) {
         try {
-          final settingsRes =
-              await _client
-                  .from('booking_settings')
-                  .select()
-                  .eq('store_slug', publishedInfo.slug)
-                  .maybeSingle();
+          final settingsRes = await _client
+              .from('booking_settings')
+              .select()
+              .eq('store_slug', publishedInfo.slug)
+              .maybeSingle();
           if (settingsRes != null) {
             bookingIsEnabled = (settingsRes['is_enabled'] ?? false) as bool;
             bookingCapacity = (settingsRes['capacity'] ?? 1) as int;
@@ -228,7 +259,7 @@ class StoreEditorController extends ChangeNotifier {
             }
           }
         } catch (e) {
-          debugPrint('Booking settings load error: $e');
+          debugPrint('Booking settings load error: \$e');
         }
       }
 
@@ -243,10 +274,9 @@ class StoreEditorController extends ChangeNotifier {
       _selectedDistrictName =
           data.districtName.isNotEmpty ? data.districtName : null;
 
-      _coverUrl =
-          data.shelfImageUrl.trim().isNotEmpty
-              ? data.shelfImageUrl
-              : data.coverImageUrl;
+      _coverUrl = data.shelfImageUrl.trim().isNotEmpty
+          ? data.shelfImageUrl
+          : data.coverImageUrl;
       _selectedKategori =
           data.kategori.trim().isEmpty ? 'Diğer' : data.kategori;
       _selectedStatus = data.status.trim().isEmpty ? 'Açık' : data.status;
@@ -298,7 +328,7 @@ class StoreEditorController extends ChangeNotifier {
         fetchArticles();
       }
     } catch (e) {
-      debugPrint('Initialization error: $e');
+      debugPrint('Initialization error: \$e');
       _isLoading = false;
       notifyListeners();
     }
@@ -317,12 +347,78 @@ class StoreEditorController extends ChangeNotifier {
           .order('created_at', ascending: false);
       _articles = List<Map<String, dynamic>>.from(res as List);
     } catch (e) {
-      debugPrint('Error fetching articles: $e');
+      debugPrint('Error fetching articles: \$e');
     } finally {
       _isLoadingArticles = false;
       notifyListeners();
     }
   }
+
+  // ─── Validation ──────────────────────────────────────────────────────────
+
+  void clearValidationErrors() {
+    _nameError = null;
+    _whatsappError = null;
+    _addressError = null;
+    _provinceError = null;
+    _districtError = null;
+    _googleLinkError = null;
+    notifyListeners();
+  }
+
+  String? validateWhatsapp(String value) {
+    if (value.trim().isEmpty) return 'WhatsApp numarası zorunludur';
+    return WhatsAppLinkHelper.isValidTurkeyMobile(value)
+        ? null
+        : WhatsAppLinkHelper.invalidNumberMessage;
+  }
+
+  String? validateGoogleReviewLink(String value) {
+    if (value.trim().isEmpty) return null;
+    final googleRegex = RegExp(
+      r'^https:\/\/(www\.)?(search\.google\.com|g\.page|maps\.google\.com|maps\.app\.goo\.gl)\/.*\$',
+    );
+    return googleRegex.hasMatch(value)
+        ? null
+        : 'Lütfen geçerli bir Google Haritalar veya Google Yorum bağlantısı girin.';
+  }
+
+  bool validatePublishForm() {
+    final name = _data.name.trim();
+    final whatsapp = _data.whatsapp.trim();
+    final address = _data.address.trim();
+    final googleLink = _data.googleBusinessLink.trim();
+    final hasValidWhatsapp = WhatsAppLinkHelper.isValidTurkeyMobile(whatsapp);
+    final isGoogleLinkValid =
+        googleLink.isEmpty || validateGoogleReviewLink(googleLink) == null;
+
+    _nameError = name.isEmpty ? 'İşletme adı zorunludur' : null;
+    _whatsappError = whatsapp.isEmpty
+        ? 'WhatsApp numarası zorunludur'
+        : hasValidWhatsapp
+            ? null
+            : WhatsAppLinkHelper.invalidNumberMessage;
+    _addressError = address.isEmpty ? 'Konum / adres bilgisi zorunludur' : null;
+    _provinceError =
+        _selectedProvinceCode == null ? 'İl seçimi zorunludur' : null;
+    _districtError =
+        _selectedDistrictName == null ? 'İlçe seçimi zorunludur' : null;
+    _googleLinkError = isGoogleLinkValid
+        ? null
+        : validateGoogleReviewLink(googleLink);
+
+    notifyListeners();
+
+    return name.isNotEmpty &&
+        whatsapp.isNotEmpty &&
+        hasValidWhatsapp &&
+        address.isNotEmpty &&
+        _selectedProvinceCode != null &&
+        _selectedDistrictName != null &&
+        isGoogleLinkValid;
+  }
+
+  // ─── Field Updates ───────────────────────────────────────────────────────
 
   void updateName(String name) {
     _data.name = name;
@@ -382,6 +478,12 @@ class StoreEditorController extends ChangeNotifier {
   void selectCategory(String category) {
     _selectedKategori = category;
     _data.kategori = category;
+    if (category != 'Kuaför') {
+      _bookingIsEnabled = false;
+      for (final offering in _offerings) {
+        offering.isBookable = false;
+      }
+    }
     notifyListeners();
   }
 
@@ -391,7 +493,18 @@ class StoreEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setKvkkConsent(bool value) {
+  void setPrivacyNoticeAcknowledged(bool value) {
+    _privacyNoticeAcknowledged = value;
+    notifyListeners();
+  }
+
+  void setTermsAccepted(bool value) {
+    _termsAccepted = value;
+    notifyListeners();
+  }
+
+  void setPublicationConsentAccepted(bool value) {
+    _publicationConsentAccepted = value;
     notifyListeners();
   }
 
@@ -461,6 +574,12 @@ class StoreEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearCoverBytes() {
+    _coverBytes = null;
+    _coverFileName = null;
+    notifyListeners();
+  }
+
   void setGalleryItems(List<EditorGalleryItem> items) {
     _galleryItems.clear();
     _galleryItems.addAll(items);
@@ -490,6 +609,8 @@ class StoreEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ─── Location ────────────────────────────────────────────────────────────
+
   Future<void> fetchLocation() async {
     _isLocating = true;
     _locationStatusMessage = 'Konum aranıyor...';
@@ -516,9 +637,8 @@ class StoreEditorController extends ChangeNotifier {
     );
 
     _isLocating = false;
-    _locationStatusMessage = LocationService.buildAccuracyMessage(
-      position.accuracy,
-    );
+    _locationStatusMessage =
+        LocationService.buildAccuracyMessage(position.accuracy);
 
     if (geoAddress != null && geoAddress.isNotEmpty) {
       _data.address = geoAddress;
@@ -573,6 +693,8 @@ class StoreEditorController extends ChangeNotifier {
         .replaceAll('ç', 'c');
   }
 
+  // ─── Persistence ─────────────────────────────────────────────────────────
+
   Future<void> saveLocally() async {
     _syncDataFields();
     await _storage.saveVitrinData(_data);
@@ -589,29 +711,27 @@ class StoreEditorController extends ChangeNotifier {
       ..latitude = _latitude
       ..longitude = _longitude
       ..locationAccuracyMeters = _locationAccuracyMeters
-      ..galleryItems =
-          _galleryItems
-              .where((i) => i.hasUrl)
-              .map((i) => i.toStoreItem())
-              .toList()
+      ..galleryItems = _galleryItems
+          .where((i) => i.hasUrl)
+          .map((i) => i.toStoreItem())
+          .toList()
       ..offerings = _offerings
-      ..marketplaceLinks =
-          _marketplaceLinks.map((link) {
-            var url = link.url.trim();
-            if (url.isNotEmpty &&
-                !url.startsWith('http://') &&
-                !url.startsWith('https://') &&
-                !url.startsWith('tel:') &&
-                !url.startsWith('mailto:')) {
-              url = 'https://$url';
-            }
-            return MarketplaceLink(
-              id: link.id,
-              platform: link.platform,
-              url: url,
-              subtitle: link.subtitle,
-            );
-          }).toList();
+      ..marketplaceLinks = _marketplaceLinks.map((link) {
+        var url = link.url.trim();
+        if (url.isNotEmpty &&
+            !url.startsWith('http://') &&
+            !url.startsWith('https://') &&
+            !url.startsWith('tel:') &&
+            !url.startsWith('mailto:')) {
+          url = 'https://\$url';
+        }
+        return MarketplaceLink(
+          id: link.id,
+          platform: link.platform,
+          url: url,
+          subtitle: link.subtitle,
+        );
+      }).toList();
   }
 
   Future<String?> publish() async {
@@ -626,7 +746,7 @@ class StoreEditorController extends ChangeNotifier {
     bool isGoogleLinkValid = true;
     if (googleLink.isNotEmpty) {
       final googleRegex = RegExp(
-        r'^https:\/\/(www\.)?(search\.google\.com|g\.page|maps\.google\.com|maps\.app\.goo\.gl)\/.*$',
+        r'^https:\/\/(www\.)?(search\.google\.com|g\.page|maps\.google\.com|maps\.app\.goo\.gl)\/.*\$',
       );
       isGoogleLinkValid = googleRegex.hasMatch(googleLink);
     }
@@ -635,10 +755,9 @@ class StoreEditorController extends ChangeNotifier {
     final districtOk = _selectedDistrictName != null;
 
     _nameError = name.isEmpty ? 'İşletme adı zorunludur' : null;
-    _whatsappError =
-        whatsapp.isEmpty
-            ? 'WhatsApp numarası zorunludur'
-            : hasValidWhatsapp
+    _whatsappError = whatsapp.isEmpty
+        ? 'WhatsApp numarası zorunludur'
+        : hasValidWhatsapp
             ? null
             : WhatsAppLinkHelper.invalidNumberMessage;
     _addressError = address.isEmpty ? 'Konum / adres bilgisi zorunludur' : null;
@@ -646,10 +765,9 @@ class StoreEditorController extends ChangeNotifier {
         _selectedProvinceCode == null ? 'İl seçimi zorunludur' : null;
     _districtError =
         _selectedDistrictName == null ? 'İlçe seçimi zorunludur' : null;
-    _googleLinkError =
-        isGoogleLinkValid
-            ? null
-            : 'Lütfen geçerli bir Google Haritalar veya Google Yorum bağlantısı girin.';
+    _googleLinkError = isGoogleLinkValid
+        ? null
+        : 'Lütfen geçerli bir Google Haritalar veya Google Yorum bağlantısı girin.';
 
     notifyListeners();
 
@@ -664,19 +782,18 @@ class StoreEditorController extends ChangeNotifier {
         !isGoogleLinkValid
             ? 'Lütfen Google Yorum bağlantısını doğru formatta girin.'
             : whatsapp.isNotEmpty && !hasValidWhatsapp
-            ? WhatsAppLinkHelper.invalidNumberMessage
-            : 'Lütfen zorunlu alanları doldurun: ad, WhatsApp, il, ilçe ve adres.',
+                ? WhatsAppLinkHelper.invalidNumberMessage
+                : 'Lütfen zorunlu alanları doldurun: ad, WhatsApp, il, ilçe ve adres.',
       );
     }
 
     final shouldPublishBooking =
         _selectedKategori == 'Kuaför' && _bookingIsEnabled;
-    final bookingServices =
-        _offerings
-            .where((offering) => offering.title.trim().isNotEmpty)
-            .take(6)
-            .map((offering) => offering.copyWith(isBookable: true))
-            .toList();
+    final bookingServices = _offerings
+        .where((offering) => offering.title.trim().isNotEmpty)
+        .take(6)
+        .map((offering) => offering.copyWith(isBookable: true))
+        .toList();
 
     if (shouldPublishBooking && bookingServices.isEmpty) {
       throw Exception(
@@ -695,7 +812,7 @@ class StoreEditorController extends ChangeNotifier {
         try {
           coverUrl = await _uploadService.uploadShelfImage(
             _coverBytes!,
-            '$slug/cover',
+            '\$slug/cover',
             fileExtension: _coverExtension,
             contentType: _coverContentType,
           );
@@ -721,12 +838,11 @@ class StoreEditorController extends ChangeNotifier {
         }
       }
 
-      final publishedGallery =
-          _galleryItems
-              .where((i) => i.hasUrl)
-              .take(_maxGalleryPhotos)
-              .map((i) => i.toStoreItem())
-              .toList();
+      final publishedGallery = _galleryItems
+          .where((i) => i.hasUrl)
+          .take(_maxGalleryPhotos)
+          .map((i) => i.toStoreItem())
+          .toList();
 
       if (_selectedKategori != 'Kuaför') {
         _bookingIsEnabled = false;
@@ -765,7 +881,7 @@ class StoreEditorController extends ChangeNotifier {
           'lunch_break': _bookingLunchBreak,
         });
       } catch (e) {
-        debugPrint('Booking settings save error: $e');
+        debugPrint('Booking settings save error: \$e');
       }
 
       await _storage.savePublishedVitrinInfo(
@@ -793,6 +909,32 @@ class StoreEditorController extends ChangeNotifier {
       return publicLink;
     } finally {
       _isPublishing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> withdrawPublicationConsent() async {
+    final info = _publishedInfo;
+    if (info == null || _isWithdrawingConsent) return;
+
+    _isWithdrawingConsent = true;
+    notifyListeners();
+
+    try {
+      await _publishService.withdrawPublicationConsent(
+        slug: info.slug,
+        editToken: info.editToken,
+      );
+      _data.publicationConsentAccepted = false;
+      _data.publicationConsentWithdrawnAt = DateTime.now().toUtc();
+      await _storage.saveVitrinData(_data);
+      await _storage.clearPublishedVitrinInfo();
+
+      _publishedInfo = null;
+      _publicationConsentAccepted = false;
+      notifyListeners();
+    } finally {
+      _isWithdrawingConsent = false;
       notifyListeners();
     }
   }
