@@ -54,6 +54,26 @@ class VitrinFormSection extends StatelessWidget {
   TextEditingController get _web => textControllers['website']!;
   TextEditingController get _google => textControllers['googleBusiness']!;
 
+  /// EditorGalleryItem → GalleryItem dönüşümü (GalleryEditorSection uyumluluğu)
+  List<GalleryItem> get _galleryItemsForEditor =>
+      controller.galleryItems.map((e) => GalleryItem(
+        id: e.id,
+        bytes: e.bytes,
+        imageUrl: e.imageUrl,
+        extension: e.extension,
+        contentType: e.contentType,
+      )).toList();
+
+  /// GalleryItem → EditorGalleryItem dönüşümü (controller uyumluluğu)
+  List<EditorGalleryItem> _toEditorItems(List<GalleryItem> items) =>
+      items.map((e) => EditorGalleryItem(
+        id: e.id,
+        bytes: e.bytes,
+        imageUrl: e.imageUrl,
+        extension: e.extension,
+        contentType: e.contentType,
+      )).toList();
+
   @override
   Widget build(BuildContext context) {
     final hasPublished = controller.publishedInfo?.isComplete == true;
@@ -135,7 +155,7 @@ class VitrinFormSection extends StatelessWidget {
               KeyedSubtree(
                 key: state.galleryKey,
                 child: GalleryEditorSection(
-                  galleryItems: controller.galleryItems,
+                  galleryItems: _galleryItemsForEditor,
                   maxGalleryPhotos: controller.maxGalleryPhotos,
                   onPickPhotos: () => _pickGallery(context),
                   onRemovePhoto: controller.removeGalleryItem,
@@ -484,14 +504,16 @@ class VitrinFormSection extends StatelessWidget {
         extension: v.fileInfo!.extension, contentType: v.fileInfo!.contentType,
       ));
     }
-    controller.setGalleryItems([...controller.galleryItems, ...newItems]);
+    // GalleryItem → EditorGalleryItem dönüşümü
+    final editorItems = _toEditorItems([..._galleryItemsForEditor, ...newItems]);
+    controller.setGalleryItems(editorItems);
     if (rejected > 0) state.showSnackBar(ctx, '$rejected fotoğraf eklenemedi.');
   }
 
   void _showProductSheet(BuildContext ctx) {
     final slug = controller.data.slug.trim().isNotEmpty
         ? controller.data.slug.trim()
-        : const StorePublishPayloadBuilder().generateSlug(_name.text.trim());
+        : StorePublishPayloadBuilder().generateSlug(_name.text.trim());
     showModalBottomSheet(
       context: ctx, backgroundColor: AppColors.surface, isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -502,10 +524,10 @@ class VitrinFormSection extends StatelessWidget {
         categories: controller.data.productCategories,
         storeSlug: slug,
         showMessage: (msg) => state.showSnackBar(ctx, msg),
-        onCatalogChanged: (products, categories) {
+        onCatalogChanged: (products, categories) async {
           controller.data.products = products;
           controller.data.productCategories = categories;
-          controller.saveLocally();
+          await controller.saveLocally();
         },
       ),
     );
