@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/controllers/store_editor_controller.dart';
+import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_form_section.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_publish_section.dart';

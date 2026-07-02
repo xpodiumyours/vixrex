@@ -387,21 +387,24 @@ class VitrinFormSection extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Yasal Onay
-              LegalConsentSection(
-                canAccept: !controller.isLoadingLegalDocuments &&
-                    controller.legalDocuments != null &&
-                    LegalConfig.hasCompleteDataControllerIdentity,
-                hasCompleteIdentity: LegalConfig.hasCompleteDataControllerIdentity,
-                isLoading: controller.isLoadingLegalDocuments,
-                errorText: controller.legalDocumentsError,
-                privacyNoticeAcknowledged: controller.privacyNoticeAcknowledged,
-                termsAccepted: controller.termsAccepted,
-                publicationConsentAccepted: controller.publicationConsentAccepted,
-                onPrivacyChanged: controller.setPrivacyNoticeAcknowledged,
-                onTermsChanged: controller.setTermsAccepted,
-                onPublicationChanged: controller.setPublicationConsentAccepted,
-                onReloadDocuments: () {},
-                onOpenLegalPage: (type) => AppRouter.navigateToLegal(context, type),
+              KeyedSubtree(
+                key: state.legalKey,
+                child: LegalConsentSection(
+                  canAccept: !controller.isLoadingLegalDocuments &&
+                      controller.legalDocuments != null &&
+                      LegalConfig.hasCompleteDataControllerIdentity,
+                  hasCompleteIdentity: LegalConfig.hasCompleteDataControllerIdentity,
+                  isLoading: controller.isLoadingLegalDocuments,
+                  errorText: controller.legalDocumentsError,
+                  privacyNoticeAcknowledged: controller.privacyNoticeAcknowledged,
+                  termsAccepted: controller.termsAccepted,
+                  publicationConsentAccepted: controller.publicationConsentAccepted,
+                  onPrivacyChanged: controller.setPrivacyNoticeAcknowledged,
+                  onTermsChanged: controller.setTermsAccepted,
+                  onPublicationChanged: controller.setPublicationConsentAccepted,
+                  onReloadDocuments: () {},
+                  onOpenLegalPage: (type) => AppRouter.navigateToLegal(context, type),
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -474,6 +477,7 @@ class VitrinFormSection extends StatelessWidget {
       type: FileType.image, withData: true,
     );
     if (result == null || result.files.isEmpty) return;
+    if (!ctx.mounted) return;
     final file = result.files.single;
     final v = GalleryImageFileValidator.validate(
       bytes: file.bytes, reportedSize: file.size,
@@ -495,6 +499,7 @@ class VitrinFormSection extends StatelessWidget {
       allowMultiple: true, type: FileType.image, withData: true,
     );
     if (result == null || result.files.isEmpty) return;
+    if (!ctx.mounted) return;
     var rejected = 0;
     final newItems = <GalleryItem>[];
     for (final file in result.files.take(remaining)) {

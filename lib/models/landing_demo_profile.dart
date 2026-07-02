@@ -77,19 +77,19 @@ class HeroDemoProfile {
       lng = 28.9878;
       web = 'aymiragiyim.com';
       parsedOfferings = [
-        const StoreOffering(
+        StoreOffering(
           id: '1',
           title: 'Elbise Seçenekleri',
           description: 'Yeni sezon özel tasarım elbiseler',
           price: 'Mağazada sorunuz',
         ),
-        const StoreOffering(
+        StoreOffering(
           id: '2',
           title: 'Triko & Hırka',
           description: 'Farklı renk ve beden alternatifleriyle',
           price: 'Mağazada sorunuz',
         ),
-        const StoreOffering(
+        StoreOffering(
           id: '3',
           title: 'Yeni Sezon Ceket',
           description: 'Şık ve modern günlük ceketler',
@@ -102,13 +102,13 @@ class HeroDemoProfile {
       lng = 29.0084;
       web = 'lezzetduragi.com';
       parsedOfferings = [
-        const StoreOffering(
+        StoreOffering(
           id: '1',
           title: 'Günün Menüsü',
           description: 'Ana yemek + çorba + içecek menüsü',
           price: '120 TL',
         ),
-        const StoreOffering(
+        StoreOffering(
           id: '2',
           title: 'Ev Yapımı Mantı',
           description: 'Yoğurtlu ve tereyağlı soslu el yapımı mantı',
@@ -121,13 +121,13 @@ class HeroDemoProfile {
       lng = 28.9850;
       web = 'novakuafor.com';
       parsedOfferings = [
-        const StoreOffering(
+        StoreOffering(
           id: '1',
           title: 'Saç Kesimi & Tasarım',
           description: 'Yıkama ve fön dahil komple saç tasarımı',
           price: '180 TL',
         ),
-        const StoreOffering(
+        StoreOffering(
           id: '2',
           title: 'Saç Boyama & Keratin',
           description: 'Saç yapısına özel organik keratin bakımı',
@@ -140,13 +140,13 @@ class HeroDemoProfile {
       lng = 28.9740;
       web = 'teknofix.com';
       parsedOfferings = [
-        const StoreOffering(
+        StoreOffering(
           id: '1',
           title: 'Telefon Ekran Değişimi',
           description: '30 dakikada hızlı ekran değişimi ve garanti',
           price: 'Mağazada sorunuz',
         ),
-        const StoreOffering(
+        StoreOffering(
           id: '2',
           title: 'Batarya Değişimi',
           description: 'Yüksek kapasiteli batarya yenilemesi',

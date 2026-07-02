@@ -170,7 +170,7 @@ class StoreEditorController extends ChangeNotifier {
   dynamic _legalDocuments;
   dynamic get legalDocuments => _legalDocuments;
 
-  bool _isLoadingLegalDocuments = true;
+  final bool _isLoadingLegalDocuments = true;
   bool get isLoadingLegalDocuments => _isLoadingLegalDocuments;
 
   String? _legalDocumentsError;
