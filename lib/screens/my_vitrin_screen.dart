@@ -8,7 +8,7 @@ import 'package:vitrinx/screens/my_vitrin/sections/vitrin_form_section.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_publish_section.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_danger_section.dart';
 import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/widgets/editor/published_summary_card.dart';
+// NOTE: PublishedSummaryCard is exported from publish_actions_section.dart
 import 'package:vitrinx/widgets/editor/publish_actions_section.dart';
 import 'package:vitrinx/widgets/editor/visibility_hub_card.dart';
 
