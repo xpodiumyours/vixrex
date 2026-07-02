@@ -7,6 +7,7 @@ import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/config/instagram_sync_config.dart';
 import 'package:vitrinx/config/legal_config.dart';
+import 'package:vitrinx/controllers/editor_gallery_item.dart';
 import 'package:vitrinx/controllers/store_editor_controller.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
