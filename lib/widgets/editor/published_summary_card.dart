@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
 class PublishedSummaryCard extends StatelessWidget {
