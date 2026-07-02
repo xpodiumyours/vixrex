@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/controllers/store_editor_controller.dart';
 import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_form_section.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_publish_section.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_danger_section.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/widgets/editor/published_summary_card.dart';
+import 'package:vitrinx/widgets/editor/publish_actions_section.dart';
+import 'package:vitrinx/widgets/editor/visibility_hub_card.dart';
 
 class MyVitrinScreen extends StatefulWidget {
   final String? initialName;
@@ -123,9 +128,9 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
                           ),
                           if (hasPublished)
                             VitrinPublishSection(
-                              controller: _controller,
-                              state: _state,
-                              onOpenExplore: widget.onOpenExplore,
+                              publishedSummary: _buildPublishedSummary(),
+                              actionButtons: _buildActionButtons(),
+                              visibilityHubCard: _buildVisibilityHubCard(),
                             ),
                           if (hasPublished)
                             VitrinDangerSection(state: _state),
@@ -140,5 +145,172 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         );
       },
     );
+  }
+
+  Widget _buildPublishedSummary() {
+    return PublishedSummaryCard(
+      info: _controller.publishedInfo!,
+      coverUrl: _controller.coverUrl?.trim() ?? '',
+      onOpenExplore: widget.onOpenExplore,
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return PublishActionsSection(
+      bookingIsEnabled: _controller.bookingIsEnabled,
+      onOpenBookingManagement: () => AppRouter.navigateToBookingManagement(
+        context,
+        slug: _controller.publishedInfo!.slug,
+      ),
+      onOpenPublicVitrin: () => AppRouter.navigateToPublicVitrin(
+        context,
+        _controller.publishedInfo!.slug,
+      ),
+      onCopyLink: () async {
+        final link = _controller.publishedInfo?.publicLink;
+        if (link == null || link.trim().isEmpty) return;
+        await Clipboard.setData(ClipboardData(text: link));
+        if (mounted) _state.showSnackBar(context, 'Vitrin linki kopyalandı.');
+      },
+      onShowQrSheet: () {
+        final link = _controller.publishedInfo?.publicLink;
+        if (link == null || link.trim().isEmpty) return;
+        showModalBottomSheet(
+          context: context,
+          showDragHandle: true,
+          backgroundColor: AppColors.surface,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          builder: (_) => Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('QR Kod', style: TextStyle(
+                  color: AppColors.darkText, fontSize: 20, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 16),
+                Container(
+                  width: 220, height: 220, padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.cardBorderDark),
+                  ),
+                  child: QrImageView(
+                    data: link, version: QrVersions.auto,
+                    errorCorrectionLevel: QrErrorCorrectLevel.M),
+                ),
+                const SizedBox(height: 12),
+                Text(link, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppColors.mutedText,
+                    fontSize: 13, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildVisibilityHubCard() {
+    final publicLink = (_controller.publishedInfo?.publicLink.trim().isNotEmpty == true)
+        ? _controller.publishedInfo!.publicLink.trim()
+        : _websiteController.text.trim();
+    final publishedArticles = _controller.articles
+        .where((a) => a['status']?.toString() == 'published')
+        .toList();
+
+    return VisibilityHubCard(
+      hasPublished: _controller.publishedInfo?.isComplete == true,
+      hasWebLink: publicLink.isNotEmpty,
+      hasLocation: _addressController.text.trim().isNotEmpty ||
+          (_controller.latitude != null && _controller.longitude != null),
+      hasGoogleReview: _googleBusinessLinkController.text.trim().isNotEmpty,
+      hasProfileDescription: _descriptionController.text.trim().isNotEmpty,
+      hasPublishedArticle: publishedArticles.isNotEmpty,
+      isLoadingArticles: _controller.isLoadingArticles,
+      publishedArticles: publishedArticles,
+      onShowGoogleReviewQr: () => _showGoogleReviewQrSheet(),
+      onCreateArticle: () => _openBlogEditor(),
+      onOpenArticle: (article) => _openBlogEditor(article: article),
+    );
+  }
+
+  void _showGoogleReviewQrSheet() {
+    final link = _googleBusinessLinkController.text.trim();
+    if (link.isEmpty) {
+      _state.showSnackBar(context,
+        'Lütfen önce Google Yorum Bağlantısı girin ve vitrininizi kaydedin.');
+      return;
+    }
+    showModalBottomSheet(
+      context: context, showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Google Yorum QR Kodu', style: TextStyle(
+              color: AppColors.darkText, fontSize: 20, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.error.withOpacity(0.35)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded,
+                    color: AppColors.error, size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Google politikaları gereği yorum karşılığında ödül veya hediye teklif edilmesi yasaktır. Lütfen QR kodunu müşterilerinizden tarafsız ve organik geri bildirimler almak üzere kullanın.',
+                      style: TextStyle(color: AppColors.darkTextAlt,
+                        fontSize: 12, fontWeight: FontWeight.w600, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: 220, height: 220, padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.cardBorderDark),
+              ),
+              child: QrImageView(
+                data: link, version: QrVersions.auto,
+                errorCorrectionLevel: QrErrorCorrectLevel.M),
+            ),
+            const SizedBox(height: 12),
+            Text(link, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppColors.mutedText,
+                fontSize: 13, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openBlogEditor({Map<String, dynamic>? article}) async {
+    final slug = _controller.publishedInfo?.slug ?? _controller.data.slug;
+    if (slug.trim().isEmpty) {
+      _state.showSnackBar(context, 'Önce vitrini yayına almanız gerekir.');
+      return;
+    }
+    final result = await AppRouter.navigateToBlogEditor(
+      context, slug: slug, article: article,
+    );
+    if (result == true) await _controller.fetchArticles();
   }
 }
