@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/controllers/store_editor_controller.dart';
-import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
+
+/// X-rex AI asistanın scroll-to-section aksiyonları.
+/// [home_shell_screen.dart] tarafından GlobalKey üzerinden çağrılır.
+enum XrexAction {
+  scrollToCover,
+  scrollToGallery,
+  scrollToName,
+  scrollToWhatsapp,
+  scrollToAddress,
+  scrollToDesc,
+  scrollToProducts,
+}
 
 class MyVitrinState extends ChangeNotifier {
   final StoreEditorController controller;
@@ -69,8 +80,6 @@ class MyVitrinState extends ChangeNotifier {
       case XrexAction.scrollToProducts:
         key = productsKey;
         break;
-      default:
-        return;
     }
 
     if (key?.currentContext != null) {
