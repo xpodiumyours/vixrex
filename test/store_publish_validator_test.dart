@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/widgets/vitrin_view.dart';
+import 'package:vitrinx/widgets/vitrin_view/vitrin_view_actions.dart';
 
 // Helper: geçerli bir mağaza verisi oluşturur.
 StoreData validStore({List<Product>? products}) {
@@ -276,48 +276,48 @@ void main() {
     });
   });
 
-  group('VitrinView.normalizeExternalUrl normalization and safety', () {
+  group('VitrinViewActions.normalizeExternalUrl normalization and safety', () {
     test('allows valid http/https schemes (case-insensitive)', () {
       expect(
-        VitrinView.normalizeExternalUrl('http://example.com'),
+        VitrinViewActions.normalizeExternalUrl('http://example.com'),
         'http://example.com',
       );
       expect(
-        VitrinView.normalizeExternalUrl('https://example.com'),
+        VitrinViewActions.normalizeExternalUrl('https://example.com'),
         'https://example.com',
       );
       expect(
-        VitrinView.normalizeExternalUrl('HTTPS://example.com'),
+        VitrinViewActions.normalizeExternalUrl('HTTPS://example.com'),
         'HTTPS://example.com',
       );
       expect(
-        VitrinView.normalizeExternalUrl('HTTP://example.com'),
+        VitrinViewActions.normalizeExternalUrl('HTTP://example.com'),
         'HTTP://example.com',
       );
     });
 
     test('rejects unsafe schemes', () {
-      expect(VitrinView.normalizeExternalUrl('javascript:alert(1)'), '');
-      expect(VitrinView.normalizeExternalUrl('data:text/html,123'), '');
-      expect(VitrinView.normalizeExternalUrl('file:///passwd'), '');
-      expect(VitrinView.normalizeExternalUrl('tel:05551234567'), '');
-      expect(VitrinView.normalizeExternalUrl('mailto:test@example.com'), '');
+      expect(VitrinViewActions.normalizeExternalUrl('javascript:alert(1)'), '');
+      expect(VitrinViewActions.normalizeExternalUrl('data:text/html,123'), '');
+      expect(VitrinViewActions.normalizeExternalUrl('file:///passwd'), '');
+      expect(VitrinViewActions.normalizeExternalUrl('tel:05551234567'), '');
+      expect(VitrinViewActions.normalizeExternalUrl('mailto:test@example.com'), '');
     });
 
     test('adds https:// scheme for valid domains without scheme', () {
       expect(
-        VitrinView.normalizeExternalUrl('google.com'),
+        VitrinViewActions.normalizeExternalUrl('google.com'),
         'https://google.com',
       );
       expect(
-        VitrinView.normalizeExternalUrl('www.example.org'),
+        VitrinViewActions.normalizeExternalUrl('www.example.org'),
         'https://www.example.org',
       );
     });
 
     test('rejects text without dot as domain', () {
-      expect(VitrinView.normalizeExternalUrl('just-text'), '');
-      expect(VitrinView.normalizeExternalUrl('   '), '');
+      expect(VitrinViewActions.normalizeExternalUrl('just-text'), '');
+      expect(VitrinViewActions.normalizeExternalUrl('   '), '');
     });
   });
 }
