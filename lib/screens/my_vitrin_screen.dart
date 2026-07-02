@@ -25,10 +25,10 @@ class MyVitrinScreen extends StatefulWidget {
   });
 
   @override
-  State<MyVitrinScreen> createState() => _MyVitrinScreenState();
+  State<MyVitrinScreen> createState() => MyVitrinScreenState();
 }
 
-class _MyVitrinScreenState extends State<MyVitrinScreen> {
+class MyVitrinScreenState extends State<MyVitrinScreen> {
   late final StoreEditorController _controller;
   late final MyVitrinState _state;
 
@@ -63,6 +63,12 @@ class _MyVitrinScreenState extends State<MyVitrinScreen> {
         _controller.publishedInfo?.publicLink ?? _controller.data.website;
     _googleBusinessLinkController.text =
         _controller.data.googleBusinessLink;
+  }
+
+  /// Xrex aksiyonuna göre ilgili forma otomatik kaydırır ve odaklanır.
+  /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden cagrılır.
+  void scrollToXrexAction(XrexAction action) {
+    _state.scrollToXrexAction(action);
   }
 
   @override
