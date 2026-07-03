@@ -1,5 +1,6 @@
 import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/services/xrex_profile_snapshot.dart';
+import 'package:vitrinx/services/category_image_service.dart';
 
 /// X-rex ekranı ve sohbeti tarafından ortak kullanılan tek öneri modeli.
 class XrexRecommendation {
@@ -20,6 +21,8 @@ class XrexRecommendation {
   });
 }
 
+// ─── Kalite Kontrol Öğeleri ─────────────────────────────────────────────────
+
 class XrexQualityItem {
   final String id;
   final String label;
@@ -36,103 +39,19 @@ class XrexQualityItem {
   });
 }
 
-class XrexQualityReport {
-  final int score;
-  final List<XrexQualityItem> items;
+// ─── Rehberlik Servisi ──────────────────────────────────────────────────────
 
-  const XrexQualityReport({required this.score, required this.items});
+class XrexGuidanceService {
+  // ── Kalite Kontrol Listesi ───────────────────────────────────────────────
 
-  XrexQualityItem? get nextImprovement {
-    for (final item in items) {
-      if (!item.completed) return item;
-    }
-    return null;
-  }
-}
-
-/// Vitrin durumundan tek ve öncelikli X-rex önerisi üretir.
-/// Depolama veya UI bağımlılığı yoktur.
-abstract final class XrexGuidanceService {
-  static XrexRecommendation recommendationFor({
-    required XrexProfileSnapshot? snapshot,
-    required bool hasShared,
-  }) {
-    if (snapshot == null) {
-      return const XrexRecommendation(
-        id: 'setup_start',
-        phase: XrexJourneyPhase.setup,
-        title: 'Vitrinini oluşturmaya başla',
-        description:
-            'İşletme bilgilerini ekleyerek dijital vitrininin ilk adımını tamamla.',
-        buttonLabel: 'Başla',
-        action: XrexAction.openVitrim,
-      );
-    }
-
-    final phase = snapshot.journeyPhase(hasShared: hasShared);
-    return switch (phase) {
-      XrexJourneyPhase.setup => _setupRecommendation(snapshot.nextMissingField),
-      XrexJourneyPhase.publish => const XrexRecommendation(
-        id: 'publish_vitrin',
-        phase: XrexJourneyPhase.publish,
-        title: 'Vitrinin yayına hazır',
-        description:
-            'Zorunlu bilgiler tamamlandı. Vitrinini kontrol edip yayınlayabilirsin.',
-        buttonLabel: 'Yayınlamaya git',
-        action: XrexAction.openVitrim,
-      ),
-      XrexJourneyPhase.share => const XrexRecommendation(
-        id: 'share_vitrin',
-        phase: XrexJourneyPhase.share,
-        title: 'Vitrinini müşterilerine duyur',
-        description:
-            'Yayındaki vitrininin bağlantısını WhatsApp üzerinden paylaş.',
-        buttonLabel: 'WhatsApp’ta paylaş',
-        action: XrexAction.shareWhatsapp,
-      ),
-      XrexJourneyPhase.improve => _improvementRecommendation(
-        qualityReportFor(snapshot: snapshot, hasShared: hasShared),
-      ),
-    };
-  }
-
-  static XrexQualityReport qualityReportFor({
-    required XrexProfileSnapshot? snapshot,
-    required bool hasShared,
-  }) {
-    final items = <XrexQualityItem>[
-      XrexQualityItem(
-        id: 'name',
-        label: 'İşletme adı',
-        points: 10,
-        completed: snapshot?.nameCompleted ?? false,
-        action: XrexAction.scrollToName,
-      ),
-      XrexQualityItem(
-        id: 'whatsapp',
-        label: 'WhatsApp numarası',
-        points: 10,
-        completed: snapshot?.whatsappCompleted ?? false,
-        action: XrexAction.scrollToWhatsapp,
-      ),
-      XrexQualityItem(
-        id: 'address',
-        label: 'Adres ve konum',
-        points: 10,
-        completed: snapshot?.addressCompleted ?? false,
-        action: XrexAction.scrollToAddress,
-      ),
-      XrexQualityItem(
-        id: 'legal',
-        label: 'Yayınlama onayları',
-        points: 10,
-        completed: snapshot?.legalCompleted ?? false,
-        action: XrexAction.scrollToLegal,
-      ),
+  static List<XrexQualityItem> qualityItems(
+    XrexProfileSnapshot? snapshot,
+  ) {
+    return [
       XrexQualityItem(
         id: 'cover',
-        label: 'Kapak görseli',
-        points: 15,
+        label: 'Kapak fotoğrafı',
+        points: 10,
         completed: snapshot?.coverCompleted ?? false,
         action: XrexAction.scrollToCover,
       ),
@@ -145,7 +64,7 @@ abstract final class XrexGuidanceService {
       ),
       XrexQualityItem(
         id: 'gallery',
-        label: 'Vitrin galerisi',
+        label: 'Galeri görselleri',
         points: 10,
         completed: snapshot?.galleryCompleted ?? false,
         action: XrexAction.scrollToGallery,
@@ -158,125 +77,172 @@ abstract final class XrexGuidanceService {
         action: XrexAction.scrollToProducts,
       ),
       XrexQualityItem(
-        id: 'published',
-        label: 'Vitrini yayınlama',
+        id: 'auto_fill',
+        label: 'Kategoriye özel görseller',
         points: 10,
-        completed: snapshot?.isPublished ?? false,
-        action: XrexAction.openVitrim,
-      ),
-      XrexQualityItem(
-        id: 'shared',
-        label: 'Vitrini duyurma',
-        points: 5,
-        completed: (snapshot?.isPublished ?? false) && hasShared,
-        action: XrexAction.shareWhatsapp,
+        completed: snapshot?.autoFillCompleted ?? false,
+        action: XrexAction.openAutoFillDialog,
       ),
     ];
-    final score = items
-        .where((item) => item.completed)
-        .fold<int>(0, (total, item) => total + item.points);
-    return XrexQualityReport(score: score, items: items);
   }
 
-  static String _buttonLabelForId(String id) {
-    switch (id) {
-      case 'name':
-        return 'İşletme Adı Ekle';
-      case 'whatsapp':
-        return 'WhatsApp Ekle';
-      case 'address':
-        return 'Adres Ekle';
-      case 'legal':
-        return 'Onayları İncele';
-      case 'cover':
-        return 'Kapak Görseli Ekle';
-      case 'description':
-        return 'Açıklama Ekle';
-      case 'products':
-        return 'Ürün Ekle';
-      case 'gallery':
-        return 'Fotoğraf Ekle';
-      default:
-        return 'Beni götür';
-    }
+  static int maxQualityScore() {
+    return qualityItems(null).fold(0, (s, i) => s + i.points);
   }
 
-  static XrexRecommendation _improvementRecommendation(
-    XrexQualityReport report,
+  // ── Setup Rehberliği ─────────────────────────────────────────────────────
+
+  /// Henüz yayınlanmamış vitrin için "sıradaki adım" önerisi.
+  static XrexRecommendation? setupRecommendation(
+    XrexProfileSnapshot snapshot,
   ) {
-    final next = report.nextImprovement;
-    if (next == null) {
-      return const XrexRecommendation(
-        id: 'improve_complete',
-        phase: XrexJourneyPhase.improve,
-        title: 'Vitrinin güçlü görünüyor',
-        description: 'Kalite kontrolündeki tüm adımlar tamamlandı.',
-        buttonLabel: 'Vitrinime git',
-        action: XrexAction.openVitrim,
-      );
-    }
-    return XrexRecommendation(
-      id: 'improve_${next.id}',
-      phase: XrexJourneyPhase.improve,
-      title: '${next.label} adımını geliştir',
-      description:
-          'Vitrin puanın ${report.score}/100. En önemli eksik: ${next.label}.',
-      buttonLabel: _buttonLabelForId(next.id),
-      action: next.action,
-    );
+    if (snapshot.areRequiredFieldsCompleted) return null;
+
+    final next = snapshot.nextMissingField;
+    return _setupRecommendationFor(next);
   }
 
-  static XrexRecommendation _setupRecommendation(XrexNextStep step) {
-    return switch (step) {
+  static XrexRecommendation _setupRecommendationFor(
+    XrexNextStep next,
+  ) {
+    return switch (next) {
       XrexNextStep.name => const XrexRecommendation(
         id: 'setup_name',
         phase: XrexJourneyPhase.setup,
-        title: 'İşletme adını ekle',
-        description: 'Müşterilerinin seni tanıması için işletme adını tamamla.',
-        buttonLabel: 'İşletme Adı Ekle',
+        title: 'İşletme adınızı girin',
+        description:
+            'Vitrininizde görünecek işletme adınızı ekleyerek başlayın.',
+        buttonLabel: 'İşletme Adına Git',
         action: XrexAction.scrollToName,
       ),
       XrexNextStep.whatsapp => const XrexRecommendation(
         id: 'setup_whatsapp',
         phase: XrexJourneyPhase.setup,
-        title: 'WhatsApp numaranı ekle',
-        description: 'Müşterilerinin sana doğrudan ulaşabilmesini sağla.',
-        buttonLabel: 'WhatsApp Ekle',
+        title: 'WhatsApp numaranızı ekleyin',
+        description:
+            'Müşterilerinizin sizi hızlıca ulaşabilmesi için WhatsApp numaranızı girin.',
+        buttonLabel: 'WhatsApp Alanına Git',
         action: XrexAction.scrollToWhatsapp,
       ),
       XrexNextStep.address => const XrexRecommendation(
         id: 'setup_address',
         phase: XrexJourneyPhase.setup,
-        title: 'Adresini ve konumunu tamamla',
-        description: 'Müşterilerinin işletmeni kolayca bulmasına yardımcı ol.',
-        buttonLabel: 'Adres Ekle',
+        title: 'Adres ve konum bilgisi ekleyin',
+        description:
+            'Müşterilerin sizi bulabilmesi için adres ve konum bilgisi ekleyin.',
+        buttonLabel: 'Adres Alanına Git',
         action: XrexAction.scrollToAddress,
       ),
       XrexNextStep.legal => const XrexRecommendation(
         id: 'setup_legal',
         phase: XrexJourneyPhase.setup,
-        title: 'Yayınlama onaylarını tamamla',
+        title: 'Yasal onayları tamamlayın',
         description:
-            'Vitrinini güvenli şekilde yayınlamak için onayları incele.',
-        buttonLabel: 'Onayları İncele',
+            'Vitrininizi yayınlayabilmeniz için gerekli yasal onayları vermeniz gerekiyor.',
+        buttonLabel: 'Yasal Onaylara Git',
         action: XrexAction.scrollToLegal,
       ),
-      XrexNextStep.publish => const XrexRecommendation(
-        id: 'publish_vitrin',
-        phase: XrexJourneyPhase.publish,
-        title: 'Vitrinin yayına hazır',
-        description: 'Bilgilerini kontrol edip vitrinini yayınlayabilirsin.',
-        buttonLabel: 'Yayınlamaya git',
+      _ => const XrexRecommendation(
+        id: 'setup_publish',
+        phase: XrexJourneyPhase.setup,
+        title: 'Vitrininizi yayınlayın',
+        description:
+            'Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz.',
+        buttonLabel: 'Vitrinimi Aç',
         action: XrexAction.openVitrim,
       ),
-      XrexNextStep.share => const XrexRecommendation(
-        id: 'share_vitrin',
-        phase: XrexJourneyPhase.share,
-        title: 'Vitrinini müşterilerine duyur',
-        description: 'Yayındaki vitrininin bağlantısını paylaş.',
-        buttonLabel: 'Paylaş',
-        action: XrexAction.shareWhatsapp,
-      ),
     };
+  }
+
+  // ── Publish Sonrası Öneriler ─────────────────────────────────────────────
+
+  /// Yayınlandıktan sonraki iyileştirme önerileri.
+  static List<XrexRecommendation> improvementRecommendations(
+    XrexProfileSnapshot snapshot,
+  ) {
+    final items = <XrexRecommendation>[];
+
+    if (!snapshot.coverCompleted) {
+      items.add(
+        const XrexRecommendation(
+          id: 'improve_cover',
+          phase: XrexJourneyPhase.improve,
+          title: 'Kapak fotoğrafı ekleyin',
+          description:
+              'Vitrininize kapak fotoğrafı ekleyerek daha profesyonel görünmesini sağlayın.',
+          buttonLabel: 'Kapak Fotoğrafına Git',
+          action: XrexAction.scrollToCover,
+        ),
+      );
+    }
+
+    if (!snapshot.galleryCompleted) {
+      items.add(
+        const XrexRecommendation(
+          id: 'improve_gallery',
+          phase: XrexJourneyPhase.improve,
+          title: 'Galeri görselleri ekleyin',
+          description:
+              'Ürün veya hizmet fotoğraflarınızı galeriye ekleyin.',
+          buttonLabel: 'Galeriye Git',
+          action: XrexAction.scrollToGallery,
+        ),
+      );
+    }
+
+    if (!snapshot.descriptionCompleted) {
+      items.add(
+        const XrexRecommendation(
+          id: 'improve_desc',
+          phase: XrexJourneyPhase.improve,
+          title: 'İşletme açıklaması ekleyin',
+          description:
+              'İşletmenizi tanıtan kısa bir açıklama ekleyin.',
+          buttonLabel: 'Açıklamaya Git',
+          action: XrexAction.scrollToDesc,
+        ),
+      );
+    }
+
+    if (!snapshot.catalogCompleted) {
+      items.add(
+        const XrexRecommendation(
+          id: 'improve_catalog',
+          phase: XrexJourneyPhase.improve,
+          title: 'Ürün veya hizmet ekleyin',
+          description:
+              'Müşterilerinize sunduğunuz ürün ve hizmetleri ekleyin.',
+          buttonLabel: 'Ürün/Hizmet Alanına Git',
+          action: XrexAction.scrollToProducts,
+        ),
+      );
+    }
+
+    return items;
+  }
+
+  // ── Selamlama Mesajı ─────────────────────────────────────────────────────
+
+  static String greetingMessage(XrexProfileSnapshot? snapshot) {
+    if (snapshot == null || snapshot.storeName.isEmpty) {
+      return 'Merhaba! Vitrininizi oluşturmak ve geliştirmek için size yardımcı olabilirim. Nasıl başlamak istersiniz?';
+    }
+
+    final score = _calculateScore(snapshot);
+    final maxScore = maxQualityScore();
+
+    if (score >= maxScore * 0.8) {
+      return '${snapshot.storeName} vitrini harika görünüyor! Kalite puanınız $score/$maxScore. Paylaşım veya ek özellikler hakkında yardımcı olabilirim.';
+    } else if (score >= maxScore * 0.5) {
+      return '${snapshot.storeName} vitrini iyi gidiyor! Kalite puanınız $score/$maxScore. Bazı iyileştirmelerle daha da profesyonel görünebilir.';
+    } else {
+      return '${snapshot.storeName} vitrininizi geliştirelim! Mevcut kalite puanınız $score/$maxScore. Size adım adım yardımcı olabilirim.';
+    }
+  }
+
+  static int _calculateScore(XrexProfileSnapshot snapshot) {
+    return qualityItems(snapshot)
+        .where((item) => item.completed)
+        .fold(0, (sum, item) => sum + item.points);
   }
 }

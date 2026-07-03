@@ -41,6 +41,7 @@ class XrexProfileSnapshot {
   final bool galleryCompleted;
   final bool descriptionCompleted;
   final bool catalogCompleted;
+  final bool autoFillCompleted;
   final bool isPublished;
   final String storeName;
   final String category;
@@ -56,6 +57,7 @@ class XrexProfileSnapshot {
     required this.galleryCompleted,
     required this.descriptionCompleted,
     required this.catalogCompleted,
+    this.autoFillCompleted = false,
     required this.isPublished,
     required this.storeName,
     required this.category,
@@ -95,6 +97,7 @@ class XrexProfileSnapshot {
     final descriptionCompleted = data.description.trim().isNotEmpty;
     final catalogCompleted =
         data.products.isNotEmpty || data.offerings.isNotEmpty;
+    // autoFillCompleted veri kaynagindan gelmez - ayri kontrol edilir
 
     return XrexProfileSnapshot(
       nameCompleted: nameOk,
@@ -105,6 +108,7 @@ class XrexProfileSnapshot {
       galleryCompleted: galleryCompleted,
       descriptionCompleted: descriptionCompleted,
       catalogCompleted: catalogCompleted,
+      autoFillCompleted: false, // SnapshotLoader'dan ayarlanacak
       isPublished: isPublished,
       storeName: data.name.trim(),
       category:
@@ -177,6 +181,7 @@ class XrexSnapshotLoader {
         galleryCompleted: false,
         descriptionCompleted: false,
         catalogCompleted: false,
+        autoFillCompleted: false,
         isPublished: false,
         storeName: '',
         category: '',
