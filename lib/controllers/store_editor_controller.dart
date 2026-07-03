@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/app_constants.dart';
 import 'package:vitrinx/models/store_data.dart';
@@ -27,7 +29,6 @@ class EditorGalleryItem {
     this.isRemoved = false,
   });
 
-  /// Yeni fotoğraf ekleme (cihazdan seçim)
   factory EditorGalleryItem.fromBytes({
     required String id,
     required Uint8List bytes,
@@ -46,7 +47,6 @@ class EditorGalleryItem {
     );
   }
 
-  /// Var olan URL'den (DB'den gelen)
   factory EditorGalleryItem.fromUrl(String url, {String? id}) {
     return EditorGalleryItem._(
       id: id ?? url,
@@ -54,7 +54,6 @@ class EditorGalleryItem {
     );
   }
 
-  /// StoreGalleryItem'dan
   factory EditorGalleryItem.fromStoreItem(StoreGalleryItem item) {
     return EditorGalleryItem._(
       id: item.id,
@@ -62,7 +61,6 @@ class EditorGalleryItem {
     );
   }
 
-  /// Kaldırma işareti
   EditorGalleryItem markRemoved() {
     return EditorGalleryItem._(
       id: id,
@@ -76,7 +74,6 @@ class EditorGalleryItem {
     );
   }
 
-  /// Kapak fotoğrafı kontrolü
   bool get isFromUrl => imageUrl != null && imageUrl!.isNotEmpty;
   bool get isFromBytes => bytes != null;
   bool get isEmpty => !isFromUrl && !isFromBytes;
@@ -87,16 +84,13 @@ class StoreEditorController extends ChangeNotifier {
   StorePublishedInfo? _publishedInfo;
   bool _isLoading = false;
 
-  // Kapak Fotoğrafı
   Uint8List? _coverBytes;
   String? _coverFileName;
   String? _coverUrl;
 
-  // Galeri
   List<EditorGalleryItem> _editorGalleryItems = [];
   int _maxGalleryPhotos = AppConstants.maxGalleryPhotos;
 
-  // Validation hataları
   String? _nameError;
   String? _whatsappError;
   String? _provinceError;
@@ -105,18 +99,15 @@ class StoreEditorController extends ChangeNotifier {
   String? _googleLinkError;
   String? _legalDocumentsError;
 
-  // Publishing durumu
   bool _isPublishing = false;
   bool _isLoadingLegalDocuments = false;
   dynamic _legalDocuments;
 
-  // Booking durumu
   bool _bookingIsEnabled = false;
   int _bookingCapacity = 0;
   List<String> _bookingWorkingHours = [];
   String? _bookingLunchBreak;
 
-  // Marketplace
   final Set<String> _customPlatformLinkIds = {};
 
   StoreEditorController(this._data) {
@@ -128,18 +119,14 @@ class StoreEditorController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   int get maxGalleryPhotos => _maxGalleryPhotos;
 
-  // ═══════════════════════════════════════════════════════════════════
-  // KAPAK FOTOĞRAFI
-  // ═══════════════════════════════════════════════════════════════════
+  // KAPAK
   Uint8List? get coverBytes => _coverBytes;
   String? get coverFileName => _coverFileName;
   String? get coverUrl => _coverUrl;
   String? get coverUrlOrNull => _coverUrl;
   bool get hasCover => _coverBytes != null || (_coverUrl != null && _coverUrl!.isNotEmpty);
 
-  // ═══════════════════════════════════════════════════════════════════
-  // GALERİ
-  // ═══════════════════════════════════════════════════════════════════
+  // GALERI
   List<EditorGalleryItem> get editorGalleryItems => _editorGalleryItems;
   List<EditorGalleryItem> get galleryItems => _editorGalleryItems;
   List<EditorGalleryItem> get activeGalleryItems =>
@@ -153,53 +140,26 @@ class StoreEditorController extends ChangeNotifier {
       .map((item) => item.imageUrl!)
       .toList();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // İŞLETME ADI
-  // ═══════════════════════════════════════════════════════════════════
+  // ISIM
   String get currentName => _data.name;
   String? get nameError => _nameError;
-
-  void setName(String name) {
-    _data.name = name;
-    notifyListeners();
-  }
-
+  void setName(String name) { _data.name = name; notifyListeners(); }
   void updateName(String name) => setName(name);
 
-  // ═══════════════════════════════════════════════════════════════════
-  // KATEGORİ
-  // ═══════════════════════════════════════════════════════════════════
+  // KATEGORI
   String get selectedKategori => _data.kategori;
+  void selectCategory(String kategori) { _data.kategori = kategori; notifyListeners(); }
 
-  void selectCategory(String kategori) {
-    _data.kategori = kategori;
-    notifyListeners();
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // AÇIKLAMA
-  // ═══════════════════════════════════════════════════════════════════
+  // ACIKLAMA
   String get currentDescription => _data.description;
+  void setDescription(String description) { _data.description = description; notifyListeners(); }
 
-  void setDescription(String description) {
-    _data.description = description;
-    notifyListeners();
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
   // WHATSAPP
-  // ═══════════════════════════════════════════════════════════════════
   String get currentWhatsapp => _data.whatsapp;
   String? get whatsappError => _whatsappError;
+  void updateWhatsapp(String w) { _data.whatsapp = w; notifyListeners(); }
 
-  void updateWhatsapp(String w) {
-    _data.whatsapp = w;
-    notifyListeners();
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // KONUM / PROVİNS / İLÇE
-  // ═══════════════════════════════════════════════════════════════════
+  // KONUM
   String get selectedProvinceCode => _data.provinceCode;
   String get selectedProvinceName => _data.provinceName;
   String get selectedDistrictCode => _data.districtCode;
@@ -225,332 +185,244 @@ class StoreEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // DURUM (STATUS)
-  // ═══════════════════════════════════════════════════════════════════
+  // DURUM
   String get selectedStatus => _data.status;
+  void selectStatus(String status) { _data.status = status; notifyListeners(); }
 
-  void selectStatus(String status) {
-    _data.status = status;
-    notifyListeners();
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // YAYINLAMA (PUBLISHING)
-  // ═══════════════════════════════════════════════════════════════════
+  // PUBLISHING
   bool get isPublishing => _isPublishing;
   bool get isLegalPublishReady =>
-      _data.privacyNoticeAcknowledged &&
-      _data.termsAccepted &&
-      _data.publicationConsentAccepted;
+      _data.privacyNoticeAcknowledged && _data.termsAccepted && _data.publicationConsentAccepted;
   bool get isLoadingLegalDocuments => _isLoadingLegalDocuments;
   dynamic get legalDocuments => _legalDocuments;
   String? get legalDocumentsError => _legalDocumentsError;
 
-  /// GERÇEK PUBLISH: StorePublishService.publishStore() çağırır
+  /// Medya upload: Supabase Storage -> public URL
+  Future<String> _uploadMedia({
+    required String bucket,
+    required String path,
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    final client = Supabase.instance.client;
+    await client.storage.from(bucket).uploadBinary(
+      path,
+      bytes,
+      fileOptions: FileOptions(contentType: contentType, upsert: true),
+    );
+    return client.storage.from(bucket).getPublicUrl(path);
+  }
+
+  /// Tüm yeni medyalari (kapak + galeri) upload et ve StoreData'ya URL'leri yaz
+  Future<void> _uploadPendingMedia() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) throw const StorePublishException('Oturum acik degil.');
+
+    final storeSlug = _data.slug.isNotEmpty
+        ? _data.slug
+        : _data.name.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '-');
+    final ts = DateTime.now().millisecondsSinceEpoch;
+
+    // 1. Kapak upload
+    if (_coverBytes != null && _coverFileName != null) {
+      final ext = (_coverFileName!.split('.').lastOrNull ?? 'jpg').toLowerCase();
+      final mime = ext == 'png' ? 'image/png' : ext == 'webp' ? 'image/webp' : 'image/jpeg';
+      final path = 'covers/$userId/${storeSlug}_cover_$ts.$ext';
+      final url = await _uploadMedia(bucket: 'store-images', path: path, bytes: _coverBytes!, contentType: mime);
+      _data.coverImageUrl = url;
+      _data.shelfImageUrl = url;
+      _coverUrl = url;
+      _coverBytes = null;
+    }
+
+    // 2. Galeri upload
+    final updatedGallery = <StoreGalleryItem>[];
+    var gi = 0;
+    for (final item in _editorGalleryItems) {
+      if (item.isRemoved) continue;
+      if (item.isFromBytes && item.bytes != null) {
+        final ext = (item.extension ?? 'jpg').toLowerCase();
+        final mime = item.contentType ?? (ext == 'png' ? 'image/png' : ext == 'webp' ? 'image/webp' : 'image/jpeg');
+        final path = 'gallery/$userId/${storeSlug}_gallery_${ts}_$gi.$ext';
+        final url = await _uploadMedia(bucket: 'store-images', path: path, bytes: item.bytes!, contentType: mime);
+        updatedGallery.add(StoreGalleryItem(id: item.id, imageUrl: url, title: 'Galeri ${gi + 1}'));
+        gi++;
+      } else if (item.isFromUrl && item.imageUrl != null && item.imageUrl!.isNotEmpty) {
+        updatedGallery.add(StoreGalleryItem(id: item.id, imageUrl: item.imageUrl!));
+      }
+    }
+    if (updatedGallery.isNotEmpty) {
+      _data.galleryItems = updatedGallery;
+      _editorGalleryItems = updatedGallery.map((i) => EditorGalleryItem.fromStoreItem(i)).toList();
+    }
+  }
+
+  /// GERCEK PUBLISH: Medya upload -> StorePublishService -> public link
   Future<String?> publish() async {
     if (_isPublishing) return null;
     _isPublishing = true;
     notifyListeners();
 
     try {
-      // Controller'daki değişiklikleri StoreData'ya uygula
-      final dataToPublish = applyChangesToData();
-      final editToken = _publishedInfo?.editToken ?? dataToPublish.slug;
-
+      await _uploadPendingMedia();
       final service = StorePublishService();
-      final result = await service.publishStore(
-        dataToPublish,
-        editToken: editToken,
-      );
-
-      // Public link oluştur
+      final result = await service.publishStore(_data, editToken: _publishedInfo?.editToken ?? _data.slug);
       final publicLink = 'https://vitrinx.app${result.publicPath}';
-
       _publishedInfo = StorePublishedInfo(
-        publicLink: publicLink,
-        slug: result.slug,
-        editToken: editToken,
-        isComplete: true,
+        publicLink: publicLink, slug: result.slug,
+        editToken: _publishedInfo?.editToken ?? _data.slug, isComplete: true,
       );
-
+      await saveLocally();
       notifyListeners();
       return publicLink;
     } on StorePublishException {
       rethrow;
     } catch (e) {
-      throw StorePublishException('Vitrin yayınlanamadı: $e');
+      throw StorePublishException('Vitrin yayinlanamadi: $e');
     } finally {
       _isPublishing = false;
       notifyListeners();
     }
   }
 
-  /// Yayınlama rızasını geri çek
   Future<void> withdrawPublicationConsent() async {
     final slug = _publishedInfo?.slug ?? _data.slug;
     final editToken = _publishedInfo?.editToken ?? '';
-
     if (slug.isEmpty || editToken.isEmpty) {
-      throw const StorePublishException(
-        'Yayındaki vitrin bilgileri eksik.',
-      );
+      throw const StorePublishException('Yayindaki vitrin bilgileri eksik.');
     }
-
     final service = StorePublishService();
-    await service.withdrawPublicationConsent(
-      slug: slug,
-      editToken: editToken,
-    );
-
+    await service.withdrawPublicationConsent(slug: slug, editToken: editToken);
     _data.publicationConsentAccepted = false;
     _data.publicationConsentWithdrawnAt = DateTime.now();
     notifyListeners();
   }
 
-  /// Vitrini sil (henüz implemente edilmedi)
   Future<void> deleteVitrin() async {
-    throw const StorePublishException(
-      'Vitrin silme henüz desteklenmiyor.',
-    );
+    throw const StorePublishException('Vitrin silme henuz desteklenmiyor.');
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // YASAL ONAYLAR (LEGAL CONSENT)
-  // ═══════════════════════════════════════════════════════════════════
+  // YASAL ONAYLAR
   bool get privacyNoticeAcknowledged => _data.privacyNoticeAcknowledged;
   bool get termsAccepted => _data.termsAccepted;
   bool get publicationConsentAccepted => _data.publicationConsentAccepted;
 
-  void setPrivacyNoticeAcknowledged(bool v) {
-    _data.privacyNoticeAcknowledged = v;
-    notifyListeners();
-  }
+  void setPrivacyNoticeAcknowledged(bool v) { _data.privacyNoticeAcknowledged = v; notifyListeners(); }
+  void setTermsAccepted(bool v) { _data.termsAccepted = v; notifyListeners(); }
+  void setPublicationConsentAccepted(bool v) { _data.publicationConsentAccepted = v; notifyListeners(); }
 
-  void setTermsAccepted(bool v) {
-    _data.termsAccepted = v;
-    notifyListeners();
-  }
-
-  void setPublicationConsentAccepted(bool v) {
-    _data.publicationConsentAccepted = v;
-    notifyListeners();
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // RANDEVU / BOOKING (sadece Kuaför)
-  // ═══════════════════════════════════════════════════════════════════
+  // BOOKING
   bool get bookingIsEnabled => _bookingIsEnabled;
   int get bookingCapacity => _bookingCapacity;
   List<String> get bookingWorkingHours => _bookingWorkingHours;
   String? get bookingLunchBreak => _bookingLunchBreak;
   List<StoreOffering> get offerings => _data.offerings;
+  void setBookingIsEnabled(bool v) { _bookingIsEnabled = v; notifyListeners(); }
+  void setBookingCapacity(int v) { _bookingCapacity = v; notifyListeners(); }
 
-  void setBookingIsEnabled(bool v) {
-    _bookingIsEnabled = v;
-    notifyListeners();
-  }
-
-  void setBookingCapacity(int v) {
-    _bookingCapacity = v;
-    notifyListeners();
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // MARKETPLACE LİNKLER
-  // ═══════════════════════════════════════════════════════════════════
+  // MARKETPLACE
   List<MarketplaceLink> get marketplaceLinks => _data.marketplaceLinks;
   Set<String> get customPlatformLinkIds => _customPlatformLinkIds;
-
-  void addMarketplaceLink(MarketplaceLink link) {
-    _data.marketplaceLinks.add(link);
-    notifyListeners();
-  }
-
+  void addMarketplaceLink(MarketplaceLink link) { _data.marketplaceLinks.add(link); notifyListeners(); }
   void removeMarketplaceLink(int index) {
     if (index >= 0 && index < _data.marketplaceLinks.length) {
       _data.marketplaceLinks.removeAt(index);
       notifyListeners();
     }
   }
-
   void toggleCustomPlatformLinkId(String id, bool isCustom) {
-    if (isCustom) {
-      _customPlatformLinkIds.add(id);
-    } else {
-      _customPlatformLinkIds.remove(id);
-    }
+    if (isCustom) _customPlatformLinkIds.add(id); else _customPlatformLinkIds.remove(id);
     notifyListeners();
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // GOOGLE BUSINESS
-  // ═══════════════════════════════════════════════════════════════════
+  // GOOGLE
   String? get googleLinkError => _googleLinkError;
+  void updateGoogleBusinessLink(String v) { _data.googleBusinessLink = v; notifyListeners(); }
 
-  void updateGoogleBusinessLink(String v) {
-    _data.googleBusinessLink = v;
-    notifyListeners();
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // ÜRÜN / HİZMET
-  // ═══════════════════════════════════════════════════════════════════
+  // URUN
   List<Product> get products => _data.products;
   bool get hasProducts => _data.products.isNotEmpty;
+  void addProduct(Product p) { _data.products.add(p); notifyListeners(); }
+  void removeProduct(int i) { if (i >= 0 && i < _data.products.length) { _data.products.removeAt(i); notifyListeners(); } }
+  void updateProduct(int i, Product p) { if (i >= 0 && i < _data.products.length) { _data.products[i] = p; notifyListeners(); } }
+  void updateProductImported() { notifyListeners(); }
 
-  void addProduct(Product product) {
-    _data.products.add(product);
-    notifyListeners();
-  }
-
-  void removeProduct(int index) {
-    if (index >= 0 && index < _data.products.length) {
-      _data.products.removeAt(index);
-      notifyListeners();
-    }
-  }
-
-  void updateProduct(int index, Product product) {
-    if (index >= 0 && index < _data.products.length) {
-      _data.products[index] = product;
-      notifyListeners();
-    }
-  }
-
-  void updateProductImported() {
-    notifyListeners();
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
   // VALIDATION
-  // ═══════════════════════════════════════════════════════════════════
   void clearValidationErrors() {
-    _nameError = null;
-    _whatsappError = null;
-    _provinceError = null;
-    _districtError = null;
-    _addressError = null;
-    _googleLinkError = null;
+    _nameError = null; _whatsappError = null; _provinceError = null;
+    _districtError = null; _addressError = null; _googleLinkError = null;
     notifyListeners();
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // KAPAK FOTOĞRAFI İŞLEMLERİ
-  // ═══════════════════════════════════════════════════════════════════
-  void setCoverBytes(Uint8List bytes, String fileName,
-      [String? ext, String? contentType]) {
-    _coverBytes = bytes;
-    _coverFileName = fileName;
-    _coverUrl = null;
-    notifyListeners();
+  // KAPAK ISLEMLERI
+  void setCoverBytes(Uint8List bytes, String fileName, [String? ext, String? contentType]) {
+    _coverBytes = bytes; _coverFileName = fileName; _coverUrl = null; notifyListeners();
   }
-
   void setCoverUrl(String url) {
-    _coverUrl = url;
-    _coverBytes = null;
-    _coverFileName = null;
-    notifyListeners();
+    _coverUrl = url; _coverBytes = null; _coverFileName = null; notifyListeners();
   }
+  void clearCoverBytes() { _coverBytes = null; _coverFileName = null; notifyListeners(); }
 
-  void clearCoverBytes() {
-    _coverBytes = null;
-    _coverFileName = null;
-    notifyListeners();
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // GALERİ İŞLEMLERİ
-  // ═══════════════════════════════════════════════════════════════════
-  void setGalleryItems(List<EditorGalleryItem> items) {
-    _editorGalleryItems = items;
-    notifyListeners();
-  }
-
+  // GALERI ISLEMLERI
+  void setGalleryItems(List<EditorGalleryItem> items) { _editorGalleryItems = items; notifyListeners(); }
   void addGalleryItem(EditorGalleryItem item) {
-    if (_editorGalleryItems.length < _maxGalleryPhotos) {
-      _editorGalleryItems.add(item);
-      notifyListeners();
-    }
+    if (_editorGalleryItems.length < _maxGalleryPhotos) { _editorGalleryItems.add(item); notifyListeners(); }
   }
-
   void removeGalleryItem(int index) {
     if (index >= 0 && index < _editorGalleryItems.length) {
       final item = _editorGalleryItems[index];
-      if (item.isFromUrl) {
-        _editorGalleryItems[index] = item.markRemoved();
-      } else {
-        _editorGalleryItems.removeAt(index);
-      }
+      if (item.isFromUrl) { _editorGalleryItems[index] = item.markRemoved(); }
+      else { _editorGalleryItems.removeAt(index); }
       notifyListeners();
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // LOKAL KAYIT
-  // ═══════════════════════════════════════════════════════════════════
+  // LOKAL KAYIT (SharedPreferences)
+  static const _prefsKey = 'store_editor_data';
+
   Future<void> saveLocally() async {
-    // TODO: SharedPreferences'a serileştirme eklenecek
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefsKey, jsonEncode(_data.toJson()));
+    } catch (e) { debugPrint('saveLocally error: $e'); }
     notifyListeners();
   }
 
-  // ═══════════════════════════════════════════════════════════════════
+  static Future<StoreData?> loadLocalData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final s = prefs.getString(_prefsKey);
+      if (s == null || s.isEmpty) return null;
+      return StoreData.fromJson(jsonDecode(s));
+    } catch (e) { debugPrint('loadLocalData error: $e'); return null; }
+  }
+
   // GENEL
-  // ═══════════════════════════════════════════════════════════════════
   void _initialize() {
     _coverUrl = _data.shelfImageUrl.isNotEmpty ? _data.shelfImageUrl : null;
-    _editorGalleryItems = _data.galleryItems
-        .map((item) => EditorGalleryItem.fromStoreItem(item))
-        .toList();
+    _editorGalleryItems = _data.galleryItems.map((item) => EditorGalleryItem.fromStoreItem(item)).toList();
   }
 
-  void setPublishedInfo(StorePublishedInfo? info) {
-    _publishedInfo = info;
-    notifyListeners();
-  }
+  void setPublishedInfo(StorePublishedInfo? info) { _publishedInfo = info; notifyListeners(); }
+  void setLoading(bool value) { _isLoading = value; notifyListeners(); }
 
-  void setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
-
-  /// Controller'daki tüm değişiklikleri StoreData'ya uygula
   StoreData applyChangesToData() {
-    // Kapak bytes varsa - servis katmanı yükleyecek
-    if (_coverUrl != null) {
-      _data.coverImageUrl = _coverUrl!;
-      _data.shelfImageUrl = _coverUrl!;
-    }
-
-    // Galeri güncelle
-    _data.galleryItems = _editorGalleryItems
-        .where((item) => !item.isRemoved)
-        .map((item) {
-          if (item.isFromUrl) {
-            return StoreGalleryItem(
-              id: item.id,
-              imageUrl: item.imageUrl!,
-            );
-          }
-          return StoreGalleryItem(id: item.id);
-        })
-        .toList();
-
+    if (_coverUrl != null) { _data.coverImageUrl = _coverUrl!; _data.shelfImageUrl = _coverUrl!; }
+    _data.galleryItems = _editorGalleryItems.where((item) => !item.isRemoved).map((item) {
+      if (item.isFromUrl) return StoreGalleryItem(id: item.id, imageUrl: item.imageUrl!);
+      return StoreGalleryItem(id: item.id);
+    }).toList();
     return _data;
   }
 
   bool get hasChanges {
-    return _coverBytes != null ||
-        _editorGalleryItems.any((item) => item.isRemoved || item.isFromBytes);
+    return _coverBytes != null || _editorGalleryItems.any((item) => item.isRemoved || item.isFromBytes);
   }
 
   void reset() {
-    _coverBytes = null;
-    _coverFileName = null;
+    _coverBytes = null; _coverFileName = null;
     _coverUrl = _data.shelfImageUrl.isNotEmpty ? _data.shelfImageUrl : null;
-    _editorGalleryItems = _data.galleryItems
-        .map((item) => EditorGalleryItem.fromStoreItem(item))
-        .toList();
+    _editorGalleryItems = _data.galleryItems.map((item) => EditorGalleryItem.fromStoreItem(item)).toList();
     notifyListeners();
   }
 }
