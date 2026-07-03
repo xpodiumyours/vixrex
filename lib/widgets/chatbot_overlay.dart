@@ -519,6 +519,9 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
         case XrexAction.scrollToLegal:
         case XrexAction.scrollToDesc:
         case XrexAction.scrollToProducts:
+        case XrexAction.scrollToCategory:
+        case XrexAction.openAutoFillDialog:
+        case XrexAction.applyCategoryTemplate:
           onScroll?.call(action);
           break;
         case XrexAction.none:
