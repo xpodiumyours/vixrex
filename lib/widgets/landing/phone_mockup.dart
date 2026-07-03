@@ -239,7 +239,7 @@ class PhoneMockup extends StatelessWidget {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 6),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
@@ -250,10 +250,7 @@ class PhoneMockup extends StatelessWidget {
                                         onTap: onPreviewTap,
                                         borderRadius: BorderRadius.circular(12),
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 7,
-                                          ),
+                                          padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
                                             color: action.color.withValues(alpha: 0.1),
                                             borderRadius: BorderRadius.circular(12),
@@ -284,25 +281,16 @@ class PhoneMockup extends StatelessWidget {
                                     }).toList(),
                               ),
                               if (profile.links.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'Bağlantılar',
-                                  style: TextStyle(
-                                    color: AppColors.darkText,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
                                 ...profile.links.take(2).map((link) {
                                   return Padding(
-                                    padding: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.only(bottom: 6),
                                     child: InkWell(
                                       onTap: onPreviewTap,
                                       borderRadius: BorderRadius.circular(14),
                                       child: Container(
                                         width: double.infinity,
-                                        padding: const EdgeInsets.all(10),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                         decoration: BoxDecoration(
                                           color: AppColors.bgLight,
                                           borderRadius: BorderRadius.circular(14),
@@ -311,16 +299,16 @@ class PhoneMockup extends StatelessWidget {
                                         child: Row(
                                           children: [
                                             Container(
-                                              width: 34,
-                                              height: 34,
+                                              width: 30,
+                                              height: 30,
                                               decoration: BoxDecoration(
                                                 color: link.color.withValues(alpha: 0.14),
-                                                borderRadius: BorderRadius.circular(12),
+                                                borderRadius: BorderRadius.circular(10),
                                               ),
                                               child: Icon(
                                                 link.icon,
                                                 color: link.color,
-                                                size: 18,
+                                                size: 16,
                                               ),
                                             ),
                                             const SizedBox(width: 10),
@@ -365,7 +353,7 @@ class PhoneMockup extends StatelessWidget {
                                 }),
                               ],
                               if (profile.galleryImages.isNotEmpty) ...[
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
                                 Row(
                                   children: [
                                     const Expanded(
@@ -398,9 +386,9 @@ class PhoneMockup extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 4),
                                 SizedBox(
-                                  height: 64,
+                                  height: 52,
                                   child: Row(
                                     children: List.generate(
                                       profile.galleryImages.take(3).length,
@@ -445,6 +433,60 @@ class PhoneMockup extends StatelessWidget {
                                 ),
                               ],
                               const Spacer(),
+                              // Vitrin hazır alt bölümü
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.bgLight,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Vitrin hazır',
+                                            style: TextStyle(
+                                              color: AppColors.darkText,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${profile.links.length} bağlantı',
+                                            style: const TextStyle(
+                                              color: AppColors.mutedText,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: profile.accentColor.withValues(alpha: 0.14),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(
+                                        Icons.qr_code_2_rounded,
+                                        color: profile.accentColor,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
