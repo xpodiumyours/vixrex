@@ -15,6 +15,7 @@ import 'package:vitrinx/services/auto_fill_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/widgets/auto_fill/auto_fill_banner.dart';
+import 'package:vitrinx/widgets/auto_fill/category_auto_fill_sheet.dart';
 import 'package:vitrinx/widgets/editor/common_form_fields.dart';
 import 'package:vitrinx/widgets/editor/cover_picker_section.dart';
 import 'package:vitrinx/widgets/editor/gallery_editor_section.dart';
@@ -76,51 +77,32 @@ class VitrinFormSection extends StatelessWidget {
         contentType: e.contentType,
       )).toList();
 
-  /// Kategoriye özel hazır görselleri uygula
-  Future<void> _applyCategoryTemplate(BuildContext ctx) async {
+  /// Kategori sablonu secim bottom sheet'ini acar
+  Future<void> _showAutoFillSheet(BuildContext ctx) async {
     final kategori = controller.selectedKategori.trim();
     if (kategori.isEmpty) {
       state.showSnackBar(ctx, 'Önce bir kategori seçmelisiniz.');
       return;
     }
-
-    // Persist to database via AutoFillService if storeId exists
-    final storeId = controller.data.id?.toString();
-    if (storeId != null && storeId.isNotEmpty) {
-      final result = await AutoFillService.applyByKategori(
-        storeId: storeId,
-        kategori: kategori,
-      );
-      if (result.error != null && ctx.mounted) {
-        state.showSnackBar(ctx, result.error!);
-      }
-    }
-
-    final imageSet = await CategoryImageService.getImagesForKategori(kategori);
-    if (imageSet == null) {
-      if (ctx.mounted) {
-        state.showSnackBar(ctx, 'Bu kategori için hazır görsel bulunamadı.');
-      }
+    final categoryKey = mapKategoriToKey(kategori);
+    if (categoryKey == null) {
+      state.showSnackBar(ctx, 'Bu kategori için hazır görsel bulunamadı.');
       return;
     }
-
-    // Kapak fotoğrafı
-    if (imageSet.coverImages.isNotEmpty) {
-      controller.setCoverUrl(imageSet.coverImages.first.imageUrl);
+    final storeId = controller.data.id?.toString() ?? '';
+    if (storeId.isEmpty) {
+      state.showSnackBar(ctx, 'Önce vitrininizi kaydetmelisiniz.');
+      return;
     }
-
-    // Galeri görselleri
-    if (imageSet.galleryImages.isNotEmpty) {
-      final storeItems = imageSet.toStoreGalleryItems();
-      final editorItems = storeItems
-          .map((item) => EditorGalleryItem.fromStoreItem(item))
-          .toList();
-      controller.setGalleryItems(editorItems);
-    }
-
-    if (ctx.mounted) {
-      state.showSnackBar(ctx, '$kategori kategorisi için hazır görseller uygulandı!');
-    }
+    await CategoryAutoFillSheet.show(
+      context: ctx,
+      categoryKey: categoryKey,
+      categoryLabel: kategori,
+      storeId: storeId,
+      onApplied: () {
+        controller.initialize(controller.data.name);
+      },
+    );
   }
 
   @override
@@ -196,7 +178,7 @@ class VitrinFormSection extends StatelessWidget {
                   coverUrl: controller.coverUrl,
                   coverFileName: controller.coverFileName,
                   onTap: () => _pickCover(context),
-                  onAutoFillTap: () => _applyCategoryTemplate(context),
+                  onAutoFillTap: () => _showAutoFillSheet(context),
                 ),
               ),
               const SizedBox(height: 10),
@@ -209,7 +191,7 @@ class VitrinFormSection extends StatelessWidget {
                   maxGalleryPhotos: controller.maxGalleryPhotos,
                   onPickPhotos: () => _pickGallery(context),
                   onRemovePhoto: controller.removeGalleryItem,
-                  onAutoFillTap: () => _applyCategoryTemplate(context),
+                  onAutoFillTap: () => _showAutoFillSheet(context),
                 ),
               ),
               const SizedBox(height: 18),
@@ -324,7 +306,9 @@ class VitrinFormSection extends StatelessWidget {
                     AutoFillBanner(
                       kategori: controller.selectedKategori,
                       storeId: controller.data.id?.toString() ?? '',
-                      onTap: () => _applyCategoryTemplate(context),
+                      onApplied: () {
+                        controller.initialize(controller.data.name);
+                      },
                     ),
                   ],
                 ),

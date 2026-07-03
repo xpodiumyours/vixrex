@@ -43,10 +43,10 @@ class CategoryAutoFillSheet extends StatefulWidget {
 }
 
 class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
-  bool _fillCover = true;
+  bool _fillCover = false;
   final bool _fillLogo = true;
-  bool _fillGallery = true;
-  bool _fillProducts = true;
+  bool _fillGallery = false;
+  bool _fillProducts = false;
   bool _isLoading = false;
   bool _isApplying = false;
   CategoryImageSet? _imageSet;
@@ -262,7 +262,8 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
                     height: 52,
                     child: ElevatedButton.icon(
                       onPressed: _isApplying ||
-                              (_imageSet?.totalCount ?? 0) == 0
+                              (_imageSet?.totalCount ?? 0) == 0 ||
+                              !(_fillCover || _fillGallery || _fillProducts)
                           ? null
                           : _apply,
                       icon: _isApplying
