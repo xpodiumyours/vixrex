@@ -55,7 +55,7 @@ class PhoneMockup extends StatelessWidget {
                   child: Column(
                     children: [
                       SizedBox(
-                        height: 172,
+                        height: 156,
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
@@ -98,15 +98,15 @@ class PhoneMockup extends StatelessWidget {
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+                              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     children: [
                                       Container(
-                                        width: 44,
-                                        height: 44,
+                                        width: 40,
+                                        height: 40,
                                         decoration: BoxDecoration(
                                           color: profile.accentColor.withValues(alpha: 0.16),
                                           borderRadius: BorderRadius.circular(16),
@@ -117,7 +117,7 @@ class PhoneMockup extends StatelessWidget {
                                         child: Icon(
                                           profile.icon,
                                           color: profile.accentColor,
-                                          size: 24,
+                                          size: 22,
                                         ),
                                       ),
                                       const Spacer(),
@@ -159,18 +159,18 @@ class PhoneMockup extends StatelessWidget {
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 6),
                                   Text(
                                     profile.name,
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 28,
+                                      fontSize: 24,
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: -0.8,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 6),
                                   Row(
                                     children: [
                                       Flexible(
@@ -178,7 +178,7 @@ class PhoneMockup extends StatelessWidget {
                                           profile.category,
                                           style: TextStyle(
                                             color: profile.accentColor,
-                                            fontSize: 13,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.w800,
                                           ),
                                           overflow: TextOverflow.ellipsis,
@@ -199,7 +199,7 @@ class PhoneMockup extends StatelessWidget {
                                           profile.secondaryBadgeText,
                                           style: const TextStyle(
                                             color: Colors.white70,
-                                            fontSize: 12,
+                                            fontSize: 11,
                                             fontWeight: FontWeight.w600,
                                           ),
                                           overflow: TextOverflow.ellipsis,
@@ -216,7 +216,7 @@ class PhoneMockup extends StatelessWidget {
                       Expanded(
                         child: Container(
                           color: AppColors.surface,
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(14),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -228,7 +228,7 @@ class PhoneMockup extends StatelessWidget {
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
                               Text(
                                 profile.description,
                                 style: const TextStyle(
@@ -236,10 +236,10 @@ class PhoneMockup extends StatelessWidget {
                                   fontSize: 12,
                                   height: 1.5,
                                 ),
-                                maxLines: 3,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 12),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
@@ -252,7 +252,7 @@ class PhoneMockup extends StatelessWidget {
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 12,
-                                            vertical: 8,
+                                            vertical: 7,
                                           ),
                                           decoration: BoxDecoration(
                                             color: action.color.withValues(alpha: 0.1),
@@ -284,7 +284,7 @@ class PhoneMockup extends StatelessWidget {
                                     }).toList(),
                               ),
                               if (profile.links.isNotEmpty) ...[
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
                                 const Text(
                                   'Bağlantılar',
                                   style: TextStyle(
@@ -302,7 +302,7 @@ class PhoneMockup extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(14),
                                       child: Container(
                                         width: double.infinity,
-                                        padding: const EdgeInsets.all(12),
+                                        padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
                                           color: AppColors.bgLight,
                                           borderRadius: BorderRadius.circular(14),
@@ -311,8 +311,8 @@ class PhoneMockup extends StatelessWidget {
                                         child: Row(
                                           children: [
                                             Container(
-                                              width: 36,
-                                              height: 36,
+                                              width: 34,
+                                              height: 34,
                                               decoration: BoxDecoration(
                                                 color: link.color.withValues(alpha: 0.14),
                                                 borderRadius: BorderRadius.circular(12),
@@ -400,7 +400,7 @@ class PhoneMockup extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 8),
                                 SizedBox(
-                                  height: 72,
+                                  height: 64,
                                   child: Row(
                                     children: List.generate(
                                       profile.galleryImages.take(3).length,
