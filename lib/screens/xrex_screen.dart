@@ -159,6 +159,15 @@ class XrexScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _buildSuggestionCard(
+                      icon: Icons.auto_fix_high_outlined,
+                      title: 'Kategoriye özel hazır görseller',
+                      subtitle: snapshot?.autoFillCompleted == true
+                          ? 'Hazır görselleri zaten kullandın. İstersen değiştirebilirsin.'
+                          : 'İşletme kategorine özel telifsiz görsellerle vitrinini doldur.',
+                      onTap: () => onAction(XrexAction.scrollToCategory),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSuggestionCard(
                       icon: Icons.edit_note_outlined,
                       title: 'Mağaza açıklamanı iyileştir',
                       subtitle: snapshot?.descriptionCompleted == true
