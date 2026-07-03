@@ -8,6 +8,7 @@ class CoverPickerSection extends StatelessWidget {
   final String? coverUrl;
   final String? coverFileName;
   final VoidCallback onTap;
+  final VoidCallback? onAutoFillTap;
 
   const CoverPickerSection({
     super.key,
@@ -15,6 +16,7 @@ class CoverPickerSection extends StatelessWidget {
     required this.coverUrl,
     required this.coverFileName,
     required this.onTap,
+    this.onAutoFillTap,
   });
 
   @override
@@ -45,7 +47,7 @@ class CoverPickerSection extends StatelessWidget {
                 border: Border.all(color: AppColors.cardBorderDark),
               ),
               clipBehavior: Clip.antiAlias,
-              child: hasCover ? _buildCoverPreview() : const _EmptyCoverState(),
+              child: hasCover ? _buildCoverPreview() : _EmptyCoverState(onAutoFillTap: onAutoFillTap),
             ),
           ),
         ),
@@ -78,20 +80,22 @@ class CoverPickerSection extends StatelessWidget {
 }
 
 class _EmptyCoverState extends StatelessWidget {
-  const _EmptyCoverState();
+  final VoidCallback? onAutoFillTap;
+
+  const _EmptyCoverState({this.onAutoFillTap});
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
+        const Icon(
           Icons.add_photo_alternate_rounded,
           color: AppColors.primary,
           size: 30,
         ),
-        SizedBox(height: 6),
-        Text(
+        const SizedBox(height: 6),
+        const Text(
           'Kapak fotoğrafı ekle',
           style: TextStyle(
             color: AppColors.darkText,
@@ -99,8 +103,8 @@ class _EmptyCoverState extends StatelessWidget {
             fontWeight: FontWeight.w900,
           ),
         ),
-        SizedBox(height: 3),
-        Text(
+        const SizedBox(height: 3),
+        const Text(
           'İsteğe bağlı — sonra da eklenebilir',
           style: TextStyle(
             color: AppColors.mutedText,
@@ -108,6 +112,21 @@ class _EmptyCoverState extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
+        if (onAutoFillTap != null) ...[
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: onAutoFillTap,
+            icon: const Icon(Icons.auto_awesome_rounded, size: 16, color: AppColors.primary),
+            label: const Text(
+              'Hazır şablonlardan seç',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
