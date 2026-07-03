@@ -26,6 +26,7 @@ class MyVitrinState extends ChangeNotifier {
   final GlobalKey legalKey = GlobalKey();
   final GlobalKey descriptionKey = GlobalKey();
   final GlobalKey productsKey = GlobalKey();
+  final GlobalKey categoryKey = GlobalKey();
 
   // ─── FocusNodes ──────────────────────────────────────────────────────────
   final FocusNode nameFocusNode = FocusNode();
@@ -74,11 +75,16 @@ class MyVitrinState extends ChangeNotifier {
       case XrexAction.scrollToProducts:
         key = productsKey;
         break;
+      case XrexAction.scrollToCategory:
+        key = categoryKey;
+        break;
       case XrexAction.openVitrim:
       case XrexAction.copyLink:
       case XrexAction.shareWhatsapp:
       case XrexAction.showQr:
       case XrexAction.openExplore:
+      case XrexAction.openAutoFillDialog:
+      case XrexAction.applyCategoryTemplate:
       case XrexAction.none:
         break;
     }

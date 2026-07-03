@@ -9,12 +9,14 @@ class AutoFillBanner extends StatefulWidget {
   final String kategori;
   final String storeId;
   final VoidCallback? onApplied;
+  final VoidCallback? onTap;
 
   const AutoFillBanner({
     super.key,
     required this.kategori,
     required this.storeId,
     this.onApplied,
+    this.onTap,
   });
 
   @override
@@ -159,7 +161,7 @@ class _AutoFillBannerState extends State<AutoFillBanner> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _openSheet,
+              onPressed: widget.onTap ?? _openSheet,
               icon: const Icon(Icons.photo_library_rounded, size: 18),
               label: const Text(
                 'Hazir Gorselleri Kullan',
