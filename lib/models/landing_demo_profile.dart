@@ -33,6 +33,9 @@ class HeroDemoProfile {
   final List<HeroDemoLink> links;
   final String coverImageUrl;
   final List<String> galleryImages;
+  /// Kategori sablon sistemi icin key
+  /// Ornek: 'butik_giyim', 'kuafor_guzellik', 'kafe_restoran', 'teknik_servis'
+  final String? templateCategoryKey;
 
   const HeroDemoProfile({
     required this.name,
@@ -49,6 +52,7 @@ class HeroDemoProfile {
     required this.links,
     required this.coverImageUrl,
     required this.galleryImages,
+    this.templateCategoryKey,
   });
 
   Color get secondaryBadgeColor {

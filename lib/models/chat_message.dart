@@ -90,20 +90,23 @@ enum ChatMessageType { text, loading, system }
 // ─── Type-safe Xrex Aksiyonları ──────────────────────────────────────────────
 /// Quick Reply butonlarının tetikleyebileceği navigasyon aksiyonları.
 enum XrexAction {
-  openVitrim,       // Vitrinim sekmesine git
-  copyLink,         // Public linki panoya kopyala
-  shareWhatsapp,    // WhatsApp paylaşım ekranı
-  showQr,           // QR bottom sheet
-  openExplore,      // Keşfet sekmesi
-  scrollToCover,    // Kapak fotoğrafına git
-  scrollToGallery,  // Galeriye git
-  scrollToName,     // İşletme adına git
-  scrollToWhatsapp, // WhatsApp alanına git
-  scrollToAddress,  // Adrese git
-  scrollToLegal,    // Yasal onaylara git
-  scrollToDesc,     // Açıklamaya git
-  scrollToProducts, // Ürün/Hizmet alanına git
-  none,             // Sadece mesaj tetikler, navigasyon yok
+  openVitrim,           // Vitrinim sekmesine git
+  copyLink,             // Public linki panoya kopyala
+  shareWhatsapp,        // WhatsApp paylaşım ekranı
+  showQr,               // QR bottom sheet
+  openExplore,          // Keşfet sekmesi
+  scrollToCover,        // Kapak fotoğrafına git
+  scrollToGallery,      // Galeriye git
+  scrollToName,         // İşletme adına git
+  scrollToWhatsapp,     // WhatsApp alanına git
+  scrollToAddress,      // Adrese git
+  scrollToLegal,        // Yasal onaylara git
+  scrollToDesc,         // Açıklamaya git
+  scrollToProducts,     // Ürün/Hizmet alanına git
+  scrollToCategory,     // Kategori seçim alanına git
+  openAutoFillDialog,   // Hazır görseller modalını aç
+  applyCategoryTemplate,// Kategori şablonunu uygula
+  none,                 // Sadece mesaj tetikler, navigasyon yok
 }
 
 /// Hızlı cevap butonu modeli.
