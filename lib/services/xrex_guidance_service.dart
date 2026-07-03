@@ -39,6 +39,20 @@ class XrexQualityItem {
   });
 }
 
+// ─── Kalite Raporu ───────────────────────────────────────────────────────────
+
+class XrexQualityReport {
+  final int score;
+  final XrexQualityItem? nextImprovement;
+  final List<XrexQualityItem> items;
+
+  const XrexQualityReport({
+    required this.score,
+    this.nextImprovement,
+    required this.items,
+  });
+}
+
 // ─── Rehberlik Servisi ──────────────────────────────────────────────────────
 
 class XrexGuidanceService {
@@ -88,6 +102,85 @@ class XrexGuidanceService {
 
   static int maxQualityScore() {
     return qualityItems(null).fold(0, (s, i) => s + i.points);
+  }
+
+  // ── Kalite Raporu ────────────────────────────────────────────────────────
+
+  static XrexQualityReport qualityReportFor({
+    XrexProfileSnapshot? snapshot,
+    required bool hasShared,
+  }) {
+    final items = qualityItems(snapshot);
+    final score = items.where((i) => i.completed).fold(0, (s, i) => s + i.points);
+    final next = items.firstWhere(
+      (i) => !i.completed,
+      orElse: () => items.last,
+    );
+    return XrexQualityReport(
+      score: score,
+      nextImprovement: next.completed ? null : next,
+      items: items,
+    );
+  }
+
+  // ── Öneri ────────────────────────────────────────────────────────────────
+
+  static XrexRecommendation recommendationFor({
+    XrexProfileSnapshot? snapshot,
+    required bool hasShared,
+  }) {
+    if (snapshot == null) {
+      return const XrexRecommendation(
+        id: 'welcome',
+        phase: XrexJourneyPhase.setup,
+        title: 'Vitrininizi Oluşturun',
+        description: 'VitrinX ile dijital vitrininizi oluşturmak için ilk adımı atın.',
+        buttonLabel: 'Başla',
+        action: XrexAction.openVitrim,
+      );
+    }
+
+    // Setup phase
+    final setupRec = setupRecommendation(snapshot);
+    if (setupRec != null) return setupRec;
+
+    // Yayınlanmamışsa
+    if (!snapshot.isPublished) {
+      return const XrexRecommendation(
+        id: 'publish',
+        phase: XrexJourneyPhase.publish,
+        title: 'Vitrininizi Yayınlayın',
+        description: 'Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz.',
+        buttonLabel: 'Yayınla',
+        action: XrexAction.openVitrim,
+      );
+    }
+
+    // Paylaşılmamışsa
+    if (!hasShared) {
+      return const XrexRecommendation(
+        id: 'share',
+        phase: XrexJourneyPhase.share,
+        title: 'Vitrininizi Paylaşın',
+        description: 'Vitrininiz yayında! Müşterilerinize ulaşmak için paylaşın.',
+        buttonLabel: 'Paylaş',
+        action: XrexAction.shareWhatsapp,
+      );
+    }
+
+    // Improvement recommendations
+    final improvements = improvementRecommendations(snapshot);
+    if (improvements.isNotEmpty) return improvements.first;
+
+    // Default: all done
+    return const XrexRecommendation(
+      id: 'all_done',
+      phase: XrexJourneyPhase.improve,
+      title: 'Tebrikler!',
+      description: 'Vitrininiz harika görünüyor. Daha fazla özellik için bize ulaşabilirsiniz.',
+      buttonLabel: 'Vitrinime Git',
+      action: XrexAction.openVitrim,
+    );
   }
 
   // ── Setup Rehberliği ─────────────────────────────────────────────────────

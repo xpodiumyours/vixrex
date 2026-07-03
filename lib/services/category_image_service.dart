@@ -233,10 +233,10 @@ class CategoryImageService {
 
     final response = await _supabase
         .from('category_image_templates')
-        .select('id', const CountOption(estimated: true))
+        .select('id')
         .eq('category_key', key)
         .eq('is_active', true);
 
-    return response.count ?? 0;
+    return (response as List).length;
   }
 }
