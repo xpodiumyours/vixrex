@@ -14,6 +14,7 @@ import 'package:vitrinx/widgets/landing/landing_bottom_cta.dart';
 import 'package:vitrinx/widgets/landing/landing_template_catalog.dart';
 import 'package:vitrinx/widgets/chatbot_overlay.dart';
 import 'package:vitrinx/config/app_router.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -232,7 +233,11 @@ class _LandingScreenState extends State<LandingScreen>
     if (mounted) setState(() => _isCheckingSavedVitrin = false);
   }
 
-  void _navigateToExploreApp() {
+  void _navigateToExploreApp([String? categoryKey]) async {
+    if (categoryKey != null) {
+      const storage = StoreLocalStorageService();
+      await storage.savePendingCategoryKey(categoryKey);
+    }
     AppRouter.navigateToAuth(context);
   }
 
@@ -285,7 +290,7 @@ class _LandingScreenState extends State<LandingScreen>
               const LandingStepsSection(),
               // YENI: 12 kategorili hazir sablon katalogu
               LandingTemplateCatalog(
-                onNavigateToAuth: _navigateToExploreApp,
+                onNavigateToAuth: (key) => _navigateToExploreApp(key),
               ),
               LandingBottomCta(onNavigateToEditor: _navigateToEditor),
             ],

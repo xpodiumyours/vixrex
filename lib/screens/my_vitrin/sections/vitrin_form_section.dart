@@ -11,6 +11,7 @@ import 'package:vitrinx/controllers/store_editor_controller.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vitrinx/services/category_image_service.dart';
+import 'package:vitrinx/services/auto_fill_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/widgets/auto_fill/auto_fill_banner.dart';
@@ -81,6 +82,18 @@ class VitrinFormSection extends StatelessWidget {
     if (kategori.isEmpty) {
       state.showSnackBar(ctx, 'Önce bir kategori seçmelisiniz.');
       return;
+    }
+
+    // Persist to database via AutoFillService if storeId exists
+    final storeId = controller.data.id?.toString();
+    if (storeId != null && storeId.isNotEmpty) {
+      final result = await AutoFillService.applyByKategori(
+        storeId: storeId,
+        kategori: kategori,
+      );
+      if (result.error != null && ctx.mounted) {
+        state.showSnackBar(ctx, result.error!);
+      }
     }
 
     final imageSet = await CategoryImageService.getImagesForKategori(kategori);

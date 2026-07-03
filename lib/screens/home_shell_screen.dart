@@ -309,6 +309,13 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     });
   }
 
+  void _xrexOpenAutoFillDialog() {
+    setState(() => _selectedIndex = 0); // Store
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _myVitrinKey.currentState?.openAutoFillDialog();
+    });
+  }
+
   Future<void> _markXrexShared() async {
     await ChatbotService().markVitrinShared();
     if (!mounted) return;
@@ -347,9 +354,11 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       case XrexAction.scrollToDesc:
       case XrexAction.scrollToProducts:
       case XrexAction.scrollToCategory:
+        _xrexScrollToAction(action);
+        break;
       case XrexAction.openAutoFillDialog:
       case XrexAction.applyCategoryTemplate:
-        _xrexScrollToAction(action);
+        _xrexOpenAutoFillDialog();
         break;
       case XrexAction.none:
         break;

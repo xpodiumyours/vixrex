@@ -169,6 +169,23 @@ class StoreLocalStorageService {
     await prefs.remove(LocalStorageKeys.lastPublishedEditToken);
   }
 
+  // ── Pending Category Key ────────────────────────────────────────────────
+
+  Future<void> savePendingCategoryKey(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('pending_category_key', key);
+  }
+
+  Future<String?> loadPendingCategoryKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('pending_category_key');
+  }
+
+  Future<void> clearPendingCategoryKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('pending_category_key');
+  }
+
   // ── Private ───────────────────────────────────────────────────────────
 
   StoreData? _readStoreData(String? rawJson) {

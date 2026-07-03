@@ -6,7 +6,7 @@ import 'package:vitrinx/theme/app_colors.dart';
 /// Kullanıcı kategoriye tıklayıp "Bu şablonla başla" dediğinde
 /// auth -> vitrin formu akışına yönlendirir.
 class LandingTemplateCatalog extends StatefulWidget {
-  final VoidCallback onNavigateToAuth;
+  final ValueChanged<String?> onNavigateToAuth;
 
   const LandingTemplateCatalog({
     super.key,
@@ -306,7 +306,7 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(sheetContext);
-                        widget.onNavigateToAuth();
+                        widget.onNavigateToAuth(category.key);
                       },
                       icon: const Icon(Icons.arrow_forward_rounded, size: 20),
                       label: const Text(

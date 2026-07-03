@@ -8,10 +8,13 @@ import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_form_section.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_publish_section.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_danger_section.dart';
+import 'package:vitrinx/services/category_image_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
 // NOTE: PublishedSummaryCard is exported from publish_actions_section.dart
 import 'package:vitrinx/widgets/editor/publish_actions_section.dart';
 import 'package:vitrinx/widgets/editor/visibility_hub_card.dart';
+import 'package:vitrinx/widgets/auto_fill/category_auto_fill_sheet.dart';
 
 class MyVitrinScreen extends StatefulWidget {
   final String? initialName;
@@ -52,6 +55,14 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   Future<void> _initialize() async {
     await _controller.initialize(widget.initialName);
     _syncControllers();
+    final pendingCategoryKey = await const StoreLocalStorageService().loadPendingCategoryKey();
+    if (pendingCategoryKey != null) {
+      final label = _mapCategoryKeyToLabel(pendingCategoryKey);
+      if (label != null) {
+        _controller.selectCategory(label);
+      }
+      await const StoreLocalStorageService().clearPendingCategoryKey();
+    }
   }
 
   void _syncControllers() {
@@ -66,10 +77,57 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         _controller.data.googleBusinessLink;
   }
 
+  String? _mapCategoryKeyToLabel(String key) {
+    switch (key) {
+      case 'butik_giyim': return 'Giyim';
+      case 'kuafor_guzellik': return 'Kuaför';
+      case 'kafe_restoran': return 'Kafe / Lokanta';
+      case 'berber': return 'Kuaför';
+      case 'oto_kuafor': return 'Oto & Araç Hizmetleri';
+      case 'market_bakkal': return 'Gıda';
+      case 'pastane_tatlici': return 'Fırın';
+      case 'mobilya_dekorasyon': return 'Dekorasyon';
+      case 'spor_salonu': return 'Spor & Fitness';
+      case 'dis_klinigi': return 'Sağlık & Yaşam';
+      case 'eczane': return 'Sağlık & Yaşam';
+      case 'teknik_servis': return 'Teknik Servis';
+      default: return null;
+    }
+  }
+
   /// Xrex aksiyonuna göre ilgili forma otomatik kaydırır ve odaklanır.
   /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden cagrılır.
   void scrollToXrexAction(XrexAction action) {
     _state.scrollToXrexAction(action);
+  }
+
+  /// X-rex asistanindan kategori sablonu otomatik doldurma bottom sheet'ini acar.
+  /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden cagrılır.
+  void openAutoFillDialog() {
+    final kategori = _controller.selectedKategori;
+    final storeId = _controller.data.id?.toString() ?? '';
+
+    if (kategori.isEmpty || storeId.isEmpty) {
+      _state.showSnackBar(context, 'Lütfen önce kategori seçin ve vitrin kaydedin.');
+      _state.scrollToXrexAction(XrexAction.scrollToCategory);
+      return;
+    }
+
+    final categoryKey = mapKategoriToKey(kategori);
+    if (categoryKey == null) {
+      _state.showSnackBar(context, 'Bu kategori için hazır görsel şablonu bulunamadı.');
+      return;
+    }
+
+    CategoryAutoFillSheet.show(
+      context: context,
+      categoryKey: categoryKey,
+      categoryLabel: kategori,
+      storeId: storeId,
+      onApplied: () {
+        _controller.initialize(_controller.data.name);
+      },
+    );
   }
 
   @override
