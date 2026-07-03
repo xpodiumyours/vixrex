@@ -1,4 +1,5 @@
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/auto_fill_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 
@@ -69,8 +70,9 @@ class XrexProfileSnapshot {
 
   factory XrexProfileSnapshot.from(
     StoreData data,
-    PublishedVitrinInfo? publishedInfo,
-  ) {
+    PublishedVitrinInfo? publishedInfo, {
+    bool autoFillCompleted = false,
+  }) {
     final nameOk = data.name.trim().isNotEmpty;
     final whatsappOk =
         data.whatsapp.trim().isNotEmpty &&
@@ -108,7 +110,7 @@ class XrexProfileSnapshot {
       galleryCompleted: galleryCompleted,
       descriptionCompleted: descriptionCompleted,
       catalogCompleted: catalogCompleted,
-      autoFillCompleted: false, // SnapshotLoader'dan ayarlanacak
+      autoFillCompleted: autoFillCompleted, // SnapshotLoader'dan ayarlanacak
       isPublished: isPublished,
       storeName: data.name.trim(),
       category:
@@ -189,6 +191,19 @@ class XrexSnapshotLoader {
         publicLink: '',
       );
     }
-    return XrexProfileSnapshot.from(vitrinData, publishedInfo);
+    bool autoFillApplied = false;
+    final storeId = vitrinData.id;
+    if (storeId != null && storeId.trim().isNotEmpty) {
+      try {
+        autoFillApplied = await AutoFillService.wasAutoFillApplied(storeId);
+      } catch (_) {
+        autoFillApplied = false;
+      }
+    }
+    return XrexProfileSnapshot.from(
+      vitrinData,
+      publishedInfo,
+      autoFillCompleted: autoFillApplied,
+    );
   }
 }
