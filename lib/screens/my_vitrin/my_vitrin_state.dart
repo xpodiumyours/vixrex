@@ -76,6 +76,9 @@ class MyVitrinState extends ChangeNotifier {
         key = productsKey;
         break;
       case XrexAction.scrollToCategory:
+      case XrexAction.openAutoFillDialog:
+      case XrexAction.applyCategoryTemplate:
+        // Tümü kategori alanına scroll yapar (AutoFillBanner orada)
         key = categoryKey;
         break;
       case XrexAction.openVitrim:
@@ -83,8 +86,6 @@ class MyVitrinState extends ChangeNotifier {
       case XrexAction.shareWhatsapp:
       case XrexAction.showQr:
       case XrexAction.openExplore:
-      case XrexAction.openAutoFillDialog:
-      case XrexAction.applyCategoryTemplate:
       case XrexAction.none:
         break;
     }

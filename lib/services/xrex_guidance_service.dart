@@ -42,6 +42,7 @@ class XrexQualityItem {
 // ─── Kalite Raporu ───────────────────────────────────────────────────────────
 
 class XrexQualityReport {
+  /// 0-100 arası normalize edilmiş kalite puanı
   final int score;
   final XrexQualityItem? nextImprovement;
   final List<XrexQualityItem> items;
@@ -111,13 +112,21 @@ class XrexGuidanceService {
     required bool hasShared,
   }) {
     final items = qualityItems(snapshot);
-    final score = items.where((i) => i.completed).fold(0, (s, i) => s + i.points);
+    final rawScore = items.where((i) => i.completed).fold(0, (s, i) => s + i.points);
+    final maxScore = maxQualityScore();
+
+    /// Normalize: raw 0-50 → 0-100 ölçek
+    final normalizedScore = maxScore > 0
+        ? ((rawScore / maxScore) * 100).round().clamp(0, 100)
+        : 0;
+
     final next = items.firstWhere(
       (i) => !i.completed,
       orElse: () => items.last,
     );
+
     return XrexQualityReport(
-      score: score,
+      score: normalizedScore,
       nextImprovement: next.completed ? null : next,
       items: items,
     );
