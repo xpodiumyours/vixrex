@@ -258,6 +258,7 @@ class StoreEditorController extends ChangeNotifier {
   }
 
   /// GERCEK PUBLISH: Medya upload -> StorePublishService -> public link
+  /// editToken/slug ayrimi: guncelleme modu vs ilk yayin
   Future<String?> publish() async {
     if (_isPublishing) return null;
     _isPublishing = true;
@@ -265,13 +266,30 @@ class StoreEditorController extends ChangeNotifier {
 
     try {
       await _uploadPendingMedia();
+
+      // Guncelleme modu: mevcut editToken'i koru
+      // Ilk yayin: slug'i editToken olarak kullan
+      final String effectiveEditToken;
+      final bool isUpdate = _publishedInfo != null && _publishedInfo!.editToken.isNotEmpty;
+      if (isUpdate) {
+        effectiveEditToken = _publishedInfo!.editToken;
+      } else {
+        effectiveEditToken = _data.slug.isNotEmpty
+            ? _data.slug
+            : _data.name.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '-');
+      }
+
       final service = StorePublishService();
-      final result = await service.publishStore(_data, editToken: _publishedInfo?.editToken ?? _data.slug);
+      final result = await service.publishStore(_data, editToken: effectiveEditToken);
       final publicLink = 'https://vitrinx.app${result.publicPath}';
+
       _publishedInfo = StorePublishedInfo(
-        publicLink: publicLink, slug: result.slug,
-        editToken: _publishedInfo?.editToken ?? _data.slug, isComplete: true,
+        publicLink: publicLink,
+        slug: result.slug,
+        editToken: effectiveEditToken,
+        isComplete: true,
       );
+
       await saveLocally();
       notifyListeners();
       return publicLink;
@@ -285,12 +303,18 @@ class StoreEditorController extends ChangeNotifier {
     }
   }
 
+  /// Yayinlama rızasını geri cek
+  /// editToken ve slug ayrı degerler - editToken auth icin, slug public path icin
   Future<void> withdrawPublicationConsent() async {
     final slug = _publishedInfo?.slug ?? _data.slug;
-    final editToken = _publishedInfo?.editToken ?? '';
-    if (slug.isEmpty || editToken.isEmpty) {
-      throw const StorePublishException('Yayindaki vitrin bilgileri eksik.');
+    final editToken = _publishedInfo?.editToken;
+
+    if (slug.isEmpty || editToken == null || editToken.isEmpty) {
+      throw const StorePublishException(
+        'Yayindaki vitrin bilgileri eksik. Lutfen once vitrininizi yayinlayin.',
+      );
     }
+
     final service = StorePublishService();
     await service.withdrawPublicationConsent(slug: slug, editToken: editToken);
     _data.publicationConsentAccepted = false;
@@ -347,10 +371,15 @@ class StoreEditorController extends ChangeNotifier {
   void updateProduct(int i, Product p) { if (i >= 0 && i < _data.products.length) { _data.products[i] = p; notifyListeners(); } }
   void updateProductImported() { notifyListeners(); }
 
-  // VALIDATION
+  // VALIDATION - DUZELTME: _legalDocumentsError de temizleniyor
   void clearValidationErrors() {
-    _nameError = null; _whatsappError = null; _provinceError = null;
-    _districtError = null; _addressError = null; _googleLinkError = null;
+    _nameError = null;
+    _whatsappError = null;
+    _provinceError = null;
+    _districtError = null;
+    _addressError = null;
+    _googleLinkError = null;
+    _legalDocumentsError = null;
     notifyListeners();
   }
 
