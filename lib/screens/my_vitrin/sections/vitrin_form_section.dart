@@ -7,15 +7,12 @@ import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/config/instagram_sync_config.dart';
 import 'package:vitrinx/config/legal_config.dart';
-import 'package:vitrinx/controllers/editor_gallery_item.dart';
 import 'package:vitrinx/controllers/store_editor_controller.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
-import 'package:vitrinx/services/category_image_service.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
-import 'package:vitrinx/widgets/auto_fill/auto_fill_banner.dart';
 import 'package:vitrinx/widgets/editor/common_form_fields.dart';
 import 'package:vitrinx/widgets/editor/cover_picker_section.dart';
 import 'package:vitrinx/widgets/editor/gallery_editor_section.dart';
@@ -63,52 +60,19 @@ class VitrinFormSection extends StatelessWidget {
       controller.galleryItems.map((e) => GalleryItem(
         id: e.id,
         bytes: e.bytes,
-        imageUrl: e.imageUrl,
-        extension: e.extension,
-        contentType: e.contentType,
+        imageUrl: e.imageUrl ?? '',
+        extension: e.extension ?? 'jpg',
+        contentType: e.contentType ?? 'image/jpeg',
       )).toList();
 
   /// GalleryItem → EditorGalleryItem dönüşümü (controller uyumluluğu)
   List<EditorGalleryItem> _toEditorItems(List<GalleryItem> items) =>
-      items.map((e) => EditorGalleryItem(
+      items.map((e) => EditorGalleryItem.fromBytes(
         id: e.id,
-        bytes: e.bytes,
-        imageUrl: e.imageUrl,
+        bytes: e.bytes!,
         extension: e.extension,
         contentType: e.contentType,
       )).toList();
-
-  Future<void> _applyCategoryTemplate(BuildContext ctx) async {
-    final kategori = controller.selectedKategori.trim();
-    if (kategori.isEmpty) {
-      state.showSnackBar(ctx, 'Önce bir kategori seçmelisiniz.');
-      return;
-    }
-
-    final imageSet = await CategoryImageService.getImagesForKategori(kategori);
-    if (imageSet == null) {
-      state.showSnackBar(ctx, 'Bu kategori için hazır görsel bulunamadı.');
-      return;
-    }
-
-    // Kapak fotoğrafı
-    if (imageSet.coverImages.isNotEmpty) {
-      controller.setCoverUrl(imageSet.coverImages.first.imageUrl);
-    }
-
-    // Galeri görselleri
-    if (imageSet.galleryImages.isNotEmpty) {
-      final storeItems = imageSet.toStoreGalleryItems();
-      final editorItems = storeItems
-          .map((item) => EditorGalleryItem.fromStoreItem(item))
-          .toList();
-      controller.setGalleryItems(editorItems);
-    }
-
-    if (ctx.mounted) {
-      state.showSnackBar(ctx, '$kategori kategorisi için hazır görseller uygulandı!');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +147,6 @@ class VitrinFormSection extends StatelessWidget {
                   coverUrl: controller.coverUrl,
                   coverFileName: controller.coverFileName,
                   onTap: () => _pickCover(context),
-                  onAutoFillTap: () => _applyCategoryTemplate(context),
                 ),
               ),
               const SizedBox(height: 10),
@@ -196,7 +159,6 @@ class VitrinFormSection extends StatelessWidget {
                   maxGalleryPhotos: controller.maxGalleryPhotos,
                   onPickPhotos: () => _pickGallery(context),
                   onRemovePhoto: controller.removeGalleryItem,
-                  onAutoFillTap: () => _applyCategoryTemplate(context),
                 ),
               ),
               const SizedBox(height: 18),
@@ -295,26 +257,12 @@ class VitrinFormSection extends StatelessWidget {
               const SizedBox(height: 14),
 
               // Kategori
-              KeyedSubtree(
-                key: state.categoryKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    EditorDropdownField(
-                      label: 'Kategori',
-                      value: controller.selectedKategori,
-                      items: BusinessCategoryConfig.categories.map((c) => c.label).toList(),
-                      icon: Icons.category_rounded,
-                      onChanged: (val) => controller.selectCategory(val ?? 'Diğer'),
-                    ),
-                    // AutoFill banner
-                    AutoFillBanner(
-                      kategori: controller.selectedKategori,
-                      storeId: controller.data.id?.toString() ?? '',
-                      onTap: () => _applyCategoryTemplate(context),
-                    ),
-                  ],
-                ),
+              EditorDropdownField(
+                label: 'Kategori',
+                value: controller.selectedKategori,
+                items: BusinessCategoryConfig.categories.map((c) => c.label).toList(),
+                icon: Icons.category_rounded,
+                onChanged: (val) => controller.selectCategory(val ?? 'Diğer'),
               ),
               const SizedBox(height: 14),
 
@@ -536,7 +484,11 @@ class VitrinFormSection extends StatelessWidget {
       state.showSnackBar(ctx, 'Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.');
       return;
     }
-    controller.setCoverBytes(file.bytes!, file.name, v.fileInfo!.extension, v.fileInfo!.contentType);
+    controller.setCoverBytes(
+      file.bytes!, file.name,
+      v.fileInfo?.extension ?? 'jpg',
+      v.fileInfo?.contentType ?? 'image/jpeg',
+    );
   }
 
   Future<void> _pickGallery(BuildContext ctx) async {
@@ -558,10 +510,10 @@ class VitrinFormSection extends StatelessWidget {
       newItems.add(GalleryItem(
         id: '${DateTime.now().microsecondsSinceEpoch}_${newItems.length}',
         bytes: file.bytes, imageUrl: '',
-        extension: v.fileInfo!.extension, contentType: v.fileInfo!.contentType,
+        extension: v.fileInfo?.extension ?? 'jpg',
+        contentType: v.fileInfo?.contentType ?? 'image/jpeg',
       ));
     }
-    // GalleryItem → EditorGalleryItem dönüşümü
     final editorItems = _toEditorItems([..._galleryItemsForEditor, ...newItems]);
     controller.setGalleryItems(editorItems);
     if (rejected > 0) state.showSnackBar(ctx, '$rejected fotoğraf eklenemedi.');
@@ -570,7 +522,7 @@ class VitrinFormSection extends StatelessWidget {
   void _showProductSheet(BuildContext ctx) {
     final slug = controller.data.slug.trim().isNotEmpty
         ? controller.data.slug.trim()
-        : const StorePublishPayloadBuilder().generateSlug(_name.text.trim());
+        : controller.data.name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '-');
     showModalBottomSheet(
       context: ctx, backgroundColor: AppColors.surface, isScrollControlled: true,
       shape: const RoundedRectangleBorder(
