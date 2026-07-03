@@ -8,6 +8,7 @@ class GalleryItem {
   String imageUrl;
   String extension;
   String contentType;
+  bool isRemoved;
 
   GalleryItem({
     required this.id,
@@ -15,6 +16,7 @@ class GalleryItem {
     required this.imageUrl,
     this.extension = 'jpg',
     this.contentType = 'image/jpeg',
+    this.isRemoved = false,
   });
 
   bool get hasLocalBytes => bytes != null;
@@ -130,6 +132,9 @@ class GalleryEditorSection extends StatelessWidget {
                         separatorBuilder: (_, __) => const SizedBox(width: 6),
                         itemBuilder: (_, index) {
                           final item = galleryItems[index];
+                          if (item.isRemoved) {
+                            return const SizedBox.shrink();
+                          }
                           Widget img;
                           if (item.hasLocalBytes) {
                             img = Image.memory(item.bytes!, fit: BoxFit.cover);

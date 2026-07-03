@@ -66,6 +66,7 @@ class VitrinFormSection extends StatelessWidget {
         imageUrl: e.imageUrl ?? '',
         extension: e.extension ?? 'jpg',
         contentType: e.contentType ?? 'image/jpeg',
+        isRemoved: e.isRemoved,
       )).toList();
 
   /// GalleryItem → EditorGalleryItem dönüşümü (controller uyumluluğu)

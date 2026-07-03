@@ -38,44 +38,53 @@ class _AutoFillBannerState extends State<AutoFillBanner> {
   @override
   void didUpdateWidget(covariant AutoFillBanner oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.kategori != widget.kategori) {
+    if (oldWidget.kategori != widget.kategori || oldWidget.storeId != widget.storeId) {
       _checkTemplate();
     }
   }
 
   Future<void> _checkTemplate() async {
     if (widget.kategori.trim().isEmpty) {
-      setState(() {
-        _hasTemplate = false;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _hasTemplate = false;
+          _isLoading = false;
+        });
+      }
       return;
     }
 
-    setState(() => _isLoading = true);
+    if (mounted) setState(() => _isLoading = true);
 
     final key = mapKategoriToKey(widget.kategori);
     if (key == null) {
-      setState(() {
-        _hasTemplate = false;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _hasTemplate = false;
+          _isLoading = false;
+        });
+      }
       return;
     }
 
     try {
       final count = await CategoryImageService.getTemplateCount(widget.kategori);
-      setState(() {
-        _categoryKey = key;
-        _hasTemplate = count > 0;
-        _templateCount = count;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _categoryKey = key;
+          _hasTemplate = count > 0;
+          _templateCount = count;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _hasTemplate = false;
-        _isLoading = false;
-      });
+      debugPrint('AutoFillBanner _checkTemplate error: $e');
+      if (mounted) {
+        setState(() {
+          _hasTemplate = false;
+          _isLoading = false;
+        });
+      }
     }
   }
 
