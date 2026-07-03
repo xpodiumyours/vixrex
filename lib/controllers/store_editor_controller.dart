@@ -1,10 +1,9 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/app_constants.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/utils/image_helper.dart';
 
 class EditorGalleryItem {
@@ -248,19 +247,72 @@ class StoreEditorController extends ChangeNotifier {
   dynamic get legalDocuments => _legalDocuments;
   String? get legalDocumentsError => _legalDocumentsError;
 
+  /// GERÇEK PUBLISH: StorePublishService.publishStore() çağırır
   Future<String?> publish() async {
-    // Stub: gerçek implementasyon StorePublishService'de
-    return _publishedInfo?.publicLink;
+    if (_isPublishing) return null;
+    _isPublishing = true;
+    notifyListeners();
+
+    try {
+      // Controller'daki değişiklikleri StoreData'ya uygula
+      final dataToPublish = applyChangesToData();
+      final editToken = _publishedInfo?.editToken ?? dataToPublish.slug;
+
+      final service = StorePublishService();
+      final result = await service.publishStore(
+        dataToPublish,
+        editToken: editToken,
+      );
+
+      // Public link oluştur
+      final publicLink = 'https://vitrinx.app${result.publicPath}';
+
+      _publishedInfo = StorePublishedInfo(
+        publicLink: publicLink,
+        slug: result.slug,
+        editToken: editToken,
+        isComplete: true,
+      );
+
+      notifyListeners();
+      return publicLink;
+    } on StorePublishException {
+      rethrow;
+    } catch (e) {
+      throw StorePublishException('Vitrin yayınlanamadı: $e');
+    } finally {
+      _isPublishing = false;
+      notifyListeners();
+    }
   }
 
+  /// Yayınlama rızasını geri çek
   Future<void> withdrawPublicationConsent() async {
+    final slug = _publishedInfo?.slug ?? _data.slug;
+    final editToken = _publishedInfo?.editToken ?? '';
+
+    if (slug.isEmpty || editToken.isEmpty) {
+      throw const StorePublishException(
+        'Yayındaki vitrin bilgileri eksik.',
+      );
+    }
+
+    final service = StorePublishService();
+    await service.withdrawPublicationConsent(
+      slug: slug,
+      editToken: editToken,
+    );
+
     _data.publicationConsentAccepted = false;
     _data.publicationConsentWithdrawnAt = DateTime.now();
     notifyListeners();
   }
 
+  /// Vitrini sil (henüz implemente edilmedi)
   Future<void> deleteVitrin() async {
-    // Stub: gerçek implementasyon servis katmanında
+    throw const StorePublishException(
+      'Vitrin silme henüz desteklenmiyor.',
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -438,7 +490,8 @@ class StoreEditorController extends ChangeNotifier {
   // LOKAL KAYIT
   // ═══════════════════════════════════════════════════════════════════
   Future<void> saveLocally() async {
-    // Stub: gerçek implementasyon servis katmanında
+    // TODO: SharedPreferences'a serileştirme eklenecek
+    notifyListeners();
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -463,16 +516,21 @@ class StoreEditorController extends ChangeNotifier {
 
   /// Controller'daki tüm değişiklikleri StoreData'ya uygula
   StoreData applyChangesToData() {
-    if (_coverBytes != null) {
-      // Bytes varsa, veriyi işleme al
-      // Not: Asıl yükleme işlemi servis katmanında yapılır
+    // Kapak bytes varsa - servis katmanı yükleyecek
+    if (_coverUrl != null) {
+      _data.coverImageUrl = _coverUrl!;
+      _data.shelfImageUrl = _coverUrl!;
     }
 
+    // Galeri güncelle
     _data.galleryItems = _editorGalleryItems
         .where((item) => !item.isRemoved)
         .map((item) {
           if (item.isFromUrl) {
-            return StoreGalleryItem(imageUrl: item.imageUrl!);
+            return StoreGalleryItem(
+              id: item.id,
+              imageUrl: item.imageUrl!,
+            );
           }
           return StoreGalleryItem(id: item.id);
         })
