@@ -17,6 +17,7 @@ import 'package:vitrinx/widgets/landing/landing_comparison_section.dart';
 import 'package:vitrinx/widgets/landing/landing_trust_band.dart';
 import 'package:vitrinx/widgets/landing/landing_steps_section.dart';
 import 'package:vitrinx/widgets/landing/landing_bottom_cta.dart';
+import 'package:vitrinx/widgets/landing/landing_template_catalog.dart';
 import 'package:vitrinx/widgets/chatbot_overlay.dart';
 import 'package:vitrinx/config/app_router.dart';
 
@@ -36,11 +37,9 @@ class _LandingScreenState extends State<LandingScreen>
   final TextEditingController _storeNameController = TextEditingController();
 
   /// Kategori sablonlarindan yuklenen galeri gorselleri cache'i
-  /// Key: templateCategoryKey, Value: gorsel URL listesi
   final Map<String, List<String>> _categoryGalleryCache = {};
   bool _isLoadingGalleryImages = false;
 
-  // Modern Color Palette
   static const Color brandBlue = AppColors.primary;
 
   static List<HeroDemoProfile> _heroDemoProfiles = [
@@ -60,21 +59,10 @@ class _LandingScreenState extends State<LandingScreen>
         HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
       ],
       links: [
-        HeroDemoLink(
-          'Vitrin galerisi',
-          'Raf ve reyon fotograflari',
-          Icons.photo_library_rounded,
-          Color(0xFFFF5A1F),
-        ),
-        HeroDemoLink(
-          'Trendyol',
-          'Magazayi ziyaret edin',
-          Icons.shopping_bag_rounded,
-          Color(0xFFF27A1A),
-        ),
+        HeroDemoLink('Vitrin galerisi', 'Raf ve reyon fotograflari', Icons.photo_library_rounded, Color(0xFFFF5A1F)),
+        HeroDemoLink('Trendyol', 'Magazayi ziyaret edin', Icons.shopping_bag_rounded, Color(0xFFF27A1A)),
       ],
-      coverImageUrl:
-          'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=300&q=80',
@@ -98,21 +86,10 @@ class _LandingScreenState extends State<LandingScreen>
         HeroDemoAction(Icons.location_on_rounded, Color(0xFFEF4444)),
       ],
       links: [
-        HeroDemoLink(
-          'Gunun menusu',
-          'Sicak yemek ve tatlilar',
-          Icons.local_dining_rounded,
-          Color(0xFFEA580C),
-        ),
-        HeroDemoLink(
-          'Paket servis',
-          'WhatsApp ile siparis',
-          Icons.delivery_dining_rounded,
-          Color(0xFF10B981),
-        ),
+        HeroDemoLink('Gunun menusu', 'Sicak yemek ve tatlilar', Icons.local_dining_rounded, Color(0xFFEA580C)),
+        HeroDemoLink('Paket servis', 'WhatsApp ile siparis', Icons.delivery_dining_rounded, Color(0xFF10B981)),
       ],
-      coverImageUrl:
-          'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=300&q=80',
@@ -136,21 +113,10 @@ class _LandingScreenState extends State<LandingScreen>
         HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
       ],
       links: [
-        HeroDemoLink(
-          'Hizmetler',
-          'Kesim, boya ve bakim',
-          Icons.spa_rounded,
-          Color(0xFFDB2777),
-        ),
-        HeroDemoLink(
-          'Randevu al',
-          'WhatsApp ile hizli iletisim',
-          Icons.event_available_rounded,
-          Color(0xFF10B981),
-        ),
+        HeroDemoLink('Hizmetler', 'Kesim, boya ve bakim', Icons.spa_rounded, Color(0xFFDB2777)),
+        HeroDemoLink('Randevu al', 'WhatsApp ile hizli iletisim', Icons.event_available_rounded, Color(0xFF10B981)),
       ],
-      coverImageUrl:
-          'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=300&q=80',
@@ -174,21 +140,10 @@ class _LandingScreenState extends State<LandingScreen>
         HeroDemoAction(Icons.phone_android_rounded, Color(0xFF2563EB)),
       ],
       links: [
-        HeroDemoLink(
-          'Servis kaydi',
-          'Ekran, batarya ve bakim',
-          Icons.construction_rounded,
-          Color(0xFF2563EB),
-        ),
-        HeroDemoLink(
-          'Google yorumlari',
-          'Musteri guveni',
-          Icons.verified_rounded,
-          Color(0xFF6366F1),
-        ),
+        HeroDemoLink('Servis kaydi', 'Ekran, batarya ve bakim', Icons.construction_rounded, Color(0xFF2563EB)),
+        HeroDemoLink('Google yorumlari', 'Musteri guveni', Icons.verified_rounded, Color(0xFF6366F1)),
       ],
-      coverImageUrl:
-          'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl: 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1545259741-2ea3ebf61fa3?auto=format&fit=crop&w=300&q=80',
@@ -288,9 +243,7 @@ class _LandingScreenState extends State<LandingScreen>
     AppRouter.navigateToAuth(context);
   }
 
-  void _navigateToSavedVitrin() {
-    // mevcut implementasyon
-  }
+  void _navigateToSavedVitrin() {}
 
   void _navigateToPreview() {
     final profile = _heroDemoProfiles[_activeProfileIndex];
@@ -337,6 +290,10 @@ class _LandingScreenState extends State<LandingScreen>
               const LandingComparisonSection(),
               const LandingTrustBand(),
               const LandingStepsSection(),
+              // YENI: 12 kategorili hazir sablon katalogu
+              LandingTemplateCatalog(
+                onNavigateToAuth: _navigateToExploreApp,
+              ),
               LandingBottomCta(onNavigateToEditor: _navigateToEditor),
             ],
           ),
