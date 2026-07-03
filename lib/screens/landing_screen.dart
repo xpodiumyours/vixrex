@@ -218,26 +218,20 @@ class _LandingScreenState extends State<LandingScreen>
     _loadCategoryGalleryImages();
   }
 
-  /// Kategori sablonlarindan galeri gorsellerini on-yukle
-  /// ve demo profilleri guncelle
   Future<void> _loadCategoryGalleryImages() async {
     setState(() => _isLoadingGalleryImages = true);
-
     final updatedProfiles = <HeroDemoProfile>[];
-
     for (final profile in _heroDemoProfiles) {
       final key = profile.templateCategoryKey;
       if (key == null || key.isEmpty) {
         updatedProfiles.add(profile);
         continue;
       }
-
       try {
         final imageSet = await CategoryImageService.getImagesForCategory(key);
         final urls = imageSet.galleryImages.map((i) => i.imageUrl).toList();
         if (urls.isNotEmpty) {
           _categoryGalleryCache[key] = urls;
-          // Profili guncel gorsellerle klonla
           updatedProfiles.add(
             HeroDemoProfile(
               name: profile.name,
@@ -264,11 +258,8 @@ class _LandingScreenState extends State<LandingScreen>
       } catch (e) {
         debugPrint('Gallery load error for $key: $e');
       }
-
-      // Fallback: orijinal profili koru
       updatedProfiles.add(profile);
     }
-
     if (mounted) {
       setState(() {
         _heroDemoProfiles = updatedProfiles;
@@ -287,7 +278,6 @@ class _LandingScreenState extends State<LandingScreen>
   Future<void> _loadSavedVitrinState() async {
     try {
       final authService = const AuthService();
-      // ... mevcut kod devam eder
     } catch (e) {
       debugPrint('Landing saved vitrin check error: $e');
     }
@@ -295,7 +285,7 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   void _navigateToExploreApp() {
-    AppRouter.navigateTo(context, AppRoute.authEmail);
+    AppRouter.navigateToAuth(context);
   }
 
   void _navigateToSavedVitrin() {
@@ -313,7 +303,7 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   void _navigateToEditor() {
-    AppRouter.navigateTo(context, AppRoute.home);
+    AppRouter.navigateToHomeShell(context);
   }
 
   @override
@@ -347,12 +337,12 @@ class _LandingScreenState extends State<LandingScreen>
               const LandingComparisonSection(),
               const LandingTrustBand(),
               const LandingStepsSection(),
-              const LandingBottomCta(),
+              LandingBottomCta(onNavigateToEditor: _navigateToEditor),
             ],
           ),
         ),
       ),
-      floatingActionButton: const ChatbotOverlay(),
+      floatingActionButton: ChatbotOverlay(),
     );
   }
 }
