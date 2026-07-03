@@ -54,139 +54,163 @@ class PhoneMockup extends StatelessWidget {
                   borderRadius: BorderRadius.circular(36),
                   child: Column(
                     children: [
-                      Container(
+                      SizedBox(
                         height: 172,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: NetworkImage(profile.coverImageUrl),
-                            onError: (exception, stackTrace) {},
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.16),
-                                Colors.black.withValues(alpha: 0.52),
-                              ],
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    profile.accentColor.withValues(alpha: 0.18),
+                                    AppColors.bgLight,
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: profile.accentColor.withValues(alpha: 0.16),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: profile.accentColor.withValues(alpha: 0.3),
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        profile.icon,
-                                        color: profile.accentColor,
-                                        size: 24,
-                                      ),
+                            Image.network(
+                              profile.coverImageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (context, error, stackTrace) => Container(
+                                    color: AppColors.bgLight,
+                                    alignment: Alignment.center,
+                                    child: Icon(
+                                      profile.icon,
+                                      color: profile.accentColor.withValues(alpha: 0.9),
+                                      size: 42,
                                     ),
-                                    const Spacer(),
-                                    InkWell(
-                                      onTap: onPreviewTap,
-                                      borderRadius: BorderRadius.circular(999),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
-                                        ),
+                                  ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black.withValues(alpha: 0.16),
+                                    Colors.black.withValues(alpha: 0.52),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 44,
+                                        height: 44,
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.3),
-                                          borderRadius: BorderRadius.circular(999),
+                                          color: profile.accentColor.withValues(alpha: 0.16),
+                                          borderRadius: BorderRadius.circular(16),
                                           border: Border.all(
-                                            color: Colors.white.withValues(alpha: 0.16),
+                                            color: profile.accentColor.withValues(alpha: 0.3),
                                           ),
                                         ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              profile.badgeIcon,
-                                              color: profile.accentColor,
-                                              size: 14,
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              profile.badgeText,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  profile.name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.8,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        profile.category,
-                                        style: TextStyle(
+                                        child: Icon(
+                                          profile.icon,
                                           color: profile.accentColor,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w800,
+                                          size: 24,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        color: profile.secondaryBadgeColor,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        profile.secondaryBadgeText,
-                                        style: const TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
+                                      const Spacer(),
+                                      InkWell(
+                                        onTap: onPreviewTap,
+                                        borderRadius: BorderRadius.circular(999),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.3),
+                                            borderRadius: BorderRadius.circular(999),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(alpha: 0.16),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                profile.badgeIcon,
+                                                color: profile.accentColor,
+                                                size: 14,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                profile.badgeText,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    profile.name,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -0.8,
                                     ),
-                                  ],
-                                ),
-                              ],
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          profile.category,
+                                          style: TextStyle(
+                                            color: profile.accentColor,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: profile.secondaryBadgeColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          profile.secondaryBadgeText,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                       Expanded(
@@ -270,85 +294,157 @@ class PhoneMockup extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                Expanded(
-                                  child: Column(
-                                    children:
-                                        profile.links.take(2).map((link) {
-                                          return Padding(
-                                            padding: const EdgeInsets.only(bottom: 8),
+                                ...profile.links.take(2).map((link) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: InkWell(
+                                      onTap: onPreviewTap,
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.bgLight,
+                                          borderRadius: BorderRadius.circular(14),
+                                          border: Border.all(color: AppColors.border),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 36,
+                                              height: 36,
+                                              decoration: BoxDecoration(
+                                                color: link.color.withValues(alpha: 0.14),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                link.icon,
+                                                color: link.color,
+                                                size: 18,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    link.title,
+                                                    style: const TextStyle(
+                                                      color: AppColors.darkText,
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w800,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    link.subtitle,
+                                                    style: const TextStyle(
+                                                      color: AppColors.mutedText,
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const Icon(
+                                              Icons.arrow_forward_ios_rounded,
+                                              size: 12,
+                                              color: AppColors.mutedText,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ],
+                              if (profile.galleryImages.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Expanded(
+                                      child: Text(
+                                        'Vitrin galerisi',
+                                        style: TextStyle(
+                                          color: AppColors.darkText,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: profile.accentColor.withValues(alpha: 0.14),
+                                        borderRadius: BorderRadius.circular(999),
+                                      ),
+                                      child: Text(
+                                        '${profile.galleryImages.length} fotoğraf',
+                                        style: TextStyle(
+                                          color: profile.accentColor,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  height: 72,
+                                  child: Row(
+                                    children: List.generate(
+                                      profile.galleryImages.take(3).length,
+                                      (index) {
+                                        final imageUrl =
+                                            profile.galleryImages.take(3).elementAt(index);
+                                        return Expanded(
+                                          child: Padding(
+                                            padding: EdgeInsets.only(
+                                              right: index == 2 ? 0 : 8,
+                                            ),
                                             child: InkWell(
                                               onTap: onPreviewTap,
-                                              borderRadius: BorderRadius.circular(14),
-                                              child: Container(
-                                                width: double.infinity,
-                                                padding: const EdgeInsets.all(12),
-                                                decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(12),
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(12),
+                                                child: Container(
                                                   color: AppColors.bgLight,
-                                                  borderRadius: BorderRadius.circular(14),
-                                                  border: Border.all(
-                                                    color: AppColors.border,
+                                                  child: Image.network(
+                                                    imageUrl,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (context, error, stackTrace) =>
+                                                            Container(
+                                                              color: AppColors.bgLight,
+                                                              alignment: Alignment.center,
+                                                              child: Icon(
+                                                                Icons.image_outlined,
+                                                                color: profile.accentColor,
+                                                                size: 20,
+                                                              ),
+                                                            ),
                                                   ),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    Container(
-                                                      width: 36,
-                                                      height: 36,
-                                                      decoration: BoxDecoration(
-                                                        color: link.color.withValues(
-                                                          alpha: 0.14,
-                                                        ),
-                                                        borderRadius: BorderRadius.circular(12),
-                                                      ),
-                                                      child: Icon(
-                                                        link.icon,
-                                                        color: link.color,
-                                                        size: 18,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(
-                                                            link.title,
-                                                            style: const TextStyle(
-                                                              color: AppColors.darkText,
-                                                              fontSize: 12,
-                                                              fontWeight: FontWeight.w800,
-                                                            ),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                          const SizedBox(height: 2),
-                                                          Text(
-                                                            link.subtitle,
-                                                            style: const TextStyle(
-                                                              color: AppColors.mutedText,
-                                                              fontSize: 11,
-                                                              fontWeight: FontWeight.w600,
-                                                            ),
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    const Icon(
-                                                      Icons.arrow_forward_ios_rounded,
-                                                      size: 12,
-                                                      color: AppColors.mutedText,
-                                                    ),
-                                                  ],
                                                 ),
                                               ),
                                             ),
-                                          );
-                                        }).toList(),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ],
+                              const Spacer(),
                             ],
                           ),
                         ),
