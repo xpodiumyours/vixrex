@@ -143,9 +143,7 @@ class _AutoFillBannerState extends State<AutoFillBanner> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      widget.kategori +
-                          ' kategorisi icin $_templateCount adet '
-                          'hazir gorsel seni bekliyor.',
+                      '${widget.kategori} kategorisi icin $_templateCount adet hazir gorsel seni bekliyor.',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,

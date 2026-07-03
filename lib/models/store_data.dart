@@ -7,6 +7,7 @@ export 'package:vitrinx/models/store_offering.dart';
 export 'package:vitrinx/models/working_hours.dart';
 
 class StoreData {
+  String? id;
   String name;
   String businessType;
   String description;
@@ -69,6 +70,7 @@ class StoreData {
   String publicationConsentHash;
 
   StoreData({
+    this.id,
     this.name = '',
     this.businessType = 'Butik',
     this.description = '',
@@ -123,6 +125,7 @@ class StoreData {
        offerings = offerings ?? [];
 
   Map<String, dynamic> toJson() => {
+    'id': id,
     'name': name,
     'businessType': businessType,
     'description': description,
@@ -192,6 +195,7 @@ class StoreData {
     );
 
     return StoreData(
+      id: _getString(json, 'id'),
       name: _getString(json, 'name') ?? '',
       businessType:
           _getString(json, 'businessType', 'business_type') ?? 'Butik',
@@ -521,6 +525,10 @@ class StoreData {
   String get coverImageUrl {
     final items = displayGalleryItems;
     return items.isEmpty ? '' : items.first.imageUrl.trim();
+  }
+
+  set coverImageUrl(String value) {
+    shelfImageUrl = value;
   }
 
   factory StoreData.dummy() {

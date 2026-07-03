@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/category_image_service.dart';
 
 // ─── Otomatik Doldurma Secenekleri ───────────────────────────────────────────

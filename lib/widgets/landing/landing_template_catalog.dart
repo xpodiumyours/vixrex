@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/config/app_router.dart';
 import 'package:vitrinx/services/category_image_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
-/// Landing ekraninda 12 kategoriyi gosteren sablon katalogu
-/// Kullanici kategoriye tiklayip "Bu sablonla basla" dediginde
-/// auth -> vitrin formu akisina yonlendirir
+/// Landing ekranında 12 kategoriyi gösteren şablon kataloğu.
+/// Kullanıcı kategoriye tıklayıp "Bu şablonla başla" dediğinde
+/// auth -> vitrin formu akışına yönlendirir.
 class LandingTemplateCatalog extends StatefulWidget {
   final VoidCallback onNavigateToAuth;
 
@@ -28,18 +27,73 @@ class _TemplateCategory {
 }
 
 const List<_TemplateCategory> _categories = [
-  _TemplateCategory('butik_giyim', 'Butik & Giyim', Icons.checkroom_rounded, Color(0xFFFF5A1F)),
-  _TemplateCategory('kuafor_guzellik', 'Kuaför & Güzellik', Icons.content_cut_rounded, Color(0xFFDB2777)),
-  _TemplateCategory('kafe_restoran', 'Kafe & Restoran', Icons.restaurant_menu_rounded, Color(0xFFEA580C)),
+  _TemplateCategory(
+    'butik_giyim',
+    'Butik & Giyim',
+    Icons.checkroom_rounded,
+    Color(0xFFFF5A1F),
+  ),
+  _TemplateCategory(
+    'kuafor_guzellik',
+    'Kuaför & Güzellik',
+    Icons.content_cut_rounded,
+    Color(0xFFDB2777),
+  ),
+  _TemplateCategory(
+    'kafe_restoran',
+    'Kafe & Restoran',
+    Icons.restaurant_menu_rounded,
+    Color(0xFFEA580C),
+  ),
   _TemplateCategory('berber', 'Berber', Icons.face_rounded, Color(0xFF7C3AED)),
-  _TemplateCategory('oto_kuafor', 'Oto Kuaför', Icons.local_car_wash_rounded, Color(0xFF2563EB)),
-  _TemplateCategory('market_bakkal', 'Market & Bakkal', Icons.shopping_basket_rounded, Color(0xFF059669)),
-  _TemplateCategory('pastane_tatlici', 'Pastane & Tatlıcı', Icons.bakery_dining_rounded, Color(0xFFD946EF)),
-  _TemplateCategory('mobilya_dekorasyon', 'Mobilya & Dekorasyon', Icons.chair_rounded, Color(0xFFCA8A04)),
-  _TemplateCategory('spor_salonu', 'Spor Salonu', Icons.fitness_center_rounded, Color(0xFFDC2626)),
-  _TemplateCategory('dis_klinigi', 'Diş Kliniği', Icons.medical_services_rounded, Color(0xFF0891B2)),
-  _TemplateCategory('eczane', 'Eczane', Icons.local_pharmacy_rounded, Color(0xFF16A34A)),
-  _TemplateCategory('teknik_servis', 'Teknik Servis', Icons.build_circle_rounded, Color(0xFF4F46E5)),
+  _TemplateCategory(
+    'oto_kuafor',
+    'Oto Kuaför',
+    Icons.local_car_wash_rounded,
+    Color(0xFF2563EB),
+  ),
+  _TemplateCategory(
+    'market_bakkal',
+    'Market & Bakkal',
+    Icons.shopping_basket_rounded,
+    Color(0xFF059669),
+  ),
+  _TemplateCategory(
+    'pastane_tatlici',
+    'Pastane & Tatlıcı',
+    Icons.bakery_dining_rounded,
+    Color(0xFFD946EF),
+  ),
+  _TemplateCategory(
+    'mobilya_dekorasyon',
+    'Mobilya & Dekorasyon',
+    Icons.chair_rounded,
+    Color(0xFFCA8A04),
+  ),
+  _TemplateCategory(
+    'spor_salonu',
+    'Spor Salonu',
+    Icons.fitness_center_rounded,
+    Color(0xFFDC2626),
+  ),
+  _TemplateCategory(
+    'dis_klinigi',
+    'Diş Kliniği',
+    Icons.medical_services_rounded,
+    Color(0xFF0891B2),
+  ),
+  _TemplateCategory(
+    'eczane',
+    'Eczane',
+    Icons.local_pharmacy_rounded,
+    Color(0xFF16A34A),
+  ),
+  _TemplateCategory(
+    'teknik_servis',
+    'Teknik Servis',
+    Icons.build_circle_rounded,
+    Color(0xFF4F46E5),
+  ),
 ];
 
 class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
@@ -57,17 +111,15 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
       setState(() => _loadingKeys.add(cat.key));
       try {
         final imageSet = await CategoryImageService.getImagesForCategory(cat.key);
-        if (mounted) {
-          setState(() {
-            _imageSets[cat.key] = imageSet;
-            _loadingKeys.remove(cat.key);
-          });
-        }
+        if (!mounted) return;
+        setState(() {
+          _imageSets[cat.key] = imageSet;
+          _loadingKeys.remove(cat.key);
+        });
       } catch (e) {
         debugPrint('Template load error for ${cat.key}: $e');
-        if (mounted) {
-          setState(() => _loadingKeys.remove(cat.key));
-        }
+        if (!mounted) return;
+        setState(() => _loadingKeys.remove(cat.key));
       }
     }
   }
@@ -92,7 +144,6 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Drag handle
                   Center(
                     child: Container(
                       width: 40,
@@ -104,7 +155,6 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Header
                   Row(
                     children: [
                       Container(
@@ -145,7 +195,6 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // Images preview
                   if (hasImages) ...[
                     if (imageSet.coverImages.isNotEmpty) ...[
                       const Text(
@@ -252,7 +301,6 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                     ),
                   ],
                   const Spacer(),
-                  // CTA Button
                   SizedBox(
                     height: 54,
                     child: ElevatedButton.icon(
@@ -300,7 +348,6 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Header
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -346,7 +393,6 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Category Grid
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final crossAxisCount = constraints.maxWidth > 900
@@ -390,8 +436,6 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
   }
 }
 
-// ─── Template Card ──────────────────────────────────────────────────────────
-
 class _TemplateCard extends StatelessWidget {
   final _TemplateCategory category;
   final String? previewUrl;
@@ -429,7 +473,6 @@ class _TemplateCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Image area
               Expanded(
                 flex: 3,
                 child: ClipRRect(
@@ -448,7 +491,6 @@ class _TemplateCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // Info area
               Expanded(
                 flex: 2,
                 child: Padding(
@@ -486,7 +528,7 @@ class _TemplateCard extends StatelessWidget {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Text(
+                          : const Text(
                               'Hazır görseller →',
                               style: TextStyle(
                                 color: AppColors.primary,
@@ -515,8 +557,6 @@ class _TemplateCard extends StatelessWidget {
     );
   }
 }
-
-// ─── Image Thumb ────────────────────────────────────────────────────────────
 
 class _ImageThumb extends StatelessWidget {
   final String url;

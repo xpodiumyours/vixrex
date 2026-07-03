@@ -96,7 +96,7 @@ class LandingHeroSection extends StatelessWidget {
             bottom: false,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final isDesktop = constraints.maxWidth > 900;
+                final isDesktop = constraints.maxWidth > 768;
                 return Column(
                   children: [
                     _buildTopNavBar(context, isDesktop),
@@ -333,273 +333,293 @@ class LandingHeroSection extends StatelessWidget {
       crossAxisAlignment:
           isDesktop ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       children: [
-        // Title block
-        Column(
-          crossAxisAlignment:
-              isDesktop ? CrossAxisAlignment.start : CrossAxisAlignment.center,
-          children: [
-            const Text(
-              'İşletmeniz için',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                color: AppColors.darkText,
-                height: 1.1,
-                letterSpacing: -0.5,
-              ),
+        // İŞLETMENİZ İÇİN DİJİTAL VİTRİN Badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0D5E65).withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: const Color(0xFF0EA8B0).withValues(alpha: 0.35)),
+          ),
+          child: const Text(
+            'İŞLETMENİZ İÇİN DİJİTAL VİTRİN',
+            style: TextStyle(
+              color: Color(0xFF10D8D8),
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.0,
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Paylaşılabilir Dijital Vitrin',
-              textAlign: isDesktop ? TextAlign.left : TextAlign.center,
-              style: const TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.w900,
-                color: brandBlue,
-                height: 1.15,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          'İşletmenizin dijital\nvitrini dakikalar\niçinde hazır',
+          textAlign: isDesktop ? TextAlign.left : TextAlign.center,
+          style: TextStyle(
+            fontSize: isDesktop ? 48 : 36,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            height: 1.15,
+            letterSpacing: -0.8,
+          ),
         ),
         const SizedBox(height: 20),
         Text(
-          'Müşterilerinizin aradığı her şeyi tek bir linkte sunun. WhatsApp iletişimi, konum tarifi, sosyal ağlar, fotoğraflar ve ürünler tek ekranda.',
+          'İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrinde toplayın. Linkinizi ve QR kodunuzu müşterilerinizle kolayca paylaşın.',
           textAlign: isDesktop ? TextAlign.left : TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
-            color: AppColors.darkTextAlt,
+            color: Colors.white.withValues(alpha: 0.7),
             height: 1.5,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 32),
-        // Interactive Setup Form
+        // Promo Card
         Container(
-          padding: const EdgeInsets.all(22),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.16),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                blurRadius: 28,
-                offset: const Offset(0, 12),
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0EA8B0).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.qr_code_scanner_rounded,
+                  color: Color(0xFF10D8D8),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tek linkte hazır dijital vitrin',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'QR kod ve WhatsApp iletişimi paylaşmaya hazır olsun.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Vitrin linkinizi belirleyin',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.darkText,
+        ),
+        const SizedBox(height: 24),
+        // Setup Form or Saved Vitrin actions
+        if (hasSavedVitrin && !isCheckingSavedVitrin) ...[
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: onNavigateToSavedVitrin,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              const SizedBox(height: 12),
-              Row(
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: Container(
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceSoft,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 14),
-                            child: Text(
-                              'vitrinx.com/',
-                              style: TextStyle(
-                                color: AppColors.mutedText,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: TextField(
-                              controller: storeNameController,
-                              style: const TextStyle(
-                                color: AppColors.darkText,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              decoration: const InputDecoration(
-                                hintText: 'butiginiz',
-                                hintStyle: TextStyle(
-                                  color: AppColors.mutedText,
-                                  fontWeight: FontWeight.normal,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                  Icon(Icons.edit_document, size: 18),
+                  SizedBox(width: 10),
+                  Text(
+                    'Kayıtlı Vitrinimi Düzenle',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              if (hasSavedVitrin && !isCheckingSavedVitrin) ...[
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: onNavigateToSavedVitrin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: mint,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.edit_document, size: 18),
-                        SizedBox(width: 10),
-                        Text(
-                          'Kayıtlı Vitrinimi Düzenle',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Center(
-                  child: TextButton(
-                    onPressed: onNavigateToExploreApp,
-                    child: const Text(
-                      'Farklı vitrinleri inceleyin',
-                      style: TextStyle(
-                        color: brandBlue,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ] else ...[
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: onNavigateToEditor,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: brandBlue,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Vitrin Oluştur',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 15,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_rounded, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 24),
-              _buildSecondaryActions(isDesktop: isDesktop),
-            ],
+            ),
           ),
+          const SizedBox(height: 10),
+          Center(
+            child: TextButton(
+              onPressed: onNavigateToExploreApp,
+              child: const Text(
+                'Farklı vitrinleri inceleyin',
+                style: TextStyle(
+                  color: Color(0xFF10D8D8),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ] else ...[
+          // Setup Form Row/Column
+          LayoutBuilder(
+            builder: (context, formConstraints) {
+              final isFormRow = formConstraints.maxWidth > 500;
+              
+              final inputField = Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                ),
+                child: Row(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14),
+                      child: Text(
+                        'vitrinx.app/',
+                        style: TextStyle(
+                          color: Colors.white60,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: storeNameController,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'isletmeniz',
+                          hintStyle: TextStyle(
+                            color: Colors.white30,
+                            fontWeight: FontWeight.normal,
+                          ),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              final submitButton = SizedBox(
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: onNavigateToEditor,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0EA8B0),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'VitrinX Oluştur',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded, size: 16),
+                    ],
+                  ),
+                ),
+              );
+
+              if (isFormRow) {
+                return Row(
+                  children: [
+                    Expanded(child: inputField),
+                    const SizedBox(width: 12),
+                    submitButton,
+                  ],
+                );
+              } else {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    inputField,
+                    const SizedBox(height: 12),
+                    submitButton,
+                  ],
+                );
+              }
+            },
+          ),
+        ],
+        const SizedBox(height: 24),
+        // Badges Section
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          alignment: isDesktop ? WrapAlignment.start : WrapAlignment.center,
+          children: [
+            _buildCheckBadge('Kredi kartı gerekmez'),
+            _buildCheckBadge('Teknik bilgi gerekmez'),
+            _buildCheckBadge('Komisyon yok'),
+            _buildCheckBadge('Link ve QR hazır'),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildSecondaryActions({required bool isDesktop}) {
-    final canOpenSavedVitrin = hasSavedVitrin && !isCheckingSavedVitrin;
-
-    final buttons = <Widget>[
-      if (canOpenSavedVitrin)
-        ElevatedButton.icon(
-          onPressed: onNavigateToSavedVitrin,
-          icon: const Icon(Icons.edit_rounded, size: 18),
-          label: const Text(
-            'VitrinX Düzenle',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+  Widget _buildCheckBadge(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.check_circle_rounded,
+            color: Color(0xFF10B981),
+            size: 16,
           ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: brandBlue,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
             ),
           ),
-        ),
-      OutlinedButton.icon(
-        onPressed: onNavigateToExploreApp,
-        icon: const Icon(
-          Icons.explore_rounded,
-          size: 18,
-          color: AppColors.darkText,
-        ),
-        label: const Text(
-          'Vitrinleri Keşfet',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 14,
-            color: AppColors.darkText,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.darkTextAlt, width: 1.5),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
+        ],
       ),
-    ];
-
-    return isDesktop
-        ? Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.start,
-            children: buttons,
-          )
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children:
-                buttons.expand((b) => [b, const SizedBox(height: 12)]).toList()
-                  ..removeLast(),
-          );
+    );
   }
+
 
   Widget _buildHeroMockup() {
     final activeProfile = heroDemoProfiles[activeProfileIndex];

@@ -638,33 +638,38 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            ChatbotConfig.botName,
-            style: const TextStyle(
-              color: AppColors.darkText,
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
+          Expanded(
+            child: Row(
+              children: [
+                Text(
+                  ChatbotConfig.botName,
+                  style: const TextStyle(
+                    color: AppColors.darkText,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(25),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    ChatbotConfig.systemStatus,
+                    style: const TextStyle(
+                      color: AppColors.primaryDark,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withAlpha(25),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              ChatbotConfig.systemStatus,
-              style: const TextStyle(
-                color: AppColors.primaryDark,
-                fontSize: 9,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ),
-          const Spacer(),
           GestureDetector(
             onTap: _clearHistory,
             child: Container(

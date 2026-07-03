@@ -1,13 +1,7 @@
-import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/screens/preview_screen.dart';
 import 'package:vitrinx/models/landing_demo_profile.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/local_storage_keys.dart';
-import 'package:vitrinx/services/auth_service.dart';
 import 'package:vitrinx/services/category_image_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/widgets/landing/landing_hero_section.dart';
@@ -32,15 +26,15 @@ class _LandingScreenState extends State<LandingScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   int _activeProfileIndex = 0;
-  bool _hasSavedVitrin = false;
+  final bool _hasSavedVitrin = false;
   bool _isCheckingSavedVitrin = true;
   final TextEditingController _storeNameController = TextEditingController();
 
   /// Kategori sablonlarindan yuklenen galeri gorselleri cache'i
   final Map<String, List<String>> _categoryGalleryCache = {};
+  // ignore: unused_field
   bool _isLoadingGalleryImages = false;
 
-  static const Color brandBlue = AppColors.primary;
 
   static List<HeroDemoProfile> _heroDemoProfiles = [
     HeroDemoProfile(
@@ -231,11 +225,6 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Future<void> _loadSavedVitrinState() async {
-    try {
-      final authService = const AuthService();
-    } catch (e) {
-      debugPrint('Landing saved vitrin check error: $e');
-    }
     if (mounted) setState(() => _isCheckingSavedVitrin = false);
   }
 
@@ -299,7 +288,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
         ),
       ),
-      floatingActionButton: ChatbotOverlay(),
+      floatingActionButton: ChatbotBadge(),
     );
   }
 }

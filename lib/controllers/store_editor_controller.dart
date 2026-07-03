@@ -1,12 +1,13 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/app_constants.dart';
+import 'package:vitrinx/config/turkey_cities_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
-import 'package:vitrinx/utils/image_helper.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
+import 'package:vitrinx/services/location_service.dart';
+import 'package:vitrinx/services/store_shelf_upload_service.dart';
 
 class EditorGalleryItem {
   final String id;
@@ -80,8 +81,14 @@ class EditorGalleryItem {
 }
 
 class StoreEditorController extends ChangeNotifier {
-  final StoreData _data;
-  StorePublishedInfo? _publishedInfo;
+  final StoreLocalStorageService storage;
+  final LocationService locationService;
+  final StorePublishService publishService;
+  final StoreShelfUploadService uploadService;
+  final SupabaseClient? supabaseClient;
+
+  StoreData _data;
+  PublishedVitrinInfo? _publishedInfo;
   bool _isLoading = false;
 
   Uint8List? _coverBytes;
@@ -89,7 +96,7 @@ class StoreEditorController extends ChangeNotifier {
   String? _coverUrl;
 
   List<EditorGalleryItem> _editorGalleryItems = [];
-  int _maxGalleryPhotos = AppConstants.maxGalleryPhotos;
+  final int _maxGalleryPhotos = AppConstants.maxGalleryPhotos;
 
   String? _nameError;
   String? _whatsappError;
@@ -100,24 +107,168 @@ class StoreEditorController extends ChangeNotifier {
   String? _legalDocumentsError;
 
   bool _isPublishing = false;
-  bool _isLoadingLegalDocuments = false;
+  final bool _isLoadingLegalDocuments = false;
   dynamic _legalDocuments;
-
-  bool _bookingIsEnabled = false;
-  int _bookingCapacity = 0;
-  List<String> _bookingWorkingHours = [];
-  String? _bookingLunchBreak;
 
   final Set<String> _customPlatformLinkIds = {};
 
-  StoreEditorController(this._data) {
+  List<Map<String, dynamic>> _articles = [];
+  bool _isLoadingArticles = false;
+
+  bool _isWithdrawingConsent = false;
+  bool _isDeleting = false;
+
+  StoreEditorController({
+    StoreLocalStorageService? storage,
+    LocationService? locationService,
+    StorePublishService? publishService,
+    StoreShelfUploadService? uploadService,
+    this.supabaseClient,
+    StoreData? initialData,
+  })  : storage = storage ?? const StoreLocalStorageService(),
+        locationService = locationService ?? const LocationService(),
+        publishService = publishService ?? const StorePublishService(),
+        uploadService = uploadService ?? const StoreShelfUploadService(),
+        _data = initialData ?? StoreData(kategori: 'Diğer', status: 'Açık') {
     _initialize();
   }
 
   StoreData get data => _data;
-  StorePublishedInfo? get publishedInfo => _publishedInfo;
+  PublishedVitrinInfo? get publishedInfo => _publishedInfo;
   bool get isLoading => _isLoading;
   int get maxGalleryPhotos => _maxGalleryPhotos;
+
+  bool get bookingIsEnabled => _data.bookingSettings?.isEnabled ?? false;
+  int get bookingCapacity => _data.bookingSettings?.capacity ?? 1;
+  Map<String, dynamic> get bookingWorkingHours => _data.bookingSettings?.workingHours ?? {};
+  Map<String, dynamic> get bookingLunchBreak => _data.bookingSettings?.lunchBreak ?? {};
+  List<StoreOffering> get offerings => _data.offerings;
+
+  List<Map<String, dynamic>> get articles => _articles;
+  bool get isLoadingArticles => _isLoadingArticles;
+
+  bool get isWithdrawingConsent => _isWithdrawingConsent;
+  bool get isDeleting => _isDeleting;
+
+  void setBookingIsEnabled(bool val) {
+    _ensureBookingSettings();
+    _data.bookingSettings!.isEnabled = val;
+    notifyListeners();
+  }
+
+  void setBookingCapacity(int val) {
+    _ensureBookingSettings();
+    _data.bookingSettings!.capacity = val;
+    notifyListeners();
+  }
+
+  void _ensureBookingSettings() {
+    _data.bookingSettings ??= BookingSettings();
+  }
+
+  Future<void> initialize(String? initialName) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final localData = await storage.loadVitrinData();
+      if (localData != null) {
+        _data = localData;
+      } else {
+        _data = StoreData(
+          name: initialName ?? '',
+          kategori: 'Diğer',
+          status: 'Açık',
+          isStore: false,
+        );
+      }
+      _publishedInfo = await storage.loadPublishedVitrinInfo();
+      _initialize();
+      if (_publishedInfo != null) {
+        await fetchArticles();
+      }
+    } catch (e) {
+      debugPrint('Error initializing controller: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchLocation() async {
+    final result = await locationService.getCurrentLocation();
+    if (result.isSuccess && result.position != null) {
+      final pos = result.position!;
+      _data.latitude = pos.latitude;
+      _data.longitude = pos.longitude;
+      _data.locationAccuracyMeters = pos.accuracy;
+      _data.locationSource = 'device';
+      _data.locationConsentAt = DateTime.now();
+
+      final address = await locationService.getAddressFromCoordinates(pos.latitude, pos.longitude);
+      if (address != null && address.trim().isNotEmpty) {
+        _data.address = address;
+        for (final province in turkeyProvinces) {
+          if (address.toLowerCase().contains(province.name.toLowerCase())) {
+            _data.provinceCode = province.code;
+            _data.provinceName = province.name;
+            final districts = turkeyDistricts[province.code];
+            if (districts != null) {
+              for (final district in districts) {
+                if (address.toLowerCase().contains(district.toLowerCase())) {
+                  _data.districtCode = district;
+                  _data.districtName = district;
+                  break;
+                }
+              }
+            }
+            break;
+          }
+        }
+      }
+      notifyListeners();
+    }
+  }
+
+  void updateAddress(String address) {
+    _data.address = address;
+    notifyListeners();
+  }
+
+  SupabaseClient? _resolveClient() {
+    if (supabaseClient != null) return supabaseClient;
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> fetchArticles() async {
+    final slug = _publishedInfo?.slug;
+    if (slug == null || slug.trim().isEmpty) return;
+
+    _isLoadingArticles = true;
+    notifyListeners();
+    try {
+      final client = _resolveClient();
+      if (client == null) {
+        _articles = [];
+        return;
+      }
+      final response = await client
+          .from('store_articles')
+          .select()
+          .eq('store_slug', slug)
+          .order('created_at', ascending: false);
+      _articles = List<Map<String, dynamic>>.from(response as List);
+    } catch (e) {
+      debugPrint('Error fetching articles: $e');
+      _articles = [];
+    } finally {
+      _isLoadingArticles = false;
+      notifyListeners();
+    }
+  }
 
   // KAPAK
   Uint8List? get coverBytes => _coverBytes;
@@ -160,10 +311,10 @@ class StoreEditorController extends ChangeNotifier {
   void updateWhatsapp(String w) { _data.whatsapp = w; notifyListeners(); }
 
   // KONUM
-  String get selectedProvinceCode => _data.provinceCode;
-  String get selectedProvinceName => _data.provinceName;
-  String get selectedDistrictCode => _data.districtCode;
-  String get selectedDistrictName => _data.districtName;
+  String? get selectedProvinceCode => _data.provinceCode.isNotEmpty ? _data.provinceCode : null;
+  String? get selectedProvinceName => _data.provinceName.isNotEmpty ? _data.provinceName : null;
+  String? get selectedDistrictCode => _data.districtCode.isNotEmpty ? _data.districtCode : null;
+  String? get selectedDistrictName => _data.districtName.isNotEmpty ? _data.districtName : null;
   double? get latitude => _data.latitude;
   double? get longitude => _data.longitude;
   double? get locationAccuracyMeters => _data.locationAccuracyMeters;
@@ -204,7 +355,7 @@ class StoreEditorController extends ChangeNotifier {
     required Uint8List bytes,
     required String contentType,
   }) async {
-    final client = Supabase.instance.client;
+    final client = supabaseClient ?? Supabase.instance.client;
     await client.storage.from(bucket).uploadBinary(
       path,
       bytes,
@@ -213,9 +364,15 @@ class StoreEditorController extends ChangeNotifier {
     return client.storage.from(bucket).getPublicUrl(path);
   }
 
-  /// Tüm yeni medyalari (kapak + galeri) upload et ve StoreData'ya URL'leri yaz
   Future<void> _uploadPendingMedia() async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final hasPendingCover = _coverBytes != null && _coverFileName != null;
+    final hasPendingGallery = _editorGalleryItems.any((item) => !item.isRemoved && item.isFromBytes && item.bytes != null);
+    if (!hasPendingCover && !hasPendingGallery) {
+      return;
+    }
+
+    final client = supabaseClient ?? Supabase.instance.client;
+    final userId = client.auth.currentUser?.id;
     if (userId == null) throw const StorePublishException('Oturum acik degil.');
 
     final storeSlug = _data.slug.isNotEmpty
@@ -227,8 +384,7 @@ class StoreEditorController extends ChangeNotifier {
     if (_coverBytes != null && _coverFileName != null) {
       final ext = (_coverFileName!.split('.').lastOrNull ?? 'jpg').toLowerCase();
       final mime = ext == 'png' ? 'image/png' : ext == 'webp' ? 'image/webp' : 'image/jpeg';
-      final path = 'covers/$userId/${storeSlug}_cover_$ts.$ext';
-      final url = await _uploadMedia(bucket: 'store-images', path: path, bytes: _coverBytes!, contentType: mime);
+      final url = await uploadService.uploadShelfImage(_coverBytes!, storeSlug, fileExtension: ext, contentType: mime);
       _data.coverImageUrl = url;
       _data.shelfImageUrl = url;
       _coverUrl = url;
@@ -279,15 +435,14 @@ class StoreEditorController extends ChangeNotifier {
             : _data.name.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '-');
       }
 
-      final service = StorePublishService();
-      final result = await service.publishStore(_data, editToken: effectiveEditToken);
+      final result = await publishService.publishStore(_data, editToken: effectiveEditToken);
       final publicLink = 'https://vitrinx.app${result.publicPath}';
 
-      _publishedInfo = StorePublishedInfo(
+      _publishedInfo = PublishedVitrinInfo(
         publicLink: publicLink,
         slug: result.slug,
+        name: _data.name,
         editToken: effectiveEditToken,
-        isComplete: true,
       );
 
       await saveLocally();
@@ -315,15 +470,47 @@ class StoreEditorController extends ChangeNotifier {
       );
     }
 
-    final service = StorePublishService();
-    await service.withdrawPublicationConsent(slug: slug, editToken: editToken);
-    _data.publicationConsentAccepted = false;
-    _data.publicationConsentWithdrawnAt = DateTime.now();
+    _isWithdrawingConsent = true;
     notifyListeners();
+    try {
+      await publishService.withdrawPublicationConsent(slug: slug, editToken: editToken);
+      await storage.clearPublishedVitrinInfo();
+      _publishedInfo = null;
+      _data.publicationConsentAccepted = false;
+      _data.publicationConsentWithdrawnAt = DateTime.now();
+      await storage.saveVitrinData(_data);
+    } finally {
+      _isWithdrawingConsent = false;
+      notifyListeners();
+    }
   }
 
   Future<void> deleteVitrin() async {
-    throw const StorePublishException('Vitrin silme henuz desteklenmiyor.');
+    _isDeleting = true;
+    notifyListeners();
+    try {
+      final slug = _publishedInfo?.slug;
+      final editToken = _publishedInfo?.editToken;
+      if (slug != null && editToken != null) {
+        try {
+          await publishService.withdrawPublicationConsent(slug: slug, editToken: editToken);
+        } catch (e) {
+          debugPrint('Error withdrawing during delete: $e');
+        }
+      }
+      await storage.clearVitrinData();
+      _data = StoreData(
+        name: '',
+        kategori: 'Diğer',
+        status: 'Açık',
+        isStore: false,
+      );
+      _publishedInfo = null;
+      _initialize();
+    } finally {
+      _isDeleting = false;
+      notifyListeners();
+    }
   }
 
   // YASAL ONAYLAR
@@ -334,15 +521,6 @@ class StoreEditorController extends ChangeNotifier {
   void setPrivacyNoticeAcknowledged(bool v) { _data.privacyNoticeAcknowledged = v; notifyListeners(); }
   void setTermsAccepted(bool v) { _data.termsAccepted = v; notifyListeners(); }
   void setPublicationConsentAccepted(bool v) { _data.publicationConsentAccepted = v; notifyListeners(); }
-
-  // BOOKING
-  bool get bookingIsEnabled => _bookingIsEnabled;
-  int get bookingCapacity => _bookingCapacity;
-  List<String> get bookingWorkingHours => _bookingWorkingHours;
-  String? get bookingLunchBreak => _bookingLunchBreak;
-  List<StoreOffering> get offerings => _data.offerings;
-  void setBookingIsEnabled(bool v) { _bookingIsEnabled = v; notifyListeners(); }
-  void setBookingCapacity(int v) { _bookingCapacity = v; notifyListeners(); }
 
   // MARKETPLACE
   List<MarketplaceLink> get marketplaceLinks => _data.marketplaceLinks;
@@ -355,7 +533,11 @@ class StoreEditorController extends ChangeNotifier {
     }
   }
   void toggleCustomPlatformLinkId(String id, bool isCustom) {
-    if (isCustom) _customPlatformLinkIds.add(id); else _customPlatformLinkIds.remove(id);
+    if (isCustom) {
+      _customPlatformLinkIds.add(id);
+    } else {
+      _customPlatformLinkIds.remove(id);
+    }
     notifyListeners();
   }
 
@@ -369,9 +551,18 @@ class StoreEditorController extends ChangeNotifier {
   void addProduct(Product p) { _data.products.add(p); notifyListeners(); }
   void removeProduct(int i) { if (i >= 0 && i < _data.products.length) { _data.products.removeAt(i); notifyListeners(); } }
   void updateProduct(int i, Product p) { if (i >= 0 && i < _data.products.length) { _data.products[i] = p; notifyListeners(); } }
-  void updateProductImported() { notifyListeners(); }
 
-  // VALIDATION - DUZELTME: _legalDocumentsError de temizleniyor
+  void updateProductImported(Product product) {
+    final index = _data.products.indexWhere((p) => p.id == product.id);
+    if (index >= 0) {
+      _data.products[index] = product;
+    } else {
+      _data.products.add(product);
+    }
+    notifyListeners();
+  }
+
+  // VALIDATION
   void clearValidationErrors() {
     _nameError = null;
     _whatsappError = null;
@@ -406,24 +597,25 @@ class StoreEditorController extends ChangeNotifier {
     }
   }
 
-  // LOKAL KAYIT (SharedPreferences)
-  static const _prefsKey = 'store_editor_data';
-
+  // LOKAL KAYIT
   Future<void> saveLocally() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_prefsKey, jsonEncode(_data.toJson()));
+      await storage.saveVitrinData(_data);
+      if (_publishedInfo != null) {
+        await storage.savePublishedVitrinInfo(
+          slug: _publishedInfo!.slug,
+          publicLink: _publishedInfo!.publicLink,
+          name: _publishedInfo!.name,
+          editToken: _publishedInfo!.editToken,
+        );
+      }
     } catch (e) { debugPrint('saveLocally error: $e'); }
     notifyListeners();
   }
 
   static Future<StoreData?> loadLocalData() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final s = prefs.getString(_prefsKey);
-      if (s == null || s.isEmpty) return null;
-      return StoreData.fromJson(jsonDecode(s));
-    } catch (e) { debugPrint('loadLocalData error: $e'); return null; }
+    final storage = const StoreLocalStorageService();
+    return storage.loadVitrinData();
   }
 
   // GENEL
@@ -432,7 +624,7 @@ class StoreEditorController extends ChangeNotifier {
     _editorGalleryItems = _data.galleryItems.map((item) => EditorGalleryItem.fromStoreItem(item)).toList();
   }
 
-  void setPublishedInfo(StorePublishedInfo? info) { _publishedInfo = info; notifyListeners(); }
+  void setPublishedInfo(PublishedVitrinInfo? info) { _publishedInfo = info; notifyListeners(); }
   void setLoading(bool value) { _isLoading = value; notifyListeners(); }
 
   StoreData applyChangesToData() {

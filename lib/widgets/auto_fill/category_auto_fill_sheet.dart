@@ -44,7 +44,7 @@ class CategoryAutoFillSheet extends StatefulWidget {
 
 class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
   bool _fillCover = true;
-  bool _fillLogo = true;
+  final bool _fillLogo = true;
   bool _fillGallery = true;
   bool _fillProducts = true;
   bool _isLoading = false;

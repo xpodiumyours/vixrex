@@ -1,276 +1,199 @@
-import 'package:flutter/material.dart';
-
 import 'package:vitrinx/models/chat_message.dart';
+import 'package:vitrinx/services/xrex_guidance_service.dart';
 import 'package:vitrinx/services/xrex_profile_snapshot.dart';
 
-/// Her intent yalnızca payload döndürür; yanıt metni ve quick-reply’ler
-/// [ChatbotConfig.responseFor] içinde yönetilir.
-class ChatbotIntent {
-  final List<String> keywords;
-  final String payload;
-
-  const ChatbotIntent({
-    required this.keywords,
-    required this.payload,
-  });
-}
-
+/// Xrex — VitrinX'in kural tabanlı kullanıcı rehberi.
+/// Tüm yanıtlar Türkçedir. API bağlantısı yoktur; kural tabanlı çalışır.
 abstract final class ChatbotConfig {
-  static const greetingPayload = 'greeting';
+  static const String botName = 'Xrex';
+  static const String botSubtitle = 'VitrinX Rehberi';
+  static const String systemStatus = 'AKTİF';
 
-  /// Kullanıcı mesajını analiz edip eşleşen payload’ı döndürür.
-  static String resolveIntent(String message) {
-    final lower = message.toLowerCase().trim();
+  // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
+  static ChatMessage get welcomeMessage => ChatMessage.bot(
+        'Merhaba! Ben $botName, VitrinX rehberiyim.\n\n'
+        'Vitrinini kurman, yayınlaman ve müşterilerine duyurman için sıradaki doğru adımı gösteririm.\n\n'
+        'Nasıl yardımcı olayım?',
+        quickReplies: mainMenuReplies(null),
+      );
 
-    final intents = [
-      ChatbotIntent(
-        keywords: ['merhaba', 'selam', 'nasılsın', 'naber', 'hey'],
-        payload: 'greeting',
-      ),
-      ChatbotIntent(
-        keywords: ['görünüm', 'tema', 'renk', 'tasarım', 'şablon', 'tema değiştir', 'tasarim'],
-        payload: 'theme',
-      ),
-      ChatbotIntent(
-        keywords: ['fotograf', 'resim', 'foto', 'galeri', 'gorsel', 'yukle'],
-        payload: 'fotograf',
-      ),
-      ChatbotIntent(
-        keywords: [
-          'hazir gorsel', 'hazır görsel', 'sablon', 'şablon', 'hazir sablon',
-          'hazır şablon', 'kategori gorseli', 'kategori görseli', 'hazir resim',
-          'hazır resim', 'otomatik doldur', 'sablon kullan', 'şablon kullan',
-        ],
-        payload: 'auto_fill_images',
-      ),
-      ChatbotIntent(
-        keywords: ['ürün', 'hizmet', 'ekle', 'fiyat', 'fiyatlarım', 'katalog', 'ürünlerim', 'hizmetlerim'],
-        payload: 'urun',
-      ),
-      ChatbotIntent(
-        keywords: ['vitrimin', 'düzenle', 'güncelle', 'vitrin', 'değiştir', 'ekle', 'form'],
-        payload: 'vitrin_duzenle',
-      ),
-      ChatbotIntent(
-        keywords: ['link', 'adres', 'url', 'bağlantı', 'baglanti', 'public'],
-        payload: 'link',
-      ),
-      ChatbotIntent(
-        keywords: ['qr', 'karekod', 'kare kod'],
-        payload: 'qr',
-      ),
-      ChatbotIntent(
-        keywords: ['xrex', 'chatbot', 'asistan', 'robot', 'bot', 'sen kimsin', 'x-rex'],
-        payload: 'xrex',
-      ),
-      ChatbotIntent(
-        keywords: ['yardım', 'help', 'destek', 'nasıl', 'nasıl yapılır', 'ipucu', 'öneri', 'ipucu', 'ne yapabilirsin'],
-        payload: 'yardim',
-      ),
-      ChatbotIntent(
-        keywords: ['sil', 'kaldır', 'temizle', 'iptal'],
-        payload: 'sil',
-      ),
-      ChatbotIntent(
-        keywords: ['galeri ekle', 'foto ekle', 'resim ekle'],
-        payload: 'fotograf',
-      ),
-    ];
+  // ─── Snapshot Tabanlı Karşılama Mesajları ────────────────────────────────
 
-    for (final intent in intents) {
-      for (final keyword in intent.keywords) {
-        if (lower.contains(keyword)) {
-          return intent.payload;
-        }
-      }
-    }
-
-    return 'unknown';
+  /// Vitrin durumuna göre kişiselleştirilmiş karşılama mesajı üretir.
+  static ChatMessage snapshotWelcome(
+    XrexProfileSnapshot snapshot, {
+    required bool hasShared,
+  }) {
+    final recommendation = XrexGuidanceService.recommendationFor(
+      snapshot: snapshot,
+      hasShared: hasShared,
+    );
+    return ChatMessage.bot(
+      '${recommendation.title}. ${recommendation.description}',
+      quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+      snapshotStateKey: recommendation.id,
+    );
   }
 
-  /// Payload’a göre yanıt mesajı ve hızlı cevaplar üretir.
-  static ChatMessage responseFor(
-    String payload,
+  // ─── Ana Menü Quick Reply'ları ───────────────────────────────────────────
+  static List<QuickReply> mainMenuReplies(
     XrexProfileSnapshot? snapshot, {
     bool hasShared = false,
   }) {
-    // Yardımcı fonksiyon
-    List<QuickReply> mainMenuReplies(
-      XrexProfileSnapshot? snapshot, {
-      required bool hasShared,
-    }) {
-      final replies = <QuickReply>[
-        const QuickReply(
-          label: 'Vitrinim Nerede?',
-          payload: 'vitrin_duzenle',
-          action: XrexAction.openVitrim,
-        ),
-        const QuickReply(
-          label: 'Nasıl Kullanırım?',
-          payload: 'yardim',
-        ),
-        const QuickReply(
-          label: 'Fotoğraf Nasıl Eklerim?',
-          payload: 'fotograf',
-        ),
-        if (snapshot?.isPublished == true && !hasShared)
-          const QuickReply(
-            label: 'Paylaş',
-            payload: 'paylas',
-            action: XrexAction.shareWhatsapp,
-          ),
+    if (snapshot == null) {
+      return const [
+        QuickReply(label: 'VitrinX Ne İşe Yarar?', payload: 'vitrinx_info'),
+        QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
       ];
-      return replies;
     }
+    
+    final recommendation = XrexGuidanceService.recommendationFor(
+      snapshot: snapshot,
+      hasShared: hasShared,
+    );
+    return [
+      QuickReply(
+        label: recommendation.buttonLabel,
+        payload: 'action_step',
+        action: recommendation.action,
+      ),
+      if (snapshot.isPublished) ...const [
+        QuickReply(
+          label: 'Linki Kopyala',
+          payload: 'copy_link',
+          action: XrexAction.copyLink,
+        ),
+        QuickReply(
+          label: 'QR Göster',
+          payload: 'show_qr',
+          action: XrexAction.showQr,
+        ),
+      ],
+      const QuickReply(label: 'VitrinX Ne İşe Yarar?', payload: 'vitrinx_info'),
+      const QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
+    ];
+  }
 
+  static List<QuickReply> get helpReplies => mainMenuReplies(null);
+
+  // ─── Intent Tanımları ────────────────────────────────────────────────────
+  static const List<ChatbotIntent> intents = [
+    ChatbotIntent(
+      keywords: ['merhaba', 'selam', 'nasil', 'baslat', 'baslayalim', 'yardim', 'ne yapabilirsin'],
+      payload: 'merhaba',
+    ),
+    ChatbotIntent(
+      keywords: ['vitrinx', 'nedir', 'ne işe yarar', 'nasil calisir', 'kurulum', 'vitrin'],
+      payload: 'vitrinx_info',
+    ),
+    ChatbotIntent(
+      keywords: ['ucret', 'fiyat', 'para', 'komisyon', 'ucretsiz', 'odeme', 'bedava', 'uyelik', 'kullanim'],
+      payload: 'membership_info',
+    ),
+    ChatbotIntent(
+      keywords: ['fotograf', 'resim', 'foto', 'galeri', 'gorsel', 'yukle'],
+      payload: 'fotograf',
+    ),
+    ChatbotIntent(
+      keywords: ['qr', 'kod', 'link', 'paylas', 'baglanti', 'url'],
+      payload: 'qr',
+    ),
+    ChatbotIntent(
+      keywords: ['randevu', 'rezervasyon', 'saat', 'takvim', 'musteri kabul'],
+      payload: 'randevu',
+    ),
+    ChatbotIntent(
+      keywords: ['whatsapp', 'telefon', 'numara', 'iletisim', 'mesaj'],
+      payload: 'whatsapp',
+    ),
+    ChatbotIntent(
+      keywords: ['adres', 'konum', 'harita', 'nerede', 'yol tarifi', 'lokasyon'],
+      payload: 'adres',
+    ),
+    ChatbotIntent(
+      keywords: ['yayinla', 'canli', 'aktif', 'yayinda', 'goster', 'acik'],
+      payload: 'yayinla',
+    ),
+  ];
+
+  // ─── Intent → Yanıt Tablosu ─────────────────────────────────────────────
+  static ChatMessage responseFor(
+    String payload, {
+    XrexProfileSnapshot? snapshot,
+    bool hasShared = false,
+  }) {
     switch (payload) {
-      case 'greeting':
+      case 'merhaba':
+        return snapshot == null
+            ? welcomeMessage
+            : snapshotWelcome(snapshot, hasShared: hasShared);
+
+      case 'vitrinx_info':
         return ChatMessage.bot(
-          'Merhaba! Size nasıl yardımcı olabilirim? Aşağıdaki seçeneklerden birine tıklayabilir veya sorunuzu yazabilirsiniz.',
+          'VitrinX ile işletme bilgilerini tek yerde toplar, vitrinini yayınlar ve link, QR veya WhatsApp ile müşterilerine duyurursun.',
+          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+        );
+        
+      case 'membership_info':
+        return ChatMessage.bot(
+          'Temel vitrin oluşturma şu an ücretsizdir. Gelişmiş özellikler uygulama içinde ayrıca gösterilecektir.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
-      case 'theme':
+      case 'vitrin_kurulum':
         return ChatMessage.bot(
-          'Vitrinim ekranındaki "Görünüm" sekmesinden dilediğiniz renk temasını seçebilirsiniz. Canlı önizlemesi sayesinde değişiklikleri anında görebilirsiniz.',
+          'Vitrin kurulumu için yalnızca İşletme Adı, WhatsApp, Adres ve Yasal Onay adımlarını tamamlamanız yeterlidir.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
       case 'fotograf':
         return ChatMessage.bot(
-          'Vitrinim → Galeri veya Kapak Fotoğrafı bölümlerinden dilediğiniz fotoğrafları ekleyebilirsiniz. Ayrıca kategorine özel hazır görseller de kullanabilirsin!',
-          quickReplies: [
-            ...mainMenuReplies(snapshot, hasShared: hasShared),
-            if (snapshot?.category != null && snapshot!.category.isNotEmpty)
-              QuickReply(
-                label: 'Hazır Görselleri Kullan',
-                payload: 'auto_fill_images',
-                action: XrexAction.openAutoFillDialog,
-              ),
-          ],
-        );
-
-      case 'auto_fill_images':
-        if (snapshot?.category == null || snapshot!.category.isEmpty) {
-          return ChatMessage.bot(
-            'Hazır görselleri kullanmak için önce vitrininde bir kategori seçmelisin. Kategori seçimi vitrin formunun en altında yer alır.',
-            quickReplies: [
-              QuickReply(
-                label: 'Kategoriye Git',
-                payload: 'scroll_category',
-                action: XrexAction.scrollToCategory,
-              ),
-              ...mainMenuReplies(snapshot, hasShared: hasShared),
-            ],
-          );
-        }
-        final categoryLabel = snapshot.category;
-        return ChatMessage.bot(
-          '$categoryLabel kategorin için özenle seçilmiş hazır görseller mevcut! Tek tıkla kapak fotoğrafı, galeri ve ürün şablonlarını vitrinine ekleyebilirsin.',
-          quickReplies: [
-            QuickReply(
-              label: 'Hazır Görselleri Kullan',
-              payload: 'apply_auto_fill',
-              action: XrexAction.openAutoFillDialog,
-            ),
-            QuickReply(
-              label: 'Galeriye Git',
-              payload: 'scroll_gallery',
-              action: XrexAction.scrollToGallery,
-            ),
-            ...mainMenuReplies(snapshot, hasShared: hasShared),
-          ],
-        );
-
-      case 'urun':
-        return ChatMessage.bot(
-          snapshot != null
-              ? 'Vitrinim → Ürünler sekmesine giderek ürün veya hizmetlerinizi fotoğraflarıyla birlikte ekleyebilirsiniz.'
-              : 'Önce vitrinim ekranına gitmeniz gerekiyor.',
-          quickReplies: [
-            ...mainMenuReplies(snapshot, hasShared: hasShared),
-            const QuickReply(
-              label: 'Vitrinime Git',
-              payload: 'vitrin_duzenle',
-              action: XrexAction.openVitrim,
-            ),
-          ],
-        );
-
-      case 'vitrin_duzenle':
-        return ChatMessage.bot(
-          snapshot != null
-              ? 'Vitrinim sekmesinden vitrininizi dilediğiniz gibi düzenleyebilirsiniz.'
-              : 'Vitrinim sekmesine giderek vitrininizi oluşturabilirsiniz.',
-          quickReplies: [
-            const QuickReply(
-              label: 'Vitrinime Git',
-              payload: 'vitrin_duzenle',
-              action: XrexAction.openVitrim,
-            ),
-            ...mainMenuReplies(snapshot, hasShared: hasShared),
-          ],
-        );
-
-      case 'link':
-        return ChatMessage.bot(
-          snapshot?.publicLink != null && snapshot!.publicLink.isNotEmpty
-              ? 'Vitrininizin bağlantısı: ${snapshot.publicLink}'
-              : 'Bağlantınızı paylaşmak için vitrininizi yayınlamış olmanız gerekiyor.',
-          quickReplies: [
-            if (snapshot?.publicLink != null && snapshot!.publicLink.isNotEmpty)
-              const QuickReply(
-                label: 'Linki Kopyala',
-                payload: 'link_kopyala',
-                action: XrexAction.copyLink,
-              ),
-            ...mainMenuReplies(snapshot, hasShared: hasShared),
-          ],
+          'Vitrinim → Galeri veya Kapak Fotoğrafı bölümlerinden dilediğiniz fotoğrafları ekleyebilirsiniz.',
+          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
       case 'qr':
         return ChatMessage.bot(
-          snapshot != null
-              ? 'QR kodunuzu görüntülemek için Vitrinim sekmesine gidebilirsiniz.'
-              : 'Önce vitrinim ekranına gitmeniz gerekiyor.',
-          quickReplies: [
-            const QuickReply(
-              label: 'QR Göster',
-              payload: 'qr_goster',
-              action: XrexAction.showQr,
-            ),
-            ...mainMenuReplies(snapshot, hasShared: hasShared),
-          ],
-        );
-
-      case 'xrex':
-        return ChatMessage.bot(
-          'Ben X-Rex, dijital vitrin asistanınızım! Size vitrin oluşturma, düzenleme, paylaşım ve optimizasyon konularında yardımcı olabilirim.',
+          'Vitrininizi yayınladıktan sonra sağ üstteki paylaş ikonundan QR kodunuza ve linkinize ulaşabilirsiniz.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
-      case 'yardim':
+      case 'randevu':
         return ChatMessage.bot(
-          'Size şu konularda yardımcı olabilirim:\n'
-          '• Vitrin oluşturma ve düzenleme\n'
-          '• Tema ve görünüm ayarları\n'
-          '• Fotoğraf ve ürün ekleme\n'
-          '• Vitrin paylaşımı ve bağlantı alma\n'
-          'Hangi konuda yardım almak istersiniz?',
+          'Vitrinim → Randevu Yönetimi sayfasından randevu sisteminizi aktif edebilirsiniz.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
-      case 'sil':
+      case 'whatsapp':
         return ChatMessage.bot(
-          'Silmek istediğiniz öğeyi belirtir misiniz? Genel ayarlar için Ayarlar sekmesine gidebilirsiniz.',
+          'Vitrinim → İletişim sayfasından müşterilerinizin size doğrudan ulaşmasını sağlayacak WhatsApp numaranızı girebilirsiniz.',
+          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+        );
+
+      case 'adres':
+        return ChatMessage.bot(
+          'Vitrinim → Konum sayfasından adresinizi kaydedebilirsiniz. Müşterileriniz tek tıkla haritalarda sizi bulur.',
+          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+        );
+
+      case 'yayinla':
+        return ChatMessage.bot(
+          'Vitrinim sayfasındaki "Yayınla" butonuna basarak dijital vitrininizi hemen müşterilerinizle buluşturabilirsiniz.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
       default:
         return ChatMessage.bot(
-          'Anladığımdan emin değilim. Size en iyi şekilde yardımcı olabilmem için aşağıdaki seçeneklerden birine tıklayabilir veya sorunuzu daha detaylı yazabilirsiniz.',
+          'Üzgünüm, bunu tam anlayamadım. Aşağıdaki seçeneklerden birini deneyebilirsiniz:',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
     }
   }
+}
+
+// ─── Intent sınıfı ─────────────────────────────────────────────────────────
+class ChatbotIntent {
+  final List<String> keywords;
+  final String payload;
+  const ChatbotIntent({required this.keywords, required this.payload});
 }

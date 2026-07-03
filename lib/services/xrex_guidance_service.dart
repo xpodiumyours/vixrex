@@ -1,6 +1,5 @@
 import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/services/xrex_profile_snapshot.dart';
-import 'package:vitrinx/services/category_image_service.dart';
 
 /// X-rex ekranı ve sohbeti tarafından ortak kullanılan tek öneri modeli.
 class XrexRecommendation {
@@ -214,7 +213,7 @@ class XrexGuidanceService {
         title: 'İşletme adınızı girin',
         description:
             'Vitrininizde görünecek işletme adınızı ekleyerek başlayın.',
-        buttonLabel: 'İşletme Adına Git',
+        buttonLabel: 'İşletme Adı Ekle',
         action: XrexAction.scrollToName,
       ),
       XrexNextStep.whatsapp => const XrexRecommendation(
@@ -223,7 +222,7 @@ class XrexGuidanceService {
         title: 'WhatsApp numaranızı ekleyin',
         description:
             'Müşterilerinizin sizi hızlıca ulaşabilmesi için WhatsApp numaranızı girin.',
-        buttonLabel: 'WhatsApp Alanına Git',
+        buttonLabel: 'WhatsApp Ekle',
         action: XrexAction.scrollToWhatsapp,
       ),
       XrexNextStep.address => const XrexRecommendation(
@@ -232,7 +231,7 @@ class XrexGuidanceService {
         title: 'Adres ve konum bilgisi ekleyin',
         description:
             'Müşterilerin sizi bulabilmesi için adres ve konum bilgisi ekleyin.',
-        buttonLabel: 'Adres Alanına Git',
+        buttonLabel: 'Adres Ekle',
         action: XrexAction.scrollToAddress,
       ),
       XrexNextStep.legal => const XrexRecommendation(
@@ -241,7 +240,7 @@ class XrexGuidanceService {
         title: 'Yasal onayları tamamlayın',
         description:
             'Vitrininizi yayınlayabilmeniz için gerekli yasal onayları vermeniz gerekiyor.',
-        buttonLabel: 'Yasal Onaylara Git',
+        buttonLabel: 'Onayları İncele',
         action: XrexAction.scrollToLegal,
       ),
       _ => const XrexRecommendation(
