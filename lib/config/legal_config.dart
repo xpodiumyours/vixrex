@@ -4,13 +4,13 @@ class LegalConfig {
   static const String appName = 'VitrinX';
   static const String ownerName = String.fromEnvironment(
     'LEGAL_DATA_CONTROLLER_TITLE',
-    defaultValue: 'Xpodiumyours',
+    defaultValue: 'Aksakal Ticaret',
   );
   static const String companyName = ownerName;
   static const String productOwnershipText = '$appName, $ownerName ürünüdür.';
   static const String dataControllerAddress = String.fromEnvironment(
     'LEGAL_DATA_CONTROLLER_ADDRESS',
-    defaultValue: '',
+    defaultValue: 'Ümraniye Esenevler Mahallesi Lokman Hekim Caddesi No 18, İstanbul',
   );
   static const String mersisNumber = String.fromEnvironment(
     'LEGAL_MERSIS_NUMBER',
@@ -18,7 +18,7 @@ class LegalConfig {
   );
   static const String taxNumber = String.fromEnvironment(
     'LEGAL_TAX_NUMBER',
-    defaultValue: '',
+    defaultValue: '0340472476',
   );
   static const String privacyEmail = String.fromEnvironment(
     'LEGAL_PRIVACY_EMAIL',
