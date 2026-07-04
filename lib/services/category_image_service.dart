@@ -283,11 +283,12 @@ class CategoryImageService {
 
       final response = await _supabase
           .from('category_image_templates')
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('category_key', key)
           .eq('is_active', true);
 
-      return response.count ?? 0;
+      if (response == null) return 0;
+      return (response as List).length;
     } catch (e) {
       debugPrint('CategoryImageService.getTemplateCount error: $e');
       return 0;
