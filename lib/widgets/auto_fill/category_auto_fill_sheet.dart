@@ -51,6 +51,7 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
   bool _isApplying = false;
   CategoryImageSet? _imageSet;
   String? _error;
+  String? _selectedCoverUrl;
 
   @override
   void initState() {
@@ -87,6 +88,7 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
         fillGallery: _fillGallery,
         fillProducts: _fillProducts,
       ),
+      selectedCoverUrl: _selectedCoverUrl,
     );
 
     setState(() => _isApplying = false);
@@ -329,20 +331,42 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
         children: [
           // Onizleme
           if (_imageSet!.coverImages.isNotEmpty) ...[
-            _buildSectionTitle('Kapak Onizleme'),
+            _buildSectionTitle('Kapak Onizleme (secmek icin dokun)'),
             const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                _imageSet!.coverImages.first.imageUrl,
-                height: 160,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  height: 160,
-                  color: Colors.grey.shade200,
-                  child: const Center(child: Icon(Icons.broken_image)),
-                ),
+            SizedBox(
+              height: 160,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _imageSet!.coverImages.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final img = _imageSet!.coverImages[index];
+                  final isSelected = _selectedCoverUrl == img.imageUrl;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedCoverUrl = img.imageUrl),
+                    child: Container(
+                      width: 280,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : Colors.transparent,
+                          width: 3,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          img.imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: Colors.grey.shade200,
+                            child: const Center(child: Icon(Icons.broken_image)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 20),

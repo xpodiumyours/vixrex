@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/local_storage_keys.dart';
 
@@ -184,6 +185,24 @@ class StoreLocalStorageService {
   Future<void> clearPendingCategoryKey() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('pending_category_key');
+  }
+
+  /// Fetch fresh store data from Supabase and save to local storage.
+  Future<void> saveVitrinDataFromSupabase({required String storeId}) async {
+    try {
+      final client = Supabase.instance.client;
+      final response = await client
+          .from('stores')
+          .select()
+          .eq('id', storeId)
+          .single();
+      final data = _readStoreData(jsonEncode(response));
+      if (data != null) {
+        await saveVitrinData(data);
+      }
+    } catch (e) {
+      debugPrint('saveVitrinDataFromSupabase error: $e');
+    }
   }
 
   // ── Private ───────────────────────────────────────────────────────────

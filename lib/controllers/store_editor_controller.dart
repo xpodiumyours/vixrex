@@ -494,10 +494,18 @@ class StoreEditorController extends ChangeNotifier {
         publicLink: publicLink,
         slug: result.slug,
         name: _data.name,
-        editToken: effectiveEditToken,
+        editToken: result.editToken,
       );
 
       await saveLocally();
+
+      // Explicitly save editToken to local storage so it persists
+      await storage.savePublishedVitrinInfo(
+        slug: result.slug,
+        publicLink: publicLink,
+        name: _data.name,
+        editToken: result.editToken,
+      );
       notifyListeners();
       return publicLink;
     } on StorePublishException {

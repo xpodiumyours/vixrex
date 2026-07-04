@@ -459,6 +459,7 @@ class StorePublishService {
               publicPath: '/v/$slug',
               slug: slug,
               wasUpdated: true,
+              editToken: editToken,
             );
           }
         } on PostgrestException catch (error) {
@@ -483,6 +484,7 @@ class StorePublishService {
           publicPath: '/v/$slug',
           slug: slug,
           wasUpdated: false,
+          editToken: editToken,
         );
       }
 
@@ -491,6 +493,7 @@ class StorePublishService {
         publicPath: '/v/$slug',
         slug: slug,
         wasUpdated: true,
+        editToken: editToken,
       );
     } on PostgrestException catch (error) {
       if (_isDuplicateSlugError(error)) {
@@ -502,6 +505,7 @@ class StorePublishService {
           publicPath: '/v/$slug',
           slug: slug,
           wasUpdated: true,
+          editToken: editToken,
         );
       }
 
@@ -650,11 +654,13 @@ class StorePublishResult {
   final String publicPath;
   final String slug;
   final bool wasUpdated;
+  final String editToken;
 
   const StorePublishResult({
     required this.publicPath,
     required this.slug,
     required this.wasUpdated,
+    required this.editToken,
   });
 }
 

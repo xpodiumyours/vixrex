@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/services/category_image_service.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
 
 // ─── Otomatik Doldurma Secenekleri ───────────────────────────────────────────
 
@@ -77,6 +78,7 @@ class AutoFillService {
     required String storeId,
     required String categoryKey,
     AutoFillOptions options = const AutoFillOptions(),
+    String? selectedCoverUrl,
   }) async {
     try {
       // RPC fonksiyonunu cagir
@@ -117,6 +119,7 @@ class AutoFillService {
         storeId: storeId,
         categoryKey: categoryKey,
         options: options,
+        selectedCoverUrl: selectedCoverUrl,
       );
     }
   }
@@ -126,6 +129,7 @@ class AutoFillService {
     required String storeId,
     required String categoryKey,
     required AutoFillOptions options,
+    String? selectedCoverUrl,
   }) async {
     try {
       // 1. Gorselleri cek
@@ -165,7 +169,7 @@ class AutoFillService {
       if (options.fillCover && imageSet.coverImages.isNotEmpty) {
         final currentCover = storeResponse['shelf_image_url'] as String? ?? '';
         if (currentCover.isEmpty) {
-          updates['shelf_image_url'] = imageSet.coverImages.first.imageUrl;
+          updates['shelf_image_url'] = selectedCoverUrl ?? imageSet.coverImages.first.imageUrl;
           appliedFields.add('kapak');
         }
       }
@@ -198,6 +202,8 @@ class AutoFillService {
       // 7. Guncelle
       if (updates.isNotEmpty) {
         await _supabase.from('stores').update(updates).eq('id', storeId);
+        // Update local storage so initialize() sees fresh data
+        await StoreLocalStorageService().saveVitrinDataFromSupabase(storeId: storeId);
       }
 
       return AutoFillResult(
