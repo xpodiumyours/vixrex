@@ -92,6 +92,12 @@ class StorePublishValidator {
       missing.add('konum / adres');
     }
 
+    if (data.provinceName.trim().isEmpty || data.provinceCode.trim().isEmpty) {
+      missing.add('il');
+    }
+    if (data.districtName.trim().isEmpty || data.districtCode.trim().isEmpty) {
+      missing.add('ilçe');
+    }
     if (missing.isNotEmpty) {
       return 'Lütfen şu zorunlu alanları doldurun: ${missing.join(', ')}.';
     }
@@ -131,6 +137,12 @@ class StorePublishValidator {
       missingItems.add('işletme kategorisi');
     }
 
+    if (data.provinceName.trim().isEmpty || data.provinceCode.trim().isEmpty) {
+      missingItems.add('il');
+    }
+    if (data.districtName.trim().isEmpty || data.districtCode.trim().isEmpty) {
+      missingItems.add('ilçe');
+    }
     if (missingItems.isNotEmpty) {
       return 'Mağaza yayınlanmadan önce şu alanları tamamlayın: ${missingItems.join(', ')}.';
     }

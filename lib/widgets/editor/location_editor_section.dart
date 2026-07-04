@@ -21,6 +21,7 @@ class LocationEditorSection extends StatefulWidget {
 
   final void Function(String? provinceCode, String? provinceName) onProvinceChanged;
   final void Function(String? districtCode, String? districtName) onDistrictChanged;
+  final void Function(String address) onAddressChanged;
   final void Function({
     double? latitude,
     double? longitude,
@@ -51,6 +52,7 @@ class LocationEditorSection extends StatefulWidget {
     required this.isLocating,
     required this.onProvinceChanged,
     required this.onDistrictChanged,
+    required this.onAddressChanged,
     required this.onLocationUpdated,
     required this.onLocatingStateChanged,
   });
@@ -339,6 +341,7 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
         const SizedBox(height: 8),
         TextField(
           controller: widget.addressController,
+          onChanged: (value) => widget.onAddressChanged(value),
           style: const TextStyle(
             color: darkText,
             fontSize: 14,

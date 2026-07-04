@@ -255,6 +255,7 @@ class VitrinFormSection extends StatelessWidget {
                   isLocating: controller.isLocating,
                   onProvinceChanged: controller.selectProvince,
                   onDistrictChanged: controller.selectDistrict,
+                  onAddressChanged: (value) => controller.updateAddress(value),
                   onLocatingStateChanged: (_) {},
                   onLocationUpdated: ({
                     latitude,
@@ -267,7 +268,10 @@ class VitrinFormSection extends StatelessWidget {
                     districtCode,
                     districtName,
                   }) {
-                    if (address != null) _address.text = address;
+                    if (address != null) {
+                      _address.text = address;
+                      controller.updateAddress(address);
+                    }
                     controller.selectProvince(provinceCode, provinceName);
                     controller.selectDistrict(districtCode, districtName);
                   },
