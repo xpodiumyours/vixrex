@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/services/category_image_service.dart';
+import 'package:vitrinx/services/auto_fill_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
 /// Local uygulama callback'i - controller'a gorselleri local olarak uygular
