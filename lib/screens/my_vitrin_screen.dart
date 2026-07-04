@@ -96,19 +96,18 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   }
 
   /// Xrex aksiyonuna göre ilgili forma otomatik kaydırır ve odaklanır.
-  /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden cagrılır.
+  /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden çağrılır.
   void scrollToXrexAction(XrexAction action) {
     _state.scrollToXrexAction(action);
   }
 
   /// X-rex asistanindan kategori sablonu otomatik doldurma bottom sheet'ini acar.
-  /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden cagrılır.
+  /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden çağrılır.
   void openAutoFillDialog() {
     final kategori = _controller.selectedKategori;
-    final storeId = _controller.data.id?.toString() ?? '';
 
-    if (kategori.isEmpty || storeId.isEmpty) {
-      _state.showSnackBar(context, 'Lütfen önce kategori seçin ve vitrin kaydedin.');
+    if (kategori.isEmpty) {
+      _state.showSnackBar(context, 'Lütfen önce kategori seçin.');
       _state.scrollToXrexAction(XrexAction.scrollToCategory);
       return;
     }
@@ -119,11 +118,34 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       return;
     }
 
+    final storeId = _controller.data.id?.toString() ?? '';
+
     CategoryAutoFillSheet.show(
       context: context,
       categoryKey: categoryKey,
       categoryLabel: kategori,
       storeId: storeId,
+      onLocalApply: storeId.isEmpty
+          ? ({
+              coverImage,
+              galleryImages = const [],
+              productImages = const [],
+            }) {
+              _controller.applyCategoryTemplateLocal(
+                coverImageUrl: coverImage?.imageUrl,
+                galleryImageUrls:
+                    galleryImages.map((img) => img.imageUrl).toList(),
+                productTemplates: productImages
+                    .map((img) => {
+                          'name': img.title ?? 'Ürün',
+                          'description': img.description ?? '',
+                          'price': '',
+                          'category': kategori,
+                        })
+                    .toList(),
+              );
+            }
+          : null,
       onApplied: () {
         _controller.initialize(_controller.data.name);
       },
