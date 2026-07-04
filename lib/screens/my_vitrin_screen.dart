@@ -146,8 +146,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
               );
             }
           : null,
-      onApplied: () {
-        _controller.initialize(_controller.data.name);
+      onApplied: () async {
+        await _controller.syncGalleryFromSupabase();
+        await _controller.initialize(_controller.data.name);
       },
     );
   }
