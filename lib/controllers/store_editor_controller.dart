@@ -183,7 +183,7 @@ class StoreEditorController extends ChangeNotifier {
       }
       _publishedInfo = await storage.loadPublishedVitrinInfo();
       
-      // Eğer local'de publishedInfo yoksa, Supabase'den mevcut vitrini çek
+      // Eger local'de publishedInfo yoksa, Supabase'den mevcut vitrini cek
       if (_publishedInfo == null) {
         await _fetchPublishedInfoFromSupabase();
       }
@@ -200,7 +200,7 @@ class StoreEditorController extends ChangeNotifier {
     }
   }
   
-  /// Supabase'den mevcut yayınlanmış vitrini çek ve _publishedInfo'yu doldur
+  /// Supabase'den mevcut yayinlanmis vitrini cek ve _publishedInfo'yu doldur
   Future<void> _fetchPublishedInfoFromSupabase() async {
     try {
       final client = _resolveClient();
@@ -209,7 +209,7 @@ class StoreEditorController extends ChangeNotifier {
       final userId = client.auth.currentUser?.id;
       if (userId == null) return;
       
-      // Son yayınlanmış vitrini çek
+      // Son yayinlanmis vitrini cek
       final response = await client
           .from('stores')
           .select('slug, edit_token, name')
@@ -510,7 +510,7 @@ class StoreEditorController extends ChangeNotifier {
     }
   }
 
-  /// Yayinlama rızasını geri cek
+  /// Yayinlama rizasini geri cek
   /// editToken ve slug ayrı degerler - editToken auth icin, slug public path icin
   Future<void> withdrawPublicationConsent() async {
     final slug = _publishedInfo?.slug ?? _data.slug;
@@ -683,6 +683,68 @@ class StoreEditorController extends ChangeNotifier {
       final item = _editorGalleryItems[index];
       if (item.isFromUrl) { _editorGalleryItems[index] = item.markRemoved(); }
       else { _editorGalleryItems.removeAt(index); }
+      notifyListeners();
+    }
+  }
+
+  /// Kategori sablonundan gelen gorselleri local olarak uygular.
+  /// Vitrin henuz kaydedilmemisse bu metod kullanilir.
+  void applyCategoryTemplateLocal({
+    String? coverImageUrl,
+    List<String> galleryImageUrls = const [],
+    List<Map<String, dynamic>> productTemplates = const [],
+  }) {
+    var hasChanges = false;
+
+    // Kapak gorseli
+    if (coverImageUrl != null && coverImageUrl.isNotEmpty) {
+      setCoverUrl(coverImageUrl);
+      _data.shelfImageUrl = coverImageUrl;
+      hasChanges = true;
+    }
+
+    // Galeri gorselleri
+    if (galleryImageUrls.isNotEmpty) {
+      final currentCount = _editorGalleryItems.where((item) => !item.isRemoved).length;
+      final remainingSpace = _maxGalleryPhotos - currentCount;
+
+      if (remainingSpace > 0) {
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final newItems = galleryImageUrls
+            .take(remainingSpace)
+            .toList()
+            .asMap()
+            .entries
+            .map((entry) => EditorGalleryItem.fromUrl(
+                  entry.value,
+                  id: 'local_template_${ts}_${entry.key}',
+                ))
+            .toList();
+        _editorGalleryItems = [..._editorGalleryItems, ...newItems];
+        hasChanges = true;
+      }
+    }
+
+    // Urun sablonlari
+    if (productTemplates.isNotEmpty) {
+      for (final template in productTemplates) {
+        final name = template['name'] as String? ?? '';
+        if (name.isNotEmpty) {
+          _data.products.add(Product(
+            id: 'local_product_${DateTime.now().millisecondsSinceEpoch}_${_data.products.length}',
+            name: name,
+            description: template['description'] as String? ?? '',
+            price: template['price'] as String? ?? '',
+            category: template['category'] as String? ?? 'Diğer',
+            isVisible: true,
+          ));
+          hasChanges = true;
+        }
+      }
+    }
+
+    if (hasChanges) {
+      saveLocally();
       notifyListeners();
     }
   }
