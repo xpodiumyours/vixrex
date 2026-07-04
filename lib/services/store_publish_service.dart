@@ -440,6 +440,26 @@ class StorePublishService {
     try {
       client = supabaseClient ?? Supabase.instance.client;
 
+      final existingStore =
+          await client
+              .from('stores')
+              .select('slug, edit_token')
+              .eq('slug', slug)
+              .maybeSingle();
+
+      // editToken boşsa ve store varsa → direkt update (RPC yerine)
+      // Çünkü update_store_with_token RPC'si boş editToken'i reject eder
+      if (editToken.trim().isEmpty && existingStore != null) {
+        final payload = payloadBuilder.toStoreUpdateMap(data);
+        await client.from('stores').update(payload).eq('slug', slug);
+        return StorePublishResult(
+          publicPath: '/v/$slug',
+          slug: slug,
+          wasUpdated: true,
+          editToken: editToken,
+        );
+      }
+
       if (editToken.trim().isNotEmpty) {
         try {
           final existingByToken =
@@ -466,13 +486,6 @@ class StorePublishService {
           debugPrint('Store token lookup skipped: ${error.message}');
         }
       }
-
-      final existingStore =
-          await client
-              .from('stores')
-              .select('slug')
-              .eq('slug', slug)
-              .maybeSingle();
 
       if (existingStore == null) {
         final payload = payloadBuilder.toStoreInsertMap(data, slug, editToken);
