@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:vitrinx/models/store_data.dart';
 
 // ─── Category Image Template Model ───────────────────────────────────────────
@@ -29,11 +30,11 @@ class CategoryTemplateImage {
 
   factory CategoryTemplateImage.fromJson(Map<String, dynamic> json) {
     return CategoryTemplateImage(
-      id: json['id'] as String,
-      categoryKey: json['category_key'] as String,
-      categoryLabel: json['category_label'] as String,
-      imageType: json['image_type'] as String,
-      imageUrl: json['image_url'] as String,
+      id: json['id'] as String? ?? '',
+      categoryKey: json['category_key'] as String? ?? '',
+      categoryLabel: json['category_label'] as String? ?? '',
+      imageType: json['image_type'] as String? ?? '',
+      imageUrl: json['image_url'] as String? ?? '',
       thumbnailUrl: json['thumbnail_url'] as String?,
       title: json['title'] as String?,
       description: json['description'] as String?,
@@ -95,13 +96,36 @@ class CategoryOption {
   int get hashCode => key.hashCode;
 }
 
+// ─── Turkce karakter normalizasyonu ──────────────────────────────────────────
+
+/// Turkce karakterleri ASCII esdegerine donusturur
+/// Ornek: "Guzellik" -> "guzellik", "Kuafor" -> "kuafor"
+String _normalizeTurkish(String text) {
+  return text
+      .toLowerCase()
+      .trim()
+      .replaceAll('ç', 'c')
+      .replaceAll('ğ', 'g')
+      .replaceAll('ı', 'i')
+      .replaceAll('ö', 'o')
+      .replaceAll('ş', 's')
+      .replaceAll('ü', 'u')
+      .replaceAll('İ', 'i')
+      .replaceAll('I', 'i')
+      .replaceAll('Ç', 'c')
+      .replaceAll('Ğ', 'g')
+      .replaceAll('Ö', 'o')
+      .replaceAll('Ş', 's')
+      .replaceAll('Ü', 'u');
+}
+
 // ─── Kategori <-> image_key eslestirmesi ────────────────────────────────────
 
 /// StoreData.kategori degerini category_image_templates.category_key'e donusturur
 String? mapKategoriToKey(String kategori) {
-  final normalized = kategori.toLowerCase().trim();
+  final normalized = _normalizeTurkish(kategori);
 
-  // Dogrudan eslesme
+  // Dogrudan eslesme (normalize edilmis)
   if (normalized.contains('butik') || normalized.contains('giyim')) {
     return 'butik_giyim';
   }
@@ -157,24 +181,34 @@ class CategoryImageService {
 
   /// Bir kategoriye ait tum aktif gorselleri getir
   static Future<CategoryImageSet> getImagesForCategory(String categoryKey) async {
-    final response = await _supabase
-        .from('category_image_templates')
-        .select('*')
-        .eq('category_key', categoryKey)
-        .eq('is_active', true)
-        .order('display_order');
+    try {
+      final response = await _supabase
+          .from('category_image_templates')
+          .select('*')
+          .eq('category_key', categoryKey)
+          .eq('is_active', true)
+          .order('display_order');
 
-    final images =
-        (response as List).map((r) => CategoryTemplateImage.fromJson(r)).toList();
+      if (response == null) {
+        return CategoryImageSet(categoryKey: categoryKey, categoryLabel: categoryKey);
+      }
 
-    return CategoryImageSet(
-      categoryKey: categoryKey,
-      categoryLabel: images.isNotEmpty ? images.first.categoryLabel : categoryKey,
-      coverImages: images.where((i) => i.imageType == 'cover').toList(),
-      logoImages: images.where((i) => i.imageType == 'logo_placeholder').toList(),
-      galleryImages: images.where((i) => i.imageType == 'gallery').toList(),
-      productImages: images.where((i) => i.imageType == 'product').toList(),
-    );
+      final list = response as List;
+      final images = list.map((r) => CategoryTemplateImage.fromJson(r as Map<String, dynamic>)).toList();
+
+      return CategoryImageSet(
+        categoryKey: categoryKey,
+        categoryLabel: images.isNotEmpty ? images.first.categoryLabel : categoryKey,
+        coverImages: images.where((i) => i.imageType == 'cover').toList(),
+        logoImages: images.where((i) => i.imageType == 'logo_placeholder').toList(),
+        galleryImages: images.where((i) => i.imageType == 'gallery').toList(),
+        productImages: images.where((i) => i.imageType == 'product').toList(),
+      );
+    } catch (e, stackTrace) {
+      debugPrint('CategoryImageService.getImagesForCategory error: $e');
+      debugPrint(stackTrace.toString());
+      return CategoryImageSet(categoryKey: categoryKey, categoryLabel: categoryKey);
+    }
   }
 
   /// StoreData.kategori'den otomatik key uretip gorselleri getir
@@ -186,57 +220,77 @@ class CategoryImageService {
 
   /// Tumu aktif kategorileri listele (distinct)
   static Future<List<CategoryOption>> getAvailableCategories() async {
-    final response = await _supabase
-        .from('category_image_templates')
-        .select('category_key, category_label')
-        .eq('is_active', true)
-        .order('category_label');
+    try {
+      final response = await _supabase
+          .from('category_image_templates')
+          .select('category_key, category_label')
+          .eq('is_active', true)
+          .order('category_label');
 
-    final seen = <String>{};
-    final options = <CategoryOption>[];
+      if (response == null) return const [];
 
-    for (final row in response as List) {
-      final key = row['category_key'] as String;
-      if (!seen.contains(key)) {
-        seen.add(key);
-        options.add(
-          CategoryOption(
-            key: key,
-            label: row['category_label'] as String,
-          ),
-        );
+      final list = response as List;
+      final seen = <String>{};
+      final options = <CategoryOption>[];
+
+      for (final row in list) {
+        final key = (row as Map<String, dynamic>)['category_key'] as String? ?? '';
+        if (key.isNotEmpty && !seen.contains(key)) {
+          seen.add(key);
+          options.add(
+            CategoryOption(
+              key: key,
+              label: row['category_label'] as String? ?? key,
+            ),
+          );
+        }
       }
-    }
 
-    return options;
+      return options;
+    } catch (e, stackTrace) {
+      debugPrint('CategoryImageService.getAvailableCategories error: $e');
+      debugPrint(stackTrace.toString());
+      return const [];
+    }
   }
 
   /// Belirli bir kategorinin sablon gorseli olup olmadigini kontrol et
   static Future<bool> hasTemplateImages(String kategori) async {
-    final key = mapKategoriToKey(kategori);
-    if (key == null) return false;
+    try {
+      final key = mapKategoriToKey(kategori);
+      if (key == null) return false;
 
-    final response = await _supabase
-        .from('category_image_templates')
-        .select('id')
-        .eq('category_key', key)
-        .eq('is_active', true)
-        .limit(1);
+      final response = await _supabase
+          .from('category_image_templates')
+          .select('id')
+          .eq('category_key', key)
+          .eq('is_active', true)
+          .limit(1);
 
-    return (response as List).isNotEmpty;
+      if (response == null) return false;
+      return (response as List).isNotEmpty;
+    } catch (e) {
+      debugPrint('CategoryImageService.hasTemplateImages error: $e');
+      return false;
+    }
   }
 
   /// Bir kategorideki gorsel sayisini getir
   static Future<int> getTemplateCount(String kategori) async {
-    final key = mapKategoriToKey(kategori);
-    if (key == null) return 0;
+    try {
+      final key = mapKategoriToKey(kategori);
+      if (key == null) return 0;
 
-    final response = await _supabase
-        .from('category_image_templates')
-        .select('id')
-        .eq('category_key', key)
-        .eq('is_active', true);
+      final response = await _supabase
+          .from('category_image_templates')
+          .select('id', const FetchOptions(count: CountOption.exact))
+          .eq('category_key', key)
+          .eq('is_active', true);
 
-    return (response as List).length;
+      return response.count ?? 0;
+    } catch (e) {
+      debugPrint('CategoryImageService.getTemplateCount error: $e');
+      return 0;
+    }
   }
 }
