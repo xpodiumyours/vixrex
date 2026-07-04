@@ -119,8 +119,9 @@ class VitrinFormSection extends StatelessWidget {
               );
             }
           : null,
-      onApplied: () {
-        controller.initialize(controller.data.name);
+      onApplied: () async {
+        await controller.syncGalleryFromSupabase();
+        await controller.initialize(controller.data.name);
       },
     );
   }
@@ -330,8 +331,9 @@ class VitrinFormSection extends StatelessWidget {
                     AutoFillBanner(
                       kategori: controller.selectedKategori,
                       storeId: controller.data.id?.toString() ?? '',
-                      onApplied: () {
-                        controller.initialize(controller.data.name);
+                      onApplied: () async {
+                        await controller.syncGalleryFromSupabase();
+                        await controller.initialize(controller.data.name);
                       },
                     ),
                   ],
