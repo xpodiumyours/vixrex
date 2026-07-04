@@ -182,6 +182,84 @@ class StoreEditorController extends ChangeNotifier {
         );
       }
       _publishedInfo = await storage.loadPublishedVitrinInfo();
+      
+      // Eğer local'de publishedInfo yoksa, Supabase'den mevcut vitrini çek
+      if (_publishedInfo == null) {
+        await _fetchPublishedInfoFromSupabase();
+      }
+      
+      _initialize();
+      if (_publishedInfo != null) {
+        await fetchArticles();
+      }
+    } catch (e) {
+      debugPrint('Error initializing controller: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+  
+  /// Supabase'den mevcut yayınlanmış vitrini çek ve _publishedInfo'yu doldur
+  Future<void> _fetchPublishedInfoFromSupabase() async {
+    try {
+      final client = _resolveClient();
+      if (client == null) return;
+      
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return;
+      
+      // Son yayınlanmış vitrini çek
+      final response = await client
+          .from('stores')
+          .select('slug, edit_token, name')
+          .eq('user_id', userId)
+          .eq('is_published', true)
+          .order('updated_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      
+      if (response != null) {
+        final slug = (response['slug'] as String?)?.trim() ?? '';
+        final editToken = (response['edit_token'] as String?)?.trim() ?? '';
+        final name = (response['name'] as String?)?.trim() ?? '';
+        
+        if (slug.isNotEmpty && editToken.isNotEmpty) {
+          _publishedInfo = PublishedVitrinInfo(
+            publicLink: 'https://vitrinx.app/v/$slug',
+            slug: slug,
+            name: name,
+            editToken: editToken,
+          );
+          // Local storage'a da kaydet
+          await storage.savePublishedVitrinInfo(
+            slug: slug,
+            publicLink: 'https://vitrinx.app/v/$slug',
+            name: name,
+            editToken: editToken,
+          );
+          debugPrint('Published info fetched from Supabase: slug=$slug');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching published info from Supabase: $e');
+    }
+  }
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final localData = await storage.loadVitrinData();
+      if (localData != null) {
+        _data = localData;
+      } else {
+        _data = StoreData(
+          name: initialName ?? '',
+          kategori: 'Diğer',
+          status: 'Açık',
+          isStore: false,
+        );
+      }
+      _publishedInfo = await storage.loadPublishedVitrinInfo();
       _initialize();
       if (_publishedInfo != null) {
         await fetchArticles();
