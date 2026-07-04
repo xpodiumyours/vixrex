@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:vitrinx/services/category_image_service.dart';
 import 'package:vitrinx/widgets/auto_fill/category_auto_fill_sheet.dart';
@@ -8,7 +9,7 @@ import 'package:vitrinx/theme/app_colors.dart';
 class AutoFillBanner extends StatefulWidget {
   final String kategori;
   final String storeId;
-  final VoidCallback? onApplied;
+  final FutureOr<void> Function()? onApplied;
   final VoidCallback? onTap;
 
   const AutoFillBanner({
@@ -90,8 +91,6 @@ class _AutoFillBannerState extends State<AutoFillBanner> {
 
   void _openSheet() {
     if (_categoryKey == null) return;
-    // Guard: Boş storeId ile sheet açma
-    if (widget.storeId.trim().isEmpty) return;
 
     CategoryAutoFillSheet.show(
       context: context,
