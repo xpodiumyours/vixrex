@@ -245,32 +245,6 @@ class StoreEditorController extends ChangeNotifier {
       debugPrint('Error fetching published info from Supabase: $e');
     }
   }
-    _isLoading = true;
-    notifyListeners();
-    try {
-      final localData = await storage.loadVitrinData();
-      if (localData != null) {
-        _data = localData;
-      } else {
-        _data = StoreData(
-          name: initialName ?? '',
-          kategori: 'Diğer',
-          status: 'Açık',
-          isStore: false,
-        );
-      }
-      _publishedInfo = await storage.loadPublishedVitrinInfo();
-      _initialize();
-      if (_publishedInfo != null) {
-        await fetchArticles();
-      }
-    } catch (e) {
-      debugPrint('Error initializing controller: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
 
   Future<void> fetchLocation() async {
     final result = await locationService.getCurrentLocation();
