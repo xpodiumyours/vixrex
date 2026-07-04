@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -182,12 +183,12 @@ class StoreEditorController extends ChangeNotifier {
         );
       }
       _publishedInfo = await storage.loadPublishedVitrinInfo();
-      
-      // Eğer local'de publishedInfo yoksa, Supabase'den mevcut vitrini çek
+
+      // Eger local'de publishedInfo yoksa, Supabase'den mevcut vitrini cek
       if (_publishedInfo == null) {
         await _fetchPublishedInfoFromSupabase();
       }
-      
+
       _initialize();
       if (_publishedInfo != null) {
         await fetchArticles();
@@ -199,17 +200,17 @@ class StoreEditorController extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
-  /// Supabase'den mevcut yayınlanmış vitrini çek ve _publishedInfo'yu doldur
+
+  /// Supabase'den mevcut yayinlanmis vitrini cek ve _publishedInfo'yu doldur
   Future<void> _fetchPublishedInfoFromSupabase() async {
     try {
       final client = _resolveClient();
       if (client == null) return;
-      
+
       final userId = client.auth.currentUser?.id;
       if (userId == null) return;
-      
-      // Son yayınlanmış vitrini çek
+
+      // Son yayinlanmis vitrini cek
       final response = await client
           .from('stores')
           .select('slug, edit_token, name')
@@ -218,12 +219,12 @@ class StoreEditorController extends ChangeNotifier {
           .order('updated_at', ascending: false)
           .limit(1)
           .maybeSingle();
-      
+
       if (response != null) {
         final slug = (response['slug'] as String?)?.trim() ?? '';
         final editToken = (response['edit_token'] as String?)?.trim() ?? '';
         final name = (response['name'] as String?)?.trim() ?? '';
-        
+
         if (slug.isNotEmpty && editToken.isNotEmpty) {
           _publishedInfo = PublishedVitrinInfo(
             publicLink: 'https://vitrinx.app/v/$slug',
@@ -518,7 +519,7 @@ class StoreEditorController extends ChangeNotifier {
     }
   }
 
-  /// Yayinlama rızasını geri cek
+  /// Yayinlama rizasini geri cek
   /// editToken ve slug ayrı degerler - editToken auth icin, slug public path icin
   Future<void> withdrawPublicationConsent() async {
     final slug = _publishedInfo?.slug ?? _data.slug;
@@ -692,6 +693,131 @@ class StoreEditorController extends ChangeNotifier {
       if (item.isFromUrl) { _editorGalleryItems[index] = item.markRemoved(); }
       else { _editorGalleryItems.removeAt(index); }
       notifyListeners();
+    }
+  }
+
+  /// Kategori sablonundan gelen gorselleri local olarak uygular.
+  /// Vitrin henuz kaydedilmemisse bu metod kullanilir.
+  void applyCategoryTemplateLocal({
+    String? coverImageUrl,
+    List<String> galleryImageUrls = const [],
+    List<Map<String, dynamic>> productTemplates = const [],
+  }) {
+    var hasChanges = false;
+
+    // Kapak gorseli
+    if (coverImageUrl != null && coverImageUrl.isNotEmpty) {
+      setCoverUrl(coverImageUrl);
+      _data.shelfImageUrl = coverImageUrl;
+      hasChanges = true;
+    }
+
+    // Galeri gorselleri
+    if (galleryImageUrls.isNotEmpty) {
+      final currentCount = _editorGalleryItems.where((item) => !item.isRemoved).length;
+      final remainingSpace = _maxGalleryPhotos - currentCount;
+
+      if (remainingSpace > 0) {
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final newItems = galleryImageUrls
+            .take(remainingSpace)
+            .toList()
+            .asMap()
+            .entries
+            .map((entry) => EditorGalleryItem.fromUrl(
+                  entry.value,
+                  id: 'local_template_${ts}_${entry.key}',
+                ))
+            .toList();
+        _editorGalleryItems = [..._editorGalleryItems, ...newItems];
+        hasChanges = true;
+      }
+    }
+
+    // Urun sablonlari
+    if (productTemplates.isNotEmpty) {
+      for (final template in productTemplates) {
+        final name = template['name'] as String? ?? '';
+        if (name.isNotEmpty) {
+          _data.products.add(Product(
+            id: 'local_product_${DateTime.now().millisecondsSinceEpoch}_${_data.products.length}',
+            name: name,
+            description: template['description'] as String? ?? '',
+            price: template['price'] as String? ?? '',
+            category: template['category'] as String? ?? 'Diğer',
+            isVisible: true,
+          ));
+          hasChanges = true;
+        }
+      }
+    }
+
+    if (hasChanges) {
+      saveLocally();
+      notifyListeners();
+    }
+  }
+
+  /// Yayinlanmis vitrinin galeri verisini Supabase'den senkronize eder.
+  /// Auto-fill service DB'yi guncelledikten sonra controller'i senkronize etmek icin kullanilir.
+  Future<void> syncGalleryFromSupabase() async {
+    try {
+      final slug = _publishedInfo?.slug ?? _data.slug;
+      if (slug.trim().isEmpty) return;
+
+      final client = _resolveClient();
+      if (client == null) return;
+
+      final response = await client
+          .from('stores')
+          .select('gallery_items, shelf_image_url')
+          .eq('slug', slug)
+          .maybeSingle();
+
+      if (response == null) return;
+
+      // Galeri items senkronizasyonu
+      final rawGallery = response['gallery_items'];
+      if (rawGallery != null) {
+        final parsed = _parseGalleryItems(rawGallery);
+        if (parsed.isNotEmpty) {
+          _data.galleryItems = parsed;
+          _editorGalleryItems = parsed
+              .map((i) => EditorGalleryItem.fromStoreItem(i))
+              .toList();
+          debugPrint('syncGalleryFromSupabase: ${parsed.length} gorsel senkronize edildi');
+        }
+      }
+
+      // Kapak gorseli senkronizasyonu
+      final shelfUrl = response['shelf_image_url'] as String?;
+      if (shelfUrl != null && shelfUrl.isNotEmpty) {
+        _data.shelfImageUrl = shelfUrl;
+        _coverUrl = shelfUrl;
+        debugPrint('syncGalleryFromSupabase: kapak gorseli senkronize edildi');
+      }
+
+      await saveLocally();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('syncGalleryFromSupabase error: $e');
+    }
+  }
+
+  /// JSON'dan gallery items parse eder
+  List<StoreGalleryItem> _parseGalleryItems(Object? rawItems) {
+    try {
+      final decodedItems = rawItems is String ? jsonDecode(rawItems) : rawItems;
+      if (decodedItems is! List) return [];
+      return decodedItems
+          .whereType<Map>()
+          .map((item) => StoreGalleryItem.fromJson(Map<String, dynamic>.from(item)))
+          .where((item) => item.imageUrl.trim().isNotEmpty)
+          .take(12)
+          .toList();
+    } catch (e) {
+      debugPrint('_parseGalleryItems error: $e');
+      return [];
     }
   }
 
