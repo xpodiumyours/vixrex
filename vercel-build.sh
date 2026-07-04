@@ -29,12 +29,7 @@ flutter build web --release \
   --dart-define=SUPABASE_URL="$SUPABASE_URL" \
   --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
   --dart-define=PUBLIC_SITE_URL="${PUBLIC_SITE_URL:-}" \
-  --dart-define=INSTAGRAM_SYNC_ENABLED="${INSTAGRAM_SYNC_ENABLED:-false}" \
-  --dart-define=LEGAL_DATA_CONTROLLER_TITLE="${LEGAL_DATA_CONTROLLER_TITLE:-}" \
-  --dart-define=LEGAL_DATA_CONTROLLER_ADDRESS="${LEGAL_DATA_CONTROLLER_ADDRESS:-}" \
-  --dart-define=LEGAL_MERSIS_NUMBER="${LEGAL_MERSIS_NUMBER:-}" \
-  --dart-define=LEGAL_TAX_NUMBER="${LEGAL_TAX_NUMBER:-}" \
-  --dart-define=LEGAL_PRIVACY_EMAIL="${LEGAL_PRIVACY_EMAIL:-}"
+  --dart-define=INSTAGRAM_SYNC_ENABLED="${INSTAGRAM_SYNC_ENABLED:-false}"
 
 if grep -q "showScoreCard" build/web/main.dart.js; then
   echo "Stale web build detected: showScoreCard is still present in main.dart.js." >&2
