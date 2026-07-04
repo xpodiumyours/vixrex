@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:vitrinx/services/category_image_service.dart';
 import 'package:vitrinx/services/auto_fill_service.dart';
@@ -18,7 +19,7 @@ class CategoryAutoFillSheet extends StatefulWidget {
   final String categoryKey;
   final String categoryLabel;
   final String storeId;
-  final VoidCallback? onApplied;
+  final FutureOr<void> Function()? onApplied;
   final LocalApplyCallback? onLocalApply;
 
   const CategoryAutoFillSheet({
@@ -35,7 +36,7 @@ class CategoryAutoFillSheet extends StatefulWidget {
     required String categoryKey,
     required String categoryLabel,
     required String storeId,
-    VoidCallback? onApplied,
+    FutureOr<void> Function()? onApplied,
     LocalApplyCallback? onLocalApply,
   }) {
     return showModalBottomSheet(
@@ -116,7 +117,7 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
 
       if (mounted) {
         Navigator.pop(context);
-        widget.onApplied?.call();
+        await widget.onApplied?.call();
 
         final totalCount = (selectedCover != null ? 1 : 0) +
             selectedGallery.length +
@@ -176,7 +177,7 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
 
     if (result.success && mounted) {
       Navigator.pop(context);
-      widget.onApplied?.call();
+      await widget.onApplied?.call();
 
       // Basari snackbar'i
       ScaffoldMessenger.of(context).showSnackBar(
