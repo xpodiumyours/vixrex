@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:vitrinx/services/category_image_service.dart';
-import 'package:vitrinx/services/auto_fill_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
+
+/// Local uygulama callback'i - controller'a gorselleri local olarak uygular
+/// [coverImage] secilen kapak goruntusu (opsiyonel)
+/// [galleryImages] secilen galeri goruntuleri
+/// [productImages] secilen urun sablon goruntuleri
+typedef LocalApplyCallback = void Function({
+  CategoryTemplateImage? coverImage,
+  List<CategoryTemplateImage> galleryImages,
+  List<CategoryTemplateImage> productImages,
+});
 
 /// Kategori sablonu ile vitrini otomatik doldurma bottom sheet'i
 class CategoryAutoFillSheet extends StatefulWidget {
@@ -9,6 +18,7 @@ class CategoryAutoFillSheet extends StatefulWidget {
   final String categoryLabel;
   final String storeId;
   final VoidCallback? onApplied;
+  final LocalApplyCallback? onLocalApply;
 
   const CategoryAutoFillSheet({
     super.key,
@@ -16,6 +26,7 @@ class CategoryAutoFillSheet extends StatefulWidget {
     required this.categoryLabel,
     required this.storeId,
     this.onApplied,
+    this.onLocalApply,
   });
 
   static Future<void> show({
@@ -24,6 +35,7 @@ class CategoryAutoFillSheet extends StatefulWidget {
     required String categoryLabel,
     required String storeId,
     VoidCallback? onApplied,
+    LocalApplyCallback? onLocalApply,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -34,6 +46,7 @@ class CategoryAutoFillSheet extends StatefulWidget {
         categoryLabel: categoryLabel,
         storeId: storeId,
         onApplied: onApplied,
+        onLocalApply: onLocalApply,
       ),
     );
   }
@@ -51,6 +64,8 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
   bool _isApplying = false;
   CategoryImageSet? _imageSet;
   String? _error;
+
+  bool get _isLocalMode => widget.storeId.trim().isEmpty;
 
   @override
   void initState() {
@@ -76,6 +91,73 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
   }
 
   Future<void> _apply() async {
+    // Local mod: controller'a gorselleri local olarak uygula
+    if (_isLocalMode && widget.onLocalApply != null) {
+      setState(() => _isApplying = true);
+
+      final selectedCover = _fillCover && _imageSet != null && _imageSet!.coverImages.isNotEmpty
+          ? _imageSet!.coverImages.first
+          : null;
+      final selectedGallery = _fillGallery && _imageSet != null
+          ? _imageSet!.galleryImages
+          : <CategoryTemplateImage>[];
+      final selectedProducts = _fillProducts && _imageSet != null
+          ? _imageSet!.productImages
+          : <CategoryTemplateImage>[];
+
+      widget.onLocalApply!(
+        coverImage: selectedCover,
+        galleryImages: selectedGallery,
+        productImages: selectedProducts,
+      );
+
+      setState(() => _isApplying = false);
+
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onApplied?.call();
+
+        final totalCount = (selectedCover != null ? 1 : 0) +
+            selectedGallery.length +
+            selectedProducts.length;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '$totalCount hazir gorsel vitrinine eklendi! '
+                    'Yayina aldiginda gorunur olacak.',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Remote mod: Supabase RPC/manuel service kullan
+    if (_isLocalMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lutfen once vitrininizi kaydedin.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isApplying = true);
 
     final result = await AutoFillService.applyCategoryTemplate(
@@ -194,6 +276,35 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
               ],
             ),
           ),
+          if (_isLocalMode)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded,
+                      color: AppColors.primary, size: 16),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Gorseller su an local olarak vitrininize eklenecek. '
+                      'Yayina aldiginizda herkes gorebilecek.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           const Divider(),
           // Content
           Expanded(
@@ -279,7 +390,9 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
                       label: Text(
                         _isApplying
                             ? 'Uygulaniyor...'
-                            : 'Hazir Gorselleri Uygula',
+                            : _isLocalMode
+                                ? 'Gorselleri Vitrinine Ekle'
+                                : 'Hazir Gorselleri Uygula',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
