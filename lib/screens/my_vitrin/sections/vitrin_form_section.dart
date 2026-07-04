@@ -71,7 +71,7 @@ class VitrinFormSection extends StatelessWidget {
 
   /// GalleryItem → EditorGalleryItem dönüşümü (controller uyumluluğu)
   List<EditorGalleryItem> _toEditorItems(List<GalleryItem> items) =>
-      items.map((e) => EditorGalleryItem.fromBytes(
+      items.where((e) => e.bytes != null).map((e) => EditorGalleryItem.fromBytes(
         id: e.id,
         bytes: e.bytes!,
         extension: e.extension,
@@ -90,16 +90,35 @@ class VitrinFormSection extends StatelessWidget {
       state.showSnackBar(ctx, 'Bu kategori için hazır görsel bulunamadı.');
       return;
     }
+
     final storeId = controller.data.id?.toString() ?? '';
-    if (storeId.isEmpty) {
-      state.showSnackBar(ctx, 'Önce vitrininizi kaydetmelisiniz.');
-      return;
-    }
+
     await CategoryAutoFillSheet.show(
       context: ctx,
       categoryKey: categoryKey,
       categoryLabel: kategori,
       storeId: storeId,
+      onLocalApply: storeId.isEmpty
+          ? ({
+              coverImage,
+              galleryImages = const [],
+              productImages = const [],
+            }) {
+              controller.applyCategoryTemplateLocal(
+                coverImageUrl: coverImage?.imageUrl,
+                galleryImageUrls:
+                    galleryImages.map((img) => img.imageUrl).toList(),
+                productTemplates: productImages
+                    .map((img) => {
+                          'name': img.title ?? 'Ürün',
+                          'description': img.description ?? '',
+                          'price': '',
+                          'category': kategori,
+                        })
+                    .toList(),
+              );
+            }
+          : null,
       onApplied: () {
         controller.initialize(controller.data.name);
       },
@@ -565,7 +584,7 @@ class VitrinFormSection extends StatelessWidget {
         contentType: v.fileInfo?.contentType ?? 'image/jpeg',
       ));
     }
-    final editorItems = _toEditorItems([..._galleryItemsForEditor, ...newItems]);
+    final editorItems = [...controller.galleryItems, ..._toEditorItems(newItems)];
     controller.setGalleryItems(editorItems);
     if (rejected > 0) state.showSnackBar(ctx, '$rejected fotoğraf eklenemedi.');
   }
