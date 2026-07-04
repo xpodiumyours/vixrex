@@ -90,6 +90,8 @@ class _AutoFillBannerState extends State<AutoFillBanner> {
 
   void _openSheet() {
     if (_categoryKey == null) return;
+    // Guard: Boş storeId ile sheet açma
+    if (widget.storeId.trim().isEmpty) return;
 
     CategoryAutoFillSheet.show(
       context: context,
