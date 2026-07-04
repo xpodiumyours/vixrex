@@ -276,12 +276,16 @@ class StorePublishPayloadBuilder {
       'privacy_notice_acknowledged': data.privacyNoticeAcknowledged,
       'privacy_notice_version': data.privacyNoticeVersion.trim(),
       'privacy_notice_hash': data.privacyNoticeHash.trim(),
+      'privacy_notice_acknowledged_at': data.privacyNoticeAcknowledgedAt?.toIso8601String(),
       'terms_accepted': data.termsAccepted,
       'terms_version': data.termsVersion.trim(),
       'terms_hash': data.termsHash.trim(),
-      'publication_consent_accepted': data.publicationConsentAccepted,
+      'terms_accepted_at': data.termsAcceptedAt?.toIso8601String(),
+      'explicit_consent_given': data.publicationConsentAccepted,
       'publication_consent_version': data.publicationConsentVersion.trim(),
       'publication_consent_hash': data.publicationConsentHash.trim(),
+      'publication_consent_accepted_at': data.publicationConsentAcceptedAt?.toIso8601String(),
+      'consent_accepted_at': data.privacyNoticeAcknowledgedAt?.toIso8601String(),
     };
   }
 
