@@ -518,9 +518,47 @@ class StoreEditorController extends ChangeNotifier {
   bool get termsAccepted => _data.termsAccepted;
   bool get publicationConsentAccepted => _data.publicationConsentAccepted;
 
-  void setPrivacyNoticeAcknowledged(bool v) { _data.privacyNoticeAcknowledged = v; notifyListeners(); }
-  void setTermsAccepted(bool v) { _data.termsAccepted = v; notifyListeners(); }
-  void setPublicationConsentAccepted(bool v) { _data.publicationConsentAccepted = v; notifyListeners(); }
+  void setPrivacyNoticeAcknowledged(bool v) {
+    _data.privacyNoticeAcknowledged = v;
+    if (v) {
+      _data.privacyNoticeVersion = '1.0';
+      _data.privacyNoticeHash = 'acknowledged';
+      _data.privacyNoticeAcknowledgedAt = DateTime.now();
+    } else {
+      _data.privacyNoticeVersion = '';
+      _data.privacyNoticeHash = '';
+      _data.privacyNoticeAcknowledgedAt = null;
+    }
+    notifyListeners();
+  }
+
+  void setTermsAccepted(bool v) {
+    _data.termsAccepted = v;
+    if (v) {
+      _data.termsVersion = '1.0';
+      _data.termsHash = 'accepted';
+      _data.termsAcceptedAt = DateTime.now();
+    } else {
+      _data.termsVersion = '';
+      _data.termsHash = '';
+      _data.termsAcceptedAt = null;
+    }
+    notifyListeners();
+  }
+
+  void setPublicationConsentAccepted(bool v) {
+    _data.publicationConsentAccepted = v;
+    if (v) {
+      _data.publicationConsentVersion = '1.0';
+      _data.publicationConsentHash = 'consented';
+      _data.publicationConsentAcceptedAt = DateTime.now();
+    } else {
+      _data.publicationConsentVersion = '';
+      _data.publicationConsentHash = '';
+      _data.publicationConsentAcceptedAt = null;
+    }
+    notifyListeners();
+  }
 
   // MARKETPLACE
   List<MarketplaceLink> get marketplaceLinks => _data.marketplaceLinks;

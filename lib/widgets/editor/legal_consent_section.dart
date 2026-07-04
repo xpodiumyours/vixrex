@@ -4,7 +4,6 @@ import 'package:vitrinx/theme/app_text_styles.dart';
 
 class LegalConsentSection extends StatelessWidget {
   final bool canAccept;
-  final bool hasCompleteIdentity;
   final bool isLoading;
   final String? errorText;
   final bool privacyNoticeAcknowledged;
@@ -19,7 +18,6 @@ class LegalConsentSection extends StatelessWidget {
   const LegalConsentSection({
     super.key,
     required this.canAccept,
-    required this.hasCompleteIdentity,
     required this.isLoading,
     required this.errorText,
     required this.privacyNoticeAcknowledged,
@@ -61,13 +59,7 @@ class LegalConsentSection extends StatelessWidget {
             'Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.',
             style: AppTextStyles.caption,
           ),
-          if (!hasCompleteIdentity) ...[
-            const SizedBox(height: 12),
-            const Text(
-              'Xpodiumyours resmî unvan ve adres bilgileri tamamlanmadığı için yayınlama geçici olarak kapalıdır.',
-              style: AppTextStyles.errorText,
-            ),
-          ] else if (isLoading) ...[
+          if (isLoading) ...[
             const SizedBox(height: 14),
             const Center(child: CircularProgressIndicator(strokeWidth: 2)),
           ] else if (errorText != null) ...[

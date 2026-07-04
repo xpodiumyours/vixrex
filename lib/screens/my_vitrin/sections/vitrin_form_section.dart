@@ -438,9 +438,7 @@ class VitrinFormSection extends StatelessWidget {
               KeyedSubtree(
                 key: state.legalKey,
                 child: LegalConsentSection(
-                  canAccept: !controller.isLoadingLegalDocuments &&
-                      LegalConfig.hasCompleteDataControllerIdentity,
-                  hasCompleteIdentity: LegalConfig.hasCompleteDataControllerIdentity,
+                  canAccept: !controller.isLoadingLegalDocuments,
                   isLoading: controller.isLoadingLegalDocuments,
                   errorText: controller.legalDocumentsError,
                   privacyNoticeAcknowledged: controller.privacyNoticeAcknowledged,
