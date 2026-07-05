@@ -7,7 +7,7 @@ Follow the steps below to test and verify the VixRex Instagram integration durin
 ## English Instructions
 
 1. Navigate to [https://app.vixrex.app](https://app.vixrex.app).
-2. Log in using the credentials provided in the **[Test Account Details](file:///c:/Projects/vixrex/docs/meta_app_review/test_account.md)** file.
+2. Log in using the credentials provided in the **[Test Account Details](test_account.md)** file.
 3. Go to the **My Showcase (Vitrinim)** screen.
 4. Open the test store.
 5. In the Instagram Connection section, click the **"Connect my Instagram account"** button.
@@ -25,7 +25,7 @@ Follow the steps below to test and verify the VixRex Instagram integration durin
 ## Türkçe Talimatlar
 
 1. [https://app.vixrex.app](https://app.vixrex.app) adresine gidin.
-2. **[Test Account Details](file:///c:/Projects/vixrex/docs/meta_app_review/test_account.md)** dosyasında belirtilen test hesabı ile giriş yapın.
+2. **[Test Account Details](test_account.md)** dosyasında belirtilen test hesabı ile giriş yapın.
 3. **Vitrinim** ekranına girin.
 4. Test mağazasını açın.
 5. Instagram bağlantısı bölümünden **"Instagram hesabımı bağla"** butonuna basın.

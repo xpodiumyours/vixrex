@@ -10,16 +10,16 @@ SELECT document_type, title, is_active FROM legal_documents ORDER BY document_ty
 -- 2. Marka adını güncelle
 UPDATE legal_documents
 SET
-  title = REPLACE(title, 'VixRex', 'VixRex'),
-  subtitle = REPLACE(subtitle, 'VixRex', 'VixRex'),
-  sections = REPLACE(sections::text, 'VixRex', 'VixRex')::jsonb
-WHERE title LIKE '%VixRex%' OR subtitle LIKE '%VixRex%' OR sections::text LIKE '%VixRex%';
+  title = REPLACE(title, 'VitrinX', 'VixRex'),
+  subtitle = REPLACE(subtitle, 'VitrinX', 'VixRex'),
+  sections = REPLACE(sections::text, 'VitrinX', 'VixRex')::jsonb
+WHERE title LIKE '%VitrinX%' OR subtitle LIKE '%VitrinX%' OR sections::text LIKE '%VitrinX%';
 
 -- 3. E-posta ve URL güncelle
 UPDATE legal_documents
 SET
-  sections = REPLACE(REPLACE(sections::text, 'privacy@vixrex.app', 'privacy@vixrex.app'), 'vixrex.app', 'vixrex.app')::jsonb
-WHERE sections::text LIKE '%vixrex%';
+  sections = REPLACE(REPLACE(sections::text, 'privacy@vitrinx.app', 'privacy@vixrex.app'), 'vitrinx.app', 'vixrex.app')::jsonb
+WHERE sections::text LIKE '%vitrinx%';
 
 -- 4. Belgeleri aktif yap
 UPDATE legal_documents
@@ -33,7 +33,7 @@ FROM legal_documents WHERE is_active = true ORDER BY document_type;
 
 -- 6. Eski referans kontrolü (bu boş dönmeli)
 SELECT document_type, title FROM legal_documents
-WHERE title LIKE '%VixRex%' OR sections::text LIKE '%vixrex%';
+WHERE title LIKE '%VitrinX%' OR sections::text LIKE '%vitrinx%';
 ```
 
 ## Beklenen Sonuç:

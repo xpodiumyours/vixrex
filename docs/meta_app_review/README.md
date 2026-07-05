@@ -4,15 +4,15 @@ This directory contains the documentation and guidelines required for the Meta A
 
 ## Contents
 
-1. **[Reviewer Instructions](file:///c:/Projects/vixrex/docs/meta_app_review/reviewer_instructions.md)**
+1. **[Reviewer Instructions](reviewer_instructions.md)**
    Step-by-step walkthrough for the Meta App Reviewer to test the integration.
-2. **[Test Account Details](file:///c:/Projects/vixrex/docs/meta_app_review/test_account.md)**
+2. **[Test Account Details](test_account.md)**
    Credentials and instructions for using the App Review test accounts.
-3. **[Screencast Checklist](file:///c:/Projects/vixrex/docs/meta_app_review/screencast_checklist.md)**
+3. **[Screencast Checklist](screencast_checklist.md)**
    Checklist and guidelines for recording the mandatory App Review demo video.
-4. **[Privacy Mapping & Data Usage](file:///c:/Projects/vixrex/docs/meta_app_review/privacy_mapping.md)**
+4. **[Privacy Mapping & Data Usage](privacy_mapping.md)**
    Description of requested permissions, data fetched, usage, and retention policies.
-5. **[Data Deletion Callback Specification](file:///c:/Projects/vixrex/docs/meta_app_review/data_deletion_callback.md)**
+5. **[Data Deletion Callback Specification](data_deletion_callback.md)**
    Technical explanation and flow of the Meta/Instagram data deletion request callback.
 
 ---

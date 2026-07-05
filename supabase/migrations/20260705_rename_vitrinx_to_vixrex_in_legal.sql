@@ -8,24 +8,23 @@ SELECT id, document_type, version, title, is_active
 FROM legal_documents
 ORDER BY document_type;
 
--- 2. Tüm belgelerdeki VixRex → VixRex değişikliği
+-- 2. Tüm belgelerdeki VitrinX → VixRex değişikliği
 UPDATE legal_documents
 SET
-  title = REPLACE(title, 'VixRex', 'VixRex'),
-  subtitle = REPLACE(subtitle, 'VixRex', 'VixRex'),
-  sections = REPLACE(sections::text, 'VixRex', 'VixRex')::jsonb,
+  title = REPLACE(REPLACE(title, 'VitrinX', 'VixRex'), 'vitrinx', 'vixrex'),
+  subtitle = REPLACE(REPLACE(subtitle, 'VitrinX', 'VixRex'), 'vitrinx', 'vixrex'),
+  sections = REPLACE(REPLACE(sections::text, 'VitrinX', 'VixRex'), 'vitrinx', 'vixrex')::jsonb,
   content_hash = ''  -- trigger otomatik güncelleyecek
-WHERE title LIKE '%VixRex%'
-   OR subtitle LIKE '%VixRex%'
-   OR sections::text LIKE '%VixRex%';
+WHERE title LIKE '%VitrinX%' OR title LIKE '%vitrinx%'
+   OR subtitle LIKE '%VitrinX%' OR subtitle LIKE '%vitrinx%'
+   OR sections::text LIKE '%VitrinX%' OR sections::text LIKE '%vitrinx%';
 
 -- 3. E-posta adresi güncelleme
 UPDATE legal_documents
 SET
-  sections = REPLACE(sections::text, 'privacy@VixRex.app', 'privacy@vixrex.app')::jsonb,
-  sections = REPLACE(sections::text, 'VixRex.app', 'vixrex.app')::jsonb,
+  sections = REPLACE(REPLACE(sections::text, 'privacy@vitrinx.app', 'privacy@vixrex.app'), 'vitrinx.app', 'vixrex.app')::jsonb,
   content_hash = ''
-WHERE sections::text LIKE '%VixRex%';
+WHERE sections::text LIKE '%vitrinx%';
 
 -- 4. Tüm belgeleri aktif yap (eğer hala draft ise)
 UPDATE legal_documents
@@ -48,7 +47,7 @@ ORDER BY document_type;
 -- 6. Eski referans kaldı mı kontrol et
 SELECT document_type, title
 FROM legal_documents
-WHERE title LIKE '%VixRex%'
-   OR sections::text LIKE '%VixRex%'
-   OR sections::text LIKE '%VixRex%';
+WHERE title LIKE '%VitrinX%' OR title LIKE '%vitrinx%'
+   OR sections::text LIKE '%VitrinX%'
+   OR sections::text LIKE '%vitrinx%';
 -- Bu sorgu boş sonuç dönmeli (0 satır)
