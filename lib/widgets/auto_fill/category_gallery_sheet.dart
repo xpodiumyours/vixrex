@@ -84,7 +84,11 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       );
 
       for (final entry in categorySets) {
-        if (entry.value.totalCount > 0) {
+        final hasImages = widget.source == ImageSource.coverPicker
+            ? entry.value.coverImages.isNotEmpty
+            : entry.value.galleryImages.isNotEmpty;
+
+        if (hasImages) {
           images[entry.key] = entry.value;
           keys.add(entry.key);
         }
@@ -280,7 +284,9 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
     bool isExpanded,
     bool isPreferred,
   ) {
-    final allImages = [...set.coverImages, ...set.galleryImages];
+    final allImages = widget.source == ImageSource.coverPicker
+        ? set.coverImages
+        : set.galleryImages;
     if (allImages.isEmpty) return const SizedBox.shrink();
 
     return Column(
