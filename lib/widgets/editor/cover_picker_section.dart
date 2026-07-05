@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
@@ -38,7 +37,7 @@ class CoverPickerSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         AspectRatio(
-          aspectRatio: 16 / 7.8,
+          aspectRatio: 16 / 7,
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.inputBg,
@@ -52,12 +51,41 @@ class CoverPickerSection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     child: _buildCoverPreview(),
                   )
-                : _EmptyCoverState(
-                    onPickTap: onTap,
-                    onCameraTap: onCameraTap,
-                    onAutoFillTap: onAutoFillTap,
-                  ),
+                : const _CoverPlaceholder(),
           ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionButton(
+                onPressed: onTap,
+                icon: Icons.add_photo_alternate_rounded,
+                label: 'Fotoğraf Yükle',
+                isPrimary: false,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _buildActionButton(
+                onPressed: onCameraTap,
+                icon: Icons.photo_camera_rounded,
+                label: 'Fotoğraf Çek',
+                isPrimary: false,
+              ),
+            ),
+            if (onAutoFillTap != null) ...[
+              const SizedBox(width: 6),
+              Expanded(
+                child: _buildActionButton(
+                  onPressed: onAutoFillTap!,
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'Hazır Şablonlar',
+                  isPrimary: true,
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );
@@ -85,88 +113,8 @@ class CoverPickerSection extends StatelessWidget {
       ],
     );
   }
-}
 
-class _EmptyCoverState extends StatelessWidget {
-  final VoidCallback onPickTap;
-  final VoidCallback onCameraTap;
-  final VoidCallback? onAutoFillTap;
-
-  const _EmptyCoverState({
-    required this.onPickTap,
-    required this.onCameraTap,
-    this.onAutoFillTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(
-          Icons.storefront_rounded,
-          color: AppColors.primary,
-          size: 28,
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Kapak Fotoğrafı Ekle',
-          style: TextStyle(
-            color: AppColors.darkText,
-            fontSize: 13,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 2),
-        const Text(
-          'İsteğe bağlı — sonra da eklenebilir',
-          style: TextStyle(
-            color: AppColors.mutedText,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildButton(
-                  onPressed: onPickTap,
-                  icon: Icons.add_photo_alternate_rounded,
-                  label: 'Dosya Seç',
-                  isPrimary: false,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: _buildButton(
-                  onPressed: onCameraTap,
-                  icon: Icons.photo_camera_rounded,
-                  label: 'Fotoğraf Çek',
-                  isPrimary: false,
-                ),
-              ),
-              if (onAutoFillTap != null) ...[
-                const SizedBox(width: 6),
-                Expanded(
-                  child: _buildButton(
-                    onPressed: onAutoFillTap!,
-                    icon: Icons.auto_awesome_rounded,
-                    label: 'Şablonlar',
-                    isPrimary: true,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildButton({
+  Widget _buildActionButton({
     required VoidCallback onPressed,
     required IconData icon,
     required String label,
@@ -178,9 +126,9 @@ class _EmptyCoverState extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.black,
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           elevation: 0,
         ),
@@ -202,9 +150,9 @@ class _EmptyCoverState extends StatelessWidget {
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.darkText,
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         side: const BorderSide(color: AppColors.border),
       ),
@@ -236,8 +184,29 @@ class _CoverPlaceholder extends StatelessWidget {
           colors: [AppColors.surfaceSoft, AppColors.bgEditor],
         ),
       ),
-      child: const Center(
-        child: Icon(Icons.storefront_rounded, color: AppColors.primary, size: 38),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.storefront_rounded, color: AppColors.primary, size: 32),
+          SizedBox(height: 6),
+          Text(
+            'Kapak Fotoğrafı Ekle',
+            style: TextStyle(
+              color: AppColors.darkText,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          SizedBox(height: 2),
+          Text(
+            'İsteğe bağlı — sonra da eklenebilir',
+            style: TextStyle(
+              color: AppColors.mutedText,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -254,7 +223,7 @@ class _CoverBadge extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 220),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.66),
+        color: Colors.black.withOpacity(0.66),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
