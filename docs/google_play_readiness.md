@@ -1,20 +1,20 @@
-# VitrinX Google Play Hazirlik Notu
+# VixRex Google Play Hazirlik Notu
 
 Son guncelleme: 12 Haziran 2026
 
 ## Android Kimligi
 
-- Uygulama adi: VitrinX
+- Uygulama adi: VixRex
 - Urun sahibi: Xpodiumyours
-- Paket adi: `com.xpodiumyours.vitrinx`
-- Privacy Policy URL: `https://vitrinx.app/privacy`
-- Terms URL: `https://vitrinx.app/terms`
-- Data Deletion URL: `https://vitrinx.app/data-deletion`
-- Iletisim: `privacy@vitrinx.app`
+- Paket adi: `com.xpodiumyours.vixrex`
+- Privacy Policy URL: `https://vixrex.app/privacy`
+- Terms URL: `https://vixrex.app/terms`
+- Data Deletion URL: `https://vixrex.app/data-deletion`
+- Iletisim: `privacy@vixrex.app`
 
 ## Data Safety Taslagi
 
-VitrinX su veri turlerini isleyebilir:
+VixRex su veri turlerini isleyebilir:
 
 - Hesap bilgisi: e-posta, Supabase kullanici kimligi.
 - Isletme/vitrin bilgisi: isletme adi, kategori, aciklama, adres, calisma saatleri, WhatsApp, Instagram, web sitesi.
@@ -27,7 +27,7 @@ Data Safety cevaplari icin onerilen beyan:
 - Veri toplaniyor: Evet.
 - Veri paylasimi: Supabase hizmet saglayici olarak kullaniliyor. Diger dis baglantilar kullanici aksiyonu ile aciliyor.
 - Veri sifreleme: Supabase ve HTTPS uzerinden aktarim kullaniliyor.
-- Kullanici veri silme talebi: Evet, uygulama ici doğrudan silme mekanizması (Danger Zone), web üzerinden `/data-deletion` sayfasi ve `privacy@vitrinx.app` uzerinden.
+- Kullanici veri silme talebi: Evet, uygulama ici doğrudan silme mekanizması (Danger Zone), web üzerinden `/data-deletion` sayfasi ve `privacy@vixrex.app` uzerinden.
 - Reklam: Mevcut paketlerde reklam SDK'si yok.
 - Odeme: Mevcut paketlerde uygulama ici odeme SDK'si yok.
 
@@ -36,7 +36,7 @@ Data Safety cevaplari icin onerilen beyan:
 Google Play için uygulamada hesap oluşturma olduğundan iki yol korunmuştur ve tamamen uyumludur:
 
 - **Uygulama içi erişim (In-app Deletion Path):** Editör ekranlarının (Vitrin/Mağaza) altındaki **"Tehlikeli Alan / Danger Zone"** bölümünden tek tıkla ve onay penceresiyle hesap ve tüm veriler anında kalıcı olarak silinebilir (Supabase RPC tetiklenir).
-- **Web erişimi (Web Deletion Path):** `https://vitrinx.app/data-deletion` sayfası üzerinden kullanıcılar uygulamayı indirmeden de veri silme talebinde bulunabilir.
+- **Web erişimi (Web Deletion Path):** `https://vixrex.app/data-deletion` sayfası üzerinden kullanıcılar uygulamayı indirmeden de veri silme talebinde bulunabilir.
 
 Silme talebinde (web/e-posta yoluyla) istenecek bilgiler:
 

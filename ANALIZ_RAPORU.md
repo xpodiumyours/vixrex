@@ -1,12 +1,12 @@
-# VitrinX Teknik Röntgen Raporu
+# VixRex Teknik Röntgen Raporu
 > Tarih: 2026-07-05 | Mod: Read-only analiz
 
 ---
 
 ## 1. Klasör Doğrulaması
 
-Talep: `C:\Users\xpodiumyours\vitrinx` → **Bu yol mevcut değil.**
-Gerçek proje: `C:\Users\Casper\vitrinx` → Tüm kritik dosyalar doğrulandı.
+Talep: `C:\Users\xpodiumyours\vixrex` → **Bu yol mevcut değil.**
+Gerçek proje: `C:\Users\Casper\vixrex` → Tüm kritik dosyalar doğrulandı.
 
 | Dosya | Var mı? |
 |---|---|

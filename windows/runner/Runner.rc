@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "vitrinx" "\0"
+            VALUE "FileDescription", "vixrex" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "vitrinx" "\0"
+            VALUE "InternalName", "vixrex" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "vitrinx.exe" "\0"
-            VALUE "ProductName", "vitrinx" "\0"
+            VALUE "OriginalFilename", "vixrex.exe" "\0"
+            VALUE "ProductName", "vixrex" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

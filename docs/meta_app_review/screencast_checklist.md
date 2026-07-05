@@ -7,8 +7,8 @@ Meta App Review requires a video demonstration (screencast) showing the exact us
 ## Required Scenes / Gösterilmesi Gereken Sahneler
 
 1. **User Login / Kullanıcı Girişi**
-   - Show the user logging into the VitrinX dashboard at `https://app.vitrinx.app`.
-   - *Kullanıcının VitrinX paneline giriş yaptığını gösterin.*
+   - Show the user logging into the VixRex dashboard at `https://app.vixrex.app`.
+   - *Kullanıcının VixRex paneline giriş yaptığını gösterin.*
 
 2. **Showcase Ownership / Mağaza Sahipliğini Gösterme**
    - Show that the user owns and manages a store profile.
@@ -23,8 +23,8 @@ Meta App Review requires a video demonstration (screencast) showing the exact us
    - *Meta izin ekranının (OAuth) açıldığını, izinlerin istendiğini net şekilde gösterin.*
 
 5. **Media Listing / Medya Listeleme**
-   - Show the list of Instagram posts loaded on the VitrinX dashboard after returning from authorization.
-   - *VitrinX'e yönlendikten sonra Instagram gönderilerinin listelendiğini gösterin.*
+   - Show the list of Instagram posts loaded on the VixRex dashboard after returning from authorization.
+   - *VixRex'e yönlendikten sonra Instagram gönderilerinin listelendiğini gösterin.*
 
 6. **Product Import / Ürüne Aktarma**
    - Select a media post, fill in details (name, price), and successfully create/import a product.

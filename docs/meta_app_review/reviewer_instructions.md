@@ -1,18 +1,18 @@
 # Reviewer Instructions / İnceleme Talimatları
 
-Follow the steps below to test and verify the VitrinX Instagram integration during the Meta App Review.
+Follow the steps below to test and verify the VixRex Instagram integration during the Meta App Review.
 
 ---
 
 ## English Instructions
 
-1. Navigate to [https://app.vitrinx.app](https://app.vitrinx.app).
-2. Log in using the credentials provided in the **[Test Account Details](file:///c:/Projects/vitrinx/docs/meta_app_review/test_account.md)** file.
+1. Navigate to [https://app.vixrex.app](https://app.vixrex.app).
+2. Log in using the credentials provided in the **[Test Account Details](file:///c:/Projects/vixrex/docs/meta_app_review/test_account.md)** file.
 3. Go to the **My Showcase (Vitrinim)** screen.
 4. Open the test store.
 5. In the Instagram Connection section, click the **"Connect my Instagram account"** button.
 6. Authorize the connection using the Meta test Instagram account credentials provided.
-7. Return to VitrinX.
+7. Return to VixRex.
 8. View the loaded media list on the dashboard.
 9. Select a photo/post from the list.
 10. Enter a product name, price, and category, then click **Import/Create Product**.
@@ -24,13 +24,13 @@ Follow the steps below to test and verify the VitrinX Instagram integration duri
 
 ## Türkçe Talimatlar
 
-1. [https://app.vitrinx.app](https://app.vitrinx.app) adresine gidin.
-2. **[Test Account Details](file:///c:/Projects/vitrinx/docs/meta_app_review/test_account.md)** dosyasında belirtilen test hesabı ile giriş yapın.
+1. [https://app.vixrex.app](https://app.vixrex.app) adresine gidin.
+2. **[Test Account Details](file:///c:/Projects/vixrex/docs/meta_app_review/test_account.md)** dosyasında belirtilen test hesabı ile giriş yapın.
 3. **Vitrinim** ekranına girin.
 4. Test mağazasını açın.
 5. Instagram bağlantısı bölümünden **"Instagram hesabımı bağla"** butonuna basın.
 6. Meta test Instagram hesabıyla giriş yapıp izin verin.
-7. VitrinX’e geri dönün.
+7. VixRex’e geri dönün.
 8. Yüklenen medya listesini görüntüleyin.
 9. Listeden bir fotoğraf seçin.
 10. Ürün adı/fiyat girerek ürüne aktarın.
@@ -42,6 +42,6 @@ Follow the steps below to test and verify the VitrinX Instagram integration duri
 
 ## Key URLs / Önemli Bağlantılar
 
-- **Privacy Policy / Gizlilik Politikası:** [https://vitrinx.app/privacy-policy](https://vitrinx.app/privacy-policy)
-- **Data Deletion Callback URL / Veri Silme Callback:** `https://vitrinx.app/api/meta/data-deletion`
-- **Data Deletion Status / Veri Silme Durum Kontrolü:** `https://vitrinx.app/data-deletion/status/{confirmation_code}`
+- **Privacy Policy / Gizlilik Politikası:** [https://vixrex.app/privacy-policy](https://vixrex.app/privacy-policy)
+- **Data Deletion Callback URL / Veri Silme Callback:** `https://vixrex.app/api/meta/data-deletion`
+- **Data Deletion Status / Veri Silme Durum Kontrolü:** `https://vixrex.app/data-deletion/status/{confirmation_code}`

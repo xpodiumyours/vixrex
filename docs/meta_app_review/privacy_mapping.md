@@ -1,6 +1,6 @@
 # Privacy Mapping & Data Usage
 
-This document outlines how user data is collected, stored, processed, and deleted under the Meta/Instagram integration on VitrinX.
+This document outlines how user data is collected, stored, processed, and deleted under the Meta/Instagram integration on VixRex.
 
 ## Data Processing Details
 
@@ -14,7 +14,7 @@ This document outlines how user data is collected, stored, processed, and delete
 ## Data Deletion & Privacy Policy
 
 - **Encryption:** Instagram access tokens are encrypted at rest using HMAC-SHA256 (`crypto`) before storage in the database.
-- **Privacy Policy:** Read our complete policy at [https://vitrinx.app/privacy-policy](https://vitrinx.app/privacy-policy).
+- **Privacy Policy:** Read our complete policy at [https://vixrex.app/privacy-policy](https://vixrex.app/privacy-policy).
 - **Data Deletion:** Users can delete their data via:
   1. The **Disconnect Connection (Mod B)** option in settings.
   2. The official **Meta Data Deletion Request Callback** (fully supported).

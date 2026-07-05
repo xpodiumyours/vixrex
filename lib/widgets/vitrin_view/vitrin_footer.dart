@@ -40,7 +40,7 @@ class VitrinFooter extends StatelessWidget {
         SizedBox(height: publicMode ? 18 : 24),
         if (!publicMode)
           Text(
-            'BU BİR VITRINX DİJİTAL KİMLİĞİDİR',
+            'BU BİR VIXREX DİJİTAL KİMLİĞİDİR',
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w900,

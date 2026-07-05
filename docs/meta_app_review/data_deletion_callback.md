@@ -1,12 +1,12 @@
 # Data Deletion Callback Specification
 
-VitrinX complies with Meta's Data Deletion Policy. We provide a secure, real-time data deletion callback endpoint that completely cleans up user data.
+VixRex complies with Meta's Data Deletion Policy. We provide a secure, real-time data deletion callback endpoint that completely cleans up user data.
 
 ---
 
 ## 1. Endpoint Configuration
 
-- **Data Deletion Callback URL:** `https://vitrinx.app/api/meta/data-deletion`
+- **Data Deletion Callback URL:** `https://vixrex.app/api/meta/data-deletion`
 - **Method:** `POST`
 - **Content-Type:** `application/x-www-form-urlencoded` or `application/json`
 - **Payload:** Contains `signed_request` which is decoded and verified using the `INSTAGRAM_CLIENT_SECRET`.
@@ -24,4 +24,4 @@ Upon receiving a valid signature and Meta User ID from the callback:
 5. **Cache Invalidation:** Next.js cache is immediately revalidated using tags `store-{slug}`, `products-{slug}`, and `sitemap`.
 6. **Logging Request:** A request log is saved to `meta_data_deletion_requests` with a unique `confirmation_code`.
 7. **Status Page:** The API returns a JSON response containing the status tracking URL:
-   `https://vitrinx.app/data-deletion/status/{confirmation_code}`
+   `https://vixrex.app/data-deletion/status/{confirmation_code}`

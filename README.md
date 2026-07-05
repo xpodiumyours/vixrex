@@ -1,8 +1,8 @@
-# VitrinX
+# VixRex
 
 Küçük işletmeler ve esnaf için paylaşılabilir dijital vitrin platformu.
 
-VitrinX; işletme bilgilerini, ürünleri, hizmetleri, galeriyi, iletişim
+VixRex; işletme bilgilerini, ürünleri, hizmetleri, galeriyi, iletişim
 kanallarını ve randevu seçeneklerini tek bir public bağlantıda toplar.
 İşletmeler vitrinlerini Flutter uygulamasından yönetir, müşteriler ise
 Keşfet ekranı, QR kod veya doğrudan bağlantı üzerinden görüntüler.
@@ -13,7 +13,7 @@ Keşfet ekranı, QR kod veya doğrudan bağlantı üzerinden görüntüler.
 
 ## İçindekiler
 
-- [VitrinX nedir?](#vitrinx-nedir)
+- [VixRex nedir?](#vixrex-nedir)
 - [Hedef kullanıcılar](#hedef-kullanıcılar)
 - [Ana özellikler](#ana-özellikler)
 - [Teknik yapı](#teknik-yapı)
@@ -29,9 +29,9 @@ Keşfet ekranı, QR kod veya doğrudan bağlantı üzerinden görüntüler.
 - [Kontrol listesi](#kontrol-listesi)
 - [Bilinen sınırlamalar](#bilinen-sınırlamalar)
 
-## VitrinX nedir?
+## VixRex nedir?
 
-VitrinX; küçük işletmelerin ürünlerini, hizmetlerini, çalışma bilgilerini,
+VixRex; küçük işletmelerin ürünlerini, hizmetlerini, çalışma bilgilerini,
 galerisini, iletişim kanallarını ve randevu seçeneklerini tek bir
 paylaşılabilir dijital vitrinde yayınlamasını sağlayan Flutter ve web tabanlı
 bir platformdur.
@@ -41,7 +41,7 @@ bir platformdur.
 | İşletme uygulaması | Vitrin oluşturma, düzenleme, canlı önizleme, yayınlama ve randevu yönetimi |
 | Herkese açık web vitrini | Müşterilerin işletmeyi, galeriyi, hizmetleri ve randevu ekranını görüntülemesi |
 
-VitrinX tam kapsamlı bir e-ticaret veya ödeme altyapısı değildir. Temel amacı,
+VixRex tam kapsamlı bir e-ticaret veya ödeme altyapısı değildir. Temel amacı,
 yerel işletmelerin dijital görünürlüğünü ve müşterileriyle iletişimini
 kolaylaştırmaktır.
 
@@ -151,7 +151,7 @@ Windows üzerinde kurulu npm sürümünü gösterir.
 
 ```powershell
 git clone <REPO_ADRESI>
-cd vitrinx
+cd vixrex
 ```
 
 `<REPO_ADRESI>` yerine gerçek Git repository adresini yazın.
@@ -231,7 +231,7 @@ Public web uygulaması varsayılan olarak `http://localhost:3000` adresinde
 |---|---:|---|
 | `SUPABASE_URL` | Evet | Supabase proje adresi |
 | `SUPABASE_PUBLISHABLE_KEY` | Evet | İstemcide kullanılan publishable/anon anahtarı |
-| `PUBLIC_SITE_URL` | Üretimde | Public vitrin adresi, örneğin `https://vitrinx.app` |
+| `PUBLIC_SITE_URL` | Üretimde | Public vitrin adresi, örneğin `https://vixrex.app` |
 | `INSTAGRAM_SYNC_ENABLED` | Instagram hazır olduğunda | Migration ve public API kurulumu bitince `true` yapılır |
 | `LEGAL_PRIVACY_EMAIL` | Hayır | Gizlilik ve veri silme iletişim adresi |
 
@@ -249,7 +249,7 @@ olarak Dart koduna aktarılacağı anlamına gelmez.
 | `REVALIDATION_SECRET` | Önerilir | Server-to-server `/api/revalidate` isteklerini doğrular |
 | `TURNSTILE_SECRET_KEY` | Hayır | İçerik bildirimlerinde bot doğrulaması |
 | `NEXT_PUBLIC_SITE_URL` | Üretimde | Public Next.js adresi |
-| `NEXT_PUBLIC_APP_URL` | Üretimde | Flutter uygulama adresi, örneğin `https://app.vitrinx.app` |
+| `NEXT_PUBLIC_APP_URL` | Üretimde | Flutter uygulama adresi, örneğin `https://app.vixrex.app` |
 | `INSTAGRAM_CLIENT_ID` | Instagram bağlantısında | Meta uygulama kimliği |
 | `INSTAGRAM_CLIENT_SECRET` | Instagram bağlantısında | Server-only Meta uygulama anahtarı |
 | `INSTAGRAM_REDIRECT_URI` | Instagram bağlantısında | Meta panelindeki OAuth callback adresi |
@@ -485,8 +485,8 @@ doğrulanmamıştır.
 
 | Vercel projesi | Root Directory | Amaç | Yapılandırmada kullanılan domain |
 |---|---|---|---|
-| VitrinX App | Repo kökü | Flutter işletme uygulaması | `app.vitrinx.app` |
-| VitrinX Public Web | `public_web` | Public vitrin ve SEO sayfaları | `vitrinx.app` |
+| VixRex App | Repo kökü | Flutter işletme uygulaması | `app.vixrex.app` |
+| VixRex Public Web | `public_web` | Public vitrin ve SEO sayfaları | `vixrex.app` |
 
 ### Flutter Vercel projesi
 
@@ -502,14 +502,14 @@ Ortam değişkenleri:
 ```text
 SUPABASE_URL
 SUPABASE_PUBLISHABLE_KEY
-PUBLIC_SITE_URL=https://vitrinx.app
+PUBLIC_SITE_URL=https://vixrex.app
 ```
 
 `vercel-build.sh`, gerekli Flutter stable kurulumunu hazırlar ve release web
 build üretir.
 
 Kök `vercel.json`, Flutter uygulamasındaki public vitrin, sitemap ve robots
-isteklerini `https://vitrinx.app` adresine yönlendirir.
+isteklerini `https://vixrex.app` adresine yönlendirir.
 
 ### Next.js public web projesi
 
@@ -534,11 +534,11 @@ TURNSTILE_SECRET_KEY
 
 | Adres | Amaç |
 |---|---|
-| `app.vitrinx.app` | Flutter işletme uygulaması |
-| `vitrinx.app` | Public Next.js sitesi |
-| `vitrinx.app/v/:slug` | İşletmenin public vitrini |
-| `vitrinx.app/sitemap.xml` | Arama motoru sitemap'i |
-| `vitrinx.app/robots.txt` | Arama motoru tarama kuralları |
+| `app.vixrex.app` | Flutter işletme uygulaması |
+| `vixrex.app` | Public Next.js sitesi |
+| `vixrex.app/v/:slug` | İşletmenin public vitrini |
+| `vixrex.app/sitemap.xml` | Arama motoru sitemap'i |
+| `vixrex.app/robots.txt` | Arama motoru tarama kuralları |
 
 ### Revalidation notu
 
@@ -611,7 +611,7 @@ Public web projesinin üretim build'ini kontrol eder.
   üretimde çalışmaz.
 - README kurulumu açıklar; mevcut migration veya build sorunlarını otomatik
   olarak düzeltmez.
-- VitrinX ödeme veya tam e-ticaret altyapısı sağlamaz.
+- VixRex ödeme veya tam e-ticaret altyapısı sağlamaz.
 
 ## Güvenlik
 

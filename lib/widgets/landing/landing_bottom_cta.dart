@@ -95,7 +95,7 @@ class LandingBottomCta extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'VITRINX',
+            'VIXREX',
             style: TextStyle(
               fontWeight: FontWeight.w900,
               letterSpacing: 8,
