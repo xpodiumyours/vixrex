@@ -102,9 +102,13 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
         return labelA.compareTo(labelB);
       });
 
+      // 'diger' kategorisini tamamen kaldıralım
+      keys.remove('diger');
+
       // Preferred kategoriyi en öne çıkar
       String? defaultActiveKey;
       if (widget.preferredCategoryKey != null &&
+          widget.preferredCategoryKey != 'diger' &&
           images.containsKey(widget.preferredCategoryKey)) {
         keys.remove(widget.preferredCategoryKey);
         keys.insert(0, widget.preferredCategoryKey!);
@@ -127,6 +131,14 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
     }
   }
 
+  List<String> get _filteredKeys {
+    if (_searchQuery.isEmpty) return _categoryKeys;
+    return _categoryKeys.where((key) {
+      final label = _categoryImages[key]?.categoryLabel ?? key;
+      return label.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+  }
+
   void _handleAction(ImageAction action) {
     if (_selectedImageUrl == null) return;
     widget.onImageAction(_selectedImageUrl!, action);
@@ -146,6 +158,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
           _buildHandle(),
           _buildHeader(),
           _buildSearch(),
+          const Divider(height: 1, color: AppColors.border),
           Expanded(child: _buildContent()),
           _buildBottomBar(),
         ],
@@ -216,12 +229,12 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
 
   Widget _buildSearch() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: TextField(
         controller: _searchController,
         style: const TextStyle(color: AppColors.darkText),
         decoration: InputDecoration(
-          hintText: 'Şablon görsel başlığı ara...',
+          hintText: 'Kategori ara...',
           hintStyle: const TextStyle(color: AppColors.softText),
           prefixIcon: const Icon(Icons.search_rounded, color: AppColors.softText),
           border: OutlineInputBorder(
@@ -253,138 +266,101 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       return const Center(child: Text('Hazır görsel bulunamadı.', style: TextStyle(color: AppColors.mutedText)));
     }
 
-    final activeKey = _activeCategoryKey ?? _categoryKeys.first;
+    final keys = _filteredKeys;
+    if (keys.isEmpty) {
+      return const Center(child: Text('Arama sonucu bulunamadı.', style: TextStyle(color: AppColors.mutedText)));
+    }
 
-    return Column(
+    final activeKey = (keys.contains(_activeCategoryKey))
+        ? _activeCategoryKey
+        : keys.first;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildCategorySelector(_categoryKeys, activeKey),
-        const SizedBox(height: 4),
+        // Sol Panel: Dikey Kategori Listesi
+        SizedBox(
+          width: 240,
+          child: _buildSidebarCategories(keys, activeKey),
+        ),
+        // Sınır Çizgisi
+        const VerticalDivider(width: 1, color: AppColors.border),
+        // Sağ Panel: Görsel Galerisi
         Expanded(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: KeyedSubtree(
-              key: ValueKey(activeKey),
-              child: _buildGridContent(activeKey),
-            ),
-          ),
+          child: activeKey != null
+              ? AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: KeyedSubtree(
+                    key: ValueKey(activeKey),
+                    child: _buildGridContent(activeKey),
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
       ],
     );
   }
 
-  Widget _buildCategorySelector(List<String> keys, String activeKey) {
-    final currentSet = _categoryImages[activeKey];
-    if (currentSet == null) return const SizedBox.shrink();
+  Widget _buildSidebarCategories(List<String> keys, String? activeKey) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: keys.length,
+      itemBuilder: (context, index) {
+        final key = keys[index];
+        final set = _categoryImages[key]!;
+        final isActive = key == activeKey;
+        final isPreferred = key == widget.preferredCategoryKey;
 
-    final categoryConfig = BusinessCategoryConfig.categories.firstWhere(
-      (c) => c.id == activeKey,
-      orElse: () => BusinessCategoryConfig.categories.last,
-    );
-    final emoji = activeKey == widget.preferredCategoryKey ? '📌' : categoryConfig.emoji;
+        final categoryConfig = BusinessCategoryConfig.categories.firstWhere(
+          (c) => c.id == key,
+          orElse: () => BusinessCategoryConfig.categories.last,
+        );
+        final emoji = isPreferred ? '📌' : categoryConfig.emoji;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      child: PopupMenuButton<String>(
-        onSelected: (key) {
-          setState(() {
-            _activeCategoryKey = key;
-            _selectedImageUrl = null; // Kategori değiştiğinde seçimi temizle
-          });
-        },
-        offset: const Offset(0, 50),
-        color: AppColors.bgEditor,
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.border),
-        ),
-        itemBuilder: (context) {
-          return keys.map((key) {
-            final set = _categoryImages[key]!;
-            final isPreferred = key == widget.preferredCategoryKey;
-            final config = BusinessCategoryConfig.categories.firstWhere(
-              (c) => c.id == key,
-              orElse: () => BusinessCategoryConfig.categories.last,
-            );
-            final itemEmoji = isPreferred ? '📌' : config.emoji;
-
-            return PopupMenuItem<String>(
-              value: key,
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+          child: InkWell(
+            onTap: () {
+              setState(() {
+                _activeCategoryKey = key;
+                _selectedImageUrl = null; // Kategori değiştiğinde seçimi temizle
+              });
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: isActive 
+                    ? AppColors.primary.withOpacity(0.08) 
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isActive ? AppColors.primary : Colors.transparent,
+                  width: 1,
+                ),
+              ),
               child: Row(
                 children: [
-                  Text(itemEmoji, style: const TextStyle(fontSize: 18)),
+                  Text(emoji, style: const TextStyle(fontSize: 18)),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       set.categoryLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: key == activeKey ? AppColors.primary : AppColors.darkText,
-                        fontWeight: key == activeKey ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 13,
+                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                        color: isActive ? AppColors.primary : AppColors.darkText,
                       ),
                     ),
                   ),
-                  if (isPreferred)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'ÖNERİLEN',
-                        style: TextStyle(fontSize: 8, color: AppColors.primary, fontWeight: FontWeight.bold),
-                      ),
-                    ),
                 ],
               ),
-            );
-          }).toList();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.inputBg,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
+            ),
           ),
-          child: Row(
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 20)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'KATEGORİ',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.softText,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      currentSet.categoryLabel,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.darkText,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: AppColors.primary,
-                size: 24,
-              ),
-            ],
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -397,31 +373,19 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
         : set.galleryImages;
 
     final seenUrls = <String>{};
-    var allImages = rawImages.where((img) => seenUrls.add(img.imageUrl)).toList();
-
-    // Arama kelimesine göre filtreleme yapalım
-    if (_searchQuery.isNotEmpty) {
-      allImages = allImages.where((img) {
-        final title = img.title ?? '';
-        return title.toLowerCase().contains(_searchQuery.toLowerCase());
-      }).toList();
-    }
+    final allImages = rawImages.where((img) => seenUrls.add(img.imageUrl)).toList();
 
     if (allImages.isEmpty) {
       return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20.0),
-          child: Text(
-            'Bu aramaya uygun görsel bulunamadı.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.mutedText),
-          ),
+        child: Text(
+          'Bu kategoride hazır görsel bulunmuyor.',
+          style: TextStyle(color: AppColors.mutedText),
         ),
       );
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 10,
