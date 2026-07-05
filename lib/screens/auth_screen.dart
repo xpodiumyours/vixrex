@@ -21,12 +21,9 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
-  bool _isLogin = false; // Varsayılan: Hesap Oluştur
+  bool _isLogin = true;
   bool _isLoading = false;
   bool _obscurePassword = true;
-  bool _showConfirmationScreen = false;
-  String _confirmationEmail = '';
-  bool _isResending = false;
 
   static const Color brandOrange = AppColors.brandOrange;
   static const Color darkAccent = AppColors.darkTextAlt;
@@ -51,24 +48,12 @@ class _AuthScreenState extends State<AuthScreen> {
 
       if (_isLogin) {
         await authService.signIn(email, password);
-        // Handle post-auth routing and linking
-        await _handlePostAuthentication();
       } else {
-        final response = await authService.signUp(email, password);
-        // E-posta onayı gerekiyor mu kontrol et
-        if (response.session == null && response.user != null) {
-          // Onay e-postası gönderildi — onay ekranını göster
-          if (mounted) {
-            setState(() {
-              _showConfirmationScreen = true;
-              _confirmationEmail = email;
-            });
-          }
-          return;
-        }
-        // Otomatik giriş yapıldıysa (email onayı kapalıysa)
-        await _handlePostAuthentication();
+        await authService.signUp(email, password);
       }
+
+      // Handle post-auth routing and linking
+      await _handlePostAuthentication();
     } on AuthException catch (e) {
       if (!mounted) return;
       _showError(_translateAuthError(e));
@@ -77,33 +62,6 @@ class _AuthScreenState extends State<AuthScreen> {
       _showError('Beklenmeyen bir hata oluştu: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _resendConfirmationEmail() async {
-    if (_isResending) return;
-    setState(() => _isResending = true);
-
-    try {
-      await Supabase.instance.client.auth.resend(
-        email: _confirmationEmail,
-        type: OtpType.signup,
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Onay e-postası tekrar gönderildi.'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        _showError('E-posta tekrar gönderilemedi: $e');
-      }
-    } finally {
-      if (mounted) setState(() => _isResending = false);
     }
   }
 
@@ -164,17 +122,6 @@ class _AuthScreenState extends State<AuthScreen> {
             LocalStorageKeys.storeEditToken,
             editToken,
           );
-          // Controller'ın okuyacağı key'lere de yaz
-          await prefs.setString(
-            LocalStorageKeys.lastPublishedEditToken,
-            editToken,
-          );
-          if (store.slug.isNotEmpty) {
-            await prefs.setString(
-              LocalStorageKeys.lastPublishedSlug,
-              store.slug,
-            );
-          }
         }
 
         if (!mounted) return;
@@ -197,17 +144,6 @@ class _AuthScreenState extends State<AuthScreen> {
             LocalStorageKeys.vitrinEditToken,
             editToken,
           );
-          // Controller'ın okuyacağı key'lere de yaz
-          await prefs.setString(
-            LocalStorageKeys.lastPublishedEditToken,
-            editToken,
-          );
-          if (store.slug.isNotEmpty) {
-            await prefs.setString(
-              LocalStorageKeys.lastPublishedSlug,
-              store.slug,
-            );
-          }
         }
 
         if (!mounted) return;
@@ -223,7 +159,7 @@ class _AuthScreenState extends State<AuthScreen> {
   String _translateAuthError(AuthException e) {
     final msg = e.message.toLowerCase();
     if (msg.contains('invalid login credentials')) {
-      return 'E-posta adresi veya şifre hatalı. E-postanızı onayladıysanız tekrar deneyin.';
+      return 'E-posta adresi veya şifre hatalı.';
     }
     if (msg.contains('user already exists')) {
       return 'Bu e-posta adresiyle kayıtlı bir kullanıcı zaten var.';
@@ -233,9 +169,6 @@ class _AuthScreenState extends State<AuthScreen> {
     }
     if (msg.contains('password is too short')) {
       return 'Şifre en az 6 karakter olmalıdır.';
-    }
-    if (msg.contains('email not confirmed') || msg.contains('not confirmed')) {
-      return 'E-posta adresiniz henüz onaylanmadı. Lütfen gelen kutunuzu kontrol edin.';
     }
     return 'Giriş yapılamadı: ${e.message}';
   }
@@ -257,163 +190,13 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildConfirmationScreen() {
-    return Scaffold(
-      backgroundColor: lightBg,
-      appBar: AppBar(
-        title: const Text(
-          'E-posta Onayı',
-          style: TextStyle(
-            color: darkAccent,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: darkAccent),
-          onPressed: () => setState(() {
-            _showConfirmationScreen = false;
-            _isLogin = true;
-          }),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Card(
-              elevation: 4,
-              shadowColor: Colors.black12,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // E-posta ikonu
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: brandOrange.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.mark_email_read_rounded,
-                        color: brandOrange,
-                        size: 48,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Başlık
-                    const Text(
-                      'E-postanızı kontrol edin',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: darkAccent,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Açıklama
-                    Text(
-                      'Hesabınızı onaylamak için $_confirmationEmail adresine bir e-posta gönderdik.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'E-postadaki onay bağlantısına tıklayarak giriş yapabilirsiniz.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Tekrar gönder butonu
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        onPressed: _isResending ? null : _resendConfirmationEmail,
-                        icon: _isResending
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.refresh_rounded, size: 20),
-                        label: Text(
-                          _isResending ? 'Gönderiliyor...' : 'E-postayı tekrar gönder',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: brandOrange,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Giriş yap butonu
-                    TextButton(
-                      onPressed: () => setState(() {
-                        _showConfirmationScreen = false;
-                        _isLogin = true;
-                      }),
-                      child: const Text(
-                        'Giriş yap sayfasına dön',
-                        style: TextStyle(
-                          color: darkAccent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Onay ekranı gösteriliyorsa
-    if (_showConfirmationScreen) {
-      return _buildConfirmationScreen();
-    }
-
     return Scaffold(
       backgroundColor: lightBg,
       appBar: AppBar(
         title: Text(
-          _isLogin ? 'Giriş Yap' : 'Hesap Oluştur',
+          _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
           style: const TextStyle(
             color: darkAccent,
             fontWeight: FontWeight.bold,
@@ -599,7 +382,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ),
                                 )
                                 : Text(
-                                  _isLogin ? 'Giriş Yap' : 'Hesap Oluştur',
+                                  _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -618,7 +401,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         },
                         child: Text(
                           _isLogin
-                              ? 'Hesabınız yok mu? Hemen oluşturun'
+                              ? 'Hesabınız yok mu? Hemen kayıt olun'
                               : 'Zaten hesabınız var mı? Giriş yapın',
                           style: const TextStyle(
                             color: brandOrange,
@@ -630,7 +413,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       Text(
                         _isLogin
                             ? 'Giriş yapmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.'
-                            : 'Hesap oluşturmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.',
+                            : 'Kayıt olmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Color(0xFF64748B),

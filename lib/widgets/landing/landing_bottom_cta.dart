@@ -61,38 +61,24 @@ class LandingBottomCta extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 48),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ElevatedButton(
-                    onPressed: onNavigateToEditor,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: brandBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 24,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      elevation: 10,
-                    ),
-                    child: const Text(
-                      'VitrinX Oluştur',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-                    ),
+              ElevatedButton(
+                onPressed: onNavigateToEditor,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: brandBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 24,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Kayıt gerekmez, hemen başlayın',
-                    style: TextStyle(
-                      color: AppColors.mutedText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                ],
+                  elevation: 10,
+                ),
+                child: const Text(
+                  'VitrinX Oluştur',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                ),
               ),
             ],
           ),
