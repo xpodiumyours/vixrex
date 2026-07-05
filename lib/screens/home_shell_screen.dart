@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vitrinx/models/chat_message.dart';
+import 'package:vitrinx/services/auth_service.dart';
 import 'package:vitrinx/services/chatbot_service.dart';
 import 'package:vitrinx/screens/blog_moderation_screen.dart';
 import 'package:vitrinx/screens/explore_screen.dart';
@@ -48,7 +48,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   /// Mevcut kullanıcının yönetici olup olmadığını kontrol eder.
   bool get _isAdmin {
     try {
-      final meta = Supabase.instance.client.auth.currentUser?.userMetadata;
+      final meta = const AuthService().currentUser?.userMetadata;
       return meta?['is_admin'] == true;
     } catch (_) {
       return false;

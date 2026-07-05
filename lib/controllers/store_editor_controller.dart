@@ -408,7 +408,8 @@ class StoreEditorController extends ChangeNotifier {
     required Uint8List bytes,
     required String contentType,
   }) async {
-    final client = supabaseClient ?? Supabase.instance.client;
+    final client = _resolveClient();
+    if (client == null) throw const StorePublishException('Supabase bağlı değil.');
     await client.storage.from(bucket).uploadBinary(
       path,
       bytes,
@@ -424,13 +425,14 @@ class StoreEditorController extends ChangeNotifier {
       return;
     }
 
-    final client = supabaseClient ?? Supabase.instance.client;
+    final client = _resolveClient();
+    if (client == null) throw const StorePublishException('Supabase bağlı değil.');
     final userId = client.auth.currentUser?.id;
     if (userId == null) throw const StorePublishException('Oturum acik degil.');
 
     final storeSlug = _data.slug.isNotEmpty
         ? _data.slug
-        : _data.name.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '-');
+        : publishService.payloadBuilder.generateSlug(_data.name);
     final ts = DateTime.now().millisecondsSinceEpoch;
 
     // 1. Kapak upload
@@ -485,7 +487,7 @@ class StoreEditorController extends ChangeNotifier {
       } else {
         effectiveEditToken = _data.slug.isNotEmpty
             ? _data.slug
-            : _data.name.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '-');
+            : publishService.payloadBuilder.generateSlug(_data.name);
       }
 
       final result = await publishService.publishStore(_data, editToken: effectiveEditToken);

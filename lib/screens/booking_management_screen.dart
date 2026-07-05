@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vitrinx/config/public_site_config.dart';
+import 'package:vitrinx/services/booking_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
 
@@ -35,16 +35,11 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
 
   Future<void> _fetchAppointments() async {
     try {
-      final client = Supabase.instance.client;
-      final res = await client
-          .from('appointments')
-          .select('*, appointment_reschedule_requests(*)')
-          .eq('store_slug', widget.storeSlug)
-          .order('appointment_time', ascending: true);
+      final appointments = await const BookingService().fetchAppointments(widget.storeSlug);
 
       if (mounted) {
         setState(() {
-          _appointments = res as List<dynamic>;
+          _appointments = appointments;
           _isLoading = false;
           _errorMessage = null;
         });
@@ -63,12 +58,11 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
   Future<void> _respond(String apptId, {String? action, String? rescheduleAction}) async {
     setState(() => _isLoading = true);
     try {
-      final client = Supabase.instance.client;
-      await client.rpc('respond_to_appointment', params: {
-        'p_appointment_id': apptId,
-        'p_action': action,
-        'p_reschedule_action': rescheduleAction,
-      });
+      await const BookingService().respondToAppointment(
+        appointmentId: apptId,
+        action: action,
+        rescheduleAction: rescheduleAction,
+      );
       await _fetchAppointments();
       _showSnackBar('Randevu güncellendi.');
     } catch (e) {

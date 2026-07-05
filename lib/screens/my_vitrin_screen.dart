@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vitrinx/config/app_router.dart';
+import 'package:vitrinx/config/business_category_config.dart';
 import 'package:vitrinx/controllers/store_editor_controller.dart';
 import 'package:vitrinx/models/chat_message.dart';
 import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
@@ -12,6 +12,7 @@ import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 // NOTE: PublishedSummaryCard is exported from publish_actions_section.dart
 import 'package:vitrinx/widgets/editor/publish_actions_section.dart';
+import 'package:vitrinx/widgets/editor/qr_code_bottom_sheet.dart';
 import 'package:vitrinx/widgets/editor/visibility_hub_card.dart';
 import 'package:vitrinx/widgets/auto_fill/category_gallery_sheet.dart';
 
@@ -56,7 +57,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _syncControllers();
     final pendingCategoryKey = await const StoreLocalStorageService().loadPendingCategoryKey();
     if (pendingCategoryKey != null) {
-      final label = _mapCategoryKeyToLabel(pendingCategoryKey);
+      final label = BusinessCategoryConfig.labelForKey(pendingCategoryKey);
       if (label != null) {
         _controller.selectCategory(label);
       }
@@ -74,24 +75,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         _controller.publishedInfo?.publicLink ?? _controller.data.website;
     _googleBusinessLinkController.text =
         _controller.data.googleBusinessLink;
-  }
-
-  String? _mapCategoryKeyToLabel(String key) {
-    switch (key) {
-      case 'butik_giyim': return 'Giyim';
-      case 'kuafor_guzellik': return 'Kuaför';
-      case 'kafe_restoran': return 'Kafe / Lokanta';
-      case 'berber': return 'Kuaför';
-      case 'oto_kuafor': return 'Oto & Araç Hizmetleri';
-      case 'market_bakkal': return 'Gıda';
-      case 'pastane_tatlici': return 'Fırın';
-      case 'mobilya_dekorasyon': return 'Dekorasyon';
-      case 'spor_salonu': return 'Spor & Fitness';
-      case 'dis_klinigi': return 'Sağlık & Yaşam';
-      case 'eczane': return 'Sağlık & Yaşam';
-      case 'teknik_servis': return 'Teknik Servis';
-      default: return null;
-    }
   }
 
   /// Xrex aksiyonuna göre ilgili forma otomatik kaydırır ve odaklanır.
@@ -223,39 +206,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       onShowQrSheet: () {
         final link = _controller.publishedInfo?.publicLink;
         if (link == null || link.trim().isEmpty) return;
-        showModalBottomSheet(
+        QrCodeBottomSheet.show(
           context: context,
-          showDragHandle: true,
-          backgroundColor: AppColors.surface,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          builder: (_) => Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('QR Kod', style: TextStyle(
-                  color: AppColors.darkText, fontSize: 20, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 16),
-                Container(
-                  width: 220, height: 220, padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.cardBorderDark),
-                  ),
-                  child: QrImageView(
-                    data: link, version: QrVersions.auto,
-                    errorCorrectionLevel: QrErrorCorrectLevel.M),
-                ),
-                const SizedBox(height: 12),
-                Text(link, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.mutedText,
-                    fontSize: 13, fontWeight: FontWeight.w700)),
-              ],
-            ),
-          ),
+          title: 'QR Kod',
+          link: link,
         );
       },
     );
@@ -292,61 +246,11 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         'Lütfen önce Google Yorum Bağlantısı girin ve vitrininizi kaydedin.');
       return;
     }
-    showModalBottomSheet(
-      context: context, showDragHandle: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Google Yorum QR Kodu', style: TextStyle(
-              color: AppColors.darkText, fontSize: 20, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.error.withOpacity(0.35)),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.warning_amber_rounded,
-                    color: AppColors.error, size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Google politikaları gereği yorum karşılığında ödül veya hediye teklif edilmesi yasaktır. Lütfen QR kodunu müşterilerinizden tarafsız ve organik geri bildirimler almak üzere kullanın.',
-                      style: TextStyle(color: AppColors.darkTextAlt,
-                        fontSize: 12, fontWeight: FontWeight.w600, height: 1.4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              width: 220, height: 220, padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.cardBorderDark),
-              ),
-              child: QrImageView(
-                data: link, version: QrVersions.auto,
-                errorCorrectionLevel: QrErrorCorrectLevel.M),
-            ),
-            const SizedBox(height: 12),
-            Text(link, maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.mutedText,
-                fontSize: 13, fontWeight: FontWeight.w700)),
-          ],
-        ),
-      ),
+    QrCodeBottomSheet.show(
+      context: context,
+      title: 'Google Yorum QR Kodu',
+      link: link,
+      warningText: 'Google politikaları gereği yorum karşılığında ödül veya hediye teklif edilmesi yasaktır. Lütfen QR kodunu müşterilerinizden tarafsız ve organik geri bildirimler almak üzere kullanın.',
     );
   }
 

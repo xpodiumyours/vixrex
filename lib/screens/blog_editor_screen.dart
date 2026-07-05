@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/turkey_cities_config.dart';
+import 'package:vitrinx/services/article_service.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
 import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/seo_service.dart';
@@ -219,7 +219,6 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final client = Supabase.instance.client;
       final title = _titleController.text.trim();
       final slug = const StorePublishPayloadBuilder().generateSlug(title);
       final cleanSlug = slug.replaceAll(RegExp(r'[^a-z0-9-]'), '');
@@ -276,7 +275,7 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
 
       if (widget.initialArticle == null) {
         // Create new article
-        await client.from('store_articles').insert(payload);
+        await const ArticleService().createArticle(payload);
         _showSnackBar(
           targetStatus == 'published'
               ? 'Yazı yayına gönderildi! (Güvenilir yazar değilseniz önce moderatör incelemesine alınır)'
@@ -286,10 +285,10 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
         // Update existing (slug'ı payload'dan çıkar — URL değişmesin)
         final updatePayload = Map<String, dynamic>.from(payload)
           ..remove('slug');
-        await client
-            .from('store_articles')
-            .update(updatePayload)
-            .eq('id', widget.initialArticle!['id']);
+        await const ArticleService().updateArticle(
+          id: widget.initialArticle!['id'],
+          payload: updatePayload,
+        );
         _showSnackBar('Değişiklikler başarıyla kaydedildi.');
       }
 

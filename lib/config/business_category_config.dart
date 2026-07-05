@@ -322,6 +322,32 @@ class BusinessCategoryConfig {
         .replaceAll('ö', 'o');
   }
 
+  /// Eski key formatlarından (ör: 'butik_giyim') güncel label'a eşleme.
+  /// [StoreLocalStorageService.loadPendingCategoryKey] tarafından kullanılır.
+  static String? labelForKey(String key) {
+    const legacyMappings = {
+      'butik_giyim': 'Giyim',
+      'kuafor_guzellik': 'Kuaför',
+      'kafe_restoran': 'Kafe / Lokanta',
+      'berber': 'Kuaför',
+      'oto_kuafor': 'Oto & Araç Hizmetleri',
+      'market_bakkal': 'Gıda',
+      'pastane_tatlici': 'Fırın',
+      'mobilya_dekorasyon': 'Dekorasyon',
+      'spor_salonu': 'Spor & Fitness',
+      'dis_klinigi': 'Sağlık & Yaşam',
+      'eczane': 'Sağlık & Yaşam',
+      'teknik_servis': 'Teknik Servis',
+    };
+    if (legacyMappings.containsKey(key)) return legacyMappings[key];
+
+    // Güncel ID ile de dene
+    for (final category in categories) {
+      if (category.id == key) return category.label;
+    }
+    return null;
+  }
+
   static BusinessCategoryConfig fromCategoryLabel(String label) {
     final cleanLabel = label.trim().toLowerCase();
 

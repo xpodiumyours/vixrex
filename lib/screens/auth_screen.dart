@@ -113,19 +113,14 @@ class _AuthScreenState extends State<AuthScreen> {
         if (!mounted) return;
 
         // Fetch and cache the edit token for the store to ensure smooth editor integration
-        final dbStore =
-            await Supabase.instance.client
-                .from('stores')
-                .select('edit_token')
-                .eq('user_id', authService.currentUser!.id)
-                .maybeSingle();
+        final editToken = await authService.getEditTokenForCurrentUser();
 
         if (!mounted) return;
 
-        if (dbStore != null && dbStore['edit_token'] != null) {
+        if (editToken != null) {
           await prefs.setString(
             LocalStorageKeys.storeEditToken,
-            dbStore['edit_token'] as String,
+            editToken,
           );
         }
 
@@ -140,19 +135,14 @@ class _AuthScreenState extends State<AuthScreen> {
 
         if (!mounted) return;
 
-        final dbStore =
-            await Supabase.instance.client
-                .from('stores')
-                .select('edit_token')
-                .eq('user_id', authService.currentUser!.id)
-                .maybeSingle();
+        final editToken = await authService.getEditTokenForCurrentUser();
 
         if (!mounted) return;
 
-        if (dbStore != null && dbStore['edit_token'] != null) {
+        if (editToken != null) {
           await prefs.setString(
             LocalStorageKeys.vitrinEditToken,
-            dbStore['edit_token'] as String,
+            editToken,
           );
         }
 

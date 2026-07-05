@@ -11,6 +11,7 @@ import 'package:vitrinx/controllers/store_editor_controller.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vitrinx/services/category_image_service.dart';
+import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/widgets/auto_fill/category_gallery_sheet.dart';
@@ -585,7 +586,7 @@ class VitrinFormSection extends StatelessWidget {
   void _showProductSheet(BuildContext ctx) {
     final slug = controller.data.slug.trim().isNotEmpty
         ? controller.data.slug.trim()
-        : controller.data.name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '-');
+        : StorePublishPayloadBuilder().generateSlug(controller.data.name);
     showModalBottomSheet(
       context: ctx, backgroundColor: AppColors.surface, isScrollControlled: true,
       shape: const RoundedRectangleBorder(

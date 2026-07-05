@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vitrinx/services/article_service.dart';
 import 'package:vitrinx/services/seo_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
@@ -40,12 +40,7 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
       _error = null;
     });
     try {
-      final client = Supabase.instance.client;
-      final data = await client
-          .from('store_articles')
-          .select('id, store_slug, title, summary, status, created_at, seo_score, article_type, target_city')
-          .eq('status', 'review')
-          .order('created_at', ascending: true);
+      final data = await const ArticleService().fetchPendingReviewArticles();
 
       setState(() {
         _pendingArticles = List<Map<String, dynamic>>.from(data as List);
@@ -68,11 +63,10 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
 
     setState(() => _processingIds.add(id));
     try {
-      final client = Supabase.instance.client;
-      await client
-          .from('store_articles')
-          .update({'status': newStatus})
-          .eq('id', id);
+      await const ArticleService().updateArticleStatus(
+        id: id,
+        status: newStatus,
+      );
 
       // Trigger ISR revalidation so public page updates immediately
       if (newStatus == 'published') {

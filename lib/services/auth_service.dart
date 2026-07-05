@@ -79,6 +79,26 @@ class AuthService {
     return null;
   }
 
+  /// Fetches the edit token for the currently logged-in user's store.
+  Future<String?> getEditTokenForCurrentUser() async {
+    final user = currentUser;
+    if (user == null) return null;
+
+    try {
+      final response =
+          await Supabase.instance.client
+              .from('stores')
+              .select('edit_token')
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+      if (response != null && response['edit_token'] != null) {
+        return response['edit_token'] as String;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   /// Links an anonymously created store (identifiable by edit token) to the current user.
   Future<bool> linkAnonymousStore(String editToken) async {
     try {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/screens/public_vitrin_screen.dart';
+import 'package:vitrinx/services/booking_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 
 class AppointmentTrackerScreen extends StatefulWidget {
@@ -34,10 +34,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
 
   Future<void> _fetchAppointment() async {
     try {
-      final client = Supabase.instance.client;
-      final res = await client.rpc('get_appointment_by_token', params: {
-        'p_token': widget.token,
-      });
+      final res = await const BookingService().getAppointmentByToken(widget.token);
 
       if (mounted) {
         if (res == null) {
@@ -86,10 +83,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final client = Supabase.instance.client;
-      await client.rpc('cancel_appointment_by_token', params: {
-        'p_token': widget.token,
-      });
+      await const BookingService().cancelAppointmentByToken(widget.token);
       await _fetchAppointment();
       _showSnackBar('Randevunuz iptal edildi.');
     } catch (e) {
@@ -106,16 +100,14 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
     });
 
     try {
-      final client = Supabase.instance.client;
-      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      final res = await client.rpc('get_public_booking_slots', params: {
-        'p_store_slug': widget.storeSlug,
-        'p_date': dateStr,
-      });
+      final res = await const BookingService().getAvailableSlots(
+        storeSlug: widget.storeSlug,
+        date: date,
+      );
 
       if (mounted) {
         setState(() {
-          _availableSlots = res as List<dynamic>;
+          _availableSlots = res;
           _isLoadingSlots = false;
         });
       }
@@ -134,14 +126,13 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
     setState(() => _isSubmittingReschedule = true);
 
     try {
-      final client = Supabase.instance.client;
       final datePart = '${_newDate!.year}-${_newDate!.month.toString().padLeft(2, '0')}-${_newDate!.day.toString().padLeft(2, '0')}';
-      final newTime = DateTime.parse('$datePart $_newSlotTime:00').toUtc().toIso8601String();
+      final newTime = DateTime.parse('$datePart $_newSlotTime:00');
 
-      await client.rpc('request_appointment_reschedule', params: {
-        'p_token': widget.token,
-        'p_new_time': newTime,
-      });
+      await const BookingService().requestReschedule(
+        token: widget.token,
+        newTime: newTime,
+      );
 
       await _fetchAppointment();
       if (mounted) {

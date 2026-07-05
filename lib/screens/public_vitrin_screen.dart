@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/screens/appointment_tracker_screen.dart';
+import 'package:vitrinx/services/public_store_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/vitrin_view_service.dart';
 import 'package:vitrinx/widgets/vitrin_view.dart';
@@ -58,14 +58,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       return widget.mockStoreData;
     }
     final response =
-        await Supabase.instance.client
-            .from('stores')
-            .select(
-              'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,latitude,longitude,location_accuracy_meters,location_consent_at,location_source,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published,is_store,products,offerings,kategori,working_hours,booking_settings(is_enabled,capacity,working_hours,lunch_break)',
-            )
-            .eq('slug', widget.slug)
-            .eq('is_published', true)
-            .maybeSingle();
+        await const PublicStoreService().fetchPublishedStoreBySlug(widget.slug);
 
     if (response == null) return null;
     unawaited(
