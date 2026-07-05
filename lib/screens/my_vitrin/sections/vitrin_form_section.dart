@@ -12,7 +12,7 @@ import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vitrinx/services/category_image_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
-import 'package:vitrinx/widgets/auto_fill/cover_template_picker_sheet.dart';
+import 'package:vitrinx/widgets/auto_fill/category_gallery_sheet.dart';
 import 'package:vitrinx/widgets/editor/common_form_fields.dart';
 import 'package:vitrinx/widgets/editor/cover_picker_section.dart';
 import 'package:vitrinx/widgets/editor/gallery_editor_section.dart';
@@ -75,26 +75,29 @@ class VitrinFormSection extends StatelessWidget {
         contentType: e.contentType,
       )).toList();
 
-  /// Kapak şablonu seçim bottom sheet'ini açar
-  Future<void> _showCoverTemplatePicker(BuildContext ctx) async {
+  /// Kategori galerisi bottom sheet'ini açar
+  Future<void> _showCategoryGallery(BuildContext ctx, {required ImageSource source}) async {
     final kategori = controller.selectedKategori.trim();
     if (kategori.isEmpty) {
       state.showSnackBar(ctx, 'Önce bir kategori seçmelisiniz.');
       return;
     }
-    final categoryKey = mapKategoriToKey(kategori);
-    if (categoryKey == null) {
-      state.showSnackBar(ctx, 'Bu kategori için hazır görsel bulunamadı.');
-      return;
-    }
+    final preferredKey = mapKategoriToKey(kategori);
 
-    await CoverTemplatePickerSheet.show(
+    await CategoryGallerySheet.show(
       context: ctx,
-      categoryKey: categoryKey,
-      categoryLabel: kategori,
-      onCoverSelected: (coverUrl) {
-        controller.setCoverUrl(coverUrl);
-        controller.saveLocally();
+      preferredCategoryKey: preferredKey,
+      source: source,
+      onImageAction: (url, action) {
+        switch (action) {
+          case ImageAction.setAsCover:
+            controller.setCoverUrl(url);
+            controller.saveLocally();
+            break;
+          case ImageAction.addToGallery:
+            controller.addGalleryUrl(url);
+            break;
+        }
       },
     );
   }
@@ -172,7 +175,7 @@ class VitrinFormSection extends StatelessWidget {
                   coverUrl: controller.coverUrl,
                   coverFileName: controller.coverFileName,
                   onTap: () => _pickCover(context),
-                  onAutoFillTap: () => _showCoverTemplatePicker(context),
+                  onAutoFillTap: () => _showCategoryGallery(context, source: ImageSource.coverPicker),
                 ),
               ),
               const SizedBox(height: 10),
@@ -185,6 +188,7 @@ class VitrinFormSection extends StatelessWidget {
                   maxGalleryPhotos: controller.maxGalleryPhotos,
                   onPickPhotos: () => _pickGallery(context),
                   onRemovePhoto: controller.removeGalleryItem,
+                  onAutoFillTap: () => _showCategoryGallery(context, source: ImageSource.galleryEditor),
                 ),
               ),
               const SizedBox(height: 18),
