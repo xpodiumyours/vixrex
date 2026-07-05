@@ -16,6 +16,7 @@ import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
 import 'package:vitrinx/widgets/auto_fill/auto_fill_banner.dart';
 import 'package:vitrinx/widgets/auto_fill/category_auto_fill_sheet.dart';
+import 'package:vitrinx/widgets/auto_fill/cover_template_picker_sheet.dart';
 import 'package:vitrinx/widgets/editor/common_form_fields.dart';
 import 'package:vitrinx/widgets/editor/cover_picker_section.dart';
 import 'package:vitrinx/widgets/editor/gallery_editor_section.dart';
@@ -78,8 +79,8 @@ class VitrinFormSection extends StatelessWidget {
         contentType: e.contentType,
       )).toList();
 
-  /// Kategori sablonu secim bottom sheet'ini acar
-  Future<void> _showAutoFillSheet(BuildContext ctx) async {
+  /// Kapak şablonu seçim bottom sheet'ini açar
+  Future<void> _showCoverTemplatePicker(BuildContext ctx) async {
     final kategori = controller.selectedKategori.trim();
     if (kategori.isEmpty) {
       state.showSnackBar(ctx, 'Önce bir kategori seçmelisiniz.');
@@ -91,37 +92,13 @@ class VitrinFormSection extends StatelessWidget {
       return;
     }
 
-    final storeId = controller.data.id?.toString() ?? '';
-
-    await CategoryAutoFillSheet.show(
+    await CoverTemplatePickerSheet.show(
       context: ctx,
       categoryKey: categoryKey,
       categoryLabel: kategori,
-      storeId: storeId,
-      onLocalApply: storeId.isEmpty
-          ? ({
-              coverImage,
-              galleryImages = const [],
-              productImages = const [],
-            }) {
-              controller.applyCategoryTemplateLocal(
-                coverImageUrl: coverImage?.imageUrl,
-                galleryImageUrls:
-                    galleryImages.map((img) => img.imageUrl).toList(),
-                productTemplates: productImages
-                    .map((img) => {
-                          'name': img.title ?? 'Ürün',
-                          'description': img.description ?? '',
-                          'price': '',
-                          'category': kategori,
-                        })
-                    .toList(),
-              );
-            }
-          : null,
-      onApplied: () async {
-        await controller.syncGalleryFromSupabase();
-        await controller.initialize(controller.data.name);
+      onCoverSelected: (coverUrl) {
+        controller.setCoverUrl(coverUrl);
+        controller.saveLocally();
       },
     );
   }
@@ -199,7 +176,7 @@ class VitrinFormSection extends StatelessWidget {
                   coverUrl: controller.coverUrl,
                   coverFileName: controller.coverFileName,
                   onTap: () => _pickCover(context),
-                  onAutoFillTap: () => _showAutoFillSheet(context),
+                  onAutoFillTap: () => _showCoverTemplatePicker(context),
                 ),
               ),
               const SizedBox(height: 10),
@@ -212,7 +189,6 @@ class VitrinFormSection extends StatelessWidget {
                   maxGalleryPhotos: controller.maxGalleryPhotos,
                   onPickPhotos: () => _pickGallery(context),
                   onRemovePhoto: controller.removeGalleryItem,
-                  onAutoFillTap: () => _showAutoFillSheet(context),
                 ),
               ),
               const SizedBox(height: 18),
