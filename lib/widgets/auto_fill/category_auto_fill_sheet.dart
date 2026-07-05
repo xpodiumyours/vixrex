@@ -120,6 +120,8 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
         Navigator.pop(context);
         await widget.onApplied?.call();
 
+        if (!mounted) return;
+
         final totalCount = (selectedCover != null ? 1 : 0) +
             selectedGallery.length +
             selectedProducts.length;
@@ -180,6 +182,8 @@ class _CategoryAutoFillSheetState extends State<CategoryAutoFillSheet> {
     if (result.success && mounted) {
       Navigator.pop(context);
       await widget.onApplied?.call();
+
+      if (!mounted) return;
 
       // Basari snackbar'i
       ScaffoldMessenger.of(context).showSnackBar(

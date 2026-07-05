@@ -189,10 +189,6 @@ class CategoryImageService {
           .eq('is_active', true)
           .order('display_order');
 
-      if (response == null) {
-        return CategoryImageSet(categoryKey: categoryKey, categoryLabel: categoryKey);
-      }
-
       final list = response as List;
       final images = list.map((r) => CategoryTemplateImage.fromJson(r as Map<String, dynamic>)).toList();
 
@@ -226,8 +222,6 @@ class CategoryImageService {
           .select('category_key, category_label')
           .eq('is_active', true)
           .order('category_label');
-
-      if (response == null) return const [];
 
       final list = response as List;
       final seen = <String>{};
@@ -267,7 +261,6 @@ class CategoryImageService {
           .eq('is_active', true)
           .limit(1);
 
-      if (response == null) return false;
       return (response as List).isNotEmpty;
     } catch (e) {
       debugPrint('CategoryImageService.hasTemplateImages error: $e');
@@ -287,7 +280,6 @@ class CategoryImageService {
           .eq('category_key', key)
           .eq('is_active', true);
 
-      if (response == null) return 0;
       return (response as List).length;
     } catch (e) {
       debugPrint('CategoryImageService.getTemplateCount error: $e');

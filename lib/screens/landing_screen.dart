@@ -238,6 +238,7 @@ class _LandingScreenState extends State<LandingScreen>
       const storage = StoreLocalStorageService();
       await storage.savePendingCategoryKey(categoryKey);
     }
+    if (!mounted) return;
     AppRouter.navigateToAuth(context);
   }
 

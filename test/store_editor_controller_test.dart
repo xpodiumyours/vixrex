@@ -44,10 +44,11 @@ class FakeStorePublishService extends Fake implements StorePublishService {
     StoreData data, {
     required String editToken,
   }) async {
-    return const StorePublishResult(
+    return StorePublishResult(
       slug: 'test-store',
       publicPath: '/test-store',
       wasUpdated: false,
+      editToken: editToken,
     );
   }
 }
