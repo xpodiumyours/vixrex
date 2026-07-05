@@ -76,11 +76,17 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       final Map<String, CategoryImageSet> images = {};
       final List<String> keys = [];
 
-      for (final cat in categories) {
-        final set = await CategoryImageService.getImagesForCategory(cat.key);
-        if (set.totalCount > 0) {
-          images[cat.key] = set;
-          keys.add(cat.key);
+      final categorySets = await Future.wait(
+        categories.map((cat) async {
+          final set = await CategoryImageService.getImagesForCategory(cat.key);
+          return MapEntry(cat.key, set);
+        }),
+      );
+
+      for (final entry in categorySets) {
+        if (entry.value.totalCount > 0) {
+          images[entry.key] = entry.value;
+          keys.add(entry.key);
         }
       }
 
