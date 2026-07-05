@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/services/store_local_storage_service.dart';
 
 class AuthService {
   const AuthService();
@@ -39,6 +40,8 @@ class AuthService {
   /// Sign out.
   Future<void> signOut() async {
     await Supabase.instance.client.auth.signOut();
+    await const StoreLocalStorageService().clearStoreData();
+    await const StoreLocalStorageService().clearVitrinData();
   }
 
   /// Deletes the currently authenticated user's account and all their data.

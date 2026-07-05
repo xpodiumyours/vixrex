@@ -95,7 +95,7 @@ class XrexGuidanceService {
         label: 'Kategoriye özel görseller',
         points: 10,
         completed: snapshot?.autoFillCompleted ?? false,
-        action: XrexAction.openAutoFillDialog,
+        action: XrexAction.scrollToCategory,
       ),
     ];
   }
