@@ -691,6 +691,24 @@ class StoreEditorController extends ChangeNotifier {
   void addGalleryItem(EditorGalleryItem item) {
     if (_editorGalleryItems.length < _maxGalleryPhotos) { _editorGalleryItems.add(item); notifyListeners(); }
   }
+  void addGalleryUrl(String url, {String? title}) {
+    if (_editorGalleryItems.length >= _maxGalleryPhotos) {
+      debugPrint('addGalleryUrl: max gallery photos reached');
+      return;
+    }
+    final item = EditorGalleryItem.fromUrl(url);
+    _editorGalleryItems.add(item);
+    _data.galleryItems = _editorGalleryItems
+        .where((i) => !i.isRemoved)
+        .map((i) => StoreGalleryItem(
+              id: i.id,
+              imageUrl: i.imageUrl ?? '',
+              title: title,
+            ))
+        .toList();
+    saveLocally();
+    notifyListeners();
+  }
   void removeGalleryItem(int index) {
     if (index >= 0 && index < _editorGalleryItems.length) {
       final item = _editorGalleryItems[index];
