@@ -9,6 +9,7 @@ import 'package:vitrinx/services/store_publish_service.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 import 'package:vitrinx/services/location_service.dart';
 import 'package:vitrinx/services/store_shelf_upload_service.dart';
+import 'package:vitrinx/utils/secure_token_generator.dart';
 
 class EditorGalleryItem {
   final String id;
@@ -473,15 +474,13 @@ class StoreEditorController extends ChangeNotifier {
       await _uploadPendingMedia();
 
       // Guncelleme modu: mevcut editToken'i koru
-      // Ilk yayin: slug'i editToken olarak kullan
+      // Ilk yayin: UUID uret (slug 24 karakter minimumunu karsilamaz)
       final String effectiveEditToken;
       final bool isUpdate = _publishedInfo != null && _publishedInfo!.editToken.isNotEmpty;
       if (isUpdate) {
         effectiveEditToken = _publishedInfo!.editToken;
       } else {
-        effectiveEditToken = _data.slug.isNotEmpty
-            ? _data.slug
-            : publishService.payloadBuilder.generateSlug(_data.name);
+        effectiveEditToken = SecureTokenGenerator.generateUuid();
       }
 
       final result = await publishService.publishStore(_data, editToken: effectiveEditToken);
