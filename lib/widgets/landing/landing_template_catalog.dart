@@ -106,11 +106,29 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
     _loadAllCategoryImages();
   }
 
+  String _dbKey(String uiKey) {
+    const keyMap = {
+      'butik_giyim': 'butik',
+      'kuafor_guzellik': 'kuafor',
+      'kafe_restoran': 'kafe_lokanta',
+      'berber': 'kuafor',
+      'oto_kuafor': 'oto_arac',
+      'market_bakkal': 'gida',
+      'pastane_tatlici': 'firin',
+      'mobilya_dekorasyon': 'dekorasyon',
+      'spor_salonu': 'spor_fitness',
+      'dis_klinigi': 'saglik_yasam',
+      'eczane': 'saglik_yasam',
+      'teknik_servis': 'teknik_servis',
+    };
+    return keyMap[uiKey] ?? uiKey;
+  }
+
   Future<void> _loadAllCategoryImages() async {
     for (final cat in _categories) {
       setState(() => _loadingKeys.add(cat.key));
       try {
-        final imageSet = await CategoryImageService.getImagesForCategory(cat.key);
+        final imageSet = await CategoryImageService.getImagesForCategory(_dbKey(cat.key));
         if (!mounted) return;
         setState(() {
           _imageSets[cat.key] = imageSet;
