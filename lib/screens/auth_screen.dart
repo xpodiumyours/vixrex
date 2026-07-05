@@ -21,7 +21,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
-  bool _isLogin = true;
+  bool _isLogin = false; // Varsayılan: Hesap Oluştur
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _showConfirmationScreen = false;
@@ -413,7 +413,7 @@ class _AuthScreenState extends State<AuthScreen> {
       backgroundColor: lightBg,
       appBar: AppBar(
         title: Text(
-          _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
+          _isLogin ? 'Giriş Yap' : 'Hesap Oluştur',
           style: const TextStyle(
             color: darkAccent,
             fontWeight: FontWeight.bold,
@@ -648,7 +648,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ),
                                 )
                                 : Text(
-                                  _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
+                                  _isLogin ? 'Giriş Yap' : 'Hesap Oluştur',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -667,7 +667,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         },
                         child: Text(
                           _isLogin
-                              ? 'Hesabınız yok mu? Hemen kayıt olun'
+                              ? 'Hesabınız yok mu? Hemen oluşturun'
                               : 'Zaten hesabınız var mı? Giriş yapın',
                           style: const TextStyle(
                             color: brandOrange,
@@ -679,7 +679,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       Text(
                         _isLogin
                             ? 'Giriş yapmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.'
-                            : 'Kayıt olmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.',
+                            : 'Hesap oluşturmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Color(0xFF64748B),

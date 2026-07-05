@@ -273,24 +273,23 @@ class LandingHeroSection extends StatelessWidget {
                   ),
               ] else ...[
                 if (isDesktop)
-                  ElevatedButton.icon(
+                  OutlinedButton.icon(
                     onPressed: () {
                       AppRouter.navigateToAuth(context).then((_) {
                         onStateChanged();
                       });
                     },
-                    icon: const Icon(Icons.login_rounded, size: 16),
+                    icon: const Icon(Icons.person_add_rounded, size: 16),
                     label: const Text(
-                      'Giriş Yap',
+                      'Hesap Oluştur',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: brandBlue,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.darkText,
+                      side: const BorderSide(color: AppColors.border),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 12,
@@ -307,13 +306,14 @@ class LandingHeroSection extends StatelessWidget {
                         onStateChanged();
                       });
                     },
-                    icon: const Icon(Icons.login_rounded, size: 18),
-                    color: Colors.white,
+                    icon: const Icon(Icons.person_add_rounded, size: 18),
+                    color: AppColors.darkText,
                     style: IconButton.styleFrom(
-                      backgroundColor: brandBlue,
+                      backgroundColor: AppColors.surfaceSoft,
                       padding: const EdgeInsets.all(10),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: AppColors.border),
                       ),
                     ),
                   ),
@@ -522,34 +522,48 @@ class LandingHeroSection extends StatelessWidget {
                 ),
               );
 
-              final submitButton = SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: onNavigateToEditor,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0EA8B0),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'VitrinX Oluştur',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
+              final submitButton = Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: onNavigateToEditor,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0EA8B0),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward_rounded, size: 16),
-                    ],
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'VitrinX Oluştur',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(Icons.arrow_forward_rounded, size: 16),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Kayıt gerekmez, hemen başlayın',
+                    style: TextStyle(
+                      color: AppColors.mutedText,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               );
 
               if (isFormRow) {
