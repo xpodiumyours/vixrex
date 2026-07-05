@@ -527,24 +527,31 @@ class VitrinFormSection extends StatelessWidget {
   }
 
   Future<void> _pickCoverFromCamera(BuildContext ctx) async {
-    final picker = img_picker.ImagePicker();
-    final pickedFile = await picker.pickImage(source: img_picker.ImageSource.camera);
-    if (pickedFile == null) return;
-    final bytes = await pickedFile.readAsBytes();
-    final size = bytes.length;
-    final v = GalleryImageFileValidator.validate(
-      bytes: bytes, reportedSize: size,
-    );
-    if (!ctx.mounted) return;
-    if (!v.isValid) {
-      state.showSnackBar(ctx, 'Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.');
-      return;
+    try {
+      final picker = img_picker.ImagePicker();
+      final pickedFile = await picker.pickImage(source: img_picker.ImageSource.camera);
+      if (pickedFile == null) return;
+      final bytes = await pickedFile.readAsBytes();
+      final size = bytes.length;
+      final v = GalleryImageFileValidator.validate(
+        bytes: bytes, reportedSize: size,
+      );
+      if (!ctx.mounted) return;
+      if (!v.isValid) {
+        state.showSnackBar(ctx, 'Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.');
+        return;
+      }
+      controller.setCoverBytes(
+        bytes, pickedFile.name,
+        v.fileInfo?.extension ?? 'jpg',
+        v.fileInfo?.contentType ?? 'image/jpeg',
+      );
+    } catch (e) {
+      debugPrint('Kamera erişim hatası: $e');
+      if (ctx.mounted) {
+        state.showSnackBar(ctx, 'Kameraya erişilemedi. Kamera izinlerini kontrol edin veya dosya yüklemeyi kullanın.');
+      }
     }
-    controller.setCoverBytes(
-      bytes, pickedFile.name,
-      v.fileInfo?.extension ?? 'jpg',
-      v.fileInfo?.contentType ?? 'image/jpeg',
-    );
   }
 
   Future<void> _pickGallery(BuildContext ctx) async {
