@@ -678,7 +678,11 @@ class StoreEditorController extends ChangeNotifier {
     _coverBytes = bytes; _coverFileName = fileName; _coverUrl = null; notifyListeners();
   }
   void setCoverUrl(String url) {
-    _coverUrl = url; _coverBytes = null; _coverFileName = null; notifyListeners();
+    _coverUrl = url;
+    _coverBytes = null;
+    _coverFileName = null;
+    _data.shelfImageUrl = url;
+    notifyListeners();
   }
   void clearCoverBytes() { _coverBytes = null; _coverFileName = null; notifyListeners(); }
 
