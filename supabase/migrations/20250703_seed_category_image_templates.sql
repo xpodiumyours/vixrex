@@ -241,7 +241,7 @@ INSERT INTO category_image_templates (category_key, category_label, image_type, 
 
 -- 19. DIGER
 INSERT INTO category_image_templates (category_key, category_label, image_type, image_url, title, display_order) VALUES
-('diger', 'Diğer', 'cover', 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=1200&q=80', 'VitrinX İşletmesi', 1),
+('diger', 'Diğer', 'cover', 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=1200&q=80', 'VixRex İşletmesi', 1),
 ('diger', 'Diğer', 'cover', 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80', 'Genel Hizmet Alanı', 2),
 ('diger', 'Diğer', 'cover', 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=1200&q=80', 'Ürün / Raf Teşhiri', 3),
 ('diger', 'Diğer', 'logo_placeholder', 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=512&q=80', 'İşletme Logo', 1),
