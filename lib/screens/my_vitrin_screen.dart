@@ -8,13 +8,12 @@ import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_form_section.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_publish_section.dart';
 import 'package:vitrinx/screens/my_vitrin/sections/vitrin_danger_section.dart';
-import 'package:vitrinx/services/category_image_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 // NOTE: PublishedSummaryCard is exported from publish_actions_section.dart
 import 'package:vitrinx/widgets/editor/publish_actions_section.dart';
 import 'package:vitrinx/widgets/editor/visibility_hub_card.dart';
-import 'package:vitrinx/widgets/auto_fill/cover_template_picker_sheet.dart';
+import 'package:vitrinx/widgets/auto_fill/category_gallery_sheet.dart';
 
 class MyVitrinScreen extends StatefulWidget {
   final String? initialName;
@@ -104,25 +103,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   /// X-rex asistanindan kapak sablonu secim bottom sheet'ini acar.
   /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden çağrılır.
   void openCoverTemplatePicker() {
-    final kategori = _controller.selectedKategori;
-
-    if (kategori.isEmpty) {
-      _state.showSnackBar(context, 'Lütfen önce kategori seçin.');
-      _state.scrollToXrexAction(XrexAction.scrollToCategory);
-      return;
-    }
-
-    final categoryKey = mapKategoriToKey(kategori);
-    if (categoryKey == null) {
-      _state.showSnackBar(context, 'Bu kategori için hazır görsel şablonu bulunamadı.');
-      return;
-    }
-
-    CoverTemplatePickerSheet.show(
+    CategoryGallerySheet.show(
       context: context,
-      categoryKey: categoryKey,
-      categoryLabel: kategori,
-      onCoverSelected: (coverUrl) {
+      source: ImageSource.coverPicker,
+      onImageAction: (coverUrl, action) {
         _controller.setCoverUrl(coverUrl);
         _controller.saveLocally();
       },

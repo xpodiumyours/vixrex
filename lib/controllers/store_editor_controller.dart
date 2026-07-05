@@ -703,7 +703,7 @@ class StoreEditorController extends ChangeNotifier {
         .map((i) => StoreGalleryItem(
               id: i.id,
               imageUrl: i.imageUrl ?? '',
-              title: title,
+              title: title ?? '',
             ))
         .toList();
     saveLocally();
