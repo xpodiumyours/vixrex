@@ -96,7 +96,14 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
         }
       }
 
-      // Preferred kategoriyi öne çıkar
+      // Kategorileri alfabetik olarak sıralayalım
+      keys.sort((a, b) {
+        final labelA = images[a]?.categoryLabel ?? '';
+        final labelB = images[b]?.categoryLabel ?? '';
+        return labelA.compareTo(labelB);
+      });
+
+      // Preferred kategoriyi en öne çıkar
       String? defaultActiveKey;
       if (widget.preferredCategoryKey != null &&
           images.containsKey(widget.preferredCategoryKey)) {
@@ -271,10 +278,10 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.85,
+        crossAxisCount: 4,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 0.9,
       ),
       itemCount: keys.length,
       itemBuilder: (context, index) {
@@ -296,22 +303,22 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
               _isViewingGallery = true;
             });
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
             decoration: BoxDecoration(
               color: isPreferred 
                   ? AppColors.primary.withOpacity(0.08) 
                   : AppColors.inputBg,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isPreferred ? AppColors.primary : AppColors.border,
-                width: isPreferred ? 2 : 1,
+                width: isPreferred ? 1.5 : 1,
               ),
               boxShadow: isPreferred ? [
                 BoxShadow(
                   color: AppColors.primary.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
                 )
               ] : null,
             ),
@@ -320,16 +327,16 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
               children: [
                 if (isPreferred)
                   Container(
-                    margin: const EdgeInsets.only(bottom: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    margin: const EdgeInsets.only(bottom: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text(
                       'ÖNERİLEN',
                       style: TextStyle(
-                        fontSize: 8,
+                        fontSize: 7,
                         fontWeight: FontWeight.w900,
                         color: Colors.black,
                       ),
@@ -337,18 +344,18 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                   ),
                 Text(
                   isPreferred ? '📌' : emoji,
-                  style: const TextStyle(fontSize: 28),
+                  style: const TextStyle(fontSize: 20),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
                     set.categoryLabel,
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: isPreferred ? AppColors.primary : AppColors.darkText,
                     ),
