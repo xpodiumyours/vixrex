@@ -284,9 +284,11 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
     bool isExpanded,
     bool isPreferred,
   ) {
-    final allImages = widget.source == ImageSource.coverPicker
+    final rawImages = widget.source == ImageSource.coverPicker
         ? set.coverImages
         : set.galleryImages;
+    final seenUrls = <String>{};
+    final allImages = rawImages.where((img) => seenUrls.add(img.imageUrl)).toList();
     if (allImages.isEmpty) return const SizedBox.shrink();
 
     return Column(
