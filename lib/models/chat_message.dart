@@ -105,6 +105,8 @@ enum XrexAction {
   scrollToProducts,     // Ürün/Hizmet alanına git
   scrollToCategory,     // Kategori seçim alanına git
   openCoverTemplatePicker, // Hazır kapak şablonu seç
+  openAutoFillDialog,       // Otomatik doldurma diyaloğunu aç
+  applyCategoryTemplate,    // Kategori şablonunu uygula
   none,                      // Sadece mesaj tetikler, navigasyon yok
 }
 

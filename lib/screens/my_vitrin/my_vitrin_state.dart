@@ -86,6 +86,7 @@ class MyVitrinState extends ChangeNotifier {
       case XrexAction.shareWhatsapp:
       case XrexAction.showQr:
       case XrexAction.openExplore:
+      case XrexAction.openCoverTemplatePicker:
       case XrexAction.none:
         break;
     }
