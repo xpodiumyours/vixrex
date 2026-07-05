@@ -55,6 +55,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
   List<String> _categoryKeys = [];
   String? _selectedImageUrl;
   String? _activeCategoryKey;
+  bool _isViewingGallery = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -146,7 +147,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
         children: [
           _buildHandle(),
           _buildHeader(),
-          _buildSearch(),
+          if (!_isViewingGallery) _buildSearch(),
           Expanded(child: _buildContent()),
           _buildBottomBar(),
         ],
@@ -197,7 +198,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  'Hazır görsellerden seç',
+                  'Hazır şablon görsellerinden seç',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.mutedText,
@@ -259,83 +260,158 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       return const Center(child: Text('Arama sonucu bulunamadı.', style: TextStyle(color: AppColors.mutedText)));
     }
 
-    final activeKey = (keys.contains(_activeCategoryKey))
-        ? _activeCategoryKey
-        : keys.first;
+    if (_isViewingGallery && _activeCategoryKey != null && _categoryKeys.contains(_activeCategoryKey)) {
+      return _buildGalleryView(_activeCategoryKey!);
+    }
 
-    return Column(
-      children: [
-        _buildCategoryTabs(keys, activeKey),
-        Expanded(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: activeKey != null
-                ? KeyedSubtree(
-                    key: ValueKey(activeKey),
-                    child: _buildGridContent(activeKey),
-                  )
-                : const SizedBox.shrink(),
+    return _buildCategoryGrid(keys);
+  }
+
+  Widget _buildCategoryGrid(List<String> keys) {
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: keys.length,
+      itemBuilder: (context, index) {
+        final key = keys[index];
+        final set = _categoryImages[key]!;
+        final isPreferred = key == widget.preferredCategoryKey;
+
+        // Config'den emoji ve ikon bul
+        final categoryConfig = BusinessCategoryConfig.categories.firstWhere(
+          (c) => c.id == key,
+          orElse: () => BusinessCategoryConfig.categories.last, // diger
+        );
+        final emoji = categoryConfig.id == 'diger' && !isPreferred ? '🏷️' : categoryConfig.emoji;
+
+        return InkWell(
+          onTap: () {
+            setState(() {
+              _activeCategoryKey = key;
+              _isViewingGallery = true;
+            });
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isPreferred 
+                  ? AppColors.primary.withOpacity(0.08) 
+                  : AppColors.inputBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isPreferred ? AppColors.primary : AppColors.border,
+                width: isPreferred ? 2 : 1,
+              ),
+              boxShadow: isPreferred ? [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                )
+              ] : null,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isPreferred)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'ÖNERİLEN',
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                Text(
+                  isPreferred ? '📌' : emoji,
+                  style: const TextStyle(fontSize: 28),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    set.categoryLabel,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isPreferred ? AppColors.primary : AppColors.darkText,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildCategoryTabs(List<String> keys, String? activeKey) {
-    return Container(
-      height: 50,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: keys.length,
-        itemBuilder: (context, index) {
-          final key = keys[index];
-          final set = _categoryImages[key]!;
-          final isActive = key == activeKey;
-          final isPreferred = key == widget.preferredCategoryKey;
+  Widget _buildGalleryView(String activeKey) {
+    final set = _categoryImages[activeKey]!;
+    final categoryConfig = BusinessCategoryConfig.categories.firstWhere(
+      (c) => c.id == activeKey,
+      orElse: () => BusinessCategoryConfig.categories.last,
+    );
+    final emoji = categoryConfig.emoji;
 
-          // Find appropriate emoji from config if possible
-          final categoryConfig = BusinessCategoryConfig.categories.firstWhere(
-            (c) => c.id == key,
-            orElse: () => BusinessCategoryConfig.categories.last, // diger
-          );
-          final emoji = categoryConfig.id == 'diger' && !isPreferred ? '🏷️' : categoryConfig.emoji;
-          final displayEmoji = isPreferred ? '📌' : emoji;
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: ChoiceChip(
-              label: Text(
-                '$displayEmoji ${set.categoryLabel}',
-                style: TextStyle(
-                  color: isActive ? Colors.black : Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-              selected: isActive,
-              selectedColor: AppColors.primary,
-              backgroundColor: AppColors.inputBg,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isActive ? AppColors.primary : AppColors.border,
-                  width: 1,
-                ),
-              ),
-              showCheckmark: false,
-              onSelected: (selected) {
-                if (selected) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: () {
                   setState(() {
-                    _activeCategoryKey = key;
+                    _isViewingGallery = false;
                   });
-                }
-              },
-            ),
-          );
-        },
-      ),
+                },
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.primary,
+                  size: 18,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.inputBg,
+                  padding: const EdgeInsets.all(10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: AppColors.border),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '$emoji ${set.categoryLabel} Şablonları',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.darkText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(child: _buildGridContent(activeKey)),
+      ],
     );
   }
 
@@ -360,7 +436,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 10,
