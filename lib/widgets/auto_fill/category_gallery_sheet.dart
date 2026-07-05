@@ -134,7 +134,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgEditor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -155,7 +155,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: Colors.grey.shade300,
+        color: AppColors.border,
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -187,14 +187,15 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
+                    color: AppColors.darkText,
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
+                const Text(
                   'Hazır görsellerden seç',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey.shade600,
+                    color: AppColors.mutedText,
                   ),
                 ),
               ],
@@ -202,7 +203,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
           ),
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close_rounded),
+            icon: const Icon(Icons.close_rounded, color: AppColors.darkText),
           ),
         ],
       ),
@@ -214,15 +215,25 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: TextField(
         controller: _searchController,
+        style: const TextStyle(color: AppColors.darkText),
         decoration: InputDecoration(
           hintText: 'Kategori ara...',
-          prefixIcon: const Icon(Icons.search_rounded),
+          hintStyle: const TextStyle(color: AppColors.softText),
+          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.softText),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary),
           ),
           filled: true,
-          fillColor: Colors.grey.shade50,
+          fillColor: AppColors.inputBg,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
         onChanged: (v) => setState(() => _searchQuery = v),
@@ -235,12 +246,12 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_categoryKeys.isEmpty) {
-      return const Center(child: Text('Hazır görsel bulunamadı.'));
+      return const Center(child: Text('Hazır görsel bulunamadı.', style: TextStyle(color: AppColors.mutedText)));
     }
 
     final keys = _filteredKeys;
     if (keys.isEmpty) {
-      return const Center(child: Text('Arama sonucu bulunamadı.'));
+      return const Center(child: Text('Arama sonucu bulunamadı.', style: TextStyle(color: AppColors.mutedText)));
     }
 
     return ListView.builder(
@@ -300,9 +311,9 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                 ),
                 Text(
                   '${allImages.length} görsel',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade500,
+                    color: AppColors.softText,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -340,7 +351,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
               : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 250),
         ),
-        const Divider(height: 1),
+        const Divider(height: 1, color: AppColors.border),
       ],
     );
   }
@@ -350,15 +361,9 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
+      decoration: const BoxDecoration(
+        color: AppColors.bgEditor,
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: SafeArea(
         child: Column(
@@ -376,7 +381,9 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                       label: const Text('Kapak Olarak Kullan'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        disabledBackgroundColor: AppColors.disabled,
+                        disabledForegroundColor: AppColors.mutedText,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -397,7 +404,9 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                       label: const Text('Galeriye Ekle'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        disabledBackgroundColor: AppColors.disabled,
+                        disabledForegroundColor: AppColors.mutedText,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -410,6 +419,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                 OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.darkText,
                     padding: const EdgeInsets.symmetric(
                       vertical: 14,
                       horizontal: 20,
@@ -417,7 +427,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    side: BorderSide(color: Colors.grey.shade300),
+                    side: const BorderSide(color: AppColors.border),
                   ),
                   child: const Text('İptal'),
                 ),
