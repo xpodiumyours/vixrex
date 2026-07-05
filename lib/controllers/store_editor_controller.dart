@@ -206,10 +206,43 @@ class StoreEditorController extends ChangeNotifier {
       final client = _resolveClient();
       if (client == null) return;
 
+      // once local'deki edit_token ile ara
+      final localToken = await storage.loadVitrinEditToken();
+      if (localToken != null && localToken.isNotEmpty) {
+        final response = await client
+            .from('stores')
+            .select('slug, edit_token, name')
+            .eq('edit_token', localToken)
+            .eq('is_published', true)
+            .maybeSingle();
+
+        if (response != null) {
+          final slug = (response['slug'] as String?)?.trim() ?? '';
+          final editToken = (response['edit_token'] as String?)?.trim() ?? '';
+          final name = (response['name'] as String?)?.trim() ?? '';
+
+          if (slug.isNotEmpty && editToken.isNotEmpty) {
+            _publishedInfo = PublishedVitrinInfo(
+              publicLink: 'https://vitrinx.app/v/$slug',
+              slug: slug,
+              name: name,
+              editToken: editToken,
+            );
+            await storage.savePublishedVitrinInfo(
+              slug: slug,
+              publicLink: 'https://vitrinx.app/v/$slug',
+              name: name,
+              editToken: editToken,
+            );
+            return;
+          }
+        }
+      }
+
+      // local token bulunamadiysa, user_id ile ara
       final userId = client.auth.currentUser?.id;
       if (userId == null) return;
 
-      // Son yayinlanmis vitrini cek
       final response = await client
           .from('stores')
           .select('slug, edit_token, name')
@@ -231,7 +264,6 @@ class StoreEditorController extends ChangeNotifier {
             name: name,
             editToken: editToken,
           );
-          // Local storage'a da kaydet
           await storage.savePublishedVitrinInfo(
             slug: slug,
             publicLink: 'https://vitrinx.app/v/$slug',

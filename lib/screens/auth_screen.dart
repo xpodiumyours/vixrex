@@ -122,6 +122,17 @@ class _AuthScreenState extends State<AuthScreen> {
             LocalStorageKeys.storeEditToken,
             editToken,
           );
+          // Controller'in okuyacagi key'lere de yaz
+          await prefs.setString(
+            LocalStorageKeys.lastPublishedEditToken,
+            editToken,
+          );
+          if (store.slug.isNotEmpty) {
+            await prefs.setString(
+              LocalStorageKeys.lastPublishedSlug,
+              store.slug,
+            );
+          }
         }
 
         if (!mounted) return;
@@ -144,6 +155,17 @@ class _AuthScreenState extends State<AuthScreen> {
             LocalStorageKeys.vitrinEditToken,
             editToken,
           );
+          // Controller'in okuyacagi key'lere de yaz
+          await prefs.setString(
+            LocalStorageKeys.lastPublishedEditToken,
+            editToken,
+          );
+          if (store.slug.isNotEmpty) {
+            await prefs.setString(
+              LocalStorageKeys.lastPublishedSlug,
+              store.slug,
+            );
+          }
         }
 
         if (!mounted) return;

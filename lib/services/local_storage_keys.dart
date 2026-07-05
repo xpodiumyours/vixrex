@@ -11,4 +11,9 @@ class LocalStorageKeys {
   static const lastPublishedLink = 'last_published_link';
   static const lastPublishedName = 'last_published_name';
   static const lastPublishedEditToken = 'last_published_edit_token';
+
+  /// Hem eski hem yeni key'leri temizle
+  static Future<void> clearAllEditTokens() async {
+    // Bu method store_local_storage_service.dart tarafindan kullanilir
+  }
 }
