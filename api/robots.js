@@ -1,5 +1,5 @@
 export default function handler(req, res) {
-  const host = req.headers.host || 'vitrinx.app';
+  const host = req.headers.host || 'vixrex.app';
   const protocol = req.headers['x-forwarded-proto'] || 'https';
 
   res.setHeader('Content-Type', 'text/plain');

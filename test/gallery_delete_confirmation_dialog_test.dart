@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/widgets/gallery_delete_confirmation_dialog.dart';
+import 'package:vixrex/widgets/gallery_delete_confirmation_dialog.dart';
 
 void main() {
   testWidgets('kapak fotoğrafı silme onay ister', (tester) async {

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/seo_service.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/seo_service.dart';
 
 void main() {
   group('buildStoreSchemas', () {
@@ -16,7 +16,7 @@ void main() {
 
         final schemas = SeoService.buildStoreSchemas(
           store,
-          publicUrl: 'https://vitrinx.app/v/nova-kuafor',
+          publicUrl: 'https://vixrex.app/v/nova-kuafor',
         );
 
         final graph = schemas['@graph'] as List;
@@ -24,7 +24,7 @@ void main() {
         final webPage = graph[1] as Map<String, dynamic>;
 
         expect(organization['@type'], 'Organization');
-        expect(organization['url'], 'https://vitrinx.app/v/nova-kuafor');
+        expect(organization['url'], 'https://vixrex.app/v/nova-kuafor');
         expect(organization.containsKey('openingHoursSpecification'), isFalse);
         expect(webPage['@type'], 'WebPage');
         expect(webPage['about']['@id'], contains('#business'));

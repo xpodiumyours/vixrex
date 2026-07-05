@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
-class XrexCatalogAssistantSection extends StatelessWidget {
+class VixRexCatalogAssistantSection extends StatelessWidget {
   final VoidCallback onActionTap;
 
-  const XrexCatalogAssistantSection({
+  const VixRexCatalogAssistantSection({
     super.key,
     required this.onActionTap,
   });
@@ -43,7 +43,7 @@ class XrexCatalogAssistantSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'X-rex ile katalog oluştur',
+                      'VixRex ile katalog oluştur',
                       style: TextStyle(
                         color: AppColors.darkText,
                         fontSize: 12,
@@ -83,7 +83,7 @@ class XrexCatalogAssistantSection extends StatelessWidget {
                 const SizedBox(width: 10),
                 _buildActionTile(
                   icon: Icons.smart_toy_rounded,
-                  title: 'X-rex önerileri',
+                  title: 'VixRex önerileri',
                   desc: 'Ürün başlıklarını iyileştir',
                 ),
               ],

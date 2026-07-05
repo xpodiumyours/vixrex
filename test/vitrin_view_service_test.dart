@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/services/vitrin_view_service.dart';
+import 'package:vixrex/services/vitrin_view_service.dart';
 
 // Dynamically handle methods using noSuchMethod to bypass compile-time signature checks
 class FakeSupabaseClient implements SupabaseClient {

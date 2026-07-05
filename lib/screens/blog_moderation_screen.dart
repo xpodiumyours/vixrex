@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/services/article_service.dart';
-import 'package:vitrinx/services/seo_service.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/services/article_service.dart';
+import 'package:vixrex/services/seo_service.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 /// Yönetici moderasyon ekranı.
 ///

@@ -3,14 +3,14 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:vitrinx/services/instagram_sync_service.dart';
+import 'package:vixrex/services/instagram_sync_service.dart';
 
 void main() {
   group('InstagramSyncService', () {
     test('bağlantı durumunu POST ile güvenli gövdeden okur', () async {
       late http.Request capturedRequest;
       final service = InstagramSyncService(
-        originOverride: 'https://vitrinx.app',
+        originOverride: 'https://vixrex.app',
         httpClient: MockClient((request) async {
           capturedRequest = request;
           return http.Response(
@@ -44,7 +44,7 @@ void main() {
 
     test('aktarılmış ürünü Product modeline dönüştürür', () async {
       final service = InstagramSyncService(
-        originOverride: 'https://vitrinx.app',
+        originOverride: 'https://vixrex.app',
         httpClient: MockClient((request) async {
           return http.Response.bytes(
             utf8.encode(
@@ -85,7 +85,7 @@ void main() {
 
     test('product null veya Map değilse INSTAGRAM_PRODUCT_INVALID hatası fırlatır', () async {
       final service = InstagramSyncService(
-        originOverride: 'https://vitrinx.app',
+        originOverride: 'https://vixrex.app',
         httpClient: MockClient((request) async {
           return http.Response(
             jsonEncode({'product': 'not-a-map'}),
@@ -112,7 +112,7 @@ void main() {
 
     test('sunucu hata kodunu kullanıcı mesajına dönüştürür', () async {
       final service = InstagramSyncService(
-        originOverride: 'https://vitrinx.app',
+        originOverride: 'https://vixrex.app',
         httpClient: MockClient(
           (_) async => http.Response(
             jsonEncode({'message': 'INSTAGRAM_TOKEN_EXPIRED'}),

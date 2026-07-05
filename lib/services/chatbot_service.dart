@@ -1,22 +1,22 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vitrinx/config/chatbot_config.dart';
-import 'package:vitrinx/models/chat_message.dart';
-import 'package:vitrinx/services/xrex_profile_snapshot.dart';
+import 'package:vixrex/config/chatbot_config.dart';
+import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 
-/// Xrex chatbot servis katmanı.
+/// VixRex chatbot servis katmanı.
 /// Kural tabanlı, tamamen offline çalışır.
 class ChatbotService {
-  static const String _greetedKey = 'xrex_greeted';
-  static const String _sharedMilestoneKey = 'xrex_vitrin_shared';
+  static const String _greetedKey = 'vixrex_greeted';
+  static const String _sharedMilestoneKey = 'vixrex_vitrin_shared';
   static const String _dismissedRecommendationKey =
-      'xrex_dismissed_recommendation';
+      'vixrex_dismissed_recommendation';
 
   /// Kullanıcının mesajını analiz edip yanıt döner.
   ChatMessage respond(
     String input, [
-    XrexProfileSnapshot? snapshot,
+    VixRexProfileSnapshot? snapshot,
     bool hasShared = false,
   ]) {
     final normalized = _normalize(input);
@@ -37,7 +37,7 @@ class ChatbotService {
   /// Quick Reply payload'ına göre yanıt döner.
   ChatMessage respondToPayload(
     String payload, [
-    XrexProfileSnapshot? snapshot,
+    VixRexProfileSnapshot? snapshot,
     bool hasShared = false,
   ]) {
     return ChatbotConfig.responseFor(payload, snapshot: snapshot, hasShared: hasShared);
@@ -45,7 +45,7 @@ class ChatbotService {
 
   /// Vitrin snapshot'ına göre kişiselleştirilmiş karşılama mesajı döner.
   ChatMessage respondWithSnapshot(
-    XrexProfileSnapshot snapshot, {
+    VixRexProfileSnapshot snapshot, {
     required bool hasShared,
   }) {
     return ChatbotConfig.snapshotWelcome(snapshot, hasShared: hasShared);
@@ -101,7 +101,7 @@ class ChatbotService {
         .replaceAll('Ç', 'c');
   }
 
-  static const String _historyKey = 'xrex_chat_history';
+  static const String _historyKey = 'vixrex_chat_history';
 
   /// Sohbet geçmişini kaydeder.
   Future<void> saveHistory(List<ChatMessage> history) async {

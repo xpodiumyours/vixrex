@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vitrinx/screens/explore_screen.dart';
-import 'package:vitrinx/services/local_storage_keys.dart';
+import 'package:vixrex/screens/explore_screen.dart';
+import 'package:vixrex/services/local_storage_keys.dart';
 
 void main() {
   testWidgets('ExploreScreen renders successfully and has correct items', (
@@ -15,8 +15,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     // Verify header title
-    expect(find.text("VitrinX'leri Keşfet"), findsOneWidget);
-    expect(find.text('Yayındaki VitrinX profillerini keşfet'), findsOneWidget);
+    expect(find.text("VixRex'leri Keşfet"), findsOneWidget);
+    expect(find.text('Yayındaki VixRex profillerini keşfet'), findsOneWidget);
 
     // Verify search text field hint
     expect(find.text('Vitrin, ürün veya kategori ara...'), findsOneWidget);

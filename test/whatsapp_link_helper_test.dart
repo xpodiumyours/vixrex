@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 void main() {
   group('WhatsAppLinkHelper', () {
@@ -93,11 +93,11 @@ void main() {
           dateStr: '22.06.2026',
           timeStr: '14:30',
           serviceTitle: 'Saç Kesimi',
-          link: 'https://vitrinx.com/v/nova-kuafor',
+          link: 'https://vixrex.com/v/nova-kuafor',
         );
         expect(
           Uri.parse(confirmUrl!).queryParameters['text'],
-          'Merhaba Ahmet Ozan, 22.06.2026 saat 14:30 için Saç Kesimi randevunuz onaylanmıştır. Teşekkür ederiz. Vitrinimiz: https://vitrinx.com/v/nova-kuafor',
+          'Merhaba Ahmet Ozan, 22.06.2026 saat 14:30 için Saç Kesimi randevunuz onaylanmıştır. Teşekkür ederiz. Vitrinimiz: https://vixrex.com/v/nova-kuafor',
         );
 
         final rejectUrl = WhatsAppLinkHelper.buildAppointmentMessageUrl(
@@ -107,7 +107,7 @@ void main() {
           dateStr: '22.06.2026',
           timeStr: '14:30',
           serviceTitle: 'Saç Kesimi',
-          link: 'https://vitrinx.com/v/nova-kuafor',
+          link: 'https://vixrex.com/v/nova-kuafor',
         );
         expect(
           Uri.parse(rejectUrl!).queryParameters['text'],
@@ -121,7 +121,7 @@ void main() {
           dateStr: '22.06.2026',
           timeStr: '14:30',
           serviceTitle: 'Saç Kesimi',
-          link: 'https://vitrinx.com/v/nova-kuafor',
+          link: 'https://vixrex.com/v/nova-kuafor',
         );
         expect(
           Uri.parse(rescheduleUrl!).queryParameters['text'],

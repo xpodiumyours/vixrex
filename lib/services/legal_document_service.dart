@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/models/legal_document.dart';
+import 'package:vixrex/models/legal_document.dart';
 
 class LegalDocumentException implements Exception {
   final String message;

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vitrinx/config/business_category_config.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/models/vitrin_gallery_preview_item.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
-import 'package:vitrinx/widgets/vitrin_view.dart';
+import 'package:vixrex/config/business_category_config.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/models/vitrin_gallery_preview_item.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/widgets/vitrin_view.dart';
 
 class PreviewScreen extends StatelessWidget {
   final StoreData storeData;

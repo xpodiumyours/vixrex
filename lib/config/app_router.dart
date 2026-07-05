@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:vitrinx/screens/appointment_tracker_screen.dart';
-import 'package:vitrinx/screens/auth_screen.dart';
-import 'package:vitrinx/screens/blog_editor_screen.dart';
-import 'package:vitrinx/screens/booking_management_screen.dart';
-import 'package:vitrinx/screens/home_shell_screen.dart';
-import 'package:vitrinx/screens/landing_screen.dart';
-import 'package:vitrinx/screens/legal_screen.dart';
-import 'package:vitrinx/screens/public_vitrin_screen.dart';
-import 'package:vitrinx/screens/public_product_screen.dart';
-import 'package:vitrinx/config/legal_config.dart';
+import 'package:vixrex/screens/appointment_tracker_screen.dart';
+import 'package:vixrex/screens/auth_screen.dart';
+import 'package:vixrex/screens/blog_editor_screen.dart';
+import 'package:vixrex/screens/booking_management_screen.dart';
+import 'package:vixrex/screens/home_shell_screen.dart';
+import 'package:vixrex/screens/landing_screen.dart';
+import 'package:vixrex/screens/legal_screen.dart';
+import 'package:vixrex/screens/public_vitrin_screen.dart';
+import 'package:vixrex/screens/public_product_screen.dart';
+import 'package:vixrex/config/legal_config.dart';
 
 class AppRouter {
   static const String landing = '/';

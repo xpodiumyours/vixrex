@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/theme/app_text_styles.dart';
+import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
 
 class VitrinDangerSection extends StatelessWidget {
   final MyVitrinState state;

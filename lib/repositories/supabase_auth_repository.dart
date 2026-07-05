@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/repositories/auth_repository.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/repositories/auth_repository.dart';
 
 /// Supabase Auth ile AuthRepository implementasyonu.
 class SupabaseAuthRepository implements AuthRepository {

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:vitrinx/config/turkey_cities_config.dart';
-import 'package:vitrinx/services/article_service.dart';
-import 'package:vitrinx/services/store_shelf_upload_service.dart';
-import 'package:vitrinx/services/store_publish_service.dart';
-import 'package:vitrinx/services/seo_service.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/config/turkey_cities_config.dart';
+import 'package:vixrex/services/article_service.dart';
+import 'package:vixrex/services/store_shelf_upload_service.dart';
+import 'package:vixrex/services/store_publish_service.dart';
+import 'package:vixrex/services/seo_service.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 class BlogEditorScreen extends StatefulWidget {
   final String storeSlug;

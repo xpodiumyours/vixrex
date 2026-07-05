@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/screens/legal_screen.dart';
-import 'package:vitrinx/theme/app_text_styles.dart';
+import 'package:vixrex/screens/legal_screen.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
 
 class LegalConsentSection extends StatelessWidget {
   final bool canAccept;

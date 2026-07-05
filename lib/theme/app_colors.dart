@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// VitrinX uygulamasının merkezi renk paleti.
+/// VixRex uygulamasının merkezi renk paleti.
 /// Elektrik Mavisi & Koyu Karbon Arka Planlar (Cyber Dragon Teması).
 abstract final class AppColors {
   // ── Marka Renkleri (Elektrik Mavisi & Cyan) ─────────────────────────────

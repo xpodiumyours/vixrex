@@ -2,15 +2,15 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/config/app_router.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(_systemUiOverlayStyle);
   _setupGlobalErrorHandler();
   await _initializeSupabase();
-  runApp(const VitrinXApp());
+  runApp(const VixRexApp());
 }
 
 const SystemUiOverlayStyle _systemUiOverlayStyle = SystemUiOverlayStyle(
@@ -58,13 +58,13 @@ Future<void> _initializeSupabase() async {
   }
 }
 
-class VitrinXApp extends StatelessWidget {
-  const VitrinXApp({super.key});
+class VixRexApp extends StatelessWidget {
+  const VixRexApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'VitrinX',
+      title: 'VixRex',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

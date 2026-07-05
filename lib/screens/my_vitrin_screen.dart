@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:vitrinx/config/app_router.dart';
-import 'package:vitrinx/config/business_category_config.dart';
-import 'package:vitrinx/controllers/store_editor_controller.dart';
-import 'package:vitrinx/models/chat_message.dart';
-import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
-import 'package:vitrinx/screens/my_vitrin/sections/vitrin_form_section.dart';
-import 'package:vitrinx/screens/my_vitrin/sections/vitrin_publish_section.dart';
-import 'package:vitrinx/screens/my_vitrin/sections/vitrin_danger_section.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/services/store_local_storage_service.dart';
+import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/config/business_category_config.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
+import 'package:vixrex/screens/my_vitrin/sections/vitrin_form_section.dart';
+import 'package:vixrex/screens/my_vitrin/sections/vitrin_publish_section.dart';
+import 'package:vixrex/screens/my_vitrin/sections/vitrin_danger_section.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
 // NOTE: PublishedSummaryCard is exported from publish_actions_section.dart
-import 'package:vitrinx/widgets/editor/publish_actions_section.dart';
-import 'package:vitrinx/widgets/editor/qr_code_bottom_sheet.dart';
-import 'package:vitrinx/widgets/editor/visibility_hub_card.dart';
-import 'package:vitrinx/widgets/auto_fill/category_gallery_sheet.dart';
+import 'package:vixrex/widgets/editor/publish_actions_section.dart';
+import 'package:vixrex/widgets/editor/qr_code_bottom_sheet.dart';
+import 'package:vixrex/widgets/editor/visibility_hub_card.dart';
+import 'package:vixrex/widgets/auto_fill/category_gallery_sheet.dart';
 
 class MyVitrinScreen extends StatefulWidget {
   final String? initialName;
@@ -77,13 +77,13 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         _controller.data.googleBusinessLink;
   }
 
-  /// Xrex aksiyonuna göre ilgili forma otomatik kaydırır ve odaklanır.
+  /// VixRex aksiyonuna göre ilgili forma otomatik kaydırır ve odaklanır.
   /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden çağrılır.
-  void scrollToXrexAction(XrexAction action) {
-    _state.scrollToXrexAction(action);
+  void scrollToVixRexAction(VixRexAction action) {
+    _state.scrollToVixRexAction(action);
   }
 
-  /// X-rex asistanindan kapak sablonu secim bottom sheet'ini acar.
+  /// VixRex asistanindan kapak sablonu secim bottom sheet'ini acar.
   /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden çağrılır.
   void openCoverTemplatePicker() {
     CategoryGallerySheet.show(

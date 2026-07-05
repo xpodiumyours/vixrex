@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/config/app_router.dart';
-import 'package:vitrinx/controllers/store_editor_controller.dart';
-import 'package:vitrinx/models/chat_message.dart';
-import 'package:vitrinx/services/store_publish_service.dart';
+import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/services/store_publish_service.dart';
 
-/// X-rex AI asistanın scroll-to-section aksiyonları.
+/// VixRex AI asistanın scroll-to-section aksiyonları.
 /// [home_shell_screen.dart] tarafından GlobalKey üzerinden çağrılır.
 class MyVitrinState extends ChangeNotifier {
   final StoreEditorController controller;
@@ -43,49 +43,49 @@ class MyVitrinState extends ChangeNotifier {
   }
 
   // ─── Scroll to section ───────────────────────────────────────────────────
-  void scrollToXrexAction(XrexAction action) {
+  void scrollToVixRexAction(VixRexAction action) {
     GlobalKey? key;
     FocusNode? focus;
 
     switch (action) {
-      case XrexAction.scrollToCover:
+      case VixRexAction.scrollToCover:
         key = coverPhotoKey;
         break;
-      case XrexAction.scrollToGallery:
+      case VixRexAction.scrollToGallery:
         key = galleryKey;
         break;
-      case XrexAction.scrollToName:
+      case VixRexAction.scrollToName:
         key = nameKey;
         focus = nameFocusNode;
         break;
-      case XrexAction.scrollToWhatsapp:
+      case VixRexAction.scrollToWhatsapp:
         key = whatsappKey;
         focus = whatsappFocusNode;
         break;
-      case XrexAction.scrollToAddress:
+      case VixRexAction.scrollToAddress:
         key = addressKey;
         break;
-      case XrexAction.scrollToLegal:
+      case VixRexAction.scrollToLegal:
         key = legalKey;
         break;
-      case XrexAction.scrollToDesc:
+      case VixRexAction.scrollToDesc:
         key = descriptionKey;
         focus = descriptionFocusNode;
         break;
-      case XrexAction.scrollToProducts:
+      case VixRexAction.scrollToProducts:
         key = productsKey;
         break;
-      case XrexAction.scrollToCategory:
+      case VixRexAction.scrollToCategory:
         // Tümü kategori alanına scroll yapar (AutoFillBanner orada)
         key = categoryKey;
         break;
-      case XrexAction.openVitrim:
-      case XrexAction.copyLink:
-      case XrexAction.shareWhatsapp:
-      case XrexAction.showQr:
-      case XrexAction.openExplore:
-      case XrexAction.openCoverTemplatePicker:
-      case XrexAction.none:
+      case VixRexAction.openVitrim:
+      case VixRexAction.copyLink:
+      case VixRexAction.shareWhatsapp:
+      case VixRexAction.showQr:
+      case VixRexAction.openExplore:
+      case VixRexAction.openCoverTemplatePicker:
+      case VixRexAction.none:
         break;
     }
 

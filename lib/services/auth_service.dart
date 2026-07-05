@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/store_local_storage_service.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
 
 /// DebugPrint için foundation.dart import'u
 import 'package:flutter/foundation.dart' show debugPrint;

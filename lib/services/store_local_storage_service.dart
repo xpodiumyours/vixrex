@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/local_storage_keys.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/local_storage_keys.dart';
 
 class PublishedVitrinInfo {
   final String slug;

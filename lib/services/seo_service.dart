@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:vitrinx/config/public_site_config.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 /// Next.js ISR önbelleğini geçersiz kılmak ve SEO şemaları üretmek için kullanılan servis.
 class SeoService {
@@ -155,7 +155,7 @@ class SeoService {
         '@type': 'WebPage',
         '@id': '$url#webpage',
         'url': url,
-        'name': name.isEmpty ? 'VitrinX' : '$name | VitrinX',
+        'name': name.isEmpty ? 'VixRex' : '$name | VixRex',
         if (description.isNotEmpty) 'description': description,
         'about': {'@id': entityId},
         if (imageUrl.isNotEmpty)

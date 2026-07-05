@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/controllers/explore_controller.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/repositories/explore_repository.dart';
+import 'package:vixrex/controllers/explore_controller.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/repositories/explore_repository.dart';
 
 
 class FakeExploreRepository extends Fake implements ExploreRepository {

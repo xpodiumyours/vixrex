@@ -1,4 +1,4 @@
-import 'package:vitrinx/models/store_data.dart';
+import 'package:vixrex/models/store_data.dart';
 
 /// Store (vitrin/mağaza) veri erişim operasyonları için repository arayüzü.
 abstract class StoreRepository {

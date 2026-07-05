@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/widgets/landing/landing_value_card.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/landing/landing_value_card.dart';
 
 class LandingFeaturesSection extends StatelessWidget {
   const LandingFeaturesSection({super.key});

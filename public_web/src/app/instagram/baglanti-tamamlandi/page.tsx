@@ -16,7 +16,7 @@ export default function InstagramConnectionCompletePage() {
         </div>
         <h1 className="mt-5 text-2xl font-bold">Instagram bağlandı</h1>
         <p className="mt-2 text-sm leading-6 text-[#b9c7d6]">
-          VitrinX uygulamasına dönerek fotoğraflarınızı seçebilirsiniz.
+          VixRex uygulamasına dönerek fotoğraflarınızı seçebilirsiniz.
         </p>
         <button
           type="button"

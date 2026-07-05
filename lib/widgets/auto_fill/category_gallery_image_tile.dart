@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/services/category_image_service.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/services/category_image_service.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 /// Tek görsel kutucuğu — seçim durumu, loading, error state destekler
 class CategoryGalleryImageTile extends StatelessWidget {

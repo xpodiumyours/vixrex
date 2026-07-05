@@ -1,4 +1,4 @@
-package com.xpodiumyours.vitrinx
+package com.xpodiumyours.vixrex
 
 import io.flutter.embedding.android.FlutterActivity
 

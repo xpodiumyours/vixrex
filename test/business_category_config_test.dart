@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/config/business_category_config.dart';
+import 'package:vixrex/config/business_category_config.dart';
 
 void main() {
   group('BusinessCategoryConfig & SuggestedOffering Tests', () {

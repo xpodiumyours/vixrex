@@ -1,24 +1,24 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/xrex_profile_snapshot.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 
 void main() {
-  group('XrexProfileSnapshot', () {
+  group('VixRexProfileSnapshot', () {
     test('Bos magaza icin name beklenmeli', () {
       final store = StoreData();
-      final snapshot = XrexProfileSnapshot.from(store, null);
+      final snapshot = VixRexProfileSnapshot.from(store, null);
       
       expect(snapshot.nameCompleted, isFalse);
-      expect(snapshot.nextMissingField, XrexNextStep.name);
+      expect(snapshot.nextMissingField, VixRexNextStep.name);
     });
 
     test('Name dolu ise whatsapp beklenmeli', () {
       final store = StoreData().copyWith(name: 'Test Store');
-      final snapshot = XrexProfileSnapshot.from(store, null);
+      final snapshot = VixRexProfileSnapshot.from(store, null);
       
       expect(snapshot.nameCompleted, isTrue);
       expect(snapshot.whatsappCompleted, isFalse);
-      expect(snapshot.nextMissingField, XrexNextStep.whatsapp);
+      expect(snapshot.nextMissingField, VixRexNextStep.whatsapp);
     });
 
     test('Legal eksik ise legal beklenmeli', () {
@@ -29,13 +29,13 @@ void main() {
         provinceName: 'Istanbul',
         districtName: 'Kadikoy',
       );
-      final snapshot = XrexProfileSnapshot.from(store, null);
+      final snapshot = VixRexProfileSnapshot.from(store, null);
       
       expect(snapshot.nameCompleted, isTrue);
       expect(snapshot.whatsappCompleted, isTrue);
       expect(snapshot.addressCompleted, isTrue);
       expect(snapshot.legalCompleted, isFalse);
-      expect(snapshot.nextMissingField, XrexNextStep.legal);
+      expect(snapshot.nextMissingField, VixRexNextStep.legal);
     });
 
     test('IsReadyToPublish legal dahil her sey tamamsa true olmali', () {
@@ -55,12 +55,12 @@ void main() {
         publicationConsentVersion: '1.0',
         publicationConsentHash: 'hash',
       );
-      final snapshot = XrexProfileSnapshot.from(store, null);
+      final snapshot = VixRexProfileSnapshot.from(store, null);
       
       expect(snapshot.legalCompleted, isTrue);
       expect(snapshot.isReadyToPublish, isTrue);
       expect(snapshot.isPublished, isFalse);
-      expect(snapshot.nextMissingField, XrexNextStep.publish);
+      expect(snapshot.nextMissingField, VixRexNextStep.publish);
     });
   });
 }

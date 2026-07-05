@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
 
 class VitrinPremiumIdentityCard extends StatelessWidget {
   final StoreData storeData;
@@ -65,7 +65,7 @@ class VitrinPremiumIdentityCard extends StatelessWidget {
                     children: [
                       Text(
                         storeData.name.isEmpty
-                            ? 'VitrinX Kart'
+                            ? 'VixRex Kart'
                             : storeData.name,
                         style: TextStyle(
                           fontWeight: FontWeight.w900,

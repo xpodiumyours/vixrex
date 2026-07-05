@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -56,7 +56,7 @@ class ProfileScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'VitrinX Kullanıcısı',
+                            'VixRex Kullanıcısı',
                             style: TextStyle(
                               color: AppColors.darkText,
                               fontSize: 16,
@@ -118,7 +118,7 @@ class ProfileScreen extends StatelessWidget {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'vitrinx.app/magazanız',
+                              'vixrex.app/magazanız',
                               style: TextStyle(
                                 color: AppColors.mutedText,
                                 fontSize: 12,

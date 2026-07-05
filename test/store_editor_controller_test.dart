@@ -6,12 +6,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/controllers/store_editor_controller.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/location_service.dart';
-import 'package:vitrinx/services/store_local_storage_service.dart';
-import 'package:vitrinx/services/store_publish_service.dart';
-import 'package:vitrinx/services/store_shelf_upload_service.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/location_service.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/store_publish_service.dart';
+import 'package:vixrex/services/store_shelf_upload_service.dart';
 
 class FakeLocationService extends Fake implements LocationService {
   @override

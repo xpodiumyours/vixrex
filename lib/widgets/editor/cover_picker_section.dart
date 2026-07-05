@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 class CoverPickerSection extends StatelessWidget {
   final Uint8List? coverBytes;

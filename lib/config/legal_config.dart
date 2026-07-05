@@ -1,7 +1,7 @@
 class LegalConfig {
   const LegalConfig._();
 
-  static const String appName = 'VitrinX';
+  static const String appName = 'VixRex';
   static const String ownerName = String.fromEnvironment(
     'LEGAL_DATA_CONTROLLER_TITLE',
     defaultValue: 'Aksakal Ticaret',
@@ -26,7 +26,7 @@ class LegalConfig {
   );
   static const String publicSiteUrl = String.fromEnvironment(
     'PUBLIC_SITE_URL',
-    defaultValue: 'https://vitrinx.app',
+    defaultValue: 'https://vixrex.app',
   );
 
   static const String privacyPath = '/privacy';

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/services/image_optimization_service.dart';
+import 'package:vixrex/services/image_optimization_service.dart';
 
 class StoreShelfUploadService {
   const StoreShelfUploadService({

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vitrinx/config/business_category_config.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/store_publish_service.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/repositories/explore_repository.dart';
-import 'package:vitrinx/controllers/explore_controller.dart';
-import 'package:vitrinx/widgets/vitrin_store_card.dart';
-import 'package:vitrinx/config/app_router.dart';
+import 'package:vixrex/config/business_category_config.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/store_publish_service.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/repositories/explore_repository.dart';
+import 'package:vixrex/controllers/explore_controller.dart';
+import 'package:vixrex/widgets/vitrin_store_card.dart';
+import 'package:vixrex/config/app_router.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -239,7 +239,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           backgroundColor: bgColor,
           appBar: AppBar(
             title: const Text(
-              "VitrinX'leri Keşfet",
+              "VixRex'leri Keşfet",
               style: TextStyle(
                 color: darkText,
                 fontWeight: FontWeight.w900,
@@ -268,7 +268,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     vertical: 8,
                   ),
                   child: const Text(
-                    'Yayındaki VitrinX profillerini keşfet',
+                    'Yayındaki VixRex profillerini keşfet',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,

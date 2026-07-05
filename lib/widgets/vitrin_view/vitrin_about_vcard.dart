@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
-import 'package:vitrinx/widgets/vitrin_view/vitrin_view_content.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/widgets/vitrin_view/vitrin_view_content.dart';
 
 class VitrinAboutCard extends StatelessWidget {
   final StoreData storeData;

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/repositories/vitrin_view_repository.dart';
+import 'package:vixrex/repositories/vitrin_view_repository.dart';
 
 /// SharedPreferences ve RPC ile VitrinViewRepository implementasyonu.
 class SupabaseVitrinViewRepository implements VitrinViewRepository {

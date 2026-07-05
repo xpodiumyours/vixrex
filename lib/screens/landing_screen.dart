@@ -1,20 +1,20 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:vitrinx/screens/preview_screen.dart';
-import 'package:vitrinx/models/landing_demo_profile.dart';
-import 'package:vitrinx/services/category_image_service.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/widgets/landing/landing_hero_section.dart';
-import 'package:vitrinx/widgets/landing/landing_value_band.dart';
-import 'package:vitrinx/widgets/landing/landing_features_section.dart';
-import 'package:vitrinx/widgets/landing/landing_comparison_section.dart';
-import 'package:vitrinx/widgets/landing/landing_trust_band.dart';
-import 'package:vitrinx/widgets/landing/landing_steps_section.dart';
-import 'package:vitrinx/widgets/landing/landing_bottom_cta.dart';
-import 'package:vitrinx/widgets/landing/landing_template_catalog.dart';
-import 'package:vitrinx/widgets/chatbot_overlay.dart';
-import 'package:vitrinx/config/app_router.dart';
-import 'package:vitrinx/services/store_local_storage_service.dart';
+import 'package:vixrex/screens/preview_screen.dart';
+import 'package:vixrex/models/landing_demo_profile.dart';
+import 'package:vixrex/services/category_image_service.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/landing/landing_hero_section.dart';
+import 'package:vixrex/widgets/landing/landing_value_band.dart';
+import 'package:vixrex/widgets/landing/landing_features_section.dart';
+import 'package:vixrex/widgets/landing/landing_comparison_section.dart';
+import 'package:vixrex/widgets/landing/landing_trust_band.dart';
+import 'package:vixrex/widgets/landing/landing_steps_section.dart';
+import 'package:vixrex/widgets/landing/landing_bottom_cta.dart';
+import 'package:vixrex/widgets/landing/landing_template_catalog.dart';
+import 'package:vixrex/widgets/chatbot_overlay.dart';
+import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});

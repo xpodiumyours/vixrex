@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
-import 'package:vitrinx/models/vitrin_gallery_preview_item.dart';
-import 'package:vitrinx/widgets/vitrin_view/vitrin_gallery_image.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/models/vitrin_gallery_preview_item.dart';
+import 'package:vixrex/widgets/vitrin_view/vitrin_gallery_image.dart';
 
 class VitrinShelfGallery extends StatelessWidget {
   final VitrinThemePreset preset;

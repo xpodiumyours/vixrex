@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/utils/app_error_guard.dart';
+import 'package:vixrex/utils/app_error_guard.dart';
 
 void main() {
   group('AppErrorGuard.run', () {

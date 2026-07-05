@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'package:vitrinx/models/store_data.dart';
+import 'package:vixrex/models/store_data.dart';
 
 class VitrinGalleryPreviewItem {
   final String imageUrl;

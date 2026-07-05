@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/config/business_category_config.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
-import 'package:vitrinx/widgets/vitrin_view/vitrin_action_button_widgets.dart';
-import 'package:vitrinx/widgets/vitrin_view/vitrin_view_actions.dart';
+import 'package:vixrex/config/business_category_config.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/widgets/vitrin_view/vitrin_action_button_widgets.dart';
+import 'package:vixrex/widgets/vitrin_view/vitrin_view_actions.dart';
 
 List<Widget> buildVitrinVisibleActions({
   required BuildContext context,

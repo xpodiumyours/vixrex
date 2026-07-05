@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/home_shell_screen.dart';
-import 'package:vitrinx/screens/public_vitrin_screen.dart';
-import 'package:vitrinx/services/local_storage_keys.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/screens/home_shell_screen.dart';
+import 'package:vixrex/screens/public_vitrin_screen.dart';
+import 'package:vixrex/services/local_storage_keys.dart';
 
 void main() {
   testWidgets('Public vitrin local sahip bilgisinde düzenle barı gösterir', (
@@ -12,7 +12,7 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues({
       LocalStorageKeys.lastPublishedSlug: 'test-vitrin',
-      LocalStorageKeys.lastPublishedLink: 'https://vitrinx.app/v/test-vitrin',
+      LocalStorageKeys.lastPublishedLink: 'https://vixrex.app/v/test-vitrin',
       LocalStorageKeys.lastPublishedName: 'Test Vitrin',
       LocalStorageKeys.lastPublishedEditToken: 'token123',
     });
@@ -36,7 +36,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.byType(HomeShellScreen), findsOneWidget);
-    expect(find.text('VitrinX Düzenle'), findsOneWidget);
+    expect(find.text('VixRex Düzenle'), findsOneWidget);
   });
 
   testWidgets('Public vitrin local sahip bilgisi yoksa düzenle barı gizler', (
@@ -67,7 +67,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     SharedPreferences.setMockInitialValues({
       LocalStorageKeys.lastPublishedSlug: 'test-vitrin',
-      LocalStorageKeys.lastPublishedLink: 'https://vitrinx.app/v/test-vitrin',
+      LocalStorageKeys.lastPublishedLink: 'https://vixrex.app/v/test-vitrin',
       LocalStorageKeys.lastPublishedName: 'Test Vitrin',
       LocalStorageKeys.lastPublishedEditToken: 'token123',
     });

@@ -184,10 +184,10 @@ export default function BookingWizardClient({ store }: BookingWizardClientProps)
         appointmentTime: dateTimeStr,
       };
 
-      const existingApptsJson = localStorage.getItem("vitrinx_appointments") || "[]";
+      const existingApptsJson = localStorage.getItem("vixrex_appointments") || "[]";
       const existingAppts = JSON.parse(existingApptsJson);
       existingAppts.push(apptData);
-      localStorage.setItem("vitrinx_appointments", JSON.stringify(existingAppts));
+      localStorage.setItem("vixrex_appointments", JSON.stringify(existingAppts));
 
       setSuccessData({
         appointmentId: data.appointment_id,

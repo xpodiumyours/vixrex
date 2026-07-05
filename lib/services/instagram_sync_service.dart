@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:vitrinx/config/public_site_config.dart';
-import 'package:vitrinx/models/store_data.dart';
+import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/models/store_data.dart';
 
 class InstagramConnectionStatus {
   final bool connected;

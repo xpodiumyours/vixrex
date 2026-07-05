@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:vitrinx/config/app_router.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/store_publish_service.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
-import 'package:vitrinx/widgets/vitrin_product_card.dart';
+import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/store_publish_service.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/widgets/vitrin_product_card.dart';
 
 class VitrinProductsCatalog extends StatelessWidget {
   final StoreData storeData;

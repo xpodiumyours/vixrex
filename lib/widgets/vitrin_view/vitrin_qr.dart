@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
 
 class VitrinQrCard extends StatelessWidget {
   final String url;

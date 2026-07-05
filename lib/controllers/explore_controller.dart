@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/repositories/explore_repository.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/repositories/explore_repository.dart';
 
 class ExploreController extends ChangeNotifier {
   final ExploreRepository _repository;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/screens/public_vitrin_screen.dart';
-import 'package:vitrinx/services/booking_service.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/screens/public_vitrin_screen.dart';
+import 'package:vixrex/services/booking_service.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 class AppointmentTrackerScreen extends StatefulWidget {
   final String token;

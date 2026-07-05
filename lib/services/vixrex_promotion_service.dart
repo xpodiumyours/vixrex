@@ -1,18 +1,18 @@
-import 'package:vitrinx/services/xrex_profile_snapshot.dart';
-import 'package:vitrinx/services/category_image_service.dart';
+import 'package:vixrex/services/vixrex_profile_snapshot.dart';
+import 'package:vixrex/services/category_image_service.dart';
 
-enum XrexPromotionTone {
+enum VixRexPromotionTone {
   short,
   friendly,
   professional,
 }
 
-class XrexPromotionDraft {
-  final XrexPromotionTone tone;
+class VixRexPromotionDraft {
+  final VixRexPromotionTone tone;
   final String label;
   final String text;
 
-  const XrexPromotionDraft({
+  const VixRexPromotionDraft({
     required this.tone,
     required this.label,
     required this.text,
@@ -20,8 +20,8 @@ class XrexPromotionDraft {
 }
 
 /// Yayındaki vitrin için tamamen yerel, düzenlenebilir tanıtım metinleri üretir.
-abstract final class XrexPromotionService {
-  static List<XrexPromotionDraft> draftsFor(XrexProfileSnapshot? snapshot) {
+abstract final class VixRexPromotionService {
+  static List<VixRexPromotionDraft> draftsFor(VixRexProfileSnapshot? snapshot) {
     final name = _valueOrFallback(snapshot?.storeName, 'İşletmemiz');
     final category = _valueOrFallback(snapshot?.category, 'ürün ve hizmetler');
     final district = snapshot?.district.trim() ?? '';
@@ -30,19 +30,19 @@ abstract final class XrexPromotionService {
     final linkText = link.isEmpty ? '' : '\n$link';
 
     return [
-      XrexPromotionDraft(
-        tone: XrexPromotionTone.short,
+      VixRexPromotionDraft(
+        tone: VixRexPromotionTone.short,
         label: 'Kısa',
         text: '$name dijital vitrini yayında. Hemen inceleyin.$linkText',
       ),
-      XrexPromotionDraft(
-        tone: XrexPromotionTone.friendly,
+      VixRexPromotionDraft(
+        tone: VixRexPromotionTone.friendly,
         label: 'Samimi',
         text:
-            'Merhaba!$locationText hizmet veren $name artık VitrinX’te. Ürünlerimize ve iletişim bilgilerimize tek bağlantıdan ulaşabilirsiniz.$linkText',
+            'Merhaba!$locationText hizmet veren $name artık VixRex’te. Ürünlerimize ve iletişim bilgilerimize tek bağlantıdan ulaşabilirsiniz.$linkText',
       ),
-      XrexPromotionDraft(
-        tone: XrexPromotionTone.professional,
+      VixRexPromotionDraft(
+        tone: VixRexPromotionTone.professional,
         label: 'Profesyonel',
         text:
             '$name dijital vitrini yayına açıldı. $category, konum ve iletişim bilgilerimizi incelemek için bağlantıyı ziyaret edebilirsiniz.$linkText',
@@ -57,7 +57,7 @@ abstract final class XrexPromotionService {
 
   // ─── Hazır Görsel Sablon Mesajları ──────────────────────────────────────────
 
-  /// xrex'in "Hazır görseller kullan" önerisi için mesaj listesi
+  /// vixrex'in "Hazır görseller kullan" önerisi için mesaj listesi
   static List<String> getAutoFillPrompts({
     required String category,
     int? availableCount,
@@ -74,7 +74,7 @@ abstract final class XrexPromotionService {
     ];
   }
 
-  /// xrex'te gösterilecek tek bir auto-fill öneri mesajı seç
+  /// vixrex'te gösterilecek tek bir auto-fill öneri mesajı seç
   static String pickAutoFillPrompt({
     required String category,
     int? availableCount,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/widgets/unsaved_changes_dialog.dart';
+import 'package:vixrex/widgets/unsaved_changes_dialog.dart';
 
 void main() {
   testWidgets('kaydedilmemiş değişiklik diyaloğu ekranda kalmayı destekler', (

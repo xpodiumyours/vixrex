@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
-/// VitrinX uygulamasının merkezi tipografi stilleri.
+/// VixRex uygulamasının merkezi tipografi stilleri.
 ///
 /// Tüm ekranlar bu sınıftan text style almalıdır.
 /// Doğrudan `TextStyle(...)` literal kullanımı yerine bu sabitler tercih edilmelidir.

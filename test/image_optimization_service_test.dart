@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/services/image_optimization_service.dart';
+import 'package:vixrex/services/image_optimization_service.dart';
 
 void main() {
   const service = ImageOptimizationService();

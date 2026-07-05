@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/config/public_site_config.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 class BookingWizardSheet extends StatefulWidget {
   final StoreData storeData;

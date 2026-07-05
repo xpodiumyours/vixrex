@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vitrinx/config/public_site_config.dart';
-import 'package:vitrinx/services/booking_service.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/services/booking_service.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 class BookingManagementScreen extends StatefulWidget {
   final String storeSlug;

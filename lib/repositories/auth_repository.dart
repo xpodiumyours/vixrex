@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/models/store_data.dart';
+import 'package:vixrex/models/store_data.dart';
 
 /// Kimlik doğrulama ve kullanıcı yönetimi için repository arayüzü.
 ///

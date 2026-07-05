@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/services/store_publish_service.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/widgets/vitrin_view/vitrin_view_actions.dart';
+import 'package:vixrex/services/store_publish_service.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/widgets/vitrin_view/vitrin_view_actions.dart';
 
 // Helper: geçerli bir mağaza verisi oluşturur.
 StoreData validStore({List<Product>? products}) {

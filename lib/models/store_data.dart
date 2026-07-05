@@ -1,10 +1,10 @@
-import 'package:vitrinx/models/store_product.dart';
-import 'package:vitrinx/models/store_offering.dart';
-import 'package:vitrinx/models/working_hours.dart';
+import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/models/store_offering.dart';
+import 'package:vixrex/models/working_hours.dart';
 
-export 'package:vitrinx/models/store_product.dart';
-export 'package:vitrinx/models/store_offering.dart';
-export 'package:vitrinx/models/working_hours.dart';
+export 'package:vixrex/models/store_product.dart';
+export 'package:vixrex/models/store_offering.dart';
+export 'package:vixrex/models/working_hours.dart';
 
 class StoreData {
   String? id;

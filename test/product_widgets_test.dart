@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/widgets/product/product_editor_sheet.dart';
-import 'package:vitrinx/widgets/product/product_management_entry_card.dart';
-import 'package:vitrinx/widgets/product/product_management_sheet.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/widgets/product/product_editor_sheet.dart';
+import 'package:vixrex/widgets/product/product_management_entry_card.dart';
+import 'package:vixrex/widgets/product/product_management_sheet.dart';
 
 void main() {
   final category = ProductCategory(id: 'cat-1', name: 'Giyim');

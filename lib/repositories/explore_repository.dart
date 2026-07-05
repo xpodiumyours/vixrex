@@ -1,8 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/local_storage_keys.dart';
-import 'package:vitrinx/utils/app_error_guard.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/local_storage_keys.dart';
+import 'package:vixrex/utils/app_error_guard.dart';
 
 class ExploreRepository {
   final SupabaseClient? _supabaseClient;

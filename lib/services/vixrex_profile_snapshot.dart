@@ -1,28 +1,28 @@
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/auto_fill_service.dart';
-import 'package:vitrinx/services/store_local_storage_service.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/auto_fill_service.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 // ─── Eksik alan enum'u ────────────────────────────────────────────────────────
-enum XrexNextStep { name, whatsapp, address, legal, publish, share }
+enum VixRexNextStep { name, whatsapp, address, legal, publish, share }
 
-/// X-rex'in kullanıcıya göstereceği rehberlik aşaması.
-enum XrexJourneyPhase { setup, publish, share, improve }
+/// VixRex'in kullanıcıya göstereceği rehberlik aşaması.
+enum VixRexJourneyPhase { setup, publish, share, improve }
 
-extension XrexNextStepLabel on XrexNextStep {
+extension VixRexNextStepLabel on VixRexNextStep {
   String get label {
     switch (this) {
-      case XrexNextStep.name:
+      case VixRexNextStep.name:
         return 'İşletme adı';
-      case XrexNextStep.whatsapp:
+      case VixRexNextStep.whatsapp:
         return 'WhatsApp numarası';
-      case XrexNextStep.address:
+      case VixRexNextStep.address:
         return 'Adres / konum';
-      case XrexNextStep.legal:
+      case VixRexNextStep.legal:
         return 'Yasal yayınlama onayları';
-      case XrexNextStep.publish:
+      case VixRexNextStep.publish:
         return 'Yayınla';
-      case XrexNextStep.share:
+      case VixRexNextStep.share:
         return 'Paylaşım';
     }
   }
@@ -31,7 +31,7 @@ extension XrexNextStepLabel on XrexNextStep {
 // ─── Snapshot ─────────────────────────────────────────────────────────────────
 /// Vitrin durumunun kullanıcı dostu özeti.
 /// Güvenlik: editToken, userId, session bilgisi içermez.
-class XrexProfileSnapshot {
+class VixRexProfileSnapshot {
   static const int requiredStepCount = 4;
 
   final bool nameCompleted;
@@ -49,7 +49,7 @@ class XrexProfileSnapshot {
   final String district;
   final String publicLink;
 
-  const XrexProfileSnapshot({
+  const VixRexProfileSnapshot({
     required this.nameCompleted,
     required this.whatsappCompleted,
     required this.addressCompleted,
@@ -68,7 +68,7 @@ class XrexProfileSnapshot {
 
   // ── Factory ───────────────────────────────────────────────────────────────
 
-  factory XrexProfileSnapshot.from(
+  factory VixRexProfileSnapshot.from(
     StoreData data,
     PublishedVitrinInfo? publishedInfo, {
     bool autoFillCompleted = false,
@@ -101,7 +101,7 @@ class XrexProfileSnapshot {
         data.products.isNotEmpty || data.offerings.isNotEmpty;
     // autoFillCompleted veri kaynagindan gelmez - ayri kontrol edilir
 
-    return XrexProfileSnapshot(
+    return VixRexProfileSnapshot(
       nameCompleted: nameOk,
       whatsappCompleted: whatsappOk,
       addressCompleted: addressOk,
@@ -125,13 +125,13 @@ class XrexProfileSnapshot {
   // ── Sıradaki Zorunlu Adım ─────────────────────────────────────────────────
 
   /// Yalnızca ilk eksik alanı döndürür.
-  XrexNextStep get nextMissingField {
-    if (!nameCompleted) return XrexNextStep.name;
-    if (!whatsappCompleted) return XrexNextStep.whatsapp;
-    if (!addressCompleted) return XrexNextStep.address;
-    if (!legalCompleted) return XrexNextStep.legal;
-    if (!isPublished) return XrexNextStep.publish;
-    return XrexNextStep.share;
+  VixRexNextStep get nextMissingField {
+    if (!nameCompleted) return VixRexNextStep.name;
+    if (!whatsappCompleted) return VixRexNextStep.whatsapp;
+    if (!addressCompleted) return VixRexNextStep.address;
+    if (!legalCompleted) return VixRexNextStep.legal;
+    if (!isPublished) return VixRexNextStep.publish;
+    return VixRexNextStep.share;
   }
 
   // ── Yardımcılar ───────────────────────────────────────────────────────────
@@ -154,27 +154,27 @@ class XrexProfileSnapshot {
         legalCompleted,
       ].where((completed) => completed).length;
 
-  XrexJourneyPhase journeyPhase({required bool hasShared}) {
-    if (!areRequiredFieldsCompleted) return XrexJourneyPhase.setup;
-    if (!isPublished) return XrexJourneyPhase.publish;
-    if (!hasShared) return XrexJourneyPhase.share;
-    return XrexJourneyPhase.improve;
+  VixRexJourneyPhase journeyPhase({required bool hasShared}) {
+    if (!areRequiredFieldsCompleted) return VixRexJourneyPhase.setup;
+    if (!isPublished) return VixRexJourneyPhase.publish;
+    if (!hasShared) return VixRexJourneyPhase.share;
+    return VixRexJourneyPhase.improve;
   }
 }
 
 // ─── Snapshot Servis ─────────────────────────────────────────────────────────
 /// HomeShellScreen'in lazy yükleme için kullandığı yardımcı.
-class XrexSnapshotLoader {
+class VixRexSnapshotLoader {
   final StoreLocalStorageService _storage;
 
-  const XrexSnapshotLoader({StoreLocalStorageService? storage})
+  const VixRexSnapshotLoader({StoreLocalStorageService? storage})
     : _storage = storage ?? const StoreLocalStorageService();
 
-  Future<XrexProfileSnapshot> load() async {
+  Future<VixRexProfileSnapshot> load() async {
     final vitrinData = await _storage.loadVitrinData();
     final publishedInfo = await _storage.loadPublishedVitrinInfo();
     if (vitrinData == null) {
-      return const XrexProfileSnapshot(
+      return const VixRexProfileSnapshot(
         nameCompleted: false,
         whatsappCompleted: false,
         addressCompleted: false,
@@ -200,7 +200,7 @@ class XrexSnapshotLoader {
         autoFillApplied = false;
       }
     }
-    return XrexProfileSnapshot.from(
+    return VixRexProfileSnapshot.from(
       vitrinData,
       publishedInfo,
       autoFillCompleted: autoFillApplied,

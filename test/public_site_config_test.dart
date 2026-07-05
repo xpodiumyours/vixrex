@@ -1,16 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/config/public_site_config.dart';
+import 'package:vixrex/config/public_site_config.dart';
 
 void main() {
   group('PublicSiteConfig', () {
     test('PUBLIC_SITE_URL varsa public linki bu origin ile üretir', () {
       final link = PublicSiteConfig.buildPublicLink(
         '/v/test-magaza',
-        configuredOriginOverride: 'https://vitrinx-two.vercel.app/silinecek',
+        configuredOriginOverride: 'https://vixrex-two.vercel.app/silinecek',
         baseUriOverride: Uri.parse('http://localhost:7357'),
       );
 
-      expect(link, 'https://vitrinx-two.vercel.app/v/test-magaza');
+      expect(link, 'https://vixrex-two.vercel.app/v/test-magaza');
     });
 
     test('PUBLIC_SITE_URL yoksa mevcut web origin değerine düşer', () {
@@ -26,7 +26,7 @@ void main() {
     test('geçersiz origin varsa sadece path döner', () {
       final link = PublicSiteConfig.buildPublicLink(
         '/v/test-magaza',
-        configuredOriginOverride: 'vitrinx-two.vercel.app',
+        configuredOriginOverride: 'vixrex-two.vercel.app',
         baseUriOverride: Uri.parse('about:blank'),
       );
 

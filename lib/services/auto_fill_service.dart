@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/services/category_image_service.dart';
-import 'package:vitrinx/services/store_local_storage_service.dart';
+import 'package:vixrex/services/category_image_service.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
 
 // ─── Otomatik Doldurma Secenekleri ───────────────────────────────────────────
 

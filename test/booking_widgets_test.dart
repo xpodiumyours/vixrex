@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/appointment_tracker_screen.dart';
-import 'package:vitrinx/widgets/booking_wizard_sheet.dart';
-import 'package:vitrinx/widgets/vitrin_view.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/screens/appointment_tracker_screen.dart';
+import 'package:vixrex/widgets/booking_wizard_sheet.dart';
+import 'package:vixrex/widgets/vitrin_view.dart';
 
 void main() {
   group('Booking Wizard Sheet Widget Tests', () {

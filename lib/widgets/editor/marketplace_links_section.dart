@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/store_product.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 class MarketplaceLinksSection extends StatelessWidget {
   final List<MarketplaceLink> links;

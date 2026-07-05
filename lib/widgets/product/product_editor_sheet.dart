@@ -2,11 +2,11 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/store_publish_service.dart';
-import 'package:vitrinx/services/store_shelf_upload_service.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/utils/gallery_image_file_validator.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/store_publish_service.dart';
+import 'package:vixrex/services/store_shelf_upload_service.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/utils/gallery_image_file_validator.dart';
 
 class ProductEditorSheet extends StatefulWidget {
   const ProductEditorSheet({

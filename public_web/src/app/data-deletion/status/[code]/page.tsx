@@ -19,7 +19,7 @@ async function getDeletionRequest(code: string) {
 
 export async function generateMetadata() {
   return {
-    title: "Veri Silme Talebi Durumu - VitrinX",
+    title: "Veri Silme Talebi Durumu - VixRex",
     robots: "noindex, nofollow",
   };
 }
@@ -122,7 +122,7 @@ export default async function DataDeletionStatusPage(props: PageProps) {
           </div>
 
           <p className="text-[10px] text-slate-500 font-bold tracking-wider mt-4 uppercase">
-            VitrinX Veri Güvenliği Yönetimi
+            VixRex Veri Güvenliği Yönetimi
           </p>
         </div>
       </div>

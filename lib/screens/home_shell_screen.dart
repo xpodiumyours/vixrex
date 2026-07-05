@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:vitrinx/models/chat_message.dart';
-import 'package:vitrinx/services/auth_service.dart';
-import 'package:vitrinx/services/chatbot_service.dart';
-import 'package:vitrinx/screens/blog_moderation_screen.dart';
-import 'package:vitrinx/screens/explore_screen.dart';
-import 'package:vitrinx/screens/my_vitrin_screen.dart';
-import 'package:vitrinx/screens/xrex_screen.dart';
-import 'package:vitrinx/screens/profile_screen.dart';
-import 'package:vitrinx/services/store_local_storage_service.dart';
-import 'package:vitrinx/services/xrex_profile_snapshot.dart';
-import 'package:vitrinx/services/xrex_promotion_service.dart';
-import 'package:vitrinx/widgets/chatbot_overlay.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/services/auth_service.dart';
+import 'package:vixrex/services/chatbot_service.dart';
+import 'package:vixrex/screens/blog_moderation_screen.dart';
+import 'package:vixrex/screens/explore_screen.dart';
+import 'package:vixrex/screens/my_vitrin_screen.dart';
+import 'package:vixrex/screens/vixrex_screen.dart';
+import 'package:vixrex/screens/profile_screen.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/vixrex_profile_snapshot.dart';
+import 'package:vixrex/services/vixrex_promotion_service.dart';
+import 'package:vixrex/widgets/chatbot_overlay.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 class HomeShellScreen extends StatefulWidget {
   final int initialIndex;
@@ -36,14 +36,14 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   final _myVitrinKey = GlobalKey<MyVitrinScreenState>();
 
   // Chat History
-  final List<ChatMessage> _xrexChatMessages = [];
+  final List<ChatMessage> _vixrexChatMessages = [];
 
-  // ── Xrex Snapshot ─────────────────────────────────────────────────────────
-  XrexProfileSnapshot? _xrexSnapshot;
+  // ── VixRex Snapshot ─────────────────────────────────────────────────────────
+  VixRexProfileSnapshot? _vixrexSnapshot;
   PublishedVitrinInfo? _publishedInfo;
-  bool _xrexHasShared = false;
-  String? _dismissedXrexRecommendationId;
-  final _snapshotLoader = const XrexSnapshotLoader();
+  bool _vixrexHasShared = false;
+  String? _dismissedVixRexRecommendationId;
+  final _snapshotLoader = const VixRexSnapshotLoader();
 
   /// Mevcut kullanıcının yönetici olup olmadığını kontrol eder.
   bool get _isAdmin {
@@ -71,12 +71,12 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     } else {
       _selectedIndex = 0; // Default to Store
     }
-    _loadXrexSnapshot();
+    _loadVixRexSnapshot();
   }
 
   // ── Snapshot Yükleme ──────────────────────────────────────────────────────
 
-  Future<void> _loadXrexSnapshot() async {
+  Future<void> _loadVixRexSnapshot() async {
     final snapshot = await _snapshotLoader.load();
     final storage = const StoreLocalStorageService();
     final publishedInfo = await storage.loadPublishedVitrinInfo();
@@ -90,12 +90,12 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
 
     if (mounted) {
       setState(() {
-        _xrexSnapshot = snapshot;
+        _vixrexSnapshot = snapshot;
         _publishedInfo = publishedInfo;
-        _xrexHasShared = hasShared;
-        _dismissedXrexRecommendationId = dismissedRecommendationId;
-        _xrexChatMessages.clear();
-        _xrexChatMessages.addAll(history);
+        _vixrexHasShared = hasShared;
+        _dismissedVixRexRecommendationId = dismissedRecommendationId;
+        _vixrexChatMessages.clear();
+        _vixrexChatMessages.addAll(history);
       });
     }
   }
@@ -112,20 +112,20 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   /// [İyileştirme #3] Vitrin yayınlandığında snapshot otomatik yenilenir.
   void _handleVitrinPublished() {
     setState(() => _exploreRefreshKey++);
-    _loadXrexSnapshot(); // ← Snapshot anında güncellenir
+    _loadVixRexSnapshot(); // ← Snapshot anında güncellenir
   }
 
-  // ── Xrex Action Callbacks ─────────────────────────────────────────────────
+  // ── VixRex Action Callbacks ─────────────────────────────────────────────────
 
-  void _xrexNavigateToVitrim() {
+  void _vixrexNavigateToVitrim() {
     setState(() => _selectedIndex = 0); // Store
   }
 
-  void _xrexCopyLink() {
+  void _vixrexCopyLink() {
     final link = _publishedInfo?.publicLink;
     if (link != null && link.isNotEmpty) {
       Clipboard.setData(ClipboardData(text: link));
-      _markXrexShared();
+      _markVixRexShared();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Link panoya kopyalandı!'),
@@ -135,18 +135,18 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     }
   }
 
-  Future<void> _xrexShareWhatsapp() async {
+  Future<void> _vixrexShareWhatsapp() async {
     final link = _publishedInfo?.publicLink;
     if (link == null || link.isEmpty) return;
 
-    final snapshot = _xrexSnapshot;
+    final snapshot = _vixrexSnapshot;
     final message = snapshot == null
         ? 'Merhaba! Dijital vitrinimi incelemek için bağlantıyı kullanabilirsiniz: $link'
-        : XrexPromotionService.draftsFor(snapshot)[1].text;
-    await _xrexSharePromotionText(message);
+        : VixRexPromotionService.draftsFor(snapshot)[1].text;
+    await _vixrexSharePromotionText(message);
   }
 
-  void _xrexCopyPromotionText(String text) {
+  void _vixrexCopyPromotionText(String text) {
     if (text.trim().isEmpty) return;
     Clipboard.setData(ClipboardData(text: text.trim()));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -157,11 +157,11 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     );
   }
 
-  Future<void> _xrexSharePromotionText(String message) async {
+  Future<void> _vixrexSharePromotionText(String message) async {
     final normalizedMessage = message.trim();
     if (normalizedMessage.isEmpty) return;
 
-    await _markXrexShared();
+    await _markVixRexShared();
     final whatsappUrl = Uri.parse(
       'https://api.whatsapp.com/send?text=${Uri.encodeComponent(normalizedMessage)}',
     );
@@ -193,7 +193,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     }
   }
 
-  void _xrexShowQr() {
+  void _vixrexShowQr() {
     final link = _publishedInfo?.publicLink;
     if (link == null || link.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -207,7 +207,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       return;
     }
 
-    _markXrexShared();
+    _markVixRexShared();
 
     showModalBottomSheet(
       context: context,
@@ -302,64 +302,64 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     );
   }
 
-  void _xrexScrollToAction(XrexAction action) {
+  void _vixrexScrollToAction(VixRexAction action) {
     setState(() => _selectedIndex = 0); // Store
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _myVitrinKey.currentState?.scrollToXrexAction(action);
+      _myVitrinKey.currentState?.scrollToVixRexAction(action);
     });
   }
 
-  void _xrexOpenCoverTemplatePicker() {
+  void _vixrexOpenCoverTemplatePicker() {
     setState(() => _selectedIndex = 0); // Store
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _myVitrinKey.currentState?.openCoverTemplatePicker();
     });
   }
 
-  Future<void> _markXrexShared() async {
+  Future<void> _markVixRexShared() async {
     await ChatbotService().markVitrinShared();
     if (!mounted) return;
-    setState(() => _xrexHasShared = true);
+    setState(() => _vixrexHasShared = true);
   }
 
-  Future<void> _dismissXrexRecommendation(String recommendationId) async {
+  Future<void> _dismissVixRexRecommendation(String recommendationId) async {
     await ChatbotService().dismissRecommendation(recommendationId);
     if (!mounted) return;
-    setState(() => _dismissedXrexRecommendationId = recommendationId);
+    setState(() => _dismissedVixRexRecommendationId = recommendationId);
   }
 
-  void _handleXrexAction(XrexAction action) {
+  void _handleVixRexAction(VixRexAction action) {
     switch (action) {
-      case XrexAction.openVitrim:
-        _xrexNavigateToVitrim();
+      case VixRexAction.openVitrim:
+        _vixrexNavigateToVitrim();
         break;
-      case XrexAction.copyLink:
-        _xrexCopyLink();
+      case VixRexAction.copyLink:
+        _vixrexCopyLink();
         break;
-      case XrexAction.shareWhatsapp:
-        _xrexShareWhatsapp();
+      case VixRexAction.shareWhatsapp:
+        _vixrexShareWhatsapp();
         break;
-      case XrexAction.showQr:
-        _xrexShowQr();
+      case VixRexAction.showQr:
+        _vixrexShowQr();
         break;
-      case XrexAction.openExplore:
+      case VixRexAction.openExplore:
         _openExplore();
         break;
-      case XrexAction.scrollToCover:
-      case XrexAction.scrollToGallery:
-      case XrexAction.scrollToName:
-      case XrexAction.scrollToWhatsapp:
-      case XrexAction.scrollToAddress:
-      case XrexAction.scrollToLegal:
-      case XrexAction.scrollToDesc:
-      case XrexAction.scrollToProducts:
-      case XrexAction.scrollToCategory:
-        _xrexScrollToAction(action);
+      case VixRexAction.scrollToCover:
+      case VixRexAction.scrollToGallery:
+      case VixRexAction.scrollToName:
+      case VixRexAction.scrollToWhatsapp:
+      case VixRexAction.scrollToAddress:
+      case VixRexAction.scrollToLegal:
+      case VixRexAction.scrollToDesc:
+      case VixRexAction.scrollToProducts:
+      case VixRexAction.scrollToCategory:
+        _vixrexScrollToAction(action);
         break;
-      case XrexAction.openCoverTemplatePicker:
-        _xrexOpenCoverTemplatePicker();
+      case VixRexAction.openCoverTemplatePicker:
+        _vixrexOpenCoverTemplatePicker();
         break;
-      case XrexAction.none:
+      case VixRexAction.none:
         break;
     }
   }
@@ -376,14 +376,14 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         onOpenExplore: _openExplore,
       ),
       ExploreScreen(key: ValueKey(_exploreRefreshKey)),
-      XrexScreen(
-        snapshot: _xrexSnapshot,
-        hasShared: _xrexHasShared,
-        dismissedRecommendationId: _dismissedXrexRecommendationId,
-        onAction: _handleXrexAction,
-        onDismissRecommendation: _dismissXrexRecommendation,
-        onCopyPromotionText: _xrexCopyPromotionText,
-        onSharePromotionText: _xrexSharePromotionText,
+      VixRexScreen(
+        snapshot: _vixrexSnapshot,
+        hasShared: _vixrexHasShared,
+        dismissedRecommendationId: _dismissedVixRexRecommendationId,
+        onAction: _handleVixRexAction,
+        onDismissRecommendation: _dismissVixRexRecommendation,
+        onCopyPromotionText: _vixrexCopyPromotionText,
+        onSharePromotionText: _vixrexSharePromotionText,
       ),
       const ProfileScreen(),
       if (isAdmin) const BlogModerationScreen(),
@@ -403,7 +403,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       const NavigationDestination(
         icon: Icon(Icons.assistant_outlined),
         selectedIcon: Icon(Icons.assistant_rounded),
-        label: 'X-rex',
+        label: 'VixRex',
       ),
       const NavigationDestination(
         icon: Icon(Icons.person_outline_rounded),
@@ -423,7 +423,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         clipBehavior: Clip.none,
         children: [
           IndexedStack(index: _selectedIndex, children: pages),
-          // Xrex: Sağ alt köşede yüzen robot rozeti (sadece X-rex tabında değilken gösterilir)
+          // VixRex: Sağ alt köşede yüzen robot rozeti (sadece VixRex tabında değilken gösterilir)
           if (_selectedIndex != 2)
             Positioned(
               right: 0,
@@ -431,14 +431,14 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
               child: SafeArea(
                 minimum: const EdgeInsets.only(right: 16, bottom: 16),
                 child: ChatbotBadge(
-                  snapshot: _xrexSnapshot,
-                  chatHistory: _xrexChatMessages,
-                  onNavigateToVitrim: _xrexNavigateToVitrim,
+                  snapshot: _vixrexSnapshot,
+                  chatHistory: _vixrexChatMessages,
+                  onNavigateToVitrim: _vixrexNavigateToVitrim,
                   onNavigateToExplore: _openExplore,
-                  onCopyLink: _xrexCopyLink,
-                  onShowQr: _xrexShowQr,
-                  onShareWhatsapp: _xrexShareWhatsapp,
-                  onScrollToAction: _xrexScrollToAction,
+                  onCopyLink: _vixrexCopyLink,
+                  onShowQr: _vixrexShowQr,
+                  onShareWhatsapp: _vixrexShareWhatsapp,
+                  onScrollToAction: _vixrexScrollToAction,
                 ),
               ),
             ),
@@ -475,7 +475,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
             selectedIndex: _selectedIndex,
             onDestinationSelected: (index) {
               setState(() => _selectedIndex = index);
-              if (index == 2) _loadXrexSnapshot();
+              if (index == 2) _loadVixRexSnapshot();
             },
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             destinations: destinations,

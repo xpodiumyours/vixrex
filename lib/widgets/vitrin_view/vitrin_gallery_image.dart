@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/vitrin_gallery_preview_item.dart';
+import 'package:vixrex/models/vitrin_gallery_preview_item.dart';
 
 class VitrinGalleryImage extends StatelessWidget {
   final VitrinGalleryPreviewItem item;

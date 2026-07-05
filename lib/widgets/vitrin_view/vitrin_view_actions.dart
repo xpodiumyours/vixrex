@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
-import 'package:vitrinx/widgets/vitrin_view/vitrin_view_content.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/widgets/vitrin_view/vitrin_view_content.dart';
 
 class VitrinViewActions {
   static bool hasVCardData(StoreData storeData) {
@@ -184,14 +184,14 @@ class VitrinViewActions {
     final storeName = storeData.name.trim();
     final shareText =
         storeName.isEmpty
-            ? 'VitrinX vitrini\n$shareUrl'
+            ? 'VixRex vitrini\n$shareUrl'
             : '$storeName vitrini\n$shareUrl';
 
     try {
       final result = await SharePlus.instance.share(
         ShareParams(
           text: shareText,
-          title: storeName.isEmpty ? 'VitrinX' : storeName,
+          title: storeName.isEmpty ? 'VixRex' : storeName,
           sharePositionOrigin: shareOrigin,
         ),
       );

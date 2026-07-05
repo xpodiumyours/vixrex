@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 class StorePublishValidator {
   const StorePublishValidator();

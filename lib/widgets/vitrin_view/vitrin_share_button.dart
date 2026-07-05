@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
 
 class VitrinShareButton extends StatelessWidget {
   final VitrinThemePreset preset;

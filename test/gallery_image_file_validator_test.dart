@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/utils/gallery_image_file_validator.dart';
+import 'package:vixrex/utils/gallery_image_file_validator.dart';
 
 void main() {
   group('GalleryImageFileValidator', () {

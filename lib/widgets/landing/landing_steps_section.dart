@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 class LandingStepsSection extends StatelessWidget {
   const LandingStepsSection({super.key});

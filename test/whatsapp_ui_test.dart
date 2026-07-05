@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/preview_screen.dart';
-import 'package:vitrinx/widgets/vitrin_view.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/screens/preview_screen.dart';
+import 'package:vixrex/widgets/vitrin_view.dart';
 
 void main() {
   testWidgets('Preview WhatsApp FAB geçersiz numarada açıklayıcı uyarı verir', (

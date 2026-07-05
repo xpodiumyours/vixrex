@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/config/legal_config.dart';
-import 'package:vitrinx/config/app_router.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/config/legal_config.dart';
+import 'package:vixrex/config/app_router.dart';
 
 class LandingBottomCta extends StatelessWidget {
   final VoidCallback onNavigateToEditor;
@@ -52,7 +52,7 @@ class LandingBottomCta extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                'VitrinX’inizi oluşturun; linkinizi, QR kodunuzu ve WhatsApp iletişiminizi paylaşmaya başlayın.',
+                'VixRex’inizi oluşturun; linkinizi, QR kodunuzu ve WhatsApp iletişiminizi paylaşmaya başlayın.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.border,
@@ -76,7 +76,7 @@ class LandingBottomCta extends StatelessWidget {
                   elevation: 10,
                 ),
                 child: const Text(
-                  'VitrinX Oluştur',
+                  'VixRex Oluştur',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                 ),
               ),

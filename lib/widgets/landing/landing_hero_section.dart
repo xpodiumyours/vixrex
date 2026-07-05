@@ -2,11 +2,11 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/models/landing_demo_profile.dart';
-import 'package:vitrinx/services/auth_service.dart';
-import 'package:vitrinx/config/app_router.dart';
-import 'package:vitrinx/widgets/landing/phone_mockup.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/models/landing_demo_profile.dart';
+import 'package:vixrex/services/auth_service.dart';
+import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/widgets/landing/phone_mockup.dart';
 
 class LandingHeroSection extends StatelessWidget {
   final AnimationController animController;
@@ -182,7 +182,7 @@ class LandingHeroSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               const Text(
-                'VitrinX',
+                'VixRex',
                 style: TextStyle(
                   color: AppColors.darkText,
                   fontWeight: FontWeight.w900,
@@ -488,7 +488,7 @@ class LandingHeroSection extends StatelessWidget {
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 14),
                       child: Text(
-                        'vitrinx.app/',
+                        'vixrex.app/',
                         style: TextStyle(
                           color: Colors.white60,
                           fontSize: 14,
@@ -539,7 +539,7 @@ class LandingHeroSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'VitrinX Oluştur',
+                        'VixRex Oluştur',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 15,

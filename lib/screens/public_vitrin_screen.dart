@@ -2,15 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:vitrinx/config/public_site_config.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/appointment_tracker_screen.dart';
-import 'package:vitrinx/services/public_store_service.dart';
-import 'package:vitrinx/services/store_local_storage_service.dart';
-import 'package:vitrinx/services/vitrin_view_service.dart';
-import 'package:vitrinx/widgets/vitrin_view.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/config/app_router.dart';
+import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/screens/appointment_tracker_screen.dart';
+import 'package:vixrex/services/public_store_service.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/vitrin_view_service.dart';
+import 'package:vixrex/widgets/vitrin_view.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/config/app_router.dart';
 
 class PublicVitrinScreen extends StatefulWidget {
   final String slug;

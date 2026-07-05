@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/config/legal_config.dart';
-import 'package:vitrinx/models/legal_document.dart';
-import 'package:vitrinx/services/legal_document_service.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/theme/app_text_styles.dart';
+import 'package:vixrex/config/legal_config.dart';
+import 'package:vixrex/models/legal_document.dart';
+import 'package:vixrex/services/legal_document_service.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
 
 enum LegalPageType {
   privacy,
@@ -43,9 +43,9 @@ enum LegalPageType {
   String get subtitle {
     switch (this) {
       case LegalPageType.privacy:
-        return 'VitrinX içinde kişisel verilerin KVKK kapsamında nasıl işlendiğini açıklar.';
+        return 'VixRex içinde kişisel verilerin KVKK kapsamında nasıl işlendiğini açıklar.';
       case LegalPageType.terms:
-        return 'VitrinX kullanırken geçerli olan temel kuralları ve sorumlulukları açıklar.';
+        return 'VixRex kullanırken geçerli olan temel kuralları ve sorumlulukları açıklar.';
       case LegalPageType.consent:
         return 'Vitrin bilgilerinizin kamuya açık yayınlanmasına ilişkin açık rıza beyanını açıklar.';
       case LegalPageType.dataDeletion:
@@ -466,7 +466,7 @@ class _EmailContactCardState extends State<_EmailContactCard> {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
       path: LegalConfig.privacyEmail,
-      query: 'subject=VitrinX Veri Silme Talebi',
+      query: 'subject=VixRex Veri Silme Talebi',
     );
     try {
       if (await canLaunchUrl(emailLaunchUri)) {

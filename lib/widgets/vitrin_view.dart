@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/models/vitrin_gallery_preview_item.dart';
-import 'package:vitrinx/services/seo_helper.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
-import 'package:vitrinx/widgets/vitrin_view/vitrin_content_sections.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/models/vitrin_gallery_preview_item.dart';
+import 'package:vixrex/services/seo_helper.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/widgets/vitrin_view/vitrin_content_sections.dart';
 
 class VitrinView extends StatelessWidget {
   final StoreData storeData;

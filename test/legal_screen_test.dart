@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/models/legal_document.dart';
-import 'package:vitrinx/screens/legal_screen.dart';
-import 'package:vitrinx/services/legal_document_service.dart';
+import 'package:vixrex/models/legal_document.dart';
+import 'package:vixrex/screens/legal_screen.dart';
+import 'package:vixrex/services/legal_document_service.dart';
 
 class FakeLegalDocumentService extends LegalDocumentService {
   final LegalDocument? document;

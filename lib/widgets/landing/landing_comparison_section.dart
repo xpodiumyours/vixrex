@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/widgets/landing/landing_setup_panel.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/landing/landing_setup_panel.dart';
 
 class LandingComparisonSection extends StatelessWidget {
   const LandingComparisonSection({super.key});
@@ -16,7 +16,7 @@ class LandingComparisonSection extends StatelessWidget {
       (Icons.qr_code_2_rounded, 'QR ve paylaşım süreci'),
       (Icons.support_agent_rounded, 'İçerik güncelleme desteği'),
     ];
-    const vitrinxSetupItems = [
+    const vixrexSetupItems = [
       (Icons.storefront_rounded, 'İşletme bilgileri ve fotoğraflar'),
       (Icons.inventory_2_rounded, 'Ürünler ve hizmetler'),
       (Icons.hub_rounded, 'WhatsApp, adres, link ve QR'),
@@ -45,7 +45,7 @@ class LandingComparisonSection extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme bilgilerinizi VitrinX’e ekleyin ve paylaşmaya başlayın.',
+                'Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme bilgilerinizi VixRex’e ekleyin ve paylaşmaya başlayın.',
                 style: TextStyle(
                   fontSize: 16,
                   color: AppColors.mutedText,
@@ -63,9 +63,9 @@ class LandingComparisonSection extends StatelessWidget {
                     footer: 'Birden fazla araç ve işlem',
                     highlighted: false,
                   );
-                  final vitrinxPanel = LandingSetupPanel(
-                    label: 'VitrinX ile',
-                    items: vitrinxSetupItems,
+                  final vixrexPanel = LandingSetupPanel(
+                    label: 'VixRex ile',
+                    items: vixrexSetupItems,
                     footer: 'Tek panel, tek link, doğrudan iletişim',
                     highlighted: true,
                   );
@@ -103,7 +103,7 @@ class LandingComparisonSection extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 18),
                           child: direction,
                         ),
-                        Expanded(child: vitrinxPanel),
+                        Expanded(child: vixrexPanel),
                       ],
                     );
                   }
@@ -115,7 +115,7 @@ class LandingComparisonSection extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         child: direction,
                       ),
-                      vitrinxPanel,
+                      vixrexPanel,
                     ],
                   );
                 },

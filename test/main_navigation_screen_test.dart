@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vitrinx/config/chatbot_config.dart';
-import 'package:vitrinx/screens/profile_screen.dart';
-import 'package:vitrinx/screens/xrex_screen.dart';
-import 'package:vitrinx/services/xrex_profile_snapshot.dart';
-import 'package:vitrinx/widgets/chatbot_overlay.dart';
+import 'package:vixrex/config/chatbot_config.dart';
+import 'package:vixrex/screens/profile_screen.dart';
+import 'package:vixrex/screens/vixrex_screen.dart';
+import 'package:vixrex/services/vixrex_profile_snapshot.dart';
+import 'package:vixrex/widgets/chatbot_overlay.dart';
 
 void main() {
-  testWidgets('X-rex ekranı Türkçe başlıkları gösterir', (tester) async {
+  testWidgets('VixRex ekranı Türkçe başlıkları gösterir', (tester) async {
     tester.view.physicalSize = const Size(1200, 1920);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -16,8 +16,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: XrexScreen(
-          snapshot: const XrexProfileSnapshot(
+        home: VixRexScreen(
+          snapshot: const VixRexProfileSnapshot(
             nameCompleted: true,
             whatsappCompleted: true,
             addressCompleted: true,
@@ -30,7 +30,7 @@ void main() {
             storeName: 'Test Mağazası',
             category: 'Kategori',
             district: 'İlçe',
-            publicLink: 'https://vitrinx.com/test',
+            publicLink: 'https://vixrex.com/test',
           ),
           hasShared: false,
           dismissedRecommendationId: null,
@@ -42,20 +42,20 @@ void main() {
       ),
     );
 
-    expect(find.text('X-rex Rehber'), findsOneWidget);
-    expect(find.text('X-rex'), findsOneWidget);
-    expect(find.text('VitrinX Rehberi'), findsOneWidget);
+    expect(find.text('VixRex Rehber'), findsOneWidget);
+    expect(find.text('VixRex'), findsOneWidget);
+    expect(find.text('VixRex Rehberi'), findsOneWidget);
   });
 
-  test('X-rex karşılama metni düz ve desteklenen karakterlerden oluşur', () {
+  test('VixRex karşılama metni düz ve desteklenen karakterlerden oluşur', () {
     final text = ChatbotConfig.welcomeMessage.text;
 
     expect(text, isNot(contains('**')));
     expect(text, isNot(contains('👋')));
-    expect(text, contains('Merhaba! Ben Xrex'));
+    expect(text, contains('Merhaba! Ben VixRex'));
   });
 
-  testWidgets('X-rex hızlı aksiyonları dar ekranda taşmaz', (tester) async {
+  testWidgets('VixRex hızlı aksiyonları dar ekranda taşmaz', (tester) async {
     SharedPreferences.setMockInitialValues({});
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -77,21 +77,21 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ProfileScreen()));
 
     expect(find.text('Profil'), findsOneWidget);
-    expect(find.text('VitrinX Kullanıcısı'), findsOneWidget);
+    expect(find.text('VixRex Kullanıcısı'), findsOneWidget);
   });
 
   testWidgets(
-    'X-rex chatbot overlay shows guided step when snapshot is incomplete',
+    'VixRex chatbot overlay shows guided step when snapshot is incomplete',
     (tester) async {
-      XrexOverlay.close();
-      addTearDown(XrexOverlay.close);
+      VixRexOverlay.close();
+      addTearDown(VixRexOverlay.close);
       SharedPreferences.setMockInitialValues({});
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      const mockSnapshot = XrexProfileSnapshot(
+      const mockSnapshot = VixRexProfileSnapshot(
         nameCompleted: false,
         whatsappCompleted: false,
         addressCompleted: false,

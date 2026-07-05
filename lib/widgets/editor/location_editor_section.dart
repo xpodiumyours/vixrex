@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/config/turkey_cities_config.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/services/location_service.dart';
+import 'package:vixrex/config/turkey_cities_config.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/services/location_service.dart';
 
 class LocationEditorSection extends StatefulWidget {
   final String? selectedProvinceCode;

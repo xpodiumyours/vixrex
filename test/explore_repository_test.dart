@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/repositories/explore_repository.dart';
-import 'package:vitrinx/services/local_storage_keys.dart';
+import 'package:vixrex/repositories/explore_repository.dart';
+import 'package:vixrex/services/local_storage_keys.dart';
 
 class MockHttpClient extends Fake implements http.Client {
   final String responseBody;

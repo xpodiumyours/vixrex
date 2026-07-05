@@ -4,29 +4,29 @@ import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vitrinx/config/app_router.dart';
-import 'package:vitrinx/config/business_category_config.dart';
-import 'package:vitrinx/config/instagram_sync_config.dart';
-import 'package:vitrinx/controllers/store_editor_controller.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
-import 'package:vitrinx/services/category_image_service.dart';
-import 'package:vitrinx/services/store_publish_service.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/utils/gallery_image_file_validator.dart';
-import 'package:vitrinx/widgets/auto_fill/category_gallery_sheet.dart';
-import 'package:vitrinx/widgets/editor/common_form_fields.dart';
-import 'package:vitrinx/widgets/editor/cover_picker_section.dart';
-import 'package:vitrinx/widgets/editor/gallery_editor_section.dart';
-import 'package:vitrinx/widgets/editor/legal_consent_section.dart';
-import 'package:vitrinx/widgets/editor/location_editor_section.dart';
-import 'package:vitrinx/widgets/editor/marketplace_links_section.dart';
-import 'package:vitrinx/widgets/editor/public_link_card.dart';
-import 'package:vitrinx/widgets/editor/store_theme_picker.dart';
-import 'package:vitrinx/widgets/editor/working_hours_editor.dart';
-import 'package:vitrinx/widgets/instagram_sync_section.dart';
-import 'package:vitrinx/widgets/product/product_management_entry_card.dart';
-import 'package:vitrinx/widgets/product/product_management_sheet.dart';
+import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/config/business_category_config.dart';
+import 'package:vixrex/config/instagram_sync_config.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
+import 'package:vixrex/services/category_image_service.dart';
+import 'package:vixrex/services/store_publish_service.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/utils/gallery_image_file_validator.dart';
+import 'package:vixrex/widgets/auto_fill/category_gallery_sheet.dart';
+import 'package:vixrex/widgets/editor/common_form_fields.dart';
+import 'package:vixrex/widgets/editor/cover_picker_section.dart';
+import 'package:vixrex/widgets/editor/gallery_editor_section.dart';
+import 'package:vixrex/widgets/editor/legal_consent_section.dart';
+import 'package:vixrex/widgets/editor/location_editor_section.dart';
+import 'package:vixrex/widgets/editor/marketplace_links_section.dart';
+import 'package:vixrex/widgets/editor/public_link_card.dart';
+import 'package:vixrex/widgets/editor/store_theme_picker.dart';
+import 'package:vixrex/widgets/editor/working_hours_editor.dart';
+import 'package:vixrex/widgets/instagram_sync_section.dart';
+import 'package:vixrex/widgets/product/product_management_entry_card.dart';
+import 'package:vixrex/widgets/product/product_management_sheet.dart';
 
 class VitrinFormSection extends StatelessWidget {
   final StoreEditorController controller;
@@ -116,7 +116,7 @@ class VitrinFormSection extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                hasPublished ? 'VitrinX Düzenle' : 'VitrinX Oluştur',
+                hasPublished ? 'VixRex Düzenle' : 'VixRex Oluştur',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -138,7 +138,7 @@ class VitrinFormSection extends StatelessWidget {
                   Icon(Icons.storefront_rounded, color: Colors.black, size: 13),
                   SizedBox(width: 4),
                   Text(
-                    'VitrinX ile',
+                    'VixRex ile',
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 12,
@@ -199,7 +199,7 @@ class VitrinFormSection extends StatelessWidget {
               KeyedSubtree(
                 key: state.nameKey,
                 child: EditorTextField(
-                  label: 'İşletme / VitrinX Adı',
+                  label: 'İşletme / VixRex Adı',
                   controller: _name,
                   focusNode: state.nameFocusNode,
                   hint: 'Örn: Aymira Butik',
@@ -638,7 +638,7 @@ class VitrinFormSection extends StatelessWidget {
     }
     try {
       final r = await SharePlus.instance.share(
-        ShareParams(text: 'VitrinX web linkim:\n$link', title: 'VitrinX Web Linki'),
+        ShareParams(text: 'VixRex web linkim:\n$link', title: 'VixRex Web Linki'),
       );
       if (r.status != ShareResultStatus.unavailable) return;
     } catch (_) {}

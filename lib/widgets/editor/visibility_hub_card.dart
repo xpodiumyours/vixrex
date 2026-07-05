@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/widgets/editor/article_summary_row.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/editor/article_summary_row.dart';
 
 class VisibilityHubCard extends StatelessWidget {
   final bool hasPublished;

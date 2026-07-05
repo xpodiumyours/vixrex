@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/landing_demo_profile.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/models/landing_demo_profile.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 class PhoneMockup extends StatelessWidget {
   final HeroDemoProfile profile;

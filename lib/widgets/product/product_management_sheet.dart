@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/screens/product_category_management_screen.dart';
-import 'package:vitrinx/theme/app_colors.dart';
-import 'package:vitrinx/widgets/product/product_editor_sheet.dart';
-import 'package:vitrinx/widgets/product/xrex_catalog_assistant_section.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/screens/product_category_management_screen.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/product/product_editor_sheet.dart';
+import 'package:vixrex/widgets/product/vixrex_catalog_assistant_section.dart';
 
 typedef ProductCatalogChanged =
     Future<void> Function(
@@ -237,10 +237,10 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
             _buildSheetHandle(),
             _buildHeader(),
             const SizedBox(height: 14),
-            XrexCatalogAssistantSection(
+            VixRexCatalogAssistantSection(
               onActionTap:
                   () => widget.showMessage(
-                    'X-rex katalog çıkarma özelliği sonraki aşamada aktif edilecek.',
+                    'VixRex katalog çıkarma özelliği sonraki aşamada aktif edilecek.',
                   ),
             ),
             const SizedBox(height: 14),

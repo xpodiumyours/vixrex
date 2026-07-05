@@ -76,7 +76,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   if (!data) return {};
 
   const { store, product, productSlug } = data;
-  const title = `${product.name} - ${store.name} | VitrinX`;
+  const title = `${product.name} - ${store.name} | VixRex`;
   const description =
     product.description ||
     `${store.name} vitrindeki ${product.name} için detay ve iletişim bilgileri.`;
@@ -290,7 +290,7 @@ export default async function ProductDetailPage(props: PageProps) {
             <div className="rounded-2xl border border-[#25415F] bg-[#071322] p-4">
               <div className="text-xs font-black text-white">Dijital dükkan arşivi</div>
               <p className="mt-2 text-xs font-semibold leading-5 text-[#9DB2C8]">
-                Bu ürün VitrinX üzerinde kalıcı ürün sayfası olarak yayınlanır ve Google tarafından okunabilir HTML içerik olarak sunulur.
+                Bu ürün VixRex üzerinde kalıcı ürün sayfası olarak yayınlanır ve Google tarafından okunabilir HTML içerik olarak sunulur.
               </p>
             </div>
           </aside>

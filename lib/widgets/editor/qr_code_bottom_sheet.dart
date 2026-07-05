@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 /// Ortak QR kodu bottom sheet widget'ı.
 /// hem vitrin linki hem Google yorum linki için kullanılır.

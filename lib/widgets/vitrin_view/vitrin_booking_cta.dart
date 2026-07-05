@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
-import 'package:vitrinx/widgets/booking_wizard_sheet.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/widgets/booking_wizard_sheet.dart';
 
 class VitrinBookingCTA extends StatelessWidget {
   final StoreData storeData;

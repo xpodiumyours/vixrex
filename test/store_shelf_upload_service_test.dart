@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/services/store_shelf_upload_service.dart';
+import 'package:vixrex/services/store_shelf_upload_service.dart';
 
 void main() {
   const service = StoreShelfUploadService();

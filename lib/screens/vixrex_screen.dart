@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/chat_message.dart';
-import 'package:vitrinx/services/xrex_guidance_service.dart';
-import 'package:vitrinx/services/xrex_promotion_service.dart';
-import 'package:vitrinx/services/xrex_profile_snapshot.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/services/vixrex_guidance_service.dart';
+import 'package:vixrex/services/vixrex_promotion_service.dart';
+import 'package:vixrex/services/vixrex_profile_snapshot.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
-const double _xrexHeroMinSize = 150;
-const double _xrexHeroMaxSize = 200;
+const double _vixrexHeroMinSize = 150;
+const double _vixrexHeroMaxSize = 200;
 
-class XrexScreen extends StatelessWidget {
-  final XrexProfileSnapshot? snapshot;
+class VixRexScreen extends StatelessWidget {
+  final VixRexProfileSnapshot? snapshot;
   final bool hasShared;
   final String? dismissedRecommendationId;
-  final ValueChanged<XrexAction> onAction;
+  final ValueChanged<VixRexAction> onAction;
   final ValueChanged<String> onDismissRecommendation;
   final ValueChanged<String> onCopyPromotionText;
   final ValueChanged<String> onSharePromotionText;
 
-  const XrexScreen({
+  const VixRexScreen({
     super.key,
     required this.snapshot,
     required this.hasShared,
@@ -30,11 +30,11 @@ class XrexScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recommendation = XrexGuidanceService.recommendationFor(
+    final recommendation = VixRexGuidanceService.recommendationFor(
       snapshot: snapshot,
       hasShared: hasShared,
     );
-    final qualityReport = XrexGuidanceService.qualityReportFor(
+    final qualityReport = VixRexGuidanceService.qualityReportFor(
       snapshot: snapshot,
       hasShared: hasShared,
     );
@@ -47,14 +47,14 @@ class XrexScreen extends StatelessWidget {
     final availableSize =
         heightBasedSize < widthBasedSize ? heightBasedSize : widthBasedSize;
     final mascotSize = availableSize
-        .clamp(_xrexHeroMinSize, _xrexHeroMaxSize)
+        .clamp(_vixrexHeroMinSize, _vixrexHeroMaxSize)
         .toDouble();
 
     return Scaffold(
       backgroundColor: AppColors.bgEditor,
       appBar: AppBar(
         title: const Text(
-          'X-rex Rehber',
+          'VixRex Rehber',
           style: TextStyle(
             color: AppColors.darkText,
             fontWeight: FontWeight.w900,
@@ -88,7 +88,7 @@ class XrexScreen extends StatelessWidget {
                 ),
                 child: ClipOval(
                   child: Image.asset(
-                    'assets/images/xrex_mascot.png',
+                    'assets/images/vixrex_mascot.png',
                     width: mascotSize,
                     height: mascotSize,
                     fit: BoxFit.cover,
@@ -97,7 +97,7 @@ class XrexScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                'X-rex',
+                'VixRex',
                 style: TextStyle(
                   color: AppColors.darkText,
                   fontSize: 28,
@@ -107,7 +107,7 @@ class XrexScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               const Text(
-                'VitrinX Rehberi',
+                'VixRex Rehberi',
                 style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 14,
@@ -164,7 +164,7 @@ class XrexScreen extends StatelessWidget {
                       subtitle: snapshot?.autoFillCompleted == true
                           ? 'Hazır görselleri zaten kullandın. İstersen değiştirebilirsin.'
                           : 'İşletme kategorine özel telifsiz görsellerle vitrinini doldur.',
-                      onTap: () => onAction(XrexAction.scrollToCategory),
+                      onTap: () => onAction(VixRexAction.scrollToCategory),
                     ),
                     const SizedBox(height: 12),
                     _buildSuggestionCard(
@@ -173,7 +173,7 @@ class XrexScreen extends StatelessWidget {
                       subtitle: snapshot?.descriptionCompleted == true
                           ? 'Açıklaman hazır. İstersen güncelleyebilirsin.'
                           : 'İşletmeni anlatan kısa bir açıklama ekle.',
-                      onTap: () => onAction(XrexAction.scrollToDesc),
+                      onTap: () => onAction(VixRexAction.scrollToDesc),
                     ),
                     const SizedBox(height: 12),
                     _buildSuggestionCard(
@@ -182,7 +182,7 @@ class XrexScreen extends StatelessWidget {
                       subtitle: snapshot?.catalogCompleted == true
                           ? 'Ürün ve hizmetlerini gözden geçir.'
                           : 'İlk ürününü veya hizmetini ekle.',
-                      onTap: () => onAction(XrexAction.scrollToProducts),
+                      onTap: () => onAction(VixRexAction.scrollToProducts),
                     ),
                     const SizedBox(height: 12),
                     _buildSuggestionCard(
@@ -195,7 +195,7 @@ class XrexScreen extends StatelessWidget {
                         if (snapshot?.isPublished == true) {
                           _showPromotionPackage(context);
                         } else {
-                          onAction(XrexAction.openVitrim);
+                          onAction(VixRexAction.openVitrim);
                         }
                       },
                     ),
@@ -209,19 +209,19 @@ class XrexScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressCard(XrexJourneyPhase phase) {
+  Widget _buildProgressCard(VixRexJourneyPhase phase) {
     final completedRequiredSteps = snapshot?.completedRequiredStepCount ?? 0;
     final isPublished = snapshot?.isPublished ?? false;
     final completedSteps = completedRequiredSteps +
         (isPublished ? 1 : 0) +
         (isPublished && hasShared ? 1 : 0);
-    const totalSteps = XrexProfileSnapshot.requiredStepCount + 2;
+    const totalSteps = VixRexProfileSnapshot.requiredStepCount + 2;
     final progress = completedSteps / totalSteps;
     final phaseLabel = switch (phase) {
-      XrexJourneyPhase.setup => 'Kurulum',
-      XrexJourneyPhase.publish => 'Yayınlama',
-      XrexJourneyPhase.share => 'Duyurma',
-      XrexJourneyPhase.improve => 'Geliştirme',
+      VixRexJourneyPhase.setup => 'Kurulum',
+      VixRexJourneyPhase.publish => 'Yayınlama',
+      VixRexJourneyPhase.share => 'Duyurma',
+      VixRexJourneyPhase.improve => 'Geliştirme',
     };
 
     return Container(
@@ -277,7 +277,7 @@ class XrexScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRecommendationCard(XrexRecommendation recommendation) {
+  Widget _buildRecommendationCard(VixRexRecommendation recommendation) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -371,7 +371,7 @@ class XrexScreen extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Bu öneri kapatıldı. Durumun değiştiğinde X-rex yeni adımı gösterecek.',
+              'Bu öneri kapatıldı. Durumun değiştiğinde VixRex yeni adımı gösterecek.',
               style: TextStyle(
                 color: AppColors.mutedText,
                 fontSize: 12,
@@ -453,7 +453,7 @@ class XrexScreen extends StatelessWidget {
 
   Future<void> _showQualityReport(
     BuildContext context,
-    XrexQualityReport report,
+    VixRexQualityReport report,
   ) {
     return showModalBottomSheet<void>(
       context: context,
@@ -582,7 +582,7 @@ class XrexScreen extends StatelessWidget {
   }
 
   Future<void> _showPromotionPackage(BuildContext context) async {
-    final drafts = XrexPromotionService.draftsFor(snapshot);
+    final drafts = VixRexPromotionService.draftsFor(snapshot);
     var selectedIndex = 1;
     final controller = TextEditingController(text: drafts[selectedIndex].text);
 
@@ -620,7 +620,7 @@ class XrexScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                       const Text(
-                        'X-rex tanıtım paketi',
+                        'VixRex tanıtım paketi',
                         style: TextStyle(
                           color: AppColors.darkText,
                           fontSize: 20,

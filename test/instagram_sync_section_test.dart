@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/instagram_sync_service.dart';
-import 'package:vitrinx/widgets/instagram_sync_section.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/instagram_sync_service.dart';
+import 'package:vixrex/widgets/instagram_sync_section.dart';
 
 class _FakeInstagramSyncService extends InstagramSyncService {
   final InstagramConnectionStatus status;

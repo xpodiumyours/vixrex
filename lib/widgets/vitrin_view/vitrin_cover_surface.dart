@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
 
 class VitrinCoverSurface extends StatelessWidget {
   final VitrinThemePreset preset;

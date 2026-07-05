@@ -78,7 +78,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   if (!data) return {};
 
   const { store } = data;
-  const title = `${store.name} - VitrinX`;
+  const title = `${store.name} - VixRex`;
   const description =
     store.description || store.corporate_bio || `${store.name} Dijital Vitrini`;
   const image = store.shelf_image_url || store.logo_url || "";
@@ -203,7 +203,7 @@ export default async function StorePage(props: PageProps) {
         "@type": "WebPage",
         "@id": `${publicUrl}#webpage`,
         url: publicUrl,
-        name: `${store.name} | VitrinX`,
+        name: `${store.name} | VixRex`,
         description: store.description || store.corporate_bio,
       },
       ...(visibleProducts.length > 0
@@ -547,7 +547,7 @@ export default async function StorePage(props: PageProps) {
           </section>
 
           <footer className="pb-8 pt-2 text-center text-xs font-bold text-[#7890AA]">
-            Bu vitrin VitrinX ile oluşturuldu.
+            Bu vitrin VixRex ile oluşturuldu.
           </footer>
         </main>
       </div>

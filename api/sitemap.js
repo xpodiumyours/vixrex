@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     }
 
     const stores = await supabaseResponse.json();
-    const host = req.headers.host || 'vitrinx.app';
+    const host = req.headers.host || 'vixrex.app';
     const protocol = req.headers['x-forwarded-proto'] || 'https';
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';

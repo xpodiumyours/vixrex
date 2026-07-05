@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/config/business_category_config.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/config/business_category_config.dart';
 
 // ─── Category Image Template Model ───────────────────────────────────────────
 

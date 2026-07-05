@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vitrinx/services/auth_service.dart';
+import 'package:vixrex/services/auth_service.dart';
 
 void main() {
   group('AuthService hesap silme doğrulaması', () {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/theme/vitrin_theme_preset.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/theme/vitrin_theme_preset.dart';
 
 class VitrinFooter extends StatelessWidget {
   final StoreData storeData;
@@ -20,8 +20,8 @@ class VitrinFooter extends StatelessWidget {
       children: [
         Text(
           publicMode
-              ? 'Bu vitrin VitrinX ile oluşturuldu'
-              : 'vitrinx.app/${storeData.name.toLowerCase().replaceAll(' ', '-')}',
+              ? 'Bu vitrin VixRex ile oluşturuldu'
+              : 'vixrex.app/${storeData.name.toLowerCase().replaceAll(' ', '-')}',
           style: TextStyle(
             fontSize: publicMode ? 12 : 14,
             fontWeight: publicMode ? FontWeight.w700 : FontWeight.w800,

@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vitrinx/config/app_constants.dart';
-import 'package:vitrinx/config/turkey_cities_config.dart';
-import 'package:vitrinx/models/store_data.dart';
-import 'package:vitrinx/services/store_publish_service.dart';
-import 'package:vitrinx/services/store_local_storage_service.dart';
-import 'package:vitrinx/services/location_service.dart';
-import 'package:vitrinx/services/store_shelf_upload_service.dart';
-import 'package:vitrinx/utils/secure_token_generator.dart';
+import 'package:vixrex/config/app_constants.dart';
+import 'package:vixrex/config/turkey_cities_config.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/store_publish_service.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/location_service.dart';
+import 'package:vixrex/services/store_shelf_upload_service.dart';
+import 'package:vixrex/utils/secure_token_generator.dart';
 
 class EditorGalleryItem {
   final String id;
@@ -223,14 +223,14 @@ class StoreEditorController extends ChangeNotifier {
 
           if (slug.isNotEmpty && editToken.isNotEmpty) {
             _publishedInfo = PublishedVitrinInfo(
-              publicLink: 'https://vitrinx.app/v/$slug',
+              publicLink: 'https://vixrex.app/v/$slug',
               slug: slug,
               name: name,
               editToken: editToken,
             );
             await storage.savePublishedVitrinInfo(
               slug: slug,
-              publicLink: 'https://vitrinx.app/v/$slug',
+              publicLink: 'https://vixrex.app/v/$slug',
               name: name,
               editToken: editToken,
             );
@@ -259,14 +259,14 @@ class StoreEditorController extends ChangeNotifier {
 
         if (slug.isNotEmpty && editToken.isNotEmpty) {
           _publishedInfo = PublishedVitrinInfo(
-            publicLink: 'https://vitrinx.app/v/$slug',
+            publicLink: 'https://vixrex.app/v/$slug',
             slug: slug,
             name: name,
             editToken: editToken,
           );
           await storage.savePublishedVitrinInfo(
             slug: slug,
-            publicLink: 'https://vitrinx.app/v/$slug',
+            publicLink: 'https://vixrex.app/v/$slug',
             name: name,
             editToken: editToken,
           );
@@ -516,7 +516,7 @@ class StoreEditorController extends ChangeNotifier {
       }
 
       final result = await publishService.publishStore(_data, editToken: effectiveEditToken);
-      final publicLink = 'https://vitrinx.app${result.publicPath}';
+      final publicLink = 'https://vixrex.app${result.publicPath}';
 
       _publishedInfo = PublishedVitrinInfo(
         publicLink: publicLink,

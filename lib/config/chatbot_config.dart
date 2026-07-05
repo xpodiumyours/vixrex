@@ -1,17 +1,17 @@
-import 'package:vitrinx/models/chat_message.dart';
-import 'package:vitrinx/services/xrex_guidance_service.dart';
-import 'package:vitrinx/services/xrex_profile_snapshot.dart';
+import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/services/vixrex_guidance_service.dart';
+import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 
-/// Xrex — VitrinX'in kural tabanlı kullanıcı rehberi.
+/// VixRex — VixRex'in kural tabanlı kullanıcı rehberi.
 /// Tüm yanıtlar Türkçedir. API bağlantısı yoktur; kural tabanlı çalışır.
 abstract final class ChatbotConfig {
-  static const String botName = 'Xrex';
-  static const String botSubtitle = 'VitrinX Rehberi';
+  static const String botName = 'VixRex';
+  static const String botSubtitle = 'VixRex Rehberi';
   static const String systemStatus = 'AKTİF';
 
   // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
   static ChatMessage get welcomeMessage => ChatMessage.bot(
-        'Merhaba! Ben $botName, VitrinX rehberiyim.\n\n'
+        'Merhaba! Ben $botName, VixRex rehberiyim.\n\n'
         'Vitrinini kurman, yayınlaman ve müşterilerine duyurman için sıradaki doğru adımı gösteririm.\n\n'
         'Nasıl yardımcı olayım?',
         quickReplies: mainMenuReplies(null),
@@ -21,10 +21,10 @@ abstract final class ChatbotConfig {
 
   /// Vitrin durumuna göre kişiselleştirilmiş karşılama mesajı üretir.
   static ChatMessage snapshotWelcome(
-    XrexProfileSnapshot snapshot, {
+    VixRexProfileSnapshot snapshot, {
     required bool hasShared,
   }) {
-    final recommendation = XrexGuidanceService.recommendationFor(
+    final recommendation = VixRexGuidanceService.recommendationFor(
       snapshot: snapshot,
       hasShared: hasShared,
     );
@@ -37,17 +37,17 @@ abstract final class ChatbotConfig {
 
   // ─── Ana Menü Quick Reply'ları ───────────────────────────────────────────
   static List<QuickReply> mainMenuReplies(
-    XrexProfileSnapshot? snapshot, {
+    VixRexProfileSnapshot? snapshot, {
     bool hasShared = false,
   }) {
     if (snapshot == null) {
       return const [
-        QuickReply(label: 'VitrinX Ne İşe Yarar?', payload: 'vitrinx_info'),
+        QuickReply(label: 'VixRex Ne İşe Yarar?', payload: 'vixrex_info'),
         QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
       ];
     }
     
-    final recommendation = XrexGuidanceService.recommendationFor(
+    final recommendation = VixRexGuidanceService.recommendationFor(
       snapshot: snapshot,
       hasShared: hasShared,
     );
@@ -61,15 +61,15 @@ abstract final class ChatbotConfig {
         QuickReply(
           label: 'Linki Kopyala',
           payload: 'copy_link',
-          action: XrexAction.copyLink,
+          action: VixRexAction.copyLink,
         ),
         QuickReply(
           label: 'QR Göster',
           payload: 'show_qr',
-          action: XrexAction.showQr,
+          action: VixRexAction.showQr,
         ),
       ],
-      const QuickReply(label: 'VitrinX Ne İşe Yarar?', payload: 'vitrinx_info'),
+      const QuickReply(label: 'VixRex Ne İşe Yarar?', payload: 'vixrex_info'),
       const QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
     ];
   }
@@ -83,8 +83,8 @@ abstract final class ChatbotConfig {
       payload: 'merhaba',
     ),
     ChatbotIntent(
-      keywords: ['vitrinx', 'nedir', 'ne işe yarar', 'nasil calisir', 'kurulum', 'vitrin'],
-      payload: 'vitrinx_info',
+      keywords: ['vixrex', 'nedir', 'ne işe yarar', 'nasil calisir', 'kurulum', 'vitrin'],
+      payload: 'vixrex_info',
     ),
     ChatbotIntent(
       keywords: ['ucret', 'fiyat', 'para', 'komisyon', 'ucretsiz', 'odeme', 'bedava', 'uyelik', 'kullanim'],
@@ -119,7 +119,7 @@ abstract final class ChatbotConfig {
   // ─── Intent → Yanıt Tablosu ─────────────────────────────────────────────
   static ChatMessage responseFor(
     String payload, {
-    XrexProfileSnapshot? snapshot,
+    VixRexProfileSnapshot? snapshot,
     bool hasShared = false,
   }) {
     switch (payload) {
@@ -128,9 +128,9 @@ abstract final class ChatbotConfig {
             ? welcomeMessage
             : snapshotWelcome(snapshot, hasShared: hasShared);
 
-      case 'vitrinx_info':
+      case 'vixrex_info':
         return ChatMessage.bot(
-          'VitrinX ile işletme bilgilerini tek yerde toplar, vitrinini yayınlar ve link, QR veya WhatsApp ile müşterilerine duyurursun.',
+          'VixRex ile işletme bilgilerini tek yerde toplar, vitrinini yayınlar ve link, QR veya WhatsApp ile müşterilerine duyurursun.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
         

@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:vitrinx/config/chatbot_config.dart';
-import 'package:vitrinx/models/chat_message.dart';
-import 'package:vitrinx/services/chatbot_service.dart';
-import 'package:vitrinx/services/xrex_profile_snapshot.dart';
-import 'package:vitrinx/theme/app_colors.dart';
+import 'package:vixrex/config/chatbot_config.dart';
+import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/services/chatbot_service.dart';
+import 'package:vixrex/services/vixrex_profile_snapshot.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
-const double _xrexBadgeSize = 84;
-const double _xrexPanelAvatarSize = 68;
+const double _vixrexBadgeSize = 84;
+const double _vixrexPanelAvatarSize = 68;
 
 // ─── Yüzen Robot Rozeti ──────────────────────────────────────────────────────
 class ChatbotBadge extends StatefulWidget {
   /// Anlık vitrin snapshot'ı. null ise genel karşılama gösterilir.
-  final XrexProfileSnapshot? snapshot;
+  final VixRexProfileSnapshot? snapshot;
 
   /// Vitrinim sekmesine git callback'i.
   final VoidCallback? onNavigateToVitrim;
@@ -30,7 +30,7 @@ class ChatbotBadge extends StatefulWidget {
   final VoidCallback? onShareWhatsapp;
 
   /// Sayfa içi kaydırma callback'i.
-  final void Function(XrexAction)? onScrollToAction;
+  final void Function(VixRexAction)? onScrollToAction;
 
   /// Sohbet geçmişi listesi.
   final List<ChatMessage>? chatHistory;
@@ -89,7 +89,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   }
 
   void _openChat(BuildContext context) {
-    XrexOverlay.show(
+    VixRexOverlay.show(
       context,
       snapshot: widget.snapshot,
       chatHistory: widget.chatHistory,
@@ -109,15 +109,15 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
       child: AnimatedBuilder(
         animation: Listenable.merge([_pulseController, _scanController]),
         child: Image.asset(
-          'assets/images/xrex_mascot.png',
-          width: _xrexBadgeSize,
-          height: _xrexBadgeSize,
+          'assets/images/vixrex_mascot.png',
+          width: _vixrexBadgeSize,
+          height: _vixrexBadgeSize,
           fit: BoxFit.cover,
         ),
         builder: (context, mascot) {
           return Container(
-            width: _xrexBadgeSize,
-            height: _xrexBadgeSize,
+            width: _vixrexBadgeSize,
+            height: _vixrexBadgeSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
@@ -137,8 +137,8 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
                   // Scan line
                   Positioned(
                     top:
-                        (_xrexBadgeSize / 2) +
-                        (_scanAnim.value * (_xrexBadgeSize / 2)),
+                        (_vixrexBadgeSize / 2) +
+                        (_scanAnim.value * (_vixrexBadgeSize / 2)),
                     left: 0,
                     right: 0,
                     child: Container(
@@ -175,26 +175,26 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   }
 }
 
-// ─── Xrex Overlay Panel ──────────────────────────────────────────────────────
-class XrexOverlay {
+// ─── VixRex Overlay Panel ──────────────────────────────────────────────────────
+class VixRexOverlay {
   static OverlayEntry? _entry;
 
-  /// [snapshot] varsa Xrex kişiselleştirilmiş karşılama gösterir.
+  /// [snapshot] varsa VixRex kişiselleştirilmiş karşılama gösterir.
   /// Callback'ler action butonlarını ilgili ekrana bağlar.
   static void show(
     BuildContext context, {
-    XrexProfileSnapshot? snapshot,
+    VixRexProfileSnapshot? snapshot,
     List<ChatMessage>? chatHistory,
     VoidCallback? onNavigateToVitrim,
     VoidCallback? onNavigateToExplore,
     VoidCallback? onCopyLink,
     VoidCallback? onShowQr,
     VoidCallback? onShareWhatsapp,
-    void Function(XrexAction)? onScrollToAction,
+    void Function(VixRexAction)? onScrollToAction,
   }) {
     if (_entry != null) return;
     _entry = OverlayEntry(
-      builder: (_) => _XrexPanelWrapper(
+      builder: (_) => _VixRexPanelWrapper(
         onClose: close,
         snapshot: snapshot,
         chatHistory: chatHistory,
@@ -215,18 +215,18 @@ class XrexOverlay {
   }
 }
 
-class _XrexPanelWrapper extends StatefulWidget {
+class _VixRexPanelWrapper extends StatefulWidget {
   final VoidCallback onClose;
-  final XrexProfileSnapshot? snapshot;
+  final VixRexProfileSnapshot? snapshot;
   final List<ChatMessage>? chatHistory;
   final VoidCallback? onNavigateToVitrim;
   final VoidCallback? onNavigateToExplore;
   final VoidCallback? onCopyLink;
   final VoidCallback? onShowQr;
   final VoidCallback? onShareWhatsapp;
-  final void Function(XrexAction)? onScrollToAction;
+  final void Function(VixRexAction)? onScrollToAction;
 
-  const _XrexPanelWrapper({
+  const _VixRexPanelWrapper({
     required this.onClose,
     this.snapshot,
     this.chatHistory,
@@ -239,10 +239,10 @@ class _XrexPanelWrapper extends StatefulWidget {
   });
 
   @override
-  State<_XrexPanelWrapper> createState() => _XrexPanelWrapperState();
+  State<_VixRexPanelWrapper> createState() => _VixRexPanelWrapperState();
 }
 
-class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
+class _VixRexPanelWrapperState extends State<_VixRexPanelWrapper>
     with SingleTickerProviderStateMixin {
   late AnimationController _slideController;
   late Animation<Offset> _slideAnim;
@@ -293,7 +293,7 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
               child: SizedBox(
                 width: panelWidth,
                 height: double.infinity,
-                child: _XrexPanel(
+                child: _VixRexPanel(
                   onClose: _close,
                   snapshot: widget.snapshot,
                   chatHistory: widget.chatHistory,
@@ -314,18 +314,18 @@ class _XrexPanelWrapperState extends State<_XrexPanelWrapper>
 }
 
 // ─── Panel İçeriği ───────────────────────────────────────────────────────────
-class _XrexPanel extends StatefulWidget {
+class _VixRexPanel extends StatefulWidget {
   final VoidCallback onClose;
-  final XrexProfileSnapshot? snapshot;
+  final VixRexProfileSnapshot? snapshot;
   final List<ChatMessage>? chatHistory;
   final VoidCallback? onNavigateToVitrim;
   final VoidCallback? onNavigateToExplore;
   final VoidCallback? onCopyLink;
   final VoidCallback? onShowQr;
   final VoidCallback? onShareWhatsapp;
-  final void Function(XrexAction)? onScrollToAction;
+  final void Function(VixRexAction)? onScrollToAction;
 
-  const _XrexPanel({
+  const _VixRexPanel({
     required this.onClose,
     this.snapshot,
     this.chatHistory,
@@ -338,10 +338,10 @@ class _XrexPanel extends StatefulWidget {
   });
 
   @override
-  State<_XrexPanel> createState() => _XrexPanelState();
+  State<_VixRexPanel> createState() => _VixRexPanelState();
 }
 
-class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
+class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixin {
   final ChatbotService _service = ChatbotService();
   late final List<ChatMessage> _messages;
   final TextEditingController _inputCtrl = TextEditingController();
@@ -455,7 +455,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
 
   void _onQuickReply(QuickReply reply) {
     // Action routing: navigasyon aksiyonu varsa önce callback'i çağır
-    if (reply.action != XrexAction.none) {
+    if (reply.action != VixRexAction.none) {
       _handleAction(reply.action);
       return;
     }
@@ -482,7 +482,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
   }
 
   /// Aksiyona göre ilgili callback'i çağırır ve paneli kapatır.
-  void _handleAction(XrexAction action) {
+  void _handleAction(VixRexAction action) {
     // Callback referanslarını önceden al (panel kapandıktan sonra widget
     // unmount olabilir, bu yüzden doğrudan widget'a erişemeyiz)
     final onVitrim   = widget.onNavigateToVitrim;
@@ -496,34 +496,34 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
     widget.onClose();
     Future.delayed(const Duration(milliseconds: 320), () {
       switch (action) {
-        case XrexAction.openVitrim:
+        case VixRexAction.openVitrim:
           onVitrim?.call();
           break;
-        case XrexAction.openExplore:
+        case VixRexAction.openExplore:
           onExplore?.call();
           break;
-        case XrexAction.copyLink:
+        case VixRexAction.copyLink:
           onCopy?.call();
           break;
-        case XrexAction.showQr:
+        case VixRexAction.showQr:
           onQr?.call();
           break;
-        case XrexAction.shareWhatsapp:
+        case VixRexAction.shareWhatsapp:
           onWhatsapp?.call();
           break;
-        case XrexAction.scrollToCover:
-        case XrexAction.scrollToGallery:
-        case XrexAction.scrollToName:
-        case XrexAction.scrollToWhatsapp:
-        case XrexAction.scrollToAddress:
-        case XrexAction.scrollToLegal:
-        case XrexAction.scrollToDesc:
-        case XrexAction.scrollToProducts:
-        case XrexAction.scrollToCategory:
-        case XrexAction.openCoverTemplatePicker:
+        case VixRexAction.scrollToCover:
+        case VixRexAction.scrollToGallery:
+        case VixRexAction.scrollToName:
+        case VixRexAction.scrollToWhatsapp:
+        case VixRexAction.scrollToAddress:
+        case VixRexAction.scrollToLegal:
+        case VixRexAction.scrollToDesc:
+        case VixRexAction.scrollToProducts:
+        case VixRexAction.scrollToCategory:
+        case VixRexAction.openCoverTemplatePicker:
           onScroll?.call(action);
           break;
-        case XrexAction.none:
+        case VixRexAction.none:
           break;
       }
     });
@@ -698,9 +698,9 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
     return AnimatedBuilder(
       animation: _scanController,
       child: Image.asset(
-        'assets/images/xrex_mascot.png',
-        width: _xrexPanelAvatarSize,
-        height: _xrexPanelAvatarSize,
+        'assets/images/vixrex_mascot.png',
+        width: _vixrexPanelAvatarSize,
+        height: _vixrexPanelAvatarSize,
         fit: BoxFit.cover,
       ),
       builder: (context, mascot) {
@@ -712,8 +712,8 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
             children: [
               // Robot mini avatar
               SizedBox(
-                width: _xrexPanelAvatarSize,
-                height: _xrexPanelAvatarSize,
+                width: _vixrexPanelAvatarSize,
+                height: _vixrexPanelAvatarSize,
                 child: ClipOval(
                   child: Stack(
                     alignment: Alignment.center,
@@ -721,8 +721,8 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
                       mascot!,
                       Positioned(
                         top:
-                            (_xrexPanelAvatarSize / 2) +
-                            (_scanAnim.value * (_xrexPanelAvatarSize / 2)),
+                            (_vixrexPanelAvatarSize / 2) +
+                            (_scanAnim.value * (_vixrexPanelAvatarSize / 2)),
                         left: 0,
                         right: 0,
                         child: Container(
@@ -829,7 +829,7 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
                 if (msg.snapshotScore != null) ...
                   [
                     const SizedBox(height: 10),
-                    _XrexScoreBar(score: msg.snapshotScore!),
+                    _VixRexScoreBar(score: msg.snapshotScore!),
                   ],
               ],
             ),
@@ -994,15 +994,15 @@ class _XrexPanelState extends State<_XrexPanel> with TickerProviderStateMixin {
 }
 
 // ─── [İyileştirme #1] Animasyonlu Skor Çubuğu ───────────────────────────────
-class _XrexScoreBar extends StatefulWidget {
+class _VixRexScoreBar extends StatefulWidget {
   final int score; // 0–100
-  const _XrexScoreBar({required this.score});
+  const _VixRexScoreBar({required this.score});
 
   @override
-  State<_XrexScoreBar> createState() => _XrexScoreBarState();
+  State<_VixRexScoreBar> createState() => _VixRexScoreBarState();
 }
 
-class _XrexScoreBarState extends State<_XrexScoreBar>
+class _VixRexScoreBarState extends State<_VixRexScoreBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _fillAnim;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Xrex chatbot mesaj modeli.
+/// VixRex chatbot mesaj modeli.
 class ChatMessage {
   final String id;
   final String text;
@@ -87,9 +87,9 @@ class ChatMessage {
 
 enum ChatMessageType { text, loading, system }
 
-// ─── Type-safe Xrex Aksiyonları ──────────────────────────────────────────────
+// ─── Type-safe VixRex Aksiyonları ──────────────────────────────────────────────
 /// Quick Reply butonlarının tetikleyebileceği navigasyon aksiyonları.
-enum XrexAction {
+enum VixRexAction {
   openVitrim,           // Vitrinim sekmesine git
   copyLink,             // Public linki panoya kopyala
   shareWhatsapp,        // WhatsApp paylaşım ekranı
@@ -115,13 +115,13 @@ class QuickReply {
   final String payload;
 
   /// Aksiyona yönlendirme için type-safe alan.
-  /// Default [XrexAction.none] — geriye uyumlu.
-  final XrexAction action;
+  /// Default [VixRexAction.none] — geriye uyumlu.
+  final VixRexAction action;
 
   const QuickReply({
     required this.label,
     required this.payload,
-    this.action = XrexAction.none,
+    this.action = VixRexAction.none,
   });
 
   Map<String, dynamic> toJson() => {
@@ -134,9 +134,9 @@ class QuickReply {
     return QuickReply(
       label: json['label'] as String,
       payload: json['payload'] as String,
-      action: XrexAction.values.firstWhere(
+      action: VixRexAction.values.firstWhere(
         (e) => e.name == json['action'],
-        orElse: () => XrexAction.none,
+        orElse: () => VixRexAction.none,
       ),
     );
   }
