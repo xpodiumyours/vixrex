@@ -14,7 +14,7 @@ import 'package:vitrinx/services/store_local_storage_service.dart';
 // NOTE: PublishedSummaryCard is exported from publish_actions_section.dart
 import 'package:vitrinx/widgets/editor/publish_actions_section.dart';
 import 'package:vitrinx/widgets/editor/visibility_hub_card.dart';
-import 'package:vitrinx/widgets/auto_fill/category_auto_fill_sheet.dart';
+import 'package:vitrinx/widgets/auto_fill/cover_template_picker_sheet.dart';
 
 class MyVitrinScreen extends StatefulWidget {
   final String? initialName;
@@ -101,9 +101,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _state.scrollToXrexAction(action);
   }
 
-  /// X-rex asistanindan kategori sablonu otomatik doldurma bottom sheet'ini acar.
+  /// X-rex asistanindan kapak sablonu secim bottom sheet'ini acar.
   /// [home_shell_screen.dart] tarafindan GlobalKey uzerinden çağrılır.
-  void openAutoFillDialog() {
+  void openCoverTemplatePicker() {
     final kategori = _controller.selectedKategori;
 
     if (kategori.isEmpty) {
@@ -118,37 +118,13 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       return;
     }
 
-    final storeId = _controller.data.id?.toString() ?? '';
-
-    CategoryAutoFillSheet.show(
+    CoverTemplatePickerSheet.show(
       context: context,
       categoryKey: categoryKey,
       categoryLabel: kategori,
-      storeId: storeId,
-      onLocalApply: storeId.isEmpty
-          ? ({
-              coverImage,
-              galleryImages = const [],
-              productImages = const [],
-            }) {
-              _controller.applyCategoryTemplateLocal(
-                coverImageUrl: coverImage?.imageUrl,
-                galleryImageUrls:
-                    galleryImages.map((img) => img.imageUrl).toList(),
-                productTemplates: productImages
-                    .map((img) => {
-                          'name': img.title ?? 'Ürün',
-                          'description': img.description ?? '',
-                          'price': '',
-                          'category': kategori,
-                        })
-                    .toList(),
-              );
-            }
-          : null,
-      onApplied: () async {
-        await _controller.syncGalleryFromSupabase();
-        await _controller.initialize(_controller.data.name);
+      onCoverSelected: (coverUrl) {
+        _controller.setCoverUrl(coverUrl);
+        _controller.saveLocally();
       },
     );
   }

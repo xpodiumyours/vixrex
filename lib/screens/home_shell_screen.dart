@@ -309,10 +309,10 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     });
   }
 
-  void _xrexOpenAutoFillDialog() {
+  void _xrexOpenCoverTemplatePicker() {
     setState(() => _selectedIndex = 0); // Store
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _myVitrinKey.currentState?.openAutoFillDialog();
+      _myVitrinKey.currentState?.openCoverTemplatePicker();
     });
   }
 
@@ -356,9 +356,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       case XrexAction.scrollToCategory:
         _xrexScrollToAction(action);
         break;
-      case XrexAction.openAutoFillDialog:
-      case XrexAction.applyCategoryTemplate:
-        _xrexOpenAutoFillDialog();
+      case XrexAction.openCoverTemplatePicker:
+        _xrexOpenCoverTemplatePicker();
         break;
       case XrexAction.none:
         break;

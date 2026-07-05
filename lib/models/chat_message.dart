@@ -104,9 +104,8 @@ enum XrexAction {
   scrollToDesc,         // Açıklamaya git
   scrollToProducts,     // Ürün/Hizmet alanına git
   scrollToCategory,     // Kategori seçim alanına git
-  openAutoFillDialog,   // Hazır görseller modalını aç
-  applyCategoryTemplate,// Kategori şablonunu uygula
-  none,                 // Sadece mesaj tetikler, navigasyon yok
+  openCoverTemplatePicker, // Hazır kapak şablonu seç
+  none,                      // Sadece mesaj tetikler, navigasyon yok
 }
 
 /// Hızlı cevap butonu modeli.

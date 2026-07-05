@@ -12,7 +12,6 @@ import 'package:vitrinx/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vitrinx/services/category_image_service.dart';
 import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/utils/gallery_image_file_validator.dart';
-import 'package:vitrinx/widgets/auto_fill/auto_fill_banner.dart';
 import 'package:vitrinx/widgets/auto_fill/cover_template_picker_sheet.dart';
 import 'package:vitrinx/widgets/editor/common_form_fields.dart';
 import 'package:vitrinx/widgets/editor/cover_picker_section.dart';
@@ -287,29 +286,15 @@ class VitrinFormSection extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              // Kategori + AutoFillBanner
+              // Kategori
               KeyedSubtree(
                 key: state.categoryKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    EditorDropdownField(
-                      label: 'Kategori',
-                      value: controller.selectedKategori,
-                      items: BusinessCategoryConfig.categories.map((c) => c.label).toList(),
-                      icon: Icons.category_rounded,
-                      onChanged: (val) => controller.selectCategory(val ?? 'Diğer'),
-                    ),
-                    // AutoFill banner - kategoriye özel hazır görseller
-                    AutoFillBanner(
-                      kategori: controller.selectedKategori,
-                      storeId: controller.data.id?.toString() ?? '',
-                      onApplied: () async {
-                        await controller.syncGalleryFromSupabase();
-                        await controller.initialize(controller.data.name);
-                      },
-                    ),
-                  ],
+                child: EditorDropdownField(
+                  label: 'Kategori',
+                  value: controller.selectedKategori,
+                  items: BusinessCategoryConfig.categories.map((c) => c.label).toList(),
+                  icon: Icons.category_rounded,
+                  onChanged: (val) => controller.selectCategory(val ?? 'Diğer'),
                 ),
               ),
               const SizedBox(height: 14),
