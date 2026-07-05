@@ -354,6 +354,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       case XrexAction.scrollToDesc:
       case XrexAction.scrollToProducts:
       case XrexAction.scrollToCategory:
+      case XrexAction.openAutoFillDialog:
+      case XrexAction.applyCategoryTemplate:
         _xrexScrollToAction(action);
         break;
       case XrexAction.openCoverTemplatePicker:
