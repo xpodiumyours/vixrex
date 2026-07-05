@@ -52,6 +52,15 @@ class GalleryEditorSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Text(
+          'Vitrin Galerisi',
+          style: TextStyle(
+            color: AppColors.softText,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
