@@ -157,7 +157,6 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
         children: [
           _buildHandle(),
           _buildHeader(),
-          _buildSearch(),
           const Divider(height: 1, color: AppColors.border),
           Expanded(child: _buildContent()),
           _buildBottomBar(),
@@ -180,7 +179,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
       child: Row(
         children: [
           Container(
@@ -190,7 +189,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
-              Icons.photo_library_rounded,
+              Icons.auto_awesome_rounded,
               color: AppColors.primary,
             ),
           ),
@@ -200,7 +199,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Kategori Galerisi',
+                  'Şablon Kütüphanesi',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
@@ -209,7 +208,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  'Hazır şablon görsellerinden seç',
+                  'İşletmeniz için özenle tasarlanmış görseller',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.mutedText,
@@ -227,16 +226,138 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
     );
   }
 
-  Widget _buildSearch() {
+  Widget _buildSelectorAndSearch(List<String> keys, String activeKey) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          // Sol: Kategori Seçici
+          Expanded(
+            flex: 4,
+            child: _buildCategorySelector(keys, activeKey),
+          ),
+          const SizedBox(width: 12),
+          // Sağ: Görsel Arama
+          Expanded(
+            flex: 5,
+            child: _buildSearch(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategorySelector(List<String> keys, String activeKey) {
+    final currentSet = _categoryImages[activeKey];
+    if (currentSet == null) return const SizedBox.shrink();
+
+    final categoryConfig = BusinessCategoryConfig.categories.firstWhere(
+      (c) => c.id == activeKey,
+      orElse: () => BusinessCategoryConfig.categories.last,
+    );
+    final emoji = activeKey == widget.preferredCategoryKey ? '📌' : categoryConfig.emoji;
+
+    return PopupMenuButton<String>(
+      onSelected: (key) {
+        setState(() {
+          _activeCategoryKey = key;
+          _selectedImageUrl = null; // Kategori değiştiğinde seçimi temizle
+        });
+      },
+      offset: const Offset(0, 50),
+      color: AppColors.bgEditor,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.border),
+      ),
+      itemBuilder: (context) {
+        return keys.map((key) {
+          final set = _categoryImages[key]!;
+          final isPreferred = key == widget.preferredCategoryKey;
+          final config = BusinessCategoryConfig.categories.firstWhere(
+            (c) => c.id == key,
+            orElse: () => BusinessCategoryConfig.categories.last,
+          );
+          final itemEmoji = isPreferred ? '📌' : config.emoji;
+
+          return PopupMenuItem<String>(
+            value: key,
+            child: Row(
+              children: [
+                Text(itemEmoji, style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    set.categoryLabel,
+                    style: TextStyle(
+                      color: key == activeKey ? AppColors.primary : AppColors.darkText,
+                      fontWeight: key == activeKey ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                if (isPreferred)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'ÖNERİLEN',
+                      style: TextStyle(fontSize: 8, color: AppColors.primary, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }).toList();
+      },
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppColors.inputBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 18)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                currentSet.categoryLabel,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.darkText,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearch() {
+    return SizedBox(
+      height: 48,
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(color: AppColors.darkText),
+        style: const TextStyle(color: AppColors.darkText, fontSize: 13),
         decoration: InputDecoration(
-          hintText: 'Kategori ara...',
-          hintStyle: const TextStyle(color: AppColors.softText),
-          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.softText),
+          hintText: 'Görsel ara...',
+          hintStyle: const TextStyle(color: AppColors.softText, fontSize: 13),
+          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.softText, size: 20),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: AppColors.border),
@@ -251,7 +372,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
           ),
           filled: true,
           fillColor: AppColors.inputBg,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
         ),
         onChanged: (v) => setState(() => _searchQuery = v),
       ),
@@ -266,101 +387,23 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       return const Center(child: Text('Hazır görsel bulunamadı.', style: TextStyle(color: AppColors.mutedText)));
     }
 
-    final keys = _filteredKeys;
-    if (keys.isEmpty) {
-      return const Center(child: Text('Arama sonucu bulunamadı.', style: TextStyle(color: AppColors.mutedText)));
-    }
+    final keys = _categoryKeys;
+    final activeKey = _activeCategoryKey ?? keys.first;
 
-    final activeKey = (keys.contains(_activeCategoryKey))
-        ? _activeCategoryKey
-        : keys.first;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
-        // Sol Panel: Dikey Kategori Listesi
-        SizedBox(
-          width: 240,
-          child: _buildSidebarCategories(keys, activeKey),
-        ),
-        // Sınır Çizgisi
-        const VerticalDivider(width: 1, color: AppColors.border),
-        // Sağ Panel: Görsel Galerisi
+        _buildSelectorAndSearch(keys, activeKey),
+        const SizedBox(height: 4),
         Expanded(
-          child: activeKey != null
-              ? AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: KeyedSubtree(
-                    key: ValueKey(activeKey),
-                    child: _buildGridContent(activeKey),
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSidebarCategories(List<String> keys, String? activeKey) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: keys.length,
-      itemBuilder: (context, index) {
-        final key = keys[index];
-        final set = _categoryImages[key]!;
-        final isActive = key == activeKey;
-        final isPreferred = key == widget.preferredCategoryKey;
-
-        final categoryConfig = BusinessCategoryConfig.categories.firstWhere(
-          (c) => c.id == key,
-          orElse: () => BusinessCategoryConfig.categories.last,
-        );
-        final emoji = isPreferred ? '📌' : categoryConfig.emoji;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                _activeCategoryKey = key;
-                _selectedImageUrl = null; // Kategori değiştiğinde seçimi temizle
-              });
-            },
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: isActive 
-                    ? AppColors.primary.withOpacity(0.08) 
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isActive ? AppColors.primary : Colors.transparent,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Text(emoji, style: const TextStyle(fontSize: 18)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      set.categoryLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                        color: isActive ? AppColors.primary : AppColors.darkText,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: KeyedSubtree(
+              key: ValueKey(activeKey),
+              child: _buildGridContent(activeKey),
             ),
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 
