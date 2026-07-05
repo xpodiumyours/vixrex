@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vitrinx/models/store_data.dart';
+import 'package:vitrinx/config/business_category_config.dart';
 
 // ─── Category Image Template Model ───────────────────────────────────────────
 
@@ -96,82 +97,12 @@ class CategoryOption {
   int get hashCode => key.hashCode;
 }
 
-// ─── Turkce karakter normalizasyonu ──────────────────────────────────────────
-
-/// Turkce karakterleri ASCII esdegerine donusturur
-/// Ornek: "Guzellik" -> "guzellik", "Kuafor" -> "kuafor"
-String _normalizeTurkish(String text) {
-  return text
-      .toLowerCase()
-      .trim()
-      .replaceAll('ç', 'c')
-      .replaceAll('ğ', 'g')
-      .replaceAll('ı', 'i')
-      .replaceAll('ö', 'o')
-      .replaceAll('ş', 's')
-      .replaceAll('ü', 'u')
-      .replaceAll('İ', 'i')
-      .replaceAll('I', 'i')
-      .replaceAll('Ç', 'c')
-      .replaceAll('Ğ', 'g')
-      .replaceAll('Ö', 'o')
-      .replaceAll('Ş', 's')
-      .replaceAll('Ü', 'u');
-}
-
 // ─── Kategori <-> image_key eslestirmesi ────────────────────────────────────
 
 /// StoreData.kategori degerini category_image_templates.category_key'e donusturur
 String? mapKategoriToKey(String kategori) {
-  final normalized = _normalizeTurkish(kategori);
-
-  // Dogrudan eslesme (normalize edilmis)
-  if (normalized.contains('butik') || normalized.contains('giyim')) {
-    return 'butik_giyim';
-  }
-  if (normalized.contains('kuaf') || normalized.contains('guzellik')) {
-    return 'kuafor_guzellik';
-  }
-  if (normalized.contains('kafe') || normalized.contains('restoran') ||
-      normalized.contains('lokanta')) {
-    return 'kafe_restoran';
-  }
-  if (normalized.contains('teknik') || normalized.contains('servis') ||
-      normalized.contains('telefon') || normalized.contains('tamir')) {
-    return 'teknik_servis';
-  }
-  if (normalized.contains('berber')) {
-    return 'berber';
-  }
-  if (normalized.contains('oto') || normalized.contains('yikama') ||
-      normalized.contains('cila')) {
-    return 'oto_kuafor';
-  }
-  if (normalized.contains('market') || normalized.contains('bakkal') ||
-      normalized.contains('manav')) {
-    return 'market_bakkal';
-  }
-  if (normalized.contains('pastane') || normalized.contains('tatlici') ||
-      normalized.contains('firin')) {
-    return 'pastane_tatlici';
-  }
-  if (normalized.contains('mobilya') || normalized.contains('dekorasyon')) {
-    return 'mobilya_dekorasyon';
-  }
-  if (normalized.contains('spor') || normalized.contains('fitness') ||
-      normalized.contains('gym')) {
-    return 'spor_salonu';
-  }
-  if (normalized.contains('dis') || normalized.contains('klinik') ||
-      normalized.contains('dentist')) {
-    return 'dis_klinigi';
-  }
-  if (normalized.contains('eczane')) {
-    return 'eczane';
-  }
-
-  // Eslesme yoksa null dondur - kullanici sablon kullanamaz
-  return null;
+  if (kategori.trim().isEmpty) return null;
+  return BusinessCategoryConfig.fromCategoryLabel(kategori).id;
 }
 
 // ─── Service ─────────────────────────────────────────────────────────────────
