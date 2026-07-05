@@ -422,8 +422,6 @@ class StoreEditorController extends ChangeNotifier {
 
     final client = _resolveClient();
     if (client == null) throw const StorePublishException('Supabase bağlı değil.');
-    final userId = client.auth.currentUser?.id;
-    if (userId == null) throw const StorePublishException('Oturum acik degil.');
 
     final storeSlug = _data.slug.isNotEmpty
         ? _data.slug
@@ -449,7 +447,7 @@ class StoreEditorController extends ChangeNotifier {
       if (item.isFromBytes && item.bytes != null) {
         final ext = (item.extension ?? 'jpg').toLowerCase();
         final mime = item.contentType ?? (ext == 'png' ? 'image/png' : ext == 'webp' ? 'image/webp' : 'image/jpeg');
-        final path = 'gallery/$userId/${storeSlug}_gallery_${ts}_$gi.$ext';
+        final path = 'gallery/${storeSlug}_gallery_${ts}_$gi.$ext';
         final url = await _uploadMedia(bucket: 'store-images', path: path, bytes: item.bytes!, contentType: mime);
         updatedGallery.add(StoreGalleryItem(id: item.id, imageUrl: url, title: 'Galeri ${gi + 1}'));
         gi++;
@@ -467,20 +465,6 @@ class StoreEditorController extends ChangeNotifier {
   /// editToken/slug ayrimi: guncelleme modu vs ilk yayin
   Future<String?> publish() async {
     if (_isPublishing) return null;
-
-    // Misafir modda publish icin giris zorunlu
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) {
-        throw const StorePublishException(
-          'Vitrinizi yayınlamak için lütfen giriş yapın veya hesap oluşturun.',
-        );
-      }
-    } catch (e) {
-      if (e is StorePublishException) rethrow;
-      // Supabase bagli degilse bile devam et (test ortami)
-    }
-
     _isPublishing = true;
     notifyListeners();
 
