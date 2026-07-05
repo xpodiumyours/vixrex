@@ -237,7 +237,8 @@ class _LandingScreenState extends State<LandingScreen>
       await storage.savePendingCategoryKey(categoryKey);
     }
     if (!mounted) return;
-    AppRouter.navigateToAuth(context);
+    // Misafir modda dogrudan editore gec
+    AppRouter.navigateToHomeShell(context);
   }
 
   void _navigateToSavedVitrin() {}

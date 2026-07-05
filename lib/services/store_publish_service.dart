@@ -589,8 +589,8 @@ class StorePublishService {
         searchableText.contains('edit token mismatch') ||
         searchableText.contains('invalid_edit_token')) {
       return isStore
-          ? 'Bu mağaza başka bir cihazdan oluşturulmuş olabilir. Lütfen oturumu kapatıp tekrar giriş yapın.'
-          : 'Bu vitrin başka bir cihazdan oluşturulmuş olabilir. Lütfen oturumu kapatıp tekrar giriş yapın.';
+          ? 'Mağaza güncellenemedi. Lütfen tekrar deneyin.'
+          : 'Vitrin güncellenemedi. Lütfen tekrar deneyin.';
     }
 
     if (searchableText.contains('privacy_notice_required') ||
