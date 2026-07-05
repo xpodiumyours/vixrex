@@ -176,8 +176,6 @@ class VitrinFormSection extends StatelessWidget {
                   coverUrl: controller.coverUrl,
                   coverFileName: controller.coverFileName,
                   onTap: () => _pickCover(context),
-                  onCameraTap: () => _pickCoverFromCamera(context),
-                  onAutoFillTap: () => _showCategoryGallery(context, source: ImageSource.coverPicker),
                 ),
               ),
               const SizedBox(height: 10),
@@ -189,6 +187,7 @@ class VitrinFormSection extends StatelessWidget {
                   galleryItems: _galleryItemsForEditor,
                   maxGalleryPhotos: controller.maxGalleryPhotos,
                   onPickPhotos: () => _pickGallery(context),
+                  onCameraTap: () => _pickGalleryFromCamera(context),
                   onRemovePhoto: controller.removeGalleryItem,
                   onAutoFillTap: () => _showCategoryGallery(context, source: ImageSource.galleryEditor),
                 ),
@@ -527,7 +526,12 @@ class VitrinFormSection extends StatelessWidget {
     );
   }
 
-  Future<void> _pickCoverFromCamera(BuildContext ctx) async {
+  Future<void> _pickGalleryFromCamera(BuildContext ctx) async {
+    final remaining = controller.maxGalleryPhotos - controller.galleryItems.length;
+    if (remaining <= 0) {
+      state.showSnackBar(ctx, 'En fazla ${controller.maxGalleryPhotos} galeri fotoğrafı eklenebilir.');
+      return;
+    }
     final picker = img_picker.ImagePicker();
     final pickedFile = await picker.pickImage(source: img_picker.ImageSource.camera);
     if (pickedFile == null) return;
@@ -541,11 +545,15 @@ class VitrinFormSection extends StatelessWidget {
       state.showSnackBar(ctx, 'Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.');
       return;
     }
-    controller.setCoverBytes(
-      bytes, pickedFile.name,
-      v.fileInfo?.extension ?? 'jpg',
-      v.fileInfo?.contentType ?? 'image/jpeg',
+    final newItem = GalleryItem(
+      id: '${DateTime.now().microsecondsSinceEpoch}_0',
+      bytes: bytes,
+      imageUrl: '',
+      extension: v.fileInfo?.extension ?? 'jpg',
+      contentType: v.fileInfo?.contentType ?? 'image/jpeg',
     );
+    final editorItems = [...controller.galleryItems, ..._toEditorItems([newItem])];
+    controller.setGalleryItems(editorItems);
   }
 
   Future<void> _pickGallery(BuildContext ctx) async {

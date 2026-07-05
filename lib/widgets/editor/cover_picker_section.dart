@@ -7,8 +7,6 @@ class CoverPickerSection extends StatelessWidget {
   final String? coverUrl;
   final String? coverFileName;
   final VoidCallback onTap;
-  final VoidCallback onCameraTap;
-  final VoidCallback? onAutoFillTap;
 
   const CoverPickerSection({
     super.key,
@@ -16,8 +14,6 @@ class CoverPickerSection extends StatelessWidget {
     required this.coverUrl,
     required this.coverFileName,
     required this.onTap,
-    required this.onCameraTap,
-    this.onAutoFillTap,
   });
 
   @override
@@ -36,56 +32,21 @@ class CoverPickerSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        AspectRatio(
-          aspectRatio: 16 / 7,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.inputBg,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.cardBorderDark),
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: AspectRatio(
+            aspectRatio: 16 / 7,
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.inputBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.cardBorderDark),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: hasCover ? _buildCoverPreview() : const _CoverPlaceholder(),
             ),
-            clipBehavior: Clip.antiAlias,
-            child: hasCover
-                ? InkWell(
-                    onTap: onTap,
-                    borderRadius: BorderRadius.circular(16),
-                    child: _buildCoverPreview(),
-                  )
-                : const _CoverPlaceholder(),
           ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionButton(
-                onPressed: onTap,
-                icon: Icons.add_photo_alternate_rounded,
-                label: 'Fotoğraf Yükle',
-                isPrimary: false,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: _buildActionButton(
-                onPressed: onCameraTap,
-                icon: Icons.photo_camera_rounded,
-                label: 'Fotoğraf Çek',
-                isPrimary: false,
-              ),
-            ),
-            if (onAutoFillTap != null) ...[
-              const SizedBox(width: 6),
-              Expanded(
-                child: _buildActionButton(
-                  onPressed: onAutoFillTap!,
-                  icon: Icons.auto_awesome_rounded,
-                  label: 'Hazır Şablonlar',
-                  isPrimary: true,
-                ),
-              ),
-            ],
-          ],
         ),
       ],
     );
@@ -111,62 +72,6 @@ class CoverPickerSection extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildActionButton({
-    required VoidCallback onPressed,
-    required IconData icon,
-    required String label,
-    required bool isPrimary,
-  }) {
-    if (isPrimary) {
-      return ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.black,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 14, color: Colors.black),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.darkText,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        side: const BorderSide(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 14, color: AppColors.primary),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
-          ),
-        ],
-      ),
     );
   }
 }
