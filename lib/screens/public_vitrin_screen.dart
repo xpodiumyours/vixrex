@@ -133,8 +133,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
           .where((o) => o.title.trim().isNotEmpty)
           .take(6)
           .toList();
-    } catch (error) {
-      debugPrint('Offerings parse error: $error');
+    } catch (_) {
       return [];
     }
   }
@@ -203,8 +202,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
                 link.platform.trim().isNotEmpty && link.url.trim().isNotEmpty,
           )
           .toList();
-    } catch (error) {
-      debugPrint('Marketplace links parse error: $error');
+    } catch (_) {
       return [];
     }
   }
@@ -220,8 +218,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
           .map((p) => Product.fromJson(Map<String, dynamic>.from(p)))
           .where((product) => product.isVisible)
           .toList();
-    } catch (error) {
-      debugPrint('Products parse error: $error');
+    } catch (_) {
       return [];
     }
   }
@@ -241,8 +238,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
           .where((item) => item.imageUrl.trim().isNotEmpty)
           .take(12)
           .toList();
-    } catch (error) {
-      debugPrint('Gallery items parse error: $error');
+    } catch (_) {
       return [];
     }
   }
@@ -267,7 +263,6 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
         }
 
         if (snapshot.hasError) {
-          debugPrint('Public vitrin load error: ${snapshot.error}');
           return const _PublicVitrinStateView(
             title: 'Vitrin yüklenirken bir sorun oluştu.',
             icon: Icons.info_outline_rounded,

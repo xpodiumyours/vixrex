@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -27,9 +26,7 @@ class VitrinViewService {
           'p_source': _normalizeSource(source),
         },
       );
-    } catch (error) {
-      debugPrint('Vitrin view record error: $error');
-    }
+    } catch (_) {}
   }
 
   Future<int> fetchTodayViewCount({
@@ -48,8 +45,7 @@ class VitrinViewService {
       if (response is int) return response;
       if (response is num) return response.toInt();
       return int.tryParse(response.toString()) ?? 0;
-    } catch (error) {
-      debugPrint('Vitrin view count error: $error');
+    } catch (_) {
       return 0;
     }
   }

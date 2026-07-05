@@ -94,17 +94,10 @@ abstract final class AppColors {
   /// Başarı / yeşil.
   static const Color success = Color(0xFF10B981);
 
-  /// Bilgi / mavi.
-  static const Color info = Color(0xFF38BDF8);
-
   /// Hata / kırmızı.
   static const Color error = Color(0xFFEF4444);
 
-  /// Uyarı / pembe-kırmızı.
-  static const Color pinkAccent = Color(0xFFEC4899);
-
   // ── Özel Bileşen Renkleri ───────────────────────────────────────────
-  static const Color bottomBarBg = Color(0xFF0D0E12);
   static const Color bottomBarActive = Color(0xFF00F0FF);
   static const Color bottomBarInactive = Color(0xFFA1A1AA);
 

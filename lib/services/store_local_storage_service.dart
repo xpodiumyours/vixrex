@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
@@ -200,9 +199,7 @@ class StoreLocalStorageService {
       if (data != null) {
         await saveVitrinData(data);
       }
-    } catch (e) {
-      debugPrint('saveVitrinDataFromSupabase error: $e');
-    }
+    } catch (_) {}
   }
 
   // ── Private ───────────────────────────────────────────────────────────
@@ -219,9 +216,7 @@ class StoreLocalStorageService {
       if (decoded is Map) {
         return StoreData.fromJson(Map<String, dynamic>.from(decoded));
       }
-    } on FormatException catch (e) {
-      debugPrint('StoreLocalStorageService: JSON parse error: $e');
-    }
+    } on FormatException catch (_) {}
     return null;
   }
 }

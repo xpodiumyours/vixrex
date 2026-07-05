@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:vitrinx/config/public_site_config.dart';
 import 'package:vitrinx/models/store_data.dart';
@@ -55,17 +54,11 @@ class SeoService {
   }) async {
     final endpoint = _resolveEndpoint();
     if (endpoint == null) {
-      debugPrint(
-        '[SeoService] PUBLIC_SITE_URL tanımlanmamış; revalidation atlandı.',
-      );
       return;
     }
 
     final secret = const String.fromEnvironment('REVALIDATION_SECRET');
     if (secret.isEmpty) {
-      debugPrint(
-        '[SeoService] REVALIDATION_SECRET tanımlanmamış; revalidation atlandı.',
-      );
       return;
     }
 
@@ -94,20 +87,11 @@ class SeoService {
           )
           .timeout(const Duration(seconds: 10));
 
-      if (response.statusCode == 200) {
-        debugPrint(
-          '[SeoService] Revalidated tags=$cleanTags paths=$cleanPaths ✓',
-        );
-      } else {
-        debugPrint(
-          '[SeoService] Revalidation başarısız: HTTP ${response.statusCode} — tags=$cleanTags paths=$cleanPaths',
-        );
+      if (response.statusCode != 200) {
+        // Revalidation failed; silently ignore.
       }
-    } catch (e) {
-      // Ağ hatası hiçbir zaman kullanıcı işlemini engellemez.
-      debugPrint(
-        '[SeoService] Revalidation hatası: $e — tags=$tags paths=$paths',
-      );
+    } catch (_) {
+      // Network errors never block the user flow.
     }
   }
 

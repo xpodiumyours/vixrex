@@ -300,7 +300,6 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      debugPrint("Save article error: $e");
       _showSnackBar('Kaydetme hatası: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isSaving = false);

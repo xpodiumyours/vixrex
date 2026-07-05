@@ -78,7 +78,7 @@ class VitrinFormSection extends StatelessWidget {
       )).toList();
 
   /// Kategori galerisi bottom sheet'ini açar
-  Future<void> _showCategoryGallery(BuildContext ctx, {required ImageSource source}) async {
+  Future<void> _showCategoryGallery(BuildContext ctx, {required SheetImageSource source}) async {
     final kategori = controller.selectedKategori.trim();
     if (kategori.isEmpty) {
       state.showSnackBar(ctx, 'Önce bir kategori seçmelisiniz.');
@@ -178,7 +178,7 @@ class VitrinFormSection extends StatelessWidget {
                   coverFileName: controller.coverFileName,
                   onTap: () => _pickCover(context),
                   onCameraTap: () => _pickCoverFromCamera(context),
-                  onAutoFillTap: () => _showCategoryGallery(context, source: ImageSource.coverPicker),
+                  onAutoFillTap: () => _showCategoryGallery(context, source: SheetImageSource.coverPicker),
                 ),
               ),
               const SizedBox(height: 10),
@@ -547,8 +547,7 @@ class VitrinFormSection extends StatelessWidget {
         v.fileInfo?.extension ?? 'jpg',
         v.fileInfo?.contentType ?? 'image/jpeg',
       );
-    } catch (e) {
-      debugPrint('Kamera erişim hatası: $e');
+    } catch (_) {
       if (ctx.mounted) {
         state.showSnackBar(ctx, 'Kameraya erişilemedi. Kamera izinlerini kontrol edin veya dosya yüklemeyi kullanın.');
       }

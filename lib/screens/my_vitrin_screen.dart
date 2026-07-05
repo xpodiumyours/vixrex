@@ -88,7 +88,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   void openCoverTemplatePicker() {
     CategoryGallerySheet.show(
       context: context,
-      source: ImageSource.coverPicker,
+      source: SheetImageSource.coverPicker,
       onImageAction: (coverUrl, action) {
         _controller.setCoverUrl(coverUrl);
         _controller.saveLocally();

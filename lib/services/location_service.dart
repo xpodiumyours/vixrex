@@ -216,9 +216,7 @@ class LocationService {
 
         return data['display_name'] as String?;
       }
-    } catch (e) {
-      debugPrint('Reverse geocoding error: $e');
-    }
+    } catch (_) {}
     return null;
   }
 }

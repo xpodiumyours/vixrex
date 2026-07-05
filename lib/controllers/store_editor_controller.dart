@@ -193,9 +193,7 @@ class StoreEditorController extends ChangeNotifier {
       if (_publishedInfo != null) {
         await fetchArticles();
       }
-    } catch (e) {
-      debugPrint('Error initializing controller: $e');
-    } finally {
+    } catch (_) {} finally {
       _isLoading = false;
       notifyListeners();
     }
@@ -239,12 +237,9 @@ class StoreEditorController extends ChangeNotifier {
             name: name,
             editToken: editToken,
           );
-          debugPrint('Published info fetched from Supabase: slug=$slug');
         }
       }
-    } catch (e) {
-      debugPrint('Error fetching published info from Supabase: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> fetchLocation() async {
@@ -314,8 +309,7 @@ class StoreEditorController extends ChangeNotifier {
           .eq('store_slug', slug)
           .order('created_at', ascending: false);
       _articles = List<Map<String, dynamic>>.from(response as List);
-    } catch (e) {
-      debugPrint('Error fetching articles: $e');
+    } catch (_) {
       _articles = [];
     } finally {
       _isLoadingArticles = false;
@@ -557,9 +551,7 @@ class StoreEditorController extends ChangeNotifier {
       if (slug != null && editToken != null) {
         try {
           await publishService.withdrawPublicationConsent(slug: slug, editToken: editToken);
-        } catch (e) {
-          debugPrint('Error withdrawing during delete: $e');
-        }
+        } catch (_) {}
       }
       await storage.clearVitrinData();
       _data = StoreData(
@@ -695,7 +687,6 @@ class StoreEditorController extends ChangeNotifier {
   }
   void addGalleryUrl(String url, {String? title}) {
     if (_editorGalleryItems.length >= _maxGalleryPhotos) {
-      debugPrint('addGalleryUrl: max gallery photos reached');
       return;
     }
     final item = EditorGalleryItem.fromUrl(url);
@@ -809,7 +800,6 @@ class StoreEditorController extends ChangeNotifier {
           _editorGalleryItems = parsed
               .map((i) => EditorGalleryItem.fromStoreItem(i))
               .toList();
-          debugPrint('syncGalleryFromSupabase: ${parsed.length} gorsel senkronize edildi');
         }
       }
 
@@ -818,14 +808,11 @@ class StoreEditorController extends ChangeNotifier {
       if (shelfUrl != null && shelfUrl.isNotEmpty) {
         _data.shelfImageUrl = shelfUrl;
         _coverUrl = shelfUrl;
-        debugPrint('syncGalleryFromSupabase: kapak gorseli senkronize edildi');
       }
 
       await saveLocally();
       notifyListeners();
-    } catch (e) {
-      debugPrint('syncGalleryFromSupabase error: $e');
-    }
+    } catch (_) {}
   }
 
   /// JSON'dan gallery items parse eder
@@ -839,8 +826,7 @@ class StoreEditorController extends ChangeNotifier {
           .where((item) => item.imageUrl.trim().isNotEmpty)
           .take(12)
           .toList();
-    } catch (e) {
-      debugPrint('_parseGalleryItems error: $e');
+    } catch (_) {
       return [];
     }
   }
@@ -857,7 +843,7 @@ class StoreEditorController extends ChangeNotifier {
           editToken: _publishedInfo!.editToken,
         );
       }
-    } catch (e) { debugPrint('saveLocally error: $e'); }
+    } catch (_) {}
     notifyListeners();
   }
 

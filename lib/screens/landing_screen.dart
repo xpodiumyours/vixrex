@@ -209,9 +209,7 @@ class _LandingScreenState extends State<LandingScreen>
           );
           continue;
         }
-      } catch (e) {
-        debugPrint('Gallery load error for $key: $e');
-      }
+      } catch (_) {}
       updatedProfiles.add(profile);
     }
     if (mounted) {

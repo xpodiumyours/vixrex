@@ -82,8 +82,7 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
           _isLoadingSlots = false;
         });
       }
-    } catch (e) {
-      debugPrint('Fetch slots error: $e');
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoadingSlots = false;
@@ -146,7 +145,6 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
         });
       }
     } on PostgrestException catch (e) {
-      debugPrint('Create appointment error: $e');
       String msg = 'Talebiniz oluşturulamadı.';
       if (e.message.contains('DAILY_LIMIT_EXCEEDED')) {
         msg = 'Günlük randevu limiti sınırına ulaştınız.';
@@ -161,8 +159,7 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
           _errorMsg = msg;
         });
       }
-    } catch (e) {
-      debugPrint('Create appointment unexpected error: $e');
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isSubmitting = false;

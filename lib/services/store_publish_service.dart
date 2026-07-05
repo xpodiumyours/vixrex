@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/utils/whatsapp_link_helper.dart';
@@ -482,9 +481,7 @@ class StorePublishService {
               editToken: editToken,
             );
           }
-        } on PostgrestException catch (error) {
-          debugPrint('Store token lookup skipped: ${error.message}');
-        }
+        } on PostgrestException catch (_) {}
       }
 
       if (existingStore == null) {
@@ -510,9 +507,6 @@ class StorePublishService {
       );
     } on PostgrestException catch (error) {
       if (_isDuplicateSlugError(error)) {
-        debugPrint(
-          'Store slug already exists after select, trying token update.',
-        );
         await _updateStoreWithToken(client, data, slug, editToken);
         return StorePublishResult(
           publicPath: '/v/$slug',

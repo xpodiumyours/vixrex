@@ -271,25 +271,6 @@ class AutoFillService {
     }
   }
 
-  /// Kategori etiketinden (turkce) otomatik doldur
-  static Future<AutoFillResult> applyByKategori({
-    required String storeId,
-    required String kategori,
-    AutoFillOptions options = const AutoFillOptions(),
-  }) async {
-    final key = mapKategoriToKey(kategori);
-    if (key == null) {
-      return AutoFillResult.error(
-        '"$kategori" kategorisi icin sablon bulunamadi.',
-      );
-    }
-    return applyCategoryTemplate(
-      storeId: storeId,
-      categoryKey: key,
-      options: options,
-    );
-  }
-
   /// Daha once auto-fill yapilip yapilmadigini kontrol et
   static Future<bool> wasAutoFillApplied(String storeId) async {
     final response = await _supabase

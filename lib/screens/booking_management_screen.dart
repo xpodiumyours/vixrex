@@ -44,8 +44,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
           _errorMessage = null;
         });
       }
-    } catch (e) {
-      debugPrint('Fetch appointments error: $e');
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -65,8 +64,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
       );
       await _fetchAppointments();
       _showSnackBar('Randevu güncellendi.');
-    } catch (e) {
-      debugPrint('Respond error: $e');
+    } catch (_) {
       setState(() => _isLoading = false);
       _showSnackBar('İşlem gerçekleştirilemedi.');
     }

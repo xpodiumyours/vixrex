@@ -67,10 +67,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _openWhatsApp(String whatsappNumber, String message) async {
-    final normalizedNumber = WhatsAppLinkHelper.normalizeTurkeyMobile(
-      whatsappNumber,
+    final url = WhatsAppLinkHelper.buildCustomUrl(
+      number: whatsappNumber,
+      message: message,
     );
-    if (normalizedNumber == null) {
+    if (url == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -80,8 +81,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
       );
       return;
     }
-    final encodedMessage = Uri.encodeComponent(message);
-    final url = 'https://wa.me/$normalizedNumber?text=$encodedMessage';
     final uri = Uri.parse(url);
 
     if (await canLaunchUrl(uri)) {

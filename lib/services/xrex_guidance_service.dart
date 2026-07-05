@@ -321,29 +321,4 @@ class XrexGuidanceService {
 
     return items;
   }
-
-  // ── Selamlama Mesajı ─────────────────────────────────────────────────────
-
-  static String greetingMessage(XrexProfileSnapshot? snapshot) {
-    if (snapshot == null || snapshot.storeName.isEmpty) {
-      return 'Merhaba! Vitrininizi oluşturmak ve geliştirmek için size yardımcı olabilirim. Nasıl başlamak istersiniz?';
-    }
-
-    final score = _calculateScore(snapshot);
-    final maxScore = maxQualityScore();
-
-    if (score >= maxScore * 0.8) {
-      return '${snapshot.storeName} vitrini harika görünüyor! Kalite puanınız $score/$maxScore. Paylaşım veya ek özellikler hakkında yardımcı olabilirim.';
-    } else if (score >= maxScore * 0.5) {
-      return '${snapshot.storeName} vitrini iyi gidiyor! Kalite puanınız $score/$maxScore. Bazı iyileştirmelerle daha da profesyonel görünebilir.';
-    } else {
-      return '${snapshot.storeName} vitrininizi geliştirelim! Mevcut kalite puanınız $score/$maxScore. Size adım adım yardımcı olabilirim.';
-    }
-  }
-
-  static int _calculateScore(XrexProfileSnapshot snapshot) {
-    return qualityItems(snapshot)
-        .where((item) => item.completed)
-        .fold(0, (sum, item) => sum + item.points);
-  }
 }

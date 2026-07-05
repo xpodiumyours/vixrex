@@ -6,7 +6,7 @@ import 'package:vitrinx/theme/app_colors.dart';
 import 'package:vitrinx/widgets/auto_fill/category_gallery_image_tile.dart';
 
 /// Sheet'in hangi alandan açıldığını belirtir
-enum ImageSource { coverPicker, galleryEditor }
+enum SheetImageSource { coverPicker, galleryEditor }
 
 /// Seçilen görsele uygulanacak aksiyon
 enum ImageAction { setAsCover, addToGallery }
@@ -17,7 +17,7 @@ enum ImageAction { setAsCover, addToGallery }
 /// kapak olarak veya galeriye ekleyebilir.
 class CategoryGallerySheet extends StatefulWidget {
   final String? preferredCategoryKey;
-  final ImageSource source;
+  final SheetImageSource source;
   final void Function(String url, ImageAction action) onImageAction;
 
   const CategoryGallerySheet({
@@ -30,7 +30,7 @@ class CategoryGallerySheet extends StatefulWidget {
   static Future<void> show({
     required BuildContext context,
     String? preferredCategoryKey,
-    required ImageSource source,
+    required SheetImageSource source,
     required void Function(String url, ImageAction action) onImageAction,
   }) {
     return showModalBottomSheet(
@@ -55,8 +55,6 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
   List<String> _categoryKeys = [];
   String? _selectedImageUrl;
   String? _activeCategoryKey;
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
 
   @override
   void initState() {
@@ -66,7 +64,6 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
 
   @override
   void dispose() {
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -85,7 +82,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       );
 
       for (final entry in categorySets) {
-        final hasImages = widget.source == ImageSource.coverPicker
+        final hasImages = widget.source == SheetImageSource.coverPicker
             ? entry.value.coverImages.isNotEmpty
             : entry.value.galleryImages.isNotEmpty;
 
@@ -125,18 +122,9 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      debugPrint('CategoryGallerySheet _loadImages error: $e');
+    } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  List<String> get _filteredKeys {
-    if (_searchQuery.isEmpty) return _categoryKeys;
-    return _categoryKeys.where((key) {
-      final label = _categoryImages[key]?.categoryLabel ?? key;
-      return label.toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
   }
 
   void _handleAction(ImageAction action) {
@@ -235,12 +223,6 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
           Expanded(
             flex: 4,
             child: _buildCategorySelector(keys, activeKey),
-          ),
-          const SizedBox(width: 12),
-          // Sağ: Görsel Arama
-          Expanded(
-            flex: 5,
-            child: _buildSearch(),
           ),
         ],
       ),
@@ -348,37 +330,6 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
     );
   }
 
-  Widget _buildSearch() {
-    return SizedBox(
-      height: 48,
-      child: TextField(
-        controller: _searchController,
-        style: const TextStyle(color: AppColors.darkText, fontSize: 13),
-        decoration: InputDecoration(
-          hintText: 'Görsel ara...',
-          hintStyle: const TextStyle(color: AppColors.softText, fontSize: 13),
-          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.softText, size: 20),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primary),
-          ),
-          filled: true,
-          fillColor: AppColors.inputBg,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
-        ),
-        onChanged: (v) => setState(() => _searchQuery = v),
-      ),
-    );
-  }
-
   Widget _buildContent() {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -411,7 +362,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
     final set = _categoryImages[activeKey];
     if (set == null) return const SizedBox.shrink();
 
-    final rawImages = widget.source == ImageSource.coverPicker
+    final rawImages = widget.source == SheetImageSource.coverPicker
         ? set.coverImages
         : set.galleryImages;
 
@@ -463,7 +414,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
           children: [
             Row(
               children: [
-                if (widget.source == ImageSource.coverPicker) ...[
+                if (widget.source == SheetImageSource.coverPicker) ...[
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: hasSelection

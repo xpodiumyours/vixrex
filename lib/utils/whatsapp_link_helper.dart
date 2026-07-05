@@ -147,4 +147,14 @@ class WhatsAppLinkHelper {
       'text': message,
     }).toString();
   }
+
+  /// Özel mesaj ile WhatsApp linki oluşturur.
+  static String? buildCustomUrl({
+    required String number,
+    required String message,
+  }) {
+    final normalized = normalizeTurkeyMobile(number);
+    if (normalized == null) return null;
+    return _buildUrl(normalized, message);
+  }
 }

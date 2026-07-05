@@ -50,8 +50,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
           });
         }
       }
-    } catch (e) {
-      debugPrint('Fetch appointment error: $e');
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -86,8 +85,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
       await const BookingService().cancelAppointmentByToken(widget.token);
       await _fetchAppointment();
       _showSnackBar('Randevunuz iptal edildi.');
-    } catch (e) {
-      debugPrint('Cancel appointment error: $e');
+    } catch (_) {
       setState(() => _isLoading = false);
       _showSnackBar('İşlem gerçekleştirilemedi.');
     }
@@ -111,8 +109,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
           _isLoadingSlots = false;
         });
       }
-    } catch (e) {
-      debugPrint('Fetch slots error: $e');
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoadingSlots = false;
@@ -144,8 +141,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
         });
       }
       _showSnackBar('Tarih değişikliği talebiniz iletildi.');
-    } catch (e) {
-      debugPrint('Reschedule error: $e');
+    } catch (_) {
       if (mounted) {
         setState(() => _isSubmittingReschedule = false);
       }

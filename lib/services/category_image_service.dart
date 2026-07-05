@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/config/business_category_config.dart';
 
@@ -131,18 +130,9 @@ class CategoryImageService {
         galleryImages: images.where((i) => i.imageType == 'gallery').toList(),
         productImages: images.where((i) => i.imageType == 'product').toList(),
       );
-    } catch (e, stackTrace) {
-      debugPrint('CategoryImageService.getImagesForCategory error: $e');
-      debugPrint(stackTrace.toString());
+    } catch (_) {
       return CategoryImageSet(categoryKey: categoryKey, categoryLabel: categoryKey);
     }
-  }
-
-  /// StoreData.kategori'den otomatik key uretip gorselleri getir
-  static Future<CategoryImageSet?> getImagesForKategori(String kategori) async {
-    final key = mapKategoriToKey(kategori);
-    if (key == null) return null;
-    return getImagesForCategory(key);
   }
 
   /// Tumu aktif kategorileri listele (distinct)
@@ -172,49 +162,8 @@ class CategoryImageService {
       }
 
       return options;
-    } catch (e, stackTrace) {
-      debugPrint('CategoryImageService.getAvailableCategories error: $e');
-      debugPrint(stackTrace.toString());
+    } catch (_) {
       return const [];
-    }
-  }
-
-  /// Belirli bir kategorinin sablon gorseli olup olmadigini kontrol et
-  static Future<bool> hasTemplateImages(String kategori) async {
-    try {
-      final key = mapKategoriToKey(kategori);
-      if (key == null) return false;
-
-      final response = await _supabase
-          .from('category_image_templates')
-          .select('id')
-          .eq('category_key', key)
-          .eq('is_active', true)
-          .limit(1);
-
-      return (response as List).isNotEmpty;
-    } catch (e) {
-      debugPrint('CategoryImageService.hasTemplateImages error: $e');
-      return false;
-    }
-  }
-
-  /// Bir kategorideki gorsel sayisini getir
-  static Future<int> getTemplateCount(String kategori) async {
-    try {
-      final key = mapKategoriToKey(kategori);
-      if (key == null) return 0;
-
-      final response = await _supabase
-          .from('category_image_templates')
-          .select('id')
-          .eq('category_key', key)
-          .eq('is_active', true);
-
-      return (response as List).length;
-    } catch (e) {
-      debugPrint('CategoryImageService.getTemplateCount error: $e');
-      return 0;
     }
   }
 }

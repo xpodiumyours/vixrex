@@ -2,6 +2,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vitrinx/models/store_data.dart';
 import 'package:vitrinx/services/store_local_storage_service.dart';
 
+/// DebugPrint için foundation.dart import'u
+import 'package:flutter/foundation.dart' show debugPrint;
+
 class AuthService {
   const AuthService();
 
@@ -95,7 +98,9 @@ class AuthService {
       if (response != null && response['edit_token'] != null) {
         return response['edit_token'] as String;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('getEditTokenForCurrentUser error: $e');
+    }
     return null;
   }
 
