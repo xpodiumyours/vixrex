@@ -8,6 +8,7 @@ class CoverPickerSection extends StatelessWidget {
   final String? coverUrl;
   final String? coverFileName;
   final VoidCallback onTap;
+  final VoidCallback onCameraTap;
   final VoidCallback? onAutoFillTap;
 
   const CoverPickerSection({
@@ -16,6 +17,7 @@ class CoverPickerSection extends StatelessWidget {
     required this.coverUrl,
     required this.coverFileName,
     required this.onTap,
+    required this.onCameraTap,
     this.onAutoFillTap,
   });
 
@@ -35,20 +37,26 @@ class CoverPickerSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: AspectRatio(
-            aspectRatio: 16 / 7,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.inputBg,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.cardBorderDark),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: hasCover ? _buildCoverPreview() : _EmptyCoverState(onAutoFillTap: onAutoFillTap),
+        AspectRatio(
+          aspectRatio: 16 / 7.8,
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.inputBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.cardBorderDark),
             ),
+            clipBehavior: Clip.antiAlias,
+            child: hasCover
+                ? InkWell(
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(16),
+                    child: _buildCoverPreview(),
+                  )
+                : _EmptyCoverState(
+                    onPickTap: onTap,
+                    onCameraTap: onCameraTap,
+                    onAutoFillTap: onAutoFillTap,
+                  ),
           ),
         ),
       ],
@@ -80,9 +88,15 @@ class CoverPickerSection extends StatelessWidget {
 }
 
 class _EmptyCoverState extends StatelessWidget {
+  final VoidCallback onPickTap;
+  final VoidCallback onCameraTap;
   final VoidCallback? onAutoFillTap;
 
-  const _EmptyCoverState({this.onAutoFillTap});
+  const _EmptyCoverState({
+    required this.onPickTap,
+    required this.onCameraTap,
+    this.onAutoFillTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -90,44 +104,121 @@ class _EmptyCoverState extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Icon(
-          Icons.add_photo_alternate_rounded,
+          Icons.storefront_rounded,
           color: AppColors.primary,
-          size: 30,
+          size: 28,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         const Text(
-          'Kapak fotoğrafı ekle',
+          'Kapak Fotoğrafı Ekle',
           style: TextStyle(
             color: AppColors.darkText,
             fontSize: 13,
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 2),
         const Text(
           'İsteğe bağlı — sonra da eklenebilir',
           style: TextStyle(
             color: AppColors.mutedText,
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: FontWeight.w600,
           ),
         ),
-        if (onAutoFillTap != null) ...[
-          const SizedBox(height: 8),
-          TextButton.icon(
-            onPressed: onAutoFillTap,
-            icon: const Icon(Icons.auto_awesome_rounded, size: 16, color: AppColors.primary),
-            label: const Text(
-              'Hazır şablonlardan seç',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildButton(
+                  onPressed: onPickTap,
+                  icon: Icons.add_photo_alternate_rounded,
+                  label: 'Dosya Seç',
+                  isPrimary: false,
+                ),
               ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _buildButton(
+                  onPressed: onCameraTap,
+                  icon: Icons.photo_camera_rounded,
+                  label: 'Fotoğraf Çek',
+                  isPrimary: false,
+                ),
+              ),
+              if (onAutoFillTap != null) ...[
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _buildButton(
+                    onPressed: onAutoFillTap!,
+                    icon: Icons.auto_awesome_rounded,
+                    label: 'Şablonlar',
+                    isPrimary: true,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    required bool isPrimary,
+  }) {
+    if (isPrimary) {
+      return ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.black,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          elevation: 0,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: Colors.black),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
             ),
+          ],
+        ),
+      );
+    }
+
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.darkText,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        side: const BorderSide(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 14, color: AppColors.primary),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
           ),
         ],
-      ],
+      ),
     );
   }
 }

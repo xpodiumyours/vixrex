@@ -53,7 +53,7 @@ class GalleryEditorSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Add button
             if (canAdd)
@@ -70,18 +70,55 @@ class GalleryEditorSection extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: cardBorder),
                     ),
-                    child: Column(
+                    child: const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.add_photo_alternate_rounded,
                           color: primaryColor,
                           size: 22,
                         ),
-                        const SizedBox(height: 3),
+                        SizedBox(height: 3),
                         Text(
-                          galleryItems.isEmpty ? 'Galeri' : '+',
-                          style: const TextStyle(
+                          'Cihazdan',
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            // Template button
+            if (canAdd && onAutoFillTap != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: InkWell(
+                  onTap: onAutoFillTap,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: thumbSize,
+                    height: thumbSize,
+                    decoration: BoxDecoration(
+                      color: inputBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          color: primaryColor,
+                          size: 22,
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          'Şablon',
+                          style: TextStyle(
                             color: primaryColor,
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -95,34 +132,16 @@ class GalleryEditorSection extends StatelessWidget {
             // Thumbnails or empty state
             Expanded(
               child: galleryItems.isEmpty
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 22),
-                          child: Text(
-                            'Galeri fotoğrafı ekleyebilirsin',
-                            style: TextStyle(
-                              color: mutedText.withValues(alpha: 0.7),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                  ? Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Text(
+                        'Vitrin galerisi için en fazla $maxGalleryPhotos fotoğraf ekleyin.',
+                        style: TextStyle(
+                          color: mutedText.withOpacity(0.7),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
-                        if (onAutoFillTap != null)
-                          TextButton.icon(
-                            onPressed: onAutoFillTap,
-                            icon: const Icon(Icons.auto_awesome_rounded, size: 16, color: primaryColor),
-                            label: const Text(
-                              'Hazır şablonlardan seç',
-                              style: TextStyle(
-                                color: primaryColor,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                      ],
+                      ),
                     )
                   : SizedBox(
                       height: thumbSize,

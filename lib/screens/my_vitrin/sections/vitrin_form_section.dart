@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart' as img_picker;
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
@@ -175,6 +176,7 @@ class VitrinFormSection extends StatelessWidget {
                   coverUrl: controller.coverUrl,
                   coverFileName: controller.coverFileName,
                   onTap: () => _pickCover(context),
+                  onCameraTap: () => _pickCoverFromCamera(context),
                   onAutoFillTap: () => _showCategoryGallery(context, source: ImageSource.coverPicker),
                 ),
               ),
@@ -520,6 +522,27 @@ class VitrinFormSection extends StatelessWidget {
     }
     controller.setCoverBytes(
       file.bytes!, file.name,
+      v.fileInfo?.extension ?? 'jpg',
+      v.fileInfo?.contentType ?? 'image/jpeg',
+    );
+  }
+
+  Future<void> _pickCoverFromCamera(BuildContext ctx) async {
+    final picker = img_picker.ImagePicker();
+    final pickedFile = await picker.pickImage(source: img_picker.ImageSource.camera);
+    if (pickedFile == null) return;
+    final bytes = await pickedFile.readAsBytes();
+    final size = bytes.length;
+    final v = GalleryImageFileValidator.validate(
+      bytes: bytes, reportedSize: size,
+    );
+    if (!ctx.mounted) return;
+    if (!v.isValid) {
+      state.showSnackBar(ctx, 'Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.');
+      return;
+    }
+    controller.setCoverBytes(
+      bytes, pickedFile.name,
       v.fileInfo?.extension ?? 'jpg',
       v.fileInfo?.contentType ?? 'image/jpeg',
     );
