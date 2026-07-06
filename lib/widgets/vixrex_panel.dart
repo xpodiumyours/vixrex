@@ -6,6 +6,7 @@ import 'package:vixrex/services/chatbot_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/vixrex_message_bubble.dart';
+import 'package:vixrex/widgets/vixrex_quick_replies.dart';
 
 const double _vixrexPanelAvatarSize = 68;
 
@@ -394,7 +395,11 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 5),
                     child: msg.isBot
-                        ? VixRexBotMessage(msg: msg, showCursor: !_isTyping)
+                        ? VixRexBotMessage(
+                            msg: msg,
+                            showCursor: !_isTyping,
+                            cursorVisible: _cursorVisible,
+                          )
                         : VixRexUserMessage(msg: msg),
                   );
                 },
