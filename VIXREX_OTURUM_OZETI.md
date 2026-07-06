@@ -217,10 +217,12 @@
 
 ---
 
-## 10.1 Bugün Elde Edilen Mimari Kazanımlar (2026-07-06)
-
-*   **Vibe Coding Hatalarının Temizlenmesi:** Projede `const BookingService()` gibi ad-hoc ve test edilemeyen servis çağrıları tamamen sonlandırıldı. Tüm ekranlar asenkron işlemlerini constructor ile inject edilebilen Controller sınıflarına delege etti.
-*   **Temiz Katmanlı Mimari (Clean Architecture):** `StoreData` üzerindeki database JSON dönüşüm yükü `StoreDataDto` sınıfına taşınarak veri katmanı domain modelinden yalıtıldı.
+*   **Vibe Coding Hatalarının Temizlenmesi:** Projede `const BookingService()` gibi ad-hoc ve test edilemeyen servis çağrıları tamamen sonlandırıldı.
+    *   [appointment_tracker_screen.dart](file:///c:/Projects/vixrex/lib/screens/appointment_tracker_screen.dart) içerisindeki `_fetchAppointment`, `_cancelAppointment`, `_fetchSlots` ve `_submitReschedule` asenkron metotları ve tüm loading/error state'leri silinerek `AppointmentTrackerController`'a taşındı.
+    *   [booking_management_screen.dart](file:///c:/Projects/vixrex/lib/screens/booking_management_screen.dart) içerisindeki tab listeleri (`_pendingList`, `_todayList`, `_upcomingList`) ve randevu kabul/ret (`_respond`) asenkron akışları silinerek `BookingManagementController`'a taşındı.
+*   **Temiz Katmanlı Mimari (Clean Architecture):** `StoreData` üzerindeki database JSON dönüşüm yükü veri katmanına yalıtıldı.
+    *   [store_data.dart](file:///c:/Projects/vixrex/lib/models/store_data.dart) dosyasından 300 satıra yakın `toJson()`, `fromJson()`, `copyWith()` ve özel parser yardımcıları silindi.
+    *   [store_data_dto.dart](file:///c:/Projects/vixrex/lib/models/store_data_dto.dart) adında yeni bir sınıf oluşturularak tüm bu serialization ve parser iş mantıkları bu dosyaya izole edildi.
 *   **Static Code Analysis:** Yapılan tüm işlemler sonrasında projede sıfır hata ve sıfır uyarı alındı. Geriye dönük uyumluluk `export` modelleriyle korundu.
 
 ---
