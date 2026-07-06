@@ -364,6 +364,15 @@ class StoreEditorController extends ChangeNotifier {
     final hasPendingCover = _coverBytes != null && _coverFileName != null;
     final hasPendingGallery = _editorGalleryItems.any((item) => !item.isRemoved && item.isFromBytes && item.bytes != null);
     if (!hasPendingCover && !hasPendingGallery) {
+      // Hala güncel olmayan local verileri koru
+      _data.galleryItems = _editorGalleryItems.where((item) => !item.isRemoved).map((item) {
+        return StoreGalleryItem(
+          id: item.id,
+          imageUrl: item.imageUrl ?? '',
+          title: item.title ?? '',
+          description: item.description ?? '',
+        );
+      }).toList();
       return;
     }
 
@@ -379,16 +388,16 @@ class StoreEditorController extends ChangeNotifier {
       final ext = (_coverFileName!.split('.').lastOrNull ?? 'jpg').toLowerCase();
       final mime = ext == 'png' ? 'image/png' : ext == 'webp' ? 'image/webp' : 'image/jpeg';
       final url = await uploadService.uploadShelfImage(_coverBytes!, storeSlug, fileExtension: ext, contentType: mime);
-      _data.coverImageUrl = url;
       _data.shelfImageUrl = url;
+      _data.coverImageUrl = url;
       _coverUrl = url;
       _coverBytes = null;
     }
 
     // 2. Galeri upload
     final updatedGallery = <StoreGalleryItem>[];
-    var gi = 0;
-    for (final item in _editorGalleryItems) {
+    for (var i = 0; i < _editorGalleryItems.length; i++) {
+      final item = _editorGalleryItems[i];
       if (item.isRemoved) continue;
       if (item.isFromBytes && item.bytes != null) {
         final ext = (item.extension ?? 'jpg').toLowerCase();
@@ -399,16 +408,23 @@ class StoreEditorController extends ChangeNotifier {
           fileExtension: ext,
           contentType: mime,
         );
-        updatedGallery.add(StoreGalleryItem(id: item.id, imageUrl: url, title: 'Galeri ${gi + 1}'));
-        gi++;
-      } else if (item.isFromUrl && item.imageUrl != null && item.imageUrl!.isNotEmpty) {
-        updatedGallery.add(StoreGalleryItem(id: item.id, imageUrl: item.imageUrl!));
+        updatedGallery.add(StoreGalleryItem(
+          id: item.id,
+          imageUrl: url,
+          title: item.title ?? 'Galeri ${i + 1}',
+          description: item.description ?? '',
+        ));
+      } else if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
+        updatedGallery.add(StoreGalleryItem(
+          id: item.id,
+          imageUrl: item.imageUrl!,
+          title: item.title ?? 'Galeri ${i + 1}',
+          description: item.description ?? '',
+        ));
       }
     }
-    if (updatedGallery.isNotEmpty) {
-      _data.galleryItems = updatedGallery;
-      _editorGalleryItems = updatedGallery.map((i) => EditorGalleryItem.fromStoreItem(i)).toList();
-    }
+    _data.galleryItems = updatedGallery;
+    _editorGalleryItems = updatedGallery.map((i) => EditorGalleryItem.fromStoreItem(i)).toList();
   }
 
   /// GERCEK PUBLISH: Medya upload -> StorePublishService -> public link
@@ -809,10 +825,17 @@ class StoreEditorController extends ChangeNotifier {
   void setLoading(bool value) { _isLoading = value; notifyListeners(); }
 
   StoreData applyChangesToData() {
-    if (_coverUrl != null) { _data.coverImageUrl = _coverUrl!; _data.shelfImageUrl = _coverUrl!; }
+    if (_coverUrl != null) {
+      _data.coverImageUrl = _coverUrl!;
+      _data.shelfImageUrl = _coverUrl!;
+    }
     _data.galleryItems = _editorGalleryItems.where((item) => !item.isRemoved).map((item) {
-      if (item.isFromUrl) return StoreGalleryItem(id: item.id, imageUrl: item.imageUrl!);
-      return StoreGalleryItem(id: item.id);
+      return StoreGalleryItem(
+        id: item.id,
+        imageUrl: item.imageUrl ?? '',
+        title: item.title ?? '',
+        description: item.description ?? '',
+      );
     }).toList();
     return _data;
   }

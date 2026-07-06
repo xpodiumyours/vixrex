@@ -7,6 +7,8 @@ class EditorGalleryItem {
   final String? imageUrl;
   final String? extension;
   final String? contentType;
+  final String? title;
+  final String? description;
   final int? originalWidth;
   final int? originalHeight;
   final bool isRemoved;
@@ -17,6 +19,8 @@ class EditorGalleryItem {
     this.imageUrl,
     this.extension,
     this.contentType,
+    this.title,
+    this.description,
     this.originalWidth,
     this.originalHeight,
     this.isRemoved = false,
@@ -27,6 +31,8 @@ class EditorGalleryItem {
     required Uint8List bytes,
     required String extension,
     required String contentType,
+    String? title,
+    String? description,
     int? originalWidth,
     int? originalHeight,
   }) {
@@ -35,15 +41,19 @@ class EditorGalleryItem {
       bytes: bytes,
       extension: extension,
       contentType: contentType,
+      title: title,
+      description: description,
       originalWidth: originalWidth,
       originalHeight: originalHeight,
     );
   }
 
-  factory EditorGalleryItem.fromUrl(String url, {String? id}) {
+  factory EditorGalleryItem.fromUrl(String url, {String? id, String? title, String? description}) {
     return EditorGalleryItem._(
       id: id ?? url,
       imageUrl: url,
+      title: title,
+      description: description,
     );
   }
 
@@ -51,6 +61,8 @@ class EditorGalleryItem {
     return EditorGalleryItem._(
       id: item.id,
       imageUrl: item.imageUrl,
+      title: item.title,
+      description: item.description,
     );
   }
 
@@ -61,6 +73,8 @@ class EditorGalleryItem {
       imageUrl: imageUrl,
       extension: extension,
       contentType: contentType,
+      title: title,
+      description: description,
       originalWidth: originalWidth,
       originalHeight: originalHeight,
       isRemoved: true,
