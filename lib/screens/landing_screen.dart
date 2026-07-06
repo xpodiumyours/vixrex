@@ -12,7 +12,7 @@ import 'package:vixrex/widgets/landing/landing_trust_band.dart';
 import 'package:vixrex/widgets/landing/landing_steps_section.dart';
 import 'package:vixrex/widgets/landing/landing_bottom_cta.dart';
 import 'package:vixrex/widgets/landing/landing_template_catalog.dart';
-import 'package:vixrex/widgets/chatbot_overlay.dart';
+import 'package:vixrex/widgets/chatbot_badge.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 

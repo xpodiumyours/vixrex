@@ -5,7 +5,7 @@ import 'package:vixrex/config/chatbot_config.dart';
 import 'package:vixrex/screens/profile_screen.dart';
 import 'package:vixrex/screens/vixrex_screen.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
-import 'package:vixrex/widgets/chatbot_overlay.dart';
+import 'package:vixrex/widgets/chatbot_badge.dart';
 
 void main() {
   testWidgets('VixRex ekranı Türkçe başlıkları gösterir', (tester) async {

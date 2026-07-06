@@ -13,7 +13,7 @@ import 'package:vixrex/screens/profile_screen.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/vixrex_promotion_service.dart';
-import 'package:vixrex/widgets/chatbot_overlay.dart';
+import 'package:vixrex/widgets/chatbot_badge.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 class HomeShellScreen extends StatefulWidget {
