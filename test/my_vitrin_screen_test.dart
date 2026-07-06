@@ -45,7 +45,7 @@ void main() {
 
     expect(find.text('Yasal Bilgilendirme ve Yayınlama Onayı'), findsOneWidget);
     expect(
-      find.textContaining('resmî unvan ve adres bilgileri'),
+      find.textContaining('Taslağınızı onay vermeden'),
       findsOneWidget,
     );
   });

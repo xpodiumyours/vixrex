@@ -32,96 +32,99 @@ class LegalConsentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF13151A),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF2B313E)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.verified_user_outlined, color: Color(0xFF00F0FF), size: 21),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Yasal Bilgilendirme ve Yayınlama Onayı',
-                  style: AppTextStyles.subTitle,
+    return Material(
+      color: const Color(0xFF13151A),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFF2B313E)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.verified_user_outlined, color: Color(0xFF00F0FF), size: 21),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Yasal Bilgilendirme ve Yayınlama Onayı',
+                    style: AppTextStyles.subTitle,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.',
+              style: AppTextStyles.caption,
+            ),
+            if (isLoading) ...[
+              const SizedBox(height: 14),
+              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ] else if (errorText != null) ...[
+              const SizedBox(height: 12),
+              Text(errorText!, style: AppTextStyles.errorText),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: onReloadDocuments,
+                  icon: const Icon(Icons.refresh_rounded, size: 17),
+                  label: const Text('Belgeleri Tekrar Yükle'),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.',
-            style: AppTextStyles.caption,
-          ),
-          if (isLoading) ...[
-            const SizedBox(height: 14),
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ] else if (errorText != null) ...[
-            const SizedBox(height: 12),
-            Text(errorText!, style: AppTextStyles.errorText),
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                onPressed: onReloadDocuments,
-                icon: const Icon(Icons.refresh_rounded, size: 17),
-                label: const Text('Belgeleri Tekrar Yükle'),
+            CheckboxListTile(
+              key: const ValueKey('privacy-notice-checkbox'),
+              value: privacyNoticeAcknowledged,
+              onChanged: canAccept ? (value) => onPrivacyChanged(value ?? false) : null,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text(
+                'Aydınlatma Metni\'ni okudum ve bilgilendirildim.',
+                style: AppTextStyles.formLabel,
               ),
             ),
+            _legalLink(
+              label: 'Aydınlatma Metni',
+              type: LegalPageType.privacy,
+            ),
+            CheckboxListTile(
+              key: const ValueKey('terms-checkbox'),
+              value: termsAccepted,
+              onChanged: canAccept ? (value) => onTermsChanged(value ?? false) : null,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text(
+                'Kullanım Şartları\'nı kabul ediyorum.',
+                style: AppTextStyles.formLabel,
+              ),
+            ),
+            _legalLink(
+              label: 'Kullanım Şartları',
+              type: LegalPageType.terms,
+            ),
+            CheckboxListTile(
+              key: const ValueKey('publication-consent-checkbox'),
+              value: publicationConsentAccepted,
+              onChanged: canAccept ? (value) => onPublicationChanged(value ?? false) : null,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text(
+                'Verilerimin dijital vitrinimde kamuya açık yayınlanmasına açık rıza veriyorum.',
+                style: AppTextStyles.formLabel,
+              ),
+            ),
+            _legalLink(
+              label: 'Açık Rıza Beyanı',
+              type: LegalPageType.consent,
+            ),
           ],
-          const SizedBox(height: 8),
-          CheckboxListTile(
-            key: const ValueKey('privacy-notice-checkbox'),
-            value: privacyNoticeAcknowledged,
-            onChanged: canAccept ? (value) => onPrivacyChanged(value ?? false) : null,
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: const Text(
-              'Aydınlatma Metni’ni okudum ve bilgilendirildim.',
-              style: AppTextStyles.formLabel,
-            ),
-          ),
-          _legalLink(
-            label: 'Aydınlatma Metni',
-            type: LegalPageType.privacy,
-          ),
-          CheckboxListTile(
-            key: const ValueKey('terms-checkbox'),
-            value: termsAccepted,
-            onChanged: canAccept ? (value) => onTermsChanged(value ?? false) : null,
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: const Text(
-              'Kullanım Şartları’nı kabul ediyorum.',
-              style: AppTextStyles.formLabel,
-            ),
-          ),
-          _legalLink(
-            label: 'Kullanım Şartları',
-            type: LegalPageType.terms,
-          ),
-          CheckboxListTile(
-            key: const ValueKey('publication-consent-checkbox'),
-            value: publicationConsentAccepted,
-            onChanged: canAccept ? (value) => onPublicationChanged(value ?? false) : null,
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: const Text(
-              'Verilerimin dijital vitrinimde kamuya açık yayınlanmasına açık rıza veriyorum.',
-              style: AppTextStyles.formLabel,
-            ),
-          ),
-          _legalLink(
-            label: 'Açık Rıza Beyanı',
-            type: LegalPageType.consent,
-          ),
-        ],
+        ),
       ),
     );
   }

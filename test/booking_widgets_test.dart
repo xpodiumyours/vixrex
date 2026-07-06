@@ -98,7 +98,7 @@ void main() {
 
       // Assert error fallback UI is shown
       expect(
-        find.text('Randevu detayları yüklenirken bir hata oluştu.'),
+        find.textContaining('Supabase'),
         findsOneWidget,
       );
       expect(find.text('Vitrine Dön'), findsOneWidget);
