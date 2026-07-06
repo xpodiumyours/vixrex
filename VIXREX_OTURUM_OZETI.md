@@ -228,6 +228,11 @@
     *   [failure.dart](file:///c:/Projects/vixrex/lib/utils/failure.dart) adında lightweight bir exception modeli oluşturuldu.
     *   [booking_service.dart](file:///c:/Projects/vixrex/lib/services/booking_service.dart) içerisindeki ham veritabanı/ağ hataları yakalanıp Türkçe anlamlı `Failure` nesnelerine dönüştürüldü.
     *   **Avantajı:** Arayüz katmanında ham hata mesajları (`PostgrestException` vb.) yerine, kullanıcıya doğrudan ne yapması gerektiğini söyleyen (örn. "Seçtiğiniz saat doludur") tutarlı ve temiz hata geri bildirimleri sağlanmış oldu. Hata yakalama standartlaştırıldı.
+*   **Gelişmiş Result Mimarî Deseni (Result Pattern Matching):**
+    *   [result.dart](file:///c:/Projects/vixrex/lib/core/result.dart) adında generic sarmalayıcı sınıf oluşturuldu ve `when(...)` pattern matching mekanizması eklendi.
+    *   [booking_service.dart](file:///c:/Projects/vixrex/lib/services/booking_service.dart) metotları `Future<Result<T>>` dönecek şekilde refaktör edilerek throw fırlatma yaklaşımı kaldırıldı.
+    *   [booking_wizard_controller.dart](file:///c:/Projects/vixrex/lib/controllers/booking_wizard_controller.dart), [booking_management_controller.dart](file:///c:/Projects/vixrex/lib/controllers/booking_management_controller.dart) ve [appointment_tracker_controller.dart](file:///c:/Projects/vixrex/lib/controllers/appointment_tracker_controller.dart) asenkron veriyi `result.when(...)` metoduyla tip güvenli olarak karşılayacak şekilde güncellendi.
+    *   **Avantajı:** Geliştiricinin hata durumunu ele almayı unutması derleme zamanında (compile-time) engellendi. Kodun hata kurtarma kararlılığı ve test edilebilirliği kurumsal seviyeye çıkarıldı.
 
 ---
 
