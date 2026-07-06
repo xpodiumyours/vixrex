@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
 
@@ -32,11 +31,18 @@ class PublishedVitrinInfo {
 class StoreLocalStorageService {
   const StoreLocalStorageService();
 
+  static SharedPreferences? _prefsCache;
+
+  Future<SharedPreferences> _getPrefs() async {
+    _prefsCache ??= await SharedPreferences.getInstance();
+    return _prefsCache!;
+  }
+
   // ── Mağaza (Store) ────────────────────────────────────────────────────
 
   /// Mağaza verisini yerel depoya kaydeder.
   Future<void> saveStoreData(StoreData data) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.setString(
       LocalStorageKeys.storeData,
       jsonEncode(data.toJson()),
@@ -45,25 +51,25 @@ class StoreLocalStorageService {
 
   /// Kayıtlı mağaza verisini okur. Yoksa `null` döner.
   Future<StoreData?> loadStoreData() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     return _readStoreData(prefs.getString(LocalStorageKeys.storeData));
   }
 
   /// Mağaza edit token'ını kaydeder.
   Future<void> saveStoreEditToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.setString(LocalStorageKeys.storeEditToken, token);
   }
 
   /// Kayıtlı mağaza edit token'ını okur. Yoksa `null` döner.
   Future<String?> loadStoreEditToken() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     return prefs.getString(LocalStorageKeys.storeEditToken);
   }
 
   /// Kayıtlı mağaza verisini ve token'ını siler.
   Future<void> clearStoreData() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.remove(LocalStorageKeys.storeData);
     await prefs.remove(LocalStorageKeys.storeEditToken);
   }
@@ -72,7 +78,7 @@ class StoreLocalStorageService {
 
   /// Vitrin verisini yerel depoya kaydeder.
   Future<void> saveVitrinData(StoreData data) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.setString(
       LocalStorageKeys.vitrinData,
       jsonEncode(data.toJson()),
@@ -81,25 +87,25 @@ class StoreLocalStorageService {
 
   /// Kayıtlı vitrin verisini okur. Yoksa `null` döner.
   Future<StoreData?> loadVitrinData() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     return _readStoreData(prefs.getString(LocalStorageKeys.vitrinData));
   }
 
   /// Vitrin edit token'ını kaydeder.
   Future<void> saveVitrinEditToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.setString(LocalStorageKeys.vitrinEditToken, token);
   }
 
   /// Kayıtlı vitrin edit token'ını okur. Yoksa `null` döner.
   Future<String?> loadVitrinEditToken() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     return prefs.getString(LocalStorageKeys.vitrinEditToken);
   }
 
   /// Kayıtlı vitrin verisini ve token'ını siler.
   Future<void> clearVitrinData() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.remove(LocalStorageKeys.vitrinData);
     await prefs.remove(LocalStorageKeys.vitrinEditToken);
     await clearPublishedVitrinInfo();
@@ -110,7 +116,7 @@ class StoreLocalStorageService {
   /// Eski `vitrin_data` anahtarında `isStore == true` bulunan veriyi
   /// okur (geriye dönük uyumluluk). Sadece okuma amaçlıdır.
   Future<StoreData?> loadLegacyStoreInVitrinData() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     final raw = prefs.getString(LocalStorageKeys.vitrinData);
     final data = _readStoreData(raw);
     if (data != null && data.isStore) {
@@ -121,7 +127,7 @@ class StoreLocalStorageService {
 
   /// Eski `vitrin_data` anahtarını siler (migration sonrası temizlik için).
   Future<void> clearLegacyVitrinData() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.remove(LocalStorageKeys.vitrinData);
   }
 
@@ -134,7 +140,7 @@ class StoreLocalStorageService {
     required String name,
     required String editToken,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.setString(LocalStorageKeys.lastPublishedSlug, slug);
     await prefs.setString(LocalStorageKeys.lastPublishedLink, publicLink);
     await prefs.setString(LocalStorageKeys.lastPublishedName, name);
@@ -143,13 +149,13 @@ class StoreLocalStorageService {
 
   /// Kayıtlı en son yayınlanan vitrin slug'ını okur. Yoksa `null` döner.
   Future<String?> loadLastPublishedSlug() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     return prefs.getString(LocalStorageKeys.lastPublishedSlug);
   }
 
   /// Kayitli yayinlanmis vitrin bilgisini okur. Eksikse `null` doner.
   Future<PublishedVitrinInfo?> loadPublishedVitrinInfo() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     final info = PublishedVitrinInfo(
       slug: prefs.getString(LocalStorageKeys.lastPublishedSlug) ?? '',
       publicLink: prefs.getString(LocalStorageKeys.lastPublishedLink) ?? '',
@@ -162,7 +168,7 @@ class StoreLocalStorageService {
 
   /// Yayınlanan vitrin işaretlerini temizler.
   Future<void> clearPublishedVitrinInfo() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.remove(LocalStorageKeys.lastPublishedSlug);
     await prefs.remove(LocalStorageKeys.lastPublishedLink);
     await prefs.remove(LocalStorageKeys.lastPublishedName);
@@ -172,34 +178,31 @@ class StoreLocalStorageService {
   // ── Pending Category Key ────────────────────────────────────────────────
 
   Future<void> savePendingCategoryKey(String key) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.setString('pending_category_key', key);
   }
 
   Future<String?> loadPendingCategoryKey() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     return prefs.getString('pending_category_key');
   }
 
   Future<void> clearPendingCategoryKey() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.remove('pending_category_key');
   }
 
-  /// Fetch fresh store data from Supabase and save to local storage.
-  Future<void> saveVitrinDataFromSupabase({required String storeId}) async {
-    try {
-      final client = Supabase.instance.client;
-      final response = await client
-          .from('stores')
-          .select()
-          .eq('id', storeId)
-          .single();
-      final data = _readStoreData(jsonEncode(response));
-      if (data != null) {
-        await saveVitrinData(data);
-      }
-    } catch (_) {}
+  // ── Toplu Temizlik ────────────────────────────────────────────────────
+
+  /// Tüm yerel depolama verilerini temizler.
+  Future<void> clearAll() async {
+    final prefs = await _getPrefs();
+    await prefs.remove(LocalStorageKeys.storeData);
+    await prefs.remove(LocalStorageKeys.storeEditToken);
+    await prefs.remove(LocalStorageKeys.vitrinData);
+    await prefs.remove(LocalStorageKeys.vitrinEditToken);
+    await clearPublishedVitrinInfo();
+    await clearPendingCategoryKey();
   }
 
   // ── Private ───────────────────────────────────────────────────────────

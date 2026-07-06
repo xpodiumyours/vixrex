@@ -127,32 +127,36 @@ class _LegalScreenState extends State<LegalScreen> {
       });
     }
 
-    try {
-      final service =
-          widget.documentService ??
-          LegalDocumentService(supabaseClient: widget.supabaseClient);
-      final document = await service.loadActiveDocument(widget.type.name);
-      if (!mounted) return;
-      setState(() {
-        _document = document;
-        _sections = document.sections
-            .map(
-              (section) =>
-                  _LegalSectionData(title: section.title, body: section.body),
-            )
-            .toList(growable: false);
-        _isLoading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _document = null;
-        _sections = [];
-        _loadError =
-            'Güncel yasal belge yüklenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.';
-        _isLoading = false;
-      });
-    }
+    final service =
+        widget.documentService ??
+        LegalDocumentService(supabaseClient: widget.supabaseClient);
+    final result = await service.loadActiveDocument(widget.type.name);
+
+    result.when(
+      success: (document) {
+        if (!mounted) return;
+        setState(() {
+          _document = document;
+          _sections = document.sections
+              .map(
+                (section) =>
+                    _LegalSectionData(title: section.title, body: section.body),
+              )
+              .toList(growable: false);
+          _isLoading = false;
+        });
+      },
+      failure: (_) {
+        if (!mounted) return;
+        setState(() {
+          _document = null;
+          _sections = [];
+          _loadError =
+              'Güncel yasal belge yüklenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+          _isLoading = false;
+        });
+      },
+    );
   }
 
   @override

@@ -1,9 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/legal_config.dart';
-import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/auth_service.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -42,27 +40,24 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = true);
     final authService = const AuthService();
 
-    try {
-      final email = _emailCtrl.text.trim();
-      final password = _passwordCtrl.text;
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
 
-      if (_isLogin) {
-        await authService.signIn(email, password);
-      } else {
-        await authService.signUp(email, password);
-      }
+    final result = _isLogin
+        ? await authService.signIn(email, password)
+        : await authService.signUp(email, password);
 
-      // Handle post-auth routing and linking
-      await _handlePostAuthentication();
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      _showError(_translateAuthError(e));
-    } catch (e) {
-      if (!mounted) return;
-      _showError('Beklenmeyen bir hata oluştu: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    result.when(
+      success: (_) async {
+        await _handlePostAuthentication();
+      },
+      failure: (failure) {
+        if (!mounted) return;
+        _showError(failure.message);
+      },
+    );
+
+    if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _handlePostAuthentication() async {
@@ -75,9 +70,17 @@ class _AuthScreenState extends State<AuthScreen> {
 
     bool linked = false;
     if (localStoreToken != null && localStoreToken.isNotEmpty) {
-      linked = await authService.linkAnonymousStore(localStoreToken);
+      final linkResult = await authService.linkAnonymousStore(localStoreToken);
+      linkResult.when(
+        success: (value) => linked = value,
+        failure: (_) {},
+      );
     } else if (localVitrinToken != null && localVitrinToken.isNotEmpty) {
-      linked = await authService.linkAnonymousStore(localVitrinToken);
+      final linkResult = await authService.linkAnonymousStore(localVitrinToken);
+      linkResult.when(
+        success: (value) => linked = value,
+        failure: (_) {},
+      );
     }
 
     if (!mounted) return;
@@ -95,104 +98,91 @@ class _AuthScreenState extends State<AuthScreen> {
     }
 
     // 2. Fetch the store owned by the authenticated user
-    final StoreData? store = await authService.getStoreForCurrentUser();
+    final storeResult = await authService.getStoreForCurrentUser();
 
-    if (!mounted) return;
-
-    if (store != null) {
-      // Cache details in SharedPreferences and redirect to the appropriate editor screen
-      if (store.isStore) {
-        // isStore: true olan hesaplar için Store editor ekranı
-        // planlanmaktadır. Şimdilik token kaydedilip LandingScreen'e
-        // yönlendirilmektedir.
-        await prefs.setString(
-          LocalStorageKeys.storeData,
-          jsonEncode(store.toJson()),
-        );
-
+    storeResult.when(
+      success: (store) async {
         if (!mounted) return;
 
-        // Fetch and cache the edit token for the store to ensure smooth editor integration
-        final editToken = await authService.getEditTokenForCurrentUser();
-
-        if (!mounted) return;
-
-        if (editToken != null) {
-          await prefs.setString(
-            LocalStorageKeys.storeEditToken,
-            editToken,
-          );
-          // Controller'in okuyacagi key'lere de yaz
-          await prefs.setString(
-            LocalStorageKeys.lastPublishedEditToken,
-            editToken,
-          );
-          if (store.slug.isNotEmpty) {
+        if (store != null) {
+          if (store.isStore) {
             await prefs.setString(
-              LocalStorageKeys.lastPublishedSlug,
-              store.slug,
+              LocalStorageKeys.storeData,
+              jsonEncode(store.toJson()),
             );
+
+            if (!mounted) return;
+
+            final tokenResult = await authService.getEditTokenForCurrentUser();
+            tokenResult.when(
+              success: (editToken) async {
+                if (editToken != null) {
+                  await prefs.setString(
+                    LocalStorageKeys.storeEditToken,
+                    editToken,
+                  );
+                  await prefs.setString(
+                    LocalStorageKeys.lastPublishedEditToken,
+                    editToken,
+                  );
+                  if (store.slug.isNotEmpty) {
+                    await prefs.setString(
+                      LocalStorageKeys.lastPublishedSlug,
+                      store.slug,
+                    );
+                  }
+                }
+              },
+              failure: (_) {},
+            );
+
+            if (!mounted) return;
+
+            AppRouter.navigateToLanding(context);
+          } else {
+            await prefs.setString(
+              LocalStorageKeys.vitrinData,
+              jsonEncode(store.toJson()),
+            );
+
+            if (!mounted) return;
+
+            final tokenResult = await authService.getEditTokenForCurrentUser();
+            tokenResult.when(
+              success: (editToken) async {
+                if (editToken != null) {
+                  await prefs.setString(
+                    LocalStorageKeys.vitrinEditToken,
+                    editToken,
+                  );
+                  await prefs.setString(
+                    LocalStorageKeys.lastPublishedEditToken,
+                    editToken,
+                  );
+                  if (store.slug.isNotEmpty) {
+                    await prefs.setString(
+                      LocalStorageKeys.lastPublishedSlug,
+                      store.slug,
+                    );
+                  }
+                }
+              },
+              failure: (_) {},
+            );
+
+            if (!mounted) return;
+
+            AppRouter.navigateToHomeShell(context, initialIndex: 1);
           }
+        } else {
+          AppRouter.navigateToLanding(context);
         }
-
+      },
+      failure: (_) {
         if (!mounted) return;
-
         AppRouter.navigateToLanding(context);
-      } else {
-        await prefs.setString(
-          LocalStorageKeys.vitrinData,
-          jsonEncode(store.toJson()),
-        );
-
-        if (!mounted) return;
-
-        final editToken = await authService.getEditTokenForCurrentUser();
-
-        if (!mounted) return;
-
-        if (editToken != null) {
-          await prefs.setString(
-            LocalStorageKeys.vitrinEditToken,
-            editToken,
-          );
-          // Controller'in okuyacagi key'lere de yaz
-          await prefs.setString(
-            LocalStorageKeys.lastPublishedEditToken,
-            editToken,
-          );
-          if (store.slug.isNotEmpty) {
-            await prefs.setString(
-              LocalStorageKeys.lastPublishedSlug,
-              store.slug,
-            );
-          }
-        }
-
-        if (!mounted) return;
-
-        AppRouter.navigateToHomeShell(context, initialIndex: 1);
-      }
-    } else {
-      // No store found, go back to LandingScreen which will let them create one
-      AppRouter.navigateToLanding(context);
-    }
-  }
-
-  String _translateAuthError(AuthException e) {
-    final msg = e.message.toLowerCase();
-    if (msg.contains('invalid login credentials')) {
-      return 'E-posta adresi veya şifre hatalı.';
-    }
-    if (msg.contains('user already exists')) {
-      return 'Bu e-posta adresiyle kayıtlı bir kullanıcı zaten var.';
-    }
-    if (msg.contains('invalid email')) {
-      return 'Geçersiz bir e-posta adresi girdiniz.';
-    }
-    if (msg.contains('password is too short')) {
-      return 'Şifre en az 6 karakter olmalıdır.';
-    }
-    return 'Giriş yapılamadı: ${e.message}';
+      },
+    );
   }
 
   void _showError(String msg) {

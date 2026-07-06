@@ -57,17 +57,22 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
     if (widget.mockStoreData != null) {
       return widget.mockStoreData;
     }
-    final response =
-        await const PublicStoreService().fetchPublishedStoreBySlug(widget.slug);
 
-    if (response == null) return null;
-    unawaited(
-      const VitrinViewService().recordView(
-        slug: widget.slug,
-        source: _readViewSource(),
-      ),
+    final result = await const PublicStoreService().fetchPublishedStoreBySlug(widget.slug);
+
+    return result.when(
+      success: (response) {
+        if (response == null) return null;
+        unawaited(
+          const VitrinViewService().recordView(
+            slug: widget.slug,
+            source: _readViewSource(),
+          ),
+        );
+        return _storeDataFromSupabase(response);
+      },
+      failure: (_) => null,
     );
-    return _storeDataFromSupabase(response);
   }
 
   StoreData _storeDataFromSupabase(Map<String, dynamic> data) {

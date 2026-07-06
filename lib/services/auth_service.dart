@@ -1,9 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/core/result.dart';
+import 'package:vixrex/core/supabase_error_mapper.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
-
-/// DebugPrint için foundation.dart import'u
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:vixrex/utils/failure.dart';
 
 class AuthService {
   const AuthService();
@@ -25,45 +25,64 @@ class AuthService {
   bool get hasActiveSession => currentUser != null;
 
   /// Sign up with email and password.
-  Future<AuthResponse> signUp(String email, String password) async {
-    return await Supabase.instance.client.auth.signUp(
-      email: email,
-      password: password,
-    );
+  Future<Result<AuthResponse>> signUp(String email, String password) async {
+    try {
+      final res = await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password,
+      );
+      return Result.success(res);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
   }
 
   /// Sign in with email and password.
-  Future<AuthResponse> signIn(String email, String password) async {
-    return await Supabase.instance.client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+  Future<Result<AuthResponse>> signIn(String email, String password) async {
+    try {
+      final res = await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      return Result.success(res);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
   }
 
   /// Sign out.
-  Future<void> signOut() async {
-    await Supabase.instance.client.auth.signOut();
-    await const StoreLocalStorageService().clearStoreData();
-    await const StoreLocalStorageService().clearVitrinData();
+  Future<Result<void>> signOut() async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+      await const StoreLocalStorageService().clearAll();
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
   }
 
   /// Deletes the currently authenticated user's account and all their data.
-  Future<void> deleteAccount() async {
+  Future<Result<void>> deleteAccount() async {
     final user = currentUser;
     if (user == null) {
-      throw StateError('Hesap silmek için aktif oturum bulunamadı.');
+      return Result.failure(
+        Failure('Hesap silmek için aktif oturum bulunamadı.'),
+      );
     }
 
-    // Call the database RPC to delete the user account
-    await Supabase.instance.client.rpc('delete_user_account');
-    // Sign out to clear local session
-    await signOut();
+    try {
+      await Supabase.instance.client.rpc('delete_user_account');
+      await signOut();
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
   }
 
   /// Fetches the store details for the currently logged-in user.
-  Future<StoreData?> getStoreForCurrentUser() async {
+  Future<Result<StoreData?>> getStoreForCurrentUser() async {
     final user = currentUser;
-    if (user == null) return null;
+    if (user == null) return const Result.success(null);
 
     try {
       final response =
@@ -74,18 +93,18 @@ class AuthService {
               .maybeSingle();
 
       if (response != null) {
-        return StoreData.fromJson(response);
+        return Result.success(StoreData.fromJson(response));
       }
-    } catch (e) {
-      // Ignore or log error
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
-    return null;
   }
 
   /// Fetches the edit token for the currently logged-in user's store.
-  Future<String?> getEditTokenForCurrentUser() async {
+  Future<Result<String?>> getEditTokenForCurrentUser() async {
     final user = currentUser;
-    if (user == null) return null;
+    if (user == null) return const Result.success(null);
 
     try {
       final response =
@@ -96,24 +115,24 @@ class AuthService {
               .maybeSingle();
 
       if (response != null && response['edit_token'] != null) {
-        return response['edit_token'] as String;
+        return Result.success(response['edit_token'] as String);
       }
-    } catch (e) {
-      debugPrint('getEditTokenForCurrentUser error: $e');
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
-    return null;
   }
 
   /// Links an anonymously created store (identifiable by edit token) to the current user.
-  Future<bool> linkAnonymousStore(String editToken) async {
+  Future<Result<bool>> linkAnonymousStore(String editToken) async {
     try {
       final result = await Supabase.instance.client.rpc(
         'link_store_to_user',
         params: {'p_edit_token': editToken},
       );
-      return result as bool? ?? false;
-    } catch (e) {
-      return false;
+      return Result.success(result as bool? ?? false);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 }

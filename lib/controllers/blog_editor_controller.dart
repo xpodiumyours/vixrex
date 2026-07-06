@@ -171,9 +171,17 @@ class BlogEditorController extends ChangeNotifier {
       if (initialArticle != null) {
         final artId = initialArticle!['id'] as String;
         final updatePayload = Map<String, dynamic>.from(payload)..remove('slug');
-        await const ArticleService().updateArticle(id: artId, payload: updatePayload);
+        final result = await const ArticleService().updateArticle(id: artId, payload: updatePayload);
+        result.when(
+          success: (_) {},
+          failure: (failure) => throw Exception(failure.message),
+        );
       } else {
-        await const ArticleService().createArticle(payload);
+        final result = await const ArticleService().createArticle(payload);
+        result.when(
+          success: (_) {},
+          failure: (failure) => throw Exception(failure.message),
+        );
       }
 
       isSaving = false;

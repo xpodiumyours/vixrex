@@ -246,8 +246,11 @@ class LandingHeroSection extends StatelessWidget {
                 if (isDesktop)
                   TextButton.icon(
                     onPressed: () async {
-                      await const AuthService().signOut();
-                      onStateChanged();
+                      final result = await const AuthService().signOut();
+                      result.when(
+                        success: (_) => onStateChanged(),
+                        failure: (_) => onStateChanged(),
+                      );
                     },
                     icon: const Icon(
                       Icons.logout_rounded,
@@ -266,8 +269,11 @@ class LandingHeroSection extends StatelessWidget {
                 else
                   IconButton(
                     onPressed: () async {
-                      await const AuthService().signOut();
-                      onStateChanged();
+                      final result = await const AuthService().signOut();
+                      result.when(
+                        success: (_) => onStateChanged(),
+                        failure: (_) => onStateChanged(),
+                      );
                     },
                     icon: const Icon(Icons.logout_rounded, size: 18),
                     color: AppColors.darkText,

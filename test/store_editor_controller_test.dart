@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/core/result.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
@@ -40,16 +41,16 @@ class FakeLocationService extends Fake implements LocationService {
 
 class FakeStorePublishService extends Fake implements StorePublishService {
   @override
-  Future<StorePublishResult> publishStore(
+  Future<Result<StorePublishResult>> publishStore(
     StoreData data, {
     required String editToken,
   }) async {
-    return StorePublishResult(
+    return Result.success(StorePublishResult(
       slug: 'test-store',
       publicPath: '/test-store',
       wasUpdated: false,
       editToken: editToken,
-    );
+    ));
   }
 }
 

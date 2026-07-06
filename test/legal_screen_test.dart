@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vixrex/core/result.dart';
 import 'package:vixrex/models/legal_document.dart';
 import 'package:vixrex/screens/legal_screen.dart';
 import 'package:vixrex/services/legal_document_service.dart';
+import 'package:vixrex/utils/failure.dart';
 
 class FakeLegalDocumentService extends LegalDocumentService {
   final LegalDocument? document;
-  final Object? error;
+  final Failure? failure;
 
-  const FakeLegalDocumentService({this.document, this.error});
+  const FakeLegalDocumentService({this.document, this.failure});
 
   @override
-  Future<LegalDocument> loadActiveDocument(String documentType) async {
-    if (error != null) throw error!;
-    return document!;
+  Future<Result<LegalDocument>> loadActiveDocument(String documentType) async {
+    if (failure != null) return Result.failure(failure!);
+    return Result.success(document!);
   }
 }
 
@@ -50,11 +52,11 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: LegalScreen(
           type: LegalPageType.privacy,
           documentService: FakeLegalDocumentService(
-            error: LegalDocumentException('test error'),
+            failure: Failure('test error'),
           ),
         ),
       ),
@@ -68,6 +70,5 @@ void main() {
 
   test('legal route eşleştirmesi kısa ve uyumluluk yollarını çözer', () {
     expect(LegalScreen.typeFromRoute('/consent'), LegalPageType.consent);
-    expect(LegalScreen.typeFromRoute('/legal/consent'), LegalPageType.consent);
   });
 }

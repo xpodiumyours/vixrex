@@ -448,26 +448,34 @@ class StoreEditorController extends ChangeNotifier {
       }
 
       final result = await publishService.publishStore(_data, editToken: effectiveEditToken);
-      final publicLink = 'https://vixrex.app${result.publicPath}';
 
-      _publishedInfo = PublishedVitrinInfo(
-        publicLink: publicLink,
-        slug: result.slug,
-        name: _data.name,
-        editToken: result.editToken,
+      return result.when(
+        success: (publishResult) async {
+          final publicLink = 'https://vixrex.app${publishResult.publicPath}';
+
+          _publishedInfo = PublishedVitrinInfo(
+            publicLink: publicLink,
+            slug: publishResult.slug,
+            name: _data.name,
+            editToken: publishResult.editToken,
+          );
+
+          await saveLocally();
+
+          // Explicitly save editToken to local storage so it persists
+          await storage.savePublishedVitrinInfo(
+            slug: publishResult.slug,
+            publicLink: publicLink,
+            name: _data.name,
+            editToken: publishResult.editToken,
+          );
+          notifyListeners();
+          return publicLink;
+        },
+        failure: (failure) {
+          throw StorePublishException(failure.message);
+        },
       );
-
-      await saveLocally();
-
-      // Explicitly save editToken to local storage so it persists
-      await storage.savePublishedVitrinInfo(
-        slug: result.slug,
-        publicLink: publicLink,
-        name: _data.name,
-        editToken: result.editToken,
-      );
-      notifyListeners();
-      return publicLink;
     } on StorePublishException {
       rethrow;
     } catch (e) {
@@ -492,17 +500,24 @@ class StoreEditorController extends ChangeNotifier {
 
     _isWithdrawingConsent = true;
     notifyListeners();
-    try {
-      await publishService.withdrawPublicationConsent(slug: slug, editToken: editToken);
-      await storage.clearPublishedVitrinInfo();
-      _publishedInfo = null;
-      _data.publicationConsentAccepted = false;
-      _data.publicationConsentWithdrawnAt = DateTime.now();
-      await storage.saveVitrinData(_data);
-    } finally {
-      _isWithdrawingConsent = false;
-      notifyListeners();
-    }
+
+    final result = await publishService.withdrawPublicationConsent(slug: slug, editToken: editToken);
+
+    result.when(
+      success: (_) async {
+        await storage.clearPublishedVitrinInfo();
+        _publishedInfo = null;
+        _data.publicationConsentAccepted = false;
+        _data.publicationConsentWithdrawnAt = DateTime.now();
+        await storage.saveVitrinData(_data);
+      },
+      failure: (failure) {
+        throw StorePublishException(failure.message);
+      },
+    );
+
+    _isWithdrawingConsent = false;
+    notifyListeners();
   }
 
   Future<void> deleteVitrin() async {
@@ -512,9 +527,7 @@ class StoreEditorController extends ChangeNotifier {
       final slug = _publishedInfo?.slug;
       final editToken = _publishedInfo?.editToken;
       if (slug != null && editToken != null) {
-        try {
-          await publishService.withdrawPublicationConsent(slug: slug, editToken: editToken);
-        } catch (_) {}
+        await publishService.withdrawPublicationConsent(slug: slug, editToken: editToken);
       }
       await storage.clearVitrinData();
       _data = StoreData(

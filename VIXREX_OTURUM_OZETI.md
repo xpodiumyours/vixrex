@@ -1,5 +1,5 @@
 # VixRex Proje Özeti & Oturum Notları
-> Son güncelleme: 2026-07-06 (Teknik risk doğrulaması tamamlandı)
+> Son güncelleme: 2026-07-06 (MVP → Ürün mimari temizliği tamamlandı)
 
 ---
 
@@ -24,6 +24,91 @@
 - `ArticleService` ve `BookingService` oluşturuldu
 - Doğrudan Supabase çağrıları UI'dan kaldırıldı
 - Unused import hack temizlendi
+
+---
+
+## 1B. MVP → Ürün: Mimari Temizlik (2026-07-06)
+
+> **Hedef:** Vibe coding hatalarını gider, katmanlı mimariyi ve güvenliği güçlendir.
+
+### Aşama 1: `_normalizeTurkish` Tekrarını Çöz (15 dk) ✅
+
+| Dosya | İşlem | Durum |
+|---|---|---|
+| `lib/utils/text_utils.dart` | YENİ OLUŞTUR - Merkezi TextUtils sınıfı | ✅ |
+| `lib/config/business_category_config.dart` | `_normalizeTurkish` kaldırıldı, `TextUtils.normalizeTurkish` kullanıldı | ✅ |
+| `lib/widgets/editor/location_editor_section.dart` | `_normalizeTurkish` kaldırıldı, `TextUtils.normalizeTurkish` kullanıldı | ✅ |
+
+**Sonuç:** 2 dosyadaki yinelenen kod tek merkezi fonksiyona taşındı.
+
+### Aşama 2: `StoreLocalStorageService` Optimizasyonu (45 dk) ✅
+
+| Dosya | İşlem | Durum |
+|---|---|---|
+| `lib/services/store_local_storage_service.dart` | SharedPreferences cache eklendi (22→1 çağrı) | ✅ |
+| `lib/services/store_local_storage_service.dart` | `saveVitrinDataFromSupabase` kaldırıldı (Supabase bağımlılığı sonlandı) | ✅ |
+| `lib/services/store_local_storage_service.dart` | `clearAll` metodu eklendi | ✅ |
+| `lib/services/auto_fill_service.dart` | Supabase fetch mantığı inline olarak taşındı | ✅ |
+| `lib/services/auth_service.dart` | `clearAll()` ile basitleştirildi | ✅ |
+
+**Sonuç:** SharedPreferences instance cache ile performans artırıldı, Supabase bağımlılığı kaldırıldı.
+
+### Aşama 3: `AuthService` → `Result<T>` Geçişi (30 dk) ✅
+
+| Dosya | İşlem | Durum |
+|---|---|---|
+| `lib/services/auth_service.dart` | Tüm metotlar `Result<T>` pattern'ine geçirildi | ✅ |
+| `lib/screens/auth_screen.dart` | `result.when` ile güncellendi, `_translateAuthError` kaldırıldı | ✅ |
+| `lib/widgets/landing/landing_hero_section.dart` | signOut çağrıları `result.when` ile güncellendi | ✅ |
+
+**Sonuç:** Auth hataları servis katmanında yakalanıyor, Türkçe mesajlar `SupabaseErrorMapper` tarafından üretiliyor.
+
+### Aşama 4: Kalan Servisler → `Result<T>` Geçişi (45 dk) ✅
+
+| Dosya | İşlem | Durum |
+|---|---|---|
+| `lib/core/result.dart` | `data` ve `failure` public getter'ları eklendi | ✅ |
+| `lib/services/article_service.dart` | Tüm metotlar `Result<T>` pattern'ine geçirildi | ✅ |
+| `lib/services/public_store_service.dart` | Tüm metotlar `Result<T>` pattern'ine geçirildi | ✅ |
+| `lib/services/legal_document_service.dart` | `throw LegalDocumentException` → `Result.failure` | ✅ |
+| `lib/controllers/blog_editor_controller.dart` | `result.when` ile güncellendi | ✅ |
+| `lib/screens/blog_moderation_screen.dart` | `result.when` ile güncellendi | ✅ |
+| `lib/screens/public_vitrin_screen.dart` | `result.when` ile güncellendi | ✅ |
+| `lib/screens/public_product_screen.dart` | `result.when` ile güncellendi | ✅ |
+| `lib/screens/legal_screen.dart` | `result.when` ile güncellendi | ✅ |
+| `test/legal_screen_test.dart` | Fake service `Result<T>` pattern'ine güncellendi | ✅ |
+
+**Sonuç:** Tüm Supabase servisleri artık `Result<T>` pattern'ini kullanıyor. Hata yönetimi tutarlı ve merkezi.
+
+### Aşama 5: `StorePublishService` → `Result<T>` Geçişi (30 dk) ✅
+
+| Dosya | İşlem | Durum |
+|---|---|---|
+| `lib/services/store_publish_service.dart` | `publishStore` ve `withdrawPublicationConsent` `Result<T>`'ye geçirildi | ✅ |
+| `lib/controllers/store_editor_controller.dart` | `publish()` ve `withdrawPublicationConsent()` `result.when` ile güncellendi | ✅ |
+| `test/store_editor_controller_test.dart` | Fake service `Result<T>` pattern'ine güncellendi | ✅ |
+| `test/store_publish_service_test.dart` | Tüm testler `result.data!` ve `result.failure!` ile güncellendi | ✅ |
+
+**Sonuç:** Publish akışı artık Result<T> pattern'ini kullanıyor. Validation hataları `Result.failure` olarak dönüyor.
+
+### Değişiklik Özeti
+
+| Dosya | İşlem | Satır |
+|---|---|---|
+| `lib/utils/text_utils.dart` | YENİ | +12 |
+| `lib/config/business_category_config.dart` | _normalizeTurkish kaldırıldı | -8 |
+| `lib/widgets/editor/location_editor_section.dart` | _normalizeTurkish kaldırıldı | -10 |
+| `lib/services/store_local_storage_service.dart` | Prefs cache + clearAll | ~210 (yeniden yazıldı) |
+| `lib/services/auto_fill_service.dart` | Supabase fetch inline | +20 |
+| `lib/services/auth_service.dart` | Result<T> pattern | ~120 (yeniden yazıldı) |
+| `lib/screens/auth_screen.dart` | result.when + unused imports | ~160 (yeniden yazıldı) |
+| `lib/widgets/landing/landing_hero_section.dart` | signOut result.when | +8 |
+
+### Doğrulama
+
+```
+flutter analyze → No issues found! (ran in 2.7s)
+```
 
 ---
 
@@ -62,10 +147,11 @@
 | Risk | Durum | Açıklama |
 |---|---|---|
 | Yeni: chatbot_overlay 1005 satır | Büyük dosya | Hâlâ tek dosyada, bölünebilir |
-| Yeni: store_editor_controller 798 satır | Büyük dosya | EditorGalleryItem + controller bir arada |
-| Yeni: _normalizeTurkish tekrarı | 2 dosyada | business_category_config.dart ve location_editor_section.dart |
-| D-2: Normalizasyon fonksiyonu tekrarı | Kısmen çözüldü | 3'ten 2'ye düştü (store_editor_controller'dan kaldırıldı) |
+| Yeni: store_editor_controller 798 satır | Büyük dosya | EditorGalleryItem class'ı içinde |
+| Yeni: _normalizeTurkish tekrarı | ✅ Çözüldü | `TextUtils` sınıfına taşındı |
+| D-2: Normalizasyon fonksiyonu tekrarı | ✅ Çözüldü | 3'ten 0'a düştü |
 | D-3: XrexScreen "Yakında" etiketi | ✅ Çözüldü | VixRexScreen artık aktif, VixRexGuidanceService kullanıyor |
+| AuthService test edilemezlik | ⚠️ Devam | Supabase.instance.client kullanımı (MVP için kabul edilebilir) |
 
 ### Büyük Dosyalar (Hâlâ Bölünmeli)
 
@@ -152,6 +238,10 @@
 
 ### lib/services/ (23 servis)
 - Yeni eklenenler: `article_service.dart`, `booking_service.dart`, `auto_fill_service.dart`, `vixrex_guidance_service.dart`, `vixrex_promotion_service.dart`, `public_store_service.dart`
+- Güncellenenler: `auth_service.dart` (Result<T>), `article_service.dart` (Result<T>), `public_store_service.dart` (Result<T>), `legal_document_service.dart` (Result<T>), `store_publish_service.dart` (Result<T>), `store_local_storage_service.dart` (cache + clearAll)
+
+### lib/utils/ (6 dosya)
+- Yeni eklenen: `text_utils.dart` — Türkçe karakter normalizasyonu
 
 ### lib/widgets/editor/ (14 dosya)
 - `publish_actions_section.dart`, `gallery_editor_section.dart`, `cover_picker_section.dart`, `common_form_fields.dart`, vb.
@@ -224,7 +314,7 @@
     *   [store_data.dart](file:///c:/Projects/vixrex/lib/models/store_data.dart) dosyasından 300 satıra yakın `toJson()`, `fromJson()`, `copyWith()` ve özel parser yardımcıları silindi.
     *   [store_data_dto.dart](file:///c:/Projects/vixrex/lib/models/store_data_dto.dart) adında yeni bir sınıf oluşturularak tüm bu serialization ve parser iş mantıkları bu dosyaya izole edildi.
 *   **Static Code Analysis:** Yapılan tüm işlemler sonrasında projede sıfır hata ve sıfır uyarı alındı. Geriye dönük uyumluluk `export` modelleriyle korundu.
-*   **Merkezi Hata Yönetim Standardı (Lightweight Failure Handling):** 
+*   **Merkezi Hata Yönetim Standardı (Lightweight Failure Handling):**
     *   [failure.dart](file:///c:/Projects/vixrex/lib/utils/failure.dart) adında lightweight bir exception modeli oluşturuldu.
     *   [booking_service.dart](file:///c:/Projects/vixrex/lib/services/booking_service.dart) içerisindeki ham veritabanı/ağ hataları yakalanıp Türkçe anlamlı `Failure` nesnelerine dönüştürüldü.
     *   **Avantajı:** Arayüz katmanında ham hata mesajları (`PostgrestException` vb.) yerine, kullanıcıya doğrudan ne yapması gerektiğini söyleyen (örn. "Seçtiğiniz saat doludur") tutarlı ve temiz hata geri bildirimleri sağlanmış oldu. Hata yakalama standartlaştırıldı.
@@ -233,6 +323,19 @@
     *   [booking_service.dart](file:///c:/Projects/vixrex/lib/services/booking_service.dart) metotları `Future<Result<T>>` dönecek şekilde refaktör edilerek throw fırlatma yaklaşımı kaldırıldı.
     *   [booking_wizard_controller.dart](file:///c:/Projects/vixrex/lib/controllers/booking_wizard_controller.dart), [booking_management_controller.dart](file:///c:/Projects/vixrex/lib/controllers/booking_management_controller.dart) ve [appointment_tracker_controller.dart](file:///c:/Projects/vixrex/lib/controllers/appointment_tracker_controller.dart) asenkron veriyi `result.when(...)` metoduyla tip güvenli olarak karşılayacak şekilde güncellendi.
     *   **Avantajı:** Geliştiricinin hata durumunu ele almayı unutması derleme zamanında (compile-time) engellendi. Kodun hata kurtarma kararlılığı ve test edilebilirliği kurumsal seviyeye çıkarıldı.
+*   **Yinelenen Kod Temizliği (DRY):**
+    *   `_normalizeTurkish` fonksiyonu 2 dosyadan kaldırıldı, `lib/utils/text_utils.dart` içinde merkezileştirildi.
+    *   `StoreLocalStorageService` içindeki 22 ayrı `SharedPreferences.getInstance()` çağrısı tek bir `_getPrefs()` metodunda önbelleğe alındı.
+    *   `StoreLocalStorageService.saveVitrinDataFromSupabase` kaldırıldı, Supabase bağımlılığı `auto_fill_service.dart`'a taşındı.
+*   **AuthService Result<T> Geçişi:**
+    *   `auth_service.dart` içindeki tüm async metotlar `Future<Result<T>>` dönecek şekilde güncellendi.
+    *   `auth_screen.dart` ve `landing_hero_section.dart` `result.when(...)` ile güncellendi.
+    *   `_translateAuthError` metodu kaldırıldı, `SupabaseErrorMapper` tarafından Türkçe hata mesajları üretiliyor.
+*   **Tüm Servislerde Result<T> Standardizasyonu:**
+    *   `article_service.dart`, `public_store_service.dart`, `legal_document_service.dart` Result<T>'ye geçirildi.
+    *   `Result<T>` sınıfına `data` ve `failure` public getter'ları eklendi.
+    *   Tüm caller'lar (`blog_editor_controller`, `blog_moderation_screen`, `public_vitrin_screen`, `public_product_screen`, `legal_screen`) güncellendi.
+    *   Test dosyası (`legal_screen_test.dart`) güncellendi.
 
 ---
 

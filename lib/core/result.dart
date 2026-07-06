@@ -6,6 +6,8 @@ class Result<T> {
 
   bool get isSuccess => _failure == null;
   bool get isFailure => _failure != null;
+  T? get data => _data;
+  Failure? get failure => _failure;
 
   const Result.success(T data)
       : _data = data,

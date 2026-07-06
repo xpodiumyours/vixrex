@@ -164,19 +164,19 @@ void main() {
 
       final result = await service.publishStore(sampleStore, editToken: 't123');
 
-      expect(result.wasUpdated, isFalse);
-      expect(result.publicPath, '/v/test-magazasi');
+      expect(result.isSuccess, isTrue);
+      expect(result.data!.wasUpdated, isFalse);
+      expect(result.data!.publicPath, '/v/test-magazasi');
       expect(fakeClient.queries['slug'], 'test-magazasi');
       expect(fakeClient.insertedPayloads.length, 1);
       expect(fakeClient.insertedPayloads.first['edit_token'], 't123');
     });
 
-    test('Validasyondan geçemeyen mağaza hata fırlatır', () async {
+    test('Validasyondan geçemeyen mağaza Result.failure döner', () async {
       final invalidStore = StoreData(isStore: true, name: '');
-      expect(
-        () => service.publishStore(invalidStore, editToken: 't123'),
-        throwsA(isA<StorePublishException>()),
-      );
+      final result = await service.publishStore(invalidStore, editToken: 't123');
+      expect(result.isFailure, isTrue);
+      expect(result.failure!.message, isNotEmpty);
     });
   });
 
@@ -191,8 +191,9 @@ void main() {
           editToken: 't123',
         );
 
-        expect(result.wasUpdated, isTrue);
-        expect(result.publicPath, '/v/test-magazasi');
+        expect(result.isSuccess, isTrue);
+        expect(result.data!.wasUpdated, isTrue);
+        expect(result.data!.publicPath, '/v/test-magazasi');
         expect(fakeClient.rpcCalls.length, 1);
         expect(fakeClient.rpcCalls.first['fn'], 'update_store_with_token');
         expect(fakeClient.rpcCalls.first['params']['p_edit_token'], 't123');
@@ -213,15 +214,16 @@ void main() {
           editToken: 't123',
         );
 
-        expect(result.wasUpdated, isTrue);
-        expect(result.publicPath, '/v/test-magazasi');
+        expect(result.isSuccess, isTrue);
+        expect(result.data!.wasUpdated, isTrue);
+        expect(result.data!.publicPath, '/v/test-magazasi');
         expect(fakeClient.rpcCalls.length, 1);
         expect(fakeClient.rpcCalls.first['fn'], 'update_store_with_token');
       },
     );
 
     test(
-      'Yetki/RLS hatası aldığında uygun açıklayıcı mesaj fırlatır',
+      'Yetki/RLS hatası aldığında Result.failure döner',
       () async {
         fakeClient.selectResponse = {'slug': 'test-magazasi'};
         fakeClient.postgrestExceptionToThrow = const PostgrestException(
@@ -229,16 +231,10 @@ void main() {
           code: '42501',
         );
 
-        expect(
-          () => service.publishStore(sampleStore, editToken: 't123'),
-          throwsA(
-            isA<StorePublishException>().having(
-              (e) => e.toString(),
-              'message',
-              contains('Supabase tarafında eksik'),
-            ),
-          ),
-        );
+        final result = await service.publishStore(sampleStore, editToken: 't123');
+
+        expect(result.isFailure, isTrue);
+        expect(result.failure!.message, contains('Supabase tarafında eksik'));
       },
     );
   });

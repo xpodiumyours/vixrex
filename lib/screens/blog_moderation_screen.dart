@@ -39,19 +39,22 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
       _isLoading = true;
       _error = null;
     });
-    try {
-      final data = await const ArticleService().fetchPendingReviewArticles();
 
-      setState(() {
-        _pendingArticles = List<Map<String, dynamic>>.from(data as List);
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = 'Yazılar yüklenemedi: $e';
-        _isLoading = false;
-      });
-    }
+    final result = await const ArticleService().fetchPendingReviewArticles();
+    result.when(
+      success: (data) {
+        setState(() {
+          _pendingArticles = data;
+          _isLoading = false;
+        });
+      },
+      failure: (failure) {
+        setState(() {
+          _error = failure.message;
+          _isLoading = false;
+        });
+      },
+    );
   }
 
   Future<void> _moderate(
@@ -62,30 +65,34 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
     if (id.isEmpty || _processingIds.contains(id)) return;
 
     setState(() => _processingIds.add(id));
-    try {
-      await const ArticleService().updateArticleStatus(
-        id: id,
-        status: newStatus,
-      );
 
-      // Trigger ISR revalidation so public page updates immediately
-      if (newStatus == 'published') {
-        final storeSlug = article['store_slug']?.toString() ?? '';
-        const SeoService().revalidateStore(storeSlug);
-      }
+    final result = await const ArticleService().updateArticleStatus(
+      id: id,
+      status: newStatus,
+    );
 
-      if (!mounted) return;
-      setState(() => _pendingArticles.removeWhere((a) => a['id']?.toString() == id));
+    result.when(
+      success: (_) async {
+        // Trigger ISR revalidation so public page updates immediately
+        if (newStatus == 'published') {
+          final storeSlug = article['store_slug']?.toString() ?? '';
+          const SeoService().revalidateStore(storeSlug);
+        }
 
-      _showSnackBar(
-        newStatus == 'published' ? '✓ Yazı yayınlandı' : '✗ Yazı reddedildi',
-      );
-    } catch (e) {
-      if (!mounted) return;
-      _showSnackBar('Hata: $e');
-    } finally {
-      if (mounted) setState(() => _processingIds.remove(id));
-    }
+        if (!mounted) return;
+        setState(() => _pendingArticles.removeWhere((a) => a['id']?.toString() == id));
+
+        _showSnackBar(
+          newStatus == 'published' ? '✓ Yazı yayınlandı' : '✗ Yazı reddedildi',
+        );
+      },
+      failure: (failure) {
+        if (!mounted) return;
+        _showSnackBar('Hata: ${failure.message}');
+      },
+    );
+
+    if (mounted) setState(() => _processingIds.remove(id));
   }
 
   void _showSnackBar(String msg) {

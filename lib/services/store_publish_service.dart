@@ -8,7 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/store_publish_validator.dart';
 import 'package:vixrex/services/store_publish_payload_builder.dart';
+import 'package:vixrex/core/result.dart';
 import 'package:vixrex/core/supabase_error_mapper.dart';
+import 'package:vixrex/utils/failure.dart';
 
 class StorePublishService {
   final StorePublishPayloadBuilder payloadBuilder;
@@ -21,13 +23,13 @@ class StorePublishService {
     this.supabaseClient,
   });
 
-  Future<StorePublishResult> publishStore(
+  Future<Result<StorePublishResult>> publishStore(
     StoreData data, {
     required String editToken,
   }) async {
     final validationMessage = validator.validate(data);
     if (validationMessage != null) {
-      throw StorePublishException(validationMessage);
+      return Result.failure(Failure(validationMessage));
     }
 
     final initialSlug =
@@ -52,12 +54,12 @@ class StorePublishService {
       if (editToken.trim().isEmpty && existingStore != null) {
         final payload = payloadBuilder.toStoreUpdateMap(data);
         await client.from('stores').update(payload).eq('slug', slug);
-        return StorePublishResult(
+        return Result.success(StorePublishResult(
           publicPath: '/v/$slug',
           slug: slug,
           wasUpdated: true,
           editToken: editToken,
-        );
+        ));
       }
 
       if (editToken.trim().isNotEmpty) {
@@ -74,13 +76,14 @@ class StorePublishService {
             if (dbSlug.isNotEmpty) {
               slug = dbSlug;
             }
-            await _updateStoreWithToken(client, data, slug, editToken);
-            return StorePublishResult(
+            final updateResult = await _updateStoreWithToken(client, data, slug, editToken);
+            if (updateResult.isFailure) return Result.failure(updateResult.failure!);
+            return Result.success(StorePublishResult(
               publicPath: '/v/$slug',
               slug: slug,
               wasUpdated: true,
               editToken: editToken,
-            );
+            ));
           }
         } on PostgrestException catch (_) {}
       }
@@ -91,45 +94,41 @@ class StorePublishService {
           payload['user_id'] = client.auth.currentUser!.id;
         }
         await client.from('stores').insert(payload);
-        return StorePublishResult(
+        return Result.success(StorePublishResult(
           publicPath: '/v/$slug',
           slug: slug,
           wasUpdated: false,
           editToken: editToken,
-        );
+        ));
       }
 
-      await _updateStoreWithToken(client, data, slug, editToken);
-      return StorePublishResult(
+      final updateResult = await _updateStoreWithToken(client, data, slug, editToken);
+      if (updateResult.isFailure) return Result.failure(updateResult.failure!);
+      return Result.success(StorePublishResult(
         publicPath: '/v/$slug',
         slug: slug,
         wasUpdated: true,
         editToken: editToken,
-      );
+      ));
     } on PostgrestException catch (error) {
       if (_isDuplicateSlugError(error)) {
-        await _updateStoreWithToken(client, data, slug, editToken);
-        return StorePublishResult(
+        final updateResult = await _updateStoreWithToken(client, data, slug, editToken);
+        if (updateResult.isFailure) return Result.failure(updateResult.failure!);
+        return Result.success(StorePublishResult(
           publicPath: '/v/$slug',
           slug: slug,
           wasUpdated: true,
           editToken: editToken,
-        );
+        ));
       }
 
-      throw StorePublishException(
-        SupabaseErrorMapper.map(error).message,
-      );
-    } on StorePublishException {
-      rethrow;
+      return Result.failure(SupabaseErrorMapper.map(error));
     } catch (error) {
-      throw StorePublishException(
-        SupabaseErrorMapper.map(error).message,
-      );
+      return Result.failure(SupabaseErrorMapper.map(error));
     }
   }
 
-  Future<void> _updateStoreWithToken(
+  Future<Result<void>> _updateStoreWithToken(
     SupabaseClient client,
     StoreData data,
     String slug,
@@ -144,20 +143,19 @@ class StorePublishService {
           'p_store': payloadBuilder.toStoreUpdateMap(data),
         },
       );
-    } on PostgrestException catch (error) {
-      throw StorePublishException(
-        SupabaseErrorMapper.map(error).message,
-      );
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 
-  Future<void> withdrawPublicationConsent({
+  Future<Result<void>> withdrawPublicationConsent({
     required String slug,
     required String editToken,
   }) async {
     if (slug.trim().isEmpty || editToken.trim().isEmpty) {
-      throw const StorePublishException(
-        'Yayındaki vitrin bilgileri eksik olduğu için rıza geri çekilemedi.',
+      return Result.failure(
+        Failure('Yayındaki vitrin bilgileri eksik olduğu için rıza geri çekilemedi.'),
       );
     }
 
@@ -167,12 +165,9 @@ class StorePublishService {
         'withdraw_store_publication_consent',
         params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
       );
-    } on PostgrestException catch (error) {
-      throw StorePublishException(SupabaseErrorMapper.map(error).message);
-    } catch (error) {
-      throw StorePublishException(
-        SupabaseErrorMapper.map(error).message,
-      );
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 

@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/category_image_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 
@@ -203,7 +206,7 @@ class AutoFillService {
       if (updates.isNotEmpty) {
         await _supabase.from('stores').update(updates).eq('id', storeId);
         // Update local storage so initialize() sees fresh data
-        await StoreLocalStorageService().saveVitrinDataFromSupabase(storeId: storeId);
+        await _refreshLocalStoreData(storeId);
       }
 
       return AutoFillResult(
@@ -280,5 +283,22 @@ class AutoFillService {
         .limit(1);
 
     return (response as List).isNotEmpty;
+  }
+
+  /// Supabase'den taze veri çekip yerel depolamaya kaydeder.
+  static Future<void> _refreshLocalStoreData(String storeId) async {
+    try {
+      final response = await _supabase
+          .from('stores')
+          .select()
+          .eq('id', storeId)
+          .single();
+      final rawJson = jsonEncode(response);
+      final decoded = jsonDecode(rawJson);
+      if (decoded is Map<String, dynamic>) {
+        final data = StoreData.fromJson(decoded);
+        await const StoreLocalStorageService().saveVitrinData(data);
+      }
+    } catch (_) {}
   }
 }
