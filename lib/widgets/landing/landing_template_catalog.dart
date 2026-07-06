@@ -117,8 +117,8 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
       'pastane_tatlici': 'firin',
       'mobilya_dekorasyon': 'dekorasyon',
       'spor_salonu': 'spor_fitness',
-      'dis_klinigi': 'saglik_yasam',
-      'eczane': 'saglik_yasam',
+      'dis_klinigi': 'dis_klinigi',
+      'eczane': 'eczane',
       'teknik_servis': 'teknik_servis',
     };
     return keyMap[uiKey] ?? uiKey;

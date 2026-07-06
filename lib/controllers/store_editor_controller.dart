@@ -428,22 +428,6 @@ class StoreEditorController extends ChangeNotifier {
   dynamic get legalDocuments => _legalDocuments;
   String? get legalDocumentsError => _legalDocumentsError;
 
-  /// Medya upload: Supabase Storage -> public URL
-  Future<String> _uploadMedia({
-    required String bucket,
-    required String path,
-    required Uint8List bytes,
-    required String contentType,
-  }) async {
-    final client = _resolveClient();
-    if (client == null) throw const StorePublishException('Supabase bağlı değil.');
-    await client.storage.from(bucket).uploadBinary(
-      path,
-      bytes,
-      fileOptions: FileOptions(contentType: contentType, upsert: true),
-    );
-    return client.storage.from(bucket).getPublicUrl(path);
-  }
 
   Future<void> _uploadPendingMedia() async {
     final hasPendingCover = _coverBytes != null && _coverFileName != null;
@@ -454,13 +438,10 @@ class StoreEditorController extends ChangeNotifier {
 
     final client = _resolveClient();
     if (client == null) throw const StorePublishException('Supabase bağlı değil.');
-    final userId = client.auth.currentUser?.id;
-    if (userId == null) throw const StorePublishException('Oturum acik degil.');
 
     final storeSlug = _data.slug.isNotEmpty
         ? _data.slug
         : publishService.payloadBuilder.generateSlug(_data.name);
-    final ts = DateTime.now().millisecondsSinceEpoch;
 
     // 1. Kapak upload
     if (_coverBytes != null && _coverFileName != null) {
@@ -481,8 +462,12 @@ class StoreEditorController extends ChangeNotifier {
       if (item.isFromBytes && item.bytes != null) {
         final ext = (item.extension ?? 'jpg').toLowerCase();
         final mime = item.contentType ?? (ext == 'png' ? 'image/png' : ext == 'webp' ? 'image/webp' : 'image/jpeg');
-        final path = 'gallery/$userId/${storeSlug}_gallery_${ts}_$gi.$ext';
-        final url = await _uploadMedia(bucket: 'store-images', path: path, bytes: item.bytes!, contentType: mime);
+        final url = await uploadService.uploadGalleryImage(
+          item.bytes!,
+          storeSlug,
+          fileExtension: ext,
+          contentType: mime,
+        );
         updatedGallery.add(StoreGalleryItem(id: item.id, imageUrl: url, title: 'Galeri ${gi + 1}'));
         gi++;
       } else if (item.isFromUrl && item.imageUrl != null && item.imageUrl!.isNotEmpty) {

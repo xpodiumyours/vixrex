@@ -317,32 +317,47 @@ export default async function StorePage(props: PageProps) {
                   {whatsappActionUrl && (
                     <Link
                       href={whatsappActionUrl}
-                      className="rounded-2xl bg-[#25D366] px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-emerald-950/20"
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-emerald-950/20 transition hover:opacity-90"
                     >
-                      WhatsApp
+                      <svg className="h-4 w-4 fill-current shrink-0" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.002 5.465 5.468 0 12.145 0c3.24.001 6.285 1.26 8.577 3.557 2.292 2.297 3.55 5.344 3.546 8.584-.007 6.68-5.473 12.145-12.15 12.145-2.002-.002-3.973-.496-5.73-1.447L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.858.002-2.634-1.025-5.11-2.89-6.98-1.866-1.87-4.348-2.9-6.988-2.9-5.442 0-9.87 4.42-9.874 9.86-.001 1.743.46 3.447 1.336 4.965l-.988 3.6 3.727-.978zm11.218-7.206c-.3-.149-1.774-.875-2.046-.974-.272-.1-.471-.149-.669.149-.198.3-.769.949-.943 1.149-.174.198-.348.223-.648.074-1.037-.518-1.797-.939-2.51-2.155-.188-.323.188-.3.539-.999.061-.124.03-.235-.015-.335-.045-.1-.471-1.136-.646-1.559-.17-.41-.357-.354-.471-.354-.108-.002-.23-.002-.353-.002-.124 0-.325.046-.496.232-.172.186-.656.641-.656 1.562 0 .921.67 1.81.764 1.937.094.124 1.318 2.012 3.194 2.818.446.193.795.308 1.067.394.448.143.855.123 1.176.075.358-.054 1.774-.725 2.022-1.425.249-.699.249-1.295.173-1.424-.075-.127-.272-.201-.57-.35z"/>
+                      </svg>
+                      WhatsApp'tan Sor
                     </Link>
                   )}
                   {instagramUrl && (
                     <Link
                       href={instagramUrl}
-                      className="rounded-2xl bg-[#E1306C] px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-pink-950/20"
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-[#E1306C] px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-pink-950/20 transition hover:opacity-90"
                     >
+                      <svg className="h-4 w-4 fill-current shrink-0" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+                      </svg>
                       Instagram
                     </Link>
                   )}
                   {websiteUrl && (
                     <Link
                       href={websiteUrl}
-                      className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 text-center text-sm font-black text-white"
+                      className="flex items-center justify-center gap-2 rounded-2xl border border-white/12 bg-white/10 px-4 py-3 text-center text-sm font-black text-white transition hover:bg-white/15"
                     >
+                      <svg className="h-4 w-4 fill-none stroke-current shrink-0" strokeWidth="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                        <path d="M2 12h20"></path>
+                      </svg>
                       Web Sitesi
                     </Link>
                   )}
                   {mapsUrl && (
                     <Link
                       href={mapsUrl}
-                      className="rounded-2xl bg-[#38A0E4] px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-sky-950/20"
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-[#38A0E4] px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-sky-950/20 transition hover:opacity-90"
                     >
+                      <svg className="h-4 w-4 fill-none stroke-current shrink-0" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
                       Yol Tarifi
                     </Link>
                   )}

@@ -61,7 +61,7 @@ List<Widget> buildPreviewActionButtons({
     ),
     if (storeData.website.trim().isNotEmpty)
       const _PreviewActionSpec(
-        label: 'Web',
+        label: 'Web Sitesi',
         icon: Icons.language_rounded,
         message:
             "Müşteriler bu butona bastığında web sitenize yönlendirilir.",
@@ -74,7 +74,7 @@ List<Widget> buildPreviewActionButtons({
     ),
     if (storeData.googleBusinessLink.trim().isNotEmpty)
       const _PreviewActionSpec(
-        label: 'Yorum Yap',
+        label: 'Google\'da Yorum Yap',
         icon: Icons.star_rate_rounded,
         message:
             "Müşteriler bu butona bastığında Google yorum sayfanıza yönlendirilir.",
