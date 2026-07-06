@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/screens/public_vitrin_screen.dart';
-import 'package:vixrex/services/booking_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
+
+import 'package:vixrex/controllers/appointment_tracker_controller.dart';
 
 class AppointmentTrackerScreen extends StatefulWidget {
   final String token;
@@ -14,50 +15,28 @@ class AppointmentTrackerScreen extends StatefulWidget {
 }
 
 class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
-  bool _isLoading = true;
-  dynamic _appointment;
-  String? _errorMsg;
-
-  // Reschedule state
-  bool _isRescheduling = false;
-  DateTime? _newDate;
-  String? _newSlotTime;
-  List<dynamic> _availableSlots = [];
-  bool _isLoadingSlots = false;
-  bool _isSubmittingReschedule = false;
+  late final AppointmentTrackerController _controller;
 
   @override
   void initState() {
     super.initState();
-    _fetchAppointment();
+    _controller = AppointmentTrackerController(
+      token: widget.token,
+      storeSlug: widget.storeSlug,
+    );
+    _controller.addListener(_onControllerChanged);
+    _controller.fetchAppointment();
   }
 
-  Future<void> _fetchAppointment() async {
-    try {
-      final res = await const BookingService().getAppointmentByToken(widget.token);
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
+    super.dispose();
+  }
 
-      if (mounted) {
-        if (res == null) {
-          setState(() {
-            _isLoading = false;
-            _errorMsg = 'Randevu bulunamadı veya geçersiz takip kodu.';
-          });
-        } else {
-          setState(() {
-            _appointment = res;
-            _isLoading = false;
-            _errorMsg = null;
-          });
-        }
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMsg = 'Randevu detayları yüklenirken bir hata oluştu.';
-        });
-      }
-    }
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _cancelAppointment() async {
@@ -80,72 +59,11 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
 
     if (confirmed != true) return;
 
-    setState(() => _isLoading = true);
-    try {
-      await const BookingService().cancelAppointmentByToken(widget.token);
-      await _fetchAppointment();
+    final success = await _controller.cancelAppointment();
+    if (success) {
       _showSnackBar('Randevunuz iptal edildi.');
-    } catch (_) {
-      setState(() => _isLoading = false);
+    } else {
       _showSnackBar('İşlem gerçekleştirilemedi.');
-    }
-  }
-
-  Future<void> _fetchSlots(DateTime date) async {
-    setState(() {
-      _isLoadingSlots = true;
-      _availableSlots = [];
-    });
-
-    try {
-      final res = await const BookingService().getAvailableSlots(
-        storeSlug: widget.storeSlug,
-        date: date,
-      );
-
-      if (mounted) {
-        setState(() {
-          _availableSlots = res;
-          _isLoadingSlots = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoadingSlots = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _submitReschedule() async {
-    if (_newDate == null || _newSlotTime == null) return;
-    setState(() => _isSubmittingReschedule = true);
-
-    try {
-      final datePart = '${_newDate!.year}-${_newDate!.month.toString().padLeft(2, '0')}-${_newDate!.day.toString().padLeft(2, '0')}';
-      final newTime = DateTime.parse('$datePart $_newSlotTime:00');
-
-      await const BookingService().requestReschedule(
-        token: widget.token,
-        newTime: newTime,
-      );
-
-      await _fetchAppointment();
-      if (mounted) {
-        setState(() {
-          _isRescheduling = false;
-          _isSubmittingReschedule = false;
-          _newDate = null;
-          _newSlotTime = null;
-        });
-      }
-      _showSnackBar('Tarih değişikliği talebiniz iletildi.');
-    } catch (_) {
-      if (mounted) {
-        setState(() => _isSubmittingReschedule = false);
-      }
-      _showSnackBar('Talep gönderilemedi. Seçilen saat dolu olabilir.');
     }
   }
 
@@ -202,9 +120,9 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
           },
         ),
       ),
-      body: _isLoading
+      body: _controller.isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _errorMsg != null
+          : _controller.errorMsg != null
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
@@ -213,7 +131,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                       children: [
                         const Icon(Icons.error_outline_rounded, size: 48, color: Colors.red),
                         const SizedBox(height: 16),
-                        Text(_errorMsg!, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text(_controller.errorMsg!, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 24),
                         ElevatedButton(
                           onPressed: () {
@@ -233,8 +151,8 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
   }
 
   Widget _buildMainContent() {
-    final status = _appointment['status'] as String;
-    final reschedule = _appointment['reschedule_request'];
+    final status = _controller.appointment['status'] as String;
+    final reschedule = _controller.appointment['reschedule_request'];
 
     Color statusColor;
     String statusText;
@@ -280,7 +198,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                 Row(
                   children: [
                     Text(
-                      _appointment['store_name'] ?? 'İşletme Vitrini',
+                      _controller.appointment['store_name'] ?? 'İşletme Vitrini',
                       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.darkText),
                     ),
                     const Spacer(),
@@ -298,19 +216,19 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                   ],
                 ),
                 const Divider(height: 24, color: AppColors.border),
-                _buildInfoRow(Icons.calendar_month_rounded, 'Tarih & Saat', _formatDateTime(_appointment['appointment_time'])),
+                _buildInfoRow(Icons.calendar_month_rounded, 'Tarih & Saat', _formatDateTime(_controller.appointment['appointment_time'])),
                 const SizedBox(height: 10),
-                _buildInfoRow(Icons.content_cut_rounded, 'Hizmet', _appointment['service_title']),
+                _buildInfoRow(Icons.content_cut_rounded, 'Hizmet', _controller.appointment['service_title']),
                 const SizedBox(height: 10),
-                _buildInfoRow(Icons.timer_rounded, 'Süre', '${_appointment['service_duration']} dakika'),
-                if (_appointment['service_price'] != null && _appointment['service_price'].toString().isNotEmpty) ...[
+                _buildInfoRow(Icons.timer_rounded, 'Süre', '${_controller.appointment['service_duration']} dakika'),
+                if (_controller.appointment['service_price'] != null && _controller.appointment['service_price'].toString().isNotEmpty) ...[
                   const SizedBox(height: 10),
-                  _buildInfoRow(Icons.payments_rounded, 'Ücret', _appointment['service_price']),
+                  _buildInfoRow(Icons.payments_rounded, 'Ücret', _controller.appointment['service_price']),
                 ],
                 const SizedBox(height: 10),
-                _buildInfoRow(Icons.person_rounded, 'Müşteri', _appointment['customer_name']),
+                _buildInfoRow(Icons.person_rounded, 'Müşteri', _controller.appointment['customer_name']),
                 const SizedBox(height: 10),
-                _buildInfoRow(Icons.phone_android_rounded, 'Telefon', _appointment['customer_phone']),
+                _buildInfoRow(Icons.phone_android_rounded, 'Telefon', _controller.appointment['customer_phone']),
               ],
             ),
           ),
@@ -356,10 +274,10 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      setState(() => _isRescheduling = !_isRescheduling);
+                      _controller.isRescheduling = !_controller.isRescheduling;
                     },
                     icon: const Icon(Icons.edit_calendar_rounded, size: 16),
-                    label: Text(_isRescheduling ? 'Kapat' : 'Tarih Değiştir'),
+                    label: Text(_controller.isRescheduling ? 'Kapat' : 'Tarih Değiştir'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -368,7 +286,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                 ),
               ],
             ),
-            if (_isRescheduling) ...[
+            if (_controller.isRescheduling) ...[
               const SizedBox(height: 16),
               _buildReschedulingSection(),
             ],
@@ -437,7 +355,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
               itemCount: dates.length,
               itemBuilder: (context, index) {
                 final date = dates[index];
-                final isSelected = _newDate?.year == date.year && _newDate?.month == date.month && _newDate?.day == date.day;
+                final isSelected = _controller.newDate?.year == date.year && _controller.newDate?.month == date.month && _controller.newDate?.day == date.day;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: ChoiceChip(
@@ -454,11 +372,9 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     onSelected: (selected) {
                       if (selected) {
-                        setState(() {
-                          _newDate = date;
-                          _newSlotTime = null;
-                        });
-                        _fetchSlots(date);
+                        _controller.newDate = date;
+                        _controller.newSlotTime = null;
+                        _controller.fetchSlots(date);
                       }
                     },
                   ),
@@ -466,16 +382,16 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
               },
             ),
           ),
-          if (_newDate != null) ...[
+          if (_controller.newDate != null) ...[
             const SizedBox(height: 16),
             const Text(
               'Yeni Saat Seçin',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.darkText),
             ),
             const SizedBox(height: 10),
-            _isLoadingSlots
+            _controller.isLoadingSlots
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                : _availableSlots.isEmpty
+                : _controller.availableSlots.isEmpty
                     ? const Text('Bu tarihte müsait saat bulunmuyor.', style: TextStyle(color: AppColors.mutedText))
                     : GridView.builder(
                         shrinkWrap: true,
@@ -486,13 +402,13 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                           mainAxisSpacing: 8,
                           childAspectRatio: 2,
                         ),
-                        itemCount: _availableSlots.length,
+                        itemCount: _controller.availableSlots.length,
                         itemBuilder: (context, index) {
-                          final slot = _availableSlots[index];
+                          final slot = _controller.availableSlots[index];
                           final timeStr = slot['time'] as String;
                           final slotsLeft = slot['slots_left'] as int;
                           final isFull = slotsLeft == 0;
-                          final isSelected = _newSlotTime == timeStr;
+                          final isSelected = _controller.newSlotTime == timeStr;
 
                           return ChoiceChip(
                             label: Text(timeStr, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -501,7 +417,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                                 ? null
                                 : (selected) {
                                     if (selected) {
-                                      setState(() => _newSlotTime = timeStr);
+                                      _controller.newSlotTime = timeStr;
                                     }
                                   },
                             selectedColor: AppColors.primary,
@@ -510,12 +426,19 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                         },
                       ),
           ],
-          if (_newSlotTime != null) ...[
+          if (_controller.newSlotTime != null) ...[
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _isSubmittingReschedule ? null : _submitReschedule,
+              onPressed: _controller.isSubmittingReschedule ? null : () async {
+                final ok = await _controller.submitReschedule();
+                if (ok) {
+                  _showSnackBar('Tarih değişikliği talebiniz iletildi.');
+                } else {
+                  _showSnackBar('Talep gönderilemedi. Seçilen saat dolu olabilir.');
+                }
+              },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryDark),
-              child: _isSubmittingReschedule
+              child: _controller.isSubmittingReschedule
                   ? const CircularProgressIndicator(color: Colors.white)
                   : const Text('Değişiklik Talebi Gönder', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
