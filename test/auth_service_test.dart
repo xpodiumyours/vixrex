@@ -11,11 +11,10 @@ void main() {
       expect(AuthService.isDeleteConfirmationValid(''), isFalse);
     });
 
-    test('aktif oturum yoksa hesap silme başarısız olur', () async {
-      await expectLater(
-        const AuthService().deleteAccount(),
-        throwsA(isA<StateError>()),
-      );
+    test('aktif oturum yoksa hesap silme Result.failure döner', () async {
+      final result = await const AuthService().deleteAccount();
+      expect(result.isFailure, isTrue);
+      expect(result.failure!.message, contains('oturum bulunamadı'));
     });
   });
 }
