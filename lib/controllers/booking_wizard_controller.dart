@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/booking_service.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
@@ -106,19 +105,23 @@ class BookingWizardController extends ChangeNotifier {
     _errorMsg = null;
     notifyListeners();
 
-    try {
-      final slots = await _bookingService.getAvailableSlots(
-        storeSlug: storeData.slug,
-        date: date,
-      );
-      _availableSlots = slots;
-      _isLoadingSlots = false;
-      notifyListeners();
-    } catch (_) {
-      _isLoadingSlots = false;
-      _errorMsg = 'Saat dilimleri yüklenirken bir hata oluştu.';
-      notifyListeners();
-    }
+    final result = await _bookingService.getAvailableSlots(
+      storeSlug: storeData.slug,
+      date: date,
+    );
+
+    result.when(
+      success: (slots) {
+        _availableSlots = slots;
+        _isLoadingSlots = false;
+        notifyListeners();
+      },
+      failure: (failure) {
+        _isLoadingSlots = false;
+        _errorMsg = failure.message;
+        notifyListeners();
+      },
+    );
   }
 
   Future<void> submitRequest(VoidCallback onSuccess) async {
@@ -142,51 +145,42 @@ class BookingWizardController extends ChangeNotifier {
     _errorMsg = null;
     notifyListeners();
 
-    try {
-      final datePart = '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
-      final apptTime = DateTime.parse('$datePart $_selectedSlotTime:00').toUtc().toIso8601String();
+    final datePart = '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
+    final apptTime = DateTime.parse('$datePart $_selectedSlotTime:00').toUtc().toIso8601String();
 
-      final res = await _bookingService.createAppointmentRequest(
-        storeSlug: storeData.slug,
-        customerName: name,
-        customerPhone: phone,
-        customerNotes: notes,
-        serviceTitle: _selectedService!.title,
-        servicePrice: _selectedService!.price,
-        serviceDuration: _selectedService!.durationMinutes,
-        appointmentTime: apptTime,
-      );
+    final result = await _bookingService.createAppointmentRequest(
+      storeSlug: storeData.slug,
+      customerName: name,
+      customerPhone: phone,
+      customerNotes: notes,
+      serviceTitle: _selectedService!.title,
+      servicePrice: _selectedService!.price,
+      serviceDuration: _selectedService!.durationMinutes,
+      appointmentTime: apptTime,
+    );
 
-      final token = res['token'] as String;
-      final apptId = res['appointment_id'] as String;
+    result.when(
+      success: (res) async {
+        final token = res['token'] as String;
+        final apptId = res['appointment_id'] as String;
 
-      await _bookingService.saveAppointmentTokenLocally(
-        appointmentId: apptId,
-        token: token,
-      );
+        await _bookingService.saveAppointmentTokenLocally(
+          appointmentId: apptId,
+          token: token,
+        );
 
-      _createdToken = token;
-      _isSubmitting = false;
-      _currentStep = 5;
-      notifyListeners();
-      onSuccess();
-    } on PostgrestException catch (e) {
-      String msg = 'Talebiniz oluşturulamadı.';
-      if (e.message.contains('DAILY_LIMIT_EXCEEDED')) {
-        msg = 'Günlük randevu limiti sınırına ulaştınız.';
-      } else if (e.message.contains('CAPACITY_FULL')) {
-        msg = 'Seçtiğiniz saat diliminde yer kalmadı. Lütfen başka bir saat seçin.';
-      } else if (e.message.contains('STORE_BUSY_TRY_AGAIN')) {
-        msg = 'Sistem şu an meşgul. Lütfen tekrar deneyin.';
-      }
-      _isSubmitting = false;
-      _errorMsg = msg;
-      notifyListeners();
-    } catch (_) {
-      _isSubmitting = false;
-      _errorMsg = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
-      notifyListeners();
-    }
+        _createdToken = token;
+        _isSubmitting = false;
+        _currentStep = 5;
+        notifyListeners();
+        onSuccess();
+      },
+      failure: (failure) {
+        _isSubmitting = false;
+        _errorMsg = failure.message;
+        notifyListeners();
+      },
+    );
   }
 
   @override

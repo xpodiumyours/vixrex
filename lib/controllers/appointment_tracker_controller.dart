@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/services/booking_service.dart';
-import 'package:vixrex/utils/failure.dart';
 
 class AppointmentTrackerController extends ChangeNotifier {
   final String token;
@@ -52,37 +51,42 @@ class AppointmentTrackerController extends ChangeNotifier {
   }
 
   Future<void> fetchAppointment() async {
-    try {
-      final res = await _bookingService.getAppointmentByToken(token);
-      if (res == null) {
-        _errorMsg = 'Randevu bulunamadı veya geçersiz takip kodu.';
-      } else {
-        _appointment = res;
-        _errorMsg = null;
-      }
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _isLoading = false;
-      _errorMsg = e is Failure ? e.message : 'Randevu detayları yüklenirken bir hata oluştu.';
-      notifyListeners();
-    }
+    final result = await _bookingService.getAppointmentByToken(token);
+    result.when(
+      success: (res) {
+        if (res == null) {
+          _errorMsg = 'Randevu bulunamadı veya geçersiz takip kodu.';
+        } else {
+          _appointment = res;
+          _errorMsg = null;
+        }
+      },
+      failure: (failure) {
+        _errorMsg = failure.message;
+      },
+    );
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<bool> cancelAppointment() async {
     _isLoading = true;
     _errorMsg = null;
     notifyListeners();
-    try {
-      await _bookingService.cancelAppointmentByToken(token);
-      await fetchAppointment();
-      return true;
-    } catch (e) {
-      _isLoading = false;
-      _errorMsg = e is Failure ? e.message : 'İşlem gerçekleştirilemedi.';
-      notifyListeners();
-      return false;
-    }
+
+    final result = await _bookingService.cancelAppointmentByToken(token);
+    return result.when(
+      success: (_) async {
+        await fetchAppointment();
+        return true;
+      },
+      failure: (failure) {
+        _isLoading = false;
+        _errorMsg = failure.message;
+        notifyListeners();
+        return false;
+      },
+    );
   }
 
   Future<void> fetchSlots(DateTime date) async {
@@ -90,19 +94,21 @@ class AppointmentTrackerController extends ChangeNotifier {
     _availableSlots = [];
     notifyListeners();
 
-    try {
-      final slots = await _bookingService.getAvailableSlots(
-        storeSlug: storeSlug,
-        date: date,
-      );
-      _availableSlots = slots;
-      _isLoadingSlots = false;
-      notifyListeners();
-    } catch (e) {
-      _isLoadingSlots = false;
-      _errorMsg = e is Failure ? e.message : null;
-      notifyListeners();
-    }
+    final result = await _bookingService.getAvailableSlots(
+      storeSlug: storeSlug,
+      date: date,
+    );
+
+    result.when(
+      success: (slots) {
+        _availableSlots = slots;
+      },
+      failure: (failure) {
+        _errorMsg = failure.message;
+      },
+    );
+    _isLoadingSlots = false;
+    notifyListeners();
   }
 
   Future<bool> submitReschedule() async {
@@ -112,29 +118,32 @@ class AppointmentTrackerController extends ChangeNotifier {
     _errorMsg = null;
     notifyListeners();
 
-    try {
-      final datePart = '${_newDate!.year}-${_newDate!.month.toString().padLeft(2, '0')}-${_newDate!.day.toString().padLeft(2, '0')}';
-      final apptTime = DateTime.parse('$datePart $_newSlotTime:00');
+    final datePart = '${_newDate!.year}-${_newDate!.month.toString().padLeft(2, '0')}-${_newDate!.day.toString().padLeft(2, '0')}';
+    final apptTime = DateTime.parse('$datePart $_newSlotTime:00');
 
-      await _bookingService.requestReschedule(
-        token: token,
-        newTime: apptTime,
-      );
+    final result = await _bookingService.requestReschedule(
+      token: token,
+      newTime: apptTime,
+    );
 
-      _isSubmittingReschedule = false;
-      _isRescheduling = false;
-      _newDate = null;
-      _newSlotTime = null;
-      _isLoading = true;
-      notifyListeners();
+    return result.when(
+      success: (_) async {
+        _isSubmittingReschedule = false;
+        _isRescheduling = false;
+        _newDate = null;
+        _newSlotTime = null;
+        _isLoading = true;
+        notifyListeners();
 
-      await fetchAppointment();
-      return true;
-    } catch (e) {
-      _isSubmittingReschedule = false;
-      _errorMsg = e is Failure ? e.message : 'Talep gönderilemedi.';
-      notifyListeners();
-      return false;
-    }
+        await fetchAppointment();
+        return true;
+      },
+      failure: (failure) {
+        _isSubmittingReschedule = false;
+        _errorMsg = failure.message;
+        notifyListeners();
+        return false;
+      },
+    );
   }
 }

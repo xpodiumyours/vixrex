@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/services/booking_service.dart';
-import 'package:vixrex/utils/failure.dart';
 
 class BookingManagementController extends ChangeNotifier {
   final String storeSlug;
@@ -20,17 +19,18 @@ class BookingManagementController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   Future<void> fetchAppointments() async {
-    try {
-      final res = await _bookingService.fetchAppointments(storeSlug);
-      _appointments = res;
-      _isLoading = false;
-      _errorMessage = null;
-      notifyListeners();
-    } catch (e) {
-      _isLoading = false;
-      _errorMessage = e is Failure ? e.message : 'Randevular yüklenirken bir hata oluştu.';
-      notifyListeners();
-    }
+    final result = await _bookingService.fetchAppointments(storeSlug);
+    result.when(
+      success: (data) {
+        _appointments = data;
+        _errorMessage = null;
+      },
+      failure: (failure) {
+        _errorMessage = failure.message;
+      },
+    );
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<bool> respondToAppointment(
@@ -41,20 +41,25 @@ class BookingManagementController extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    try {
-      await _bookingService.respondToAppointment(
-        appointmentId: apptId,
-        action: action,
-        rescheduleAction: rescheduleAction,
-      );
-      await fetchAppointments();
-      return true;
-    } catch (e) {
-      _isLoading = false;
-      _errorMessage = e is Failure ? e.message : 'İşlem gerçekleştirilemedi.';
-      notifyListeners();
-      return false;
-    }
+
+    final result = await _bookingService.respondToAppointment(
+      appointmentId: apptId,
+      action: action,
+      rescheduleAction: rescheduleAction,
+    );
+
+    return result.when(
+      success: (_) async {
+        await fetchAppointments();
+        return true;
+      },
+      failure: (failure) {
+        _isLoading = false;
+        _errorMessage = failure.message;
+        notifyListeners();
+        return false;
+      },
+    );
   }
 
   List<dynamic> get pendingList {

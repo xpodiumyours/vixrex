@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vixrex/core/result.dart';
 import 'package:vixrex/utils/failure.dart';
 
 /// Randevu ile ilgili tüm Supabase RPC işlemlerini merkezileştirir.
@@ -13,21 +14,21 @@ class BookingService {
   // ─── Management (store owner) ─────────────────────────────────────────────
 
   /// Mağazanın tüm randevularını getirir.
-  Future<List<dynamic>> fetchAppointments(String storeSlug) async {
+  Future<Result<List<dynamic>>> fetchAppointments(String storeSlug) async {
     try {
       final res = await _resolveClient
           .from('appointments')
           .select('*, appointment_reschedule_requests(*)')
           .eq('store_slug', storeSlug)
           .order('appointment_time', ascending: true);
-      return res as List<dynamic>;
-    } catch (_) {
-      throw const Failure('Randevular yüklenirken bağlantı hatası oluştu.');
+      return Result.success(res as List<dynamic>);
+    } catch (e, s) {
+      return Result.failure(Failure('Randevular yüklenirken bağlantı hatası oluştu.', stackTrace: s));
     }
   }
 
   /// Randevuya yanıt verir (kabul/reddet/değişiklik).
-  Future<void> respondToAppointment({
+  Future<Result<void>> respondToAppointment({
     required String appointmentId,
     String? action,
     String? rescheduleAction,
@@ -38,37 +39,40 @@ class BookingService {
         'p_action': action,
         'p_reschedule_action': rescheduleAction,
       });
-    } catch (_) {
-      throw const Failure('Randevu durumu güncellenemedi. Lütfen internetinizi kontrol edin.');
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(Failure('Randevu durumu güncellenemedi. Lütfen internetinizi kontrol edin.', stackTrace: s));
     }
   }
 
   // ─── Public (customer) ────────────────────────────────────────────────────
 
   /// Token ile randevu detayı getirir.
-  Future<dynamic> getAppointmentByToken(String token) async {
+  Future<Result<dynamic>> getAppointmentByToken(String token) async {
     try {
-      return await _resolveClient.rpc('get_appointment_by_token', params: {
+      final res = await _resolveClient.rpc('get_appointment_by_token', params: {
         'p_token': token,
       });
-    } catch (_) {
-      throw const Failure('Randevu bilgileri alınamadı. Kod geçersiz olabilir.');
+      return Result.success(res);
+    } catch (e, s) {
+      return Result.failure(Failure('Randevu bilgileri alınamadı. Kod geçersiz olabilir.', stackTrace: s));
     }
   }
 
   /// Randevuyu iptal eder.
-  Future<void> cancelAppointmentByToken(String token) async {
+  Future<Result<void>> cancelAppointmentByToken(String token) async {
     try {
       await _resolveClient.rpc('cancel_appointment_by_token', params: {
         'p_token': token,
       });
-    } catch (_) {
-      throw const Failure('Randevu iptal edilemedi.');
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(Failure('Randevu iptal edilemedi.', stackTrace: s));
     }
   }
 
   /// Belirli bir tarih için müsait slotları getirir.
-  Future<List<dynamic>> getAvailableSlots({
+  Future<Result<List<dynamic>>> getAvailableSlots({
     required String storeSlug,
     required DateTime date,
   }) async {
@@ -79,14 +83,14 @@ class BookingService {
         'p_store_slug': storeSlug,
         'p_date': dateStr,
       });
-      return res as List<dynamic>;
-    } catch (_) {
-      throw const Failure('Müsait randevu saatleri alınamadı.');
+      return Result.success(res as List<dynamic>);
+    } catch (e, s) {
+      return Result.failure(Failure('Müsait randevu saatleri alınamadı.', stackTrace: s));
     }
   }
 
   /// Randevu değişiklik talebi gönderir.
-  Future<void> requestReschedule({
+  Future<Result<void>> requestReschedule({
     required String token,
     required DateTime newTime,
   }) async {
@@ -95,16 +99,17 @@ class BookingService {
         'p_token': token,
         'p_new_time': newTime.toUtc().toIso8601String(),
       });
-    } catch (e) {
+      return const Result.success(null);
+    } catch (e, s) {
       if (e is PostgrestException && e.message.contains('dolu')) {
-        throw const Failure('Seçtiğiniz randevu saati dolu.');
+        return Result.failure(Failure('Seçtiğiniz randevu saati dolu.', stackTrace: s));
       }
-      throw const Failure('Tarih güncelleme talebi gönderilemedi.');
+      return Result.failure(Failure('Tarih güncelleme talebi gönderilemedi.', stackTrace: s));
     }
   }
 
   /// Yeni randevu talebi oluşturur.
-  Future<Map<String, dynamic>> createAppointmentRequest({
+  Future<Result<Map<String, dynamic>>> createAppointmentRequest({
     required String storeSlug,
     required String customerName,
     required String customerPhone,
@@ -125,12 +130,12 @@ class BookingService {
         'p_service_duration': serviceDuration,
         'p_appointment_time': appointmentTime,
       });
-      return res as Map<String, dynamic>;
-    } catch (e) {
+      return Result.success(res as Map<String, dynamic>);
+    } catch (e, s) {
       if (e is PostgrestException && e.message.contains('dolu')) {
-        throw const Failure('Seçilen saat dolmuştur, lütfen başka bir saat seçin.');
+        return Result.failure(Failure('Seçilen saat dolmuştur, lütfen başka bir saat seçin.', stackTrace: s));
       }
-      throw const Failure('Randevu talebi oluşturulurken hata oluştu.');
+      return Result.failure(Failure('Randevu talebi oluşturulurken hata oluştu.', stackTrace: s));
     }
   }
 
