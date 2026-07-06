@@ -1,5 +1,5 @@
 # VixRex Proje Özeti & Oturum Notları
-> Son güncelleme: 2026-07-06 (MVP → Ürün mimari temizliği tamamlandı)
+> Son güncelleme: 2026-07-07 (Test hataları düzeltildi, tüm testler geçiyor)
 
 ---
 
@@ -91,6 +91,32 @@
 
 **Sonuç:** Publish akışı artık Result<T> pattern'ini kullanıyor. Validation hataları `Result.failure` olarak dönüyor.
 
+### Aşama 6: Test Hatalarının Düzeltmesi (45 dk) ✅
+
+| Dosya | İşlem | Durum |
+|---|---|---|
+| `test/auth_service_test.dart` | `throw` → `Result.failure` kontrolü | ✅ |
+| `test/store_publish_validator_test.dart` | il/ilçe eksik, helper'lar güncellendi | ✅ |
+| `test/store_publish_service_test.dart` | `sampleStore` il/ilçe eklendi | ✅ |
+| `test/store_publish_payload_builder_test.dart` | `explicit_consent_given` anahtarı düzeltildi | ✅ |
+| `test/booking_widgets_test.dart` | Supabase hata mesajı güncellendi | ✅ |
+| `test/my_vitrin_screen_test.dart` | ListTile uyarısı + eski metin düzeltildi | ✅ |
+| `test/widget_test.dart` | SharedPreferences cache reset eklendi | ✅ |
+| `test/public_vitrin_owner_bar_test.dart` | SharedPreferences cache reset eklendi | ✅ |
+| `lib/widgets/editor/legal_consent_section.dart` | Material wrapper ile ListTile uyarısı giderildi | ✅ |
+| `lib/services/store_local_storage_service.dart` | `resetCache()` metodu eklendi | ✅ |
+
+**Sonuç:** 35 başarısız test → 0 başarısız test. Tüm testler geçiyor.
+
+### CLAUDE.md Oluşturuldu ✅
+
+| Dosya | İçerik | Durum |
+|---|---|---|
+| `CLAUDE.md` | Proje kuralları, yapı, servis kalıbı, yasaklar | ✅ |
+| `VIXREX_OTURUM_OZETI.md` | İletişim rehberi, prompt kalıpları | ✅ |
+
+**Sonuç:** Başka bir agent gelse bile aynı kurallara uymak zorunda. Proje bilgisi kopmaz.
+
 ### Değişiklik Özeti
 
 | Dosya | İşlem | Satır |
@@ -117,6 +143,7 @@ flutter analyze → No issues found! (ran in 2.7s)
 | Özellik | Durum | Not |
 |---|---|---|
 | Flutter uygulaması | ✅ Çalışıyor | `flutter analyze` hata yok |
+| Testler | ✅ 227/227 geçiyor | `flutter test` sıfır hata |
 | Public web (Next.js) | ✅ Çalışıyor | SEO altyapısı hazır |
 | Instagram entegrasyonu | ✅ Hazır | Feature flag: `INSTAGRAM_SYNC_ENABLED = false` |
 | Google/SEO | ✅ Hazır | JSON-LD, sitemap, robots.txt, ISR |
@@ -345,3 +372,109 @@ flutter analyze → No issues found! (ran in 2.7s)
 - **Çekmeköy, İstanbul** → İşletme konumu
 - **VixRex vizyonu** → Domain almadan web sitesi kalitesinde SEO dostu link ile dijitalleşme
 - **Hedef kitle** → Küçük işletme sahipleri, teknik bilgisi olmayan esnaf
+
+---
+
+## 12. Nasıl Çalışıyoruz? (İletişim Rehberi)
+
+> Bu bölüm, teknik terim bilmeden nasıl prompt gireceğinizi gösterir.
+
+### Temel Kural
+**Siz sorunu tarif edin, ben çözümü bulup uygulayayım.** Teknik terim bilmenize gerek yok.
+
+### Prompt Kalıpları
+
+#### 1. Aynı Kod Tekrar Ediyorsa
+```
+"DosyaX ve DosyaY'da aynı fonksiyon var, tekrarı kaldır"
+```
+**Örnek:** "business_category_config.dart ve location_editor_section.dart dosyalarında _normalizeTurkish aynı, temizle"
+
+#### 2. Hatalar Yutuluyorsa (catch (_) {} varsa)
+```
+"X dosyasında hatalar yutuluyor, kullanıcı hata mesajı görsün"
+```
+**Örnek:** "vitrin_view_service.dart'da catch (_) {} var, hata olursa kullanıcı bilsin"
+
+#### 3. Dosya Çok Uzunsa
+```
+"X dosyası çok uzun (N satır), parçala"
+```
+**Örnek:** "store_editor_controller.dart 758 satır, daha küçük parçalara böl"
+
+#### 4. Testler Çalışmıyorsa
+```
+"testleri çalıştır, bozuk olanları düzelt"
+```
+
+#### 5. Yeni Özellik Eklerken
+```
+"X özelliğini ekle, Y sayfasında görünsün"
+```
+**Örnek:** "Kullanıcı profiline bildirim sayısı ekle, profile_screen.dart'da göster"
+
+#### 6. Bir Şeyin Neden Çalışmadığını Anlamak İçin
+```
+"X çalışmıyor, nedenini bul ve düzelt"
+```
+**Örnek:** "Randevu oluşturma çalışmıyor, nedenini bul"
+
+#### 7. Kod Kalitesini İyileştirmek İçin
+```
+"Projede tekrar eden kodları bul ve temizle"
+```
+
+#### 8. Güvenlik Kontrolü İçin
+```
+"Güvenlik açığı var mı kontrol et"
+```
+
+### Sorun Tarif Etme Rehberi
+
+| Sizin Gördüğünüz | Benim Anladığım | Yaptığım |
+|---|---|---|
+| "Aynı kod 2 yerde" | Kod tekrarı (DRY ihlali) | Merkezi fonksiyona taşıma |
+| "Hata oluyor ama nedenini bilmiyorum" | Silent catch blokları | Hata loglama ekleme |
+| "Dosya çok karmaşık" | God object/widget | Dosyayı parçalama |
+| "Değişiklik yapamıyorum" | Yüksek bağımlılık | Bağımlılığı azaltma |
+| "Testler geçmiyor" | Test uyumsuzluğu | Test güncelleme |
+| "Yavaş çalışıyor" | Performans sorunu | Optimizasyon |
+
+### Hızlı Komutlar
+
+| Komut | Ne Yapar |
+|---|---|
+| "Analiz et" | Projeyi tarar, sorunları listeler |
+| "Düzelt" | Tespit edilen sorunları çözer |
+| "Test et" | Testleri çalıştırır, sonuçları gösterir |
+| "Commit et" | Değişiklikleri GitHub'a gönderir |
+| "Açıkla" | Seçili dosyadaki kodu açıklar |
+
+### İpucu
+Bana şunu diyebilirsiniz:
+> "Projeyi analiz et, sorunları listele, sonra düzelt"
+
+Ben gerisini hallederim. Siz sadece **onay verirsiniz**.
+
+---
+
+## 13. Bu Oturumda Yapılan Commit'ler
+
+| Commit | Tarih | Açıklama |
+|---|---|---|
+| `296115e` | 2026-07-07 | refactor: Result<T> pattern tüm servislere geçirildi |
+| `6e6e439` | 2026-07-07 | docs: CLAUDE.md kurallar dosyası oluşturuldu |
+| `b38dc7c` | 2026-07-07 | docs: CLAUDE.md güncellendi, proje rehberi eklendi |
+| `bad2aa9` | 2026-07-07 | test: Result<T> ve il/ilçe uyumsuzlukları düzeltildi |
+| `2c19a9f` | 2026-07-07 | test: 7 test daha düzeltildi, ListTile uyarısı giderildi |
+| `87887d3` | 2026-07-07 | test: SharedPreferences cache reset ile son 2 test düzeltildi |
+
+### Toplam İstatistikler
+
+| Metrik | Değer |
+|---|---|
+| Toplam commit | 6 |
+| Güncellenen dosya | 30+ |
+| Düzeltilen test | 35 → 0 başarısız |
+| Geçen test | 227 |
+| `flutter analyze` | Sıfır hata |
