@@ -373,6 +373,12 @@ flutter analyze → No issues found! (ran in 2.7s)
 - **VixRex vizyonu** → Domain almadan web sitesi kalitesinde SEO dostu link ile dijitalleşme
 - **Hedef kitle** → Küçük işletme sahipleri, teknik bilgisi olmayan esnaf
 
+### İletişim Tercihleri
+- **Dil:** Türkçe (İngilizce bilmiyor)
+- **Okuma:** Uzun metinleri sevmiyor, kısa ve öz yaz
+- **Görüş:** Gözleri bozuk, ekrana uzun süre bakamıyor
+- **Çalışma:** Teknik terim kullanmadan sorunlarını tarif ediyor, basit komutlarla çalışıyor
+
 ---
 
 ## 12. Nasıl Çalışıyoruz? (İletişim Rehberi)
