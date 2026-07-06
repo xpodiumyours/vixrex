@@ -224,6 +224,10 @@
     *   [store_data.dart](file:///c:/Projects/vixrex/lib/models/store_data.dart) dosyasından 300 satıra yakın `toJson()`, `fromJson()`, `copyWith()` ve özel parser yardımcıları silindi.
     *   [store_data_dto.dart](file:///c:/Projects/vixrex/lib/models/store_data_dto.dart) adında yeni bir sınıf oluşturularak tüm bu serialization ve parser iş mantıkları bu dosyaya izole edildi.
 *   **Static Code Analysis:** Yapılan tüm işlemler sonrasında projede sıfır hata ve sıfır uyarı alındı. Geriye dönük uyumluluk `export` modelleriyle korundu.
+*   **Merkezi Hata Yönetim Standardı (Lightweight Failure Handling):** 
+    *   [failure.dart](file:///c:/Projects/vixrex/lib/utils/failure.dart) adında lightweight bir exception modeli oluşturuldu.
+    *   [booking_service.dart](file:///c:/Projects/vixrex/lib/services/booking_service.dart) içerisindeki ham veritabanı/ağ hataları yakalanıp Türkçe anlamlı `Failure` nesnelerine dönüştürüldü.
+    *   **Avantajı:** Arayüz katmanında ham hata mesajları (`PostgrestException` vb.) yerine, kullanıcıya doğrudan ne yapması gerektiğini söyleyen (örn. "Seçtiğiniz saat doludur") tutarlı ve temiz hata geri bildirimleri sağlanmış oldu. Hata yakalama standartlaştırıldı.
 
 ---
 
