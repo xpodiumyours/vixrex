@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/public_site_config.dart';
-import 'package:vixrex/services/booking_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
+
+import 'package:vixrex/controllers/booking_management_controller.dart';
 
 class BookingManagementScreen extends StatefulWidget {
   final String storeSlug;
@@ -16,56 +17,38 @@ class BookingManagementScreen extends StatefulWidget {
 
 class _BookingManagementScreenState extends State<BookingManagementScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _isLoading = true;
-  List<dynamic> _appointments = [];
-  String? _errorMessage;
+  late final BookingManagementController _controller;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _fetchAppointments();
+    _controller = BookingManagementController(storeSlug: widget.storeSlug);
+    _controller.addListener(_onControllerChanged);
+    _controller.fetchAppointments();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchAppointments() async {
-    try {
-      final appointments = await const BookingService().fetchAppointments(widget.storeSlug);
-
-      if (mounted) {
-        setState(() {
-          _appointments = appointments;
-          _isLoading = false;
-          _errorMessage = null;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Randevular yüklenirken bir hata oluştu.';
-        });
-      }
-    }
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _respond(String apptId, {String? action, String? rescheduleAction}) async {
-    setState(() => _isLoading = true);
-    try {
-      await const BookingService().respondToAppointment(
-        appointmentId: apptId,
-        action: action,
-        rescheduleAction: rescheduleAction,
-      );
-      await _fetchAppointments();
+    final success = await _controller.respondToAppointment(
+      apptId,
+      action: action,
+      rescheduleAction: rescheduleAction,
+    );
+    if (success) {
       _showSnackBar('Randevu güncellendi.');
-    } catch (_) {
-      setState(() => _isLoading = false);
+    } else {
       _showSnackBar('İşlem gerçekleştirilemedi.');
     }
   }
@@ -115,36 +98,6 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
     }
   }
 
-  List<dynamic> get _pendingList {
-    return _appointments.where((appt) {
-      final status = appt['status'] as String;
-      final hasPendingReschedule = (appt['appointment_reschedule_requests'] as List?)?.any(
-            (r) => r['status'] == 'pending',
-          ) ??
-          false;
-      return status == 'pending' || hasPendingReschedule;
-    }).toList();
-  }
-
-  List<dynamic> get _todayList {
-    final today = DateTime.now();
-    return _appointments.where((appt) {
-      if (appt['status'] != 'confirmed') return false;
-      final time = DateTime.parse(appt['appointment_time']).toLocal();
-      return time.year == today.year && time.month == today.month && time.day == today.day;
-    }).toList();
-  }
-
-  List<dynamic> get _upcomingList {
-    final todayStart = DateTime.now();
-    final todayLimit = DateTime(todayStart.year, todayStart.month, todayStart.day, 23, 59, 59);
-    return _appointments.where((appt) {
-      if (appt['status'] != 'confirmed') return false;
-      final time = DateTime.parse(appt['appointment_time']).toLocal();
-      return time.isAfter(todayLimit);
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,22 +116,22 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
           unselectedLabelColor: AppColors.mutedText,
           indicatorColor: AppColors.primary,
           tabs: [
-            Tab(text: 'Bekleyen (${_pendingList.length})'),
-            Tab(text: 'Bugün (${_todayList.length})'),
-            Tab(text: 'Yaklaşan (${_upcomingList.length})'),
+            Tab(text: 'Bekleyen (${_controller.pendingList.length})'),
+            Tab(text: 'Bugün (${_controller.todayList.length})'),
+            Tab(text: 'Yaklaşan (${_controller.upcomingList.length})'),
           ],
         ),
       ),
-      body: _isLoading
+      body: _controller.isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _errorMessage != null
-              ? Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)))
+          : _controller.errorMessage != null
+              ? Center(child: Text(_controller.errorMessage!, style: const TextStyle(color: Colors.red)))
               : TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildAppointmentList(_pendingList, isPendingTab: true),
-                    _buildAppointmentList(_todayList),
-                    _buildAppointmentList(_upcomingList),
+                    _buildAppointmentList(_controller.pendingList, isPendingTab: true),
+                    _buildAppointmentList(_controller.todayList),
+                    _buildAppointmentList(_controller.upcomingList),
                   ],
                 ),
     );
