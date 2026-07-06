@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Randevu ile ilgili tüm Supabase RPC işlemlerini merkezileştirir.
 class BookingService {
@@ -72,5 +73,40 @@ class BookingService {
       'p_token': token,
       'p_new_time': newTime.toUtc().toIso8601String(),
     });
+  }
+
+  /// Yeni randevu talebi oluşturur.
+  Future<Map<String, dynamic>> createAppointmentRequest({
+    required String storeSlug,
+    required String customerName,
+    required String customerPhone,
+    required String customerNotes,
+    required String serviceTitle,
+    required String servicePrice,
+    required int serviceDuration,
+    required String appointmentTime,
+  }) async {
+    final res = await _resolveClient.rpc('create_appointment_request', params: {
+      'p_store_slug': storeSlug,
+      'p_customer_name': customerName,
+      'p_customer_phone': customerPhone,
+      'p_customer_notes': customerNotes,
+      'p_service_title': serviceTitle,
+      'p_service_price': servicePrice,
+      'p_service_duration': serviceDuration,
+      'p_appointment_time': appointmentTime,
+    });
+    return res as Map<String, dynamic>;
+  }
+
+  /// Randevu tokenını yerel hafızaya kaydeder.
+  Future<void> saveAppointmentTokenLocally({
+    required String appointmentId,
+    required String token,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedTokens = prefs.getStringList('booking_tokens') ?? [];
+    savedTokens.add('$appointmentId:$token');
+    await prefs.setStringList('booking_tokens', savedTokens);
   }
 }

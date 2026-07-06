@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/theme/app_colors.dart';
-import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 import 'package:vixrex/widgets/booking/booking_service_step.dart';
 import 'package:vixrex/widgets/booking/booking_date_step.dart';
 import 'package:vixrex/widgets/booking/booking_slot_step.dart';
 import 'package:vixrex/widgets/booking/booking_details_step.dart';
 import 'package:vixrex/widgets/booking/booking_success_step.dart';
+
+import 'package:vixrex/controllers/booking_wizard_controller.dart';
 
 class BookingWizardSheet extends StatefulWidget {
   final StoreData storeData;
@@ -22,156 +21,24 @@ class BookingWizardSheet extends StatefulWidget {
 }
 
 class _BookingWizardSheetState extends State<BookingWizardSheet> {
-  int _currentStep = 1; // 1: Service, 2: Date, 3: Slot, 4: Details, 5: Success
-  StoreOffering? _selectedService;
-  DateTime? _selectedDate;
-  String? _selectedSlotTime;
+  late final BookingWizardController _controller;
 
-  // Form Fields
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _notesController = TextEditingController();
-  bool _kvkkConsent = false;
-
-  // State
-  bool _isLoadingSlots = false;
-  List<dynamic> _availableSlots = [];
-  bool _isSubmitting = false;
-  String? _createdToken;
-  String? _errorMsg;
+  @override
+  void initState() {
+    super.initState();
+    _controller = BookingWizardController(storeData: widget.storeData);
+    _controller.addListener(_onControllerChanged);
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _notesController.dispose();
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
     super.dispose();
   }
 
-  // 30 days calculation
-  List<DateTime> get _availableDates {
-    final list = <DateTime>[];
-    final today = DateTime.now();
-    final settings = widget.storeData.bookingSettings;
-    if (settings == null) return [];
-
-    for (int i = 0; i < 30; i++) {
-      final date = today.add(Duration(days: i));
-      final dow = date.weekday.toString(); // 1 = Monday, 7 = Sunday
-      final dowConfig = settings.workingHours[dow];
-      if (dowConfig != null && (dowConfig['active'] ?? false) == true) {
-        list.add(date);
-      }
-    }
-    return list;
-  }
-
-  Future<void> _fetchSlots(DateTime date) async {
-    setState(() {
-      _isLoadingSlots = true;
-      _availableSlots = [];
-      _errorMsg = null;
-    });
-
-    try {
-      final client = Supabase.instance.client;
-      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      final res = await client.rpc('get_public_booking_slots', params: {
-        'p_store_slug': widget.storeData.slug,
-        'p_date': dateStr,
-      });
-
-      if (mounted) {
-        setState(() {
-          _availableSlots = res as List<dynamic>;
-          _isLoadingSlots = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoadingSlots = false;
-          _errorMsg = 'Saat dilimleri yüklenirken bir hata oluştu.';
-        });
-      }
-    }
-  }
-
-  Future<void> _submitRequest() async {
-    final name = _nameController.text.trim();
-    final phone = _phoneController.text.trim();
-    final notes = _notesController.text.trim();
-
-    if (name.isEmpty || phone.isEmpty || !_kvkkConsent || _selectedDate == null || _selectedSlotTime == null || _selectedService == null) {
-      setState(() => _errorMsg = 'Lütfen tüm zorunlu alanları doldurun ve onay verin.');
-      return;
-    }
-
-    if (!WhatsAppLinkHelper.isValidTurkeyMobile(phone)) {
-      setState(() => _errorMsg = WhatsAppLinkHelper.invalidNumberMessage);
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-      _errorMsg = null;
-    });
-
-    try {
-      final client = Supabase.instance.client;
-      final datePart = '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
-      final apptTime = DateTime.parse('$datePart $_selectedSlotTime:00').toUtc().toIso8601String();
-
-      final res = await client.rpc('create_appointment_request', params: {
-        'p_store_slug': widget.storeData.slug,
-        'p_customer_name': name,
-        'p_customer_phone': phone,
-        'p_customer_notes': notes,
-        'p_service_title': _selectedService!.title,
-        'p_service_price': _selectedService!.price,
-        'p_service_duration': _selectedService!.durationMinutes,
-        'p_appointment_time': apptTime,
-      });
-
-      final token = res['token'] as String;
-      final apptId = res['appointment_id'] as String;
-
-      // Save token locally in SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      final savedTokens = prefs.getStringList('booking_tokens') ?? [];
-      savedTokens.add('$apptId:$token');
-      await prefs.setStringList('booking_tokens', savedTokens);
-
-      if (mounted) {
-        setState(() {
-          _createdToken = token;
-          _isSubmitting = false;
-          _currentStep = 5;
-        });
-      }
-    } on PostgrestException catch (e) {
-      String msg = 'Talebiniz oluşturulamadı.';
-      if (e.message.contains('DAILY_LIMIT_EXCEEDED')) {
-        msg = 'Günlük randevu limiti sınırına ulaştınız.';
-      } else if (e.message.contains('CAPACITY_FULL')) {
-        msg = 'Seçtiğiniz saat diliminde yer kalmadı. Lütfen başka bir saat seçin.';
-      } else if (e.message.contains('STORE_BUSY_TRY_AGAIN')) {
-        msg = 'Sistem şu an meşgul. Lütfen tekrar deneyin.';
-      }
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-          _errorMsg = msg;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-          _errorMsg = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
-        });
-      }
-    }
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -210,26 +77,21 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  if (_currentStep > 1 && _currentStep < 5)
+                  if (_controller.currentStep > 1 && _controller.currentStep < 5)
                     IconButton(
                       icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                      onPressed: () {
-                        setState(() {
-                          _currentStep--;
-                          _errorMsg = null;
-                        });
-                      },
+                      onPressed: _controller.previousStep,
                     ),
                   Expanded(
                     child: Text(
                       _stepTitle,
                       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.darkText),
-                      textAlign: _currentStep == 5 ? TextAlign.center : TextAlign.start,
+                      textAlign: _controller.currentStep == 5 ? TextAlign.center : TextAlign.start,
                     ),
                   ),
-                  if (_currentStep < 5)
+                  if (_controller.currentStep < 5)
                     Text(
-                      '$_currentStep/4',
+                      '${_controller.currentStep}/4',
                       style: const TextStyle(color: AppColors.mutedText, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                 ],
@@ -243,7 +105,7 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (_errorMsg != null) ...[
+                    if (_controller.errorMsg != null) ...[
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -251,7 +113,7 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          _errorMsg!,
+                          _controller.errorMsg!,
                           style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -269,7 +131,7 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
   }
 
   String get _stepTitle {
-    switch (_currentStep) {
+    switch (_controller.currentStep) {
       case 1:
         return 'Hizmet Seçimi';
       case 2:
@@ -286,64 +148,41 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
   }
 
   Widget _buildStepContent(List<StoreOffering> services) {
-    switch (_currentStep) {
+    switch (_controller.currentStep) {
       case 1:
         return BookingServiceStep(
           services: services,
-          selectedService: _selectedService,
-          onServiceSelected: (srv) {
-            setState(() {
-              _selectedService = srv;
-              _currentStep = 2;
-              _errorMsg = null;
-            });
-          },
+          selectedService: _controller.selectedService,
+          onServiceSelected: _controller.selectService,
         );
       case 2:
         return BookingDateStep(
-          dates: _availableDates,
-          selectedDate: _selectedDate,
-          onDateSelected: (date) {
-            setState(() {
-              _selectedDate = date;
-              _currentStep = 3;
-              _errorMsg = null;
-            });
-            _fetchSlots(date);
-          },
+          dates: _controller.availableDates,
+          selectedDate: _controller.selectedDate,
+          onDateSelected: _controller.selectDate,
         );
       case 3:
         return BookingSlotStep(
-          isLoadingSlots: _isLoadingSlots,
-          availableSlots: _availableSlots,
-          selectedSlotTime: _selectedSlotTime,
-          onSlotSelected: (time) {
-            setState(() {
-              _selectedSlotTime = time;
-              _currentStep = 4;
-              _errorMsg = null;
-            });
-          },
+          isLoadingSlots: _controller.isLoadingSlots,
+          availableSlots: _controller.availableSlots,
+          selectedSlotTime: _controller.selectedSlotTime,
+          onSlotSelected: _controller.selectSlot,
         );
       case 4:
         return BookingDetailsStep(
-          selectedService: _selectedService!,
-          selectedDate: _selectedDate!,
-          selectedSlotTime: _selectedSlotTime!,
-          nameController: _nameController,
-          phoneController: _phoneController,
-          notesController: _notesController,
-          kvkkConsent: _kvkkConsent,
-          onKvkkConsentChanged: (val) {
-            setState(() {
-              _kvkkConsent = val;
-            });
-          },
-          isSubmitting: _isSubmitting,
-          onSubmit: _submitRequest,
+          selectedService: _controller.selectedService!,
+          selectedDate: _controller.selectedDate!,
+          selectedSlotTime: _controller.selectedSlotTime!,
+          nameController: _controller.nameController,
+          phoneController: _controller.phoneController,
+          notesController: _controller.notesController,
+          kvkkConsent: _controller.kvkkConsent,
+          onKvkkConsentChanged: (val) => _controller.kvkkConsent = val,
+          isSubmitting: _controller.isSubmitting,
+          onSubmit: () => _controller.submitRequest(() {}),
         );
       case 5:
-        final trackingLink = '${PublicSiteConfig.buildPublicLink('/v/${widget.storeData.slug}')}#randevu_token=$_createdToken';
+        final trackingLink = '${PublicSiteConfig.buildPublicLink('/v/${widget.storeData.slug}')}#randevu_token=${_controller.createdToken}';
         return BookingSuccessStep(
           trackingLink: trackingLink,
           onCopyPressed: _showSnackBar,
