@@ -11,76 +11,7 @@ import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/utils/secure_token_generator.dart';
 
-class EditorGalleryItem {
-  final String id;
-  final Uint8List? bytes;
-  final String? imageUrl;
-  final String? extension;
-  final String? contentType;
-  final int? originalWidth;
-  final int? originalHeight;
-  final bool isRemoved;
-
-  const EditorGalleryItem._({
-    required this.id,
-    this.bytes,
-    this.imageUrl,
-    this.extension,
-    this.contentType,
-    this.originalWidth,
-    this.originalHeight,
-    this.isRemoved = false,
-  });
-
-  factory EditorGalleryItem.fromBytes({
-    required String id,
-    required Uint8List bytes,
-    required String extension,
-    required String contentType,
-    int? originalWidth,
-    int? originalHeight,
-  }) {
-    return EditorGalleryItem._(
-      id: id,
-      bytes: bytes,
-      extension: extension,
-      contentType: contentType,
-      originalWidth: originalWidth,
-      originalHeight: originalHeight,
-    );
-  }
-
-  factory EditorGalleryItem.fromUrl(String url, {String? id}) {
-    return EditorGalleryItem._(
-      id: id ?? url,
-      imageUrl: url,
-    );
-  }
-
-  factory EditorGalleryItem.fromStoreItem(StoreGalleryItem item) {
-    return EditorGalleryItem._(
-      id: item.id,
-      imageUrl: item.imageUrl,
-    );
-  }
-
-  EditorGalleryItem markRemoved() {
-    return EditorGalleryItem._(
-      id: id,
-      bytes: bytes,
-      imageUrl: imageUrl,
-      extension: extension,
-      contentType: contentType,
-      originalWidth: originalWidth,
-      originalHeight: originalHeight,
-      isRemoved: true,
-    );
-  }
-
-  bool get isFromUrl => imageUrl != null && imageUrl!.isNotEmpty;
-  bool get isFromBytes => bytes != null;
-  bool get isEmpty => !isFromUrl && !isFromBytes;
-}
+import 'package:vixrex/models/editor_gallery_item.dart';
 
 class StoreEditorController extends ChangeNotifier {
   final StoreLocalStorageService storage;

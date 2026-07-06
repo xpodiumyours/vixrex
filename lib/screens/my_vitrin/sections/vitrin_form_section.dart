@@ -13,6 +13,7 @@ import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/category_image_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/models/editor_gallery_item.dart';
 import 'package:vixrex/utils/gallery_image_file_validator.dart';
 import 'package:vixrex/widgets/auto_fill/category_gallery_sheet.dart';
 import 'package:vixrex/widgets/editor/common_form_fields.dart';
