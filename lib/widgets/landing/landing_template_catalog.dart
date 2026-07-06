@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/services/category_image_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/landing/landing_template_category.dart';
+import 'package:vixrex/widgets/landing/landing_template_card.dart';
 
 /// Landing ekranında 12 kategoriyi gösteren şablon kataloğu.
 /// Kullanıcı kategoriye tıklayıp "Bu şablonla başla" dediğinde
@@ -16,85 +18,6 @@ class LandingTemplateCatalog extends StatefulWidget {
   @override
   State<LandingTemplateCatalog> createState() => _LandingTemplateCatalogState();
 }
-
-class _TemplateCategory {
-  final String key;
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  const _TemplateCategory(this.key, this.label, this.icon, this.color);
-}
-
-const List<_TemplateCategory> _categories = [
-  _TemplateCategory(
-    'butik_giyim',
-    'Butik & Giyim',
-    Icons.checkroom_rounded,
-    Color(0xFFFF5A1F),
-  ),
-  _TemplateCategory(
-    'kuafor_guzellik',
-    'Kuaför & Güzellik',
-    Icons.content_cut_rounded,
-    Color(0xFFDB2777),
-  ),
-  _TemplateCategory(
-    'kafe_restoran',
-    'Kafe & Restoran',
-    Icons.restaurant_menu_rounded,
-    Color(0xFFEA580C),
-  ),
-  _TemplateCategory('berber', 'Berber', Icons.face_rounded, Color(0xFF7C3AED)),
-  _TemplateCategory(
-    'oto_kuafor',
-    'Oto Kuaför',
-    Icons.local_car_wash_rounded,
-    Color(0xFF2563EB),
-  ),
-  _TemplateCategory(
-    'market_bakkal',
-    'Market & Bakkal',
-    Icons.shopping_basket_rounded,
-    Color(0xFF059669),
-  ),
-  _TemplateCategory(
-    'pastane_tatlici',
-    'Pastane & Tatlıcı',
-    Icons.bakery_dining_rounded,
-    Color(0xFFD946EF),
-  ),
-  _TemplateCategory(
-    'mobilya_dekorasyon',
-    'Mobilya & Dekorasyon',
-    Icons.chair_rounded,
-    Color(0xFFCA8A04),
-  ),
-  _TemplateCategory(
-    'spor_salonu',
-    'Spor Salonu',
-    Icons.fitness_center_rounded,
-    Color(0xFFDC2626),
-  ),
-  _TemplateCategory(
-    'dis_klinigi',
-    'Diş Kliniği',
-    Icons.medical_services_rounded,
-    Color(0xFF0891B2),
-  ),
-  _TemplateCategory(
-    'eczane',
-    'Eczane',
-    Icons.local_pharmacy_rounded,
-    Color(0xFF16A34A),
-  ),
-  _TemplateCategory(
-    'teknik_servis',
-    'Teknik Servis',
-    Icons.build_circle_rounded,
-    Color(0xFF4F46E5),
-  ),
-];
 
 class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
   final Map<String, CategoryImageSet> _imageSets = {};
@@ -125,7 +48,7 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
   }
 
   Future<void> _loadAllCategoryImages() async {
-    for (final cat in _categories) {
+    for (final cat in templateCategories) {
       setState(() => _loadingKeys.add(cat.key));
       try {
         final imageSet = await CategoryImageService.getImagesForCategory(_dbKey(cat.key));
@@ -142,7 +65,7 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
     }
   }
 
-  void _openTemplatePreview(_TemplateCategory category) {
+  void _openTemplatePreview(TemplateCategory category) {
     final imageSet = _imageSets[category.key];
     final hasImages = imageSet != null && imageSet.totalCount > 0;
 
@@ -427,15 +350,15 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                         crossAxisSpacing: 16,
                         childAspectRatio: 0.85,
                       ),
-                      itemCount: _categories.length,
+                      itemCount: templateCategories.length,
                       itemBuilder: (context, index) {
-                        final cat = _categories[index];
+                        final cat = templateCategories[index];
                         final imageSet = _imageSets[cat.key];
                         final previewUrl = imageSet?.coverImages.isNotEmpty == true
                             ? imageSet!.coverImages.first.imageUrl
                             : null;
 
-                        return _TemplateCard(
+                        return TemplateCard(
                           category: cat,
                           previewUrl: previewUrl,
                           isLoading: _loadingKeys.contains(cat.key),
@@ -449,128 +372,6 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _TemplateCard extends StatelessWidget {
-  final _TemplateCategory category;
-  final String? previewUrl;
-  final bool isLoading;
-  final VoidCallback onTap;
-
-  const _TemplateCard({
-    required this.category,
-    this.previewUrl,
-    required this.isLoading,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                flex: 3,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                  child: Container(
-                    color: category.color.withValues(alpha: 0.08),
-                    child: previewUrl != null
-                        ? Image.network(
-                            previewUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _fallbackContent(),
-                          )
-                        : _fallbackContent(),
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: category.color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          category.icon,
-                          color: category.color,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        category.label,
-                        style: const TextStyle(
-                          color: AppColors.darkText,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      isLoading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text(
-                              'Hazır görseller →',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _fallbackContent() {
-    return Center(
-      child: Icon(
-        category.icon,
-        size: 48,
-        color: category.color.withValues(alpha: 0.4),
       ),
     );
   }
