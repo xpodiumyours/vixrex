@@ -5,8 +5,14 @@ import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/home_shell_screen.dart';
 import 'package:vixrex/screens/public_vitrin_screen.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
 
 void main() {
+  setUp(() {
+    StoreLocalStorageService.resetCache();
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets('Public vitrin local sahip bilgisinde düzenle barı gösterir', (
     WidgetTester tester,
   ) async {

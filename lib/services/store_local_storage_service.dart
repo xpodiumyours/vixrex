@@ -38,6 +38,11 @@ class StoreLocalStorageService {
     return _prefsCache!;
   }
 
+  /// Test ortamında cache'i temizler.
+  static void resetCache() {
+    _prefsCache = null;
+  }
+
   // ── Mağaza (Store) ────────────────────────────────────────────────────
 
   /// Mağaza verisini yerel depoya kaydeder.
