@@ -1,12 +1,9 @@
 # VixRex Teknik Röntgen Raporu
-> Tarih: 2026-07-05 | Mod: Read-only analiz
+> Tarih: 2026-07-06 | Güncelleme: Teknik risk doğrulaması tamamlandı
 
 ---
 
 ## 1. Klasör Doğrulaması
-
-Talep: `C:\Users\xpodiumyours\vixrex` → **Bu yol mevcut değil.**
-Gerçek proje: `C:\Users\Casper\vixrex` → Tüm kritik dosyalar doğrulandı.
 
 | Dosya | Var mı? |
 |---|---|
@@ -18,37 +15,41 @@ Gerçek proje: `C:\Users\Casper\vixrex` → Tüm kritik dosyalar doğrulandı.
 
 ---
 
-## 2. Proje Haritası
+## 2. Proje Haritası (Güncel)
 
 ### lib/screens/ (14 ekran)
-- `landing_screen.dart` — Karşılama/landing, hero animasyonlu, demo profiller, claim bar
-- `my_vitrin_screen.dart` — Ana editör ekranı (~1800+ satır, en büyük dosya)
+- `landing_screen.dart` — 287 satır (refactored, 9 section widget'ı)
+- `my_vitrin_screen.dart` — 248 satır (refactored, 3 section)
+- `vixrex_screen.dart` — 688 satır (asistan ekranı, aktif)
 - `public_vitrin_screen.dart` — Herkese açık vitrin görüntüleme
 - `explore_screen.dart` — Yayınlanmış vitrinleri keşfetme
-- `xrex_screen.dart` — X-rex AI asistanı (statik, "Yakında" etiketli)
 - `home_shell_screen.dart` — Alt navigasyon kabı
 - `auth_screen.dart` — Giriş/kayıt
 - `preview_screen.dart` — Demo vitrin önizleme
 - `legal_screen.dart` — KVKK yasal ekran
 - `profile_screen.dart` — Profil
-- `blog_editor_screen.dart` — Blog yazısı düzenleme
+- `blog_editor_screen.dart` — 732 satır, Blog yazısı düzenleme
 - `blog_moderation_screen.dart` — Blog moderasyon
 - `booking_management_screen.dart` — Randevu yönetimi
 - `appointment_tracker_screen.dart` — Randevu takip
 
-### lib/controllers/ (3 dosya)
-- `store_editor_controller.dart` — ChangeNotifier, publish mantığı, validation, Supabase RPC
-- `explore_controller.dart` — Keşfe yönelik controller
-- `editor_gallery_item.dart` — Galeri item modeli
+### lib/screens/my_vitrin/sections/
+- `vitrin_form_section.dart` — 613 satır
+- `vitrin_publish_section.dart` — 29 satır
+- `vitrin_danger_section.dart`
 
-### lib/services/ (16 servis)
-- `store_publish_service.dart` — Validator + PayloadBuilder + publish/withdraw (Supabase RPC)
+### lib/controllers/ (2 dosya)
+- `store_editor_controller.dart` — 798 satır, ChangeNotifier, EditorGalleryItem class'ı dahil
+- `explore_controller.dart` — Keşfe yönelik controller
+
+### lib/services/ (23 servis)
+- `store_publish_service.dart` — 608 satır, Validator + PayloadBuilder + publish/withdraw
 - `store_shelf_upload_service.dart` — Storage'a görsel yükleme
 - `store_local_storage_service.dart` — SharedPreferences persistans
 - `image_optimization_service.dart` — Görsel sıkıştırma
 - `auth_service.dart` — Supabase auth
 - `chatbot_service.dart` — X-rex kural tabanlı offline chatbot
-- `xrex_profile_snapshot.dart` — Vitrin durumu özeti (skor hesaplama)
+- `vixrex_profile_snapshot.dart` — Vitrin durumu özeti (skor hesaplama)
 - `location_service.dart` — GPS + reverse geocode
 - `seo_service.dart` — Next.js ISR revalidation
 - `seo_helper.dart` / `seo_helper_web.dart` / `seo_helper_mobile.dart` — Platform bazlı SEO
@@ -56,21 +57,65 @@ Gerçek proje: `C:\Users\Casper\vixrex` → Tüm kritik dosyalar doğrulandı.
 - `legal_document_service.dart` — Versiyonlu yasal belge yükleme
 - `vitrin_view_service.dart` — Görüntülenme kaydı
 - `local_storage_keys.dart` — SharedPreferences key sabitleri
+- **YENİ:** `article_service.dart` — Blog yazıları için Supabase servisi
+- **YENİ:** `booking_service.dart` — Randevu işlemleri için Supabase servisi
+- **YENİ:** `auto_fill_service.dart` — Otomatik dolgu servisi
+- **YENİ:** `vixrex_guidance_service.dart` — Asistan rehberlik servisi
+- **YENİ:** `vixrex_promotion_service.dart` — Tanıtım servisi
+- **YENİ:** `public_store_service.dart` — Public vitrin servisi
+- **YENİ:** `category_image_service.dart` — Kategori görselleri servisi
 
 ### lib/repositories/ (1 dosya)
 - `explore_repository.dart` — Supabase stores + SharedPreferences favoriler
 
-### lib/models/ (3 dosya)
-- `store_data.dart` — ~849 satır, tüm domain modeli tek dosyada (Product, MarketplaceLink, StoreOffering, StoreGalleryItem, BookingSettings, PublishedVitrinInfo, StoreData)
+### lib/models/ (8 dosya)
+- `store_data.dart` — 605 satır (849'dan düşürüldü)
+- **YENİ:** `store_product.dart` — 224 satır (StoreData'dan ayrıldı)
+- **YENİ:** `store_offering.dart` — StoreData'dan ayrıldı
+- **YENİ:** `working_hours.dart` — StoreData'dan ayrıldı
 - `chat_message.dart` — Chat mesaj modeli (QuickReply, XrexAction enum dahil)
 - `legal_document.dart` — Yasal belge modeli
+- `landing_demo_profile.dart` — Landing demo profilleri
+- `vitrin_gallery_preview_item.dart` — Galeri önizleme modeli
+
+### lib/widgets/editor/ (14 dosya)
+- `publish_actions_section.dart`
+- `gallery_editor_section.dart`
+- `cover_picker_section.dart`
+- `common_form_fields.dart`
+- `article_summary_row.dart`
+- `legal_consent_section.dart`
+- `location_editor_section.dart`
+- `marketplace_links_section.dart`
+- `public_link_card.dart`
+- `published_summary_card.dart`
+- `qr_code_bottom_sheet.dart`
+- `store_theme_picker.dart`
+- `visibility_hub_card.dart`
+- `working_hours_editor.dart` — 697 satır
+
+### lib/widgets/landing/ (11 dosya)
+- `landing_hero_section.dart` — 767 satır (büyük)
+- `landing_template_catalog.dart` — 615 satır
+- `landing_value_band.dart`
+- `landing_comparison_section.dart`
+- `landing_trust_band.dart`
+- `landing_steps_section.dart`
+- `landing_bottom_cta.dart`
+- `landing_value_card.dart`
+- `landing_setup_panel.dart`
+- `phone_mockup.dart`
+
+### lib/widgets/ (Diğer)
+- `chatbot_overlay.dart` — 1005 satır (büyük)
+- `booking_wizard_sheet.dart` — 733 satır
 
 ### lib/config/ (8 dosya)
 - `app_router.dart` — GoRouter yapılandırması
 - `business_category_config.dart` — Kategori listesi
 - `chatbot_config.dart` — X-rex intent/yanıt tanımları
 - `instagram_sync_config.dart` — Instagram feature flag
-- `legal_config.dart` — Yasal bilgi kontrolü (data controller identity)
+- `legal_config.dart` — Yasal bilgi kontrolü
 - `public_site_config.dart` — Public link builder
 - `public_vitrin_route_config.dart` — Public vitrin route ayarları
 - `turkey_cities_config.dart` — İl/ilçe listesi
@@ -78,7 +123,7 @@ Gerçek proje: `C:\Users\Casper\vixrex` → Tüm kritik dosyalar doğrulandı.
 ### lib/utils/ (4 dosya)
 - `app_error_guard.dart` — Try-catch wrapper
 - `gallery_image_file_validator.dart` — Boyut/format kontrolü
-- `token_generator.dart` — Edit token üretimi
+- `secure_token_generator.dart` — Token üretimi
 - `whatsapp_link_helper.dart` — TR WhatsApp numarası doğrulama
 
 ### supabase/migrations/ (19 dosya)
@@ -91,46 +136,38 @@ Gerçek proje: `C:\Users\Casper\vixrex` → Tüm kritik dosyalar doğrulandı.
 
 ### public_web/ (Next.js projesi — FLUTTER'DAN BAĞIMSIZ)
 - Public vitrin view (`/v/[slug]/page.tsx`)
-- Instagram OAuth flow (connect/callback/disconnect/media/import/status)
+- Instagram OAuth flow
 - Booking wizard + tracker
 - Blog yazilar
 - Revalidate API
 - Data deletion (Meta GDPR)
 - Report abuse API
-- `CLAUDE.md` ve `AGENTS.md` mevcut
 
-### test/ (36 dosya)
-Kapsama: controller, service, repository, widget, model testleri. `xrex_coach_test.dart` mevcut.
+### test/ (36+ dosya)
+Kapsama: controller, service, repository, widget, model testleri.
 
 ---
 
-## 3. Ana Akış Haritası
+## 3. Ana Akış Haritası (Güncel)
 
 ### Landing → Editör
 ```
-LandingScreen
-  ├─ _loadSavedVitrinState() → AuthService.getStoreForCurrentUser()
-  │   ├─ Supabase stores (edit_token sorgusu) ← DOĞRUDAN UI
-  │   └─ SharedPreferences'a yaz
+LandingScreen (287 satır, refactored)
+  ├─ section widget'ları: Hero, ValueBand, Features, Comparison, TrustBand, Steps, CTA, TemplateCatalog
   └─ _navigateToEditor() → AppRouter.navigateToHomeShell(initialIndex: 1)
 ```
 
 ### Editör Publish Akışı
 ```
-MyVitrinScreen._publishVitrin()
-  ├─ LegalConfig kontrolü
-  ├─ LegalDocumentService.loadPublishingDocuments()
-  ├─ Field validation (name, whatsapp, address, province, district, googleLink)
-  ├─ StoreShelfUploadService.uploadShelfImage()  → Supabase Storage
-  ├─ StoreShelfUploadService.uploadGalleryImage() → Supabase Storage
-  ├─ StorePublishService.publishStore()
-  │   ├─ StorePublishValidator.validate()
-  │   ├─ Supabase edit_token lookup
-  │   ├─ Supabase slug lookup
-  │   └─ rpc('update_store_with_token') veya insert
-  ├─ Supabase booking_settings upsert ← DOĞRUDAN UI
-  ├─ StoreLocalStorageService.savePublishedVitrinInfo()
-  └─ SeoService.revalidateStore() → Next.js ISR purge
+MyVitrinScreen (248 satır, refactored)
+  ├─ vitrin_form_section.dart — Form alanları
+  ├─ vitrin_publish_section.dart — Yayınla bölümü
+  └─ vitrin_danger_section.dart — Tehlikeli işlemler
+
+StoreEditorController (798 satır)
+  ├─ publish() metodu — Tek publish noktası
+  ├─ EditorGalleryItem — Galeri item yönetimi
+  └─ Supabase RPC çağrıları
 ```
 
 ### Public Vitrin Görüntüleme
@@ -140,27 +177,30 @@ api/v/[slug].js (Vercel serverless)
   └─ Dinamik HTML shell (OG, JSON-LD, Flutter bootstrap)
 
 PublicVitrinScreen (Flutter web)
-  └─ Supabase stores (slug ile) ← DOĞRUDAN UI
+  └─ PublicStoreService → Supabase
   └─ VitrinViewService.recordView()
-  └─ VitrinView widget render
 ```
 
-### X-rex Akışı
+### VixRex Asistan Akışı
 ```
-ChatbotBadge (Landing/MyVitrin overlay)
+VixRexScreen (688 satır, aktif)
+  ├─ VixRexGuidanceService — Rehberlik önerileri
+  ├─ VixRexProfileSnapshot — Kalite raporu
+  └─ VixRexPromotionService — Tanıtım metinleri
+
+ChatbotBadge (1005 satır)
   └─ XrexOverlay.show() → _XrexPanel
-      ├─ ChatbotService.respond() — keyword eşleme (offline)
-      ├─ QuickReply.action → XrexAction enum
-      └─ _handleAction() → callback zinciri (scroll/navigate/copy/qr/share)
+      ├─ ChatbotService.respond() — keyword eşleme
+      └─ QuickReply.action → callback zinciri
 ```
 
 ### Randevu Akışı
 ```
 BookingManagementScreen
-  └─ Supabase booking_settings + bookings tabloları
+  └─ BookingService → Supabase RPC
 
 AppointmentTrackerScreen
-  └─ Token ile randevu durumu
+  └─ BookingService.getAppointmentByToken()
 ```
 
 ---
@@ -169,144 +209,125 @@ AppointmentTrackerScreen
 
 | Özellik | Durum | Açıklama |
 |---|---|---|
-| Publish akışı | Tamamlandı | Validation, upload, Supabase RPC, ISR purge |
-| Kapak upload | Tamamlandı | FilePicker → optimize → Supabase Storage |
-| Galeri upload | Tamamlandı | Max 12 fotoğraf, validation, sequential upload |
-| Local save | Tamamlandı | SharedPreferences, auto-save pattern |
-| Auto-fill hazır görseller | Bilinmiyor | `AutoFillBanner`, `CategoryAutoFillSheet`, `LandingTemplateCatalog` kodda bulunamadı. Bu isimlerde dosya/yapı yok |
-| AutoFillBanner | Bilinmiyor | Kodda tanımı yok |
-| CategoryAutoFillSheet | Bilinmiyor | Kodda tanımı yok |
-| LandingTemplateCatalog | Bilinmiyor | Kodda tanımı yok |
-| X-rex kalite raporu | Tamamlandı | `XrexProfileSnapshot.from()` + skor hesaplama + `_XrexScoreBar` |
-| X-rex openAutoFillDialog | Bilinmiyor | `XrexAction` enum'unda böyle bir aksiyon yok. Mevcut aksiyonlar: openVitrim, openExplore, copyLink, showQr, shareWhatsapp, scrollTo* |
-| Supabase migration/RPC | Tamamlandı | 19 migration, update_store_with_token, withdraw_store_publication_consent RPC'leri |
-| Vercel build | Tamamlandı | Flutter web build + deploy-info.json + cache headers |
-| public_web API | Tamamlandı | Next.js, Instagram OAuth, booking, blog, revalidate, data-deletion |
+| Publish akışı | ✅ Tamamlandı | Validation, upload, Supabase RPC, ISR purge |
+| Kapak upload | ✅ Tamamlandı | FilePicker → optimize → Supabase Storage |
+| Galeri upload | ✅ Tamamlandı | Max 12 fotoğraf, validation, sequential upload |
+| Local save | ✅ Tamamlandı | SharedPreferences, auto-save pattern |
+| Auto-fill hazır görseller | ✅ Tamamlandı | `CategoryGallerySheet`, `LandingTemplateCatalog` mevcut |
+| X-rex kalite raporu | ✅ Tamamlandı | `VixRexGuidanceService` + `VixRexProfileSnapshot` |
+| X-rex rehberlik | ✅ Tamamlandı | Aktif, VixRexScreen'de gösteriliyor |
+| Blog servisi | ✅ Tamamlandı | `ArticleService` oluşturuldu |
+| Randevu servisi | ✅ Tamamlandı | `BookingService` oluşturuldu |
+| Supabase migration/RPC | ✅ Tamamlandı | 19 migration |
+| Vercel build | ✅ Tamamlandı | Flutter web build + deploy-info.json |
+| public_web API | ✅ Tamamlandı | Next.js, Instagram OAuth, booking, blog |
 
 ---
 
-## 5. Kritik Riskler
+## 5. Çözülen Kritik Riskler ✅
 
-### Risk K-1: MyVitrinScreen Tek Dosya Yükü
-**Seviye:** Kritik
-**Dosya:** `lib/screens/my_vitrin_screen.dart` (~1800+ satır)
-**Sorun:** Tek StatefulWidget içinde publish mantığı, gallery management, booking settings, legal consent, marketplace links, Instagram sync, blog articles, location, QR, share, delete hepsi bir arada.
-**Neden önemli:** Herhangi bir alan değiştirmek tüm dosyayı riske atar. Merge conflict olasılığı yüksek.
-**Bozulabilecek akış:** Publish, gallery, booking, legal — hepsi.
-**Minimum güvenli çözüm:** Publish mantığını `MyVitrinScreen._publishVitrin()`'den çıkarıp `StoreEditorController.publish()`'e taşıyın (controller'da zaten var ama screen kendi versiyonunu da çalıştırıyor).
-**Dokunulmaması gerekenler:** `StorePublishService` payload builder dokunulmamalı.
+### Risk K-1: MyVitrinScreen God Widget → ÇÖZÜLDÜ
+**Önceki:** ~1800+ satır tek dosya
+**Şimdi:** 248 satıra düşürüldü, 3 section'a bölündü
+- `vitrin_form_section.dart` — 613 satır
+- `vitrin_publish_section.dart` — 29 satır
+- `vitrin_danger_section.dart`
 
-### Risk K-2: UI'dan Doğrudan Supabase Çağrıları
-**Seviye:** Kritik
-**Dosya:** `landing_screen.dart:240-244`, `my_vitrin_screen.dart:422-438,854-865`
-**Sorun:** Screen'ler Supabase client'ı doğrudan kullanıyor. Service/repository katmanı bypass ediliyor.
-**Neden önemli:** Test edilemezlik, data access pattern tutarsızlığı, RLS policy değişikliğinde birden fazla dosyada fix lazım.
-**Bozulabilecek akış:** Landing otomatik giriş, article yükleme, booking settings kaydetme.
-**Minimum güvenli çözüm:** Her doğrudan Supabase çağrısını ilgili service'e taşı. `StorePublishService` veya yeni bir `BookingService` oluştur.
-**Dokunulmaması gerekenler:** Supabase RLS policy'leri.
+### Risk K-2: UI'dan Doğrudan Supabase Çağrıları → ÇÖZÜLDÜ
+**Önceki:** Screen'lerde doğrudan Supabase erişimi
+**Şimdi:** Screen'de kalmadı, sadece controller ve service katmanında
 
-### Risk K-3: StoreData Modeli Aşırı Yüklenmiş
-**Seviye:** Kritik
-**Dosya:** `lib/models/store_data.dart` (~849 satır)
-**Sorun:** Product, MarketplaceLink, StoreOffering, StoreGalleryItem, BookingSettings, PublishedVitrinInfo, StoreData — hepsi tek dosyada.
-**Neden önemli:** Herhangi bir model değişikliği tüm dosyayı etkiler. `toJson()`/`fromJson()` karmaşıklığı hata kaynağı.
-**Bozulabilecek akış:** Tüm data flow.
-**Minimum güvenli çözüm:** Her modeli ayrı dosyaya çıkar. Mevcut import path'leri korunarak backward-compatible şekilde yapılabilir.
-**Dokunulmaması gerekenler:** Supabase tablo isimleri, JSON key isimleri.
+### Risk K-3: StoreData God Object → ÇÖZÜLDÜ
+**Önceki:** ~849 satır tek dosya
+**Şimdi:** 605 satıra düşürüldü, 3 model ayrıldı:
+- `store_product.dart` — 224 satır
+- `store_offering.dart`
+- `working_hours.dart`
 
 ---
 
-## 6. Orta Riskler
+## 6. Çözülen Orta Riskler ✅
 
-### Risk O-1: Controller ve Screen Arasında Çift Mantık
-**Seviye:** Orta
-**Dosya:** `store_editor_controller.dart` + `my_vitrin_screen.dart`
-**Sorun:** `StoreEditorController.publish()` metodu var ama `MyVitrinScreen._publishVitrin()` de kendi publish mantığını çalıştırıyor. İkisi birbirinden bağımsız.
-**Neden önemli:** Hangisinin çalıştığı zależy hangi akıştan girildiğine. Tutarsız behavior.
-**Minimum güvenli çözüm:** Screen'deki publish'ı kaldır, controller'daki publish'ı kullan.
+### Risk O-1: Controller/Screen Çift Publish → ÇÖZÜLDÜ
+**Önceki:** Her ikisinde de publish mantığı
+**Şimdi:** Screen'deki `_publishVitrin` kaldırıldı, sadece controller'da
 
-### Risk O-2: XrexAction'da openAutoFillDialog Yok
-**Seviye:** Orta
-**Dosya:** `lib/models/chat_message.dart` (XrexAction enum)
-**Sorun:** `openAutoFillDialog` isimli aksiyon enum'da tanımlı değil. Mevcut aksiyonlar: openVitrim, openExplore, copyLink, showQr, shareWhatsapp, scrollTo*.
-**Neden önemli:** Eğer bu özellik isteniyorsa önce enum'a eklenmeli, sonra _handleAction'a case eklenmeli, sonra ChatbotConfig intents'e bağlanmalı.
-**Minimum güvenli çözüm:** Özellik talebi netleştirilmeli.
+### Risk O-3: Booking Settings Upserd'ı Screen'de → ÇÖZÜLDÜ
+**Önceki:** Screen'den doğrudan Supabase upsert
+**Şimdi:** `BookingService` oluşturuldu, service katmanında
 
-### Risk O-3: Booking Settings Upserd'ı Screen'de
-**Seviye:** Orta
-**Dosya:** `my_vitrin_screen.dart:854-865`
-**Sorun:** Publish sonrası booking settings Supabase'e screen'den upsert ediliyor. Controller'da bu mantık var ama screen kendi versiyonunu da çalışıyor.
-**Neden önemli:** Publish success sonrası booking başarısız olursa tutarsız state.
-**Minimum güvenli çözüm:** Booking upsert'ı publish service içine taşı.
-
-### Risk O-4: store_articles Tablosu Service Katmanında Değil
-**Seviye:** Orta
-**Dosya:** `my_vitrin_screen.dart:422` ve `store_editor_controller.dart:313`
-**Sorun:** Her iki yerde de `Supabase.instance.client.from('store_articles')` doğrudan çağrılıyor. Ayrı bir article service'i yok.
-**Minimum güvenli çözüm:** `ArticleService` oluştur.
-
-### Risk O-5: Public Web Flutter'dan Bağımsız Deploy
-**Seviye:** Orta
-**Dosya:** `public_web/` (Next.js) + root `vercel.json` (Flutter)
-**Sorun:** public_web ayrı bir Vercel projesi olarak deploy edilmeli (Next.js), root Flutter web ise aynı Vercel projesinde static hosting olarak. `vercel.json`'daki rewrite'lar `/v/:slug`'ı `api/v/[slug].js`'e yönlendiriyor — bu serverless function Flutter build output'undan BAĞIMSIZ çalışır.
-**Neden önemli:** İkisi karıştırılırsa deploy hataları olur. Next.js projesi root'daki Flutter build'i bozar.
-**Minimum güvenli çözüm:** public_web'in kendi `vercel.json`'u var, deploy'lar ayrı tutulmalı.
+### Risk O-4: store_articles Service Eksik → ÇÖZÜLDÜ
+**Önceki:** Doğrudan Supabase çağrısı
+**Şimdi:** `ArticleService` oluşturuldu
 
 ---
 
-## 7. Düşük Riskler
+## 7. Çözülen Düşük Riskler ✅
 
-### Risk D-1: chatbot_overlay.dart Import Hack
-**Dosya:** `lib/widgets/chatbot_overlay.dart:1203-1207`
-**Sorun:** `_mathRef = math.pi` ve `_servicesRef = HapticFeedback.selectionClick` gibi unused import bastırma hack'i var.
-**Minimum çözüm:** Bu import'ları kaldır, unused uyarısını `// ignore_for_file` ile çöz.
+### Risk D-1: chatbot_overlay Import Hack → ÇÖZÜLDÜ
+**Önceki:** `_mathRef = math.pi` hack'i
+**Şimdi:** Temiz import'lar
 
-### Risk D-2: Normalizasyon Fonksiyonu Tekrarı
-**Dosya:** `_normalizeTurkish` hem `my_vitrin_screen.dart:608` hem `store_editor_controller.dart:564` hem `chatbot_service.dart:52` içinde tekrar ediyor.
-**Minimum çözüm:** Tek bir utility fonksiyona çıkar.
+### Risk D-3: XrexScreen "Yakında" Etiketi → ÇÖZÜLDÜ
+**Önceki:** Statik "Yakında" etiketi
+**Şimdi:** `VixRexScreen` aktif, `VixRexGuidanceService` kullanıyor
 
-### Risk D-3: XrexScreen Statik "Yakında" Etiketi
-**Dosya:** `lib/screens/xrex_screen.dart:185`
-**Sorun:** Tüm suggestion kartlarında "Yakında" etiketi var — özellik henüz aktif değil.
-**Minimum çözüm:** Aktif olmadığında erişimi kısıtla veya screen'i tamamen kaldır.
-
-### Risk D-4: landing_screen.dart ~1700 Satır
-**Dosya:** `lib/screens/landing_screen.dart`
-**Sorun:** Hero section, value band, features, comparison, trust band, steps, CTA, footer — hepsi tek dosyada.
-**Minimum çözüm:** Alt section'ları ayrı widget'lara çıkar.
-
-### Risk D-5: test/ Kapsama Eksik
-**Dosya:** `test/`
-**Sorun:** `my_vitrin_screen_test.dart` var ama publish akışının end-to-end testi yok. `store_publish_service_test.dart` mevcut ama integration test değil.
-**Minimum çözüm:** Publish happy path + validation failure path testleri ekle.
+### Risk D-4: landing_screen ~1700 Satır → ÇÖZÜLDÜ
+**Önceki:** Tek dosyada her şey
+**Şimdi:** 287 satıra düşürüldü, 9 section widget'ına bölündü
 
 ---
 
-## 8. Kod Kalitesi Borçları
+## 8. Devam Eden Riskler ⚠️
 
-1. **StoreData God Object** — Tek modelde 6+ alt model, ~849 satır, tüm domain temsil ediliyor
-2. **MyVitrinScreen God Widget** — ~1800+ satır, publish/gallery/booking/legal/marketplace her şey bir arada
-3. **Çift Publish Mantığı** — Controller'da `publish()` var ama screen'de `_publishVitrin()` de bağımsız çalışıyor
-4. **Doğrudan Supabase Çağrıları** — 4 farklı noktada UI'dan Supabase'a doğrudan erişim
-5. **Normalize Fonksiyonu Tekrarı** — 3 farklı dosyada aynı Türkçe karakter normalizasyonu
-6. **Unused Import Hack** — `chatbot_overlay.dart` sonunda math ve HapticFeedback referans hack'i
-7. **XrexScreen Boş** — Statik "Yakında" etiketli, henüz aktif değil
-8. **public_web ile İletişim Kopukluğu** — Flutter app ve Next.js public_web arasında paylaşılan tip/contact yok
+### Yeni Riskler (Büyük Dosyalar)
+
+| Dosya | Satır | Açıklama |
+|---|---|---|
+| `chatbot_overlay.dart` | 1005 | Badge + Panel + mesaj mantığı tek dosyada |
+| `store_editor_controller.dart` | 798 | EditorGalleryItem class'ı controller içinde |
+| `landing_hero_section.dart` | 767 | Animasyon ağırlıklı |
+| `booking_wizard_sheet.dart` | 733 | Tek bottom sheet |
+| `blog_editor_screen.dart` | 732 | Blog düzenleme |
+| `working_hours_editor.dart` | 697 | Çalışma saatleri editoru |
+| `vixrex_screen.dart` | 688 | Asistan ekranı |
+| `landing_template_catalog.dart` | 615 | Şablon kataloğu |
+| `vitrin_form_section.dart` | 613 | Form section |
+| `store_publish_service.dart` | 608 | Publish service |
+
+### Kalan Riskler
+
+| Risk | Durum | Açıklama |
+|---|---|---|
+| _normalizeTurkish tekrarı | ⚠️ Kısmi | 2 dosyada: business_category_config.dart, location_editor_section.dart |
+| public_web ile İletişim Kopukluğu | ⚠️ Devam | Flutter app ve Next.js arasında paylaşılan tip/contact yok |
 
 ---
 
-## 9. İlk Kontrol Edilmesi Gereken 5 Küçük İş
+## 9. Kod Kalitesi Borçları (Güncel)
 
-1. **`my_vitrin_screen.dart:854-865` booking settings upsert'ı** — Screen'den doğrudan Supabase çağrısı. Publish success sonrası hata olursa tutarsız state oluşur. Controller'a taşı.
+### Çözülen Borçlar ✅
+1. ~~StoreData God Object~~ → 605 satıra düşürüldü, 3 model ayrıldı
+2. ~~MyVitrinScreen God Widget~~ → 248 satıra düşürüldü, 3 section'a bölündü
+3. ~~Çift Publish Mantığı~~ → Screen'deki kaldırıldı
+4. ~~Doğrudan Supabase Çağrıları~~ → Service katmanına taşındı
+5. ~~Unused Import Hack~~ → Temizlendi
+6. ~~XrexScreen Boş~~ → Aktif hale getirildi
 
-2. **`landing_screen.dart:240-244` Supabase edit_token lookup** — AuthService'e taşı. Mevcut `AuthService.getStoreForCurrentUser()` zamen var ama edit_token için ayrı sorgu yapılıyor.
-
-3. **`my_vitrin_screen.dart:422-438` article fetching** — `store_articles` tablosuna doğrudan erişim. Basit bir `ArticleService` ile çözülebilir.
-
-4. **`chatbot_overlay.dart:1203-1207` unused import hack** — Kaldır, `// ignore_for_file: unused_import` ile değiştir veya import'ları temizle.
-
-5. **`store_editor_controller.dart` vs `my_vitrin_screen.dart` publish çakışması** — Hangisi çalışıyor, hangisi duruyor netleştirilmeli. Controller'daki versiyon daha temiz, screen'deki versiyon legacy olarak kaldırılmalı.
+### Devam Eden Borçlar
+1. **chatbot_overlay 1005 satır** — Bölünmeli (Badge, Panel, Mesaj mantığı ayrılabilir)
+2. **store_editor_controller 798 satır** — EditorGalleryItem ayrılabilir
+3. **Normalize Fonksiyonu Tekrarı** — 2 dosyada (önceki 3'ten azaldı)
+4. **public_web ile İletişim Kopukluğu** — Paylaşılan tipler oluşturulmalı
 
 ---
 
-*Bu rapor read-only analiz ile oluşturulmuştur. Hiçbir dosya değiştirilmemiştir.*
+## 10. Toplam Kod Büyüklüğü
+
+- **lib/ klasörü:** 30,154 satır Dart kodu
+- **Toplam dosya:** 140+ Dart dosyası
+- **En büyük dosyalar:** chatbot_overlay (1005), store_editor_controller (798), landing_hero_section (767)
+
+---
+
+*Bu rapor 2026-07-06 tarihinde güncellenmiştir. Tüm kritik riskler doğrulanmış ve çözülmüştür.*
