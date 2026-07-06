@@ -115,7 +115,7 @@ export default async function StorePage(props: PageProps) {
   const siteUrl = getSiteUrl();
   const publicUrl = buildSiteUrl(`/v/${store.slug}`);
   const heroImage =
-    store.shelf_image_url || galleryItems[0]?.imageUrl || store.logo_url || "";
+    store.shelf_image_url || store.logo_url || "";
   const hasPhysicalLocation =
     store.address && store.latitude != null && store.longitude != null;
   const isBookingEnabled = bookingSettings?.is_enabled ?? false;
@@ -180,7 +180,7 @@ export default async function StorePage(props: PageProps) {
         "@id": `${publicUrl}#business`,
         name: store.name,
         description: store.description || store.corporate_bio,
-        image: store.shelf_image_url || galleryItems[0]?.imageUrl || store.logo_url,
+        image: store.shelf_image_url || store.logo_url,
         logo: store.logo_url,
         telephone: phoneDigits ? `+${phoneDigits}` : undefined,
         url: publicUrl,
