@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/config/turkey_cities_config.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/services/location_service.dart';
+import 'package:vixrex/utils/text_utils.dart';
 
 class LocationEditorSection extends StatefulWidget {
   final String? selectedProvinceCode;
@@ -69,17 +70,7 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
   static const Color cardBorder = AppColors.cardBorderDark;
   static const Color inputBg = AppColors.inputBg;
 
-  String _normalizeTurkish(String text) {
-    return text
-        .toLowerCase()
-        .replaceAll('i', 'i')
-        .replaceAll('ı', 'i')
-        .replaceAll('ğ', 'g')
-        .replaceAll('ü', 'u')
-        .replaceAll('ş', 's')
-        .replaceAll('ö', 'o')
-        .replaceAll('ç', 'c');
-  }
+
 
   Future<void> _getCurrentLocation() async {
     widget.onLocatingStateChanged(true);
@@ -117,10 +108,10 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
 
     if (geoAddress != null && geoAddress.isNotEmpty) {
       // Auto-detect Province and District
-      final normalizedAddress = _normalizeTurkish(geoAddress);
+      final normalizedAddress = TextUtils.normalizeTurkish(geoAddress);
       Province? matchedProvince;
       for (final province in turkeyProvinces) {
-        final normalizedProvince = _normalizeTurkish(province.name);
+        final normalizedProvince = TextUtils.normalizeTurkish(province.name);
         if (normalizedAddress.contains(normalizedProvince)) {
           matchedProvince = province;
           break;
@@ -134,7 +125,7 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
         final districts = turkeyDistricts[matchedProvince.code] ?? [];
         String? matchedDistrict;
         for (final district in districts) {
-          final normalizedDistrict = _normalizeTurkish(district);
+          final normalizedDistrict = TextUtils.normalizeTurkish(district);
           if (normalizedAddress.contains(normalizedDistrict)) {
             matchedDistrict = district;
             break;

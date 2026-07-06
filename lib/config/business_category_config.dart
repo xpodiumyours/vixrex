@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vixrex/utils/text_utils.dart';
 
 class BusinessCategoryConfig {
   final String id;
@@ -312,15 +313,7 @@ class BusinessCategoryConfig {
     ),
   ];
 
-  static String _normalizeTurkish(String text) {
-    return text
-        .replaceAll('ı', 'i')
-        .replaceAll('ş', 's')
-        .replaceAll('ç', 'c')
-        .replaceAll('ğ', 'g')
-        .replaceAll('ü', 'u')
-        .replaceAll('ö', 'o');
-  }
+
 
   /// Eski key formatlarından (ör: 'butik_giyim') güncel label'a eşleme.
   /// [StoreLocalStorageService.loadPendingCategoryKey] tarafından kullanılır.
@@ -359,9 +352,9 @@ class BusinessCategoryConfig {
     }
     
     // Also try exact match with normalized values to catch "kuafor" matching exactly the ID "kuafor" or matching a normalized label
-    final normalizedLabel = _normalizeTurkish(cleanLabel);
+    final normalizedLabel = TextUtils.normalizeTurkish(cleanLabel);
     for (final category in categories) {
-      if (_normalizeTurkish(category.label.toLowerCase()) == normalizedLabel || _normalizeTurkish(category.id) == normalizedLabel) {
+      if (TextUtils.normalizeTurkish(category.label.toLowerCase()) == normalizedLabel || TextUtils.normalizeTurkish(category.id) == normalizedLabel) {
         return category;
       }
     }
@@ -400,7 +393,7 @@ class BusinessCategoryConfig {
     };
 
     for (final entry in keywordMappings.entries) {
-      final normalizedKey = _normalizeTurkish(entry.key);
+      final normalizedKey = TextUtils.normalizeTurkish(entry.key);
       if (normalizedLabel.contains(normalizedKey)) {
         return categories.firstWhere((c) => c.id == entry.value);
       }
