@@ -8,7 +8,6 @@ import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/instagram_sync_config.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
-import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/category_image_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
@@ -17,17 +16,20 @@ import 'package:vixrex/models/editor_gallery_item.dart';
 import 'package:vixrex/utils/gallery_image_file_validator.dart';
 import 'package:vixrex/widgets/auto_fill/category_gallery_sheet.dart';
 import 'package:vixrex/widgets/editor/common_form_fields.dart';
-import 'package:vixrex/widgets/editor/cover_picker_section.dart';
 import 'package:vixrex/widgets/editor/gallery_editor_section.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
-import 'package:vixrex/widgets/editor/location_editor_section.dart';
-import 'package:vixrex/widgets/editor/marketplace_links_section.dart';
 import 'package:vixrex/widgets/editor/public_link_card.dart';
 import 'package:vixrex/widgets/editor/store_theme_picker.dart';
 import 'package:vixrex/widgets/editor/working_hours_editor.dart';
 import 'package:vixrex/widgets/instagram_sync_section.dart';
 import 'package:vixrex/widgets/product/product_management_entry_card.dart';
 import 'package:vixrex/widgets/product/product_management_sheet.dart';
+
+import 'package:vixrex/widgets/editor/form_media_picker.dart';
+import 'package:vixrex/widgets/editor/form_business_info.dart';
+import 'package:vixrex/widgets/editor/form_contact_info.dart';
+import 'package:vixrex/widgets/editor/form_location_info.dart';
+import 'package:vixrex/widgets/editor/form_marketplace_links.dart';
 
 class VitrinFormSection extends StatelessWidget {
   final StoreEditorController controller;
@@ -170,126 +172,37 @@ class VitrinFormSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Kapak
-              KeyedSubtree(
-                key: state.coverPhotoKey,
-                child: CoverPickerSection(
-                  coverBytes: controller.coverBytes,
-                  coverUrl: controller.coverUrl,
-                  coverFileName: controller.coverFileName,
-                  onTap: () => _pickCover(context),
-                  onCameraTap: () => _pickCoverFromCamera(context),
-                  onAutoFillTap: () => _showCategoryGallery(context, source: SheetImageSource.coverPicker),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Galeri
-              KeyedSubtree(
-                key: state.galleryKey,
-                child: GalleryEditorSection(
-                  galleryItems: _galleryItemsForEditor,
-                  maxGalleryPhotos: controller.maxGalleryPhotos,
-                  onPickPhotos: () => _pickGallery(context),
-                  onRemovePhoto: controller.removeGalleryItem,
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // İsim
-              KeyedSubtree(
-                key: state.nameKey,
-                child: EditorTextField(
-                  label: 'İşletme / VixRex Adı',
-                  controller: _name,
-                  focusNode: state.nameFocusNode,
-                  hint: 'Örn: Aymira Butik',
-                  icon: Icons.storefront_rounded,
-                  requiredField: true,
-                  errorText: controller.nameError,
-                  onChanged: (v) {
-                    controller.updateName(v);
-                    controller.clearValidationErrors();
-                  },
-                ),
+              FormMediaPicker(
+                controller: controller,
+                state: state,
+                galleryItems: _galleryItemsForEditor,
+                onPickCover: () => _pickCover(context),
+                onPickCoverFromCamera: () => _pickCoverFromCamera(context),
+                onAutoFillCover: () => _showCategoryGallery(context, source: SheetImageSource.coverPicker),
+                onPickGallery: () => _pickGallery(context),
               ),
               const SizedBox(height: 14),
 
-              // WhatsApp
-              KeyedSubtree(
-                key: state.whatsappKey,
-                child: EditorTextField(
-                  label: 'WhatsApp Numarası',
-                  controller: _whatsapp,
-                  focusNode: state.whatsappFocusNode,
-                  hint: '05xx xxx xx xx',
-                  icon: Icons.chat_bubble_rounded,
-                  keyboardType: TextInputType.phone,
-                  requiredField: true,
-                  errorText: controller.whatsappError,
-                  onChanged: (v) {
-                    controller.updateWhatsapp(v);
-                    controller.clearValidationErrors();
-                  },
-                ),
+              FormBusinessInfo(
+                controller: controller,
+                state: state,
+                nameController: _name,
+                descController: _desc,
               ),
               const SizedBox(height: 14),
 
-              // Konum
-              KeyedSubtree(
-                key: state.addressKey,
-                child: LocationEditorSection(
-                  selectedProvinceCode: controller.selectedProvinceCode,
-                  selectedProvinceName: controller.selectedProvinceName,
-                  selectedDistrictCode: controller.selectedDistrictCode,
-                  selectedDistrictName: controller.selectedDistrictName,
-                  provinceError: controller.provinceError,
-                  districtError: controller.districtError,
-                  addressError: controller.addressError,
-                  addressController: _address,
-                  latitude: controller.latitude,
-                  longitude: controller.longitude,
-                  locationAccuracyMeters: controller.locationAccuracyMeters,
-                  locationStatusMessage: controller.locationStatusMessage,
-                  isLocating: controller.isLocating,
-                  onProvinceChanged: controller.selectProvince,
-                  onDistrictChanged: controller.selectDistrict,
-                  onAddressChanged: (value) => controller.updateAddress(value),
-                  onLocatingStateChanged: (_) {},
-                  onLocationUpdated: ({
-                    latitude,
-                    longitude,
-                    accuracy,
-                    statusMessage,
-                    address,
-                    provinceCode,
-                    provinceName,
-                    districtCode,
-                    districtName,
-                  }) {
-                    if (address != null) {
-                      _address.text = address;
-                      controller.updateAddress(address);
-                    }
-                    controller.selectProvince(provinceCode, provinceName);
-                    controller.selectDistrict(districtCode, districtName);
-                  },
-                ),
+              FormContactInfo(
+                controller: controller,
+                state: state,
+                whatsappController: _whatsapp,
+                instaController: _insta,
               ),
               const SizedBox(height: 14),
 
-              // Açıklama
-              KeyedSubtree(
-                key: state.descriptionKey,
-                child: EditorTextField(
-                  label: 'Kısa Açıklama',
-                  controller: _desc,
-                  focusNode: state.descriptionFocusNode,
-                  hint: 'Bugün vitrinde ne var? Kısa bir tanıtım yaz.',
-                  icon: Icons.notes_rounded,
-                  maxLines: 3,
-                  onChanged: (_) => controller.clearValidationErrors(),
-                ),
+              FormLocationInfo(
+                controller: controller,
+                state: state,
+                addressController: _address,
               ),
               const SizedBox(height: 14),
 
@@ -343,16 +256,6 @@ class VitrinFormSection extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              // Instagram
-              EditorTextField(
-                label: 'Instagram',
-                controller: _insta,
-                hint: '@kullanici_adi veya profil linki',
-                icon: Icons.camera_alt_rounded,
-                keyboardType: TextInputType.url,
-              ),
-              const SizedBox(height: 14),
-
               // Ürün Yönetimi
               ProductManagementEntryCard(
                 productCount: controller.data.products.length,
@@ -397,30 +300,9 @@ class VitrinFormSection extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              // Marketplace
-              MarketplaceLinksSection(
-                links: controller.marketplaceLinks,
-                customPlatformLinkIds: controller.customPlatformLinkIds,
+              FormMarketplaceLinks(
+                controller: controller,
                 platformOptions: _platformOptions,
-                onAddLink: () => controller.addMarketplaceLink(
-                  MarketplaceLink(id: DateTime.now().millisecondsSinceEpoch.toString()),
-                ),
-                onRemoveLink: controller.removeMarketplaceLink,
-                onPlatformChanged: (index, value) {
-                  final link = controller.marketplaceLinks[index];
-                  if (value == 'Özel...') {
-                    link.platform = 'Özel...';
-                    controller.toggleCustomPlatformLinkId(link.id, true);
-                  } else {
-                    link.platform = value ?? '';
-                    controller.toggleCustomPlatformLinkId(link.id, false);
-                  }
-                },
-                onUrlChanged: (index, value) => controller.marketplaceLinks[index].url = value,
-                onCustomPlatformChanged: (index, value) =>
-                    controller.marketplaceLinks[index].platform = value.trim(),
-                onSubtitleChanged: (index, value) =>
-                    controller.marketplaceLinks[index].subtitle = value.trim(),
               ),
               const SizedBox(height: 24),
 
