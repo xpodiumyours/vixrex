@@ -101,25 +101,126 @@ class XService {
 
 ---
 
-## 6. Mevcut Durum (2026-07-06)
+## 6. Adım Adım İş Akışı
 
-### Tamamlananlar
-- vitrinx → vixrex yeniden adlandırma
-- God Widget/Object sorunları çözüldü
-- Tüm servisler `Result<T>` pattern'ine geçirildi
-- `_normalizeTurkish` tekrarı çözüldü
-- `StoreLocalStorageService` optimize edildi
-- `CLAUDE.md` kurallar dosyası oluşturuldu
+### Yeni Özellik Eklerken
+```
+1. VIXREX_OTURUM_OZETI.md'yi oku → Mevcut durumu anla
+2. İlgili dosyaları oku → Mevcut kodu anla
+3. Plan oluştur → Ne yapılacağını belirle
+4. Uygula → Kodu yaz
+5. Test et → flutter analyze + flutter test
+6. Commit et → Mesaj formatına uy
+7. Güncelle → VIXREX_OTURUM_OZETI.md'yi güncelle
+```
 
-### Kalanlar
-- Büyük dosyaların bölünmesi (store_editor_controller 758 satır)
-- Sessiz hata yutmalarının düzeltilmesi (15 yerde catch (_) {})
-- Masaüstü layout sorunu
-- Mascot düzeltmesi
+### Hata Düzeltirken
+```
+1. Hatanın kaynağını bul → Hangi dosyada, neden
+2. Kök nedeni analiz et → Symptom mu, root cause mu?
+3. Çözümü uygula → Minimum değişiklikle düzelt
+4. Test et → flutter analyze + ilgili testleri çalıştır
+5. Yan etkileri kontrol et → Başka bir şeyi bozdu mu?
+6. Commit et → Fix: ... formatında
+```
+
+### Refaktör Yaparken
+```
+1. Mevcut durumu analiz et → Kod kalitesi sorunlarını listele
+2. Önceliklendir → Kritik → Orta → Düşük
+3. Birer birer düzelt → Aynı anda birden fazla şey değiştirme
+4. Her adım sonrası test et → flutter analyze + flutter test
+5. Commit et → Her adım ayrı commit
+```
 
 ---
 
-## 7. Commit Mesajı Formatı
+## 7. Karar Verme Rehberi
+
+### Ne Zaman Soru Sorulur?
+- Belirsizlik varsa → "X mi, Y mi?"
+- Birden fazla doğru yol varsa → "Hangisi tercih edilir?"
+- Kullanıcının tercihi gerekiyorsa → "Bu özellik nasıl görünsün?"
+
+### Ne Zaman Soru Sormadan Yapılır?
+- Tek doğru yol varsa → Direkt yap
+- Kurallarda belirtilmişse → Kurallara uy
+- Daha önce aynı şey yapıldıysa → Aynı şekilde yap
+- Test edilebilir ve geri alınabilirse → Yap, sonra göster
+
+### Risk Değerlendirmesi
+| Risk | Aksiyon |
+|---|---|
+| Geri alınabilir (commit ile) | Yap |
+| Test edilebilir | Yap, test et |
+| Başka dosyaları etkiler | Önce sor |
+| Güvenlik açığı yaratır | ASLA yapma |
+
+---
+
+## 8. Bağlam Yönetimi
+
+### Oturum Başında
+```
+1. CLAUDE.md oku → Bu dosya (zaten otomatik okunur)
+2. VIXREX_OTURUM_OZETI.md oku → Son durumu anla
+3. flutter analyze çalıştır → Mevcut hataları gör
+4. flutter test çalıştır → Test durumunu gör
+```
+
+### Oturum Sonunda
+```
+1. Yapılanları kaydet → VIXREX_OTURUM_OZETI.md'yi güncelle
+2. Commit et → Değişiklikleri GitHub'a gönder
+3. Kalanları listele → Gelecek oturum için not bırak
+```
+
+### Dosya Öncelik Sırası
+| Dosya | Ne Zaman Okunur |
+|---|---|
+| `CLAUDE.md` | Her otomatik (zaten okunuyor) |
+| `VIXREX_OTURUM_OZETI.md` | Oturum başında |
+| `ANALIZ_RAPORU.md` | Teknik detay gerektiğinde |
+| `VIXREX_UI_NOTLARI.md` | UI düzeltmesi gerektiğinde |
+| `README.md` | Kurulum/başlatma gerektiğinde |
+
+---
+
+## 9. Kalite Standartları
+
+### "Yeterli" Ne Demek?
+- `flutter analyze` sıfır hata → Yeterli
+- Tüm testler geçiyor → Yeterli
+- Kod okunabilir → Yeterli
+- Güvenlik açığı yok → Yeterli
+
+### "Mükemmel" Ne Demek?
+- Tüm testler geçiyor + coverage yüksek
+- Dosyalar küçük ve anlamlı
+- Tekrar eden kod yok
+- Dokümantasyon güncel
+
+### Pratik Yaklaşım
+- Önce "çalışsın" → Sonra "temiz olsun"
+- Kritik hataları düzelt → Kozmetik olanları sonra
+- %80 mükemmel → %100 mükemmel için uğraşma
+
+---
+
+## 10. Sık Yapılan Hatalar
+
+| Hata | Sonuç | Çözüm |
+|---|---|---|
+| `catch (_) {}` | Hata yutuluyor | `debugPrint` ile logla |
+| Aynı kodu 2 yere yazma | Değişiklik unutulur | Merkezi fonksiyona taşı |
+| Dosyayı bölmeme | Anlaşılması zor | 300 satırsa böl |
+| Test yazmama | Hata bulmak zor | Her servise test yaz |
+| Commit mesajı yazmama | Geçmiş anlaşılmaz | Conventional commit kullan |
+| VIXREX_OTURUM_OZETI.md'yi güncelleme | Bilgi kopar | Her işlem sonrası güncelle |
+
+---
+
+## 11. Commit Mesajı Formatı
 
 ```
 tip(değişiklik): kısa açıklama
@@ -134,29 +235,19 @@ docs: README güncellendi
 
 ---
 
-## 8. Kontrol Listesi (Her İşlem Sonrası)
+## 12. Kontrol Listesi (Her İşlem Sonrası)
 
 - [ ] `flutter analyze` → sıfır hata?
 - [ ] `catch (_) {}` var mı? → kaldır veya log ekle
 - [ ] Dosya 300 satırı geçti mi? → böl
 - [ ] Aynı kod başka yerde var mı? → merkezileştir
 - [ ] Test çalıştırıldı mı? → çalıştır
+- [ ] VIXREX_OTURUM_OZETI.md güncellendi mi? → güncelle
+- [ ] Commit mesajı yazıldı mı? → yaz
 
 ---
 
-## 9. Dosya Referansı
-
-| Dosya | Amaç |
-|---|---|
-| `CLAUDE.md` | Bu dosya (kurallar + yapı) |
-| `ANALIZ_RAPORU.md` | Teknik detaylı analiz |
-| `VIXREX_OTURUM_OZETI.md` | Oturum notları, yapılan işlemler |
-| `VIXREX_UI_NOTLARI.md` | UI düzeltme notları |
-| `README.md` | Proje kurulumu ve kullanımı |
-
----
-
-## 10. İletişim Kalıpları
+## 13. İletişim Kalıpları
 
 Teknik terim bilmeden nasıl prompt girilir:
 
@@ -170,3 +261,56 @@ Teknik terim bilmeden nasıl prompt girilir:
 | "Düzelt" | Çözerim |
 | "Test et" | Çalıştırırım |
 | "Commit et" | GitHub'a gönderirim |
+
+---
+
+## 14. Dosya Referansı
+
+| Dosya | Amaç |
+|---|---|
+| `CLAUDE.md` | Bu dosya (kurallar + yapı) |
+| `ANALIZ_RAPORU.md` | Teknik detaylı analiz |
+| `VIXREX_OTURUM_OZETI.md` | Oturum notları, yapılan işlemler |
+| `VIXREX_UI_NOTLARI.md` | UI düzeltme notları |
+| `README.md` | Proje kurulumu ve kullanımı |
+
+---
+
+## 15. Örnek Senaryolar
+
+### Senaryo 1: "Yeni bir servis ekle"
+```
+1. lib/services/ altına XService.dart oluştur
+2. Result<T> pattern'ini kullan
+3. SupabaseErrorMapper ile hata yönetimi
+4. test/ altına XService_test.dart oluştur
+5. flutter analyze çalıştır
+6. flutter test çalıştır
+7. Commit et: "feat(yeni): XService oluşturuldu"
+8. VIXREX_OTURUM_OZETI.md'yi güncelle
+```
+
+### Senaryo 2: "Bu sayfa çalışmıyor"
+```
+1. İlgili screen dosyasını oku
+2. Hatanın kaynağını bul (hangi satır, ne zaman)
+3. Kök nedeni analiz et
+4. Çözümü uygula (minimum değişiklik)
+5. flutter analyze çalıştır
+6. İlgili testleri çalıştır
+7. Manually test et (gerekirse)
+8. Commit et: "fix(hata): X sayfası düzeltildi"
+9. VIXREX_OTURUM_OZETI.md'yi güncelle
+```
+
+### Senaryo 3: "Kod kalitesini artır"
+```
+1. flutter analyze çalıştır → Mevcut hataları gör
+2. Büyük dosyaları tespit et → 300+ satır
+3. Tekrar eden kodları bul → Aynı fonksiyon 2+ yerde
+4. Önceliklendir → Kritik → Orta → Düşük
+5. Birer birer düzelt
+6. Her adım sonrası test et
+7. Commit et: "refactor(temizlik): X düzeltildi"
+8. VIXREX_OTURUM_OZETI.md'yi güncelle
+```
