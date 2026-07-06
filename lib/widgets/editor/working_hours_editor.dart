@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/editor/working_hours_day_row.dart';
+import 'package:vixrex/widgets/editor/working_hours_service_row.dart';
 
 class WorkingHoursEditor extends StatefulWidget {
   final bool bookingIsEnabled;
@@ -40,8 +42,6 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
   static const Color mutedText = AppColors.mutedText;
   static const Color softText = AppColors.softText;
   static const Color cardBorder = AppColors.cardBorderDark;
-  static const Color inputBg = AppColors.inputBg;
-  static const Color dangerColor = Color(0xFFDC2626);
 
   Widget _buildBookingServicesSection() {
     final config = BusinessCategoryConfig.fromCategoryLabel(widget.selectedKategori);
@@ -179,316 +179,19 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
             ),
           ),
         for (int i = 0; i < widget.offerings.length; i++) ...[
-          _buildBookingServiceRow(i),
-          const SizedBox(height: 10),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildBookingServiceRow(int index) {
-    final offering = widget.offerings[index];
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: inputBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextFormField(
-                  key: ValueKey('${offering.id}-title'),
-                  initialValue: offering.title,
-                  onChanged: (val) {
-                    offering.title = val;
-                    widget.onStateChanged();
-                  },
-                  maxLength: 60,
-                  buildCounter: (
-                    context, {
-                    required currentLength,
-                    required isFocused,
-                    maxLength,
-                  }) => null,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: darkText,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Randevu hizmeti (örn: Saç Kesimi)',
-                    hintStyle: TextStyle(
-                      color: mutedText.withValues(alpha: 0.6),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  key: ValueKey('${offering.id}-price'),
-                  initialValue: offering.price,
-                  onChanged: (val) {
-                    offering.price = val;
-                    widget.onStateChanged();
-                  },
-                  maxLength: 30,
-                  buildCounter: (
-                    context, {
-                    required currentLength,
-                    required isFocused,
-                    maxLength,
-                  }) => null,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Fiyat (örn: 150 TL)',
-                    hintStyle: TextStyle(
-                      color: mutedText.withValues(alpha: 0.6),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    widget.offerings.removeAt(index);
-                  });
-                  widget.onStateChanged();
-                },
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  size: 18,
-                  color: dangerColor,
-                ),
-                style: IconButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(28, 28),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 1, color: cardBorder),
-          TextFormField(
-            key: ValueKey('${offering.id}-desc'),
-            initialValue: offering.description,
-            onChanged: (val) {
-              offering.description = val;
-              widget.onStateChanged();
-            },
-            maxLength: 120,
-            buildCounter: (
-              context, {
-              required currentLength,
-              required isFocused,
-              maxLength,
-            }) => null,
-            maxLines: 2,
-            style: const TextStyle(
-              fontSize: 12,
-              color: softText,
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: InputDecoration(
-              hintText: 'Kısa açıklama (örn: Yıkama ve fön dahil hizmet)',
-              hintStyle: TextStyle(
-                color: mutedText.withValues(alpha: 0.5),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 8,
-              ),
-              border: InputBorder.none,
-            ),
-          ),
-          const Divider(height: 1, color: cardBorder),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const SizedBox(width: 8),
-              const Icon(Icons.timer_rounded, size: 14, color: mutedText),
-              const SizedBox(width: 4),
-              const Text(
-                'Süre',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: softText,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              DropdownButton<int>(
-                value: offering.durationMinutes,
-                items: [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
-                  return DropdownMenuItem<int>(
-                    value: val,
-                    child: Text(
-                      '$val dk',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: darkText,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  setState(() {
-                    if (val != null) {
-                      offering.durationMinutes = val;
-                    }
-                    offering.isBookable = true;
-                  });
-                  widget.onStateChanged();
-                },
-                underline: const SizedBox(),
-              ),
-              const SizedBox(width: 8),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDayRow(String day) {
-    final dayNames = {
-      '1': 'Pazartesi',
-      '2': 'Salı',
-      '3': 'Çarşamba',
-      '4': 'Perşembe',
-      '5': 'Cuma',
-      '6': 'Cumartesi',
-      '7': 'Pazar',
-    };
-    final dayHours = widget.bookingWorkingHours[day] ??
-        {'start': '09:00', 'end': '19:00', 'active': true};
-    final isActive = dayHours['active'] ?? false;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 90,
-            child: Text(
-              dayNames[day]!,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: isActive ? darkText : mutedText,
-              ),
-            ),
-          ),
-          Checkbox(
-            value: isActive,
-            activeColor: primaryColor,
-            onChanged: (val) {
+          WorkingHoursServiceRow(
+            offering: widget.offerings[i],
+            onDelete: () {
               setState(() {
-                dayHours['active'] = val ?? false;
-                widget.bookingWorkingHours[day] = dayHours;
+                widget.offerings.removeAt(i);
               });
               widget.onStateChanged();
             },
+            onStateChanged: widget.onStateChanged,
           ),
-          if (isActive) ...[
-            const SizedBox(width: 8),
-            Expanded(
-              child: DropdownButton<String>(
-                value: dayHours['start'] ?? '09:00',
-                items: ['07:00', '08:00', '08:30', '09:00', '09:30', '10:00'].map((String val) {
-                  return DropdownMenuItem<String>(
-                    value: val,
-                    child: Text(val, style: const TextStyle(fontSize: 11)),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  setState(() {
-                    if (val != null) {
-                      dayHours['start'] = val;
-                      widget.bookingWorkingHours[day] = dayHours;
-                    }
-                  });
-                  widget.onStateChanged();
-                },
-                underline: const SizedBox(),
-              ),
-            ),
-            const Text('-', style: TextStyle(color: mutedText)),
-            Expanded(
-              child: DropdownButton<String>(
-                value: dayHours['end'] ?? '19:00',
-                items: [
-                  '16:00',
-                  '17:00',
-                  '18:00',
-                  '19:00',
-                  '20:00',
-                  '21:00',
-                  '22:00',
-                  '23:00',
-                ].map((String val) {
-                  return DropdownMenuItem<String>(
-                    value: val,
-                    child: Text(val, style: const TextStyle(fontSize: 11)),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  setState(() {
-                    if (val != null) {
-                      dayHours['end'] = val;
-                      widget.bookingWorkingHours[day] = dayHours;
-                    }
-                  });
-                  widget.onStateChanged();
-                },
-                underline: const SizedBox(),
-              ),
-            ),
-          ] else ...[
-            const Expanded(
-              child: Text(
-                'Kapalı',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: mutedText,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-          ],
+          const SizedBox(height: 10),
         ],
-      ),
+      ],
     );
   }
 
@@ -698,7 +401,11 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
             ),
             const SizedBox(height: 8),
             for (String day in ['1', '2', '3', '4', '5', '6', '7']) ...[
-              _buildDayRow(day),
+              WorkingHoursDayRow(
+                day: day,
+                bookingWorkingHours: widget.bookingWorkingHours,
+                onStateChanged: widget.onStateChanged,
+              ),
             ],
           ],
         ],
