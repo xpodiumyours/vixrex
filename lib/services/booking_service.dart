@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/core/result.dart';
-import 'package:vixrex/utils/failure.dart';
+import 'package:vixrex/core/supabase_error_mapper.dart';
 
 /// Randevu ile ilgili tüm Supabase RPC işlemlerini merkezileştirir.
 class BookingService {
@@ -23,7 +23,7 @@ class BookingService {
           .order('appointment_time', ascending: true);
       return Result.success(res as List<dynamic>);
     } catch (e, s) {
-      return Result.failure(Failure('Randevular yüklenirken bağlantı hatası oluştu.', stackTrace: s));
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 
@@ -41,7 +41,7 @@ class BookingService {
       });
       return const Result.success(null);
     } catch (e, s) {
-      return Result.failure(Failure('Randevu durumu güncellenemedi. Lütfen internetinizi kontrol edin.', stackTrace: s));
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 
@@ -55,7 +55,7 @@ class BookingService {
       });
       return Result.success(res);
     } catch (e, s) {
-      return Result.failure(Failure('Randevu bilgileri alınamadı. Kod geçersiz olabilir.', stackTrace: s));
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 
@@ -67,7 +67,7 @@ class BookingService {
       });
       return const Result.success(null);
     } catch (e, s) {
-      return Result.failure(Failure('Randevu iptal edilemedi.', stackTrace: s));
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 
@@ -85,7 +85,7 @@ class BookingService {
       });
       return Result.success(res as List<dynamic>);
     } catch (e, s) {
-      return Result.failure(Failure('Müsait randevu saatleri alınamadı.', stackTrace: s));
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 
@@ -101,10 +101,7 @@ class BookingService {
       });
       return const Result.success(null);
     } catch (e, s) {
-      if (e is PostgrestException && e.message.contains('dolu')) {
-        return Result.failure(Failure('Seçtiğiniz randevu saati dolu.', stackTrace: s));
-      }
-      return Result.failure(Failure('Tarih güncelleme talebi gönderilemedi.', stackTrace: s));
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 
@@ -132,10 +129,7 @@ class BookingService {
       });
       return Result.success(res as Map<String, dynamic>);
     } catch (e, s) {
-      if (e is PostgrestException && e.message.contains('dolu')) {
-        return Result.failure(Failure('Seçilen saat dolmuştur, lütfen başka bir saat seçin.', stackTrace: s));
-      }
-      return Result.failure(Failure('Randevu talebi oluşturulurken hata oluştu.', stackTrace: s));
+      return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 

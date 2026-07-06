@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/store_publish_validator.dart';
 import 'package:vixrex/services/store_publish_payload_builder.dart';
+import 'package:vixrex/core/supabase_error_mapper.dart';
 
 class StorePublishService {
   final StorePublishPayloadBuilder payloadBuilder;
@@ -117,13 +118,13 @@ class StorePublishService {
       }
 
       throw StorePublishException(
-        _messageForPostgrestError(error, data.isStore),
+        SupabaseErrorMapper.map(error).message,
       );
     } on StorePublishException {
       rethrow;
     } catch (error) {
       throw StorePublishException(
-        _messageForUnexpectedError(error, data.isStore),
+        SupabaseErrorMapper.map(error).message,
       );
     }
   }
@@ -145,7 +146,7 @@ class StorePublishService {
       );
     } on PostgrestException catch (error) {
       throw StorePublishException(
-        _messageForPostgrestError(error, data.isStore),
+        SupabaseErrorMapper.map(error).message,
       );
     }
   }
@@ -167,77 +168,12 @@ class StorePublishService {
         params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
       );
     } on PostgrestException catch (error) {
-      throw StorePublishException(_messageForPostgrestError(error, false));
-    } catch (_) {
-      throw const StorePublishException(
-        'Yayınlama rızası geri çekilemedi. Lütfen tekrar deneyin.',
+      throw StorePublishException(SupabaseErrorMapper.map(error).message);
+    } catch (error) {
+      throw StorePublishException(
+        SupabaseErrorMapper.map(error).message,
       );
     }
-  }
-
-  String _messageForPostgrestError(PostgrestException error, bool isStore) {
-    final searchableText =
-        [
-          error.message,
-          error.code,
-          error.details?.toString(),
-          error.hint,
-          error.toString(),
-        ].whereType<String>().join(' ').toLowerCase();
-
-    if (searchableText.contains('edit_token_mismatch') ||
-        searchableText.contains('edit token mismatch') ||
-        searchableText.contains('invalid_edit_token')) {
-      return isStore
-          ? 'Bu mağaza başka bir cihazdan oluşturulmuş olabilir. Lütfen oturumu kapatıp tekrar giriş yapın.'
-          : 'Bu vitrin başka bir cihazdan oluşturulmuş olabilir. Lütfen oturumu kapatıp tekrar giriş yapın.';
-    }
-
-    if (searchableText.contains('privacy_notice_required') ||
-        searchableText.contains('privacy_notice_version_invalid')) {
-      return 'Güncel Aydınlatma Metni hakkında bilgilendirildiğinizi onaylamalısınız.';
-    }
-    if (searchableText.contains('terms_acceptance_required') ||
-        searchableText.contains('terms_version_invalid')) {
-      return 'Güncel Kullanım Şartları’nı kabul etmelisiniz.';
-    }
-    if (searchableText.contains('publication_consent_required') ||
-        searchableText.contains('publication_consent_version_invalid')) {
-      return 'Vitrininizi yayınlamak için güncel açık rıza beyanını onaylamalısınız.';
-    }
-
-    if (searchableText.contains('update_store_with_token') ||
-        searchableText.contains('could not find the function')) {
-      return 'Güncelleme altyapısı Supabase tarafında henüz kurulmamış.';
-    }
-
-    if (searchableText.contains('row-level security') ||
-        searchableText.contains('permission denied') ||
-        searchableText.contains('violates row-level security')) {
-      return isStore
-          ? 'Mağaza güncelleme izni Supabase tarafında eksik görünüyor.'
-          : 'Vitrin güncelleme izni Supabase tarafında eksik görünüyor.';
-    }
-
-    return isStore
-        ? 'Mağaza yayınlanamadı: ${error.message}'
-        : 'Vitrin yayınlanamadı: ${error.message}';
-  }
-
-  String _messageForUnexpectedError(Object error, bool isStore) {
-    final searchableText = error.toString().toLowerCase();
-
-    if (searchableText.contains('supabase') &&
-        (searchableText.contains('initialize') ||
-            searchableText.contains('not initialized') ||
-            searchableText.contains('has not been initialized') ||
-            searchableText.contains('instance'))) {
-      return 'Supabase bağlantı bilgileri eksik. Uygulamayı SUPABASE_URL ve SUPABASE_PUBLISHABLE_KEY değerleriyle başlatın.';
-    }
-
-    return isStore
-        ? 'Mağaza yayınlanamadı: $error'
-        : 'Vitrin yayınlanamadı: $error';
   }
 
   bool _isDuplicateSlugError(PostgrestException error) {
