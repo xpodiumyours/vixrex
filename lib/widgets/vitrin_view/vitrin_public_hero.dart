@@ -31,7 +31,10 @@ class VitrinPublicHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final heroItem = galleryItems.isEmpty ? null : galleryItems.first;
+    final hasShelfImage = storeData.shelfImageUrl.trim().isNotEmpty;
+    final heroItem = hasShelfImage
+        ? VitrinGalleryPreviewItem(imageUrl: storeData.shelfImageUrl.trim())
+        : (galleryItems.isEmpty ? null : galleryItems.first);
     final heroHeight = desktop ? 376.0 : 168.0;
     final avatarSize = desktop ? 116.0 : 92.0;
     final description = VitrinViewContent.publicHeroDescription(storeData);

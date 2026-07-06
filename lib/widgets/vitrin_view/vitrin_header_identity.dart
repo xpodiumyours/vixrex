@@ -34,7 +34,10 @@ class VitrinModernHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final heroItem = galleryItems.isEmpty ? null : galleryItems.first;
+    final hasShelfImage = storeData.shelfImageUrl.trim().isNotEmpty;
+    final heroItem = hasShelfImage
+        ? VitrinGalleryPreviewItem(imageUrl: storeData.shelfImageUrl.trim())
+        : (galleryItems.isEmpty ? null : galleryItems.first);
     final hasHeroImage = heroItem != null;
     final heroHeight =
         isEmbedded
