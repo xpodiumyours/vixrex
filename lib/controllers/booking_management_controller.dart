@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/services/booking_service.dart';
+import 'package:vixrex/utils/failure.dart';
 
 class BookingManagementController extends ChangeNotifier {
   final String storeSlug;
@@ -25,9 +26,9 @@ class BookingManagementController extends ChangeNotifier {
       _isLoading = false;
       _errorMessage = null;
       notifyListeners();
-    } catch (_) {
+    } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Randevular yüklenirken bir hata oluştu.';
+      _errorMessage = e is Failure ? e.message : 'Randevular yüklenirken bir hata oluştu.';
       notifyListeners();
     }
   }
@@ -38,6 +39,7 @@ class BookingManagementController extends ChangeNotifier {
     String? rescheduleAction,
   }) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
     try {
       await _bookingService.respondToAppointment(
@@ -47,8 +49,9 @@ class BookingManagementController extends ChangeNotifier {
       );
       await fetchAppointments();
       return true;
-    } catch (_) {
+    } catch (e) {
       _isLoading = false;
+      _errorMessage = e is Failure ? e.message : 'İşlem gerçekleştirilemedi.';
       notifyListeners();
       return false;
     }

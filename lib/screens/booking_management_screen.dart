@@ -49,7 +49,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
     if (success) {
       _showSnackBar('Randevu güncellendi.');
     } else {
-      _showSnackBar('İşlem gerçekleştirilemedi.');
+      _showSnackBar(_controller.errorMessage ?? 'İşlem gerçekleştirilemedi.');
     }
   }
 

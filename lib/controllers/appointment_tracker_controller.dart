@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/services/booking_service.dart';
+import 'package:vixrex/utils/failure.dart';
 
 class AppointmentTrackerController extends ChangeNotifier {
   final String token;
@@ -61,22 +62,24 @@ class AppointmentTrackerController extends ChangeNotifier {
       }
       _isLoading = false;
       notifyListeners();
-    } catch (_) {
+    } catch (e) {
       _isLoading = false;
-      _errorMsg = 'Randevu detayları yüklenirken bir hata oluştu.';
+      _errorMsg = e is Failure ? e.message : 'Randevu detayları yüklenirken bir hata oluştu.';
       notifyListeners();
     }
   }
 
   Future<bool> cancelAppointment() async {
     _isLoading = true;
+    _errorMsg = null;
     notifyListeners();
     try {
       await _bookingService.cancelAppointmentByToken(token);
       await fetchAppointment();
       return true;
-    } catch (_) {
+    } catch (e) {
       _isLoading = false;
+      _errorMsg = e is Failure ? e.message : 'İşlem gerçekleştirilemedi.';
       notifyListeners();
       return false;
     }
@@ -95,8 +98,9 @@ class AppointmentTrackerController extends ChangeNotifier {
       _availableSlots = slots;
       _isLoadingSlots = false;
       notifyListeners();
-    } catch (_) {
+    } catch (e) {
       _isLoadingSlots = false;
+      _errorMsg = e is Failure ? e.message : null;
       notifyListeners();
     }
   }
@@ -105,6 +109,7 @@ class AppointmentTrackerController extends ChangeNotifier {
     if (_newDate == null || _newSlotTime == null) return false;
 
     _isSubmittingReschedule = true;
+    _errorMsg = null;
     notifyListeners();
 
     try {
@@ -125,8 +130,9 @@ class AppointmentTrackerController extends ChangeNotifier {
 
       await fetchAppointment();
       return true;
-    } catch (_) {
+    } catch (e) {
       _isSubmittingReschedule = false;
+      _errorMsg = e is Failure ? e.message : 'Talep gönderilemedi.';
       notifyListeners();
       return false;
     }

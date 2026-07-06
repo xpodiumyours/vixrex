@@ -63,7 +63,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
     if (success) {
       _showSnackBar('Randevunuz iptal edildi.');
     } else {
-      _showSnackBar('İşlem gerçekleştirilemedi.');
+      _showSnackBar(_controller.errorMsg ?? 'İşlem gerçekleştirilemedi.');
     }
   }
 
