@@ -5,217 +5,11 @@ import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/chatbot_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/vixrex_message_bubble.dart';
 
-const double _vixrexBadgeSize = 84;
 const double _vixrexPanelAvatarSize = 68;
 
-// ─── Yüzen Robot Rozeti ──────────────────────────────────────────────────────
-class ChatbotBadge extends StatefulWidget {
-  /// Anlık vitrin snapshot'ı. null ise genel karşılama gösterilir.
-  final VixRexProfileSnapshot? snapshot;
-
-  /// Vitrinim sekmesine git callback'i.
-  final VoidCallback? onNavigateToVitrim;
-
-  /// Keşfet sekmesine git callback'i.
-  final VoidCallback? onNavigateToExplore;
-
-  /// Public linki kopyala callback'i.
-  final VoidCallback? onCopyLink;
-
-  /// QR bottom sheet callback'i.
-  final VoidCallback? onShowQr;
-
-  /// WhatsApp paylaşım callback'i.
-  final VoidCallback? onShareWhatsapp;
-
-  /// Sayfa içi kaydırma callback'i.
-  final void Function(VixRexAction)? onScrollToAction;
-
-  /// Sohbet geçmişi listesi.
-  final List<ChatMessage>? chatHistory;
-
-  const ChatbotBadge({
-    super.key,
-    this.snapshot,
-    this.chatHistory,
-    this.onNavigateToVitrim,
-    this.onNavigateToExplore,
-    this.onCopyLink,
-    this.onShowQr,
-    this.onShareWhatsapp,
-    this.onScrollToAction,
-  });
-
-  @override
-  State<ChatbotBadge> createState() => _ChatbotBadgeState();
-}
-
-class _ChatbotBadgeState extends State<ChatbotBadge>
-    with TickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late AnimationController _scanController;
-  late Animation<double> _pulseAnim;
-  late Animation<double> _scanAnim;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Pulsing halka
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 0.6, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
-    // Scan line
-    _scanController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )..repeat();
-    _scanAnim = Tween<double>(begin: -1.0, end: 1.0).animate(
-      CurvedAnimation(parent: _scanController, curve: Curves.linear),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    _scanController.dispose();
-    super.dispose();
-  }
-
-  void _openChat(BuildContext context) {
-    VixRexOverlay.show(
-      context,
-      snapshot: widget.snapshot,
-      chatHistory: widget.chatHistory,
-      onNavigateToVitrim: widget.onNavigateToVitrim,
-      onNavigateToExplore: widget.onNavigateToExplore,
-      onCopyLink: widget.onCopyLink,
-      onShowQr: widget.onShowQr,
-      onShareWhatsapp: widget.onShareWhatsapp,
-      onScrollToAction: widget.onScrollToAction,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _openChat(context),
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_pulseController, _scanController]),
-        child: Image.asset(
-          'assets/images/vixrex_mascot.webp',
-          width: _vixrexBadgeSize,
-          height: _vixrexBadgeSize,
-          fit: BoxFit.cover,
-        ),
-        builder: (context, mascot) {
-          return Container(
-            width: _vixrexBadgeSize,
-            height: _vixrexBadgeSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.transparent,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withAlpha((255 * 0.25 * _pulseAnim.value).round()),
-                  blurRadius: 16,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  mascot!,
-                  // Scan line
-                  Positioned(
-                    top:
-                        (_vixrexBadgeSize / 2) +
-                        (_scanAnim.value * (_vixrexBadgeSize / 2)),
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      height: 1.5,
-                      color: AppColors.primary.withAlpha(60),
-                    ),
-                  ),
-                  // LED aktif göstergesi
-                  Positioned(
-                    bottom: 6,
-                    right: 6,
-                    child: Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: AppColors.success,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.success.withAlpha(180),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ─── VixRex Overlay Panel ──────────────────────────────────────────────────────
-class VixRexOverlay {
-  static OverlayEntry? _entry;
-
-  /// [snapshot] varsa VixRex kişiselleştirilmiş karşılama gösterir.
-  /// Callback'ler action butonlarını ilgili ekrana bağlar.
-  static void show(
-    BuildContext context, {
-    VixRexProfileSnapshot? snapshot,
-    List<ChatMessage>? chatHistory,
-    VoidCallback? onNavigateToVitrim,
-    VoidCallback? onNavigateToExplore,
-    VoidCallback? onCopyLink,
-    VoidCallback? onShowQr,
-    VoidCallback? onShareWhatsapp,
-    void Function(VixRexAction)? onScrollToAction,
-  }) {
-    if (_entry != null) return;
-    _entry = OverlayEntry(
-      builder: (_) => _VixRexPanelWrapper(
-        onClose: close,
-        snapshot: snapshot,
-        chatHistory: chatHistory,
-        onNavigateToVitrim: onNavigateToVitrim,
-        onNavigateToExplore: onNavigateToExplore,
-        onCopyLink: onCopyLink,
-        onShowQr: onShowQr,
-        onShareWhatsapp: onShareWhatsapp,
-        onScrollToAction: onScrollToAction,
-      ),
-    );
-    Overlay.of(context).insert(_entry!);
-  }
-
-  static void close() {
-    _entry?.remove();
-    _entry = null;
-  }
-}
-
-class _VixRexPanelWrapper extends StatefulWidget {
+class VixRexPanelWrapper extends StatefulWidget {
   final VoidCallback onClose;
   final VixRexProfileSnapshot? snapshot;
   final List<ChatMessage>? chatHistory;
@@ -226,7 +20,8 @@ class _VixRexPanelWrapper extends StatefulWidget {
   final VoidCallback? onShareWhatsapp;
   final void Function(VixRexAction)? onScrollToAction;
 
-  const _VixRexPanelWrapper({
+  const VixRexPanelWrapper({
+    super.key,
     required this.onClose,
     this.snapshot,
     this.chatHistory,
@@ -239,10 +34,10 @@ class _VixRexPanelWrapper extends StatefulWidget {
   });
 
   @override
-  State<_VixRexPanelWrapper> createState() => _VixRexPanelWrapperState();
+  State<VixRexPanelWrapper> createState() => _VixRexPanelWrapperState();
 }
 
-class _VixRexPanelWrapperState extends State<_VixRexPanelWrapper>
+class _VixRexPanelWrapperState extends State<VixRexPanelWrapper>
     with SingleTickerProviderStateMixin {
   late AnimationController _slideController;
   late Animation<Offset> _slideAnim;
@@ -293,7 +88,7 @@ class _VixRexPanelWrapperState extends State<_VixRexPanelWrapper>
               child: SizedBox(
                 width: panelWidth,
                 height: double.infinity,
-                child: _VixRexPanel(
+                child: VixRexPanel(
                   onClose: _close,
                   snapshot: widget.snapshot,
                   chatHistory: widget.chatHistory,
@@ -313,8 +108,7 @@ class _VixRexPanelWrapperState extends State<_VixRexPanelWrapper>
   }
 }
 
-// ─── Panel İçeriği ───────────────────────────────────────────────────────────
-class _VixRexPanel extends StatefulWidget {
+class VixRexPanel extends StatefulWidget {
   final VoidCallback onClose;
   final VixRexProfileSnapshot? snapshot;
   final List<ChatMessage>? chatHistory;
@@ -325,7 +119,8 @@ class _VixRexPanel extends StatefulWidget {
   final VoidCallback? onShareWhatsapp;
   final void Function(VixRexAction)? onScrollToAction;
 
-  const _VixRexPanel({
+  const VixRexPanel({
+    super.key,
     required this.onClose,
     this.snapshot,
     this.chatHistory,
@@ -338,10 +133,10 @@ class _VixRexPanel extends StatefulWidget {
   });
 
   @override
-  State<_VixRexPanel> createState() => _VixRexPanelState();
+  State<VixRexPanel> createState() => _VixRexPanelState();
 }
 
-class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixin {
+class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin {
   final ChatbotService _service = ChatbotService();
   late final List<ChatMessage> _messages;
   final TextEditingController _inputCtrl = TextEditingController();
@@ -358,19 +153,16 @@ class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixi
   void initState() {
     super.initState();
 
-    // Scan line
     _scanController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
     _scanAnim = Tween<double>(begin: -1.0, end: 1.0).animate(_scanController);
 
-    // İmleç
     _cursorTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
       if (mounted) setState(() => _cursorVisible = !_cursorVisible);
     });
 
-    // Sohbet geçmişini başlat/bağla
     _messages = widget.chatHistory ?? [];
     _initializeGuidance();
 
@@ -454,7 +246,6 @@ class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixi
   }
 
   void _onQuickReply(QuickReply reply) {
-    // Action routing: navigasyon aksiyonu varsa önce callback'i çağır
     if (reply.action != VixRexAction.none) {
       _handleAction(reply.action);
       return;
@@ -481,10 +272,7 @@ class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixi
     });
   }
 
-  /// Aksiyona göre ilgili callback'i çağırır ve paneli kapatır.
   void _handleAction(VixRexAction action) {
-    // Callback referanslarını önceden al (panel kapandıktan sonra widget
-    // unmount olabilir, bu yüzden doğrudan widget'a erişemeyiz)
     final onVitrim   = widget.onNavigateToVitrim;
     final onExplore  = widget.onNavigateToExplore;
     final onCopy     = widget.onCopyLink;
@@ -492,7 +280,6 @@ class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixi
     final onWhatsapp = widget.onShareWhatsapp;
     final onScroll   = widget.onScrollToAction;
 
-    // onClose void döndürür — Future.delayed ile animasyon süresini bekle
     widget.onClose();
     Future.delayed(const Duration(milliseconds: 320), () {
       switch (action) {
@@ -591,12 +378,9 @@ class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixi
       child: SafeArea(
         child: Column(
           children: [
-            // ── Başlık ──────────────────────────────────────────────────
             _buildHeader(),
-            // ── Robot Avatar ────────────────────────────────────────────
             _buildAvatar(),
             const Divider(color: AppColors.border, height: 1),
-            // ── Mesajlar ────────────────────────────────────────────────
             Expanded(
               child: ListView.builder(
                 controller: _scrollCtrl,
@@ -604,16 +388,21 @@ class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixi
                 itemCount: _messages.length + (_isTyping ? 1 : 0),
                 itemBuilder: (context, i) {
                   if (_isTyping && i == _messages.length) {
-                    return _buildTypingIndicator();
+                    return const VixRexTypingIndicator();
                   }
-                  return _buildMessageRow(_messages[i]);
+                  final msg = _messages[i];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: msg.isBot
+                        ? VixRexBotMessage(msg: msg, showCursor: !_isTyping)
+                        : VixRexUserMessage(msg: msg),
+                  );
                 },
               ),
             ),
-            // ── Quick Replies ───────────────────────────────────────────
-            if (quickReplies.isNotEmpty) _buildQuickReplies(quickReplies),
+            if (quickReplies.isNotEmpty)
+              VixRexQuickReplies(replies: quickReplies, onTap: _onQuickReply),
             const Divider(color: AppColors.border, height: 1),
-            // ── Giriş Alanı ─────────────────────────────────────────────
             _buildInput(),
           ],
         ),
@@ -698,7 +487,7 @@ class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixi
     return AnimatedBuilder(
       animation: _scanController,
       child: Image.asset(
-        'assets/images/vixrex_mascot.png',
+        'assets/images/vixrex_mascot.webp',
         width: _vixrexPanelAvatarSize,
         height: _vixrexPanelAvatarSize,
         fit: BoxFit.cover,
@@ -710,7 +499,6 @@ class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixi
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Robot mini avatar
               SizedBox(
                 width: _vixrexPanelAvatarSize,
                 height: _vixrexPanelAvatarSize,
@@ -762,190 +550,6 @@ class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixi
     );
   }
 
-  Widget _buildMessageRow(ChatMessage msg) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: msg.isBot ? _buildBotMessage(msg) : _buildUserMessage(msg),
-    );
-  }
-
-  Widget _buildBotMessage(ChatMessage msg) {
-    final lines = msg.text.split('\n');
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withAlpha(20),
-            shape: BoxShape.circle,
-          ),
-          child: const Center(
-            child: Text('X', style: TextStyle(color: AppColors.primaryDark, fontSize: 10, fontWeight: FontWeight.w900)),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.bgEditor,
-              borderRadius: const BorderRadius.only(
-                topRight: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12),
-              ),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ...lines.map((line) {
-                  if (line.isEmpty) return const SizedBox(height: 4);
-                  final isCursor = !_isTyping && lines.last == line;
-                  return RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: line,
-                          style: const TextStyle(
-                            color: AppColors.darkText,
-                            fontSize: 12.5,
-                            height: 1.5,
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                        if (isCursor && _cursorVisible)
-                          const TextSpan(
-                            text: ' ▌',
-                            style: TextStyle(color: AppColors.primary, fontSize: 12),
-                          ),
-                      ],
-                    ),
-                  );
-                }),
-                // ── [İyileştirme #1] Skor çubuğu ────────────────────────
-                if (msg.snapshotScore != null) ...
-                  [
-                    const SizedBox(height: 10),
-                    _VixRexScoreBar(score: msg.snapshotScore!),
-                  ],
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUserMessage(ChatMessage msg) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Flexible(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: AppColors.ctaGradient,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-            ),
-            child: Text(
-              msg.text,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTypingIndicator() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        children: [
-          Container(
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withAlpha(20),
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Text('X', style: TextStyle(color: AppColors.primaryDark, fontSize: 10, fontWeight: FontWeight.w900)),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.bgEditor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: const Text(
-              'Analiz ediliyor...',
-              style: TextStyle(color: AppColors.mutedText, fontSize: 11, fontStyle: FontStyle.italic),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickReplies(List<QuickReply> replies) {
-    return Container(
-      color: AppColors.bgEditor,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: SizedBox(
-        height: 44,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          itemCount: replies.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 6),
-          itemBuilder: (context, index) {
-            final r = replies[index];
-            return Semantics(
-              button: true,
-              label: r.label,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => _onQuickReply(r),
-                child: Container(
-                  constraints: const BoxConstraints(minHeight: 44),
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.ctaGradient,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    r.label,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
   Widget _buildInput() {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
@@ -989,92 +593,6 @@ class _VixRexPanelState extends State<_VixRexPanel> with TickerProviderStateMixi
           ),
         ],
       ),
-    );
-  }
-}
-
-// ─── [İyileştirme #1] Animasyonlu Skor Çubuğu ───────────────────────────────
-class _VixRexScoreBar extends StatefulWidget {
-  final int score; // 0–100
-  const _VixRexScoreBar({required this.score});
-
-  @override
-  State<_VixRexScoreBar> createState() => _VixRexScoreBarState();
-}
-
-class _VixRexScoreBarState extends State<_VixRexScoreBar>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _fillAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _fillAnim = Tween<double>(begin: 0, end: widget.score / 100)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
-    _ctrl.forward();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  Color _barColor(int score) {
-    if (score >= 80) return const Color(0xFF22C55E); // yeşil
-    if (score >= 50) return const Color(0xFFF59E0B); // sarı
-    return const Color(0xFFEF4444);                  // kırmızı
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _barColor(widget.score);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Vitrin skoru',
-              style: TextStyle(
-                color: AppColors.mutedText,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            AnimatedBuilder(
-              animation: _fillAnim,
-              builder: (_, __) => Text(
-                '%${(widget.score * _fillAnim.value).round()}',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: AnimatedBuilder(
-            animation: _fillAnim,
-            builder: (_, __) => LinearProgressIndicator(
-              value: _fillAnim.value,
-              minHeight: 6,
-              backgroundColor: AppColors.border,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

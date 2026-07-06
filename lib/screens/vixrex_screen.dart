@@ -88,7 +88,7 @@ class VixRexScreen extends StatelessWidget {
                 ),
                 child: ClipOval(
                   child: Image.asset(
-                    'assets/images/vixrex_mascot.png',
+                    'assets/images/vixrex_mascot.webp',
                     width: mascotSize,
                     height: mascotSize,
                     fit: BoxFit.cover,
