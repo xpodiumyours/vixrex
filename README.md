@@ -7,9 +7,9 @@ kanallarını ve randevu seçeneklerini tek bir public bağlantıda toplar.
 İşletmeler vitrinlerini Flutter uygulamasından yönetir, müşteriler ise
 Keşfet ekranı, QR kod veya doğrudan bağlantı üzerinden görüntüler.
 
-> Bu doküman mevcut repo yapısını açıklar. Repoda `stores`, `vitrin_views`
-> ve bazı görüntülenme RPC'lerinin ilk oluşturma SQL dosyaları bulunmadığı
-> için Supabase'in sıfırdan eksiksiz kurulabildiği varsayılmaz.
+> Bu doküman mevcut repo yapısını açıklar. Proje kök dizininde bulunan
+> [supabase_schema.sql](file:///c:/Projects/vixrex/supabase_schema.sql) dosyası tüm veritabanı tablolarını,
+> RLS politikalarını, trigger'ları ve RPC fonksiyonlarını tek seferde sıfırdan kurmanızı sağlar.
 
 ## İçindekiler
 
