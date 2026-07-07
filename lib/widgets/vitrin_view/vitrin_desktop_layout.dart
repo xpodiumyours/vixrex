@@ -13,7 +13,7 @@ class VitrinDesktopLayout extends StatelessWidget {
   final bool hasSideLinks;
   final bool hasGalleryMedia;
   final bool isBookingEnabled;
-  final bool isStore;
+  final bool hasProducts;
   final bool hasAboutText;
   final bool hasQrCard;
 
@@ -31,7 +31,7 @@ class VitrinDesktopLayout extends StatelessWidget {
     required this.hasSideLinks,
     required this.hasGalleryMedia,
     required this.isBookingEnabled,
-    required this.isStore,
+    required this.hasProducts,
     required this.hasAboutText,
     required this.hasQrCard,
   });
@@ -56,7 +56,7 @@ class VitrinDesktopLayout extends StatelessWidget {
                   children: [
                     bookingCTA,
                     if (isBookingEnabled) const SizedBox(height: 18),
-                    if (isStore) ...[
+                    if (hasProducts) ...[
                       productsCatalog,
                       const SizedBox(height: 22),
                     ],

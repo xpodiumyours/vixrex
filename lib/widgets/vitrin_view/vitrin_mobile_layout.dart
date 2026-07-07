@@ -12,7 +12,7 @@ class VitrinMobileLayout extends StatelessWidget {
   final Widget footer;
 
   final bool isBookingEnabled;
-  final bool isStore;
+  final bool hasProducts;
   final bool hasAboutText;
   final bool hasMarketplaceLinks;
   final bool hasGalleryMedia;
@@ -30,7 +30,7 @@ class VitrinMobileLayout extends StatelessWidget {
     required this.qrCard,
     required this.footer,
     required this.isBookingEnabled,
-    required this.isStore,
+    required this.hasProducts,
     required this.hasAboutText,
     required this.hasMarketplaceLinks,
     required this.hasGalleryMedia,
@@ -45,7 +45,7 @@ class VitrinMobileLayout extends StatelessWidget {
         const SizedBox(height: 14),
         bookingCTA,
         if (isBookingEnabled) const SizedBox(height: 16),
-        if (isStore) ...[
+        if (hasProducts) ...[
           productsCatalog,
           const SizedBox(height: 14),
         ],
@@ -90,7 +90,7 @@ class VitrinDefaultLayout extends StatelessWidget {
   final bool isBookingEnabled;
   final bool hasVisibleActions;
   final bool hasGalleryMedia;
-  final bool isStore;
+  final bool hasProducts;
   final bool publicMode;
   final bool hasQrCard;
   final bool showPremiumIdentityCard;
@@ -113,7 +113,7 @@ class VitrinDefaultLayout extends StatelessWidget {
     required this.isBookingEnabled,
     required this.hasVisibleActions,
     required this.hasGalleryMedia,
-    required this.isStore,
+    required this.hasProducts,
     required this.publicMode,
     required this.hasQrCard,
     required this.showPremiumIdentityCard,
@@ -137,7 +137,7 @@ class VitrinDefaultLayout extends StatelessWidget {
         shelfImageCard,
         SizedBox(height: isEmbedded ? 16 : 30),
       ],
-      if (isStore) ...[
+      if (hasProducts) ...[
         productsCatalog,
         SizedBox(height: isEmbedded ? 16 : 30),
       ],

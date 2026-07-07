@@ -199,7 +199,7 @@ class VitrinDefaultContentSection extends StatelessWidget {
         publicLink: publicLink,
       ),
       hasGalleryMedia: hasGalleryMedia,
-      isStore: storeData.isStore,
+      hasProducts: storeData.products.any((p) => p.isVisible),
       publicMode: publicMode,
       hasQrCard: publicMode && hasQrCard,
       showPremiumIdentityCard: !publicMode,
@@ -318,6 +318,8 @@ class VitrinPublicLayoutSection extends StatelessWidget {
     );
     final hasQrCard = publicLink?.isNotEmpty ?? false;
 
+    final hasProducts = storeData.products.any((p) => p.isVisible);
+
     return isDesktop
         ? VitrinDesktopLayout(
           hero: hero,
@@ -332,7 +334,7 @@ class VitrinPublicLayoutSection extends StatelessWidget {
           hasSideLinks: hasMarketplaceLinks,
           hasGalleryMedia: galleryItems.isNotEmpty,
           isBookingEnabled: isBookingEnabled,
-          isStore: storeData.isStore,
+          hasProducts: hasProducts,
           hasAboutText: hasAboutText,
           hasQrCard: hasQrCard,
         )
@@ -347,7 +349,7 @@ class VitrinPublicLayoutSection extends StatelessWidget {
           qrCard: qrCard,
           footer: footer,
           isBookingEnabled: isBookingEnabled,
-          isStore: storeData.isStore,
+          hasProducts: hasProducts,
           hasAboutText: hasAboutText,
           hasMarketplaceLinks: hasMarketplaceLinks,
           hasGalleryMedia: galleryItems.isNotEmpty,
