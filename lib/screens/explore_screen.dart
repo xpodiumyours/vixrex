@@ -415,68 +415,62 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           : LayoutBuilder(
                             builder: (context, constraints) {
                               final width = constraints.maxWidth;
+                              // Masaüstü için daha kompakt grid
                               final columnCount =
-                                  width >= 1100
+                                  width >= 1000
                                       ? 4
-                                      : width >= 650
+                                      : width >= 700
                                       ? 3
                                       : 2;
                               final cardHeight =
                                   columnCount == 2
-                                      ? 250.0
+                                      ? 220.0
                                       : columnCount == 3
-                                      ? 290.0
-                                      : 310.0;
+                                      ? 240.0
+                                      : 260.0;
 
-                              return Center(
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 1280,
-                                  ),
-                                  child: GridView.builder(
-                                    padding: const EdgeInsets.all(12),
-                                    gridDelegate:
-                                        SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: columnCount,
-                                          crossAxisSpacing: 12,
-                                          mainAxisSpacing: 12,
-                                          mainAxisExtent: cardHeight,
-                                        ),
-                                    itemCount: stores.length,
-                                    itemBuilder: (context, index) {
-                                      final store = stores[index];
-                                      return VitrinStoreCard(
-                                        store: store,
-                                        isExample:
-                                            _controller.showingExampleStores,
-                                        isFavorited: _controller.isFavorite(
-                                          store,
-                                        ),
-                                        isOwnStore: _controller.isOwnStore(
-                                          store,
-                                        ),
-                                        onTap: () {
-                                          final slug =
-                                              store.slug.isNotEmpty
-                                                  ? store.slug
-                                                  : const StorePublishPayloadBuilder()
-                                                      .generateSlug(store.name);
-                                          AppRouter.navigateToPublicVitrin(
-                                            context,
-                                            slug,
-                                          );
-                                        },
-                                        onFavoritePressed:
-                                            () => _controller.toggleFavorite(
-                                              store.name,
-                                            ),
-                                        onWhatsAppPressed:
-                                            () =>
-                                                _showWhatsAppBottomSheet(store),
+                              return GridView.builder(
+                                padding: const EdgeInsets.all(12),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: columnCount,
+                                      crossAxisSpacing: 10,
+                                      mainAxisSpacing: 10,
+                                      mainAxisExtent: cardHeight,
+                                    ),
+                                itemCount: stores.length,
+                                itemBuilder: (context, index) {
+                                  final store = stores[index];
+                                  return VitrinStoreCard(
+                                    store: store,
+                                    isExample:
+                                        _controller.showingExampleStores,
+                                    isFavorited: _controller.isFavorite(
+                                      store,
+                                    ),
+                                    isOwnStore: _controller.isOwnStore(
+                                      store,
+                                    ),
+                                    onTap: () {
+                                      final slug =
+                                          store.slug.isNotEmpty
+                                              ? store.slug
+                                              : const StorePublishPayloadBuilder()
+                                                  .generateSlug(store.name);
+                                      AppRouter.navigateToPublicVitrin(
+                                        context,
+                                        slug,
                                       );
                                     },
-                                  ),
-                                ),
+                                    onFavoritePressed:
+                                        () => _controller.toggleFavorite(
+                                          store.name,
+                                        ),
+                                    onWhatsAppPressed:
+                                        () =>
+                                            _showWhatsAppBottomSheet(store),
+                                  );
+                                },
                               );
                             },
                           ),
