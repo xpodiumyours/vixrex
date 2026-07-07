@@ -128,6 +128,51 @@ class StorePublishService {
     }
   }
 
+  /// Ürünler Supabase'e anında kaydedilir (publish gerektirmez).
+  Future<Result<void>> updateProductsOnly(
+    StoreData data, {
+    required String editToken,
+  }) async {
+    try {
+      final client = supabaseClient ?? Supabase.instance.client;
+      final slug = data.slug.trim().isNotEmpty
+          ? data.slug.trim()
+          : payloadBuilder.generateSlug(data.name);
+
+      if (slug.isEmpty) {
+        return Result.failure(Failure('Vitrin slug\'ı bulunamadı.'));
+      }
+
+      // edit token ile store'u bul
+      final existingByToken = await client
+          .from('stores')
+          .select('slug')
+          .eq('edit_token', editToken)
+          .maybeSingle();
+
+      if (existingByToken == null) {
+        return Result.failure(Failure(
+          'Bu cihazda yayınlanmamış bir vitrin bulunamadı.',
+        ));
+      }
+
+      final dbSlug = (existingByToken['slug'] as String?)?.trim() ?? slug;
+
+      // Sadece ürünleri güncelle
+      final productsPayload = payloadBuilder.productsToJson(data);
+      final categoriesPayload = payloadBuilder.productCategoriesToJson(data);
+
+      await client.from('stores').update({
+        'products': productsPayload,
+        'product_categories': categoriesPayload,
+      }).eq('slug', dbSlug);
+
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
+
   Future<Result<void>> _updateStoreWithToken(
     SupabaseClient client,
     StoreData data,

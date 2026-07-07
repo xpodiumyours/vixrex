@@ -617,11 +617,43 @@ class StoreEditorController extends ChangeNotifier {
   // URUN
   List<Product> get products => _data.products;
   bool get hasProducts => _data.products.isNotEmpty;
-  void addProduct(Product p) { _data.products.add(p); notifyListeners(); }
-  void removeProduct(int i) { if (i >= 0 && i < _data.products.length) { _data.products.removeAt(i); notifyListeners(); } }
-  void updateProduct(int i, Product p) { if (i >= 0 && i < _data.products.length) { _data.products[i] = p; notifyListeners(); } }
 
-  void updateProductImported(Product product) {
+  Future<void> addProduct(Product p) async {
+    _data.products.add(p);
+    notifyListeners();
+    await syncProductsToSupabase();
+  }
+
+  Future<void> removeProduct(int i) async {
+    if (i >= 0 && i < _data.products.length) {
+      _data.products.removeAt(i);
+      notifyListeners();
+      await syncProductsToSupabase();
+    }
+  }
+
+  Future<void> updateProduct(int i, Product p) async {
+    if (i >= 0 && i < _data.products.length) {
+      _data.products[i] = p;
+      notifyListeners();
+      await syncProductsToSupabase();
+    }
+  }
+
+  /// Ürünleri Supabase'e senkronize et
+  Future<void> syncProductsToSupabase() async {
+    final editToken = _publishedInfo?.editToken;
+    if (editToken == null || editToken.isEmpty) return;
+
+    try {
+      await publishService.updateProductsOnly(_data, editToken: editToken);
+    } catch (e) {
+      // Supabase hatası kritik değil, yerel kayıt devam eder
+      debugPrint('Ürünler Supabase\'e kaydedilemedi: $e');
+    }
+  }
+
+  Future<void> updateProductImported(Product product) async {
     final index = _data.products.indexWhere((p) => p.id == product.id);
     if (index >= 0) {
       _data.products[index] = product;
@@ -629,6 +661,7 @@ class StoreEditorController extends ChangeNotifier {
       _data.products.add(product);
     }
     notifyListeners();
+    await syncProductsToSupabase();
   }
 
   // VALIDATION

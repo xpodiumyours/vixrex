@@ -483,6 +483,8 @@ class VitrinFormSection extends StatelessWidget {
           controller.data.products = products;
           controller.data.productCategories = categories;
           await controller.saveLocally();
+          // Ürünleri Supabase'e de kaydet
+          await controller.syncProductsToSupabase();
         },
       ),
     );
