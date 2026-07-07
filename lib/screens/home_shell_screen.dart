@@ -55,13 +55,18 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     }
   }
 
+  /// Ekran genişliğine göre masaüstü modu
+  bool _isDesktop(BuildContext context) {
+    return MediaQuery.of(context).size.width > 900;
+  }
+
   @override
   void initState() {
     super.initState();
     // Safely map initialIndex:
     // Old 0 (Explore) -> New 1 (Discover)
     // Old 1 (MyVitrin) -> New 0 (Store)
-    // Old 2 (Moderation) -> New 4 (Moderation)
+    // Old 2 (Moderation) -> New 4 (Moderasyon)
     if (widget.initialIndex == 0) {
       _selectedIndex = 1;
     } else if (widget.initialIndex == 1) {
@@ -367,6 +372,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   @override
   Widget build(BuildContext context) {
     final isAdmin = _isAdmin;
+    final isDesktop = _isDesktop(context);
 
     final pages = [
       MyVitrinScreen(
@@ -389,6 +395,16 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       if (isAdmin) const BlogModerationScreen(),
     ];
 
+    // Masaüstü için sidebar menü öğeleri
+    final sidebarItems = [
+      _SidebarItem(icon: Icons.storefront_outlined, selectedIcon: Icons.storefront_rounded, label: 'Vitrinim'),
+      _SidebarItem(icon: Icons.travel_explore_outlined, selectedIcon: Icons.travel_explore_rounded, label: 'Keşfet'),
+      _SidebarItem(icon: Icons.assistant_outlined, selectedIcon: Icons.assistant_rounded, label: 'VixRex'),
+      _SidebarItem(icon: Icons.person_outline_rounded, selectedIcon: Icons.person_rounded, label: 'Profil'),
+      if (isAdmin) _SidebarItem(icon: Icons.admin_panel_settings_outlined, selectedIcon: Icons.admin_panel_settings_rounded, label: 'Moderasyon'),
+    ];
+
+    // Mobil için alt navigasyon barı
     final destinations = [
       const NavigationDestination(
         icon: Icon(Icons.storefront_outlined),
@@ -418,6 +434,121 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         ),
     ];
 
+    // Masaüstü sidebar
+    if (isDesktop) {
+      return Scaffold(
+        backgroundColor: AppColors.bgEditor,
+        body: Row(
+          children: [
+            // Sidebar
+            Container(
+              width: 220,
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                border: Border(
+                  right: BorderSide(color: AppColors.border, width: 0.8),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Logo alanı
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withAlpha(20),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.storefront_rounded,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'VixRex',
+                          style: TextStyle(
+                            color: AppColors.darkText,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: AppColors.border),
+                  // Menü öğeleri
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      itemCount: sidebarItems.length,
+                      itemBuilder: (context, index) {
+                        final item = sidebarItems[index];
+                        final isSelected = _selectedIndex == index;
+                        return _buildSidebarItem(
+                          item: item,
+                          isSelected: isSelected,
+                          onTap: () {
+                            setState(() => _selectedIndex = index);
+                            if (index == 2) _loadVixRexSnapshot();
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  // Alt bilgi
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    child: const Text(
+                      'v1.0.0',
+                      style: TextStyle(
+                        color: AppColors.mutedText,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Ana içerik
+            Expanded(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IndexedStack(index: _selectedIndex, children: pages),
+                  // VixRex robot rozeti
+                  if (_selectedIndex != 2)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: SafeArea(
+                        minimum: const EdgeInsets.only(right: 16, bottom: 16),
+                        child: ChatbotBadge(
+                          snapshot: _vixrexSnapshot,
+                          chatHistory: _vixrexChatMessages,
+                          onNavigateToVitrim: _vixrexNavigateToVitrim,
+                          onNavigateToExplore: _openExplore,
+                          onCopyLink: _vixrexCopyLink,
+                          onShowQr: _vixrexShowQr,
+                          onShareWhatsapp: _vixrexShareWhatsapp,
+                          onScrollToAction: _vixrexScrollToAction,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Mobil layout (mevcut yapı)
     return Scaffold(
       body: Stack(
         clipBehavior: Clip.none,
@@ -485,4 +616,66 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       ),
     );
   }
+
+  Widget _buildSidebarItem({
+    required _SidebarItem item,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: isSelected ? AppColors.primary.withAlpha(15) : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Icon(
+                  isSelected ? item.selectedIcon : item.icon,
+                  color: isSelected ? AppColors.primary : AppColors.mutedText,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      color: isSelected ? AppColors.darkText : AppColors.mutedText,
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SidebarItem {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+
+  const _SidebarItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+  });
 }
