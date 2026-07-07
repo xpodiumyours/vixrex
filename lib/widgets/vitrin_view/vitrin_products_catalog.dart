@@ -149,7 +149,7 @@ class _VitrinProductsCatalogBodyState extends State<_VitrinProductsCatalogBody> 
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'ÃœrÃ¼nler',
+                    'Ürünler',
                     style: TextStyle(
                       color: preset.textPrimary,
                       fontSize: isCompact ? 14 : 16,
@@ -225,7 +225,7 @@ class _VitrinProductsCatalogBodyState extends State<_VitrinProductsCatalogBody> 
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'ÃœrÃ¼nler yakÄ±nda',
+                      'Ürünler yakında',
                       style: TextStyle(
                         color: preset.textPrimary,
                         fontSize: 14,
@@ -234,7 +234,7 @@ class _VitrinProductsCatalogBodyState extends State<_VitrinProductsCatalogBody> 
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'MaÄŸaza sahibi henÃ¼z Ã¼rÃ¼n eklemedi.',
+                      'Mağaza sahibi henüz ürün eklemedi.',
                       style: TextStyle(
                         color: preset.textSecondary,
                         fontSize: 11,
