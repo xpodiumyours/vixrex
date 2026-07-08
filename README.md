@@ -75,6 +75,7 @@ sağlayıcılardır.
 | Ürün ve hizmetler | İşletmeye özel ürün, hizmet, fiyat ve süre bilgileri |
 | Public bağlantı | Her işletme için `/v/:slug` biçiminde paylaşılabilir vitrin |
 | Konum ve dış bağlantılar | Adres, sosyal medya, web sitesi ve pazar yeri bağlantıları |
+| OCR ile ürün çıkarma | Fotoğraf veya faturadan otomatik ürün kataloğu oluşturma (Premium) |
 
 Blog, içerik moderasyonu ve Google görünürlüğü ile ilgili özellikler
 `public_web` katmanında ayrı bir web kapsamı olarak bulunur.
@@ -315,6 +316,7 @@ Editor üzerinden dikkatli biçimde uygulanabilir.
 13. `20260622_add_google_visibility_and_blog.sql`
 14. `20260622_add_quality_and_spam_controls.sql`
 15. `20260622_published_at_and_updated_at.sql`
+16. `20260707_add_ocr_premium_tables.sql`
 
 > Bazı migration'lar mevcut tablo, politika ve fonksiyonları değiştirir.
 > Dosyaların tekrar çalıştırılmasının her durumda güvenli olduğu
@@ -425,6 +427,43 @@ listesinden ayrıdır:
 - `on_article_approved`
 - `on_article_spam_check`
 - `on_store_trust_protection`
+
+## OCR (Optik Karakter Tanıma)
+
+VixRex, fotoğraflardan veya faturalardan otomatik ürün çıkarma özelliği sunar.
+
+### Nasıl Çalışır?
+
+```
+Fotoğraf/Fatura → OCR ile metin okuma → Ürün eşleştirme → Kullanıcı onayı → Vitrine ekleme
+```
+
+### Bileşenler
+
+| Bileşen | Dosya | Amaç |
+|---|---|---|
+| OCR Servisi | `lib/services/ocr/ocr_service.dart` | Ana koordinatör |
+| Metin Ayrıştırıcı | `lib/services/ocr/ocr_text_parser.dart` | ML Kit OCR |
+| Fiyat Çıkarıcı | `lib/services/ocr/ocr_price_parser.dart` | Türk formatı fiyat |
+| Ürün Eşleştirici | `lib/services/ocr/ocr_product_matcher.dart` | Excel verisi ile eşleştirme |
+| Görsel Ön İşleme | `lib/services/ocr/ocr_image_preprocessor.dart` | Gri tonlama, kontrast, keskinlik |
+| Controller | `lib/controllers/ocr_controller.dart` | State yönetimi |
+| Tarama Ekranı | `lib/screens/ocr_scanner_screen.dart` | Kullanıcı arayüzü |
+
+### Premium Özellikleri
+
+| Özellik | Ücretsiz | Premium |
+|---|---|---|
+| OCR kullanımı | Günde 3 | Sınırsız |
+| Toplu yükleme | Yok | Var |
+| Excel içe aktarma | Yok | Var |
+| Barkod tarama | Yok | Var |
+
+### Supabase Tabloları
+
+- `ocr_usage` → Günlük OCR kullanımı takibi
+- `ocr_history` → OCR geçmişi
+- `product_database` → Ürün veritabanı (OCR doğrulama için)
 
 ## Demo ekran akışı
 
