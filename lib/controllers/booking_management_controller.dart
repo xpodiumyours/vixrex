@@ -77,8 +77,12 @@ class BookingManagementController extends ChangeNotifier {
     final today = DateTime.now();
     return _appointments.where((appt) {
       if (appt['status'] != 'confirmed') return false;
-      final time = DateTime.parse(appt['appointment_time']).toLocal();
-      return time.year == today.year && time.month == today.month && time.day == today.day;
+      try {
+        final time = DateTime.parse(appt['appointment_time'] as String).toLocal();
+        return time.year == today.year && time.month == today.month && time.day == today.day;
+      } catch (_) {
+        return false;
+      }
     }).toList();
   }
 
@@ -87,8 +91,12 @@ class BookingManagementController extends ChangeNotifier {
     final todayLimit = DateTime(todayStart.year, todayStart.month, todayStart.day, 23, 59, 59);
     return _appointments.where((appt) {
       if (appt['status'] != 'confirmed') return false;
-      final time = DateTime.parse(appt['appointment_time']).toLocal();
-      return time.isAfter(todayLimit);
+      try {
+        final time = DateTime.parse(appt['appointment_time'] as String).toLocal();
+        return time.isAfter(todayLimit);
+      } catch (_) {
+        return false;
+      }
     }).toList();
   }
 }

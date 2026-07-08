@@ -44,7 +44,7 @@ Future<void> _initializeSupabase() async {
   );
 
   if (supabaseUrl.isEmpty || supabasePublishableKey.isEmpty) {
-    debugPrint('Supabase config missing');
+    debugPrint('[FATAL] Supabase config missing - SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be provided via --dart-define');
     return;
   }
 
@@ -53,8 +53,9 @@ Future<void> _initializeSupabase() async {
       url: supabaseUrl,
       anonKey: supabasePublishableKey,
     );
+    debugPrint('[OK] Supabase initialized successfully');
   } catch (error) {
-    debugPrint('Supabase initialize failed: $error');
+    debugPrint('[FATAL] Supabase initialize failed: $error');
   }
 }
 

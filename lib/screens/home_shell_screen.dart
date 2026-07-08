@@ -425,6 +425,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       if (isAdmin) const BlogModerationScreen(),
     ];
 
+    // Güvenlik: index sayfa sayısını aşmasın
+    final safeIndex = _selectedIndex.clamp(0, pages.length - 1);
+
     // Masaüstü için sidebar menü öğeleri
     final sidebarItems = [
       _SidebarItem(icon: Icons.storefront_outlined, selectedIcon: Icons.storefront_rounded, label: 'Vitrinim'),
@@ -550,7 +553,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  IndexedStack(index: _selectedIndex, children: pages),
+                  IndexedStack(index: safeIndex, children: pages),
                   // VixRex robot rozeti
                   if (_selectedIndex != 2)
                     Positioned(
@@ -583,7 +586,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       body: Stack(
         clipBehavior: Clip.none,
         children: [
-          IndexedStack(index: _selectedIndex, children: pages),
+          IndexedStack(index: safeIndex, children: pages),
           // VixRex: Sağ alt köşede yüzen robot rozeti (sadece VixRex tabında değilken gösterilir)
           if (_selectedIndex != 2)
             Positioned(
