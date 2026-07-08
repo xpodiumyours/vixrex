@@ -69,6 +69,10 @@ abstract final class ChatbotConfig {
           action: VixRexAction.showQr,
         ),
       ],
+      const QuickReply(
+        label: '📷 Ürün Ekle',
+        payload: 'ocr_scan',
+      ),
       const QuickReply(label: 'VixRex Ne İşe Yarar?', payload: 'vixrex_info'),
       const QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
     ];
@@ -113,6 +117,14 @@ abstract final class ChatbotConfig {
     ChatbotIntent(
       keywords: ['yayinla', 'canli', 'aktif', 'yayinda', 'goster', 'acik'],
       payload: 'yayinla',
+    ),
+    ChatbotIntent(
+      keywords: ['fotograf', 'fatura', 'tara', 'urun ekle', 'katalog', 'otomatik', 'ocr'],
+      payload: 'ocr_scan',
+    ),
+    ChatbotIntent(
+      keywords: ['premium', 'ucretsiz', 'sinirsiz', 'ucretli', 'odeme'],
+      payload: 'ocr_premium',
     ),
   ];
 
@@ -179,6 +191,42 @@ abstract final class ChatbotConfig {
       case 'yayinla':
         return ChatMessage.bot(
           'Vitrinim sayfasındaki "Yayınla" butonuna basarak dijital vitrininizi hemen müşterilerinizle buluşturabilirsiniz.',
+          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+        );
+
+      case 'ocr_scan':
+        return ChatMessage.bot(
+          'Fotoğraftan ürün çıkarma özelliği ile fotoğraf veya fatura çekerek otomatik ürün kataloğu oluşturabilirsiniz.\n\n'
+          'Bu özellik için Vitrinim sayfasındaki "Ürünleri Yönet" butonuna basın, ardından "Fotoğraftan Ürün Çıkar" seçeneğini seçin.',
+          quickReplies: [
+            const QuickReply(label: 'Ürünleri Yönet', payload: 'action_step'),
+            const QuickReply(label: 'Nasıl Çalışır?', payload: 'ocr_info'),
+          ],
+        );
+
+      case 'ocr_info':
+        return ChatMessage.bot(
+          'Nasıl Çalışır:\n'
+          '1. Fotoğrafınızı çekin veya galeriden seçin\n'
+          '2. Ürünler otomatik olarak tanınır\n'
+          '3. Ürünleri onaylayın veya düzenleyin\n'
+          '4. Onaylanan ürünler vitrininize eklenir\n\n'
+          'Not: Bu özellik premium gerektirir.',
+          quickReplies: [
+            const QuickReply(label: 'Premium Bilgisi', payload: 'ocr_premium'),
+            const QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
+        );
+
+      case 'ocr_premium':
+        return ChatMessage.bot(
+          'Premium üyelik ile:\n'
+          '• Fotoğraftan sınırsız ürün çıkarma\n'
+          '• Faturadan otomatik ürün kaydı\n'
+          '• Toplu Excel yükleme\n'
+          '• Barkod tarama\n\n'
+          'Ücretsiz deneme: Günde 3 ücretsiz OCR hakkı.\n'
+          'Premium için uygulama içinden satın alma yapabilirsiniz.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
