@@ -19,6 +19,7 @@ class ProductManagementSheet extends StatefulWidget {
     required this.storeSlug,
     required this.showMessage,
     required this.onCatalogChanged,
+    required this.onOcrTap,
   });
 
   final List<Product> products;
@@ -26,6 +27,7 @@ class ProductManagementSheet extends StatefulWidget {
   final String storeSlug;
   final ValueChanged<String> showMessage;
   final ProductCatalogChanged onCatalogChanged;
+  final VoidCallback onOcrTap;
 
   @override
   State<ProductManagementSheet> createState() => _ProductManagementSheetState();
@@ -238,10 +240,10 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
             _buildHeader(),
             const SizedBox(height: 14),
             VixRexCatalogAssistantSection(
-              onActionTap:
-                  () => widget.showMessage(
-                    'VixRex katalog çıkarma özelliği sonraki aşamada aktif edilecek.',
-                  ),
+              onOcrTap: widget.onOcrTap,
+              onSuggestionTap: () => widget.showMessage(
+                'VixRex önerileri özelliği yakında aktif olacak.',
+              ),
             ),
             const SizedBox(height: 14),
             _buildFilters(),

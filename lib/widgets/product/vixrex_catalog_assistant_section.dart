@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 class VixRexCatalogAssistantSection extends StatelessWidget {
-  final VoidCallback onActionTap;
+  final VoidCallback onOcrTap;
+  final VoidCallback? onSuggestionTap;
 
   const VixRexCatalogAssistantSection({
     super.key,
-    required this.onActionTap,
+    required this.onOcrTap,
+    this.onSuggestionTap,
   });
 
   @override
@@ -73,18 +75,21 @@ class VixRexCatalogAssistantSection extends StatelessWidget {
                   icon: Icons.image_search_rounded,
                   title: 'Fotoğraftan çıkar',
                   desc: 'Fotoğraftan ad/kategori çıkar',
+                  onTap: onOcrTap,
                 ),
                 const SizedBox(width: 10),
                 _buildActionTile(
                   icon: Icons.document_scanner_rounded,
                   title: 'Faturadan çıkar',
                   desc: 'Faturadan ürünleri algıla',
+                  onTap: onOcrTap,
                 ),
                 const SizedBox(width: 10),
                 _buildActionTile(
                   icon: Icons.smart_toy_rounded,
                   title: 'VixRex önerileri',
                   desc: 'Ürün başlıklarını iyileştir',
+                  onTap: onSuggestionTap,
                 ),
               ],
             ),
@@ -98,9 +103,10 @@ class VixRexCatalogAssistantSection extends StatelessWidget {
     required IconData icon,
     required String title,
     required String desc,
+    VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: onActionTap,
+      onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 146,

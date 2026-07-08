@@ -7,9 +7,12 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/instagram_sync_config.dart';
+import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/screens/ocr_scanner_screen.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/category_image_service.dart';
+import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/models/editor_gallery_item.dart';
@@ -485,6 +488,19 @@ class VitrinFormSection extends StatelessWidget {
           await controller.saveLocally();
           // Ürünleri Supabase'e de kaydet
           await controller.syncProductsToSupabase();
+        },
+        onOcrTap: () {
+          Navigator.of(ctx).pop(); // Alt paneli kapat
+          Navigator.of(ctx).push(
+            MaterialPageRoute(
+              builder: (_) => OcrScannerScreen(
+                ocrController: OcrController(
+                  ocrService: const OcrService(),
+                  editorController: controller,
+                ),
+              ),
+            ),
+          );
         },
       ),
     );

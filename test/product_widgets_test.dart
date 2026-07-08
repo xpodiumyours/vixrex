@@ -48,6 +48,7 @@ void main() {
             storeSlug: 'ornek-vitrin',
             showMessage: (_) {},
             onCatalogChanged: (_, __) async {},
+            onOcrTap: () {},
           ),
         ),
       ),
