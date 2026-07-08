@@ -179,6 +179,14 @@ export async function getConnectedInstagramAccess(storeSlug: string, editToken: 
         .eq("id", typedConnection.id);
     } catch (error) {
       console.error("[instagram/token-refresh]", error);
+      // Token refresh başarısız oldu - bağlantıyı hata durumuna geç
+      await admin
+        .from("store_instagram_connections")
+        .update({ 
+          status: "refresh_error",
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", typedConnection.id);
     }
   }
 

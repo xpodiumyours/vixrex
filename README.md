@@ -582,6 +582,21 @@ TURNSTILE_SECRET_KEY
 ### Revalidation notu
 
 `/api/revalidate`, `x-revalidate-secret` başlığını Next.js projesindeki
+
+### Deploy Sırası (ÖNEMLİ)
+
+Deployment sırası kritiktir. Yanlış sırada deploy edilirse linkler kırılabilir:
+
+1. **Önce `public_web`** (Next.js) deploy edilmeli
+2. **Sonra Flutter app** deploy edilmeli
+
+Neden: Flutter uygulaması `PUBLIC_SITE_URL` ile Next.js adresine link verir.
+Eğer Next.js henüz deploy edilmemişse, linkler çalışmaz.
+
+**Vercel'de otomatik deploy varsa:** Her iki projede de `main` branch'ine push
+yapıldığında otomatik deploy tetiklenir. Bu durumda sıralama otomatik gerçekleşir.
+
+**Manuel deploy'da:** Önce `public_web/` dizinini, sonra kök dizini deploy edin.
 `REVALIDATION_SECRET` ile karşılaştırır. Server-to-server tetikleyicide kullanılan
 değer ile Next.js Vercel ortamındaki değer birebir aynı olmalıdır.
 
