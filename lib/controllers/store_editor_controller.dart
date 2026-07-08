@@ -125,7 +125,9 @@ class StoreEditorController extends ChangeNotifier {
       if (_publishedInfo != null) {
         await fetchArticles();
       }
-    } catch (_) {} finally {
+    } catch (e) {
+      debugPrint('StoreEditorController.initialize failed: $e');
+    } finally {
       _isLoading = false;
       notifyListeners();
     }
@@ -203,7 +205,9 @@ class StoreEditorController extends ChangeNotifier {
           );
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Gallery sync error: $e');
+    }
   }
 
   Future<void> fetchLocation() async {
@@ -821,7 +825,9 @@ class StoreEditorController extends ChangeNotifier {
 
       await saveLocally();
       notifyListeners();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Shelf image upload error: $e');
+    }
   }
 
   /// JSON'dan gallery items parse eder
@@ -852,7 +858,9 @@ class StoreEditorController extends ChangeNotifier {
           editToken: _publishedInfo!.editToken,
         );
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Local save error: $e');
+    }
     notifyListeners();
   }
 

@@ -59,6 +59,16 @@ class BlogCoverPicker extends StatelessWidget {
                                 : Image.network(
                                     coverImageUrl!,
                                     fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: AppColors.surface,
+                                        child: const Icon(
+                                          Icons.broken_image_rounded,
+                                          color: AppColors.mutedText,
+                                          size: 32,
+                                        ),
+                                      );
+                                    },
                                   ),
                             Container(color: Colors.black38),
                             const Center(

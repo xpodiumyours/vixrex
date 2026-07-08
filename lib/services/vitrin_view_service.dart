@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -21,12 +22,14 @@ class VitrinViewService {
       await client.rpc(
         'record_vitrin_view',
         params: {
-          'p_store_slug': slug.trim(),
-          'p_session_key': sessionKey,
-          'p_source': _normalizeSource(source),
+          'p_slug': slug.trim(),
+          'p_ip': sessionKey,
+          'p_ua': _normalizeSource(source),
         },
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('View record error: $e');
+    }
   }
 
   Future<int> fetchTodayViewCount({
