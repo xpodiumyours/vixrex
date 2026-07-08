@@ -105,6 +105,7 @@ enum VixRexAction {
   scrollToProducts,     // Ürün/Hizmet alanına git
   scrollToCategory,     // Kategori seçim alanına git
   openCoverTemplatePicker, // Hazır kapak şablonu seç
+  openOcrScanner,      // OCR tarama ekranını aç
   none,                      // Sadece mesaj tetikler, navigasyon yok
 }
 

@@ -8,8 +8,11 @@ import 'package:vixrex/services/chatbot_service.dart';
 import 'package:vixrex/screens/blog_moderation_screen.dart';
 import 'package:vixrex/screens/explore_screen.dart';
 import 'package:vixrex/screens/my_vitrin_screen.dart';
+import 'package:vixrex/screens/ocr_scanner_screen.dart';
 import 'package:vixrex/screens/vixrex_screen.dart';
 import 'package:vixrex/screens/profile_screen.dart';
+import 'package:vixrex/controllers/ocr_controller.dart';
+import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/vixrex_promotion_service.dart';
@@ -321,6 +324,19 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     });
   }
 
+  void _openOcrScanner() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => OcrScannerScreen(
+          ocrController: OcrController(
+            ocrService: const OcrService(),
+            editorController: _myVitrinKey.currentState?.controller,
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _markVixRexShared() async {
     await ChatbotService().markVitrinShared();
     if (!mounted) return;
@@ -363,6 +379,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         break;
       case VixRexAction.openCoverTemplatePicker:
         _vixrexOpenCoverTemplatePicker();
+        break;
+      case VixRexAction.openOcrScanner:
+        _openOcrScanner();
         break;
       case VixRexAction.none:
         break;

@@ -36,6 +36,8 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   late final StoreEditorController _controller;
   late final MyVitrinState _state;
 
+  StoreEditorController get controller => _controller;
+
   final _nameController = TextEditingController();
   final _whatsappController = TextEditingController();
   final _addressController = TextEditingController();

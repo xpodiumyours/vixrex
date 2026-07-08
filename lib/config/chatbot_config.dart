@@ -72,6 +72,7 @@ abstract final class ChatbotConfig {
       const QuickReply(
         label: '📷 Ürün Ekle',
         payload: 'ocr_scan',
+        action: VixRexAction.openOcrScanner,
       ),
       const QuickReply(label: 'VixRex Ne İşe Yarar?', payload: 'vixrex_info'),
       const QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
@@ -197,9 +198,13 @@ abstract final class ChatbotConfig {
       case 'ocr_scan':
         return ChatMessage.bot(
           'Fotoğraftan ürün çıkarma özelliği ile fotoğraf veya fatura çekerek otomatik ürün kataloğu oluşturabilirsiniz.\n\n'
-          'Bu özellik için Vitrinim sayfasındaki "Ürünleri Yönet" butonuna basın, ardından "Fotoğraftan Ürün Çıkar" seçeneğini seçin.',
+          'Hazırsanız fotoğrafınızı çekin!',
           quickReplies: [
-            const QuickReply(label: 'Ürünleri Yönet', payload: 'action_step'),
+            const QuickReply(
+              label: '📷 Fotoğraf Çek',
+              payload: 'action_step',
+              action: VixRexAction.openOcrScanner,
+            ),
             const QuickReply(label: 'Nasıl Çalışır?', payload: 'ocr_info'),
           ],
         );
