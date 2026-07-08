@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
@@ -6,18 +5,39 @@ import 'package:image/image.dart' as img;
 class OcrImagePreprocessor {
   const OcrImagePreprocessor();
 
+  /// Maksimum genişlik (piksel). Bu boyutun altına küçültülür.
+  static const int _maxWidth = 2000;
+
   /// Görüntüyü OCR için optimize eder.
   Future<Uint8List> preprocess(Uint8List imageBytes) async {
+    return compute(_preprocessSync, imageBytes);
+  }
+
+  /// Senkron ön işleme (isolate içinde çalışır).
+  static Uint8List _preprocessSync(Uint8List imageBytes) {
     final image = img.decodeImage(imageBytes);
     if (image == null) return imageBytes;
 
-    // 1. Gri tonlamaya çevir (gürültüyü azaltır)
-    final grayscale = img.grayscale(image);
+    // 1. Görseli küçült (büyük fotoğraflar için)
+    img.Image resized = image;
+    if (image.width > _maxWidth) {
+      final ratio = _maxWidth / image.width;
+      final newHeight = (image.height * ratio).round();
+      resized = img.copyResize(
+        image,
+        width: _maxWidth,
+        height: newHeight,
+        interpolation: img.Interpolation.linear,
+      );
+    }
 
-    // 2. Kontrastı artır (metinleri netleştirir)
-    final contrasted = img.adjustColor(grayscale, contrast: 1.8);
+    // 2. Gri tonlamaya çevir (gürültüyü azaltır)
+    final grayscale = img.grayscale(resized);
 
-    // 3. Keskinlik ekle (OCR doğruluğunu artırır)
+    // 3. Kontrastı artır (metinleri netleştirir)
+    final contrasted = img.adjustColor(grayscale, contrast: 1.5);
+
+    // 4. Hafif keskinlik (sadece temel)
     final sharpened = img.convolution(
       contrasted,
       filter: [
@@ -27,10 +47,8 @@ class OcrImagePreprocessor {
       ],
     );
 
-    // 4. Hafif blur (pürüzleri yumuşatır)
-    final blurred = img.gaussianBlur(sharpened, radius: 1);
-
-    return Uint8List.fromList(img.encodeJpg(blurred));
+    // JPEG kalitesini düşür (hız için)
+    return Uint8List.fromList(img.encodeJpg(sharpened, quality: 85));
   }
 
   /// Fiyat etiketleri için renk filtresi uygular.
