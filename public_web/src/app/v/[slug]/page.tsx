@@ -172,6 +172,20 @@ export default async function StorePage(props: PageProps) {
     ],
   };
 
+  // Working hours'u schema.org formatına çevir
+  const openingHoursSpecification = store.working_hours 
+    ? Object.entries(store.working_hours as Record<string, { start: string; end: string; active: boolean }>)
+        .filter(([_, hours]) => hours.active)
+        .map(([day, hours]) => ({
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: [
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+          ][parseInt(day) - 1],
+          opens: hours.start,
+          closes: hours.end,
+        }))
+    : undefined;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -198,6 +212,7 @@ export default async function StorePage(props: PageProps) {
               longitude: store.longitude,
             }
           : undefined,
+        openingHoursSpecification: openingHoursSpecification,
       },
       {
         "@type": "WebPage",
