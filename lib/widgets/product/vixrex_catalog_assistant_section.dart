@@ -105,40 +105,43 @@ class VixRexCatalogAssistantSection extends StatelessWidget {
     required String desc,
     VoidCallback? onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 146,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: AppColors.primary, size: 18),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: const TextStyle(
-                color: AppColors.darkText,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 146,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: AppColors.primary, size: 18),
+              const SizedBox(height: 6),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppColors.darkText,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 1),
-            Text(
-              desc,
-              style: const TextStyle(
-                color: AppColors.mutedText,
-                fontSize: 8,
-                height: 1.25,
+              const SizedBox(height: 1),
+              Text(
+                desc,
+                style: const TextStyle(
+                  color: AppColors.mutedText,
+                  fontSize: 8,
+                  height: 1.25,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

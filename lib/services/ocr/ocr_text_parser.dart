@@ -11,7 +11,10 @@ class OcrTextParser {
   /// Görüntüden metin oku.
   Future<OcrTextResult> parseFromImage(List<int> imageBytes) async {
     if (kIsWeb) {
-      return OcrTextResult.empty();
+      throw UnsupportedError(
+        'OCR özelliği sadece mobil uygulamalarda çalışır. '
+        'Lütfen Android veya iOS uygulamasını kullanın.',
+      );
     }
 
     // Geçici dosyaya kaydet
