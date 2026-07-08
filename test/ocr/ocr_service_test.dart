@@ -18,7 +18,6 @@ void main() {
         matcher: OcrProductMatcher(
           verifier: OcrExcelVerifier(),
         ),
-        verifier: OcrExcelVerifier(),
       );
     });
 

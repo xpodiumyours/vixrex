@@ -28,6 +28,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
   @override
   void dispose() {
     widget.ocrController.removeListener(_onStateChanged);
+    widget.ocrController.dispose();
     super.dispose();
   }
 

@@ -107,8 +107,11 @@ class OcrController extends ChangeNotifier {
 
   /// DetectedProduct'ı Product'a çevir.
   Product _convertToProduct(DetectedProduct detected) {
+    // Benzersiz ID: timestamp + random + name hash
+    final timestamp = DateTime.now().microsecondsSinceEpoch;
+    final random = (timestamp * 7 + detected.name.hashCode).abs();
     return Product(
-      id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${detected.name.hashCode}',
+      id: 'ocr_${timestamp}_$random',
       name: detected.name,
       price: detected.price?.toStringAsFixed(2) ?? '',
       description: detected.description ?? '',

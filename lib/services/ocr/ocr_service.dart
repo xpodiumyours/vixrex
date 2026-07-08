@@ -15,21 +15,18 @@ class OcrService {
   final OcrPriceParser _priceParser;
   final OcrImagePreprocessor _preprocessor;
   final OcrProductMatcher _matcher;
-  final OcrExcelVerifier _verifier;
 
   const OcrService({
     OcrTextParser? textParser,
     OcrPriceParser? priceParser,
     OcrImagePreprocessor? preprocessor,
     OcrProductMatcher? matcher,
-    OcrExcelVerifier? verifier,
   })  : _textParser = textParser ?? const OcrTextParser(),
         _priceParser = priceParser ?? const OcrPriceParser(),
         _preprocessor = preprocessor ?? const OcrImagePreprocessor(),
         _matcher = matcher ?? const OcrProductMatcher(
           verifier: OcrExcelVerifier(),
-        ),
-        _verifier = verifier ?? const OcrExcelVerifier();
+        );
 
   /// Görüntüden ürün kataloğu oluşturur.
   Future<Result<OcrCatalogResult>> analyzeImage(Uint8List imageBytes) async {
@@ -43,16 +40,13 @@ class OcrService {
       // 3. Fiyatları çıkar
       final prices = _priceParser.extractPrices(textResult.rawText);
 
-      // 4. Ürünleri eşleştir
+      // 4. Ürünleri eşleştir (DB doğrulaması dahil)
       final products = await _matcher.matchProducts(textResult.lines, prices);
-
-      // 5. Excel ile doğrula
-      final verified = await _verifier.verify(products);
 
       return Result.success(OcrCatalogResult(
         rawText: textResult.rawText,
-        products: verified,
-        confidence: _calculateConfidence(verified),
+        products: products,
+        confidence: _calculateConfidence(products),
       ));
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));

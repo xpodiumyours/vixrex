@@ -325,12 +325,23 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   }
 
   void _openOcrScanner() {
+    final editorController = _myVitrinKey.currentState?.controller;
+    if (editorController == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vitrin henüz yüklenmedi. Lütfen bekleyin.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => OcrScannerScreen(
           ocrController: OcrController(
             ocrService: const OcrService(),
-            editorController: _myVitrinKey.currentState?.controller,
+            editorController: editorController,
           ),
         ),
       ),
