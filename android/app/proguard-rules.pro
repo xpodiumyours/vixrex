@@ -6,6 +6,11 @@
 -keep class io.flutter.**  { *; }
 -keep class io.flutter.plugins.**  { *; }
 
+# Google Play Core (split install, deferred components)
+-dontwarn com.google.android.play.core.splitcompat.SplitCompatApplication
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
+
 # Google ML Kit Text Recognition
 -keep class com.google.mlkit.vision.text.** { *; }
 -keep class com.google.mlkit.vision.text.chinese.** { *; }
