@@ -161,8 +161,15 @@ class BookingWizardController extends ChangeNotifier {
 
     result.when(
       success: (res) async {
-        final token = res['token'] as String;
-        final apptId = res['appointment_id'] as String;
+        final token = res['token'] as String?;
+        final apptId = res['appointment_id'] as String?;
+
+        if (token == null || apptId == null) {
+          _isSubmitting = false;
+          _errorMsg = 'Randevu oluşturulamadı. Lütfen tekrar deneyin.';
+          notifyListeners();
+          return;
+        }
 
         await _bookingService.saveAppointmentTokenLocally(
           appointmentId: apptId,

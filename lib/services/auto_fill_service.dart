@@ -74,7 +74,8 @@ class AutoFillResult {
 // ─── Auto Fill Service ───────────────────────────────────────────────────────
 
 class AutoFillService {
-  static final _supabase = Supabase.instance.client;
+  static SupabaseClient? _supabaseClient;
+  static SupabaseClient get _client => _supabaseClient ??= Supabase.instance.client;
 
   /// Vitrini kategori sablonuyla otomatik doldur (RPC fonksiyonunu kullanir)
   static Future<AutoFillResult> applyCategoryTemplate({
@@ -85,7 +86,7 @@ class AutoFillService {
   }) async {
     try {
       // RPC fonksiyonunu cagir
-      final result = await _supabase.rpc(
+      final result = await _client.rpc(
         'apply_category_template',
         params: {
           'p_store_id': storeId,
@@ -141,7 +142,7 @@ class AutoFillService {
       );
 
       // 2. Mevcut store verisini cek
-      final storeResponse = await _supabase
+      final storeResponse = await _client
           .from('stores')
           .select('shelf_image_url, logo_url, gallery_items, products')
           .eq('id', storeId)
@@ -204,7 +205,7 @@ class AutoFillService {
 
       // 7. Guncelle
       if (updates.isNotEmpty) {
-        await _supabase.from('stores').update(updates).eq('id', storeId);
+        await _client.from('stores').update(updates).eq('id', storeId);
         // Update local storage so initialize() sees fresh data
         await _refreshLocalStoreData(storeId);
       }
@@ -276,7 +277,7 @@ class AutoFillService {
 
   /// Daha once auto-fill yapilip yapilmadigini kontrol et
   static Future<bool> wasAutoFillApplied(String storeId) async {
-    final response = await _supabase
+    final response = await _client
         .from('store_category_image_usage')
         .select('id')
         .eq('store_id', storeId)
@@ -288,7 +289,7 @@ class AutoFillService {
   /// Supabase'den taze veri çekip yerel depolamaya kaydeder.
   static Future<void> _refreshLocalStoreData(String storeId) async {
     try {
-      final response = await _supabase
+      final response = await _client
           .from('stores')
           .select()
           .eq('id', storeId)

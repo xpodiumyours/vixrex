@@ -151,7 +151,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
   }
 
   Widget _buildMainContent() {
-    final status = _controller.appointment['status'] as String;
+    final status = _controller.appointment['status'] as String? ?? 'pending';
     final reschedule = _controller.appointment['reschedule_request'];
 
     Color statusColor;
@@ -216,19 +216,19 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                   ],
                 ),
                 const Divider(height: 24, color: AppColors.border),
-                _buildInfoRow(Icons.calendar_month_rounded, 'Tarih & Saat', _formatDateTime(_controller.appointment['appointment_time'])),
+                _buildInfoRow(Icons.calendar_month_rounded, 'Tarih & Saat', _formatDateTime(_controller.appointment['appointment_time'] ?? '')),
                 const SizedBox(height: 10),
-                _buildInfoRow(Icons.content_cut_rounded, 'Hizmet', _controller.appointment['service_title']),
+                _buildInfoRow(Icons.content_cut_rounded, 'Hizmet', _controller.appointment['service_title'] ?? ''),
                 const SizedBox(height: 10),
-                _buildInfoRow(Icons.timer_rounded, 'Süre', '${_controller.appointment['service_duration']} dakika'),
+                _buildInfoRow(Icons.timer_rounded, 'Süre', '${_controller.appointment['service_duration'] ?? ''} dakika'),
                 if (_controller.appointment['service_price'] != null && _controller.appointment['service_price'].toString().isNotEmpty) ...[
                   const SizedBox(height: 10),
-                  _buildInfoRow(Icons.payments_rounded, 'Ücret', _controller.appointment['service_price']),
+                  _buildInfoRow(Icons.payments_rounded, 'Ücret', _controller.appointment['service_price'].toString()),
                 ],
                 const SizedBox(height: 10),
-                _buildInfoRow(Icons.person_rounded, 'Müşteri', _controller.appointment['customer_name']),
+                _buildInfoRow(Icons.person_rounded, 'Müşteri', _controller.appointment['customer_name'] ?? ''),
                 const SizedBox(height: 10),
-                _buildInfoRow(Icons.phone_android_rounded, 'Telefon', _controller.appointment['customer_phone']),
+                _buildInfoRow(Icons.phone_android_rounded, 'Telefon', _controller.appointment['customer_phone'] ?? ''),
               ],
             ),
           ),

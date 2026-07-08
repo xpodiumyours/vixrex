@@ -1,6 +1,7 @@
 class PublicSiteConfig {
   static const String configuredOrigin = String.fromEnvironment(
     'PUBLIC_SITE_URL',
+    defaultValue: 'https://vitrinx-two.vercel.app',
   );
 
   static String buildPublicLink(

@@ -64,7 +64,7 @@ class BookingManagementController extends ChangeNotifier {
 
   List<dynamic> get pendingList {
     return _appointments.where((appt) {
-      final status = appt['status'] as String;
+      final status = appt['status'] as String? ?? '';
       final hasPendingReschedule = (appt['appointment_reschedule_requests'] as List?)?.any(
             (r) => r['status'] == 'pending',
           ) ??

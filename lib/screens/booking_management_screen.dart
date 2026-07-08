@@ -165,7 +165,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
   }
 
   Widget _buildAppointmentCard(dynamic appt) {
-    final status = appt['status'] as String;
+    final status = appt['status'] as String? ?? 'pending';
     final reschedules = appt['appointment_reschedule_requests'] as List?;
     final pendingReschedule = reschedules?.firstWhere(
       (r) => r['status'] == 'pending',

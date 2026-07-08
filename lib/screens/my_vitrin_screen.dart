@@ -56,8 +56,10 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
 
   Future<void> _initialize() async {
     await _controller.initialize(widget.initialName);
+    if (!mounted) return;
     _syncControllers();
     final pendingCategoryKey = await const StoreLocalStorageService().loadPendingCategoryKey();
+    if (!mounted) return;
     if (pendingCategoryKey != null) {
       final label = BusinessCategoryConfig.labelForKey(pendingCategoryKey);
       if (label != null) {

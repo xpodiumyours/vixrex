@@ -107,12 +107,13 @@ String? mapKategoriToKey(String kategori) {
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 class CategoryImageService {
-  static final _supabase = Supabase.instance.client;
+  static SupabaseClient? _supabaseClient;
+  static SupabaseClient get _client => _supabaseClient ??= Supabase.instance.client;
 
   /// Bir kategoriye ait tum aktif gorselleri getir
   static Future<CategoryImageSet> getImagesForCategory(String categoryKey) async {
     try {
-      final response = await _supabase
+      final response = await _client
           .from('category_image_templates')
           .select('*')
           .eq('category_key', categoryKey)
@@ -138,7 +139,7 @@ class CategoryImageService {
   /// Tumu aktif kategorileri listele (distinct)
   static Future<List<CategoryOption>> getAvailableCategories() async {
     try {
-      final response = await _supabase
+      final response = await _client
           .from('category_image_templates')
           .select('category_key, category_label')
           .eq('is_active', true)
