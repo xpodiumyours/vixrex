@@ -7,7 +7,7 @@ import 'store_editor_controller.dart';
 /// OCR state yönetimi controller'ı.
 class OcrController extends ChangeNotifier {
   final OcrService _ocrService;
-  final StoreEditorController _editorController;
+  final StoreEditorController? _editorController;
 
   OcrCatalogResult? _result;
   bool _isProcessing = false;
@@ -15,7 +15,7 @@ class OcrController extends ChangeNotifier {
 
   OcrController({
     required OcrService ocrService,
-    required StoreEditorController editorController,
+    StoreEditorController? editorController,
   })  : _ocrService = ocrService,
         _editorController = editorController;
 
@@ -94,7 +94,7 @@ class OcrController extends ChangeNotifier {
     if (approved == null || approved.isEmpty) return;
 
     for (final product in approved) {
-      await _editorController.addProduct(
+      await _editorController?.addProduct(
         _convertToProduct(product),
       );
     }
