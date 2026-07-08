@@ -3,6 +3,7 @@ class StoreOffering {
   String title;
   String description;
   String price;
+  String currency; // Para birimi (varsayılan: TRY)
   int durationMinutes; // Dakika cinsinden (varsayılan 30, 15-240 arası)
   bool isBookable; // Randevuya açık mı?
 
@@ -11,6 +12,7 @@ class StoreOffering {
     this.title = '',
     this.description = '',
     this.price = '',
+    this.currency = 'TRY',
     this.durationMinutes = 30,
     this.isBookable = false,
   });
@@ -20,6 +22,7 @@ class StoreOffering {
     'title': title,
     'description': description,
     'price': price,
+    'currency': currency,
     'durationMinutes': durationMinutes,
     'isBookable': isBookable,
   };
@@ -29,6 +32,7 @@ class StoreOffering {
     title: (json['title'] ?? '').toString(),
     description: (json['description'] ?? '').toString(),
     price: (json['price'] ?? '').toString(),
+    currency: (json['currency'] ?? 'TRY').toString(),
     durationMinutes:
         (json['durationMinutes'] ?? json['duration_minutes'] ?? 30) as int,
     isBookable: (json['isBookable'] ?? json['is_bookable'] ?? false) as bool,
@@ -39,6 +43,7 @@ class StoreOffering {
     String? title,
     String? description,
     String? price,
+    String? currency,
     int? durationMinutes,
     bool? isBookable,
   }) {
@@ -47,9 +52,16 @@ class StoreOffering {
       title: title ?? this.title,
       description: description ?? this.description,
       price: price ?? this.price,
+      currency: currency ?? this.currency,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       isBookable: isBookable ?? this.isBookable,
     );
+  }
+
+  /// Fiyatı para birimiyle birlikte göster.
+  String get formattedPrice {
+    if (price.isEmpty) return '';
+    return '$price $currency';
   }
 }
 

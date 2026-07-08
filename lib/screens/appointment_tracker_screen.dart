@@ -434,7 +434,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                 if (ok) {
                   _showSnackBar('Tarih değişikliği talebiniz iletildi.');
                 } else {
-                  _showSnackBar('Talep gönderilemedi. Seçilen saat dolu olabilir.');
+                  _showSnackBar('Talep gönderilemedi. Seçtiğiniz saat dolu olabilir. Lütfen başka bir saat seçin.');
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryDark),

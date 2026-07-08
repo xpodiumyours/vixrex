@@ -199,6 +199,15 @@ class StoreLocalStorageService {
 
   // ── Toplu Temizlik ────────────────────────────────────────────────────
 
+  /// Sadece auth ile ilgili verileri temizler (çıkış yapınca).
+  /// Vitrin verilerini korur.
+  Future<void> clearAuthData() async {
+    final prefs = await _getPrefs();
+    await prefs.remove(LocalStorageKeys.storeEditToken);
+    await prefs.remove(LocalStorageKeys.vitrinEditToken);
+    await clearPublishedVitrinInfo();
+  }
+
   /// Tüm yerel depolama verilerini temizler.
   Future<void> clearAll() async {
     final prefs = await _getPrefs();

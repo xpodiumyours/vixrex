@@ -54,7 +54,8 @@ class AuthService {
   Future<Result<void>> signOut() async {
     try {
       await Supabase.instance.client.auth.signOut();
-      await const StoreLocalStorageService().clearAll();
+      // Sadece auth verilerini temizle, vitrin verilerini koru
+      await const StoreLocalStorageService().clearAuthData();
       return const Result.success(null);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
