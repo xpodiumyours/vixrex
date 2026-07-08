@@ -490,22 +490,19 @@ class VitrinFormSection extends StatelessWidget {
           await controller.syncProductsToSupabase();
         },
         onOcrTap: () {
-          // Önce alt paneli kapat, sonra OCR ekranını aç
+          // Alt paneli kapat, sonra root navigator'dan OCR ekranını aç
           Navigator.of(ctx).pop();
-          Future.delayed(const Duration(milliseconds: 100), () {
-            if (ctx.mounted) {
-              Navigator.of(ctx).push(
-                MaterialPageRoute(
-                  builder: (_) => OcrScannerScreen(
-                    ocrController: OcrController(
-                      ocrService: const OcrService(),
-                      editorController: controller,
-                    ),
-                  ),
+          // Root navigator'u kullanarak navigasyon yap
+          Navigator.of(ctx, rootNavigator: true).push(
+            MaterialPageRoute(
+              builder: (_) => OcrScannerScreen(
+                ocrController: OcrController(
+                  ocrService: const OcrService(),
+                  editorController: controller,
                 ),
-              );
-            }
-          });
+              ),
+            ),
+          );
         },
       ),
     );

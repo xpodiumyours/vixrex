@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/ocr_catalog_result.dart';
+import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'store_editor_controller.dart';
 
@@ -105,15 +106,16 @@ class OcrController extends ChangeNotifier {
   }
 
   /// DetectedProduct'ı Product'a çevir.
-  dynamic _convertToProduct(DetectedProduct detected) {
-    return {
-      'id': DateTime.now().microsecondsSinceEpoch.toString(),
-      'name': detected.name,
-      'price': detected.price?.toString() ?? '',
-      'category': detected.category,
-      'stockStatus': 'Mevcut',
-      'isVisible': true,
-    };
+  Product _convertToProduct(DetectedProduct detected) {
+    return Product(
+      id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${detected.name.hashCode}',
+      name: detected.name,
+      price: detected.price?.toStringAsFixed(2) ?? '',
+      description: detected.description ?? '',
+      category: detected.category,
+      stockStatus: 'Mevcut',
+      isVisible: true,
+    );
   }
 
   /// Sonucu temizle.
