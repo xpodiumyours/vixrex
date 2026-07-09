@@ -40,10 +40,12 @@ test/             → Unit ve widget testleri
 ## 3. Zorunlu Kodlama Kuralları
 
 ### Hata Yönetimi
-- `catch (_) {}` KULLANMA. En azından `debugPrint` ile logla.
+- `catch (_) {}` KULLANMA. En azında `debugPrint` ile logla.
 - Tüm servis metotları `Future<Result<T>>` dönmeli.
 - Hatalar servis katmanında yakalanmalı, ekrana `throw` fırlatılmamalı.
 - Kullanıcıya Türkçe, anlaşılır hata mesajı gösterilmeli.
+- **Async metodlarda `setState` öncesi `if (!mounted) return;` zorunlu.**
+- **Tüm `debugPrint`'ler `if (kDebugMode) debugPrint(...)` ile sarmalanmalı.**
 
 ### Kod Kalitesi
 - Aynı fonksiyon 2 dosyada olamaz (DRY).
@@ -90,6 +92,7 @@ class XService {
 
 ## 5. Yasaklar
 
+### Kesin Yasaklar
 | Yapma | Neden |
 |---|---|
 | `catch (_) {}` | Hata yutuluyor, debug edilemez |
@@ -98,6 +101,20 @@ class XService {
 | Dosya > 500 satır | Anlaşılması zor |
 | Aynı kod 2 dosyada | Değişiklik unutulabilir |
 | Service role anahtarı istemci kodunda | Güvenlik açığı |
+| `debugPrint` kDebugMode olmadan | Production'da log sızıntısı |
+| `setState` sonrası `mounted` kontrolü yoksa | Ekran kapanırken crash |
+
+### Vibe Coding Yasakları (Kod Gerilemesini Önle)
+| Yapma | Neden | Çözüm |
+|---|---|---|
+| Mevcut kodu silip yeniden yazma | Mevcut iş mantığı kaybolur | Mevcut kodu oku, üzerine ekle |
+| Import'ları değiştirerek var olan kodu bozma | Derleme hataları yaratır | Önce mevcut import'ları koru |
+| Method imzasını değiştirip tüm caller'ları bozma | Zincirleme hata yaratır | Eski imzayı koru, yeni method ekle |
+| Try-catch eklemeden async metod yazma | Crash olur | Her async metod try-catch ile başlasın |
+| `Positioned`, `Container` gibi widget'ları silerek UI'ı bozma | Görünüm bozulur | Mevcut widget'ları koru, üzerlerine inşa et |
+| Controller'daki getter/method'ları silerek UI'ı bozma | Heryer kırılır | Yeni getter ekle, eskisini koru |
+| Test dosyalarını görmezden gelme | Regression olur | Değişiklik sonrası test çalıştır |
+| Tek seferde 10+ dosyada değişiklik yapma | Hata bulmak zorlaşır | Birer birer değiştir, her adımda analyze çalıştır |
 
 ---
 
@@ -106,9 +123,9 @@ class XService {
 ### Yeni Özellik Eklerken
 ```
 1. VIXREX_OTURUM_OZETI.md'yi oku → Mevcut durumu anla
-2. İlgili dosyaları oku → Mevcut kodu anla
+2. İlgili dosyaları oku → MEVCUT KODU ANLA (en önemli adım)
 3. Plan oluştur → Ne yapılacağını belirle
-4. Uygula → Kodu yaz
+4. Uygula → Mevcut kodu bozmadan üzerine inşa et
 5. Test et → flutter analyze + flutter test
 6. Commit et → Mesaj formatına uy
 7. Güncelle → VIXREX_OTURUM_OZETI.md'yi güncelle
@@ -133,6 +150,16 @@ class XService {
 5. Commit et → Her adım ayrı commit
 ```
 
+### Vibe Coding Hasarı Düzeltirken (KRİTİK)
+```
+1. ORİJİNAL KODU BUL → git show HEAD:dosya_yolu ile orijinali gör
+2. NEYİ BOZDUĞUNU ANLA → Hangi satırlar değişmiş, neden
+3. ORİJİNALİ GERİ YÜKLE → Sadece bozulan dosyaları geri al
+4. İYİLEŞTİRMEYİ YENİDEN UYGULA → Doğru şekilde, mevcut kodu bozmadan
+5. TEST ET → flutter analyze + flutter test
+6. TEKRAR KONTROL ET → Başka yer bozuldu mu?
+```
+
 ---
 
 ## 7. Karar Verme Rehberi
@@ -141,12 +168,23 @@ class XService {
 - Belirsizlik varsa → "X mi, Y mi?"
 - Birden fazla doğru yol varsa → "Hangisi tercih edilir?"
 - Kullanıcının tercihi gerekiyorsa → "Bu özellik nasıl görünsün?"
+- Mevcut kodu silip silmeyeceğinden emin değilsen → "Bu kodu değiştirmek mi, üzerine eklemek mi istersin?"
 
 ### Ne Zaman Soru Sormadan Yapılır?
 - Tek doğru yol varsa → Direkt yap
 - Kurallarda belirtilmişse → Kurallara uy
 - Daha önce aynı şey yapıldıysa → Aynı şekilde yap
 - Test edilebilir ve geri alınabilirse → Yap, sonra göster
+
+### Vibe Coding Karar Rehberi
+| Durum | Aksiyon |
+|---|---|
+| Mevcut kod çalışıyor ama yavaş | Optimize et, silme |
+| Mevcut kod karmaşık ama çalışıyor | Üzerine inşa et, silip yeniden yazma |
+| Method imzası değişiyor | Eski imzayı koru, yeni method ekle |
+| Widget görünümü değişiyor | Mevcut widget'ları koru, üzerlerine inşa et |
+| Testler geçmiyor | Önce testleri düzelt, sonra devam et |
+| Birden fazla dosyada değişiklik gerek | Birer birer yap, her adımda test et |
 
 ### Risk Değerlendirmesi
 | Risk | Aksiyon |
@@ -155,6 +193,7 @@ class XService {
 | Test edilebilir | Yap, test et |
 | Başka dosyaları etkiler | Önce sor |
 | Güvenlik açığı yaratır | ASLA yapma |
+| Mevcut kodu silip yeniden yazma | ASLA yapma (üzerine inşa et) |
 
 ---
 
@@ -209,6 +248,7 @@ class XService {
 
 ## 10. Sık Yapılan Hatalar
 
+### Genel Hatalar
 | Hata | Sonuç | Çözüm |
 |---|---|---|
 | `catch (_) {}` | Hata yutuluyor | `debugPrint` ile logla |
@@ -217,6 +257,20 @@ class XService {
 | Test yazmama | Hata bulmak zor | Her servise test yaz |
 | Commit mesajı yazmama | Geçmiş anlaşılmaz | Conventional commit kullan |
 | VIXREX_OTURUM_OZETI.md'yi güncelleme | Bilgi kopar | Her işlem sonrası güncelle |
+
+### Vibe Coding Hataları (Kod Gerilemesine Yol Açan)
+| Hata | Sonuç | Çözüm |
+|---|---|---|
+| Mevcut kodu silip yeniden yazma | İş mantığı kaybolur | Mevcut kodu oku, üzerine inşa et |
+| Method imzasını değiştirme | Tüm caller'lar kırılır | Eski imzayı koru, yeni method ekle |
+| Widget silerek UI'ı değiştirme | Görünüm bozulur | Mevcut widget'ları koru, üzerlerine inşa et |
+| Import eklerken eski import'u silme | Derleme hatası | Eski import'u koru, yeniyi ekle |
+| Controller'daki getter'ları silme | UI her yerde kırılır | Yeni getter ekle, eskisini koru |
+| Tek seferde 10+ dosya değiştirme | Hata bulmak zorlaşır | Birer birer değiştir |
+| Mounted kontrolü yapmama | Crash | Her async setState sonrası mounted kontrolü |
+| debugPrint kDebugMode olmadan | Log sızıntısı | `if (kDebugMode) debugPrint(...)` |
+| Try-catch eklemeden async yazma | Crash | Her async metod try-catch ile başlasın |
+| Testleri çalıştırmadan commit etme | Regression | Önce analyze + test, sonra commit |
 
 ---
 
@@ -237,6 +291,7 @@ docs: README güncellendi
 
 ## 12. Kontrol Listesi (Her İşlem Sonrası)
 
+### Teknik Kontrol
 - [ ] `flutter analyze` → sıfır hata?
 - [ ] `catch (_) {}` var mı? → kaldır veya log ekle
 - [ ] Dosya 300 satırı geçti mi? → böl
@@ -244,6 +299,25 @@ docs: README güncellendi
 - [ ] Test çalıştırıldı mı? → çalıştır
 - [ ] VIXREX_OTURUM_OZETI.md güncellendi mi? → güncelle
 - [ ] Commit mesajı yazıldı mı? → yaz
+
+### Vibe Coding Kontrol (Değişiklik Sonrası ZORUNLU)
+- [ ] Mevcut kodu silmedim mi? → Üzerine inşa ettim
+- [ ] Method imzasını değiştirmedim mi? → Eski imzayı korudum
+- [ ] Widget silmedim mi? → Mevcut widget'ları korudum
+- [ ] Import silmedim mi? → Eski import'ları korudum
+- [ ] mounted kontrolü ekledim mi? → Her async setState sonrası
+- [ ] debugPrint sarmaladım mı? → kDebugMode ile
+- [ ] try-catch ekledim mi? → Her async metod için
+- [ ] Testleri çalıştırdım mı? → analyze + test
+- [ ] Başka dosyalar bozuldu mu? → Grep ile kontrol et
+
+### Demo Kontrol (Büyük Değişiklik Sonrası)
+- [ ] Yeni APK build al → Gerçek fişle dene
+- [ ] İnternet kapalıyken aç → Ne oluyor?
+- [ ] 5MB+ fotoğraf yükle → Donuyor mu?
+- [ ] OCR tarama → Ürün çıkıyor mu?
+- [ ] Vitrin yayınla → Link çalışıyor mu?
+- [ ] Public vitrin → Mobilde düzgün görünüyor mu?
 
 ---
 
