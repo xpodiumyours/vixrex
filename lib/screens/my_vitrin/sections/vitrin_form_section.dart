@@ -77,8 +77,8 @@ class VitrinFormSection extends StatelessWidget {
   /// GalleryItem → EditorGalleryItem dönüşümü (controller uyumluluğu)
   List<EditorGalleryItem> _toEditorItems(List<GalleryItem> items) =>
       items.where((e) => e.bytes != null).map((e) => EditorGalleryItem.fromBytes(
+        e.bytes!,
         id: e.id,
-        bytes: e.bytes!,
         extension: e.extension,
         contentType: e.contentType,
       )).toList();
@@ -113,266 +113,346 @@ class VitrinFormSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasPublished = controller.publishedInfo?.isComplete == true;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 900;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                hasPublished ? 'VixRex Düzenle' : 'VixRex Oluştur',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  height: 1.15,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF00F0FF),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.storefront_rounded, color: Colors.black, size: 13),
-                  SizedBox(width: 4),
-                  Text(
-                    'VixRex ile',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        _buildHeader(hasPublished),
         const SizedBox(height: 8),
-        Text(
-          hasPublished
-              ? 'Düzenledikten sonra kaydet, linkin ve QR kodun güncellenir.'
-              : 'Ad, WhatsApp ve konumunu gir — vitrin hazır. Diğer detayları sonra ekleyebilirsin.',
-          style: const TextStyle(
-            color: Color(0xFFA1A1AA),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            height: 1.4,
-          ),
-        ),
+        _buildSubHeader(hasPublished),
         const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(isDesktop ? 24 : 18),
           decoration: _cardDecoration(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              FormMediaPicker(
-                controller: controller,
-                state: state,
-                galleryItems: _galleryItemsForEditor,
-                onPickCover: () => _pickCover(context),
-                onPickCoverFromCamera: () => _pickCoverFromCamera(context),
-                onAutoFillCover: () => _showCategoryGallery(context, source: SheetImageSource.coverPicker),
-                onPickGallery: () => _pickGallery(context),
-              ),
-              const SizedBox(height: 14),
-
-              FormBusinessInfo(
-                controller: controller,
-                state: state,
-                nameController: _name,
-                descController: _desc,
-              ),
-              const SizedBox(height: 14),
-
-              FormContactInfo(
-                controller: controller,
-                state: state,
-                whatsappController: _whatsapp,
-                instaController: _insta,
-              ),
-              const SizedBox(height: 14),
-
-              FormLocationInfo(
-                controller: controller,
-                state: state,
-                addressController: _address,
-              ),
-              const SizedBox(height: 14),
-
-              // Kategori
-              KeyedSubtree(
-                key: state.categoryKey,
-                child: EditorDropdownField(
-                  label: 'Kategori',
-                  value: controller.selectedKategori,
-                  items: BusinessCategoryConfig.categories.map((c) => c.label).toList(),
-                  icon: Icons.category_rounded,
-                  onChanged: (val) => controller.selectCategory(val ?? 'Diğer'),
+              if (isDesktop)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // SOL SÜTUN
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildMediaSection(context),
+                          const SizedBox(height: 20),
+                          _buildBusinessInfoSection(),
+                          const SizedBox(height: 20),
+                          _buildCategoryAndThemeSection(),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 32),
+                    // SAĞ SÜTUN
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildContactSection(),
+                          const SizedBox(height: 20),
+                          _buildLocationSection(),
+                          const SizedBox(height: 20),
+                          _buildOperationalSection(context, hasPublished),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              else
+                // MOBİL LAYOUT
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildMediaSection(context),
+                    const SizedBox(height: 14),
+                    _buildBusinessInfoSection(),
+                    const SizedBox(height: 14),
+                    _buildContactSection(),
+                    const SizedBox(height: 14),
+                    _buildLocationSection(),
+                    const SizedBox(height: 14),
+                    _buildCategoryAndThemeSection(),
+                    const SizedBox(height: 14),
+                    _buildOperationalSection(context, hasPublished),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 14),
 
-              // Tema
-              StoreThemePicker(
-                selectedTheme: controller.data.theme,
-                onThemeChanged: (val) => controller.data.theme = val,
-              ),
-              const SizedBox(height: 14),
-
-              // Randevu (sadece Kuaför)
-              if (controller.selectedKategori == 'Kuaför') ...[
-                KeyedSubtree(
-                  key: state.productsKey,
-                  child: WorkingHoursEditor(
-                    bookingIsEnabled: controller.bookingIsEnabled,
-                    bookingCapacity: controller.bookingCapacity,
-                    bookingWorkingHours: controller.bookingWorkingHours,
-                    bookingLunchBreak: controller.bookingLunchBreak,
-                    offerings: controller.offerings,
-                    selectedKategori: controller.selectedKategori,
-                    onBookingEnabledChanged: controller.setBookingIsEnabled,
-                    onBookingCapacityChanged: controller.setBookingCapacity,
-                    onStateChanged: () {},
-                    showSnackBar: (msg) => state.showSnackBar(context, msg),
-                  ),
-                ),
-                const SizedBox(height: 14),
-              ],
-
-              // Durum
-              EditorDropdownField(
-                label: 'Vitrin Durumu',
-                value: controller.selectedStatus,
-                items: const ['Açık', 'Bugün kampanya var', 'Yeni ürünler geldi', 'Stok sınırlı', 'Kapalı'],
-                icon: Icons.info_outline_rounded,
-                onChanged: (val) => controller.selectStatus(val ?? 'Açık'),
-              ),
-              const SizedBox(height: 14),
-
-              // Ürün Yönetimi
-              ProductManagementEntryCard(
-                productCount: controller.data.products.length,
-                onTap: () => _showProductSheet(context),
-              ),
-              const SizedBox(height: 14),
-
-              // Instagram Sync
-              if (hasPublished && InstagramSyncConfig.enabled) ...[
-                InstagramSyncSection(
-                  storeSlug: controller.publishedInfo!.slug,
-                  editToken: controller.publishedInfo!.editToken,
-                  defaultCategory: controller.selectedKategori,
-                  onProductImported: controller.updateProductImported,
-                  onMessage: (msg) => state.showSnackBar(context, msg),
-                ),
-                const SizedBox(height: 14),
-              ],
-
-              // Public Link
-              PublicLinkCard(
-                controller: _web,
-                publicLink: controller.publishedInfo?.publicLink,
-                onOpenLink: () => _openLink(context),
-                onCopyLink: () => _copyLink(context),
-                onShareLink: () => _shareLink(context),
-              ),
-              const SizedBox(height: 14),
-
-              // Google Yorum
-              EditorTextField(
-                label: 'Google Yorum Bağlantısı',
-                controller: _google,
-                hint: 'https://search.google.com/local/writereview?placeid=...',
-                icon: Icons.rate_review_rounded,
-                keyboardType: TextInputType.url,
-                errorText: controller.googleLinkError,
-                onChanged: (v) {
-                  controller.updateGoogleBusinessLink(v);
-                  controller.clearValidationErrors();
-                },
-              ),
-              const SizedBox(height: 14),
-
-              FormMarketplaceLinks(
-                controller: controller,
-                platformOptions: _platformOptions,
-              ),
+              const SizedBox(height: 24),
+              const Divider(color: Color(0xFF25415F), height: 1),
               const SizedBox(height: 24),
 
-              // Yasal Onay
-              KeyedSubtree(
-                key: state.legalKey,
-                child: LegalConsentSection(
-                  canAccept: !controller.isLoadingLegalDocuments,
-                  isLoading: controller.isLoadingLegalDocuments,
-                  errorText: controller.legalDocumentsError,
-                  privacyNoticeAcknowledged: controller.privacyNoticeAcknowledged,
-                  termsAccepted: controller.termsAccepted,
-                  publicationConsentAccepted: controller.publicationConsentAccepted,
-                  onPrivacyChanged: controller.setPrivacyNoticeAcknowledged,
-                  onTermsChanged: controller.setTermsAccepted,
-                  onPublicationChanged: controller.setPublicationConsentAccepted,
-                  onReloadDocuments: () {},
-                  onOpenLegalPage: (type) => AppRouter.navigateToLegal(context, type),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Yayınla Butonu
-              SizedBox(
-                height: 54,
-                child: ElevatedButton.icon(
-                  onPressed: controller.isPublishing || !controller.isLegalPublishReady
-                      ? null
-                      : () => state.handlePublish(context, onPublished),
-                  icon: controller.isPublishing
-                      ? const SizedBox(
-                          width: 18, height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                        )
-                      : Icon(
-                          hasPublished ? Icons.cloud_upload_rounded : Icons.rocket_launch_rounded,
-                          size: 19,
-                        ),
-                  label: Text(
-                    controller.isPublishing
-                        ? 'Yayına alınıyor...'
-                        : hasPublished
-                            ? 'Değişiklikleri Kaydet & Yayına Al'
-                            : 'Vitrinimi Yayına Al',
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00F0FF),
-                    foregroundColor: Colors.black,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                hasPublished
-                    ? 'Mevcut linkin korunur, Keşfet görünümün güncellenir.'
-                    : 'Linkin oluşur, Keşfet\'te görünürsün.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFFA1A1AA),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              // ALT ALAN (Her iki görünümde de tam genişlik)
+              _buildLegalAndPublishSection(context, hasPublished),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader(bool hasPublished) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            hasPublished ? 'VixRex Düzenle' : 'VixRex Oluştur',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              height: 1.15,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        _buildVixRexBadge(),
+      ],
+    );
+  }
+
+  Widget _buildVixRexBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFF00F0FF),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.storefront_rounded, color: Colors.black, size: 13),
+          SizedBox(width: 4),
+          Text(
+            'VixRex ile',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubHeader(bool hasPublished) {
+    return Text(
+      hasPublished
+          ? 'Düzenledikten sonra kaydet, linkin ve QR kodun güncellenir.'
+          : 'Ad, WhatsApp ve konumunu gir — vitrin hazır. Diğer detayları sonra ekleyebilirsin.',
+      style: const TextStyle(
+        color: Color(0xFFA1A1AA),
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        height: 1.4,
+      ),
+    );
+  }
+
+  Widget _buildMediaSection(BuildContext context) {
+    return FormMediaPicker(
+      controller: controller,
+      state: state,
+      galleryItems: _galleryItemsForEditor,
+      onPickCover: () => _pickCover(context),
+      onPickCoverFromCamera: () => _pickCoverFromCamera(context),
+      onAutoFillCover: () => _showCategoryGallery(context, source: SheetImageSource.coverPicker),
+      onPickGallery: () => _pickGallery(context),
+    );
+  }
+
+  Widget _buildBusinessInfoSection() {
+    return FormBusinessInfo(
+      controller: controller,
+      state: state,
+      nameController: _name,
+      descController: _desc,
+    );
+  }
+
+  Widget _buildCategoryAndThemeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        KeyedSubtree(
+          key: state.categoryKey,
+          child: EditorDropdownField(
+            label: 'Kategori',
+            value: controller.selectedKategori,
+            items: BusinessCategoryConfig.categories.map((c) => c.label).toList(),
+            icon: Icons.category_rounded,
+            onChanged: (val) => controller.selectCategory(val ?? 'Diğer'),
+          ),
+        ),
+        const SizedBox(height: 14),
+        StoreThemePicker(
+          selectedTheme: controller.data.theme,
+          onThemeChanged: (val) => controller.data.theme = val,
+        ),
+        const SizedBox(height: 14),
+        EditorDropdownField(
+          label: 'Vitrin Durumu',
+          value: controller.selectedStatus,
+          items: const ['Açık', 'Bugün kampanya var', 'Yeni ürünler geldi', 'Stok sınırlı', 'Kapalı'],
+          icon: Icons.info_outline_rounded,
+          onChanged: (val) => controller.selectStatus(val ?? 'Açık'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContactSection() {
+    return FormContactInfo(
+      controller: controller,
+      state: state,
+      whatsappController: _whatsapp,
+      instaController: _insta,
+    );
+  }
+
+  Widget _buildLocationSection() {
+    return FormLocationInfo(
+      controller: controller,
+      state: state,
+      addressController: _address,
+    );
+  }
+
+  Widget _buildOperationalSection(BuildContext context, bool hasPublished) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (controller.selectedKategori == 'Kuaför') ...[
+          KeyedSubtree(
+            key: state.productsKey,
+            child: WorkingHoursEditor(
+              bookingIsEnabled: controller.bookingIsEnabled,
+              bookingCapacity: controller.bookingCapacity,
+              bookingWorkingHours: controller.bookingWorkingHours,
+              bookingLunchBreak: controller.bookingLunchBreak,
+              offerings: controller.offerings,
+              selectedKategori: controller.selectedKategori,
+              onBookingEnabledChanged: controller.setBookingIsEnabled,
+              onBookingCapacityChanged: controller.setBookingCapacity,
+              onStateChanged: () {},
+              showSnackBar: (msg) => state.showSnackBar(context, msg),
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
+        ProductManagementEntryCard(
+          productCount: controller.data.products.length,
+          onTap: () => _showProductSheet(context),
+        ),
+        const SizedBox(height: 14),
+        if (hasPublished && InstagramSyncConfig.enabled) ...[
+          InstagramSyncSection(
+            storeSlug: controller.publishedInfo!.slug,
+            editToken: controller.publishedInfo!.editToken,
+            defaultCategory: controller.selectedKategori,
+            onProductImported: controller.updateProductImported,
+            onMessage: (msg) => state.showSnackBar(context, msg),
+          ),
+          const SizedBox(height: 14),
+        ],
+        PublicLinkCard(
+          controller: _web,
+          publicLink: controller.publishedInfo?.publicLink,
+          onOpenLink: () => _openLink(context),
+          onCopyLink: () => _copyLink(context),
+          onShareLink: () => _shareLink(context),
+        ),
+        const SizedBox(height: 14),
+        EditorTextField(
+          label: 'Google Yorum Bağlantısı',
+          controller: _google,
+          hint: 'https://search.google.com/local/writereview?placeid=...',
+          icon: Icons.rate_review_rounded,
+          keyboardType: TextInputType.url,
+          errorText: controller.googleLinkError,
+          onChanged: (v) {
+            controller.updateGoogleBusinessLink(v);
+            controller.clearValidationErrors();
+          },
+        ),
+        const SizedBox(height: 14),
+        FormMarketplaceLinks(
+          controller: controller,
+          platformOptions: _platformOptions,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegalAndPublishSection(BuildContext context, bool hasPublished) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        KeyedSubtree(
+          key: state.legalKey,
+          child: LegalConsentSection(
+            canAccept: !controller.isLoadingLegalDocuments,
+            isLoading: controller.isLoadingLegalDocuments,
+            errorText: controller.legalDocumentsError,
+            privacyNoticeAcknowledged: controller.privacyNoticeAcknowledged,
+            termsAccepted: controller.termsAccepted,
+            publicationConsentAccepted: controller.publicationConsentAccepted,
+            onPrivacyChanged: controller.setPrivacyNoticeAcknowledged,
+            onTermsChanged: controller.setTermsAccepted,
+            onPublicationChanged: controller.setPublicationConsentAccepted,
+            onReloadDocuments: () {},
+            onOpenLegalPage: (type) => AppRouter.navigateToLegal(context, type),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 54,
+          child: ElevatedButton.icon(
+            onPressed: controller.isPublishing || !controller.isLegalPublishReady
+                ? null
+                : () => state.handlePublish(context, onPublished),
+            icon: controller.isPublishing
+                ? const SizedBox(
+                    width: 18, height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                  )
+                : Icon(
+                    hasPublished ? Icons.cloud_upload_rounded : Icons.rocket_launch_rounded,
+                    size: 19,
+                  ),
+            label: Text(
+              controller.isPublishing
+                  ? 'Yayına alınıyor...'
+                  : hasPublished
+                      ? 'Değişiklikleri Kaydet & Yayına Al'
+                      : 'Vitrinimi Yayına Al',
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00F0FF),
+              foregroundColor: Colors.black,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          hasPublished
+              ? 'Mevcut linkin korunur, Keşfet görünümün güncellenir.'
+              : 'Linkin oluşur, Keşfet\'te görünürsün.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xFFA1A1AA),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -487,7 +567,11 @@ class VitrinFormSection extends StatelessWidget {
           controller.data.productCategories = categories;
           await controller.saveLocally();
           // Ürünleri Supabase'e de kaydet
-          await controller.syncProductsToSupabase();
+          await controller.syncProductsToSupabase(
+            data: controller.data,
+            publishService: controller.publishService,
+            editToken: controller.publishedInfo?.editToken,
+          );
         },
         onOcrTap: () {
           // Alt paneli kapat, sonra root navigator'dan OCR ekranını aç

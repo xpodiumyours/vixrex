@@ -151,7 +151,7 @@ void main() {
         );
 
         await controller.initialize(null);
-        await controller.fetchLocation();
+        await controller.triggerFetchLocation();
 
         expect(controller.latitude, 41.0082);
         expect(controller.longitude, 28.9784);
@@ -183,9 +183,9 @@ void main() {
 
         await controller.initialize('Valid Store');
         controller.updateWhatsapp('05551234567');
-        controller.updateAddress('Valid Address');
-        controller.selectProvince('34', 'İstanbul');
-        controller.selectDistrict('Kadıköy', 'Kadıköy');
+        controller.updateAddress(controller.data, 'Valid Address');
+        controller.selectProvince(controller.data, '34', 'İstanbul');
+        controller.selectDistrict(controller.data, 'Kadıköy', 'Kadıköy');
 
         final publicLink = await controller.publish();
         expect(publicLink, contains('test-store'));

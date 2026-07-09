@@ -231,7 +231,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       hasPublished: _controller.publishedInfo?.isComplete == true,
       hasWebLink: publicLink.isNotEmpty,
       hasLocation: _addressController.text.trim().isNotEmpty ||
-          (_controller.latitude != null && _controller.longitude != null),
+          (_controller.data.latitude != null && _controller.data.longitude != null),
       hasGoogleReview: _googleBusinessLinkController.text.trim().isNotEmpty,
       hasProfileDescription: _descriptionController.text.trim().isNotEmpty,
       hasPublishedArticle: publishedArticles.isNotEmpty,
@@ -267,6 +267,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     final result = await AppRouter.navigateToBlogEditor(
       context, slug: slug, article: article,
     );
-    if (result == true) await _controller.fetchArticles();
+    if (result == true) await _controller.fetchArticlesUI();
   }
 }

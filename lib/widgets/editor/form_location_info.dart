@@ -33,9 +33,9 @@ class FormLocationInfo extends StatelessWidget {
         locationAccuracyMeters: controller.locationAccuracyMeters,
         locationStatusMessage: controller.locationStatusMessage,
         isLocating: controller.isLocating,
-        onProvinceChanged: controller.selectProvince,
-        onDistrictChanged: controller.selectDistrict,
-        onAddressChanged: (value) => controller.updateAddress(value),
+        onProvinceChanged: (code, name) => controller.selectProvince(controller.data, code, name),
+        onDistrictChanged: (code, name) => controller.selectDistrict(controller.data, code, name),
+        onAddressChanged: (value) => controller.updateAddress(controller.data, value),
         onLocatingStateChanged: (_) {},
         onLocationUpdated: ({
           latitude,
@@ -50,10 +50,10 @@ class FormLocationInfo extends StatelessWidget {
         }) {
           if (address != null) {
             addressController.text = address;
-            controller.updateAddress(address);
+            controller.updateAddress(controller.data, address);
           }
-          controller.selectProvince(provinceCode, provinceName);
-          controller.selectDistrict(districtCode, districtName);
+          controller.selectProvince(controller.data, provinceCode, provinceName);
+          controller.selectDistrict(controller.data, districtCode, districtName);
         },
       ),
     );

@@ -15,7 +15,13 @@ class AuthService {
   /// Returns the currently authenticated user session.
   User? get currentUser {
     try {
-      return Supabase.instance.client.auth.currentUser;
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null && session.isExpired) {
+        // Oturum süresi dolmuşsa yenilemeyi dene (asenkron olmadığı için burada sadece null döner,
+        // ancak bir sonraki asenkron işlemde Supabase SDK otomatik yenileyecektir)
+        return null;
+      }
+      return session?.user;
     } catch (_) {
       return null;
     }

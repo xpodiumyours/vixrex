@@ -87,11 +87,14 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
       onTap: () => _openChat(context),
       child: AnimatedBuilder(
         animation: Listenable.merge([_pulseController, _scanController]),
-        child: Image.asset(
-          'assets/images/vixrex_mascot.webp',
-          width: _vixrexBadgeSize,
-          height: _vixrexBadgeSize,
-          fit: BoxFit.cover,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset(
+            'assets/images/vixrex_mascot.webp',
+            width: _vixrexBadgeSize,
+            height: _vixrexBadgeSize,
+            fit: BoxFit.contain,
+          ),
         ),
         builder: (context, mascot) {
           return Container(
@@ -99,12 +102,13 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
             height: _vixrexBadgeSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.transparent,
+              color: Colors.white.withAlpha(20),
+              border: Border.all(color: AppColors.primary.withAlpha(40), width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withAlpha((255 * 0.25 * _pulseAnim.value).round()),
-                  blurRadius: 16,
-                  spreadRadius: 4,
+                  color: AppColors.primary.withAlpha((255 * 0.35 * _pulseAnim.value).round()),
+                  blurRadius: 18,
+                  spreadRadius: 2,
                 ),
               ],
             ),
@@ -114,14 +118,21 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
                 children: [
                   mascot!,
                   Positioned(
-                    top:
-                        (_vixrexBadgeSize / 2) +
-                        (_scanAnim.value * (_vixrexBadgeSize / 2)),
-                    left: 0,
-                    right: 0,
+                    top: (_vixrexBadgeSize / 2) +
+                        (_scanAnim.value * (_vixrexBadgeSize * 0.4)),
+                    left: 10,
+                    right: 10,
                     child: Container(
-                      height: 1.5,
-                      color: AppColors.primary.withAlpha(60),
+                      height: 2,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary.withAlpha(0),
+                            AppColors.primary.withAlpha(120),
+                            AppColors.primary.withAlpha(0),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                   Positioned(
