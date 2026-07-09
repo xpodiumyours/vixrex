@@ -215,6 +215,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
           products: result.products,
           onApprove: widget.ocrController.approveProduct,
           onReject: widget.ocrController.rejectProduct,
+          onEdit: _editProduct,
         ),
         const SizedBox(height: 16),
         // Kaydet butonu
@@ -239,6 +240,61 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
 
   void _analyzeImage(List<int> imageBytes) {
     widget.ocrController.analyzeImage(Uint8List.fromList(imageBytes));
+  }
+
+  void _editProduct(int index) {
+    final product = widget.ocrController.result!.products[index];
+    final nameController = TextEditingController(text: product.name);
+    final priceController = TextEditingController(
+      text: product.price?.toStringAsFixed(2) ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Ürünü Düzenle', style: TextStyle(color: AppColors.darkText)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Ürün Adı',
+                labelStyle: TextStyle(color: AppColors.mutedText),
+              ),
+              style: const TextStyle(color: AppColors.darkText),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: priceController,
+              decoration: const InputDecoration(
+                labelText: 'Fiyat (₺)',
+                labelStyle: TextStyle(color: AppColors.mutedText),
+              ),
+              style: const TextStyle(color: AppColors.darkText),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final updated = product;
+              updated.name = nameController.text;
+              updated.price = double.tryParse(priceController.text);
+              widget.ocrController.updateProduct(index, updated);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _saveProducts() async {

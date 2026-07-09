@@ -48,12 +48,27 @@ class OcrProductMatcher {
         final cleanedName = _cleanProductName(productLine.text, price.rawText);
         if (cleanedName.length < 2) continue;
 
+        // Fuzzy matching ile ürün sözlüğünde eşleştir
+        final fuzzyResult = _fuzzyMatcher.findBestMatch(
+          cleanedName,
+          _productDictionary,
+          threshold: 0.4,
+        );
+
+        // Confidence hesapla
+        final baseConfidence = _calculateConfidence(cleanedName, price, productLine);
+        final finalConfidence = fuzzyResult.isNotEmpty
+            ? (baseConfidence + fuzzyResult.score) / 2
+            : baseConfidence;
+
+        final finalName = fuzzyResult.isNotEmpty ? fuzzyResult.matchedText : cleanedName;
+
         products.add(DetectedProduct(
           id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${products.length}',
-          name: cleanedName,
+          name: finalName,
           price: price.amount,
-          confidence: 0.5,
-          source: 'ocr_priced',
+          confidence: finalConfidence,
+          source: fuzzyResult.isNotEmpty ? 'ocr_fuzzy_matched' : 'ocr_priced',
         ));
       }
     }
@@ -147,4 +162,57 @@ class OcrProductMatcher {
     }
     return map.values.toList();
   }
+
+  /// Confidence skoru hesapla (0.0 - 1.0).
+  double _calculateConfidence(String name, OcrPrice price, OcrLine line) {
+    double score = 0.5; // Başlangıç
+
+    // 1. Ürün adı uzunluğu: Kısa ise güvenilirlik düşer
+    if (name.length >= 8) score += 0.1;
+    if (name.length >= 15) score += 0.1;
+    if (name.length < 4) score -= 0.2;
+
+    // 2. Ürün adında harf oranı: Sayısal değerler güvenilir değil
+    final letterRatio = name.replaceAll(RegExp(r'[^a-zA-Zà-üÀ-Ü]'), '').length / name.length;
+    if (letterRatio > 0.7) score += 0.1;
+    if (letterRatio < 0.3) score -= 0.2;
+
+    // 3. Fiyat makul aralıktaysa
+    if (price.amount >= 1 && price.amount <= 50000) score += 0.05;
+
+    // 4. Noise kelimesi içeriyor mu
+    if (_isNoiseLine(name)) score -= 0.3;
+
+    // 5. Sadece sayısal değer mi
+    if (RegExp(r'^\d+$').hasMatch(name.trim())) score -= 0.3;
+
+    // 6. Tek kelime mi (ürün adları genellikle çok kelimeli)
+    if (name.split(RegExp(r'\s+')).length == 1) score -= 0.1;
+
+    return score.clamp(0.0, 1.0);
+  }
+
+  /// Bilinen ürün sözlüğü (fuzzy matching için).
+  static const List<String> _productDictionary = [
+    // Tekstil
+    'V YAKA KISA KOL BADI', 'YAKASI KISA KOL REÇME ARA BIYELI',
+    'YAKA KISA KOLU REÇME ARA BIYELI', 'ARA BEDEN KALIN BIYELİ IP ASKILI ATLET',
+    'L XL XXL YARIM BALIKÇI UZUN KOL BADI', 'ELİT ERK PENYE ATLET',
+    'ELİT ERK ARJANTİN', 'ELİT ERK ELASTAN SIFIRYAKA',
+    'ELİT BYN MOD ELAS UZUN TAYT', 'ELİT BYN ELASTAN SIFIRKOL',
+    'ELİT BYN ELASTAN YARIMKOL', 'SHR ERK BOXER DESENLİ',
+    'SHR BYN PEN KAŞKORSE', 'TUT ERK PEN ATLET',
+    'TUT BYN KAŞKORSE BİKİNİ',
+    // Gıda
+    'ÜLKER ÇİKOLATALI GOFRET', 'ÇAYKUR FİLİZ ÇAYI 500G',
+    'SÜTAŞ TAM YAĞLI SÜT 1L', 'RULOKAT FINDIKLI RULO GOFRET',
+    'DANKEK LOKMALIK HİNDİSTAN CEVİZLİ', 'BİSCOLATA MOOD ÇİKOLATALI',
+    'KEKSTRA ÇİLEKLİ JOLEBOL', 'ÜLKER ÇOKOPRENS',
+    'LUPPO SANDVİÇ KEK', 'BİSKÜVİ',
+    // Elektronik
+    'SAMSUNG GALAXY A54', 'JBL TUNE 520BT KULAKLIK',
+    'ANKER POWERBANK 10000',
+    // Genel
+    'PAKET', 'KUTU', 'ŞİŞE', 'TENEKE', 'TORBA',
+  ];
 }

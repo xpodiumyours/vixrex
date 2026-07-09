@@ -126,10 +126,18 @@ class OcrController extends ChangeNotifier {
         'confidence': p.confidence,
       }).toList();
 
+      final parsedList = _result!.products.map((p) => {
+        'name': p.name,
+        'price': p.price,
+        'confidence': p.confidence,
+      }).toList();
+
       await const OcrFeedbackService().saveFeedback(
         rawOcrText: _result!.rawText,
+        parsedProducts: parsedList,
         correctedProducts: feedbackList,
         scanMode: _scanMode,
+        imageHash: 'hash_${_result!.rawText.hashCode.abs()}',
       );
 
       // 2. Ürünleri editör kontrolcüsüne ekle

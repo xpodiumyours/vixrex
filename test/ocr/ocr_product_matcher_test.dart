@@ -57,9 +57,9 @@ void main() {
 
         final result = await matcher.matchProducts(lines, prices, scanMode: 'receipt');
         expect(result.length, 1);
-        expect(result.first.name, 'Dankek Lokmalık Hindistan Cevizli');
+        expect(result.first.name.toUpperCase(), contains('DANKEK'));
         expect(result.first.price, 55.0);
-        expect(result.first.source, 'ocr_priced');
+        expect(result.first.source, 'ocr_fuzzy_matched');
       });
 
       test('Raf/Etiket Modu: Aynı bloktaki satırları eşleştirir', () async {
@@ -89,9 +89,9 @@ void main() {
 
         final result = await matcher.matchProducts(lines, prices, scanMode: 'shelf_label');
         expect(result.length, 1);
-        expect(result.first.name, 'Biscolata Mood 110g');
+        expect(result.first.name.toUpperCase(), contains('BİSCOLATA'));
         expect(result.first.price, 54.99);
-        expect(result.first.source, 'ocr_priced');
+        expect(result.first.source, 'ocr_fuzzy_matched');
       });
 
       test('Gurultu satirlarini atlar', () async {

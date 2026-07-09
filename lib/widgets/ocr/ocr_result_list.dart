@@ -34,7 +34,21 @@ class OcrResultList extends StatelessWidget {
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];
-        return _buildProductCard(product, index);
+        return Dismissible(
+          key: Key(product.id),
+          direction: DismissDirection.endToStart,
+          onDismissed: (_) => onReject(index),
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.delete, color: AppColors.error),
+          ),
+          child: _buildProductCard(product, index),
+        );
       },
     );
   }
