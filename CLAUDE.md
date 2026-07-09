@@ -30,7 +30,7 @@ lib/
   utils/          → Yardımcı fonksiyonlar (TextUtils, WhatsAppLinkHelper vb.)
   models/         → Veri modelleri (StoreData, Product, vb.)
   config/         → Sabitler, yapılandırma (AppRouter, BusinessCategoryConfig vb.)
-  repositories/   → Veri erişim soyutlaması (şimdilik boş)
+  repositories/   → Veri erişim soyutlaması (auth, store, explore vb.)
   theme/          → Renkler, stiller
 test/             → Unit ve widget testleri
 ```
@@ -40,12 +40,12 @@ test/             → Unit ve widget testleri
 ## 3. Zorunlu Kodlama Kuralları
 
 ### Hata Yönetimi
-- `catch (_) {}` KULLANMA. En azında `debugPrint` ile logla.
+- `catch (_) {}` yerine `debugPrint` ile loglama önerilir.
 - Tüm servis metotları `Future<Result<T>>` dönmeli.
 - Hatalar servis katmanında yakalanmalı, ekrana `throw` fırlatılmamalı.
 - Kullanıcıya Türkçe, anlaşılır hata mesajı gösterilmeli.
-- **Async metodlarda `setState` öncesi `if (!mounted) return;` zorunlu.**
-- **Tüm `debugPrint`'ler `if (kDebugMode) debugPrint(...)` ile sarmalanmalı.**
+- Async metodlarda `setState` öncesi `if (!mounted) return;` eklenmeli.
+- Tüm `debugPrint`'ler `if (kDebugMode) debugPrint(...)` ile sarmalanmalı.
 
 ### Kod Kalitesi
 - Aynı fonksiyon 2 dosyada olamaz (DRY).
@@ -90,21 +90,21 @@ class XService {
 
 ---
 
-## 5. Yasaklar
+## 5. Dikkat Noktaları
 
-### Kesin Yasaklar
+### Kod Kalitesi
 | Yapma | Neden |
 |---|---|
 | `catch (_) {}` | Hata yutuluyor, debug edilemez |
 | `Supabase.instance.client` screen içinde | Test edilemez, katman ihlali |
 | `throw Exception('msg')` serviste | Result<T> kullanmalısın |
-| Dosya > 500 satır (yeni dosya için 300) | Anlaşılması zor | Kademeli olarak böl |
+| Dosya > 500 satır (yeni dosya için 300) | Anlaşılması zor, kademeli olarak böl |
 | Aynı kod 2 dosyada | Değişiklik unutulabilir |
 | Service role anahtarı istemci kodunda | Güvenlik açığı |
 | `debugPrint` kDebugMode olmadan | Production'da log sızıntısı |
 | `setState` sonrası `mounted` kontrolü yoksa | Ekran kapanırken crash |
 
-### Vibe Coding Yasakları (Kod Gerilemesini Önle)
+### Vibe Coding Dikkat Noktaları (Kod Gerilemesini Önle)
 | Yapma | Neden | Çözüm |
 |---|---|---|
 | Mevcut kodu silip yeniden yazma (refaktör hariç) | Mevcut iş mantığı kaybolur | Mevcut kodu oku, üzerine ekle |
@@ -112,10 +112,9 @@ class XService {
 | Import'ları değiştirerek var olan kodu bozma | Derleme hataları yaratır | Önce mevcut import'ları koru |
 | Method imzasını değiştirip tüm caller'ları bozma | Zincirleme hata yaratır | Eski imzayı koru, yeni method ekle |
 | Try-catch eklemeden async metod yazma | Crash olur | Her async metod try-catch ile başlasın |
-| `Positioned`, `Container` gibi widget'ları silerek UI'ı bozma | Görünüm bozulur | Mevcut widget'ları koru, üzerlerine inşa et |
-| Controller'daki getter/method'ları silerek UI'ı bozma | Heryer kırılır | Yeni getter ekle, eskisini koru |
-| Test dosyalarını görmezden gelme | Regression olur | Değişiklik sonrası test çalıştır |
-| Tek seferde 10+ dosyada değişiklik yapma | Hata bulmak zorlaşır | Birer birer değiştir, her adımda analyze çalıştır |
+| Widget'ları silerek UI'ı değiştirme | Görünüm bozulur | Mevcut widget'ları koru, üzerlerine inşa et |
+| Controller'daki getter'ları silme | UI her yerde kırılır | Yeni getter ekle, eskisini koru |
+| Testleri görmezden gelme | Regression olur | Değişiklik sonrası test çalıştır |
 
 ---
 
@@ -293,33 +292,12 @@ docs: README güncellendi
 
 ## 12. Kontrol Listesi (Her İşlem Sonrası)
 
-### Teknik Kontrol
 - [ ] `flutter analyze` → sıfır hata?
-- [ ] `catch (_) {}` var mı? → kaldır veya log ekle
-- [ ] Dosya 300 satırı geçti mi (yeni) / 500'ü (mevcut) → böl
-- [ ] Aynı kod başka yerde var mı? → merkezileştir
-- [ ] Test çalıştırıldı mı? → çalıştır
-- [ ] VIXREX_OTURUM_OZETI.md güncellendi mi? → güncelle
-- [ ] Commit mesajı yazıldı mı? → yaz
-
-### Vibe Coding Kontrol (Değişiklik Sonrası ZORUNLU)
-- [ ] Mevcut kodu silmedim mi? → Üzerine inşa ettim
-- [ ] Method imzasını değiştirmedim mi? → Eski imzayı korudum
-- [ ] Widget silmedim mi? → Mevcut widget'ları korudum
-- [ ] Import silmedim mi? → Eski import'ları korudum
-- [ ] mounted kontrolü ekledim mi? → Her async setState sonrası
-- [ ] debugPrint sarmaladım mı? → kDebugMode ile
-- [ ] try-catch ekledim mi? → Her async metod için
-- [ ] Testleri çalıştırdım mı? → analyze + test
-- [ ] Başka dosyalar bozuldu mu? → Grep ile kontrol et
-
-### Demo Kontrol (Büyük Değişiklik Sonrası)
-- [ ] Yeni APK build al → Gerçek fişle dene
-- [ ] İnternet kapalıyken aç → Ne oluyor?
-- [ ] 5MB+ fotoğraf yükle → Donuyor mu?
-- [ ] OCR tarama → Ürün çıkıyor mu?
-- [ ] Vitrin yayınla → Link çalışıyor mu?
-- [ ] Public vitrin → Mobilde düzgün görünüyor mu?
+- [ ] Mevcut kodu silmedim mi? (Vibe hasarı önle)
+- [ ] Mounted kontrolü eklendi mi? (async setState sonrası)
+- [ ] Test çalıştırıldı mı?
+- [ ] VIXREX_OTURUM_OZETI.md güncellendi mi?
+- [ ] Commit mesajı yazıldı mı?
 
 ---
 
