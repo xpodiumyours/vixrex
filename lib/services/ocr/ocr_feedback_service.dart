@@ -13,8 +13,10 @@ class OcrFeedbackService {
   /// Kullanıcının yaptığı OCR düzeltmelerini kaydeder.
   Future<Result<void>> saveFeedback({
     required String rawOcrText,
+    required List<Map<String, dynamic>> parsedProducts,
     required List<Map<String, dynamic>> correctedProducts,
     required String scanMode,
+    String? imageHash,
   }) async {
     try {
       final userId = _resolveClient.auth.currentUser?.id;
@@ -22,8 +24,11 @@ class OcrFeedbackService {
       await _resolveClient.from('ocr_feedback_dataset').insert({
         if (userId != null) 'user_id': userId,
         'raw_ocr_text': rawOcrText,
+        'parsed_products': parsedProducts,
         'corrected_products': correctedProducts,
         'scan_mode': scanMode,
+        'image_hash': imageHash ?? 'hash_${DateTime.now().millisecondsSinceEpoch}',
+        'timestamp': DateTime.now().toIso8601String(),
         'is_verified': false,
       });
 

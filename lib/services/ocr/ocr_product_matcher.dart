@@ -3,18 +3,23 @@ import 'package:vixrex/models/ocr_line.dart';
 import 'package:vixrex/models/ocr_price.dart';
 import 'package:vixrex/utils/text_utils.dart';
 import 'ocr_excel_verifier.dart';
+import 'ocr_fuzzy_matcher.dart';
 
 /// OCR satırlarını ve fiyatlarıyla ürün eşleştirme servisi.
 ///
 /// Mantık:
 /// 1. Tüm satırları ve fiyatları sırala (y coordinate'e göre)
-/// 2. Her fiyatın hemen üstündeki veya aynı satırındaki metni ürün adı olarak al
-/// 3. Eşleşenleri DetectedProduct listesine dönüştür
+/// 2. Her fiyatın en yakınındaki metni ürün adı olarak al
+/// 3. Fuzzy matching ile ürün adını iyileştir
+/// 4. Eşleşenleri DetectedProduct listesine dönüştür
 class OcrProductMatcher {
   final OcrExcelVerifier _verifier;
+  final OcrFuzzyMatcher _fuzzyMatcher;
 
-  const OcrProductMatcher({required OcrExcelVerifier verifier})
-      : _verifier = verifier;
+  const OcrProductMatcher({
+    required OcrExcelVerifier verifier,
+  })  : _verifier = verifier,
+        _fuzzyMatcher = const OcrFuzzyMatcher();
 
   Future<List<DetectedProduct>> matchProducts(
     List<OcrLine> lines,
@@ -57,7 +62,6 @@ class OcrProductMatcher {
   }
 
   /// Her fiyat için en uygun ürün satırını bul.
-  /// Mantık: Fiyatın hemen üstündeki veya aynı yatay hizada olan satırı seç.
   OcrLine? _findBestProductLine(
     List<OcrLine> sortedLines,
     OcrPrice price,
@@ -76,17 +80,16 @@ class OcrProductMatcher {
       if (line.text.trim() == price.rawText.trim()) continue;
       if (line.text.contains(price.rawText)) continue;
 
-      // Dikey mesafe: Fiyatın üstündeki veya en fazla 3 satır altındaki
+      // Dikey mesafe
       final yDiff = (line.centerY - price.lineNumber * 30).abs();
 
-      // Yatay benzerlik: Aynı yatay hizada mı?
-      // centerX farklılıklarını hesapla (ML Kit farklı boyutlarda okuyabilir)
+      // Yatay benzerlik
       final xDiff = (line.centerX - price.lineNumber * 5).abs();
 
-      // Skor: Dikey mesafe öncelikli, yatay benzerlik ikincil
+      // Skor
       final score = yDiff * 10 + xDiff;
 
-      if (score < bestScore && yDiff < 200) { // Maksimum 200px dikey mesafe
+      if (score < bestScore && yDiff < 200) {
         bestScore = score;
         bestLine = line;
       }
@@ -95,37 +98,22 @@ class OcrProductMatcher {
     return bestLine;
   }
 
-  /// Ürün adını temizle: Fiyat, barkod, miktar bilgilerini kaldır.
+  /// Ürün adını temizle.
   String _cleanProductName(String text, String priceText) {
     var cleaned = text;
-
-    // Fiyatı temizle
     cleaned = cleaned.replaceAll(priceText, '');
-
-    // TL/₺ sembollerini temizle
-    cleaned = cleaned.replaceAll(RegExp(r'(?:₺|TL|TRY|tl|try)', caseSensitive: false), '');
-
-    // 13 haneli barkodları temizle
+    cleaned = cleaned.replaceAll(RegExp(r'(?:₺|TL|TRY|tl|try|KR|KURUŞ)', caseSensitive: false), '');
     cleaned = cleaned.replaceAll(RegExp(r'\b\d{13}\b'), '');
-
-    // Adet bilgilerini temizle (2 AD, 3 ADET, 5 dz)
     cleaned = cleaned.replaceAll(RegExp(r'\b\d+\s*(ad|adet|dz|pcs|ADET)\b', caseSensitive: false), '');
-
-    // 4+ haneli model kodlarını temizle (ama kısa kodları KORU: 129, 158 vb.)
     cleaned = cleaned.replaceAll(RegExp(r'\b[A-Z]{2,4}\d{4,6}\b'), '');
-
-    // Baştaki/sondaki fazlalık boşlukları temizle
     cleaned = cleaned.trim();
-
     return cleaned;
   }
 
   /// Satır sadece fiyat veya sayılıysa true dön.
   bool _isOnlyPriceOrNumber(String text) {
     final trimmed = text.trim();
-    // Tamamen sayısal veya fiyat içeren satır
     if (RegExp(r'^[\d\s.,TL₺TRY%:\-+*xX]+$').hasMatch(trimmed)) return true;
-    // Kısa sayısal değerler (sıra no, vb.)
     if (trimmed.length <= 5 && RegExp(r'^\d+$').hasMatch(trimmed)) return true;
     return false;
   }

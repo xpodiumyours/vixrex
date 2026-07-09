@@ -1,14 +1,48 @@
 import 'package:vixrex/models/ocr_price.dart';
 
-/// OCR çıktısından fiyat çıkarma servisi.
+/// Çok katmanlı fiyat çıkarma servisi.
+///
+/// 3 strateji kullanır:
+/// 1. Regex tabanlı (hızlı, genel)
+/// 2. Pattern tabanlı (yapısal fiş formatları)
+/// 3. Context-aware (satır bağlamına göre)
 class OcrPriceParser {
   const OcrPriceParser();
 
-  /// Türk lirası fiyat pattern'i (geliştirilmiş sürüm).
-  static final RegExp pricePattern = RegExp(
-    r'(?:sepette\s*)?(?:(?:₺|TL|TRY)\s*)?(?:\b\d{1,3}(?:[.,]\d{3})*[.,]\d{2,4}\b|\b\d+[.,]\d{2,4}\b|\b\d{3,4}\b|\b\d{1,5}\b)\s*(?:₺|TL|TRY|tl|try)?',
+  // ─── STRATEJİ 1: REGEX ───────────────────────────────────────────
+
+  /// Türk lirası fiyat pattern'i.
+  static final RegExp _pricePattern = RegExp(
+    r'(?:sepette\s*)?'
+    r'(?:₺|TL|TRY|KR|KURUŞ|tl|try|kr|kuruş)?\s*'
+    r'(?:\b\d{1,3}(?:[.,]\d{3})*[.,]\d{2,4}\b'
+    r'|\b\d+[.,]\d{2,4}\b'
+    r'|\b\d{3,4}\b'
+    r'|\b\d{1,5}\b)'
+    r'\s*(?:₺|TL|TRY|KR|KURUŞ|tl|try|kr|kuruş)?',
     caseSensitive: false,
   );
+
+  /// "2 adet x 15₺ = 30₺" formatı.
+  static final RegExp _quantityPricePattern = RegExp(
+    r'(\d+)\s*(?:adet|ad|pcs|kutu|paket|kg|lt|g|ADET|AD|PCS)\s*[xX×*]\s*'
+    r'([\d.,]+)\s*(?:₺|TL|TRY|KR|KURUŞ|tl|try|kr|kuruş)?\s*=\s*([\d.,]+)\s*(?:₺|TL|TRY|KR|KURUŞ|tl|try|kr|kuruş)?',
+    caseSensitive: false,
+  );
+
+  // ─── STRATEJİ 2: YAPIsal Fiyat Patternleri ──────────────────────
+
+  /// Fiyat-miktar toplamı pattern'i: "15.00 x 4 = 60.00"
+  static final RegExp _priceTimesQuantity = RegExp(
+    r'([\d.,]+)\s*[xX×*]\s*(\d+)\s*=\s*([\d.,]+)',
+  );
+
+  /// Birim fiyat + toplam pattern'i: "75.0000 TL 300.00 TL"
+  static final RegExp _unitAndTotal = RegExp(
+    r'([\d.,]+)\s*(?:₺|TL|TRY|tl|try)?\s+([\d.,]+)\s*(?:₺|TL|TRY|tl|try)',
+  );
+
+  // ─── ANA METOT ──────────────────────────────────────────────────
 
   /// Metin içindeki tüm fiyatları çıkar.
   List<OcrPrice> extractPrices(String rawText) {
@@ -18,21 +52,28 @@ class OcrPriceParser {
     for (var lineIndex = 0; lineIndex < lines.length; lineIndex++) {
       final line = lines[lineIndex];
       final lowerLine = line.toLowerCase();
-      
-      // Satır bazlı gürültü kontrolü (Tarih, Saat, Fiş No satırları fiyat içermez)
-      if (lowerLine.contains('tarih') || 
-          lowerLine.contains('saat :') || 
-          lowerLine.contains('fiş no') ||
-          lowerLine.contains('sayfa') ||
-          lowerLine.contains('model stok')) {
-        // Ancak bu satırda açıkça 'TL' veya '₺' geçiyorsa izin ver (örn: Toplam: 1.920,00 TL)
-        if (!lowerLine.contains('tl') && !lowerLine.contains('₺')) {
-          continue;
+
+      // Header/Footer satırlarını atla
+      if (_isHeaderOrFooter(lowerLine)) {
+        // Ama toplam satırlarını yakala
+        if (lowerLine.contains('toplam') && (lowerLine.contains('tl') || lowerLine.contains('₺') || lowerLine.contains('kuruş') || lowerLine.contains('kr'))) {
+          final price = _extractSinglePrice(line, lineIndex);
+          if (price != null) {
+            prices.add(price.copyWith(confidence: _priceConfidence(price.rawText, line)));
+          }
         }
+        continue;
       }
 
-      final matches = pricePattern.allMatches(line);
+      // Strateji 2: Yapısal pattern kontrolü
+      final structuralPrice = _extractStructuralPrice(line, lineIndex);
+      if (structuralPrice != null) {
+        prices.add(structuralPrice.copyWith(confidence: _priceConfidence(structuralPrice.rawText, line)));
+        continue;
+      }
 
+      // Strateji 1: Regex ile fiyat çıkarma
+      final matches = _pricePattern.allMatches(line);
       for (final match in matches) {
         final rawPrice = match.group(0)?.trim();
         if (rawPrice == null || rawPrice.isEmpty) continue;
@@ -47,39 +88,117 @@ class OcrPriceParser {
           amount: amount.toDouble(),
           lineNumber: lineIndex,
           blockIndex: 0,
+          confidence: _priceConfidence(rawPrice, line),
         ));
-        break; // Fiş/Fatura ve etiketlerde satırdaki İLK geçerli fiyatı (Birim Fiyatı) baz al
+        break; // Satırdaki ilk geçerli fiyatı al
       }
     }
 
     return prices;
   }
 
-  /// Satırdaki ilk fiyatı çıkar.
-  OcrPrice? extractFirstPrice(String text, {int lineNumber = 0}) {
-    final match = pricePattern.firstMatch(text);
-    if (match == null) return null;
+  // ─── STRATEJİ 2: YAPIsal Fiyat Çıkarma ─────────────────────────
 
-    final rawPrice = match.group(0)?.trim();
-    if (rawPrice == null) return null;
+  /// Yapısal pattern'lerden fiyat çıkar.
+  OcrPrice? _extractStructuralPrice(String line, int lineIndex) {
+    // "75.0000 TL 300.00 TL" → birim fiyat = 75.0000
+    final unitMatch = _unitAndTotal.firstMatch(line);
+    if (unitMatch != null) {
+      final unitPrice = parseAmount(unitMatch.group(1)!);
+      if (unitPrice != null && unitPrice > 0 && unitPrice <= 100000) {
+        return OcrPrice(
+          rawText: unitMatch.group(1)!,
+          amount: unitPrice.toDouble(),
+          lineNumber: lineIndex,
+          blockIndex: 0,
+        );
+      }
+    }
 
-    final amount = parseAmount(rawPrice);
-    if (amount == null) return null;
+    // "2 adet x 15₺ = 30₺" → birim fiyat = 15
+    final qpMatch = _quantityPricePattern.firstMatch(line);
+    if (qpMatch != null) {
+      final unitPrice = parseAmount(qpMatch.group(2)!);
+      if (unitPrice != null && unitPrice > 0) {
+        return OcrPrice(
+          rawText: qpMatch.group(2)!,
+          amount: unitPrice.toDouble(),
+          lineNumber: lineIndex,
+          blockIndex: 0,
+        );
+      }
+    }
 
-    if (!_looksLikePrice(rawPrice, text)) return null;
+    return null;
+  }
 
-    return OcrPrice(
-      rawText: rawPrice,
-      amount: amount.toDouble(),
-      lineNumber: lineNumber,
-      blockIndex: 0,
-    );
+  // ─── STRATEJİ 3: CONTEXT-AWARE ──────────────────────────────────
+
+  /// Satır bağlamına göre fiyat olasılığını hesapla.
+  /// 0.0 (fiyat değil) ile 1.0 (kesin fiyat) arasında.
+  double _priceConfidence(String rawPrice, String fullLine) {
+    double confidence = 0.5; // Başlangıç
+
+    final lower = fullLine.toLowerCase();
+
+    // Para birimi varsa +0.3
+    if (lower.contains('tl') || lower.contains('₺') || lower.contains('try') || lower.contains('kr') || lower.contains('kuruş')) {
+      confidence += 0.3;
+    }
+
+    // Ondalık ayracı varsa +0.1
+    if (rawPrice.contains('.') || rawPrice.contains(',')) {
+      confidence += 0.1;
+    }
+
+    // "TOPMAL", "GENEL TOPLAM" gibi ifadeler varsa bu bir fiyat
+    if (lower.contains('toplam') || lower.contains('genel') || lower.contains('tutar')) {
+      confidence += 0.2;
+    }
+
+    // Sadece sayısal değer ve para birimi yoksa -0.2
+    if (!lower.contains('tl') && !lower.contains('₺') && !lower.contains('try') && !lower.contains('kr') && !lower.contains('kuruş')) {
+      confidence -= 0.2;
+    }
+
+    return confidence.clamp(0.0, 1.0);
+  }
+
+  // ─── YARDIMCI METOTLAR ──────────────────────────────────────────
+
+  /// Tek satırdan fiyat çıkar.
+  OcrPrice? _extractSinglePrice(String line, int lineNumber) {
+    final matches = _pricePattern.allMatches(line);
+    for (final match in matches) {
+      final rawPrice = match.group(0)?.trim();
+      if (rawPrice == null) continue;
+      final amount = parseAmount(rawPrice);
+      if (amount != null && amount > 0 && amount <= 100000) {
+        return OcrPrice(
+          rawText: rawPrice,
+          amount: amount.toDouble(),
+          lineNumber: lineNumber,
+          blockIndex: 0,
+        );
+      }
+    }
+    return null;
+  }
+
+  /// Header/footer satırı mı kontrol et.
+  bool _isHeaderOrFooter(String lowerLine) {
+    const headerFooterKeywords = [
+      'tarih', 'saat :', 'fiş no', 'sayfa', 'model stok',
+      'mağaza', 'firma', 'adres', 'telefon', 'vergi no',
+      'kasiyer', 'işlem no', 'pos', 'terminal',
+    ];
+    return headerFooterKeywords.any((kw) => lowerLine.contains(kw));
   }
 
   /// Fiyat string'inden sayısal değeri çıkar.
   num? parseAmount(String rawPrice) {
     var normalized = rawPrice
-        .replaceAll(RegExp(r'sepette|tl|try|₺|\$', caseSensitive: false), '')
+        .replaceAll(RegExp(r'sepette|tl|try|₺|\$|kr|kuruş', caseSensitive: false), '')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
 
@@ -127,71 +246,98 @@ class OcrPriceParser {
   bool _looksLikePrice(String value, String fullLine) {
     final normalizedLine = fullLine.toLowerCase();
 
-    // 1. Saat formatı kontrolü
+    // 1. Saat formatı
     if (RegExp(r'\b\d{1,2}:\d{2}(:\d{2})?\b').hasMatch(normalizedLine)) return false;
 
-    // 2. Özel simge ve gürültü kelimeleri
+    // 2. Yıldız ve emoji
     if (normalizedLine.contains('★') || normalizedLine.contains('⭐')) return false;
+
+    // 3. Puan/yorum
     if (normalizedLine.contains('puan') || normalizedLine.contains('yorum')) return false;
+
+    // 4. Yüzde
     if (normalizedLine.contains('%')) return false;
+
+    // 5. Kupon
     if (normalizedLine.contains('kupon')) return false;
 
-    // 3. Barkod kontrolü (10 haneden büyük sayılar fiyat olamaz)
+    // 6. Barkod (10+ haneli)
     final digitsOnly = value.replaceAll(RegExp(r'\D'), '');
     if (digitsOnly.length >= 10) return false;
 
-    // 4. Tarih formatları kontrolü (örn: 07.07.2026, 07/07/2026)
+    // 7. Tarih formatı
     if (RegExp(r'\b\d{2}[./-]\d{2}[./-]\d{2,4}\b').hasMatch(value)) return false;
 
-    // 5. Adet / Miktar kontrolü (örn: 18 ad, 2 AD)
-    if (RegExp(value.replaceAll('.', r'\.') + r'\s*(ad|adet|dz|pcs|kg|g|lt|l)\b', caseSensitive: false).hasMatch(normalizedLine)) {
+    // 8. Adet/miktar
+    if (RegExp(value.replaceAll('.', r'\.') + r'\s*(ad|adet|dz|pcs|kg|g|lt|l|kutu|paket)\b', caseSensitive: false).hasMatch(normalizedLine)) {
       return false;
     }
 
     final numeric = parseAmount(value);
     if (numeric == null) return false;
 
-    // 6. Aşırı büyük veya sıfıra yakın tutarları engelle
+    // 9. Aşırı büyük/sıfıra yakın
     if (numeric <= 0.5 || numeric > 150000) return false;
 
     final hasCurrency = normalizedLine.contains('tl') ||
         normalizedLine.contains('try') ||
         normalizedLine.contains('₺') ||
-        normalizedLine.contains(r'$');
+        normalizedLine.contains(r'$') ||
+        normalizedLine.contains('kr') ||
+        normalizedLine.contains('kuruş');
 
-    // 7. Satırda para birimi varsa ve bu değer para birimi simgesi taşımıyorsa, ama satırdaki başka bir değer taşıyorsa bunu skip et
+    // 10. Para birimi varsa ve düz tamsayıysa skip et
     if (!value.contains('TL') && !value.contains('₺') && !value.contains('tl')) {
-      final lineHasExplicitCurrency = lineHasCurrency(fullLine);
-      if (lineHasExplicitCurrency) {
-        // Eğer bu değer düz bir tamsayı ise (kuruşsuz, örn: 115) skip et. Fiyatlar genellikle kuruşludur.
+      if (lineHasCurrency(fullLine)) {
         if (numeric % 1 == 0 && numeric < 1000) return false;
       }
     }
 
-    // 8. Başı 0 ile başlayan ve ondalık barındırmayan kodları skip et (örn: 021)
+    // 11. Başı 0 ile başlayan kodlar
     if (value.trim().startsWith('0') && !value.contains('.') && !value.contains(',')) {
       return false;
     }
 
-    // 9. Satırda ondalıklı (kuruşlu) bir sayı varsa ve bu değer düz tamsayı ise skip et (örn: 129 ve 80.00 aynı satırdaysa 129'u skip et)
+    // 12. Ondalıklı satırda düz tamsayı
     if (!value.contains('.') && !value.contains(',')) {
       final lineHasDecimals = RegExp(r'\b\d+[\.,]\d{2}\b').hasMatch(fullLine);
       if (lineHasDecimals) return false;
     }
 
     if (hasCurrency) return true;
-    
-    // Para birimi yoksa, en azından bir ondalık ayracı (virgül veya nokta) içermesini isteyelim ki (örn: 70,50) adetlerle karışmasın
+
+    // Para birimi yoksa ondalık ayracı şart
     final hasDecimalSeparator = value.contains(',') || value.contains('.');
     if (hasDecimalSeparator) return true;
 
-    // Hiçbir ayırt edici özellik yoksa tamsayı fiyatlar için makul aralıkta olmasını isteyelim (örn: 700)
+    // Tamsayı fiyatlar için makul aralık
     return numeric >= 10 && numeric <= 5000;
   }
 
-  /// Satırda açıkça para birimi geçiyor mu?
+  /// Satırda para birimi geçiyor mu?
   bool lineHasCurrency(String line) {
     final lower = line.toLowerCase();
-    return RegExp(r'\b(tl|try|₺|\$)\b').hasMatch(lower);
+    return RegExp(r'\b(tl|try|₺|\$|kr|kuruş)\b').hasMatch(lower);
+  }
+
+  /// Satırdaki ilk fiyatı çıkar.
+  OcrPrice? extractFirstPrice(String text, {int lineNumber = 0}) {
+    final match = _pricePattern.firstMatch(text);
+    if (match == null) return null;
+
+    final rawPrice = match.group(0)?.trim();
+    if (rawPrice == null) return null;
+
+    final amount = parseAmount(rawPrice);
+    if (amount == null) return null;
+
+    if (!_looksLikePrice(rawPrice, text)) return null;
+
+    return OcrPrice(
+      rawText: rawPrice,
+      amount: amount.toDouble(),
+      lineNumber: lineNumber,
+      blockIndex: 0,
+    );
   }
 }
