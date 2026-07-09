@@ -1,73 +1,73 @@
-{
-  "test_cases": [
-    {
-      "id": "receipt_1_satis_teklif",
-      "scan_mode": "receipt",
-      "raw_text": "Tarih 07.07.26 09.20\nSayfa 1/1 Satış Teklif Form Dökümü\nFiş No : 59.2026.44183\nModel Stok Barkod Varyant Beden Miktar Fiyat Tutar\nTKD0152 TUT BYN BADY SÜTYEN 8680508937910 100 BEYAZ 115 18 ad 64,0000 TL 1.152,00 TL\nTKD0152 TUT BYN BADY SÜTYEN 8680508956744 100 GRİ 115 12 ad 64,0000 TL 768,00 TL\nToplam: 30 ad 2 dz 1.920,00 TL",
-      "expected_products": [
-        { "name": "TUT BYN BADY SÜTYEN", "price": 64.0 }
-      ]
-    },
-    {
-      "id": "receipt_2_osman_aksakal",
-      "scan_mode": "receipt",
-      "raw_text": "OSMAN AKSAKAL TARİH : 2026-07-07\n1.SAYFA SAAT : 08:46:24\nSIRA KOD URUN ACIKLAMASI MIKTAR FIYAT TUTAR\n1 177-4-XL TEN RB.BY.iPASK.ATL. 3 70,50 211,50\n2 177-1-3XL BYZ.RB.BY.iPASK.ATL(Y) 3 74,00 222,00\n3 177-1-XXL BYZ.RB.BY.iPASK.ATL(Y) 3 71,00 213,00\nToplam: 42.928,00",
-      "expected_products": [
-        { "name": "TEN RB.BY.iPASK.ATL.", "price": 70.50 },
-        { "name": "BYZ.RB.BY.iPASK.ATL(Y)", "price": 74.00 },
-        { "name": "BYZ.RB.BY.iPASK.ATL(Y)", "price": 71.00 }
-      ]
-    },
-    {
-      "id": "receipt_3_belissa_moda",
-      "scan_mode": "receipt",
-      "raw_text": "BELISSA MODA Sipariş Fişi\nOsman Aksakal Tarih: 07/07/2026\nADET CİNSİ FİYAT TUTARI\n4 Çilek Takım 700 2.800\n8 Yakalı Battal Elbise 650 5.200\nToplam 8.000",
-      "expected_products": [
-        { "name": "Çilek Takım", "price": 700.0 },
-        { "name": "Yakalı Battal Elbise", "price": 650.0 }
-      ]
-    },
-    {
-      "id": "receipt_4_ece_siparis",
-      "scan_mode": "receipt",
-      "raw_text": "ece Sipariş Teklif Formu\nFiş No: 15920 Fiş Tarihi: 07/07/2026 10:45:12\nSTOK ADI MİKTAR CİNSİ FİYAT TUTAR\n129 V YAKA KISA KOL BADİ 2 AD 80.00 160.00\n158 YAKASI KISA KOL REÇME ARA BİYELİ 3 AD 85.00 255.00\n129 V YAKA KISA KOL BADİ 2 AD 80.00 160.00\nToplam 1.666.50",
-      "expected_products": [
-        { "name": "V YAKA KISA KOL BADİ", "price": 80.0 },
-        { "name": "YAKASI KISA KOL REÇME ARA BİYELİ", "price": 85.0 }
-      ]
-    },
-    {
-      "id": "receipt_5_pnr_collection",
-      "scan_mode": "receipt",
-      "raw_text": "P.N.R Collection Sipariş Fişi\nOsman Aksakal Tarih: 06/07/2026\nMİKTARI CİNSİ FİYATI TUTARI\n2 021 250 500\n2 026 275 550\nToplam 1.050",
-      "expected_products": [
-        { "name": "021", "price": 250.0 },
-        { "name": "026", "price": 275.0 }
-      ]
-    },
-    {
-      "id": "shelf_label_1_dankek",
-      "scan_mode": "shelf_label",
-      "raw_text": "Dankek Lokmalık Hindistan Cevizli 180g\nİNDİRİM\n20.00\nKDV Dahil",
-      "expected_products": [
-        { "name": "Dankek Lokmalık Hindistan Cevizli 180g", "price": 20.00 }
-      ]
-    },
-    {
-      "id": "shelf_label_2_biscolata",
-      "scan_mode": "shelf_label",
-      "raw_text": "Biscolata Mood Çikolatalı 110g\nFiyat: 54.99 ₺\nKDV Dahil",
-      "expected_products": [
-        { "name": "Biscolata Mood Çikolatalı 110g", "price": 54.99 }
-      ]
-    },
-    {
-      "id": "shelf_label_3_kekstra",
-      "scan_mode": "shelf_label",
-      "raw_text": "KİM seni düşünür İNDİRİM\nKekstra Çilekli Jolebol 40g\n11.00 TL\nEski Fiyat: 13.75 TL",
-      "expected_products": [
-        { "name": "Kekstra Çilekli Jolebol 40g", "price": 11.00 }
-      ]
-    }
-  ]
-}
+[
+  {
+    "id": "ece_satis_teklif",
+    "name": "ECE Satış Teklif Formu (Tekstil Toptan)",
+    "sector": "tekstil",
+    "rawText": "Tarih : 07.07.26 09:16\nSayfa 1/1\nFiş No : 59.2026.44178\nFiş Tarihi : 07.07.2026\nİrsaliye Firma :\nSatış Teklif Form Dökümü\nModel Stok Barkod Varyant Beden Miktar (dz) Fiyat Tutar\nELT1001 ELİT ERK PENYE ATLET 8681128320670 100 BEYAZ 6 4 ad 75.0000 TL 300.00 TL\nELT1051 ELİT ERK ARJANTİN 8681128322650 100 BEYAZ 5 5 ad 81.0000 TL 405.00 TL\nELT1301 ELİT ERK ELASTAN SIFIRYAKA 8681128321035 100 BEYAZ M 1 ad 115.0000 TL 115.00 TL\nELT2101 ELİT BYN MOD ELAS. UZUN TAYT 8681128327273 750 SİYAH XL 1 ad 117.0000 TL 117.00 TL\nELT2201 ELİT BYN ELASTAN SIFIRKOL 8681128326290 100 BEYAZ L 1 ad 81.0000 TL 81.00 TL\nELT2201 ELİT BYN ELASTAN SIFIRKOL 8681128326313 100 BEYAZ XL 2 ad 81.0000 TL 162.00 TL\nELT2202 ELİT BYN ELASTAN YARIMKOL 8681128326559 100 BEYAZ XL 1 ad 81.0000 TL 81.00 TL\nELT2202 ELİT BYN ELASTAN YARIMKOL 8681128326559 100 BEYAZ XXL 5 ad 41.5000 TL 207.50 TL\nSERD007 SHR ERK BOXER DESENLİ 8680508905650 975 KOMBİN 5 6 ad 41.5000 TL 249.00 TL\nSKD0010 SHR BYN PEN. KAŞKORSE 8681128334523 100 BEYAZ 6 6 ad 41.5000 TL 249.00 TL\nSKD0010 SHR BYN PEN. KAŞKORSE 8681128334547 100 BEYAZ 6 6 ad 41.5000 TL 249.00 TL\nTER0101 TUT ERK PEN. ATLET 8680508918131 100 BEYAZ 4 12 ad 63.5000 TL 762.00 TL\nTKD0510 TUT BYN KAŞKORSE BİKİNİ 8681128333342 975 KOMBİN 6 24 ad 21.5000 TL 516.00 TL\nToplam: 68 ad 5 dz 3.244,50 TL",
+    "expected": [
+      {"modelCode": "ELT1001", "name": "ELİT ERK PENYE ATLET", "barcode": "8681128320670", "variant": "100 BEYAZ", "size": "6", "quantity": 4, "unitPrice": 75.0, "total": 300.0},
+      {"modelCode": "ELT1051", "name": "ELİT ERK ARJANTİN", "barcode": "8681128322650", "variant": "100 BEYAZ", "size": "5", "quantity": 5, "unitPrice": 81.0, "total": 405.0},
+      {"modelCode": "ELT1301", "name": "ELİT ERK ELASTAN SIFIRYAKA", "barcode": "8681128321035", "variant": "100 BEYAZ", "size": "M", "quantity": 1, "unitPrice": 115.0, "total": 115.0},
+      {"modelCode": "ELT2101", "name": "ELİT BYN MOD ELAS. UZUN TAYT", "barcode": "8681128327273", "variant": "750 SİYAH", "size": "XL", "quantity": 1, "unitPrice": 117.0, "total": 117.0},
+      {"modelCode": "ELT2201", "name": "ELİT BYN ELASTAN SIFIRKOL", "barcode": "8681128326290", "variant": "100 BEYAZ", "size": "L", "quantity": 1, "unitPrice": 81.0, "total": 81.0},
+      {"modelCode": "ELT2201", "name": "ELİT BYN ELASTAN SIFIRKOL", "barcode": "8681128326313", "variant": "100 BEYAZ", "size": "XL", "quantity": 2, "unitPrice": 81.0, "total": 162.0},
+      {"modelCode": "ELT2202", "name": "ELİT BYN ELASTAN YARIMKOL", "barcode": "8681128326559", "variant": "100 BEYAZ", "size": "XL", "quantity": 1, "unitPrice": 81.0, "total": 81.0},
+      {"modelCode": "ELT2202", "name": "ELİT BYN ELASTAN YARIMKOL", "barcode": "8681128326559", "variant": "100 BEYAZ", "size": "XXL", "quantity": 5, "unitPrice": 41.5, "total": 207.5},
+      {"modelCode": "SERD007", "name": "SHR ERK BOXER DESENLİ", "barcode": "8680508905650", "variant": "975 KOMBİN", "size": "5", "quantity": 6, "unitPrice": 41.5, "total": 249.0},
+      {"modelCode": "SKD0010", "name": "SHR BYN PEN. KAŞKORSE", "barcode": "8681128334523", "variant": "100 BEYAZ", "size": "6", "quantity": 6, "unitPrice": 41.5, "total": 249.0},
+      {"modelCode": "SKD0010", "name": "SHR BYN PEN. KAŞKORSE", "barcode": "8681128334547", "variant": "100 BEYAZ", "size": "6", "quantity": 6, "unitPrice": 41.5, "total": 249.0},
+      {"modelCode": "TER0101", "name": "TUT ERK PEN. ATLET", "barcode": "8680508918131", "variant": "100 BEYAZ", "size": "4", "quantity": 12, "unitPrice": 63.5, "total": 762.0},
+      {"modelCode": "TKD0510", "name": "TUT BYN KAŞKORSE BİKİNİ", "barcode": "8681128333342", "variant": "975 KOMBİN", "size": "6", "quantity": 24, "unitPrice": 21.5, "total": 516.0}
+    ],
+    "expectedTotal": {"pieces": 68, "dozen": 5, "grandTotal": 3244.50}
+  },
+  {
+    "id": "ece_siparis_teklif_fis",
+    "name": "ECE Sipariş Teklif Fişi (İç Giyim)",
+    "sector": "tekstil",
+    "rawText": "Sipariş Teklif Formu\nOsman aksakal\nFiş No: 15920\nFiş Tarihi: 07/07/2026\nSTOK ADI MİKTAR CİNSİ FİYAT TUTAR\n129 V YAKA KISA KOL BADI 2 AD 80.00 160.00\n158 YAKASI KISA KOL REÇME ARA BIYELI 3 AD 85.00 255.00\n258 YAKA KISA KOLU REÇME ARA BIYELI 3 AD 90.00 270.00\n266 ARA BEDEN KALIN BIYELİ IP ASKILI ATLET 2 AD 85.00 170.00\n823 L XL XXL YARIM BALIKÇI UZUN KOL BADI 6 AD 110.00 660.00\nTOPLAM: 16 AD\nMAL BEDELİ: 1,515.00\nNET TUTAR 1,666.50",
+    "expected": [
+      {"name": "V YAKA KISA KOL BADI", "quantity": 2, "unitPrice": 80.0, "total": 160.0},
+      {"name": "YAKASI KISA KOL REÇME ARA BIYELI", "quantity": 3, "unitPrice": 85.0, "total": 255.0},
+      {"name": "YAKA KISA KOLU REÇME ARA BIYELI", "quantity": 3, "unitPrice": 90.0, "total": 270.0},
+      {"name": "ARA BEDEN KALIN BIYELİ IP ASKILI ATLET", "quantity": 2, "unitPrice": 85.0, "total": 170.0},
+      {"name": "L XL XXL YARIM BALIKÇI UZUN KOL BADI", "quantity": 6, "unitPrice": 110.0, "total": 660.0}
+    ],
+    "expectedTotal": {"pieces": 16, "grandTotal": 1666.50}
+  },
+  {
+    "id": "market_fis_ornek",
+    "name": "Market Fişi (Gıda)",
+    "sector": "gida",
+    "rawText": "KİM MARKET\nTarih: 09.07.2026  Fiş No: 88432\n------------------------------------------\nSTOK ADI         MİKTAR    FİYAT    TUTAR\n------------------------------------------\nÜLKER ÇİKOLATALI GOFRET 2 ADET 15.50 31.00\nÇAYKUR FİLİZ ÇAYI 500G 1 ADET 45.00 45.00\nSÜTAŞ TAM YAĞLI SÜT 1L 3 ADET 22.75 68.25\nRULOKAT FINDIKLI RULO GOFRET 1 ADET 18.00 18.00\n------------------------------------------\nTOPLAM: 162.25 TL\nKDV: 29.21 TL\nGENEL TOPLAM: 191.46 TL",
+    "expected": [
+      {"name": "ÜLKER ÇİKOLATALI GOFRET", "quantity": 2, "unitPrice": 15.5, "total": 31.0},
+      {"name": "ÇAYKUR FİLİZ ÇAYI 500G", "quantity": 1, "unitPrice": 45.0, "total": 45.0},
+      {"name": "SÜTAŞ TAM YAĞLI SÜT 1L", "quantity": 3, "unitPrice": 22.75, "total": 68.25},
+      {"name": "RULOKAT FINDIKLI RULO GOFRET", "quantity": 1, "unitPrice": 18.0, "total": 18.0}
+    ],
+    "expectedTotal": {"grandTotal": 191.46}
+  },
+  {
+    "id": "reyon_etiketi_ornek",
+    "name": "Raf/Etiket (Market Reyonu)",
+    "sector": "gida",
+    "rawText": "KİM seni düşünür İNDİRİM\nBiscolata Mood Çikolatalı\n12.50 TL\nEski Fiyat: 15.63 TL\n=======================\nDankek Lokmalık Hindistan Cevizli\n9.95 TL\nKDV Dahil\n=======================",
+    "expected": [
+      {"name": "Biscolata Mood Çikolatalı", "unitPrice": 12.5},
+      {"name": "Dankek Lokmalık Hindistan Cevizli", "unitPrice": 9.95}
+    ]
+  },
+  {
+    "id": "elektronik_fatura_ornek",
+    "name": "Elektronik Fatura",
+    "sector": "elektronik",
+    "rawText": "TECH MAĞAZA A.Ş.\nFatura No: 2026/E-001234\nTarih: 08.07.2026\n------------------------------------------\nAÇIKLAMA              MİKTAR  BİRİM FİYAT  TOPLAM\nSAMSUNG GALAXY A54     1      12,999.00   12,999.00\nJBL TUNE 520BT KULAKLIK 2        899.00    1,798.00\nANKER POWERBANK 10000   1        449.00      449.00\n------------------------------------------\nARA TOPLAM:  15,246.00 TL\nKDV (%20):    3,049.20 TL\nGENEL TOPLAM: 18,295.20 TL",
+    "expected": [
+      {"name": "SAMSUNG GALAXY A54", "quantity": 1, "unitPrice": 12999.0, "total": 12999.0},
+      {"name": "JBL TUNE 520BT KULAKLIK", "quantity": 2, "unitPrice": 899.0, "total": 1798.0},
+      {"name": "ANKER POWERBANK 10000", "quantity": 1, "unitPrice": 449.0, "total": 449.0}
+    ],
+    "expectedTotal": {"grandTotal": 18295.20}
+  }
+]

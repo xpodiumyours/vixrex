@@ -1,9 +1,10 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/models/ocr_line.dart';
-import 'package:vixrex/models/ocr_price.dart';
 import 'package:vixrex/services/ocr/ocr_price_parser.dart';
 import 'package:vixrex/services/ocr/ocr_product_matcher.dart';
 import 'package:vixrex/services/ocr/ocr_excel_verifier.dart';
