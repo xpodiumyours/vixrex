@@ -69,11 +69,11 @@ void main() {
         expect(fakeClient.rpcCalls.length, 1);
         final call = fakeClient.rpcCalls.first;
         expect(call['fn'], 'record_vitrin_view');
-        expect(call['params']?['p_store_slug'], 'butik-esra');
-        expect(call['params']?['p_source'], 'qr'); // lowercase and trimmed
-        expect(call['params']?['p_session_key'], isNotNull);
+        expect(call['params']?['p_slug'], 'butik-esra');
+        expect(call['params']?['p_ua'], 'qr'); // lowercase and trimmed
+        expect(call['params']?['p_ip'], isNotNull);
         expect(
-          call['params']?['p_session_key'].toString().length,
+          call['params']?['p_ip'].toString().length,
           greaterThanOrEqualTo(16),
         );
       },
@@ -83,7 +83,7 @@ void main() {
       await service.recordView(slug: 'butik-esra', source: 'facebook_ads');
 
       expect(fakeClient.rpcCalls.length, 1);
-      expect(fakeClient.rpcCalls.first['params']?['p_source'], 'unknown');
+      expect(fakeClient.rpcCalls.first['params']?['p_ua'], 'unknown');
     });
 
     test('SharedPreferences üzerindeki session_key değerini korur', () async {
@@ -97,7 +97,7 @@ void main() {
 
       expect(fakeClient.rpcCalls.length, 1);
       expect(
-        fakeClient.rpcCalls.first['params']?['p_session_key'],
+        fakeClient.rpcCalls.first['params']?['p_ip'],
         'my-custom-persistent-session-key',
       );
     });
