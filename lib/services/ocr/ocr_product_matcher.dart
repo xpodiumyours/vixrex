@@ -7,9 +7,14 @@ import 'ocr_excel_verifier.dart';
 /// OCR satırlarını ve fiyatlarıyla ürün eşleştirme servisi.
 class OcrProductMatcher {
   final OcrExcelVerifier _verifier;
+  final int maxVerticalDiff;
+  final double maxHorizontalCenterDiff;
 
-  const OcrProductMatcher({required OcrExcelVerifier verifier})
-      : _verifier = verifier;
+  const OcrProductMatcher({
+    required OcrExcelVerifier verifier,
+    this.maxVerticalDiff = 5,
+    this.maxHorizontalCenterDiff = 300,
+  }) : _verifier = verifier;
 
   /// OCR satırlarını ve fiyatlarıyla ürünleri eşleştir.
   Future<List<DetectedProduct>> matchProducts(
@@ -31,7 +36,8 @@ class OcrProductMatcher {
             l.lineIndex < price.lineNumber &&
             !usedLines.contains(l.lineIndex) &&
             l.text.length >= 3 &&
-            !_isNoiseLine(l.text));
+            !_isNoiseLine(l.text) &&
+            !_isOnlyPrice(l.text));
 
         if (sameBlockLines.isNotEmpty) {
           // En yakın üst satırı seç
@@ -43,6 +49,7 @@ class OcrProductMatcher {
               !usedLines.contains(l.lineIndex) &&
               l.text.length >= 3 &&
               !_isNoiseLine(l.text) &&
+              !_isOnlyPrice(l.text) &&
               l.centerY < lines.firstWhere((pl) => pl.lineIndex == price.lineNumber && pl.blockIndex == price.blockIndex, orElse: () => lines.first).centerY);
 
           if (candidates.isNotEmpty) {
@@ -152,13 +159,13 @@ class OcrProductMatcher {
         if (tokens.length < 3) continue;
       }
 
-      // Satır fiyatın yukarısında olmalı (dikey koridor: 450px)
+      // Satır fiyatın yukarısında olmalı (dikey koridor)
       final verticalDiff = price.lineNumber - line.lineIndex;
-      if (verticalDiff < 0 || verticalDiff > 5) continue;
+      if (verticalDiff < 0 || verticalDiff > maxVerticalDiff) continue;
 
       // Yatay eksende yakın olmalı
       final horizontalCenterDiff = (line.centerX - price.rawText.length * 5).abs();
-      if (horizontalCenterDiff > 300) continue;
+      if (horizontalCenterDiff > maxHorizontalCenterDiff) continue;
 
       final distance = verticalDiff * 100 + horizontalCenterDiff;
       if (distance < bestDistance) {
@@ -226,5 +233,14 @@ class OcrProductMatcher {
     cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
 
     return cleaned;
+  }
+
+  /// Satırın sadece fiyat veya sayısal değerlerden oluşup oluşmadığını denetler.
+  bool _isOnlyPrice(String text) {
+    final trimmed = text.trim();
+    final isOnlyPrice = RegExp(r'^[\d\s.,TL₺TRY%:\-+*xXadADETadetsılmSIRAoOgG\(\)]+$').hasMatch(trimmed);
+    if (!isOnlyPrice) return false;
+    final tokens = trimmed.split(RegExp(r'\s+'));
+    return tokens.length < 3;
   }
 }
