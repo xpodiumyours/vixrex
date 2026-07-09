@@ -28,7 +28,7 @@ class VitrinViewService {
         },
       );
     } catch (e) {
-      debugPrint('View record error: $e');
+      if (kDebugMode) debugPrint('View record error: $e');
     }
   }
 

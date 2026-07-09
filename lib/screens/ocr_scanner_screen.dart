@@ -210,16 +210,27 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
     widget.ocrController.analyzeImage(Uint8List.fromList(imageBytes));
   }
 
-  void _saveProducts() async {
-    await widget.ocrController.saveApprovedProducts();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ürünler vitrine eklendi!'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      Navigator.of(context).pop();
+  Future<void> _saveProducts() async {
+    try {
+      await widget.ocrController.saveApprovedProducts();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ürünler vitrine eklendi!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Kaydetme hatası: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 }

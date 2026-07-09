@@ -94,15 +94,31 @@ class OcrController extends ChangeNotifier {
     final approved = _result?.approvedProducts;
     if (approved == null || approved.isEmpty) return;
 
-    for (final product in approved) {
-      await _editorController?.addProduct(
-        _convertToProduct(product),
-      );
+    // Validation: boş isim veya negatif fiyat filtresi
+    final validProducts = approved.where((p) {
+      if (p.name.trim().isEmpty) return false;
+      if (p.price != null && p.price! < 0) return false;
+      return true;
+    }).toList();
+
+    if (validProducts.isEmpty) {
+      _errorMessage = 'Kaydedilecek geçerli ürün yok. Ürün adı boş veya fiyat geçersiz.';
+      notifyListeners();
+      return;
     }
 
-    // Sonucu temizle
-    _result = null;
-    notifyListeners();
+    try {
+      for (final product in validProducts) {
+        await _editorController?.addProduct(
+          _convertToProduct(product),
+        );
+      }
+      _result = null;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Ürünler kaydedilemedi: $e';
+      notifyListeners();
+    }
   }
 
   /// DetectedProduct'ı Product'a çevir.

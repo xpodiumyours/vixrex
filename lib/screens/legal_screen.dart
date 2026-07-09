@@ -460,6 +460,7 @@ class _EmailContactCardState extends State<_EmailContactCard> {
     await Clipboard.setData(
       const ClipboardData(text: LegalConfig.privacyEmail),
     );
+    if (!mounted) return;
     setState(() => _isCopied = true);
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _isCopied = false);

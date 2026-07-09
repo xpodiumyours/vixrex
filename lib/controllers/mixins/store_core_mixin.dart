@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/store_publish_service.dart';
@@ -51,7 +52,7 @@ mixin StoreCoreMixin on ChangeNotifier {
     try {
       await publishService.updateProductsOnly(data, editToken: editToken);
     } catch (e) {
-      debugPrint('Ürün senkronizasyon hatası: $e');
+      if (kDebugMode) debugPrint('Ürün senkronizasyon hatası: $e');
     }
   }
 

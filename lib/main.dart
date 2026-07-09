@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,12 +28,12 @@ const SystemUiOverlayStyle _systemUiOverlayStyle = SystemUiOverlayStyle(
 void _setupGlobalErrorHandler() {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    debugPrint(
+    if (kDebugMode) debugPrint(
       '[GlobalError] Captured Flutter Error: ${details.exceptionAsString()}',
     );
   };
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    debugPrint('[GlobalError] Captured Platform/Async Error: $error');
+    if (kDebugMode) debugPrint('[GlobalError] Captured Platform/Async Error: $error');
     return true;
   };
 }
@@ -44,7 +45,7 @@ Future<void> _initializeSupabase() async {
   );
 
   if (supabaseUrl.isEmpty || supabasePublishableKey.isEmpty) {
-    debugPrint('[FATAL] Supabase config missing - SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be provided via --dart-define');
+    if (kDebugMode) debugPrint('[FATAL] Supabase config missing - SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be provided via --dart-define');
     return;
   }
 
@@ -53,9 +54,9 @@ Future<void> _initializeSupabase() async {
       url: supabaseUrl,
       anonKey: supabasePublishableKey,
     );
-    debugPrint('[OK] Supabase initialized successfully');
+    if (kDebugMode) debugPrint('[OK] Supabase initialized successfully');
   } catch (error) {
-    debugPrint('[FATAL] Supabase initialize failed: $error');
+    if (kDebugMode) debugPrint('[FATAL] Supabase initialize failed: $error');
   }
 }
 

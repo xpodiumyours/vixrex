@@ -43,12 +43,14 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
     final result = await const ArticleService().fetchPendingReviewArticles();
     result.when(
       success: (data) {
+        if (!mounted) return;
         setState(() {
           _pendingArticles = data;
           _isLoading = false;
         });
       },
       failure: (failure) {
+        if (!mounted) return;
         setState(() {
           _error = failure.message;
           _isLoading = false;

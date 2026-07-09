@@ -50,7 +50,7 @@ class _ProductCategoryManagementScreenState
 
   Future<void> _addCategory() async {
     final name = await _showNameDialog(title: 'Yeni Kategori');
-    if (name == null) return;
+    if (name == null || !mounted) return;
     setState(() {
       _categories.add(
         ProductCategory(
@@ -68,7 +68,7 @@ class _ProductCategoryManagementScreenState
       initialValue: category.name,
       excludedId: category.id,
     );
-    if (name == null) return;
+    if (name == null || !mounted) return;
     setState(() {
       category.name = name;
       for (final product in _products) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_data.dart';
@@ -114,7 +115,7 @@ class StoreEditorController extends ChangeNotifier
         await fetchArticles(slug: _publishedInfo!.slug, supabaseClient: _resolveClient());
       }
     } catch (e) {
-      debugPrint('StoreEditorController.initialize failed: $e');
+      if (kDebugMode) debugPrint('StoreEditorController.initialize failed: $e');
     } finally {
       setLoading(false);
     }

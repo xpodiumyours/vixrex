@@ -12,7 +12,7 @@ class AppErrorGuard {
     try {
       return await action();
     } catch (error, stack) {
-      debugPrint('[AppErrorGuard] Error in ${label ?? 'action'}: $error');
+      if (kDebugMode) debugPrint('[AppErrorGuard] Error in ${label ?? 'action'}: $error');
       if (onError != null) {
         onError(error, stack);
       }

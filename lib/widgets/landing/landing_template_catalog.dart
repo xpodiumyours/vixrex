@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vixrex/services/category_image_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -58,7 +59,7 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
           _loadingKeys.remove(cat.key);
         });
       } catch (e) {
-        debugPrint('Template load error for ${cat.key}: $e');
+        if (kDebugMode) debugPrint('Template load error for ${cat.key}: $e');
         if (!mounted) return;
         setState(() => _loadingKeys.remove(cat.key));
       }

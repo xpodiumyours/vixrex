@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/chatbot_config.dart';
 import 'package:vixrex/models/chat_message.dart';
@@ -110,7 +110,7 @@ class ChatbotService {
       final jsonList = history.map((m) => m.toJson()).toList();
       await prefs.setString(_historyKey, jsonEncode(jsonList));
     } catch (e) {
-      debugPrint('saveHistory error: $e');
+      if (kDebugMode) debugPrint('saveHistory error: $e');
     }
   }
 
@@ -135,7 +135,7 @@ class ChatbotService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_historyKey);
     } catch (e) {
-      debugPrint('clearHistory error: $e');
+      if (kDebugMode) debugPrint('clearHistory error: $e');
     }
   }
 }
