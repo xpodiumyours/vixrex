@@ -80,17 +80,20 @@ class OcrProductMatcher {
     } else {
       // 2. Fiş/Fatura Modu: Önce fiyat içeren satırları işle
       for (final price in prices) {
-        // Fiyata en yakın metin satırını bul (yukarıda)
+        // Fiyata en yakın metin satırını bul (yukarıda veya aynı satırda)
         final nearbyLine = _findNearestTextAbove(lines, price, usedLines);
         if (nearbyLine != null) {
           usedLines.add(nearbyLine.lineIndex);
 
-          final normalized = TextUtils.normalizeTurkish(nearbyLine.text);
+          final cleaned = _cleanProductText(nearbyLine.text, prices);
+          if (cleaned.length < 3) continue;
+
+          final normalized = TextUtils.normalizeTurkish(cleaned);
           final match = await _verifier.findBestMatch(normalized);
 
           products.add(DetectedProduct(
             id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${products.length}',
-            name: match?.urunAdi ?? nearbyLine.text,
+            name: match?.urunAdi ?? cleaned,
             brand: match?.marka ?? '',
             category: match?.kategori ?? 'Genel',
             price: price.amount,
@@ -138,7 +141,16 @@ class OcrProductMatcher {
       if (usedLines.contains(line.lineIndex)) continue;
       if (line.text.length < 3) continue;
       if (_isNoiseLine(line.text)) continue;
-      if (line.text == price.rawText || line.text.contains(price.rawText)) continue;
+
+      // Fiyatın kendisiyle birebir aynıysa skip
+      if (line.text.trim() == price.rawText.trim()) continue;
+      // Sadece fiyat/sayı içeren satırları skip
+      final isOnlyPrice = RegExp(r'^[\d\s.,TL₺TRY%:\-+*xXadADETadetsılmSIRAoOgG\(\)]+$').hasMatch(line.text.trim());
+      if (isOnlyPrice) {
+        // Eğer satırda birden fazla boşlukla ayrılmış sayı grubu varsa (örn: 2 021 250 500), bu bir fiş satırıdır, skip etme!
+        final tokens = line.text.trim().split(RegExp(r'\s+'));
+        if (tokens.length < 3) continue;
+      }
 
       // Satır fiyatın yukarısında olmalı (dikey koridor: 450px)
       final verticalDiff = price.lineNumber - line.lineIndex;
@@ -186,5 +198,33 @@ class OcrProductMatcher {
     }
 
     return map.values.toList();
+  }
+
+  /// Satırdaki fiyat, miktar, barkod ve model kodlarını temizler.
+  String _cleanProductText(String text, List<OcrPrice> prices) {
+    var cleaned = text;
+
+    // 1. Tüm tespit edilen fiyatları temizle
+    for (final price in prices) {
+      cleaned = cleaned.replaceAll(price.rawText, '');
+    }
+
+    // 2. Barkodları (13 haneli) temizle
+    cleaned = cleaned.replaceAll(RegExp(r'\b\d{13}\b'), '');
+
+    // 3. Adet ve Miktarları temizle (örn: 18 ad, 2 AD, 3 adet)
+    cleaned = cleaned.replaceAll(RegExp(r'\b\d+\s*(ad|adet|dz|AD|ADET|adetsılmSIRA)\b', caseSensitive: false), '');
+
+    // 4. Model kodlarını temizle (hem harf hem rakam içeren alfa-nümerik yapılar veya 4+ haneli düz sayılar)
+    cleaned = cleaned.replaceAll(RegExp(r'\b(?=[A-Za-z0-9-]*\d)(?=[A-Za-z0-9-]*[A-Za-z])[A-Za-z0-9-]{4,15}\b|\b\d{4,9}\b'), '');
+
+    // 5. Baştaki ve sondaki sayıları temizle (sıra no, adet no vb.)
+    cleaned = cleaned.replaceAll(RegExp(r'^\d+\s+'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'\s+\d+$'), '');
+
+    // 6. Fazlalık boşlukları düzelt
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    return cleaned;
   }
 }

@@ -4,9 +4,9 @@ import 'package:vixrex/models/ocr_price.dart';
 class OcrPriceParser {
   const OcrPriceParser();
 
-  /// Türk lirası fiyat pattern'i.
+  /// Türk lirası fiyat pattern'i (geliştirilmiş sürüm).
   static final RegExp pricePattern = RegExp(
-    r'(?:sepette\s*)?(?:(?:₺|TL|TRY)\s*)?(?:\d{1,3}(?:[.,\s]\d{3})*|\d{1,9})(?:[.,]\d{1,2})?\s*(?:₺|TL|TRY|tl|try)?',
+    r'(?:sepette\s*)?(?:(?:₺|TL|TRY)\s*)?(?:\b\d{1,3}(?:[.,]\d{3})*[.,]\d{2,4}\b|\b\d+[.,]\d{2,4}\b|\b\d{3,4}\b|\b\d{1,5}\b)\s*(?:₺|TL|TRY|tl|try)?',
     caseSensitive: false,
   );
 
@@ -17,6 +17,20 @@ class OcrPriceParser {
 
     for (var lineIndex = 0; lineIndex < lines.length; lineIndex++) {
       final line = lines[lineIndex];
+      final lowerLine = line.toLowerCase();
+      
+      // Satır bazlı gürültü kontrolü (Tarih, Saat, Fiş No satırları fiyat içermez)
+      if (lowerLine.contains('tarih') || 
+          lowerLine.contains('saat :') || 
+          lowerLine.contains('fiş no') ||
+          lowerLine.contains('sayfa') ||
+          lowerLine.contains('model stok')) {
+        // Ancak bu satırda açıkça 'TL' veya '₺' geçiyorsa izin ver (örn: Toplam: 1.920,00 TL)
+        if (!lowerLine.contains('tl') && !lowerLine.contains('₺')) {
+          continue;
+        }
+      }
+
       final matches = pricePattern.allMatches(line);
 
       for (final match in matches) {
@@ -34,6 +48,7 @@ class OcrPriceParser {
           lineNumber: lineIndex,
           blockIndex: 0,
         ));
+        break; // Fiş/Fatura ve etiketlerde satırdaki İLK geçerli fiyatı (Birim Fiyatı) baz al
       }
     }
 
@@ -92,7 +107,7 @@ class OcrPriceParser {
         final fractionalLength = parts.last.length;
         if (fractionalLength == 3) {
           normalized = normalized.replaceAll(separator, '');
-        } else if (fractionalLength == 1 || fractionalLength == 2) {
+        } else if (fractionalLength == 1 || fractionalLength == 2 || fractionalLength == 4) {
           if (separator == ',') {
             normalized = normalized.replaceAll(',', '.');
           }
@@ -112,21 +127,71 @@ class OcrPriceParser {
   bool _looksLikePrice(String value, String fullLine) {
     final normalizedLine = fullLine.toLowerCase();
 
-    if (RegExp(r'\d{1,2}:\d{2}').hasMatch(normalizedLine)) return false;
+    // 1. Saat formatı kontrolü
+    if (RegExp(r'\b\d{1,2}:\d{2}(:\d{2})?\b').hasMatch(normalizedLine)) return false;
+
+    // 2. Özel simge ve gürültü kelimeleri
     if (normalizedLine.contains('★') || normalizedLine.contains('⭐')) return false;
     if (normalizedLine.contains('puan') || normalizedLine.contains('yorum')) return false;
     if (normalizedLine.contains('%')) return false;
     if (normalizedLine.contains('kupon')) return false;
 
+    // 3. Barkod kontrolü (10 haneden büyük sayılar fiyat olamaz)
+    final digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+    if (digitsOnly.length >= 10) return false;
+
+    // 4. Tarih formatları kontrolü (örn: 07.07.2026, 07/07/2026)
+    if (RegExp(r'\b\d{2}[./-]\d{2}[./-]\d{2,4}\b').hasMatch(value)) return false;
+
+    // 5. Adet / Miktar kontrolü (örn: 18 ad, 2 AD)
+    if (RegExp(value.replaceAll('.', r'\.') + r'\s*(ad|adet|dz|pcs|kg|g|lt|l)\b', caseSensitive: false).hasMatch(normalizedLine)) {
+      return false;
+    }
+
     final numeric = parseAmount(value);
     if (numeric == null) return false;
+
+    // 6. Aşırı büyük veya sıfıra yakın tutarları engelle
+    if (numeric <= 0.5 || numeric > 150000) return false;
 
     final hasCurrency = normalizedLine.contains('tl') ||
         normalizedLine.contains('try') ||
         normalizedLine.contains('₺') ||
         normalizedLine.contains(r'$');
 
+    // 7. Satırda para birimi varsa ve bu değer para birimi simgesi taşımıyorsa, ama satırdaki başka bir değer taşıyorsa bunu skip et
+    if (!value.contains('TL') && !value.contains('₺') && !value.contains('tl')) {
+      final lineHasExplicitCurrency = lineHasCurrency(fullLine);
+      if (lineHasExplicitCurrency) {
+        // Eğer bu değer düz bir tamsayı ise (kuruşsuz, örn: 115) skip et. Fiyatlar genellikle kuruşludur.
+        if (numeric % 1 == 0 && numeric < 1000) return false;
+      }
+    }
+
+    // 8. Başı 0 ile başlayan ve ondalık barındırmayan kodları skip et (örn: 021)
+    if (value.trim().startsWith('0') && !value.contains('.') && !value.contains(',')) {
+      return false;
+    }
+
+    // 9. Satırda ondalıklı (kuruşlu) bir sayı varsa ve bu değer düz tamsayı ise skip et (örn: 129 ve 80.00 aynı satırdaysa 129'u skip et)
+    if (!value.contains('.') && !value.contains(',')) {
+      final lineHasDecimals = RegExp(r'\b\d+[\.,]\d{2}\b').hasMatch(fullLine);
+      if (lineHasDecimals) return false;
+    }
+
     if (hasCurrency) return true;
-    return numeric >= 4;
+    
+    // Para birimi yoksa, en azından bir ondalık ayracı (virgül veya nokta) içermesini isteyelim ki (örn: 70,50) adetlerle karışmasın
+    final hasDecimalSeparator = value.contains(',') || value.contains('.');
+    if (hasDecimalSeparator) return true;
+
+    // Hiçbir ayırt edici özellik yoksa tamsayı fiyatlar için makul aralıkta olmasını isteyelim (örn: 700)
+    return numeric >= 10 && numeric <= 5000;
+  }
+
+  /// Satırda açıkça para birimi geçiyor mu?
+  bool lineHasCurrency(String line) {
+    final lower = line.toLowerCase();
+    return RegExp(r'\b(tl|try|₺|\$)\b').hasMatch(lower);
   }
 }

@@ -1,0 +1,73 @@
+{
+  "test_cases": [
+    {
+      "id": "receipt_1_satis_teklif",
+      "scan_mode": "receipt",
+      "raw_text": "Tarih 07.07.26 09.20\nSayfa 1/1 Satış Teklif Form Dökümü\nFiş No : 59.2026.44183\nModel Stok Barkod Varyant Beden Miktar Fiyat Tutar\nTKD0152 TUT BYN BADY SÜTYEN 8680508937910 100 BEYAZ 115 18 ad 64,0000 TL 1.152,00 TL\nTKD0152 TUT BYN BADY SÜTYEN 8680508956744 100 GRİ 115 12 ad 64,0000 TL 768,00 TL\nToplam: 30 ad 2 dz 1.920,00 TL",
+      "expected_products": [
+        { "name": "TUT BYN BADY SÜTYEN", "price": 64.0 }
+      ]
+    },
+    {
+      "id": "receipt_2_osman_aksakal",
+      "scan_mode": "receipt",
+      "raw_text": "OSMAN AKSAKAL TARİH : 2026-07-07\n1.SAYFA SAAT : 08:46:24\nSIRA KOD URUN ACIKLAMASI MIKTAR FIYAT TUTAR\n1 177-4-XL TEN RB.BY.iPASK.ATL. 3 70,50 211,50\n2 177-1-3XL BYZ.RB.BY.iPASK.ATL(Y) 3 74,00 222,00\n3 177-1-XXL BYZ.RB.BY.iPASK.ATL(Y) 3 71,00 213,00\nToplam: 42.928,00",
+      "expected_products": [
+        { "name": "TEN RB.BY.iPASK.ATL.", "price": 70.50 },
+        { "name": "BYZ.RB.BY.iPASK.ATL(Y)", "price": 74.00 },
+        { "name": "BYZ.RB.BY.iPASK.ATL(Y)", "price": 71.00 }
+      ]
+    },
+    {
+      "id": "receipt_3_belissa_moda",
+      "scan_mode": "receipt",
+      "raw_text": "BELISSA MODA Sipariş Fişi\nOsman Aksakal Tarih: 07/07/2026\nADET CİNSİ FİYAT TUTARI\n4 Çilek Takım 700 2.800\n8 Yakalı Battal Elbise 650 5.200\nToplam 8.000",
+      "expected_products": [
+        { "name": "Çilek Takım", "price": 700.0 },
+        { "name": "Yakalı Battal Elbise", "price": 650.0 }
+      ]
+    },
+    {
+      "id": "receipt_4_ece_siparis",
+      "scan_mode": "receipt",
+      "raw_text": "ece Sipariş Teklif Formu\nFiş No: 15920 Fiş Tarihi: 07/07/2026 10:45:12\nSTOK ADI MİKTAR CİNSİ FİYAT TUTAR\n129 V YAKA KISA KOL BADİ 2 AD 80.00 160.00\n158 YAKASI KISA KOL REÇME ARA BİYELİ 3 AD 85.00 255.00\n129 V YAKA KISA KOL BADİ 2 AD 80.00 160.00\nToplam 1.666.50",
+      "expected_products": [
+        { "name": "V YAKA KISA KOL BADİ", "price": 80.0 },
+        { "name": "YAKASI KISA KOL REÇME ARA BİYELİ", "price": 85.0 }
+      ]
+    },
+    {
+      "id": "receipt_5_pnr_collection",
+      "scan_mode": "receipt",
+      "raw_text": "P.N.R Collection Sipariş Fişi\nOsman Aksakal Tarih: 06/07/2026\nMİKTARI CİNSİ FİYATI TUTARI\n2 021 250 500\n2 026 275 550\nToplam 1.050",
+      "expected_products": [
+        { "name": "021", "price": 250.0 },
+        { "name": "026", "price": 275.0 }
+      ]
+    },
+    {
+      "id": "shelf_label_1_dankek",
+      "scan_mode": "shelf_label",
+      "raw_text": "Dankek Lokmalık Hindistan Cevizli 180g\nİNDİRİM\n20.00\nKDV Dahil",
+      "expected_products": [
+        { "name": "Dankek Lokmalık Hindistan Cevizli 180g", "price": 20.00 }
+      ]
+    },
+    {
+      "id": "shelf_label_2_biscolata",
+      "scan_mode": "shelf_label",
+      "raw_text": "Biscolata Mood Çikolatalı 110g\nFiyat: 54.99 ₺\nKDV Dahil",
+      "expected_products": [
+        { "name": "Biscolata Mood Çikolatalı 110g", "price": 54.99 }
+      ]
+    },
+    {
+      "id": "shelf_label_3_kekstra",
+      "scan_mode": "shelf_label",
+      "raw_text": "KİM seni düşünür İNDİRİM\nKekstra Çilekli Jolebol 40g\n11.00 TL\nEski Fiyat: 13.75 TL",
+      "expected_products": [
+        { "name": "Kekstra Çilekli Jolebol 40g", "price": 11.00 }
+      ]
+    }
+  ]
+}
