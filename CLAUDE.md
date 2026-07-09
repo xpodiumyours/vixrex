@@ -49,7 +49,7 @@ test/             → Unit ve widget testleri
 
 ### Kod Kalitesi
 - Aynı fonksiyon 2 dosyada olamaz (DRY).
-- Dosya 300 satırı geçerse böl.
+- Yeni dosyalar 300 satırı geçmemeli. Mevcut büyük dosyalar kademeli olarak bölünmeli (hedef: 500 altı).
 - Kullanılmayan import olmamalı.
 
 ### Mimari
@@ -98,7 +98,7 @@ class XService {
 | `catch (_) {}` | Hata yutuluyor, debug edilemez |
 | `Supabase.instance.client` screen içinde | Test edilemez, katman ihlali |
 | `throw Exception('msg')` serviste | Result<T> kullanmalısın |
-| Dosya > 500 satır | Anlaşılması zor |
+| Dosya > 500 satır (yeni dosya için 300) | Anlaşılması zor | Kademeli olarak böl |
 | Aynı kod 2 dosyada | Değişiklik unutulabilir |
 | Service role anahtarı istemci kodunda | Güvenlik açığı |
 | `debugPrint` kDebugMode olmadan | Production'da log sızıntısı |
@@ -107,7 +107,8 @@ class XService {
 ### Vibe Coding Yasakları (Kod Gerilemesini Önle)
 | Yapma | Neden | Çözüm |
 |---|---|---|
-| Mevcut kodu silip yeniden yazma | Mevcut iş mantığı kaybolur | Mevcut kodu oku, üzerine ekle |
+| Mevcut kodu silip yeniden yazma (refaktör hariç) | Mevcut iş mantığı kaybolur | Mevcut kodu oku, üzerine ekle |
+| Refaktör yaparken caller'ları unutma | Zincirleme hata yaratır | Eski imzayı koru VEYA tüm caller'ları güncelle |
 | Import'ları değiştirerek var olan kodu bozma | Derleme hataları yaratır | Önce mevcut import'ları koru |
 | Method imzasını değiştirip tüm caller'ları bozma | Zincirleme hata yaratır | Eski imzayı koru, yeni method ekle |
 | Try-catch eklemeden async metod yazma | Crash olur | Her async metod try-catch ile başlasın |
@@ -193,7 +194,8 @@ class XService {
 | Test edilebilir | Yap, test et |
 | Başka dosyaları etkiler | Önce sor |
 | Güvenlik açığı yaratır | ASLA yapma |
-| Mevcut kodu silip yeniden yazma | ASLA yapma (üzerine inşa et) |
+| Mevcut kodu silip yeniden yazma (refaktör Hariç) | ASLA yapma |
+| Refaktör (tüm caller'ları güncelleyerek) | Yap, test et |
 
 ---
 
@@ -253,7 +255,7 @@ class XService {
 |---|---|---|
 | `catch (_) {}` | Hata yutuluyor | `debugPrint` ile logla |
 | Aynı kodu 2 yere yazma | Değişiklik unutulur | Merkezi fonksiyona taşı |
-| Dosyayı bölmeme | Anlaşılması zor | 300 satırsa böl |
+| Dosyayı bölmeme | Anlaşılması zor | Yeni dosya 300, mevcut dosya 500 altı hedefi |
 | Test yazmama | Hata bulmak zor | Her servise test yaz |
 | Commit mesajı yazmama | Geçmiş anlaşılmaz | Conventional commit kullan |
 | VIXREX_OTURUM_OZETI.md'yi güncelleme | Bilgi kopar | Her işlem sonrası güncelle |
@@ -294,7 +296,7 @@ docs: README güncellendi
 ### Teknik Kontrol
 - [ ] `flutter analyze` → sıfır hata?
 - [ ] `catch (_) {}` var mı? → kaldır veya log ekle
-- [ ] Dosya 300 satırı geçti mi? → böl
+- [ ] Dosya 300 satırı geçti mi (yeni) / 500'ü (mevcut) → böl
 - [ ] Aynı kod başka yerde var mı? → merkezileştir
 - [ ] Test çalıştırıldı mı? → çalıştır
 - [ ] VIXREX_OTURUM_OZETI.md güncellendi mi? → güncelle
