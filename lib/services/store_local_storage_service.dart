@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/models/store_data.dart';
@@ -233,7 +234,9 @@ class StoreLocalStorageService {
       if (decoded is Map) {
         return StoreData.fromJson(Map<String, dynamic>.from(decoded));
       }
-    } on FormatException catch (_) {}
+    } on FormatException catch (e) {
+      if (kDebugMode) debugPrint('StoreData parse error: $e');
+    }
     return null;
   }
 }

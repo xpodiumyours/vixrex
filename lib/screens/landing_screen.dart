@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vixrex/screens/preview_screen.dart';
 import 'package:vixrex/models/landing_demo_profile.dart';
@@ -209,7 +210,9 @@ class _LandingScreenState extends State<LandingScreen>
           );
           continue;
         }
-      } catch (_) {}
+      } catch (e) {
+        if (kDebugMode) debugPrint('Demo profile load error: $e');
+      }
       updatedProfiles.add(profile);
     }
     if (mounted) {

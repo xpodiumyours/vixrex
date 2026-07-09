@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_data.dart';
@@ -300,6 +301,8 @@ class AutoFillService {
         final data = StoreData.fromJson(decoded);
         await const StoreLocalStorageService().saveVitrinData(data);
       }
-    } catch (_) {}
+    } catch (e) {
+      if (kDebugMode) debugPrint('AutoFill parse error: $e');
+    }
   }
 }

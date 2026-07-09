@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
 import 'package:vixrex/config/public_site_config.dart';
@@ -49,7 +50,9 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
           return match.group(1);
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      if (kDebugMode) debugPrint('Slug parse error: $e');
+    }
     return null;
   }
 

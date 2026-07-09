@@ -56,7 +56,9 @@ class OcrTextParser {
       // Geçici dosyayı temizle
       try {
         await tempFile.delete();
-      } catch (_) {}
+      } catch (e) {
+        if (kDebugMode) debugPrint('OCR temp file delete error: $e');
+      }
     }
   }
 

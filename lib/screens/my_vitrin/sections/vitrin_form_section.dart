@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' as img_picker;
 import 'package:flutter/services.dart';
@@ -628,7 +629,9 @@ class VitrinFormSection extends StatelessWidget {
         ShareParams(text: 'VixRex web linkim:\n$link', title: 'VixRex Web Linki'),
       );
       if (r.status != ShareResultStatus.unavailable) return;
-    } catch (_) {}
+    } catch (e) {
+      if (kDebugMode) debugPrint('_shareLink error: $e');
+    }
     await Clipboard.setData(ClipboardData(text: link));
     if (ctx.mounted) state.showSnackBar(ctx, 'Paylaşım açılamadı, link kopyalandı.');
   }

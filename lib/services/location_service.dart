@@ -216,7 +216,9 @@ class LocationService {
 
         return data['display_name'] as String?;
       }
-    } catch (_) {}
+    } catch (e) {
+      if (kDebugMode) debugPrint('Reverse geocode error: $e');
+    }
     return null;
   }
 }

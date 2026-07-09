@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 export 'package:vixrex/services/store_publish_validator.dart';
 export 'package:vixrex/services/store_publish_payload_builder.dart';
 export 'package:vixrex/services/store_publish_legal_validator.dart';
@@ -85,7 +86,9 @@ class StorePublishService {
               editToken: editToken,
             ));
           }
-        } on PostgrestException catch (_) {}
+        } on PostgrestException catch (e) {
+          if (kDebugMode) debugPrint('Store update check error: $e');
+        }
       }
 
       if (existingStore == null) {

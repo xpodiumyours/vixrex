@@ -43,7 +43,7 @@ class StoreShelfUploadService {
     } on ImageOptimizationException {
       rethrow;
     } catch (error) {
-      throw Exception('Raf fotoğrafı yüklenemedi: $error');
+      throw ImageOptimizationException('Raf fotoğrafı yüklenemedi: $error');
     }
   }
 

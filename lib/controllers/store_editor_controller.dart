@@ -324,6 +324,8 @@ class StoreEditorController extends ChangeNotifier
         );
         await saveLocally();
       }
-    } catch (_) {}
+    } catch (e) {
+      if (kDebugMode) debugPrint('_fetchPublishedInfoFromSupabase: $e');
+    }
   }
 }
