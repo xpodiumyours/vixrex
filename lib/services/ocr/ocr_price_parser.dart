@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:vixrex/models/ocr_price.dart';
 
 /// Çok katmanlı fiyat çıkarma servisi.
@@ -89,6 +90,7 @@ class OcrPriceParser {
           lineNumber: lineIndex,
           blockIndex: 0,
           confidence: _priceConfidence(rawPrice, line),
+          boundingBox: Rect.fromLTWH(0, lineIndex * 30.0, line.length * 8.0, 20),
         ));
         break; // Satırdaki ilk geçerli fiyatı al
       }
@@ -111,6 +113,7 @@ class OcrPriceParser {
           amount: unitPrice.toDouble(),
           lineNumber: lineIndex,
           blockIndex: 0,
+          boundingBox: Rect.fromLTWH(0, lineIndex * 30.0, line.length * 8.0, 20),
         );
       }
     }
@@ -125,6 +128,7 @@ class OcrPriceParser {
           amount: unitPrice.toDouble(),
           lineNumber: lineIndex,
           blockIndex: 0,
+          boundingBox: Rect.fromLTWH(0, lineIndex * 30.0, line.length * 8.0, 20),
         );
       }
     }
@@ -179,6 +183,7 @@ class OcrPriceParser {
           amount: amount.toDouble(),
           lineNumber: lineNumber,
           blockIndex: 0,
+          boundingBox: Rect.fromLTWH(0, lineNumber * 30.0, rawPrice.length * 8.0, 20),
         );
       }
     }
@@ -338,6 +343,7 @@ class OcrPriceParser {
       amount: amount.toDouble(),
       lineNumber: lineNumber,
       blockIndex: 0,
+      boundingBox: Rect.fromLTWH(0, lineNumber * 30.0, text.length * 8.0, 20),
     );
   }
 }

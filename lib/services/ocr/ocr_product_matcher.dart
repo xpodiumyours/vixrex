@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/ocr_line.dart';
 import 'package:vixrex/models/ocr_price.dart';
@@ -95,16 +96,14 @@ class OcrProductMatcher {
       if (line.text.trim() == price.rawText.trim()) continue;
       if (line.text.contains(price.rawText)) continue;
 
-      // Dikey mesafe
-      final yDiff = (line.centerY - price.lineNumber * 30).abs();
+      // Bounding box tabanlı mesafe hesaplama
+      final yDiff = (line.centerY - price.centerY).abs();
+      final xDiff = (line.centerX - price.centerX).abs();
 
-      // Yatay benzerlik
-      final xDiff = (line.centerX - price.lineNumber * 5).abs();
+      // Skor: Dikey mesafe öncelikli, yatay benzerlik ikincil
+      final score = yDiff * 2 + xDiff;
 
-      // Skor
-      final score = yDiff * 10 + xDiff;
-
-      if (score < bestScore && yDiff < 200) {
+      if (score < bestScore && yDiff < 150) {
         bestScore = score;
         bestLine = line;
       }
@@ -177,17 +176,31 @@ class OcrProductMatcher {
     if (letterRatio > 0.7) score += 0.1;
     if (letterRatio < 0.3) score -= 0.2;
 
-    // 3. Fiyat makul aralıktaysa
+    // 3. BoundingBox mesafesi: Yakın ise yüksek güvenilirlik
+    if (price.boundingBox != null && line.boundingBox != Rect.zero) {
+      final yDiff = (line.centerY - price.centerY).abs();
+      if (yDiff < 30) score += 0.1; // Aynı satır
+      else if (yDiff < 80) score += 0.05; // Yakın
+      else if (yDiff > 150) score -= 0.1; // Uzak
+    }
+
+    // 4. Fiyat formatı: Kuruşlu fiyatlar daha güvenilir
+    if (price.amount % 1 != 0 && price.amount > 0) score += 0.05;
+
+    // 5. Fiyat makul aralıktaysa
     if (price.amount >= 1 && price.amount <= 50000) score += 0.05;
 
-    // 4. Noise kelimesi içeriyor mu
+    // 6. Noise kelimesi içeriyor mu
     if (_isNoiseLine(name)) score -= 0.3;
 
-    // 5. Sadece sayısal değer mi
+    // 7. Sadece sayısal değer mi
     if (RegExp(r'^\d+$').hasMatch(name.trim())) score -= 0.3;
 
-    // 6. Tek kelime mi (ürün adları genellikle çok kelimeli)
+    // 8. Tek kelime mi (ürün adları genellikle çok kelimeli)
     if (name.split(RegExp(r'\s+')).length == 1) score -= 0.1;
+
+    // 9. Para birimi içeriğe yazılı mı (TL, ₺)
+    if (price.rawText.contains('TL') || price.rawText.contains('₺')) score += 0.05;
 
     return score.clamp(0.0, 1.0);
   }

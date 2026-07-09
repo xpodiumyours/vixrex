@@ -35,15 +35,21 @@ class OcrImagePreprocessor {
     // 2. Gri tonlamaya çevir
     final grayscale = img.grayscale(resized);
 
-    // 3. Global threshold (HIZLI — sabit eşik, Otsu'dan 100x hızlı)
-    //闘影 ve aydınlık pikselleri ayırt eder
-    final thresholded = _globalThreshold(grayscale);
+    // 3. Contrast enhancement (metin netliği için)
+    final contrasted = img.adjustColor(grayscale, contrast: 1.3);
 
-    // 4. Hafif gürültü temizleme (3x3 median)
-    final denoised = _medianFilter(thresholded);
+    // 4. Hafif sharpening (kenar netliği için)
+    final sharpened = img.convolution(
+      contrasted,
+      filter: [
+         0, -1,  0,
+        -1,  5, -1,
+         0, -1,  0,
+      ],
+    );
 
-    // JPEG kalitesi 85 (hız + yeterli kalite)
-    return Uint8List.fromList(img.encodeJpg(denoised, quality: 85));
+    // JPEG kalitesi 90 (kalite + hız dengesi)
+    return Uint8List.fromList(img.encodeJpg(sharpened, quality: 90));
   }
 
   /// Global threshold: Tek sabit eşik değeri ile siyah/beyaz ayrımı.

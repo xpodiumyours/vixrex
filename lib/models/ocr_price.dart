@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 /// OCR ile tespit edilen fiyat.
 class OcrPrice {
   final String rawText;
@@ -6,6 +8,7 @@ class OcrPrice {
   final int lineNumber;
   final int blockIndex;
   final double confidence;
+  final Rect? boundingBox;
 
   const OcrPrice({
     required this.rawText,
@@ -14,9 +17,16 @@ class OcrPrice {
     required this.lineNumber,
     required this.blockIndex,
     this.confidence = 0.5,
+    this.boundingBox,
   });
 
   String get formatted => '${amount.toStringAsFixed(2)} ₺';
+
+  /// Fiyatın yatay merkezi.
+  double get centerX => boundingBox?.center.dx ?? 0;
+
+  /// Fiyatın dikey merkezi.
+  double get centerY => boundingBox?.center.dy ?? lineNumber * 30.0;
 
   OcrPrice copyWith({
     String? rawText,
@@ -25,6 +35,7 @@ class OcrPrice {
     int? lineNumber,
     int? blockIndex,
     double? confidence,
+    Rect? boundingBox,
   }) {
     return OcrPrice(
       rawText: rawText ?? this.rawText,
@@ -33,6 +44,7 @@ class OcrPrice {
       lineNumber: lineNumber ?? this.lineNumber,
       blockIndex: blockIndex ?? this.blockIndex,
       confidence: confidence ?? this.confidence,
+      boundingBox: boundingBox ?? this.boundingBox,
     );
   }
 

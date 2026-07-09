@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
+import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/ocr/ocr_scanner_widget.dart';
 import 'package:vixrex/widgets/ocr/ocr_result_list.dart';
@@ -299,6 +300,22 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
 
   Future<void> _saveProducts() async {
     try {
+      // Feedback loop: Ham OCR metnini ve düzeltilmiş ürünleri kaydet
+      final result = widget.ocrController.result;
+      if (result != null) {
+        final correctedProducts = result.approvedProducts.map((p) => {
+          'name': p.name,
+          'price': p.price,
+          'is_approved': p.isApproved,
+        }).toList();
+        await const OcrFeedbackService().saveFeedback(
+          rawOcrText: result.rawText,
+          parsedProducts: result.products.map((p) => {'name': p.name, 'price': p.price}).toList(),
+          correctedProducts: correctedProducts,
+          scanMode: widget.ocrController.scanMode,
+        );
+      }
+
       await widget.ocrController.saveApprovedProducts();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
