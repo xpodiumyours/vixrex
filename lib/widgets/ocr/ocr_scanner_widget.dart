@@ -91,12 +91,28 @@ class OcrScannerWidget extends StatelessWidget {
   }
 
   Future<void> _pickImage(BuildContext context, ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 2000,
+        maxHeight: 2000,
+        imageQuality: 85,
+      );
 
-    if (pickedFile != null) {
-      final bytes = await pickedFile.readAsBytes();
-      onImageSelected(bytes);
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        onImageSelected(bytes);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fotoğraf seçilirken hata oluştu: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }
