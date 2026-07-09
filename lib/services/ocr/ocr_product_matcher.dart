@@ -5,129 +5,50 @@ import 'package:vixrex/utils/text_utils.dart';
 import 'ocr_excel_verifier.dart';
 
 /// OCR satırlarını ve fiyatlarıyla ürün eşleştirme servisi.
+///
+/// Mantık:
+/// 1. Tüm satırları ve fiyatları sırala (y coordinate'e göre)
+/// 2. Her fiyatın hemen üstündeki veya aynı satırındaki metni ürün adı olarak al
+/// 3. Eşleşenleri DetectedProduct listesine dönüştür
 class OcrProductMatcher {
   final OcrExcelVerifier _verifier;
-  final int maxVerticalDiff;
-  final double maxHorizontalCenterDiff;
 
-  const OcrProductMatcher({
-    required OcrExcelVerifier verifier,
-    this.maxVerticalDiff = 5,
-    this.maxHorizontalCenterDiff = 300,
-  }) : _verifier = verifier;
+  const OcrProductMatcher({required OcrExcelVerifier verifier})
+      : _verifier = verifier;
 
-  /// OCR satırlarını ve fiyatlarıyla ürünleri eşleştir.
   Future<List<DetectedProduct>> matchProducts(
     List<OcrLine> lines,
     List<OcrPrice> prices, {
     String scanMode = 'receipt',
   }) async {
+    if (prices.isEmpty) return [];
+
+    // Satırları ve fiyatları sırala (y coordinate'e göre)
+    final sortedLines = List<OcrLine>.from(lines)
+      ..sort((a, b) => a.centerY.compareTo(b.centerY));
+    final sortedPrices = List<OcrPrice>.from(prices)
+      ..sort((a, b) => a.lineNumber.compareTo(b.lineNumber));
+
     final products = <DetectedProduct>[];
-    final usedLines = <int>{};
+    final usedLineIndices = <int>{};
 
-    if (scanMode == 'shelf_label') {
-      // 1. Raf/Etiket Modu: Aynı blockIndex altındaki veya hemen üstündeki metinleri fiyatla eşleştir
-      for (final price in prices) {
-        OcrLine? matchingProductLine;
+    // Her fiyat için en yakın ürün satırını bul
+    for (final price in sortedPrices) {
+      final productLine = _findBestProductLine(sortedLines, price, usedLineIndices);
 
-        // Aynı block içindeki en yakın üst satırı bulmaya çalış
-        final sameBlockLines = lines.where((l) =>
-            l.blockIndex == price.blockIndex &&
-            l.lineIndex < price.lineNumber &&
-            !usedLines.contains(l.lineIndex) &&
-            l.text.length >= 3 &&
-            !_isNoiseLine(l.text) &&
-            !_isOnlyPrice(l.text));
+      if (productLine != null) {
+        usedLineIndices.add(productLine.lineIndex);
 
-        if (sameBlockLines.isNotEmpty) {
-          // En yakın üst satırı seç
-          matchingProductLine = sameBlockLines.reduce((a, b) =>
-              (price.lineNumber - a.lineIndex) < (price.lineNumber - b.lineIndex) ? a : b);
-        } else {
-          // Farklı block'taysa en yakın dikey mesafedeki üst satırı ara
-          final candidates = lines.where((l) =>
-              !usedLines.contains(l.lineIndex) &&
-              l.text.length >= 3 &&
-              !_isNoiseLine(l.text) &&
-              !_isOnlyPrice(l.text) &&
-              l.centerY < lines.firstWhere((pl) => pl.lineIndex == price.lineNumber && pl.blockIndex == price.blockIndex, orElse: () => lines.first).centerY);
+        // Ürün adını temizle
+        final cleanedName = _cleanProductName(productLine.text, price.rawText);
+        if (cleanedName.length < 2) continue;
 
-          if (candidates.isNotEmpty) {
-            final priceLine = lines.firstWhere((pl) => pl.lineIndex == price.lineNumber && pl.blockIndex == price.blockIndex, orElse: () => lines.first);
-            OcrLine? closest;
-            double minDist = double.infinity;
-            for (final c in candidates) {
-              final dist = priceLine.verticalDistanceTo(c);
-              if (dist < minDist && dist < 300) { // Maksimum dikey mesafe sınırı
-                minDist = dist;
-                closest = c;
-              }
-            }
-            matchingProductLine = closest;
-          }
-        }
-
-        if (matchingProductLine != null) {
-          usedLines.add(matchingProductLine.lineIndex);
-
-          final normalized = TextUtils.normalizeTurkish(matchingProductLine.text);
-          final match = await _verifier.findBestMatch(normalized);
-
-          products.add(DetectedProduct(
-            id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${products.length}',
-            name: match?.urunAdi ?? matchingProductLine.text,
-            brand: match?.marka ?? '',
-            category: match?.kategori ?? 'Genel',
-            price: price.amount,
-            confidence: (match?.confidence ?? 0.3) + 0.1, // Blok içi eşleşmeler daha güvenilirdir
-            source: 'ocr_shelf_label',
-          ));
-        }
-      }
-    } else {
-      // 2. Fiş/Fatura Modu: Önce fiyat içeren satırları işle
-      for (final price in prices) {
-        // Fiyata en yakın metin satırını bul (yukarıda veya aynı satırda)
-        final nearbyLine = _findNearestTextAbove(lines, price, usedLines);
-        if (nearbyLine != null) {
-          usedLines.add(nearbyLine.lineIndex);
-
-          final cleaned = _cleanProductText(nearbyLine.text, prices);
-          if (cleaned.length < 3) continue;
-
-          final normalized = TextUtils.normalizeTurkish(cleaned);
-          final match = await _verifier.findBestMatch(normalized);
-
-          products.add(DetectedProduct(
-            id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${products.length}',
-            name: match?.urunAdi ?? cleaned,
-            brand: match?.marka ?? '',
-            category: match?.kategori ?? 'Genel',
-            price: price.amount,
-            confidence: match?.confidence ?? 0.3,
-            source: 'ocr_priced',
-          ));
-        }
-      }
-    }
-
-    // 2. Fiyat içermeyen ama ürün olabilecek satırları işle
-    for (final line in lines) {
-      if (usedLines.contains(line.lineIndex)) continue;
-      if (line.text.length < 3) continue;
-      if (_isNoiseLine(line.text)) continue;
-
-      final normalized = TextUtils.normalizeTurkish(line.text);
-      final match = await _verifier.findBestMatch(normalized);
-
-      if (match != null && match.confidence >= 0.5) {
         products.add(DetectedProduct(
           id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${products.length}',
-          name: match.urunAdi,
-          brand: match.marka,
-          category: match.kategori,
-          confidence: match.confidence,
-          source: 'ocr_text',
+          name: cleanedName,
+          price: price.amount,
+          confidence: 0.5,
+          source: 'ocr_priced',
         ));
       }
     }
@@ -135,46 +56,78 @@ class OcrProductMatcher {
     return _deduplicateProducts(products);
   }
 
-  /// Fiyata en yakın metin satırını bul (yukarıda, dikey koridorda).
-  OcrLine? _findNearestTextAbove(
-    List<OcrLine> lines,
+  /// Her fiyat için en uygun ürün satırını bul.
+  /// Mantık: Fiyatın hemen üstündeki veya aynı yatay hizada olan satırı seç.
+  OcrLine? _findBestProductLine(
+    List<OcrLine> sortedLines,
     OcrPrice price,
     Set<int> usedLines,
   ) {
     OcrLine? bestLine;
-    double bestDistance = double.infinity;
+    double bestScore = double.infinity;
 
-    for (final line in lines) {
+    for (final line in sortedLines) {
       if (usedLines.contains(line.lineIndex)) continue;
-      if (line.text.length < 3) continue;
+      if (line.text.length < 2) continue;
       if (_isNoiseLine(line.text)) continue;
+      if (_isOnlyPriceOrNumber(line.text)) continue;
 
-      // Fiyatın kendisiyle birebir aynıysa skip
+      // Fiyatın kendisiyse atla
       if (line.text.trim() == price.rawText.trim()) continue;
-      // Sadece fiyat/sayı içeren satırları skip
-      final isOnlyPrice = RegExp(r'^[\d\s.,TL₺TRY%:\-+*xXadADETadetsılmSIRAoOgG\(\)]+$').hasMatch(line.text.trim());
-      if (isOnlyPrice) {
-        // Eğer satırda birden fazla boşlukla ayrılmış sayı grubu varsa (örn: 2 021 250 500), bu bir fiş satırıdır, skip etme!
-        final tokens = line.text.trim().split(RegExp(r'\s+'));
-        if (tokens.length < 3) continue;
-      }
+      if (line.text.contains(price.rawText)) continue;
 
-      // Satır fiyatın yukarısında olmalı (dikey koridor)
-      final verticalDiff = price.lineNumber - line.lineIndex;
-      if (verticalDiff < 0 || verticalDiff > maxVerticalDiff) continue;
+      // Dikey mesafe: Fiyatın üstündeki veya en fazla 3 satır altındaki
+      final yDiff = (line.centerY - price.lineNumber * 30).abs();
 
-      // Yatay eksende yakın olmalı
-      final horizontalCenterDiff = (line.centerX - price.rawText.length * 5).abs();
-      if (horizontalCenterDiff > maxHorizontalCenterDiff) continue;
+      // Yatay benzerlik: Aynı yatay hizada mı?
+      // centerX farklılıklarını hesapla (ML Kit farklı boyutlarda okuyabilir)
+      final xDiff = (line.centerX - price.lineNumber * 5).abs();
 
-      final distance = verticalDiff * 100 + horizontalCenterDiff;
-      if (distance < bestDistance) {
-        bestDistance = distance;
+      // Skor: Dikey mesafe öncelikli, yatay benzerlik ikincil
+      final score = yDiff * 10 + xDiff;
+
+      if (score < bestScore && yDiff < 200) { // Maksimum 200px dikey mesafe
+        bestScore = score;
         bestLine = line;
       }
     }
 
     return bestLine;
+  }
+
+  /// Ürün adını temizle: Fiyat, barkod, miktar bilgilerini kaldır.
+  String _cleanProductName(String text, String priceText) {
+    var cleaned = text;
+
+    // Fiyatı temizle
+    cleaned = cleaned.replaceAll(priceText, '');
+
+    // TL/₺ sembollerini temizle
+    cleaned = cleaned.replaceAll(RegExp(r'(?:₺|TL|TRY|tl|try)', caseSensitive: false), '');
+
+    // 13 haneli barkodları temizle
+    cleaned = cleaned.replaceAll(RegExp(r'\b\d{13}\b'), '');
+
+    // Adet bilgilerini temizle (2 AD, 3 ADET, 5 dz)
+    cleaned = cleaned.replaceAll(RegExp(r'\b\d+\s*(ad|adet|dz|pcs|ADET)\b', caseSensitive: false), '');
+
+    // 4+ haneli model kodlarını temizle (ama kısa kodları KORU: 129, 158 vb.)
+    cleaned = cleaned.replaceAll(RegExp(r'\b[A-Z]{2,4}\d{4,6}\b'), '');
+
+    // Baştaki/sondaki fazlalık boşlukları temizle
+    cleaned = cleaned.trim();
+
+    return cleaned;
+  }
+
+  /// Satır sadece fiyat veya sayılıysa true dön.
+  bool _isOnlyPriceOrNumber(String text) {
+    final trimmed = text.trim();
+    // Tamamen sayısal veya fiyat içeren satır
+    if (RegExp(r'^[\d\s.,TL₺TRY%:\-+*xX]+$').hasMatch(trimmed)) return true;
+    // Kısa sayısal değerler (sıra no, vb.)
+    if (trimmed.length <= 5 && RegExp(r'^\d+$').hasMatch(trimmed)) return true;
+    return false;
   }
 
   bool _isNoiseLine(String text) {
@@ -184,14 +137,15 @@ class OcrProductMatcher {
       'bedava', 'indirim', 'sepet',
       'taksit', 'kampanya', 'hakkımızda', 'iletişim',
       'fiş no', 'fiş tarihi', 'mağaza',
+      'toplam', 'ara toplam', 'genel toplam', 'mal bedeli',
+      'net tutar', 'kdv',
     ];
     return noiseKeywords.any((kw) => lower.contains(kw));
   }
 
-  /// Aynı ürünleri birleştir (miktarı artır).
+  /// Aynı ürünleri birleştir.
   List<DetectedProduct> _deduplicateProducts(List<DetectedProduct> products) {
     final map = <String, DetectedProduct>{};
-
     for (final product in products) {
       final key = TextUtils.normalizeTurkish(product.name).toLowerCase();
       if (map.containsKey(key)) {
@@ -203,44 +157,6 @@ class OcrProductMatcher {
         map[key] = product;
       }
     }
-
     return map.values.toList();
-  }
-
-  /// Satırdaki fiyat, miktar, barkod ve model kodlarını temizler.
-  String _cleanProductText(String text, List<OcrPrice> prices) {
-    var cleaned = text;
-
-    // 1. Tüm tespit edilen fiyatları temizle
-    for (final price in prices) {
-      cleaned = cleaned.replaceAll(price.rawText, '');
-    }
-
-    // 2. Barkodları (13 haneli) temizle
-    cleaned = cleaned.replaceAll(RegExp(r'\b\d{13}\b'), '');
-
-    // 3. Adet ve Miktarları temizle (örn: 18 ad, 2 AD, 3 adet)
-    cleaned = cleaned.replaceAll(RegExp(r'\b\d+\s*(ad|adet|dz|AD|ADET|adetsılmSIRA)\b', caseSensitive: false), '');
-
-    // 4. Model kodlarını temizle (hem harf hem rakam içeren alfa-nümerik yapılar veya 4+ haneli düz sayılar)
-    cleaned = cleaned.replaceAll(RegExp(r'\b(?=[A-Za-z0-9-]*\d)(?=[A-Za-z0-9-]*[A-Za-z])[A-Za-z0-9-]{4,15}\b|\b\d{4,9}\b'), '');
-
-    // 5. Baştaki ve sondaki sayıları temizle (sıra no, adet no vb.)
-    cleaned = cleaned.replaceAll(RegExp(r'^\d+\s+'), '');
-    cleaned = cleaned.replaceAll(RegExp(r'\s+\d+$'), '');
-
-    // 6. Fazlalık boşlukları düzelt
-    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
-
-    return cleaned;
-  }
-
-  /// Satırın sadece fiyat veya sayısal değerlerden oluşup oluşmadığını denetler.
-  bool _isOnlyPrice(String text) {
-    final trimmed = text.trim();
-    final isOnlyPrice = RegExp(r'^[\d\s.,TL₺TRY%:\-+*xXadADETadetsılmSIRAoOgG\(\)]+$').hasMatch(trimmed);
-    if (!isOnlyPrice) return false;
-    final tokens = trimmed.split(RegExp(r'\s+'));
-    return tokens.length < 3;
   }
 }

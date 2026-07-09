@@ -62,7 +62,7 @@ void main() {
         expect(result.first.source, 'ocr_priced');
       });
 
-      test('Raf/Etiket Modu: Aynı blockIndex altındaki satırları eşleştirir', () async {
+      test('Raf/Etiket Modu: Aynı bloktaki satırları eşleştirir', () async {
         final lines = [
           OcrLine(
             text: 'Biscolata Mood 110g',
@@ -91,7 +91,7 @@ void main() {
         expect(result.length, 1);
         expect(result.first.name, 'Biscolata Mood 110g');
         expect(result.first.price, 54.99);
-        expect(result.first.source, 'ocr_shelf_label');
+        expect(result.first.source, 'ocr_priced');
       });
 
       test('Gurultu satirlarini atlar', () async {
