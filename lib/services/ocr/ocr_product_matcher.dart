@@ -101,8 +101,9 @@ class OcrProductMatcher {
     final lower = text.toLowerCase();
     const noiseKeywords = [
       'kargo', 'teslimat', 'kupon', 'puan', 'yorum',
-      'bedava', 'indirim', 'sepet', 'stok', 'kdv',
+      'bedava', 'indirim', 'sepet',
       'taksit', 'kampanya', 'hakkımızda', 'iletişim',
+      'fiş no', 'fiş tarihi', 'mağaza',
     ];
     return noiseKeywords.any((kw) => lower.contains(kw));
   }
