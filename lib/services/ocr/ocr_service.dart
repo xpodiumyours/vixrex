@@ -32,7 +32,7 @@ class OcrService {
   Future<Result<OcrCatalogResult>> analyzeImage(Uint8List imageBytes, {String scanMode = 'receipt'}) async {
     try {
       // 1. OCR ile metni oku (preprocessing olmadan — test için)
-      final textResult = await _textParser.parseFromImage(imageBytes);
+      final textResult = await _textParser.parseFromImage(imageBytes, scanMode: scanMode);
       
       if (kDebugMode) {
         debugPrint('=== OCR RAW TEXT START ===');
@@ -76,7 +76,7 @@ class OcrService {
   Future<Result<List<DetectedProduct>>> extractProducts(Uint8List imageBytes, {String scanMode = 'receipt'}) async {
     try {
       final preprocessed = await _preprocessor.preprocess(imageBytes);
-      final textResult = await _textParser.parseFromImage(preprocessed);
+      final textResult = await _textParser.parseFromImage(preprocessed, scanMode: scanMode);
       final prices = _priceParser.extractPrices(textResult.rawText);
       final products = await _matcher.matchProducts(textResult.lines, prices, scanMode: scanMode);
 

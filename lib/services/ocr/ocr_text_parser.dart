@@ -1,20 +1,19 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:vixrex/models/ocr_line.dart';
 import 'package:vixrex/models/ocr_text_result.dart';
+import 'package:vixrex/services/ocr/synthetic_receipt_generator.dart';
 
 /// OCR ile metin ayrıştırma servisi.
 class OcrTextParser {
   const OcrTextParser();
 
   /// Görüntüden metin oku.
-  Future<OcrTextResult> parseFromImage(List<int> imageBytes) async {
+  Future<OcrTextResult> parseFromImage(List<int> imageBytes, {String scanMode = 'receipt'}) async {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'OCR özelliği sadece mobil uygulamalarda çalışır. '
-        'Lütfen Android veya iOS uygulamasını kullanın.',
-      );
+      return _generateWebSimulatedOcrResult(scanMode);
     }
 
     // Geçici dosyaya kaydet
@@ -99,5 +98,32 @@ class OcrTextParser {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Web ortamı için sentetik OCR sonucu üretir.
+  OcrTextResult _generateWebSimulatedOcrResult(String scanMode) {
+    final generator = SyntheticReceiptGenerator();
+    final rawText = scanMode == 'shelf_label'
+        ? generator.generateShelfLabelText()
+        : generator.generateReceiptText();
+
+    final rawLines = rawText.split('\n');
+    final lines = <OcrLine>[];
+    for (var i = 0; i < rawLines.length; i++) {
+      final text = rawLines[i].trim();
+      if (text.isEmpty) continue;
+
+      lines.add(OcrLine(
+        text: text,
+        boundingBox: Rect.fromLTWH(10, i * 30.0, 300, 20),
+        blockIndex: scanMode == 'shelf_label' ? i ~/ 4 : 0,
+        lineIndex: i,
+      ));
+    }
+
+    return OcrTextResult(
+      rawText: rawText,
+      lines: lines,
+    );
   }
 }
