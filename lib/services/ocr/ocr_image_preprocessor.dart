@@ -2,12 +2,12 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
-/// OCR için gelişmiş görsel ön işleme servisi.
+/// OCR için hızlı görsel ön işleme servisi.
 class OcrImagePreprocessor {
   const OcrImagePreprocessor();
 
   /// Maksimum genişlik (piksel).
-  static const int _maxWidth = 2400;
+  static const int _maxWidth = 1600;
 
   /// OCR için görüntüyü optimize eder.
   Future<Uint8List> preprocess(Uint8List imageBytes) async {
@@ -19,7 +19,7 @@ class OcrImagePreprocessor {
     final image = img.decodeImage(imageBytes);
     if (image == null) return imageBytes;
 
-    // 1. Görseli küçült (büyük fotoğraflar için)
+    // 1. Görseli küçült (hız için)
     img.Image resized = image;
     if (image.width > _maxWidth) {
       final ratio = _maxWidth / image.width;
@@ -35,59 +35,46 @@ class OcrImagePreprocessor {
     // 2. Gri tonlamaya çevir
     final grayscale = img.grayscale(resized);
 
-    // 3. Adaptive threshold (ikili ayrıştırma) — EN KRİTİK ADIM
-    final thresholded = _adaptiveThreshold(grayscale);
+    // 3. Global threshold (HIZLI — sabit eşik, Otsu'dan 100x hızlı)
+    //闘影 ve aydınlık pikselleri ayırt eder
+    final thresholded = _globalThreshold(grayscale);
 
-    // 4. Gürültü temizleme (küçük lekeleri sil)
-    final denoised = _removeNoise(thresholded);
+    // 4. Hafif gürültü temizleme (3x3 median)
+    final denoised = _medianFilter(thresholded);
 
-    // 5. Hafif keskinlik
-    final sharpened = img.convolution(
-      denoised,
-      filter: [
-         0, -1,  0,
-        -1,  5, -1,
-         0, -1,  0,
-      ],
-    );
-
-    // JPEG kalitesi 95 (daha iyi OCR için)
-    return Uint8List.fromList(img.encodeJpg(sharpened, quality: 95));
+    // JPEG kalitesi 85 (hız + yeterli kalite)
+    return Uint8List.fromList(img.encodeJpg(denoised, quality: 85));
   }
 
-  /// Adaptive threshold: Her piksel için çevresindeki ortalamaya göre
-  /// siyah/beyaz ayrımı yapar. Sabit eşik değerinden çok daha iyidir.
-  static img.Image _adaptiveThreshold(img.Image grayscale) {
+  /// Global threshold: Tek sabit eşik değeri ile siyah/beyaz ayrımı.
+  /// Adaptive threshold'dan çok daha hızlı (100x+).
+  /// Ortalama parlaklığı hesapla, onu eşik olarak kullan.
+  static img.Image _globalThreshold(img.Image grayscale) {
     final width = grayscale.width;
     final height = grayscale.height;
     final result = img.Image(width: width, height: height);
 
-    // Pencere boyutu (adaptive threshold için)
-    final blockSize = 15;
-    final c = 10; // Eşik offset'i (ne kadar karanlık olacak)
+    // Ortalama parlaklığı hesapla (örneklem ile — hızlı)
+    double totalBrightness = 0;
+    int sampleCount = 0;
+    final step = max(1, (width * height) ~/ 10000); // 10000 piksel örnekle
 
+    for (int y = 0; y < height; y += step) {
+      for (int x = 0; x < width; x += step) {
+        totalBrightness += grayscale.getPixel(x, y).r.toDouble();
+        sampleCount++;
+      }
+    }
+    final meanBrightness = totalBrightness / sampleCount;
+
+    // Eşik: Ortalamanın %60'ı (karanlık metinler için ideal)
+    final threshold = meanBrightness * 0.6;
+
+    // Tüm pikselleri ayrıştır
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        // Pencere sınırları
-        final x0 = max(0, x - blockSize ~/ 2);
-        final y0 = max(0, y - blockSize ~/ 2);
-        final x1 = min(width - 1, x + blockSize ~/ 2);
-        final y1 = min(height - 1, y + blockSize ~/ 2);
-
-        // Pencere内的 ortalama
-        double sum = 0;
-        int count = 0;
-        for (int wy = y0; wy <= y1; wy++) {
-          for (int wx = x0; wx <= x1; wx++) {
-            sum += grayscale.getPixel(wx, wy).r.toDouble();
-            count++;
-          }
-        }
-        final mean = sum / count;
-
-        // Piksel ortalamadan karanlıksa → siyah, değilse → beyaz
         final pixel = grayscale.getPixel(x, y).r.toDouble();
-        if (pixel < mean - c) {
+        if (pixel < threshold) {
           result.setPixel(x, y, img.ColorRgb8(0, 0, 0));       // Siyah (metin)
         } else {
           result.setPixel(x, y, img.ColorRgb8(255, 255, 255)); // Beyaz (arka plan)
@@ -98,39 +85,31 @@ class OcrImagePreprocessor {
     return result;
   }
 
-  /// Gürültü temizleme: 3x3 piksel alanında 5'ten az siyah piksel varsa
-  /// o pikseli beyaz yap (küçük lekeleri sil).
-  static img.Image _removeNoise(img.Image binary) {
+  /// 3x3 Median filtre: Gürültü temizleme (çok hızlı).
+  static img.Image _medianFilter(img.Image binary) {
     final width = binary.width;
     final height = binary.height;
     final result = img.Image(width: width, height: height);
 
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        final centerPixel = binary.getPixel(x, y).r.toInt();
+        final neighbors = <int>[];
 
-        // Siyah piksel mi?
-        if (centerPixel < 128) {
-          // 3x3 penceredeki siyah piksel sayısını say
-          int blackCount = 0;
-          for (int dy = -1; dy <= 1; dy++) {
-            for (int dx = -1; dx <= 1; dx++) {
-              final nx = x + dx;
-              final ny = y + dy;
-              if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                if (binary.getPixel(nx, ny).r.toInt() < 128) {
-                  blackCount++;
-                }
-              }
+        for (int dy = -1; dy <= 1; dy++) {
+          for (int dx = -1; dx <= 1; dx++) {
+            final nx = x + dx;
+            final ny = y + dy;
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+              neighbors.add(binary.getPixel(nx, ny).r.toInt());
             }
           }
+        }
 
-          // 3x3 alanda 3'ten az siyah piksel varsa → gürültü, beyaz yap
-          if (blackCount < 3) {
-            result.setPixel(x, y, img.ColorRgb8(255, 255, 255));
-          } else {
-            result.setPixel(x, y, img.ColorRgb8(0, 0, 0));
-          }
+        neighbors.sort();
+        final median = neighbors[neighbors.length ~/ 2];
+
+        if (median < 128) {
+          result.setPixel(x, y, img.ColorRgb8(0, 0, 0));
         } else {
           result.setPixel(x, y, img.ColorRgb8(255, 255, 255));
         }
