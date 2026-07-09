@@ -28,9 +28,11 @@ const SystemUiOverlayStyle _systemUiOverlayStyle = SystemUiOverlayStyle(
 void _setupGlobalErrorHandler() {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    if (kDebugMode) debugPrint(
-      '[GlobalError] Captured Flutter Error: ${details.exceptionAsString()}',
-    );
+    if (kDebugMode) {
+      debugPrint(
+        '[GlobalError] Captured Flutter Error: ${details.exceptionAsString()}',
+      );
+    }
   };
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     if (kDebugMode) debugPrint('[GlobalError] Captured Platform/Async Error: $error');

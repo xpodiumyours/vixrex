@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 
@@ -8,7 +7,7 @@ mixin StoreCoreMixin on ChangeNotifier {
   // --- States ---
   bool _isLoading = false;
   bool _isPublishing = false;
-  bool _isDeleting = false;
+  final bool _isDeleting = false;
   bool _isLoadingArticles = false;
   List<Map<String, dynamic>> _articles = [];
 
