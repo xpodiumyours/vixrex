@@ -6,14 +6,17 @@ import 'package:vixrex/theme/app_colors.dart';
 /// OCR tarama widget'ı - kamera/galeri seçimi.
 class OcrScannerWidget extends StatelessWidget {
   final Function(Uint8List imageBytes) onImageSelected;
+  final String scanMode;
 
   const OcrScannerWidget({
     super.key,
     required this.onImageSelected,
+    this.scanMode = 'receipt',
   });
 
   @override
   Widget build(BuildContext context) {
+    final isShelf = scanMode == 'shelf_label';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -23,24 +26,26 @@ class OcrScannerWidget extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.document_scanner_rounded,
+          Icon(
+            isShelf ? Icons.label_outline_rounded : Icons.receipt_long_rounded,
             size: 48,
             color: AppColors.primary,
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Fotoğraf veya Fatura Çekin',
-            style: TextStyle(
+          Text(
+            isShelf ? 'Raf veya Fiyat Etiketi Çekin' : 'Fotoğraf veya Fatura Çekin',
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppColors.darkText,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Ürünleri otomatik olarak tanıyacağız',
-            style: TextStyle(
+          Text(
+            isShelf
+                ? 'Sarı/beyaz etiketler ve ürünler eşleştirilecek'
+                : 'Ürünler ve fiyatlar faturadan otomatik tanınacak',
+            style: const TextStyle(
               fontSize: 13,
               color: AppColors.mutedText,
             ),

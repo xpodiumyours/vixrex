@@ -14,30 +14,90 @@ class OcrProductMatcher {
   /// OCR satırlarını ve fiyatlarıyla ürünleri eşleştir.
   Future<List<DetectedProduct>> matchProducts(
     List<OcrLine> lines,
-    List<OcrPrice> prices,
-  ) async {
+    List<OcrPrice> prices, {
+    String scanMode = 'receipt',
+  }) async {
     final products = <DetectedProduct>[];
     final usedLines = <int>{};
 
-    // 1. Önce fiyat içeren satırları işle
-    for (final price in prices) {
-      // Fiyata en yakın metin satırını bul (yukarıda)
-      final nearbyLine = _findNearestTextAbove(lines, price, usedLines);
-      if (nearbyLine != null) {
-        usedLines.add(nearbyLine.lineIndex);
+    if (scanMode == 'shelf_label') {
+      // 1. Raf/Etiket Modu: Aynı blockIndex altındaki veya hemen üstündeki metinleri fiyatla eşleştir
+      for (final price in prices) {
+        OcrLine? matchingProductLine;
 
-        final normalized = TextUtils.normalizeTurkish(nearbyLine.text);
-        final match = await _verifier.findBestMatch(normalized);
+        // Aynı block içindeki en yakın üst satırı bulmaya çalış
+        final sameBlockLines = lines.where((l) =>
+            l.blockIndex == price.blockIndex &&
+            l.lineIndex < price.lineNumber &&
+            !usedLines.contains(l.lineIndex) &&
+            l.text.length >= 3 &&
+            !_isNoiseLine(l.text));
 
-        products.add(DetectedProduct(
-          id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${products.length}',
-          name: match?.urunAdi ?? nearbyLine.text,
-          brand: match?.marka ?? '',
-          category: match?.kategori ?? 'Genel',
-          price: price.amount,
-          confidence: match?.confidence ?? 0.3,
-          source: 'ocr_priced',
-        ));
+        if (sameBlockLines.isNotEmpty) {
+          // En yakın üst satırı seç
+          matchingProductLine = sameBlockLines.reduce((a, b) =>
+              (price.lineNumber - a.lineIndex) < (price.lineNumber - b.lineIndex) ? a : b);
+        } else {
+          // Farklı block'taysa en yakın dikey mesafedeki üst satırı ara
+          final candidates = lines.where((l) =>
+              !usedLines.contains(l.lineIndex) &&
+              l.text.length >= 3 &&
+              !_isNoiseLine(l.text) &&
+              l.centerY < lines.firstWhere((pl) => pl.lineIndex == price.lineNumber && pl.blockIndex == price.blockIndex, orElse: () => lines.first).centerY);
+
+          if (candidates.isNotEmpty) {
+            final priceLine = lines.firstWhere((pl) => pl.lineIndex == price.lineNumber && pl.blockIndex == price.blockIndex, orElse: () => lines.first);
+            OcrLine? closest;
+            double minDist = double.infinity;
+            for (final c in candidates) {
+              final dist = priceLine.verticalDistanceTo(c);
+              if (dist < minDist && dist < 300) { // Maksimum dikey mesafe sınırı
+                minDist = dist;
+                closest = c;
+              }
+            }
+            matchingProductLine = closest;
+          }
+        }
+
+        if (matchingProductLine != null) {
+          usedLines.add(matchingProductLine.lineIndex);
+
+          final normalized = TextUtils.normalizeTurkish(matchingProductLine.text);
+          final match = await _verifier.findBestMatch(normalized);
+
+          products.add(DetectedProduct(
+            id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${products.length}',
+            name: match?.urunAdi ?? matchingProductLine.text,
+            brand: match?.marka ?? '',
+            category: match?.kategori ?? 'Genel',
+            price: price.amount,
+            confidence: (match?.confidence ?? 0.3) + 0.1, // Blok içi eşleşmeler daha güvenilirdir
+            source: 'ocr_shelf_label',
+          ));
+        }
+      }
+    } else {
+      // 2. Fiş/Fatura Modu: Önce fiyat içeren satırları işle
+      for (final price in prices) {
+        // Fiyata en yakın metin satırını bul (yukarıda)
+        final nearbyLine = _findNearestTextAbove(lines, price, usedLines);
+        if (nearbyLine != null) {
+          usedLines.add(nearbyLine.lineIndex);
+
+          final normalized = TextUtils.normalizeTurkish(nearbyLine.text);
+          final match = await _verifier.findBestMatch(normalized);
+
+          products.add(DetectedProduct(
+            id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${products.length}',
+            name: match?.urunAdi ?? nearbyLine.text,
+            brand: match?.marka ?? '',
+            category: match?.kategori ?? 'Genel',
+            price: price.amount,
+            confidence: match?.confidence ?? 0.3,
+            source: 'ocr_priced',
+          ));
+        }
       }
     }
 
@@ -78,6 +138,7 @@ class OcrProductMatcher {
       if (usedLines.contains(line.lineIndex)) continue;
       if (line.text.length < 3) continue;
       if (_isNoiseLine(line.text)) continue;
+      if (line.text == price.rawText || line.text.contains(price.rawText)) continue;
 
       // Satır fiyatın yukarısında olmalı (dikey koridor: 450px)
       final verticalDiff = price.lineNumber - line.lineIndex;

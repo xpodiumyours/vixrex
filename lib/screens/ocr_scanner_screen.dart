@@ -57,10 +57,41 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Tarama Modu Seçici
+            if (!widget.ocrController.hasResult) ...[
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment<String>(
+                    value: 'receipt',
+                    label: Text('Fiş/Fatura Modu'),
+                    icon: Icon(Icons.receipt_long_rounded),
+                  ),
+                  ButtonSegment<String>(
+                    value: 'shelf_label',
+                    label: Text('Raf/Etiket Modu'),
+                    icon: Icon(Icons.label_outline_rounded),
+                  ),
+                ],
+                selected: {widget.ocrController.scanMode},
+                onSelectionChanged: (Set<String> newSelection) {
+                  setState(() {
+                    widget.ocrController.scanMode = newSelection.first;
+                  });
+                },
+                style: SegmentedButton.styleFrom(
+                  selectedBackgroundColor: AppColors.primary,
+                  selectedForegroundColor: Colors.white,
+                  backgroundColor: AppColors.surface,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Tarama widget'ı
             if (!widget.ocrController.hasResult)
               OcrScannerWidget(
                 onImageSelected: _analyzeImage,
+                scanMode: widget.ocrController.scanMode,
               ),
 
             // Hata mesajı

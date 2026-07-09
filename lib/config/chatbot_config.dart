@@ -197,15 +197,20 @@ abstract final class ChatbotConfig {
 
       case 'ocr_scan':
         return ChatMessage.bot(
-          'Fotoğraftan ürün çıkarma özelliği ile fotoğraf veya fatura çekerek otomatik ürün kataloğu oluşturabilirsiniz.\n\n'
-          'Hazırsanız fotoğrafınızı çekin!',
+          'Fotoğraftan ürün çıkarma özelliği ile fiş/fatura veya raf fiyat etiketi çekerek otomatik ürün kataloğu oluşturabilirsiniz.\n\n'
+          'Tarama yapmak istediğiniz yöntemi seçin:',
           quickReplies: [
             const QuickReply(
-              label: '📷 Fotoğraf Çek',
+              label: '📷 Fiş/Fatura Tara',
               payload: 'action_step',
               action: VixRexAction.openOcrScanner,
             ),
-            const QuickReply(label: 'Nasıl Çalışır?', payload: 'ocr_info'),
+            const QuickReply(
+              label: '🏷️ Raf/Etiket Tara',
+              payload: 'action_step',
+              action: VixRexAction.openOcrScannerShelf,
+            ),
+            const QuickReply(label: '❓ Nasıl Çalışır?', payload: 'ocr_info'),
           ],
         );
 

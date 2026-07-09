@@ -3,6 +3,7 @@ import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/ocr_catalog_result.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
+import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
 import 'store_editor_controller.dart';
 
 /// OCR state yönetimi controller'ı.
@@ -20,6 +21,15 @@ class OcrController extends ChangeNotifier {
   })  : _ocrService = ocrService,
         _editorController = editorController;
 
+  String _scanMode = 'receipt';
+  String get scanMode => _scanMode;
+
+  set scanMode(String mode) {
+    if (_scanMode == mode) return;
+    _scanMode = mode;
+    notifyListeners();
+  }
+
   OcrCatalogResult? get result => _result;
   bool get isProcessing => _isProcessing;
   String? get errorMessage => _errorMessage;
@@ -31,7 +41,7 @@ class OcrController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _ocrService.analyzeImage(imageBytes);
+    final result = await _ocrService.analyzeImage(imageBytes, scanMode: _scanMode);
 
     result.when(
       success: (catalog) {
@@ -108,6 +118,21 @@ class OcrController extends ChangeNotifier {
     }
 
     try {
+      // 1. Düzeltilmiş feedback verilerini Supabase'e gönder (Active Learning Loop)
+      final feedbackList = _result!.products.map((p) => {
+        'name': p.name,
+        'price': p.price,
+        'is_approved': p.isApproved,
+        'confidence': p.confidence,
+      }).toList();
+
+      await const OcrFeedbackService().saveFeedback(
+        rawOcrText: _result!.rawText,
+        correctedProducts: feedbackList,
+        scanMode: _scanMode,
+      );
+
+      // 2. Ürünleri editör kontrolcüsüne ekle
       for (final product in validProducts) {
         await _editorController?.addProduct(
           _convertToProduct(product),

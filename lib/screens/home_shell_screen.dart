@@ -324,7 +324,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     });
   }
 
-  void _openOcrScanner() {
+  void _openOcrScanner({String scanMode = 'receipt'}) {
     final editorController = _myVitrinKey.currentState?.controller;
     if (editorController == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -336,13 +336,16 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       return;
     }
 
+    final ocrController = OcrController(
+      ocrService: const OcrService(),
+      editorController: editorController,
+    );
+    ocrController.scanMode = scanMode;
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => OcrScannerScreen(
-          ocrController: OcrController(
-            ocrService: const OcrService(),
-            editorController: editorController,
-          ),
+          ocrController: ocrController,
         ),
       ),
     );
@@ -392,7 +395,10 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         _vixrexOpenCoverTemplatePicker();
         break;
       case VixRexAction.openOcrScanner:
-        _openOcrScanner();
+        _openOcrScanner(scanMode: 'receipt');
+        break;
+      case VixRexAction.openOcrScannerShelf:
+        _openOcrScanner(scanMode: 'shelf_label');
         break;
       case VixRexAction.none:
         break;

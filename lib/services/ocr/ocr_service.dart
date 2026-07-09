@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:vixrex/core/result.dart';
 import 'package:vixrex/core/supabase_error_mapper.dart';
 import 'package:vixrex/models/detected_product.dart';
@@ -29,19 +29,37 @@ class OcrService {
         );
 
   /// Görüntüden ürün kataloğu oluşturur.
-  Future<Result<OcrCatalogResult>> analyzeImage(Uint8List imageBytes) async {
+  Future<Result<OcrCatalogResult>> analyzeImage(Uint8List imageBytes, {String scanMode = 'receipt'}) async {
     try {
-      // 1. Görseli ön işle
-      final preprocessed = await _preprocessor.preprocess(imageBytes);
+      // 1. OCR ile metni oku (preprocessing olmadan — test için)
+      final textResult = await _textParser.parseFromImage(imageBytes);
+      
+      if (kDebugMode) {
+        debugPrint('=== OCR RAW TEXT START ===');
+        debugPrint(textResult.rawText);
+        debugPrint('=== OCR RAW TEXT END ===');
+        debugPrint('OCR Lines: ${textResult.lines.length}');
+        for (final line in textResult.lines) {
+          debugPrint('LINE [${line.lineIndex}]: "${line.text}"');
+        }
+      }
 
-      // 2. OCR ile metni oku
-      final textResult = await _textParser.parseFromImage(preprocessed);
-
-      // 3. Fiyatları çıkar
+      // 2. Fiyatları çıkar
       final prices = _priceParser.extractPrices(textResult.rawText);
+      
+      if (kDebugMode) {
+        debugPrint('Extracted prices: ${prices.length}');
+        for (final p in prices) {
+          debugPrint('PRICE: ${p.rawText} → ${p.amount}');
+        }
+      }
 
-      // 4. Ürünleri eşleştir (DB doğrulaması dahil)
-      final products = await _matcher.matchProducts(textResult.lines, prices);
+      // 3. Ürünleri eşleştir
+      final products = await _matcher.matchProducts(textResult.lines, prices, scanMode: scanMode);
+      
+      if (kDebugMode) {
+        debugPrint('Matched products: ${products.length}');
+      }
 
       return Result.success(OcrCatalogResult(
         rawText: textResult.rawText,
@@ -49,17 +67,18 @@ class OcrService {
         confidence: _calculateConfidence(products),
       ));
     } catch (e, s) {
+      if (kDebugMode) debugPrint('OCR ERROR: $e');
       return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
 
   /// Ürün adaylarını listele (kullanıcı seçimi için).
-  Future<Result<List<DetectedProduct>>> extractProducts(Uint8List imageBytes) async {
+  Future<Result<List<DetectedProduct>>> extractProducts(Uint8List imageBytes, {String scanMode = 'receipt'}) async {
     try {
       final preprocessed = await _preprocessor.preprocess(imageBytes);
       final textResult = await _textParser.parseFromImage(preprocessed);
       final prices = _priceParser.extractPrices(textResult.rawText);
-      final products = await _matcher.matchProducts(textResult.lines, prices);
+      final products = await _matcher.matchProducts(textResult.lines, prices, scanMode: scanMode);
 
       return Result.success(products);
     } catch (e, s) {
