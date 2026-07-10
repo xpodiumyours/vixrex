@@ -175,9 +175,13 @@ class OcrProductMatcher {
     // 3. BoundingBox mesafesi: Yakın ise yüksek güvenilirlik
     if (price.boundingBox != null && line.boundingBox != Rect.zero) {
       final yDiff = (line.centerY - price.centerY).abs();
-      if (yDiff < 30) score += 0.1; // Aynı satır
-      else if (yDiff < 80) score += 0.05; // Yakın
-      else if (yDiff > 150) score -= 0.1; // Uzak
+      if (yDiff < 30) {
+        score += 0.1; // Aynı satır
+      } else if (yDiff < 80) {
+        score += 0.05; // Yakın
+      } else if (yDiff > 150) {
+        score -= 0.1; // Uzak
+      }
     }
 
     // 4. Fiyat formatı: Kuruşlu fiyatlar daha güvenilir

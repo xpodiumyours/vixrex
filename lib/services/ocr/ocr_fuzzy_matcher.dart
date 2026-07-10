@@ -18,8 +18,12 @@ class OcrFuzzyMatcher {
       (i) => List.generate(b.length + 1, (j) => 0),
     );
 
-    for (int i = 0; i <= a.length; i++) matrix[i][0] = i;
-    for (int j = 0; j <= b.length; j++) matrix[0][j] = j;
+    for (int i = 0; i <= a.length; i++) {
+      matrix[i][0] = i;
+    }
+    for (int j = 0; j <= b.length; j++) {
+      matrix[0][j] = j;
+    }
 
     for (int i = 1; i <= a.length; i++) {
       for (int j = 1; j <= b.length; j++) {
@@ -82,18 +86,25 @@ class OcrFuzzyMatcher {
     int k = 0;
     for (int i = 0; i < shorter.length; i++) {
       if (!shorterMatches[i]) continue;
-      while (!longerMatches[k]) k++;
+      while (!longerMatches[k]) {
+        k++;
+      }
       if (shorter[i] != longer[k]) transpositions++;
       k++;
     }
 
     return (matches / shorter.length +
             matches / longer.length +
-            (matches - transpositions ~/ 2) / matches) / 3.0;
+            (matches - transpositions ~/ 2) / matches) /
+        3.0;
   }
 
   /// Jaro-Winkler benzerliği (prefix bonus'u ile).
-  double jaroWinklerSimilarity(String a, String b, {double boostThreshold = 0.7}) {
+  double jaroWinklerSimilarity(
+    String a,
+    String b, {
+    double boostThreshold = 0.7,
+  }) {
     final jaro = jaroSimilarity(a, b);
     if (jaro < boostThreshold) return jaro;
 
@@ -146,14 +157,19 @@ class OcrFuzzyMatcher {
       final normalizedDb = _normalize(databaseProducts[i]);
 
       // Birden fazla metrik kullan, en yüksek olanı al
-      final levenshteinScore = levenshteinSimilarity(normalizedOcr, normalizedDb);
-      final jaroWinklerScore = jaroWinklerSimilarity(normalizedOcr, normalizedDb);
+      final levenshteinScore = levenshteinSimilarity(
+        normalizedOcr,
+        normalizedDb,
+      );
+      final jaroWinklerScore = jaroWinklerSimilarity(
+        normalizedOcr,
+        normalizedDb,
+      );
       final tokenScore = tokenSetRatio(normalizedOcr, normalizedDb);
 
       // Ağırlıklı ortalama
-      final combinedScore = levenshteinScore * 0.3 +
-          jaroWinklerScore * 0.4 +
-          tokenScore * 0.3;
+      final combinedScore =
+          levenshteinScore * 0.3 + jaroWinklerScore * 0.4 + tokenScore * 0.3;
 
       if (combinedScore > bestScore) {
         bestScore = combinedScore;
@@ -168,9 +184,18 @@ class OcrFuzzyMatcher {
     return FuzzyMatchResult(
       matchedText: databaseProducts[bestIndex],
       score: bestScore,
-      levenshteinScore: levenshteinSimilarity(normalizedOcr, _normalize(databaseProducts[bestIndex])),
-      jaroWinklerScore: jaroWinklerSimilarity(normalizedOcr, _normalize(databaseProducts[bestIndex])),
-      tokenScore: tokenSetRatio(normalizedOcr, _normalize(databaseProducts[bestIndex])),
+      levenshteinScore: levenshteinSimilarity(
+        normalizedOcr,
+        _normalize(databaseProducts[bestIndex]),
+      ),
+      jaroWinklerScore: jaroWinklerSimilarity(
+        normalizedOcr,
+        _normalize(databaseProducts[bestIndex]),
+      ),
+      tokenScore: tokenSetRatio(
+        normalizedOcr,
+        _normalize(databaseProducts[bestIndex]),
+      ),
     );
   }
 

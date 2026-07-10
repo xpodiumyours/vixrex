@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
-import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/ocr/ocr_scanner_widget.dart';
 import 'package:vixrex/widgets/ocr/ocr_result_list.dart';
