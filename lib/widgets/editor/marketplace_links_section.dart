@@ -135,7 +135,7 @@ class _MarketplaceLinkRow extends StatelessWidget {
             Expanded(
               flex: 2,
               child: DropdownButtonFormField<String>(
-                initialValue: dropdownValue,
+                value: dropdownValue,
                 hint: const Text('Platform', style: TextStyle(fontSize: 13)),
                 decoration: InputDecoration(
                   filled: true,

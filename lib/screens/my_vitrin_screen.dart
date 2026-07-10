@@ -134,7 +134,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           body: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final isDesktop = constraints.maxWidth > 720;
+                final isDesktop = constraints.maxWidth > 900;
                 return SingleChildScrollView(
                   padding: EdgeInsets.symmetric(
                     horizontal: isDesktop ? 32 : 16,
@@ -142,7 +142,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                   ),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 680),
+                      constraints: const BoxConstraints(maxWidth: 1200),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [

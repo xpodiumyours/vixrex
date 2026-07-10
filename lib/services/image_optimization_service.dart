@@ -36,7 +36,7 @@ class ImageOptimizationService {
 
   static const int maxLongEdge = 1600;
   static const int fallbackLongEdge = 1200;
-  static const int maxPreferredBytes = 2 * 1024 * 1024;
+  static const int maxPreferredBytes = 1 * 1024 * 1024;
 
   Future<OptimizedImage> optimize(
     Uint8List bytes, {
@@ -97,7 +97,7 @@ class ImageOptimizationService {
           bytes,
           minWidth: retryTarget.width,
           minHeight: retryTarget.height,
-          quality: 72,
+          quality: 65,
           format: format,
           keepExif: false,
         );

@@ -213,6 +213,258 @@ Her adımda test et. Context window'u 80K altında tut.
 
 ---
 
+## 2.11 Kötü/Ambiguous Prompt Güvenliği (AI Sizi Anlamasa Bile)
+
+Bu bölüm, prompt'unuz net olmasa bile AI'ın doğru anlamasını ve yanlış yönlere gitmemesini sağlayan güvenlik mekanizmalarıdır.
+
+### 2.11.1 Prompt Öncesi Context Priming (Zorunlu)
+
+Her session başında AI'ın beynini "ısıtın". AI prompt'unuzu anlamadan önce projenin bağlamını bilsin:
+
+```
+ÖNCE BU DOSYALARI OKU (Sırayla):
+1. VIXREX_OTURUM_OZETI.md
+2. .opencode/skills/SKILL.md
+3. PLAN.md (sadece Faz 1)
+4. [İlgili max 3 dosya]
+
+OKUDUKTAN SONRA bu prompt'u işle.
+```
+
+Neden: AI, prompt'unuzu kendi başına yorumlamaz. Önce projenin mevcut durumunu, kurallarını ve sınırlarını bilirse, ambiguous prompt'unuzu bile doğru çerçevede anlar.
+
+### 2.11.2 Clarification Loop (Anlamazsa Sorma Zorunluluğu)
+
+AI'ın prompt'unuzu anlamadığını düşündüğünüzde veya ambiguous bir ifade kullandığınızda, AI'a şu komutu verin:
+
+```
+Bu prompt'ta net olmadığım noktalar olabilir.
+Önce:
+1. Prompt'umu kendi kelimelerinle özetle
+2. Anlamadığın veya belirsiz bulduğun noktaları listele
+3. Varsayımlarını (assumptions) yaz
+4. Uygulamadan ÖNCE onayımı al
+
+Emin olmadığın bir nokta varsa UYGULAMA, sadece SOR.
+```
+
+Kural: AI, emin olmadığı bir kararı kendi başına veremez. Sana sormak zorunda.
+
+### 2.11.3 Negative Constraints (Yapma Listesi) - En Güçlü Araç
+
+AI'a ne yapacağını söylemek yerine, ne YAPMAYACAĞINI söylemek daha etkilidir. Her prompt'ta mutlaka ekle:
+
+```
+YAPMA:
+- Mevcut kodu silip yeniden yazma
+- Yeni bağımlılık ekle (önce onay iste)
+- Diğer dosyalara dokun (sadece listelenen dosyalar)
+- Faz 1 dışına çık
+- Test yazmadan bitir
+- setState sonrası mounted kontrolü eklemeden geçme
+- catch (_) {} kullanma
+```
+
+Neden: Negative constraints, AI'ın "hallucination" yapma alanını daraltır. AI ne yapmayacağını bilirse, yapabilecekleri arasında daha doğru seçim yapar.
+
+### 2.11.4 Acceptance Criteria (Başarı Kriterleri) - Prompt'un Sözleşmesi
+
+Her prompt'un sonuna mutlaka ekle. AI'ın ne zaman "bitti" diyeceğini tanımla:
+
+```
+KABUL KRİTERLERİ (Hepsi sağlanmadan bitirme):
+□ flutter analyze sıfır hata
+□ flutter test tüm testler geçiyor
+□ if (!mounted) return; eklendi
+□ try-catch eklendi
+□ debugPrint kDebugMode ile sarmalandı
+□ E2E test senaryosu yazıldı
+□ Diğer platform (Flutter/Next.js) etkilenmedi
+```
+
+Neden: AI, prompt'unuzu tamamladığını sanıp eksik bırakabilir. Acceptance criteria, AI'ın "bitti" demeden önce kontrol etmesi gereken maddelerdir.
+
+### 2.11.5 Output Format Zorunluluğu (AI'ın Nasıl Cevap Vereceğini Belirle)
+
+Ambiguous prompt'unuzun sonucunun nasıl döneceğini tanımla:
+
+```
+CEVAP FORMATI:
+1. Önce: Anladığını özetle (1 paragraf)
+2. Sonra: Implementasyon planı (maddele)
+3. Sonra: Kod (sadece değişen dosyalar)
+4. Sonra: Test senaryoları
+5. Son: Acceptance criteria kontrol listesi
+
+KOD CEVABI KURALLARI:
+- Sadece değişen dosyaları göster
+- Tam dosya içeriği değil, sadece diff göster
+- Açıklama ekleme, sadece kod ve yorum satırları
+- Eğer yeni dosya ise tam içeriğini göster
+```
+
+Neden: AI, nasıl cevap vereceğini bilmezse uzun, gereksiz açıklamalarla doldurur veya eksik cevap verir. Format belirlerseniz, AI disiplinli kalır.
+
+### 2.11.6 Few-Shot Example (Örnek Vererek Anlat)
+
+Ne istediğinizi kelimelerle açıklayamıyorsanız, örnek verin:
+
+```
+İSTEDİĞİM PATTERN (Örnek):
+
+Future<Result<User>> getUser(String id) async {
+  try {
+    final response = await _client.from('users').select().eq('id', id).single();
+    return Result.success(User.fromJson(response));
+  } catch (e) {
+    if (kDebugMode) debugPrint('getUser error: $e');
+    return Result.failure('Kullanıcı bulunamadı');
+  }
+}
+
+Şimdi aynı pattern ile [yeni fonksiyon] yaz.
+```
+
+Neden: AI, örnekleri kopyala-yapıştır gibi taklit eder. Ne istediğinizi tarif etmek yerine örnek göstermek, ambiguous prompt'ları bile netleştirir.
+
+### 2.11.7 Role-Based Prompting (AI'ın Kimliğini Belirle)
+
+Her prompt'ta AI'ın kim olduğunu tanımla. Bu, AI'ın nasıl düşüneceğini belirler:
+
+```
+ROL: Sen bir senior Flutter geliştiricisisin.
+- Clean Architecture uzmanısın
+- Result<T> pattern kullanırsın
+- Türkçe hata mesajları yazarsın
+- Test yazmadan kod teslim etmezsin
+- Mevcut kodu refactor ederken bozmazsın
+
+Bu rolde: [prompt'unuz]
+```
+
+Neden: AI, genel bir asistan gibi davranmak yerine, belirli bir rolde daha tutarlı ve doğru cevaplar verir.
+
+### 2.11.8 Iterative Confirmation (Adım Adım Onay)
+
+Büyük veya ambiguous bir istekte, AI'ın her adımda onay almasını zorunlu kıl:
+
+```
+BU İŞLEMİ ADIM ADIM YAP:
+Adım 1: Planı oluştur → Bana göster, onay bekle
+Adım 2: Model/Entity değişikliği → Bana göster, onay bekle
+Adım 3: Servis katmanı → Bana göster, onay bekle
+Adım 4: UI katmanı → Bana göster, onay bekle
+Adım 5: Test → Bana göster, onay bekle
+
+Bir adımı onaylamadan SONRAKİ adıma geçme.
+```
+
+Neden: AI, tek seferde çok fazla kod üretirse hata yapma olasılığı artar. Adım adım ilerlerseniz, her adımda düzeltme yapabilirsiniz.
+
+### 2.11.9 Vibe Collapse Tespiti ve Kurtarma
+
+AI'ın "kaybolduğunu" nasıl anlarsınız ve kurtarırsınız:
+
+**Belirtiler (Vibe Collapse):**
+- Aynı hatayı tekrar tekrar yapıyor
+- Önceki kararlara aykırı kod üretiyor
+- İki çözüm arasında gidip geliyor (A'ya fix → B bozuluyor → B'ye fix → A bozuluyor)
+- Context window dolmuş olabilir (80K+ token)
+
+**Kurtarma Protokolü:**
+1. DUR: Yeni prompt yazmayı bırak
+2. KAYDET: Mevcut çalışmayı commit'le (`git add . && git commit -m "WIP: [özellik]"`)
+3. YENİ SESSION: Claude Code'da `/clear` veya yeni session başlat
+4. ÖZET OKU: `VIXREX_OTURUM_OZETI.md` + `NOTES.md` oku
+5. TEK ADIM: Sadece bir adımı tekrar iste, bütün özelliği değil
+
+Neden: Uzun sessionlarda AI'ın performansı düşer ("lost in the middle"). Yeni session, temiz bir başlangıçtır.
+
+### 2.11.10 Prompt Fallback Template (Hiçbir Şey Anlamazsanız)
+
+En kötü senaryo: AI prompt'unuzu hiç anlamadı. Kullanacağınız son çare:
+
+```
+PROMPT'UMU ANLAMADIYSAN:
+"Anlamadım" demek YERİNE, prompt'umu parçalara ayır
+Her parçayı ayrı ayrı özetle
+Hangi parçayı anlamadığını belirt
+Ben düzeltinceye kadar UYGULAMA
+Emin olmadığın hiçbir şeyi varsayma (assumption yapma)
+BENİM YERİME KARAR VERME. Sadece SOR.
+```
+
+Neden: AI, "anlamadım" demek yerine tahminde bulunur (hallucination). Bu template, AI'ı tahmin yapmaktan alıkoyar ve size sormaya zorlar.
+
+### 2.11.11 Özet: Ambiguous Prompt Güvenlik Kontrol Listesi
+
+Her prompt yazmadan önce şu checklist'i gözden geçirin:
+
+```
+□ Context priming yapıldı mı? (Önce dosyaları okuttum mu?)
+□ Negative constraints (YAPMA listesi) eklendi mi?
+□ Acceptance criteria (Kabul kriterleri) tanımlandı mı?
+□ Output format belirlendi mi?
+□ AI'ın rolü tanımlandı mı?
+□ Büyük işlemse adım adım onay mekanizması var mı?
+□ Örnek (few-shot) verebilir miyim?
+□ AI'ın anlamadığında sorması için fallback template var mı?
+□ Session context window'u kontrol edildi mi? (80K sınırı)
+```
+
+### 2.11.12 Örnek: Tam Bir "Kötü Prompt" Güvenli Prompt'u
+
+```
+ÖNCE OKU: VIXREX_OTURUM_OZETI.md, SKILL.md, PLAN.md (Faz 1)
+
+ROL: Sen senior Flutter geliştiricisisin. Clean Architecture, Result<T>
+
+GÖREV: Ürün ekleme ekranındaki formu düzelt. Kullanıcı şikayet etti.
+
+YAPMA:
+- Mevcut kodu silip yeniden yazma
+- Yeni paket ekleme
+- Diğer ekranlara dokunma
+- Faz 1 dışına çıkma
+- Test yazmadan bitirme
+
+KABUL KRİTERLERİ:
+□ flutter analyze sıfır hata
+□ flutter test geçiyor
+□ if (!mounted) return; var
+□ try-catch var
+□ debugPrint kDebugMode ile sarmalı
+□ E2E test senaryosu yazıldı
+
+CEVAP FORMATI:
+1. Önce: Anladığını özetle (1 paragraf)
+2. Sonra: Root cause analizi
+3. Sonra: Fix planı (maddele)
+4. Sonra: Kod (sadece değişen dosyalar, diff formatında)
+5. Son: Test senaryosu
+
+EMİN OLMAZSAN SOR, UYGULAMA.
+```
+
+**Not**: Bu prompt'ta "formu düzelt" kısmı ambiguous — ama context priming, negative constraints, acceptance criteria ve format zorunluluğu sayesinde AI, VixRex'in kurallarına uygun ve doğru bir fix üretir.
+
+### 2.11.13 Disiplin Kuralları (Gereksiz İşlem Yasağı)
+
+AI, aşağıdaki işlemleri KULLANICI ONAYI OLMADAN yapamaz:
+
+- `dart analyze`, `flutter analyze`, `flutter test` gibi kontrol komutları — sadece kullanıcı isterse çalıştır
+- Dosya okuma/yazma dışında shell komutu çalıştırma — grep, find, ls gibi
+- Git commit/push — sadece kullanıcı isterse
+- Yeni dosya oluşturma — mevcut dosyaları düzenle, yeni oluşturmak için onay iste
+- Import ekleme/çıkarma — sadece zorunluysa yap, onay al
+- Debug yazdırma (`debugPrint`, `print`) — konsola yazdırma, kullanıcıya söyle
+
+**Temel kural:** Kod yaz, bitir, kullanıcıya söyle. Arada gereksiz kontrol, analiz, test çalıştırma. Her işlem sonrası "temiz mi" diye bakma — kullanıcı isterse bakar.
+
+**Eğer emin değilsen:** Kodu yaz, kullanıcıya "Bu şekilde doğru mu?" diye sor. Gereksiz analyze çalıştırarak time harcama.
+
+---
+
 ## 3. Token Optimizasyonu ve Maliyet Kontrolü
 
 ### 3.1 Token Harcamalarını Azaltma Stratejileri

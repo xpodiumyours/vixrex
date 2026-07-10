@@ -55,36 +55,21 @@ class PremiumService {
     }
   }
 
-  /// OCR kullanım sayısını artır.
-  Future<Result<void>> incrementOcrUsage(String userId) async {
+  /// OCR kullanımını sunucu tarafında kontrol et ve artır (atomik RPC).
+  Future<Result<OcrUsageCheck>> checkAndIncrementOcrUsage(String userId) async {
     try {
-      final today = DateTime.now().toIso8601String().substring(0, 10);
+      final res = await _resolveClient.rpc(
+        'check_and_increment_ocr_usage',
+        params: {'p_user_id': userId},
+      );
 
-      // Mevcut kaydı bul
-      final existing = await _resolveClient
-          .from('ocr_usage')
-          .select('id, usage_count')
-          .eq('user_id', userId)
-          .eq('usage_date', today)
-          .maybeSingle();
-
-      if (existing != null) {
-        // Güncelle
-        final currentCount = existing['usage_count'] as int? ?? 0;
-        await _resolveClient
-            .from('ocr_usage')
-            .update({'usage_count': currentCount + 1})
-            .eq('id', existing['id']);
-      } else {
-        // Yeni kayıt oluştur
-        await _resolveClient.from('ocr_usage').insert({
-          'user_id': userId,
-          'usage_date': today,
-          'usage_count': 1,
-        });
-      }
-
-      return const Result.success(null);
+      final data = res as Map<String, dynamic>;
+      return Result.success(OcrUsageCheck(
+        allowed: data['allowed'] as bool? ?? false,
+        remaining: data['remaining'] as int? ?? 0,
+        isPremium: data['is_premium'] as bool? ?? false,
+        message: data['message'] as String?,
+      ));
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
     }
@@ -136,4 +121,19 @@ class PremiumService {
       return Result.failure(SupabaseErrorMapper.map(e, s));
     }
   }
+}
+
+/// OCR kullanım kontrolü sonucu.
+class OcrUsageCheck {
+  final bool allowed;
+  final int remaining;
+  final bool isPremium;
+  final String? message;
+
+  const OcrUsageCheck({
+    required this.allowed,
+    required this.remaining,
+    required this.isPremium,
+    this.message,
+  });
 }

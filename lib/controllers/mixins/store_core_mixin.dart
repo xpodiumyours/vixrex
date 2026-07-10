@@ -70,7 +70,8 @@ mixin StoreCoreMixin on ChangeNotifier {
           .eq('store_slug', slug)
           .order('created_at', ascending: false);
       _articles = List<Map<String, dynamic>>.from(response as List);
-    } catch (_) {
+    } catch (e) {
+      if (kDebugMode) debugPrint('fetchArticles hatası: $e');
       _articles = [];
     } finally {
       _isLoadingArticles = false;

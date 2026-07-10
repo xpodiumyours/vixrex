@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/screens/bulk_product_upload_screen.dart';
 import 'package:vixrex/screens/product_category_management_screen.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/product/product_editor_sheet.dart';
@@ -251,6 +252,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
             Expanded(child: _buildProductList(filtered, canReorder)),
             const SizedBox(height: 12),
             _buildAddProductButton(),
+            const SizedBox(height: 8),
+            _buildBulkUploadButton(),
           ],
         ),
       ),
@@ -383,6 +386,38 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         minimumSize: const Size.fromHeight(50),
       ),
     );
+  }
+
+  Widget _buildBulkUploadButton() {
+    return OutlinedButton.icon(
+      onPressed: _openBulkUpload,
+      icon: const Icon(Icons.upload_file_rounded, size: 18),
+      label: const Text(
+        'Toplu Ürün Yükle',
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.darkText,
+        side: const BorderSide(color: AppColors.border),
+        minimumSize: const Size.fromHeight(44),
+      ),
+    );
+  }
+
+  Future<void> _openBulkUpload() async {
+    final result = await BulkProductUploadScreen.show(
+      context: context,
+      categories: _categories,
+      onSaved: (products) async {
+        setState(() {
+          _products.insertAll(0, products);
+        });
+        await _persist();
+      },
+    );
+    if (result == true && mounted) {
+      widget.showMessage('Toplu yükleme tamamlandı.');
+    }
   }
 
   Widget _buildEmptyState() {

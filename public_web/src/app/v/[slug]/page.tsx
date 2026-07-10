@@ -14,7 +14,7 @@ import {
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import ProductCatalog from "./ProductCatalog";
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -34,42 +34,47 @@ interface MarketplaceLinkItem {
 }
 
 async function _getStoreData(slug: string) {
-  const { data: store, error } = await supabase
-    .from("stores")
-    .select("*")
-    .eq("slug", slug)
-    .eq("is_published", true)
-    .single();
+  try {
+    const { data: store, error } = await supabase
+      .from("stores")
+      .select("*")
+      .eq("slug", slug)
+      .eq("is_published", true)
+      .single();
 
-  if (error || !store) return null;
+    if (error || !store) return null;
 
-  const { data: bookingSettings } = await supabase
-    .from("booking_settings")
-    .select("*")
-    .eq("store_slug", slug)
-    .maybeSingle();
+    const { data: bookingSettings } = await supabase
+      .from("booking_settings")
+      .select("*")
+      .eq("store_slug", slug)
+      .maybeSingle();
 
-  const { data: articles } = await supabase
-    .from("store_articles")
-    .select("*")
-    .eq("store_slug", slug)
-    .eq("status", "published")
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false })
-    .limit(3);
+    const { data: articles } = await supabase
+      .from("store_articles")
+      .select("*")
+      .eq("store_slug", slug)
+      .eq("status", "published")
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(3);
 
-  return {
-    store,
-    bookingSettings,
-    articles: articles || [],
-  };
+    return {
+      store,
+      bookingSettings,
+      articles: articles || [],
+    };
+  } catch (err) {
+    console.error(`Store data fetch error for slug=${slug}:`, err);
+    return null;
+  }
 }
 
 const getStoreData = (slug: string) =>
   unstable_cache(
     () => _getStoreData(slug),
     [`store-${slug}`],
-    { tags: [`store-${slug}`, `products-${slug}`], revalidate: 300 }
+    { tags: [`store-${slug}`, `products-${slug}`], revalidate: 60 }
   )();
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
@@ -101,7 +106,10 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 export default async function StorePage(props: PageProps) {
   const params = await props.params;
   const data = await getStoreData(params.slug);
-  if (!data) notFound();
+  if (!data) {
+    // Veri yoksa 404 göster — cache sorunu olabilir, 60sn sonra tekrar dene
+    notFound();
+  }
 
   const { store, bookingSettings, articles } = data;
 

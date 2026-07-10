@@ -2,7 +2,9 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
@@ -11,7 +13,15 @@ Future<void> main() async {
   SystemChrome.setSystemUIOverlayStyle(_systemUiOverlayStyle);
   _setupGlobalErrorHandler();
   await _initializeSupabase();
-  runApp(const VixRexApp());
+  _initializeOneSignal();
+
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = const String.fromEnvironment('SENTRY_DSN');
+      options.tracesSampleRate = 1.0;
+    },
+    appRunner: () => runApp(const VixRexApp()),
+  );
 }
 
 const SystemUiOverlayStyle _systemUiOverlayStyle = SystemUiOverlayStyle(
@@ -60,6 +70,17 @@ Future<void> _initializeSupabase() async {
   } catch (error) {
     if (kDebugMode) debugPrint('[FATAL] Supabase initialize failed: $error');
   }
+}
+
+void _initializeOneSignal() {
+  const oneSignalAppId = String.fromEnvironment('ONESIGNAL_APP_ID');
+  if (oneSignalAppId.isEmpty) {
+    if (kDebugMode) debugPrint('[WARN] OneSignal App ID not set');
+    return;
+  }
+
+  OneSignal.initialize(oneSignalAppId);
+  OneSignal.Notifications.requestPermission(true);
 }
 
 class VixRexApp extends StatelessWidget {

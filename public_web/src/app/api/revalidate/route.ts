@@ -5,12 +5,12 @@ import { revalidateTag, revalidatePath } from "next/cache";
  * POST /api/revalidate
  *
  * Flutter'dan ve Supabase webhook'larından gelen ISR geçersizleştirme isteklerini
- * işler. Secret, query param yerine header üzerinden okunur (URL log sızıntısı önlemi).
+ * işler. Secret, query param yerine header üzerinden okunur.
  *
  * Body (JSON):
  *   { "tag": "store-nova-kuafor" }          → revalidateTag kullanır
  *   { "tags": ["store-x", "products-x"] }   → çoklu tag yeniler
- *   { "path": "/v/nova-kuafor" }            → revalidatePath kullanır (geriye dönük uyumluluk)
+ *   { "path": "/v/nova-kuafor" }            → revalidatePath kullanır
  *   { "paths": ["/v/x/urun/y"] }            → çoklu path yeniler
  *
  * Header:
@@ -19,7 +19,6 @@ import { revalidateTag, revalidatePath } from "next/cache";
 export async function POST(req: NextRequest) {
   const localSecret = process.env.REVALIDATION_SECRET;
 
-  // Secret header üzerinden okunur — query param'da sızmaz
   const headerSecret = req.headers.get("x-revalidate-secret");
 
   if (!localSecret || headerSecret !== localSecret) {
@@ -61,13 +60,12 @@ export async function POST(req: NextRequest) {
     const revalidated: string[] = [];
 
     for (const tag of tags) {
-      // "max" profili: tag'i anında geçersiz kıl (bu Next.js sürümünde 2. argüman zorunlu)
-      revalidateTag(tag, "max");
+      // revalidateTag sadece 1 argüman alır — "max" geçersiz
+      revalidateTag(tag);
       revalidated.push(`tag:${tag}`);
     }
 
     for (const path of paths) {
-      // Geriye dönük uyumluluk: path bazlı revalidation da desteklenir
       revalidatePath(path, "page");
       revalidated.push(`path:${path}`);
     }

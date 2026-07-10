@@ -4,6 +4,7 @@ import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/models/editor_gallery_item.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/seo_service.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/utils/secure_token_generator.dart';
@@ -281,6 +282,8 @@ class StoreEditorController extends ChangeNotifier
             name: _data.name, editToken: publishResult.editToken,
           );
           await saveLocally();
+          // Next.js cache'ini yenile
+          SeoService().revalidateStore(publishResult.slug);
           notifyListeners();
           return publicLink;
         },

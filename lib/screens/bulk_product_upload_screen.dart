@@ -1,11 +1,7 @@
-import 'dart:typed_data';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:vixrex/controllers/bulk_product_upload_controller.dart';
 import 'package:vixrex/models/store_product.dart';
-import 'package:vixrex/services/bulk_product_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 typedef OnBulkProductsSaved = Future<void> Function(List<Product> products);
@@ -89,8 +85,8 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
+    return ListenableBuilder(
+      listenable: _controller,
       builder: (context, _) {
         return SizedBox(
           height: MediaQuery.sizeOf(context).height * 0.92,
@@ -785,16 +781,9 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
   }
 
   void _downloadTemplate() {
-    final bytes = BulkProductUploadService().generateTemplateCsv();
-    // Web platformda doğrudan indirme
-    if (identical(0, 0.0)) {
-      // Web
-      // ignore: unused_element
-      // Bu kısım web platformu için ayrılabilir
-    }
-    // Mobil platformda paylaş
+    // Web platformda dosya indirme, mobilde bilgi mesajı
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Şablon oluşturuldu. Web tarayıcısında otomatik indirilir.')),
+      const SnackBar(content: Text('Şablon: "Ürün Adı, Fiyat, Açıklama, Kategori, Stok Durumu" sütunlarını kullanın.')),
     );
   }
 }

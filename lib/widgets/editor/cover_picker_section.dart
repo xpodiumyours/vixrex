@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
@@ -89,14 +90,32 @@ class CoverPickerSection extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        if (coverBytes != null)
-          Image.memory(coverBytes!, fit: BoxFit.cover)
-        else
-          Image.network(
-            coverUrl!,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const _CoverPlaceholder(),
+        // Arka plan: Bulanıklaştırılmış görsel (BoxFit.cover)
+        ClipRect(
+          child: ImageFiltered(
+            imageFilter: ui.ImageFilter.blur(sigmaX: 18.0, sigmaY: 18.0),
+            child: Opacity(
+              opacity: 0.55,
+              child: coverBytes != null
+                  ? Image.memory(coverBytes!, fit: BoxFit.cover)
+                  : Image.network(
+                      coverUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+            ),
           ),
+        ),
+        // Ön plan: Orijinal en-boy oranında tam sığdırılan görsel (BoxFit.contain)
+        Center(
+          child: coverBytes != null
+              ? Image.memory(coverBytes!, fit: BoxFit.contain)
+              : Image.network(
+                  coverUrl!,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const _CoverPlaceholder(),
+                ),
+        ),
         Positioned(
           right: 10,
           bottom: 10,
