@@ -3,7 +3,6 @@ import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/ocr_line.dart';
 import 'package:vixrex/models/ocr_price.dart';
 import 'package:vixrex/utils/text_utils.dart';
-import 'ocr_excel_verifier.dart';
 import 'ocr_fuzzy_matcher.dart';
 
 /// OCR satırlarını ve fiyatlarıyla ürün eşleştirme servisi.
@@ -14,13 +13,10 @@ import 'ocr_fuzzy_matcher.dart';
 /// 3. Fuzzy matching ile ürün adını iyileştir
 /// 4. Eşleşenleri DetectedProduct listesine dönüştür
 class OcrProductMatcher {
-  final OcrExcelVerifier _verifier;
   final OcrFuzzyMatcher _fuzzyMatcher;
 
-  const OcrProductMatcher({
-    required OcrExcelVerifier verifier,
-  })  : _verifier = verifier,
-        _fuzzyMatcher = const OcrFuzzyMatcher();
+  const OcrProductMatcher()
+      : _fuzzyMatcher = const OcrFuzzyMatcher();
 
   Future<List<DetectedProduct>> matchProducts(
     List<OcrLine> lines,

@@ -4,7 +4,6 @@ import 'package:vixrex/services/ocr/ocr_text_parser.dart';
 import 'package:vixrex/services/ocr/ocr_price_parser.dart';
 import 'package:vixrex/services/ocr/ocr_image_preprocessor.dart';
 import 'package:vixrex/services/ocr/ocr_product_matcher.dart';
-import 'package:vixrex/services/ocr/ocr_excel_verifier.dart';
 
 void main() {
   group('OcrService', () {
@@ -15,9 +14,7 @@ void main() {
         textParser: OcrTextParser(),
         priceParser: OcrPriceParser(),
         preprocessor: OcrImagePreprocessor(),
-        matcher: OcrProductMatcher(
-          verifier: OcrExcelVerifier(),
-        ),
+        matcher: OcrProductMatcher(),
       );
     });
 

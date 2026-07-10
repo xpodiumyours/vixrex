@@ -19,9 +19,7 @@ void main() {
     late OcrProductMatcher matcher;
 
     setUp(() {
-      matcher = const OcrProductMatcher(
-        verifier: MockOcrExcelVerifier(),
-      );
+      matcher = const OcrProductMatcher();
     });
 
     group('matchProducts', () {

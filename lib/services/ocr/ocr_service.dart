@@ -7,7 +7,6 @@ import 'ocr_image_preprocessor.dart';
 import 'ocr_text_parser.dart';
 import 'ocr_price_parser.dart';
 import 'ocr_product_matcher.dart';
-import 'ocr_excel_verifier.dart';
 
 /// Ana OCR servisi. Tüm OCR işlemlerini koordine eder.
 class OcrService {
@@ -24,9 +23,7 @@ class OcrService {
   })  : _textParser = textParser ?? const OcrTextParser(),
         _priceParser = priceParser ?? const OcrPriceParser(),
         _preprocessor = preprocessor ?? const OcrImagePreprocessor(),
-        _matcher = matcher ?? const OcrProductMatcher(
-          verifier: OcrExcelVerifier(),
-        );
+        _matcher = matcher ?? const OcrProductMatcher();
 
   /// Görüntüden ürün kataloğu oluşturur.
   Future<Result<OcrCatalogResult>> analyzeImage(Uint8List imageBytes, {String scanMode = 'receipt'}) async {

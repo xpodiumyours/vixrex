@@ -29,7 +29,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
   @override
   void dispose() {
     widget.ocrController.removeListener(_onStateChanged);
-    widget.ocrController.dispose();
+    // Controller'i olusturan taraf dispose etmeli
     super.dispose();
   }
 
@@ -300,22 +300,6 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
 
   Future<void> _saveProducts() async {
     try {
-      // Feedback loop: Ham OCR metnini ve düzeltilmiş ürünleri kaydet
-      final result = widget.ocrController.result;
-      if (result != null) {
-        final correctedProducts = result.approvedProducts.map((p) => {
-          'name': p.name,
-          'price': p.price,
-          'is_approved': p.isApproved,
-        }).toList();
-        await const OcrFeedbackService().saveFeedback(
-          rawOcrText: result.rawText,
-          parsedProducts: result.products.map((p) => {'name': p.name, 'price': p.price}).toList(),
-          correctedProducts: correctedProducts,
-          scanMode: widget.ocrController.scanMode,
-        );
-      }
-
       await widget.ocrController.saveApprovedProducts();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

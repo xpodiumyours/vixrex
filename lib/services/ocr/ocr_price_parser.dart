@@ -33,11 +33,6 @@ class OcrPriceParser {
 
   // ─── STRATEJİ 2: YAPIsal Fiyat Patternleri ──────────────────────
 
-  /// Fiyat-miktar toplamı pattern'i: "15.00 x 4 = 60.00"
-  static final RegExp _priceTimesQuantity = RegExp(
-    r'([\d.,]+)\s*[xX×*]\s*(\d+)\s*=\s*([\d.,]+)',
-  );
-
   /// Birim fiyat + toplam pattern'i: "75.0000 TL 300.00 TL"
   static final RegExp _unitAndTotal = RegExp(
     r'([\d.,]+)\s*(?:₺|TL|TRY|tl|try)?\s+([\d.,]+)\s*(?:₺|TL|TRY|tl|try)',

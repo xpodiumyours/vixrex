@@ -103,7 +103,7 @@ class OcrNoiseFilter {
     const footerNoise = [
       'teşekkür', 'iyi günler', 'gorüşmek üzere',
       'bizi tercih ettiğiniz', 'müşteri memnuniyeti',
-      'öneri ve şikayet', ' Çağrı merkezi',
+      'öneri ve şikayet', 'çağrı merkezi',
     ];
     return footerNoise.any((kw) => lower.contains(kw));
   }
