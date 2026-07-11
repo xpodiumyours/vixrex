@@ -11,9 +11,9 @@
 - [x] Next.js public web (Public vitrin, SEO, sitemap, robots)
 - [x] Supabase (Database, Auth, Storage, RLS, RPC)
 - [x] Vercel yapılandırması (Flutter + Next.js)
-- [x] OneSignal entegrasyonu (main.dart'da initialize)
+- [x] OneSignal: initialize + kullanıcı login/logout + tıklama deep link (`/bookings/:slug`)
 - [x] Sentry entegrasyonu (Error tracking)
-- [x] Legal consent section (Privacy, Terms, Publication consent)
+- [x] Legal consent section (Privacy, Terms, Publication consent) — UI
 - [x] OCR sistemi (Google ML Kit, Fuzzy matching, Confidence)
 - [x] Randevu sistemi (Booking, Appointments, Reschedule)
 - [x] WhatsApp entegrasyonu
@@ -21,30 +21,31 @@
 - [x] Keşfet ekranı
 - [x] Galeri yönetimi
 - [x] Ürün ve hizmet yönetimi
+- [x] Bildirim ayarları UI (Profil → Uygulama Ayarları)
+- [x] Notification preferences (randevu push aç/kapa, SharedPreferences)
+- [x] In-app notifications + bildirim geçmişi ekranı
+- [x] FAQ / Help center (Kullanım & Destek SSS)
+- [x] Social sharing (vitrin link / QR paylaşım)
+- [x] Content moderation UI (Blog moderasyon, admin)
+- [x] User data deletion automation (RPC `delete_user_account` cascade)
+- [x] Spam protection (kısmi: Turnstile / article spam)
+- [x] Bildirim template'leri (onay / red / hatırlatma / talep)
+- [x] Bildirim gönderme mantığı (Edge Function `send-booking-push` → OneSignal)
+- [x] Çerez yönetimi + consent banner + tercihler (public_web)
+- [x] GA4 kapısı (`NEXT_PUBLIC_GA_ID`, analitik çerezi açıkken)
+- [x] Hesap silme UI (Ayarlar → SİL onayı → `deleteAccount`)
+- [x] Password reset (Auth ekranı → Supabase `resetPasswordForEmail`)
+- [x] Keşfet: API hatasında mock vitrin yok (empty + retry)
+- [x] User data export (Ayarlar → JSON paylaş; edit_token ayıklı)
 
 ### ❌ Eksik Bileşenler (Production için Gerekli)
-- [ ] Bildirim sistemi tam aktif değil (OneSignal initialize var ama kullanım yok)
-- [ ] Bildirim ayarları UI yok
-- [ ] Bildirim template'leri yok
-- [ ] Bildirim gönderme mantığı yok
-- [ ] Çerez yönetimi yok (GDPR/KVKK uyumu için)
-- [ ] Çerez consent banner yok
-- [ ] Çerez tercihleri yönetimi yok
-- [ ] Analytics (GA4 entegrasyonu) yok
-- [ ] Data retention policy yok
-- [ ] Privacy policy tamamlanmamış
-- [ ] Terms of service tamamlanmamış
-- [ ] Cookie policy yok
-- [ ] GDPR/KVKK uyumluluğu eksik
-- [ ] User data export yok
-- [ ] User data deletion automation yok
-- [ ] Email verification yok
-- [ ] Password reset yok
+- [ ] Notification analytics yok
+- [ ] Push notification scheduling yok
+- [ ] Email notifications yok
+- [ ] SMS notifications yok
 - [ ] 2FA yok
-- [ ] Rate limiting yok
-- [ ] Spam protection yok
-- [ ] Content moderation UI yok
-- [ ] Admin panel yok
+- [ ] Rate limiting yok (genel API)
+- [ ] Admin panel yok (tam; blog moderasyon hariç)
 - [ ] Dashboard yok
 - [ ] User analytics yok
 - [ ] Business analytics yok
@@ -65,14 +66,11 @@
 - [ ] Admin documentation yok
 - [ ] Onboarding flow yok
 - [ ] Tutorial yok
-- [ ] Help center yok
-- [ ] Support system yok
-- [ ] FAQ yok
+- [ ] Support system yok (contact form / ticket)
 - [ ] Contact form yok
 - [ ] Feedback system yok
 - [ ] Rating system yok
 - [ ] Review system yok
-- [ ] Social sharing yok
 - [ ] Referral system yok
 - [ ] Loyalty program yok
 - [ ] Premium subscription yok
@@ -84,31 +82,40 @@
 - [ ] Mobile app (iOS/Android) altyapısı var, production build eksik
 - [ ] PWA yok
 - [ ] Offline mode yok
-- [ ] Push notification scheduling yok
-- [ ] Email notifications yok
-- [ ] SMS notifications yok
-- [ ] In-app notifications yok
-- [ ] Notification preferences yok
-- [ ] Notification history yok
-- [ ] Notification analytics yok
+
+### Ertelenen işlemler (sonraya — bilinçli)
+**Resmi / hukuki evrak**
+- [ ] Data retention policy
+- [ ] Privacy policy tamamlanmamış (içerik final / hukuki inceleme)
+- [ ] Terms of service tamamlanmamış
+- [ ] Cookie policy yok
+- [ ] GDPR/KVKK uyumluluğu eksik (hukuki paket)
+
+**Markalı auth e-postası (Supabase ops)**
+- [ ] Custom SMTP (Resend/SendGrid vb.) — gönderen: `VixRex` / `noreply@…`
+- [ ] Domain SPF/DKIM/DMARC
+- [ ] Auth e-posta şablonları (Confirm signup, Reset password) VixRex markası
+- [ ] Site URL + Redirect URLs (doğrulama / şifre sıfırlama linkleri)
+- [ ] Email verification akışı production’da markalı mail ile tamamlanır
+  - Not: Uygulama tarafında kayıt sonrası “doğrulama mailine tıkla” uyarısı var; gönderici hâlâ varsayılan Supabase olabilir.
 
 ---
 
-## Hazırlık Durumu: %45
+## Hazırlık Durumu: ~%60
 
 | Kategori | Durum | % |
 |---|---|---|
-| **Core Features** | ✅ Tamamlandı | 90% |
-| **Bildirim Sistemi** | ⚠️ Altyapı var, kullanım yok | 20% |
-| **Çerez Yönetimi** | ❌ Yok | 0% |
-| **Analytics** | ⚠️ Sentry var, GA4 yok | 30% |
-| **Legal/Compliance** | ⚠️ UI var, içerik eksik | 40% |
-| **Security** | ⚠️ Temel seviye | 50% |
+| **Core Features** | ✅ Tamamlandı | 92% |
+| **Bildirim Sistemi** | ⚠️ Template + Edge gönderim + UI/inbox | 70% |
+| **Çerez Yönetimi** | ⚠️ Banner + tercihler + GA4 kapısı (resmi politika ertelendi) | 60% |
+| **Analytics** | ⚠️ Sentry + GA4 (çerez izniyle) | 55% |
+| **Legal/Compliance** | ⚠️ UI + veri export/silme; resmi içerik ertelendi | 48% |
+| **Security** | ⚠️ Hesap silme + şifre sıfırlama + export; 2FA/rate limit eksik | 60% |
 | **Monitoring** | ⚠️ Sentry var, eksik | 40% |
 | **Documentation** | ❌ Yok | 0% |
-| **Support** | ❌ Yok | 0% |
+| **Support** | ⚠️ SSS var | 30% |
 | **Monetization** | ❌ Yok | 0% |
-| **Genel** | **⚠️ MVP seviyesi** | **45%** |
+| **Genel** | **⚠️ Soft-launch hazırlık** | **~60%** |
 
 ---
 
@@ -144,8 +151,8 @@
 - [ ] Terms of service tamamlama
 - [ ] Cookie policy oluşturma
 - [ ] Data retention policy oluşturma
-- [ ] User data export fonksiyonu
-- [ ] User data deletion automation
+- [x] User data export fonksiyonu
+- [x] User data deletion automation
 - [ ] Legal documents public web'de yayınla
 
 **Zorluk:** Yüksek
@@ -175,8 +182,8 @@
 ### Hafta 7-8: Security ve Compliance
 **Hedef:** Güvenlik ve uyumluluk iyileştirmesi
 
-- [ ] Email verification (Supabase Auth)
-- [ ] Password reset (Supabase Auth)
+- [ ] Email verification (Supabase Auth) — **ertelendi:** custom SMTP + VixRex şablonları ile birlikte
+- [x] Password reset (Supabase Auth)
 - [ ] 2FA (Two-Factor Authentication)
 - [ ] Rate limiting (API endpoints)
 - [ ] Spam protection (honeypot, rate limit)
@@ -385,5 +392,5 @@ Bu plan ile:
 
 ---
 
-*Son güncelleme: 2026-07-10*
-*Sonraki review: 2026-07-17*
+*Son güncelleme: 2026-07-11*
+*Sonraki review: 2026-07-18*

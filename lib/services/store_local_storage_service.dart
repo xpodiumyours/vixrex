@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
 
@@ -148,8 +149,11 @@ class StoreLocalStorageService {
     required String editToken,
   }) async {
     final prefs = await _getPrefs();
+    final canonicalLink = slug.trim().isNotEmpty
+        ? PublicSiteConfig.buildVitrinLink(slug)
+        : PublicSiteConfig.repairPublicLink(publicLink);
     await prefs.setString(LocalStorageKeys.lastPublishedSlug, slug);
-    await prefs.setString(LocalStorageKeys.lastPublishedLink, publicLink);
+    await prefs.setString(LocalStorageKeys.lastPublishedLink, canonicalLink);
     await prefs.setString(LocalStorageKeys.lastPublishedName, name);
     await prefs.setString(LocalStorageKeys.lastPublishedEditToken, editToken);
   }
@@ -170,9 +174,15 @@ class StoreLocalStorageService {
           prefs.getString(LocalStorageKeys.storeEditToken) ??
           '';
     }
+    final slug = prefs.getString(LocalStorageKeys.lastPublishedSlug) ?? '';
+    final rawLink = prefs.getString(LocalStorageKeys.lastPublishedLink) ?? '';
+    // Canonical müşteri linki: her zaman vixrex.app/v/{slug} (localhost / hash onarılır).
+    final publicLink = slug.trim().isNotEmpty
+        ? PublicSiteConfig.buildVitrinLink(slug)
+        : PublicSiteConfig.repairPublicLink(rawLink);
     final info = PublishedVitrinInfo(
-      slug: prefs.getString(LocalStorageKeys.lastPublishedSlug) ?? '',
-      publicLink: prefs.getString(LocalStorageKeys.lastPublishedLink) ?? '',
+      slug: slug,
+      publicLink: publicLink,
       name: prefs.getString(LocalStorageKeys.lastPublishedName) ?? '',
       editToken: editToken,
     );

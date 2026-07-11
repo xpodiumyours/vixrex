@@ -32,5 +32,50 @@ void main() {
 
       expect(link, '/v/test-magaza');
     });
+
+    test('bare slug linkini /v/ slug olarak onarır', () {
+      final repaired = PublicSiteConfig.repairPublicLink(
+        'https://vixrex.app/nova-kuafor',
+      );
+      expect(repaired, 'https://vixrex.app/v/nova-kuafor');
+    });
+
+    test('hash /v/slug ve localhost linklerini canonical üretir', () {
+      expect(
+        PublicSiteConfig.repairPublicLink(
+          'http://localhost:49692/#/v/nova-kuafor',
+        ),
+        'https://vixrex.app/v/nova-kuafor',
+      );
+      expect(
+        PublicSiteConfig.repairPublicLink(
+          'https://vixrex.app/#/v/nova-kuafor',
+        ),
+        'https://vixrex.app/v/nova-kuafor',
+      );
+      expect(
+        PublicSiteConfig.repairPublicLink(
+          'http://localhost:49692/v/nova-kuafor',
+        ),
+        'https://vixrex.app/v/nova-kuafor',
+      );
+    });
+
+    test('path resolve: /v/slug ve bare slug', () {
+      expect(
+        PublicSiteConfig.resolveVitrinSlugFromPath('/v/nova-kuafor'),
+        'nova-kuafor',
+      );
+      expect(
+        PublicSiteConfig.resolveVitrinSlugFromPath('/v/nova-kuafor/'),
+        'nova-kuafor',
+      );
+      expect(
+        PublicSiteConfig.resolveVitrinSlugFromPath('/nova-kuafor'),
+        'nova-kuafor',
+      );
+      expect(PublicSiteConfig.resolveVitrinSlugFromPath('/auth'), isNull);
+      expect(PublicSiteConfig.resolveVitrinSlugFromPath('/'), isNull);
+    });
   });
 }

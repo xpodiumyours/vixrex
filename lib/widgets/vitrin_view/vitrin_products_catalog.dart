@@ -225,7 +225,7 @@ class _VitrinProductsCatalogBodyState extends State<_VitrinProductsCatalogBody> 
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Ürünler yakında',
+                      'Henüz ürün eklenmemiş',
                       style: TextStyle(
                         color: preset.textPrimary,
                         fontSize: 14,
@@ -248,17 +248,22 @@ class _VitrinProductsCatalogBodyState extends State<_VitrinProductsCatalogBody> 
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth >= 620;
                   if (!isWide) {
+                    const crossAxisCount = 2;
+                    const spacing = 10.0;
+                    final cardWidth =
+                        (constraints.maxWidth - spacing) / crossAxisCount;
+                    final cardHeight =
+                        VitrinProductCard.cardHeightForWidth(cardWidth);
                     return GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: visibleProducts.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                            childAspectRatio: 0.64,
-                          ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        mainAxisExtent: cardHeight,
+                      ),
                       itemBuilder: (context, index) {
                         final product = visibleProducts[index];
                         return _buildProductCard(
@@ -271,18 +276,22 @@ class _VitrinProductsCatalogBodyState extends State<_VitrinProductsCatalogBody> 
                   }
 
                   final columns = constraints.maxWidth >= 1000 ? 4 : 3;
+                  final spacing = 12.0;
                   final cardWidth =
-                      (constraints.maxWidth - (12 * (columns - 1))) / columns;
+                      (constraints.maxWidth - (spacing * (columns - 1))) /
+                      columns;
+                  final cardHeight =
+                      VitrinProductCard.cardHeightForWidth(cardWidth);
 
                   return Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
+                    spacing: spacing,
+                    runSpacing: spacing,
                     children:
                         visibleProducts
                             .map(
                               (product) => SizedBox(
                                 width: cardWidth,
-                                height: 250,
+                                height: cardHeight,
                                 child: _buildProductCard(
                                   context,
                                   product,
@@ -304,7 +313,7 @@ class _VitrinProductsCatalogBodyState extends State<_VitrinProductsCatalogBody> 
                     });
                   },
                   icon: const Icon(Icons.expand_more_rounded),
-                  label: const Text('Daha fazla gÃ¶ster'),
+                  label: const Text('Daha fazla göster'),
                 ),
               ),
             ],
@@ -332,7 +341,7 @@ class _VitrinProductsCatalogBodyState extends State<_VitrinProductsCatalogBody> 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                "MÃ¼ÅŸteriler bu karta bastÄ±ÄŸÄ±nda '${product.name}' hakkÄ±nda WhatsApp'tan bilgi isteyebilir.",
+                "Müşteriler bu karta bastığında '${product.name}' hakkında WhatsApp'tan bilgi isteyebilir.",
               ),
               behavior: SnackBarBehavior.floating,
             ),

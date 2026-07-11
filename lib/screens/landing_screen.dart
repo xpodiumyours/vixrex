@@ -28,7 +28,7 @@ class _LandingScreenState extends State<LandingScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   int _activeProfileIndex = 0;
-  final bool _hasSavedVitrin = false;
+  bool _hasSavedVitrin = false;
   bool _isCheckingSavedVitrin = true;
   final TextEditingController _storeNameController = TextEditingController();
 
@@ -231,7 +231,23 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Future<void> _loadSavedVitrinState() async {
-    if (mounted) setState(() => _isCheckingSavedVitrin = false);
+    try {
+      const storage = StoreLocalStorageService();
+      final data = await storage.loadVitrinData();
+      final hasSaved = data != null && data.name.trim().isNotEmpty;
+      if (!mounted) return;
+      setState(() {
+        _hasSavedVitrin = hasSaved;
+        _isCheckingSavedVitrin = false;
+      });
+    } catch (e) {
+      if (kDebugMode) debugPrint('_loadSavedVitrinState: $e');
+      if (!mounted) return;
+      setState(() {
+        _hasSavedVitrin = false;
+        _isCheckingSavedVitrin = false;
+      });
+    }
   }
 
   void _navigateToExploreApp([String? categoryKey]) async {
@@ -243,7 +259,9 @@ class _LandingScreenState extends State<LandingScreen>
     AppRouter.navigateToAuth(context);
   }
 
-  void _navigateToSavedVitrin() {}
+  void _navigateToSavedVitrin() {
+    AppRouter.navigateToHomeShell(context);
+  }
 
   void _navigateToPreview() {
     final profile = _heroDemoProfiles[_activeProfileIndex];

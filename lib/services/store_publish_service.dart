@@ -132,6 +132,7 @@ class StorePublishService {
   }
 
   /// Ürünler Supabase'e anında kaydedilir (publish gerektirmez).
+  /// RLS'i aşmak için doğrudan UPDATE yerine `update_store_with_token` RPC kullanılır.
   Future<Result<void>> updateProductsOnly(
     StoreData data, {
     required String editToken,
@@ -161,15 +162,47 @@ class StorePublishService {
 
       final dbSlug = (existingByToken['slug'] as String?)?.trim() ?? slug;
 
-      // Sadece ürünleri güncelle
-      final productsPayload = payloadBuilder.productsToJson(data);
-      final categoriesPayload = payloadBuilder.productCategoriesToJson(data);
+      await client.rpc(
+        'update_store_with_token',
+        params: {
+          'p_slug': dbSlug,
+          'p_edit_token': editToken,
+          'p_store': {
+            'products': payloadBuilder.productsToJson(data),
+            'product_categories':
+                payloadBuilder.productCategoriesToJson(data),
+          },
+        },
+      );
 
-      await client.from('stores').update({
-        'products': productsPayload,
-        'product_categories': categoriesPayload,
-      }).eq('slug', dbSlug);
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
 
+  /// Yayın sonrası tek alan yaması (ör. Instagram kullanıcı adı).
+  Future<Result<void>> updateStorePatch({
+    required String slug,
+    required String editToken,
+    required Map<String, dynamic> patch,
+  }) async {
+    final trimmedSlug = slug.trim();
+    final trimmedToken = editToken.trim();
+    if (trimmedSlug.isEmpty || trimmedToken.isEmpty || patch.isEmpty) {
+      return Result.failure(Failure('Vitrin bilgileri eksik.'));
+    }
+
+    try {
+      final client = supabaseClient ?? Supabase.instance.client;
+      await client.rpc(
+        'update_store_with_token',
+        params: {
+          'p_slug': trimmedSlug,
+          'p_edit_token': trimmedToken,
+          'p_store': patch,
+        },
+      );
       return const Result.success(null);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));

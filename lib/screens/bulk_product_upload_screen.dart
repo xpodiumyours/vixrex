@@ -1,7 +1,10 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:vixrex/controllers/bulk_product_upload_controller.dart';
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/services/bulk_product_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 typedef OnBulkProductsSaved = Future<void> Function(List<Product> products);
@@ -780,11 +783,55 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
     );
   }
 
-  void _downloadTemplate() {
-    // Web platformda dosya indirme, mobilde bilgi mesajı
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Şablon: "Ürün Adı, Fiyat, Açıklama, Kategori, Stok Durumu" sütunlarını kullanın.')),
-    );
+  Future<void> _downloadTemplate() async {
+    final bytes = const BulkProductUploadService().generateTemplateCsv();
+    const fileName = 'vixrex_urun_sablonu.csv';
+
+    try {
+      final savedPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'CSV şablonunu kaydet',
+        fileName: fileName,
+        bytes: bytes,
+        type: FileType.custom,
+        allowedExtensions: const ['csv'],
+      );
+      if (savedPath != null) {
+        if (!mounted) return;
+        _showMessage('Şablon kaydedildi.');
+        return;
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('_downloadTemplate saveFile: $e');
+    }
+
+    try {
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          files: [
+            XFile.fromData(
+              bytes,
+              mimeType: 'text/csv',
+              name: fileName,
+            ),
+          ],
+          subject: 'VixRex ürün CSV şablonu',
+          text: 'Ürün Adı, Fiyat, Açıklama, Kategori, Stok Durumu sütunlarını doldurun.',
+        ),
+      );
+      if (result.status == ShareResultStatus.unavailable) {
+        if (!mounted) return;
+        _showMessage('Şablon paylaşımı bu cihazda açılamadı. Tekrar deneyin.');
+        return;
+      }
+      if (!mounted) return;
+      if (result.status == ShareResultStatus.success) {
+        _showMessage('Şablon paylaşıldı.');
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('_downloadTemplate share: $e');
+      if (!mounted) return;
+      _showMessage('Şablon indirilemedi. Lütfen tekrar deneyin.');
+    }
   }
 }
 

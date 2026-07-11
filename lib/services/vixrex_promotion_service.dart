@@ -1,3 +1,4 @@
+import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/category_image_service.dart';
 
@@ -25,7 +26,10 @@ abstract final class VixRexPromotionService {
     final name = _valueOrFallback(snapshot?.storeName, 'İşletmemiz');
     final category = _valueOrFallback(snapshot?.category, 'ürün ve hizmetler');
     final district = snapshot?.district.trim() ?? '';
-    final link = snapshot?.publicLink.trim() ?? '';
+    final rawLink = snapshot?.publicLink.trim() ?? '';
+    final link = rawLink.isEmpty
+        ? ''
+        : PublicSiteConfig.repairPublicLink(rawLink);
     final locationText = district.isEmpty ? '' : ' $district’te';
     final linkText = link.isEmpty ? '' : '\n$link';
 

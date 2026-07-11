@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/core/result.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/models/editor_gallery_item.dart';
 import 'package:vixrex/services/store_publish_service.dart';
@@ -75,11 +77,6 @@ class StoreEditorController extends ChangeNotifier
   bool get privacyNoticeAcknowledged => _data.privacyNoticeAcknowledged;
   bool get termsAccepted => _data.termsAccepted;
   bool get publicationConsentAccepted => _data.publicationConsentAccepted;
-  // Genel isLoading ile bağlama — aksi halde init sırasında kutular kilitlenir
-  // ve eski kayıttaki onaylar version damgasız kalır.
-  bool get isLoadingLegalDocuments => false;
-  @override
-  String? get legalDocumentsError => null;
 
   List<MarketplaceLink> get marketplaceLinks => _data.marketplaceLinks;
   Set<String> get customPlatformLinkIds => {};
@@ -136,11 +133,55 @@ class StoreEditorController extends ChangeNotifier
   }
 
   // --- Delegated Methods (UI Compatibility) ---
+  /// Hazır şablon kapak URL'sini hem editör state'ine hem StoreData.shelfImageUrl'e yazar.
+  @override
+  void setCoverUrl(String url) {
+    final trimmed = url.trim();
+    super.setCoverUrl(trimmed);
+    if (trimmed.isNotEmpty) {
+      _data.shelfImageUrl = trimmed;
+    }
+  }
+
   void setName(String name) { _data.name = name; notifyListeners(); }
   void updateName(String name) => setName(name);
   void selectCategory(String kategori) { _data.kategori = kategori; notifyListeners(); }
   void setDescription(String description) { _data.description = description; notifyListeners(); }
   void updateWhatsapp(String w) { _data.whatsapp = w; notifyListeners(); }
+  void updateInstagram(String value) {
+    _data.instagram = value.trim();
+    notifyListeners();
+  }
+
+  /// Instagram OAuth sonrası kullanıcı adını forma ve (yayındaysa) Supabase'e yazar.
+  Future<Result<void>> applyConnectedInstagramUsername(String username) async {
+    final cleaned = username.trim().replaceFirst('@', '');
+    if (cleaned.isEmpty) return const Result.success(null);
+    final handle = '@$cleaned';
+    updateInstagram(handle);
+
+    final info = _publishedInfo;
+    if (info == null ||
+        info.slug.trim().isEmpty ||
+        info.editToken.trim().isEmpty) {
+      return const Result.success(null);
+    }
+
+    final result = await publishService.updateStorePatch(
+      slug: info.slug,
+      editToken: info.editToken,
+      patch: {'instagram': handle},
+    );
+    if (result.isSuccess) {
+      await saveLocally();
+    }
+    return result;
+  }
+
+  void updateWebsite(String value) {
+    _data.website = value.trim();
+    notifyListeners();
+  }
   void selectStatus(String status) { _data.status = status; notifyListeners(); }
   void updateGoogleBusinessLink(String v) { _data.googleBusinessLink = v; notifyListeners(); }
 
@@ -163,6 +204,10 @@ class StoreEditorController extends ChangeNotifier
     _data.bookingSettings!.capacity = val;
     notifyListeners();
   }
+
+  /// WorkingHoursEditor in-place mutasyon sonrası UI yenileme.
+  void refreshBookingEditor() => notifyListeners();
+
   void _ensureBookingSettings() { _data.bookingSettings ??= BookingSettings(); }
 
   @override
@@ -221,13 +266,25 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
+  /// Kullanıcı "Belgeleri Tekrar Yükle" dediğinde loading + error state ile yükler.
+  Future<void> reloadLegalDocuments() async {
+    setLoadingLegalDocuments(true);
+    setLegalDocumentsError(null);
+    try {
+      await _stampAcceptedLegalDocuments(reportError: true);
+    } finally {
+      setLoadingLegalDocuments(false);
+    }
+  }
+
   /// Aktif yasal belgelerden version/hash damgala (hash DB'de boş olabilir).
   /// API başarısız olsa bile bilinen aktif sürümlerle boşluk doldurulur.
-  Future<void> _stampAcceptedLegalDocuments() async {
+  Future<void> _stampAcceptedLegalDocuments({bool reportError = false}) async {
     try {
       final result = await legalDocumentService.loadPublishingDocuments();
       result.when(
         success: (docs) {
+          setLegalDocumentsError(null);
           if (_data.privacyNoticeAcknowledged) {
             _data.privacyNoticeVersion = docs.privacy.version;
             _data.privacyNoticeHash = docs.privacy.contentHash;
@@ -248,10 +305,20 @@ class StoreEditorController extends ChangeNotifier
           if (kDebugMode) {
             debugPrint('_stampAcceptedLegalDocuments: ${f.message}');
           }
+          if (reportError) {
+            setLegalDocumentsError(
+              'Belgeler yüklenemedi. İnternet bağlantınızı kontrol edin',
+            );
+          }
         },
       );
     } catch (e) {
       if (kDebugMode) debugPrint('_stampAcceptedLegalDocuments failed: $e');
+      if (reportError) {
+        setLegalDocumentsError(
+          'Belgeler yüklenemedi. Lütfen tekrar deneyin',
+        );
+      }
     }
     _ensureFallbackLegalStamps();
     notifyListeners();
@@ -278,31 +345,49 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
-  Future<void> addProduct(Product p) async {
+  Future<Result<void>> addProduct(Product p) async {
     _data.products.add(p);
     notifyListeners();
-    await syncProductsToSupabase(data: _data, publishService: publishService, editToken: _publishedInfo?.editToken);
+    return syncProductsToSupabase(
+      data: _data,
+      publishService: publishService,
+      editToken: _publishedInfo?.editToken,
+    );
   }
-  Future<void> removeProduct(int i) async {
+  Future<Result<void>> removeProduct(int i) async {
     if (i >= 0 && i < _data.products.length) {
       _data.products.removeAt(i);
       notifyListeners();
-      await syncProductsToSupabase(data: _data, publishService: publishService, editToken: _publishedInfo?.editToken);
+      return syncProductsToSupabase(
+        data: _data,
+        publishService: publishService,
+        editToken: _publishedInfo?.editToken,
+      );
     }
+    return const Result.success(null);
   }
-  Future<void> updateProduct(int i, Product p) async {
+  Future<Result<void>> updateProduct(int i, Product p) async {
     if (i >= 0 && i < _data.products.length) {
       _data.products[i] = p;
       notifyListeners();
-      await syncProductsToSupabase(data: _data, publishService: publishService, editToken: _publishedInfo?.editToken);
+      return syncProductsToSupabase(
+        data: _data,
+        publishService: publishService,
+        editToken: _publishedInfo?.editToken,
+      );
     }
+    return const Result.success(null);
   }
-  Future<void> updateProductImported(Product product) async {
+  Future<Result<void>> updateProductImported(Product product) async {
     final index = _data.products.indexWhere((p) => p.id == product.id);
     if (index >= 0) { _data.products[index] = product; }
     else { _data.products.add(product); }
     notifyListeners();
-    await syncProductsToSupabase(data: _data, publishService: publishService, editToken: _publishedInfo?.editToken);
+    return syncProductsToSupabase(
+      data: _data,
+      publishService: publishService,
+      editToken: _publishedInfo?.editToken,
+    );
   }
 
   Future<void> withdrawPublicationConsent() async {
@@ -362,7 +447,9 @@ class StoreEditorController extends ChangeNotifier
       final result = await publishService.publishStore(_data, editToken: effectiveEditToken);
       return result.when(
         success: (publishResult) async {
-          final publicLink = 'https://vixrex.app${publishResult.publicPath}';
+          final publicLink = PublicSiteConfig.buildPublicLink(
+            publishResult.publicPath,
+          );
           _publishedInfo = PublishedVitrinInfo(
             publicLink: publicLink, slug: publishResult.slug,
             name: _data.name, editToken: publishResult.editToken,
@@ -449,7 +536,7 @@ class StoreEditorController extends ChangeNotifier
       }
 
       _publishedInfo = PublishedVitrinInfo(
-        publicLink: 'https://vixrex.app/v/$slug',
+        publicLink: PublicSiteConfig.buildVitrinLink(slug),
         slug: slug,
         name: (response['name'] ?? '').toString(),
         editToken: editToken,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:excel/excel.dart';
@@ -23,7 +24,7 @@ class BulkProductUploadService {
 
   BulkParseResult _parseCsv(Uint8List bytes) {
     try {
-      final content = String.fromCharCodes(bytes);
+      final content = utf8.decode(bytes, allowMalformed: true);
       final lines = content.split(RegExp(r'\r?\n')).where((l) => l.trim().isNotEmpty).toList();
       if (lines.length < 2) {
         return BulkParseResult.failure('CSV dosyasında en az 2 satır olmalı (başlık + veri).');
@@ -253,7 +254,7 @@ class BulkProductUploadService {
     buffer.writeln('Örnek Ürün 1,125.50,Günlük kullanım için uygun,Genel,Mevcut');
     buffer.writeln('Örnek Ürün 2,"1,250.00",Özel tasarım elbise,Elbise,Mevcut');
     buffer.writeln('Örnek Ürün 3,,Kampanyalı fiyat,Genel,Tükendi');
-    return Uint8List.fromList(buffer.toString().codeUnits);
+    return Uint8List.fromList(utf8.encode(buffer.toString()));
   }
 }
 

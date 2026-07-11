@@ -11,6 +11,12 @@ class VitrinProductCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onWhatsAppTap;
 
+  /// Görsel oranı (genişlik / yükseklik). Katalog kart yüksekliği buna göre hesaplanır.
+  static const double imageAspectRatio = 1.15;
+
+  /// Görsel altı metin bloğu için yaklaşık yükseklik (padding dahil).
+  static const double textBlockHeight = 118;
+
   const VitrinProductCard({
     super.key,
     required this.name,
@@ -23,139 +29,122 @@ class VitrinProductCard extends StatelessWidget {
     this.onWhatsAppTap,
   });
 
+  static double cardHeightForWidth(double width) {
+    return (width / imageAspectRatio) + textBlockHeight;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasImage = imagePath != null && imagePath!.isNotEmpty;
+    final hasImage = imagePath != null && imagePath!.trim().isNotEmpty;
+    final trimmedDesc = description.trim();
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppColors.radius24),
-        border: Border.all(color: AppColors.border, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 1.2,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (hasImage)
-                  Image.network(
-                    imagePath!,
-                    fit: BoxFit.cover,
-                    errorBuilder:
-                        (context, error, stackTrace) =>
-                            _buildImagePlaceholder(),
-                  )
-                else
-                  _buildImagePlaceholder(),
-
-                // Bottom gradient overlay
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          AppColors.surface.withValues(alpha: 0.8),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Siber Onay/Aktif Göstergesi (Sağ Alt Köşe)
-                Positioned(
-                  bottom: AppColors.spacing12,
-                  right: AppColors.spacing12,
-                  child: Container(
-                    width: AppColors.spacing20,
-                    height: AppColors.spacing20,
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.secondary.withValues(alpha: 0.5),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.check_rounded,
-                        color: Colors.black,
-                        size: 12,
-                        weight: 900,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppColors.radius24),
+          border: Border.all(color: AppColors.border, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
-          ),
-
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(AppColors.spacing12),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: imageAspectRatio,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (hasImage)
+                    Image.network(
+                      imagePath!.trim(),
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (context, error, stackTrace) =>
+                              _buildImagePlaceholder(),
+                    )
+                  else
+                    _buildImagePlaceholder(),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            AppColors.surface.withValues(alpha: 0.75),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: AppColors.spacing12,
+                    right: AppColors.spacing12,
+                    child: Container(
+                      width: AppColors.spacing20,
+                      height: AppColors.spacing20,
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.secondary.withValues(alpha: 0.5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.check_rounded,
+                          color: Colors.black,
+                          size: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Flexible(
+                      Expanded(
                         child: Text(
-                          category.toUpperCase(),
+                          category.trim().isEmpty
+                              ? 'GENEL'
+                              : category.toUpperCase(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
                             color: AppColors.secondary,
-                            letterSpacing: 1.2,
+                            letterSpacing: 1.1,
                           ),
                         ),
                       ),
                       if (stockStatus != 'Mevcut')
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppColors.spacing8,
-                            vertical: AppColors.spacing4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: (stockStatus == 'Tükendi'
-                                    ? AppColors.error
-                                    : AppColors.primary)
-                                .withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(
-                              AppColors.spacing4,
-                            ),
-                            border: Border.all(
-                              color:
-                                  stockStatus == 'Tükendi'
-                                      ? AppColors.error
-                                      : AppColors.primary,
-                              width: 0.8,
-                            ),
-                          ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6),
                           child: Text(
                             stockStatus.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 8,
                               fontWeight: FontWeight.w900,
@@ -168,47 +157,51 @@ class VitrinProductCard extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: AppColors.spacing8),
+                  const SizedBox(height: 4),
                   Text(
                     name,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w800,
                       color: AppColors.darkText,
+                      height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: AppColors.spacing4),
-                  Expanded(
-                    child: Text(
-                      description,
-                      maxLines: 2,
+                  if (trimmedDesc.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      trimmedDesc,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.mutedText,
-                        height: 1.3,
+                        height: 1.25,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppColors.spacing8),
+                  ],
+                  const SizedBox(height: 6),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        price,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.primary,
+                      Expanded(
+                        child: Text(
+                          price.trim().isEmpty ? '—' : price,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
                       InkWell(
                         onTap: onWhatsAppTap,
                         borderRadius: BorderRadius.circular(99),
                         child: Container(
-                          padding: const EdgeInsets.all(AppColors.spacing8),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
@@ -229,9 +222,8 @@ class VitrinProductCard extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -248,13 +240,14 @@ class VitrinProductCard extends StatelessWidget {
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.image_outlined,
-              size: 34,
+              size: 28,
               color: AppColors.primary.withValues(alpha: 0.25),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               'Görsel yok',
               style: TextStyle(

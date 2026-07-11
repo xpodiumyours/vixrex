@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/auth_service.dart';
 import 'package:vixrex/services/chatbot_service.dart';
@@ -25,7 +26,7 @@ class HomeShellScreen extends StatefulWidget {
 
   const HomeShellScreen({
     super.key,
-    this.initialIndex = 1,
+    this.initialIndex = 0,
     this.initialVitrinName,
   });
 
@@ -35,8 +36,9 @@ class HomeShellScreen extends StatefulWidget {
 
 class _HomeShellScreenState extends State<HomeShellScreen> {
   late int _selectedIndex;
-  int _exploreRefreshKey = 0;
   final _myVitrinKey = GlobalKey<MyVitrinScreenState>();
+  final _exploreKey = GlobalKey<ExploreScreenState>();
+  final _globalSearchController = TextEditingController();
 
   // Chat History
   final List<ChatMessage> _vixrexChatMessages = [];
@@ -66,20 +68,15 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   @override
   void initState() {
     super.initState();
-    // Safely map initialIndex:
-    // Old 0 (Explore) -> New 1 (Discover)
-    // Old 1 (MyVitrin) -> New 0 (Store)
-    // Old 2 (Moderation) -> New 4 (Moderasyon)
-    if (widget.initialIndex == 0) {
-      _selectedIndex = 1;
-    } else if (widget.initialIndex == 1) {
-      _selectedIndex = 0;
-    } else if (widget.initialIndex == 2 && _isAdmin) {
-      _selectedIndex = 4;
-    } else {
-      _selectedIndex = 0; // Default to Store
-    }
+    // Doğrudan sekme indeksi: 0=Vitrinim, 1=Keşfet, 2=VixRex, 3=Profil, 4=Moderasyon
+    _selectedIndex = widget.initialIndex < 0 ? 0 : widget.initialIndex;
     _loadVixRexSnapshot();
+  }
+
+  @override
+  void dispose() {
+    _globalSearchController.dispose();
+    super.dispose();
   }
 
   // ── Snapshot Yükleme ──────────────────────────────────────────────────────
@@ -111,16 +108,20 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   // ── Navigation ────────────────────────────────────────────────────────────
 
   void _openExplore() {
-    setState(() {
-      _selectedIndex = 1; // Discover
-      _exploreRefreshKey++;
+    setState(() => _selectedIndex = 1); // Discover
+  }
+
+  void _applyGlobalSearch(String query) {
+    setState(() => _selectedIndex = 1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _exploreKey.currentState?.applyExternalSearch(query);
     });
   }
 
   /// [İyileştirme #3] Vitrin yayınlandığında snapshot otomatik yenilenir.
   void _handleVitrinPublished() {
-    setState(() => _exploreRefreshKey++);
-    _loadVixRexSnapshot(); // ← Snapshot anında güncellenir
+    _exploreKey.currentState?.reloadStores();
+    _loadVixRexSnapshot();
   }
 
   // ── VixRex Action Callbacks ─────────────────────────────────────────────────
@@ -130,8 +131,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   }
 
   void _vixrexCopyLink() {
-    final link = _publishedInfo?.publicLink;
-    if (link != null && link.isNotEmpty) {
+    final raw = _publishedInfo?.publicLink;
+    if (raw != null && raw.isNotEmpty) {
+      final link = PublicSiteConfig.repairPublicLink(raw);
       Clipboard.setData(ClipboardData(text: link));
       _markVixRexShared();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -144,8 +146,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   }
 
   Future<void> _vixrexShareWhatsapp() async {
-    final link = _publishedInfo?.publicLink;
-    if (link == null || link.isEmpty) return;
+    final raw = _publishedInfo?.publicLink;
+    if (raw == null || raw.isEmpty) return;
+    final link = PublicSiteConfig.repairPublicLink(raw);
 
     final snapshot = _vixrexSnapshot;
     final message = snapshot == null
@@ -202,8 +205,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   }
 
   void _vixrexShowQr() {
-    final link = _publishedInfo?.publicLink;
-    if (link == null || link.isEmpty) {
+    final raw = _publishedInfo?.publicLink;
+    if (raw == null || raw.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -214,6 +217,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       );
       return;
     }
+    final link = PublicSiteConfig.repairPublicLink(raw);
 
     _markVixRexShared();
 
@@ -417,7 +421,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         onPublished: _handleVitrinPublished,
         onOpenExplore: _openExplore,
       ),
-      ExploreScreen(key: ValueKey(_exploreRefreshKey)),
+      ExploreScreen(key: _exploreKey),
       VixRexScreen(
         snapshot: _vixrexSnapshot,
         hasShared: _vixrexHasShared,
@@ -427,7 +431,12 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         onCopyPromotionText: _vixrexCopyPromotionText,
         onSharePromotionText: _vixrexSharePromotionText,
       ),
-      const ProfileScreen(),
+      ProfileScreen(
+        publicLink: _publishedInfo?.publicLink,
+        storeName: _vixrexSnapshot?.storeName,
+        onShowQr: _vixrexShowQr,
+        onCopyLink: _vixrexCopyLink,
+      ),
       if (isAdmin) const BlogModerationScreen(),
     ];
 
@@ -521,6 +530,56 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                     ),
                   ),
                   const Divider(height: 1, color: AppColors.border),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                    child: TextField(
+                      controller: _globalSearchController,
+                      style: const TextStyle(
+                        color: AppColors.darkText,
+                        fontSize: 13,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Vitrin veya ürün ara...',
+                        hintStyle: const TextStyle(
+                          color: AppColors.mutedText,
+                          fontSize: 12,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          size: 18,
+                          color: AppColors.mutedText,
+                        ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.inputBg,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: _applyGlobalSearch,
+                      onChanged: (value) {
+                        if (_selectedIndex == 1) {
+                          _exploreKey.currentState?.applyExternalSearch(value);
+                        }
+                      },
+                    ),
+                  ),
                   // Menü öğeleri
                   Expanded(
                     child: ListView.builder(

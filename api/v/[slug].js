@@ -213,6 +213,13 @@ export default async function handler(req, res) {
 </head>
 <body>
   <script>
+    // Path URL strategy: /v/slug kalsın. Eski #/app hash'i profil rotasını bozmasın.
+    (function () {
+      if (!/^\\/v\\/[^\\/]+\\/?$/.test(location.pathname)) return;
+      if (location.hash && /^#\\/(app|home|auth)?\\/?$/.test(location.hash)) {
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+    })();
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
         registrations.forEach(function(registration) {

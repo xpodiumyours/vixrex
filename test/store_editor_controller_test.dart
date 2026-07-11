@@ -52,6 +52,23 @@ class FakeStorePublishService extends Fake implements StorePublishService {
       editToken: editToken,
     ));
   }
+
+  @override
+  Future<Result<void>> updateProductsOnly(
+    StoreData data, {
+    required String editToken,
+  }) async {
+    return const Result.success(null);
+  }
+
+  @override
+  Future<Result<void>> updateStorePatch({
+    required String slug,
+    required String editToken,
+    required Map<String, dynamic> patch,
+  }) async {
+    return const Result.success(null);
+  }
 }
 
 class FakeStoreShelfUploadService extends Fake

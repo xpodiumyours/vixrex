@@ -109,6 +109,20 @@ void main() {
       },
     );
 
+    test('search query matches product names on store', () async {
+      testStores[0].products = [
+        Product(id: '1', name: 'Keten Elbise', price: '450'),
+      ];
+      final repo = FakeExploreRepository(mockStores: testStores);
+      final controller = ExploreController(repository: repo);
+      await controller.initialize();
+
+      controller.setSearchQuery('Keten');
+      expect(controller.filteredStores.length, 1);
+      expect(controller.filteredStores[0].name, 'Store A');
+      expect(controller.filteredStores[0].products.first.name, 'Keten Elbise');
+    });
+
     test('category filter and favorite filter work together', () async {
       final repo = FakeExploreRepository(mockStores: testStores);
       repo.mockFavorites = ['Store A', 'Store B'];
@@ -140,16 +154,15 @@ void main() {
       expect(controller.isFavorite(testStores[0]), isFalse);
     });
 
-    test('fallback to mock stores on fetch failure', () async {
+    test('fetch failure boş liste + hata mesajı döner (mock yok)', () async {
       final repo = FakeExploreRepository(shouldThrow: true);
       final controller = ExploreController(repository: repo);
       await controller.initialize();
 
       expect(controller.isLoading, isFalse);
-      expect(controller.showingExampleStores, isTrue);
+      expect(controller.showingExampleStores, isFalse);
       expect(controller.loadErrorMessage, isNotNull);
-      expect(controller.allStores.length, 3);
-      expect(controller.allStores[0].name, 'Aymira Giyim');
+      expect(controller.allStores, isEmpty);
     });
   });
 }

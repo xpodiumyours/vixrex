@@ -114,9 +114,14 @@ export default async function ProductDetailPage(props: PageProps) {
       )}`
     : null;
   const instagramValue = String(store.instagram || "").trim();
-  const instagramUrl = instagramValue
-    ? `https://instagram.com/${instagramValue.replace("@", "").replace("/", "")}`
-    : null;
+  const instagramUrl = (() => {
+    if (!instagramValue) return null;
+    if (/instagram\.com/i.test(instagramValue)) {
+      return normalizeExternalUrl(instagramValue);
+    }
+    const username = instagramValue.replace(/^@/, "").replace(/\//g, "").trim();
+    return username ? `https://instagram.com/${username}` : null;
+  })();
   const sourceUrl = normalizeExternalUrl(product.sourcePermalink);
   const productImages = getProductImages(product);
   const fallbackImage = store.shelf_image_url || store.logo_url || "";

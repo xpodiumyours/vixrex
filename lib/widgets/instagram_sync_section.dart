@@ -10,6 +10,8 @@ class InstagramSyncSection extends StatefulWidget {
   final String defaultCategory;
   final ValueChanged<Product> onProductImported;
   final ValueChanged<String> onMessage;
+  /// Bağlantı kurulunca Instagram kullanıcı adını vitrin alanına yazar.
+  final ValueChanged<String>? onConnectedUsername;
   final InstagramSyncService service;
 
   const InstagramSyncSection({
@@ -19,6 +21,7 @@ class InstagramSyncSection extends StatefulWidget {
     required this.defaultCategory,
     required this.onProductImported,
     required this.onMessage,
+    this.onConnectedUsername,
     this.service = const InstagramSyncService(),
   });
 
@@ -66,6 +69,13 @@ class _InstagramSyncSectionState extends State<InstagramSyncSection>
         _isLoading = false;
         if (status.connected) _authorizationOpened = false;
       });
+      final username = status.username?.trim();
+      if (status.connected &&
+          username != null &&
+          username.isNotEmpty &&
+          widget.onConnectedUsername != null) {
+        widget.onConnectedUsername!(username);
+      }
     } on InstagramSyncException catch (error) {
       if (!mounted) return;
       setState(() => _isLoading = false);

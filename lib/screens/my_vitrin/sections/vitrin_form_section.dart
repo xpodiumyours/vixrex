@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/instagram_sync_config.dart';
+import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/screens/ocr_scanner_screen.dart';
@@ -23,6 +24,7 @@ import 'package:vixrex/widgets/editor/common_form_fields.dart';
 import 'package:vixrex/widgets/editor/gallery_editor_section.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 import 'package:vixrex/widgets/editor/public_link_card.dart';
+import 'package:vixrex/widgets/google_business_guide_card.dart';
 import 'package:vixrex/widgets/editor/store_theme_picker.dart';
 import 'package:vixrex/widgets/editor/working_hours_editor.dart';
 import 'package:vixrex/widgets/instagram_sync_section.dart';
@@ -176,6 +178,15 @@ class VitrinFormSection extends StatelessWidget {
                         onCopyLink: () => _copyLink(context),
                         onShareLink: () => _shareLink(context),
                       ),
+                      if (hasPublished &&
+                          (controller.publishedInfo?.publicLink.trim().isNotEmpty ??
+                              false)) ...[
+                        const SizedBox(height: 14),
+                        GoogleBusinessGuideCard(
+                          publishedLink:
+                              controller.publishedInfo!.publicLink.trim(),
+                        ),
+                      ],
                       const SizedBox(height: 14),
 
                       // Instagram Sync Section (if active)
@@ -186,6 +197,8 @@ class VitrinFormSection extends StatelessWidget {
                           defaultCategory: controller.selectedKategori,
                           onProductImported: controller.updateProductImported,
                           onMessage: (msg) => state.showSnackBar(context, msg),
+                          onConnectedUsername: (username) =>
+                              _applyConnectedInstagram(username),
                         ),
                         const SizedBox(height: 14),
                       ],
@@ -203,7 +216,7 @@ class VitrinFormSection extends StatelessWidget {
                             selectedKategori: controller.selectedKategori,
                             onBookingEnabledChanged: controller.setBookingIsEnabled,
                             onBookingCapacityChanged: controller.setBookingCapacity,
-                            onStateChanged: () {},
+                            onStateChanged: controller.refreshBookingEditor,
                             showSnackBar: (msg) => state.showSnackBar(context, msg),
                           ),
                         ),
@@ -305,6 +318,14 @@ class VitrinFormSection extends StatelessWidget {
                   onCopyLink: () => _copyLink(context),
                   onShareLink: () => _shareLink(context),
                 ),
+                if (hasPublished &&
+                    (controller.publishedInfo?.publicLink.trim().isNotEmpty ??
+                        false)) ...[
+                  const SizedBox(height: 14),
+                  GoogleBusinessGuideCard(
+                    publishedLink: controller.publishedInfo!.publicLink.trim(),
+                  ),
+                ],
                 const SizedBox(height: 14),
 
                 // Instagram Sync Section (if active)
@@ -315,6 +336,8 @@ class VitrinFormSection extends StatelessWidget {
                     defaultCategory: controller.selectedKategori,
                     onProductImported: controller.updateProductImported,
                     onMessage: (msg) => state.showSnackBar(context, msg),
+                    onConnectedUsername: (username) =>
+                        _applyConnectedInstagram(username),
                   ),
                   const SizedBox(height: 14),
                 ],
@@ -332,7 +355,7 @@ class VitrinFormSection extends StatelessWidget {
                       selectedKategori: controller.selectedKategori,
                       onBookingEnabledChanged: controller.setBookingIsEnabled,
                       onBookingCapacityChanged: controller.setBookingCapacity,
-                      onStateChanged: () {},
+                      onStateChanged: controller.refreshBookingEditor,
                       showSnackBar: (msg) => state.showSnackBar(context, msg),
                     ),
                   ),
@@ -532,7 +555,10 @@ class VitrinFormSection extends StatelessWidget {
         hint: 'Bugün vitrinde ne var? Kısa bir tanıtım yaz.',
         icon: Icons.notes_rounded,
         maxLines: 3,
-        onChanged: (_) => controller.clearValidationErrors(),
+        onChanged: (v) {
+          controller.setDescription(v);
+          controller.clearValidationErrors();
+        },
       ),
     );
   }
@@ -544,7 +570,22 @@ class VitrinFormSection extends StatelessWidget {
       hint: '@kullanici_adi veya profil linki',
       icon: Icons.camera_alt_rounded,
       keyboardType: TextInputType.url,
+      onChanged: (v) => controller.updateInstagram(v),
     );
+  }
+
+  Future<void> _applyConnectedInstagram(String username) async {
+    final cleaned = username.trim().replaceFirst('@', '');
+    if (cleaned.isEmpty) return;
+    final handle = '@$cleaned';
+    _insta.text = handle;
+    final result = await controller.applyConnectedInstagramUsername(cleaned);
+    if (result.isFailure) {
+      // Yerel alan yine dolu; yayın/yeniden kaydet ile düzelir.
+      if (kDebugMode) {
+        debugPrint('_applyConnectedInstagram: ${result.failure?.message}');
+      }
+    }
   }
 
   Widget _buildLocationSection() {
@@ -571,7 +612,7 @@ class VitrinFormSection extends StatelessWidget {
             onPrivacyChanged: controller.setPrivacyNoticeAcknowledged,
             onTermsChanged: controller.setTermsAccepted,
             onPublicationChanged: controller.setPublicationConsentAccepted,
-            onReloadDocuments: () {},
+            onReloadDocuments: controller.reloadLegalDocuments,
             onOpenLegalPage: (type) => AppRouter.navigateToLegal(context, type),
           ),
         ),
@@ -730,12 +771,18 @@ class VitrinFormSection extends StatelessWidget {
           controller.data.products = products;
           controller.data.productCategories = categories;
           await controller.saveLocally();
-          // Ürünleri Supabase'e de kaydet
-          await controller.syncProductsToSupabase(
+          final sync = await controller.syncProductsToSupabase(
             data: controller.data,
             publishService: controller.publishService,
             editToken: controller.publishedInfo?.editToken,
           );
+          if (sync.isFailure && ctx.mounted) {
+            state.showSnackBar(
+              ctx,
+              sync.failure?.message ??
+                  'Ürünler kaydedilemedi, lütfen tekrar deneyin.',
+            );
+          }
         },
         onOcrTap: () {
           // Alt paneli kapat, sonra root navigator'dan OCR ekranını aç
@@ -757,11 +804,12 @@ class VitrinFormSection extends StatelessWidget {
   }
 
   Future<void> _openLink(BuildContext ctx) async {
-    final link = controller.publishedInfo?.publicLink.trim();
-    if (link == null || link.isEmpty) {
+    final raw = controller.publishedInfo?.publicLink.trim();
+    if (raw == null || raw.isEmpty) {
       state.showSnackBar(ctx, 'Vitrininizi yayına aldığınızda size özel web linkiniz oluşacak.');
       return;
     }
+    final link = PublicSiteConfig.repairPublicLink(raw);
     final uri = Uri.tryParse(link);
     if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
       state.showSnackBar(ctx, 'Vitrin linki açılamadı.'); return;
@@ -775,18 +823,20 @@ class VitrinFormSection extends StatelessWidget {
   }
 
   Future<void> _copyLink(BuildContext ctx) async {
-    final link = controller.publishedInfo?.publicLink;
-    if (link == null || link.trim().isEmpty) return;
+    final raw = controller.publishedInfo?.publicLink;
+    if (raw == null || raw.trim().isEmpty) return;
+    final link = PublicSiteConfig.repairPublicLink(raw);
     await Clipboard.setData(ClipboardData(text: link));
     if (ctx.mounted) state.showSnackBar(ctx, 'Vitrin linki kopyalandı.');
   }
 
   Future<void> _shareLink(BuildContext ctx) async {
-    final link = controller.publishedInfo?.publicLink.trim();
-    if (link == null || link.isEmpty) {
+    final raw = controller.publishedInfo?.publicLink.trim();
+    if (raw == null || raw.isEmpty) {
       state.showSnackBar(ctx, 'Vitrininizi yayına aldığınızda size özel web linkiniz oluşacak.');
       return;
     }
+    final link = PublicSiteConfig.repairPublicLink(raw);
     try {
       final r = await SharePlus.instance.share(
         ShareParams(text: 'VixRex web linkim:\n$link', title: 'VixRex Web Linki'),

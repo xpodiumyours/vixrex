@@ -6,6 +6,8 @@ import 'package:vixrex/models/vitrin_gallery_preview_item.dart';
 import 'package:vixrex/theme/vitrin_theme_preset.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
 import 'package:vixrex/widgets/vitrin_view.dart';
+import 'package:vixrex/widgets/vitrin_view/vitrin_view_actions.dart';
+import 'package:vixrex/widgets/vitrin_view/vitrin_view_content.dart';
 
 class PreviewScreen extends StatelessWidget {
   final StoreData storeData;
@@ -103,7 +105,18 @@ class PreviewScreen extends StatelessWidget {
                 ),
               )
               : FloatingActionButton(
-                onPressed: () {},
+                onPressed: () {
+                  final shareUrl = VitrinViewContent.buildShareUrl(
+                    storeData,
+                    null,
+                  );
+                  VitrinViewActions.shareVitrin(
+                    context,
+                    storeData: storeData,
+                    shareUrl: shareUrl,
+                    preset: vitrinThemePresetFor(storeData.theme),
+                  );
+                },
                 backgroundColor: isDark ? Colors.white : Colors.black,
                 child: Icon(
                   Icons.share,

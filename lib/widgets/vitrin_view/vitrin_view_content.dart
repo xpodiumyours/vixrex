@@ -1,4 +1,6 @@
+import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/store_publish_slug_generator.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 class VitrinViewContent {
@@ -105,10 +107,13 @@ class VitrinViewContent {
   }
 
   static String buildShareUrl(StoreData storeData, String? publicLink) {
-    final slug = storeData.name.toLowerCase().replaceAll(
-      RegExp(r'[^a-zA-Z0-9]'),
-      '-',
-    );
-    return publicLink ?? 'https://vixrex.app/v/$slug';
+    final trimmedLink = publicLink?.trim();
+    if (trimmedLink != null && trimmedLink.isNotEmpty) {
+      return PublicSiteConfig.repairPublicLink(trimmedLink);
+    }
+    final slug = storeData.slug.trim().isNotEmpty
+        ? storeData.slug.trim()
+        : const StorePublishSlugGenerator().generateSlug(storeData.name);
+    return PublicSiteConfig.buildVitrinLink(slug);
   }
 }

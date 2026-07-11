@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/store_publish_slug_generator.dart';
 import 'package:vixrex/theme/vitrin_theme_preset.dart';
 
 class VitrinFooter extends StatelessWidget {
@@ -16,12 +18,18 @@ class VitrinFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final slug = storeData.slug.trim().isNotEmpty
+        ? storeData.slug.trim()
+        : const StorePublishSlugGenerator().generateSlug(storeData.name);
+    final previewHost = PublicSiteConfig.buildVitrinLink(slug)
+        .replaceFirst(RegExp(r'^https?://'), '');
+
     return Column(
       children: [
         Text(
           publicMode
               ? 'Bu vitrin VixRex ile oluşturuldu'
-              : 'vixrex.app/${storeData.name.toLowerCase().replaceAll(' ', '-')}',
+              : previewHost,
           style: TextStyle(
             fontSize: publicMode ? 12 : 14,
             fontWeight: publicMode ? FontWeight.w700 : FontWeight.w800,

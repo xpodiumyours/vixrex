@@ -16,5 +16,11 @@ void main() {
       expect(result.isFailure, isTrue);
       expect(result.failure!.message, contains('oturum bulunamadı'));
     });
+
+    test('aktif oturum yoksa veri export Result.failure döner', () async {
+      final result = await const AuthService().exportMyData();
+      expect(result.isFailure, isTrue);
+      expect(result.failure!.message, contains('giriş'));
+    });
   });
 }

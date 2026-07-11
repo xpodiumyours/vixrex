@@ -125,13 +125,13 @@ class SupabaseErrorMapper {
       final message = error.message.toLowerCase();
       if (message.contains('invalid login credentials')) {
         return Failure(
-          'Giriş bilgileri hatalı. Lütfen e-posta veya şifrenizi kontrol edin.',
+          'Giriş bilgileri hatalı. E-posta/şifreyi kontrol edin veya doğrulama mailindeki bağlantıya tıklayın.',
           stackTrace: stackTrace,
         );
       }
       if (message.contains('email not confirmed')) {
         return Failure(
-          'Lütfen e-posta adresinizi doğrulayın.',
+          'E-posta henüz doğrulanmadı. Gelen kutunuzdaki bağlantıya tıklayın, sonra tekrar giriş yapın.',
           stackTrace: stackTrace,
         );
       }

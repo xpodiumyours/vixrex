@@ -135,7 +135,7 @@ List<Widget> buildPublicActionButtons({
           },
         )
         : null,
-    storeData.instagram.trim().isNotEmpty
+    storeData.instagram.trim().isNotEmpty && instagramUrl.isNotEmpty
         ? _buildActionButton(
           label: 'Instagram',
           icon: Icons.camera_rounded,

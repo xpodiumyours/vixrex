@@ -295,7 +295,7 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
             return _PublicVitrinShell(
               showOwnerBar: ownerSnapshot.data == true,
               onEdit: () {
-                AppRouter.navigateToHomeShell(context, initialIndex: 1);
+                AppRouter.navigateToMyVitrin(context);
               },
               child: VitrinView(
                 storeData: storeData,

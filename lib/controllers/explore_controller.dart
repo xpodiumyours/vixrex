@@ -62,10 +62,13 @@ class ExploreController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _allStores = _getMockStores();
-      _showingExampleStores = true;
+      if (kDebugMode) {
+        debugPrint('ExploreController.reloadStores: $e');
+      }
+      _allStores = [];
+      _showingExampleStores = false;
       _loadErrorMessage =
-          'Canlı vitrinler yüklenemedi. Aşağıdaki kartlar tıklanamayan örneklerdir.';
+          'Vitrinler yüklenemedi. İnternet bağlantınızı kontrol edin.';
       _isLoading = false;
       notifyListeners();
     }
@@ -119,57 +122,17 @@ class ExploreController extends ChangeNotifier {
       if (_onlyFavorites && !_favoritedStoreNames.contains(store.name)) {
         return false;
       }
-      // 3. Search query filter
+      // 3. Search query filter (vitrin, kategori, ürün)
       if (query.isNotEmpty) {
         final matchName = store.name.toLowerCase().contains(query);
         final matchDesc = store.description.toLowerCase().contains(query);
         final matchCat = store.kategori.toLowerCase().contains(query);
-        return matchName || matchDesc || matchCat;
+        final matchProduct = store.products.any(
+          (p) => p.name.toLowerCase().contains(query),
+        );
+        return matchName || matchDesc || matchCat || matchProduct;
       }
       return true;
     }).toList();
-  }
-
-  List<StoreData> _getMockStores() {
-    return [
-      StoreData(
-        name: 'Aymira Giyim',
-        description:
-            'Sezonun en trend kadın kıyafetleri ve tasarım kombinleri.',
-        kategori: 'Giyim',
-        businessType: 'Giyim',
-        whatsapp: '0555 123 45 67',
-        address: 'Bahariye Cad. No:12, Kadıköy, İstanbul',
-        slug: 'aymira-giyim',
-        shelfImageUrl:
-            'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=500&q=80',
-        isStore: true,
-      ),
-      StoreData(
-        name: 'Lezzet Durağı',
-        description:
-            'Taze kahveler, kruvasanlar ve el yapımı ekşi mayalı ekmekler.',
-        kategori: 'Gıda',
-        businessType: 'Gıda',
-        whatsapp: '0555 234 56 78',
-        address: 'Şair Nedim Cad. No:45, Beşiktaş, İstanbul',
-        slug: 'lezzet-duragi',
-        shelfImageUrl:
-            'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=500&q=80',
-        isStore: true,
-      ),
-      StoreData(
-        name: 'Elit Aksesuar',
-        description: 'Özel tasarım takılar ve şık gümüş aksesuarlar vitrini.',
-        kategori: 'Dekorasyon',
-        businessType: 'Dekorasyon',
-        whatsapp: '0555 345 67 89',
-        address: 'Moda Cad. No:89, Kadıköy, İstanbul',
-        slug: 'elit-aksesuar',
-        shelfImageUrl:
-            'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=500&q=80',
-        isStore: false,
-      ),
-    ];
   }
 }

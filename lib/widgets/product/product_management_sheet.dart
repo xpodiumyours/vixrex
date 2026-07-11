@@ -211,6 +211,49 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     );
   }
 
+  /// Ürün başlıklarını düzenler (boşluk/büyük-küçük harf) — VixRex önerileri Complete.
+  Future<void> _applyVixRexTitleSuggestions() async {
+    if (_products.isEmpty) {
+      widget.showMessage(
+        'Önce ürün ekleyin, sonra başlık önerilerini uygulayın.',
+      );
+      return;
+    }
+
+    var improved = 0;
+    setState(() {
+      for (var i = 0; i < _products.length; i++) {
+        final original = _products[i].name;
+        final next = _improveProductTitle(original);
+        if (next != original) {
+          _products[i] = _products[i].copyWith(name: next);
+          improved++;
+        }
+      }
+    });
+
+    if (improved == 0) {
+      widget.showMessage('Ürün başlıkları zaten düzenli görünüyor.');
+      return;
+    }
+
+    await _persist();
+    widget.showMessage('$improved ürün başlığı iyileştirildi.');
+  }
+
+  String _improveProductTitle(String raw) {
+    final trimmed = raw.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (trimmed.isEmpty) return trimmed;
+    return trimmed
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          if (word.length == 1) return word.toUpperCase();
+          return '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}';
+        })
+        .join(' ');
+  }
+
   Future<void> _toggleVisibility(Product product, bool value) async {
     setState(() => product.isVisible = value);
     await _persist();
@@ -242,9 +285,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
             const SizedBox(height: 14),
             VixRexCatalogAssistantSection(
               onOcrTap: widget.onOcrTap,
-              onSuggestionTap: () => widget.showMessage(
-                'VixRex önerileri özelliği yakında aktif olacak.',
-              ),
+              onSuggestionTap: _applyVixRexTitleSuggestions,
             ),
             const SizedBox(height: 14),
             _buildFilters(),

@@ -133,9 +133,14 @@ export default async function StorePage(props: PageProps) {
     ? `${waBaseUrl}?text=${encodeURIComponent(`Merhaba, ${store.name} vitrininiz hakkında bilgi almak istiyorum.`)}`
     : null;
   const instagramValue = String(store.instagram || "").trim();
-  const instagramUrl = instagramValue
-    ? `https://instagram.com/${instagramValue.replace("@", "").replace("/", "")}`
-    : null;
+  const instagramUrl = (() => {
+    if (!instagramValue) return null;
+    if (/instagram\.com/i.test(instagramValue)) {
+      return normalizeExternalUrl(instagramValue);
+    }
+    const username = instagramValue.replace(/^@/, "").replace(/\//g, "").trim();
+    return username ? `https://instagram.com/${username}` : null;
+  })();
   const websiteUrl = normalizeExternalUrl(store.website);
   const referencesUrl = normalizeExternalUrl(store.references_link);
   const mapsUrl = hasPhysicalLocation

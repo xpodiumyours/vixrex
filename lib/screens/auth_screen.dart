@@ -48,7 +48,23 @@ class _AuthScreenState extends State<AuthScreen> {
         : await authService.signUp(email, password);
 
     result.when(
-      success: (_) async {
+      success: (authResponse) async {
+        // E-posta onayı açıksa signup session döndürmez; giriş çalışmaz.
+        if (!_isLogin && authResponse.session == null) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Hesap oluşturuldu. Giriş için e-postanızdaki VixRex doğrulama bağlantısına tıklayın.',
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 6),
+            ),
+          );
+          setState(() => _isLogin = true);
+          return;
+        }
         await _handlePostAuthentication();
       },
       failure: (failure) {
@@ -58,6 +74,35 @@ class _AuthScreenState extends State<AuthScreen> {
     );
 
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  Future<void> _resetPassword() async {
+    final email = _emailCtrl.text.trim();
+    if (email.isEmpty ||
+        !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      _showError('Şifre sıfırlamak için geçerli bir e-posta girin.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    final result = await const AuthService().resetPassword(email);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    result.when(
+      success: (_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Şifre sıfırlama bağlantısı e-postanıza gönderildi. Gelen kutunuzu kontrol edin.',
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      failure: (failure) => _showError(failure.message),
+    );
   }
 
   Future<void> _handlePostAuthentication() async {
@@ -172,7 +217,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
             if (!mounted) return;
 
-            AppRouter.navigateToHomeShell(context, initialIndex: 1);
+            AppRouter.navigateToHomeShell(context, initialIndex: 0);
           }
         } else {
           AppRouter.navigateToLanding(context);
@@ -367,7 +412,22 @@ class _AuthScreenState extends State<AuthScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 24),
+                      if (_isLogin) ...[
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _isLoading ? null : _resetPassword,
+                            child: const Text(
+                              'Şifremi unuttum',
+                              style: TextStyle(
+                                color: brandOrange,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ] else
+                        const SizedBox(height: 24),
 
                       // Submit button
                       ElevatedButton(

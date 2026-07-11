@@ -36,14 +36,29 @@ class VitrinProfileTools extends StatelessWidget {
           subtitle: '${storeData.products.length} ürün',
           color: preset.accent,
           onTap: () {
-            ScaffoldMessenger.of(context).clearSnackBars();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Katalog ürünleri bu sayfada görüntüleniyor.'),
-                behavior: SnackBarBehavior.floating,
-                duration: Duration(seconds: 2),
-              ),
-            );
+            final scrollable = Scrollable.maybeOf(context);
+            if (scrollable != null) {
+              scrollable.position.animateTo(
+                (scrollable.position.pixels + 420).clamp(
+                  0.0,
+                  scrollable.position.maxScrollExtent,
+                ),
+                duration: const Duration(milliseconds: 420),
+                curve: Curves.easeOutCubic,
+              );
+              return;
+            }
+            final primary = PrimaryScrollController.maybeOf(context);
+            if (primary != null && primary.hasClients) {
+              primary.animateTo(
+                (primary.offset + 420).clamp(
+                  0.0,
+                  primary.position.maxScrollExtent,
+                ),
+                duration: const Duration(milliseconds: 420),
+                curve: Curves.easeOutCubic,
+              );
+            }
           },
         ),
       if (hasVCardData)

@@ -36,7 +36,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
 
     await tester.pumpWidget(
-      const MaterialApp(home: HomeShellScreen(initialIndex: 1)),
+      const MaterialApp(home: HomeShellScreen(initialIndex: 0)),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));

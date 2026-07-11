@@ -83,6 +83,14 @@ mixin StoreMediaMixin on ChangeNotifier {
     final hasPendingCover = _coverBytes != null && _coverFileName != null;
     final hasPendingGallery = _editorGalleryItems.any((item) => !item.isRemoved && item.isFromBytes && item.bytes != null);
 
+    // Hazır şablon / uzak URL kapak: byte yüklemesi yoksa StoreData'ya yaz
+    if (!hasPendingCover) {
+      final remoteCover = (_coverUrl ?? '').trim();
+      if (remoteCover.isNotEmpty) {
+        storeData.shelfImageUrl = remoteCover;
+      }
+    }
+
     if (!hasPendingCover && !hasPendingGallery) {
       storeData.galleryItems = _editorGalleryItems.where((item) => !item.isRemoved).map((item) {
         return StoreGalleryItem(

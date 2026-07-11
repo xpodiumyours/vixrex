@@ -15,10 +15,10 @@ class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
 
   @override
-  State<ExploreScreen> createState() => _ExploreScreenState();
+  State<ExploreScreen> createState() => ExploreScreenState();
 }
 
-class _ExploreScreenState extends State<ExploreScreen> {
+class ExploreScreenState extends State<ExploreScreen> {
   final TextEditingController _searchController = TextEditingController();
   late final ExploreController _controller;
   bool _isControllerInitialized = false;
@@ -60,8 +60,25 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  /// Shell sidebar / global arama — Keşfet sekmesine query uygular.
+  void applyExternalSearch(String query) {
+    _searchController.text = query;
+    _searchController.selection = TextSelection.collapsed(offset: query.length);
+    if (_isControllerInitialized) {
+      _controller.setSearchQuery(query);
+    }
+  }
+
+  Future<void> reloadStores() async {
+    if (!_isControllerInitialized) return;
+    await _controller.reloadStores();
+  }
+
   @override
   void dispose() {
+    if (_isControllerInitialized) {
+      _controller.dispose();
+    }
     _searchController.dispose();
     super.dispose();
   }
@@ -512,29 +529,64 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
             ),
           ),
+          TextButton(
+            onPressed: () => _controller.reloadStores(),
+            child: const Text(
+              'Tekrar dene',
+              style: TextStyle(
+                color: Color(0xFF9A3412),
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildEmptyState() {
+    final hasError = _controller.loadErrorMessage != null;
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.storefront_rounded, size: 48, color: mutedText),
-          const SizedBox(height: 12),
-          Text(
-            _controller.onlyFavorites
-                ? 'Favorilere ekli vitrin bulunamadı.'
-                : 'Aramanızla eşleşen vitrin bulunamadı.',
-            style: const TextStyle(
-              fontSize: 14,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              hasError
+                  ? Icons.wifi_off_rounded
+                  : Icons.storefront_rounded,
+              size: 48,
               color: mutedText,
-              fontWeight: FontWeight.bold,
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              hasError
+                  ? 'Vitrinler şu an yüklenemedi.'
+                  : _controller.onlyFavorites
+                      ? 'Favorilere ekli vitrin bulunamadı.'
+                      : 'Aramanızla eşleşen vitrin bulunamadı.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: mutedText,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (hasError) ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => _controller.reloadStores(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Tekrar dene'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

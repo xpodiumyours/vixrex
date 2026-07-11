@@ -503,7 +503,7 @@ class LandingHeroSection extends StatelessWidget {
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 14),
                       child: Text(
-                        'vixrex.app/',
+                        'vixrex.app/v/',
                         style: TextStyle(
                           color: Colors.white60,
                           fontSize: 14,

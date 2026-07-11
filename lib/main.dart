@@ -2,14 +2,20 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/services/push_notification_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Path URL: müşteri linki /v/slug tarayıcıda PublicVitrinScreen açar (hash /#/app değil).
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
   SystemChrome.setSystemUIOverlayStyle(_systemUiOverlayStyle);
   _setupGlobalErrorHandler();
   await _initializeSupabase();
@@ -81,6 +87,24 @@ void _initializeOneSignal() {
 
   OneSignal.initialize(oneSignalAppId);
   OneSignal.Notifications.requestPermission(true);
+  PushNotificationService.instance.attachClickListener();
+  PushNotificationService.instance.setDeepLinkHandler(({
+    required String type,
+    required String storeSlug,
+  }) {
+    if (type == 'booking' || type.isEmpty) {
+      AppRouter.openBookingFromNotification(storeSlug);
+    }
+  });
+
+  try {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null && userId.isNotEmpty) {
+      PushNotificationService.instance.loginUser(userId);
+    }
+  } catch (e) {
+    if (kDebugMode) debugPrint('[WARN] OneSignal login skipped: $e');
+  }
 }
 
 class VixRexApp extends StatelessWidget {

@@ -151,9 +151,11 @@ class VitrinViewActions {
 
   static String buildInstagramUrl(String value) {
     final text = value.trim();
+    if (text.isEmpty) return '';
     if (text.contains('instagram.com')) return normalizeExternalUrl(text);
 
     final username = text.replaceFirst('@', '').replaceAll('/', '').trim();
+    if (username.isEmpty) return '';
     return 'https://instagram.com/$username';
   }
 

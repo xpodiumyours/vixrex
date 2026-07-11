@@ -28,6 +28,16 @@ class VitrinStoreCard extends StatelessWidget {
     required this.onWhatsAppPressed,
   });
 
+  String? get _visibleProductSummary {
+    final visible = store.products.where((p) => p.isVisible).toList();
+    if (visible.isEmpty) return null;
+    final names = visible.take(2).map((p) => p.name.trim()).where((n) => n.isNotEmpty);
+    final joined = names.join(' · ');
+    if (joined.isEmpty) return '${visible.length} ürün';
+    if (visible.length > 2) return '$joined · +${visible.length - 2}';
+    return '$joined · ${visible.length} ürün';
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasImage = store.shelfImageUrl.isNotEmpty;
@@ -209,6 +219,19 @@ class VitrinStoreCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+                      if (_visibleProductSummary != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _visibleProductSummary!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: mutedText,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                       const Spacer(),
                       Row(
                         children: [

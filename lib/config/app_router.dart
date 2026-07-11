@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:vixrex/config/legal_config.dart';
+import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/screens/appointment_tracker_screen.dart';
 import 'package:vixrex/screens/auth_screen.dart';
 import 'package:vixrex/screens/blog_editor_screen.dart';
@@ -9,7 +11,6 @@ import 'package:vixrex/screens/landing_screen.dart';
 import 'package:vixrex/screens/legal_screen.dart';
 import 'package:vixrex/screens/public_vitrin_screen.dart';
 import 'package:vixrex/screens/public_product_screen.dart';
-import 'package:vixrex/config/legal_config.dart';
 
 class AppRouter {
   static const String landing = '/';
@@ -18,9 +19,19 @@ class AppRouter {
   static const String auth = '/auth';
   static const String consent = LegalConfig.consentPath;
 
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   static final GoRouter router = GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation: landing,
-    errorBuilder: (context, state) => const LandingScreen(),
+    errorBuilder: (context, state) {
+      final slug = PublicSiteConfig.resolveVitrinSlugFromPath(state.uri.path);
+      if (slug != null) {
+        return PublicVitrinScreen(slug: slug);
+      }
+      return const LandingScreen();
+    },
     routes: [
       GoRoute(
         path: landing,
@@ -41,7 +52,7 @@ class AppRouter {
           }
 
           if (uri.path == app || uri.path == home) {
-            final index = uri.path == app ? 1 : 0;
+            final index = uri.path == app ? 0 : 1;
             return HomeShellScreen(initialIndex: index);
           }
 
@@ -54,11 +65,18 @@ class AppRouter {
       ),
       GoRoute(
         path: app,
-        builder: (context, state) => const HomeShellScreen(initialIndex: 1),
+        builder: (context, state) => const HomeShellScreen(initialIndex: 0),
       ),
       GoRoute(
         path: home,
-        builder: (context, state) => const HomeShellScreen(initialIndex: 0),
+        builder: (context, state) => const HomeShellScreen(initialIndex: 1),
+      ),
+      GoRoute(
+        path: '/bookings/:slug',
+        builder: (context, state) {
+          final slug = state.pathParameters['slug'] ?? '';
+          return BookingManagementScreen(storeSlug: slug);
+        },
       ),
       GoRoute(
         path: '/v/:slug/urun/:productSlug',
@@ -122,9 +140,10 @@ class AppRouter {
     }
   }
 
+  /// Ana kabuk. [initialIndex]: 0=Vitrinim, 1=Keşfet, 2=VixRex, 3=Profil.
   static void navigateToHomeShell(BuildContext context,
-      {int initialIndex = 1, String? initialVitrinName}) {
-    if (initialVitrinName != null) {
+      {int initialIndex = 0, String? initialVitrinName}) {
+    if (initialVitrinName != null || initialIndex > 1) {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -139,7 +158,7 @@ class AppRouter {
     }
 
     try {
-      if (initialIndex == 0) {
+      if (initialIndex == 1) {
         context.go(home);
       } else {
         context.go(app);
@@ -156,6 +175,22 @@ class AppRouter {
         (route) => false,
       );
     }
+  }
+
+  /// Public vitrinden "Düzenle": her zaman Vitrinim sekmesine taze shell açar.
+  static void navigateToMyVitrin(
+    BuildContext context, {
+    String? initialVitrinName,
+  }) {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => HomeShellScreen(
+          initialIndex: 0,
+          initialVitrinName: initialVitrinName,
+        ),
+      ),
+      (_) => false,
+    );
   }
 
   static Future<dynamic> navigateToAuth(BuildContext context) {
@@ -198,12 +233,25 @@ class AppRouter {
 
   static Future<dynamic> navigateToBookingManagement(BuildContext context,
       {required String slug}) {
-    return Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BookingManagementScreen(storeSlug: slug),
-      ),
-    );
+    try {
+      return context.push('/bookings/$slug');
+    } catch (_) {
+      return Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BookingManagementScreen(storeSlug: slug),
+        ),
+      );
+    }
+  }
+
+  /// OneSignal / bildirim tıklamasından randevu yönetimine gider.
+  static void openBookingFromNotification(String slug) {
+    final trimmed = slug.trim();
+    if (trimmed.isEmpty) return;
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return;
+    navigateToBookingManagement(ctx, slug: trimmed);
   }
 
   static Future<bool?> navigateToAppointmentTracker(BuildContext context,
