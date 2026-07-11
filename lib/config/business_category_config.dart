@@ -403,6 +403,25 @@ class BusinessCategoryConfig {
       (c) => c.id == 'diger',
     );
   }
+
+  /// Randevu paketi (bildirim ayarı, ileride CTA): kategoriye göre otomatik.
+  /// Perakende vitrinlerde kapalı; hizmet / randevu kategorilerinde açık.
+  static const Set<String> bookingCategoryIds = {
+    'kuafor',
+    'saglik_yasam',
+    'spor_fitness',
+    'egitim_ders',
+    'ev_temizlik',
+    'pet_shop_veteriner',
+    'teknik_servis',
+    'oto_arac',
+  };
+
+  static bool supportsBookingPackage(String? kategori) {
+    final trimmed = kategori?.trim() ?? '';
+    if (trimmed.isEmpty) return false;
+    return bookingCategoryIds.contains(fromCategoryLabel(trimmed).id);
+  }
 }
 
 class SuggestedOffering {

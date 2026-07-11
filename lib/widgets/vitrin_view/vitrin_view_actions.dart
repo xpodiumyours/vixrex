@@ -227,10 +227,7 @@ class VitrinViewActions {
     required String? publicLink,
     required bool publicMode,
   }) {
-    final normalizedPublicLink = normalizeExternalUrl(publicLink?.trim() ?? '');
-    if (publicMode && normalizedPublicLink.isNotEmpty) {
-      return normalizedPublicLink;
-    }
+    // Public + preview: gerçek website; vitrin self-link "Web Sitesi" değildir.
     return normalizeExternalUrl(storeData.website);
   }
 
@@ -243,11 +240,7 @@ class VitrinViewActions {
 
     return WhatsAppLinkHelper.isValidTurkeyMobile(storeData.whatsapp) ||
         storeData.instagram.trim().isNotEmpty ||
-        publicWebsiteActionUrl(
-          storeData: storeData,
-          publicLink: publicLink,
-          publicMode: publicMode,
-        ).isNotEmpty ||
+        normalizeExternalUrl(storeData.website).isNotEmpty ||
         storeData.googleBusinessLink.trim().isNotEmpty ||
         storeData.address.trim().isNotEmpty ||
         (storeData.latitude != null && storeData.longitude != null);

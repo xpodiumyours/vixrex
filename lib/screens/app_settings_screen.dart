@@ -4,10 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/screens/legal_screen.dart';
 import 'package:vixrex/screens/notifications_screen.dart';
 import 'package:vixrex/services/auth_service.dart';
 import 'package:vixrex/services/notification_preferences_service.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 /// Uygulama ayarları — bildirim tercihi + hesap. Tema ayrı state uydurulmaz (app dark-first).
@@ -21,8 +23,10 @@ class AppSettingsScreen extends StatefulWidget {
 class _AppSettingsScreenState extends State<AppSettingsScreen> {
   final _prefsService = const NotificationPreferencesService();
   final _auth = const AuthService();
+  final _storage = const StoreLocalStorageService();
   bool _loading = true;
   bool _bookingPushEnabled = true;
+  bool _showBookingPushSetting = false;
   bool _signingOut = false;
   bool _deletingAccount = false;
   bool _exportingData = false;
@@ -36,9 +40,14 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
   Future<void> _load() async {
     try {
       final enabled = await _prefsService.isBookingPushEnabled();
+      final store = await _storage.loadVitrinData();
+      final showBooking = BusinessCategoryConfig.supportsBookingPackage(
+        store?.kategori,
+      );
       if (!mounted) return;
       setState(() {
         _bookingPushEnabled = enabled;
+        _showBookingPushSetting = showBooking;
         _loading = false;
       });
     } catch (e) {
@@ -241,36 +250,38 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
               children: [
                 _sectionTitle('Bildirimler'),
                 const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: SwitchListTile(
-                    value: _bookingPushEnabled,
-                    onChanged: _setBookingPush,
-                    title: const Text(
-                      'Randevu bildirimleri',
-                      style: TextStyle(
-                        color: AppColors.darkText,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                      ),
+                if (_showBookingPushSetting) ...[
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    subtitle: const Text(
-                      'Randevu onay, red ve hatırlatma push bildirimleri',
-                      style: TextStyle(
-                        color: AppColors.mutedText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                    child: SwitchListTile(
+                      value: _bookingPushEnabled,
+                      onChanged: _setBookingPush,
+                      title: const Text(
+                        'Randevu bildirimleri',
+                        style: TextStyle(
+                          color: AppColors.darkText,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
                       ),
+                      subtitle: const Text(
+                        'Randevu onay, red ve hatırlatma push bildirimleri',
+                        style: TextStyle(
+                          color: AppColors.mutedText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      activeThumbColor: Colors.black,
+                      activeTrackColor: AppColors.primary,
                     ),
-                    activeThumbColor: Colors.black,
-                    activeTrackColor: AppColors.primary,
                   ),
-                ),
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
+                ],
                 _linkTile(
                   'Bildirim geçmişi',
                   () => Navigator.push(

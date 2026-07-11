@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
-import 'package:vixrex/screens/appointment_tracker_screen.dart';
 import 'package:vixrex/services/public_store_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/vitrin_view_service.dart';
@@ -27,6 +27,167 @@ class PublicVitrinScreen extends StatefulWidget {
 
   @override
   State<PublicVitrinScreen> createState() => _PublicVitrinScreenState();
+
+  /// Supabase public store satırını [StoreData]'ya çevirir (logo + Google dahil).
+  static StoreData mapStoreFromSupabase({
+    required String slug,
+    required Map<String, dynamic> data,
+  }) {
+    final description = _readString(data['description']);
+    final corporateBio = _readString(
+      data['corporate_bio'],
+      fallback: description,
+    );
+
+    final rawBooking = data['booking_settings'];
+    dynamic bookingMap;
+    if (rawBooking is List && rawBooking.isNotEmpty) {
+      bookingMap = rawBooking.first;
+    } else if (rawBooking is Map) {
+      bookingMap = rawBooking;
+    }
+
+    final bookingSettings =
+        bookingMap != null
+            ? BookingSettings.fromJson(Map<String, dynamic>.from(bookingMap))
+            : null;
+
+    return StoreData(
+      slug: slug,
+      name: _readString(data['name']),
+      businessType: _readString(data['business_type']),
+      description: description,
+      whatsapp: _readString(data['whatsapp']),
+      instagram: _readString(data['instagram']),
+      website: _readString(data['website']),
+      address: _readString(data['address']),
+      latitude: _readDouble(data['latitude']),
+      longitude: _readDouble(data['longitude']),
+      locationAccuracyMeters: _readDouble(data['location_accuracy_meters']),
+      locationConsentAt: _readDateTime(data['location_consent_at']),
+      locationSource: _readString(data['location_source']),
+      theme: _readString(data['theme'], fallback: 'Premium'),
+      status: _readString(data['status']),
+      isEsnafMode: true,
+      isStore: _readBool(data['is_store']),
+      corporateBio: corporateBio,
+      referencesLink: _readString(data['references_link']),
+      shelfImageUrl: _readString(data['shelf_image_url']),
+      logoUrl: _readString(data['logo_url']).isEmpty
+          ? null
+          : _readString(data['logo_url']),
+      googleBusinessLink: _readString(data['google_business_link']),
+      galleryItems: _parseGalleryItems(data['gallery_items']),
+      marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),
+      products: _parseProducts(data['products']),
+      offerings: _parseOfferings(data['offerings']),
+      kategori: _readString(data['kategori']),
+      workingHours: _readString(data['working_hours']),
+      bookingSettings: bookingSettings,
+    );
+  }
+
+  static List<StoreOffering> _parseOfferings(Object? rawOfferings) {
+    try {
+      final decodedOfferings =
+          rawOfferings is String ? jsonDecode(rawOfferings) : rawOfferings;
+      if (decodedOfferings is! List) return [];
+
+      return decodedOfferings
+          .whereType<Map>()
+          .map((o) => StoreOffering.fromJson(Map<String, dynamic>.from(o)))
+          .where((o) => o.title.trim().isNotEmpty)
+          .take(6)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static String _readString(Object? value, {String fallback = ''}) {
+    if (value == null) return fallback;
+    final text = value.toString().trim();
+    return text.isEmpty ? fallback : text;
+  }
+
+  static bool _readBool(Object? value) {
+    if (value is bool) return value;
+    if (value is String) return value.toLowerCase() == 'true';
+    return false;
+  }
+
+  static double? _readDouble(Object? value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value.trim());
+    return null;
+  }
+
+  static DateTime? _readDateTime(Object? value) {
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
+  }
+
+  static List<MarketplaceLink> _parseMarketplaceLinks(Object? rawLinks) {
+    try {
+      final decodedLinks = rawLinks is String ? jsonDecode(rawLinks) : rawLinks;
+
+      if (decodedLinks is! List) return [];
+
+      return decodedLinks
+          .whereType<Map>()
+          .map(
+            (link) => MarketplaceLink(
+              id: UniqueKey().toString(),
+              platform: _readString(link['platform']),
+              url: _readString(link['url']),
+              subtitle: _readString(link['subtitle'] ?? ''),
+            ),
+          )
+          .where(
+            (link) =>
+                link.platform.trim().isNotEmpty && link.url.trim().isNotEmpty,
+          )
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static List<Product> _parseProducts(Object? rawProducts) {
+    try {
+      final decodedProducts =
+          rawProducts is String ? jsonDecode(rawProducts) : rawProducts;
+      if (decodedProducts is! List) return [];
+
+      return decodedProducts
+          .whereType<Map>()
+          .map((p) => Product.fromJson(Map<String, dynamic>.from(p)))
+          .where((product) => product.isVisible)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static List<StoreGalleryItem> _parseGalleryItems(Object? rawItems) {
+    try {
+      final decodedItems = rawItems is String ? jsonDecode(rawItems) : rawItems;
+
+      if (decodedItems is! List) return [];
+
+      return decodedItems
+          .whereType<Map>()
+          .map(
+            (item) =>
+                StoreGalleryItem.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .where((item) => item.imageUrl.trim().isNotEmpty)
+          .take(12)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
 }
 
 class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
@@ -72,101 +233,13 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
             source: _readViewSource(),
           ),
         );
-        return _storeDataFromSupabase(response);
+        return PublicVitrinScreen.mapStoreFromSupabase(
+          slug: widget.slug,
+          data: response,
+        );
       },
       failure: (_) => null,
     );
-  }
-
-  StoreData _storeDataFromSupabase(Map<String, dynamic> data) {
-    final description = _readString(data['description']);
-    final corporateBio = _readString(
-      data['corporate_bio'],
-      fallback: description,
-    );
-
-    final rawBooking = data['booking_settings'];
-    dynamic bookingMap;
-    if (rawBooking is List && rawBooking.isNotEmpty) {
-      bookingMap = rawBooking.first;
-    } else if (rawBooking is Map) {
-      bookingMap = rawBooking;
-    }
-
-    final bookingSettings =
-        bookingMap != null
-            ? BookingSettings.fromJson(Map<String, dynamic>.from(bookingMap))
-            : null;
-
-    return StoreData(
-      slug: widget.slug,
-      name: _readString(data['name']),
-      businessType: _readString(data['business_type']),
-      description: description,
-      whatsapp: _readString(data['whatsapp']),
-      instagram: _readString(data['instagram']),
-      website: _readString(data['website']),
-      address: _readString(data['address']),
-      latitude: _readDouble(data['latitude']),
-      longitude: _readDouble(data['longitude']),
-      locationAccuracyMeters: _readDouble(data['location_accuracy_meters']),
-      locationConsentAt: _readDateTime(data['location_consent_at']),
-      locationSource: _readString(data['location_source']),
-      theme: _readString(data['theme'], fallback: 'Premium'),
-      status: _readString(data['status']),
-      isEsnafMode: true,
-      isStore: _readBool(data['is_store']),
-      corporateBio: corporateBio,
-      referencesLink: _readString(data['references_link']),
-      shelfImageUrl: _readString(data['shelf_image_url']),
-      galleryItems: _parseGalleryItems(data['gallery_items']),
-      marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),
-      products: _parseProducts(data['products']),
-      offerings: _parseOfferings(data['offerings']),
-      kategori: _readString(data['kategori']),
-      workingHours: _readString(data['working_hours']),
-      bookingSettings: bookingSettings,
-    );
-  }
-
-  List<StoreOffering> _parseOfferings(Object? rawOfferings) {
-    try {
-      final decodedOfferings =
-          rawOfferings is String ? jsonDecode(rawOfferings) : rawOfferings;
-      if (decodedOfferings is! List) return [];
-
-      return decodedOfferings
-          .whereType<Map>()
-          .map((o) => StoreOffering.fromJson(Map<String, dynamic>.from(o)))
-          .where((o) => o.title.trim().isNotEmpty)
-          .take(6)
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  String _readString(Object? value, {String fallback = ''}) {
-    if (value == null) return fallback;
-    final text = value.toString().trim();
-    return text.isEmpty ? fallback : text;
-  }
-
-  bool _readBool(Object? value) {
-    if (value is bool) return value;
-    if (value is String) return value.toLowerCase() == 'true';
-    return false;
-  }
-
-  double? _readDouble(Object? value) {
-    if (value is num) return value.toDouble();
-    if (value is String) return double.tryParse(value.trim());
-    return null;
-  }
-
-  DateTime? _readDateTime(Object? value) {
-    if (value == null) return null;
-    return DateTime.tryParse(value.toString());
   }
 
   String _readViewSource() {
@@ -189,74 +262,25 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
         info.editToken.trim().isNotEmpty;
   }
 
-  List<MarketplaceLink> _parseMarketplaceLinks(Object? rawLinks) {
-    try {
-      final decodedLinks = rawLinks is String ? jsonDecode(rawLinks) : rawLinks;
-
-      if (decodedLinks is! List) return [];
-
-      return decodedLinks
-          .whereType<Map>()
-          .map(
-            (link) => MarketplaceLink(
-              id: UniqueKey().toString(),
-              platform: _readString(link['platform']),
-              url: _readString(link['url']),
-              subtitle: _readString(link['subtitle'] ?? ''),
-            ),
-          )
-          .where(
-            (link) =>
-                link.platform.trim().isNotEmpty && link.url.trim().isNotEmpty,
-          )
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  List<Product> _parseProducts(Object? rawProducts) {
-    try {
-      final decodedProducts =
-          rawProducts is String ? jsonDecode(rawProducts) : rawProducts;
-      if (decodedProducts is! List) return [];
-
-      return decodedProducts
-          .whereType<Map>()
-          .map((p) => Product.fromJson(Map<String, dynamic>.from(p)))
-          .where((product) => product.isVisible)
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  List<StoreGalleryItem> _parseGalleryItems(Object? rawItems) {
-    try {
-      final decodedItems = rawItems is String ? jsonDecode(rawItems) : rawItems;
-
-      if (decodedItems is! List) return [];
-
-      return decodedItems
-          .whereType<Map>()
-          .map(
-            (item) =>
-                StoreGalleryItem.fromJson(Map<String, dynamic>.from(item)),
-          )
-          .where((item) => item.imageUrl.trim().isNotEmpty)
-          .take(12)
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Eski #randevu_token= → canonical /v/{slug}/randevu/{token}
     if (!widget.bypassTracker) {
       final token = _getFragmentToken();
-      if (token != null) {
-        return AppointmentTrackerScreen(token: token, storeSlug: widget.slug);
+      if (token != null && token.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          final path = PublicSiteConfig.buildBookingTrackerPath(
+            widget.slug,
+            token,
+          );
+          context.go(path);
+        });
+        return const _PublicVitrinStateView(
+          title: 'Randevu takip açılıyor...',
+          icon: Icons.hourglass_empty_rounded,
+          showLoader: true,
+        );
       }
     }
     return FutureBuilder<StoreData?>(

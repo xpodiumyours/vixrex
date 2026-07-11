@@ -182,7 +182,10 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
           onSubmit: () => _controller.submitRequest(() {}),
         );
       case 5:
-        final trackingLink = '${PublicSiteConfig.buildPublicLink('/v/${widget.storeData.slug}')}#randevu_token=${_controller.createdToken}';
+        final trackingLink = PublicSiteConfig.buildBookingTrackerLink(
+          widget.storeData.slug,
+          _controller.createdToken ?? '',
+        );
         return BookingSuccessStep(
           trackingLink: trackingLink,
           onCopyPressed: _showSnackBar,

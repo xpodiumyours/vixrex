@@ -24,7 +24,6 @@ import 'package:vixrex/widgets/editor/common_form_fields.dart';
 import 'package:vixrex/widgets/editor/gallery_editor_section.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 import 'package:vixrex/widgets/editor/public_link_card.dart';
-import 'package:vixrex/widgets/google_business_guide_card.dart';
 import 'package:vixrex/widgets/editor/store_theme_picker.dart';
 import 'package:vixrex/widgets/editor/working_hours_editor.dart';
 import 'package:vixrex/widgets/instagram_sync_section.dart';
@@ -178,15 +177,6 @@ class VitrinFormSection extends StatelessWidget {
                         onCopyLink: () => _copyLink(context),
                         onShareLink: () => _shareLink(context),
                       ),
-                      if (hasPublished &&
-                          (controller.publishedInfo?.publicLink.trim().isNotEmpty ??
-                              false)) ...[
-                        const SizedBox(height: 14),
-                        GoogleBusinessGuideCard(
-                          publishedLink:
-                              controller.publishedInfo!.publicLink.trim(),
-                        ),
-                      ],
                       const SizedBox(height: 14),
 
                       // Instagram Sync Section (if active)
@@ -203,8 +193,10 @@ class VitrinFormSection extends StatelessWidget {
                         const SizedBox(height: 14),
                       ],
 
-                      // Working Hours (if Kuaför)
-                      if (controller.selectedKategori == 'Kuaför') ...[
+                      // Randevu / çalışma saatleri — sadece booking paketi kategorilerinde
+                      if (BusinessCategoryConfig.supportsBookingPackage(
+                        controller.selectedKategori,
+                      )) ...[
                         KeyedSubtree(
                           key: state.productsKey,
                           child: WorkingHoursEditor(
@@ -318,14 +310,6 @@ class VitrinFormSection extends StatelessWidget {
                   onCopyLink: () => _copyLink(context),
                   onShareLink: () => _shareLink(context),
                 ),
-                if (hasPublished &&
-                    (controller.publishedInfo?.publicLink.trim().isNotEmpty ??
-                        false)) ...[
-                  const SizedBox(height: 14),
-                  GoogleBusinessGuideCard(
-                    publishedLink: controller.publishedInfo!.publicLink.trim(),
-                  ),
-                ],
                 const SizedBox(height: 14),
 
                 // Instagram Sync Section (if active)
@@ -342,8 +326,10 @@ class VitrinFormSection extends StatelessWidget {
                   const SizedBox(height: 14),
                 ],
 
-                // Working Hours (if Kuaför)
-                if (controller.selectedKategori == 'Kuaför') ...[
+                // Randevu / çalışma saatleri — sadece booking paketi kategorilerinde
+                if (BusinessCategoryConfig.supportsBookingPackage(
+                  controller.selectedKategori,
+                )) ...[
                   KeyedSubtree(
                     key: state.productsKey,
                     child: WorkingHoursEditor(

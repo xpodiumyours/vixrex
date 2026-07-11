@@ -80,25 +80,40 @@ const getStoreData = (slug: string) =>
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
   const data = await getStoreData(params.slug);
-  if (!data) return {};
+  if (!data) return { robots: { index: false, follow: false } };
 
   const { store } = data;
   const title = `${store.name} - VixRex`;
   const description =
     store.description || store.corporate_bio || `${store.name} Dijital Vitrini`;
   const image = store.shelf_image_url || store.logo_url || "";
+  const canonicalPath = `/v/${store.slug}`;
+  const canonicalUrl = buildSiteUrl(canonicalPath);
+  const ogImages = image
+    ? [{ url: image.startsWith("http") ? image : buildSiteUrl(image) }]
+    : [];
 
   return {
     title,
     description,
+    robots: { index: true, follow: true },
     alternates: {
-      canonical: `/v/${store.slug}`,
+      canonical: canonicalPath,
     },
     openGraph: {
       title,
       description,
-      images: image ? [{ url: image }] : [],
+      url: canonicalUrl,
+      siteName: "VixRex",
+      locale: "tr_TR",
+      images: ogImages,
       type: "profile",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImages.map((item) => item.url),
     },
   };
 }

@@ -61,6 +61,21 @@ void main() {
       );
     });
 
+    test('randevu path ve tracker linkleri Next.js ile aynı sözleşmede', () {
+      expect(
+        PublicSiteConfig.buildBookingPath('nova-kuafor'),
+        '/v/nova-kuafor/randevu',
+      );
+      expect(
+        PublicSiteConfig.buildBookingTrackerPath('nova-kuafor', 'tok123'),
+        '/v/nova-kuafor/randevu/tok123',
+      );
+      expect(
+        PublicSiteConfig.buildBookingTrackerLink('nova-kuafor', 'tok123'),
+        'https://vixrex.app/v/nova-kuafor/randevu/tok123',
+      );
+    });
+
     test('path resolve: /v/slug ve bare slug', () {
       expect(
         PublicSiteConfig.resolveVitrinSlugFromPath('/v/nova-kuafor'),

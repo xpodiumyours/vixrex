@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/core/result.dart';
 import 'package:vixrex/models/store_data.dart';
@@ -145,7 +146,21 @@ class StoreEditorController extends ChangeNotifier
 
   void setName(String name) { _data.name = name; notifyListeners(); }
   void updateName(String name) => setName(name);
-  void selectCategory(String kategori) { _data.kategori = kategori; notifyListeners(); }
+
+  /// Kategori seçimi: özellik paketini sessiz uygular (randevu vb.).
+  void selectCategory(String kategori) {
+    _data.kategori = kategori;
+    _applyCategoryFeaturePackage(kategori);
+    notifyListeners();
+  }
+
+  void _applyCategoryFeaturePackage(String kategori) {
+    final supportsBooking =
+        BusinessCategoryConfig.supportsBookingPackage(kategori);
+    _ensureBookingSettings();
+    _data.bookingSettings!.isEnabled = supportsBooking;
+  }
+
   void setDescription(String description) { _data.description = description; notifyListeners(); }
   void updateWhatsapp(String w) { _data.whatsapp = w; notifyListeners(); }
   void updateInstagram(String value) {

@@ -7,7 +7,8 @@ Allow: /
 Disallow: /v/*/randevu/*
 Disallow: /api/*
 
-Sitemap: ${buildSiteUrl("/sitemap.xml")}`;
+Sitemap: ${buildSiteUrl("/sitemap.xml")}
+`;
 
   return new NextResponse(robots, {
     headers: {

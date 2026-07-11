@@ -155,6 +155,13 @@ void main() {
         controller.selectCategory('Giyim & Butik');
         expect(controller.selectedKategori, 'Giyim & Butik');
         expect(controller.data.kategori, 'Giyim & Butik');
+        expect(controller.bookingIsEnabled, isFalse);
+
+        controller.selectCategory('Kuaför');
+        expect(controller.bookingIsEnabled, isTrue);
+
+        controller.selectCategory('Butik');
+        expect(controller.bookingIsEnabled, isFalse);
       },
     );
 

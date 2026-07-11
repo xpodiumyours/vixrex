@@ -37,6 +37,28 @@
 - [x] Password reset (Auth ekranı → Supabase `resetPasswordForEmail`)
 - [x] Keşfet: API hatasında mock vitrin yok (empty + retry)
 - [x] User data export (Ayarlar → JSON paylaş; edit_token ayıklı)
+- [x] Mobil↔Web public parity Faz 1 (randevu path, logo/Google, Web Sitesi CTA)
+- [x] Kategori → özellik paketi (randevu ayarı/UI; Ayarlar satırı)
+- [x] Flutter editör `noindex` + Google Haritalar rehber kartı kaldırıldı
+- [x] Public SEO meta sıkılaştırma (OG/Twitter absolute, robots index)
+- [ ] **Ops — senin tarafta:** Google Search Console (`vixrex.app` + sitemap)
+
+### Mobil ↔ Web Public Vitrin Eşitliği
+
+**Faz 1 (tamamlandı — soft launch zorunlu)**
+- [x] Randevu URL: Flutter + Next.js → `/v/{slug}/randevu` ve `/v/{slug}/randevu/{token}`
+- [x] Eski `#randevu_token=` hash → path redirect (geriye uyum)
+- [x] Public fetch: `logo_url` + `google_business_link`
+- [x] “Web Sitesi” butonu → `store.website` (vitrin self-link değil)
+
+**Faz 2 (backlog — soft launch sonrası)**
+- [ ] Flutter public yazılar: `/v/:slug/yazilar` (+ detay) — şu an yalnız Next.js
+- [ ] Next.js vCard gerçek `.vcf` indirme
+- [ ] WhatsApp prefill metin hizası (Flutter kategori şablonu ↔ web generic)
+- [ ] Flutter ürün detayda IG `sourcePermalink`
+- [ ] Tema / view analytics polish (isteğe bağlı)
+
+**Bilinçli farklı bırakılanlar:** SEO SSR / çerez / GA4 = web-only; Editör / Keşfet / Ayarlar / push inbox = Flutter-only.
 
 ### ❌ Eksik Bileşenler (Production için Gerekli)
 - [ ] Notification analytics yok

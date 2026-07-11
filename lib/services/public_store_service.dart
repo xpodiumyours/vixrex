@@ -16,7 +16,7 @@ class PublicStoreService {
       final res = await _resolveClient
           .from('stores')
           .select(
-            'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,latitude,longitude,location_accuracy_meters,location_consent_at,location_source,theme,status,marketplace_links,references_link,shelf_image_url,gallery_items,is_published,is_store,products,offerings,kategori,working_hours,booking_settings(is_enabled,capacity,working_hours,lunch_break)',
+            'slug,name,business_type,description,corporate_bio,whatsapp,instagram,website,address,latitude,longitude,location_accuracy_meters,location_consent_at,location_source,theme,status,marketplace_links,references_link,shelf_image_url,logo_url,google_business_link,gallery_items,is_published,is_store,products,offerings,kategori,working_hours,booking_settings(is_enabled,capacity,working_hours,lunch_break)',
           )
           .eq('slug', slug)
           .eq('is_published', true)

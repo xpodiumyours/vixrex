@@ -9,6 +9,7 @@ import 'package:vixrex/screens/booking_management_screen.dart';
 import 'package:vixrex/screens/home_shell_screen.dart';
 import 'package:vixrex/screens/landing_screen.dart';
 import 'package:vixrex/screens/legal_screen.dart';
+import 'package:vixrex/screens/public_booking_screen.dart';
 import 'package:vixrex/screens/public_vitrin_screen.dart';
 import 'package:vixrex/screens/public_product_screen.dart';
 
@@ -76,6 +77,23 @@ class AppRouter {
         builder: (context, state) {
           final slug = state.pathParameters['slug'] ?? '';
           return BookingManagementScreen(storeSlug: slug);
+        },
+      ),
+      GoRoute(
+        path: '/v/:slug/randevu/:token',
+        builder: (context, state) {
+          return AppointmentTrackerScreen(
+            storeSlug: state.pathParameters['slug'] ?? '',
+            token: state.pathParameters['token'] ?? '',
+          );
+        },
+      ),
+      GoRoute(
+        path: '/v/:slug/randevu',
+        builder: (context, state) {
+          return PublicBookingScreen(
+            slug: state.pathParameters['slug'] ?? '',
+          );
         },
       ),
       GoRoute(
@@ -256,12 +274,35 @@ class AppRouter {
 
   static Future<bool?> navigateToAppointmentTracker(BuildContext context,
       {required String slug, required String token}) {
-    return Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AppointmentTrackerScreen(storeSlug: slug, token: token),
-      ),
-    );
+    final path = PublicSiteConfig.buildBookingTrackerPath(slug, token);
+    try {
+      return context.push<bool>(path);
+    } catch (_) {
+      return Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              AppointmentTrackerScreen(storeSlug: slug, token: token),
+        ),
+      );
+    }
+  }
+
+  static Future<dynamic> navigateToPublicBooking(
+    BuildContext context, {
+    required String slug,
+  }) {
+    final path = PublicSiteConfig.buildBookingPath(slug);
+    try {
+      return context.push(path);
+    } catch (_) {
+      return Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PublicBookingScreen(slug: slug),
+        ),
+      );
+    }
   }
 
   static void navigateToPublicVitrin(BuildContext context, String slug) {

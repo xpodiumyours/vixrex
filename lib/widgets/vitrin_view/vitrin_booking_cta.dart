@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/theme/vitrin_theme_preset.dart';
 import 'package:vixrex/widgets/booking_wizard_sheet.dart';
@@ -41,7 +42,7 @@ class VitrinBookingCTA extends StatelessWidget {
               );
               return;
             }
-            _openBookingWizard(context);
+            _openBooking(context);
           },
           icon: const Icon(Icons.calendar_month_rounded, size: 20),
           label: const Text(
@@ -61,7 +62,12 @@ class VitrinBookingCTA extends StatelessWidget {
     );
   }
 
-  void _openBookingWizard(BuildContext context) {
+  void _openBooking(BuildContext context) {
+    final slug = storeData.slug.trim();
+    if (slug.isNotEmpty) {
+      AppRouter.navigateToPublicBooking(context, slug: slug);
+      return;
+    }
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,

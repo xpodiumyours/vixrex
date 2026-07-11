@@ -73,7 +73,7 @@ const getProductData = (slug: string, productSlug: string) =>
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
   const data = await getProductData(params.slug, params.productSlug);
-  if (!data) return {};
+  if (!data) return { robots: { index: false, follow: false } };
 
   const { store, product, productSlug } = data;
   const title = `${product.name} - ${store.name} | VixRex`;
@@ -82,18 +82,33 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     `${store.name} vitrindeki ${product.name} için detay ve iletişim bilgileri.`;
   const image =
     getProductImages(product)[0] || store.shelf_image_url || store.logo_url || "";
+  const canonicalPath = `/v/${store.slug}/urun/${productSlug}`;
+  const canonicalUrl = buildSiteUrl(canonicalPath);
+  const ogImages = image
+    ? [{ url: image.startsWith("http") ? image : buildSiteUrl(image) }]
+    : [];
 
   return {
     title,
     description,
+    robots: { index: true, follow: true },
     alternates: {
-      canonical: `/v/${store.slug}/urun/${productSlug}`,
+      canonical: canonicalPath,
     },
     openGraph: {
       title,
       description,
-      images: image ? [{ url: image }] : [],
+      url: canonicalUrl,
+      siteName: "VixRex",
+      locale: "tr_TR",
+      images: ogImages,
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImages.map((item) => item.url),
     },
   };
 }

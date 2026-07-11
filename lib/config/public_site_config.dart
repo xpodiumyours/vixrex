@@ -37,6 +37,27 @@ class PublicSiteConfig {
     return buildPublicLink('/v/${Uri.encodeComponent(trimmed)}');
   }
 
+  /// Path-only booking entry (`/v/{slug}/randevu`) — Next.js ile aynı.
+  static String buildBookingPath(String slug) {
+    final trimmed = slug.trim();
+    if (trimmed.isEmpty) return '/v/randevu';
+    return '/v/${Uri.encodeComponent(trimmed)}/randevu';
+  }
+
+  /// Path-only appointment tracker (`/v/{slug}/randevu/{token}`).
+  static String buildBookingTrackerPath(String slug, String token) {
+    final s = slug.trim();
+    final t = token.trim();
+    if (s.isEmpty || t.isEmpty) return buildBookingPath(s);
+    return '/v/${Uri.encodeComponent(s)}/randevu/${Uri.encodeComponent(t)}';
+  }
+
+  static String buildBookingLink(String slug) =>
+      buildPublicLink(buildBookingPath(slug));
+
+  static String buildBookingTrackerLink(String slug, String token) =>
+      buildPublicLink(buildBookingTrackerPath(slug, token));
+
   /// Eski/yanlış linkleri (`vixrex.app/slug`, `#/v/slug`, localhost) → canonical `/v/slug`.
   static String repairPublicLink(String link) {
     final trimmed = link.trim();
