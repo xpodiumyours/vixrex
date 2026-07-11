@@ -13,6 +13,7 @@ class LegalDocumentService {
 
   Future<Result<LegalDocument>> loadActiveDocument(String documentType) async {
     try {
+      // effective_at null olan kayıtlarda order sorun çıkarmasın
       final response =
           await _client
               .from('legal_documents')
@@ -22,7 +23,6 @@ class LegalDocumentService {
               )
               .eq('document_type', documentType)
               .eq('is_active', true)
-              .order('effective_at', ascending: false)
               .limit(1)
               .maybeSingle();
 

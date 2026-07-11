@@ -60,11 +60,8 @@ class LegalDocument {
     );
   }
 
-  bool get isUsable =>
-      type.isNotEmpty &&
-      version.isNotEmpty &&
-      contentHash.isNotEmpty &&
-      sections.isNotEmpty;
+  /// Version zorunlu. content_hash DB'de boş gelebilir; sections okuma UI'sı içindir.
+  bool get isUsable => type.isNotEmpty && version.isNotEmpty;
 }
 
 class PublishingLegalDocuments {

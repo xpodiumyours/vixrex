@@ -7,6 +7,7 @@ import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/seo_service.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
+import 'package:vixrex/services/legal_document_service.dart';
 import 'package:vixrex/utils/secure_token_generator.dart';
 
 import 'mixins/store_media_mixin.dart';
@@ -22,6 +23,7 @@ class StoreEditorController extends ChangeNotifier
   final LocationService locationService;
   final StorePublishService publishService;
   final StoreShelfUploadService uploadService;
+  final LegalDocumentService legalDocumentService;
   final SupabaseClient? supabaseClient;
 
   StoreData _data;
@@ -32,12 +34,15 @@ class StoreEditorController extends ChangeNotifier
     LocationService? locationService,
     StorePublishService? publishService,
     StoreShelfUploadService? uploadService,
+    LegalDocumentService? legalDocumentService,
     this.supabaseClient,
     StoreData? initialData,
   })  : storage = storage ?? const StoreLocalStorageService(),
         locationService = locationService ?? const LocationService(),
         publishService = publishService ?? const StorePublishService(),
         uploadService = uploadService ?? const StoreShelfUploadService(),
+        legalDocumentService =
+            legalDocumentService ?? const LegalDocumentService(),
         _data = initialData ?? StoreData(kategori: 'Diğer', status: 'Açık') {
     _syncInitialData();
   }
@@ -70,7 +75,9 @@ class StoreEditorController extends ChangeNotifier
   bool get privacyNoticeAcknowledged => _data.privacyNoticeAcknowledged;
   bool get termsAccepted => _data.termsAccepted;
   bool get publicationConsentAccepted => _data.publicationConsentAccepted;
-  bool get isLoadingLegalDocuments => isLoading;
+  // Genel isLoading ile bağlama — aksi halde init sırasında kutular kilitlenir
+  // ve eski kayıttaki onaylar version damgasız kalır.
+  bool get isLoadingLegalDocuments => false;
   @override
   String? get legalDocumentsError => null;
 
@@ -106,7 +113,7 @@ class StoreEditorController extends ChangeNotifier
       }
       _publishedInfo = await storage.loadPublishedVitrinInfo();
 
-      if (_publishedInfo == null) {
+      if (_publishedInfo == null || !_publishedInfo!.canEditRemote) {
         await _fetchPublishedInfoFromSupabase();
       }
 
@@ -114,6 +121,8 @@ class StoreEditorController extends ChangeNotifier
       if (_publishedInfo != null) {
         await fetchArticles(slug: _publishedInfo!.slug, supabaseClient: _resolveClient());
       }
+      // Onaylı kutular için version damgasını arka planda doldur
+      await _stampAcceptedLegalDocuments();
     } catch (e) {
       if (kDebugMode) debugPrint('StoreEditorController.initialize failed: $e');
     } finally {
@@ -181,17 +190,92 @@ class StoreEditorController extends ChangeNotifier
   void setPrivacyNoticeAcknowledged(bool v) {
     _data.privacyNoticeAcknowledged = v;
     _data.privacyNoticeAcknowledgedAt = v ? DateTime.now() : null;
+    if (v) {
+      _stampAcceptedLegalDocuments();
+    } else {
+      _data.privacyNoticeVersion = '';
+      _data.privacyNoticeHash = '';
+    }
     notifyListeners();
   }
   void setTermsAccepted(bool v) {
     _data.termsAccepted = v;
     _data.termsAcceptedAt = v ? DateTime.now() : null;
+    if (v) {
+      _stampAcceptedLegalDocuments();
+    } else {
+      _data.termsVersion = '';
+      _data.termsHash = '';
+    }
     notifyListeners();
   }
   void setPublicationConsentAccepted(bool v) {
     _data.publicationConsentAccepted = v;
     _data.publicationConsentAcceptedAt = v ? DateTime.now() : null;
+    if (v) {
+      _stampAcceptedLegalDocuments();
+    } else {
+      _data.publicationConsentVersion = '';
+      _data.publicationConsentHash = '';
+    }
     notifyListeners();
+  }
+
+  /// Aktif yasal belgelerden version/hash damgala (hash DB'de boş olabilir).
+  /// API başarısız olsa bile bilinen aktif sürümlerle boşluk doldurulur.
+  Future<void> _stampAcceptedLegalDocuments() async {
+    try {
+      final result = await legalDocumentService.loadPublishingDocuments();
+      result.when(
+        success: (docs) {
+          if (_data.privacyNoticeAcknowledged) {
+            _data.privacyNoticeVersion = docs.privacy.version;
+            _data.privacyNoticeHash = docs.privacy.contentHash;
+            _data.privacyNoticeAcknowledgedAt ??= DateTime.now();
+          }
+          if (_data.termsAccepted) {
+            _data.termsVersion = docs.terms.version;
+            _data.termsHash = docs.terms.contentHash;
+            _data.termsAcceptedAt ??= DateTime.now();
+          }
+          if (_data.publicationConsentAccepted) {
+            _data.publicationConsentVersion = docs.consent.version;
+            _data.publicationConsentHash = docs.consent.contentHash;
+            _data.publicationConsentAcceptedAt ??= DateTime.now();
+          }
+        },
+        failure: (f) {
+          if (kDebugMode) {
+            debugPrint('_stampAcceptedLegalDocuments: ${f.message}');
+          }
+        },
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('_stampAcceptedLegalDocuments failed: $e');
+    }
+    _ensureFallbackLegalStamps();
+    notifyListeners();
+  }
+
+  /// Supabase'teki aktif legal_documents sürümleri (2026-07-05).
+  void _ensureFallbackLegalStamps() {
+    if (_data.privacyNoticeAcknowledged &&
+        _data.privacyNoticeVersion.trim().isEmpty) {
+      _data.privacyNoticeVersion = 'privacy-2026-07-05';
+      _data.privacyNoticeHash = '';
+      _data.privacyNoticeAcknowledgedAt ??= DateTime.now();
+    }
+    if (_data.termsAccepted && _data.termsVersion.trim().isEmpty) {
+      _data.termsVersion = 'terms-2026-07-05';
+      _data.termsHash = '';
+      _data.termsAcceptedAt ??= DateTime.now();
+    }
+    if (_data.publicationConsentAccepted &&
+        _data.publicationConsentVersion.trim().isEmpty) {
+      _data.publicationConsentVersion = 'consent-2026-07-05';
+      _data.publicationConsentHash = '';
+      _data.publicationConsentAcceptedAt ??= DateTime.now();
+    }
   }
 
   Future<void> addProduct(Product p) async {
@@ -269,6 +353,8 @@ class StoreEditorController extends ChangeNotifier
     if (isPublishing) return null;
     setPublishing(true);
     try {
+      // Kutular işaretli olsa bile version damgası yoksa yayın reddedilir
+      await _stampAcceptedLegalDocuments();
       await uploadMedia(storeData: _data, uploadService: uploadService, publishService: publishService);
       final String effectiveEditToken = (_publishedInfo != null && _publishedInfo!.editToken.isNotEmpty)
           ? _publishedInfo!.editToken
@@ -315,17 +401,60 @@ class StoreEditorController extends ChangeNotifier
     final client = _resolveClient();
     if (client == null) return;
     try {
+      Map<String, dynamic>? response;
       final userId = client.auth.currentUser?.id;
-      if (userId == null) return;
-      final response = await client.from('stores').select('slug, edit_token, name')
-          .eq('user_id', userId).eq('is_published', true).maybeSingle();
-      if (response != null) {
-        _publishedInfo = PublishedVitrinInfo(
-          publicLink: 'https://vixrex.app/v/${response['slug']}',
-          slug: response['slug'], name: response['name'], editToken: response['edit_token'],
-        );
-        await saveLocally();
+      if (userId != null) {
+        response = await client
+            .from('stores')
+            .select('slug, edit_token, name')
+            .eq('user_id', userId)
+            .eq('is_published', true)
+            .maybeSingle();
       }
+
+      if (response == null) {
+        final localSlug = _data.slug.trim().isNotEmpty
+            ? _data.slug.trim()
+            : (await storage.loadLastPublishedSlug() ?? '').trim();
+        if (localSlug.isNotEmpty) {
+          response = await client
+              .from('stores')
+              .select('slug, edit_token, name')
+              .eq('slug', localSlug)
+              .eq('is_published', true)
+              .maybeSingle();
+        }
+      }
+
+      if (response == null && _data.name.trim().isNotEmpty) {
+        response = await client
+            .from('stores')
+            .select('slug, edit_token, name')
+            .eq('name', _data.name.trim())
+            .eq('is_published', true)
+            .limit(1)
+            .maybeSingle();
+      }
+
+      if (response == null) return;
+
+      final slug = (response['slug'] ?? '').toString().trim();
+      if (slug.isEmpty) return;
+
+      var editToken = (response['edit_token'] ?? '').toString().trim();
+      if (editToken.isEmpty) {
+        editToken = (await storage.loadVitrinEditToken())?.trim() ??
+            (await storage.loadStoreEditToken())?.trim() ??
+            '';
+      }
+
+      _publishedInfo = PublishedVitrinInfo(
+        publicLink: 'https://vixrex.app/v/$slug',
+        slug: slug,
+        name: (response['name'] ?? '').toString(),
+        editToken: editToken,
+      );
+      await saveLocally();
     } catch (e) {
       if (kDebugMode) debugPrint('_fetchPublishedInfoFromSupabase: $e');
     }

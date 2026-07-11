@@ -18,10 +18,11 @@ class PublishedVitrinInfo {
     required this.editToken,
   });
 
+  /// Panelde yayın kartı için slug+link yeterli.
   bool get isComplete =>
-      slug.trim().isNotEmpty &&
-      publicLink.trim().isNotEmpty &&
-      editToken.trim().isNotEmpty;
+      slug.trim().isNotEmpty && publicLink.trim().isNotEmpty;
+
+  bool get canEditRemote => editToken.trim().isNotEmpty;
 }
 
 /// Mağaza ve vitrin verilerinin yerel depolamaya yazılması/okunmasını
@@ -162,11 +163,18 @@ class StoreLocalStorageService {
   /// Kayitli yayinlanmis vitrin bilgisini okur. Eksikse `null` doner.
   Future<PublishedVitrinInfo?> loadPublishedVitrinInfo() async {
     final prefs = await _getPrefs();
+    var editToken =
+        prefs.getString(LocalStorageKeys.lastPublishedEditToken) ?? '';
+    if (editToken.trim().isEmpty) {
+      editToken = prefs.getString(LocalStorageKeys.vitrinEditToken) ??
+          prefs.getString(LocalStorageKeys.storeEditToken) ??
+          '';
+    }
     final info = PublishedVitrinInfo(
       slug: prefs.getString(LocalStorageKeys.lastPublishedSlug) ?? '',
       publicLink: prefs.getString(LocalStorageKeys.lastPublishedLink) ?? '',
       name: prefs.getString(LocalStorageKeys.lastPublishedName) ?? '',
-      editToken: prefs.getString(LocalStorageKeys.lastPublishedEditToken) ?? '',
+      editToken: editToken,
     );
 
     return info.isComplete ? info : null;
@@ -201,12 +209,11 @@ class StoreLocalStorageService {
   // ── Toplu Temizlik ────────────────────────────────────────────────────
 
   /// Sadece auth ile ilgili verileri temizler (çıkış yapınca).
-  /// Vitrin verilerini korur.
+  /// Vitrin verilerini ve yayın kartı bilgisini korur.
   Future<void> clearAuthData() async {
     final prefs = await _getPrefs();
     await prefs.remove(LocalStorageKeys.storeEditToken);
     await prefs.remove(LocalStorageKeys.vitrinEditToken);
-    await clearPublishedVitrinInfo();
   }
 
   /// Tüm yerel depolama verilerini temizler.
