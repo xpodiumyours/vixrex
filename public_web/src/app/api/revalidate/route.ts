@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
     const revalidated: string[] = [];
 
     for (const tag of tags) {
-      // revalidateTag sadece 1 argüman alır — "max" geçersiz
-      revalidateTag(tag);
+      // Next.js 16: revalidateTag(tag, profile) — profile "max" = hemen yenile
+      revalidateTag(tag, "max");
       revalidated.push(`tag:${tag}`);
     }
 
