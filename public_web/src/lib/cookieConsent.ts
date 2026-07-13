@@ -1,4 +1,5 @@
 export const COOKIE_CONSENT_KEY = "vixrex_cookie_consent";
+const COOKIE_CONSENT_EVENT = "vixrex-cookie-consent";
 
 export type CookieConsent = {
   necessary: true;
@@ -16,11 +17,9 @@ export function defaultConsent(): CookieConsent {
   };
 }
 
-export function readConsent(): CookieConsent | null {
-  if (typeof window === "undefined") return null;
+export function parseConsentSnapshot(raw: string | null): CookieConsent | null {
+  if (!raw) return null;
   try {
-    const raw = window.localStorage.getItem(COOKIE_CONSENT_KEY);
-    if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<CookieConsent>;
     return {
       necessary: true,
@@ -36,6 +35,25 @@ export function readConsent(): CookieConsent | null {
   }
 }
 
+export function readConsentSnapshot(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(COOKIE_CONSENT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function readConsent(): CookieConsent | null {
+  return parseConsentSnapshot(readConsentSnapshot());
+}
+
+export function subscribeToConsent(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  window.addEventListener(COOKIE_CONSENT_EVENT, onStoreChange);
+  return () => window.removeEventListener(COOKIE_CONSENT_EVENT, onStoreChange);
+}
+
 export function writeConsent(
   partial: Pick<CookieConsent, "analytics" | "marketing">,
 ): CookieConsent {
@@ -46,6 +64,6 @@ export function writeConsent(
     updatedAt: new Date().toISOString(),
   };
   window.localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(value));
-  window.dispatchEvent(new CustomEvent("vixrex-cookie-consent", { detail: value }));
+  window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_EVENT, { detail: value }));
   return value;
 }
