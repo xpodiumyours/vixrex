@@ -16,6 +16,12 @@ interface DisconnectBody {
   mode?: "A" | "B";
 }
 
+function readStringField(value: unknown, key: string): string | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const field = (value as Record<string, unknown>)[key];
+  return typeof field === "string" ? field : undefined;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as DisconnectBody;
@@ -54,7 +60,8 @@ export async function POST(req: NextRequest) {
 
         if (Array.isArray(products)) {
           const nextProducts = products.filter(
-            (prod: any) => prod?.source !== "instagram"
+            (product: unknown) =>
+              readStringField(product, "source") !== "instagram",
           );
           const { error: storeUpdateError } = await admin
             .from("stores")
