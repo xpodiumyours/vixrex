@@ -76,7 +76,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   if (!data) return { robots: { index: false, follow: false } };
 
   const { store, product, productSlug } = data;
-  const title = `${product.name} - ${store.name} | VixRex`;
+  const title = `${product.name} - ${store.name} | Vixrex`;
   const description =
     product.description ||
     `${store.name} vitrindeki ${product.name} için detay ve iletişim bilgileri.`;
@@ -99,7 +99,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
       title,
       description,
       url: canonicalUrl,
-      siteName: "VixRex",
+      siteName: "Vixrex",
       locale: "tr_TR",
       images: ogImages,
       type: "website",
@@ -310,7 +310,7 @@ export default async function ProductDetailPage(props: PageProps) {
             <div className="rounded-2xl border border-[#25415F] bg-[#071322] p-4">
               <div className="text-xs font-black text-white">Dijital dükkan arşivi</div>
               <p className="mt-2 text-xs font-semibold leading-5 text-[#9DB2C8]">
-                Bu ürün VixRex üzerinde kalıcı ürün sayfası olarak yayınlanır ve Google tarafından okunabilir HTML içerik olarak sunulur.
+                Bu ürün Vixrex üzerinde kalıcı ürün sayfası olarak yayınlanır ve Google tarafından okunabilir HTML içerik olarak sunulur.
               </p>
             </div>
           </aside>

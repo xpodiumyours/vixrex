@@ -44,9 +44,9 @@ enum LegalPageType {
   String get subtitle {
     switch (this) {
       case LegalPageType.privacy:
-        return 'VixRex içinde kişisel verilerin KVKK kapsamında nasıl işlendiğini açıklar.';
+        return 'Vixrex içinde kişisel verilerin KVKK kapsamında nasıl işlendiğini açıklar.';
       case LegalPageType.terms:
-        return 'VixRex kullanırken geçerli olan temel kuralları ve sorumlulukları açıklar.';
+        return 'Vixrex kullanırken geçerli olan temel kuralları ve sorumlulukları açıklar.';
       case LegalPageType.consent:
         return 'Vitrin bilgilerinizin kamuya açık yayınlanmasına ilişkin açık rıza beyanını açıklar.';
       case LegalPageType.dataDeletion:
@@ -472,7 +472,7 @@ class _EmailContactCardState extends State<_EmailContactCard> {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
       path: LegalConfig.privacyEmail,
-      query: 'subject=VixRex Veri Silme Talebi',
+      query: 'subject=Vixrex Veri Silme Talebi',
     );
     try {
       if (await canLaunchUrl(emailLaunchUri)) {

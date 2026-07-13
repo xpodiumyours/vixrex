@@ -155,7 +155,7 @@ class SeoService {
         '@type': 'WebPage',
         '@id': '$url#webpage',
         'url': url,
-        'name': name.isEmpty ? 'VixRex' : '$name | VixRex',
+        'name': name.isEmpty ? 'Vixrex' : '$name | Vixrex',
         if (description.isNotEmpty) 'description': description,
         'about': {'@id': entityId},
         if (imageUrl.isNotEmpty)

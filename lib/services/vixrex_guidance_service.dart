@@ -1,7 +1,7 @@
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 
-/// VixRex ekranı ve sohbeti tarafından ortak kullanılan tek öneri modeli.
+/// Vixrex ekranı ve sohbeti tarafından ortak kullanılan tek öneri modeli.
 class VixRexRecommendation {
   final String id;
   final VixRexJourneyPhase phase;
@@ -142,7 +142,7 @@ class VixRexGuidanceService {
         id: 'welcome',
         phase: VixRexJourneyPhase.setup,
         title: 'Vitrininizi Oluşturun',
-        description: 'VixRex ile dijital vitrininizi oluşturmak için ilk adımı atın.',
+        description: 'Vixrex ile dijital vitrininizi oluşturmak için ilk adımı atın.',
         buttonLabel: 'Başla',
         action: VixRexAction.openVitrim,
       );

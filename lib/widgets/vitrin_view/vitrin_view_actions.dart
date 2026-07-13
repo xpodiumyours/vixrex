@@ -186,14 +186,14 @@ class VitrinViewActions {
     final storeName = storeData.name.trim();
     final shareText =
         storeName.isEmpty
-            ? 'VixRex vitrini\n$shareUrl'
+            ? 'Vixrex vitrini\n$shareUrl'
             : '$storeName vitrini\n$shareUrl';
 
     try {
       final result = await SharePlus.instance.share(
         ShareParams(
           text: shareText,
-          title: storeName.isEmpty ? 'VixRex' : storeName,
+          title: storeName.isEmpty ? 'Vixrex' : storeName,
           sharePositionOrigin: shareOrigin,
         ),
       );

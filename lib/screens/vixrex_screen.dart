@@ -58,7 +58,7 @@ class VixRexScreen extends StatelessWidget {
       backgroundColor: AppColors.bgEditor,
       appBar: AppBar(
         title: const Text(
-          'VixRex Rehber',
+          'Vixrex Rehber',
           style: TextStyle(
             color: AppColors.darkText,
             fontWeight: FontWeight.w900,
@@ -397,7 +397,7 @@ class VixRexScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                       const Text(
-                        'VixRex tanıtım paketi',
+                        'Vixrex tanıtım paketi',
                         style: TextStyle(
                           color: AppColors.darkText,
                           fontSize: 20,

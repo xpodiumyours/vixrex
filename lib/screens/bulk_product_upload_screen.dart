@@ -814,7 +814,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
               name: fileName,
             ),
           ],
-          subject: 'VixRex ürün CSV şablonu',
+          subject: 'Vixrex ürün CSV şablonu',
           text: 'Ürün Adı, Fiyat, Açıklama, Kategori, Stok Durumu sütunlarını doldurun.',
         ),
       );

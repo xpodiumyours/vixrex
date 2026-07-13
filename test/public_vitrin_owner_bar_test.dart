@@ -42,7 +42,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.byType(HomeShellScreen), findsOneWidget);
-    expect(find.text('VixRex Düzenle'), findsOneWidget);
+    expect(find.text('Vixrex Düzenle'), findsOneWidget);
   });
 
   testWidgets('Public vitrin local sahip bilgisi yoksa düzenle barı gizler', (

@@ -15,8 +15,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     // Verify header title
-    expect(find.text("VixRex'leri Keşfet"), findsOneWidget);
-    expect(find.text('Yayındaki VixRex profillerini keşfet'), findsOneWidget);
+    expect(find.text("Vixrex'leri Keşfet"), findsOneWidget);
+    expect(find.text('Yayındaki Vixrex profillerini keşfet'), findsOneWidget);
 
     // Verify search text field hint
     expect(find.text('Vitrin, ürün veya kategori ara...'), findsOneWidget);

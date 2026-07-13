@@ -52,7 +52,7 @@ class LandingBottomCta extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                'VixRex’inizi oluşturun; linkinizi, QR kodunuzu ve WhatsApp iletişiminizi paylaşmaya başlayın.',
+                'Vixrex’inizi oluşturun; linkinizi, QR kodunuzu ve WhatsApp iletişiminizi paylaşmaya başlayın.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.border,
@@ -76,7 +76,7 @@ class LandingBottomCta extends StatelessWidget {
                   elevation: 10,
                 ),
                 child: const Text(
-                  'VixRex Oluştur',
+                  'Vixrex Oluştur',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                 ),
               ),

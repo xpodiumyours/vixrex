@@ -4,7 +4,7 @@ import { CookieConsentRoot } from "@/components/cookie-consent/CookieConsentRoot
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "VixRex | İşletmenizin Dijital Vitrini",
+  title: "Vixrex | İşletmenizin Dijital Vitrini",
   description:
     "İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrin linkinde toplayın ve QR kodla paylaşın.",
   metadataBase: new URL(getSiteUrl()),

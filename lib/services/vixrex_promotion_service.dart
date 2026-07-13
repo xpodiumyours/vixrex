@@ -43,7 +43,7 @@ abstract final class VixRexPromotionService {
         tone: VixRexPromotionTone.friendly,
         label: 'Samimi',
         text:
-            'Merhaba!$locationText hizmet veren $name artık VixRex’te. Ürünlerimize ve iletişim bilgilerimize tek bağlantıdan ulaşabilirsiniz.$linkText',
+            'Merhaba!$locationText hizmet veren $name artık Vixrex’te. Ürünlerimize ve iletişim bilgilerimize tek bağlantıdan ulaşabilirsiniz.$linkText',
       ),
       VixRexPromotionDraft(
         tone: VixRexPromotionTone.professional,

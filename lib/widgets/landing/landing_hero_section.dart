@@ -191,7 +191,7 @@ class LandingHeroSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               const Text(
-                'VixRex',
+                'Vixrex',
                 style: TextStyle(
                   color: AppColors.darkText,
                   fontWeight: FontWeight.w900,
@@ -554,7 +554,7 @@ class LandingHeroSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'VixRex Oluştur',
+                        'Vixrex Oluştur',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 15,

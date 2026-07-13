@@ -182,7 +182,7 @@ class LocationService {
           .get(
             url,
             headers: {
-              'User-Agent': 'VixRex-Flutter-App',
+              'User-Agent': 'Vixrex-Flutter-App',
               'Accept-Language': 'tr-TR,tr;q=0.9',
             },
           )

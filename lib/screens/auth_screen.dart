@@ -55,7 +55,7 @@ class _AuthScreenState extends State<AuthScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'Hesap oluşturuldu. Giriş için e-postanızdaki VixRex doğrulama bağlantısına tıklayın.',
+                'Hesap oluşturuldu. Giriş için e-postanızdaki Vixrex doğrulama bağlantısına tıklayın.',
               ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
@@ -303,7 +303,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                           const SizedBox(width: 10),
                           const Text(
-                            'VixRex',
+                            'Vixrex',
                             style: TextStyle(
                               color: darkAccent,
                               fontSize: 24,

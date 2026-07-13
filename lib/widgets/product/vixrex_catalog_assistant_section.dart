@@ -45,7 +45,7 @@ class VixRexCatalogAssistantSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'VixRex ile katalog oluştur',
+                      'Vixrex ile katalog oluştur',
                       style: TextStyle(
                         color: AppColors.darkText,
                         fontSize: 12,
@@ -87,7 +87,7 @@ class VixRexCatalogAssistantSection extends StatelessWidget {
                 const SizedBox(width: 10),
                 _buildActionTile(
                   icon: Icons.smart_toy_rounded,
-                  title: 'VixRex önerileri',
+                  title: 'Vixrex önerileri',
                   desc: 'Ürün başlıklarını iyileştir',
                   onTap: onSuggestionTap,
                 ),

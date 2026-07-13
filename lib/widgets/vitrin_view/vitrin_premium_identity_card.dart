@@ -65,7 +65,7 @@ class VitrinPremiumIdentityCard extends StatelessWidget {
                     children: [
                       Text(
                         storeData.name.isEmpty
-                            ? 'VixRex Kart'
+                            ? 'Vixrex Kart'
                             : storeData.name,
                         style: TextStyle(
                           fontWeight: FontWeight.w900,

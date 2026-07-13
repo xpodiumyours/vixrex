@@ -1,4 +1,4 @@
--- VixRex Yasal Belgeler (Aktif Versiyon)
+-- Vixrex Yasal Belgeler (Aktif Versiyon)
 -- Tarih: 2026-07-07
 -- Durum: Şirket bilgileri eklenecek
 
@@ -18,7 +18,7 @@ VALUES
   '[
     {
       "title": "Veri Sorumlusu",
-      "body": "VixRex kapsamında kişisel verileriniz [ŞİRKET ÜNVANI] tarafından veri sorumlusu sıfatıyla işlenir. Adres: [ADRES]. E-posta: [E-POSTA]."
+      "body": "Vixrex kapsamında kişisel verileriniz [ŞİRKET ÜNVANI] tarafından veri sorumlusu sıfatıyla işlenir. Adres: [ADRES]. E-posta: [E-POSTA]."
     },
     {
       "title": "İşlenen Veriler",
@@ -78,11 +78,11 @@ VALUES
   'terms',
   'terms-2026-07-07-v1',
   'Kullanım Şartları',
-  'VixRex platform kullanım kuralları ve koşulları.',
+  'Vixrex platform kullanım kuralları ve koşulları.',
   '[
     {
       "title": "Platform Niteliği",
-      "body": "VixRex, küçük işletmelerin ürünlerini, hizmetlerini ve iletişim bilgilerini dijital vitrin olarak yayınlayabildiği bir platformdur. Platform yalnızca vitrin oluşturma ve yönetme hizmeti sunar; satış, ödeme veya kargo işlemi yapmaz."
+      "body": "Vixrex, küçük işletmelerin ürünlerini, hizmetlerini ve iletişim bilgilerini dijital vitrin olarak yayınlayabildiği bir platformdur. Platform yalnızca vitrin oluşturma ve yönetme hizmeti sunar; satış, ödeme veya kargo işlemi yapmaz."
     },
     {
       "title": "Hesap Oluşturma",
@@ -94,19 +94,19 @@ VALUES
     },
     {
       "title": "İçerik Sorumluluğu",
-      "body": "Paylaştığınız tüm içeriklerden (ürün, hizmet, fiyat, görsel, açıklama) siz sorumlusunuz. Hukuka aykırı, yanıltıcı veya yanıltıcı içerik paylaşmak yasaktır. VixRex, uygunsuz içerikleri kaldırma hakkını saklı tutar."
+      "body": "Paylaştığınız tüm içeriklerden (ürün, hizmet, fiyat, görsel, açıklama) siz sorumlusunuz. Hukuka aykırı, yanıltıcı veya yanıltıcı içerik paylaşmak yasaktır. Vixrex, uygunsuz içerikleri kaldırma hakkını saklı tutar."
     },
     {
       "title": "Fikri Mülkiyet",
-      "body": "VixRex logosu, tasarımı ve yazılımı [ŞİRKET ÜNVANI]'na aittir. Kullanıcılar, kendi içeriklerinin fikri mülkiyet haklarını korur. VixRex, kullanıcı içeriklerini yalnızca platform hizmetini sunmak amacıyla kullanır."
+      "body": "Vixrex logosu, tasarımı ve yazılımı [ŞİRKET ÜNVANI]'na aittir. Kullanıcılar, kendi içeriklerinin fikri mülkiyet haklarını korur. Vixrex, kullanıcı içeriklerini yalnızca platform hizmetini sunmak amacıyla kullanır."
     },
     {
       "title": "Sorumluluk Sınırı",
-      "body": "VixRex: (1) Kullanıcı içeriklerinin doğruluğundan sorumlu değildir, (2) Üçüncü taraf hizmetlerinden kaynaklanan arızalardan sorumlu değildir, (3) Kullanıcılar arasındaki anlaşmazlıklara karışmaz, (4) Dolaylı veya sonuç zararlarından sorumlu değildir."
+      "body": "Vixrex: (1) Kullanıcı içeriklerinin doğruluğundan sorumlu değildir, (2) Üçüncü taraf hizmetlerinden kaynaklanan arızalardan sorumlu değildir, (3) Kullanıcılar arasındaki anlaşmazlıklara karışmaz, (4) Dolaylı veya sonuç zararlarından sorumlu değildir."
     },
     {
       "title": "Hesap Askıya Alma ve Sonlandırma",
-      "body": "VixRex, kuralları ihlal eden hesapları askıya alma veya sonlandırma hakkını saklı tutar. Kullanıcı kendi hesabını istediği zaman silebilir. Hesap silindiğinde tüm veriler kalıcı olarak silinir."
+      "body": "Vixrex, kuralları ihlal eden hesapları askıya alma veya sonlandırma hakkını saklı tutar. Kullanıcı kendi hesabını istediği zaman silebilir. Hesap silindiğinde tüm veriler kalıcı olarak silinir."
     },
     {
       "title": "Değişiklikler",
@@ -138,7 +138,7 @@ VALUES
   '[
     {
       "title": "Yayınlama Açık Rızası",
-      "body": "Vitrin oluştururken paylaştığım mağaza adı, açıklama, kategori, adres, konum, iletişim bilgileri, sosyal bağlantılar, logo, galeri, ürün, hizmet ve çalışma saatlerinin VixRex üzerindeki dijital vitrinimde kamuya açık şekilde yayınlanmasına açık rıza veriyorum."
+      "body": "Vitrin oluştururken paylaştığım mağaza adı, açıklama, kategori, adres, konum, iletişim bilgileri, sosyal bağlantılar, logo, galeri, ürün, hizmet ve çalışma saatlerinin Vixrex üzerindeki dijital vitrinimde kamuya açık şekilde yayınlanmasına açık rıza veriyorum."
     },
     {
       "title": "Verilerin Görünürlüğü",

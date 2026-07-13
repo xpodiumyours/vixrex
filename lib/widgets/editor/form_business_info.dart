@@ -25,7 +25,7 @@ class FormBusinessInfo extends StatelessWidget {
         KeyedSubtree(
           key: state.nameKey,
           child: EditorTextField(
-            label: 'İşletme / VixRex Adı',
+            label: 'İşletme / Vixrex Adı',
             controller: nameController,
             focusNode: state.nameFocusNode,
             hint: 'Örn: Aymira Butik',

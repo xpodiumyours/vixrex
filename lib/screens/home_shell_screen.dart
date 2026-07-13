@@ -43,7 +43,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   // Chat History
   final List<ChatMessage> _vixrexChatMessages = [];
 
-  // ── VixRex Snapshot ─────────────────────────────────────────────────────────
+  // ── Vixrex Snapshot ─────────────────────────────────────────────────────────
   VixRexProfileSnapshot? _vixrexSnapshot;
   PublishedVitrinInfo? _publishedInfo;
   bool _vixrexHasShared = false;
@@ -68,7 +68,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   @override
   void initState() {
     super.initState();
-    // Doğrudan sekme indeksi: 0=Vitrinim, 1=Keşfet, 2=VixRex, 3=Profil, 4=Moderasyon
+    // Doğrudan sekme indeksi: 0=Vitrinim, 1=Keşfet, 2=Vixrex, 3=Profil, 4=Moderasyon
     _selectedIndex = widget.initialIndex < 0 ? 0 : widget.initialIndex;
     _loadVixRexSnapshot();
   }
@@ -124,7 +124,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     _loadVixRexSnapshot();
   }
 
-  // ── VixRex Action Callbacks ─────────────────────────────────────────────────
+  // ── Vixrex Action Callbacks ─────────────────────────────────────────────────
 
   void _vixrexNavigateToVitrim() {
     setState(() => _selectedIndex = 0); // Store
@@ -447,7 +447,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final sidebarItems = [
       _SidebarItem(icon: Icons.storefront_outlined, selectedIcon: Icons.storefront_rounded, label: 'Vitrinim'),
       _SidebarItem(icon: Icons.travel_explore_outlined, selectedIcon: Icons.travel_explore_rounded, label: 'Keşfet'),
-      _SidebarItem(icon: Icons.assistant_outlined, selectedIcon: Icons.assistant_rounded, label: 'VixRex'),
+      _SidebarItem(icon: Icons.assistant_outlined, selectedIcon: Icons.assistant_rounded, label: 'Vixrex'),
       _SidebarItem(icon: Icons.person_outline_rounded, selectedIcon: Icons.person_rounded, label: 'Profil'),
       if (isAdmin) _SidebarItem(icon: Icons.admin_panel_settings_outlined, selectedIcon: Icons.admin_panel_settings_rounded, label: 'Moderasyon'),
     ];
@@ -467,7 +467,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       const NavigationDestination(
         icon: Icon(Icons.assistant_outlined),
         selectedIcon: Icon(Icons.assistant_rounded),
-        label: 'VixRex',
+        label: 'Vixrex',
       ),
       const NavigationDestination(
         icon: Icon(Icons.person_outline_rounded),
@@ -519,7 +519,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                         ),
                         const SizedBox(width: 12),
                         const Text(
-                          'VixRex',
+                          'Vixrex',
                           style: TextStyle(
                             color: AppColors.darkText,
                             fontSize: 18,
@@ -619,7 +619,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                 clipBehavior: Clip.none,
                 children: [
                   IndexedStack(index: safeIndex, children: pages),
-                  // VixRex robot rozeti
+                  // Vixrex robot rozeti
                   if (_selectedIndex != 2)
                     Positioned(
                       right: 0,
@@ -652,7 +652,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         clipBehavior: Clip.none,
         children: [
           IndexedStack(index: safeIndex, children: pages),
-          // VixRex: Sağ alt köşede yüzen robot rozeti (sadece VixRex tabında değilken gösterilir)
+          // Vixrex: Sağ alt köşede yüzen robot rozeti (sadece Vixrex tabında değilken gösterilir)
           if (_selectedIndex != 2)
             Positioned(
               right: 0,
