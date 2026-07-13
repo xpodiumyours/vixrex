@@ -67,7 +67,7 @@ class LegalDocument {
 }
 
 String _normalizeBrandDisplay(String value) {
-  return value.replaceAll('VixRex', 'Vixrex').replaceAll('VitrinX', 'Vixrex');
+  return value.replaceAll('VixRex', 'Vixrex');
 }
 
 class PublishingLegalDocuments {

@@ -7,10 +7,10 @@ void main() {
       'document_type': 'terms',
       'version': '1.0.0',
       'title': 'VixRex Kullanım Koşulları',
-      'subtitle': 'VitrinX platform kuralları',
+      'subtitle': 'VixRex platform kuralları',
       'content_hash': 'existing-hash',
       'sections': [
-        {'title': 'VixRex', 'body': 'VitrinX hizmet açıklaması.'},
+        {'title': 'VixRex', 'body': 'VixRex hizmet açıklaması.'},
       ],
     });
 

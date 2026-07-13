@@ -55,7 +55,7 @@ Kuaför/güzellik → randevu paketi açık. Butik/fırın/giyim → randevu yok
 - Flutter `web/index.html` → `noindex` (editör indekslenmesin)  
 - Google Haritalar rehber kartı editörden kaldırıldı  
 - Public meta sıkılaştırıldı (OG/Twitter, robots index) — `public_web`  
-- Search Console: kullanıcı `vitrinx-two.vercel.app` doğruladı  
+- Search Console: önceki geçici Vercel aliası doğrulandı; aktif hedef `vixrex-public.vercel.app`
 - Sitemap kutuya **sadece** `sitemap.xml` yazılır (tam URL yazılmaz)  
 - Asıl SEO hedefi uzun vadede: **`vixrex.app/v/{slug}`** (public), Flutter `/app` değil  
 
