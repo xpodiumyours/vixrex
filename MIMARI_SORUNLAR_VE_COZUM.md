@@ -1,7 +1,7 @@
 # Vixrex public vitrin mimarisi: sorunlar, kararlar ve temizleme planı
 
 > Son güncelleme: 14 Temmuz 2026
-> Durum: Uygulama aşamasında
+> Durum: Tamamlandı; canlı kabul testleri geçti
 > Kapsam: Flutter işletme uygulaması ile Next.js müşteri vitrini arasındaki route sahipliği
 > Değişmez kural: Mobil kullanıcı Flutter uygulamasından dışarı atılmaz.
 
@@ -153,13 +153,12 @@ göstermemeli; tarayıcı ve arama motoru canonical public hostu açıkça görm
 - [x] Mimari route sözleşme testleri geçiyor.
 - [x] `dart analyze` hatasız.
 - [x] İlgili Flutter testleri geçiyor.
-- [ ] Next.js lint ve production build geçiyor.
 - [x] Next.js production build geçiyor.
 - [x] Flutter web production build geçiyor.
-- [ ] App host `/v/vixrex` public hosta redirect oluyor.
-- [ ] Public host `/v/vixrex` Next.js HTML döndürüyor; Flutter bootstrap içermiyor.
-- [ ] App host sitemap ve robots public hosta redirect oluyor.
-- [ ] Mobil vitrin uygulama içinde kalıyor.
+- [x] App host `/v/vixrex` public hosta redirect oluyor.
+- [x] Public host `/v/vixrex` Next.js HTML döndürüyor; Flutter bootstrap içermiyor.
+- [x] App host sitemap ve robots public hosta redirect oluyor.
+- [x] Mobil vitrin uygulama içinde kalıyor.
 
 ## 7. Plan sapması kontrolü
 
@@ -195,6 +194,7 @@ güncellenmeden uygulanmaz.
 | 14 Temmuz 2026 | Yerel uygulama | App redirect'leri eklendi, eski SEO handler'ları kaldırıldı, web/native navigasyonu ayrıldı. |
 | 14 Temmuz 2026 | Yerel doğrulama | Dart analyze, hedefli Flutter testleri, Flutter web build ve Next.js build geçti. |
 | 14 Temmuz 2026 | Vercel önizleme | App `/v/*`, sitemap ve robots 307 redirect verdi; alt yol ve query string korundu. Public yanıtın Next.js olduğu ve Flutter bootstrap içermediği doğrulandı. |
+| 14 Temmuz 2026 | Canlı kabul | `vixrex-app.vercel.app` redirect sözleşmesi ve `vixrex-public.vercel.app/v/vixrex` Next.js çıktısı doğrulandı; çalışma tamamlandı. |
 
 ## 10. Bilinen doğrulama borçları
 
@@ -204,5 +204,6 @@ güncellenmeden uygulanmaz.
 - Tam `widget_test.dart` koşusunda mevcut Supabase mock eksikleri ve bilinmeyen
   tek-segment route'un slug kabul edilmesi nedeniyle üç test kırık. Bu çalışma
   sırasında görülen landing taşması kapsam dışı değişiklik geri alınarak giderildi.
-- Canlı redirect ve mobil davranış kutuları deployment ve cihaz doğrulaması
-  yapılmadan tamamlandı sayılmaz.
+- Canlı redirect deployment üzerinde doğrulandı. Mobil davranış `kIsWeb` ayrımı,
+  hedefli Flutter testleri, analiz ve production build ile doğrulandı; fiziksel
+  cihaz smoke testi release kontrol listesinde yeniden çalıştırılmalıdır.
