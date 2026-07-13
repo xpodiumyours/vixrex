@@ -9,7 +9,16 @@ import {
   writeConsent,
 } from "@/lib/cookieConsent";
 
+const subscribeToHydration = () => () => undefined;
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
+
 export function CookieBanner() {
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot,
+  );
   const consentSnapshot = useSyncExternalStore(
     subscribeToConsent,
     readConsentSnapshot,
@@ -27,7 +36,7 @@ export function CookieBanner() {
     setCustomize(false);
   }
 
-  if (existingConsent || dismissed) return null;
+  if (!hydrated || existingConsent || dismissed) return null;
 
   return (
     <div
