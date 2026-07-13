@@ -26,7 +26,7 @@ class LegalConfig {
   );
   static const String publicSiteUrl = String.fromEnvironment(
     'PUBLIC_SITE_URL',
-    defaultValue: 'https://vixrex.app',
+    defaultValue: 'https://vixrex-public.vercel.app',
   );
 
   static const String privacyPath = '/privacy';

@@ -9,7 +9,7 @@ function getAllowedOrigins() {
     .filter((origin): origin is string => Boolean(origin));
 
   if (configured.length === 0) {
-    configured.push("https://app.vixrex.app");
+    configured.push("https://vixrex-app.vercel.app");
   }
 
   return new Set(configured);

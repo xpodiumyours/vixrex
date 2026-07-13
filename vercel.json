@@ -2,6 +2,23 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "bash vercel-build.sh",
   "outputDirectory": "build/web",
+  "redirects": [
+    {
+      "source": "/v/:path*",
+      "destination": "https://vixrex-public.vercel.app/v/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://vixrex-public.vercel.app/sitemap.xml",
+      "permanent": false
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "https://vixrex-public.vercel.app/robots.txt",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/main.dart.js",
@@ -41,22 +58,6 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/robots.txt",
-      "destination": "/api/robots"
-    },
-    {
-      "source": "/sitemap.xml",
-      "destination": "/api/sitemap"
-    },
-    {
-      "source": "/v/:slug((?!.*\\.).*)",
-      "destination": "/api/v/:slug"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

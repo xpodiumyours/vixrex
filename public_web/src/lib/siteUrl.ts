@@ -1,4 +1,4 @@
-const DEFAULT_SITE_URL = "https://vixrex.app";
+const DEFAULT_SITE_URL = "https://vixrex-public.vercel.app";
 
 export function getSiteUrl() {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();

@@ -6,11 +6,11 @@ void main() {
     test('PUBLIC_SITE_URL varsa public linki bu origin ile üretir', () {
       final link = PublicSiteConfig.buildPublicLink(
         '/v/test-magaza',
-        configuredOriginOverride: 'https://vixrex-two.vercel.app/silinecek',
+        configuredOriginOverride: 'https://public.example.com/silinecek',
         baseUriOverride: Uri.parse('http://localhost:7357'),
       );
 
-      expect(link, 'https://vixrex-two.vercel.app/v/test-magaza');
+      expect(link, 'https://public.example.com/v/test-magaza');
     });
 
     test('PUBLIC_SITE_URL yoksa mevcut web origin değerine düşer', () {
@@ -26,7 +26,7 @@ void main() {
     test('geçersiz origin varsa sadece path döner', () {
       final link = PublicSiteConfig.buildPublicLink(
         '/v/test-magaza',
-        configuredOriginOverride: 'vixrex-two.vercel.app',
+        configuredOriginOverride: 'public.example.com',
         baseUriOverride: Uri.parse('about:blank'),
       );
 
@@ -37,7 +37,7 @@ void main() {
       final repaired = PublicSiteConfig.repairPublicLink(
         'https://vixrex.app/nova-kuafor',
       );
-      expect(repaired, 'https://vixrex.app/v/nova-kuafor');
+      expect(repaired, 'https://vixrex-public.vercel.app/v/nova-kuafor');
     });
 
     test('hash /v/slug ve localhost linklerini canonical üretir', () {
@@ -45,19 +45,19 @@ void main() {
         PublicSiteConfig.repairPublicLink(
           'http://localhost:49692/#/v/nova-kuafor',
         ),
-        'https://vixrex.app/v/nova-kuafor',
+        'https://vixrex-public.vercel.app/v/nova-kuafor',
       );
       expect(
         PublicSiteConfig.repairPublicLink(
           'https://vixrex.app/#/v/nova-kuafor',
         ),
-        'https://vixrex.app/v/nova-kuafor',
+        'https://vixrex-public.vercel.app/v/nova-kuafor',
       );
       expect(
         PublicSiteConfig.repairPublicLink(
           'http://localhost:49692/v/nova-kuafor',
         ),
-        'https://vixrex.app/v/nova-kuafor',
+        'https://vixrex-public.vercel.app/v/nova-kuafor',
       );
     });
 
@@ -72,7 +72,7 @@ void main() {
       );
       expect(
         PublicSiteConfig.buildBookingTrackerLink('nova-kuafor', 'tok123'),
-        'https://vixrex.app/v/nova-kuafor/randevu/tok123',
+        'https://vixrex-public.vercel.app/v/nova-kuafor/randevu/tok123',
       );
     });
 

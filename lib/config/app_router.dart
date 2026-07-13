@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/legal_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/screens/appointment_tracker_screen.dart';
@@ -305,13 +307,51 @@ class AppRouter {
     }
   }
 
-  static void navigateToPublicVitrin(BuildContext context, String slug) {
+  static Future<void> navigateToPublicVitrin(
+    BuildContext context,
+    String slug,
+  ) async {
+    final normalizedSlug = slug.trim();
+    if (normalizedSlug.isEmpty) return;
+
+    // Web işletme uygulaması public vitrini render etmez. Müşteri yüzünün tek
+    // sahibi Next.js'tir. Native uygulamada ise kullanıcı Flutter içinde kalır.
+    if (kIsWeb) {
+      final publicUri = Uri.tryParse(
+        PublicSiteConfig.buildVitrinLink(normalizedSlug),
+      );
+      var launched = false;
+      if (publicUri != null) {
+        try {
+          launched = await launchUrl(
+            publicUri,
+            mode: LaunchMode.externalApplication,
+          );
+        } catch (_) {
+          launched = false;
+        }
+      }
+
+      if (!launched && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Public vitrin yeni sekmede açılamadı.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    final path = '/v/${Uri.encodeComponent(normalizedSlug)}';
     try {
-      context.push('/v/$slug');
+      await context.push(path);
     } catch (_) {
-      Navigator.push(
+      if (!context.mounted) return;
+      await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: slug)),
+        MaterialPageRoute(
+          builder: (_) => PublicVitrinScreen(slug: normalizedSlug),
+        ),
       );
     }
   }
