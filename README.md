@@ -1,8 +1,8 @@
-# VixRex
+# Vixrex
 
 Küçük işletmeler ve esnaf için paylaşılabilir dijital vitrin platformu.
 
-VixRex; işletme bilgilerini, ürünleri, hizmetleri, galeriyi, iletişim
+Vixrex; işletme bilgilerini, ürünleri, hizmetleri, galeriyi, iletişim
 kanallarını ve randevu seçeneklerini tek bir public bağlantıda toplar.
 İşletmeler vitrinlerini Flutter uygulamasından yönetir, müşteriler ise
 Keşfet ekranı, QR kod veya doğrudan bağlantı üzerinden görüntüler.
@@ -13,7 +13,7 @@ Keşfet ekranı, QR kod veya doğrudan bağlantı üzerinden görüntüler.
 
 ## İçindekiler
 
-- [VixRex nedir?](#vixrex-nedir)
+- [Vixrex nedir?](#vixrex-nedir)
 - [Hedef kullanıcılar](#hedef-kullanıcılar)
 - [Ana özellikler](#ana-özellikler)
 - [Teknik yapı](#teknik-yapı)
@@ -29,9 +29,9 @@ Keşfet ekranı, QR kod veya doğrudan bağlantı üzerinden görüntüler.
 - [Kontrol listesi](#kontrol-listesi)
 - [Bilinen sınırlamalar](#bilinen-sınırlamalar)
 
-## VixRex nedir?
+## Vixrex nedir?
 
-VixRex; küçük işletmelerin ürünlerini, hizmetlerini, çalışma bilgilerini,
+Vixrex; küçük işletmelerin ürünlerini, hizmetlerini, çalışma bilgilerini,
 galerisini, iletişim kanallarını ve randevu seçeneklerini tek bir
 paylaşılabilir dijital vitrinde yayınlamasını sağlayan Flutter ve web tabanlı
 bir platformdur.
@@ -41,7 +41,7 @@ bir platformdur.
 | İşletme uygulaması | Vitrin oluşturma, düzenleme, canlı önizleme, yayınlama ve randevu yönetimi |
 | Herkese açık web vitrini | Müşterilerin işletmeyi, galeriyi, hizmetleri ve randevu ekranını görüntülemesi |
 
-VixRex tam kapsamlı bir e-ticaret veya ödeme altyapısı değildir. Temel amacı,
+Vixrex tam kapsamlı bir e-ticaret veya ödeme altyapısı değildir. Temel amacı,
 yerel işletmelerin dijital görünürlüğünü ve müşterileriyle iletişimini
 kolaylaştırmaktır.
 
@@ -430,7 +430,7 @@ listesinden ayrıdır:
 
 ## OCR (Optik Karakter Tanıma)
 
-VixRex, fotoğraflardan veya faturalardan otomatik ürün çıkarma özelliği sunar.
+Vixrex, fotoğraflardan veya faturalardan otomatik ürün çıkarma özelliği sunar.
 
 ### Nasıl Çalışır?
 
@@ -524,8 +524,8 @@ doğrulanmamıştır.
 
 | Vercel projesi | Root Directory | Amaç | Yapılandırmada kullanılan domain |
 |---|---|---|---|
-| VixRex App | Repo kökü | Flutter işletme uygulaması | `app.vixrex.app` |
-| VixRex Public Web | `public_web` | Public vitrin ve SEO sayfaları | `vixrex.app` |
+| Vixrex App | Repo kökü | Flutter işletme uygulaması | `app.vixrex.app` |
+| Vixrex Public Web | `public_web` | Public vitrin ve SEO sayfaları | `vixrex.app` |
 
 ### Flutter Vercel projesi
 
@@ -665,7 +665,7 @@ Public web projesinin üretim build'ini kontrol eder.
   üretimde çalışmaz.
 - README kurulumu açıklar; mevcut migration veya build sorunlarını otomatik
   olarak düzeltmez.
-- VixRex ödeme veya tam e-ticaret altyapısı sağlamaz.
+- Vixrex ödeme veya tam e-ticaret altyapısı sağlamaz.
 
 ## Güvenlik
 

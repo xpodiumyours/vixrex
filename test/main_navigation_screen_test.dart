@@ -8,7 +8,7 @@ import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
 
 void main() {
-  testWidgets('VixRex ekranı Türkçe başlıkları gösterir', (tester) async {
+  testWidgets('Vixrex ekranı Türkçe başlıkları gösterir', (tester) async {
     tester.view.physicalSize = const Size(1200, 1920);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -42,20 +42,20 @@ void main() {
       ),
     );
 
-    expect(find.text('VixRex Rehber'), findsOneWidget);
-    expect(find.text('VixRex'), findsOneWidget);
-    expect(find.text('VixRex Rehberi'), findsOneWidget);
+    expect(find.text('Vixrex Rehber'), findsOneWidget);
+    expect(find.text('Vixrex'), findsOneWidget);
+    expect(find.text('Vixrex Rehberi'), findsOneWidget);
   });
 
-  test('VixRex karşılama metni düz ve desteklenen karakterlerden oluşur', () {
+  test('Vixrex karşılama metni düz ve desteklenen karakterlerden oluşur', () {
     final text = ChatbotConfig.welcomeMessage.text;
 
     expect(text, isNot(contains('**')));
     expect(text, isNot(contains('👋')));
-    expect(text, contains('Merhaba! Ben VixRex'));
+    expect(text, contains('Merhaba! Ben Vixrex'));
   });
 
-  testWidgets('VixRex hızlı aksiyonları dar ekranda taşmaz', (tester) async {
+  testWidgets('Vixrex hızlı aksiyonları dar ekranda taşmaz', (tester) async {
     SharedPreferences.setMockInitialValues({});
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -77,11 +77,11 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ProfileScreen()));
 
     expect(find.text('Profil'), findsOneWidget);
-    expect(find.text('VixRex Kullanıcısı'), findsOneWidget);
+    expect(find.text('Vixrex Kullanıcısı'), findsOneWidget);
   });
 
   testWidgets(
-    'VixRex chatbot overlay shows guided step when snapshot is incomplete',
+    'Vixrex chatbot overlay shows guided step when snapshot is incomplete',
     (tester) async {
       VixRexOverlay.close();
       addTearDown(VixRexOverlay.close);

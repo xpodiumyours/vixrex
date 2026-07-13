@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Gizlilik Politikası | VixRex',
-  description: 'VixRex gizlilik politikası ve KVKK aydınlatma metni.',
+  title: 'Gizlilik Politikası | Vixrex',
+  description: 'Vixrex gizlilik politikası ve KVKK aydınlatma metni.',
 };
 
 export default function PrivacyPage() {
@@ -13,7 +13,7 @@ export default function PrivacyPage() {
 
       <h2>1. Veri Sorumlusu</h2>
       <p>
-        <strong>VixRex</strong>, Aksakal Ticaret tarafından işletilmektedir.<br />
+        <strong>Vixrex</strong>, Aksakal Ticaret tarafından işletilmektedir.<br />
         Adres: Ümraniye Esenevler Mahallesi Lokman Hekim Caddesi No 18, İstanbul<br />
         E-posta: Xpodiumyours@gmail.com
       </p>

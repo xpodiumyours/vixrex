@@ -438,7 +438,7 @@ class VitrinFormSection extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            hasPublished ? 'VixRex Düzenle' : 'VixRex Oluştur',
+            hasPublished ? 'Vixrex Düzenle' : 'Vixrex Oluştur',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -466,7 +466,7 @@ class VitrinFormSection extends StatelessWidget {
           Icon(Icons.storefront_rounded, color: Colors.black, size: 13),
           SizedBox(width: 4),
           Text(
-            'VixRex ile',
+            'Vixrex ile',
             style: TextStyle(
               color: Colors.black,
               fontSize: 12,
@@ -496,7 +496,7 @@ class VitrinFormSection extends StatelessWidget {
     return KeyedSubtree(
       key: state.nameKey,
       child: EditorTextField(
-        label: 'İşletme / VixRex Adı',
+        label: 'İşletme / Vixrex Adı',
         controller: _name,
         focusNode: state.nameFocusNode,
         hint: 'Örn: Aymira Butik',
@@ -825,7 +825,7 @@ class VitrinFormSection extends StatelessWidget {
     final link = PublicSiteConfig.repairPublicLink(raw);
     try {
       final r = await SharePlus.instance.share(
-        ShareParams(text: 'VixRex web linkim:\n$link', title: 'VixRex Web Linki'),
+        ShareParams(text: 'Vixrex web linkim:\n$link', title: 'Vixrex Web Linki'),
       );
       if (r.status != ShareResultStatus.unavailable) return;
     } catch (e) {

@@ -40,7 +40,7 @@ export default async function handler(req, res) {
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Mağaza Bulunamadı - VixRex</title>
+  <title>Mağaza Bulunamadı - Vixrex</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 50px; background: #fafafa; color: #333; }
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
 <body>
   <h1>404 - Mağaza Bulunamadı</h1>
   <p>Aradığınız dijital vitrin bulunamadı veya henüz yayınlanmadı.</p>
-  <p><a href="/">VixRex Ana Sayfasına Dön</a></p>
+  <p><a href="/">Vixrex Ana Sayfasına Dön</a></p>
 </body>
 </html>`);
       return;
@@ -143,7 +143,7 @@ export default async function handler(req, res) {
       '@type': 'WebPage',
       '@id': `${publicUrl}#webpage`,
       'url': publicUrl,
-      'name': storeName ? `${storeName} | VixRex` : 'VixRex',
+      'name': storeName ? `${storeName} | Vixrex` : 'Vixrex',
       'about': { '@id': entityId },
     };
     if (storeDescription) webPage.description = storeDescription;
@@ -161,7 +161,7 @@ export default async function handler(req, res) {
 
     const jsonLdString = JSON.stringify(jsonLdMap).replace(/</g, '\\u003c');
 
-    const rawTitle = store.name ? `${store.name} - VixRex` : 'VixRex';
+    const rawTitle = store.name ? `${store.name} - Vixrex` : 'Vixrex';
     const rawDesc = store.description || store.corporate_bio || 'Küçük işletmeler için dijital vitrin kartı.';
     const shareImage = imageUrl || `${protocol}://${host}/favicon.png`;
 
@@ -185,7 +185,7 @@ export default async function handler(req, res) {
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${escapedImageUrl}">
   <meta property="og:url" content="${publicUrl}">
-  <meta property="og:site_name" content="VixRex">
+  <meta property="og:site_name" content="Vixrex">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
@@ -196,7 +196,7 @@ export default async function handler(req, res) {
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="VixRex">
+  <meta name="apple-mobile-web-app-title" content="Vixrex">
   <link rel="apple-touch-icon" href="/icons/Icon-192.png">
 
   <!-- Favicon -->

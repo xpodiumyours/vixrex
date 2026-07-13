@@ -45,7 +45,7 @@ class LandingComparisonSection extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme bilgilerinizi VixRex’e ekleyin ve paylaşmaya başlayın.',
+                'Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme bilgilerinizi Vixrex’e ekleyin ve paylaşmaya başlayın.',
                 style: TextStyle(
                   fontSize: 16,
                   color: AppColors.mutedText,
@@ -64,7 +64,7 @@ class LandingComparisonSection extends StatelessWidget {
                     highlighted: false,
                   );
                   final vixrexPanel = LandingSetupPanel(
-                    label: 'VixRex ile',
+                    label: 'Vixrex ile',
                     items: vixrexSetupItems,
                     footer: 'Tek panel, tek link, doğrudan iletişim',
                     highlighted: true,

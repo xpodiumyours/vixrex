@@ -28,7 +28,7 @@ class VitrinFooter extends StatelessWidget {
       children: [
         Text(
           publicMode
-              ? 'Bu vitrin VixRex ile oluşturuldu'
+              ? 'Bu vitrin Vixrex ile oluşturuldu'
               : previewHost,
           style: TextStyle(
             fontSize: publicMode ? 12 : 14,

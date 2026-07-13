@@ -256,7 +256,7 @@ class ExploreScreenState extends State<ExploreScreen> {
           backgroundColor: bgColor,
           appBar: AppBar(
             title: const Text(
-              "VixRex'leri Keşfet",
+              "Vixrex'leri Keşfet",
               style: TextStyle(
                 color: darkText,
                 fontWeight: FontWeight.w900,
@@ -285,7 +285,7 @@ class ExploreScreenState extends State<ExploreScreen> {
                     vertical: 8,
                   ),
                   child: const Text(
-                    'Yayındaki VixRex profillerini keşfet',
+                    'Yayındaki Vixrex profillerini keşfet',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,

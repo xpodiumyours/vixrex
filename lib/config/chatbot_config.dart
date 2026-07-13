@@ -2,16 +2,16 @@ import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 
-/// VixRex — VixRex'in kural tabanlı kullanıcı rehberi.
+/// Vixrex — Vixrex'in kural tabanlı kullanıcı rehberi.
 /// Tüm yanıtlar Türkçedir. API bağlantısı yoktur; kural tabanlı çalışır.
 abstract final class ChatbotConfig {
-  static const String botName = 'VixRex';
-  static const String botSubtitle = 'VixRex Rehberi';
+  static const String botName = 'Vixrex';
+  static const String botSubtitle = 'Vixrex Rehberi';
   static const String systemStatus = 'AKTİF';
 
   // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
   static ChatMessage get welcomeMessage => ChatMessage.bot(
-        'Merhaba! Ben $botName, VixRex rehberiyim.\n\n'
+        'Merhaba! Ben $botName, Vixrex rehberiyim.\n\n'
         'Vitrinini kurman, yayınlaman ve müşterilerine duyurman için sıradaki doğru adımı gösteririm.\n\n'
         'Nasıl yardımcı olayım?',
         quickReplies: mainMenuReplies(null),
@@ -42,7 +42,7 @@ abstract final class ChatbotConfig {
   }) {
     if (snapshot == null) {
       return const [
-        QuickReply(label: 'VixRex Ne İşe Yarar?', payload: 'vixrex_info'),
+        QuickReply(label: 'Vixrex Ne İşe Yarar?', payload: 'vixrex_info'),
         QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
       ];
     }
@@ -74,7 +74,7 @@ abstract final class ChatbotConfig {
         payload: 'ocr_scan',
         action: VixRexAction.openOcrScanner,
       ),
-      const QuickReply(label: 'VixRex Ne İşe Yarar?', payload: 'vixrex_info'),
+      const QuickReply(label: 'Vixrex Ne İşe Yarar?', payload: 'vixrex_info'),
       const QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
     ];
   }
@@ -143,7 +143,7 @@ abstract final class ChatbotConfig {
 
       case 'vixrex_info':
         return ChatMessage.bot(
-          'VixRex ile işletme bilgilerini tek yerde toplar, vitrinini yayınlar ve link, QR veya WhatsApp ile müşterilerine duyurursun.',
+          'Vixrex ile işletme bilgilerini tek yerde toplar, vitrinini yayınlar ve link, QR veya WhatsApp ile müşterilerine duyurursun.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
         

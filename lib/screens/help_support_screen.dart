@@ -40,7 +40,7 @@ class HelpSupportScreen extends StatelessWidget {
     final uri = Uri(
       scheme: 'mailto',
       path: LegalConfig.privacyEmail,
-      queryParameters: {'subject': 'VixRex Destek'},
+      queryParameters: {'subject': 'Vixrex Destek'},
     );
     try {
       final launched = await launchUrl(uri);

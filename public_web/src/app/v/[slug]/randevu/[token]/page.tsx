@@ -17,7 +17,7 @@ async function getAppointmentData(token: string) {
 
 export async function generateMetadata() {
   return {
-    title: "Randevu Takip - VixRex",
+    title: "Randevu Takip - Vixrex",
     robots: "noindex, nofollow", // Do not index personal tracking links
   };
 }

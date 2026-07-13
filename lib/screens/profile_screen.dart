@@ -36,7 +36,7 @@ class ProfileScreen extends StatelessWidget {
     if (email != null && email.isNotEmpty) return email;
     final name = storeName?.trim();
     if (name != null && name.isNotEmpty) return name;
-    return 'VixRex Kullanıcısı';
+    return 'Vixrex Kullanıcısı';
   }
 
   Future<void> _copyLink(BuildContext context) async {

@@ -1,4 +1,4 @@
-# VITRINX — PROJE ANAYASASI
+# VIXREX — PROJE ANAYASASI
 
 > Bu dosyayı her yeni AI konuşmasının (Claude, Cursor, ChatGPT, Gemini fark etmez) EN BAŞINA yapıştır.
 > Ajan bu kuralları okumadan hiçbir kod yazmaz, hiçbir dosyaya dokunmaz.
@@ -111,10 +111,10 @@ Bir görevi "tamamlandı" demeden önce ajan şu 3 soruyu KENDİNE sorup cevapla
 
 ## 10. PROJE BAĞLAMI (KISA ÖZET)
 
-VitrinX: Türkiye'deki küçük işletmeler için dijital vitrin platformu.
+Vixrex: Türkiye'deki küçük işletmeler için dijital vitrin platformu.
 - Stack: Flutter + FlutterFlow (hızlı MVP) + Antigravity IDE (Clean Architecture, Riverpod) + Supabase + GitHub
-- Repo: `xpodiumyours/vitrinx`
-- Hedef: `vitrinx.app/v/[slug]` üzerinden canlı yayın
+- Repo: `xpodiumyours/vixrex`
+- Hedef: `vixrex.app/v/[slug]` üzerinden canlı yayın
 - Şu an: MVP tamamlanmaya yakın, reklam öncesi kritik hata düzeltme aşamasında (WhatsApp FAB, sahte istatistik, silme onayı vb.)
 
 ---

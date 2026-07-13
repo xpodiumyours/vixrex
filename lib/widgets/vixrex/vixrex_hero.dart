@@ -40,7 +40,7 @@ class VixRexHero extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         const Text(
-          'VixRex',
+          'Vixrex',
           style: TextStyle(
             color: AppColors.darkText,
             fontSize: 28,
@@ -50,7 +50,7 @@ class VixRexHero extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         const Text(
-          'VixRex Rehberi',
+          'Vixrex Rehberi',
           style: TextStyle(
             color: AppColors.primary,
             fontSize: 14,

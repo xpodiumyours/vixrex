@@ -10,7 +10,7 @@
     <uses-feature android:name="android.hardware.location" android:required="false"/>
 
     <application
-        android:label="VixRex"
+        android:label="Vixrex"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

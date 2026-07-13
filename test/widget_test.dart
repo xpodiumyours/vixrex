@@ -17,7 +17,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('VixRex ilk açılışta karşılama ekranını gösterir', (
+  testWidgets('Vixrex ilk açılışta karşılama ekranını gösterir', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -27,7 +27,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(LandingScreen), findsOneWidget);
-    expect(find.text('VixRex Oluştur'), findsAtLeastNWidgets(1));
+    expect(find.text('Vixrex Oluştur'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('HomeShell Vitrinim hızlı yayın ekranını gösterir', (
@@ -43,7 +43,7 @@ void main() {
 
     expect(find.text('Keşfet'), findsOneWidget);
     expect(find.text('Vitrinim'), findsOneWidget);
-    expect(find.text('VixRex Oluştur'), findsAtLeastNWidgets(1));
+    expect(find.text('Vixrex Oluştur'), findsAtLeastNWidgets(1));
     expect(find.text('Vitrinimi Yayına Al'), findsOneWidget);
   });
 
@@ -97,10 +97,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('VixRex Düzenle'), findsOneWidget);
-    expect(find.text('VixRex Oluştur'), findsNothing);
+    expect(find.text('Vixrex Düzenle'), findsOneWidget);
+    expect(find.text('Vixrex Oluştur'), findsNothing);
     expect(find.text('Değişiklikleri Kaydet & Yayına Al'), findsOneWidget);
-    expect(find.text('İşletme / VixRex Adı'), findsOneWidget);
+    expect(find.text('İşletme / Vixrex Adı'), findsOneWidget);
     expect(find.text('Yayındaki Vitrini Aç'), findsOneWidget);
     expect(find.text('Linki Kopyala'), findsOneWidget);
     expect(find.text('QR Göster'), findsOneWidget);

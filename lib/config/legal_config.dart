@@ -1,7 +1,7 @@
 class LegalConfig {
   const LegalConfig._();
 
-  static const String appName = 'VixRex';
+  static const String appName = 'Vixrex';
   static const String ownerName = String.fromEnvironment(
     'LEGAL_DATA_CONTROLLER_TITLE',
     defaultValue: 'Aksakal Ticaret',

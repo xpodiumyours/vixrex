@@ -6,8 +6,8 @@ class LegalDocumentSection {
 
   factory LegalDocumentSection.fromJson(Map<String, dynamic> json) {
     return LegalDocumentSection(
-      title: (json['title'] ?? '').toString().trim(),
-      body: (json['body'] ?? '').toString().trim(),
+      title: _normalizeBrandDisplay((json['title'] ?? '').toString().trim()),
+      body: _normalizeBrandDisplay((json['body'] ?? '').toString().trim()),
     );
   }
 }
@@ -52,8 +52,10 @@ class LegalDocument {
     return LegalDocument(
       type: (json['document_type'] ?? '').toString().trim(),
       version: (json['version'] ?? '').toString().trim(),
-      title: (json['title'] ?? '').toString().trim(),
-      subtitle: (json['subtitle'] ?? '').toString().trim(),
+      title: _normalizeBrandDisplay((json['title'] ?? '').toString().trim()),
+      subtitle: _normalizeBrandDisplay(
+        (json['subtitle'] ?? '').toString().trim(),
+      ),
       contentHash: (json['content_hash'] ?? '').toString().trim(),
       effectiveAt: DateTime.tryParse((json['effective_at'] ?? '').toString()),
       sections: sections,
@@ -62,6 +64,10 @@ class LegalDocument {
 
   /// Version zorunlu. content_hash DB'de boş gelebilir; sections okuma UI'sı içindir.
   bool get isUsable => type.isNotEmpty && version.isNotEmpty;
+}
+
+String _normalizeBrandDisplay(String value) {
+  return value.replaceAll('VixRex', 'Vixrex');
 }
 
 class PublishingLegalDocuments {

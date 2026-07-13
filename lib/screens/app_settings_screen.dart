@@ -201,8 +201,8 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
               name: 'vixrex-verilerim-$stamp.json',
             ),
           ],
-          subject: 'VixRex veri dışa aktarımı',
-          text: 'VixRex hesap verileriniz (JSON).',
+          subject: 'Vixrex veri dışa aktarımı',
+          text: 'Vixrex hesap verileriniz (JSON).',
         ),
       );
       if (!mounted) return;

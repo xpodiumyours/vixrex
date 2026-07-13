@@ -47,7 +47,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const data = await getBlogData(params.slug);
   if (!data || data.articles.length === 0) return {};
 
-  const title = `${data.store.name} İçerik ve Duyurular - VixRex`;
+  const title = `${data.store.name} İçerik ve Duyurular - Vixrex`;
   const description = `${data.store.name} işletmesinin güncel yazıları, duyuruları ve rehberleri.`;
 
   return {

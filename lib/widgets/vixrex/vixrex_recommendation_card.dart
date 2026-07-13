@@ -37,7 +37,7 @@ class VixRexRecommendationCard extends StatelessWidget {
             SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Bu öneri kapatıldı. Durumun değiştiğinde VixRex yeni adımı gösterecek.',
+                'Bu öneri kapatıldı. Durumun değiştiğinde Vixrex yeni adımı gösterecek.',
                 style: TextStyle(
                   color: AppColors.mutedText,
                   fontSize: 12,

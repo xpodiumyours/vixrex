@@ -76,7 +76,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const article = await getArticleData(params.slug, params.articleSlug);
   if (!article) return {};
 
-  const title = `${article.title} - ${article.store.name} | VixRex`;
+  const title = `${article.title} - ${article.store.name} | Vixrex`;
   const description = article.summary || article.content.substring(0, 150);
   const image = article.cover_image_url || "";
 
@@ -135,7 +135,7 @@ export default async function ArticleDetailPage(props: PageProps) {
     },
     "publisher": {
       "@type": "Organization",
-      "name": "VixRex",
+      "name": "Vixrex",
       "logo": {
         "@type": "ImageObject",
         "url": buildSiteUrl("/favicon.png"),
