@@ -1,0 +1,41 @@
+name: Public Web Lint
+
+on:
+  pull_request:
+    paths:
+      - "public_web/**"
+      - ".github/workflows/public-web-lint.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "public_web/**"
+      - ".github/workflows/public-web-lint.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
