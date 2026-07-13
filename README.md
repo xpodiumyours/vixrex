@@ -232,7 +232,7 @@ Public web uygulaması varsayılan olarak `http://localhost:3000` adresinde
 |---|---:|---|
 | `SUPABASE_URL` | Evet | Supabase proje adresi |
 | `SUPABASE_PUBLISHABLE_KEY` | Evet | İstemcide kullanılan publishable/anon anahtarı |
-| `PUBLIC_SITE_URL` | Üretimde | Public vitrin adresi, örneğin `https://vixrex.app` |
+| `PUBLIC_SITE_URL` | Üretimde | Public vitrin adresi, şu anda `https://vixrex-public.vercel.app` |
 | `INSTAGRAM_SYNC_ENABLED` | Instagram hazır olduğunda | Migration ve public API kurulumu bitince `true` yapılır |
 | `LEGAL_PRIVACY_EMAIL` | Hayır | Gizlilik ve veri silme iletişim adresi |
 
@@ -250,7 +250,7 @@ olarak Dart koduna aktarılacağı anlamına gelmez.
 | `REVALIDATION_SECRET` | Önerilir | Server-to-server `/api/revalidate` isteklerini doğrular |
 | `TURNSTILE_SECRET_KEY` | Hayır | İçerik bildirimlerinde bot doğrulaması |
 | `NEXT_PUBLIC_SITE_URL` | Üretimde | Public Next.js adresi |
-| `NEXT_PUBLIC_APP_URL` | Üretimde | Flutter uygulama adresi, örneğin `https://app.vixrex.app` |
+| `NEXT_PUBLIC_APP_URL` | Üretimde | Flutter uygulama adresi, şu anda `https://vixrex-app.vercel.app` |
 | `INSTAGRAM_CLIENT_ID` | Instagram bağlantısında | Meta uygulama kimliği |
 | `INSTAGRAM_CLIENT_SECRET` | Instagram bağlantısında | Server-only Meta uygulama anahtarı |
 | `INSTAGRAM_REDIRECT_URI` | Instagram bağlantısında | Meta panelindeki OAuth callback adresi |
@@ -519,13 +519,13 @@ flowchart TD
 ## Vercel ile yayınlama
 
 Repo yapılandırması, Flutter uygulaması ve Next.js public web için iki ayrı
-Vercel projesini hedefler. Canlı domain ve DNS durumu bu README incelemesinde
-doğrulanmamıştır.
+Vercel projesini hedefler. Özel domain satın alınana kadar aktif Vercel
+adresleri kullanılır.
 
-| Vercel projesi | Root Directory | Amaç | Yapılandırmada kullanılan domain |
+| Vercel projesi | Root Directory | Amaç | Aktif domain |
 |---|---|---|---|
-| Vixrex App | Repo kökü | Flutter işletme uygulaması | `app.vixrex.app` |
-| Vixrex Public Web | `public_web` | Public vitrin ve SEO sayfaları | `vixrex.app` |
+| Vixrex App | Repo kökü | Flutter işletme uygulaması | `vixrex-app.vercel.app` |
+| Vixrex Public Web | `public_web` | Public vitrin ve SEO sayfaları | `vixrex-public.vercel.app` |
 
 ### Flutter Vercel projesi
 
@@ -541,14 +541,15 @@ Ortam değişkenleri:
 ```text
 SUPABASE_URL
 SUPABASE_PUBLISHABLE_KEY
-PUBLIC_SITE_URL=https://vixrex.app
+PUBLIC_SITE_URL=https://vixrex-public.vercel.app
 ```
 
 `vercel-build.sh`, gerekli Flutter stable kurulumunu hazırlar ve release web
 build üretir.
 
 Kök `vercel.json`, Flutter uygulamasındaki public vitrin, sitemap ve robots
-isteklerini `https://vixrex.app` adresine yönlendirir.
+isteklerini açık redirect ile `https://vixrex-public.vercel.app` adresine
+yönlendirir. Flutter app hostu public vitrin HTML'i üretmez.
 
 ### Next.js public web projesi
 
@@ -563,21 +564,28 @@ Ortam değişkenleri:
 ```text
 SUPABASE_URL
 SUPABASE_PUBLISHABLE_KEY
+NEXT_PUBLIC_SITE_URL=https://vixrex-public.vercel.app
+NEXT_PUBLIC_APP_URL=https://vixrex-app.vercel.app
 REVALIDATION_SECRET
 TURNSTILE_SECRET_KEY
 ```
 
 `TURNSTILE_SECRET_KEY` yalnızca bot doğrulaması kullanılacaksa gereklidir.
 
-### Domain dağılımı
+### Aktif domain dağılımı
 
 | Adres | Amaç |
 |---|---|
-| `app.vixrex.app` | Flutter işletme uygulaması |
-| `vixrex.app` | Public Next.js sitesi |
-| `vixrex.app/v/:slug` | İşletmenin public vitrini |
-| `vixrex.app/sitemap.xml` | Arama motoru sitemap'i |
-| `vixrex.app/robots.txt` | Arama motoru tarama kuralları |
+| `vixrex-app.vercel.app` | Flutter işletme uygulaması |
+| `vixrex-public.vercel.app` | Public Next.js sitesi |
+| `vixrex-public.vercel.app/v/:slug` | İşletmenin public vitrini |
+| `vixrex-public.vercel.app/sitemap.xml` | Arama motoru sitemap'i |
+| `vixrex-public.vercel.app/robots.txt` | Arama motoru tarama kuralları |
+
+Özel domain satın alındıktan sonraki hedef dağılım
+`app.vixrex.com` (Flutter) ve `vixrex.com` (Next.js) olacaktır. Domain değişimi
+yalnızca origin ve DNS ayarlarını değiştirir; `/v/*` route sahipliği Next.js'te
+kalır.
 
 ### Revalidation notu
 

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const fallbackAppUrl = "https://vixrex-two.vercel.app";
+const fallbackAppUrl = "https://vixrex-app.vercel.app";
 
 function getAppUrl() {
   const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();

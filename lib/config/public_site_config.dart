@@ -1,7 +1,7 @@
 class PublicSiteConfig {
   static const String configuredOrigin = String.fromEnvironment(
     'PUBLIC_SITE_URL',
-    defaultValue: 'https://vixrex.app',
+    defaultValue: 'https://vixrex-public.vercel.app',
   );
 
   static String buildPublicLink(
@@ -58,7 +58,7 @@ class PublicSiteConfig {
   static String buildBookingTrackerLink(String slug, String token) =>
       buildPublicLink(buildBookingTrackerPath(slug, token));
 
-  /// Eski/yanlış linkleri (`vixrex.app/slug`, `#/v/slug`, localhost) → canonical `/v/slug`.
+  /// Eski/yanlış linkleri (bare slug, hash route, localhost) → canonical `/v/slug`.
   static String repairPublicLink(String link) {
     final trimmed = link.trim();
     if (trimmed.isEmpty) return trimmed;

@@ -176,7 +176,7 @@ class StoreLocalStorageService {
     }
     final slug = prefs.getString(LocalStorageKeys.lastPublishedSlug) ?? '';
     final rawLink = prefs.getString(LocalStorageKeys.lastPublishedLink) ?? '';
-    // Canonical müşteri linki: her zaman vixrex.app/v/{slug} (localhost / hash onarılır).
+    // Canonical müşteri linki: her zaman public Next.js origin'indeki /v/{slug}.
     final publicLink = slug.trim().isNotEmpty
         ? PublicSiteConfig.buildVitrinLink(slug)
         : PublicSiteConfig.repairPublicLink(rawLink);
