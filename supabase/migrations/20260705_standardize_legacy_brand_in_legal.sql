@@ -9,6 +9,8 @@ FROM legal_documents
 ORDER BY document_type;
 
 -- 2. Tüm belgelerdeki eski marka yazımını güncelle
+BEGIN;
+
 UPDATE legal_documents
 SET
   title = REPLACE(REPLACE(title, concat('Vitrin', 'X'), 'Vixrex'), concat('vitrin', 'x'), 'vixrex'),
@@ -31,6 +33,8 @@ UPDATE legal_documents
 SET is_active = true, effective_at = now()
 WHERE is_active = false
   AND document_type IN ('privacy', 'terms', 'consent', 'dataDeletion');
+
+COMMIT;
 
 -- 5. Sonucu doğrula
 SELECT
