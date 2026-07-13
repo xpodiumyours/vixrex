@@ -19,6 +19,26 @@ const mockBuilder = {
   },
 };
 
+type ConnectedAccess = Awaited<
+  ReturnType<typeof getConnectedInstagramAccess>
+>;
+
+function createConnectedAccess(
+  store: ConnectedAccess["store"],
+): ConnectedAccess {
+  return {
+    admin: mockBuilder as unknown as ConnectedAccess["admin"],
+    store,
+    connection: {
+      id: "conn-1",
+      store_slug: store.slug,
+      status: "connected",
+    } as ConnectedAccess["connection"],
+    accessToken: "llt-1",
+    expiresAt: null,
+  };
+}
+
 vi.mock("@/lib/supabaseAdmin", () => {
   return { getSupabaseAdmin: () => mockBuilder };
 });
@@ -50,12 +70,13 @@ describe("POST /api/instagram/import", () => {
   });
 
   it("rejects non-IMAGE media types (422)", async () => {
-    vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      admin: mockBuilder as any,
-      store: { slug: "test-store", products: [] },
-      connection: { id: "conn-1" },
-      accessToken: "llt-1",
-    } as any);
+    vi.mocked(getConnectedInstagramAccess).mockResolvedValue(
+      createConnectedAccess({
+        slug: "test-store",
+        name: "Test Store",
+        products: [],
+      }),
+    );
 
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",
@@ -81,12 +102,13 @@ describe("POST /api/instagram/import", () => {
   });
 
   it("rejects images larger than 6MB (422)", async () => {
-    vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      admin: mockBuilder as any,
-      store: { slug: "test-store", products: [] },
-      connection: { id: "conn-1" },
-      accessToken: "llt-1",
-    } as any);
+    vi.mocked(getConnectedInstagramAccess).mockResolvedValue(
+      createConnectedAccess({
+        slug: "test-store",
+        name: "Test Store",
+        products: [],
+      }),
+    );
 
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",
@@ -120,12 +142,13 @@ describe("POST /api/instagram/import", () => {
   });
 
   it("successfully imports an image product and saves it in store products array", async () => {
-    vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      admin: mockBuilder as any,
-      store: { slug: "test-store", name: "My Store", products: [] },
-      connection: { id: "conn-1" },
-      accessToken: "llt-1",
-    } as any);
+    vi.mocked(getConnectedInstagramAccess).mockResolvedValue(
+      createConnectedAccess({
+        slug: "test-store",
+        name: "My Store",
+        products: [],
+      }),
+    );
 
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",

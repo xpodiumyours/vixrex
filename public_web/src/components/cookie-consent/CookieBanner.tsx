@@ -1,35 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   type CookieConsent,
-  readConsent,
+  parseConsentSnapshot,
+  readConsentSnapshot,
+  subscribeToConsent,
   writeConsent,
 } from "@/lib/cookieConsent";
 
 export function CookieBanner() {
-  const [visible, setVisible] = useState(false);
+  const consentSnapshot = useSyncExternalStore(
+    subscribeToConsent,
+    readConsentSnapshot,
+    () => null,
+  );
+  const existingConsent = parseConsentSnapshot(consentSnapshot);
+  const [dismissed, setDismissed] = useState(false);
   const [customize, setCustomize] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
 
-  useEffect(() => {
-    const existing = readConsent();
-    if (!existing) {
-      setVisible(true);
-      return;
-    }
-    setAnalytics(existing.analytics);
-    setMarketing(existing.marketing);
-  }, []);
-
   function persist(next: Pick<CookieConsent, "analytics" | "marketing">) {
     writeConsent(next);
-    setVisible(false);
+    setDismissed(true);
     setCustomize(false);
   }
 
-  if (!visible) return null;
+  if (existingConsent || dismissed) return null;
 
   return (
     <div

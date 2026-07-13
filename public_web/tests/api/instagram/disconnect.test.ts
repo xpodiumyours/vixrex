@@ -1,11 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/instagram/disconnect/route";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { revalidateTag } from "next/cache";
 
-const mockResult = { data: null, error: null };
+type MockQueryResult = { data: unknown; error: unknown };
+type MockStorageResult = {
+  data: Array<{ name: string }>;
+  error: unknown;
+};
+
+const mockResult: MockQueryResult = { data: null, error: null };
+const emptyStorageResult: MockStorageResult = { data: [], error: null };
 const mockBuilder = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
@@ -16,8 +22,8 @@ const mockBuilder = {
   then: vi.fn().mockImplementation((resolve) => resolve(mockResult)),
   storage: {
     from: vi.fn().mockReturnThis(),
-    list: vi.fn().mockResolvedValue({ data: [], error: null }),
-    remove: vi.fn().mockResolvedValue({ data: [], error: null }),
+    list: vi.fn().mockResolvedValue(emptyStorageResult),
+    remove: vi.fn().mockResolvedValue(emptyStorageResult),
   },
 };
 
@@ -48,7 +54,7 @@ describe("POST /api/instagram/disconnect", () => {
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({
       data: { id: "conn-1" },
       error: null,
-    } as any);
+    });
 
     const req = new NextRequest("http://localhost/api/instagram/disconnect", {
       method: "POST",
@@ -93,12 +99,12 @@ describe("POST /api/instagram/disconnect", () => {
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({
       data: { id: "conn-1" },
       error: null,
-    } as any);
+    });
 
     vi.spyOn(mockBuilder.storage, "list").mockResolvedValue({
       data: [{ name: "img1.jpg" }, { name: "img2.jpg" }],
       error: null,
-    } as any);
+    });
 
     const req = new NextRequest("http://localhost/api/instagram/disconnect", {
       method: "POST",

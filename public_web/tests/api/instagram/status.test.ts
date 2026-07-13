@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/instagram/status/route";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyStoreEditToken, getConnectedInstagramAccess } from "@/lib/instagramServer";
 
-const mockResult = { data: null, error: null };
+type MockQueryResult = { data: unknown; error: unknown };
+type ConnectedAccess = Awaited<
+  ReturnType<typeof getConnectedInstagramAccess>
+>;
+
+const mockResult: MockQueryResult = { data: null, error: null };
 const mockBuilder = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
@@ -12,6 +16,22 @@ const mockBuilder = {
   maybeSingle: vi.fn().mockImplementation(() => Promise.resolve(mockResult)),
   then: vi.fn().mockImplementation((resolve) => resolve(mockResult)),
 };
+
+function createConnectedAccess(
+  store: ConnectedAccess["store"],
+): ConnectedAccess {
+  return {
+    admin: mockBuilder as unknown as ConnectedAccess["admin"],
+    store,
+    connection: {
+      id: "conn-1",
+      store_slug: store.slug,
+      status: "connected",
+    } as ConnectedAccess["connection"],
+    accessToken: "llt-1",
+    expiresAt: "2026-12-31",
+  };
+}
 
 vi.mock("@/lib/supabaseAdmin", () => {
   return { getSupabaseAdmin: () => mockBuilder };
@@ -34,7 +54,7 @@ describe("POST /api/instagram/status", () => {
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({
       data: { status: "disconnected" },
       error: null,
-    } as any);
+    });
 
     const req = new NextRequest("http://localhost/api/instagram/status", {
       method: "POST",
@@ -55,15 +75,11 @@ describe("POST /api/instagram/status", () => {
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({
       data: { status: "connected", username: "tester", account_type: "PERSONAL", expires_at: "2026-12-31" },
       error: null,
-    } as any);
+    });
 
-    vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      admin: mockBuilder,
-      store: mockStore,
-      connection: { id: "conn-1" } as any,
-      accessToken: "llt-1",
-      expiresAt: "2026-12-31",
-    } as any);
+    vi.mocked(getConnectedInstagramAccess).mockResolvedValue(
+      createConnectedAccess(mockStore),
+    );
 
     const req = new NextRequest("http://localhost/api/instagram/status", {
       method: "POST",

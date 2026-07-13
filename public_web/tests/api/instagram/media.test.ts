@@ -2,7 +2,24 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/instagram/media/route";
 import { getConnectedInstagramAccess } from "@/lib/instagramServer";
-import { sanitizeInstagramMedia } from "@/lib/instagram";
+
+type ConnectedAccess = Awaited<
+  ReturnType<typeof getConnectedInstagramAccess>
+>;
+
+function createConnectedAccess(): ConnectedAccess {
+  return {
+    admin: {} as ConnectedAccess["admin"],
+    store: { slug: "test-store", name: "Test Store" },
+    connection: {
+      id: "conn-1",
+      store_slug: "test-store",
+      status: "connected",
+    } as ConnectedAccess["connection"],
+    accessToken: "mock-access-token",
+    expiresAt: null,
+  };
+}
 
 vi.mock("@/lib/instagramServer", () => ({
   getConnectedInstagramAccess: vi.fn(),
@@ -39,9 +56,9 @@ describe("POST /api/instagram/media", () => {
   });
 
   it("filters and returns only permitted media types (IMAGE)", async () => {
-    vi.mocked(getConnectedInstagramAccess).mockResolvedValue({
-      accessToken: "mock-access-token",
-    } as any);
+    vi.mocked(getConnectedInstagramAccess).mockResolvedValue(
+      createConnectedAccess(),
+    );
 
     const mockGraphResponse = {
       ok: true,
@@ -54,7 +71,7 @@ describe("POST /api/instagram/media", () => {
       }),
     } as Response;
 
-    const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue(mockGraphResponse);
+    vi.spyOn(global, "fetch").mockResolvedValue(mockGraphResponse);
 
     const req = new NextRequest("http://localhost/api/instagram/media", {
       method: "POST",

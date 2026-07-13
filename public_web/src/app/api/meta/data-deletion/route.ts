@@ -5,6 +5,12 @@ import { revalidateTag } from "next/cache";
 
 export const runtime = "nodejs";
 
+function readStringField(value: unknown, key: string): string | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const field = (value as Record<string, unknown>)[key];
+  return typeof field === "string" ? field : undefined;
+}
+
 function base64urlDecodeBuf(str: string): Buffer {
   let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
   while (base64.length % 4) {
@@ -118,9 +124,11 @@ export async function POST(req: NextRequest) {
 
       if (store && Array.isArray(store.products)) {
         // Remove products where source is 'instagram' OR matches the imported slugs
-        const nextProducts = store.products.filter(
-          (prod: any) => prod?.source !== "instagram" && !importedSlugs.includes(prod?.slug)
-        );
+        const nextProducts = store.products.filter((product: unknown) => {
+          const source = readStringField(product, "source");
+          const slug = readStringField(product, "slug");
+          return source !== "instagram" && (!slug || !importedSlugs.includes(slug));
+        });
 
         await admin
           .from("stores")
