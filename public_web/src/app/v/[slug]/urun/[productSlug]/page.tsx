@@ -141,7 +141,6 @@ export default async function ProductDetailPage(props: PageProps) {
   const productImages = getProductImages(product);
   const fallbackImage = store.shelf_image_url || store.logo_url || "";
   const images = productImages.length > 0 ? productImages : fallbackImage ? [fallbackImage] : [];
-  const image = images[0] || "";
   const productDescription =
     product.description ||
     store.description ||
