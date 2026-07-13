@@ -121,7 +121,7 @@ tamamlandıktan sonra `[x]` yapılır.
 - [x] Flutter Vercel projesinde `/sitemap.xml` → Next.js sitemap redirect.
 - [x] Flutter Vercel projesinde `/robots.txt` → Next.js robots redirect.
 - [x] `/v/*` için Flutter API rewrite'ını kaldır.
-- [ ] Redirect'in query string ve alt route'ları koruduğunu doğrula.
+- [x] Redirect'in query string ve alt route'ları koruduğunu doğrula.
 
 Redirect kullanılmasının nedeni: App hostu public içeriği kendi origin'i altında
 göstermemeli; tarayıcı ve arama motoru canonical public hostu açıkça görmelidir.
@@ -194,6 +194,7 @@ güncellenmeden uygulanmaz.
 | 14 Temmuz 2026 | Plan | Tek sahiplik kararı ve temizleme kapıları bu belgeye kaydedildi. |
 | 14 Temmuz 2026 | Yerel uygulama | App redirect'leri eklendi, eski SEO handler'ları kaldırıldı, web/native navigasyonu ayrıldı. |
 | 14 Temmuz 2026 | Yerel doğrulama | Dart analyze, hedefli Flutter testleri, Flutter web build ve Next.js build geçti. |
+| 14 Temmuz 2026 | Vercel önizleme | App `/v/*`, sitemap ve robots 307 redirect verdi; alt yol ve query string korundu. Public yanıtın Next.js olduğu ve Flutter bootstrap içermediği doğrulandı. |
 
 ## 10. Bilinen doğrulama borçları
 
