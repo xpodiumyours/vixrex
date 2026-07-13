@@ -68,5 +68,18 @@ void main() {
       expect(nextConfig, isNot(contains('vixrex-two.vercel.app')));
       expect(siteUrl, contains('https://vixrex-public.vercel.app'));
     });
+
+    test('project rules keep public web ownership explicit', () {
+      final rules = File('AGENTS.md').readAsStringSync();
+
+      expect(
+        rules,
+        contains('prompt ne kadar kısa veya belirsiz olursa olsun'),
+      );
+      expect(rules, contains('Next.js `public_web`'));
+      expect(rules, contains('Paralel yol oluşturma yasağı'));
+      expect(rules, contains('Native vitrin akışı Flutter içinde kalır'));
+      expect(rules, contains('test\\architecture_routing_contract_test.dart'));
+    });
   });
 }
