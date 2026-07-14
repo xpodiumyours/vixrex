@@ -275,28 +275,41 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         _searchController.text.trim().isEmpty && _selectedCategoryId.isEmpty;
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.88,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildSheetHandle(),
-            _buildHeader(),
-            const SizedBox(height: 14),
-            VixRexCatalogAssistantSection(
-              onOcrTap: widget.onOcrTap,
-              onSuggestionTap: _applyVixRexTitleSuggestions,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxHeight < 550;
+          final padding = isCompact
+              ? const EdgeInsets.fromLTRB(16, 6, 16, 8)
+              : const EdgeInsets.fromLTRB(20, 12, 20, 16);
+          final spacing14 = isCompact ? 6.0 : 14.0;
+          final spacing10 = isCompact ? 6.0 : 10.0;
+          final spacing12 = isCompact ? 6.0 : 12.0;
+          final spacing8 = isCompact ? 4.0 : 8.0;
+
+          return Padding(
+            padding: padding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildSheetHandle(),
+                _buildHeader(),
+                SizedBox(height: spacing14),
+                VixRexCatalogAssistantSection(
+                  onOcrTap: widget.onOcrTap,
+                  onSuggestionTap: _applyVixRexTitleSuggestions,
+                ),
+                SizedBox(height: spacing14),
+                _buildFilters(),
+                SizedBox(height: spacing10),
+                Expanded(child: _buildProductList(filtered, canReorder)),
+                SizedBox(height: spacing12),
+                _buildAddProductButton(),
+                SizedBox(height: spacing8),
+                _buildBulkUploadButton(),
+              ],
             ),
-            const SizedBox(height: 14),
-            _buildFilters(),
-            const SizedBox(height: 10),
-            Expanded(child: _buildProductList(filtered, canReorder)),
-            const SizedBox(height: 12),
-            _buildAddProductButton(),
-            const SizedBox(height: 8),
-            _buildBulkUploadButton(),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

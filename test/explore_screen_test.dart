@@ -1,10 +1,62 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/screens/explore_screen.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
+    final mockData = [
+      {
+        'name': 'Aymira Giyim',
+        'description': 'Yeni Sezon Ürünler',
+        'kategori': 'Giyim',
+        'whatsapp': '905551234567',
+        'address': 'Kadıköy',
+        'slug': 'aymira-giyim',
+        'is_published': true,
+      },
+      {
+        'name': 'Lezzet Durağı',
+        'description': 'Ev Yemekleri',
+        'kategori': 'Yiyecek & İçecek',
+        'whatsapp': '905557654321',
+        'address': 'Beşiktaş',
+        'slug': 'lezzet-duragi',
+        'is_published': true,
+      },
+    ];
+
+    final mockClient = MockClient((request) async {
+      return http.Response(
+        jsonEncode(mockData),
+        200,
+        request: request,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+
+    try {
+      await Supabase.instance.dispose();
+    } catch (_) {}
+
+    await Supabase.initialize(
+      url: 'https://dummyproject.supabase.co',
+      anonKey: 'dummyAnonKey',
+      httpClient: mockClient,
+    );
+  });
+
+  tearDown(() async {
+    try {
+      await Supabase.instance.dispose();
+    } catch (_) {}
+  });
   testWidgets('ExploreScreen renders successfully and has correct items', (
     WidgetTester tester,
   ) async {
@@ -91,6 +143,21 @@ void main() {
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
+
+    await Supabase.instance.dispose();
+    final emptyMockClient = MockClient((request) async {
+      return http.Response(
+        '[]',
+        200,
+        request: request,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    await Supabase.initialize(
+      url: 'https://dummyproject.supabase.co',
+      anonKey: 'dummyAnonKey',
+      httpClient: emptyMockClient,
+    );
 
     await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
     await tester.pump();

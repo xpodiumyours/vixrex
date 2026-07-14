@@ -500,14 +500,21 @@ class LandingHeroSection extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14),
-                      child: Text(
-                        'vixrex.app/v/',
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            formConstraints.maxWidth < 400
+                                ? '/v/'
+                                : 'vixrex-public.vercel.app/v/',
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ),

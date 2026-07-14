@@ -72,6 +72,7 @@ void main() {
     test('project rules keep public web ownership explicit', () {
       final rules = File('AGENTS.md').readAsStringSync();
 
+      expect(rules, contains('PROJECT_RULES.md'));
       expect(
         rules,
         contains('prompt ne kadar kısa veya belirsiz olursa olsun'),

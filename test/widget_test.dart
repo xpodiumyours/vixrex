@@ -10,11 +10,59 @@ import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:vixrex/config/app_router.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
-  setUp(() {
+  setUp(() async {
     StoreLocalStorageService.resetCache();
     SharedPreferences.setMockInitialValues({});
+    final mockClient = MockClient((request) async {
+      final urlStr = request.url.toString();
+      if (urlStr.contains('legal_documents')) {
+        String docType = 'privacy';
+        if (urlStr.contains('terms')) docType = 'terms';
+        if (urlStr.contains('consent')) docType = 'consent';
+        return http.Response(
+          jsonEncode({
+            'document_type': docType,
+            'version': '$docType-2026-07-05',
+            'title': docType == 'privacy'
+                ? 'Gizlilik'
+                : (docType == 'terms' ? 'Kullanım Koşulları' : 'Açık Rıza'),
+            'subtitle': '',
+            'content_hash': 'hash',
+            'sections': [],
+          }),
+          200,
+          request: request,
+          headers: {'content-type': 'application/json'},
+        );
+      }
+      return http.Response(
+        '[]',
+        200,
+        request: request,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+
+    try {
+      await Supabase.instance.dispose();
+    } catch (_) {}
+
+    await Supabase.initialize(
+      url: 'https://dummyproject.supabase.co',
+      anonKey: 'dummyAnonKey',
+      httpClient: mockClient,
+    );
+  });
+
+  tearDown(() async {
+    try {
+      await Supabase.instance.dispose();
+    } catch (_) {}
   });
 
   testWidgets('Vixrex ilk açılışta karşılama ekranını gösterir', (
@@ -55,7 +103,7 @@ void main() {
     await tester.pumpWidget(const VixRexApp());
     await tester.pump();
 
-    AppRouter.router.go('/gecersiz-route');
+    AppRouter.router.go('/app/gecersiz-route');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
@@ -88,7 +136,7 @@ void main() {
       ),
       LocalStorageKeys.lastPublishedSlug: 'kayitli-vitrin',
       LocalStorageKeys.lastPublishedLink:
-          'https://vixrex.app/v/kayitli-vitrin',
+          'https://vixrex-public.vercel.app/v/kayitli-vitrin',
       LocalStorageKeys.lastPublishedName: 'Kayitli Vitrin',
       LocalStorageKeys.lastPublishedEditToken: 'token123',
     });

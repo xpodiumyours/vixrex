@@ -16,7 +16,7 @@ void main() {
 
         final schemas = SeoService.buildStoreSchemas(
           store,
-          publicUrl: 'https://vixrex.app/v/nova-kuafor',
+          publicUrl: 'https://vixrex-public.vercel.app/v/nova-kuafor',
         );
 
         final graph = schemas['@graph'] as List;
@@ -24,7 +24,7 @@ void main() {
         final webPage = graph[1] as Map<String, dynamic>;
 
         expect(organization['@type'], 'Organization');
-        expect(organization['url'], 'https://vixrex.app/v/nova-kuafor');
+        expect(organization['url'], 'https://vixrex-public.vercel.app/v/nova-kuafor');
         expect(organization.containsKey('openingHoursSpecification'), isFalse);
         expect(webPage['@type'], 'WebPage');
         expect(webPage['about']['@id'], contains('#business'));
