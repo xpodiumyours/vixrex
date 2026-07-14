@@ -99,3 +99,35 @@ mimari karar netleşmeden uygulama yapma.
 Bir alt dizinde başka `AGENTS.md` varsa bu kök kurallara ek olarak uygulanır.
 Özellikle `public_web/AGENTS.md`, Next.js sürümüne ait yerel dokümantasyonu
 okumayı zorunlu kılar.
+
+## 7. Android üretim imzası sözleşmesi
+
+- Tek Android release hattı `.github/workflows/android-apk.yml` dosyasıdır;
+  paralel bir imzalama veya dağıtım yolu oluşturma.
+- Bütün üretim APK/AAB dosyalarını mevcut kalıcı upload keystore ile imzala.
+  Beklenen upload sertifikası SHA-256 değeri:
+  `295af3e289e13bc9fea273f224fa7c1fcb1879472790d48ed3eea8239c0ffc24`.
+- Keystore, şifre veya beklenen sertifika yoksa ya da uyuşmuyorsa işlemi
+  durdur; yeni anahtar üretme, anahtar döndürme veya debug imzasına düşme.
+- Her release'te package adını, artan `versionCode` değerini, upload sertifika
+  parmak izini ve artifact checksum'unu doğrula.
+- Play App Signing sonrasında upload sertifikası ile Google'ın app signing
+  sertifikasını iki ayrı kimlik olarak kaydet ve raporla.
+- Ayrıntılı kabul kapıları ve sonraki işler için
+  `MOBIL_APK_GUNCELLEME.md` belgesini uygula.
+
+## 8. Bulgu ve doğrulama sözleşmesi
+
+- Ön taramada bulunan kapsam dışı sorunu aynı değişikliğe ekleme; yerini,
+  kanıtını, etkisini ve durumunu raporla, Furkan onayından sonra ayrı küçük iş yap.
+- Bir bulguya `düzeltildi` denebilmesi için ilgili test/build/canlı kabul kanıtı
+  bulunmalıdır. Kanıt yoksa en fazla `açık` veya `doğrulandı` kullan.
+- Yeni regresyonu eski borçtan ayır; mimari, kalite, UI ve güvenlik kapsamlarını
+  tek PR'da sebepsiz birleştirme.
+- Geçici bulgular için yeni borç/teşhis Markdown dosyaları üretme. İlgili mevcut
+  alan belgesini veya Furkan'ın onayladığı GitHub işini kullan.
+- Doküman-only değişiklikte `git diff --check`, kırık referans taraması ve sabit
+  dosya biçimi kontrolü uygula. Kod değişikliğinde ilgili platform kapılarını da
+  çalıştır; alakasız uzun testleri yalnız alışkanlık olduğu için çalıştırma.
+- Tamamlanmış kayıtları aktif repo defterinde sonsuza kadar çoğaltma; kalıcı
+  kararları kurallara taşı, geçmiş kanıtı Git commit/PR kayıtlarında bırak.
