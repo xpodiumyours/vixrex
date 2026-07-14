@@ -1,6 +1,6 @@
 TARİH: 15 Temmuz 2026
-BUGÜN YAPILAN: Yerel analyze ve 15/15 test geçti; APK değişiklikleri feat/android-ci-apk dalına gönderildi; taslak PR #18 açıldı ve iki Vercel preview kontrolü yeşil.
-YARIM KALAN: PR #18 birleşme onayı; iki imzalı CI APK'nın sürüm ve imza kontrolü; telefonda üstüne-kurma, oturum ve kritik akış kabulü.
-SIRADAKİ ADIM: Furkan onayıyla PR #18'i main'e birleştir; ilk Android APK workflow'unu ve imzalı artifact'ı doğrula.
-DOKUNULAN DOSYALAR: .github/workflows/android-apk.yml, android/app/build.gradle.kts, android/key.properties.template, pubspec.yaml, pubspec.lock, MOBIL_APK_GUNCELLEME.md, SON_DURUM.md
-DİKKAT: Release debug fallback yoktur; keystore/şifre Git'e veya loga giremez; gerçek imzalı APK ve telefon kabulü olmadan Faz 1 tamamlandı sayılmaz.
+BUGÜN YAPILAN: PR #18 main'e birleşti; imzalı build 10001 ve 10002 yeşil CI ile üretildi, checksum/sürüm/aynı sertifika doğrulandı; 10002 telefonda 10001'in üzerine kuruldu ve kritik akış geçti.
+YARIM KALAN: APK Faz 1 işi yok; Play Internal AAB Faz 2 başlamadı. T-010 Node.js action major güncellemesi ayrı düşük öncelikli CI bakım işi.
+SIRADAKİ ADIM: Ayrı onayla T-010 CI bakımını kapat; ardından Play Console Internal Testing/AAB Faz 2 kararını ver.
+DOKUNULAN DOSYALAR: MOBIL_APK_GUNCELLEME.md, TARAMA.md, SON_DURUM.md
+DİKKAT: Kalıcı upload keystore ve şifreler kaybedilmemeli veya Git'e girmemeli; eski demo imza yolu emekli edildi, bundan sonra aynı üretim anahtarı kullanılmalı.

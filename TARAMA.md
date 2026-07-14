@@ -1,7 +1,7 @@
 # TARAMA.md — Vibe coding hata ayıklama
 
 > **Tek kayıt defteri.** Tespitler yalnız bu dosyaya yazılır. Her bulgu için yeni `.md` açılmaz.  
-> **Son tarama:** 14 Temmuz 2026 gece (Cursor: Gemini son işlem + canlı/git doğrulama)  
+> **Son tarama:** 15 Temmuz 2026 (Android imzalı APK CI + gerçek cihaz kabulü)
 > **Bağlı kurallar:** `PROJECT_RULES.md` · `AGENTS.md` · `SON_DURUM.md`
 
 ---
@@ -90,6 +90,8 @@ Her “ürün / kalite tarama” oturumunda işaretle. `[x]` = bu oturumda bakı
 | T-006 | D | düşük | `CookieBanner.tsx:51` | “yakında yayınlanacaktır” duruyor; çerez politikası metni. | kasıtlı |
 | T-007 | A | bilgi | `curl` app `/v/vixrex` → **307** public; public `_next` var, flutter bootstrap yok | Route sahipliği yeniden doğrulandı. | doğrulandı |
 | T-008 | E | bilgi | `npm run lint` exit **0** (Cursor, 14 Tem) | Lint yeşil. | doğrulandı |
+| T-009 | E | yüksek | PR #18; Actions run `29370463146` + `29371434810`; telefon kabulü 15 Tem | Kalıcı imzalı APK CI kuruldu; build 10001→10002 aynı sertifikayla uygulama silinmeden güncellendi ve kritik mobil akış geçti. Eski demo imza çakışması tek seferlik kaldırmayla emekli edildi. | düzeltildi |
+| T-010 | E | düşük | İki Android APK run annotation'ı | `checkout@v4`, `setup-java@v4`, `upload-artifact@v4` Node.js 20 hedefli; GitHub bunları Node.js 24'e zorlayarak başarıyla çalıştırdı. Güncel major sürümlere geçiş ayrı küçük CI bakım işi. | açık |
 
 ---
 
@@ -110,7 +112,7 @@ T-001/T-004 yanlış işaretlenmişti; geri açıldı.
 | generated_plugin* | Hâlâ dirty | **T-004 yapılmamış** |
 | Canlı curl | App→public 307; public Next; logo VitrinX | Deploy bekliyor |
 
-**Sıradaki odak:** Tarama açık maddeleri kapanmış (T-002 deploy OK, T-004 restore edilmişti). Yeni tarama gerekirse §C’ye satır ekle.
+**Sıradaki odak:** APK Faz 1 tamamlandı. T-010 yalnız ayrı küçük CI bakım işi; ürün veya telefon güncellemesini engellemiyor.
 
 ---
 
