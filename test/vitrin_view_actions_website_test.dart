@@ -11,18 +11,18 @@ void main() {
       );
       final url = VitrinViewActions.publicWebsiteActionUrl(
         storeData: store,
-        publicLink: 'https://vixrex.app/v/test',
+        publicLink: 'https://vixrex-public.vercel.app/v/test',
         publicMode: true,
       );
       expect(url, contains('ornek.com'));
-      expect(url, isNot(contains('vixrex.app')));
+      expect(url, isNot(contains('vixrex-public.vercel.app')));
     });
 
     test('website boşsa publicMode boş URL', () {
       final store = StoreData(name: 'Test', website: '');
       final url = VitrinViewActions.publicWebsiteActionUrl(
         storeData: store,
-        publicLink: 'https://vixrex.app/v/test',
+        publicLink: 'https://vixrex-public.vercel.app/v/test',
         publicMode: true,
       );
       expect(url, isEmpty);

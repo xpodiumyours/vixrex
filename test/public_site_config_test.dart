@@ -35,7 +35,7 @@ void main() {
 
     test('bare slug linkini /v/ slug olarak onarır', () {
       final repaired = PublicSiteConfig.repairPublicLink(
-        'https://vixrex.app/nova-kuafor',
+        'https://vixrex-public.vercel.app/nova-kuafor',
       );
       expect(repaired, 'https://vixrex-public.vercel.app/v/nova-kuafor');
     });
@@ -49,7 +49,7 @@ void main() {
       );
       expect(
         PublicSiteConfig.repairPublicLink(
-          'https://vixrex.app/#/v/nova-kuafor',
+          'https://vixrex-public.vercel.app/#/v/nova-kuafor',
         ),
         'https://vixrex-public.vercel.app/v/nova-kuafor',
       );

@@ -20,7 +20,7 @@ void main() {
   test('yayın kartı editToken olmadan gösterilebilir', () {
     const info = PublishedVitrinInfo(
       slug: 'deneme-7',
-      publicLink: 'https://vixrex.app/v/deneme-7',
+      publicLink: 'https://vixrex-public.vercel.app/v/deneme-7',
       name: 'deneme 7',
       editToken: '',
     );

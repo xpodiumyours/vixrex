@@ -4,10 +4,25 @@ Bu dosya, prompt ne kadar kısa veya belirsiz olursa olsun bu repoda çalışan 
 kod ajanları için bağlayıcıdır. Kullanıcının doğru teknik terimleri bilmesini
 bekleme; mevcut mimariyi incelemek ve çelişki üretmemek ajanın sorumluluğudur.
 
+## 0. Zorunlu okuma ve kural hiyerarşisi
+
+Her AI ajanı herhangi bir dosyaya dokunmadan önce sırasıyla şunları tamamen okur:
+
+1. [`PROJECT_RULES.md`](PROJECT_RULES.md) — kullanıcı anayasası, çalışma biçimi ve
+   dokunulmaz alanlar için en üst kuraldır.
+2. Varsa `SON_DURUM.md` — yalnız güncel oturum devridir.
+3. Bu `AGENTS.md` — güncel teknik mimari ve repo sözleşmesidir.
+4. İlgili alt dizindeki `AGENTS.md` ve görevle eşleşen `.agents/skills/*/SKILL.md`
+   dosyaları — yalnız ek kural koyabilir, üst kuralları gevşetemez.
+
+`PROJECT_RULES.md`, Furkan'ın açık onayı olmadan silinemez, yeniden adlandırılamaz,
+kısaltılamaz veya etkisizleştirilemez. Kullanıcı anayasası ile güncel teknik bilgi
+arasında çelişki görülürse ajan sessizce seçim yapmaz; değişiklikten önce Furkan'a
+çelişkiyi açıkça bildirir ve yön ister.
+
 ## 1. Değişmez mimari sahiplik
 
-Bağlayıcı karar ve geçmiş teşhis:
-[`MIMARI_SORUNLAR_VE_COZUM.md`](MIMARI_SORUNLAR_VE_COZUM.md).
+Aşağıdaki sahiplik tablosu bağlayıcı mimari karardır.
 
 | Yüzey | Tek sahibi | Kural |
 |---|---|---|
