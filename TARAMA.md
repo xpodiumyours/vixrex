@@ -83,7 +83,7 @@ Her “ürün / kalite tarama” oturumunda işaretle. `[x]` = bu oturumda bakı
 | ID | Sınıf | Önem | Yer (dosya / kanıt) | Bulgu | Durum |
 |----|-------|------|---------------------|-------|-------|
 | T-001 | C | yüksek | `PROJECT_RULES.md:124-130` | Yerel anayasa §10 artık **Vixrex** + Flutter/Next.js + `xpodiumyours/vixrex` + public host. Gemini SON_DURUM’da “onay bekle” demiş ama metin **zaten yazılmış**. | düzeltildi |
-| T-002 | G | yüksek | yerel `page.tsx:298` = `Vixrex`; canlı = `Vitrin`+`X` | Yerel OK. **Canlı public hâlâ VitrinX** (14 Tem curl). Deploy yok → tam bitti değil. | açık |
+| T-002 | G | yüksek | yerel + canlı `page.tsx` logo | Yerel ve **canlı** `vixrex-public…/v/vixrex` → `Vixrex` (PR #17 merge + deploy, 14 Tem). | düzeltildi |
 | T-003 | G | orta | `landing_hero_section.dart` | Public host metni + dar ekranda `/v/` (FittedBox). Kod OK. | doğrulandı |
 | T-004 | E | orta | `git restore` linux/macos/windows generated_plugin* | Cursor 14 Tem: beş generated dosya restore; `git status`’ta artık yok. | düzeltildi |
 | T-005 | B | düşük | `test/**/*.dart` | `vixrex.app` yok; ek test yeşilleri (explore/my_vitrin/product_widgets) da dokunulmuş. | düzeltildi |
@@ -110,7 +110,7 @@ T-001/T-004 yanlış işaretlenmişti; geri açıldı.
 | generated_plugin* | Hâlâ dirty | **T-004 yapılmamış** |
 | Canlı curl | App→public 307; public Next; logo VitrinX | Deploy bekliyor |
 
-**Sıradaki odak:** T-002 deploy (public). T-004 Cursor tarafından restore edildi (14 Tem gece).
+**Sıradaki odak:** Tarama açık maddeleri kapanmış (T-002 deploy OK, T-004 restore edilmişti). Yeni tarama gerekirse §C’ye satır ekle.
 
 ---
 
