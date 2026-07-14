@@ -1,7 +1,7 @@
 # Mobil APK güncelleme — Cursor uygulama planı
 
 > **Sahip isteği:** Telefon APK'sının unutulan elle build sürecini kaldır.
-> **Durum:** Faz 1 yerel kapıları geçti — PR, iki imzalı CI build ve telefon kabulü bekliyor.
+> **Durum:** Faz 1 yerel kapıları geçti; taslak PR #18 açık — merge, iki imzalı CI build ve telefon kabulü bekliyor.
 > **Tarih:** 15 Temmuz 2026
 > **Dal:** `feat/android-ci-apk`
 
