@@ -1,9 +1,9 @@
 # Mobil APK güncelleme — Cursor uygulama planı
 
 > **Sahip isteği:** Telefon APK'sının unutulan elle build sürecini kaldır.
-> **Durum:** Faz 1 yerel kapıları geçti; taslak PR #18 açık — merge, iki imzalı CI build ve telefon kabulü bekliyor.
+> **Durum:** Faz 1 tamamlandı — iki imzalı CI build ve gerçek telefon üstüne-kurma kabulü geçti.
 > **Tarih:** 15 Temmuz 2026
-> **Dal:** `feat/android-ci-apk`
+> **Dal:** `main` — PR #18, merge `cc3ec16`
 
 ## 1. Hedef ve gerçek başarı tanımı
 
@@ -160,21 +160,33 @@ Yerel doğrulama (15 Temmuz 2026):
 - [x] Flutter 3.44.4 ile debug APK derlendi.
 - [x] Kotlin 2.2 uyumu için `sentry_flutter` 9.3.0'a sabitlendi; debug derleme tekrar geçti.
 - [x] Git durumunda yalnız planlanan yedi dosya var; keystore / `key.properties` takip edilmiyor.
-- [ ] İmzalı release APK yalnız GitHub Actions üzerinde doğrulanacak.
+- [x] İmzalı release APK GitHub Actions üzerinde doğrulandı.
 
-- [ ] Workflow manuel çalıştırıldı ve yeşil.
-- [ ] Analyze ve üç hedefli test dosyası geçti.
-- [ ] Birinci APK indirildi; paket adı ve versionCode doğrulandı.
-- [ ] İmza sertifikası SHA-256 parmak izi kaydedildi (secret değildir).
-- [ ] Birinci APK telefona kuruldu ve giriş yapıldı.
-- [ ] İkinci run daha büyük versionCode üretti.
-- [ ] İkinci APK'nın sertifika parmak izi birinciyle aynı.
-- [ ] İkinci APK, uygulama kaldırılmadan üzerine kuruldu.
-- [ ] Oturum ve yerel veri korundu.
-- [ ] Keşfet → kendi vitrin → Düzenle → Vitrinim akışı geçti.
-- [ ] Workflow log/artifact içinde keystore veya şifre bulunmadı.
-- [ ] Generated plugin veya kapsam dışı dosya commit'e girmedi.
-- [ ] Furkan ekran görüntüsüyle “geç” dedi.
+- [x] İlk push run'ı ve ikinci manuel workflow run'ı yeşil.
+- [x] Analyze ve üç hedefli test dosyası iki CI run'ında geçti.
+- [x] Birinci APK indirildi; `com.xpodiumyours.vixrex`, `1.0.0 (10001)` doğrulandı.
+- [x] İmza sertifikası SHA-256 parmak izi kaydedildi (secret değildir).
+- [x] Birinci APK telefona kuruldu ve giriş yapıldı.
+- [x] İkinci run `versionCode 10002` üretti.
+- [x] İkinci APK'nın sertifika parmak izi birinciyle aynı.
+- [x] İkinci APK, build 10001 kaldırılmadan üzerine kuruldu.
+- [x] Oturum ve yerel veri korundu.
+- [x] Keşfet → kendi vitrin → Düzenle → Vitrinim akışı geçti.
+- [x] Workflow log/artifact içinde keystore veya şifre bulunmadı.
+- [x] Generated plugin veya kapsam dışı dosya commit'e girmedi.
+- [x] Furkan “akış düzgün çalıştı” diyerek gerçek cihaz kabulünü verdi.
+
+### 5.1 Kabul kanıtı
+
+| Run | Artifact | versionCode | APK SHA-256 | Sertifika SHA-256 |
+|---|---|---:|---|---|
+| [29370463146](https://github.com/xpodiumyours/vixrex/actions/runs/29370463146) | `vixrex-android-1.0.0-10001-cc3ec16` | 10001 | `1a08d71cde43e172752722b162ea0e527a462aa7c40198e46ab1b847d6e9df48` | `295af3e289e13bc9fea273f224fa7c1fcb1879472790d48ed3eea8239c0ffc24` |
+| [29371434810](https://github.com/xpodiumyours/vixrex/actions/runs/29371434810) | `vixrex-android-1.0.0-10002-cc3ec16` | 10002 | `3e9649a55b9408309584572e23a6743d95e144d9c7adfa1928086d1a8f9e6c64` | `295af3e289e13bc9fea273f224fa7c1fcb1879472790d48ed3eea8239c0ffc24` |
+
+Telefondaki eski demo APK farklı imzalı olduğu için build 10001 ilk denemede üzerine
+kurulamadı. Kullanıcının özel yerel ayarı olmadığı doğrulandı; eski demo bir kez
+kaldırılıp kalıcı üretim anahtarlı build 10001 kuruldu. Asıl güncelleme kabulü olan
+`10001 → 10002` geçişi uygulama silinmeden başarıyla tamamlandı.
 
 Bu maddelerin tamamı kanıtlanmadan Faz 1 tamamlandı yapılmaz.
 
@@ -230,7 +242,7 @@ Faz 1 tamamlanmadan başlanmaz.
 | Faz | Durum |
 |---|---|
 | Plan doğrulaması | **tamamlandı** |
-| Faz 1 — workflow + Gradle fail-fast | **yerel kapılar geçti — PR/CI bekliyor** |
-| Faz 1 — iki build/telefon kabulü | bekliyor (keystore + Secrets şart) |
+| Faz 1 — workflow + Gradle fail-fast | **tamamlandı** |
+| Faz 1 — iki build/telefon kabulü | **tamamlandı** |
 | Faz 2 — Play Internal AAB | bekliyor |
 | Faz 3 — minimum sürüm uyarısı | ertelendi |
