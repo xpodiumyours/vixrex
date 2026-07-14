@@ -1,8 +1,12 @@
 # TARAMA.md — Vibe coding hata ayıklama
 
-> **Tek kayıt defteri.** Tespitler yalnız bu dosyaya yazılır. Her bulgu için yeni `.md` açılmaz.  
+> **Tarihsel kayıt defteri.** Yeni bulgular artık bu dosyaya eklenmez ve her
+> bulgu için yeni `.md` açılmaz.
 > **Son tarama:** 15 Temmuz 2026 (Android imzalı APK CI + gerçek cihaz kabulü)
 > **Bağlı kurallar:** `PROJECT_RULES.md` · `AGENTS.md` · `SON_DURUM.md`
+> **Geçiş durumu:** Yeni bulgu kaydı donduruldu. A–E bölümleri tarihçedir;
+> bağlayıcı yeni düzen `PROJECT_RULES.md` §3.1 ve `AGENTS.md` §8'dir. Bu dosya
+> yalnız §F kaldırma kapısı tamamlanana kadar korunur.
 
 ---
 
@@ -132,4 +136,57 @@ curl.exe -sI https://vixrex-public.vercel.app/v/SLUG
 
 ---
 
-*Bulgular çoğaldıkça yalnız §C büyür. Yeni belge açma. “düzeltildi” = kanıt zorunlu.*
+## F) Güvenli emeklilik planı
+
+Bu dosya bu turda **silinmez**. Amaç, kuralları ve yaşayan işi kaybetmeden tek
+seferlik ayrı bir dokümantasyon commit'iyle emekli etmektir.
+
+### F1 — Taşınan kalıcı kurallar
+
+- [x] Önce tarama ve tek sahiplik kontrolü `PROJECT_RULES.md` §3.1 ile
+  `AGENTS.md` §8'e taşındı.
+- [x] Kanıtsız `düzeltildi` yasağı ve standart durumlar taşındı.
+- [x] Yeni regresyon/eski borç ayrımı ve kapsam karıştırma yasağı taşındı.
+- [x] Generated/format gürültüsünü commit dışında tutma kuralı taşındı.
+- [x] Yeni `*_BORCU.md`, `*_TESHIS.md`, `NOT_*.md` defteri açmama kuralı taşındı.
+- [x] Doküman-only işler için orantılı doğrulama kuralı taşındı.
+
+### F2 — Yaşayan kayıtların kaybolmama kontrolü
+
+- [x] Açık T-010'un ayrıntılı uygulama ve kabul planı
+  `MOBIL_APK_GUNCELLEME.md` §11.A içinde bulunuyor.
+- [x] T-006 kasıtlı çerez metnidir; aktif hata veya onaylı düzeltme değildir.
+- [x] T-001–T-005 ve T-007–T-009 tamamlanmış/doğrulanmış geçmiş kayıtlardır;
+  kanıtları Git geçmişinde kalacaktır.
+
+### F3 — Ayrı kaldırma işi (Furkan onayından sonra)
+
+1. Temiz çalışma ağacında yalnız dokümantasyon kapsamlı ayrı dal/commit aç.
+2. `MOBIL_APK_GUNCELLEME.md` içindeki `TARAMA.md` okuma, durum ve T-010 kanıt
+   referanslarını ilgili alan belgesi/PR kanıtına çevir.
+3. `SON_DURUM.md` dosyasını altı satır formatında yeni düzene göre güncelle.
+4. Bütün repoda `rg -n --hidden --glob '!.git/**' "TARAMA\\.md|TARAMA" .`
+   çalıştır; silinecek dosyanın kendi içeriği dışında referans bırakma.
+5. Ancak açık iş ve referans kaybı olmadığı doğrulandıktan sonra `TARAMA.md`
+   dosyasını sil.
+6. Silme sonrasında aynı `rg` komutunun sıfır sonuç verdiğini, `git diff --check`
+   çıktısının temiz olduğunu ve `SON_DURUM.md` dosyasının tam altı satır olduğunu
+   doğrula.
+7. Uygulama/workflow koduna dokunma; diff yalnız ilgili belgeler ve
+   `TARAMA.md` silinmesinden oluşsun.
+8. Ayrı commit oluştur. Sorun görülürse bu tek commit `git revert` ile geri
+   alınabilsin.
+
+### F4 — Kaldırma tamamlanma kapısı
+
+- [ ] Furkan kaldırma işlemini ayrıca onayladı.
+- [ ] T-010 planı ve kalıcı kurallar erişilebilir durumda.
+- [ ] Repo içinde kırık `TARAMA.md` referansı yok.
+- [ ] Yeni bir borç/teşhis defteri oluşturulmadı.
+- [ ] `SON_DURUM.md` yeni tek-yol düzenini gösteriyor.
+- [ ] Doküman diff ve biçim kontrolleri yeşil.
+
+---
+
+*Bu kayıt dondurulmuştur. Yeni borç defteri açılmaz; yaşayan iş ilgili mevcut
+alan belgesine veya Furkan'ın onayladığı GitHub işine kaydedilir.*

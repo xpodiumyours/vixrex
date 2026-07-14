@@ -115,3 +115,19 @@ okumayı zorunlu kılar.
   sertifikasını iki ayrı kimlik olarak kaydet ve raporla.
 - Ayrıntılı kabul kapıları ve sonraki işler için
   `MOBIL_APK_GUNCELLEME.md` belgesini uygula.
+
+## 8. Bulgu ve doğrulama sözleşmesi
+
+- Ön taramada bulunan kapsam dışı sorunu aynı değişikliğe ekleme; yerini,
+  kanıtını, etkisini ve durumunu raporla, Furkan onayından sonra ayrı küçük iş yap.
+- Bir bulguya `düzeltildi` denebilmesi için ilgili test/build/canlı kabul kanıtı
+  bulunmalıdır. Kanıt yoksa en fazla `açık` veya `doğrulandı` kullan.
+- Yeni regresyonu eski borçtan ayır; mimari, kalite, UI ve güvenlik kapsamlarını
+  tek PR'da sebepsiz birleştirme.
+- Geçici bulgular için yeni borç/teşhis Markdown dosyaları üretme. İlgili mevcut
+  alan belgesini veya Furkan'ın onayladığı GitHub işini kullan.
+- Doküman-only değişiklikte `git diff --check`, kırık referans taraması ve sabit
+  dosya biçimi kontrolü uygula. Kod değişikliğinde ilgili platform kapılarını da
+  çalıştır; alakasız uzun testleri yalnız alışkanlık olduğu için çalıştırma.
+- Tamamlanmış kayıtları aktif repo defterinde sonsuza kadar çoğaltma; kalıcı
+  kararları kurallara taşı, geçmiş kanıtı Git commit/PR kayıtlarında bırak.
