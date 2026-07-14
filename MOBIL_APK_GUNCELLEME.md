@@ -246,3 +246,119 @@ Faz 1 tamamlanmadan başlanmaz.
 | Faz 1 — iki build/telefon kabulü | **tamamlandı** |
 | Faz 2 — Play Internal AAB | bekliyor |
 | Faz 3 — minimum sürüm uyarısı | ertelendi |
+
+## 11. Onay bekleyen iki gelecek iş
+
+Bu iki iş aynı PR'a konmaz ve aşağıdaki sırayla yürütülür. Birinci iş yeşile
+dönmeden ikinci iş için kod veya Play Console değişikliği yapılmaz.
+
+### 11.A T-010 — GitHub Actions Node.js 24 major bakımı
+
+**Amaç:** Çalışan APK hattının davranışını değiştirmeden Node.js 20 geçiş
+uyarılarını kaldırmak.
+
+15 Temmuz 2026 tarihli resmî action belgelerine göre hedefler:
+
+| Mevcut | Hedef |
+|---|---|
+| `actions/checkout@v4` | `actions/checkout@v7` |
+| `actions/setup-java@v4` | `actions/setup-java@v5` |
+| `actions/upload-artifact@v4` | `actions/upload-artifact@v6` |
+
+Uygulama sırası:
+
+1. Ayrı bir `codex/` bakım dalı aç.
+2. Yalnız `.github/workflows/android-apk.yml` içindeki bu üç `uses` major
+   değerini değiştir. Trigger, permission, secret, Flutter/Java sürümü,
+   versionCode hesabı, imzalama ve artifact içeriğine dokunma.
+3. Dalda `workflow_dispatch` çalıştır.
+4. Analyze, test, release APK, checksum ve imza doğrulama adımlarının tamamının
+   yeşil olduğunu kontrol et.
+5. Artifact içindeki package adını, artan `versionCode` değerini ve upload
+   sertifikası SHA-256 değerini doğrula. Beklenen sertifika:
+   `295af3e289e13bc9fea273f224fa7c1fcb1879472790d48ed3eea8239c0ffc24`.
+6. Log ve annotation'larda Node.js 20 uyarısının kalmadığını ve secret
+   sızıntısı olmadığını doğrula.
+7. Küçük bir PR aç, birleştir ve `main` run'ının da yeşil olduğunu doğrula.
+8. Kanıt bağlantılarını `TARAMA.md` içindeki T-010 satırına ekleyip durumunu
+   `düzeltildi` yap; `SON_DURUM.md` dosyasını altı satır kuralıyla güncelle.
+
+Tamamlanma kapısı:
+
+- Yalnız üç action major'u değişmiş olmalı.
+- Dal ve `main` run'ı yeşil olmalı.
+- APK'nın package, versionCode, checksum ve kalıcı upload imzası doğrulanmalı.
+- Uygulama kodu değişmediği için telefon kabul testi tekrarlanmaz; imza/package
+  doğrulaması başarısızsa iş tamamlanmış sayılmaz.
+
+### 11.B Faz 2 — Play Internal Testing ve AAB
+
+**Ön koşullar:** T-010 kapanmış olmalı. Play geliştirici hesabı ücreti, hesap
+türü, kimlik ve cihaz doğrulaması Furkan'ın katılımı ve açık onayı olmadan
+başlatılmaz. Ajan ödeme yapmaz veya hesap açılışını kendi başına tamamlamaz.
+
+Değişmezler:
+
+- Paket kimliği `com.xpodiumyours.vixrex` olarak kalır.
+- AAB, APK ile aynı kalıcı upload keystore kullanılarak imzalanır.
+- AAB `versionCode` değeri işlem günündeki son Android CI build numarasından
+  büyük olur; sabit `10002` eşiğine güvenilmez.
+- Google Play'in güncel target API ve hesap koşulları işlem günü resmî
+  belgelerden yeniden kontrol edilir.
+- Ayrı bir imzalama hattı açılmaz. Mevcut
+  `.github/workflows/android-apk.yml`, elle tetiklenen run'da imzalı AAB'yi de
+  üretecek şekilde genişletilir; APK güvenlik kapıları korunur.
+
+Uygulama sırası:
+
+1. Furkan ile Play Console geliştirici hesabı türünü seç; ücret, kimlik ve
+   gerekiyorsa gerçek Android cihaz doğrulamasını kullanıcı tamamlasın.
+2. Play Console'da **Vixrex** uygulamasını oluştur ve paket kimliğini ilk
+   yüklemeden önce tekrar doğrula.
+3. Play App Signing'i etkinleştir. Kalıcı upload sertifikası ile Google'ın app
+   signing sertifikasının SHA-256 parmak izlerini iki ayrı kayıt olarak sakla.
+4. Mevcut workflow'a yalnız `workflow_dispatch` sırasında çalışan imzalı
+   `flutter build appbundle --release` adımı ve AAB artifact'ı ekle. Otomatik
+   Play yüklemesi ilk dilimde kurulmaz.
+5. Analyze ve testleri çalıştır; AAB imzasını, package adını, versionCode'u,
+   checksum'u ve upload sertifikasını CI içinde doğrula.
+6. AAB'yi Furkan'ın katılımıyla elle Internal Testing kanalına yükle. Furkan ve
+   en az bir ikinci Google hesabını testçi listesine ekle.
+7. Play test bağlantısından temiz kurulum yap; giriş ve kritik akışı doğrula.
+8. Daha yüksek versionCode ile ikinci Internal AAB üretip Play'e yükle. İlk
+   kurulumu silmeden Play üzerinden güncelle ve oturum/yerel veri korunmasını
+   doğrula.
+9. İki release bağlantısını, upload ve app signing sertifika parmak izlerini,
+   versionCode'ları ve cihaz kabul sonucunu bu belgeye kaydet.
+10. Yalnız bu kanıtlar tamamlanınca Faz 2 durumunu `tamamlandı` yap.
+
+Tamamlanma kapısı:
+
+- İki Internal release aynı upload anahtarı ve artan versionCode ile kabul
+  edilmiş olmalı.
+- İkinci sürüm, birincisi kaldırılmadan Play üzerinden güncellenmiş olmalı.
+- Play App Signing sertifikası ile upload sertifikası ayrı ayrı kaydedilmiş
+  olmalı.
+- Uygulama yalnız Internal Testing'de kaldığı sürece Data safety muafiyeti
+  geçerlidir. Closed, open veya production öncesinde Data safety, gizlilik ve
+  mağaza metinleri ayrı iş olarak tamamlanır.
+- Yeni kişisel geliştirici hesabı production'a geçecekse Google'ın o tarihteki
+  closed test şartı ayrıca uygulanır; bu şart Faz 2 Internal kabulünün parçası
+  değildir.
+
+## 12. Resmî dayanaklar
+
+15 Temmuz 2026'da kontrol edilen birincil kaynaklar:
+
+- GitHub Actions: [checkout](https://github.com/actions/checkout),
+  [setup-java](https://github.com/actions/setup-java),
+  [upload-artifact releases](https://github.com/actions/upload-artifact/releases)
+- Flutter: [Android release ve app bundle](https://docs.flutter.dev/deployment/android)
+- Google Play: [uygulama oluşturma ve release](https://support.google.com/googleplay/android-developer/answer/9859152?hl=tr),
+  [Internal Testing](https://support.google.com/googleplay/android-developer/answer/9845334?hl=tr),
+  [Play App Signing](https://support.google.com/googleplay/android-developer/answer/9842756?hl=tr),
+  [uygulama güncelleme koşulları](https://support.google.com/googleplay/android-developer/answer/9859350?hl=tr),
+  [Data safety](https://support.google.com/googleplay/android-developer/answer/10787469?hl=tr)
+
+Sürüm ve Play politika koşulları değişebileceği için uygulama gününde bu
+kaynaklar tekrar kontrol edilir.

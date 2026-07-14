@@ -91,7 +91,7 @@ Her “ürün / kalite tarama” oturumunda işaretle. `[x]` = bu oturumda bakı
 | T-007 | A | bilgi | `curl` app `/v/vixrex` → **307** public; public `_next` var, flutter bootstrap yok | Route sahipliği yeniden doğrulandı. | doğrulandı |
 | T-008 | E | bilgi | `npm run lint` exit **0** (Cursor, 14 Tem) | Lint yeşil. | doğrulandı |
 | T-009 | E | yüksek | PR #18; Actions run `29370463146` + `29371434810`; telefon kabulü 15 Tem | Kalıcı imzalı APK CI kuruldu; build 10001→10002 aynı sertifikayla uygulama silinmeden güncellendi ve kritik mobil akış geçti. Eski demo imza çakışması tek seferlik kaldırmayla emekli edildi. | düzeltildi |
-| T-010 | E | düşük | İki Android APK run annotation'ı | `checkout@v4`, `setup-java@v4`, `upload-artifact@v4` Node.js 20 hedefli; GitHub bunları Node.js 24'e zorlayarak başarıyla çalıştırdı. Güncel major sürümlere geçiş ayrı küçük CI bakım işi. | açık |
+| T-010 | E | düşük | İki Android APK run annotation'ı; `MOBIL_APK_GUNCELLEME.md` §11.A | `checkout@v4`, `setup-java@v4`, `upload-artifact@v4` Node.js 20 hedefli; GitHub bunları Node.js 24'e zorlayarak başarıyla çalıştırdı. Resmî hedefler `checkout@v7`, `setup-java@v5`, `upload-artifact@v6`; yalnız üç major değişikliği ve imza/package/artifact doğrulamasıyla kapatılacak. | açık |
 
 ---
 
@@ -112,7 +112,7 @@ T-001/T-004 yanlış işaretlenmişti; geri açıldı.
 | generated_plugin* | Hâlâ dirty | **T-004 yapılmamış** |
 | Canlı curl | App→public 307; public Next; logo VitrinX | Deploy bekliyor |
 
-**Sıradaki odak:** APK Faz 1 tamamlandı. T-010 yalnız ayrı küçük CI bakım işi; ürün veya telefon güncellemesini engellemiyor.
+**Sıradaki odak:** Önce ayrı küçük PR ile T-010; yeşil `main` run'ından sonra, ayrıca onaylanırsa `MOBIL_APK_GUNCELLEME.md` §11.B Play Internal/AAB Faz 2.
 
 ---
 

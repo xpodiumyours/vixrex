@@ -99,3 +99,19 @@ mimari karar netleşmeden uygulama yapma.
 Bir alt dizinde başka `AGENTS.md` varsa bu kök kurallara ek olarak uygulanır.
 Özellikle `public_web/AGENTS.md`, Next.js sürümüne ait yerel dokümantasyonu
 okumayı zorunlu kılar.
+
+## 7. Android üretim imzası sözleşmesi
+
+- Tek Android release hattı `.github/workflows/android-apk.yml` dosyasıdır;
+  paralel bir imzalama veya dağıtım yolu oluşturma.
+- Bütün üretim APK/AAB dosyalarını mevcut kalıcı upload keystore ile imzala.
+  Beklenen upload sertifikası SHA-256 değeri:
+  `295af3e289e13bc9fea273f224fa7c1fcb1879472790d48ed3eea8239c0ffc24`.
+- Keystore, şifre veya beklenen sertifika yoksa ya da uyuşmuyorsa işlemi
+  durdur; yeni anahtar üretme, anahtar döndürme veya debug imzasına düşme.
+- Her release'te package adını, artan `versionCode` değerini, upload sertifika
+  parmak izini ve artifact checksum'unu doğrula.
+- Play App Signing sonrasında upload sertifikası ile Google'ın app signing
+  sertifikasını iki ayrı kimlik olarak kaydet ve raporla.
+- Ayrıntılı kabul kapıları ve sonraki işler için
+  `MOBIL_APK_GUNCELLEME.md` belgesini uygula.
