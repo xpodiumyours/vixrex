@@ -28,7 +28,7 @@ dependencies:
   google_mlkit_text_recognition: 0.15.1
   excel: ^4.0.0
   onesignal_flutter: ^5.2.0
-  sentry_flutter: ^8.14.0
+  sentry_flutter: 9.3.0
 
 dev_dependencies:
   flutter_test:

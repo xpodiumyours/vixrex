@@ -1,8 +1,8 @@
-# Android Release Signing Key
-# Bu dosyayı key.properties olarak kopyalayıp doldurun.
-# key.properties dosyası GIT'E EKLENMEZ.
+# Android release signing template.
+# Bu dosyayı android/key.properties olarak kopyalayıp yerelde doldurun.
+# key.properties ve .jks dosyası Git'e eklenmez.
 
-storeFile=../upload-keystore.jks
+storeFile=upload-keystore.jks
 storePassword=YOUR_STORE_PASSWORD
 keyAlias=vixrex
 keyPassword=YOUR_KEY_PASSWORD

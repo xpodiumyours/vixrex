@@ -1,7 +1,16 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val keyPropertiesFile = rootProject.file("key.properties")
+val keyProperties = Properties()
+val hasReleaseKeystore = keyPropertiesFile.exists()
+if (hasReleaseKeystore) {
+    keyProperties.load(keyPropertiesFile.inputStream())
 }
 
 android {
@@ -19,15 +28,20 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            val properties = java.util.Properties()
-            val keyFile = rootProject.file("key.properties")
-            if (keyFile.exists()) {
-                properties.load(keyFile.inputStream())
-                storeFile = file(properties["storeFile"] as String)
-                storePassword = properties["storePassword"] as String
-                keyAlias = properties["keyAlias"] as String
-                keyPassword = properties["keyPassword"] as String
+        if (hasReleaseKeystore) {
+            create("release") {
+                val storePath = keyProperties["storeFile"] as String?
+                val storePasswordValue = keyProperties["storePassword"] as String?
+                val keyAliasValue = keyProperties["keyAlias"] as String?
+                val keyPasswordValue = keyProperties["keyPassword"] as String?
+                check(!storePath.isNullOrBlank()) { "android/key.properties missing storeFile" }
+                check(!storePasswordValue.isNullOrBlank()) { "android/key.properties missing storePassword" }
+                check(!keyAliasValue.isNullOrBlank()) { "android/key.properties missing keyAlias" }
+                check(!keyPasswordValue.isNullOrBlank()) { "android/key.properties missing keyPassword" }
+                storeFile = file(storePath)
+                storePassword = storePasswordValue
+                keyAlias = keyAliasValue
+                keyPassword = keyPasswordValue
             }
         }
     }
@@ -42,11 +56,9 @@ android {
 
     buildTypes {
         release {
-            val keyFile = rootProject.file("key.properties")
-            signingConfig = if (keyFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            // Never fall back to the debug key. Release requires key.properties.
+            if (hasReleaseKeystore) {
+                signingConfig = signingConfigs.getByName("release")
             }
             isMinifyEnabled = true
             isShrinkResources = true
@@ -60,4 +72,25 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// Fail release/package tasks when no upload keystore is configured.
+// Debug / flutter run stay usable without android/key.properties.
+gradle.taskGraph.whenReady {
+    val needsReleaseKey = allTasks.any { task ->
+        val n = task.name
+        n.contains("Release", ignoreCase = true) &&
+            (n.startsWith("assemble") ||
+                n.startsWith("bundle") ||
+                n.startsWith("package") ||
+                n.contains("bundleRelease") ||
+                n == "assembleRelease")
+    }
+    if (needsReleaseKey && !hasReleaseKeystore) {
+        throw GradleException(
+            "Missing android/key.properties. Release builds require a real upload keystore " +
+                "(see MOBIL_APK_GUNCELLEME.md and android/key.properties.template). " +
+                "Debug builds are unchanged."
+        )
+    }
 }
