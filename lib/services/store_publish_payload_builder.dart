@@ -1,3 +1,4 @@
+import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/store_publish_slug_generator.dart';
 
@@ -9,6 +10,13 @@ class StorePublishPayloadBuilder {
   });
 
   String generateSlug(String name) => slugGenerator.generateSlug(name);
+
+  /// Yayın öncesi gösterilen öngörülen vitrin linki (canlı rezervasyon değildir).
+  String previewVitrinLink(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return '';
+    return PublicSiteConfig.buildVitrinLink(generateSlug(trimmed));
+  }
 
   Map<String, dynamic> toStoreInsertMap(
     StoreData data,

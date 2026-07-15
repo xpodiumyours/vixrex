@@ -11,13 +11,16 @@ import 'package:vixrex/config/instagram_sync_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/models/editor_gallery_item.dart';
 import 'package:vixrex/screens/ocr_scanner_screen.dart';
+import 'package:vixrex/screens/preview_screen.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/category_image_service.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
+import 'package:vixrex/services/store_publish_payload_builder.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
-import 'package:vixrex/models/editor_gallery_item.dart';
 import 'package:vixrex/utils/gallery_image_file_validator.dart';
 import 'package:vixrex/widgets/auto_fill/category_gallery_sheet.dart';
 import 'package:vixrex/widgets/editor/common_form_fields.dart';
@@ -60,7 +63,6 @@ class VitrinFormSection extends StatelessWidget {
   TextEditingController get _address => textControllers['address']!;
   TextEditingController get _desc => textControllers['description']!;
   TextEditingController get _insta => textControllers['instagram']!;
-  TextEditingController get _web => textControllers['website']!;
   TextEditingController get _google => textControllers['googleBusiness']!;
 
   /// EditorGalleryItem → GalleryItem dönüşümü (GalleryEditorSection uyumluluğu)
@@ -169,14 +171,8 @@ class VitrinFormSection extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 1. Website (En Üstte)
-                      PublicLinkCard(
-                        controller: _web,
-                        publicLink: controller.publishedInfo?.publicLink,
-                        onOpenLink: () => _openLink(context),
-                        onCopyLink: () => _copyLink(context),
-                        onShareLink: () => _shareLink(context),
-                      ),
+                      // Vitrin paylaşım linki (isimden öngörülen / yayın sonrası canlı)
+                      _buildPublicLinkCard(context, hasPublished),
                       const SizedBox(height: 14),
 
                       // Instagram Sync Section (if active)
@@ -302,14 +298,8 @@ class VitrinFormSection extends StatelessWidget {
                 _buildInstagramField(),
                 const SizedBox(height: 14),
 
-                // Website (Website Linki)
-                PublicLinkCard(
-                  controller: _web,
-                  publicLink: controller.publishedInfo?.publicLink,
-                  onOpenLink: () => _openLink(context),
-                  onCopyLink: () => _copyLink(context),
-                  onShareLink: () => _shareLink(context),
-                ),
+                // Vitrin paylaşım linki (isimden öngörülen / yayın sonrası canlı)
+                _buildPublicLinkCard(context, hasPublished),
                 const SizedBox(height: 14),
 
                 // Instagram Sync Section (if active)
@@ -560,6 +550,56 @@ class VitrinFormSection extends StatelessWidget {
     );
   }
 
+  Widget _buildPublicLinkCard(BuildContext context, bool hasPublished) {
+    const builder = StorePublishPayloadBuilder();
+    final publishedLink = controller.publishedInfo?.publicLink.trim() ?? '';
+    final previewLink = builder.previewVitrinLink(controller.data.name);
+    final displayLink = hasPublished && publishedLink.isNotEmpty
+        ? publishedLink
+        : (previewLink.isEmpty ? null : previewLink);
+
+    return PublicLinkCard(
+      displayLink: displayLink,
+      isLive: hasPublished && publishedLink.isNotEmpty,
+      onCopyLink: () => _copyDisplayLink(context, displayLink, isLive: hasPublished),
+      onPreview: () => _openInAppPreview(context),
+      onShareLink: hasPublished ? () => _shareLink(context) : null,
+      onOpenLiveLink: hasPublished ? () => _openLink(context) : null,
+      onScrollToPublish: hasPublished
+          ? null
+          : () => state.scrollToVixRexAction(VixRexAction.scrollToLegal),
+    );
+  }
+
+  Future<void> _openInAppPreview(BuildContext ctx) async {
+    await Navigator.of(ctx).push(
+      MaterialPageRoute(
+        builder: (_) => PreviewScreen(storeData: controller.data),
+      ),
+    );
+  }
+
+  Future<void> _copyDisplayLink(
+    BuildContext ctx,
+    String? link, {
+    required bool isLive,
+  }) async {
+    final raw = link?.trim() ?? '';
+    if (raw.isEmpty) {
+      state.showSnackBar(ctx, 'Önce işletme adını yazın.');
+      return;
+    }
+    final repaired = isLive ? PublicSiteConfig.repairPublicLink(raw) : raw;
+    await Clipboard.setData(ClipboardData(text: repaired));
+    if (!ctx.mounted) return;
+    state.showSnackBar(
+      ctx,
+      isLive
+          ? 'Vitrin linki kopyalandı.'
+          : 'Öngörülen vitrin linki kopyalandı. Yayına alınca tarayıcıda açılır.',
+    );
+  }
+
   Future<void> _applyConnectedInstagram(String username) async {
     final cleaned = username.trim().replaceFirst('@', '');
     if (cleaned.isEmpty) return;
@@ -806,14 +846,6 @@ class VitrinFormSection extends StatelessWidget {
     } catch (_) {
       if (ctx.mounted) state.showSnackBar(ctx, 'Tarayıcı açılamadı.');
     }
-  }
-
-  Future<void> _copyLink(BuildContext ctx) async {
-    final raw = controller.publishedInfo?.publicLink;
-    if (raw == null || raw.trim().isEmpty) return;
-    final link = PublicSiteConfig.repairPublicLink(raw);
-    await Clipboard.setData(ClipboardData(text: link));
-    if (ctx.mounted) state.showSnackBar(ctx, 'Vitrin linki kopyalandı.');
   }
 
   Future<void> _shareLink(BuildContext ctx) async {

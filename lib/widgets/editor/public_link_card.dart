@@ -1,52 +1,74 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
+/// Mağazaya özel Vixrex vitrin linki (işletmenin kendi web sitesi değildir).
+/// İsim yazılınca öngörülen link; yayın sonrası canlı link gösterilir.
 class PublicLinkCard extends StatelessWidget {
-  final TextEditingController controller;
-  final String? publicLink;
-  final VoidCallback onOpenLink;
+  final String? displayLink;
+  final bool isLive;
   final VoidCallback onCopyLink;
-  final VoidCallback onShareLink;
+  final VoidCallback onPreview;
+  final VoidCallback? onShareLink;
+  final VoidCallback? onOpenLiveLink;
+  final VoidCallback? onScrollToPublish;
 
   const PublicLinkCard({
     super.key,
-    required this.controller,
-    required this.publicLink,
-    required this.onOpenLink,
+    required this.displayLink,
+    required this.isLive,
     required this.onCopyLink,
-    required this.onShareLink,
+    required this.onPreview,
+    this.onShareLink,
+    this.onOpenLiveLink,
+    this.onScrollToPublish,
   });
 
   @override
   Widget build(BuildContext context) {
-    final trimmedPublicLink = publicLink?.trim();
-    final hasPublicLink =
-        trimmedPublicLink != null && trimmedPublicLink.isNotEmpty;
+    final trimmedLink = displayLink?.trim();
+    final hasLink = trimmedLink != null && trimmedLink.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Website',
-          style: TextStyle(
-            color: AppColors.softText,
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Paylaşım linki',
+                style: TextStyle(
+                  color: AppColors.softText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            if (hasLink && isLive)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF12B76A).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Canlı',
+                  style: TextStyle(
+                    color: Color(0xFF12B76A),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          keyboardType: TextInputType.url,
-          style: const TextStyle(
-            color: AppColors.darkText,
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-          ),
+        InputDecorator(
           decoration: InputDecoration(
             prefixIcon: IconButton(
-              tooltip: 'Web linkini aç',
-              onPressed: onOpenLink,
+              tooltip: isLive ? 'Canlı vitrin linkini aç' : 'Önizlemeyi aç',
+              onPressed: hasLink
+                  ? (isLive ? (onOpenLiveLink ?? onPreview) : onPreview)
+                  : null,
               icon: Container(
                 width: 32,
                 height: 32,
@@ -54,44 +76,12 @@ class PublicLinkCard extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
-                  Icons.language_rounded,
+                child: Icon(
+                  isLive ? Icons.link_rounded : Icons.visibility_rounded,
                   color: AppColors.primary,
                   size: 18,
                 ),
               ),
-            ),
-            suffixIcon:
-                hasPublicLink
-                    ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip: 'Linki kopyala',
-                          onPressed: onCopyLink,
-                          icon: const Icon(
-                            Icons.copy_rounded,
-                            color: AppColors.mutedText,
-                            size: 18,
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Linki paylaş',
-                          onPressed: onShareLink,
-                          icon: const Icon(
-                            Icons.ios_share_rounded,
-                            color: AppColors.primary,
-                            size: 18,
-                          ),
-                        ),
-                      ],
-                    )
-                    : null,
-            hintText: 'Yayına aldığınızda özel web linkiniz burada oluşur.',
-            hintStyle: TextStyle(
-              color: AppColors.mutedText.withValues(alpha: 0.62),
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
             ),
             filled: true,
             fillColor: AppColors.inputBg,
@@ -115,8 +105,117 @@ class PublicLinkCard extends StatelessWidget {
               vertical: 14,
             ),
           ),
+          child: hasLink
+              ? SelectableText(
+                  trimmedLink,
+                  style: const TextStyle(
+                    color: AppColors.darkText,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                )
+              : Text(
+                  'İşletme adı yazınca oluşur.',
+                  style: TextStyle(
+                    color: AppColors.mutedText.withValues(alpha: 0.62),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
         ),
+        if (hasLink && !isLive) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Yayından sonra tarayıcıda açılır.',
+            style: TextStyle(
+              color: AppColors.mutedText.withValues(alpha: 0.85),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        if (hasLink) ...[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _ActionChip(
+                icon: Icons.copy_rounded,
+                label: 'Kopyala',
+                onTap: onCopyLink,
+              ),
+              _ActionChip(
+                icon: Icons.visibility_rounded,
+                label: 'Önizle',
+                onTap: onPreview,
+              ),
+              if (isLive && onShareLink != null)
+                _ActionChip(
+                  icon: Icons.ios_share_rounded,
+                  label: 'Paylaş',
+                  onTap: onShareLink!,
+                ),
+              if (!isLive && onScrollToPublish != null)
+                _ActionChip(
+                  icon: Icons.rocket_launch_rounded,
+                  label: 'Yayına al',
+                  emphasized: true,
+                  onTap: onScrollToPublish!,
+                ),
+            ],
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _ActionChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool emphasized;
+
+  const _ActionChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.emphasized = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = emphasized
+        ? AppColors.primary.withValues(alpha: 0.18)
+        : AppColors.inputBg;
+    final fg = emphasized ? AppColors.primary : AppColors.darkText;
+
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: fg,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -18,6 +18,15 @@ void main() {
       expect(builder.generateSlug(''), 'magazaniz');
       expect(builder.generateSlug('!!!'), 'magazaniz');
     });
+
+    test('isimden öngörülen vitrin linki üretir, boş isimde boş döner', () {
+      expect(
+        builder.previewVitrinLink('Aymira Giyim'),
+        'https://vixrex-public.vercel.app/v/aymira-giyim',
+      );
+      expect(builder.previewVitrinLink(''), isEmpty);
+      expect(builder.previewVitrinLink('   '), isEmpty);
+    });
   });
 
   group('StorePublishPayloadBuilder payload', () {
