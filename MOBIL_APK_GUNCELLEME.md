@@ -241,7 +241,7 @@ Faz 1 tamamlanmadan başlanmaz.
 | Plan doğrulaması | **tamamlandı** |
 | Faz 1 — workflow + Gradle fail-fast | **tamamlandı** |
 | Faz 1 — iki build/telefon kabulü | **tamamlandı** |
-| Faz 2 — Play Internal AAB | bekliyor |
+| Faz 2 — Play Internal AAB | kod hazır; CI ve Play kabulü bekliyor |
 | Faz 3 — minimum sürüm uyarısı | ertelendi |
 
 ## 11. Onay bekleyen iki gelecek iş
@@ -325,6 +325,23 @@ Değişmezler:
   `.github/workflows/android-apk.yml`, elle tetiklenen run'da imzalı AAB'yi de
   üretecek şekilde genişletilir; APK güvenlik kapıları korunur.
 
+**Kod hazırlığı — kısmi (15 Temmuz 2026):**
+
+- `codex/play-internal-aab` dalında mevcut manuel workflow genişletildi; ikinci
+  workflow veya otomatik Play yükleme yolu açılmadı.
+- APK ve AAB aynı `versionName`, `versionCode`, kalıcı upload keystore ve
+  `--dart-define` değerleriyle üretiliyor.
+- CI, artifact yüklemeden önce AAB biçimini, paket kimliğini, `versionCode`
+  değerini, en az API 35 hedefini ve upload sertifikasını doğruluyor. APK ile
+  AAB sertifikalarının eşitliği de zorunlu.
+- Resmî `bundletool` 1.18.3 sürümü SHA-256
+  `a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29`
+  ile sabitlendi ve indirme sonrası doğrulanıyor.
+- Yerelde Android workflow sözleşme testi 5/5 geçti; değişen Dart testinde
+  analiz 0 hata, workflow YAML parse ve `git diff --check` başarılı.
+- GitHub Actions AAB run'ı, artifact kimlik kanıtı, Play Console kurulumu ve iki
+  gerçek Play cihaz kabulü henüz yapılmadı. Bu nedenle Faz 2 tamamlanmış değildir.
+
 Uygulama sırası:
 
 1. Furkan ile Play Console geliştirici hesabı türünü seç; ücret, kimlik ve
@@ -370,6 +387,8 @@ Tamamlanma kapısı:
   [setup-java](https://github.com/actions/setup-java),
   [upload-artifact releases](https://github.com/actions/upload-artifact/releases)
 - Flutter: [Android release ve app bundle](https://docs.flutter.dev/deployment/android)
+- Android: [bundletool](https://developer.android.com/tools/bundletool),
+  [resmî bundletool sürümleri](https://github.com/google/bundletool/releases)
 - Google Play: [uygulama oluşturma ve release](https://support.google.com/googleplay/android-developer/answer/9859152?hl=tr),
   [Internal Testing](https://support.google.com/googleplay/android-developer/answer/9845334?hl=tr),
   [Play App Signing](https://support.google.com/googleplay/android-developer/answer/9842756?hl=tr),
