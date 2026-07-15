@@ -1,14 +1,16 @@
 # Mobil APK güncelleme — Cursor uygulama planı
 
-> **Sahip isteği:** Telefon APK'sının unutulan elle build sürecini kaldır.
+> **Sahip isteği:** İmzalı telefon APK'sını güvenli biçimde üret; normal kod
+> push'larında gereksiz APK üretme.
 > **Durum:** Faz 1 tamamlandı — iki imzalı CI build ve gerçek telefon üstüne-kurma kabulü geçti.
 > **Tarih:** 15 Temmuz 2026
 > **Dal:** `main` — PR #18, merge `cc3ec16`
 
 ## 1. Hedef ve gerçek başarı tanımı
 
-Mobil kod main dalına girdiğinde GitHub Actions, indirilebilir ve kalıcı aynı
-anahtarla imzalanmış Android APK üretecek. Başarı yalnız “APK oluştu” değildir:
+Furkan GitHub Actions'tan elle başlattığında, indirilebilir ve kalıcı aynı
+anahtarla imzalanmış Android APK üretilecek. Normal commit/push yalnız kaynak
+kodu kaydeder; APK üretmez. Başarı yalnız “APK oluştu” değildir:
 
 1. Birinci CI APK telefona kurulur.
 2. İkinci bir commit/run daha yüksek versionCode ile yeni APK üretir.
@@ -94,17 +96,12 @@ UI, route, public web, Supabase şeması ve generated plugin dosyaları kapsam d
 
 ### 4.2 Workflow tetikleyicileri
 
-- workflow_dispatch — Furkan elle çalıştırabilsin.
-- push: main yalnız şu mobil yollarında:
-  - lib/**
-  - assets/**
-  - android/**
-  - pubspec.yaml
-  - pubspec.lock
-  - .github/workflows/android-apk.yml
+- Yalnız `workflow_dispatch` kullanılır; Furkan veya görevli ajan gerektiğinde
+  GitHub Actions ekranından elle başlatır.
+- `main` dahil hiçbir dala yapılan normal push APK üretmez.
 
-Doküman-only commit APK dakikası tüketmez. Workflow izni contents: read olur.
-Aynı ref için eski koşuyu iptal edecek concurrency grubu eklenir.
+Workflow izni `contents: read` olur. Aynı ref için eski koşuyu iptal edecek
+concurrency grubu korunur.
 
 ### 4.3 Sabit araç zinciri
 
