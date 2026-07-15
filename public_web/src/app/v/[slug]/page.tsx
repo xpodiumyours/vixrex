@@ -294,9 +294,9 @@ export default async function StorePage(props: PageProps) {
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,19,34,0.96),rgba(7,19,34,0.78),rgba(7,19,34,0.48))]" />
             <div className="relative flex min-h-[390px] flex-col justify-between gap-10 p-5 sm:p-8 lg:p-9">
               <div className="flex items-center justify-between gap-3">
-                <Link href="/" className="text-lg font-black tracking-tight text-white">
+                <a href="/" className="text-lg font-black tracking-tight text-white">
                   Vix<span className="text-[#38A0E4]">rex</span>
-                </Link>
+                </a>
                 <div className="flex items-center gap-2">
                   {articles.length > 0 && (
                     <Link
