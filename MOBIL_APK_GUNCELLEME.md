@@ -145,7 +145,7 @@ Secret değerleri loga açık basılmaz.
 - Artifact adı: vixrex-android-(version)-(build)-(short-sha)
 - Retention: 14 gün
 
-Artifact için actions/upload-artifact@v4 kullanılır. İş sonunda if: always()
+Artifact için actions/upload-artifact@v6 kullanılır. İş sonunda if: always()
 ile geçici android/key.properties ve keystore dosyası silinir.
 
 ## 5. Faz 1 kabul kapısı — iki ardışık build zorunlu
@@ -258,9 +258,13 @@ uyarılarını kaldırmak.
 
 | Mevcut | Hedef |
 |---|---|
-| `actions/checkout@v4` | `actions/checkout@v7` |
+| `actions/checkout@v4` | `actions/checkout@v6` |
 | `actions/setup-java@v4` | `actions/setup-java@v5` |
 | `actions/upload-artifact@v4` | `actions/upload-artifact@v6` |
+
+Resmî kaynaklar uygulama günü yeniden kontrol edildi. `upload-artifact@v7`
+mevcut olsa da T-010'un Node.js 20 uyarısını kaldırma hedefi için gerekli değil;
+ESM/direct-upload değişikliğini bu küçük bakım işine katmamak için v6 seçildi.
 
 Uygulama sırası:
 
@@ -283,7 +287,8 @@ Uygulama sırası:
 
 Tamamlanma kapısı:
 
-- Yalnız üç action major'u değişmiş olmalı.
+- Workflow davranışında yalnız üç action major'u değişmiş olmalı; bunu koruyan
+  sözleşme testi ve sonuç belgeleri dışında kapsam büyümemeli.
 - Dal ve `main` run'ı yeşil olmalı.
 - APK'nın package, versionCode, checksum ve kalıcı upload imzası doğrulanmalı.
 - Uygulama kodu değişmediği için telefon kabul testi tekrarlanmaz; imza/package
