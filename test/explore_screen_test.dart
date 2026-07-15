@@ -1,79 +1,68 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/repositories/explore_repository.dart';
 import 'package:vixrex/screens/explore_screen.dart';
-import 'package:vixrex/services/local_storage_keys.dart';
+import 'package:vixrex/widgets/vitrin_store_card.dart';
+
+/// Testler için sahte repository — Supabase'e ihtiyaç duymaz.
+class _FakeExploreRepository extends Fake implements ExploreRepository {
+  _FakeExploreRepository({
+    required this.stores,
+    this.favoriteNames = const [],
+    this.publishedSlug,
+  });
+  final List<StoreData> stores;
+  final List<String> favoriteNames;
+  final String? publishedSlug;
+
+  @override
+  Future<List<StoreData>> fetchPublishedStores() async => stores;
+
+  @override
+  Future<List<String>> loadFavoriteStoreNames() async => favoriteNames;
+
+  @override
+  Future<String?> loadLastPublishedSlug() async => publishedSlug;
+}
 
 void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
-    final mockData = [
-      {
-        'name': 'Aymira Giyim',
-        'description': 'Yeni Sezon Ürünler',
-        'kategori': 'Giyim',
-        'whatsapp': '905551234567',
-        'address': 'Kadıköy',
-        'slug': 'aymira-giyim',
-        'is_published': true,
-      },
-      {
-        'name': 'Lezzet Durağı',
-        'description': 'Ev Yemekleri',
-        'kategori': 'Yiyecek & İçecek',
-        'whatsapp': '905557654321',
-        'address': 'Beşiktaş',
-        'slug': 'lezzet-duragi',
-        'is_published': true,
-      },
-    ];
-
-    final mockClient = MockClient((request) async {
-      return http.Response(
-        jsonEncode(mockData),
-        200,
-        request: request,
-        headers: {'content-type': 'application/json'},
-      );
-    });
-
-    try {
-      await Supabase.instance.dispose();
-    } catch (_) {}
-
-    await Supabase.initialize(
-      url: 'https://dummyproject.supabase.co',
-      anonKey: 'dummyAnonKey',
-      httpClient: mockClient,
-    );
   });
 
-  tearDown(() async {
-    try {
-      await Supabase.instance.dispose();
-    } catch (_) {}
-  });
   testWidgets('ExploreScreen renders successfully and has correct items', (
     WidgetTester tester,
   ) async {
-    SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
+    final repo = _FakeExploreRepository(
+      stores: [
+        StoreData(
+          name: 'Aymira Giyim',
+          description: 'Yeni Sezon Ürünler',
+          kategori: 'Giyim',
+          whatsapp: '905551234567',
+          address: 'Kadıköy',
+          slug: 'aymira-giyim',
+        ),
+        StoreData(
+          name: 'Lezzet Durağı',
+          description: 'Ev Yemekleri',
+          kategori: 'Yiyecek & İçecek',
+          whatsapp: '905557654321',
+          address: 'Beşiktaş',
+          slug: 'lezzet-duragi',
+        ),
+      ],
+    );
 
-    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
+    await tester.pumpWidget(MaterialApp(home: ExploreScreen(repository: repo)));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify header title
     expect(find.text("Vixrex'leri Keşfet"), findsOneWidget);
     expect(find.text('Yayındaki Vixrex profillerini keşfet'), findsOneWidget);
-
-    // Verify search text field hint
     expect(find.text('Vitrin, ürün veya kategori ara...'), findsOneWidget);
-
-    // Verify category chips exist
     expect(find.text('Tümü'), findsAtLeastNWidgets(1));
     expect(find.text('Giyim'), findsAtLeastNWidgets(1));
   });
@@ -81,21 +70,37 @@ void main() {
   testWidgets('ExploreScreen search and filters work correctly', (
     WidgetTester tester,
   ) async {
-    SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
+    final repo = _FakeExploreRepository(
+      stores: [
+        StoreData(
+          name: 'Aymira Giyim',
+          description: 'Yeni Sezon Ürünler',
+          kategori: 'Giyim',
+          whatsapp: '905551234567',
+          address: 'Kadıköy',
+          slug: 'aymira-giyim',
+        ),
+        StoreData(
+          name: 'Lezzet Durağı',
+          description: 'Ev Yemekleri',
+          kategori: 'Yiyecek & İçecek',
+          whatsapp: '905557654321',
+          address: 'Beşiktaş',
+          slug: 'lezzet-duragi',
+        ),
+      ],
+    );
 
-    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
+    await tester.pumpWidget(MaterialApp(home: ExploreScreen(repository: repo)));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify some stores are loaded
     expect(find.text('Aymira Giyim'), findsAtLeastNWidgets(1));
 
-    // Type in search bar
     await tester.enterText(find.byType(TextField), 'Lezzet Durağı');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify only matching stores are displayed
     expect(find.text('Aymira Giyim'), findsNothing);
     expect(find.text('Lezzet Durağı'), findsAtLeastNWidgets(1));
   });
@@ -103,15 +108,32 @@ void main() {
   testWidgets('ExploreScreen favorites toggle works', (
     WidgetTester tester,
   ) async {
-    SharedPreferences.setMockInitialValues({
-      'favorite_stores': ['Aymira Giyim'],
-    });
+    final repo = _FakeExploreRepository(
+      stores: [
+        StoreData(
+          name: 'Aymira Giyim',
+          description: 'Yeni Sezon Ürünler',
+          kategori: 'Giyim',
+          whatsapp: '905551234567',
+          address: 'Kadıköy',
+          slug: 'aymira-giyim',
+        ),
+        StoreData(
+          name: 'Lezzet Durağı',
+          description: 'Ev Yemekleri',
+          kategori: 'Yiyecek & İçecek',
+          whatsapp: '905557654321',
+          address: 'Beşiktaş',
+          slug: 'lezzet-duragi',
+        ),
+      ],
+      favoriteNames: ['Aymira Giyim'],
+    );
 
-    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
+    await tester.pumpWidget(MaterialApp(home: ExploreScreen(repository: repo)));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Tap on the Favorite Filter Chip
     final favoriteFilter = find.textContaining('Favorilerim');
     expect(favoriteFilter, findsOneWidget);
 
@@ -119,7 +141,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify only favorited store posts are displayed (Aymira Giyim is favorited, Lezzet Durağı is not)
     expect(find.text('Aymira Giyim'), findsAtLeastNWidgets(1));
     expect(find.text('Lezzet Durağı'), findsNothing);
   });
@@ -127,57 +148,58 @@ void main() {
   testWidgets('ExploreScreen kendi vitrini etiketi gösterir', (
     WidgetTester tester,
   ) async {
-    SharedPreferences.setMockInitialValues({
-      'favorite_stores': <String>[],
-      LocalStorageKeys.lastPublishedSlug: 'aymira-giyim',
-    });
+    final repo = _FakeExploreRepository(
+      stores: [
+        StoreData(
+          name: 'Aymira Giyim',
+          description: 'Yeni Sezon Ürünler',
+          kategori: 'Giyim',
+          whatsapp: '905551234567',
+          address: 'Kadıköy',
+          slug: 'aymira-giyim',
+        ),
+      ],
+      publishedSlug: 'aymira-giyim',
+    );
 
-    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
+    await tester.pumpWidget(MaterialApp(home: ExploreScreen(repository: repo)));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Senin vitrinin'), findsOneWidget);
   });
 
-  testWidgets('fallback kartları örnek olarak işaretlenir ve açılmaz', (
+  testWidgets('Boş sonuçta boş durum gösterilir ve vitrin kartı oluşmaz', (
     WidgetTester tester,
   ) async {
-    SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
+    final repo = _FakeExploreRepository(stores: []);
 
-    await Supabase.instance.dispose();
-    final emptyMockClient = MockClient((request) async {
-      return http.Response(
-        '[]',
-        200,
-        request: request,
-        headers: {'content-type': 'application/json'},
-      );
-    });
-    await Supabase.initialize(
-      url: 'https://dummyproject.supabase.co',
-      anonKey: 'dummyAnonKey',
-      httpClient: emptyMockClient,
-    );
-
-    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
+    await tester.pumpWidget(MaterialApp(home: ExploreScreen(repository: repo)));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('Örnek'), findsWidgets);
-    await tester.ensureVisible(find.text('Aymira Giyim'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Aymira Giyim'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(find.text('Aramanızla eşleşen vitrin bulunamadı.'), findsOneWidget);
+    expect(find.byType(VitrinStoreCard), findsNothing);
+    expect(find.text('Örnek'), findsNothing);
   });
 
   testWidgets('WhatsApp hızlı mesaj seçenekleri güncel metinleri gösterir', (
     WidgetTester tester,
   ) async {
-    SharedPreferences.setMockInitialValues({'favorite_stores': <String>[]});
+    final repo = _FakeExploreRepository(
+      stores: [
+        StoreData(
+          name: 'Aymira Giyim',
+          description: 'Yeni Sezon Ürünler',
+          kategori: 'Giyim',
+          whatsapp: '905551234567',
+          address: 'Kadıköy',
+          slug: 'aymira-giyim',
+        ),
+      ],
+    );
 
-    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
+    await tester.pumpWidget(MaterialApp(home: ExploreScreen(repository: repo)));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 

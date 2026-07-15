@@ -12,7 +12,9 @@ import 'package:vixrex/widgets/vitrin_store_card.dart';
 import 'package:vixrex/config/app_router.dart';
 
 class ExploreScreen extends StatefulWidget {
-  const ExploreScreen({super.key});
+  final ExploreRepository? repository;
+
+  const ExploreScreen({super.key, this.repository});
 
   @override
   State<ExploreScreen> createState() => ExploreScreenState();
@@ -49,8 +51,9 @@ class ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _initController() async {
-    final prefs = await SharedPreferences.getInstance();
-    final repository = ExploreRepository(sharedPreferences: prefs);
+    final repository = widget.repository ?? ExploreRepository(
+      sharedPreferences: await SharedPreferences.getInstance(),
+    );
     _controller = ExploreController(repository: repository);
     await _controller.initialize();
     if (mounted) {
