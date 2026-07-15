@@ -294,6 +294,19 @@ Tamamlanma kapısı:
 - Uygulama kodu değişmediği için telefon kabul testi tekrarlanmaz; imza/package
   doğrulaması başarısızsa iş tamamlanmış sayılmaz.
 
+**Sonuç — düzeltildi (15 Temmuz 2026):**
+
+- PR [#21](https://github.com/xpodiumyours/vixrex/pull/21) birleştirildi.
+- Dal kabulü: [run #4](https://github.com/xpodiumyours/vixrex/actions/runs/29411342940),
+  artifact `vixrex-android-1.0.0-10004-8bd70d9`.
+- `main` kabulü: [run #5](https://github.com/xpodiumyours/vixrex/actions/runs/29412555129),
+  artifact `vixrex-android-1.0.0-10005-c979a9c`.
+- `main` APK SHA-256:
+  `408f52b0e78d205bff1e9978fa83d4e7715f42618c27d16e9d59be1bd563c729`.
+- Package `com.xpodiumyours.vixrex`, `versionCode 10005`, v2 imza ve kalıcı
+  upload sertifikası doğrulandı. Node.js 20/deprecation uyarısı ve secret
+  sızıntısı görülmedi.
+
 ### 11.B Faz 2 — Play Internal Testing ve AAB
 
 **Ön koşullar:** T-010 kapanmış olmalı. Play geliştirici hesabı ücreti, hesap
