@@ -20,6 +20,22 @@ kısaltılamaz veya etkisizleştirilemez. Kullanıcı anayasası ile güncel tek
 arasında çelişki görülürse ajan sessizce seçim yapmaz; değişiklikten önce Furkan'a
 çelişkiyi açıkça bildirir ve yön ister.
 
+### 0.1 Zorunlu uyma ve kaynak bütçesi
+
+`PROJECT_RULES.md` bölüm **3.2 AI kaynak ve token disiplini**, okuma listesinin
+bağlayıcı parçasıdır. Ajanın "Kurallar okundu" yazması uyum kanıtı değildir;
+çalışma sırasında aşağıdaki kapılar zorunludur:
+
+- İlk araç çağrısından önce en küçük kanıt bütçesini belirle: bir hedefli tarama,
+  bir küçük değişiklik ve bir orantılı doğrulama turu.
+- Yeni bir değişiklik veya yeni hata kanıtı yoksa aynı komutu tekrar çalıştırma.
+- Uzak CI/deploy işini başlattıktan sonra bekleme veya periyodik polling yapma;
+  run kimliğini bildirip kontrolü kullanıcıya bırak.
+- Tam log yerine önce başarısız adımın en fazla 80 satırlık hedefli kesitini oku.
+- Bu bütçeyi aşmak gerekiyorsa devam etmeden önce Furkan'a maliyeti ve gerekçeyi
+  söyleyip açık onay al.
+- Kural ihlali fark edilirse yeni işlem başlatma; durumu kısa biçimde devret.
+
 ## 1. Değişmez mimari sahiplik
 
 Aşağıdaki sahiplik tablosu bağlayıcı mimari karardır.

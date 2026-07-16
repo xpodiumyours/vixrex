@@ -1,6 +1,6 @@
-TARİH: 15 Temmuz 2026
-BUGÜN YAPILAN: T-010 tamamlandı; Android Actions major'ları Node 24 uyumlu sürümlere yükseltildi, PR #21 ile dal ve main APK kabul koşulları doğrulandı.
-YARIM KALAN: Play Internal Testing/AAB; Chrome–telefon edit token; erken vitrin linkinin görsel kabulü.
-SIRADAKİ ADIM: Furkan açıkça onaylarsa Play Internal Testing ve AAB Faz 2 hazırlığına başla; görsel kabul işlerini ayrı tut.
-DOKUNULAN DOSYALAR: .github/workflows/android-apk.yml, test/android_apk_workflow_contract_test.dart, MOBIL_APK_GUNCELLEME.md, SON_DURUM.md
-DİKKAT: APK gerektiğinde workflow elle başlatılır; tüm APK/AAB'ler mevcut kalıcı upload keystore ve beklenen sertifikayla imzalanır.
+TARİH: 16 Temmuz 2026
+BUGÜN YAPILAN: Asistan plan/HTML + AI token kuralları güvenli commit için hazırlandı; tek kaynak plan vixrex-asistan.md.
+YARIM KALAN: Commit sonrası isteğe bağlı push; Dalga 1 kodu (Furkan “başla” demeden yok); PR #25 AAB / Play ayrı; VİXREX-ASİSTAN-SON-PLAN.md commit dışı bırakıldı.
+SIRADAKİ ADIM: Furkan “Dalga 1 başla” veya push isterse ona göre.
+DOKUNULAN DOSYALAR: PROJECT_RULES.md, AGENTS.md, vixrex-asistan.md, vixrex-asistan-ornek.html, UYGULAMA_SAYFALARI.md, maskot/asistan md’leri, SON_DURUM.md
+DİKKAT: Kod değişmedi. Çelişirse vixrex-asistan.md + HTML kazanır.
