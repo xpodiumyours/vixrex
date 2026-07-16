@@ -12,8 +12,11 @@ Her AI ajanı herhangi bir dosyaya dokunmadan önce sırasıyla şunları tamame
    dokunulmaz alanlar için en üst kuraldır.
 2. Varsa `SON_DURUM.md` — yalnız güncel oturum devridir.
 3. Bu `AGENTS.md` — güncel teknik mimari ve repo sözleşmesidir.
-4. İlgili alt dizindeki `AGENTS.md` ve görevle eşleşen `.agents/skills/*/SKILL.md`
-   dosyaları — yalnız ek kural koyabilir, üst kuralları gevşetemez.
+4. İlgili alt dizindeki `AGENTS.md` ve görevle eşleşen
+   `.cursor/skills/*/SKILL.md` / `.agents/skills/*/SKILL.md` dosyaları — yalnız
+   ek kural koyabilir, üst kuralları gevşetemez. Asistan işlerinde
+   [`.cursor/skills/vixrex-asistan-bagla/SKILL.md`](.cursor/skills/vixrex-asistan-bagla/SKILL.md)
+   **her adımda** okunur ve uygulanır (plan, tarama, kod, test, rapor).
 
 `PROJECT_RULES.md`, Furkan'ın açık onayı olmadan silinemez, yeniden adlandırılamaz,
 kısaltılamaz veya etkisizleştirilemez. Kullanıcı anayasası ile güncel teknik bilgi

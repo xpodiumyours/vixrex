@@ -29,7 +29,10 @@ class FakeSupabaseClient implements SupabaseClient {
         'fn': fn,
         'params': args[#params] as Map<String, dynamic>?,
       });
-      return FakePostgrestFilterBuilder<dynamic>(this);
+      return FakePostgrestFilterBuilder<dynamic>(
+        this,
+        isCreateRpc: fn == 'create_store_with_token',
+      );
     }
     return super.noSuchMethod(invocation);
   }
@@ -69,7 +72,12 @@ class FakePostgrestFilterBuilder<T>
     implements PostgrestFilterBuilder<T>, Future<T> {
   final FakeSupabaseClient client;
   final bool isInsert;
-  FakePostgrestFilterBuilder(this.client, {this.isInsert = false});
+  final bool isCreateRpc;
+  FakePostgrestFilterBuilder(
+    this.client, {
+    this.isInsert = false,
+    this.isCreateRpc = false,
+  });
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
@@ -86,10 +94,13 @@ class FakePostgrestFilterBuilder<T>
   }
 
   Future<T> get _future {
-    if (isInsert && client.postgrestExceptionToThrowOnInsert != null) {
+    if ((isInsert || isCreateRpc) &&
+        client.postgrestExceptionToThrowOnInsert != null) {
       return Future<T>.error(client.postgrestExceptionToThrowOnInsert!);
     }
-    if (!isInsert && client.postgrestExceptionToThrow != null) {
+    if (!isInsert &&
+        !isCreateRpc &&
+        client.postgrestExceptionToThrow != null) {
       return Future<T>.error(client.postgrestExceptionToThrow!);
     }
     final val = (client.selectResponse ?? <String, dynamic>{}) as T;
@@ -134,6 +145,7 @@ void main() {
   late FakeSupabaseClient fakeClient;
   late StorePublishService service;
   late StoreData sampleStore;
+  const editToken = 'edit-token-1234567890123456';
 
   setUp(() {
     fakeClient = FakeSupabaseClient();
@@ -163,22 +175,27 @@ void main() {
   });
 
   group('StorePublishService.publishStore - Yeni Kayıt', () {
-    test('Mağaza mevcut değilse insert yapar ve publicPath döner', () async {
+    test('Mağaza mevcut değilse create_store_with_token rpc çağırır', () async {
       fakeClient.selectResponse = null;
 
-      final result = await service.publishStore(sampleStore, editToken: 't123');
+      final result =
+          await service.publishStore(sampleStore, editToken: editToken);
 
       expect(result.isSuccess, isTrue);
       expect(result.data!.wasUpdated, isFalse);
       expect(result.data!.publicPath, '/v/test-magazasi');
-      expect(fakeClient.queries['slug'], 'test-magazasi');
-      expect(fakeClient.insertedPayloads.length, 1);
-      expect(fakeClient.insertedPayloads.first['edit_token'], 't123');
+      expect(fakeClient.queries['edit_token'], editToken);
+      expect(fakeClient.insertedPayloads, isEmpty);
+      expect(fakeClient.rpcCalls.length, 1);
+      expect(fakeClient.rpcCalls.first['fn'], 'create_store_with_token');
+      expect(fakeClient.rpcCalls.first['params']['p_edit_token'], editToken);
+      expect(fakeClient.rpcCalls.first['params']['p_slug'], 'test-magazasi');
     });
 
     test('Validasyondan geçemeyen mağaza Result.failure döner', () async {
       final invalidStore = StoreData(isStore: true, name: '');
-      final result = await service.publishStore(invalidStore, editToken: 't123');
+      final result =
+          await service.publishStore(invalidStore, editToken: editToken);
       expect(result.isFailure, isTrue);
       expect(result.failure!.message, isNotEmpty);
     });
@@ -192,7 +209,7 @@ void main() {
 
         final result = await service.publishStore(
           sampleStore,
-          editToken: 't123',
+          editToken: editToken,
         );
 
         expect(result.isSuccess, isTrue);
@@ -200,7 +217,10 @@ void main() {
         expect(result.data!.publicPath, '/v/test-magazasi');
         expect(fakeClient.rpcCalls.length, 1);
         expect(fakeClient.rpcCalls.first['fn'], 'update_store_with_token');
-        expect(fakeClient.rpcCalls.first['params']['p_edit_token'], 't123');
+        expect(
+          fakeClient.rpcCalls.first['params']['p_edit_token'],
+          editToken,
+        );
       },
     );
 
@@ -215,14 +235,16 @@ void main() {
 
         final result = await service.publishStore(
           sampleStore,
-          editToken: 't123',
+          editToken: editToken,
         );
 
         expect(result.isSuccess, isTrue);
         expect(result.data!.wasUpdated, isTrue);
         expect(result.data!.publicPath, '/v/test-magazasi');
-        expect(fakeClient.rpcCalls.length, 1);
-        expect(fakeClient.rpcCalls.first['fn'], 'update_store_with_token');
+        expect(
+          fakeClient.rpcCalls.map((c) => c['fn']),
+          containsAll(['create_store_with_token', 'update_store_with_token']),
+        );
       },
     );
 
@@ -235,7 +257,8 @@ void main() {
           code: '42501',
         );
 
-        final result = await service.publishStore(sampleStore, editToken: 't123');
+        final result =
+            await service.publishStore(sampleStore, editToken: editToken);
 
         expect(result.isFailure, isTrue);
         expect(result.failure!.message, contains('Supabase tarafında eksik'));
@@ -254,6 +277,21 @@ void main() {
         fakeClient.rpcCalls.last['fn'],
         'withdraw_store_publication_consent',
       );
+      expect(fakeClient.rpcCalls.last['params'], {
+        'p_slug': 'test-magazasi',
+        'p_edit_token': 'edit-token-12345678901234567890',
+      });
+    });
+  });
+
+  group('StorePublishService permanent deletion', () {
+    test('delete RPC is called with slug and edit token', () async {
+      await service.deleteStore(
+        slug: 'test-magazasi',
+        editToken: 'edit-token-12345678901234567890',
+      );
+
+      expect(fakeClient.rpcCalls.last['fn'], 'delete_store_with_token');
       expect(fakeClient.rpcCalls.last['params'], {
         'p_slug': 'test-magazasi',
         'p_edit_token': 'edit-token-12345678901234567890',

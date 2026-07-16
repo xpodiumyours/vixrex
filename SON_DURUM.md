@@ -1,6 +1,6 @@
 TARİH: 17 Temmuz 2026
-BUGÜN YAPILAN: Landing’de sağ alttaki sabit maskot artık route/çekmece açmadan mevcut telefon maketinin içinde Vixrex kurulum sohbetini açıyor; Kapat ile telefon tekrar dönen vitrinlere dönüyor.
-YARIM KALAN: Chrome görsel kabul testi; telefon içi sohbetin dar ekrandaki taşma/okunabilirlik kontrolü ve kullanıcı onayı, commit/push yok.
-SIRADAKİ ADIM: Chrome hot restart → landing’de maskota bas → telefon içi sohbet aç/kapat → dört vitrin döngüsünün geri geldiğini ekran görüntüsüyle doğrula.
-DOKUNULAN DOSYALAR: landing_screen.dart, landing_hero_section.dart, landing_hero_mockup.dart, vixrex_onboarding_chat_screen.dart, widget_test.dart.
-DİKKAT: Yeni landing davranışı widget testi geçti; linter hatası yok. Tam widget testindeki eski Keşfet beklentisi kodun Auth yönlendirmesiyle çelişiyor; OpenAI askıda.
+BUGÜN YAPILAN: Butik’teki 404 kapak görseli canlı migration ile değiştirildi; landing rozetine basınca telefon içi sohbet görünür alana otomatik kaydırılacak şekilde bağlandı; Landing Keşfet artık mevcut Keşfet sekmesine gidiyor; widget testleri geçti; elektrik mavisi landing renk demosu hazırlandı.
+YARIM KALAN: Commit/push yok.
+SIRADAKİ ADIM: Elektrik mavisi demo görsel onayı sonrası gerçek landing renklerini küçük Flutter değişikliğiyle uygula.
+DOKUNULAN DOSYALAR: 20260717_fix_boutique_template_image.sql, landing_screen.dart, landing_hero_section.dart, widget_test.dart, landing-elektrik-mavisi-demo.html.
+DİKKAT: Demo üretim koduna bağlı değildir. OpenAI askıda; vitrin temel akışlarına dokunulmadı.

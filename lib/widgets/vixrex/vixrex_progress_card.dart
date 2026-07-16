@@ -31,10 +31,10 @@ class VixRexProgressCard extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -45,15 +45,15 @@ class VixRexProgressCard extends StatelessWidget {
               const Icon(
                 Icons.route_outlined,
                 color: AppColors.primary,
-                size: 20,
+                size: 15,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 7),
               Expanded(
                 child: Text(
                   'Aşama: $phaseLabel',
                   style: const TextStyle(
                     color: AppColors.darkText,
-                    fontSize: 14,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -62,18 +62,18 @@ class VixRexProgressCard extends StatelessWidget {
                 '$completedSteps/$totalSteps',
                 style: const TextStyle(
                   color: AppColors.mutedText,
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 7,
+              minHeight: 5,
               backgroundColor: AppColors.surfaceSoft,
               valueColor: const AlwaysStoppedAnimation(AppColors.primary),
             ),

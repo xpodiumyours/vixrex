@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
-import 'package:vixrex/widgets/vixrex_panel.dart';
 
 const double _vixrexBadgeSize = 84;
 
@@ -16,6 +15,9 @@ class ChatbotBadge extends StatefulWidget {
   final void Function(VixRexAction)? onScrollToAction;
   final List<ChatMessage>? chatHistory;
 
+  /// Verilirse eski FAQ overlay açılmaz; mevcut asistan/kapıya gider.
+  final VoidCallback? onOpen;
+
   const ChatbotBadge({
     super.key,
     this.snapshot,
@@ -26,6 +28,7 @@ class ChatbotBadge extends StatefulWidget {
     this.onShowQr,
     this.onShareWhatsapp,
     this.onScrollToAction,
+    this.onOpen,
   });
 
   @override
@@ -68,17 +71,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   }
 
   void _openChat(BuildContext context) {
-    VixRexOverlay.show(
-      context,
-      snapshot: widget.snapshot,
-      chatHistory: widget.chatHistory,
-      onNavigateToVitrim: widget.onNavigateToVitrim,
-      onNavigateToExplore: widget.onNavigateToExplore,
-      onCopyLink: widget.onCopyLink,
-      onShowQr: widget.onShowQr,
-      onShareWhatsapp: widget.onShareWhatsapp,
-      onScrollToAction: widget.onScrollToAction,
-    );
+    widget.onOpen?.call();
   }
 
   @override
@@ -160,42 +153,5 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
         },
       ),
     );
-  }
-}
-
-class VixRexOverlay {
-  static OverlayEntry? _entry;
-
-  static void show(
-    BuildContext context, {
-    VixRexProfileSnapshot? snapshot,
-    List<ChatMessage>? chatHistory,
-    VoidCallback? onNavigateToVitrim,
-    VoidCallback? onNavigateToExplore,
-    VoidCallback? onCopyLink,
-    VoidCallback? onShowQr,
-    VoidCallback? onShareWhatsapp,
-    void Function(VixRexAction)? onScrollToAction,
-  }) {
-    if (_entry != null) return;
-    _entry = OverlayEntry(
-      builder: (_) => VixRexPanelWrapper(
-        onClose: close,
-        snapshot: snapshot,
-        chatHistory: chatHistory,
-        onNavigateToVitrim: onNavigateToVitrim,
-        onNavigateToExplore: onNavigateToExplore,
-        onCopyLink: onCopyLink,
-        onShowQr: onShowQr,
-        onShareWhatsapp: onShareWhatsapp,
-        onScrollToAction: onScrollToAction,
-      ),
-    );
-    Overlay.of(context).insert(_entry!);
-  }
-
-  static void close() {
-    _entry?.remove();
-    _entry = null;
   }
 }

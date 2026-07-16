@@ -427,7 +427,13 @@ class StoreEditorController extends ChangeNotifier
       final slug = _publishedInfo?.slug;
       final editToken = _publishedInfo?.editToken;
       if (slug != null && editToken != null) {
-        await publishService.withdrawPublicationConsent(slug: slug, editToken: editToken);
+        final result = await publishService.deleteStore(
+          slug: slug,
+          editToken: editToken,
+        );
+        if (result.isFailure) {
+          throw result.failure!.message;
+        }
       }
       await storage.clearVitrinData();
       _data = StoreData(kategori: 'Diğer', status: 'Açık');

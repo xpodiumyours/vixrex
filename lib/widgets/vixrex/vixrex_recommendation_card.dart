@@ -3,6 +3,8 @@ import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
+/// Sıradaki adımı ince, tek-CTA'lı bir kart olarak gösterir.
+/// Motor: [VixRexGuidanceService] — aksiyon mevcut [VixRexAction] handler'larına gider.
 class VixRexRecommendationCard extends StatelessWidget {
   final VixRexRecommendation recommendation;
   final bool isRecommendationDismissed;
@@ -21,10 +23,10 @@ class VixRexRecommendationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isRecommendationDismissed) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.border),
         ),
         child: const Row(
@@ -32,16 +34,16 @@ class VixRexRecommendationCard extends StatelessWidget {
             Icon(
               Icons.check_circle_outline,
               color: AppColors.mutedText,
-              size: 20,
+              size: 15,
             ),
-            SizedBox(width: 10),
+            SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Bu öneri kapatıldı. Durumun değiştiğinde Vixrex yeni adımı gösterecek.',
                 style: TextStyle(
                   color: AppColors.mutedText,
-                  fontSize: 12,
-                  height: 1.4,
+                  fontSize: 11,
+                  height: 1.35,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -51,44 +53,75 @@ class VixRexRecommendationCard extends StatelessWidget {
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 2, bottom: 6),
+          child: Text(
+            'SIRADAKİ ADIM',
+            style: TextStyle(
+              color: AppColors.mutedText,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withAlpha(15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.primary.withAlpha(90)),
+          ),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.auto_awesome_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Sıradaki adım',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
                     Text(
                       recommendation.title,
                       style: const TextStyle(
                         color: AppColors.darkText,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      recommendation.description,
+                      style: const TextStyle(
+                        color: AppColors.mutedText,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 28,
+                      child: ElevatedButton(
+                        onPressed: () => onAction(recommendation.action),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: const Color(0xFF00181A),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 11),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                        ),
+                        child: Text(
+                          recommendation.buttonLabel,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -98,35 +131,18 @@ class VixRexRecommendationCard extends StatelessWidget {
                 onPressed: () => onDismissRecommendation(recommendation.id),
                 tooltip: 'Öneriyi kapat',
                 visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 icon: const Icon(
                   Icons.close_rounded,
                   color: AppColors.mutedText,
-                  size: 20,
+                  size: 16,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            recommendation.description,
-            style: const TextStyle(
-              color: AppColors.mutedText,
-              fontSize: 12,
-              height: 1.45,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => onAction(recommendation.action),
-              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-              label: Text(recommendation.buttonLabel),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

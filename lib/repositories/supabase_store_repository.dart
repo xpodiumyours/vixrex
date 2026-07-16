@@ -48,7 +48,16 @@ class SupabaseStoreRepository implements StoreRepository {
 
   @override
   Future<void> insertStore(Map<String, dynamic> payload) async {
-    await _client.from('stores').insert(payload);
+    final slug = (payload['slug'] ?? '').toString().trim();
+    final editToken = (payload['edit_token'] ?? '').toString().trim();
+    await _client.rpc(
+      'create_store_with_token',
+      params: {
+        'p_slug': slug,
+        'p_edit_token': editToken,
+        'p_store': payload,
+      },
+    );
   }
 
   @override

@@ -6,9 +6,11 @@ import 'package:vixrex/screens/profile_screen.dart';
 import 'package:vixrex/screens/vixrex_screen.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
+import 'package:vixrex/widgets/vixrex/vixrex_hero.dart';
 
 void main() {
   testWidgets('Vixrex ekranı Türkçe başlıkları gösterir', (tester) async {
+    SharedPreferences.setMockInitialValues({});
     tester.view.physicalSize = const Size(1200, 1920);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -36,15 +38,20 @@ void main() {
           dismissedRecommendationId: null,
           onAction: (_) {},
           onDismissRecommendation: (_) {},
-          onCopyPromotionText: (_) {},
-          onSharePromotionText: (_) {},
+          onSaveField: (_, __) {},
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
-    expect(find.text('Vixrex Rehber'), findsOneWidget);
-    expect(find.text('Vixrex'), findsOneWidget);
-    expect(find.text('Vixrex Rehberi'), findsOneWidget);
+    expect(find.text('Vixrex'), findsWidgets);
+    expect(find.text('SIRADAKİ ADIM'), findsOneWidget);
+    expect(find.text('Vitrin araçları'), findsNothing);
+
+    await tester.tap(find.byType(VixRexHero));
+    await tester.pump();
+    final input = tester.widget<TextField>(find.byType(TextField));
+    expect(input.focusNode?.hasFocus, isTrue);
   });
 
   test('Vixrex karşılama metni düz ve desteklenen karakterlerden oluşur', () {
@@ -55,21 +62,29 @@ void main() {
     expect(text, contains('Merhaba! Ben Vixrex'));
   });
 
-  testWidgets('Vixrex hızlı aksiyonları dar ekranda taşmaz', (tester) async {
+  testWidgets('ChatbotBadge onOpen tek kapıyı çağırır, overlay açmaz', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    var opened = false;
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: Center(child: ChatbotBadge()))),
+      MaterialApp(
+        home: Scaffold(
+          body: Center(child: ChatbotBadge(onOpen: () => opened = true)),
+        ),
+      ),
     );
     await tester.tap(find.byType(ChatbotBadge));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 700));
 
-    expect(find.text('Üyelik / Kullanım'), findsOneWidget);
+    expect(opened, isTrue);
+    expect(find.text('Üyelik / Kullanım'), findsNothing);
+    expect(find.text('İşletme Adı Ekle'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -79,47 +94,4 @@ void main() {
     expect(find.text('Profil'), findsOneWidget);
     expect(find.text('Vixrex Kullanıcısı'), findsOneWidget);
   });
-
-  testWidgets(
-    'Vixrex chatbot overlay shows guided step when snapshot is incomplete',
-    (tester) async {
-      VixRexOverlay.close();
-      addTearDown(VixRexOverlay.close);
-      SharedPreferences.setMockInitialValues({});
-      tester.view.physicalSize = const Size(800, 1200);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      const mockSnapshot = VixRexProfileSnapshot(
-        nameCompleted: false,
-        whatsappCompleted: false,
-        addressCompleted: false,
-        legalCompleted: false,
-        coverCompleted: false,
-        galleryCompleted: false,
-        descriptionCompleted: false,
-        catalogCompleted: false,
-        isPublished: false,
-        storeName: '',
-        category: '',
-        district: '',
-        publicLink: '',
-      );
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: Center(child: ChatbotBadge(snapshot: mockSnapshot)),
-          ),
-        ),
-      );
-
-      await tester.tap(find.byType(ChatbotBadge));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 700));
-
-      expect(find.text('İşletme Adı Ekle'), findsOneWidget);
-    },
-  );
 }

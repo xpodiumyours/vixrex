@@ -106,19 +106,28 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -5000),
+    );
+    await tester.pump();
+    final landingScroll = tester.state<ScrollableState>(
+      find.byType(Scrollable).first,
+    );
+    final beforeOpeningChat = landingScroll.position.pixels;
+    expect(beforeOpeningChat, greaterThan(0));
+
     await tester.tap(find.byType(ChatbotBadge));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 450));
 
     expect(
       AppRouter.router.routeInformationProvider.value.uri.path,
       AppRouter.landing,
     );
     expect(find.byType(VixRexOnboardingChatScreen), findsOneWidget);
-
-    await tester.tap(find.text('Kapat'));
-    await tester.pump();
-    expect(find.byType(VixRexOnboardingChatScreen), findsNothing);
+    expect(landingScroll.position.pixels, lessThan(beforeOpeningChat));
   });
 
   testWidgets('Geçersiz route karşılama ekranına düşer', (

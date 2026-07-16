@@ -67,7 +67,7 @@ class VixRexGuidanceService {
         label: 'Kapak fotoğrafı',
         points: 10,
         completed: snapshot?.coverCompleted ?? false,
-        action: VixRexAction.scrollToCover,
+        action: VixRexAction.openCoverTemplatePicker,
       ),
       VixRexQualityItem(
         id: 'description',
@@ -268,11 +268,11 @@ class VixRexGuidanceService {
         const VixRexRecommendation(
           id: 'improve_cover',
           phase: VixRexJourneyPhase.improve,
-          title: 'Kapak fotoğrafı ekleyin',
+          title: 'Kapak şablonu seçin',
           description:
-              'Vitrininize kapak fotoğrafı ekleyerek daha profesyonel görünmesini sağlayın.',
-          buttonLabel: 'Kapak Fotoğrafına Git',
-          action: VixRexAction.scrollToCover,
+              'Hazır kapak şablonundan birini seç — vitrinin hemen daha profesyonel görünür.',
+          buttonLabel: 'Kapak şablonu seç',
+          action: VixRexAction.openCoverTemplatePicker,
         ),
       );
     }
@@ -312,12 +312,75 @@ class VixRexGuidanceService {
           phase: VixRexJourneyPhase.improve,
           title: 'Ürün veya hizmet ekleyin',
           description:
-              'Müşterilerinize sunduğunuz ürün ve hizmetleri ekleyin.',
-          buttonLabel: 'Ürün/Hizmet Alanına Git',
+              'İlk ürün/hizmetini elle ekle — müşteri menünde görsün.',
+          buttonLabel: 'Ürün alanına git',
           action: VixRexAction.scrollToProducts,
         ),
       );
+      items.add(
+        const VixRexRecommendation(
+          id: 'improve_catalog_ocr',
+          phase: VixRexJourneyPhase.improve,
+          title: 'Fiş veya etiketle ürün ekle',
+          description:
+              'Mevcut tarayıcıyla fiş/etiketten ürün aktar — elle yazmana gerek kalmasın.',
+          buttonLabel: 'Tarayıcıyı aç',
+          action: VixRexAction.openOcrScanner,
+        ),
+      );
     }
+
+    // ── Randevu sistemi ──
+    items.add(
+      const VixRexRecommendation(
+        id: 'improve_booking',
+        phase: VixRexJourneyPhase.improve,
+        title: 'Randevu sistemi kurun',
+        description:
+            'Müşterileriniz online randevu alsın — 7/24 açık kalın.',
+        buttonLabel: 'Randevu ayarları',
+        action: VixRexAction.scrollToCategory,
+      ),
+    );
+
+    // ── Blog / duyuru ──
+    items.add(
+      const VixRexRecommendation(
+        id: 'improve_blog',
+        phase: VixRexJourneyPhase.improve,
+        title: 'Duyuru veya yazı paylaşın',
+        description:
+            'Kampanya, indirim veya haberlerinizi yazarak Google\'da üst sıralara çıkın.',
+        buttonLabel: 'Vitrinime git',
+        action: VixRexAction.openVitrim,
+      ),
+    );
+
+    // ── SEO ayarları ──
+    items.add(
+      const VixRexRecommendation(
+        id: 'improve_seo',
+        phase: VixRexJourneyPhase.improve,
+        title: 'Google görünürlüğünü güçlendirin',
+        description:
+            'Meta başlık, açıklama ve anahtar kelimelerinizi girerek arama sonuçlarında öne çıkın.',
+        buttonLabel: 'Vitrinime git',
+        action: VixRexAction.openVitrim,
+      ),
+    );
+
+    // ── Hesap güvence ──
+    items.add(
+      const VixRexRecommendation(
+        id: 'improve_account',
+        phase: VixRexJourneyPhase.improve,
+        title: 'Hesabınızı güvenceye alın',
+        description:
+            'Giriş yaparak vitrininizi hesabınıza bağlayın — verileriniz güvende kalsın.',
+        buttonLabel: 'Hesap',
+        action: VixRexAction.openAuth,
+      ),
+    );
 
     return items;
   }

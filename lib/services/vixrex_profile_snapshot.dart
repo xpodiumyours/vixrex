@@ -82,16 +82,15 @@ class VixRexProfileSnapshot {
         data.provinceName.trim().isNotEmpty &&
         data.districtName.trim().isNotEmpty;
 
+    // Not: hash DB'de boş olabilir (bkz. StoreEditorController._stampAcceptedLegalDocuments).
+    // Yayın kapısı (isLegalPublishReady) da hash'i şart koşmaz; burada da koşmuyoruz.
     final legalOk =
         data.privacyNoticeAcknowledged &&
         data.privacyNoticeVersion.trim().isNotEmpty &&
-        data.privacyNoticeHash.trim().isNotEmpty &&
         data.termsAccepted &&
         data.termsVersion.trim().isNotEmpty &&
-        data.termsHash.trim().isNotEmpty &&
         data.publicationConsentAccepted &&
-        data.publicationConsentVersion.trim().isNotEmpty &&
-        data.publicationConsentHash.trim().isNotEmpty;
+        data.publicationConsentVersion.trim().isNotEmpty;
 
     final isPublished = publishedInfo != null && publishedInfo.isComplete;
     final coverCompleted = data.shelfImageUrl.trim().isNotEmpty;

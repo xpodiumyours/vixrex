@@ -14,7 +14,14 @@ abstract final class ChatbotConfig {
         'Merhaba! Ben $botName, Vixrex rehberiyim.\n\n'
         'Vitrinini kurman, yayınlaman ve müşterilerine duyurman için sıradaki doğru adımı gösteririm.\n\n'
         'Nasıl yardımcı olayım?',
-        quickReplies: mainMenuReplies(null),
+        quickReplies: [
+          const QuickReply(
+            label: 'Vitrin oluştur',
+            payload: 'start_setup',
+            action: VixRexAction.openVitrim,
+          ),
+          ...mainMenuReplies(null),
+        ],
       );
 
   // ─── Snapshot Tabanlı Karşılama Mesajları ────────────────────────────────
@@ -70,9 +77,14 @@ abstract final class ChatbotConfig {
         ),
       ],
       const QuickReply(
-        label: '📷 Ürün Ekle',
+        label: 'Ürün ekle (tara)',
         payload: 'ocr_scan',
         action: VixRexAction.openOcrScanner,
+      ),
+      const QuickReply(
+        label: 'Kapak şablonu',
+        payload: 'kapak',
+        action: VixRexAction.openCoverTemplatePicker,
       ),
       const QuickReply(label: 'Vixrex Ne İşe Yarar?', payload: 'vixrex_info'),
       const QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
@@ -96,8 +108,20 @@ abstract final class ChatbotConfig {
       payload: 'membership_info',
     ),
     ChatbotIntent(
+      keywords: ['kapak', 'sablon', 'kapak foto', 'cover'],
+      payload: 'kapak',
+    ),
+    ChatbotIntent(
       keywords: ['fotograf', 'resim', 'foto', 'galeri', 'gorsel', 'yukle'],
       payload: 'fotograf',
+    ),
+    ChatbotIntent(
+      keywords: ['aciklama', 'hakkinda', 'bio', 'tanitim yazisi'],
+      payload: 'aciklama',
+    ),
+    ChatbotIntent(
+      keywords: ['urun', 'hizmet', 'menu', 'katalog', 'fiyat listesi'],
+      payload: 'urun',
     ),
     ChatbotIntent(
       keywords: ['qr', 'kod', 'link', 'paylas', 'baglanti', 'url'],
@@ -120,12 +144,24 @@ abstract final class ChatbotConfig {
       payload: 'yayinla',
     ),
     ChatbotIntent(
-      keywords: ['fotograf', 'fatura', 'tara', 'urun ekle', 'katalog', 'otomatik', 'ocr'],
+      keywords: ['fatura', 'fis', 'tara', 'etiket', 'otomatik', 'ocr'],
       payload: 'ocr_scan',
     ),
     ChatbotIntent(
-      keywords: ['premium', 'ucretsiz', 'sinirsiz', 'ucretli', 'odeme'],
+      keywords: ['premium', 'sinirsiz', 'ucretli'],
       payload: 'ocr_premium',
+    ),
+    ChatbotIntent(
+      keywords: [
+        'hesap',
+        'giris',
+        'uye ol',
+        'kayit',
+        'guvence',
+        'hesabimi',
+        'login',
+      ],
+      payload: 'hesap',
     ),
   ];
 
@@ -159,58 +195,172 @@ abstract final class ChatbotConfig {
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
+      case 'kapak':
+        return ChatMessage.bot(
+          'Hazır kapak şablonundan birini seç — vitrinin hemen daha profesyonel görünür.',
+          quickReplies: const [
+            QuickReply(
+              label: 'Kapak şablonu seç',
+              payload: 'action_cover',
+              action: VixRexAction.openCoverTemplatePicker,
+            ),
+            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
+        );
+
       case 'fotograf':
         return ChatMessage.bot(
-          'Vitrinim → Galeri veya Kapak Fotoğrafı bölümlerinden dilediğiniz fotoğrafları ekleyebilirsiniz.',
-          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+          'Galeriye görsel ekle veya kapak şablonu seç. İkisi de mevcut Vitrinim editöründen açılır.',
+          quickReplies: const [
+            QuickReply(
+              label: 'Galeriye git',
+              payload: 'action_gallery',
+              action: VixRexAction.scrollToGallery,
+            ),
+            QuickReply(
+              label: 'Kapak şablonu seç',
+              payload: 'action_cover',
+              action: VixRexAction.openCoverTemplatePicker,
+            ),
+            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
+        );
+
+      case 'aciklama':
+        return ChatMessage.bot(
+          'Kısa bir işletme açıklaması ekle — müşteri seni daha çabuk anlar.',
+          quickReplies: const [
+            QuickReply(
+              label: 'Açıklamaya git',
+              payload: 'action_desc',
+              action: VixRexAction.scrollToDesc,
+            ),
+            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
+        );
+
+      case 'urun':
+        return ChatMessage.bot(
+          'Ürün/hizmet ekle: elle yaz veya fiş/etiket tarayıcıyı kullan. İkisi de mevcut uygulama yolları.',
+          quickReplies: const [
+            QuickReply(
+              label: 'Ürün alanına git',
+              payload: 'action_products',
+              action: VixRexAction.scrollToProducts,
+            ),
+            QuickReply(
+              label: 'Fiş ile tara',
+              payload: 'action_ocr',
+              action: VixRexAction.openOcrScanner,
+            ),
+            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
         );
 
       case 'qr':
         return ChatMessage.bot(
-          'Vitrininizi yayınladıktan sonra sağ üstteki paylaş ikonundan QR kodunuza ve linkinize ulaşabilirsiniz.',
-          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+          snapshot?.isPublished == true
+              ? 'Linkini kopyala, QR göster veya WhatsApp ile paylaş — hepsi mevcut paylaşım yolları.'
+              : 'Önce vitrinini yayınla; sonra QR ve link hazır olur.',
+          quickReplies: [
+            if (snapshot?.isPublished == true) ...const [
+              QuickReply(
+                label: 'Linki kopyala',
+                payload: 'copy_link',
+                action: VixRexAction.copyLink,
+              ),
+              QuickReply(
+                label: 'QR göster',
+                payload: 'show_qr',
+                action: VixRexAction.showQr,
+              ),
+              QuickReply(
+                label: 'WhatsApp’ta paylaş',
+                payload: 'share_wa',
+                action: VixRexAction.shareWhatsapp,
+              ),
+            ] else
+              const QuickReply(
+                label: 'Vitrinime git',
+                payload: 'open_vitrim',
+                action: VixRexAction.openVitrim,
+              ),
+            const QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
         );
 
       case 'randevu':
         return ChatMessage.bot(
-          'Vitrinim → Randevu Yönetimi sayfasından randevu sisteminizi aktif edebilirsiniz.',
-          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+          'Randevu, uygun kategoride mevcut editör paketinden açılır. Kategori alanına gidip kontrol edebilirsin.',
+          quickReplies: const [
+            QuickReply(
+              label: 'Kategoriye git',
+              payload: 'action_category',
+              action: VixRexAction.scrollToCategory,
+            ),
+            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
         );
 
       case 'whatsapp':
         return ChatMessage.bot(
-          'Vitrinim → İletişim sayfasından müşterilerinizin size doğrudan ulaşmasını sağlayacak WhatsApp numaranızı girebilirsiniz.',
-          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+          'WhatsApp numaran Vitrinim iletişim alanında. Oradan güncelle.',
+          quickReplies: const [
+            QuickReply(
+              label: 'WhatsApp alanına git',
+              payload: 'action_wa',
+              action: VixRexAction.scrollToWhatsapp,
+            ),
+            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
         );
 
       case 'adres':
         return ChatMessage.bot(
-          'Vitrinim → Konum sayfasından adresinizi kaydedebilirsiniz. Müşterileriniz tek tıkla haritalarda sizi bulur.',
-          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+          'Konumunu Vitrinim adres alanından güncelle — GPS veya elle.',
+          quickReplies: const [
+            QuickReply(
+              label: 'Adrese git',
+              payload: 'action_address',
+              action: VixRexAction.scrollToAddress,
+            ),
+            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
         );
 
       case 'yayinla':
         return ChatMessage.bot(
-          'Vitrinim sayfasındaki "Yayınla" butonuna basarak dijital vitrininizi hemen müşterilerinizle buluşturabilirsiniz.',
-          quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+          'Yayın için yasal onaylar ve Yayınla butonu Vitrinim’de. Oradan devam et.',
+          quickReplies: const [
+            QuickReply(
+              label: 'Yasal onaylara git',
+              payload: 'action_legal',
+              action: VixRexAction.scrollToLegal,
+            ),
+            QuickReply(
+              label: 'Vitrinime git',
+              payload: 'open_vitrim',
+              action: VixRexAction.openVitrim,
+            ),
+            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
         );
 
       case 'ocr_scan':
         return ChatMessage.bot(
-          'Fotoğraftan ürün çıkarma özelliği ile fiş/fatura veya raf fiyat etiketi çekerek otomatik ürün kataloğu oluşturabilirsiniz.\n\n'
-          'Tarama yapmak istediğiniz yöntemi seçin:',
-          quickReplies: [
-            const QuickReply(
-              label: '📷 Fiş/Fatura Tara',
-              payload: 'action_step',
+          'Fiş/fatura veya raf etiketi ile ürün aktar — mevcut tarayıcıyı aç.',
+          quickReplies: const [
+            QuickReply(
+              label: 'Fiş/Fatura tara',
+              payload: 'action_ocr',
               action: VixRexAction.openOcrScanner,
             ),
-            const QuickReply(
-              label: '🏷️ Raf/Etiket Tara',
-              payload: 'action_step',
+            QuickReply(
+              label: 'Raf/Etiket tara',
+              payload: 'action_ocr_shelf',
               action: VixRexAction.openOcrScannerShelf,
             ),
-            const QuickReply(label: '❓ Nasıl Çalışır?', payload: 'ocr_info'),
+            QuickReply(label: 'Nasıl çalışır?', payload: 'ocr_info'),
           ],
         );
 
@@ -238,6 +388,20 @@ abstract final class ChatbotConfig {
           'Ücretsiz deneme: Günde 3 ücretsiz OCR hakkı.\n'
           'Premium için uygulama içinden satın alma yapabilirsiniz.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+        );
+
+      case 'hesap':
+        return ChatMessage.bot(
+          'Vitrinini güvenceye almak için giriş yap / üye ol. '
+          'Mevcut Auth ekranı açılır; vitrin token ile hesaba bağlanır.',
+          quickReplies: const [
+            QuickReply(
+              label: 'Hesabımı güvenceye al',
+              payload: 'action_auth',
+              action: VixRexAction.openAuth,
+            ),
+            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
         );
 
       default:

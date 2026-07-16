@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 export 'package:vixrex/services/store_publish_validator.dart';
 export 'package:vixrex/services/store_publish_payload_builder.dart';
 export 'package:vixrex/services/store_publish_legal_validator.dart';
@@ -43,18 +42,25 @@ class StorePublishService {
     try {
       client = supabaseClient ?? Supabase.instance.client;
 
-      final existingStore =
+      if (editToken.trim().isEmpty) {
+        return Result.failure(Failure('Yayın için edit token gerekli.'));
+      }
+
+      // 1. Token ile mevcut vitrin var mı kontrol et → güncelle
+      final existingByToken =
           await client
               .from('stores')
-              .select('slug, edit_token')
-              .eq('slug', slug)
+              .select('slug')
+              .eq('edit_token', editToken)
               .maybeSingle();
 
-      // editToken boşsa ve store varsa → direkt update (RPC yerine)
-      // Çünkü update_store_with_token RPC'si boş editToken'i reject eder
-      if (editToken.trim().isEmpty && existingStore != null) {
-        final payload = payloadBuilder.toStoreUpdateMap(data);
-        await client.from('stores').update(payload).eq('slug', slug);
+      if (existingByToken != null) {
+        final dbSlug = (existingByToken['slug'] as String?)?.trim() ?? '';
+        if (dbSlug.isNotEmpty) {
+          slug = dbSlug;
+        }
+        final updateResult = await _updateStoreWithToken(client, data, slug, editToken);
+        if (updateResult.isFailure) return Result.failure(updateResult.failure!);
         return Result.success(StorePublishResult(
           publicPath: '/v/$slug',
           slug: slug,
@@ -63,56 +69,36 @@ class StorePublishService {
         ));
       }
 
-      if (editToken.trim().isNotEmpty) {
-        try {
-          final existingByToken =
-              await client
-                  .from('stores')
-                  .select('slug')
-                  .eq('edit_token', editToken)
-                  .maybeSingle();
-
-          if (existingByToken != null) {
-            final dbSlug = (existingByToken['slug'] as String?)?.trim() ?? '';
-            if (dbSlug.isNotEmpty) {
-              slug = dbSlug;
-            }
-            final updateResult = await _updateStoreWithToken(client, data, slug, editToken);
-            if (updateResult.isFailure) return Result.failure(updateResult.failure!);
-            return Result.success(StorePublishResult(
-              publicPath: '/v/$slug',
-              slug: slug,
-              wasUpdated: true,
-              editToken: editToken,
-            ));
-          }
-        } on PostgrestException catch (e) {
-          if (kDebugMode) debugPrint('Store update check error: $e');
-        }
-      }
-
-      if (existingStore == null) {
-        final payload = payloadBuilder.toStoreInsertMap(data, slug, editToken);
-        if (client.auth.currentUser != null) {
-          payload['user_id'] = client.auth.currentUser!.id;
-        }
-        await client.from('stores').insert(payload);
+      // 2. Yeni vitrin oluştur (RPC)
+      try {
+        await client.rpc(
+          'create_store_with_token',
+          params: {
+            'p_slug': slug,
+            'p_edit_token': editToken,
+            'p_store': payloadBuilder.toStoreInsertMap(data, slug, editToken),
+          },
+        );
         return Result.success(StorePublishResult(
           publicPath: '/v/$slug',
           slug: slug,
           wasUpdated: false,
           editToken: editToken,
         ));
+      } on PostgrestException catch (error) {
+        // Slug çakışıyorsa → güncelle
+        if (_isDuplicateSlugError(error)) {
+          final updateResult = await _updateStoreWithToken(client, data, slug, editToken);
+          if (updateResult.isFailure) return Result.failure(updateResult.failure!);
+          return Result.success(StorePublishResult(
+            publicPath: '/v/$slug',
+            slug: slug,
+            wasUpdated: true,
+            editToken: editToken,
+          ));
+        }
+        return Result.failure(SupabaseErrorMapper.map(error));
       }
-
-      final updateResult = await _updateStoreWithToken(client, data, slug, editToken);
-      if (updateResult.isFailure) return Result.failure(updateResult.failure!);
-      return Result.success(StorePublishResult(
-        publicPath: '/v/$slug',
-        slug: slug,
-        wasUpdated: true,
-        editToken: editToken,
-      ));
     } on PostgrestException catch (error) {
       if (_isDuplicateSlugError(error)) {
         final updateResult = await _updateStoreWithToken(client, data, slug, editToken);
@@ -124,7 +110,6 @@ class StorePublishService {
           editToken: editToken,
         ));
       }
-
       return Result.failure(SupabaseErrorMapper.map(error));
     } catch (error) {
       return Result.failure(SupabaseErrorMapper.map(error));
@@ -244,6 +229,29 @@ class StorePublishService {
       final client = supabaseClient ?? Supabase.instance.client;
       await client.rpc(
         'withdraw_store_publication_consent',
+        params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
+      );
+      return const Result.success(null);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
+
+  /// Token doğrulamasıyla vitrini ve ona bağlı verileri kalıcı olarak siler.
+  Future<Result<void>> deleteStore({
+    required String slug,
+    required String editToken,
+  }) async {
+    if (slug.trim().isEmpty || editToken.trim().isEmpty) {
+      return Result.failure(
+        Failure('Silinecek vitrin bilgileri eksik.'),
+      );
+    }
+
+    try {
+      final client = supabaseClient ?? Supabase.instance.client;
+      await client.rpc(
+        'delete_store_with_token',
         params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
       );
       return const Result.success(null);

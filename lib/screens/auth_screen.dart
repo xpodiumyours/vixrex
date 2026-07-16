@@ -109,19 +109,20 @@ class _AuthScreenState extends State<AuthScreen> {
     final authService = const AuthService();
     final prefs = await SharedPreferences.getInstance();
 
-    // 1. Check for local edit tokens and link them if present
-    final localStoreToken = prefs.getString(LocalStorageKeys.storeEditToken);
-    final localVitrinToken = prefs.getString(LocalStorageKeys.vitrinEditToken);
+    // 1. Check for local edit tokens and link them if present.
+    // Publish writes last_published_edit_token (+ mirrored vitrin/store keys).
+    final localTokenCandidates = <String>[
+      prefs.getString(LocalStorageKeys.lastPublishedEditToken) ?? '',
+      prefs.getString(LocalStorageKeys.vitrinEditToken) ?? '',
+      prefs.getString(LocalStorageKeys.storeEditToken) ?? '',
+    ];
+    final localEditToken = localTokenCandidates
+        .map((t) => t.trim())
+        .firstWhere((t) => t.isNotEmpty, orElse: () => '');
 
     bool linked = false;
-    if (localStoreToken != null && localStoreToken.isNotEmpty) {
-      final linkResult = await authService.linkAnonymousStore(localStoreToken);
-      linkResult.when(
-        success: (value) => linked = value,
-        failure: (_) {},
-      );
-    } else if (localVitrinToken != null && localVitrinToken.isNotEmpty) {
-      final linkResult = await authService.linkAnonymousStore(localVitrinToken);
+    if (localEditToken.isNotEmpty) {
+      final linkResult = await authService.linkAnonymousStore(localEditToken);
       linkResult.when(
         success: (value) => linked = value,
         failure: (_) {},

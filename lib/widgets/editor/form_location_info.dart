@@ -48,6 +48,13 @@ class FormLocationInfo extends StatelessWidget {
           districtCode,
           districtName,
         }) {
+          if (latitude != null && longitude != null) {
+            controller.data.latitude = latitude;
+            controller.data.longitude = longitude;
+            controller.data.locationAccuracyMeters = accuracy;
+            controller.data.locationSource = 'device';
+            controller.data.locationConsentAt = DateTime.now();
+          }
           if (address != null) {
             addressController.text = address;
             controller.updateAddress(controller.data, address);

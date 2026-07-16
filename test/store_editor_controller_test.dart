@@ -15,22 +15,31 @@ import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 
 class FakeLocationService extends Fake implements LocationService {
+  FakeLocationService({this.useApproximate = false});
+
+  final bool useApproximate;
+
   @override
   Future<LocationResult> getCurrentLocation() async {
-    return LocationResult.success(
-      Position(
-        latitude: 41.0082,
-        longitude: 28.9784,
-        timestamp: DateTime.now(),
-        accuracy: 10,
-        altitude: 0,
-        heading: 0,
-        speed: 0,
-        speedAccuracy: 0,
-        altitudeAccuracy: 0,
-        headingAccuracy: 0,
-      ),
+    final position = Position(
+      latitude: 41.0082,
+      longitude: 28.9784,
+      timestamp: DateTime.now(),
+      accuracy: useApproximate ? 120 : 10,
+      altitude: 0,
+      heading: 0,
+      speed: 0,
+      speedAccuracy: 0,
+      altitudeAccuracy: 0,
+      headingAccuracy: 0,
     );
+    if (useApproximate) {
+      return LocationResult.approximate(
+        position,
+        LocationService.buildAccuracyMessage(position.accuracy),
+      );
+    }
+    return LocationResult.success(position);
   }
 
   @override
@@ -181,6 +190,25 @@ void main() {
         expect(controller.longitude, 28.9784);
         expect(controller.data.address, 'İstanbul Kadıköy Moda');
         expect(controller.selectedProvinceName, 'İstanbul');
+      },
+    );
+
+    test(
+      'fetchLocation accepts approximate web GPS and still matches il/ilçe',
+      () async {
+        final controller = StoreEditorController(
+          storage: storageService,
+          locationService: FakeLocationService(useApproximate: true),
+          supabaseClient: fakeSupabase,
+        );
+
+        await controller.initialize(null);
+        await controller.triggerFetchLocation();
+
+        expect(controller.latitude, 41.0082);
+        expect(controller.longitude, 28.9784);
+        expect(controller.selectedProvinceName, 'İstanbul');
+        expect(controller.data.districtName, 'Kadıköy');
       },
     );
 

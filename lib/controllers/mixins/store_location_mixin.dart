@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/config/turkey_cities_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/location_service.dart';
+import 'package:vixrex/utils/text_utils.dart';
 
 /// Konum (GPS) ve Adres (İl/İlçe) işlemlerini yöneten Mixin.
 mixin StoreLocationMixin on ChangeNotifier {
@@ -43,6 +44,9 @@ mixin StoreLocationMixin on ChangeNotifier {
   }
 
   /// GPS üzerinden mevcut konumu çeker ve il/ilçe eşleştirmesi yapar.
+  ///
+  /// Chrome/web sık sık 30 m üstü (yaklaşık) konum döner; editördeki gibi
+  /// `bestPosition` kabul edilir. Elle adres yazma yolu buraya bağlı değildir.
   Future<void> fetchLocation({
     required StoreData data,
     required LocationService locationService,
@@ -51,34 +55,44 @@ mixin StoreLocationMixin on ChangeNotifier {
     notifyListeners();
 
     final result = await locationService.getCurrentLocation();
-    if (result.isSuccess && result.position != null) {
-      final pos = result.position!;
+    final pos = result.bestPosition;
+    if (pos != null) {
       data.latitude = pos.latitude;
       data.longitude = pos.longitude;
       data.locationAccuracyMeters = pos.accuracy;
       data.locationSource = 'device';
       data.locationConsentAt = DateTime.now();
 
-      final address = await locationService.getAddressFromCoordinates(pos.latitude, pos.longitude);
+      final address = await locationService.getAddressFromCoordinates(
+        pos.latitude,
+        pos.longitude,
+      );
       if (address != null && address.trim().isNotEmpty) {
         data.address = address;
-        // İl/İlçe otomatik tespiti
+        final normalizedAddress = TextUtils.normalizeTurkish(address);
         for (final province in turkeyProvinces) {
-          if (address.toLowerCase().contains(province.name.toLowerCase())) {
-            data.provinceCode = province.code;
-            data.provinceName = province.name;
-            final districts = turkeyDistricts[province.code];
-            if (districts != null) {
-              for (final district in districts) {
-                if (address.toLowerCase().contains(district.toLowerCase())) {
-                  data.districtCode = district;
-                  data.districtName = district;
-                  break;
-                }
+          final normalizedProvince =
+              TextUtils.normalizeTurkish(province.name);
+          if (!normalizedAddress.contains(normalizedProvince)) continue;
+
+          data.provinceCode = province.code;
+          data.provinceName = province.name;
+          final districts = turkeyDistricts[province.code];
+          if (districts != null) {
+            // Uzun ilçe adını önce dene (ör. "Şişli" vs kısa eşleşmeler).
+            final ordered = [...districts]
+              ..sort((a, b) => b.length.compareTo(a.length));
+            for (final district in ordered) {
+              final normalizedDistrict =
+                  TextUtils.normalizeTurkish(district);
+              if (normalizedAddress.contains(normalizedDistrict)) {
+                data.districtCode = district;
+                data.districtName = district;
+                break;
               }
             }
-            break;
           }
+          break;
         }
       }
     }

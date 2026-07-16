@@ -116,6 +116,7 @@ class StoreLocalStorageService {
     final prefs = await _getPrefs();
     await prefs.remove(LocalStorageKeys.vitrinData);
     await prefs.remove(LocalStorageKeys.vitrinEditToken);
+    await prefs.remove(LocalStorageKeys.storeEditToken);
     await clearPublishedVitrinInfo();
   }
 
@@ -156,6 +157,12 @@ class StoreLocalStorageService {
     await prefs.setString(LocalStorageKeys.lastPublishedLink, canonicalLink);
     await prefs.setString(LocalStorageKeys.lastPublishedName, name);
     await prefs.setString(LocalStorageKeys.lastPublishedEditToken, editToken);
+    // Auth post-login reads vitrin/store keys; keep them aligned with publish token.
+    final trimmedToken = editToken.trim();
+    if (trimmedToken.isNotEmpty) {
+      await prefs.setString(LocalStorageKeys.vitrinEditToken, trimmedToken);
+      await prefs.setString(LocalStorageKeys.storeEditToken, trimmedToken);
+    }
   }
 
   /// Kayıtlı en son yayınlanan vitrin slug'ını okur. Yoksa `null` döner.

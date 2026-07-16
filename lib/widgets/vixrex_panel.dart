@@ -313,6 +313,7 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
         case VixRexAction.openOcrScannerShelf:
           onScroll?.call(action);
           break;
+        case VixRexAction.openAuth:
         case VixRexAction.none:
           break;
       }

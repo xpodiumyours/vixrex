@@ -87,6 +87,7 @@ class MyVitrinState extends ChangeNotifier {
       case VixRexAction.openCoverTemplatePicker:
       case VixRexAction.openOcrScanner:
       case VixRexAction.openOcrScannerShelf:
+      case VixRexAction.openAuth:
       case VixRexAction.none:
         break;
     }

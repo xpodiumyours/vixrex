@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/legal_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/screens/appointment_tracker_screen.dart';
 import 'package:vixrex/screens/auth_screen.dart';
 import 'package:vixrex/screens/blog_editor_screen.dart';
@@ -14,12 +15,14 @@ import 'package:vixrex/screens/legal_screen.dart';
 import 'package:vixrex/screens/public_booking_screen.dart';
 import 'package:vixrex/screens/public_vitrin_screen.dart';
 import 'package:vixrex/screens/public_product_screen.dart';
+import 'package:vixrex/screens/vixrex_onboarding_chat_screen.dart';
 
 class AppRouter {
   static const String landing = '/';
   static const String app = '/app';
   static const String home = '/home';
   static const String auth = '/auth';
+  static const String onboardingChat = '/onboarding-chat';
   static const String consent = LegalConfig.consentPath;
 
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -65,6 +68,13 @@ class AppRouter {
       GoRoute(
         path: auth,
         builder: (context, state) => const AuthScreen(),
+      ),
+      GoRoute(
+        path: onboardingChat,
+        builder: (context, state) {
+          final initialName = state.extra is String ? state.extra as String : null;
+          return VixRexOnboardingChatScreen(initialName: initialName);
+        },
       ),
       GoRoute(
         path: app,
@@ -160,16 +170,43 @@ class AppRouter {
     }
   }
 
+  static void navigateToOnboardingChat(
+    BuildContext context, {
+    String? initialName,
+  }) {
+    final name = initialName?.trim();
+    final extra = (name != null && name.isNotEmpty) ? name : null;
+    try {
+      context.go(onboardingChat, extra: extra);
+    } catch (_) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VixRexOnboardingChatScreen(initialName: extra),
+        ),
+        (route) => false,
+      );
+    }
+  }
+
   /// Ana kabuk. [initialIndex]: 0=Vitrinim, 1=Keşfet, 2=VixRex, 3=Profil.
-  static void navigateToHomeShell(BuildContext context,
-      {int initialIndex = 0, String? initialVitrinName}) {
-    if (initialVitrinName != null || initialIndex > 1) {
+  static void navigateToHomeShell(
+    BuildContext context, {
+    int initialIndex = 0,
+    String? initialVitrinName,
+    VixRexAction? initialVixRexAction,
+  }) {
+    final needsFreshShell = initialVitrinName != null ||
+        initialIndex > 1 ||
+        initialVixRexAction != null;
+    if (needsFreshShell) {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
           builder: (_) => HomeShellScreen(
             initialIndex: initialIndex,
             initialVitrinName: initialVitrinName,
+            initialVixRexAction: initialVixRexAction,
           ),
         ),
         (route) => false,
@@ -190,6 +227,7 @@ class AppRouter {
           builder: (_) => HomeShellScreen(
             initialIndex: initialIndex,
             initialVitrinName: initialVitrinName,
+            initialVixRexAction: initialVixRexAction,
           ),
         ),
         (route) => false,

@@ -1,142 +1,234 @@
-# Vixrex Asistan — Temiz İlerleme Planı
+# VIXREX ASİSTAN PLANI (TEK KAYNAK)
+
+**Bu dosya bağlayıcı tek plandır.**  
+Görsel tarz: `vixrex-asistan-ornek.html` (HTML ile bu plan çelişirse önce Furkan’a sor; tahminle seçme).  
+Oturum özeti (ne yapıldı): `vixrex-asistan-OTURUM-YAPILANLAR.md` — planı değiştirmez.
+
+**Üst kurallar (değişmez):** `PROJECT_RULES.md` → `SON_DURUM.md` → `AGENTS.md` → bu dosya.  
+Bu plan üst kuralları gevşetemez.  
+**Asistan skill (her adımda):** `.cursor/skills/vixrex-asistan-bagla/SKILL.md` —
+ürünü bozma, ölü kod bırakma, kabuk işlem yok; çalışan ürün üzerine çalışan asistan.
 
 **Tarih:** 16 Temmuz 2026  
-**Tek kaynak plan:** Bu dosya. Diğer `vixrex-asistan-*.md` / komple plan = arşiv/kaynak; çelişirse **bu dosya + HTML** kazanır.  
-**UX tarzı (bağlayıcı):** [`vixrex-asistan-ornek.html`](vixrex-asistan-ornek.html)  
-**Durum:** Plan hazır. Kod yok. Furkan “Dalga 1’e başla” demeden Flutter yazılmaz.
+**Kod durumu:** Çalışma ağacında (commit yok). Paralel asistan/yayın/GPS yok — mevcut yapıya bağlanır.
 
 ---
 
-## 1. Ne istiyorsun? (kısa)
+## 1. ÜRÜN (ne istiyoruz)
 
-HTML’deki gibi konuşan Vixrex; detaya boğmadan.
+Vixrex maskotu, kullanıcı uygulamada kaldığı sürece yanında olan tek asistandır.
 
-- Kısa tanışma → onay  
-- Ad + WhatsApp + konum (GPS veya yazı)  
-- “Artık dijitalde varsın” + kolay profil + link (domain yok)  
-- Hemen kapak şablonu teşviki  
-- Sonra kullanıcı uygulamada kaldığı sürece yanında: ürün, randevu, paylaşım… **sıradaki özelliği konuşarak tanıtır**
+Akış (sırayla):
+1. Kısa soru: dijital vitrin oluşturayım mı?
+2. Onaydan sonra yalnız: işletme adı, WhatsApp, konum (GPS veya yazı)
+3. “Artık dijitalde varsın” + kolay profil + web linki (domain yok mesajı)
+4. Kapak şablonu teşviki
+5. Sonra sırayla özellik tanıtımı: açıklama → ürün → randevu → paylaşım → hesap…
 
-**Tek asistan.** Ayrı yardım botu yok. Landing / badge / VixRex sekmesi aynı motorun kapılarıdır.
-
----
-
-## 2. Kurallara uyum (sıkı)
-
-| Kural | Bu planda |
-|---|---|
-| Paralel kayıt yolu yok | Yalnız `StoreEditorController` + `StorePublishService` |
-| Hesap bağlama | Mevcut `link_store_to_user` (yeni RPC adı yok) |
-| Misafir create | Geniş anon INSERT değil → security-definer RPC |
-| Token | Publish ↔ Auth key hizası zorunlu |
-| Dokunulmaz | Canlı önizleme, yerel kayıt, tema, tab, Keşfet akışı bozulmaz |
-| Küçük iş | Dalga dalga; tek PR’da 40 özellik yok |
-| Yeni defter yok | Bu dosya tek plan; `*_BORCU.md` açılmaz |
+Üslup: kısa cümle, teşvik, kalabalık tanıtım yok, bir anda her şeyi sorma.
 
 ---
 
-## 3. Kullanıcı filmi (HTML = doğru his)
+## 2. AI ÇALIŞMA KURALLARI (zorunlu)
+
+Her ajan bu plana göre çalışırken:
+
+0. **Her adımda** `.cursor/skills/vixrex-asistan-bagla/SKILL.md` oku ve kapıyı geç.
+1. **Yeni plan dosyası açma.** Bu dosyayı güncelle veya Furkan’a sor.
+2. **Paralel yol yok.** Yeni kayıt/yayın motoru yok. Kullan: `StoreEditorController`, `StorePublishService`, `link_store_to_user`.
+3. **İkinci asistan/FAQ botu yok.** Landing, badge, VixRex sekmesi aynı motor.
+4. **Faz atlama yok.** Faz N bitmeden Faz N+1 kodlama.
+5. **Küçük iş.** Bir seferde bir faz dilimi; büyük refactor yok.
+6. **Dokunulmaz:** canlı önizleme, yerel kayıt, tema, mobil tab, sticky, Keşfet→kart→Düzenle akışı.
+7. **Misafir create:** security-definer RPC. Geniş `anon INSERT` politikası yazma.
+8. **Furkan teknik değil.** Belirsizse sor. Varsayım varsa açık yaz.
+9. **“Tamamlandı”** ancak kontrol sütunundaki davranış gerçekten çalışıyorsa.
+
+---
+
+## 3. FAZLAR (sıra kilitli)
+
+### Faz 0 — Plan kilidi
+Durum: **bitti**
+
+- Bu dosya tek kaynak
+- HTML tarz örneği var
+
+---
+
+### Faz 1 — Yayın temeli
+**Kod:** çalışma ağacında (RPC + publish + token hizası + test).  
+**Canlı:** RPC + yasal kolonlar uygulandı. Chrome kabul / commit açık.
+
+Amaç: Üye olmadan vitrin oluşsun; girişte hesaba bağlansın.
+
+| Adım | Yapılacak | Kontrol |
+|------|-----------|---------|
+| 1.1 | Misafir create RPC | `create_store_with_token` |
+| 1.2 | Publish servisi bu RPC’yi kullanır | Paralel insert yok |
+| 1.3 | Token key hizası (publish ↔ Auth) | Mirror + Auth okuma |
+| 1.4 | Test / canlı kabul | Birim test + Chrome |
+
+---
+
+### Faz 2 — Asistan varlık sohbeti
+
+Amaç: HTML’deki ilk film uygulamada çalışır.  
+**Kod:** çalışma ağacında. Konum=`FormLocationInfo`, yasal=`LegalConsentSection`, yayın=`publish()`.  
+**Kabul:** Chrome testi + Furkan onayı; commit yok.
+
+| Adım | Yapılacak | Kontrol |
+|------|-----------|---------|
+| 2.1 | Asistan ekranı + rota | `/onboarding-chat` |
+| 2.2 | Landing “Vixrex Oluştur” → asistan | Forma dump yok; ad alanı `initialName` |
+| 2.3 | Ad → WhatsApp → konum → kısa yasal → publish | Editör parçaları bağlı |
+| 2.4 | “Artık dijitalde varsın” + link mesajı | Kopyala / canlı aç (PublicSiteConfig) |
+| 2.5 | “Hesabımı güvenceye al” (yumuşak) | Auth |
+
+Bu fazda **yapılmayacak:** kapak şablonu, ürün, randevu.
+
+---
+
+### Faz 3 — Tek kapı
+
+| Adım | Yapılacak | Kontrol |
+|------|-----------|---------|
+| 3.1 | Badge → aynı asistan | Landing rozet → onboarding; uygulama içi rozet → VixRex sekmesi (overlay FAQ kapalı). Kısmen yapıldı, Chrome onayı yok. |
+| 3.2 | VixRex sekmesi → aynı asistan | Mevcut `VixRexScreen` + `VixRexGuidanceService` korunur; ikinci rehber yok |
+| 3.3 | Mod: kurulum / sıradaki özellik | Kurulum=onboarding; özellik=mevcut guidance/sekme |
+
+---
+
+### Faz 4 — Görünüm
+
+- Kapak şablonu teşviki  
+- Galeri teşviki  
+- Kısa açıklama  
+- Kalite göstergesi (mevcut guidance reuse)
+
+---
+
+### Faz 5 — Ürün
+
+- Sohbetle ürün/hizmet ekleme  
+- OCR / Excel’i konuşarak tanıtma (mevcut ekranı tetikle)
+
+---
+
+### Faz 6 — Randevu, duyuru, paylaşım
+
+- Randevu tanıtımı  
+- Kampanya/yazı tanıtımı  
+- Link / QR / WhatsApp paylaşım
+
+---
+
+### Faz 7 — Hesap, büyüme, sürekli koç
+
+- Hesap güvence  
+- Instagram / Keşfet / SEO mesajları  
+- Kalıcı “sıradaki özellik” döngüsü
+
+---
+
+### Faz 8 — Serbest metin anlama (LLM destekli sohbetten kayıt)
+
+**Durum:** Furkan isteğiyle askıda. OpenAI kodu ve Supabase Function korunuyor;
+uygulama çağrı yapmıyor, Function da OpenAI isteği göndermeden 503 döndürüyor.
+
+**Amaç:** Kullanıcı sohbette serbest yazınca (örn. "adresim Kadıköy"), Vixrex
+anlayıp kısaca özetler, onay ister; onaylanınca mevcut `StoreEditorController`
+üzerinden kaydeder. İkinci yazma yolu açılmaz.
+
+**Kapsam:** İşletme adı, WhatsApp, adres, açıklama, kategori.
+**Kapsam dışı (bilerek):** Yasal onaylar (`LegalConsentSection`). Onay
+checkbox'ları serbest metinle verilmez — uyumluluk riski nedeniyle mevcut
+buton akışı aynen kalır.
+
+| Adım | Yapılacak | Kontrol |
+|------|-----------|---------|
+| 8.1 | Serbest metin → alan önerisi → onay kartı → `StoreEditorController` setter akışı | Kod/test doğrulandı; mock üretim kodunda bırakılmadı |
+| 8.2 | Supabase Edge Function iskeleti (`vixrex-assistant-nlu`) + cihaz/IP bazlı rate limit | Canlı: 6 istek/dakika |
+| 8.3 | Furkan, OpenAI hesabında aylık sert harcama limitini kurar | Doğrulandı: $5 kredi, otomatik şarj kapalı |
+| 8.4 | Edge Function gerçek OpenAI API'sine bağlanır | Askıda: kod korunuyor, OpenAI çağrısı kapalı |
+| 8.5 | Furkan onayı → commit | Bozulma yok |
+
+**Yasak (ek):** Harcama limiti kurulmadan gerçek API'ye bağlanmak;
+`StoreEditorController` dışında ikinci bir yazma yolu açmak; onay alınmadan
+alan kaydetmek.
+
+---
+
+### Sonra (şimdi yok)
+
+TTL, offline, puan/rozet, analytics, AutoVitrinBuilder.
+
+---
+
+## 4. TEKNİK SINIRLAR
+
+**Kullan:**
+- `StoreEditorController`, `StorePublishService`
+- `AuthService.linkAnonymousStore` → RPC `link_store_to_user`
+- `LocationService` (GPS)
+- `StorePublishValidator`
+- HTML tonu / mevcut bubble-quick reply parçaları (uygunsa)
+
+**Yazma:**
+- Yeni `StoreData` yolu
+- Yeni publish API
+- `link_anonymous_store` adlı yeni RPC
+- Geniş anon INSERT policy
+- İkinci chatbot/asistan
+
+---
+
+## 5. GÜVENLİ İLERLEME YOLU (kilitli)
+
+**Hedef:** Asistan uygulamada hakim olsun; kullanıcıyla sohbet etsin.  
+**Yöntem:** Yeni motor yok. Editör, publish, guidance, OCR, paylaşım **asistana bağlanır**.
+
+### Bağlama haritası (tek doğru)
+
+| Kullanıcı kapısı | Gider | Motor |
+|------------------|--------|--------|
+| Landing oluştur / rozet | `/onboarding-chat` | Kurulum sohbeti → `StoreEditorController` |
+| App rozet | VixRex sekmesi | `VixRexGuidanceService` + sohbet dili → `VixRexAction` |
+| VixRex “sıradaki adım” | Aynı sekme | Quick reply → mevcut HomeShell handler |
+| Kapak / galeri / ürün / OCR / paylaş | Mevcut ekranlar | `openCoverTemplatePicker`, `scrollTo*`, `openOcrScanner`, … |
+
+### Sıra (atlamadan)
+
+| Adım | Ne | Güvenli kontrol | Durum |
+|------|----|-----------------|--------|
+| **G0** | Chrome: misafir yayın + link | Yayın gerçekten oluşur | Test sonra (Furkan) |
+| **G1** | VixRex sıradaki adım sohbet dili | Guidance → bot + quick reply | Yapıldı |
+| **G2** | Companion sürekliliği | Mevcut `ChatbotService` VixRex sekmesinde; kurulum → “Rehberde devam” | Yapıldı |
+| **G3** | Görünüm / ürün / randevu / paylaş | Sohbet intent → mevcut `VixRexAction` | Yapıldı |
+| **G4** | Hesap güvence | Sohbet → mevcut Auth (`openAuth` / `link_store_to_user`) | Yapıldı |
+| **G5** | Furkan onayı → **tek commit** | Bozulma yok | Commit yok |
+
+### Yasak (her adımda)
+
+- İkinci chatbot, ikinci publish, ikinci GPS, ikinci router shell  
+- Vitrinim / canlı önizleme / Keşfet→Düzenle akışını kırmak  
+- Kart + sohbet için **iki ayrı öneri motoru** (tek kaynak: `VixRexGuidanceService`)
+
+---
+
+## 6. CURSOR / DİĞER AI İÇİN KISA EMİR
 
 ```
-Landing "Vixrex Oluştur"
-  → Kısa: "Dijital vitrin oluşturmamı ister misin?"
-  → Evet
-  → Ad → WhatsApp → Konum (GPS)
-  → Kısa yasal onay
-  → "Artık dijitalde varsın" + profil + link
-  → "Kapak şablonu seç" (zorlama yok)
-  → (sürekli) sıradaki özellik tanıtımı…
+1) PROJECT_RULES + AGENTS + bu dosyayı oku
+2) Şu anki güvenli adım = G0 Chrome test (Furkan) veya Keşfet/Instagram büyüme mesajları; G1–G4 bağlandı
+3) Yeni md plan dosyası yaratma
+4) Paralel yol açma — mevcut StoreEditor / Guidance / VixRexAction bağla
+5) Küçük değişiklik → analyze/test → Türkçe kısa rapor
+6) Commit yalnız Furkan “commit” deyince
 ```
 
-Üslup: kısa cümle, teşvik, bir anda her şeyi sorma, esnaf temposu.
-
 ---
 
-## 4. Özellik yolu (detaya boğulmadan)
+## 7. FURKAN İÇİN TEK CÜMLE
 
-Her adım aynı kalıp: **kısa tanıt → onay → yaptır → sonuç göster → sıradakini öner**
-
-| Sıra | Ne | Mevcut ürün (yeniden yazma) |
-|---|---|---|
-| A | Varlık: ad, WA, konum, yayın, link | publish + edit_token |
-| B | Kapak şablonu → galeri | kapak / gallery |
-| C | Kısa açıklama | description |
-| D | Ürün / hizmet → OCR / Excel tanıt | ürün + OCR + bulk |
-| E | Randevu | booking |
-| F | Duyuru / yazı | blog |
-| G | Paylaşım: link, QR, WhatsApp | share |
-| H | Hesabı güvenceye al | link_store_to_user |
-| I | Büyüme: Instagram, Keşfet, SEO | mevcut özellikler |
-
-SEO’nun 10 alt satırı planı şişirmez: I dalgasında “ürün/vitrin Google’da görünsün” diye konuşulur; teknik SSR zaten `public_web`.
-
----
-
-## 5. Dalgalar (ilerleme)
-
-Bir dalga bitmeden sonrakine geçilmez.  
-Her dalga: HTML’de his (gerekirse) → Furkan onay → küçük kod → test → commit.
-
-### Dalga 0 — Plan + HTML tarzı
-- [x] HTML tarzı onaylandı (istediğin his bu)
-- [x] Bu temiz plan
-- [ ] Furkan: “Dalga 1 başla”
-
-### Dalga 1 — Temel + Varlık (A)
-1. Misafir create RPC + token key hizası  
-2. Asistan ekranı / rota; Landing “Vixrex Oluştur” buraya  
-3. Ad → WhatsApp → konum (GPS reuse) → kısa yasal → publish  
-4. “Artık varsın” + link + domain yok  
-5. Badge / sekme aynı asistana bağlanır (ayrı FAQ kalmaz)
-
-**Kapı:** Misafir yayın + link görünür + girişte vitrin bağlanır.
-
-### Dalga 2 — Görünüm (B) + anlatım (C)
-Kapak şablonu, galeri teşviki, kısa açıklama, kalite çubuğu (mevcut guidance reuse).
-
-### Dalga 3 — Katalog (D) = “sıradaki özellik”
-Sohbetle ilk ürün; sonra OCR/Excel’i konuşarak tanıt (mevcut ekranı tetikle).
-
-### Dalga 4 — Randevu + duyuru + paylaşım (E–G)
-
-### Dalga 5 — Hesap + büyüme (H–I) + sürekli koç
-Eksik olana göre “sıradaki özelliğin…” döngüsü kalıcı olur.
-
-### Bilerek sonra
-TTL, offline, puan/rozet, analytics, AutoVitrinBuilder (paralel StoreData yok).
-
----
-
-## 6. Teknik iskelet (kısa)
-
-**Dokunulacak (Dalga 1):**  
-create RPC, `store_publish_service`, local token, `auth_screen`, asistan screen/service, `app_router`, `landing_screen`, badge/sekme bağlama.
-
-**Reuse:**  
-`LocationService`, `StorePublishValidator`, `VixRexGuidanceService` sırası, bubble/quick-reply UI parçaları, HTML tonu.
-
-**Yasak:**  
-Yeni publish API, yeni StoreData yolu, ikinci asistan/FAQ, geniş anon INSERT.
-
----
-
-## 7. Doğrulama (Furkan gözü)
-
-| # | Ne yaparsın | Ne görmelisin |
-|---|---|---|
-| 1 | Vixrex Oluştur | Kısa soru; form dump yok |
-| 2 | 3 bilgi + GPS | Artık varsın + link |
-| 3 | Kapak | Teşvik; atlanabilir |
-| 4 | Sonra | “Ürün ekleyelim mi?” gibi sıradaki özellik |
-| 5 | Badge / VixRex sekmesi | Aynı asistan |
-
-Kod kapısı (Dalga 1): ilgili flutter test + analyze; adım adım test yönergesi görev bitince verilir.
-
----
-
-## 8. Şimdi ne?
-
-**Seçimin (1):** Dalga 1 — gerçek uygulama temeli (misafir create + varlık sohbeti).
-
-Hazır olduğunda tek cümle yaz: **“Dalga 1 başla”**.  
-O zamana kadar kod yok; HTML tarzı ve bu plan kilit.
+Yayın şema hatası giderildi. Test sonra. Şimdi: asistan VixRex’te mevcut `ChatbotService` ile sohbet eder; aksiyonlar mevcut `VixRexAction` — ikinci sistem yok.

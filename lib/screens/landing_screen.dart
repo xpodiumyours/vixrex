@@ -29,6 +29,7 @@ class _LandingScreenState extends State<LandingScreen>
   late final AnimationController _animController;
   int _activeProfileIndex = 0;
   bool _isMockupChatOpen = false;
+  final ScrollController _landingScrollController = ScrollController();
   bool _hasSavedVitrin = false;
   bool _isCheckingSavedVitrin = true;
   final TextEditingController _storeNameController = TextEditingController();
@@ -271,6 +272,7 @@ class _LandingScreenState extends State<LandingScreen>
   @override
   void dispose() {
     _animController.dispose();
+    _landingScrollController.dispose();
     _storeNameController.dispose();
     super.dispose();
   }
@@ -301,7 +303,7 @@ class _LandingScreenState extends State<LandingScreen>
       await storage.savePendingCategoryKey(categoryKey);
     }
     if (!mounted) return;
-    AppRouter.navigateToAuth(context);
+    AppRouter.navigateToHomeShell(context, initialIndex: 1);
   }
 
   void _navigateToSavedVitrin() {
@@ -324,6 +326,23 @@ class _LandingScreenState extends State<LandingScreen>
 
   void _openMockupChat() {
     setState(() => _isMockupChatOpen = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_landingScrollController.hasClients) return;
+      final isMobile = MediaQuery.sizeOf(context).width <= 768;
+      final targetOffset = isMobile ? 560.0 : 0.0;
+      final clampedOffset =
+          targetOffset
+              .clamp(
+                _landingScrollController.position.minScrollExtent,
+                _landingScrollController.position.maxScrollExtent,
+              )
+              .toDouble();
+      _landingScrollController.animateTo(
+        clampedOffset,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   void _closeMockupChat() {
@@ -336,6 +355,7 @@ class _LandingScreenState extends State<LandingScreen>
       backgroundColor: AppColors.bgLight,
       body: SafeArea(
         child: SingleChildScrollView(
+          controller: _landingScrollController,
           child: Column(
             children: [
               LandingHeroSection(

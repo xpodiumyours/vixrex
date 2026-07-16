@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/auth_service.dart';
@@ -15,6 +17,7 @@ import 'package:vixrex/screens/profile_screen.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/vixrex_promotion_service.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
@@ -24,10 +27,14 @@ class HomeShellScreen extends StatefulWidget {
   final int initialIndex;
   final String? initialVitrinName;
 
+  /// Asistan/kurulumdan gelen tek aksiyon — mevcut VixRex handler'larına düşer.
+  final VixRexAction? initialVixRexAction;
+
   const HomeShellScreen({
     super.key,
     this.initialIndex = 0,
     this.initialVitrinName,
+    this.initialVixRexAction,
   });
 
   @override
@@ -71,6 +78,15 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     // Doğrudan sekme indeksi: 0=Vitrinim, 1=Keşfet, 2=Vixrex, 3=Profil, 4=Moderasyon
     _selectedIndex = widget.initialIndex < 0 ? 0 : widget.initialIndex;
     _loadVixRexSnapshot();
+    final pending = widget.initialVixRexAction;
+    if (pending != null && pending != VixRexAction.none) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future<void>.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted) return;
+          _handleVixRexAction(pending);
+        });
+      });
+    }
   }
 
   @override
@@ -151,21 +167,11 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final link = PublicSiteConfig.repairPublicLink(raw);
 
     final snapshot = _vixrexSnapshot;
-    final message = snapshot == null
-        ? 'Merhaba! Dijital vitrinimi incelemek için bağlantıyı kullanabilirsiniz: $link'
-        : VixRexPromotionService.draftsFor(snapshot)[1].text;
+    final message =
+        snapshot == null
+            ? 'Merhaba! Dijital vitrinimi incelemek için bağlantıyı kullanabilirsiniz: $link'
+            : VixRexPromotionService.draftsFor(snapshot)[1].text;
     await _vixrexSharePromotionText(message);
-  }
-
-  void _vixrexCopyPromotionText(String text) {
-    if (text.trim().isEmpty) return;
-    Clipboard.setData(ClipboardData(text: text.trim()));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tanıtım metni panoya kopyalandı!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
   }
 
   Future<void> _vixrexSharePromotionText(String message) async {
@@ -262,7 +268,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color:
-                        Colors.white, // Keep QR white background for scan reliability
+                        Colors
+                            .white, // Keep QR white background for scan reliability
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -348,9 +355,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => OcrScannerScreen(
-          ocrController: ocrController,
-        ),
+        builder: (context) => OcrScannerScreen(ocrController: ocrController),
       ),
     );
   }
@@ -367,10 +372,63 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     setState(() => _dismissedVixRexRecommendationId = recommendationId);
   }
 
+  /// Faz 8.1 — sohbette onaylanan alanı GERÇEK `StoreEditorController`
+  /// üzerinden kaydeder. Anlama katmanı mock; yazma yolu değişmedi
+  /// (ikinci yazma yolu açılmadı).
+  void _handleVixRexSaveField(VixRexNluField field, String value) {
+    final editorController = _myVitrinKey.currentState?.controller;
+    if (editorController == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vitrin henüz yüklenmedi. Lütfen bekleyin.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    switch (field) {
+      case VixRexNluField.storeName:
+        editorController.setName(value);
+        break;
+      case VixRexNluField.whatsapp:
+        editorController.updateWhatsapp(value);
+        break;
+      case VixRexNluField.address:
+        editorController.updateAddress(editorController.data, value);
+        break;
+      case VixRexNluField.description:
+        editorController.setDescription(value);
+        break;
+      case VixRexNluField.category:
+        final normalized = value.toLowerCase().trim();
+        final category = BusinessCategoryConfig.categories.where(
+          (item) =>
+              item.id.toLowerCase() == normalized ||
+              item.label.toLowerCase() == normalized,
+        );
+        if (category.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Bu kategori Vixrex listesinde bulunamadı.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+        editorController.selectCategory(category.first.id);
+        break;
+    }
+  }
+
   void _handleVixRexAction(VixRexAction action) {
     switch (action) {
       case VixRexAction.openVitrim:
-        _vixrexNavigateToVitrim();
+        // Snapshot yoksa kurulum asistanı; varsa mevcut Vitrinim sekmesi.
+        if (_vixrexSnapshot == null) {
+          AppRouter.navigateToOnboardingChat(context);
+        } else {
+          _vixrexNavigateToVitrim();
+        }
         break;
       case VixRexAction.copyLink:
         _vixrexCopyLink();
@@ -404,6 +462,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       case VixRexAction.openOcrScannerShelf:
         _openOcrScanner(scanMode: 'shelf_label');
         break;
+      case VixRexAction.openAuth:
+        AppRouter.navigateToAuth(context);
+        break;
       case VixRexAction.none:
         break;
     }
@@ -427,9 +488,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         hasShared: _vixrexHasShared,
         dismissedRecommendationId: _dismissedVixRexRecommendationId,
         onAction: _handleVixRexAction,
+        onSaveField: _handleVixRexSaveField,
         onDismissRecommendation: _dismissVixRexRecommendation,
-        onCopyPromotionText: _vixrexCopyPromotionText,
-        onSharePromotionText: _vixrexSharePromotionText,
       ),
       ProfileScreen(
         publicLink: _publishedInfo?.publicLink,
@@ -445,11 +505,32 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
 
     // Masaüstü için sidebar menü öğeleri
     final sidebarItems = [
-      _SidebarItem(icon: Icons.storefront_outlined, selectedIcon: Icons.storefront_rounded, label: 'Vitrinim'),
-      _SidebarItem(icon: Icons.travel_explore_outlined, selectedIcon: Icons.travel_explore_rounded, label: 'Keşfet'),
-      _SidebarItem(icon: Icons.assistant_outlined, selectedIcon: Icons.assistant_rounded, label: 'Vixrex'),
-      _SidebarItem(icon: Icons.person_outline_rounded, selectedIcon: Icons.person_rounded, label: 'Profil'),
-      if (isAdmin) _SidebarItem(icon: Icons.admin_panel_settings_outlined, selectedIcon: Icons.admin_panel_settings_rounded, label: 'Moderasyon'),
+      _SidebarItem(
+        icon: Icons.storefront_outlined,
+        selectedIcon: Icons.storefront_rounded,
+        label: 'Vitrinim',
+      ),
+      _SidebarItem(
+        icon: Icons.travel_explore_outlined,
+        selectedIcon: Icons.travel_explore_rounded,
+        label: 'Keşfet',
+      ),
+      _SidebarItem(
+        icon: Icons.assistant_outlined,
+        selectedIcon: Icons.assistant_rounded,
+        label: 'Vixrex',
+      ),
+      _SidebarItem(
+        icon: Icons.person_outline_rounded,
+        selectedIcon: Icons.person_rounded,
+        label: 'Profil',
+      ),
+      if (isAdmin)
+        _SidebarItem(
+          icon: Icons.admin_panel_settings_outlined,
+          selectedIcon: Icons.admin_panel_settings_rounded,
+          label: 'Moderasyon',
+        ),
     ];
 
     // Mobil için alt navigasyon barı
@@ -501,7 +582,10 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                 children: [
                   // Logo alanı
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 24,
+                    ),
                     child: Row(
                       children: [
                         Container(
@@ -583,7 +667,10 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                   // Menü öğeleri
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 12,
+                      ),
                       itemCount: sidebarItems.length,
                       itemBuilder: (context, index) {
                         final item = sidebarItems[index];
@@ -627,14 +714,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                       child: SafeArea(
                         minimum: const EdgeInsets.only(right: 16, bottom: 16),
                         child: ChatbotBadge(
-                          snapshot: _vixrexSnapshot,
-                          chatHistory: _vixrexChatMessages,
-                          onNavigateToVitrim: _vixrexNavigateToVitrim,
-                          onNavigateToExplore: _openExplore,
-                          onCopyLink: _vixrexCopyLink,
-                          onShowQr: _vixrexShowQr,
-                          onShareWhatsapp: _vixrexShareWhatsapp,
-                          onScrollToAction: _vixrexScrollToAction,
+                          // Tek kapı: overlay FAQ yok → mevcut VixRex sekmesi.
+                          onOpen: () => setState(() => _selectedIndex = 2),
                         ),
                       ),
                     ),
@@ -660,14 +741,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
               child: SafeArea(
                 minimum: const EdgeInsets.only(right: 16, bottom: 16),
                 child: ChatbotBadge(
-                  snapshot: _vixrexSnapshot,
-                  chatHistory: _vixrexChatMessages,
-                  onNavigateToVitrim: _vixrexNavigateToVitrim,
-                  onNavigateToExplore: _openExplore,
-                  onCopyLink: _vixrexCopyLink,
-                  onShowQr: _vixrexShowQr,
-                  onShareWhatsapp: _vixrexShareWhatsapp,
-                  onScrollToAction: _vixrexScrollToAction,
+                  // Tek kapı: overlay FAQ yok → mevcut VixRex sekmesi.
+                  onOpen: () => setState(() => _selectedIndex = 2),
                 ),
               ),
             ),
@@ -723,7 +798,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Material(
-        color: isSelected ? AppColors.primary.withAlpha(15) : Colors.transparent,
+        color:
+            isSelected ? AppColors.primary.withAlpha(15) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: onTap,
@@ -742,9 +818,11 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                   child: Text(
                     item.label,
                     style: TextStyle(
-                      color: isSelected ? AppColors.darkText : AppColors.mutedText,
+                      color:
+                          isSelected ? AppColors.darkText : AppColors.mutedText,
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ),
