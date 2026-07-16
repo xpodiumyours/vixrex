@@ -107,7 +107,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
           'Randevuları Yönet',
           style: TextStyle(color: AppColors.darkText, fontWeight: FontWeight.w900, fontSize: 20),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0.5,
         iconTheme: const IconThemeData(color: AppColors.darkText),
         bottom: TabBar(
@@ -125,7 +125,12 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
       body: _controller.isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _controller.errorMessage != null
-              ? Center(child: Text(_controller.errorMessage!, style: const TextStyle(color: Colors.red)))
+              ? Center(
+                child: Text(
+                  _controller.errorMessage!,
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              )
               : TabBarView(
                   controller: _tabController,
                   children: [
@@ -179,16 +184,16 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
       statusColor = AppColors.success;
       statusText = 'Onaylandı';
     } else if (status == 'rejected') {
-      statusColor = Colors.red;
+      statusColor = AppColors.error;
       statusText = 'Reddedildi';
     } else if (status == 'cancelled_by_customer') {
-      statusColor = Colors.grey;
+      statusColor = AppColors.mutedText;
       statusText = 'Müşteri İptal Etti';
     } else if (status == 'cancelled_by_store') {
-      statusColor = Colors.grey;
+      statusColor = AppColors.mutedText;
       statusText = 'İşletme İptal Etti';
     } else if (status == 'expired') {
-      statusColor = Colors.grey;
+      statusColor = AppColors.mutedText;
       statusText = 'Süresi Doldu';
     } else {
       statusColor = Colors.orange;
@@ -199,7 +204,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> with 
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),

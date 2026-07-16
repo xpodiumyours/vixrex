@@ -344,7 +344,7 @@ class _VixRexOnboardingChatScreenState
         _step == _OnboardingStep.name || _step == _OnboardingStep.whatsapp;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1218),
+      backgroundColor: AppColors.bgEditor,
       body: SafeArea(
         child: Column(
           children: [
@@ -364,7 +364,7 @@ class _VixRexOnboardingChatScreenState
                 child: Text(
                   _error!,
                   style: const TextStyle(
-                    color: Color(0xFFFF8F8F),
+                    color: AppColors.error,
                     fontSize: 12.5,
                   ),
                   textAlign: TextAlign.center,
@@ -382,8 +382,8 @@ class _VixRexOnboardingChatScreenState
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       decoration: const BoxDecoration(
-        color: Color(0xFF101820),
-        border: Border(bottom: BorderSide(color: Color(0x16FFFFFF))),
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,7 +403,7 @@ class _VixRexOnboardingChatScreenState
                 child: const Text(
                   'Vx',
                   style: TextStyle(
-                    color: Color(0xFF041016),
+                    color: AppColors.onPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -416,14 +416,14 @@ class _VixRexOnboardingChatScreenState
                     Text(
                       'Vixrex',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.darkText,
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                       ),
                     ),
                     Text(
                       'Dijital vitrin asistanı',
-                      style: TextStyle(color: Color(0xFF8FA3B0), fontSize: 12),
+                      style: TextStyle(color: AppColors.mutedText, fontSize: 12),
                     ),
                   ],
                 ),
@@ -434,7 +434,7 @@ class _VixRexOnboardingChatScreenState
                     () => AppRouter.navigateToLanding(context),
                 child: const Text(
                   'Kapat',
-                  style: TextStyle(color: Color(0xFF8FA3B0)),
+                  style: TextStyle(color: AppColors.mutedText),
                 ),
               ),
             ],
@@ -451,7 +451,7 @@ class _VixRexOnboardingChatScreenState
                     color:
                         i <= phase
                             ? AppColors.primary
-                            : const Color(0x22FFFFFF),
+                            : AppColors.surfaceSoft,
                   ),
                 ),
               );
@@ -460,7 +460,7 @@ class _VixRexOnboardingChatScreenState
           const SizedBox(height: 8),
           Text(
             _phases[phase.clamp(0, _phases.length - 1)],
-            style: const TextStyle(color: Color(0xFF8FA3B0), fontSize: 11),
+            style: const TextStyle(color: AppColors.mutedText, fontSize: 11),
           ),
         ],
       ),
@@ -472,8 +472,8 @@ class _VixRexOnboardingChatScreenState
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
       decoration: const BoxDecoration(
-        color: Color(0xF2101820),
-        border: Border(top: BorderSide(color: Color(0x16FFFFFF))),
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -534,21 +534,24 @@ class _VixRexOnboardingChatScreenState
                   child: TextField(
                     controller: _inputController,
                     focusNode: _inputFocus,
-                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                    style: const TextStyle(
+                      color: AppColors.darkText,
+                      fontSize: 15,
+                    ),
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _onSend(),
                     decoration: InputDecoration(
                       hintText: _hintForStep(),
-                      hintStyle: const TextStyle(color: Color(0xFF8FA3B0)),
+                      hintStyle: const TextStyle(color: AppColors.mutedText),
                       filled: true,
-                      fillColor: const Color(0xFF17232D),
+                      fillColor: AppColors.inputBg,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0x22FFFFFF)),
+                        borderSide: const BorderSide(color: AppColors.border),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0x22FFFFFF)),
+                        borderSide: const BorderSide(color: AppColors.border),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -562,7 +565,7 @@ class _VixRexOnboardingChatScreenState
                   onPressed: _busy ? null : _onSend,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: const Color(0xFF041016),
+                    foregroundColor: AppColors.onPrimary,
                     minimumSize: const Size(88, 48),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -626,7 +629,7 @@ class _VixRexOnboardingChatScreenState
       onPressed: onPressed,
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.primary,
-        foregroundColor: const Color(0xFF041016),
+        foregroundColor: AppColors.onPrimary,
         minimumSize: const Size.fromHeight(48),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -638,8 +641,8 @@ class _VixRexOnboardingChatScreenState
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: const BorderSide(color: Color(0x33FFFFFF)),
+        foregroundColor: AppColors.darkText,
+        side: const BorderSide(color: AppColors.border),
         minimumSize: const Size.fromHeight(48),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -678,7 +681,10 @@ class _ChatBubble extends StatelessWidget {
           maxWidth: MediaQuery.sizeOf(context).width * 0.86,
         ),
         decoration: BoxDecoration(
-          color: line.isBot ? const Color(0xFF17232D) : const Color(0xFF13343C),
+          color:
+              line.isBot
+                  ? AppColors.surfaceSoft
+                  : AppColors.primary.withValues(alpha: 0.2),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -688,7 +694,7 @@ class _ChatBubble extends StatelessWidget {
           border: Border.all(
             color:
                 line.isBot
-                    ? const Color(0x16FFFFFF)
+                    ? AppColors.border
                     : AppColors.primary.withValues(alpha: 0.25),
           ),
         ),
@@ -699,7 +705,7 @@ class _ChatBubble extends StatelessWidget {
             Text(
               line.text,
               style: const TextStyle(
-                color: Color(0xFFE8EEF2),
+                color: AppColors.darkTextAlt,
                 fontSize: 14.5,
                 height: 1.45,
               ),
@@ -712,7 +718,7 @@ class _ChatBubble extends StatelessWidget {
                   onPressed: line.onOpenPublicLink,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: const Color(0xFF041016),
+                    foregroundColor: AppColors.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 11),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),

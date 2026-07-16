@@ -106,7 +106,7 @@ class VixRexRecommendationCard extends StatelessWidget {
                         onPressed: () => onAction(recommendation.action),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: const Color(0xFF00181A),
+                          foregroundColor: AppColors.onPrimary,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(horizontal: 11),
                           minimumSize: Size.zero,

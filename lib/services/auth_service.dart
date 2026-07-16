@@ -132,14 +132,19 @@ class AuthService {
           .select()
           .eq('user_id', user.id);
 
-      final stores = (storesRaw as List)
-          .map((row) => _sanitizeStoreExport(Map<String, dynamic>.from(row as Map)))
-          .toList();
+      final stores =
+          (storesRaw as List)
+              .map(
+                (row) =>
+                    _sanitizeStoreExport(Map<String, dynamic>.from(row as Map)),
+              )
+              .toList();
 
-      final slugs = stores
-          .map((s) => s['slug']?.toString().trim() ?? '')
-          .where((s) => s.isNotEmpty)
-          .toList();
+      final slugs =
+          stores
+              .map((s) => s['slug']?.toString().trim() ?? '')
+              .where((s) => s.isNotEmpty)
+              .toList();
 
       List<dynamic> appointments = [];
       List<dynamic> bookingSettings = [];
@@ -163,10 +168,7 @@ class AuthService {
       return Result.success({
         'exported_at': DateTime.now().toUtc().toIso8601String(),
         'app': LegalConfig.appName,
-        'user': {
-          'id': user.id,
-          'email': user.email,
-        },
+        'user': {'id': user.id, 'email': user.email},
         'stores': stores,
         'appointments': appointments,
         'booking_settings': bookingSettings,
@@ -200,28 +202,6 @@ class AuthService {
 
       if (response != null) {
         return Result.success(StoreData.fromJson(response));
-      }
-      return const Result.success(null);
-    } catch (e, s) {
-      return Result.failure(SupabaseErrorMapper.map(e, s));
-    }
-  }
-
-  /// Fetches the edit token for the currently logged-in user's store.
-  Future<Result<String?>> getEditTokenForCurrentUser() async {
-    final user = currentUser;
-    if (user == null) return const Result.success(null);
-
-    try {
-      final response =
-          await Supabase.instance.client
-              .from('stores')
-              .select('edit_token')
-              .eq('user_id', user.id)
-              .maybeSingle();
-
-      if (response != null && response['edit_token'] != null) {
-        return Result.success(response['edit_token'] as String);
       }
       return const Result.success(null);
     } catch (e, s) {

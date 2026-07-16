@@ -98,9 +98,7 @@ class FakePostgrestFilterBuilder<T>
         client.postgrestExceptionToThrowOnInsert != null) {
       return Future<T>.error(client.postgrestExceptionToThrowOnInsert!);
     }
-    if (!isInsert &&
-        !isCreateRpc &&
-        client.postgrestExceptionToThrow != null) {
+    if (!isInsert && !isCreateRpc && client.postgrestExceptionToThrow != null) {
       return Future<T>.error(client.postgrestExceptionToThrow!);
     }
     final val = (client.selectResponse ?? <String, dynamic>{}) as T;
@@ -178,13 +176,16 @@ void main() {
     test('Mağaza mevcut değilse create_store_with_token rpc çağırır', () async {
       fakeClient.selectResponse = null;
 
-      final result =
-          await service.publishStore(sampleStore, editToken: editToken);
+      final result = await service.publishStore(
+        sampleStore,
+        editToken: editToken,
+      );
 
       expect(result.isSuccess, isTrue);
       expect(result.data!.wasUpdated, isFalse);
       expect(result.data!.publicPath, '/v/test-magazasi');
-      expect(fakeClient.queries['edit_token'], editToken);
+      expect(fakeClient.queries['slug'], 'test-magazasi');
+      expect(fakeClient.queries.containsKey('edit_token'), isFalse);
       expect(fakeClient.insertedPayloads, isEmpty);
       expect(fakeClient.rpcCalls.length, 1);
       expect(fakeClient.rpcCalls.first['fn'], 'create_store_with_token');
@@ -194,8 +195,10 @@ void main() {
 
     test('Validasyondan geçemeyen mağaza Result.failure döner', () async {
       final invalidStore = StoreData(isStore: true, name: '');
-      final result =
-          await service.publishStore(invalidStore, editToken: editToken);
+      final result = await service.publishStore(
+        invalidStore,
+        editToken: editToken,
+      );
       expect(result.isFailure, isTrue);
       expect(result.failure!.message, isNotEmpty);
     });
@@ -217,10 +220,7 @@ void main() {
         expect(result.data!.publicPath, '/v/test-magazasi');
         expect(fakeClient.rpcCalls.length, 1);
         expect(fakeClient.rpcCalls.first['fn'], 'update_store_with_token');
-        expect(
-          fakeClient.rpcCalls.first['params']['p_edit_token'],
-          editToken,
-        );
+        expect(fakeClient.rpcCalls.first['params']['p_edit_token'], editToken);
       },
     );
 
@@ -248,22 +248,21 @@ void main() {
       },
     );
 
-    test(
-      'Yetki/RLS hatası aldığında Result.failure döner',
-      () async {
-        fakeClient.selectResponse = {'slug': 'test-magazasi'};
-        fakeClient.postgrestExceptionToThrow = const PostgrestException(
-          message: 'row-level security policy violation',
-          code: '42501',
-        );
+    test('Yetki/RLS hatası aldığında Result.failure döner', () async {
+      fakeClient.selectResponse = {'slug': 'test-magazasi'};
+      fakeClient.postgrestExceptionToThrow = const PostgrestException(
+        message: 'row-level security policy violation',
+        code: '42501',
+      );
 
-        final result =
-            await service.publishStore(sampleStore, editToken: editToken);
+      final result = await service.publishStore(
+        sampleStore,
+        editToken: editToken,
+      );
 
-        expect(result.isFailure, isTrue);
-        expect(result.failure!.message, contains('Supabase tarafında eksik'));
-      },
-    );
+      expect(result.isFailure, isTrue);
+      expect(result.failure!.message, contains('Supabase tarafında eksik'));
+    });
   });
 
   group('StorePublishService publication consent withdrawal', () {
@@ -302,9 +301,7 @@ void main() {
   group('StorePublishService.updateProductsOnly', () {
     test('ürünleri update_store_with_token RPC ile kaydeder', () async {
       fakeClient.selectResponse = {'slug': 'test-magazasi'};
-      sampleStore.products = [
-        Product(id: 'p1', name: 'Tişört', price: '199'),
-      ];
+      sampleStore.products = [Product(id: 'p1', name: 'Tişört', price: '199')];
       sampleStore.slug = 'test-magazasi';
 
       final result = await service.updateProductsOnly(

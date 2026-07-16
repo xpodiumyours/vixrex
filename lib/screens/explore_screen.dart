@@ -119,7 +119,7 @@ class ExploreScreenState extends State<ExploreScreen> {
   void _showWhatsAppBottomSheet(StoreData store) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -583,7 +583,7 @@ class ExploreScreenState extends State<ExploreScreen> {
                 onPressed: () => _controller.reloadStores(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimary,
                 ),
                 child: const Text('Tekrar dene'),
               ),

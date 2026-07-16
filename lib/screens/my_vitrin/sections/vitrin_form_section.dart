@@ -399,7 +399,7 @@ class VitrinFormSection extends StatelessWidget {
             ),
 
           const SizedBox(height: 24),
-          const Divider(color: Color(0xFF25415F), height: 1),
+          const Divider(color: AppColors.border, height: 1),
           const SizedBox(height: 24),
 
               // ALT ALAN (Her iki görünümde de tam genişlik)
@@ -430,7 +430,7 @@ class VitrinFormSection extends StatelessWidget {
           child: Text(
             hasPublished ? 'Vixrex Düzenle' : 'Vixrex Oluştur',
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.darkText,
               fontSize: 24,
               fontWeight: FontWeight.w900,
               height: 1.15,
@@ -447,18 +447,18 @@ class VitrinFormSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFF00F0FF),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(20),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.storefront_rounded, color: Colors.black, size: 13),
+          Icon(Icons.storefront_rounded, color: AppColors.onPrimary, size: 13),
           SizedBox(width: 4),
           Text(
             'Vixrex ile',
             style: TextStyle(
-              color: Colors.black,
+              color: AppColors.onPrimary,
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
@@ -474,7 +474,7 @@ class VitrinFormSection extends StatelessWidget {
           ? 'Düzenledikten sonra kaydet, linkin ve QR kodun güncellenir.'
           : 'Ad, WhatsApp ve konumunu gir — vitrin hazır. Diğer detayları sonra ekleyebilirsin.',
       style: const TextStyle(
-        color: Color(0xFFA1A1AA),
+        color: AppColors.mutedText,
         fontSize: 13,
         fontWeight: FontWeight.w600,
         height: 1.4,
@@ -652,7 +652,10 @@ class VitrinFormSection extends StatelessWidget {
             icon: controller.isPublishing
                 ? const SizedBox(
                     width: 18, height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.onPrimary,
+                    ),
                   )
                 : Icon(
                     hasPublished ? Icons.cloud_upload_rounded : Icons.rocket_launch_rounded,
@@ -667,8 +670,8 @@ class VitrinFormSection extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00F0FF),
-              foregroundColor: Colors.black,
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.onPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -681,7 +684,7 @@ class VitrinFormSection extends StatelessWidget {
               : 'Linkin oluşur, Keşfet\'te görünürsün.',
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: Color(0xFFA1A1AA),
+            color: AppColors.mutedText,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),

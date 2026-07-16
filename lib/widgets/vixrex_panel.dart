@@ -495,7 +495,7 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
     return AnimatedBuilder(
       animation: _scanController,
       child: Image.asset(
-        'assets/images/vixrex_mascot.webp',
+        'assets/images/vixrex_idle.png',
         width: _vixrexPanelAvatarSize,
         height: _vixrexPanelAvatarSize,
         fit: BoxFit.cover,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/screens/legal_screen.dart';
+import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/theme/app_text_styles.dart';
 
 class LegalConsentSection extends StatelessWidget {
@@ -33,20 +34,24 @@ class LegalConsentSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF13151A),
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(18),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFF2B313E)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Row(
               children: [
-                Icon(Icons.verified_user_outlined, color: Color(0xFF00F0FF), size: 21),
+                Icon(
+                  Icons.verified_user_outlined,
+                  color: AppColors.primary,
+                  size: 21,
+                ),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(

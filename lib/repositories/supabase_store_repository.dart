@@ -7,29 +7,18 @@ class SupabaseStoreRepository implements StoreRepository {
   final SupabaseClient _client;
 
   SupabaseStoreRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   @override
   Future<StoreData?> getStoreForCurrentUser() async {
     final user = _client.auth.currentUser;
     if (user == null) return null;
-    final response = await _client
-        .from('stores')
-        .select()
-        .eq('user_id', user.id)
-        .maybeSingle();
-    if (response == null) return null;
-    return StoreData.fromJson(response);
-  }
-
-  @override
-  Future<StoreData?> getStoreByToken(String editToken) async {
-    if (editToken.trim().isEmpty) return null;
-    final response = await _client
-        .from('stores')
-        .select()
-        .eq('edit_token', editToken.trim())
-        .maybeSingle();
+    final response =
+        await _client
+            .from('stores')
+            .select()
+            .eq('user_id', user.id)
+            .maybeSingle();
     if (response == null) return null;
     return StoreData.fromJson(response);
   }
@@ -37,11 +26,12 @@ class SupabaseStoreRepository implements StoreRepository {
   @override
   Future<StoreData?> getStoreBySlug(String slug) async {
     if (slug.trim().isEmpty) return null;
-    final response = await _client
-        .from('stores')
-        .select()
-        .eq('slug', slug.trim())
-        .maybeSingle();
+    final response =
+        await _client
+            .from('stores')
+            .select()
+            .eq('slug', slug.trim())
+            .maybeSingle();
     if (response == null) return null;
     return StoreData.fromJson(response);
   }
@@ -52,11 +42,7 @@ class SupabaseStoreRepository implements StoreRepository {
     final editToken = (payload['edit_token'] ?? '').toString().trim();
     await _client.rpc(
       'create_store_with_token',
-      params: {
-        'p_slug': slug,
-        'p_edit_token': editToken,
-        'p_store': payload,
-      },
+      params: {'p_slug': slug, 'p_edit_token': editToken, 'p_store': payload},
     );
   }
 
@@ -83,10 +69,7 @@ class SupabaseStoreRepository implements StoreRepository {
   }) async {
     await _client.rpc(
       'withdraw_store_publication_consent',
-      params: {
-        'p_slug': slug.trim(),
-        'p_edit_token': editToken.trim(),
-      },
+      params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
     );
   }
 

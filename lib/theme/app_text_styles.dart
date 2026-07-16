@@ -68,7 +68,7 @@ abstract final class AppTextStyles {
   static const TextStyle ctaButton = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w900,
-    color: Colors.black,
+    color: AppColors.onPrimary,
     letterSpacing: 0.3,
   );
 

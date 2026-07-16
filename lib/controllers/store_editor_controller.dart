@@ -21,7 +21,6 @@ import 'mixins/store_core_mixin.dart';
 /// UI ile iş mantığı arasındaki köprüdür. Alt görevleri Mixin'lere delege eder.
 class StoreEditorController extends ChangeNotifier
     with StoreMediaMixin, StoreLocationMixin, StoreCoreMixin {
-
   final StoreLocalStorageService storage;
   final LocationService locationService;
   final StorePublishService publishService;
@@ -40,13 +39,13 @@ class StoreEditorController extends ChangeNotifier
     LegalDocumentService? legalDocumentService,
     this.supabaseClient,
     StoreData? initialData,
-  })  : storage = storage ?? const StoreLocalStorageService(),
-        locationService = locationService ?? const LocationService(),
-        publishService = publishService ?? const StorePublishService(),
-        uploadService = uploadService ?? const StoreShelfUploadService(),
-        legalDocumentService =
-            legalDocumentService ?? const LegalDocumentService(),
-        _data = initialData ?? StoreData(kategori: 'Diğer', status: 'Açık') {
+  }) : storage = storage ?? const StoreLocalStorageService(),
+       locationService = locationService ?? const LocationService(),
+       publishService = publishService ?? const StorePublishService(),
+       uploadService = uploadService ?? const StoreShelfUploadService(),
+       legalDocumentService =
+           legalDocumentService ?? const LegalDocumentService(),
+       _data = initialData ?? StoreData(kategori: 'Diğer', status: 'Açık') {
     _syncInitialData();
   }
 
@@ -56,8 +55,10 @@ class StoreEditorController extends ChangeNotifier
 
   bool get bookingIsEnabled => _data.bookingSettings?.isEnabled ?? false;
   int get bookingCapacity => _data.bookingSettings?.capacity ?? 1;
-  Map<String, dynamic> get bookingWorkingHours => _data.bookingSettings?.workingHours ?? {};
-  Map<String, dynamic> get bookingLunchBreak => _data.bookingSettings?.lunchBreak ?? {};
+  Map<String, dynamic> get bookingWorkingHours =>
+      _data.bookingSettings?.workingHours ?? {};
+  Map<String, dynamic> get bookingLunchBreak =>
+      _data.bookingSettings?.lunchBreak ?? {};
   List<StoreOffering> get offerings => _data.offerings;
   List<Product> get products => _data.products;
   bool get hasProducts => _data.products.isNotEmpty;
@@ -70,10 +71,14 @@ class StoreEditorController extends ChangeNotifier
   double? get locationAccuracyMeters => _data.locationAccuracyMeters;
   String? get locationStatusMessage => null;
 
-  String? get selectedProvinceCode => _data.provinceCode.isNotEmpty ? _data.provinceCode : null;
-  String? get selectedProvinceName => _data.provinceName.isNotEmpty ? _data.provinceName : null;
-  String? get selectedDistrictCode => _data.districtCode.isNotEmpty ? _data.districtCode : null;
-  String? get selectedDistrictName => _data.districtName.isNotEmpty ? _data.districtName : null;
+  String? get selectedProvinceCode =>
+      _data.provinceCode.isNotEmpty ? _data.provinceCode : null;
+  String? get selectedProvinceName =>
+      _data.provinceName.isNotEmpty ? _data.provinceName : null;
+  String? get selectedDistrictCode =>
+      _data.districtCode.isNotEmpty ? _data.districtCode : null;
+  String? get selectedDistrictName =>
+      _data.districtName.isNotEmpty ? _data.districtName : null;
 
   bool get privacyNoticeAcknowledged => _data.privacyNoticeAcknowledged;
   bool get termsAccepted => _data.termsAccepted;
@@ -83,13 +88,19 @@ class StoreEditorController extends ChangeNotifier
   Set<String> get customPlatformLinkIds => {};
 
   bool get isLegalPublishReady =>
-      _data.privacyNoticeAcknowledged && _data.termsAccepted && _data.publicationConsentAccepted;
+      _data.privacyNoticeAcknowledged &&
+      _data.termsAccepted &&
+      _data.publicationConsentAccepted;
 
   bool get isWithdrawingConsent => isLoading;
 
   // --- Core Lifecycle ---
   void _syncInitialData() {
-    setGalleryItems(_data.galleryItems.map((item) => EditorGalleryItem.fromStoreItem(item)).toList());
+    setGalleryItems(
+      _data.galleryItems
+          .map((item) => EditorGalleryItem.fromStoreItem(item))
+          .toList(),
+    );
     if (_data.shelfImageUrl.isNotEmpty) {
       setCoverUrl(_data.shelfImageUrl);
     }
@@ -117,7 +128,10 @@ class StoreEditorController extends ChangeNotifier
 
       _syncInitialData();
       if (_publishedInfo != null) {
-        await fetchArticles(slug: _publishedInfo!.slug, supabaseClient: _resolveClient());
+        await fetchArticles(
+          slug: _publishedInfo!.slug,
+          supabaseClient: _resolveClient(),
+        );
       }
       // Onaylı kutular için version damgasını arka planda doldur
       await _stampAcceptedLegalDocuments();
@@ -130,7 +144,11 @@ class StoreEditorController extends ChangeNotifier
 
   SupabaseClient? _resolveClient() {
     if (supabaseClient != null) return supabaseClient;
-    try { return Supabase.instance.client; } catch (_) { return null; }
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
   }
 
   // --- Delegated Methods (UI Compatibility) ---
@@ -144,7 +162,11 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
-  void setName(String name) { _data.name = name; notifyListeners(); }
+  void setName(String name) {
+    _data.name = name;
+    notifyListeners();
+  }
+
   void updateName(String name) => setName(name);
 
   /// Kategori seçimi: özellik paketini sessiz uygular (randevu vb.).
@@ -155,14 +177,23 @@ class StoreEditorController extends ChangeNotifier
   }
 
   void _applyCategoryFeaturePackage(String kategori) {
-    final supportsBooking =
-        BusinessCategoryConfig.supportsBookingPackage(kategori);
+    final supportsBooking = BusinessCategoryConfig.supportsBookingPackage(
+      kategori,
+    );
     _ensureBookingSettings();
     _data.bookingSettings!.isEnabled = supportsBooking;
   }
 
-  void setDescription(String description) { _data.description = description; notifyListeners(); }
-  void updateWhatsapp(String w) { _data.whatsapp = w; notifyListeners(); }
+  void setDescription(String description) {
+    _data.description = description;
+    notifyListeners();
+  }
+
+  void updateWhatsapp(String w) {
+    _data.whatsapp = w;
+    notifyListeners();
+  }
+
   void updateInstagram(String value) {
     _data.instagram = value.trim();
     notifyListeners();
@@ -197,23 +228,39 @@ class StoreEditorController extends ChangeNotifier
     _data.website = value.trim();
     notifyListeners();
   }
-  void selectStatus(String status) { _data.status = status; notifyListeners(); }
-  void updateGoogleBusinessLink(String v) { _data.googleBusinessLink = v; notifyListeners(); }
 
-  void addMarketplaceLink(MarketplaceLink link) { _data.marketplaceLinks.add(link); notifyListeners(); }
+  void selectStatus(String status) {
+    _data.status = status;
+    notifyListeners();
+  }
+
+  void updateGoogleBusinessLink(String v) {
+    _data.googleBusinessLink = v;
+    notifyListeners();
+  }
+
+  void addMarketplaceLink(MarketplaceLink link) {
+    _data.marketplaceLinks.add(link);
+    notifyListeners();
+  }
+
   void removeMarketplaceLink(int index) {
     if (index >= 0 && index < _data.marketplaceLinks.length) {
       _data.marketplaceLinks.removeAt(index);
       notifyListeners();
     }
   }
-  void toggleCustomPlatformLinkId(String id, bool val) { notifyListeners(); }
+
+  void toggleCustomPlatformLinkId(String id, bool val) {
+    notifyListeners();
+  }
 
   void setBookingIsEnabled(bool val) {
     _ensureBookingSettings();
     _data.bookingSettings!.isEnabled = val;
     notifyListeners();
   }
+
   void setBookingCapacity(int val) {
     _ensureBookingSettings();
     _data.bookingSettings!.capacity = val;
@@ -223,7 +270,9 @@ class StoreEditorController extends ChangeNotifier
   /// WorkingHoursEditor in-place mutasyon sonrası UI yenileme.
   void refreshBookingEditor() => notifyListeners();
 
-  void _ensureBookingSettings() { _data.bookingSettings ??= BookingSettings(); }
+  void _ensureBookingSettings() {
+    _data.bookingSettings ??= BookingSettings();
+  }
 
   @override
   void updateAddress(StoreData data, String address) {
@@ -245,7 +294,8 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  Future<void> triggerFetchLocation() => fetchLocation(data: _data, locationService: locationService);
+  Future<void> triggerFetchLocation() =>
+      fetchLocation(data: _data, locationService: locationService);
 
   void setPrivacyNoticeAcknowledged(bool v) {
     _data.privacyNoticeAcknowledged = v;
@@ -258,6 +308,7 @@ class StoreEditorController extends ChangeNotifier
     }
     notifyListeners();
   }
+
   void setTermsAccepted(bool v) {
     _data.termsAccepted = v;
     _data.termsAcceptedAt = v ? DateTime.now() : null;
@@ -269,6 +320,7 @@ class StoreEditorController extends ChangeNotifier
     }
     notifyListeners();
   }
+
   void setPublicationConsentAccepted(bool v) {
     _data.publicationConsentAccepted = v;
     _data.publicationConsentAcceptedAt = v ? DateTime.now() : null;
@@ -330,9 +382,7 @@ class StoreEditorController extends ChangeNotifier
     } catch (e) {
       if (kDebugMode) debugPrint('_stampAcceptedLegalDocuments failed: $e');
       if (reportError) {
-        setLegalDocumentsError(
-          'Belgeler yüklenemedi. Lütfen tekrar deneyin',
-        );
+        setLegalDocumentsError('Belgeler yüklenemedi. Lütfen tekrar deneyin');
       }
     }
     _ensureFallbackLegalStamps();
@@ -369,6 +419,7 @@ class StoreEditorController extends ChangeNotifier
       editToken: _publishedInfo?.editToken,
     );
   }
+
   Future<Result<void>> removeProduct(int i) async {
     if (i >= 0 && i < _data.products.length) {
       _data.products.removeAt(i);
@@ -381,6 +432,7 @@ class StoreEditorController extends ChangeNotifier
     }
     return const Result.success(null);
   }
+
   Future<Result<void>> updateProduct(int i, Product p) async {
     if (i >= 0 && i < _data.products.length) {
       _data.products[i] = p;
@@ -393,10 +445,14 @@ class StoreEditorController extends ChangeNotifier
     }
     return const Result.success(null);
   }
+
   Future<Result<void>> updateProductImported(Product product) async {
     final index = _data.products.indexWhere((p) => p.id == product.id);
-    if (index >= 0) { _data.products[index] = product; }
-    else { _data.products.add(product); }
+    if (index >= 0) {
+      _data.products[index] = product;
+    } else {
+      _data.products.add(product);
+    }
     notifyListeners();
     return syncProductsToSupabase(
       data: _data,
@@ -410,7 +466,10 @@ class StoreEditorController extends ChangeNotifier
     final editToken = _publishedInfo?.editToken;
     if (slug.isEmpty || editToken == null) return;
 
-    final result = await publishService.withdrawPublicationConsent(slug: slug, editToken: editToken);
+    final result = await publishService.withdrawPublicationConsent(
+      slug: slug,
+      editToken: editToken,
+    );
     result.when(
       success: (_) async {
         await storage.clearPublishedVitrinInfo();
@@ -461,19 +520,29 @@ class StoreEditorController extends ChangeNotifier
     try {
       // Kutular işaretli olsa bile version damgası yoksa yayın reddedilir
       await _stampAcceptedLegalDocuments();
-      await uploadMedia(storeData: _data, uploadService: uploadService, publishService: publishService);
-      final String effectiveEditToken = (_publishedInfo != null && _publishedInfo!.editToken.isNotEmpty)
-          ? _publishedInfo!.editToken
-          : SecureTokenGenerator.generateUuid();
-      final result = await publishService.publishStore(_data, editToken: effectiveEditToken);
+      await uploadMedia(
+        storeData: _data,
+        uploadService: uploadService,
+        publishService: publishService,
+      );
+      final String effectiveEditToken =
+          (_publishedInfo != null && _publishedInfo!.editToken.isNotEmpty)
+              ? _publishedInfo!.editToken
+              : SecureTokenGenerator.generateUuid();
+      final result = await publishService.publishStore(
+        _data,
+        editToken: effectiveEditToken,
+      );
       return result.when(
         success: (publishResult) async {
           final publicLink = PublicSiteConfig.buildPublicLink(
             publishResult.publicPath,
           );
           _publishedInfo = PublishedVitrinInfo(
-            publicLink: publicLink, slug: publishResult.slug,
-            name: _data.name, editToken: publishResult.editToken,
+            publicLink: publicLink,
+            slug: publishResult.slug,
+            name: _data.name,
+            editToken: publishResult.editToken,
           );
           await saveLocally();
           // Next.js cache'ini yenile
@@ -494,8 +563,10 @@ class StoreEditorController extends ChangeNotifier
     await storage.saveVitrinData(_data);
     if (_publishedInfo != null) {
       await storage.savePublishedVitrinInfo(
-        slug: _publishedInfo!.slug, publicLink: _publishedInfo!.publicLink,
-        name: _publishedInfo!.name, editToken: _publishedInfo!.editToken,
+        slug: _publishedInfo!.slug,
+        publicLink: _publishedInfo!.publicLink,
+        name: _publishedInfo!.name,
+        editToken: _publishedInfo!.editToken,
       );
     }
   }
@@ -512,36 +583,29 @@ class StoreEditorController extends ChangeNotifier
       Map<String, dynamic>? response;
       final userId = client.auth.currentUser?.id;
       if (userId != null) {
-        response = await client
-            .from('stores')
-            .select('slug, edit_token, name')
-            .eq('user_id', userId)
-            .eq('is_published', true)
-            .maybeSingle();
+        response =
+            await client
+                .from('stores')
+                .select('slug, name')
+                .eq('user_id', userId)
+                .eq('is_published', true)
+                .maybeSingle();
       }
 
       if (response == null) {
-        final localSlug = _data.slug.trim().isNotEmpty
-            ? _data.slug.trim()
-            : (await storage.loadLastPublishedSlug() ?? '').trim();
+        final localSlug =
+            _data.slug.trim().isNotEmpty
+                ? _data.slug.trim()
+                : (await storage.loadLastPublishedSlug() ?? '').trim();
         if (localSlug.isNotEmpty) {
-          response = await client
-              .from('stores')
-              .select('slug, edit_token, name')
-              .eq('slug', localSlug)
-              .eq('is_published', true)
-              .maybeSingle();
+          response =
+              await client
+                  .from('stores')
+                  .select('slug, name')
+                  .eq('slug', localSlug)
+                  .eq('is_published', true)
+                  .maybeSingle();
         }
-      }
-
-      if (response == null && _data.name.trim().isNotEmpty) {
-        response = await client
-            .from('stores')
-            .select('slug, edit_token, name')
-            .eq('name', _data.name.trim())
-            .eq('is_published', true)
-            .limit(1)
-            .maybeSingle();
       }
 
       if (response == null) return;
@@ -549,12 +613,10 @@ class StoreEditorController extends ChangeNotifier
       final slug = (response['slug'] ?? '').toString().trim();
       if (slug.isEmpty) return;
 
-      var editToken = (response['edit_token'] ?? '').toString().trim();
-      if (editToken.isEmpty) {
-        editToken = (await storage.loadVitrinEditToken())?.trim() ??
-            (await storage.loadStoreEditToken())?.trim() ??
-            '';
-      }
+      final editToken =
+          (await storage.loadVitrinEditToken())?.trim() ??
+          (await storage.loadStoreEditToken())?.trim() ??
+          '';
 
       _publishedInfo = PublishedVitrinInfo(
         publicLink: PublicSiteConfig.buildVitrinLink(slug),

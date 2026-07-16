@@ -315,7 +315,7 @@ class LandingHeroSection extends StatelessWidget {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: brandBlue,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.onPrimary,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -334,7 +334,7 @@ class LandingHeroSection extends StatelessWidget {
                       });
                     },
                     icon: const Icon(Icons.login_rounded, size: 18),
-                    color: Colors.white,
+                    color: AppColors.onPrimary,
                     style: IconButton.styleFrom(
                       backgroundColor: brandBlue,
                       padding: const EdgeInsets.all(10),
@@ -363,16 +363,16 @@ class LandingHeroSection extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF0D5E65).withValues(alpha: 0.25),
+            color: AppColors.primary.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(30),
             border: Border.all(
-              color: const Color(0xFF0EA8B0).withValues(alpha: 0.35),
+              color: AppColors.secondary.withValues(alpha: 0.45),
             ),
           ),
           child: const Text(
             'İŞLETMENİZ İÇİN DİJİTAL VİTRİN',
             style: TextStyle(
-              color: Color(0xFF10D8D8),
+              color: AppColors.secondary,
               fontSize: 11,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.0,
@@ -386,7 +386,7 @@ class LandingHeroSection extends StatelessWidget {
           style: TextStyle(
             fontSize: isDesktop ? 48 : 36,
             fontWeight: FontWeight.w900,
-            color: Colors.white,
+            color: AppColors.darkText,
             height: 1.15,
             letterSpacing: -0.8,
           ),
@@ -416,12 +416,12 @@ class LandingHeroSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0EA8B0).withValues(alpha: 0.15),
+                  color: AppColors.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.qr_code_scanner_rounded,
-                  color: Color(0xFF10D8D8),
+                  color: AppColors.secondary,
                   size: 24,
                 ),
               ),
@@ -435,7 +435,7 @@ class LandingHeroSection extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
-                        color: Colors.white,
+                        color: AppColors.darkText,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -488,7 +488,7 @@ class LandingHeroSection extends StatelessWidget {
               child: const Text(
                 'Farklı vitrinleri inceleyin',
                 style: TextStyle(
-                  color: Color(0xFF10D8D8),
+                  color: AppColors.secondary,
                   fontWeight: FontWeight.w900,
                   fontSize: 13,
                 ),
@@ -559,8 +559,8 @@ class LandingHeroSection extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onNavigateToEditor,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0EA8B0),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.onPrimary,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     shape: RoundedRectangleBorder(

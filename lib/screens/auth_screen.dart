@@ -43,9 +43,10 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
 
-    final result = _isLogin
-        ? await authService.signIn(email, password)
-        : await authService.signUp(email, password);
+    final result =
+        _isLogin
+            ? await authService.signIn(email, password)
+            : await authService.signUp(email, password);
 
     result.when(
       success: (authResponse) async {
@@ -123,10 +124,7 @@ class _AuthScreenState extends State<AuthScreen> {
     bool linked = false;
     if (localEditToken.isNotEmpty) {
       final linkResult = await authService.linkAnonymousStore(localEditToken);
-      linkResult.when(
-        success: (value) => linked = value,
-        failure: (_) {},
-      );
+      linkResult.when(success: (value) => linked = value, failure: (_) {});
     }
 
     if (!mounted) return;
@@ -159,28 +157,12 @@ class _AuthScreenState extends State<AuthScreen> {
 
             if (!mounted) return;
 
-            final tokenResult = await authService.getEditTokenForCurrentUser();
-            tokenResult.when(
-              success: (editToken) async {
-                if (editToken != null) {
-                  await prefs.setString(
-                    LocalStorageKeys.storeEditToken,
-                    editToken,
-                  );
-                  await prefs.setString(
-                    LocalStorageKeys.lastPublishedEditToken,
-                    editToken,
-                  );
-                  if (store.slug.isNotEmpty) {
-                    await prefs.setString(
-                      LocalStorageKeys.lastPublishedSlug,
-                      store.slug,
-                    );
-                  }
-                }
-              },
-              failure: (_) {},
-            );
+            if (store.slug.isNotEmpty) {
+              await prefs.setString(
+                LocalStorageKeys.lastPublishedSlug,
+                store.slug,
+              );
+            }
 
             if (!mounted) return;
 
@@ -193,28 +175,12 @@ class _AuthScreenState extends State<AuthScreen> {
 
             if (!mounted) return;
 
-            final tokenResult = await authService.getEditTokenForCurrentUser();
-            tokenResult.when(
-              success: (editToken) async {
-                if (editToken != null) {
-                  await prefs.setString(
-                    LocalStorageKeys.vitrinEditToken,
-                    editToken,
-                  );
-                  await prefs.setString(
-                    LocalStorageKeys.lastPublishedEditToken,
-                    editToken,
-                  );
-                  if (store.slug.isNotEmpty) {
-                    await prefs.setString(
-                      LocalStorageKeys.lastPublishedSlug,
-                      store.slug,
-                    );
-                  }
-                }
-              },
-              failure: (_) {},
-            );
+            if (store.slug.isNotEmpty) {
+              await prefs.setString(
+                LocalStorageKeys.lastPublishedSlug,
+                store.slug,
+              );
+            }
 
             if (!mounted) return;
 
@@ -241,7 +207,7 @@ class _AuthScreenState extends State<AuthScreen> {
             Expanded(child: Text(msg)),
           ],
         ),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -264,7 +230,7 @@ class _AuthScreenState extends State<AuthScreen> {
           icon: const Icon(Icons.arrow_back, color: darkAccent),
           onPressed: () => Navigator.pop(context),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
       ),
       body: Center(
@@ -336,7 +302,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Colors.grey,
+                          color: AppColors.mutedText,
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -435,7 +401,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         onPressed: _isLoading ? null : _submit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: brandOrange,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -450,7 +416,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
+                                      AppColors.onPrimary,
                                     ),
                                   ),
                                 )
@@ -489,7 +455,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             : 'Kayıt olmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Color(0xFF64748B),
+                          color: AppColors.mutedText,
                           fontSize: 12,
                           height: 1.35,
                           fontWeight: FontWeight.w600,

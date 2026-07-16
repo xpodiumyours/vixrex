@@ -125,6 +125,8 @@ class VixRexApp extends StatelessWidget {
           primary: AppColors.primary,
           secondary: AppColors.secondary,
           surface: AppColors.surface,
+          onPrimary: AppColors.onPrimary,
+          onSecondary: AppColors.onPrimary,
           shadow: Colors.black12,
         ),
         scaffoldBackgroundColor: AppColors.bgEditor,
@@ -165,7 +167,7 @@ class VixRexApp extends StatelessWidget {
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.black,
+            foregroundColor: AppColors.onPrimary,
             disabledBackgroundColor: AppColors.surfaceSoft,
             disabledForegroundColor: AppColors.mutedText,
             elevation: 0,
@@ -192,8 +194,8 @@ class VixRexApp extends StatelessWidget {
           selectedColor: AppColors.primary,
           secondarySelectedColor: AppColors.primary,
           labelStyle: const TextStyle(color: AppColors.darkText),
-          secondaryLabelStyle: const TextStyle(color: Colors.black),
-          checkmarkColor: Colors.black,
+          secondaryLabelStyle: const TextStyle(color: AppColors.onPrimary),
+          checkmarkColor: AppColors.onPrimary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: const BorderSide(color: AppColors.border),
@@ -228,7 +230,7 @@ class VixRexApp extends StatelessWidget {
             }
             return AppColors.surfaceSoft;
           }),
-          checkColor: const WidgetStatePropertyAll(Colors.black),
+          checkColor: const WidgetStatePropertyAll(AppColors.onPrimary),
           side: const BorderSide(color: AppColors.border, width: 1.5),
         ),
         dialogTheme: const DialogThemeData(

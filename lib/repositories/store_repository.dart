@@ -5,9 +5,6 @@ abstract class StoreRepository {
   /// Kullanıcının kendi vitrinini getirir.
   Future<StoreData?> getStoreForCurrentUser();
 
-  /// Edit token ile vitrin getirir.
-  Future<StoreData?> getStoreByToken(String editToken);
-
   /// Slug ile vitrin getirir.
   Future<StoreData?> getStoreBySlug(String slug);
 
