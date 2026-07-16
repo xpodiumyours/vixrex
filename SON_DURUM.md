@@ -1,6 +1,6 @@
-TARİH: 16 Temmuz 2026
-BUGÜN YAPILAN: Asistan plan/HTML + AI token kuralları güvenli commit için hazırlandı; tek kaynak plan vixrex-asistan.md.
-YARIM KALAN: Commit sonrası isteğe bağlı push; Dalga 1 kodu (Furkan “başla” demeden yok); PR #25 AAB / Play ayrı; VİXREX-ASİSTAN-SON-PLAN.md commit dışı bırakıldı.
-SIRADAKİ ADIM: Furkan “Dalga 1 başla” veya push isterse ona göre.
-DOKUNULAN DOSYALAR: PROJECT_RULES.md, AGENTS.md, vixrex-asistan.md, vixrex-asistan-ornek.html, UYGULAMA_SAYFALARI.md, maskot/asistan md’leri, SON_DURUM.md
-DİKKAT: Kod değişmedi. Çelişirse vixrex-asistan.md + HTML kazanır.
+TARİH: 17 Temmuz 2026
+BUGÜN YAPILAN: Landing’de sağ alttaki sabit maskot artık route/çekmece açmadan mevcut telefon maketinin içinde Vixrex kurulum sohbetini açıyor; Kapat ile telefon tekrar dönen vitrinlere dönüyor.
+YARIM KALAN: Chrome görsel kabul testi; telefon içi sohbetin dar ekrandaki taşma/okunabilirlik kontrolü ve kullanıcı onayı, commit/push yok.
+SIRADAKİ ADIM: Chrome hot restart → landing’de maskota bas → telefon içi sohbet aç/kapat → dört vitrin döngüsünün geri geldiğini ekran görüntüsüyle doğrula.
+DOKUNULAN DOSYALAR: landing_screen.dart, landing_hero_section.dart, landing_hero_mockup.dart, vixrex_onboarding_chat_screen.dart, widget_test.dart.
+DİKKAT: Yeni landing davranışı widget testi geçti; linter hatası yok. Tam widget testindeki eski Keşfet beklentisi kodun Auth yönlendirmesiyle çelişiyor; OpenAI askıda.

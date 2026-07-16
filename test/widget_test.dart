@@ -5,14 +5,17 @@ import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/home_shell_screen.dart';
 import 'package:vixrex/screens/landing_screen.dart';
 import 'package:vixrex/screens/my_vitrin_screen.dart';
+import 'package:vixrex/screens/vixrex_onboarding_chat_screen.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/widgets/chatbot_badge.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:vixrex/config/app_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/widgets/landing/landing_template_catalog.dart';
 
 void main() {
   setUp(() async {
@@ -28,9 +31,10 @@ void main() {
           jsonEncode({
             'document_type': docType,
             'version': '$docType-2026-07-05',
-            'title': docType == 'privacy'
-                ? 'Gizlilik'
-                : (docType == 'terms' ? 'Kullanım Koşulları' : 'Açık Rıza'),
+            'title':
+                docType == 'privacy'
+                    ? 'Gizlilik'
+                    : (docType == 'terms' ? 'Kullanım Koşulları' : 'Açık Rıza'),
             'subtitle': '',
             'content_hash': 'hash',
             'sections': [],
@@ -95,6 +99,28 @@ void main() {
     expect(find.text('Vitrinimi Yayına Al'), findsOneWidget);
   });
 
+  testWidgets('Landing maskotu telefon içi kurulum sohbetini açar', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const VixRexApp());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(find.byType(ChatbotBadge));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(
+      AppRouter.router.routeInformationProvider.value.uri.path,
+      AppRouter.landing,
+    );
+    expect(find.byType(VixRexOnboardingChatScreen), findsOneWidget);
+
+    await tester.tap(find.text('Kapat'));
+    await tester.pump();
+    expect(find.byType(VixRexOnboardingChatScreen), findsNothing);
+  });
+
   testWidgets('Geçersiz route karşılama ekranına düşer', (
     WidgetTester tester,
   ) async {
@@ -125,6 +151,51 @@ void main() {
 
     expect(find.textContaining('Yakında'), findsNothing);
     expect(find.text('Vitrinleri Keşfet'), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets(
+    'Landing Keşfet mevcut Keşfet sekmesini açar, Auth ekranını değil',
+    (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(const VixRexApp());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      await tester.tap(find.text('Vitrinleri Keşfet').first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(HomeShellScreen), findsOneWidget);
+      expect(find.text("Vixrex'leri Keşfet"), findsOneWidget);
+    },
+  );
+
+  testWidgets('Şablon kataloğu seçilen kategori anahtarını korur', (
+    WidgetTester tester,
+  ) async {
+    String? selectedCategoryKey;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: LandingTemplateCatalog(
+              onNavigateToAuth:
+                  (categoryKey) => selectedCategoryKey = categoryKey,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Butik & Giyim').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bu Şablonla Başla'));
+    await tester.pumpAndSettle();
+
+    expect(selectedCategoryKey, 'butik_giyim');
   });
 
   testWidgets('Vitrinim yayınlanmış vitrini aynı sayfada düzenletir', (

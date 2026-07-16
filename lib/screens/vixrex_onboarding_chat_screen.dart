@@ -1,0 +1,743 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/widgets/editor/form_location_info.dart';
+import 'package:vixrex/widgets/editor/legal_consent_section.dart';
+
+enum _OnboardingStep {
+  welcome,
+  name,
+  whatsapp,
+  location,
+  legal,
+  publishing,
+  done,
+}
+
+/// Faz 2: HTML örneğindeki varlık sohbeti (ad / WA / konum → yayın → link).
+/// Landing’deki işletme adı alanı [initialName] ile gelir (home shell ile aynı fikir).
+class VixRexOnboardingChatScreen extends StatefulWidget {
+  const VixRexOnboardingChatScreen({
+    super.key,
+    this.initialName,
+    this.compact = false,
+    this.onClose,
+  });
+
+  final String? initialName;
+  final bool compact;
+  final VoidCallback? onClose;
+
+  @override
+  State<VixRexOnboardingChatScreen> createState() =>
+      _VixRexOnboardingChatScreenState();
+}
+
+class _VixRexOnboardingChatScreenState
+    extends State<VixRexOnboardingChatScreen> {
+  final _controller = StoreEditorController();
+  late final MyVitrinState _vitrinState = MyVitrinState(
+    controller: _controller,
+  );
+  final _scrollController = ScrollController();
+  final _inputController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _inputFocus = FocusNode();
+
+  final List<_ChatLine> _lines = [];
+  _OnboardingStep _step = _OnboardingStep.welcome;
+  bool _busy = false;
+  String? _error;
+  String? _publicLink;
+
+  static const _phases = ['Tanışma', 'Bilgiler', 'Vitrinin hazır'];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onControllerTick);
+    _bootstrap();
+  }
+
+  void _onControllerTick() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _bootstrap() async {
+    await _controller.initialize(widget.initialName);
+    if (!mounted) return;
+    _pushBot(
+      'Merhaba, ben Vixrex.\n\n'
+      'Sana dijital bir vitrin oluşturmamı ister misin?',
+    );
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerTick);
+    _vitrinState.dispose();
+    _controller.dispose();
+    _scrollController.dispose();
+    _inputController.dispose();
+    _addressController.dispose();
+    _inputFocus.dispose();
+    super.dispose();
+  }
+
+  int get _phaseIndex {
+    switch (_step) {
+      case _OnboardingStep.welcome:
+        return 0;
+      case _OnboardingStep.name:
+      case _OnboardingStep.whatsapp:
+      case _OnboardingStep.location:
+      case _OnboardingStep.legal:
+      case _OnboardingStep.publishing:
+        return 1;
+      case _OnboardingStep.done:
+        return 2;
+    }
+  }
+
+  void _pushBot(String text, {String? publicLink}) {
+    _lines.add(
+      _ChatLine.bot(
+        text,
+        publicLink: publicLink,
+        onOpenPublicLink: publicLink == null ? null : _openPublicLink,
+      ),
+    );
+    _scrollToEnd();
+  }
+
+  void _pushUser(String text) {
+    _lines.add(_ChatLine.user(text));
+    _scrollToEnd();
+  }
+
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent + 80,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  Future<void> _acceptWelcome() async {
+    _pushUser('Evet, oluşturalım');
+    setState(() => _error = null);
+
+    final existingName = _controller.data.name.trim();
+    if (existingName.length >= 2) {
+      _pushUser(existingName);
+      setState(() => _step = _OnboardingStep.whatsapp);
+      _pushBot('Müşteriler seni nasıl bulsun?\nWhatsApp numaranı yaz.');
+      _focusInput();
+      return;
+    }
+
+    setState(() => _step = _OnboardingStep.name);
+    _pushBot('Harika. İşletmenin adı ne?');
+    _focusInput();
+  }
+
+  void _declineWelcome() {
+    _pushUser('Şimdilik bakınıyorum');
+    _pushBot('Tamam. Hazır olunca buradayım.');
+    setState(() => _step = _OnboardingStep.welcome);
+  }
+
+  Future<void> _submitName(String raw) async {
+    final name = raw.trim();
+    if (name.length < 2) {
+      setState(() => _error = 'İşletme adını en az 2 karakter yaz.');
+      return;
+    }
+    _pushUser(name);
+    _controller.updateName(name);
+    await _controller.saveLocally();
+    setState(() {
+      _step = _OnboardingStep.whatsapp;
+      _error = null;
+      _inputController.clear();
+    });
+    _pushBot('Müşteriler seni nasıl bulsun?\nWhatsApp numaranı yaz.');
+    _focusInput();
+  }
+
+  Future<void> _submitWhatsapp(String raw) async {
+    final normalized = WhatsAppLinkHelper.normalizeTurkeyMobile(raw);
+    if (normalized == null) {
+      setState(() => _error = WhatsAppLinkHelper.invalidNumberMessage);
+      return;
+    }
+    _pushUser(raw.trim());
+    _controller.updateWhatsapp(normalized);
+    await _controller.saveLocally();
+    setState(() {
+      _step = _OnboardingStep.location;
+      _error = null;
+      _inputController.clear();
+    });
+    _pushBot(
+      'İşletmen nerede?\n'
+      'Aşağıda profil editöründeki konum alanını kullan — '
+      'GPS veya il/ilçe/adres.',
+    );
+  }
+
+  Future<void> _confirmLocationFromEditor() async {
+    final data = _controller.data;
+    if (data.provinceCode.trim().isEmpty ||
+        data.districtName.trim().isEmpty ||
+        data.address.trim().isEmpty) {
+      setState(
+        () => _error = 'İl, ilçe ve adres gerekli. GPS veya listeden seç.',
+      );
+      return;
+    }
+    final label =
+        '${data.districtName}, ${data.provinceName} — ${data.address}';
+    _pushUser(label);
+    await _controller.saveLocally();
+    if (!mounted) return;
+    setState(() {
+      _step = _OnboardingStep.legal;
+      _error = null;
+    });
+    _pushBot(
+      'Son adım: editördeki yasal onayları işaretle, sonra yayınla.\n'
+      'Kısa tutuyoruz.',
+    );
+  }
+
+  Future<void> _acceptLegalAndPublish() async {
+    if (_busy) return;
+    if (!_controller.isLegalPublishReady) {
+      setState(() => _error = 'Yayın için aşağıdaki yasal onayları işaretle.');
+      return;
+    }
+    _pushUser('Yayınla');
+    setState(() {
+      _busy = true;
+      _error = null;
+      _step = _OnboardingStep.publishing;
+    });
+    _pushBot('Vitrinin hazırlanıyor…');
+
+    try {
+      await _controller.saveLocally();
+      final link = await _controller.publish();
+      if (!mounted) return;
+      if (link == null || link.trim().isEmpty) {
+        setState(() {
+          _busy = false;
+          _step = _OnboardingStep.legal;
+          _error = 'Yayın tamamlanamadı. Tekrar dene.';
+        });
+        _pushBot('Bir sorun oluştu. Tekrar deneyebilirsin.');
+        return;
+      }
+      _publicLink = link.trim();
+      setState(() {
+        _busy = false;
+        _step = _OnboardingStep.done;
+      });
+      _pushBot(
+        'İşte bu kadar.\nArtık dijitalde varsın.\n\n'
+        'İşletme adına özel vitrinin hazır. Web siten var — domain masrafın yok.',
+        publicLink: _repairedPublicLink,
+      );
+      _pushBot(
+        'Sırada görünüm ve ürünler var.\n'
+        'Kapak şablonunu seç; galeri, açıklama, ürün ve fiş tarayıcı '
+        'için VixRex rehberinde devam et.',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _step = _OnboardingStep.legal;
+        _error = e.toString().replaceFirst('StorePublishException: ', '');
+      });
+      _pushBot(
+        'Yayın şu an tamamlanamadı.\n'
+        'Tekrar dene. Devam etmezse ekrandaki kırmızı hata metnini bana gönder.',
+      );
+    }
+  }
+
+  void _focusInput() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _inputFocus.requestFocus();
+    });
+  }
+
+  Future<void> _onSend() async {
+    final text = _inputController.text;
+    switch (_step) {
+      case _OnboardingStep.name:
+        await _submitName(text);
+      case _OnboardingStep.whatsapp:
+        await _submitWhatsapp(text);
+      default:
+        break;
+    }
+  }
+
+  String? get _repairedPublicLink {
+    final raw = _publicLink?.trim() ?? '';
+    if (raw.isEmpty) return null;
+    return PublicSiteConfig.repairPublicLink(raw);
+  }
+
+  Future<void> _copyPublicLink() async {
+    final link = _repairedPublicLink;
+    if (link == null) return;
+    await Clipboard.setData(ClipboardData(text: link));
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Vitrin linki kopyalandı.')));
+  }
+
+  Future<void> _openPublicLink() async {
+    final link = _repairedPublicLink;
+    if (link == null) return;
+    final uri = Uri.tryParse(link);
+    if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vitrin linki açılamadı.')));
+      return;
+    }
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Tarayıcı açılamadı.')));
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Tarayıcı açılamadı.')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showInput =
+        _step == _OnboardingStep.name || _step == _OnboardingStep.whatsapp;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B1218),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildTopBar(),
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                itemCount: _lines.length,
+                itemBuilder:
+                    (context, index) => _ChatBubble(line: _lines[index]),
+              ),
+            ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(
+                    color: Color(0xFFFF8F8F),
+                    fontSize: 12.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            _buildComposer(showInput),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    final phase = _phaseIndex;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF101820),
+        border: Border(bottom: BorderSide(color: Color(0x16FFFFFF))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryDark],
+                  ),
+                ),
+                child: const Text(
+                  'Vx',
+                  style: TextStyle(
+                    color: Color(0xFF041016),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Vixrex',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                    Text(
+                      'Dijital vitrin asistanı',
+                      style: TextStyle(color: Color(0xFF8FA3B0), fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed:
+                    widget.onClose ??
+                    () => AppRouter.navigateToLanding(context),
+                child: const Text(
+                  'Kapat',
+                  style: TextStyle(color: Color(0xFF8FA3B0)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: List.generate(3, (i) {
+              return Expanded(
+                child: Container(
+                  height: 3,
+                  margin: EdgeInsets.only(right: i == 2 ? 0 : 6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(99),
+                    color:
+                        i <= phase
+                            ? AppColors.primary
+                            : const Color(0x22FFFFFF),
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _phases[phase.clamp(0, _phases.length - 1)],
+            style: const TextStyle(color: Color(0xFF8FA3B0), fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComposer(bool showInput) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+      decoration: const BoxDecoration(
+        color: Color(0xF2101820),
+        border: Border(top: BorderSide(color: Color(0x16FFFFFF))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_step == _OnboardingStep.welcome) ...[
+            _primaryButton('Evet, oluşturalım', _busy ? null : _acceptWelcome),
+            const SizedBox(height: 8),
+            _ghostButton(
+              'Şimdilik bakınıyorum',
+              _busy ? null : _declineWelcome,
+            ),
+          ],
+          if (_step == _OnboardingStep.legal) ...[
+            LegalConsentSection(
+              canAccept: !_controller.isLoadingLegalDocuments,
+              isLoading: _controller.isLoadingLegalDocuments,
+              errorText: _controller.legalDocumentsError,
+              privacyNoticeAcknowledged: _controller.privacyNoticeAcknowledged,
+              termsAccepted: _controller.termsAccepted,
+              publicationConsentAccepted:
+                  _controller.publicationConsentAccepted,
+              onPrivacyChanged: _controller.setPrivacyNoticeAcknowledged,
+              onTermsChanged: _controller.setTermsAccepted,
+              onPublicationChanged: _controller.setPublicationConsentAccepted,
+              onReloadDocuments: _controller.reloadLegalDocuments,
+              onOpenLegalPage:
+                  (type) => AppRouter.navigateToLegal(context, type),
+            ),
+            const SizedBox(height: 10),
+            _primaryButton(
+              _busy
+                  ? 'Yayınlanıyor…'
+                  : (_controller.isLegalPublishReady
+                      ? 'Yayınla'
+                      : 'Onayları işaretle'),
+              _busy || !_controller.isLegalPublishReady
+                  ? null
+                  : _acceptLegalAndPublish,
+            ),
+          ],
+          if (_step == _OnboardingStep.location) ...[
+            FormLocationInfo(
+              controller: _controller,
+              state: _vitrinState,
+              addressController: _addressController,
+            ),
+            const SizedBox(height: 10),
+            _primaryButton(
+              'Konumu onayla, devam',
+              _busy ? null : _confirmLocationFromEditor,
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (showInput)
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _inputController,
+                    focusNode: _inputFocus,
+                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _onSend(),
+                    decoration: InputDecoration(
+                      hintText: _hintForStep(),
+                      hintStyle: const TextStyle(color: Color(0xFF8FA3B0)),
+                      filled: true,
+                      fillColor: const Color(0xFF17232D),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0x22FFFFFF)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0x22FFFFFF)),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: _busy ? null : _onSend,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: const Color(0xFF041016),
+                    minimumSize: const Size(88, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Gönder'),
+                ),
+              ],
+            ),
+          if (_step == _OnboardingStep.done) ...[
+            _primaryButton('Rehberde devam et', () {
+              AppRouter.navigateToHomeShell(context, initialIndex: 2);
+            }),
+            const SizedBox(height: 8),
+            _ghostButton('Kapak şablonu seç', () {
+              AppRouter.navigateToHomeShell(
+                context,
+                initialVixRexAction: VixRexAction.openCoverTemplatePicker,
+              );
+            }),
+            const SizedBox(height: 8),
+            _ghostButton('Vitrinime git', () {
+              AppRouter.navigateToHomeShell(context);
+            }),
+            const SizedBox(height: 8),
+            _ghostButton('Hesabımı güvenceye al', () {
+              AppRouter.navigateToAuth(context);
+            }),
+            if (_publicLink != null) ...[
+              const SizedBox(height: 8),
+              _ghostButton('Linki kopyala', _copyPublicLink),
+              const SizedBox(height: 8),
+              _ghostButton('Canlı vitrini aç', _openPublicLink),
+            ],
+          ],
+          if (_step == _OnboardingStep.publishing)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _hintForStep() {
+    switch (_step) {
+      case _OnboardingStep.name:
+        return 'Örn: Demir Fırın';
+      case _OnboardingStep.whatsapp:
+        return '05xx xxx xx xx';
+      default:
+        return '';
+    }
+  }
+
+  Widget _primaryButton(String label, VoidCallback? onPressed) {
+    return FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: const Color(0xFF041016),
+        minimumSize: const Size.fromHeight(48),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+    );
+  }
+
+  Widget _ghostButton(String label, VoidCallback? onPressed) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: const BorderSide(color: Color(0x33FFFFFF)),
+        minimumSize: const Size.fromHeight(48),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: Text(label),
+    );
+  }
+}
+
+class _ChatLine {
+  final String text;
+  final bool isBot;
+  final String? publicLink;
+  final VoidCallback? onOpenPublicLink;
+
+  const _ChatLine.bot(this.text, {this.publicLink, this.onOpenPublicLink})
+    : isBot = true;
+  const _ChatLine.user(this.text)
+    : isBot = false,
+      publicLink = null,
+      onOpenPublicLink = null;
+}
+
+class _ChatBubble extends StatelessWidget {
+  final _ChatLine line;
+  const _ChatBubble({required this.line});
+
+  @override
+  Widget build(BuildContext context) {
+    final align = line.isBot ? Alignment.centerLeft : Alignment.centerRight;
+    return Align(
+      alignment: align,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.sizeOf(context).width * 0.86,
+        ),
+        decoration: BoxDecoration(
+          color: line.isBot ? const Color(0xFF17232D) : const Color(0xFF13343C),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(line.isBot ? 4 : 16),
+            bottomRight: Radius.circular(line.isBot ? 16 : 4),
+          ),
+          border: Border.all(
+            color:
+                line.isBot
+                    ? const Color(0x16FFFFFF)
+                    : AppColors.primary.withValues(alpha: 0.25),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              line.text,
+              style: const TextStyle(
+                color: Color(0xFFE8EEF2),
+                fontSize: 14.5,
+                height: 1.45,
+              ),
+            ),
+            if (line.publicLink != null && line.onOpenPublicLink != null) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: line.onOpenPublicLink,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: const Color(0xFF041016),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 17),
+                  label: const Text(
+                    'Canlı vitrini aç',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SelectableText(
+                line.publicLink!,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 11.5,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

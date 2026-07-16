@@ -19,6 +19,8 @@ class LandingHeroSection extends StatelessWidget {
   final VoidCallback onNavigateToPreview;
   final VoidCallback onNavigateToEditor;
   final VoidCallback onStateChanged;
+  final bool isMockupChatOpen;
+  final VoidCallback onCloseMockupChat;
 
   const LandingHeroSection({
     super.key,
@@ -33,6 +35,8 @@ class LandingHeroSection extends StatelessWidget {
     required this.onNavigateToPreview,
     required this.onNavigateToEditor,
     required this.onStateChanged,
+    required this.isMockupChatOpen,
+    required this.onCloseMockupChat,
   });
 
   static const Color brandBlue = AppColors.primary;
@@ -127,9 +131,13 @@ class LandingHeroSection extends StatelessWidget {
                                         flex: 5,
                                         child: LandingHeroMockup(
                                           animController: animController,
-                                          activeProfileIndex: activeProfileIndex,
+                                          activeProfileIndex:
+                                              activeProfileIndex,
                                           heroDemoProfiles: heroDemoProfiles,
-                                          onNavigateToPreview: onNavigateToPreview,
+                                          onNavigateToPreview:
+                                              onNavigateToPreview,
+                                          isMockupChatOpen: isMockupChatOpen,
+                                          onCloseMockupChat: onCloseMockupChat,
                                         ),
                                       ),
                                     ],
@@ -147,7 +155,10 @@ class LandingHeroSection extends StatelessWidget {
                                         animController: animController,
                                         activeProfileIndex: activeProfileIndex,
                                         heroDemoProfiles: heroDemoProfiles,
-                                        onNavigateToPreview: onNavigateToPreview,
+                                        onNavigateToPreview:
+                                            onNavigateToPreview,
+                                        isMockupChatOpen: isMockupChatOpen,
+                                        onCloseMockupChat: onCloseMockupChat,
                                       ),
                                     ],
                                   ),
@@ -354,7 +365,9 @@ class LandingHeroSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFF0D5E65).withValues(alpha: 0.25),
             borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: const Color(0xFF0EA8B0).withValues(alpha: 0.35)),
+            border: Border.all(
+              color: const Color(0xFF0EA8B0).withValues(alpha: 0.35),
+            ),
           ),
           child: const Text(
             'İŞLETMENİZ İÇİN DİJİTAL VİTRİN',
@@ -462,10 +475,7 @@ class LandingHeroSection extends StatelessWidget {
                   SizedBox(width: 10),
                   Text(
                     'Kayıtlı Vitrinimi Düzenle',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
                   ),
                 ],
               ),
@@ -490,13 +500,15 @@ class LandingHeroSection extends StatelessWidget {
           LayoutBuilder(
             builder: (context, formConstraints) {
               final isFormRow = formConstraints.maxWidth > 500;
-              
+
               final inputField = Container(
                 height: 52,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -534,9 +546,7 @@ class LandingHeroSection extends StatelessWidget {
                           ),
                           border: InputBorder.none,
                           isDense: true,
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: 14,
-                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 14),
                         ),
                       ),
                     ),
@@ -648,9 +658,7 @@ class LandingHeroSection extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withValues(alpha: 0)],
-        ),
+        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
       ),
     );
   }

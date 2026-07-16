@@ -28,6 +28,7 @@ class _LandingScreenState extends State<LandingScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   int _activeProfileIndex = 0;
+  bool _isMockupChatOpen = false;
   bool _hasSavedVitrin = false;
   bool _isCheckingSavedVitrin = true;
   final TextEditingController _storeNameController = TextEditingController();
@@ -36,7 +37,6 @@ class _LandingScreenState extends State<LandingScreen>
   final Map<String, List<String>> _categoryGalleryCache = {};
   // ignore: unused_field
   bool _isLoadingGalleryImages = false;
-
 
   static List<HeroDemoProfile> _heroDemoProfiles = [
     HeroDemoProfile(
@@ -55,10 +55,21 @@ class _LandingScreenState extends State<LandingScreen>
         const HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
       ],
       links: [
-        const HeroDemoLink('Vitrin galerisi', 'Raf ve reyon fotoğrafları', Icons.photo_library_rounded, Color(0xFFFF5A1F)),
-        const HeroDemoLink('Trendyol', 'Mağazayı ziyaret edin', Icons.shopping_bag_rounded, Color(0xFFF27A1A)),
+        const HeroDemoLink(
+          'Vitrin galerisi',
+          'Raf ve reyon fotoğrafları',
+          Icons.photo_library_rounded,
+          Color(0xFFFF5A1F),
+        ),
+        const HeroDemoLink(
+          'Trendyol',
+          'Mağazayı ziyaret edin',
+          Icons.shopping_bag_rounded,
+          Color(0xFFF27A1A),
+        ),
       ],
-      coverImageUrl: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl:
+          'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=300&q=80',
@@ -83,10 +94,21 @@ class _LandingScreenState extends State<LandingScreen>
         const HeroDemoAction(Icons.location_on_rounded, Color(0xFFEF4444)),
       ],
       links: [
-        const HeroDemoLink('Günün menüsü', 'Sıcak yemek ve tatlılar', Icons.local_dining_rounded, Color(0xFFEA580C)),
-        const HeroDemoLink('Paket servis', 'WhatsApp ile sipariş', Icons.delivery_dining_rounded, Color(0xFF10B981)),
+        const HeroDemoLink(
+          'Günün menüsü',
+          'Sıcak yemek ve tatlılar',
+          Icons.local_dining_rounded,
+          Color(0xFFEA580C),
+        ),
+        const HeroDemoLink(
+          'Paket servis',
+          'WhatsApp ile sipariş',
+          Icons.delivery_dining_rounded,
+          Color(0xFF10B981),
+        ),
       ],
-      coverImageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl:
+          'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=300&q=80',
@@ -111,10 +133,21 @@ class _LandingScreenState extends State<LandingScreen>
         const HeroDemoAction(Icons.camera_alt_rounded, Color(0xFFE1306C)),
       ],
       links: [
-        const HeroDemoLink('Hizmetler', 'Kesim, boya ve bakım', Icons.spa_rounded, Color(0xFFDB2777)),
-        const HeroDemoLink('Randevu al', 'WhatsApp ile hızlı iletişim', Icons.event_available_rounded, Color(0xFF10B981)),
+        const HeroDemoLink(
+          'Hizmetler',
+          'Kesim, boya ve bakım',
+          Icons.spa_rounded,
+          Color(0xFFDB2777),
+        ),
+        const HeroDemoLink(
+          'Randevu al',
+          'WhatsApp ile hızlı iletişim',
+          Icons.event_available_rounded,
+          Color(0xFF10B981),
+        ),
       ],
-      coverImageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl:
+          'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=300&q=80',
@@ -139,10 +172,21 @@ class _LandingScreenState extends State<LandingScreen>
         const HeroDemoAction(Icons.phone_android_rounded, Color(0xFF2563EB)),
       ],
       links: [
-        const HeroDemoLink('Servis kaydı', 'Ekran, batarya ve bakım', Icons.construction_rounded, Color(0xFF2563EB)),
-        const HeroDemoLink('Google yorumları', 'Müşteri güveni', Icons.verified_rounded, Color(0xFF6366F1)),
+        const HeroDemoLink(
+          'Servis kaydı',
+          'Ekran, batarya ve bakım',
+          Icons.construction_rounded,
+          Color(0xFF2563EB),
+        ),
+        const HeroDemoLink(
+          'Google yorumları',
+          'Müşteri güveni',
+          Icons.verified_rounded,
+          Color(0xFF6366F1),
+        ),
       ],
-      coverImageUrl: 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=400&q=80',
+      coverImageUrl:
+          'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=400&q=80',
       galleryImages: [
         'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=300&q=80',
         'https://images.unsplash.com/photo-1545259741-2ea3ebf61fa3?auto=format&fit=crop&w=300&q=80',
@@ -201,9 +245,10 @@ class _LandingScreenState extends State<LandingScreen>
               secondaryBadgeText: profile.secondaryBadgeText,
               actions: profile.actions,
               links: profile.links,
-              coverImageUrl: imageSet.coverImages.isNotEmpty
-                  ? imageSet.coverImages.first.imageUrl
-                  : profile.coverImageUrl,
+              coverImageUrl:
+                  imageSet.coverImages.isNotEmpty
+                      ? imageSet.coverImages.first.imageUrl
+                      : profile.coverImageUrl,
               galleryImages: urls.take(3).toList(),
               templateCategoryKey: key,
             ),
@@ -277,6 +322,14 @@ class _LandingScreenState extends State<LandingScreen>
     AppRouter.navigateToHomeShell(context);
   }
 
+  void _openMockupChat() {
+    setState(() => _isMockupChatOpen = true);
+  }
+
+  void _closeMockupChat() {
+    setState(() => _isMockupChatOpen = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -296,6 +349,8 @@ class _LandingScreenState extends State<LandingScreen>
                 onNavigateToSavedVitrin: _navigateToSavedVitrin,
                 onNavigateToPreview: _navigateToPreview,
                 onNavigateToEditor: _navigateToEditor,
+                isMockupChatOpen: _isMockupChatOpen,
+                onCloseMockupChat: _closeMockupChat,
                 onStateChanged: () {
                   if (mounted) {
                     setState(() {});
@@ -317,7 +372,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
         ),
       ),
-      floatingActionButton: ChatbotBadge(),
+      floatingActionButton: ChatbotBadge(onOpen: _openMockupChat),
     );
   }
 }
