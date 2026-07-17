@@ -27,6 +27,7 @@ void main() {
     expect(safeSelect, contains("'id,slug,name"));
     expect(safeSelect, isNot(contains("'edit_token")));
     expect(safeSelect, isNot(contains(',edit_token')));
+    expect(safeSelect, isNot(contains('published_at')));
   });
 
   test(
