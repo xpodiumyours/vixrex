@@ -1,0 +1,14 @@
+# ============================================================================
+# VixRex Supabase .gitignore (M1)
+# ============================================================================
+
+# Yerel Supabase verileri
+temp/
+vector.sql
+seed.sql.tmp
+
+# Supabase Studio
+.studio/
+
+# Yerel PostgreSQL verileri
+docker/postgres/
