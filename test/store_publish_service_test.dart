@@ -120,9 +120,6 @@ class FakePostgrestTransformBuilder<T>
   FakePostgrestTransformBuilder(this.client);
 
   Future<T> get _future {
-    if (client.postgrestExceptionToThrow != null) {
-      return Future<T>.error(client.postgrestExceptionToThrow!);
-    }
     final val = client.selectResponse as T;
     return Future<T>.value(val);
   }
@@ -248,21 +245,30 @@ void main() {
       },
     );
 
-    test('Yetki/RLS hatası aldığında Result.failure döner', () async {
-      fakeClient.selectResponse = {'slug': 'test-magazasi'};
-      fakeClient.postgrestExceptionToThrow = const PostgrestException(
-        message: 'row-level security policy violation',
-        code: '42501',
-      );
+    test(
+      'Yetkisiz slug çakışmasında yeni benzersiz slug ile create çağırır',
+      () async {
+        fakeClient.selectResponse = {'slug': 'test-magazasi'};
+        fakeClient.postgrestExceptionToThrow = const PostgrestException(
+          message: 'STORE_UPDATE_NOT_ALLOWED',
+          code: 'P0001',
+        );
 
-      final result = await service.publishStore(
-        sampleStore,
-        editToken: editToken,
-      );
+        final result = await service.publishStore(
+          sampleStore,
+          editToken: editToken,
+        );
 
-      expect(result.isFailure, isTrue);
-      expect(result.failure!.message, contains('Supabase tarafında eksik'));
-    });
+        expect(result.isSuccess, isTrue);
+        expect(result.data!.wasUpdated, isFalse);
+        expect(result.data!.slug, startsWith('test-magazasi-'));
+        expect(result.data!.slug, isNot('test-magazasi'));
+        expect(
+          fakeClient.rpcCalls.map((c) => c['fn']),
+          containsAll(['update_store_with_token', 'create_store_with_token']),
+        );
+      },
+    );
   });
 
   group('StorePublishService publication consent withdrawal', () {

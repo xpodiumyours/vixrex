@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
+import 'package:vixrex/services/store_safe_select.dart';
 import 'package:vixrex/utils/app_error_guard.dart';
 
 class ExploreRepository {
@@ -24,7 +25,7 @@ class ExploreRepository {
       action: () async {
         final response = await _client
             .from('stores')
-            .select()
+            .select(StoreSafeSelect.columns)
             .eq('is_published', true);
         final List<dynamic> data = response as List<dynamic>;
         return data.map((json) => StoreData.fromJson(json)).toList();

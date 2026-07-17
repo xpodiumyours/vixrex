@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/category_image_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/store_safe_select.dart';
 
 // ─── Otomatik Doldurma Secenekleri ───────────────────────────────────────────
 
@@ -84,6 +85,7 @@ class AutoFillService {
     required String categoryKey,
     AutoFillOptions options = const AutoFillOptions(),
     String? selectedCoverUrl,
+    String? editToken,
   }) async {
     try {
       // RPC fonksiyonunu cagir
@@ -96,6 +98,7 @@ class AutoFillService {
           'p_fill_logo': options.fillLogo,
           'p_fill_gallery': options.fillGallery,
           'p_fill_products': options.fillProducts,
+          'p_edit_token': editToken,
         },
       );
 
@@ -292,7 +295,7 @@ class AutoFillService {
     try {
       final response = await _client
           .from('stores')
-          .select()
+          .select(StoreSafeSelect.columns)
           .eq('id', storeId)
           .single();
       final rawJson = jsonEncode(response);

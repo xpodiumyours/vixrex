@@ -22,9 +22,10 @@ class SupabaseErrorMapper {
       final searchableText = '$message $code $details';
 
       // Specific business / authorization constraints from store publisher
-      if (searchableText.contains('edit_token_mismatch') || 
-          searchableText.contains('edit token mismatch') || 
-          searchableText.contains('invalid_edit_token')) {
+      if (searchableText.contains('edit_token_mismatch') ||
+          searchableText.contains('edit token mismatch') ||
+          searchableText.contains('invalid_edit_token') ||
+          searchableText.contains('store_update_not_allowed')) {
         return Failure(
           'Bu vitrin/mağaza başka bir cihazdan oluşturulmuş olabilir. Lütfen yetkinizi kontrol edin.',
           stackTrace: stackTrace,

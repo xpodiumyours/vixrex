@@ -66,17 +66,21 @@ class StorePublishService {
           slug,
           editToken,
         );
-        if (updateResult.isFailure) {
+        if (updateResult.isSuccess) {
+          return Result.success(
+            StorePublishResult(
+              publicPath: '/v/$slug',
+              slug: slug,
+              wasUpdated: true,
+              editToken: editToken,
+            ),
+          );
+        }
+        if (!_isUnauthorizedUpdate(updateResult.failure)) {
           return Result.failure(updateResult.failure!);
         }
-        return Result.success(
-          StorePublishResult(
-            publicPath: '/v/$slug',
-            slug: slug,
-            wasUpdated: true,
-            editToken: editToken,
-          ),
-        );
+        // Slug başka sahibe ait: yeni benzersiz adresle oluştur.
+        slug = _allocateUniqueSlug(initialSlug);
       }
 
       // 2. Yeni vitrin oluştur (RPC)
@@ -98,7 +102,7 @@ class StorePublishService {
           ),
         );
       } on PostgrestException catch (error) {
-        // Slug çakışıyorsa → güncelle
+        // Slug çakışıyorsa → yetkiliyse güncelle, değilse yeni slug ile oluştur
         if (_isDuplicateSlugError(error)) {
           final updateResult = await _updateStoreWithToken(
             client,
@@ -106,14 +110,33 @@ class StorePublishService {
             slug,
             editToken,
           );
-          if (updateResult.isFailure) {
+          if (updateResult.isSuccess) {
+            return Result.success(
+              StorePublishResult(
+                publicPath: '/v/$slug',
+                slug: slug,
+                wasUpdated: true,
+                editToken: editToken,
+              ),
+            );
+          }
+          if (!_isUnauthorizedUpdate(updateResult.failure)) {
             return Result.failure(updateResult.failure!);
           }
+          slug = _allocateUniqueSlug(initialSlug);
+          await client.rpc(
+            'create_store_with_token',
+            params: {
+              'p_slug': slug,
+              'p_edit_token': editToken,
+              'p_store': payloadBuilder.toStoreInsertMap(data, slug, editToken),
+            },
+          );
           return Result.success(
             StorePublishResult(
               publicPath: '/v/$slug',
               slug: slug,
-              wasUpdated: true,
+              wasUpdated: false,
               editToken: editToken,
             ),
           );
@@ -128,14 +151,33 @@ class StorePublishService {
           slug,
           editToken,
         );
-        if (updateResult.isFailure) {
+        if (updateResult.isSuccess) {
+          return Result.success(
+            StorePublishResult(
+              publicPath: '/v/$slug',
+              slug: slug,
+              wasUpdated: true,
+              editToken: editToken,
+            ),
+          );
+        }
+        if (!_isUnauthorizedUpdate(updateResult.failure)) {
           return Result.failure(updateResult.failure!);
         }
+        slug = _allocateUniqueSlug(initialSlug);
+        await client.rpc(
+          'create_store_with_token',
+          params: {
+            'p_slug': slug,
+            'p_edit_token': editToken,
+            'p_store': payloadBuilder.toStoreInsertMap(data, slug, editToken),
+          },
+        );
         return Result.success(
           StorePublishResult(
             publicPath: '/v/$slug',
             slug: slug,
-            wasUpdated: true,
+            wasUpdated: false,
             editToken: editToken,
           ),
         );
@@ -289,6 +331,23 @@ class StorePublishService {
         searchableText.contains('duplicate key') ||
         searchableText.contains('23505') ||
         searchableText.contains('409');
+  }
+
+  bool _isUnauthorizedUpdate(Failure? failure) {
+    if (failure == null) return false;
+    final text = failure.message.toLowerCase();
+    return text.contains('başka bir cihazdan') ||
+        text.contains('store_update_not_allowed') ||
+        text.contains('edit_token_mismatch') ||
+        text.contains('erişim reddedildi');
+  }
+
+  String _allocateUniqueSlug(String baseSlug) {
+    final cleaned =
+        baseSlug.trim().isEmpty ? 'magazaniz' : baseSlug.trim();
+    final stamp = DateTime.now().millisecondsSinceEpoch.toString();
+    final suffix = stamp.length > 6 ? stamp.substring(stamp.length - 6) : stamp;
+    return '$cleaned-$suffix';
   }
 }
 

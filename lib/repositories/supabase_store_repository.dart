@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/store_repository.dart';
+import 'package:vixrex/services/store_safe_select.dart';
 
 /// Supabase ile StoreRepository implementasyonu.
 class SupabaseStoreRepository implements StoreRepository {
@@ -16,7 +17,7 @@ class SupabaseStoreRepository implements StoreRepository {
     final response =
         await _client
             .from('stores')
-            .select()
+            .select(StoreSafeSelect.columns)
             .eq('user_id', user.id)
             .maybeSingle();
     if (response == null) return null;
@@ -29,7 +30,7 @@ class SupabaseStoreRepository implements StoreRepository {
     final response =
         await _client
             .from('stores')
-            .select()
+            .select(StoreSafeSelect.columns)
             .eq('slug', slug.trim())
             .maybeSingle();
     if (response == null) return null;
@@ -77,7 +78,7 @@ class SupabaseStoreRepository implements StoreRepository {
   Future<List<StoreData>> fetchPublishedStores() async {
     final response = await _client
         .from('stores')
-        .select()
+        .select(StoreSafeSelect.columns)
         .eq('is_published', true);
     final List<dynamic> data = response as List<dynamic>;
     return data.map((json) => StoreData.fromJson(json)).toList();

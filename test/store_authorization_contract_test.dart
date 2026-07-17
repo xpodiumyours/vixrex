@@ -14,11 +14,19 @@ void main() {
     );
     final authService = read('lib/services/auth_service.dart');
     final repository = read('lib/repositories/supabase_store_repository.dart');
+    final explore = read('lib/repositories/explore_repository.dart');
+    final safeSelect = read('lib/services/store_safe_select.dart');
 
     expect(publishService, isNot(contains(".eq('edit_token'")));
     expect(editorController, isNot(contains("select('slug, edit_token")));
     expect(authService, isNot(contains("select('edit_token')")));
     expect(repository, isNot(contains(".eq('edit_token'")));
+    expect(explore, contains('StoreSafeSelect.columns'));
+    expect(authService, contains('StoreSafeSelect.columns'));
+    expect(safeSelect, contains('StoreSafeSelect'));
+    expect(safeSelect, contains("'id,slug,name"));
+    expect(safeSelect, isNot(contains("'edit_token")));
+    expect(safeSelect, isNot(contains(',edit_token')));
   });
 
   test(

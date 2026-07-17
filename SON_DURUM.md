@@ -1,6 +1,6 @@
 TARİH: 17 Temmuz 2026
-BUGÜN YAPILAN: Canlı Supabase’de edit_token okuma izni kapatıldı; vitrin yazma/silme/yayından kaldırma RPC’leri misafir tokenı veya giriş yapmış gerçek sahip kontrolüyle güçlendirildi; geniş randevu ve booking ayarı politikaları kaldırıldı; uygulamadaki token geri alma sorguları temizlendi.
-YARIM KALAN: İki ayrı test hesabıyla canlı kabul (A, B’nin vitrinini/randevusunu/ayarını değiştirememeli; kendi vitrini çalışmalı); kullanıcı test hesabı bilgilerini yarın paylaşacak.
-SIRADAKİ ADIM: İki test hesabıyla saldırı senaryolarını ve sahip akışını canlıda doğrula; sonra kullanıcı isterse commit oluştur.
-DOKUNULAN DOSYALAR: 20260717_close_store_authorization_gap.sql, store_publish_service.dart, store_editor_controller.dart, auth_service.dart, auth_screen.dart, store_repository.dart, supabase_store_repository.dart, store_publish_service_test.dart, store_authorization_contract_test.dart.
-DİKKAT: Migration canlıya uygulandı; flutter test ve flutter analyze geçti. Commit/push yok.
+BUGÜN YAPILAN: P0 canlı + Flutter Keşfet/publish güvenli select; P1 canlı uygulandı (`p1_security_hardening`: storage listing kapat, shelf delete `objects.name`, store_articles sahiplik RLS, duplicate stores SELECT düştü, inert grants revoke, search_path sabit).
+YARIM KALAN: Flutter+SQL repo commit/push (Vercel Keşfet için şart); iki hesaplı canlı kabul; HaveIBeenPwned (Auth dashboard manuel); `send-booking-push` deploy + OneSignal secrets.
+SIRADAKİ ADIM: Commit/push onayı → Keşfet smoke → A/B hesap kabulü.
+DOKUNULAN DOSYALAR: store_safe_select.dart, explore/auth/autofill/publish + repos, error mapper, 20260717_* migrations (auth gap, lock shelf, gate template, p1), testler.
+DİKKAT: Maskot widget/asset’ler commit dışı bırakılmalı. Global blog moderasyon (`fetchPendingReviewArticles`) artık owner-only UPDATE ile kırılır — ayrı admin yolu yoksa kullanma.

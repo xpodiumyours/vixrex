@@ -5,6 +5,7 @@ import 'package:vixrex/core/supabase_error_mapper.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/push_notification_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/store_safe_select.dart';
 import 'package:vixrex/utils/failure.dart';
 
 class AuthService {
@@ -129,7 +130,7 @@ class AuthService {
       final client = Supabase.instance.client;
       final storesRaw = await client
           .from('stores')
-          .select()
+          .select(StoreSafeSelect.columns)
           .eq('user_id', user.id);
 
       final stores =
@@ -196,7 +197,7 @@ class AuthService {
       final response =
           await Supabase.instance.client
               .from('stores')
-              .select()
+              .select(StoreSafeSelect.columns)
               .eq('user_id', user.id)
               .maybeSingle();
 

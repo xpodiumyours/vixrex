@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/auth_repository.dart';
+import 'package:vixrex/services/store_safe_select.dart';
 
 /// Supabase Auth ile AuthRepository implementasyonu.
 class SupabaseAuthRepository implements AuthRepository {
@@ -52,7 +53,7 @@ class SupabaseAuthRepository implements AuthRepository {
     if (user == null) return null;
     final response = await _client
         .from('stores')
-        .select()
+        .select(StoreSafeSelect.columns)
         .eq('user_id', user.id)
         .maybeSingle();
     if (response == null) return null;
