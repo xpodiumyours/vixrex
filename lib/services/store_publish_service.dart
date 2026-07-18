@@ -314,7 +314,7 @@ class StorePublishService {
           'p_slug': slug.trim(),
           'p_edit_token':
               normalizedToken == null || normalizedToken.isEmpty
-                  ? null
+                  ? ''
                   : normalizedToken,
         },
       );

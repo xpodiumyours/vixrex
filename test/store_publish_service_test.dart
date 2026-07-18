@@ -311,7 +311,7 @@ void main() {
         expect(fakeClient.rpcCalls.last['fn'], 'delete_store_with_token');
         expect(fakeClient.rpcCalls.last['params'], {
           'p_slug': 'test-magazasi',
-          'p_edit_token': null,
+          'p_edit_token': '',
         });
       },
     );
