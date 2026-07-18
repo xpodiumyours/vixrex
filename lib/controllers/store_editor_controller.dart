@@ -483,17 +483,20 @@ class StoreEditorController extends ChangeNotifier
   Future<void> deleteVitrin() async {
     setLoading(true);
     try {
-      final slug = _publishedInfo?.slug;
+      final slug = (_publishedInfo?.slug ?? _data.slug).trim();
       final editToken = _publishedInfo?.editToken;
-      if (slug != null && editToken != null) {
-        final result = await publishService.deleteStore(
-          slug: slug,
-          editToken: editToken,
-        );
-        if (result.isFailure) {
-          throw result.failure!.message;
-        }
+      if (slug.isEmpty) {
+        throw 'Silinecek vitrin bilgisi bulunamadı.';
       }
+
+      final result = await publishService.deleteStore(
+        slug: slug,
+        editToken: editToken,
+      );
+      if (result.isFailure) {
+        throw result.failure!.message;
+      }
+
       await storage.clearVitrinData();
       _data = StoreData(kategori: 'Diğer', status: 'Açık');
       _publishedInfo = null;

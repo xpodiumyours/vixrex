@@ -299,17 +299,24 @@ class StorePublishService {
   /// Token doğrulamasıyla vitrini ve ona bağlı verileri kalıcı olarak siler.
   Future<Result<void>> deleteStore({
     required String slug,
-    required String editToken,
+    String? editToken,
   }) async {
-    if (slug.trim().isEmpty || editToken.trim().isEmpty) {
+    if (slug.trim().isEmpty) {
       return Result.failure(Failure('Silinecek vitrin bilgileri eksik.'));
     }
 
     try {
       final client = supabaseClient ?? Supabase.instance.client;
+      final normalizedToken = editToken?.trim();
       await client.rpc(
         'delete_store_with_token',
-        params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
+        params: {
+          'p_slug': slug.trim(),
+          'p_edit_token':
+              normalizedToken == null || normalizedToken.isEmpty
+                  ? null
+                  : normalizedToken,
+        },
       );
       return const Result.success(null);
     } catch (e, s) {
@@ -343,8 +350,7 @@ class StorePublishService {
   }
 
   String _allocateUniqueSlug(String baseSlug) {
-    final cleaned =
-        baseSlug.trim().isEmpty ? 'magazaniz' : baseSlug.trim();
+    final cleaned = baseSlug.trim().isEmpty ? 'magazaniz' : baseSlug.trim();
     final stamp = DateTime.now().millisecondsSinceEpoch.toString();
     final suffix = stamp.length > 6 ? stamp.substring(stamp.length - 6) : stamp;
     return '$cleaned-$suffix';

@@ -13,6 +13,7 @@ import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
+import 'package:vixrex/utils/failure.dart';
 
 class FakeLocationService extends Fake implements LocationService {
   FakeLocationService({this.useApproximate = false});
@@ -49,17 +50,23 @@ class FakeLocationService extends Fake implements LocationService {
 }
 
 class FakeStorePublishService extends Fake implements StorePublishService {
+  Result<void> deleteResult = const Result.success(null);
+  String? deletedSlug;
+  String? deletedEditToken;
+
   @override
   Future<Result<StorePublishResult>> publishStore(
     StoreData data, {
     required String editToken,
   }) async {
-    return Result.success(StorePublishResult(
-      slug: 'test-store',
-      publicPath: '/test-store',
-      wasUpdated: false,
-      editToken: editToken,
-    ));
+    return Result.success(
+      StorePublishResult(
+        slug: 'test-store',
+        publicPath: '/test-store',
+        wasUpdated: false,
+        editToken: editToken,
+      ),
+    );
   }
 
   @override
@@ -77,6 +84,16 @@ class FakeStorePublishService extends Fake implements StorePublishService {
     required Map<String, dynamic> patch,
   }) async {
     return const Result.success(null);
+  }
+
+  @override
+  Future<Result<void>> deleteStore({
+    required String slug,
+    String? editToken,
+  }) async {
+    deletedSlug = slug;
+    deletedEditToken = editToken;
+    return deleteResult;
   }
 }
 
@@ -121,6 +138,7 @@ void main() {
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
+      StoreLocalStorageService.resetCache();
       storageService = const StoreLocalStorageService();
 
       final mockClient = MockHttpClient(jsonEncode({}));
@@ -244,5 +262,49 @@ void main() {
         expect(controller.publishedInfo?.slug, 'test-store');
       },
     );
+
+    test('authenticated owner can delete without a local edit token', () async {
+      await storageService.savePublishedVitrinInfo(
+        slug: 'owner-store',
+        publicLink: 'https://vixrex-public.vercel.app/v/owner-store',
+        name: 'Owner Store',
+        editToken: '',
+      );
+      final fakePublish = FakeStorePublishService();
+      final controller = StoreEditorController(
+        storage: storageService,
+        publishService: fakePublish,
+        supabaseClient: fakeSupabase,
+      );
+
+      await controller.initialize(null);
+      await controller.deleteVitrin();
+
+      expect(fakePublish.deletedSlug, 'owner-store');
+      expect(fakePublish.deletedEditToken, isEmpty);
+      expect(await storageService.loadPublishedVitrinInfo(), isNull);
+    });
+
+    test('remote delete failure keeps local published store data', () async {
+      await storageService.savePublishedVitrinInfo(
+        slug: 'owner-store',
+        publicLink: 'https://vixrex-public.vercel.app/v/owner-store',
+        name: 'Owner Store',
+        editToken: 'edit-token-12345678901234567890',
+      );
+      final fakePublish =
+          FakeStorePublishService()
+            ..deleteResult = Result.failure(Failure('remote delete failed'));
+      final controller = StoreEditorController(
+        storage: storageService,
+        publishService: fakePublish,
+        supabaseClient: fakeSupabase,
+      );
+
+      await controller.initialize(null);
+
+      expect(controller.deleteVitrin(), throwsA('remote delete failed'));
+      expect(await storageService.loadPublishedVitrinInfo(), isNotNull);
+    });
   });
 }
