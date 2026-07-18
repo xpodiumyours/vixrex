@@ -33,16 +33,26 @@ interface MarketplaceLinkItem {
   subtitle?: string;
 }
 
+const PUBLIC_STORE_SELECT =
+  "slug,name,business_type,description,corporate_bio,whatsapp,instagram," +
+  "website,address,status,marketplace_links,gallery_items,products," +
+  "references_link,shelf_image_url,logo_url,working_hours,is_published," +
+  "kategori,latitude,longitude,google_business_link";
+
 async function _getStoreData(slug: string) {
   try {
-    const { data: store, error } = await supabase
+    const { data: store, error: storeError } = await supabase
       .from("stores")
-      .select("*")
+      .select(PUBLIC_STORE_SELECT)
       .eq("slug", slug)
       .eq("is_published", true)
-      .single();
+      .maybeSingle();
 
-    if (error || !store) return null;
+    if (storeError) {
+      console.error(`Public store query failed for slug=${slug}:`, storeError);
+      throw storeError;
+    }
+    if (!store) return null;
 
     const { data: bookingSettings } = await supabase
       .from("booking_settings")
@@ -66,7 +76,7 @@ async function _getStoreData(slug: string) {
     };
   } catch (err) {
     console.error(`Store data fetch error for slug=${slug}:`, err);
-    return null;
+    throw err;
   }
 }
 
