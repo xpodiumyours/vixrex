@@ -11,24 +11,62 @@ BEGIN;
 -- SETUP (service_role / postgres bağlamında)
 -- ============================================================================
 
-INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, confirmed_at)
-VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'test-a@test.com', crypt('Test123!', gen_salt('bf')), now(), now(), now(), now());
-INSERT INTO auth.identities (id, user_id, identity_data, provider, created_at, updated_at)
-VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', '{"sub": "00000000-0000-0000-0000-000000000001", "email": "test-a@test.com"}', 'email', now(), now());
+INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000011', 'authenticated', 'authenticated', 'test-a@test.com', crypt('Test123!', gen_salt('bf')), now(), now(), now());
+INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000011', '{"sub": "00000000-0000-0000-0000-000000000011", "email": "test-a@test.com"}', 'email', '00000000-0000-0000-0000-000000000011', now(), now());
 
-INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, confirmed_at)
-VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'test-b@test.com', crypt('Test123!', gen_salt('bf')), now(), now(), now(), now());
-INSERT INTO auth.identities (id, user_id, identity_data, provider, created_at, updated_at)
-VALUES ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', '{"sub": "00000000-0000-0000-0000-000000000002", "email": "test-b@test.com"}', 'email', now(), now());
+INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000012', 'authenticated', 'authenticated', 'test-b@test.com', crypt('Test123!', gen_salt('bf')), now(), now(), now());
+INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000012', '{"sub": "00000000-0000-0000-0000-000000000012", "email": "test-b@test.com"}', 'email', '00000000-0000-0000-0000-000000000012', now(), now());
 
+INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000013', 'authenticated', 'authenticated', 'test-a-draft@test.com', crypt('Test123!', gen_salt('bf')), now(), now(), now());
+INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000013', '{"sub": "00000000-0000-0000-0000-000000000013", "email": "test-a-draft@test.com"}', 'email', '00000000-0000-0000-0000-000000000013', now(), now());
+
+INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000014', 'authenticated', 'authenticated', 'test-b@test.com2', crypt('Test123!', gen_salt('bf')), now(), now(), now());
+INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000014', '{"sub": "00000000-0000-0000-0000-000000000014", "email": "test-b@test.com2"}', 'email', '00000000-0000-0000-0000-000000000014', now(), now());
+
+INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000015', 'authenticated', 'authenticated', 'test-b-draft@test.com', crypt('Test123!', gen_salt('bf')), now(), now(), now());
+INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, created_at, updated_at)
+VALUES ('00000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000015', '{"sub": "00000000-0000-0000-0000-000000000015", "email": "test-b-draft@test.com"}', 'email', '00000000-0000-0000-0000-000000000015', now(), now());
+
+-- Legal documents (store'lardan önce; seed ile çakışırsa atla)
+INSERT INTO public.legal_documents (document_type, version, title, subtitle, sections, is_active)
+VALUES ('privacy', '1.0', 'Test Gizlilik', '', '[]'::jsonb, true)
+ON CONFLICT (document_type, version) DO NOTHING;
+INSERT INTO public.legal_documents (document_type, version, title, subtitle, sections, is_active)
+VALUES ('terms', '1.0', 'Test Şartlar', '', '[]'::jsonb, true)
+ON CONFLICT (document_type, version) DO NOTHING;
+INSERT INTO public.legal_documents (document_type, version, title, subtitle, sections, is_active)
+VALUES ('consent', '1.0', 'Test Rıza', '', '[]'::jsonb, true)
+ON CONFLICT (document_type, version) DO NOTHING;
+
+INSERT INTO public.stores (slug, name, is_published, user_id, edit_token,
+  privacy_notice_acknowledged, privacy_notice_version, privacy_notice_hash,
+  terms_accepted, terms_version, terms_hash,
+  publication_consent_accepted, publication_consent_version, publication_consent_hash)
+VALUES ('test-store-a', 'Store A', true, '00000000-0000-0000-0000-000000000011', 'test-edit-token-a-1234567890abcdef',
+  true, '1.0', md5('privacy'||'|'||'1.0'||'|'||'Gizlilik Bildirimi'||'|'||''||'|'||'[]'),
+  true, '1.0', md5('terms'||'|'||'1.0'||'|'||'Kullanım Şartları'||'|'||''||'|'||'[]'),
+  true, '1.0', md5('consent'||'|'||'1.0'||'|'||'Açık Rıza Beyanı'||'|'||''||'|'||'[]'));
 INSERT INTO public.stores (slug, name, is_published, user_id, edit_token)
-VALUES ('test-store-a', 'Store A', true, '00000000-0000-0000-0000-000000000001', 'test-edit-token-a-1234567890abcdef');
+VALUES ('test-store-a-draft', 'Store A Draft', false, '00000000-0000-0000-0000-000000000013', 'test-edit-token-a-draft-1234567890abcdef');
+INSERT INTO public.stores (slug, name, is_published, user_id, edit_token,
+  privacy_notice_acknowledged, privacy_notice_version, privacy_notice_hash,
+  terms_accepted, terms_version, terms_hash,
+  publication_consent_accepted, publication_consent_version, publication_consent_hash)
+VALUES ('test-store-b', 'Store B', true, '00000000-0000-0000-0000-000000000014', 'test-edit-token-b-1234567890abcdef',
+  true, '1.0', md5('privacy'||'|'||'1.0'||'|'||'Gizlilik Bildirimi'||'|'||''||'|'||'[]'),
+  true, '1.0', md5('terms'||'|'||'1.0'||'|'||'Kullanım Şartları'||'|'||''||'|'||'[]'),
+  true, '1.0', md5('consent'||'|'||'1.0'||'|'||'Açık Rıza Beyanı'||'|'||''||'|'||'[]'));
 INSERT INTO public.stores (slug, name, is_published, user_id, edit_token)
-VALUES ('test-store-a-draft', 'Store A Draft', false, '00000000-0000-0000-0000-000000000001', 'test-edit-token-a-draft-1234567890abcdef');
-INSERT INTO public.stores (slug, name, is_published, user_id, edit_token)
-VALUES ('test-store-b', 'Store B', true, '00000000-0000-0000-0000-000000000002', 'test-edit-token-b-1234567890abcdef');
-INSERT INTO public.stores (slug, name, is_published, user_id, edit_token)
-VALUES ('test-store-b-draft', 'Store B Draft', false, '00000000-0000-0000-0000-000000000002', 'test-edit-token-b-draft-1234567890abcdef');
+VALUES ('test-store-b-draft', 'Store B Draft', false, '00000000-0000-0000-0000-000000000015', 'test-edit-token-b-draft-1234567890abcdef');
 
 INSERT INTO public.booking_settings (store_slug, is_enabled, capacity)
 VALUES ('test-store-a', true, 2);
@@ -158,7 +196,7 @@ SELECT is(
 -- ── vitrin_views RLS ─────────────────────────────────────────────────────────
 
 -- 12: vitrin_views RLS açık
-SELECT has_row_security('public', 'vitrin_views', 'vitrin_views RLS açık');
+SELECT is((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='vitrin_views'), true, 'vitrin_views RLS açık');
 
 -- 13: store_slug sütunu mevcut
 SELECT has_column('public', 'vitrin_views', 'store_slug', 'store_slug sütunu mevcut');
@@ -169,10 +207,10 @@ SELECT has_column('public', 'vitrin_views', 'session_key', 'session_key sütunu 
 -- ── RLS açık tablolar ───────────────────────────────────────────────────────
 
 -- 15: booking_settings RLS açık
-SELECT has_row_security('public', 'booking_settings', 'booking_settings RLS açık');
+SELECT is((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='booking_settings'), true, 'booking_settings RLS açık');
 
 -- 16: appointments RLS açık
-SELECT has_row_security('public', 'appointments', 'appointments RLS açık');
+SELECT is((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='appointments'), true, 'appointments RLS açık');
 
 -- ── slug unique ──────────────────────────────────────────────────────────────
 
@@ -195,8 +233,8 @@ RESET role;
 DELETE FROM public.appointments WHERE store_slug LIKE 'test-store-%';
 DELETE FROM public.booking_settings WHERE store_slug LIKE 'test-store-%';
 DELETE FROM public.stores WHERE slug LIKE 'test-store-%';
-DELETE FROM auth.identities WHERE user_id IN ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002');
-DELETE FROM auth.users WHERE id IN ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002');
+DELETE FROM auth.identities WHERE user_id IN ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000012');
+DELETE FROM auth.users WHERE id IN ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000012');
 
 SELECT * FROM finish();
 

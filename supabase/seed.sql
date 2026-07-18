@@ -4,6 +4,18 @@
 -- ============================================================================
 
 -- ============================================================================
+-- 0. YASAL BELGELER (store'lardan önce eklenmeli)
+-- ============================================================================
+-- trigger set_legal_document_hash content_hash'i otomatik hesaplar
+-- Store hash'leri trigger formülüyle aynı olmalı: md5(type|version|title|subtitle|sections)
+INSERT INTO public.legal_documents (document_type, version, title, subtitle, sections, is_active)
+VALUES ('privacy', '1.0', 'Gizlilik Bildirimi', '', '[]'::jsonb, true);
+INSERT INTO public.legal_documents (document_type, version, title, subtitle, sections, is_active)
+VALUES ('terms', '1.0', 'Kullanım Şartları', '', '[]'::jsonb, true);
+INSERT INTO public.legal_documents (document_type, version, title, subtitle, sections, is_active)
+VALUES ('consent', '1.0', 'Açık Rıza Beyanı', '', '[]'::jsonb, true);
+
+-- ============================================================================
 -- 1. SAHTE AUTH KULLANICILARI (deterministic UUID)
 -- ============================================================================
 -- Supabase local'de auth.users tablosuna service_role context'inde INSERT yapılabilir.
@@ -26,8 +38,7 @@ INSERT INTO auth.users (
   last_sign_in_at,
   raw_app_meta_data,
   raw_user_meta_data,
-  is_super_admin,
-  confirmed_at
+  is_super_admin
 ) VALUES (
   '00000000-0000-0000-0000-000000000000',
   '00000000-0000-0000-0000-000000000001',
@@ -45,8 +56,7 @@ INSERT INTO auth.users (
   now(),
   '{"provider": "email", "providers": ["email"]}',
   '{"full_name": "Aylin Test"}',
-  false,
-  now()
+  false
 );
 
 INSERT INTO auth.identities (
@@ -54,6 +64,7 @@ INSERT INTO auth.identities (
   user_id,
   identity_data,
   provider,
+  provider_id,
   last_sign_in_at,
   created_at,
   updated_at
@@ -62,6 +73,7 @@ INSERT INTO auth.identities (
   '00000000-0000-0000-0000-000000000001',
   '{"sub": "00000000-0000-0000-0000-000000000001", "email": "sahte-aylin@test.com"}',
   'email',
+  '00000000-0000-0000-0000-000000000001',
   now(),
   now(),
   now()
@@ -85,8 +97,7 @@ INSERT INTO auth.users (
   last_sign_in_at,
   raw_app_meta_data,
   raw_user_meta_data,
-  is_super_admin,
-  confirmed_at
+  is_super_admin
 ) VALUES (
   '00000000-0000-0000-0000-000000000000',
   '00000000-0000-0000-0000-000000000002',
@@ -104,8 +115,7 @@ INSERT INTO auth.users (
   now(),
   '{"provider": "email", "providers": ["email"]}',
   '{"full_name": "Mehmet Test"}',
-  false,
-  now()
+  false
 );
 
 INSERT INTO auth.identities (
@@ -113,6 +123,7 @@ INSERT INTO auth.identities (
   user_id,
   identity_data,
   provider,
+  provider_id,
   last_sign_in_at,
   created_at,
   updated_at
@@ -121,6 +132,7 @@ INSERT INTO auth.identities (
   '00000000-0000-0000-0000-000000000002',
   '{"sub": "00000000-0000-0000-0000-000000000002", "email": "sahte-mehmet@test.com"}',
   'email',
+  '00000000-0000-0000-0000-000000000002',
   now(),
   now(),
   now()
@@ -154,7 +166,16 @@ INSERT INTO public.stores (
   province_name,
   district_name,
   user_id,
-  edit_token
+  edit_token,
+  privacy_notice_acknowledged,
+  privacy_notice_version,
+  privacy_notice_hash,
+  terms_accepted,
+  terms_version,
+  terms_hash,
+  publication_consent_accepted,
+  publication_consent_version,
+  publication_consent_hash
 ) VALUES (
   'sahte-butik-aylin',
   'Aylin Butik',
@@ -188,7 +209,16 @@ INSERT INTO public.stores (
   'İstanbul',
   'Merkez',
   '00000000-0000-0000-0000-000000000001',
-  'sahte-edit-token-aylin-1234567890abcdef'
+  'sahte-edit-token-aylin-1234567890abcdef',
+  true,
+  '1.0',
+  md5('privacy' || '|' || '1.0' || '|' || 'Gizlilik Bildirimi' || '|' || '' || '|' || '[]'),
+  true,
+  '1.0',
+  md5('terms' || '|' || '1.0' || '|' || 'Kullanım Şartları' || '|' || '' || '|' || '[]'),
+  true,
+  '1.0',
+  md5('consent' || '|' || '1.0' || '|' || 'Açık Rıza Beyanı' || '|' || '' || '|' || '[]')
 );
 
 -- ============================================================================
@@ -219,7 +249,16 @@ INSERT INTO public.stores (
   province_name,
   district_name,
   user_id,
-  edit_token
+  edit_token,
+  privacy_notice_acknowledged,
+  privacy_notice_version,
+  privacy_notice_hash,
+  terms_accepted,
+  terms_version,
+  terms_hash,
+  publication_consent_accepted,
+  publication_consent_version,
+  publication_consent_hash
 ) VALUES (
   'sahte-firin-mehmet',
   'Mehmet Fırın',
@@ -246,14 +285,23 @@ INSERT INTO public.stores (
     {"id": "p2", "name": "Poğaça", "price": "15 TL", "category": "Unlu mamul", "description": "Peynirli ve zeytinli poğaça", "isVisible": true}
   ]'::jsonb,
   '[
-    {"id": "o1", "title": "Günlük Taze Ekmek", "description": "Sabah 06:00\'dan itibaren taze", "price": "25 TL"}
+    {"id": "o1", "title": "Günlük Taze Ekmek", "description": "Sabah 06:00''dan itibaren taze", "price": "25 TL"}
   ]'::jsonb,
   '[{"id": "1", "platform": "Instagram", "url": "instagram.com/mehmetfirin"}]'::jsonb,
   'Her gün 06:00-20:00',
   'İzmir',
   'Merkez',
   '00000000-0000-0000-0000-000000000002',
-  'sahte-edit-token-mehmet-1234567890abcdef'
+  'sahte-edit-token-mehmet-1234567890abcdef',
+  true,
+  '1.0',
+  md5('privacy' || '|' || '1.0' || '|' || 'Gizlilik Bildirimi' || '|' || '' || '|' || '[]'),
+  true,
+  '1.0',
+  md5('terms' || '|' || '1.0' || '|' || 'Kullanım Şartları' || '|' || '' || '|' || '[]'),
+  true,
+  '1.0',
+  md5('consent' || '|' || '1.0' || '|' || 'Açık Rıza Beyanı' || '|' || '' || '|' || '[]')
 );
 
 -- ============================================================================
