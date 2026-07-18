@@ -1,6 +1,6 @@
-TARİH: 17 Temmuz 2026
-BUGÜN YAPILAN: P0 canlı + Flutter Keşfet/publish güvenli select; P1 canlı uygulandı (`p1_security_hardening`: storage listing kapat, shelf delete `objects.name`, store_articles sahiplik RLS, duplicate stores SELECT düştü, inert grants revoke, search_path sabit).
-YARIM KALAN: Flutter+SQL repo commit/push (Vercel Keşfet için şart); iki hesaplı canlı kabul; HaveIBeenPwned (Auth dashboard manuel); `send-booking-push` deploy + OneSignal secrets.
-SIRADAKİ ADIM: Commit/push onayı → Keşfet smoke → A/B hesap kabulü.
-DOKUNULAN DOSYALAR: store_safe_select.dart, explore/auth/autofill/publish + repos, error mapper, 20260717_* migrations (auth gap, lock shelf, gate template, p1), testler.
-DİKKAT: Maskot widget/asset’ler commit dışı bırakılmalı. Global blog moderasyon (`fetchPendingReviewArticles`) artık owner-only UPDATE ile kırılır — ayrı admin yolu yoksa kullanma.
+TARİH: 18 Temmuz 2026
+BUGÜN YAPILAN: Public vitrin 404/hata ayrımı ve vitrin silmede uzak işlem başarılı olmadan yerel veriyi koruma commitlendi; hesap silme tek JWT korumalı Edge Function yoluna taşındı ve test sözleşmesi hazırlandı.
+YARIM KALAN: Kullanıcının çalıştıracağı yerel test kapıları; hesap silme değişikliklerinin commit/push işlemi; ayrı onayla Edge Function deploy, uygulama yayını ve RPC emeklilik migration'ı; canlı kabul.
+SIRADAKİ ADIM: Yerel test sonuçlarını al, başarısızlık yoksa hesap silme paketini commit et; canlıda sırasıyla Edge Function → uygulama → RPC emeklilik migration'ı uygula.
+DOKUNULAN DOSYALAR: public_web vitrin sayfası/error/test; store publish/controller/testleri; delete-user-account Edge Function; AuthService ve SupabaseAuthRepository; iki ileri migration; hesap silme sözleşme testi.
+DİKKAT: Canlı işlem yapılmadı. RPC emeklilik migration'ı Edge Function ve yeni uygulama yayınlanmadan uygulanmaz; Android imza, public vitrin tek sahipliği ve mevcut mobil akış korunur.

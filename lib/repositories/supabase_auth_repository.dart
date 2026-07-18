@@ -8,7 +8,7 @@ class SupabaseAuthRepository implements AuthRepository {
   final SupabaseClient _client;
 
   SupabaseAuthRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   @override
   User? get currentUser {
@@ -29,7 +29,10 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<AuthResponse> signIn(String email, String password) async {
-    return await _client.auth.signInWithPassword(email: email, password: password);
+    return await _client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
   }
 
   @override
@@ -43,19 +46,25 @@ class SupabaseAuthRepository implements AuthRepository {
     if (user == null) {
       throw StateError('Hesap silmek için aktif oturum bulunamadı.');
     }
-    await _client.rpc('delete_user_account');
-    await signOut();
+    await _client.functions.invoke(
+      'delete-user-account',
+      body: const {'confirm': true},
+    );
+    try {
+      await _client.auth.signOut(scope: SignOutScope.local);
+    } catch (_) {}
   }
 
   @override
   Future<StoreData?> getStoreForCurrentUser() async {
     final user = currentUser;
     if (user == null) return null;
-    final response = await _client
-        .from('stores')
-        .select(StoreSafeSelect.columns)
-        .eq('user_id', user.id)
-        .maybeSingle();
+    final response =
+        await _client
+            .from('stores')
+            .select(StoreSafeSelect.columns)
+            .eq('user_id', user.id)
+            .maybeSingle();
     if (response == null) return null;
     return StoreData.fromJson(response);
   }

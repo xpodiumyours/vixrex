@@ -90,8 +90,21 @@ class AuthService {
     }
 
     try {
-      await Supabase.instance.client.rpc('delete_user_account');
-      await signOut();
+      final client = Supabase.instance.client;
+      await client.functions.invoke(
+        'delete-user-account',
+        body: const {'confirm': true},
+      );
+
+      // Sunucu hesabi sildikten sonra istemci temizligi basarisiz olsa bile
+      // silinmis hesabi kullaniciya hata olarak gostermeyiz.
+      try {
+        await PushNotificationService.instance.logoutUser();
+      } catch (_) {}
+      try {
+        await client.auth.signOut(scope: SignOutScope.local);
+      } catch (_) {}
+      await const StoreLocalStorageService().clearAll();
       return const Result.success(null);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
