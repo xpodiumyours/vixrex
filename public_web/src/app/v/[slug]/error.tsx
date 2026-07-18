@@ -4,10 +4,10 @@ import { useEffect } from "react";
 
 export default function StoreError({
   error,
-  unstable_retry,
+  reset,
 }: {
   error: Error & { digest?: string };
-  unstable_retry: () => void;
+  reset: () => void;
 }) {
   useEffect(() => {
     console.error("Public vitrin render failed:", error);
@@ -22,7 +22,7 @@ export default function StoreError({
         </p>
         <button
           type="button"
-          onClick={() => unstable_retry()}
+          onClick={() => reset()}
           className="mt-6 rounded-2xl bg-[#38A0E4] px-5 py-3 text-sm font-black text-white transition hover:opacity-90"
         >
           Tekrar dene

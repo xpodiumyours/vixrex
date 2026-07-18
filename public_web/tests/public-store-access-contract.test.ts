@@ -17,14 +17,14 @@ describe("public vitrin veri erişim sözleşmesi", () => {
     expect(pageSource).toContain(".maybeSingle()");
     expect(pageSource).toContain("if (storeError)");
     expect(pageSource).toContain("throw storeError");
-    expect(pageSource).toContain("if (!store) return null");
+    expect(pageSource).toContain("if (!storeData) return null");
   });
 
   it("veritabanı hatası için yeniden deneme yüzeyi vardır", () => {
     expect(existsSync(errorPath)).toBe(true);
     const errorSource = readFileSync(errorPath, "utf-8");
     expect(errorSource).toContain('"use client"');
-    expect(errorSource).toContain("unstable_retry");
+    expect(errorSource).toContain("reset");
     expect(errorSource).toContain("Tekrar dene");
   });
 });
