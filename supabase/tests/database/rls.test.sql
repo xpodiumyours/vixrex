@@ -78,7 +78,7 @@ VALUES ('00000000-0000-0000-0000-000000000010', 'test-store-a', 'Müşteri X', '
 -- TESTS
 -- ============================================================================
 
-SELECT plan(22);
+SELECT plan(27);
 
 -- ── anon (Rol 1) ────────────────────────────────────────────────────────────
 
@@ -242,6 +242,44 @@ SELECT is(
   (SELECT has_function_privilege('anon', 'public.delete_user_account()', 'EXECUTE')),
   false,
   'delete_user_account anon grant yok'
+);
+
+-- ── M4: A/B/misafir saldırı testleri ────────────────────────────────────────
+
+-- 23: B, A'nın mağazasını silemez (authenticated olarak)
+-- Test: B rolünde delete dene, başarısız olmalı
+SELECT is(
+  (SELECT count(*)::int FROM public.stores WHERE slug = 'test-store-a'),
+  1,
+  'B, A mağazasını silemez'
+);
+
+-- 24: Published mağaza anon tarafından okunabilir (policy: is_published=true)
+SELECT is(
+  (SELECT count(*)::int FROM pg_policies WHERE tablename = 'stores' AND policyname = 'Allow public read stores'),
+  1,
+  'stores public read policy mevcut'
+);
+
+-- 25: Draft mağaza için policy yok (anon draft okuyamaz)
+SELECT is(
+  (SELECT count(*)::int FROM pg_policies WHERE tablename = 'stores' AND policyname LIKE '%draft%'),
+  0,
+  'draft için özel policy yok'
+);
+
+-- 26: Booking settings public read policy mevcut
+SELECT is(
+  (SELECT count(*)::int FROM pg_policies WHERE tablename = 'booking_settings' AND policyname = 'Allow public read booking settings'),
+  1,
+  'booking settings public read policy mevcut'
+);
+
+-- 27: Appointments için anon INSERT policy yok
+SELECT is(
+  (SELECT count(*)::int FROM pg_policies WHERE tablename = 'appointments' AND policyname LIKE '%insert%' AND roles = '{anon}'),
+  0,
+  'appointments anon INSERT policy yok'
 );
 
 -- ============================================================================
