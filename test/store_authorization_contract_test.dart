@@ -55,4 +55,20 @@ void main() {
       );
     },
   );
+
+  test('forward migration repairs owner-or-token store deletion', () {
+    final migration = read(
+      'supabase/migrations/20260718210900_fix_delete_store_with_token.sql',
+    );
+
+    expect(migration, contains('user_id = auth.uid()'));
+    expect(migration, contains("edit_token = pg_catalog.btrim(p_edit_token)"));
+    expect(migration, isNot(contains('pg_catalog.coalesce')));
+    expect(
+      migration,
+      contains(
+        'REVOKE EXECUTE ON FUNCTION public.delete_store_with_token(text, text) FROM PUBLIC;',
+      ),
+    );
+  });
 }

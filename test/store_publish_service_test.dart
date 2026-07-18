@@ -302,6 +302,19 @@ void main() {
         'p_edit_token': 'edit-token-12345678901234567890',
       });
     });
+
+    test(
+      'authenticated owner deletion can be sent without local token',
+      () async {
+        await service.deleteStore(slug: 'test-magazasi');
+
+        expect(fakeClient.rpcCalls.last['fn'], 'delete_store_with_token');
+        expect(fakeClient.rpcCalls.last['params'], {
+          'p_slug': 'test-magazasi',
+          'p_edit_token': '',
+        });
+      },
+    );
   });
 
   group('StorePublishService.updateProductsOnly', () {

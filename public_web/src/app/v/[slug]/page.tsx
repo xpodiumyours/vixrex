@@ -33,16 +33,52 @@ interface MarketplaceLinkItem {
   subtitle?: string;
 }
 
+interface PublicStoreRow {
+  slug: string;
+  name: string;
+  business_type: string | null;
+  description: string | null;
+  corporate_bio: string | null;
+  whatsapp: string | null;
+  instagram: string | null;
+  website: string | null;
+  address: string | null;
+  status: string | null;
+  marketplace_links: unknown;
+  gallery_items: unknown;
+  products: unknown;
+  references_link: string | null;
+  shelf_image_url: string | null;
+  logo_url: string | null;
+  working_hours: unknown;
+  is_published: boolean;
+  kategori: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  google_business_link: string | null;
+}
+
+const PUBLIC_STORE_SELECT =
+  "slug,name,business_type,description,corporate_bio,whatsapp,instagram," +
+  "website,address,status,marketplace_links,gallery_items,products," +
+  "references_link,shelf_image_url,logo_url,working_hours,is_published," +
+  "kategori,latitude,longitude,google_business_link";
+
 async function _getStoreData(slug: string) {
   try {
-    const { data: store, error } = await supabase
+    const { data: storeData, error: storeError } = await supabase
       .from("stores")
-      .select("*")
+      .select(PUBLIC_STORE_SELECT)
       .eq("slug", slug)
       .eq("is_published", true)
-      .single();
+      .maybeSingle();
 
-    if (error || !store) return null;
+    if (storeError) {
+      console.error(`Public store query failed for slug=${slug}:`, storeError);
+      throw storeError;
+    }
+    if (!storeData) return null;
+    const store = storeData as unknown as PublicStoreRow;
 
     const { data: bookingSettings } = await supabase
       .from("booking_settings")
@@ -66,7 +102,7 @@ async function _getStoreData(slug: string) {
     };
   } catch (err) {
     console.error(`Store data fetch error for slug=${slug}:`, err);
-    return null;
+    throw err;
   }
 }
 
@@ -518,7 +554,8 @@ export default async function StorePage(props: PageProps) {
                 <h2 className="mb-3 text-base font-black text-white">İletişim</h2>
                 <div className="space-y-3 text-sm font-semibold text-[#C4D1E3]">
                   {store.address && <p>{store.address}</p>}
-                  {store.working_hours && <p>{store.working_hours}</p>}
+                  {typeof store.working_hours === "string" &&
+                    store.working_hours && <p>{store.working_hours}</p>}
                   {mapsUrl && (
                     <Link href={mapsUrl} className="block rounded-2xl bg-[#38A0E4] px-4 py-3 text-center text-sm font-black text-white">
                       Yol Tarifi Al
