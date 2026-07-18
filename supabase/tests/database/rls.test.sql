@@ -78,7 +78,7 @@ VALUES ('00000000-0000-0000-0000-000000000010', 'test-store-a', 'Müşteri X', '
 -- TESTS
 -- ============================================================================
 
-SELECT plan(19);
+SELECT plan(22);
 
 -- ── anon (Rol 1) ────────────────────────────────────────────────────────────
 
@@ -224,6 +224,25 @@ SELECT has_function('public', 'get_appointment_by_token', ARRAY['text'], 'get_ap
 
 -- 19: cancel_appointment_by_token fonksiyonu mevcut (M3'te test edilecek)
 SELECT has_function('public', 'cancel_appointment_by_token', ARRAY['text'], 'cancel_appointment_by_token RPC mevcut');
+
+-- ── M3: Hesap silme fonksiyonu ──────────────────────────────────────────────
+
+-- 20: delete_user_account fonksiyonu mevcut
+SELECT has_function('public', 'delete_user_account', ARRAY[]::text[], 'delete_user_account mevcut');
+
+-- 21: delete_user_account yalnız authenticated'a grant edilmiş
+SELECT is(
+  (SELECT has_function_privilege('authenticated', 'public.delete_user_account()', 'EXECUTE')),
+  true,
+  'delete_user_account authenticated grant'
+);
+
+-- 22: delete_user_account anon'a grant edilmemiş
+SELECT is(
+  (SELECT has_function_privilege('anon', 'public.delete_user_account()', 'EXECUTE')),
+  false,
+  'delete_user_account anon grant yok'
+);
 
 -- ============================================================================
 -- CLEANUP (service_role / postgres bağlamında)

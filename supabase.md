@@ -24,7 +24,8 @@ Supabase migration zincirini şemanın tek kaynağı yapmak. Boş veritabanı re
 | M1 (iskelet + CI) | ✓ |
 | C1-R2/R3/R4 patchleri | ✓ |
 | M2V (yerel doğrulama) | ✓ |
-| **M2 (commit)** | AKTİF |
+| M2 (commit) | ✓ |
+| **M3 (hesap silme)** | ✓ |
 
 ## M2V Sonuçları
 
