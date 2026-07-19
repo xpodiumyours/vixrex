@@ -55,3 +55,9 @@ vitrin_dump.txt
 android/key.properties
 android/*.jks
 android/*.keystore
+
+# OAuth client secrets — never commit
+android/app/client_secret_*.json
+
+# Local dev scripts with embedded credentials
+run_local.ps1

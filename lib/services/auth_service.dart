@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/legal_config.dart';
 import 'package:vixrex/core/result.dart';
@@ -57,6 +59,77 @@ class AuthService {
         email: email,
         password: password,
       );
+      final userId = res.user?.id;
+      if (userId != null) {
+        await PushNotificationService.instance.loginUser(userId);
+      }
+      return Result.success(res);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
+
+  /// Sign in with Google using native ID token authentication.
+  Future<Result<AuthResponse>> signInWithGoogle() async {
+    try {
+      const webClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+      const iosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+
+      if (kIsWeb) {
+        try {
+          final googleSignIn = GoogleSignIn(
+            clientId: webClientId,
+          );
+          final googleUser = await googleSignIn.signIn();
+          if (googleUser == null) {
+            return Result.failure(Failure('Google ile giriş iptal edildi.'));
+          }
+          final googleAuth = await googleUser.authentication;
+          final idToken = googleAuth.idToken;
+          if (idToken != null) {
+            final res = await Supabase.instance.client.auth.signInWithIdToken(
+              provider: OAuthProvider.google,
+              idToken: idToken,
+              accessToken: googleAuth.accessToken,
+            );
+            final userId = res.user?.id;
+            if (userId != null) {
+              await PushNotificationService.instance.loginUser(userId);
+            }
+            return Result.success(res);
+          }
+        } catch (_) {
+          // Web fallback: Harici OAuth yönlendirmesi
+        }
+        await Supabase.instance.client.auth.signInWithOAuth(
+          OAuthProvider.google,
+          redirectTo: kIsWeb ? Uri.base.origin : null,
+        );
+        return Result.failure(Failure('Google ile giriş yönlendiriliyor...'));
+      }
+
+      final googleSignIn = GoogleSignIn(
+        clientId: iosClientId.isNotEmpty ? iosClientId : null,
+        serverClientId: webClientId.isNotEmpty ? webClientId : null,
+      );
+
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        return Result.failure(Failure('Google ile giriş iptal edildi.'));
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        return Result.failure(Failure('Google token alınamadı.'));
+      }
+
+      final res = await Supabase.instance.client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: googleAuth.accessToken,
+      );
+
       final userId = res.user?.id;
       if (userId != null) {
         await PushNotificationService.instance.loginUser(userId);

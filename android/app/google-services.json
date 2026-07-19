@@ -1,0 +1,34 @@
+{
+  "project_info": {
+    "project_number": "939936730019",
+    "project_id": "project-47cd11bb-f246-41e9-99c",
+    "storage_bucket": "project-47cd11bb-f246-41e9-99c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:939936730019:android:com.xpodiumyours.vixrex",
+        "android_client_info": {
+          "package_name": "com.xpodiumyours.vixrex"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "939936730019-7lbclkfufqksst42h83ehraqth31egb1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSy_Vixrex_Android_Key"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

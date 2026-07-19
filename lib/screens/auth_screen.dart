@@ -106,6 +106,25 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+    final result = await const AuthService().signInWithGoogle();
+
+    result.when(
+      success: (authResponse) async {
+        await _handlePostAuthentication();
+      },
+      failure: (failure) {
+        if (!mounted) return;
+        if (!failure.message.contains('iptal')) {
+          _showError(failure.message);
+        }
+      },
+    );
+
+    if (mounted) setState(() => _isLoading = false);
+  }
+
   Future<void> _handlePostAuthentication() async {
     final authService = const AuthService();
     final prefs = await SharedPreferences.getInstance();
@@ -427,6 +446,54 @@ class _AuthScreenState extends State<AuthScreen> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ── VEYA divider ──
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Divider(color: AppColors.border),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              'veya',
+                              style: TextStyle(
+                                color: AppColors.mutedText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const Expanded(
+                            child: Divider(color: AppColors.border),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // ── Google ile Giriş Yap ──
+                      OutlinedButton.icon(
+                        onPressed: _isLoading ? null : _signInWithGoogle,
+                        icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
+                        label: const Text(
+                          'Google ile Giriş Yap',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.darkText,
+                          backgroundColor: AppColors.surface,
+                          side: const BorderSide(color: AppColors.border),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 16),
 
