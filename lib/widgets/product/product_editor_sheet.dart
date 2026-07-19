@@ -26,7 +26,11 @@ class ProductEditorSheet extends StatefulWidget {
 
 class _ProductEditorSheetState extends State<ProductEditorSheet> {
   static const int _maxImages = 4;
-  static const _stockOptions = ['Mevcut', 'Son birkaç adet', 'Tükendi'];
+  static final _stockOptions = [
+    StockStatus.available.label,
+    StockStatus.lowStock.label,
+    StockStatus.soldOut.label,
+  ];
 
   late final TextEditingController _nameController;
   late final TextEditingController _priceController;
@@ -272,7 +276,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                     _isSaving
                         ? null
                         : (value) =>
-                            setState(() => _stockStatus = value ?? 'Mevcut'),
+                            setState(() => _stockStatus = value ?? StockStatus.available.label),
               ),
               const SizedBox(height: 10),
               SwitchListTile.adaptive(

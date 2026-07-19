@@ -857,7 +857,11 @@ class _BulkProductEditSheetState extends State<_BulkProductEditSheet> {
   late String _categoryId;
   late String _stockStatus;
 
-  static const _stockOptions = ['Mevcut', 'Son birkaç adet', 'Tükendi'];
+  static final _stockOptions = [
+    StockStatus.available.label,
+    StockStatus.lowStock.label,
+    StockStatus.soldOut.label,
+  ];
 
   @override
   void initState() {
@@ -867,7 +871,7 @@ class _BulkProductEditSheetState extends State<_BulkProductEditSheet> {
     _descController = TextEditingController(text: widget.product.description);
     _stockStatus = _stockOptions.contains(widget.product.stockStatus)
         ? widget.product.stockStatus
-        : 'Mevcut';
+        : StockStatus.available.label;
     _categoryId = _resolveCategoryId();
   }
 
@@ -972,7 +976,7 @@ class _BulkProductEditSheetState extends State<_BulkProductEditSheet> {
                 items: _stockOptions
                     .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                     .toList(),
-                onChanged: (v) => setState(() => _stockStatus = v ?? 'Mevcut'),
+                onChanged: (v) => setState(() => _stockStatus = v ?? StockStatus.available.label),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(

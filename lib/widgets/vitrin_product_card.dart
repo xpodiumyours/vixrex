@@ -1,4 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 class VitrinProductCard extends StatelessWidget {
@@ -7,6 +9,7 @@ class VitrinProductCard extends StatelessWidget {
   final String category;
   final String description;
   final String? imagePath;
+  final List<String> imageUrls;
   final String stockStatus;
   final VoidCallback? onTap;
   final VoidCallback? onWhatsAppTap;
@@ -24,6 +27,7 @@ class VitrinProductCard extends StatelessWidget {
     required this.category,
     required this.description,
     this.imagePath,
+    this.imageUrls = const [],
     this.stockStatus = 'Mevcut',
     this.onTap,
     this.onWhatsAppTap,
@@ -35,7 +39,10 @@ class VitrinProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = imagePath != null && imagePath!.trim().isNotEmpty;
+    final displayImage = imagePath?.trim().isNotEmpty == true
+        ? imagePath!.trim()
+        : (imageUrls.isNotEmpty ? imageUrls.first.trim() : '');
+    final hasImage = displayImage.isNotEmpty;
     final trimmedDesc = description.trim();
 
     return GestureDetector(
@@ -63,12 +70,11 @@ class VitrinProductCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   if (hasImage)
-                    Image.network(
-                      imagePath!.trim(),
+                    CachedNetworkImage(
+                      imageUrl: displayImage,
                       fit: BoxFit.cover,
-                      errorBuilder:
-                          (context, error, stackTrace) =>
-                              _buildImagePlaceholder(),
+                      placeholder: (context, url) => _buildImagePlaceholder(),
+                      errorWidget: (context, url, error) => _buildImagePlaceholder(),
                     )
                   else
                     _buildImagePlaceholder(),
@@ -138,7 +144,7 @@ class VitrinProductCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (stockStatus != 'Mevcut')
+                      if (stockStatus != StockStatus.available.label)
                         Padding(
                           padding: const EdgeInsets.only(left: 6),
                           child: Text(
@@ -149,7 +155,7 @@ class VitrinProductCard extends StatelessWidget {
                               fontSize: 8,
                               fontWeight: FontWeight.w900,
                               color:
-                                  stockStatus == 'Tükendi'
+                                  stockStatus == StockStatus.soldOut.label
                                       ? AppColors.error
                                       : AppColors.primary,
                             ),

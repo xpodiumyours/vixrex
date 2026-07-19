@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:excel/excel.dart';
+import 'package:uuid/uuid.dart';
 import 'package:vixrex/models/store_product.dart';
 
 /// Excel (.xlsx) ve CSV dosyalarından toplu ürün çıkarma servisi.
@@ -10,6 +11,15 @@ class BulkProductUploadService {
 
   /// Dosya içeriğinden ürün listesi oluşturur.
   BulkParseResult parse(Uint8List bytes, {required String fileName}) {
+    // Maksimum dosya boyutu kontrolü (5 MB)
+    const maxBytes = 5 * 1024 * 1024;
+    if (bytes.length > maxBytes) {
+      return BulkParseResult.failure(
+        'Dosya çok büyük (${(bytes.length / 1024 / 1024).toStringAsFixed(1)} MB). '
+        'Maksimum 5 MB olmalıdır.',
+      );
+    }
+
     final lowerName = fileName.toLowerCase();
     if (lowerName.endsWith('.csv')) {
       return _parseCsv(bytes);
@@ -138,6 +148,7 @@ class BulkProductUploadService {
       if (_categoryAliases.contains(normalized)) map['category'] ??= i;
       if (_stockAliases.contains(normalized)) map['stockStatus'] ??= i;
       if (_barcodeAliases.contains(normalized)) map['barcode'] ??= i;
+      if (_imageUrlAliases.contains(normalized)) map['imageUrl'] ??= i;
     }
     return map;
   }
@@ -161,6 +172,7 @@ class BulkProductUploadService {
   static const _categoryAliases = {'kategori', 'category', 'kat', 'grup', 'group', 'turu', 'type', 'kategori '};
   static const _stockAliases = {'stok', 'stock', 'stokdurumu', 'stockstatus', 'stokdurum', 'stok '};
   static const _barcodeAliases = {'barkod', 'barcode', 'sku', 'kod', 'code', 'barkod '};
+  static const _imageUrlAliases = {'gorselurl', 'gorsel', 'imageurl', 'image', 'foto', 'fotoğraf', 'resim', 'kapak', 'cover', 'gorselurl ',};
 
   /// Satırı Product'a çevirir.
   _RowParseResult _rowToProduct(List<String> values, Map<String, int> columnMap, {required int rowIndex}) {
@@ -179,11 +191,17 @@ class BulkProductUploadService {
     final stockRaw = _cellValue(values, columnMap['stockStatus'] ?? -1);
     final stockStatus = _normalizeStockStatus(stockRaw);
 
+    final imageUrlRaw = _cellValue(values, columnMap['imageUrl'] ?? -1);
+    final imageUrl = imageUrlRaw.trim();
+    final imageUrls = imageUrl.isNotEmpty ? [imageUrl] : <String>[];
+
     final product = Product(
-      id: 'bulk_${DateTime.now().microsecondsSinceEpoch}_$rowIndex',
+      id: 'bulk_${const Uuid().v4()}',
       name: name,
       price: price,
       description: description,
+      imagePath: imageUrl.isNotEmpty ? imageUrl : null,
+      imageUrls: imageUrls,
       category: category.isNotEmpty ? category : 'Genel',
       stockStatus: stockStatus,
       isVisible: true,
@@ -239,21 +257,21 @@ class BulkProductUploadService {
   String _normalizeStockStatus(String raw) {
     final lower = raw.toLowerCase();
     if (lower.contains('tükendi') || lower.contains('yok') || lower.contains('0')) {
-      return 'Tükendi';
+      return StockStatus.soldOut.label;
     }
     if (lower.contains('son') || lower.contains('az') || lower.contains('limit')) {
-      return 'Son birkaç adet';
+      return StockStatus.lowStock.label;
     }
-    return 'Mevcut';
+    return StockStatus.available.label;
   }
 
   /// Örnek CSV şablonu üretir.
   Uint8List generateTemplateCsv() {
     final buffer = StringBuffer();
-    buffer.writeln('Ürün Adı,Fiyat,Açıklama,Kategori,Stok Durumu');
-    buffer.writeln('Örnek Ürün 1,125.50,Günlük kullanım için uygun,Genel,Mevcut');
-    buffer.writeln('Örnek Ürün 2,"1,250.00",Özel tasarım elbise,Elbise,Mevcut');
-    buffer.writeln('Örnek Ürün 3,,Kampanyalı fiyat,Genel,Tükendi');
+    buffer.writeln('Ürün Adı,Fiyat,Açıklama,Kategori,Stok Durumu,Görsel URL');
+    buffer.writeln('Örnek Ürün 1,125.50,Günlük kullanım için uygun,Genel,Mevcut,');
+    buffer.writeln('Örnek Ürün 2,"1,250.00",Özel tasarım elbise,Elbise,Mevcut,https://ornek.com/gorsel.jpg');
+    buffer.writeln('Örnek Ürün 3,,Kampanyalı fiyat,Genel,Tükendi,');
     return Uint8List.fromList(utf8.encode(buffer.toString()));
   }
 }

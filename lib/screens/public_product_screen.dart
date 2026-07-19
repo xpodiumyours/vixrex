@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -116,7 +117,13 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ürün Detayı'),
+        title: FutureBuilder<_PublicProductData?>(
+          future: _dataFuture,
+          builder: (_, snapshot) {
+            final name = snapshot.data?.product.name;
+            return Text(name != null && name.isNotEmpty ? name : 'Ürün Detayı');
+          },
+        ),
         actions: [
           FutureBuilder<_PublicProductData?>(
             future: _dataFuture,
@@ -136,7 +143,7 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
         future: _dataFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const _ProductSkeleton();
           }
           if (snapshot.hasError || snapshot.data == null) {
             return _ProductNotFound(storeSlug: widget.storeSlug);
@@ -208,13 +215,15 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
                         onPageChanged:
                             (index) => setState(() => _imageIndex = index),
                         itemBuilder:
-                            (_, index) => Image.network(
-                              images[index],
+                            (_, index) => CachedNetworkImage(
+                              imageUrl: images[index],
                               fit: BoxFit.cover,
-                              errorBuilder:
-                                  (_, __, ___) => const Center(
-                                    child: Icon(Icons.broken_image_outlined),
-                                  ),
+                              placeholder: (_, __) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                              errorWidget: (_, __, ___) => const Center(
+                                child: Icon(Icons.broken_image_outlined),
+                              ),
                             ),
                       ),
             ),
@@ -393,6 +402,60 @@ class _ProductNotFound extends StatelessWidget {
               child: const Text('Vitrine geri dön'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductSkeleton extends StatelessWidget {
+  const _ProductSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 820),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                height: 300,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceSoft,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                height: 24,
+                width: 200,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceSoft,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                height: 16,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceSoft,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 16,
+                width: 280,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceSoft,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

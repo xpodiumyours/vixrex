@@ -165,7 +165,7 @@ class OcrController extends ChangeNotifier {
       price: detected.price?.toStringAsFixed(2) ?? '',
       description: detected.description ?? '',
       category: detected.category,
-      stockStatus: 'Mevcut',
+      stockStatus: StockStatus.available.label,
       isVisible: true,
     );
   }

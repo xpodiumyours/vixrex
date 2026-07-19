@@ -330,6 +330,7 @@ class _VitrinProductsCatalogBodyState extends State<_VitrinProductsCatalogBody> 
       category: product.category,
       description: product.description,
       imagePath: product.primaryImageUrl,
+      imageUrls: product.displayImageUrls,
       stockStatus: product.stockStatus,
       onTap:
           widget.publicMode

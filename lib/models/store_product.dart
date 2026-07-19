@@ -1,3 +1,19 @@
+enum StockStatus {
+  available('Mevcut'),
+  soldOut('Tükendi'),
+  lowStock('Son birkaç adet');
+
+  final String label;
+  const StockStatus(this.label);
+
+  static StockStatus fromString(String value) {
+    for (final status in values) {
+      if (status.label == value) return status;
+    }
+    return StockStatus.available;
+  }
+}
+
 class Product {
   String id;
   String name;
@@ -98,7 +114,7 @@ class Product {
     categoryId: (json['categoryId'] ?? json['category_id'] ?? '').toString(),
     category: (json['category'] ?? 'Tümü').toString(),
     stockStatus:
-        (json['stockStatus'] ?? json['stock_status'] ?? 'Mevcut').toString(),
+        (json['stockStatus'] ?? json['stock_status'] ?? StockStatus.available.label).toString(),
     isVisible: (json['isVisible'] ?? json['is_visible'] ?? true) as bool,
     slug:
         (json['slug'] ?? '').toString().trim().isEmpty
