@@ -150,3 +150,37 @@ okumayı zorunlu kılar.
   çalıştır; alakasız uzun testleri yalnız alışkanlık olduğu için çalıştırma.
 - Tamamlanmış kayıtları aktif repo defterinde sonsuza kadar çoğaltma; kalıcı
   kararları kurallara taşı, geçmiş kanıtı Git commit/PR kayıtlarında bırak.
+
+## Cursor Cloud specific instructions
+
+Bu bölüm, güncelleme betiği (bağımlılık kurulumu) çalıştırıldıktan sonra başlayan
+gelecekteki cloud agent oturumları içindir. Standart komutlar `README.md`
+"Kontrol listesi" bölümünde ve `public_web/package.json` içindedir; burada yalnız
+Cloud ortamına özgü, az bilinen davranışlar özetlenir.
+
+- **Platform farkı:** `README.md` komutları Windows/PowerShell içindir (`npm.cmd`,
+  ters bölü `` ` ``). Cloud (Linux) ortamında `npm`, `flutter`, `dart` komutlarını
+  doğrudan; satır devamı için `\` kullan.
+- **Flutter SDK:** Snapshot'ta `~/flutter` altında kuruludur (stable, Dart >=3.7.2)
+  ve PATH `~/.bashrc` içine eklenmiştir. Login/interaktif kabukta `flutter`
+  doğrudan çalışır; script içinde garanti gerekiyorsa `"$HOME/flutter/bin/flutter"`
+  kullan.
+- **Backend = hosted Supabase; yerel Supabase/Docker YOK.** `supabase/config.toml`
+  bulunmaz, `supabase start` akışı beklenmez. Gerçek backend akışları (giriş,
+  yayınlama, Keşfet listesi, `/v/:slug` verisi) yalnız Secrets panelinden gelen
+  `SUPABASE_URL` + `SUPABASE_PUBLISHABLE_KEY` (public_web için ayrıca
+  `SUPABASE_SERVICE_ROLE_KEY`) ile çalışır.
+- **Secret olmadan da uygulama açılır (beklenen davranış):** `lib/main.dart`,
+  Supabase config yoksa init'i atlar ve çökmеz. İstemci-taraflı akışlar (landing,
+  `Vitrinim` editörü, işletme adından otomatik `/v/:slug` slug üretimi ve canlı
+  önizleme) backend olmadan çalışır. Bu durumda `Keşfet` "Vitrinler yüklenemedi"
+  uyarısı gösterir — bu bir hata değil, Supabase secret eksikliğinin sonucudur.
+- **public_web secret olmadan boot eder:** `src/lib/supabase.ts` placeholder
+  fallback kullanır; `npm run dev`/`build`/`lint`/`test` secret olmadan geçer.
+  Ancak `/v/[slug]` gerçek veriyi ancak geçerli Supabase ile render eder.
+- **Yerel çalıştırma (dev):**
+  - public_web: `npm --prefix public_web run dev` → `http://localhost:3000`
+  - Flutter web: `flutter run -d web-server --web-port 8080 --dart-define=PUBLIC_SITE_URL="http://localhost:3000"` → `http://localhost:8080` (masaüstü tarayıcı için `-d chrome` da kullanılabilir).
+- Flutter için `--dart-define` değerleri sıcak yeniden yükleme (hot reload) ile
+  değişmez; `SUPABASE_URL` gibi define'ları değiştirdiğinde `flutter run`'ı
+  yeniden başlat.
