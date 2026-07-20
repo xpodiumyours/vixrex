@@ -11,7 +11,10 @@ import 'package:vixrex/services/seo_service.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/services/legal_document_service.dart';
+import 'package:vixrex/services/product_service.dart';
+import 'package:vixrex/repositories/supabase_product_repository.dart';
 import 'package:vixrex/utils/secure_token_generator.dart';
+import 'package:vixrex/utils/failure.dart';
 
 import 'mixins/store_media_mixin.dart';
 import 'mixins/store_location_mixin.dart';
@@ -26,6 +29,7 @@ class StoreEditorController extends ChangeNotifier
   final StorePublishService publishService;
   final StoreShelfUploadService uploadService;
   final LegalDocumentService legalDocumentService;
+  final ProductService productService;
   final SupabaseClient? supabaseClient;
 
   StoreData _data;
@@ -37,6 +41,7 @@ class StoreEditorController extends ChangeNotifier
     StorePublishService? publishService,
     StoreShelfUploadService? uploadService,
     LegalDocumentService? legalDocumentService,
+    ProductService? productService,
     this.supabaseClient,
     StoreData? initialData,
   }) : storage = storage ?? const StoreLocalStorageService(),
@@ -45,6 +50,9 @@ class StoreEditorController extends ChangeNotifier
        uploadService = uploadService ?? const StoreShelfUploadService(),
        legalDocumentService =
            legalDocumentService ?? const LegalDocumentService(),
+       productService = productService ?? ProductService(
+         repository: SupabaseProductRepository(),
+       ),
        _data = initialData ?? StoreData(kategori: 'Diğer', status: 'Açık') {
     _syncInitialData();
   }
@@ -410,55 +418,113 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
+  /// Yeni ürün ekler (Aşama 5: ProductService üzerinden).
   Future<Result<void>> addProduct(Product p) async {
-    _data.products.add(p);
-    notifyListeners();
-    return syncProductsToSupabase(
-      data: _data,
-      publishService: publishService,
-      editToken: _publishedInfo?.editToken,
+    final storeId = _data.id;
+    final editToken = _publishedInfo?.editToken ?? '';
+    if (storeId == null || storeId.isEmpty) {
+      return const Result.success(null);
+    }
+
+    final result = await productService.addProduct(
+      storeId: storeId,
+      editToken: editToken,
+      name: p.name,
+      slug: p.slug ?? _generateSlug(p.name),
+      description: p.description,
+      priceText: p.price,
+      imageUrls: p.displayImageUrls,
+      categoryId: p.categoryId.isNotEmpty ? p.categoryId : null,
+      sourceType: p.source ?? 'manual',
+      isVisible: p.isVisible,
+      sortOrder: _data.products.length,
     );
+
+    if (result.isSuccess) {
+      _data.products.add(p);
+      notifyListeners();
+    }
+    return result.isSuccess ? const Result.success(null) : Result.failure(Failure(result.failure?.message ?? 'Ürün eklenemedi'));
   }
 
+  /// Ürün siler (Aşama 5: ProductService üzerinden).
   Future<Result<void>> removeProduct(int i) async {
-    if (i >= 0 && i < _data.products.length) {
+    if (i < 0 || i >= _data.products.length) {
+      return const Result.success(null);
+    }
+    final product = _data.products[i];
+    final editToken = _publishedInfo?.editToken;
+
+    final result = await productService.deleteProduct(product.id, editToken: editToken);
+    if (result.isSuccess) {
       _data.products.removeAt(i);
       notifyListeners();
-      return syncProductsToSupabase(
-        data: _data,
-        publishService: publishService,
-        editToken: _publishedInfo?.editToken,
-      );
     }
-    return const Result.success(null);
+    return result;
   }
 
+  /// Ürün günceller (Aşama 5: ProductService üzerinden).
   Future<Result<void>> updateProduct(int i, Product p) async {
-    if (i >= 0 && i < _data.products.length) {
+    if (i < 0 || i >= _data.products.length) {
+      return const Result.success(null);
+    }
+    final editToken = _publishedInfo?.editToken;
+
+    final result = await productService.updateProduct(
+      productId: p.id,
+      editToken: editToken,
+      name: p.name,
+      slug: p.slug,
+      description: p.description,
+      priceText: p.price,
+      imageUrls: p.displayImageUrls,
+      categoryId: p.categoryId.isNotEmpty ? p.categoryId : null,
+      isVisible: p.isVisible,
+      stockStatus: p.stockStatus,
+    );
+
+    if (result.isSuccess) {
       _data.products[i] = p;
       notifyListeners();
-      return syncProductsToSupabase(
-        data: _data,
-        publishService: publishService,
-        editToken: _publishedInfo?.editToken,
-      );
     }
-    return const Result.success(null);
+    return result;
   }
 
+  /// İçe aktarılan ürün günceller (Aşama 5: ProductService üzerinden).
   Future<Result<void>> updateProductImported(Product product) async {
     final index = _data.products.indexWhere((p) => p.id == product.id);
+    final editToken = _publishedInfo?.editToken;
+
     if (index >= 0) {
-      _data.products[index] = product;
+      final result = await productService.updateProduct(
+        productId: product.id,
+        editToken: editToken,
+        name: product.name,
+        slug: product.slug,
+        description: product.description,
+        priceText: product.price,
+        imageUrls: product.displayImageUrls,
+        categoryId: product.categoryId.isNotEmpty ? product.categoryId : null,
+        isVisible: product.isVisible,
+      );
+      if (result.isSuccess) {
+        _data.products[index] = product;
+        notifyListeners();
+      }
+      return result;
     } else {
-      _data.products.add(product);
+      return addProduct(product);
     }
-    notifyListeners();
-    return syncProductsToSupabase(
-      data: _data,
-      publishService: publishService,
-      editToken: _publishedInfo?.editToken,
-    );
+  }
+
+  String _generateSlug(String name) {
+    return name
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9\s-]'), '')
+        .replaceAll(RegExp(r'\s+'), '-')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
   }
 
   Future<void> withdrawPublicationConsent() async {

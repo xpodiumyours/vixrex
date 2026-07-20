@@ -10,6 +10,7 @@ import {
   normalizeExternalUrl,
   normalizeWhatsappDigits,
   safeParseJson,
+  slugifyTR,
   type ProductItem,
 } from "@/lib/products";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
@@ -33,13 +34,35 @@ interface StoreRow {
   shelf_image_url?: string;
   products?: unknown;
   is_published?: boolean;
+  product_storage_version?: number;
+}
+
+interface ProductRow {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  price_text: string | null;
+  price_amount: number | null;
+  currency: string;
+  stock_status: string | null;
+  image_urls: string[];
+  category_id: string | null;
+  is_visible: boolean;
+  is_active: boolean;
+  source_type: string;
+}
+
+interface CategoryRow {
+  id: string;
+  name: string;
 }
 
 async function _getProductData(slug: string, productSlug: string) {
   const { data: store, error } = await supabase
     .from("stores")
     .select(
-      "slug,name,description,corporate_bio,whatsapp,instagram,website,address,logo_url,shelf_image_url,products,is_published"
+      "slug,name,description,corporate_bio,whatsapp,instagram,website,address,logo_url,shelf_image_url,products,is_published,product_storage_version"
     )
     .eq("slug", slug)
     .eq("is_published", true)
@@ -47,6 +70,53 @@ async function _getProductData(slug: string, productSlug: string) {
 
   if (error || !store) return null;
 
+  const storageVersion = store.product_storage_version ?? 1;
+
+  if (storageVersion === 2) {
+    // Yeni sistem: products tablosundan oku
+    const { data: productRow } = await supabase
+      .from("products")
+      .select("id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type")
+      .eq("store_id", (await supabase.from("stores").select("id").eq("slug", slug).single()).data?.id)
+      .eq("slug", productSlug)
+      .eq("is_active", true)
+      .single<ProductRow>();
+
+    if (!productRow || !productRow.name?.trim() || !productRow.is_visible) return null;
+
+    // Kategori adını çek
+    let categoryName = "";
+    if (productRow.category_id) {
+      const { data: cat } = await supabase
+        .from("product_categories")
+        .select("name")
+        .eq("id", productRow.category_id)
+        .single<CategoryRow>();
+      categoryName = cat?.name || "";
+    }
+
+    // ProductItem formatına çevir
+    const product: ProductItem = {
+      id: productRow.id,
+      slug: productRow.slug,
+      name: productRow.name,
+      description: productRow.description || undefined,
+      price: productRow.price_text || (productRow.price_amount != null ? `${productRow.price_amount} ${productRow.currency}` : undefined),
+      imageUrls: Array.isArray(productRow.image_urls) ? productRow.image_urls : [],
+      category: categoryName || undefined,
+      stockStatus: productRow.stock_status || undefined,
+      isVisible: productRow.is_visible,
+      source: productRow.source_type,
+    };
+
+    return {
+      store,
+      product,
+      productSlug: productRow.slug,
+    };
+  }
+
+  // Eski sistem: JSON'dan oku (mevcut yapı)
   const products = safeParseJson<ProductItem>(store.products);
   const product = findProductBySlug(products, productSlug);
   if (!product || !product.name?.trim() || product.isVisible === false) {

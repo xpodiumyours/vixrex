@@ -1,42 +1,54 @@
-"use client";
-
 import Link from "next/link";
-import { useMemo, useState } from "react";
 import {
   getProductImages,
   getProductUrlSlug,
   type ProductItem,
 } from "@/lib/products";
 
+interface ProductPagination {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  hasNext: boolean;
+  category: string;
+  query: string;
+}
+
+interface CategoryItem {
+  id: string;
+  name: string;
+}
+
 interface ProductCatalogProps {
   storeSlug: string;
   products: ProductItem[];
+  categoryMap: CategoryItem[];
+  pagination: ProductPagination;
 }
 
-export default function ProductCatalog({ storeSlug, products }: ProductCatalogProps) {
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [visibleLimit, setVisibleLimit] = useState(12);
+export default function ProductCatalog({
+  storeSlug,
+  products,
+  categoryMap,
+  pagination,
+}: ProductCatalogProps) {
+  const { page, totalCount, hasNext, category, query } = pagination;
 
-  const categories = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          products
-            .map((product) => String(product.category || "").trim())
-            .filter(Boolean)
-        )
-      ),
-    [products]
-  );
+  function buildPageUrl(pageNum: number) {
+    const params = new URLSearchParams();
+    if (pageNum > 1) params.set("page", String(pageNum));
+    if (category) params.set("category", category);
+    if (query) params.set("q", query);
+    const qs = params.toString();
+    return `/v/${storeSlug}${qs ? `?${qs}` : ""}`;
+  }
 
-  const filteredProducts = selectedCategory
-    ? products.filter((product) => product.category === selectedCategory)
-    : products;
-  const visibleProducts = filteredProducts.slice(0, visibleLimit);
-
-  function selectCategory(category: string) {
-    setSelectedCategory(category);
-    setVisibleLimit(12);
+  function buildCategoryUrl(catId: string) {
+    const params = new URLSearchParams();
+    if (catId) params.set("category", catId);
+    if (query) params.set("q", query);
+    const qs = params.toString();
+    return `/v/${storeSlug}${qs ? `?${qs}` : ""}`;
   }
 
   return (
@@ -44,44 +56,42 @@ export default function ProductCatalog({ storeSlug, products }: ProductCatalogPr
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-base font-black text-white">Ürünler</h2>
         <span className="text-xs font-extrabold text-[#9DB2C8]">
-          {filteredProducts.length} ürün
+          {totalCount} ürün
         </span>
       </div>
 
-      {categories.length > 1 && (
+      {categoryMap.length > 1 && (
         <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-          <button
-            type="button"
-            onClick={() => selectCategory("")}
+          <Link
+            href={buildCategoryUrl("")}
             className={`min-h-11 shrink-0 rounded-full border px-4 text-xs font-black ${
-              selectedCategory === ""
+              category === ""
                 ? "border-[#38A0E4] bg-[#38A0E4] text-[#071322]"
                 : "border-[#25415F] bg-[#13243A] text-[#C4D1E3]"
             }`}
           >
             Tümü
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => selectCategory(category)}
+          </Link>
+          {categoryMap.map((cat) => (
+            <Link
+              key={cat.id}
+              href={buildCategoryUrl(cat.id)}
               className={`min-h-11 shrink-0 rounded-full border px-4 text-xs font-black ${
-                selectedCategory === category
+                category === cat.id
                   ? "border-[#38A0E4] bg-[#38A0E4] text-[#071322]"
                   : "border-[#25415F] bg-[#13243A] text-[#C4D1E3]"
               }`}
             >
-              {category}
-            </button>
+              {cat.name}
+            </Link>
           ))}
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-        {visibleProducts.map((product, index) => {
-          const productIndex = products.indexOf(product);
-          const productUrl = `/v/${storeSlug}/urun/${getProductUrlSlug(product, productIndex)}`;
+        {products.map((product, index) => {
+          const globalIndex = (page - 1) * pagination.pageSize + index;
+          const productUrl = `/v/${storeSlug}/urun/${getProductUrlSlug(product, globalIndex)}`;
           const image = getProductImages(product)[0];
           return (
             <Link
@@ -118,14 +128,32 @@ export default function ProductCatalog({ storeSlug, products }: ProductCatalogPr
         })}
       </div>
 
-      {visibleProducts.length < filteredProducts.length && (
-        <button
-          type="button"
-          onClick={() => setVisibleLimit((current) => current + 12)}
-          className="mt-4 min-h-11 w-full rounded-2xl border border-[#38A0E4]/40 bg-[#38A0E4]/10 px-4 text-sm font-black text-[#B9E1FF]"
-        >
-          Daha fazla göster
-        </button>
+      {(page > 1 || hasNext) && (
+        <div className="mt-4 flex items-center justify-between gap-3">
+          {page > 1 ? (
+            <Link
+              href={buildPageUrl(page - 1)}
+              className="min-h-11 rounded-2xl border border-[#25415F] bg-[#13243A] px-5 text-sm font-black text-[#C4D1E3]"
+            >
+              Önceki sayfa
+            </Link>
+          ) : (
+            <div />
+          )}
+          <span className="text-xs font-bold text-[#9DB2C8]">
+            Sayfa {page} / {Math.ceil(totalCount / pagination.pageSize)}
+          </span>
+          {hasNext ? (
+            <Link
+              href={buildPageUrl(page + 1)}
+              className="min-h-11 rounded-2xl border border-[#38A0E4]/40 bg-[#38A0E4]/10 px-5 text-sm font-black text-[#B9E1FF]"
+            >
+              Sonraki sayfa
+            </Link>
+          ) : (
+            <div />
+          )}
+        </div>
       )}
     </section>
   );

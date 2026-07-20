@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vixrex Mobile Concept</title>
+    <!-- Modern Font matching the design -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Vixrex Renk Paleti */
+            --bg-base: #060e17; /* En koyu arka plan */
+            --bg-surface: #0f1724; /* Kart arka planı */
+            --bg-surface-light: #162032; /* Kart hover/açık arka plan */
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(255, 255, 255, 0.15);
+            --text-main: #ffffff;
+            --text-secondary: #94a3b8;
+            --vixrex-blue: #0ea5e9;
+            --whatsapp-green: #25D366;
+            --status-green: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #000; /* Dış çerçeve siyah */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+        }
+
+        /* Mobile App Container (Masaüstünde telefon gibi görünmesi için) */
+        .app-container {
+            width: 100%;
+            max-width: 414px; /* iPhone Max width */
+            height: 100vh;
+            max-height: 896px;
+            background: linear-gradient(160deg, #0a111a 0%, var(--bg-base) 100%);
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-radius: 0;
+            /* Scrollbar gizleme */
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        .app-container::-webkit-scrollbar { display: none; }
+
+        @media (min-width: 415px) {
+            .app-container {
+                height: 850px;
+                border-radius: 40px;
+                border: 8px solid #1a1a1a;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        /* Top Safe Area & Header */
+        .header {
+            padding: 50px 20px 20px 20px; /* Status bar boşluğu */
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Profile Card (Design'daki en üstteki AVA CHEN kartı) */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .profile-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px; /* Hafif köşeli */
+            background: var(--bg-surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            border: 1px solid var(--border-highlight);
+        }
+
+        .profile-info h1 {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .profile-info h1 svg { width: 14px; height: 14px; fill: var(--text-main); }
+        .profile-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .profile-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--status-green);
+            font-weight: 500;
+        }
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--status-green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--status-green);
+        }
+
+        /* Hero Banner (STYLE THE FUTURE) */
+        .hero-banner {
+            margin: 20px;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            background: var(--bg-surface);
+            height: 180px;
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+        }
+        .hero-bg {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 60%;
+            background: url('https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&q=80') center/cover;
+            -webkit-mask-image: linear-gradient(to right, transparent, black 40%);
+            mask-image: linear-gradient(to right, transparent, black 40%);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 24px;
+            width: 70%;
+        }
+        .hero-content h2 {
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .hero-content p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .hero-btn {
+            background: var(--text-main);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Categories (Chips) */
+        .categories-wrapper {
+            margin: 0 0 20px 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .categories-wrapper::-webkit-scrollbar { display: none; }
+        
+        .categories {
+            display: flex;
+            padding: 0 20px;
+            gap: 10px;
+        }
+        
+        .chip {
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            background: transparent;
+            border: 1px solid var(--border-highlight);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chip.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+            border-color: transparent;
+        }
+        .chip-icon {
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Product Grid */
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding: 0 20px 120px 20px; /* Alt bar için boşluk */
+        }
+
+        .p-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .p-img-wrapper {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--bg-surface-light);
+            margin-bottom: 12px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .p-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .placeholder-text {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .p-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .p-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .p-price {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .p-status {
+            font-size: 11px;
+            color: var(--vixrex-blue);
+            font-weight: 600;
+        }
+
+        .p-add-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 500;
+            align-self: flex-end;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: auto;
+        }
+
+        /* Floating WhatsApp Button */
+        .fab-wa {
+            position: absolute;
+            bottom: 90px;
+            right: 20px;
+            background: rgba(37, 211, 102, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(37, 211, 102, 0.3);
+            border-radius: 100px;
+            padding: 10px 16px 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+        .fab-wa .icon-circle {
+            width: 32px;
+            height: 32px;
+            background: var(--whatsapp-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fab-wa span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(to top, rgba(6, 14, 23, 0.95), rgba(6, 14, 23, 0.8));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: 20px; /* Safe area */
+            z-index: 90;
+        }
+        .nav-item {
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 10px;
+        }
+        .nav-item.active {
+            color: var(--text-main);
+        }
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            stroke-width: 2;
+        }
+        
+        /* Home Indicator (iOS çizgisi) */
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 130px;
+            height: 5px;
+            background: #fff;
+            border-radius: 10px;
+            z-index: 100;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <div class="header">
+        <div class="profile-card">
+            <div class="profile-left">
+                <div class="avatar">S</div>
+                <div class="profile-info">
+                    <h1>sdene 
+                        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    </h1>
+                    <p>Diğer, Butik</p>
+                </div>
+            </div>
+            <div class="profile-right">
+                <div class="status-dot"></div>
+                Açık
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-banner">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <h2>YENİ<br>SEZON</h2>
+            <p>Koleksiyonu İncele</p>
+            <button class="hero-btn">Keşfet</button>
+        </div>
+    </div>
+
+    <div class="categories-wrapper">
+        <div class="categories">
+            <div class="chip chip-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <div class="chip active">Tümü</div>
+            <div class="chip">Giyim</div>
+            <div class="chip">Butik</div>
+            <div class="chip">Gıda</div>
+            <div class="chip">Fırın</div>
+        </div>
+    </div>
+
+    <div class="product-grid">
+        <!-- Product 1 -->
+        <div class="p-card">
+            <div class="p-img-wrapper">
+                <span class="placeholder-text">Kapak Görseli Bekleniyor</span>
+            </div>
+            <div class="p-title">ssss</div>
+            <div class="p-meta">
+                <span class="p-price">ssssssss ₺</span>
+                <span class="p-status">Mevcut</span>
+            </div>
+            <div class="p-add-btn">+ Ekle</div>
+        </div>
+
+        <!-- Product 2 -->
+        <div class="p-card">
+            <div class="p-img-wrapper">
+                <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80" alt="Product">
+            </div>
+            <div class="p-title">Akıllı Saat Pro</div>
+            <div class="p-meta">
+                <span class="p-price">3499.00 ₺</span>
+                <span class="p-status">Mevcut</span>
+            </div>
+            <div class="p-add-btn">+ Ekle</div>
+        </div>
+
+        <!-- Product 3 -->
+        <div class="p-card">
+            <div class="p-img-wrapper">
+                <span class="placeholder-text">Kapak Görseli Bekleniyor</span>
+            </div>
+            <div class="p-title">ÇAYKUR FİLİZ ÇAYI</div>
+            <div class="p-meta">
+                <span class="p-price">37.40 ₺</span>
+                <span class="p-status">Mevcut</span>
+            </div>
+            <div class="p-add-btn">+ Ekle</div>
+        </div>
+
+        <!-- Product 4 -->
+        <div class="p-card">
+            <div class="p-img-wrapper">
+                <span class="placeholder-text">Kapak Görseli Bekleniyor</span>
+            </div>
+            <div class="p-title">SÜTAŞ TAM YAĞLI SÜT</div>
+            <div class="p-meta">
+                <span class="p-price">96.95 ₺</span>
+                <span class="p-status">Mevcut</span>
+            </div>
+            <div class="p-add-btn">+ Ekle</div>
+        </div>
+    </div>
+
+    <!-- Floating WhatsApp -->
+    <div class="fab-wa">
+        <div class="icon-circle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        </div>
+        <span>WhatsApp'tan<br>Sipariş Ver</span>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <div class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </div>
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </div>
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        </div>
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+    </div>
+    
+    <div class="home-indicator"></div>
+
+</div>
+
+</body>
+</html>

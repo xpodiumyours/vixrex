@@ -4,7 +4,7 @@
 Görsel tarz: `vixrex-asistan-ornek.html` (HTML ile bu plan çelişirse önce Furkan’a sor; tahminle seçme).  
 Oturum özeti (ne yapıldı): `vixrex-asistan-OTURUM-YAPILANLAR.md` — planı değiştirmez.
 
-**Üst kurallar (değişmez):** `PROJECT_RULES.md` → `SON_DURUM.md` → `AGENTS.md` → bu dosya.  
+**Üst kurallar (değişmez):** `PROJECT_RULES.md` → `AGENTS.md` → bu dosya.  
 Bu plan üst kuralları gevşetemez.  
 **Asistan skill (her adımda):** `.cursor/skills/vixrex-asistan-bagla/SKILL.md` —
 ürünü bozma, ölü kod bırakma, kabuk işlem yok; çalışan ürün üzerine çalışan asistan.

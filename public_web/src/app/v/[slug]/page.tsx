@@ -16,8 +16,11 @@ import ProductCatalog from "./ProductCatalog";
 
 export const revalidate = 60;
 
+const PAGE_SIZE = 24;
+
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string; category?: string; q?: string }>;
 }
 
 interface GalleryItem {
@@ -56,15 +59,48 @@ interface PublicStoreRow {
   latitude: number | null;
   longitude: number | null;
   google_business_link: string | null;
+  product_storage_version: number | null;
+}
+
+interface ProductRow {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  price_text: string | null;
+  price_amount: number | null;
+  currency: string;
+  stock_status: string | null;
+  image_urls: string[];
+  category_id: string | null;
+  is_visible: boolean;
+  is_active: boolean;
+  source_type: string;
+  sort_order: number;
+}
+
+interface CategoryRow {
+  id: string;
+  name: string;
+}
+
+interface ProductPagination {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  hasNext: boolean;
+  category: string;
+  query: string;
 }
 
 const PUBLIC_STORE_SELECT =
   "slug,name,business_type,description,corporate_bio,whatsapp,instagram," +
   "website,address,status,marketplace_links,gallery_items,products," +
   "references_link,shelf_image_url,logo_url,working_hours,is_published," +
-  "kategori,latitude,longitude,google_business_link";
+  "kategori,latitude,longitude,google_business_link,product_storage_version";
 
-async function _getStoreData(slug: string) {
+async function _getStoreData(slug: string, page = 1, category = "", query = "") {
+  page = Math.max(1, page);
   try {
     const { data: storeData, error: storeError } = await supabase
       .from("stores")
@@ -95,10 +131,120 @@ async function _getStoreData(slug: string) {
       .order("created_at", { ascending: false })
       .limit(3);
 
+    const storageVersion = store.product_storage_version ?? 1;
+    let visibleProducts: ProductItem[] = [];
+    let categories: CategoryRow[] = [];
+    let productPagination: ProductPagination | null = null;
+
+    if (storageVersion === 2) {
+      const storeIdResult = await supabase
+        .from("stores")
+        .select("id")
+        .eq("slug", slug)
+        .single();
+      const storeId = storeIdResult.data?.id;
+
+      if (storeId) {
+        const { data: categoryRows } = await supabase
+          .from("product_categories")
+          .select("id,name")
+          .eq("store_id", storeId)
+          .eq("is_active", true)
+          .order("sort_order");
+
+        categories = categoryRows || [];
+
+        const categoryMap = new Map<string, string>();
+        categories.forEach((cat) => {
+          categoryMap.set(cat.id, cat.name);
+        });
+
+        const from = (page - 1) * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
+
+        let productQuery = supabase
+          .from("products")
+          .select("id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order", { count: "exact" })
+          .eq("store_id", storeId)
+          .eq("is_active", true)
+          .eq("is_visible", true)
+          .order("sort_order", { ascending: true })
+          .order("id", { ascending: true });
+
+        if (category) {
+          productQuery = productQuery.eq("category_id", category);
+        }
+
+        if (query) {
+          productQuery = productQuery.ilike("name", `%${query}%`);
+        }
+
+        const { data: productRows, count } = await productQuery.range(from, to);
+
+        const totalCount = count || 0;
+        visibleProducts = (productRows || [])
+          .filter((p) => p.name?.trim())
+          .map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            description: p.description || undefined,
+            price: p.price_text || (p.price_amount != null ? `${p.price_amount} ${p.currency}` : undefined),
+            imageUrls: Array.isArray(p.image_urls) ? p.image_urls : [],
+            category: (p.category_id ? categoryMap.get(p.category_id) : undefined) || undefined,
+            stockStatus: p.stock_status || undefined,
+            isVisible: p.is_visible,
+            source: p.source_type,
+          }));
+
+        productPagination = {
+          page,
+          pageSize: PAGE_SIZE,
+          totalCount,
+          hasNext: from + PAGE_SIZE < totalCount,
+          category,
+          query,
+        };
+      }
+    } else {
+      const products = safeParseJson<ProductItem>(store.products);
+      visibleProducts = products
+        .filter((product) => product.name?.trim() && product.isVisible !== false)
+        .sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
+
+      if (category) {
+        visibleProducts = visibleProducts.filter(
+          (p) => (p.categoryId || "") === category
+        );
+      }
+      if (query) {
+        const q = query.toLowerCase();
+        visibleProducts = visibleProducts.filter(
+          (p) => (p.name || "").toLowerCase().includes(q)
+        );
+      }
+
+      const totalCount = visibleProducts.length;
+      const from = (page - 1) * PAGE_SIZE;
+      visibleProducts = visibleProducts.slice(from, from + PAGE_SIZE);
+
+      productPagination = {
+        page,
+        pageSize: PAGE_SIZE,
+        totalCount,
+        hasNext: from + PAGE_SIZE < totalCount,
+        category,
+        query,
+      };
+    }
+
     return {
       store,
       bookingSettings,
       articles: articles || [],
+      visibleProducts,
+      categories,
+      productPagination,
     };
   } catch (err) {
     console.error(`Store data fetch error for slug=${slug}:`, err);
@@ -106,16 +252,20 @@ async function _getStoreData(slug: string) {
   }
 }
 
-const getStoreData = (slug: string) =>
+const getStoreData = (slug: string, page: number, category: string, query: string) =>
   unstable_cache(
-    () => _getStoreData(slug),
-    [`store-${slug}`],
+    () => _getStoreData(slug, page, category, query),
+    [`store-${slug}`, `p${page}`, `c${category}`, `q${query}`],
     { tags: [`store-${slug}`, `products-${slug}`], revalidate: 60 }
   )();
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
-  const data = await getStoreData(params.slug);
+  const searchParams = await props.searchParams;
+  const page = Math.max(1, parseInt(searchParams.page || "1", 10) || 1);
+  const category = searchParams.category || "";
+  const query = searchParams.q || "";
+  const data = await getStoreData(params.slug, page, category, query);
   if (!data) return { robots: { index: false, follow: false } };
 
   const { store } = data;
@@ -156,19 +306,18 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
 export default async function StorePage(props: PageProps) {
   const params = await props.params;
-  const data = await getStoreData(params.slug);
+  const searchParams = await props.searchParams;
+  const page = Math.max(1, parseInt(searchParams.page || "1", 10) || 1);
+  const category = searchParams.category || "";
+  const query = searchParams.q || "";
+  const data = await getStoreData(params.slug, page, category, query);
   if (!data) {
-    // Veri yoksa 404 göster — cache sorunu olabilir, 60sn sonra tekrar dene
     notFound();
   }
 
-  const { store, bookingSettings, articles } = data;
+  const { store, bookingSettings, articles, visibleProducts, categories, productPagination } = data;
 
   const galleryItems = safeParseJson<GalleryItem>(store.gallery_items);
-  const products = safeParseJson<ProductItem>(store.products);
-  const visibleProducts = products.filter(
-    (product) => product.name?.trim() && product.isVisible !== false
-  );
   const marketplaceLinks = safeParseJson<MarketplaceLinkItem>(store.marketplace_links);
 
   const siteUrl = getSiteUrl();
@@ -236,8 +385,7 @@ export default async function StorePage(props: PageProps) {
     ],
   };
 
-  // Working hours'u schema.org formatına çevir
-  const openingHoursSpecification = store.working_hours 
+  const openingHoursSpecification = store.working_hours
     ? Object.entries(store.working_hours as Record<string, { start: string; end: string; active: boolean }>)
         .filter(([, hours]) => hours.active)
         .map(([day, hours]) => ({
@@ -292,12 +440,11 @@ export default async function StorePage(props: PageProps) {
               "@id": `${publicUrl}#products`,
               name: `${store.name} ürünleri`,
               itemListElement: visibleProducts.slice(0, 12).map((product, index) => {
-                const productIndex = products.indexOf(product);
                 return {
                   "@type": "ListItem",
                   position: index + 1,
                   url: buildSiteUrl(
-                    `/v/${store.slug}/urun/${getProductUrlSlug(product, productIndex)}`
+                    `/v/${store.slug}/urun/${getProductUrlSlug(product, index)}`
                   ),
                   name: product.name,
                 };
@@ -479,8 +626,13 @@ export default async function StorePage(props: PageProps) {
                 </div>
               )}
 
-              {visibleProducts.length > 0 && (
-                <ProductCatalog storeSlug={store.slug} products={visibleProducts} />
+              {visibleProducts.length > 0 && productPagination && (
+                <ProductCatalog
+                  storeSlug={store.slug}
+                  products={visibleProducts}
+                  categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
+                  pagination={productPagination}
+                />
               )}
 
               {store.corporate_bio && (

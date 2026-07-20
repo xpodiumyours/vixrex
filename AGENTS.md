@@ -10,8 +10,7 @@ Her AI ajanı herhangi bir dosyaya dokunmadan önce sırasıyla şunları tamame
 
 1. [`PROJECT_RULES.md`](PROJECT_RULES.md) — kullanıcı anayasası, çalışma biçimi ve
    dokunulmaz alanlar için en üst kuraldır.
-2. Varsa `SON_DURUM.md` — yalnız güncel oturum devridir.
-3. Bu `AGENTS.md` — güncel teknik mimari ve repo sözleşmesidir.
+2. Bu `AGENTS.md` — güncel teknik mimari ve repo sözleşmesidir.
 4. İlgili alt dizindeki `AGENTS.md` ve görevle eşleşen
    `.cursor/skills/*/SKILL.md` / `.agents/skills/*/SKILL.md` dosyaları — yalnız
    ek kural koyabilir, üst kuralları gevşetemez. Asistan işlerinde

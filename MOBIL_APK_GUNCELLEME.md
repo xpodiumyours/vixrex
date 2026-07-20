@@ -22,7 +22,7 @@ Web/Vercel deploy akışı değişmez. iOS ve Play Store yayını Faz 1 kapsamı
 
 ## 2. Ön doğrulama — Cursor kod yazmadan önce
 
-- [x] PROJECT_RULES.md, SON_DURUM.md ve AGENTS.md tamamen okundu.
+- [x] PROJECT_RULES.md ve AGENTS.md tamamen okundu.
 - [x] Çalışma ağacı listelendi; kapsam dışı dosyaya dokunulmadı.
 - [x] Yeni çalışma `feat/android-ci-apk` dalında yapıldı.
 - [x] Paket kimliği com.xpodiumyours.vixrex doğrulandı; değiştirilmedi.
@@ -90,7 +90,7 @@ her AAB bu değerden büyük olur.
 - .github/workflows/android-apk.yml — yeni workflow
 - android/app/build.gradle.kts — release key yoksa fail-fast
 - Gerekirse android/key.properties.template — yalnız örnek alan adları
-- MOBIL_APK_GUNCELLEME.md ve SON_DURUM.md — durum/kanıt
+- MOBIL_APK_GUNCELLEME.md — durum/kanıt
 
 UI, route, public web, Supabase şeması ve generated plugin dosyaları kapsam dışıdır.
 
@@ -282,8 +282,7 @@ Uygulama sırası:
    sızıntısı olmadığını doğrula.
 7. Küçük bir PR aç, birleştir ve `main` run'ının da yeşil olduğunu doğrula.
 8. Kanıt bağlantılarını bu belgenin §11.A sonuç bölümüne ekleyip T-010'u
-   `düzeltildi` olarak kaydet; `SON_DURUM.md` dosyasını altı satır kuralıyla
-   güncelle.
+   `düzeltildi` olarak kaydet.
 
 Tamamlanma kapısı:
 

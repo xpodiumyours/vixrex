@@ -64,7 +64,8 @@ class StorePublishPayloadBuilder {
       'location_accuracy_meters': data.locationAccuracyMeters,
       'location_consent_at': data.locationConsentAt?.toIso8601String(),
       'location_source': data.locationSource,
-      'products': productsToJson(data),
+      // products artık ayrı products tablosunda tutuluyor (Aşama 5)
+      // COALESCE mevcut JSON'u korur, bu alan gönderilmezse
       'product_categories': productCategoriesToJson(data),
       'offerings': offeringsToJson(data),
       'privacy_notice_acknowledged': data.privacyNoticeAcknowledged,
