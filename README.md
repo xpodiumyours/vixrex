@@ -1,200 +1,519 @@
 # Vixrex
 
-Küçük işletmeler ve esnaf için paylaşılabilir dijital vitrin platformu.
+**Küçük işletmeler, esnaf ve ürün odaklı firmalar için dijital vitrin, katalog, keşif ve müşteri yönlendirme platformu.**
 
-Vixrex; işletme bilgilerini, ürünleri, hizmetleri, galeriyi, iletişim
-kanallarını ve randevu seçeneklerini tek bir public bağlantıda toplar.
-İşletmeler vitrinlerini Flutter uygulamasından yönetir, müşteriler ise
-Keşfet ekranı, QR kod veya doğrudan bağlantı üzerinden görüntüler.
+Vixrex; bir işletmenin profilini, ürünlerini, hizmetlerini, galerisini, konumunu, çalışma bilgilerini, randevu seçeneklerini ve iletişim kanallarını tek bir paylaşılabilir bağlantıda toplar.
 
-> Bu doküman mevcut repo yapısını açıklar. Proje kök dizininde bulunan
-> [supabase_schema.sql](file:///c:/Projects/vixrex/supabase_schema.sql) dosyası tüm veritabanı tablolarını,
-> RLS politikalarını, trigger'ları ve RPC fonksiyonlarını tek seferde sıfırdan kurmanızı sağlar.
+İşletme sahibi Flutter uygulamasından vitrini oluşturur ve yönetir. Müşteri ise Next.js tabanlı public web üzerinden işletmeyi ve ürünleri görüntüler; QR kod, Keşfet, Google veya doğrudan bağlantı üzerinden vitrini bulur ve WhatsApp ya da işletmenin kendi satış kanalına yönlenir.
 
-## İçindekiler
+> Vixrex şu anda sepet, ödeme, kargo ve iade yöneten tam kapsamlı bir e-ticaret altyapısı değildir. Temel ürün yaklaşımı; işletmeyi ve ürünlerini dijitalde görünür hale getirmek, SEO sayfaları üretmek ve müşteriyi işletmenin kendi iletişim veya sipariş kanalına taşımaktır.
 
-- [Vixrex nedir?](#vixrex-nedir)
-- [Hedef kullanıcılar](#hedef-kullanıcılar)
-- [Ana özellikler](#ana-özellikler)
-- [Teknik yapı](#teknik-yapı)
-- [Gereksinimler](#gereksinimler)
-- [Flutter kurulumu](#flutter-kurulumu)
-- [Public web kurulumu](#public-web-kurulumu)
-- [Ortam değişkenleri](#ortam-değişkenleri)
-- [Supabase kurulumu](#supabase-kurulumu)
-- [Supabase tabloları](#supabase-tabloları)
-- [RPC fonksiyonları](#rpc-fonksiyonları)
-- [Demo ekran akışı](#demo-ekran-akışı)
-- [Vercel ile yayınlama](#vercel-ile-yayınlama)
-- [Kontrol listesi](#kontrol-listesi)
-- [Bilinen sınırlamalar](#bilinen-sınırlamalar)
+## Ürün durumu
 
-## Vixrex nedir?
-
-Vixrex; küçük işletmelerin ürünlerini, hizmetlerini, çalışma bilgilerini,
-galerisini, iletişim kanallarını ve randevu seçeneklerini tek bir
-paylaşılabilir dijital vitrinde yayınlamasını sağlayan Flutter ve web tabanlı
-bir platformdur.
-
-| Yüzey | Amaç |
+| Durum | Anlamı |
 |---|---|
-| İşletme uygulaması | Vitrin oluşturma, düzenleme, canlı önizleme, yayınlama ve randevu yönetimi |
-| Herkese açık web vitrini | Müşterilerin işletmeyi, galeriyi, hizmetleri ve randevu ekranını görüntülemesi |
+| ✅ Aktif | Kodda bulunan ve mevcut Vixrex akışına bağlı özellik |
+| 🧪 Yapılandırma gerekir | Kodda mevcut; harici servis, migration veya ortam değişkeni gerektirir |
+| 🛣️ Yol haritası | Henüz üretim özelliği değildir |
 
-Vixrex tam kapsamlı bir e-ticaret veya ödeme altyapısı değildir. Temel amacı,
-yerel işletmelerin dijital görünürlüğünü ve müşterileriyle iletişimini
-kolaylaştırmaktır.
+## Vixrex ne sağlar?
 
-## Hedef kullanıcılar
+### İşletme sahibi için
 
-Birincil hedef kullanıcılar küçük işletmeler, esnaf ve yerel hizmet
-sağlayıcılardır.
+- Asistan eşliğinde hızlı vitrin oluşturma
+- Misafir olarak vitrin yayınlama ve sonradan hesaba bağlama
+- İşletme adı, açıklama, WhatsApp, adres ve konum yönetimi
+- Kapak, logo ve galeri görselleri
+- Ürün, hizmet ve kategori yönetimi
+- Ürünlere fiyat, açıklama, stok durumu ve çoklu görsel ekleme
+- Instagram gönderisinden ürün aktarma
+- Fiş veya etiket görselinden OCR ile ürün adayı çıkarma
+- Hazır kategori şablonlarıyla başlangıç içeriği oluşturma
+- Randevu ayarları ve talep yönetimi
+- Canlı önizleme, yayınlama, QR kod ve paylaşım
+- VixRex rehberiyle eksik alanları ve sıradaki adımı görme
 
-Örnek kullanım alanları:
+### Müşteri için
 
-- Butik ve mağazalar
-- Kuaför ve güzellik salonları
-- Kafe ve restoranlar
-- Teknik servisler
-- Atölyeler
-- Danışmanlar
-- Randevu veya WhatsApp üzerinden müşteri kabul eden yerel işletmeler
+- İşletmeye özel `/v/:slug` public vitrin
+- Ürün kataloğu ve ayrı ürün detay sayfaları
+- Ürün veya işletme üzerinden WhatsApp iletişimi
+- İşletme web sitesi, Instagram ve pazaryeri bağlantıları
+- Konum ve harita yönlendirmesi
+- Online randevu talebi ve takip bağlantısı
+- Keşfet üzerinden işletme arama ve kategori filtreleme
+- Google tarafından taranabilen metadata, sitemap ve yapılandırılmış veri
 
-## Ana özellikler
+---
 
-| Özellik | Açıklama |
+# Ana özellikler
+
+## 1. Vixrex Asistan ile vitrin oluşturma ✅
+
+Vixrex’in kurulum asistanı ayrı bir yayın motoru veya ikinci bir editör değildir. Mevcut `StoreEditorController`, konum bileşeni, yasal onay bileşeni ve yayın servisini sohbet biçiminde yöneten hızlı kurulum katmanıdır.
+
+### Kurulum akışı
+
+```text
+Landing / Vixrex Oluştur
+        ↓
+İşletme adı
+        ↓
+WhatsApp numarası
+        ↓
+GPS veya il / ilçe / adres
+        ↓
+Yasal onaylar
+        ↓
+Vitrini yayınla
+        ↓
+/v/:slug public bağlantısı
+```
+
+Asistanın kullandığı mevcut parçalar:
+
+| İşlem | Kullanılan gerçek Vixrex bileşeni |
 |---|---|
-| Dijital vitrin | İşletme adı, açıklama, durum, iletişim, konum, ürün ve hizmetleri yayınlama |
-| Canlı önizleme | Değişiklikleri yayınlamadan önce vitrin görünümünde kontrol etme |
-| QR kod | Public vitrin bağlantısını QR kod ile paylaşma |
-| WhatsApp | Ürün, hizmet, sipariş veya genel iletişim mesajı başlatma |
-| Keşfet | Yayındaki işletmeleri arama, kategoriye göre filtreleme ve görüntüleme |
-| Randevu | Uygun saat seçme, talep oluşturma, takip etme, iptal veya erteleme isteme |
-| Randevu yönetimi | Talepleri onaylama, reddetme ve müşteriyi WhatsApp ile bilgilendirme |
-| Galeri | En fazla 12 işletme, ürün veya mekan görseli yayınlama |
-| Ürün ve hizmetler | İşletmeye özel ürün, hizmet, fiyat ve süre bilgileri |
-| Public bağlantı | Her işletme için `/v/:slug` biçiminde paylaşılabilir vitrin |
-| Konum ve dış bağlantılar | Adres, sosyal medya, web sitesi ve pazar yeri bağlantıları |
-| OCR ile ürün çıkarma | Fotoğraf veya faturadan otomatik ürün kataloğu oluşturma (Premium) |
+| Form ve vitrin verisi | `StoreEditorController` |
+| Konum | `FormLocationInfo` ve mevcut konum editörü |
+| Yasal onay | `LegalConsentSection` |
+| Yayın | `StoreEditorController.publish()` → `StorePublishService` |
+| Misafir vitrin oluşturma | `create_store_with_token` Supabase RPC |
+| Public bağlantı | `PublicSiteConfig` ve `/v/:slug` |
 
-Blog, içerik moderasyonu ve Google görünürlüğü ile ilgili özellikler
-`public_web` katmanında ayrı bir web kapsamı olarak bulunur.
+Kurulum tamamlandığında kullanıcı:
 
-## Teknik yapı
+- Public bağlantıyı kopyalayabilir veya açabilir.
+- Vitrin editörüne geçebilir.
+- Hesap oluşturarak mevcut misafir vitrini hesabına bağlayabilir.
+- Kapak, galeri, açıklama, ürün ve randevu adımlarına devam edebilir.
+
+### Asistanın iki çalışma biçimi
+
+1. **Kurulum modu:** `VixRexOnboardingChatScreen`
+   - Ad, WhatsApp, konum, yasal onay ve yayın akışını tamamlar.
+
+2. **Rehber modu:** `VixRexScreen` + `VixRexGuidanceService`
+   - Mevcut vitrine göre sıradaki adımı önerir.
+   - Kapak, açıklama, galeri, ürün, OCR, paylaşım, QR ve randevu alanlarına yönlendirir.
+   - Vitrin kalite puanı ve eksik alan kontrolü üretir.
+
+### Yapay zekâ durumu
+
+Kurulum sohbeti aktif olarak kontrollü ve kural tabanlı çalışır; yayın için kullanıcıdan alınan alanları doğrudan mevcut editör akışına aktarır.
+
+Repoda serbest metinden alan önerisi üretmek için `supabase/functions/vixrex-assistant-nlu` fonksiyonu da bulunur. Bu fonksiyon şu anda `assistantEnabled = false` olduğu için üretimde aktif değildir. Aktif edildiğinde bile veritabanına doğrudan yazmaz; yalnız öneri döndürür ve kayıt işlemi kullanıcı onayından sonra mevcut editör üzerinden yapılır.
+
+---
+
+## 2. Dijital vitrin editörü ✅
+
+İşletme sahibi aşağıdaki bilgileri tek editörden yönetebilir:
+
+- İşletme adı ve işletme türü
+- Kısa açıklama ve kurumsal biyografi
+- WhatsApp, Instagram ve web sitesi
+- Adres, il, ilçe, GPS koordinatı ve Google Business bağlantısı
+- Çalışma saatleri ve işletme durumu
+- Logo, kapak ve galeri
+- Ürünler, hizmetler ve kategoriler
+- Pazaryeri bağlantıları
+- Randevu ayarları
+- KVKK, kullanım koşulları ve yayınlama onayları
+
+Değişiklikler yayınlanmadan önce canlı vitrin önizlemesinde kontrol edilebilir.
+
+---
+
+## 3. Ürün katalog sistemi ✅
+
+Mevcut ürün modeli aşağıdaki alanları destekler:
+
+| Alan | Destek |
+|---|---|
+| Ürün adı | ✅ |
+| Açıklama | ✅ |
+| Fiyat metni | ✅ |
+| Kategori ve kategori kimliği | ✅ |
+| Stok durumu | `Mevcut`, `Tükendi`, `Son birkaç adet` |
+| Görünür / gizli | ✅ |
+| Ürün başına görsel | En fazla 4 URL |
+| Kalıcı ürün slug alanı | ✅ |
+| Kaynak bilgisi | Manuel, Instagram, OCR veya kategori şablonu gibi kaynakları işaretleyebilir |
+| Kaynak medya kimliği ve bağlantısı | ✅ |
+
+### Ürün ekleme kanalları
+
+#### Manuel ürün ekleme ✅
+
+İşletme sahibi ürün adı, fiyat, açıklama, kategori, stok durumu ve görselleri elle yönetebilir.
+
+#### Hazır kategori şablonları ✅
+
+`category_image_templates` ve `apply_category_template` altyapısı, işletme kategorisine göre boş alanlara hazır içerik uygulayabilir:
+
+- Kapak görseli
+- Logo yer tutucusu
+- Galeri görselleri
+- Başlangıç ürün örnekleri
+
+Şablon uygulaması mevcut verileri ezmek yerine yalnız boş alanları dolduracak şekilde tasarlanmıştır ve mağaza sahibi veya geçerli edit token ile yetkilendirilir.
+
+#### Instagram’dan ürün aktarma 🧪
+
+Meta yapılandırması tamamlandığında işletme:
+
+1. Instagram hesabını bağlar.
+2. Hesaptaki uygun medya gönderilerini listeler.
+3. Bir görsel seçer.
+4. Fiyat ve kategori girer.
+5. Gönderiyi Vixrex ürününe dönüştürür.
+
+Aktarılan üründe Instagram kaynak kimliği, kaynak bağlantısı ve aktarım zamanı saklanabilir. Instagram OAuth ve import route’larının çalışması için Meta uygulaması, callback adresleri, migration ve server-only ortam değişkenleri gerekir.
+
+#### OCR ile ürün çıkarma 🧪
+
+OCR modülü şu işlemleri koordine eder:
+
+```text
+Görsel
+  → ML Kit metin tanıma
+  → satır ve fiyat ayrıştırma
+  → ürün adaylarını eşleştirme
+  → kullanıcı onayı / düzenleme
+  → editörde ürün oluşturma
+```
+
+Desteklenen akışlar:
+
+- Fiş okuma
+- Raf veya etiket metni okuma
+- Ürün adaylarını tek tek onaylama veya reddetme
+- Tümünü onaylama
+- Ürün adını ve fiyatını düzenleme
+- Onaylanan ürünleri mevcut vitrin editörüne ekleme
+- Düzeltmeleri OCR geri bildirim tablosuna kaydetme
+
+**Önemli platform notu:** Gerçek Google ML Kit OCR işlemi mobil/yerel platformlarda çalışır. Flutter web tarafında mevcut kod sentetik test verisi üretir; gerçek web OCR olarak değerlendirilmemelidir.
+
+### Premium durumu
+
+OCR kullanım tabloları ve premium alanları repoda bulunur. Ancak gerçek ödeme sağlayıcısına bağlı, doğrulanmış üretim satın alma akışı tamamlanmış değildir. README bu nedenle OCR’ı çalışan teknik modül, ödeme/premium tarafını ise üretim öncesi yapılandırma olarak değerlendirir.
+
+---
+
+## 4. Public işletme vitrini ✅
+
+Next.js `public_web` katmanı müşteriye sunulan public HTML yüzeyidir.
+
+Temel rota:
+
+```text
+/v/:slug
+```
+
+Public vitrin şunları gösterebilir:
+
+- İşletme adı, açıklaması ve kategori bilgisi
+- Kapak, logo ve galeri
+- Ürün ve hizmet listesi
+- Kategori koleksiyonları
+- WhatsApp iletişim bağlantısı
+- Instagram, web sitesi ve pazaryeri bağlantıları
+- Adres ve harita yönlendirmesi
+- Çalışma saatleri
+- Randevu bağlantısı
+- Blog, haber veya kampanya içerikleri
+
+Flutter uygulama hostu public vitrin HTML’i üretmez. `/v/*`, ürün sayfaları, sitemap ve robots içerikleri Next.js public web projesinin sorumluluğundadır.
+
+---
+
+## 5. Her ürün için ayrı SEO sayfası ✅
+
+Ürün detay rotası:
+
+```text
+/v/:slug/urun/:productSlug
+```
+
+Her görünür ürün sayfasında şu SEO yapıları bulunur:
+
+- Ürüne özel `<title>`
+- Meta description
+- Canonical URL
+- Open Graph görseli ve bilgileri
+- Twitter kartları
+- `Product` JSON-LD
+- Fiyat ve stok durumu
+- Satıcı / işletme bilgisi
+- Breadcrumb JSON-LD
+- Ürün görselleri
+- İşletme vitrinine dönüş bağlantısı
+- WhatsApp iletişim bağlantısı
+
+Ürün adı, fiyatı veya açıklaması güncellendiğinde kalıcı `slug` korunursa Google’daki ürün adresi değişmeden kalabilir.
+
+---
+
+## 6. Keşfet, QR ve paylaşım ✅
+
+- Yayındaki işletmeler Keşfet ekranında listelenebilir.
+- İşletmeler kategori ve arama ile filtrelenebilir.
+- Her vitrin için public bağlantı ve QR kod oluşturulur.
+- Vitrin veya ürün bağlantısı WhatsApp üzerinden paylaşılabilir.
+- Public bağlantı işletmenin özel domain satın almasını zorunlu kılmaz.
+
+Ürün odaklı Keşfet sekmesi ve yüksek hacimli ürün sayfalaması, ilişkisel ürün dönüşümünden sonra genişletilecek yol haritası kapsamındadır.
+
+---
+
+## 7. Randevu sistemi ✅
+
+Vixrex hizmet işletmeleri için randevu altyapısı içerir:
+
+- Randevu özelliğini açma / kapatma
+- Çalışma saatleri ve kapasite ayarları
+- Kapalı veya bloke saatler
+- Müşteri randevu talebi
+- Takip bağlantısı
+- İptal veya erteleme talebi
+- İşletme tarafından onaylama veya reddetme
+- WhatsApp üzerinden bilgilendirme
+
+Public randevu rotaları `/v/:slug/randevu` altında bulunur.
+
+---
+
+## 8. Blog, Google görünürlüğü ve moderasyon ✅ / 🧪
+
+`public_web` aşağıdaki web kapsamlarını da içerir:
+
+- İşletme blog, haber ve kampanya sayfaları
+- İçerik onay ve reddetme akışları
+- İçerik bildirme
+- Sitemap ve robots
+- LocalBusiness / Organization yapılandırılmış verileri
+- Konum ve çalışma saatleri için SEO alanları
+- Veri silme başvuru ve takip rotaları
+
+Bazı moderasyon, Meta ve bot koruma akışları ilgili migration ve ortam değişkenleri olmadan çalışmaz.
+
+---
+
+# Mevcut ürün veri yapısı ve planlanan dönüşüm
+
+## Bugünkü yapı
+
+Ürünler şu anda `public.stores.products` adlı `jsonb` alanında mağaza kaydının parçası olarak tutulur.
+
+Bu yaklaşım az sayıda manuel ürün içeren ilk dijital vitrin sürümü için basit ve hızlıdır. Ancak binlerce XML ürünü için uygun değildir; çünkü mağaza açıldığında tüm ürün listesinin indirilmesi ve ayrıştırılması gerekir.
+
+## Planlanan ilişkisel ürün altyapısı 🛣️
+
+XML entegrasyonundan önce ürünler ayrı PostgreSQL tablolarına taşınacaktır:
+
+```text
+stores
+product_categories
+products
+```
+
+Hedef `products` tablosu aşağıdaki ihtiyaçları karşılayacaktır:
+
+- Her ürünün ayrı satır olması
+- `store_id` ile işletmeye bağlanması
+- Kalıcı slug ve SEO URL’si
+- Manuel, Instagram, OCR, kategori şablonu ve XML kaynakları
+- `external_product_id` ile tekrarları önleme
+- Fiyat ve stok güncellemesi
+- Aktif / pasif ve görünür / gizli ayrımı
+- Sunucu taraflı arama, filtreleme ve 24’lü sayfalama
+- 10.000 ve üzeri ürünün tek seferde istemciye gönderilmemesi
+
+### Geçiş ilkeleri
+
+- Mevcut JSON ürünler silinmeden yeni tabloya taşınacak.
+- Eski ürün slug’ları korunacak.
+- Public ürün SEO sayfaları aynı URL’lerle çalışmaya devam edecek.
+- Flutter, Next.js ve mevcut edit token mimarisi yeniden kurulmayacak.
+- Geçiş doğrulanana kadar JSON alanı geri dönüş amacıyla korunacak.
+
+## XML katalog entegrasyonu 🛣️
+
+İlişkisel ürün dönüşümü tamamlandıktan sonra eklenecek katman:
+
+```text
+Tedarikçi XML’i
+  → XML alan eşleme
+  → ürün doğrulama
+  → products tablosuna ekle / güncelle
+  → fiyat ve stok senkronizasyonu
+  → firma vitrini ve ürün SEO sayfaları
+```
+
+Planlanan XML yetenekleri:
+
+- Bir tedarikçiyi bir Vixrex mağazasına bağlama
+- Ürün adı, açıklama, marka, barkod, kategori, fiyat, stok ve görselleri alma
+- Aynı ürünü tekrar oluşturmadan güncelleme
+- XML’den kaldırılan ürünü güvenli biçimde pasifleştirme
+- Senkronizasyon hata ve sonuç kayıtları
+- Tedarikçinin görsel URL’lerini kullanarak başlangıç depolama maliyetini azaltma
+- İlk pilotta 10 firma ve yaklaşık 10.000 gerçek ürün
+
+**XML yükleme özelliği henüz aktif değildir.** İlişkisel ürün altyapısı tamamlanmadan doğrudan `stores.products` JSON alanına binlerce ürün yüklenmemelidir.
+
+---
+
+# Teknik mimari
 
 ```mermaid
 flowchart LR
-    A[Flutter işletme uygulaması] --> B[Supabase]
-    C[Next.js public_web] --> B
-    D[Müşteri] --> C
-    A --> E[Vercel Flutter projesi]
-    C --> F[Vercel Public Web projesi]
-    B --> G[PostgreSQL]
-    B --> H[Auth]
-    B --> I[Storage]
-    B --> J[RPC ve RLS]
+    OWNER[İşletme sahibi] --> FLUTTER[Flutter uygulaması]
+    FLUTTER --> SUPABASE[Supabase]
+    CUSTOMER[Müşteri] --> NEXT[Next.js public_web]
+    NEXT --> SUPABASE
+    SUPABASE --> POSTGRES[PostgreSQL]
+    SUPABASE --> AUTH[Auth]
+    SUPABASE --> STORAGE[Storage]
+    SUPABASE --> RPC[RPC + RLS]
+    FLUTTER --> VERCEL_APP[Vercel App]
+    NEXT --> VERCEL_WEB[Vercel Public Web]
 ```
 
-| Katman | Teknoloji |
-|---|---|
-| İşletme uygulaması | Flutter / Dart |
-| Public vitrin | Next.js / React |
-| Veritabanı | Supabase PostgreSQL |
-| Kullanıcı hesabı | Supabase Auth |
-| Görsel depolama | Supabase Storage |
-| Güvenli işlemler | PostgreSQL RPC ve Row Level Security |
-| Yayınlama | Vercel |
+| Katman | Teknoloji | Sorumluluk |
+|---|---|---|
+| İşletme uygulaması | Flutter / Dart | Asistan, editör, önizleme, ürün ve randevu yönetimi |
+| Public web | Next.js / React | SSR vitrinler, ürün sayfaları, SEO, blog ve randevu |
+| Veritabanı | Supabase PostgreSQL | İşletme, içerik, randevu, OCR ve bağlantı verileri |
+| Yetkilendirme | Supabase Auth + edit token | Hesaplı ve misafir vitrin sahipliği |
+| Dosya depolama | Supabase Storage | Kapak, logo ve galeri yüklemeleri |
+| Güvenli işlemler | PostgreSQL RPC + RLS | Yayın, güncelleme, silme ve public okuma kuralları |
+| Yayınlama | Vercel | Flutter uygulaması ve Next.js public web için iki proje |
 
-Repo içindeki iki web yüzeyi ayrı amaçlara sahiptir:
+## Repo yapısı
 
-- Repo kökü: Flutter işletme uygulaması
-- `public_web/`: SSR, metadata, sitemap ve robots altyapısı içeren public
-  vitrin ve içerik sayfaları
+```text
+vixrex/
+├── lib/                         Flutter uygulaması
+│   ├── controllers/             Editör, OCR ve ekran state yönetimi
+│   ├── models/                  Mağaza, ürün, randevu ve OCR modelleri
+│   ├── repositories/            Supabase veri erişimi
+│   ├── screens/                 Landing, asistan, Keşfet, Vitrinim ve diğer ekranlar
+│   ├── services/                Yayınlama, OCR, Instagram, rehber ve yardımcı servisler
+│   └── widgets/                 Editör ve vitrin bileşenleri
+├── public_web/                  Next.js public müşteri yüzeyi
+│   ├── src/app/v/[slug]/        İşletme, ürün, blog ve randevu rotaları
+│   └── src/app/api/             Instagram, revalidation ve diğer server route’ları
+├── supabase/
+│   ├── functions/               Edge Functions
+│   └── migrations/              Veritabanı değişiklikleri
+├── test/                        Flutter testleri
+├── public_web/tests/            Next.js/API testleri
+└── README.md
+```
+
+---
+
+# Güvenlik ve sahiplik modeli
+
+## Misafir vitrin
+
+Kullanıcı hesap açmadan vitrin oluşturabilir. Vitrin, yüksek entropili bir `edit_token` ile yönetilir.
+
+Yeni misafir vitrin oluşturma işlemi doğrudan anonim tablo insert’i yerine:
+
+```text
+create_store_with_token
+```
+
+RPC’si üzerinden yapılır.
+
+## Hesaba bağlama
+
+Kullanıcı daha sonra Supabase Auth hesabı oluşturduğunda mevcut vitrini:
+
+```text
+link_store_to_user
+```
+
+akışıyla hesabına bağlayabilir.
+
+## Temel güvenlik ilkeleri
+
+- Edit token public sorgularda aranmaz veya gösterilmez.
+- Public kullanıcı yalnız yayınlanmış içerikleri okuyabilir.
+- Güncelleme ve silme işlemleri mağaza sahibi veya geçerli edit token gerektirir.
+- Service role anahtarı Flutter istemcisine verilmez.
+- Yasal onaylar kullanıcı etkileşimi olmadan işaretlenmez.
+- Instagram token’ları server tarafında yönetilir.
+- Asistan NLU aktif edilirse dahi doğrudan veritabanına yazmaz.
+
+---
+
+# Kurulum
 
 ## Gereksinimler
 
 - Flutter stable
 - Dart SDK `>=3.7.2 <4.0.0`
-- Chrome
-- Git
 - Node.js `>=20.9.0`
 - npm
+- Git
 - Supabase projesi
 - Vercel hesabı
 
-```powershell
-flutter --version
-```
+## Repoyu indir
 
-Kurulu Flutter ve Dart sürümünü gösterir.
-
-```powershell
-flutter doctor
-```
-
-Flutter geliştirme ortamındaki eksikleri kontrol eder.
-
-```powershell
-node --version
-```
-
-Kurulu Node.js sürümünü gösterir.
-
-```powershell
-npm.cmd --version
-```
-
-Windows üzerinde kurulu npm sürümünü gösterir.
-
-## Flutter kurulumu
-
-### 1. Projeyi indir
-
-```powershell
+```bash
 git clone <REPO_ADRESI>
 cd vixrex
 ```
 
-`<REPO_ADRESI>` yerine gerçek Git repository adresini yazın.
+## Flutter paketleri
 
-### 2. Flutter paketlerini indir
-
-```powershell
+```bash
 flutter pub get
 ```
 
-Bu komut `pubspec.yaml` içindeki Flutter paketlerini indirir.
+## Flutter uygulamasını çalıştır
 
-### 3. Uygulamayı Chrome'da çalıştır
-
-```powershell
-flutter run -d chrome `
-  --dart-define=SUPABASE_URL="https://PROJE.supabase.co" `
-  --dart-define=SUPABASE_PUBLISHABLE_KEY="PUBLIC_KEY" `
+```bash
+flutter run -d chrome \
+  --dart-define=SUPABASE_URL="https://PROJE.supabase.co" \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY="PUBLIC_KEY" \
   --dart-define=PUBLIC_SITE_URL="http://localhost:3000"
 ```
 
-Bu komut Flutter web uygulamasını Supabase bağlantı bilgileriyle çalıştırır.
-
-`SUPABASE_PUBLISHABLE_KEY` alanında Supabase'in istemcide kullanılabilen
-publishable/anon anahtarı kullanılmalıdır. Service role anahtarı istemciye
-verilmemelidir.
+Windows PowerShell kullanırken satır devamı için `\` yerine backtick kullanılabilir.
 
 ## Public web kurulumu
 
-`public_web`, müşterilerin gördüğü Next.js public vitrin uygulamasıdır.
-
-### 1. Paketleri indir
-
-```powershell
-npm.cmd --prefix public_web install
+```bash
+npm --prefix public_web install
+npm --prefix public_web run dev
 ```
 
-Bu komut `public_web` projesinin Node.js paketlerini indirir.
+Public web varsayılan olarak `http://localhost:3000` üzerinde çalışır.
 
-### 2. Ortam dosyasını oluştur
+---
 
-`public_web/.env.local`:
+# Ortam değişkenleri
+
+## Flutter
+
+| Değişken | Kullanım |
+|---|---|
+| `SUPABASE_URL` | Supabase proje adresi |
+| `SUPABASE_PUBLISHABLE_KEY` | İstemcide kullanılabilen anon/publishable anahtar |
+| `PUBLIC_SITE_URL` | Next.js public vitrin adresi |
+| `INSTAGRAM_SYNC_ENABLED` | Instagram senkron bölümünü etkinleştirme bayrağı |
+| `LEGAL_PRIVACY_EMAIL` | Gizlilik ve veri silme iletişim adresi |
+
+Flutter web için `--dart-define` değerleri derleme sırasında bundle içine eklenir. Gizli anahtarlar burada kullanılmamalıdır.
+
+## Next.js `public_web/.env.local`
 
 ```env
 SUPABASE_URL=https://PROJE.supabase.co
@@ -213,472 +532,167 @@ INSTAGRAM_TOKEN_ENCRYPTION_KEY=
 INSTAGRAM_ALLOWED_ORIGINS=http://localhost:8080
 ```
 
-`.env.local` dosyası ve gerçek anahtarlar Git'e eklenmemelidir.
+Gerçek anahtarlar README’ye, kaynak koda veya commit geçmişine eklenmemelidir.
 
-### 3. Geliştirme sunucusunu başlat
+## Opsiyonel asistan NLU Edge Function
 
-```powershell
-npm.cmd --prefix public_web run dev
-```
-
-Public web uygulaması varsayılan olarak `http://localhost:3000` adresinde
-çalışır.
-
-## Ortam değişkenleri
-
-### Flutter uygulaması
-
-| Değişken | Zorunlu | Kullanım |
-|---|---:|---|
-| `SUPABASE_URL` | Evet | Supabase proje adresi |
-| `SUPABASE_PUBLISHABLE_KEY` | Evet | İstemcide kullanılan publishable/anon anahtarı |
-| `PUBLIC_SITE_URL` | Üretimde | Public vitrin adresi, şu anda `https://vixrex-public.vercel.app` |
-| `INSTAGRAM_SYNC_ENABLED` | Instagram hazır olduğunda | Migration ve public API kurulumu bitince `true` yapılır |
-| `LEGAL_PRIVACY_EMAIL` | Hayır | Gizlilik ve veri silme iletişim adresi |
-
-Flutter değişkenleri çalışma veya build sırasında `--dart-define` ile
-aktarılır. Yalnızca Vercel ortam değişkeni oluşturmak, değişkenin otomatik
-olarak Dart koduna aktarılacağı anlamına gelmez.
-
-### Next.js public web
-
-| Değişken | Zorunlu | Kullanım |
-|---|---:|---|
-| `SUPABASE_URL` | Evet | Supabase proje adresi |
-| `SUPABASE_PUBLISHABLE_KEY` | Evet | Public Supabase anahtarı |
-| `SUPABASE_SERVICE_ROLE_KEY` | Instagram bağlantısında | Yalnızca server route'larında kullanılan yönetici anahtarı |
-| `REVALIDATION_SECRET` | Önerilir | Server-to-server `/api/revalidate` isteklerini doğrular |
-| `TURNSTILE_SECRET_KEY` | Hayır | İçerik bildirimlerinde bot doğrulaması |
-| `NEXT_PUBLIC_SITE_URL` | Üretimde | Public Next.js adresi |
-| `NEXT_PUBLIC_APP_URL` | Üretimde | Flutter uygulama adresi, şu anda `https://vixrex-app.vercel.app` |
-| `INSTAGRAM_CLIENT_ID` | Instagram bağlantısında | Meta uygulama kimliği |
-| `INSTAGRAM_CLIENT_SECRET` | Instagram bağlantısında | Server-only Meta uygulama anahtarı |
-| `INSTAGRAM_REDIRECT_URI` | Instagram bağlantısında | Meta panelindeki OAuth callback adresi |
-| `INSTAGRAM_SCOPES` | Instagram bağlantısında | Bu akış için `instagram_business_basic` |
-| `INSTAGRAM_STATE_SECRET` | Instagram bağlantısında | OAuth state imzası için server-only anahtar |
-| `INSTAGRAM_TOKEN_ENCRYPTION_KEY` | Instagram bağlantısında | Token şifrelemek için 32 baytlık anahtar |
-| `INSTAGRAM_ALLOWED_ORIGINS` | Instagram bağlantısında | Flutter web origin listesi; birden fazlaysa virgülle ayrılır |
-
-> Gerçek anahtarları README, kaynak kod, commit veya ekran görüntülerine
-> eklemeyin.
-
-Instagram Login kısa ömürlü token'ı callback route'unda server tarafında
-60 günlük token'a çevirir. Token, bitimine 7 gün kaldığında ve en az 24 saatlik
-olduğunda kullanım sırasında yenilenir. Süresi geçmiş token yenilenemez;
-kullanıcının hesabı yeniden bağlaması gerekir.
-
-## Supabase kurulumu
-
-### Önemli ön koşul
-
-Mevcut migration dosyaları, `public.stores` tablosunun ve bazı görüntülenme
-altyapılarının daha önce oluşturulduğunu varsayar. Repoda şu bileşenlerin ilk
-oluşturma SQL'i bulunmaz:
-
-- `public.stores`
-- `public.vitrin_views`
-- `record_vitrin_view`
-- `get_today_vitrin_view_count`
-
-Bu nedenle yeni ve boş bir Supabase projesine yalnızca mevcut migration
-dosyalarını uygulamak yeterli değildir. Önce çekirdek şemanın güvenilir bir
-yedekten veya doğrulanmış başlangıç migration'ından sağlanması gerekir.
-
-### Kurulum sırası
-
-1. Supabase projesi oluşturun.
-2. Project URL ve publishable/anon key değerlerini alın.
-3. Çekirdek `stores` ve `vitrin_views` şemasını doğrulayın.
-4. Aşağıdaki migration listesini ve Storage sırası uyarısını izleyin.
-5. `shelf-images` Storage bucket ve politikalarını doğrulayın.
-6. RLS politikalarını kontrol edin.
-7. RPC fonksiyonlarını kontrol edin.
-8. Önce test projesinde vitrin yayınlama ve randevu akışını deneyin.
-
-Repoda `supabase/config.toml` bulunmadığı için bu doküman Supabase CLI ile
-otomatik migration çalıştırıldığını varsaymaz. Mevcut dosyalar Supabase SQL
-Editor üzerinden dikkatli biçimde uygulanabilir.
-
-### Migration sırası
-
-1. `20260528_add_gallery_items.sql`
-2. `20260530_update_shelf_images_file_limit.sql`
-3. `20260603_add_location_fields_to_stores.sql`
-4. `20260604_add_logo_url_to_stores.sql`
-5. `20260604_add_products_to_stores.sql`
-6. `20260604_add_storage_policies_for_shelf_images.sql`
-7. `20260604_add_user_id_and_auth_policies.sql`
-8. `20260604_remediate_security_advisor_warnings.sql`
-9. `20260604_fix_remaining_security_advisor_warnings.sql`
-10. `20260613_add_delete_user_account_function.sql`
-11. `20260621_add_offerings_to_stores.sql`
-12. `20260622_add_booking_system.sql`
-13. `20260622_add_google_visibility_and_blog.sql`
-14. `20260622_add_quality_and_spam_controls.sql`
-15. `20260622_published_at_and_updated_at.sql`
-16. `20260707_add_ocr_premium_tables.sql`
-
-> Bazı migration'lar mevcut tablo, politika ve fonksiyonları değiştirir.
-> Dosyaların tekrar çalıştırılmasının her durumda güvenli olduğu
-> varsayılmamalıdır. Önce test Supabase projesinde doğrulayın.
-
-### Storage sırası uyarısı
-
-`20260530_update_shelf_images_file_limit.sql`, `shelf-images` limitini 15 MB
-yapar. Daha sonraki `20260604_add_storage_policies_for_shelf_images.sql` ise
-bucket oluştururken veya güncellerken limiti tekrar 5 MB yapar.
-
-Flutter tarafındaki dosya doğrulayıcı 15 MB kabul ettiği için yeni ortam
-kurulumunda:
-
-1. Önce `20260604_add_storage_policies_for_shelf_images.sql` ile bucket ve
-   politikaları oluşturun.
-2. Ardından `20260530_update_shelf_images_file_limit.sql` dosyasını yeniden
-   uygulayarak son limiti 15 MB yapın.
-3. Supabase Storage ayarlarında `file_size_limit = 15728640` olduğunu
-   doğrulayın.
-
-Bu özel tekrar yalnızca bucket limitini güncelleyen `20260530` dosyası içindir;
-diğer migration'ların tekrar çalıştırılabileceği anlamına gelmez.
-
-## Supabase tabloları
-
-Aşağıdaki tablo ve fonksiyon listeleri, bu repodaki migration dosyaları ve
-istemci çağrılarından çıkarılmıştır. Bağlı uzak Supabase projesinin eksiksiz
-şema envanteri olduğu anlamına gelmez.
-
-### Çekirdek tablolar
-
-| Tablo | Amaç | Repo durumu |
-|---|---|---|
-| `stores` | İşletme, vitrin, galeri, ürün, hizmet ve yayın bilgileri | Kullanılıyor; ilk oluşturma migration'ı yok |
-| `vitrin_views` | Public vitrin görüntülenme kayıtları | Kullanılıyor; ilk oluşturma migration'ı yok |
-
-### Randevu tabloları
-
-| Tablo | Amaç |
-|---|---|
-| `booking_settings` | Randevu durumu, kapasite, çalışma saatleri ve öğle arası |
-| `booking_blocks` | Kapalı veya bloke edilen tarih ve saatler |
-| `appointments` | Müşteri randevu talepleri |
-| `appointment_reschedule_requests` | Randevu erteleme talepleri |
-
-### İçerik ve moderasyon tabloları
-
-| Tablo | Amaç |
-|---|---|
-| `store_articles` | İşletmeye ait blog, haber ve kampanya içerikleri |
-| `admins` | İçerik moderasyonu yapabilen kullanıcılar |
-| `article_reports` | Kullanıcılar tarafından bildirilen içerikler |
-
-### Storage
-
-| Bucket | Amaç |
-|---|---|
-| `shelf-images` | Kapak, galeri ve vitrin görselleri |
-
-## RPC fonksiyonları
-
-### Vitrin ve hesap
-
-| RPC | Amaç |
-|---|---|
-| `link_store_to_user` | Anonim oluşturulmuş vitrini giriş yapan kullanıcıya bağlar |
-| `update_store_with_token` | Edit token ile vitrini güvenli şekilde günceller |
-| `delete_user_account` | Kullanıcının kendi hesabını ve bağlı verilerini siler |
-
-### Görüntülenme
-
-| RPC | Amaç |
-|---|---|
-| `record_vitrin_view` | Public vitrin görüntülenmesini kaydeder |
-| `get_today_vitrin_view_count` | İşletmenin günlük görüntülenme sayısını getirir |
-
-Bu iki görüntülenme RPC'sinin ilk oluşturma SQL'i repoda bulunmaz.
-
-### Randevu
-
-| RPC | Amaç |
-|---|---|
-| `get_public_booking_slots` | Seçilen gün için uygun randevu saatlerini hesaplar |
-| `create_appointment_request` | Yeni randevu talebi oluşturur |
-| `get_appointment_by_token` | Takip koduyla randevu bilgisini getirir |
-| `cancel_appointment_by_token` | Müşterinin randevusunu iptal eder |
-| `request_appointment_reschedule` | Yeni tarih veya saat talebi oluşturur |
-| `respond_to_appointment` | İşletmenin talebi onaylamasını veya reddetmesini sağlar |
-
-### Moderasyon
-
-| RPC | Amaç |
-|---|---|
-| `approve_store_article` | İncelenen içeriği onaylar |
-| `reject_store_article` | İncelenen içeriği gerekçeyle reddeder |
-
-### Trigger ve yardımcı fonksiyonlar
-
-Aşağıdaki fonksiyonlar istemcinin normal kullanımda doğrudan çağırdığı RPC
-listesinden ayrıdır:
-
-- `mask_appointment_name`
-- `set_updated_at`
-- `set_published_at`
-- `set_published_at_on_insert`
-- `on_article_before_save`
-- `on_article_approved`
-- `on_article_spam_check`
-- `on_store_trust_protection`
-
-## OCR (Optik Karakter Tanıma)
-
-Vixrex, fotoğraflardan veya faturalardan otomatik ürün çıkarma özelliği sunar.
-
-### Nasıl Çalışır?
-
-```
-Fotoğraf/Fatura → OCR ile metin okuma → Ürün eşleştirme → Kullanıcı onayı → Vitrine ekleme
-```
-
-### Bileşenler
-
-| Bileşen | Dosya | Amaç |
-|---|---|---|
-| OCR Servisi | `lib/services/ocr/ocr_service.dart` | Ana koordinatör |
-| Metin Ayrıştırıcı | `lib/services/ocr/ocr_text_parser.dart` | ML Kit OCR |
-| Fiyat Çıkarıcı | `lib/services/ocr/ocr_price_parser.dart` | Türk formatı fiyat |
-| Ürün Eşleştirici | `lib/services/ocr/ocr_product_matcher.dart` | Excel verisi ile eşleştirme |
-| Görsel Ön İşleme | `lib/services/ocr/ocr_image_preprocessor.dart` | Gri tonlama, kontrast, keskinlik |
-| Controller | `lib/controllers/ocr_controller.dart` | State yönetimi |
-| Tarama Ekranı | `lib/screens/ocr_scanner_screen.dart` | Kullanıcı arayüzü |
-
-### Premium Özellikleri
-
-| Özellik | Ücretsiz | Premium |
-|---|---|---|
-| OCR kullanımı | Günde 3 | Sınırsız |
-| Toplu yükleme | Yok | Var |
-| Excel içe aktarma | Yok | Var |
-| Barkod tarama | Yok | Var |
-
-### Supabase Tabloları
-
-- `ocr_usage` → Günlük OCR kullanımı takibi
-- `ocr_history` → OCR geçmişi
-- `product_database` → Ürün veritabanı (OCR doğrulama için)
-
-## Demo ekran akışı
-
-Repoda README için hazırlanmış ekran görüntüleri bulunmadığından demo,
-doğrulanmamış görseller yerine gerçek ekran davranışlarını gösteren akış
-şemalarıyla anlatılır.
-
-### İşletme sahibi akışı
-
-```mermaid
-flowchart TD
-    A[Açılış sayfası] --> B[Vitrin oluştur veya giriş yap]
-    B --> C[Vitrinim]
-    C --> D[İşletme bilgilerini doldur]
-    D --> E[Ürün, hizmet ve galeri ekle]
-    E --> F[WhatsApp ve bağlantıları ekle]
-    F --> G[Randevu ayarlarını yapılandır]
-    G --> H[Canlı önizlemeyi kontrol et]
-    H --> I[Vitrini yayına al]
-    I --> J[Public bağlantı ve QR kod]
-    J --> K[Keşfet sayfasında görün]
-    I --> L[Randevuları yönet]
-```
-
-### Müşteri akışı
-
-```mermaid
-flowchart TD
-    A[Keşfet, QR veya public bağlantı] --> B[Public işletme vitrini]
-    B --> C[Galeri ve hizmetleri incele]
-    B --> D[WhatsApp ile iletişim kur]
-    B --> E[Randevu al]
-    E --> F[Hizmet ve saat seç]
-    F --> G[Randevu talebi oluştur]
-    G --> H[Takip bağlantısını aç]
-    H --> I[Durumu takip et]
-    H --> J[İptal veya erteleme talebi oluştur]
-```
-
-### Manuel demo senaryosu
-
-1. Flutter uygulamasını Chrome'da açın.
-2. Kayıt olun, giriş yapın veya yeni vitrin oluşturma akışını başlatın.
-3. `Vitrinim` ekranına geçin.
-4. İşletme adı ve geçerli WhatsApp numarası ekleyin.
-5. Kapak veya galeri görseli ekleyin.
-6. İsteğe bağlı ürün, hizmet ve randevu ayarı ekleyin.
-7. Canlı önizlemeyi kontrol edin.
-8. Vitrini yayına alın.
-9. Oluşan public bağlantıyı veya QR kodu açın.
-10. Keşfet, WhatsApp ve randevu akışlarını test edin.
-
-## Vercel ile yayınlama
-
-Repo yapılandırması, Flutter uygulaması ve Next.js public web için iki ayrı
-Vercel projesini hedefler. Özel domain satın alınana kadar aktif Vercel
-adresleri kullanılır.
-
-| Vercel projesi | Root Directory | Amaç | Aktif domain |
-|---|---|---|---|
-| Vixrex App | Repo kökü | Flutter işletme uygulaması | `vixrex-app.vercel.app` |
-| Vixrex Public Web | `public_web` | Public vitrin ve SEO sayfaları | `vixrex-public.vercel.app` |
-
-### Flutter Vercel projesi
-
-Vercel ayarları:
-
-- Root Directory: repo kökü
-- Framework Preset: Other
-- Build Command: `bash vercel-build.sh`
-- Output Directory: `build/web`
-
-Ortam değişkenleri:
+Repodaki NLU fonksiyonu etkinleştirilecekse server-side secret’lar gerekir:
 
 ```text
+OPENAI_API_KEY
+OPENAI_MODEL
 SUPABASE_URL
-SUPABASE_PUBLISHABLE_KEY
-PUBLIC_SITE_URL=https://vixrex-public.vercel.app
+SUPABASE_SERVICE_ROLE_KEY
 ```
 
-`vercel-build.sh`, gerekli Flutter stable kurulumunu hazırlar ve release web
-build üretir.
+Fonksiyon şu anda kod seviyesinde kapalıdır.
 
-Kök `vercel.json`, Flutter uygulamasındaki public vitrin, sitemap ve robots
-isteklerini açık redirect ile `https://vixrex-public.vercel.app` adresine
-yönlendirir. Flutter app hostu public vitrin HTML'i üretmez.
+---
 
-### Next.js public web projesi
+# Supabase kurulumu
 
-Vercel ayarları:
+Proje kökündeki `supabase_schema.sql`, çekirdek şema, RLS, trigger ve RPC’lerin toplu referansıdır. `supabase/migrations/` ise tarihsel ve yeni değişiklikleri içerir.
 
-- Root Directory: `public_web`
-- Framework Preset: Next.js
-- Build Command: `npm run build`
+Yeni veya boş bir Supabase projesinde:
 
-Ortam değişkenleri:
+1. Şemanın hedef ortamla uyumunu kontrol edin.
+2. Migration’ları önce test projesinde uygulayın.
+3. `shelf-images` bucket ve politikalarını doğrulayın.
+4. RLS politikalarını kapatmayın.
+5. Misafir yayın, edit token ve hesap bağlama akışlarını test edin.
+6. Randevu, Instagram ve OCR tablolarının gerçekten oluşturulduğunu kontrol edin.
 
-```text
-SUPABASE_URL
-SUPABASE_PUBLISHABLE_KEY
-NEXT_PUBLIC_SITE_URL=https://vixrex-public.vercel.app
-NEXT_PUBLIC_APP_URL=https://vixrex-app.vercel.app
-REVALIDATION_SECRET
-TURNSTILE_SECRET_KEY
+Önemli RPC’ler:
+
+| RPC | Amaç |
+|---|---|
+| `create_store_with_token` | Misafir veya token tabanlı yeni vitrin oluşturma |
+| `update_store_with_token` | Vitrini geçerli token ile güncelleme |
+| `delete_store_with_token` | Vitrini ve bağlı verileri silme |
+| `link_store_to_user` | Misafir vitrini giriş yapan kullanıcıya bağlama |
+| `withdraw_store_publication_consent` | Yayın rızasını geri çekip vitrini yayından alma |
+| `apply_category_template` | Hazır kategori içeriklerini yetkili mağazaya uygulama |
+| `get_public_booking_slots` | Uygun randevu saatlerini hesaplama |
+| `create_appointment_request` | Müşteri randevu talebi oluşturma |
+
+---
+
+# Public rotalar
+
+| Rota | Amaç |
+|---|---|
+| `/v/:slug` | İşletme vitrini |
+| `/v/:slug/urun/:productSlug` | Ürün SEO ve detay sayfası |
+| `/v/:slug/randevu` | Randevu oluşturma |
+| `/v/:slug/randevu/:token` | Randevu takibi |
+| `/v/:slug/yazilar` | İşletme içerikleri |
+| `/v/:slug/yazilar/:articleSlug` | İçerik detay sayfası |
+| `/sitemap.xml` | Arama motoru sitemap’i |
+| `/robots.txt` | Tarama kuralları |
+
+---
+
+# Test ve kalite kontrolleri
+
+## Flutter
+
+```bash
+flutter analyze
+flutter test
 ```
 
-`TURNSTILE_SECRET_KEY` yalnızca bot doğrulaması kullanılacaksa gereklidir.
+## Public web
 
-### Aktif domain dağılımı
+```bash
+npm --prefix public_web run lint
+npm --prefix public_web run build
+```
+
+## Manuel kabul akışı
+
+1. Landing ekranını açın.
+2. **Vixrex Oluştur** ile onboarding sohbetine girin.
+3. İşletme adı ve geçerli Türkiye WhatsApp numarası girin.
+4. GPS veya il / ilçe / adres seçin.
+5. Yasal onayları tamamlayın.
+6. Vitrini yayınlayın.
+7. Oluşan `/v/:slug` bağlantısını açın.
+8. Kapak, galeri, açıklama ve ürün ekleyin.
+9. Ürün detay sayfasını ve WhatsApp bağlantısını kontrol edin.
+10. QR, paylaşım, Keşfet ve randevu akışlarını test edin.
+
+Instagram testi ayrıca gerçek Meta uygulaması ve test hesabı gerektirir. OCR’nin gerçek görüntü testi web simülasyonu yerine desteklenen mobil platformda yapılmalıdır.
+
+---
+
+# Vercel yayınlama
+
+Vixrex iki ayrı Vercel projesi kullanır:
+
+| Proje | Root Directory | Amaç |
+|---|---|---|
+| Vixrex App | Repo kökü | Flutter işletme uygulaması |
+| Vixrex Public Web | `public_web` | Next.js public vitrin ve SEO sayfaları |
+
+Mevcut hedef adresler:
 
 | Adres | Amaç |
 |---|---|
-| `vixrex-app.vercel.app` | Flutter işletme uygulaması |
-| `vixrex-public.vercel.app` | Public Next.js sitesi |
-| `vixrex-public.vercel.app/v/:slug` | İşletmenin public vitrini |
-| `vixrex-public.vercel.app/sitemap.xml` | Arama motoru sitemap'i |
-| `vixrex-public.vercel.app/robots.txt` | Arama motoru tarama kuralları |
+| `https://vixrex-app.vercel.app` | Flutter uygulaması |
+| `https://vixrex-public.vercel.app` | Public Next.js sitesi |
+| `https://vixrex-public.vercel.app/v/:slug` | İşletme vitrini |
 
-Özel domain satın alındıktan sonraki hedef dağılım
-`app.vixrex.com` (Flutter) ve `vixrex.com` (Next.js) olacaktır. Domain değişimi
-yalnızca origin ve DNS ayarlarını değiştirir; `/v/*` route sahipliği Next.js'te
-kalır.
+Manuel deploy sırası:
 
-### Revalidation notu
+1. Önce `public_web`
+2. Sonra Flutter uygulaması
 
-`/api/revalidate`, `x-revalidate-secret` başlığını Next.js projesindeki
+Flutter uygulaması public bağlantıları `PUBLIC_SITE_URL` üzerinden Next.js projesine üretir.
 
-### Deploy Sırası (ÖNEMLİ)
+---
 
-Deployment sırası kritiktir. Yanlış sırada deploy edilirse linkler kırılabilir:
+# Bilinen sınırlamalar
 
-1. **Önce `public_web`** (Next.js) deploy edilmeli
-2. **Sonra Flutter app** deploy edilmeli
+- Ürünler halen `stores.products` JSONB alanında tutulur; yüksek hacimli katalog için ilişkisel ürün dönüşümü tamamlanmalıdır.
+- XML ürün içe aktarma ve periyodik fiyat/stok senkronizasyonu henüz aktif değildir.
+- Flutter web OCR gerçek görüntüyü ML Kit ile okumaz; sentetik test sonucu üretir.
+- Instagram aktarımı Meta uygulaması ve server ortam değişkenleri olmadan çalışmaz.
+- Asistan NLU Edge Function kodda kapalıdır; aktif asistan kurulum akışı kontrollü onboarding akışıdır.
+- Premium alanları ve kullanım limitleri bulunsa da doğrulanmış gerçek ödeme entegrasyonu tamamlanmamıştır.
+- Vixrex sepet, ödeme, kargo ve iade yönetmez.
+- Flutter ve Next.js ayrı Vercel projeleri olarak yapılandırılmalıdır.
+- Görselleri tedarikçi URL’lerinden göstermek hotlink, erişim süresi ve dış kaynak bağımlılığı oluşturabilir.
 
-Neden: Flutter uygulaması `PUBLIC_SITE_URL` ile Next.js adresine link verir.
-Eğer Next.js henüz deploy edilmemişse, linkler çalışmaz.
+---
 
-**Vercel'de otomatik deploy varsa:** Her iki projede de `main` branch'ine push
-yapıldığında otomatik deploy tetiklenir. Bu durumda sıralama otomatik gerçekleşir.
+# Yol haritası
 
-**Manuel deploy'da:** Önce `public_web/` dizinini, sonra kök dizini deploy edin.
-`REVALIDATION_SECRET` ile karşılaştırır. Server-to-server tetikleyicide kullanılan
-değer ile Next.js Vercel ortamındaki değer birebir aynı olmalıdır.
+1. `stores.products` JSONB yapısından ilişkisel `products` ve `product_categories` tablolarına güvenli geçiş
+2. Mevcut ürünlerin slug ve SEO adreslerini koruyan veri taşıma
+3. Flutter ve Next.js için sunucu taraflı arama, filtreleme ve sayfalama
+4. XML tedarikçi kaynağı ve senkronizasyon motoru
+5. İlk 10 tedarikçi ile yaklaşık 10.000 gerçek ürün pilotu
+6. Keşfet içinde ürün odaklı arama ve kategori görünümü
+7. Firma bazlı ürün görüntülenme ve yönlendirme analitiği
 
-Ortak secret Flutter web bundle'ına gömülmemelidir; `--dart-define` değerleri
-istemci JavaScript'i içinde okunabilir. Instagram import route'u revalidation'ı
-zaten server tarafında doğrudan tetikler. Diğer güncellemeler için 300 saniyelik
-ISR fallback korunur; Flutter'dan anlık tetikleme gerekiyorsa kullanıcı oturumunu
-doğrulayan ayrı bir server endpoint'i kullanılmalıdır.
+---
 
-## Kontrol listesi
+# Ürün özeti
 
-### Flutter
+Vixrex bugün yalnızca bir profil kartı değildir. Mevcut yapı şunları tek üründe birleştirir:
 
-```powershell
-flutter analyze
+```text
+Asistanla kurulum
++ dijital işletme vitrini
++ ürün ve hizmet kataloğu
++ her ürün için SEO sayfası
++ Keşfet
++ WhatsApp ve dış satış kanalı yönlendirmesi
++ QR ve paylaşım
++ Instagram’dan ürün aktarımı
++ OCR destekli ürün girişi
++ randevu
++ blog ve yerel SEO
 ```
 
-Dart ve Flutter hata/uyarılarını kontrol eder.
-
-```powershell
-flutter run -d chrome `
-  --dart-define=SUPABASE_URL="https://PROJE.supabase.co" `
-  --dart-define=SUPABASE_PUBLISHABLE_KEY="PUBLIC_KEY" `
-  --dart-define=PUBLIC_SITE_URL="http://localhost:3000"
-```
-
-Flutter web uygulamasının Chrome üzerinde açıldığını doğrular.
-
-### Public web
-
-```powershell
-npm.cmd --prefix public_web run lint
-```
-
-Next.js ve TypeScript kod kalitesi kontrollerini çalıştırır.
-
-```powershell
-npm.cmd --prefix public_web run build
-```
-
-Public web projesinin üretim build'ini kontrol eder.
-
-### Manuel fonksiyon kontrolü
-
-- Kullanıcı kaydı ve giriş
-- Vitrin oluşturma ve güncelleme
-- Galeri yükleme
-- Public vitrin bağlantısı
-- QR kod
-- Keşfet listesi
-- WhatsApp yönlendirmesi
-- Randevu oluşturma ve takip
-- İşletme randevu yönetimi
-- Public sitemap ve robots yanıtları
-
-## Bilinen sınırlamalar
-
-- `stores` ve `vitrin_views` için başlangıç migration'ları repoda yoktur.
-- Görüntülenme RPC'lerinin ilk oluşturma SQL'leri repoda yoktur.
-- `supabase/config.toml` bulunmadığı için Supabase CLI akışı hazır değildir.
-- Storage migration dosyaları farklı limitler tanımlar; son bucket limiti
-  uygulamanın 15 MB doğrulamasıyla ayrıca eşleştirilmelidir.
-- Flutter ve Next.js deployment'ları ayrı Vercel projeleri olarak
-  yapılandırılmalıdır.
-- `public_web`, ayrı bir Next.js Vercel projesi olarak bağlanmadan API route'ları
-  üretimde çalışmaz.
-- README kurulumu açıklar; mevcut migration veya build sorunlarını otomatik
-  olarak düzeltmez.
-- Vixrex ödeme veya tam e-ticaret altyapısı sağlamaz.
-
-## Güvenlik
-
-- Service role anahtarını Flutter veya Next.js istemci koduna eklemeyin.
-- Gerçek ortam değişkenlerini Git'e göndermeyin.
-- Migration'ları doğrudan üretimde çalıştırmadan önce test projesinde deneyin.
-- RLS politikalarını devre dışı bırakmayın.
-- Kullanıcı yüklemeleri için dosya boyutu ve MIME türü kontrollerini koruyun.
+Sıradaki temel mimari çalışma, ürünleri mağaza içindeki tek JSON listesinden ayrı PostgreSQL kayıtlarına taşımaktır. Bu dönüşüm tamamlandığında Vixrex, mevcut manuel katalog özelliklerini koruyarak XML tabanlı ve on binlerce ürün içeren kataloglara hazır hale gelecektir.
