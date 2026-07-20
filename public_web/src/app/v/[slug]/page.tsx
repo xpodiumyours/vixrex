@@ -37,6 +37,7 @@ interface MarketplaceLinkItem {
 }
 
 interface PublicStoreRow {
+  id: string;
   slug: string;
   name: string;
   business_type: string | null;
@@ -94,7 +95,7 @@ interface ProductPagination {
 }
 
 const PUBLIC_STORE_SELECT =
-  "slug,name,business_type,description,corporate_bio,whatsapp,instagram," +
+  "id,slug,name,business_type,description,corporate_bio,whatsapp,instagram," +
   "website,address,status,marketplace_links,gallery_items,products," +
   "references_link,shelf_image_url,logo_url,working_hours,is_published," +
   "kategori,latitude,longitude,google_business_link,product_storage_version";
@@ -137,12 +138,7 @@ async function _getStoreData(slug: string, page = 1, category = "", query = "") 
     let productPagination: ProductPagination | null = null;
 
     if (storageVersion === 2) {
-      const storeIdResult = await supabase
-        .from("stores")
-        .select("id")
-        .eq("slug", slug)
-        .single();
-      const storeId = storeIdResult.data?.id;
+      const storeId = store.id;
 
       if (storeId) {
         const { data: categoryRows } = await supabase
