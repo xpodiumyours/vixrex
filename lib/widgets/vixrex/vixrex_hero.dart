@@ -59,7 +59,7 @@ class VixRexHero extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Vixrex Rehberi',
+                  'Yanındayım',
                   style: TextStyle(
                     color: AppColors.primary,
                     fontSize: 11,

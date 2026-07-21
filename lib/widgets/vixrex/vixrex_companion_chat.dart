@@ -9,7 +9,6 @@ import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/vixrex_message_bubble.dart';
 import 'package:vixrex/widgets/vixrex_quick_replies.dart';
-import 'package:vixrex/widgets/vixrex/vixrex_recommendation_card.dart';
 
 const String _nluConfirmPrefix = 'nlu_confirm:';
 const String _nluCancelPayload = 'nlu_cancel';
@@ -80,6 +79,8 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           ..addAll(history);
         _loading = false;
       });
+      // Kurulum handoff’unda CTA olmaz; sıradaki tek adımı ekle.
+      await _ensureStepCta();
       _scrollToEnd();
       return;
     }
@@ -103,12 +104,46 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     _scrollToEnd();
   }
 
+  static const _handoffMarker = 'onboarding_handoff_v1';
+
+  bool get _historyHasOnboardingHandoff =>
+      _messages.any((m) => m.snapshotStateKey == _handoffMarker);
+
+  Future<void> _ensureStepCta() async {
+    if (widget.snapshot == null) return;
+    final hasStepCta = _messages.any(
+      (m) =>
+          m.isBot && m.quickReplies.any((q) => q.payload == 'action_step'),
+    );
+    if (hasStepCta) return;
+    // Handoff varsa tam karşılama/link tekrarlanmaz — yalnız sıradaki adım.
+    final tip =
+        _historyHasOnboardingHandoff
+            ? ChatbotConfig.nextStepTip(
+              widget.snapshot!,
+              hasShared: widget.hasShared,
+            )
+            : _service.respondWithSnapshot(
+              widget.snapshot!,
+              hasShared: widget.hasShared,
+            );
+    if (!mounted) return;
+    setState(() => _messages.add(tip));
+    await _service.saveHistory(_messages);
+  }
+
   void _refreshGuidanceTip() {
     if (_messages.isEmpty || widget.snapshot == null) return;
-    final tip = _service.respondWithSnapshot(
-      widget.snapshot!,
-      hasShared: widget.hasShared,
-    );
+    final tip =
+        _historyHasOnboardingHandoff
+            ? ChatbotConfig.nextStepTip(
+              widget.snapshot!,
+              hasShared: widget.hasShared,
+            )
+            : _service.respondWithSnapshot(
+              widget.snapshot!,
+              hasShared: widget.hasShared,
+            );
     final lastKey = _messages.last.snapshotStateKey;
     if (lastKey == tip.snapshotStateKey) return;
     setState(() => _messages.add(tip));
@@ -263,21 +298,9 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           child: ListView.builder(
             controller: _scrollCtrl,
             padding: const EdgeInsets.only(top: 8, bottom: 12),
-            itemCount: _messages.length + (_typing ? 1 : 0) + 1,
+            itemCount: _messages.length + (_typing ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index == 0) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: VixRexRecommendationCard(
-                    recommendation: widget.recommendation,
-                    isRecommendationDismissed: widget.isRecommendationDismissed,
-                    onDismissRecommendation: widget.onDismissRecommendation,
-                    onAction: widget.onAction,
-                  ),
-                );
-              }
-              final messageIndex = index - 1;
-              if (_typing && messageIndex == _messages.length) {
+              if (_typing && index == _messages.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Text(
@@ -286,7 +309,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
                   ),
                 );
               }
-              final msg = _messages[messageIndex];
+              final msg = _messages[index];
               if (msg.isBot) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),

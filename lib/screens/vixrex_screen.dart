@@ -6,7 +6,6 @@ import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/vixrex/vixrex_companion_chat.dart';
 import 'package:vixrex/widgets/vixrex/vixrex_hero.dart';
-import 'package:vixrex/widgets/vixrex/vixrex_progress_card.dart';
 
 const double _vixrexHeroAvatarSize = 34;
 
@@ -72,28 +71,16 @@ class _VixRexScreenState extends State<VixRexScreen> {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-          child: Column(
-            children: [
-              VixRexProgressCard(
-                snapshot: widget.snapshot,
-                phase: recommendation.phase,
-                hasShared: widget.hasShared,
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: VixRexCompanionChat(
-                  snapshot: widget.snapshot,
-                  hasShared: widget.hasShared,
-                  recommendation: recommendation,
-                  isRecommendationDismissed:
-                      widget.dismissedRecommendationId == recommendation.id,
-                  onAction: widget.onAction,
-                  onDismissRecommendation: widget.onDismissRecommendation,
-                  onSaveField: widget.onSaveField,
-                  inputFocusNode: _chatInputFocusNode,
-                ),
-              ),
-            ],
+          child: VixRexCompanionChat(
+            snapshot: widget.snapshot,
+            hasShared: widget.hasShared,
+            recommendation: recommendation,
+            isRecommendationDismissed:
+                widget.dismissedRecommendationId == recommendation.id,
+            onAction: widget.onAction,
+            onDismissRecommendation: widget.onDismissRecommendation,
+            onSaveField: widget.onSaveField,
+            inputFocusNode: _chatInputFocusNode,
           ),
         ),
       ),

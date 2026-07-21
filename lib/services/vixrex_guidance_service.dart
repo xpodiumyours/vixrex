@@ -164,23 +164,28 @@ class VixRexGuidanceService {
       );
     }
 
-    // Paylaşılmamışsa
+    // Yayın sonrası: önce görünüm/ürün (şablon → ürün), paylaşım sonra.
+    final improvements = improvementRecommendations(snapshot);
+    for (final rec in improvements) {
+      if (rec.id == 'improve_cover' || rec.id == 'improve_catalog') {
+        return rec;
+      }
+    }
+
     if (!hasShared) {
       return const VixRexRecommendation(
         id: 'share',
         phase: VixRexJourneyPhase.share,
         title: 'Vitrininizi Paylaşın',
-        description: 'Vitrininiz yayında! Müşterilerinize ulaşmak için paylaşın.',
+        description:
+            'Vitrinin hazır. Müşterilerine ulaştırmak için paylaşalım.',
         buttonLabel: 'Paylaş',
         action: VixRexAction.shareWhatsapp,
       );
     }
 
-    // Improvement recommendations
-    final improvements = improvementRecommendations(snapshot);
     if (improvements.isNotEmpty) return improvements.first;
 
-    // Default: all done
     return const VixRexRecommendation(
       id: 'all_done',
       phase: VixRexJourneyPhase.improve,
@@ -268,10 +273,11 @@ class VixRexGuidanceService {
         const VixRexRecommendation(
           id: 'improve_cover',
           phase: VixRexJourneyPhase.improve,
-          title: 'Kapak şablonu seçin',
+          title: 'Şablonla güzelleştir',
           description:
-              'Hazır kapak şablonundan birini seç — vitrinin hemen daha profesyonel görünür.',
-          buttonLabel: 'Kapak şablonu seç',
+              'Güzel. Şimdi kategorine göre hazır şablonlardan birini seçelim — '
+              'dijital vitrini hızlıca daha güzel yapalım.',
+          buttonLabel: 'Hazır şablonları aç',
           action: VixRexAction.openCoverTemplatePicker,
         ),
       );
@@ -310,22 +316,12 @@ class VixRexGuidanceService {
         const VixRexRecommendation(
           id: 'improve_catalog',
           phase: VixRexJourneyPhase.improve,
-          title: 'Ürün veya hizmet ekleyin',
+          title: 'Ürünleri yükle',
           description:
-              'İlk ürün/hizmetini elle ekle — müşteri menünde görsün.',
-          buttonLabel: 'Ürün alanına git',
+              'Müşterilerine gösterebilmen için ürünleri nasıl yükleyeceğimize '
+              'karar verelim — tarayıcı veya elle ekleme.',
+          buttonLabel: 'Ürün yükleme yolunu seç',
           action: VixRexAction.scrollToProducts,
-        ),
-      );
-      items.add(
-        const VixRexRecommendation(
-          id: 'improve_catalog_ocr',
-          phase: VixRexJourneyPhase.improve,
-          title: 'Fiş veya etiketle ürün ekle',
-          description:
-              'Mevcut tarayıcıyla fiş/etiketten ürün aktar — elle yazmana gerek kalmasın.',
-          buttonLabel: 'Tarayıcıyı aç',
-          action: VixRexAction.openOcrScanner,
         ),
       );
     }

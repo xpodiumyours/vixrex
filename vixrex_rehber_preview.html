@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vixrex Rehberi — Hedef (tek adım CTA)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+
+    :root {
+      --bg: #060B13;
+      --shell: #0B1422;
+      --bar: #0F172A;
+      --text: #E2E8F0;
+      --muted: #94A3B8;
+      --blue: #0EA5E9;
+      --blue2: #2563EB;
+      --border: rgba(255,255,255,0.08);
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 15% 0%, rgba(14, 165, 233, 0.16), transparent 45%),
+        var(--bg);
+      color: var(--text);
+      padding: 24px 14px 48px;
+    }
+
+    .wrap { max-width: 1100px; margin: 0 auto; }
+
+    .badge {
+      display: inline-block;
+      background: rgba(14, 165, 233, 0.15);
+      border: 1px solid rgba(14, 165, 233, 0.4);
+      color: #38BDF8;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: clamp(22px, 4vw, 28px);
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      max-width: 720px;
+      margin-bottom: 16px;
+    }
+
+    .hint {
+      color: #BAE6FD;
+      font-size: 13px;
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      border: 1px solid var(--border);
+      background: #0E1726;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .tab.active {
+      color: #fff;
+      border-color: rgba(14, 165, 233, 0.5);
+      background: rgba(14, 165, 233, 0.15);
+    }
+
+    .stage { display: none; justify-content: center; }
+    .stage.active { display: flex; }
+
+    .frame-label {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #34D399;
+      margin-bottom: 10px;
+    }
+
+    .desktop {
+      width: min(980px, 100%);
+      height: min(640px, 78vh);
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--shell);
+      box-shadow: 0 24px 50px rgba(0,0,0,0.35);
+    }
+
+    .side {
+      background: #0A1220;
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .side-logo {
+      font-weight: 900;
+      color: #fff;
+      font-size: 16px;
+      margin-bottom: 10px;
+      padding: 0 6px;
+    }
+    .side-item {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .side-item.active {
+      background: rgba(14, 165, 233, 0.15);
+      color: #7DD3FC;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: var(--shell);
+    }
+
+    .mobile-wrap { width: min(360px, 100%); }
+    .mobile {
+      height: min(680px, 82vh);
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow:
+        0 0 0 2px rgba(14, 165, 233, 0.2),
+        0 24px 48px rgba(0,0,0,0.45);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: var(--shell);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bar);
+      flex-shrink: 0;
+    }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #0E1B2E;
+      border: 1.5px solid rgba(14, 165, 233, 0.7);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .topbar-title { font-size: 14px; font-weight: 800; color: #fff; }
+    .topbar-sub { font-size: 11px; color: var(--muted); }
+
+    .feed {
+      flex: 1;
+      overflow: auto;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .win-card {
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: linear-gradient(145deg, rgba(14, 165, 233, 0.16), rgba(15, 23, 42, 0.95));
+      border: 1px solid rgba(14, 165, 233, 0.35);
+    }
+    .win-card h3 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .win-card p {
+      font-size: 12px;
+      color: #CBD5E1;
+      line-height: 1.45;
+      margin-bottom: 10px;
+    }
+    .link-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .link-chip {
+      flex: 1;
+      min-width: 0;
+      display: block;
+      text-decoration: none;
+      color: #7DD3FC;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(14, 165, 233, 0.12);
+      border: 1px solid rgba(14, 165, 233, 0.35);
+      border-radius: 10px;
+      padding: 9px 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .copy-btn {
+      border: 1px solid rgba(255,255,255,0.14);
+      background: #0E1B2E;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .bot {
+      max-width: 94%;
+      background: #121C2E;
+      border-radius: 4px 16px 16px 16px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .user {
+      align-self: flex-end;
+      max-width: 78%;
+      background: rgba(14, 165, 233, 0.2);
+      border: 1px solid rgba(14, 165, 233, 0.28);
+      border-radius: 16px 16px 4px 16px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* İlk sohbet paneli gibi: altta tek (veya en fazla 2) hap — peş peşe liste yok */
+    .composer-block {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 10px 12px 12px;
+      flex-shrink: 0;
+      background: var(--bar);
+    }
+    .pill-label {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748B;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+    .pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .pill-primary {
+      flex: 0 1 auto;
+      width: auto;
+      max-width: 220px;
+      height: 36px;
+      padding: 0 16px;
+      border: none;
+      border-radius: 18px;
+      background: linear-gradient(90deg, var(--blue), var(--blue2));
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(14, 165, 233, 0.28);
+      cursor: pointer;
+    }
+    .pill-ghost {
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 18px;
+      border: 1.2px solid rgba(56, 160, 228, 0.45);
+      background: #0E1B2E;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .composer {
+      display: flex;
+      gap: 8px;
+    }
+    .composer input {
+      flex: 1;
+      min-width: 0;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: var(--shell);
+      color: var(--text);
+      padding: 0 12px;
+      font-size: 13px;
+    }
+    .composer button {
+      height: 44px;
+      padding: 0 14px;
+      border: none;
+      border-radius: 12px;
+      background: var(--blue);
+      color: #041016;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .note {
+      margin-top: 24px;
+      background: rgba(14, 165, 233, 0.1);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      border-radius: 16px;
+      padding: 14px 18px;
+      color: #BAE6FD;
+      font-size: 13px;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    .demo-nav {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .demo-nav button {
+      border: 1px solid var(--border);
+      background: #0E1726;
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .demo-nav button.active {
+      color: #fff;
+      border-color: rgba(52, 211, 153, 0.5);
+      background: rgba(52, 211, 153, 0.12);
+    }
+
+    @media (max-width: 720px) {
+      .desktop { grid-template-columns: 1fr; height: auto; min-height: 70vh; }
+      .side { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="badge">TASARIM ÖNİZLEME — FLUTTER YOK</div>
+    <h1>Rehber: “Aşama” yok, peş peşe buton yok</h1>
+    <p class="subtitle">
+      İlk sohbet paneli gibi: bir anda tek ilerleme. Kullanıcı tamamlayınca
+      sonraki mesaj + sonraki buton gelir. Sayfayı dolduran 1-2-3 kartları yok.
+    </p>
+    <p class="hint">
+      Aşağıdaki “Adım 1 / 2 / 3” sadece önizleme demosu — uygulamada bunlar peş peşe görünmez.
+    </p>
+
+    <div class="demo-nav">
+      <button type="button" class="active" data-step="1">Demo: Adım 1 (Vitrine bak)</button>
+      <button type="button" data-step="2">Demo: Adım 2 (Şablon)</button>
+      <button type="button" data-step="3">Demo: Adım 3 (Ürün)</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" type="button" data-tab="desktop">Masaüstü</button>
+      <button class="tab" type="button" data-tab="mobile">Mobil</button>
+    </div>
+
+    <div class="stage active" id="stage-desktop">
+      <div style="width:100%;">
+        <div class="frame-label">Masaüstü</div>
+        <div class="desktop">
+          <aside class="side">
+            <div class="side-logo">Vixrex</div>
+            <div class="side-item">Vitrinim</div>
+            <div class="side-item">Keşfet</div>
+            <div class="side-item active">Vixrex</div>
+            <div class="side-item">Profil</div>
+          </aside>
+          <section class="main" id="rehber-desktop"></section>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage" id="stage-mobile">
+      <div class="mobile-wrap">
+        <div class="frame-label">Mobil</div>
+        <div class="mobile" id="rehber-mobile"></div>
+      </div>
+    </div>
+
+    <div class="note">
+      Yok: “Aşama: Görünüm” tablosu · peş peşe 3 adım kartı · 7 hap şerit.<br>
+      Var: kazanım + link · tek sohbet mesajı · altta tek mavi tamam butonu (gerekirse bir ghost).
+    </div>
+  </div>
+
+  <script>
+    const STEPS = {
+      1: {
+        feed: `
+          <div class="win-card">
+            <h3>Vitrinin yayında — bunu kazandın</h3>
+            <p>İşletme adın, WhatsApp’ın ve konumun tek yerde. Müşterin bu linkten seni bulabilir.</p>
+            <div class="link-row">
+              <a class="link-chip" href="https://vixrex-public.vercel.app/v/ornek" target="_blank" rel="noopener">vixrex-public.vercel.app/v/ornek</a>
+              <span class="copy-btn">Kopyala</span>
+            </div>
+          </div>
+          <div class="bot">
+            Harika, buraya kadar geldik.<br><br>
+            Önce senin için hazırladığımız vitrine bir bak — nasıl göründüğünü birlikte görelim.
+          </div>
+        `,
+        pills: `
+          <div class="pill-label">Devam</div>
+          <div class="pills">
+            <button class="pill-primary" type="button" data-next="2">Vitrine bak</button>
+          </div>
+        `
+      },
+      2: {
+        feed: `
+          <div class="win-card">
+            <h3>Vitrinin yayında — bunu kazandın</h3>
+            <p>İşletme adın, WhatsApp’ın ve konumun tek yerde.</p>
+            <div class="link-row">
+              <a class="link-chip" href="https://vixrex-public.vercel.app/v/ornek" target="_blank" rel="noopener">vixrex-public.vercel.app/v/ornek</a>
+              <span class="copy-btn">Kopyala</span>
+            </div>
+          </div>
+          <div class="user">Vitrine bak</div>
+          <div class="bot">
+            Güzel. Şimdi kategorine göre hazır şablonlardan birini seçelim —
+            dijital vitrini hızlıca daha güzel yapalım.
+          </div>
+        `,
+        pills: `
+          <div class="pill-label">Devam</div>
+          <div class="pills">
+            <button class="pill-primary" type="button" data-next="3">Hazır şablonları aç</button>
+          </div>
+        `
+      },
+      3: {
+        feed: `
+          <div class="win-card">
+            <h3>Vitrinin yayında — bunu kazandın</h3>
+            <p>İşletme adın, WhatsApp’ın ve konumun tek yerde.</p>
+            <div class="link-row">
+              <a class="link-chip" href="https://vixrex-public.vercel.app/v/ornek" target="_blank" rel="noopener">vixrex-public.vercel.app/v/ornek</a>
+              <span class="copy-btn">Kopyala</span>
+            </div>
+          </div>
+          <div class="user">Hazır şablonları aç</div>
+          <div class="bot">
+            Şablon tarafı tamam (veya sonra döneriz).<br><br>
+            Müşterilerine gösterebilmen için ürünleri nasıl yükleyeceğimize karar verelim.
+          </div>
+        `,
+        pills: `
+          <div class="pill-label">Devam</div>
+          <div class="pills">
+            <button class="pill-primary" type="button">Ürün yükleme yolunu seç</button>
+            <button class="pill-ghost" type="button">Sonra</button>
+          </div>
+        `
+      }
+    };
+
+    let currentStep = '1';
+
+    function shellHtml(stepKey) {
+      const s = STEPS[stepKey];
+      return `
+        <div class="topbar">
+          <div class="avatar">
+            <img src="assets/images/vixrex_v_crystal_mascot.png" alt="" onerror="this.style.display='none'">
+          </div>
+          <div>
+            <div class="topbar-title">Vixrex</div>
+            <div class="topbar-sub">Yanındayım</div>
+          </div>
+        </div>
+        <div class="feed">${s.feed}</div>
+        <div class="composer-block">
+          ${s.pills}
+          <div class="composer">
+            <input placeholder="Vixrex’e yaz…" readonly>
+            <button type="button">Gönder</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function render() {
+      document.getElementById('rehber-desktop').innerHTML = shellHtml(currentStep);
+      document.getElementById('rehber-mobile').innerHTML = shellHtml(currentStep);
+      document.querySelectorAll('.demo-nav button').forEach((b) => {
+        b.classList.toggle('active', b.dataset.step === currentStep);
+      });
+      document.querySelectorAll('[data-next]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          currentStep = btn.dataset.next;
+          render();
+        });
+      });
+    }
+
+    document.querySelectorAll('.demo-nav button').forEach((b) => {
+      b.addEventListener('click', () => {
+        currentStep = b.dataset.step;
+        render();
+      });
+    });
+
+    document.querySelectorAll('.tab').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach((b) => b.classList.remove('active'));
+        document.querySelectorAll('.stage').forEach((s) => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('stage-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    render();
+  </script>
+</body>
+</html>

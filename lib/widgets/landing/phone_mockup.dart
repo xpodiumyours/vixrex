@@ -30,10 +30,20 @@ class PhoneMockup extends StatelessWidget {
               color: const Color(0xEB0A101C),
               borderRadius: BorderRadius.circular(40),
               border: Border.all(
-                color: const Color(0xFF38A0E4).withAlpha(120),
-                width: 2.2,
+                color: Colors.white.withValues(alpha: 0.18),
+                width: 2.5,
               ),
               boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
+                  blurRadius: 0,
+                  spreadRadius: 1.5,
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  blurRadius: 50,
+                  offset: const Offset(0, 25),
+                ),
                 BoxShadow(
                   color: const Color(0xFF0EA5E9).withAlpha(90),
                   blurRadius: 36,
@@ -56,7 +66,7 @@ class PhoneMockup extends StatelessWidget {
                     children: [
                       Column(
                         children: [
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 22),
                           SizedBox(
                             height: 156,
                             child: Stack(
@@ -498,22 +508,64 @@ class PhoneMockup extends StatelessWidget {
                    ),
                    // Dynamic Island Notch
                    Positioned(
-                     top: 6,
+                     top: 10,
                      left: 0,
                      right: 0,
                      child: Center(
                        child: Container(
-                         width: 88,
-                         height: 18,
+                         width: 96,
+                         height: 22,
+                         padding: const EdgeInsets.symmetric(horizontal: 10),
                          decoration: BoxDecoration(
                            color: Colors.black,
-                           borderRadius: BorderRadius.circular(16),
+                           borderRadius: BorderRadius.circular(20),
                            boxShadow: const [
                              BoxShadow(
-                               color: Colors.black54,
-                               blurRadius: 4,
+                               color: Colors.black87,
+                               blurRadius: 8,
+                               offset: Offset(0, 2),
                              ),
                            ],
+                         ),
+                         child: Row(
+                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                           children: [
+                             Container(
+                               width: 10,
+                               height: 10,
+                               decoration: BoxDecoration(
+                                 color: const Color(0xFF0D131F),
+                                 shape: BoxShape.circle,
+                                 border: Border.all(
+                                   color: Colors.white.withValues(alpha: 0.1),
+                                 ),
+                               ),
+                             ),
+                             Container(
+                               width: 6,
+                               height: 6,
+                               decoration: const BoxDecoration(
+                                 color: Color(0xFF0A2540),
+                                 shape: BoxShape.circle,
+                               ),
+                             ),
+                           ],
+                         ),
+                       ),
+                     ),
+                   ),
+                   // Home indicator
+                   Positioned(
+                     bottom: 8,
+                     left: 0,
+                     right: 0,
+                     child: Center(
+                       child: Container(
+                         width: 110,
+                         height: 4,
+                         decoration: BoxDecoration(
+                           color: Colors.white.withValues(alpha: 0.3),
+                           borderRadius: BorderRadius.circular(10),
                          ),
                        ),
                      ),
@@ -523,8 +575,9 @@ class PhoneMockup extends StatelessWidget {
              ),
            ),
          ),
-       );
-     },
-   );
- }
+       ),
+     );
+   },
+ );
+}
 }

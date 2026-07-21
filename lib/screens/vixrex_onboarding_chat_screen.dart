@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
+import 'package:vixrex/services/chatbot_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
 import 'package:vixrex/widgets/editor/form_location_info.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
+
+/// Rehber sohbet geçmişine onboarding transcript yazıldığını işaretler (çift yazmayı engeller).
+const String _kOnboardingHandoffMarker = 'onboarding_handoff_v1';
 
 enum _OnboardingStep {
   welcome,
@@ -57,8 +60,6 @@ class _VixRexOnboardingChatScreenState
   String? _error;
   String? _publicLink;
 
-  static const _phases = ['Tanışma', 'Bilgiler', 'Vitrinin hazır'];
-
   @override
   void initState() {
     super.initState();
@@ -92,21 +93,6 @@ class _VixRexOnboardingChatScreenState
     super.dispose();
   }
 
-  int get _phaseIndex {
-    switch (_step) {
-      case _OnboardingStep.welcome:
-        return 0;
-      case _OnboardingStep.name:
-      case _OnboardingStep.whatsapp:
-      case _OnboardingStep.location:
-      case _OnboardingStep.legal:
-      case _OnboardingStep.publishing:
-        return 1;
-      case _OnboardingStep.done:
-        return 2;
-    }
-  }
-
   void _pushBot(String text, {String? publicLink}) {
     _lines.add(
       _ChatLine.bot(
@@ -121,6 +107,60 @@ class _VixRexOnboardingChatScreenState
   void _pushUser(String text) {
     _lines.add(_ChatLine.user(text));
     _scrollToEnd();
+  }
+
+  List<ChatMessage> _transcriptAsChatMessages() {
+    final now = DateTime.now();
+    final out = <ChatMessage>[];
+    for (var i = 0; i < _lines.length; i++) {
+      final line = _lines[i];
+      final link = line.publicLink?.trim();
+      final text =
+          (link == null || link.isEmpty) ? line.text : '${line.text}\n\n$link';
+      final isLast = i == _lines.length - 1;
+      out.add(
+        ChatMessage(
+          id: 'onboarding_$i',
+          text: text,
+          isBot: line.isBot,
+          timestamp: now.add(Duration(milliseconds: i)),
+          snapshotStateKey: isLast ? _kOnboardingHandoffMarker : null,
+        ),
+      );
+    }
+    if (out.isEmpty) {
+      out.add(
+        ChatMessage.bot(
+          'Kurulum sohbeti tamamlandı.',
+          snapshotStateKey: _kOnboardingHandoffMarker,
+        ),
+      );
+    }
+    return out;
+  }
+
+  /// Onboarding balonlarını mevcut rehber history’sine yazar (tek sefer).
+  Future<void> _handoffTranscriptToRehber() async {
+    final service = ChatbotService();
+    final existing = await service.loadHistory();
+    if (existing.any((m) => m.snapshotStateKey == _kOnboardingHandoffMarker)) {
+      return;
+    }
+    final transcript = _transcriptAsChatMessages();
+    await service.saveHistory([...transcript, ...existing]);
+  }
+
+  Future<void> _navigateAfterHandoff({
+    int initialIndex = 0,
+    VixRexAction? initialVixRexAction,
+  }) async {
+    await _handoffTranscriptToRehber();
+    if (!mounted) return;
+    AppRouter.navigateToHomeShell(
+      context,
+      initialIndex: initialIndex,
+      initialVixRexAction: initialVixRexAction,
+    );
   }
 
   void _scrollToEnd() {
@@ -302,16 +342,6 @@ class _VixRexOnboardingChatScreenState
     return PublicSiteConfig.repairPublicLink(raw);
   }
 
-  Future<void> _copyPublicLink() async {
-    final link = _repairedPublicLink;
-    if (link == null) return;
-    await Clipboard.setData(ClipboardData(text: link));
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Vitrin linki kopyalandı.')));
-  }
-
   Future<void> _openPublicLink() async {
     final link = _repairedPublicLink;
     if (link == null) return;
@@ -378,106 +408,77 @@ class _VixRexOnboardingChatScreenState
   }
 
   Widget _buildTopBar() {
-    final phase = _phaseIndex;
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF0E1B2E),
-                  border: Border.all(
-                    color: const Color(0xFF0EA5E9).withAlpha(180),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF0EA5E9).withAlpha(80),
-                      blurRadius: 8,
-                    ),
-                  ],
+          Container(
+            width: 40,
+            height: 40,
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF0E1B2E),
+              border: Border.all(
+                color: const Color(0xFF0EA5E9).withAlpha(180),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0EA5E9).withAlpha(80),
+                  blurRadius: 8,
                 ),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/images/vixrex_v_crystal_mascot.png',
+              ],
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/vixrex_v_crystal_mascot.png',
+                width: 36,
+                height: 36,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    'assets/images/vixrex_mascot.webp',
                     width: 36,
                     height: 36,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.asset(
-                        'assets/images/vixrex_mascot.webp',
-                        width: 36,
-                        height: 36,
-                        fit: BoxFit.contain,
-                      );
-                    },
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Vixrex',
+                  style: TextStyle(
+                    color: AppColors.darkText,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Vixrex',
-                      style: TextStyle(
-                        color: AppColors.darkText,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
-                    Text(
-                      'Dijital vitrin asistanı',
-                      style: TextStyle(color: AppColors.mutedText, fontSize: 12),
-                    ),
-                  ],
+                Text(
+                  'Dijital vitrin asistanı',
+                  style: TextStyle(color: AppColors.mutedText, fontSize: 12),
                 ),
-              ),
-              TextButton(
-                onPressed:
-                    widget.onClose ??
-                    () => AppRouter.navigateToLanding(context),
-                child: const Text(
-                  'Kapat',
-                  style: TextStyle(color: AppColors.mutedText),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: List.generate(3, (i) {
-              return Expanded(
-                child: Container(
-                  height: 3,
-                  margin: EdgeInsets.only(right: i == 2 ? 0 : 6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(99),
-                    color:
-                        i <= phase
-                            ? AppColors.primary
-                            : AppColors.surfaceSoft,
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _phases[phase.clamp(0, _phases.length - 1)],
-            style: const TextStyle(color: AppColors.mutedText, fontSize: 11),
+          TextButton(
+            onPressed:
+                widget.onClose ??
+                () => AppRouter.navigateToLanding(context),
+            child: const Text(
+              'Kapat',
+              style: TextStyle(color: AppColors.mutedText),
+            ),
           ),
         ],
       ),
@@ -640,8 +641,6 @@ class _VixRexOnboardingChatScreenState
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _onSend(),
                     decoration: InputDecoration(
-                      hintText: _hintForStep(),
-                      hintStyle: const TextStyle(color: AppColors.mutedText),
                       filled: true,
                       fillColor: AppColors.inputBg,
                       border: OutlineInputBorder(
@@ -674,32 +673,10 @@ class _VixRexOnboardingChatScreenState
                 ),
               ],
             ),
-          if (_step == _OnboardingStep.done) ...[
-            _primaryButton('Rehberde devam et', () {
-              AppRouter.navigateToHomeShell(context, initialIndex: 2);
+          if (_step == _OnboardingStep.done)
+            _primaryButton('Vixrex ile geliştir', () {
+              _navigateAfterHandoff(initialIndex: 2);
             }),
-            const SizedBox(height: 8),
-            _ghostButton('Kapak şablonu seç', () {
-              AppRouter.navigateToHomeShell(
-                context,
-                initialVixRexAction: VixRexAction.openCoverTemplatePicker,
-              );
-            }),
-            const SizedBox(height: 8),
-            _ghostButton('Vitrinime git', () {
-              AppRouter.navigateToHomeShell(context);
-            }),
-            const SizedBox(height: 8),
-            _ghostButton('Hesabımı güvenceye al', () {
-              AppRouter.navigateToAuth(context);
-            }),
-            if (_publicLink != null) ...[
-              const SizedBox(height: 8),
-              _ghostButton('Linki kopyala', _copyPublicLink),
-              const SizedBox(height: 8),
-              _ghostButton('Canlı vitrini aç', _openPublicLink),
-            ],
-          ],
           if (_step == _OnboardingStep.publishing)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
@@ -710,17 +687,6 @@ class _VixRexOnboardingChatScreenState
         ],
       ),
     );
-  }
-
-  String _hintForStep() {
-    switch (_step) {
-      case _OnboardingStep.name:
-        return 'Örn: Demir Fırın';
-      case _OnboardingStep.whatsapp:
-        return '05xx xxx xx xx';
-      default:
-        return '';
-    }
   }
 
   Widget _primaryButton(String label, VoidCallback? onPressed) {
@@ -736,18 +702,6 @@ class _VixRexOnboardingChatScreenState
     );
   }
 
-  Widget _ghostButton(String label, VoidCallback? onPressed) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.darkText,
-        side: const BorderSide(color: AppColors.border),
-        minimumSize: const Size.fromHeight(48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      child: Text(label),
-    );
-  }
 }
 
 class _ChatLine {

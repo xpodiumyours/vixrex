@@ -35,14 +35,40 @@ abstract final class ChatbotConfig {
       snapshot: snapshot,
       hasShared: hasShared,
     );
+    final link = snapshot.publicLink.trim();
+    // Boş geçmişte tek karşılama (kazanım + link bir kez).
+    final warmIntro =
+        snapshot.isPublished
+            ? 'Harika, buraya kadar geldik.\n\n'
+                'Vitrinin yayında — adın, WhatsApp’ın ve konumun tek yerde.'
+                '${link.isEmpty ? '' : '\n\n$link'}\n\n'
+                '${recommendation.description}'
+            : '${recommendation.title}. ${recommendation.description}';
     return ChatMessage.bot(
-      '${recommendation.title}. ${recommendation.description}',
+      warmIntro,
+      quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+      snapshotStateKey: recommendation.id,
+    );
+  }
+
+  /// Kurulum handoff sonrası: kazanım/link TEKRAR YAZILMAZ, yalnız sıradaki adım.
+  static ChatMessage nextStepTip(
+    VixRexProfileSnapshot snapshot, {
+    required bool hasShared,
+  }) {
+    final recommendation = VixRexGuidanceService.recommendationFor(
+      snapshot: snapshot,
+      hasShared: hasShared,
+    );
+    return ChatMessage.bot(
+      recommendation.description,
       quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
       snapshotStateKey: recommendation.id,
     );
   }
 
   // ─── Ana Menü Quick Reply'ları ───────────────────────────────────────────
+  /// Tek (veya en fazla iki) küçük hap — 7’li şerit yok.
   static List<QuickReply> mainMenuReplies(
     VixRexProfileSnapshot? snapshot, {
     bool hasShared = false,
@@ -53,7 +79,7 @@ abstract final class ChatbotConfig {
         QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
       ];
     }
-    
+
     final recommendation = VixRexGuidanceService.recommendationFor(
       snapshot: snapshot,
       hasShared: hasShared,
@@ -64,30 +90,6 @@ abstract final class ChatbotConfig {
         payload: 'action_step',
         action: recommendation.action,
       ),
-      if (snapshot.isPublished) ...const [
-        QuickReply(
-          label: 'Linki Kopyala',
-          payload: 'copy_link',
-          action: VixRexAction.copyLink,
-        ),
-        QuickReply(
-          label: 'QR Göster',
-          payload: 'show_qr',
-          action: VixRexAction.showQr,
-        ),
-      ],
-      const QuickReply(
-        label: 'Ürün ekle (tara)',
-        payload: 'ocr_scan',
-        action: VixRexAction.openOcrScanner,
-      ),
-      const QuickReply(
-        label: 'Kapak şablonu',
-        payload: 'kapak',
-        action: VixRexAction.openCoverTemplatePicker,
-      ),
-      const QuickReply(label: 'Vixrex Ne İşe Yarar?', payload: 'vixrex_info'),
-      const QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
     ];
   }
 
