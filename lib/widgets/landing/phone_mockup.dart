@@ -24,40 +24,43 @@ class PhoneMockup extends StatelessWidget {
         return Transform.scale(
           scale: scale,
           child: Container(
-            width: 320,
+            width: 325,
             height: 640,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF26313B), AppColors.surface],
+              color: const Color(0xEB0A101C),
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(
+                color: const Color(0xFF38A0E4).withAlpha(120),
+                width: 2.2,
               ),
-              borderRadius: BorderRadius.circular(44),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.28),
-                  blurRadius: 60,
-                  offset: const Offset(0, 30),
+                  color: const Color(0xFF0EA5E9).withAlpha(90),
+                  blurRadius: 36,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 16),
                 ),
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.bgEditor,
-                  borderRadius: BorderRadius.circular(36),
+                  borderRadius: BorderRadius.circular(34),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(36),
-                  child: Column(
+                  borderRadius: BorderRadius.circular(34),
+                  child: Stack(
                     children: [
-                      SizedBox(
-                        height: 156,
-                        child: Stack(
-                          fit: StackFit.expand,
+                      Column(
+                        children: [
+                          const SizedBox(height: 18),
+                          SizedBox(
+                            height: 156,
+                            child: Stack(
+                              fit: StackFit.expand,
                           children: [
                             Container(
                               decoration: BoxDecoration(
@@ -486,19 +489,42 @@ class PhoneMockup extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+                               ),
+                             ],
+                           ),
+                         ),
+                       ),
+                     ],
+                   ),
+                   // Dynamic Island Notch
+                   Positioned(
+                     top: 6,
+                     left: 0,
+                     right: 0,
+                     child: Center(
+                       child: Container(
+                         width: 88,
+                         height: 18,
+                         decoration: BoxDecoration(
+                           color: Colors.black,
+                           borderRadius: BorderRadius.circular(16),
+                           boxShadow: const [
+                             BoxShadow(
+                               color: Colors.black54,
+                               blurRadius: 4,
+                             ),
+                           ],
+                         ),
+                       ),
+                     ),
+                   ),
+                 ],
+               ),
+             ),
+           ),
+         ),
+       );
+     },
+   );
+ }
 }

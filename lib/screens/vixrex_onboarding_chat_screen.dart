@@ -496,11 +496,93 @@ class _VixRexOnboardingChatScreenState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_step == _OnboardingStep.welcome) ...[
-            _primaryButton('Evet, oluşturalım', _busy ? null : _acceptWelcome),
-            const SizedBox(height: 8),
-            _ghostButton(
-              'Şimdilik bakınıyorum',
-              _busy ? null : _declineWelcome,
+            const Padding(
+              padding: EdgeInsets.only(bottom: 6),
+              child: Text(
+                'Hızlı Seçenekler',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.mutedText,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: _busy ? null : _acceptWelcome,
+                    borderRadius: BorderRadius.circular(24),
+                    child: Container(
+                      height: 42,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0EA5E9), Color(0xFF2563EB)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0EA5E9).withAlpha(90),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.auto_awesome, size: 14, color: Colors.white),
+                          SizedBox(width: 6),
+                          Text(
+                            'Evet, Oluşturalım',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: _busy ? null : _declineWelcome,
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    height: 42,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      color: const Color(0xFF0E1B2E),
+                      border: Border.all(
+                        color: const Color(0xFF38A0E4).withAlpha(120),
+                        width: 1.2,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.visibility_outlined, size: 14, color: AppColors.mutedText),
+                        SizedBox(width: 6),
+                        Text(
+                          'Bakınıyorum',
+                          style: TextStyle(
+                            color: AppColors.mutedText,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
           if (_step == _OnboardingStep.legal) ...[
