@@ -9,24 +9,23 @@
 - [x] Google Cloud Console authorized origins ve redirect URI
 - [x] İmzalı APK üretim altyapısı
 - [x] GitHub Actions Node.js 24 güncellemesi
+- [x] AAB (.aab) derleme, CI imza doğrulama ve artifact paketi hazırlığı
 
 ---
 
 ## 🔲 Bekleyen Görevler
 
-### Android Google Girişi
-- [ ] Google Cloud Console'da **Android OAuth Client ID** oluştur
-  - Package: `com.xpodiumyours.vixrex`
-  - SHA-256 (production): `295af3e289e13bc9fea273f224fa7c1fcb1879472790d48ed3eea8239c0ffc24`
-  - SHA-1 (debug): `42:42:DA:51:DD:D2:0D:8A:AF:7C:27:54:D0:EB:73:CE:B0:DF:82:8B`
-- [ ] `google-services.json`'a Android Client ID'yi ekle
+### Play Store & Faz 2 (Internal Testing)
+- [ ] Play Console'da `com.xpodiumyours.vixrex` uygulamasını oluştur (Furkan)
+- [ ] Play App Signing'i upload keystore (`295af3e2...`) ile etkinleştir
+- [ ] İlk AAB'yi Play Console Internal Testing kanalına yükle
+- [ ] Play Console'dan Play App Signing SHA-1 ve SHA-256 parmak izlerini al
 
-### Play Store
-- [ ] Play Console uygulama kurulumu
-- [ ] Play App Signing kurulumu
-- [ ] AAB branch'ini (`codex/play-internal-aab`) `main`e birleştir
-- [ ] Internal Testing'e AAB yükle
-- [ ] İki sürümlü gerçek cihaz güncelleme testi
+### Android Google Girişi (OAuth Entegrasyonu)
+- [ ] Google Cloud Console / Firebase'de Android OAuth Client ID'ye Play App Signing SHA-1 ve SHA-256 ekle
+- [ ] Güncel `google-services.json` dosyasını projeye indir
+- [ ] İkinci AAB'yi (daha yüksek `versionCode` ile) ürettir ve Play üzerinden güncelleme/Google Sign-In testini geç
 
 ### Genel
 - [ ] Production'da Google girişi uçtan uca kabul testi
+

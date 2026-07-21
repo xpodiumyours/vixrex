@@ -393,18 +393,35 @@ class _VixRexOnboardingChatScreenState
               Container(
                 width: 40,
                 height: 40,
-                alignment: Alignment.center,
+                padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, AppColors.primaryDark],
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF0E1B2E),
+                  border: Border.all(
+                    color: const Color(0xFF0EA5E9).withAlpha(180),
+                    width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0EA5E9).withAlpha(80),
+                      blurRadius: 8,
+                    ),
+                  ],
                 ),
-                child: const Text(
-                  'Vx',
-                  style: TextStyle(
-                    color: AppColors.onPrimary,
-                    fontWeight: FontWeight.w800,
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/vixrex_v_crystal_mascot.png',
+                    width: 36,
+                    height: 36,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.asset(
+                        'assets/images/vixrex_mascot.webp',
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.contain,
+                      );
+                    },
                   ),
                 ),
               ),

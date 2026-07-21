@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
-import 'package:vixrex/theme/app_colors.dart';
 
-const double _vixrexBadgeSize = 84;
+const double _vixrexBadgeSize = 60;
 
 class ChatbotBadge extends StatefulWidget {
   final VixRexProfileSnapshot? snapshot;
@@ -39,8 +38,10 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
     with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _scanController;
+  late AnimationController _floatController;
   late Animation<double> _pulseAnim;
   late Animation<double> _scanAnim;
+  late Animation<double> _floatAnim;
 
   @override
   void initState() {
@@ -61,12 +62,21 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
     _scanAnim = Tween<double>(begin: -1.0, end: 1.0).animate(
       CurvedAnimation(parent: _scanController, curve: Curves.linear),
     );
+
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+    _floatAnim = Tween<double>(begin: -4.0, end: 4.0).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     _scanController.dispose();
+    _floatController.dispose();
     super.dispose();
   }
 
@@ -78,80 +88,142 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _openChat(context),
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_pulseController, _scanController]),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Image.asset(
-            'assets/images/vixrex_mascot.webp',
-            width: _vixrexBadgeSize,
-            height: _vixrexBadgeSize,
-            fit: BoxFit.contain,
-          ),
-        ),
-        builder: (context, mascot) {
-          return Container(
-            width: _vixrexBadgeSize,
-            height: _vixrexBadgeSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withAlpha(20),
-              border: Border.all(color: AppColors.primary.withAlpha(40), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withAlpha((255 * 0.35 * _pulseAnim.value).round()),
-                  blurRadius: 18,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  mascot!,
-                  Positioned(
-                    top: (_vixrexBadgeSize / 2) +
-                        (_scanAnim.value * (_vixrexBadgeSize * 0.4)),
-                    left: 10,
-                    right: 10,
-                    child: Container(
-                      height: 2,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primary.withAlpha(0),
-                            AppColors.primary.withAlpha(120),
-                            AppColors.primary.withAlpha(0),
-                          ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Notification Speech Bubble Tooltip
+          AnimatedBuilder(
+            animation: _floatAnim,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, _floatAnim.value),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xEE0E1B2E),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(14),
+                      topRight: Radius.circular(14),
+                      bottomLeft: Radius.circular(14),
+                      bottomRight: Radius.circular(3),
+                    ),
+                    border: Border.all(
+                      color: const Color(0xFF0EA5E9).withAlpha(180),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0EA5E9).withAlpha(70),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '👋 Dijital vitrinini hazırlayayım mı?',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                  Positioned(
-                    bottom: 6,
-                    right: 6,
-                    child: Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: AppColors.success,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.success.withAlpha(180),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
+              );
+            },
+          ),
+          // Floating Mascot Badge
+          AnimatedBuilder(
+            animation: Listenable.merge([_pulseController, _scanController]),
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Image.asset(
+                'assets/images/vixrex_v_crystal_mascot.png',
+                width: _vixrexBadgeSize,
+                height: _vixrexBadgeSize,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    'assets/images/vixrex_mascot.webp',
+                    width: _vixrexBadgeSize,
+                    height: _vixrexBadgeSize,
+                    fit: BoxFit.contain,
+                  );
+                },
               ),
             ),
-          );
-        },
+            builder: (context, mascot) {
+              return Container(
+                width: _vixrexBadgeSize,
+                height: _vixrexBadgeSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF0E1B2E).withAlpha(200),
+                  border: Border.all(color: const Color(0xFF38A0E4).withAlpha(160), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0EA5E9).withAlpha((255 * 0.45 * _pulseAnim.value).round()),
+                      blurRadius: 16,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      mascot!,
+                      Positioned(
+                        top: (_vixrexBadgeSize / 2) +
+                            (_scanAnim.value * (_vixrexBadgeSize * 0.35)),
+                        left: 6,
+                        right: 6,
+                        child: Container(
+                          height: 1.5,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0x000EA5E9),
+                                Color(0xCC0EA5E9),
+                                Color(0x000EA5E9),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 4,
+                        right: 4,
+                        child: Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xCC10B981),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 }
+

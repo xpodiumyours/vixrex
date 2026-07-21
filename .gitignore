@@ -61,3 +61,8 @@ android/app/client_secret_*.json
 
 # Local dev scripts with embedded credentials
 run_local.ps1
+
+# Local release APKs and scratch scripts
+release_apk/
+scratch/
+

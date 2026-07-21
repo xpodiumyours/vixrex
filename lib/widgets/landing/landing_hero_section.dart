@@ -455,15 +455,30 @@ class LandingHeroSection extends StatelessWidget {
         const SizedBox(height: 24),
         // Setup Form or Saved Vitrin actions
         if (hasSavedVitrin && !isCheckingSavedVitrin) ...[
-          SizedBox(
+          Container(
             width: double.infinity,
             height: 52,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0EA5E9), Color(0xFF2563EB)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0EA5E9).withAlpha(80),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             child: ElevatedButton(
               onPressed: onNavigateToSavedVitrin,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
                 foregroundColor: Colors.white,
-                elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),

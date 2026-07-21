@@ -116,7 +116,7 @@ jobs:
             printf 'storeFile=upload-keystore.jks\n'
           } > android/key.properties
 
-      - name: Build release APK
+      - name: Build release APK and AAB
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
@@ -127,23 +127,53 @@ jobs:
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
             --dart-define=PUBLIC_SITE_URL="${{ env.PUBLIC_SITE_URL }}"
+          flutter build appbundle --release \
+            --build-name="${{ steps.version.outputs.version_name }}" \
+            --build-number="${{ steps.version.outputs.build_number }}" \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
+            --dart-define=PUBLIC_SITE_URL="${{ env.PUBLIC_SITE_URL }}"
+
+      - name: Verify AAB certificate signature and report metadata
+        run: |
+          AAB_SRC="build/app/outputs/bundle/release/app-release.aab"
+          test -f "$AAB_SRC"
+          CERT_SHA256=$(keytool -printcert -jarfile "$AAB_SRC" | grep "SHA256:" | head -n 1 | tr -d ' ' | cut -d':' -f2 | tr '[:upper:]' '[:lower:]')
+          EXPECTED_SHA256="295af3e289e13bc9fea273f224fa7c1fcb1879472790d48ed3eea8239c0ffc24"
+          echo "AAB Cert SHA-256: $CERT_SHA256"
+          if [ "$CERT_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "ERROR: Upload certificate signature mismatch! Expected $EXPECTED_SHA256 but found $CERT_SHA256"
+            exit 1
+          fi
+          echo "Upload certificate SHA-256 signature verified successfully."
+          {
+            echo "- Package: \`com.xpodiumyours.vixrex\`"
+            echo "- AAB Cert SHA-256: \`$CERT_SHA256\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Prepare artifact files
         run: |
           APK_SRC="build/app/outputs/flutter-apk/app-release.apk"
+          AAB_SRC="build/app/outputs/bundle/release/app-release.aab"
           test -f "$APK_SRC"
+          test -f "$AAB_SRC"
           sha256sum "$APK_SRC" | tee app-release.apk.sha256
+          sha256sum "$AAB_SRC" | tee app-release.aab.sha256
           mkdir -p dist
           cp "$APK_SRC" dist/app-release.apk
           cp app-release.apk.sha256 dist/app-release.apk.sha256
+          cp "$AAB_SRC" dist/app-release.aab
+          cp app-release.aab.sha256 dist/app-release.aab.sha256
 
-      - name: Upload APK artifact
+      - name: Upload APK and AAB artifacts
         uses: actions/upload-artifact@v6
         with:
           name: vixrex-android-${{ steps.version.outputs.version_name }}-${{ steps.version.outputs.build_number }}-${{ steps.version.outputs.short_sha }}
           path: |
             dist/app-release.apk
             dist/app-release.apk.sha256
+            dist/app-release.aab
+            dist/app-release.aab.sha256
           retention-days: 14
           if-no-files-found: error
 
@@ -151,3 +181,4 @@ jobs:
         if: always()
         run: |
           rm -f android/key.properties android/app/upload-keystore.jks
+

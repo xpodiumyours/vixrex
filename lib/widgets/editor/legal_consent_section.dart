@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:vixrex/screens/legal_screen.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -33,6 +34,10 @@ class LegalConsentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAllAccepted = privacyNoticeAcknowledged &&
+        termsAccepted &&
+        publicationConsentAccepted;
+
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(18),
@@ -40,7 +45,12 @@ class LegalConsentSection extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(
+            color: isAllAccepted
+                ? const Color(0xFF0EA5E9).withAlpha(160)
+                : AppColors.border,
+            width: isAllAccepted ? 1.4 : 1.0,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -82,66 +92,87 @@ class LegalConsentSection extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 8),
-            CheckboxListTile(
-              key: const ValueKey('privacy-notice-checkbox'),
-              value: privacyNoticeAcknowledged,
-              onChanged: canAccept ? (value) => onPrivacyChanged(value ?? false) : null,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: const Text(
-                'Aydınlatma Metni\'ni okudum ve bilgilendirildim.',
-                style: AppTextStyles.formLabel,
-              ),
-            ),
-            _legalLink(
-              label: 'Aydınlatma Metni',
-              type: LegalPageType.privacy,
-            ),
-            CheckboxListTile(
-              key: const ValueKey('terms-checkbox'),
-              value: termsAccepted,
-              onChanged: canAccept ? (value) => onTermsChanged(value ?? false) : null,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: const Text(
-                'Kullanım Şartları\'nı kabul ediyorum.',
-                style: AppTextStyles.formLabel,
-              ),
-            ),
-            _legalLink(
-              label: 'Kullanım Şartları',
-              type: LegalPageType.terms,
-            ),
-            CheckboxListTile(
-              key: const ValueKey('publication-consent-checkbox'),
-              value: publicationConsentAccepted,
-              onChanged: canAccept ? (value) => onPublicationChanged(value ?? false) : null,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: const Text(
-                'Verilerimin dijital vitrinimde kamuya açık yayınlanmasına açık rıza veriyorum.',
-                style: AppTextStyles.formLabel,
-              ),
-            ),
-            _legalLink(
-              label: 'Açık Rıza Beyanı',
-              type: LegalPageType.consent,
+            const SizedBox(height: 14),
+            // Master Consent Row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    key: const ValueKey('privacy-notice-checkbox'),
+                    value: isAllAccepted,
+                    activeColor: const Color(0xFF0EA5E9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    onChanged: canAccept
+                        ? (value) {
+                            final newValue = value ?? false;
+                            onPrivacyChanged(newValue);
+                            onTermsChanged(newValue);
+                            onPublicationChanged(newValue);
+                          }
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        height: 1.45,
+                        color: AppColors.darkText,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'Aydınlatma Metni',
+                          style: const TextStyle(
+                            color: Color(0xFF0EA5E9),
+                            fontWeight: FontWeight.w700,
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => onOpenLegalPage(LegalPageType.privacy),
+                        ),
+                        const TextSpan(text: ', '),
+                        TextSpan(
+                          text: 'Kullanım Şartları',
+                          style: const TextStyle(
+                            color: Color(0xFF0EA5E9),
+                            fontWeight: FontWeight.w700,
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => onOpenLegalPage(LegalPageType.terms),
+                        ),
+                        const TextSpan(text: ' ve '),
+                        TextSpan(
+                          text: 'Açık Rıza Beyanı',
+                          style: const TextStyle(
+                            color: Color(0xFF0EA5E9),
+                            fontWeight: FontWeight.w700,
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => onOpenLegalPage(LegalPageType.consent),
+                        ),
+                        const TextSpan(
+                          text: '\'nı okudum, anladım ve kabul ediyorum.',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _legalLink({required String label, required LegalPageType type}) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: TextButton.icon(
-        onPressed: () => onOpenLegalPage(type),
-        icon: const Icon(Icons.open_in_new_rounded, size: 15),
-        label: Text(label),
-      ),
-    );
-  }
 }
+
