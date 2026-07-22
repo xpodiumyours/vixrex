@@ -15,6 +15,7 @@ import 'package:vixrex/screens/ocr_scanner_screen.dart';
 import 'package:vixrex/screens/vixrex_screen.dart';
 import 'package:vixrex/screens/profile_screen.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
@@ -46,6 +47,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   final _myVitrinKey = GlobalKey<MyVitrinScreenState>();
   final _exploreKey = GlobalKey<ExploreScreenState>();
   final _globalSearchController = TextEditingController();
+  late final StoreEditorController _editorController;
+  late final Future<void> _editorInitialization;
 
   // Chat History
   final List<ChatMessage> _vixrexChatMessages = [];
@@ -77,6 +80,10 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     super.initState();
     // Doğrudan sekme indeksi: 0=Vitrinim, 1=Keşfet, 2=Vixrex, 3=Profil, 4=Moderasyon
     _selectedIndex = widget.initialIndex < 0 ? 0 : widget.initialIndex;
+    _editorController = StoreEditorController();
+    _editorInitialization = _editorController.initialize(
+      widget.initialVitrinName,
+    );
     _loadVixRexSnapshot();
     final pending = widget.initialVixRexAction;
     if (pending != null && pending != VixRexAction.none) {
@@ -92,6 +99,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   @override
   void dispose() {
     _globalSearchController.dispose();
+    _editorController.dispose();
     super.dispose();
   }
 
@@ -503,12 +511,16 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       MyVitrinScreen(
         key: _myVitrinKey,
         initialName: widget.initialVitrinName,
+        editorController: _editorController,
+        editorInitialization: _editorInitialization,
         onPublished: _handleVitrinPublished,
         onOpenExplore: _openExplore,
       ),
       ExploreScreen(key: _exploreKey),
       VixRexScreen(
         snapshot: _vixrexSnapshot,
+        editorController: _editorController,
+        editorInitialization: _editorInitialization,
         hasShared: _vixrexHasShared,
         dismissedRecommendationId: _dismissedVixRexRecommendationId,
         onAction: _handleVixRexAction,
@@ -766,6 +778,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
               child: SafeArea(
                 minimum: const EdgeInsets.only(right: 16, bottom: 16),
                 child: ChatbotBadge(
+                  snapshot: _vixrexSnapshot,
+                  hasShared: _vixrexHasShared,
                   // Tek kapı: overlay FAQ yok → mevcut VixRex sekmesi.
                   onOpen: () => setState(() => _selectedIndex = 2),
                 ),

@@ -18,12 +18,16 @@ import 'package:vixrex/widgets/auto_fill/category_gallery_sheet.dart';
 
 class MyVitrinScreen extends StatefulWidget {
   final String? initialName;
+  final StoreEditorController? editorController;
+  final Future<void>? editorInitialization;
   final VoidCallback? onPublished;
   final VoidCallback? onOpenExplore;
 
   const MyVitrinScreen({
     super.key,
     this.initialName,
+    this.editorController,
+    this.editorInitialization,
     this.onPublished,
     this.onOpenExplore,
   });
@@ -35,6 +39,7 @@ class MyVitrinScreen extends StatefulWidget {
 class MyVitrinScreenState extends State<MyVitrinScreen> {
   late final StoreEditorController _controller;
   late final MyVitrinState _state;
+  late final bool _ownsController;
 
   StoreEditorController get controller => _controller;
 
@@ -49,13 +54,20 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = StoreEditorController();
+    _ownsController = widget.editorController == null;
+    _controller = widget.editorController ?? StoreEditorController();
     _state = MyVitrinState(controller: _controller);
+    _controller.addListener(_syncControllers);
     _initialize();
   }
 
   Future<void> _initialize() async {
-    await _controller.initialize(widget.initialName);
+    final sharedInitialization = widget.editorInitialization;
+    if (sharedInitialization != null) {
+      await sharedInitialization;
+    } else if (_ownsController) {
+      await _controller.initialize(widget.initialName);
+    }
     if (!mounted) return;
     _syncControllers();
     final pendingCategoryKey = await const StoreLocalStorageService().loadPendingCategoryKey();
@@ -70,15 +82,27 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   }
 
   void _syncControllers() {
-    _nameController.text = _controller.data.name;
-    _whatsappController.text = _controller.data.whatsapp;
-    _addressController.text = _controller.data.address;
-    _descriptionController.text = _controller.data.description;
-    _instagramController.text = _controller.data.instagram;
-    _websiteController.text =
-        _controller.publishedInfo?.publicLink ?? _controller.data.website;
-    _googleBusinessLinkController.text =
-        _controller.data.googleBusinessLink;
+    _syncText(_nameController, _controller.data.name);
+    _syncText(_whatsappController, _controller.data.whatsapp);
+    _syncText(_addressController, _controller.data.address);
+    _syncText(_descriptionController, _controller.data.description);
+    _syncText(_instagramController, _controller.data.instagram);
+    _syncText(
+      _websiteController,
+      _controller.publishedInfo?.publicLink ?? _controller.data.website,
+    );
+    _syncText(
+      _googleBusinessLinkController,
+      _controller.data.googleBusinessLink,
+    );
+  }
+
+  void _syncText(TextEditingController controller, String value) {
+    if (controller.text == value) return;
+    controller.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
   }
 
   /// VixRex aksiyonuna göre ilgili forma otomatik kaydırır ve odaklanır.
@@ -102,6 +126,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
 
   @override
   void dispose() {
+    _controller.removeListener(_syncControllers);
     _nameController.dispose();
     _whatsappController.dispose();
     _addressController.dispose();
@@ -110,6 +135,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _websiteController.dispose();
     _googleBusinessLinkController.dispose();
     _state.dispose();
+    if (_ownsController) _controller.dispose();
     super.dispose();
   }
 

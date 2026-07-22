@@ -11,11 +11,15 @@ Her AI ajanı herhangi bir dosyaya dokunmadan önce sırasıyla şunları tamame
 1. [`PROJECT_RULES.md`](PROJECT_RULES.md) — kullanıcı anayasası, çalışma biçimi ve
    dokunulmaz alanlar için en üst kuraldır.
 2. Bu `AGENTS.md` — güncel teknik mimari ve repo sözleşmesidir.
+3. [`.cursor/skills/vixrex-islem-butcesi/SKILL.md`](.cursor/skills/vixrex-islem-butcesi/SKILL.md)
+   — bütün görevlerde görev başında bir kez okunur; gereksiz tarama, format,
+   test/build, GitHub/Vercel ve release işlemlerini kilitler.
 4. İlgili alt dizindeki `AGENTS.md` ve görevle eşleşen
    `.cursor/skills/*/SKILL.md` / `.agents/skills/*/SKILL.md` dosyaları — yalnız
    ek kural koyabilir, üst kuralları gevşetemez. Asistan işlerinde
    [`.cursor/skills/vixrex-asistan-bagla/SKILL.md`](.cursor/skills/vixrex-asistan-bagla/SKILL.md)
-   **her adımda** okunur ve uygulanır (plan, tarama, kod, test, rapor).
+   görev başında bir kez okunur ve **her adımda uygulanır** (plan, tarama, kod,
+   test, rapor); aynı turda araç çağrısı için tekrar açılmaz.
 
 `PROJECT_RULES.md`, Furkan'ın açık onayı olmadan silinemez, yeniden adlandırılamaz,
 kısaltılamaz veya etkisizleştirilemez. Kullanıcı anayasası ile güncel teknik bilgi
@@ -24,12 +28,14 @@ arasında çelişki görülürse ajan sessizce seçim yapmaz; değişiklikten ö
 
 ### 0.1 Zorunlu uyma ve kaynak bütçesi
 
-`PROJECT_RULES.md` bölüm **3.2 AI kaynak ve token disiplini**, okuma listesinin
+`PROJECT_RULES.md` bölüm **3.2 AI kaynak ve token disiplini** ve **3.3 gereksiz
+işlem kilidi**, okuma listesinin
 bağlayıcı parçasıdır. Ajanın "Kurallar okundu" yazması uyum kanıtı değildir;
 çalışma sırasında aşağıdaki kapılar zorunludur:
 
-- İlk araç çağrısından önce en küçük kanıt bütçesini belirle: bir hedefli tarama,
-  bir küçük değişiklik ve bir orantılı doğrulama turu.
+- İlk araç çağrısından önce görev sınıfını ve izin verilen işlemleri belirle.
+- Kullanıcı yalnız commit/push isterse veya yerel test/build'i açıkça yasaklarsa
+  bu kapsama format, analyze, test, build, `gh`, Vercel veya APK işlemi ekleme.
 - Yeni bir değişiklik veya yeni hata kanıtı yoksa aynı komutu tekrar çalıştırma.
 - Uzak CI/deploy işini başlattıktan sonra bekleme veya periyodik polling yapma;
   run kimliğini bildirip kontrolü kullanıcıya bırak.
@@ -74,12 +80,15 @@ Aktif geçici originler:
 3. En küçük çözümü uygula; kapsam dışı UI veya özellik çalışması ekleme.
 4. Değişen davranış için otomatik sözleşme testi ekle veya mevcut testi güncelle.
 5. Eski yolun gerçekten kaldırıldığını repo taramasıyla doğrula.
-6. Yerel test/build, ardından gerekiyorsa preview ve canlı kabul testi çalıştır.
+6. İşlem-bütçesi skill'i yerel doğrulama gerektiriyorsa hedefli test/build çalıştır;
+   aynı kapı uzak CI'da otomatikse gereksiz yerel tekrar yapma. Ardından gerekiyorsa
+   preview ve canlı kabul kanıtını al.
 7. Kanıt tamamlanmadan plan kutusunu `[x]` yapma ve “tamamlandı” deme.
 
 ## 4. Public vitrin değişiklik kapısı
 
-Public vitrin, route, domain, Vercel veya navigasyon değişikliğinde en az şunlar
+Public vitrin, route, domain, Vercel veya navigasyon değişikliğinde en az şu kapılar
+son kod değişikliğinden sonra yerelde veya yapılandırılmış uzak CI'da bir kez
 geçmelidir:
 
 ```powershell
@@ -87,6 +96,10 @@ flutter test test\architecture_routing_contract_test.dart test\public_site_confi
 dart analyze
 npm.cmd --prefix public_web run build
 ```
+
+Kullanıcı görevi açıkça `commit/push` ile sınırladıysa ve uzak CI bu kapıları
+otomatik çalıştırıyorsa ajan aynı komutları yerelde açmaz; commit/run kimliğini
+bildirir ve sonucu geçmiş saymadan CI'a bırakır.
 
 Ayrıca şu davranışlar doğrulanır:
 

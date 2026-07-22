@@ -577,91 +577,14 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
-  /// Yeni ürün ekler (ilişkisel `products` tablosu).
+  /// Yeni ürün ekler (ilişkisel `products` tablosuna senkronize eder).
   Future<Result<void>> addProduct(Product p) async {
     final editToken = _publishedInfo?.editToken.trim() ?? '';
-    if (editToken.isEmpty) {
-      return Result.failure(
-        Failure('Ürünleri kaydetmek için önce vitrini yayınlayın.'),
-      );
-    }
-    final ready = await ensureRemoteStoreId();
+    final ready = editToken.isNotEmpty ? await ensureRemoteStoreId() : false;
     final storeId = _data.id?.trim() ?? '';
-    if (!ready || storeId.isEmpty) {
-      return Result.failure(
-        Failure('Mağaza kimliği bulunamadı. Yayınlayıp tekrar deneyin.'),
-      );
-    }
 
-    final result = await productService.addProduct(
-      storeId: storeId,
-      editToken: editToken,
-      name: p.name,
-      slug: p.slug ?? _generateSlug(p.name),
-      description: p.description,
-      priceText: p.price,
-      imageUrls: p.displayImageUrls,
-      categoryId:
-          p.categoryId.isNotEmpty && _isUuid(p.categoryId)
-              ? p.categoryId
-              : null,
-      sourceType: p.source ?? 'manual',
-      isVisible: p.isVisible,
-      sortOrder: _data.products.length,
-    );
-
-    if (result.isSuccess && result.data != null) {
-      p.id = result.data!;
-      _data.products.add(p);
-      notifyListeners();
-      return const Result.success(null);
-    }
-    return Result.failure(
-      Failure(result.failure?.message ?? 'Ürün eklenemedi'),
-    );
-  }
-
-  /// Ürün siler (ilişkisel `products` tablosu).
-  Future<Result<void>> removeProduct(int i) async {
-    if (i < 0 || i >= _data.products.length) {
-      return const Result.success(null);
-    }
-    final product = _data.products[i];
-    final editToken = _publishedInfo?.editToken;
-
-    if (_isUuid(product.id) && editToken != null && editToken.isNotEmpty) {
-      final result = await productService.deleteProduct(
-        product.id,
-        editToken: editToken,
-      );
-      if (result.isFailure) return result;
-    }
-    _data.products.removeAt(i);
-    notifyListeners();
-    return const Result.success(null);
-  }
-
-  /// Ürün günceller (ilişkisel `products` tablosu).
-  Future<Result<void>> updateProduct(int i, Product p) async {
-    if (i < 0 || i >= _data.products.length) {
-      return const Result.success(null);
-    }
-    final editToken = _publishedInfo?.editToken.trim() ?? '';
-    if (editToken.isEmpty) {
-      return Result.failure(
-        Failure('Ürünleri kaydetmek için önce vitrini yayınlayın.'),
-      );
-    }
-
-    if (!_isUuid(p.id)) {
-      final ready = await ensureRemoteStoreId();
-      final storeId = _data.id?.trim() ?? '';
-      if (!ready || storeId.isEmpty) {
-        return Result.failure(
-          Failure('Mağaza kimliği bulunamadı. Yayınlayıp tekrar deneyin.'),
-        );
-      }
-      final created = await productService.addProduct(
+    if (editToken.isNotEmpty && ready && storeId.isNotEmpty) {
+      final result = await productService.addProduct(
         storeId: storeId,
         editToken: editToken,
         name: p.name,
@@ -675,41 +598,70 @@ class StoreEditorController extends ChangeNotifier
                 : null,
         sourceType: p.source ?? 'manual',
         isVisible: p.isVisible,
-        sortOrder: i,
+        sortOrder: _data.products.length,
       );
-      if (created.isFailure || created.data == null) {
-        return Result.failure(
-          Failure(created.failure?.message ?? 'Ürün eklenemedi'),
-        );
+
+      if (result.isSuccess && result.data != null) {
+        p.id = result.data!;
       }
-      p.id = created.data!;
-      _data.products[i] = p;
-      notifyListeners();
+    }
+
+    _data.products.add(p);
+    await saveLocally();
+    notifyListeners();
+    return const Result.success(null);
+  }
+
+  /// Ürün siler (ilişkisel `products` tablosu).
+  Future<Result<void>> removeProduct(int i) async {
+    if (i < 0 || i >= _data.products.length) {
       return const Result.success(null);
     }
+    final product = _data.products[i];
+    final editToken = _publishedInfo?.editToken.trim() ?? '';
 
-    final result = await productService.updateProduct(
-      productId: p.id,
-      editToken: editToken,
-      name: p.name,
-      slug: p.slug,
-      description: p.description,
-      priceText: p.price,
-      imageUrls: p.displayImageUrls,
-      categoryId:
-          p.categoryId.isNotEmpty && _isUuid(p.categoryId)
-              ? p.categoryId
-              : null,
-      clearCategory: p.categoryId.trim().isEmpty || !_isUuid(p.categoryId),
-      isVisible: p.isVisible,
-      stockStatus: p.stockStatus,
-    );
-
-    if (result.isSuccess) {
-      _data.products[i] = p;
-      notifyListeners();
+    if (_isUuid(product.id) && editToken.isNotEmpty) {
+      await productService.deleteProduct(
+        product.id,
+        editToken: editToken,
+      );
     }
-    return result;
+    _data.products.removeAt(i);
+    await saveLocally();
+    notifyListeners();
+    return const Result.success(null);
+  }
+
+  /// Ürün günceller (ilişkisel `products` tablosu).
+  Future<Result<void>> updateProduct(int i, Product p) async {
+    if (i < 0 || i >= _data.products.length) {
+      return const Result.success(null);
+    }
+    final editToken = _publishedInfo?.editToken.trim() ?? '';
+    final storeId = _data.id?.trim() ?? '';
+
+    if (editToken.isNotEmpty && storeId.isNotEmpty && _isUuid(p.id)) {
+      await productService.updateProduct(
+        productId: p.id,
+        editToken: editToken,
+        name: p.name,
+        slug: p.slug ?? _generateSlug(p.name),
+        description: p.description,
+        priceText: p.price,
+        imageUrls: p.displayImageUrls,
+        categoryId:
+            p.categoryId.isNotEmpty && _isUuid(p.categoryId)
+                ? p.categoryId
+                : null,
+        isVisible: p.isVisible,
+        stockStatus: p.stockStatus,
+      );
+    }
+
+    _data.products[i] = p;
+    await saveLocally();
+    notifyListeners();
+    return const Result.success(null);
   }
 
   /// İçe aktarılan ürün günceller (ilişkisel `products` tablosu).

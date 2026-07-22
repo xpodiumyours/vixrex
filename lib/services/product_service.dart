@@ -158,10 +158,12 @@ class ProductService {
     if (msg.contains('STORE_NOT_FOUND')) return 'Mağaza bulunamadı.';
     if (msg.contains('UNAUTHORIZED')) return 'Bu işlem için yetkiniz yok.';
     if (msg.contains('PRODUCT_NOT_FOUND')) return 'Ürün bulunamadı.';
-    if (msg.contains('SLUG_ALREADY_EXISTS'))
+    if (msg.contains('SLUG_ALREADY_EXISTS')) {
       return 'Bu ürün adı zaten kullanılıyor.';
-    if (msg.contains('CATEGORY_NOT_IN_SAME_STORE'))
+    }
+    if (msg.contains('CATEGORY_NOT_IN_SAME_STORE')) {
       return 'Kategori bu mağazaya ait değil.';
+    }
     return 'İşlem başarısız oldu.';
   }
 }

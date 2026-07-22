@@ -30,6 +30,8 @@ class VixRexOnboardingChatScreen extends StatefulWidget {
   const VixRexOnboardingChatScreen({
     super.key,
     this.initialName,
+    this.editorController,
+    this.editorInitialization,
     this.compact = false,
     this.onClose,
     this.embeddedInShell = false,
@@ -37,6 +39,8 @@ class VixRexOnboardingChatScreen extends StatefulWidget {
   });
 
   final String? initialName;
+  final StoreEditorController? editorController;
+  final Future<void>? editorInitialization;
   final bool compact;
   final VoidCallback? onClose;
 
@@ -53,10 +57,9 @@ class VixRexOnboardingChatScreen extends StatefulWidget {
 
 class _VixRexOnboardingChatScreenState
     extends State<VixRexOnboardingChatScreen> {
-  final _controller = StoreEditorController();
-  late final MyVitrinState _vitrinState = MyVitrinState(
-    controller: _controller,
-  );
+  late final StoreEditorController _controller;
+  late final MyVitrinState _vitrinState;
+  late final bool _ownsController;
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
   final _addressController = TextEditingController();
@@ -71,6 +74,9 @@ class _VixRexOnboardingChatScreenState
   @override
   void initState() {
     super.initState();
+    _ownsController = widget.editorController == null;
+    _controller = widget.editorController ?? StoreEditorController();
+    _vitrinState = MyVitrinState(controller: _controller);
     _controller.addListener(_onControllerTick);
     _bootstrap();
   }
@@ -80,7 +86,12 @@ class _VixRexOnboardingChatScreenState
   }
 
   Future<void> _bootstrap() async {
-    await _controller.initialize(widget.initialName);
+    final sharedInitialization = widget.editorInitialization;
+    if (sharedInitialization != null) {
+      await sharedInitialization;
+    } else if (_ownsController) {
+      await _controller.initialize(widget.initialName);
+    }
     if (!mounted) return;
     _pushBot(
       'Merhaba, ben Vixrex.\n\n'
@@ -93,7 +104,7 @@ class _VixRexOnboardingChatScreenState
   void dispose() {
     _controller.removeListener(_onControllerTick);
     _vitrinState.dispose();
-    _controller.dispose();
+    if (_ownsController) _controller.dispose();
     _scrollController.dispose();
     _inputController.dispose();
     _addressController.dispose();

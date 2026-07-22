@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vixrex Ýþlem Bütçesi"
+  short_description: "Gereksiz araç ve doðrulama iþlemlerini engeller"
+  default_prompt: "Use $vixrex-islem-butcesi to keep this Vixrex task minimal, justified, and within scope."

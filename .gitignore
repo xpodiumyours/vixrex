@@ -66,3 +66,6 @@ run_local.ps1
 release_apk/
 scratch/
 
+# Cursor temporary task plans are local-only
+.cursor/plans/
+

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/store_data.dart';
-import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/repositories/product_repository.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';

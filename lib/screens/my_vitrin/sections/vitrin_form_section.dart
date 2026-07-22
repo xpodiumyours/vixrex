@@ -991,7 +991,8 @@ class VitrinFormSection extends StatelessWidget {
       if (kDebugMode) debugPrint('_shareLink error: $e');
     }
     await Clipboard.setData(ClipboardData(text: link));
-    if (ctx.mounted)
+    if (ctx.mounted) {
       state.showSnackBar(ctx, 'Paylaşım açılamadı, link kopyalandı.');
+    }
   }
 }

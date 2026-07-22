@@ -52,13 +52,43 @@ void main() {
       expect(rec.action, VixRexAction.openVitrim);
     });
 
-    test('yayınlı kapak eksikse şablon picker aksiyonu', () {
+    test('yayınlı ama kategorisi eksikse önce kategorini seç önerisi', () {
       final store = StoreData().copyWith(
         name: 'Test',
         whatsapp: '05551234567',
         address: 'Adres',
         provinceName: 'Istanbul',
         districtName: 'Kadikoy',
+        privacyNoticeAcknowledged: true,
+        privacyNoticeVersion: '1.0',
+        termsAccepted: true,
+        termsVersion: '1.0',
+        publicationConsentAccepted: true,
+        publicationConsentVersion: '1.0',
+      );
+      const published = PublishedVitrinInfo(
+        slug: 'test',
+        publicLink: 'https://vixrex-public.vercel.app/v/test',
+        name: 'Test',
+        editToken: 'token',
+      );
+      final snapshot = VixRexProfileSnapshot.from(store, published);
+      final rec = VixRexGuidanceService.recommendationFor(
+        snapshot: snapshot,
+        hasShared: false,
+      );
+      expect(rec.id, 'improve_category');
+      expect(rec.action, VixRexAction.scrollToCategory);
+    });
+
+    test('yayınlı ve kategorisi tam ama kapak eksikse şablon picker aksiyonu', () {
+      final store = StoreData().copyWith(
+        name: 'Test',
+        whatsapp: '05551234567',
+        address: 'Adres',
+        provinceName: 'Istanbul',
+        districtName: 'Kadikoy',
+        kategori: 'giyim',
         privacyNoticeAcknowledged: true,
         privacyNoticeVersion: '1.0',
         termsAccepted: true,
@@ -140,6 +170,40 @@ void main() {
       expect(snapshot.isReadyToPublish, isTrue);
       expect(snapshot.isPublished, isFalse);
       expect(snapshot.nextMissingField, VixRexNextStep.publish);
+    });
+  });
+
+  group('ChatbotService history management', () {
+    test('ChatMessage deduplication prevents consecutive identical bot messages', () {
+      final msg1 = ChatMessage.bot('Test Tip', snapshotStateKey: 'state_1');
+      final msg2 = ChatMessage.bot('Test Tip', snapshotStateKey: 'state_1');
+      final msg3 = ChatMessage.user('User question');
+      final msg4 = ChatMessage.bot('Test Tip', snapshotStateKey: 'state_1');
+
+      final rawList = [msg1, msg2, msg3, msg4];
+      final cleaned = <ChatMessage>[];
+      for (final msg in rawList) {
+        if (cleaned.isEmpty) {
+          cleaned.add(msg);
+          continue;
+        }
+        final prev = cleaned.last;
+        if (msg.isBot && prev.isBot) {
+          if (msg.text.trim() == prev.text.trim() ||
+              (msg.snapshotStateKey != null &&
+                  msg.snapshotStateKey == prev.snapshotStateKey)) {
+            continue;
+          }
+        }
+        cleaned.add(msg);
+      }
+
+      // msg2 was consecutive duplicate of msg1 -> removed
+      // msg4 came after user message -> kept
+      expect(cleaned, hasLength(3));
+      expect(cleaned[0].text, 'Test Tip');
+      expect(cleaned[1].isBot, isFalse);
+      expect(cleaned[2].text, 'Test Tip');
     });
   });
 }

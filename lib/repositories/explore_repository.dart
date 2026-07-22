@@ -27,8 +27,46 @@ class ExploreRepository {
             .from('stores')
             .select(StoreSafeSelect.columns)
             .eq('is_published', true);
-        final List<dynamic> data = response as List<dynamic>;
-        return data.map((json) => StoreData.fromJson(json)).toList();
+        final List<dynamic> rawList = response as List<dynamic>;
+        final stores = rawList.map((json) => StoreData.fromJson(json)).toList();
+
+        final storeIds = stores
+            .map((s) => s.id?.trim() ?? '')
+            .where((id) => id.isNotEmpty)
+            .toList();
+
+        if (storeIds.isNotEmpty) {
+          final productsResponse = await _client
+              .from('products')
+              .select(
+                'id, store_id, name, slug, description, price_text, price_amount, currency, stock_status, image_urls, is_visible, is_active, sort_order',
+              )
+              .filter('store_id', 'in', storeIds)
+              .eq('is_active', true)
+              .eq('is_visible', true)
+              .order('sort_order');
+
+          final List<dynamic> rawProducts = productsResponse as List<dynamic>;
+          final Map<String, List<Product>> productMap = {};
+          for (final item in rawProducts) {
+            if (item is Map) {
+              final map = Map<String, dynamic>.from(item);
+              final storeId = (map['store_id'] ?? '').toString().trim();
+              if (storeId.isNotEmpty) {
+                final product = Product.fromJson(map);
+                productMap.putIfAbsent(storeId, () => []).add(product);
+              }
+            }
+          }
+          for (final store in stores) {
+            final id = store.id?.trim() ?? '';
+            if (id.isNotEmpty && productMap.containsKey(id)) {
+              store.products = productMap[id]!;
+            }
+          }
+        }
+
+        return stores;
       },
     );
   }

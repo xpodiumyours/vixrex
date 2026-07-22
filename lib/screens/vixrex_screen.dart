@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/screens/vixrex_onboarding_chat_screen.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
@@ -16,6 +17,8 @@ const double _vixrexHeroAvatarSize = 34;
 /// Yayın var: [VixRexCompanionChat] rehber (şablon → ürün → paylaş).
 class VixRexScreen extends StatefulWidget {
   final VixRexProfileSnapshot? snapshot;
+  final StoreEditorController? editorController;
+  final Future<void>? editorInitialization;
   final bool hasShared;
   final String? dismissedRecommendationId;
   final ValueChanged<VixRexAction> onAction;
@@ -26,6 +29,8 @@ class VixRexScreen extends StatefulWidget {
   const VixRexScreen({
     super.key,
     required this.snapshot,
+    this.editorController,
+    this.editorInitialization,
     required this.hasShared,
     required this.dismissedRecommendationId,
     required this.onAction,
@@ -78,6 +83,8 @@ class _VixRexScreenState extends State<VixRexScreen> {
         child: _needsSetup
             ? VixRexOnboardingChatScreen(
                 key: const ValueKey('vixrex_setup'),
+                editorController: widget.editorController,
+                editorInitialization: widget.editorInitialization,
                 embeddedInShell: true,
                 onSetupComplete: widget.onSetupComplete,
               )

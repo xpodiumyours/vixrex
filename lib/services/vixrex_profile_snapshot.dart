@@ -112,10 +112,7 @@ class VixRexProfileSnapshot {
       autoFillCompleted: autoFillCompleted, // SnapshotLoader'dan ayarlanacak
       isPublished: isPublished,
       storeName: data.name.trim(),
-      category:
-          data.kategori.trim().isNotEmpty
-              ? data.kategori.trim()
-              : data.businessType.trim(),
+      category: data.kategori.trim(),
       district: data.districtName.trim(),
       publicLink: publishedInfo?.publicLink.trim() ?? '',
     );
@@ -134,6 +131,11 @@ class VixRexProfileSnapshot {
   }
 
   // ── Yardımcılar ───────────────────────────────────────────────────────────
+
+  bool get categoryCompleted =>
+      category.trim().isNotEmpty &&
+      category.trim().toLowerCase() != 'diger' &&
+      category.trim().toLowerCase() != 'diğer';
 
   bool get isReadyToPublish =>
       nameCompleted &&

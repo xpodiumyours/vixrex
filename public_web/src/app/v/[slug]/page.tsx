@@ -132,97 +132,72 @@ async function _getStoreData(slug: string, page = 1, category = "", query = "") 
       .order("created_at", { ascending: false })
       .limit(3);
 
-    const storageVersion = store.product_storage_version ?? 1;
     let visibleProducts: ProductItem[] = [];
     let categories: CategoryRow[] = [];
     let productPagination: ProductPagination | null = null;
+    const storeId = store.id;
 
-    if (storageVersion === 2) {
-      const storeId = store.id;
+    if (storeId) {
+      const { data: categoryRows } = await supabase
+        .from("product_categories")
+        .select("id,name")
+        .eq("store_id", storeId)
+        .eq("is_active", true)
+        .order("sort_order");
 
-      if (storeId) {
-        const { data: categoryRows } = await supabase
-          .from("product_categories")
-          .select("id,name")
-          .eq("store_id", storeId)
-          .eq("is_active", true)
-          .order("sort_order");
+      categories = categoryRows || [];
 
-        categories = categoryRows || [];
+      const categoryMap = new Map<string, string>();
+      categories.forEach((cat) => {
+        categoryMap.set(cat.id, cat.name);
+      });
 
-        const categoryMap = new Map<string, string>();
-        categories.forEach((cat) => {
-          categoryMap.set(cat.id, cat.name);
-        });
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
 
-        const from = (page - 1) * PAGE_SIZE;
-        const to = from + PAGE_SIZE - 1;
-
-        let productQuery = supabase
-          .from("products")
-          .select("id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order", { count: "exact" })
-          .eq("store_id", storeId)
-          .eq("is_active", true)
-          .eq("is_visible", true)
-          .order("sort_order", { ascending: true })
-          .order("id", { ascending: true });
-
-        if (category) {
-          productQuery = productQuery.eq("category_id", category);
-        }
-
-        if (query) {
-          productQuery = productQuery.ilike("name", `%${query}%`);
-        }
-
-        const { data: productRows, count } = await productQuery.range(from, to);
-
-        const totalCount = count || 0;
-        visibleProducts = (productRows || [])
-          .filter((p) => p.name?.trim())
-          .map((p) => ({
-            id: p.id,
-            slug: p.slug,
-            name: p.name,
-            description: p.description || undefined,
-            price: p.price_text || (p.price_amount != null ? `${p.price_amount} ${p.currency}` : undefined),
-            imageUrls: Array.isArray(p.image_urls) ? p.image_urls : [],
-            category: (p.category_id ? categoryMap.get(p.category_id) : undefined) || undefined,
-            stockStatus: p.stock_status || undefined,
-            isVisible: p.is_visible,
-            source: p.source_type,
-          }));
-
-        productPagination = {
-          page,
-          pageSize: PAGE_SIZE,
-          totalCount,
-          hasNext: from + PAGE_SIZE < totalCount,
-          category,
-          query,
-        };
-      }
-    } else {
-      const products = safeParseJson<ProductItem>(store.products);
-      visibleProducts = products
-        .filter((product) => product.name?.trim() && product.isVisible !== false)
-        .sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
+      let productQuery = supabase
+        .from("products")
+        .select(
+          "id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order",
+          { count: "exact" }
+        )
+        .eq("store_id", storeId)
+        .eq("is_active", true)
+        .eq("is_visible", true)
+        .order("sort_order", { ascending: true })
+        .order("id", { ascending: true });
 
       if (category) {
-        visibleProducts = visibleProducts.filter(
-          (p) => (p.categoryId || "") === category
-        );
-      }
-      if (query) {
-        const q = query.toLowerCase();
-        visibleProducts = visibleProducts.filter(
-          (p) => (p.name || "").toLowerCase().includes(q)
-        );
+        productQuery = productQuery.eq("category_id", category);
       }
 
-      const totalCount = visibleProducts.length;
-      const from = (page - 1) * PAGE_SIZE;
-      visibleProducts = visibleProducts.slice(from, from + PAGE_SIZE);
+      if (query) {
+        productQuery = productQuery.ilike("name", `%${query}%`);
+      }
+
+      const { data: productRows, count } = await productQuery.range(from, to);
+
+      const totalCount = count || 0;
+      visibleProducts = (productRows || [])
+        .filter((p) => p.name?.trim())
+        .map((p) => ({
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          description: p.description || undefined,
+          price:
+            p.price_text ||
+            (p.price_amount != null
+              ? `${p.price_amount} ${p.currency}`
+              : undefined),
+          imageUrls: Array.isArray(p.image_urls) ? p.image_urls : [],
+          category:
+            (p.category_id ? categoryMap.get(p.category_id) : undefined) ||
+            undefined,
+          stockStatus: p.stock_status || undefined,
+          isVisible: p.is_visible,
+          source: p.source_type,
+        }));
 
       productPagination = {
         page,

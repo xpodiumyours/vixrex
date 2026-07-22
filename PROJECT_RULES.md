@@ -103,6 +103,34 @@ uygulanır:
 - Bu sınırlardan biri ihlal edilirse ajan işlemi durdurur, ihlali açıkça söyler
   ve kullanıcı onayı olmadan yeni araç çağrısı veya kapsam genişletmesi yapmaz.
 
+### 3.3 Gereksiz işlem kilidi ve yerel/uzak doğrulama ayrımı
+
+Her görevde `.cursor/skills/vixrex-islem-butcesi/SKILL.md` görev başında bir kez
+tamamen okunur ve bütün adımlarda uygulanır. Aynı turda yalnız “uygulamak” için
+dosyayı tekrar tekrar açmak yasaktır.
+
+- Görev başlamadan önce `inceleme`, `belge`, `kod`, `commit/push`, `deploy` veya
+  `APK/release` sınıflarından yalnız biri seçilir. Kullanıcı kapsamı genişletmedikçe
+  başka sınıfın işlemleri eklenmez.
+- Kullanıcı “yalnız commit/push”, “test/build çalıştırma” veya benzeri açık sınır
+  verdiyse format, analyze, test, build, GitHub API/`gh`, Vercel sorgusu, deploy ve
+  APK işlemi başlatılamaz. Açık dosyalar stage edilir; commit ve push ile durulur.
+- Yerel format yalnız kullanıcı istediğinde veya değişen dosya gerçek biçim kapısını
+  geçemediğinde, yalnız açık dosya listesiyle çalıştırılır. Önce/sonra diff büyüklüğü
+  karşılaştırılır; mekanik satır gürültüsü oluşursa stage/commit/push durdurulur.
+- Aynı analyze/test/build uzak CI tarafından otomatik çalıştırılıyorsa ve kullanıcı
+  yerel tekrar istemiyorsa yerelde çalıştırılmaz. Sonuç `CI bekliyor` diye raporlanır;
+  kanıt gelmeden `geçti` denmez.
+- Tam build, tam test, `gh auth`, deploy sorgusu, bağımlılık kurulumu ve ağ işlemi
+  yalnız çıktısı mevcut kararı değiştirecekse ve skill tablosundaki koşul oluştuysa
+  yapılır. “Belki gerekir” gerekçe değildir.
+- Her araçtan önce “Bu çıktı hangi somut kararı değiştirecek?” sorusu cevaplanır.
+  Somut cevap yoksa araç çağrısı yasaktır.
+
+Bu bölüm, doğrulama zorunluluğunu kaldırmaz; yerel ve uzak CI arasında gereksiz
+tekrarı kaldırır. Daha alt belgelerdeki genel test/build ifadeleri bu kilitle birlikte
+yorumlanır.
+
 ---
 
 ## 4. GÜVENLİK

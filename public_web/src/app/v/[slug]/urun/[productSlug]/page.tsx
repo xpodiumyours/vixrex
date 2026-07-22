@@ -70,64 +70,63 @@ async function _getProductData(slug: string, productSlug: string) {
 
   if (error || !store) return null;
 
-  const storageVersion = store.product_storage_version ?? 1;
+  // İlişkisel products tablosundan oku
+  const { data: storeRow } = await supabase
+    .from("stores")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
 
-  if (storageVersion === 2) {
-    // Yeni sistem: products tablosundan oku
+  if (storeRow?.id) {
     const { data: productRow } = await supabase
       .from("products")
-      .select("id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type")
-      .eq("store_id", (await supabase.from("stores").select("id").eq("slug", slug).single()).data?.id)
+      .select(
+        "id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type"
+      )
+      .eq("store_id", storeRow.id)
       .eq("slug", productSlug)
       .eq("is_active", true)
-      .single<ProductRow>();
+      .maybeSingle<ProductRow>();
 
-    if (!productRow || !productRow.name?.trim() || !productRow.is_visible) return null;
+    if (productRow && productRow.name?.trim() && productRow.is_visible) {
+      let categoryName = "";
+      if (productRow.category_id) {
+        const { data: cat } = await supabase
+          .from("product_categories")
+          .select("name")
+          .eq("id", productRow.category_id)
+          .maybeSingle<CategoryRow>();
+        categoryName = cat?.name || "";
+      }
 
-    // Kategori adını çek
-    let categoryName = "";
-    if (productRow.category_id) {
-      const { data: cat } = await supabase
-        .from("product_categories")
-        .select("name")
-        .eq("id", productRow.category_id)
-        .single<CategoryRow>();
-      categoryName = cat?.name || "";
+      const product: ProductItem = {
+        id: productRow.id,
+        slug: productRow.slug,
+        name: productRow.name,
+        description: productRow.description || undefined,
+        price:
+          productRow.price_text ||
+          (productRow.price_amount != null
+            ? `${productRow.price_amount} ${productRow.currency}`
+            : undefined),
+        imageUrls: Array.isArray(productRow.image_urls)
+          ? productRow.image_urls
+          : [],
+        category: categoryName || undefined,
+        stockStatus: productRow.stock_status || undefined,
+        isVisible: productRow.is_visible,
+        source: productRow.source_type,
+      };
+
+      return {
+        store,
+        product,
+        productSlug: productRow.slug,
+      };
     }
-
-    // ProductItem formatına çevir
-    const product: ProductItem = {
-      id: productRow.id,
-      slug: productRow.slug,
-      name: productRow.name,
-      description: productRow.description || undefined,
-      price: productRow.price_text || (productRow.price_amount != null ? `${productRow.price_amount} ${productRow.currency}` : undefined),
-      imageUrls: Array.isArray(productRow.image_urls) ? productRow.image_urls : [],
-      category: categoryName || undefined,
-      stockStatus: productRow.stock_status || undefined,
-      isVisible: productRow.is_visible,
-      source: productRow.source_type,
-    };
-
-    return {
-      store,
-      product,
-      productSlug: productRow.slug,
-    };
   }
 
-  // Eski sistem: JSON'dan oku (mevcut yapı)
-  const products = safeParseJson<ProductItem>(store.products);
-  const product = findProductBySlug(products, productSlug);
-  if (!product || !product.name?.trim() || product.isVisible === false) {
-    return null;
-  }
-
-  return {
-    store,
-    product,
-    productSlug: getProductUrlSlug(product, products.indexOf(product)),
-  };
+  return null;
 }
 
 const getProductData = (slug: string, productSlug: string) =>

@@ -53,8 +53,6 @@ class PublicVitrinScreen extends StatefulWidget {
             ? BookingSettings.fromJson(Map<String, dynamic>.from(bookingMap))
             : null;
 
-    final storageVersion =
-        (data['product_storage_version'] as num?)?.toInt() ?? 1;
     final storeId = _readString(data['id']);
 
     return StoreData(
@@ -86,8 +84,8 @@ class PublicVitrinScreen extends StatefulWidget {
       googleBusinessLink: _readString(data['google_business_link']),
       galleryItems: _parseGalleryItems(data['gallery_items']),
       marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),
-      // v2 ürünleri _fetchStore içinde tablodan doldurulur
-      products: storageVersion == 2 ? [] : _parseProducts(data['products']),
+      // Ürünler ilişkisel products tablosundan yüklenir
+      products: [],
       offerings: _parseOfferings(data['offerings']),
       kategori: _readString(data['kategori']),
       workingHours: _readString(data['working_hours']),
@@ -161,21 +159,7 @@ class PublicVitrinScreen extends StatefulWidget {
     }
   }
 
-  static List<Product> _parseProducts(Object? rawProducts) {
-    try {
-      final decodedProducts =
-          rawProducts is String ? jsonDecode(rawProducts) : rawProducts;
-      if (decodedProducts is! List) return [];
 
-      return decodedProducts
-          .whereType<Map>()
-          .map((p) => Product.fromJson(Map<String, dynamic>.from(p)))
-          .where((product) => product.isVisible)
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
 
   static List<StoreGalleryItem> _parseGalleryItems(Object? rawItems) {
     try {
@@ -247,10 +231,8 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       slug: widget.slug,
       data: response,
     );
-    final storageVersion =
-        (response['product_storage_version'] as num?)?.toInt() ?? 1;
     final storeId = (response['id'] ?? '').toString().trim();
-    if (storageVersion == 2 && storeId.isNotEmpty) {
+    if (storeId.isNotEmpty) {
       store.products = await ProductService().fetchVisibleProducts(storeId);
     }
     return store;

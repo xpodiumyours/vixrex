@@ -22,7 +22,7 @@ void main() {
     expect(store.products, isEmpty);
   });
 
-  test('v1 mapStoreFromSupabase JSON ürünleri okur', () {
+  test('mapStoreFromSupabase JSON ürünleri hicbir kosulda okumaz', () {
     final store = PublicVitrinScreen.mapStoreFromSupabase(
       slug: 'demo',
       data: {
@@ -35,8 +35,7 @@ void main() {
       },
     );
 
-    expect(store.products, isNotEmpty);
-    expect(store.products.single.name, 'JSON Ürün');
+    expect(store.products, isEmpty);
   });
 
   test('updateProductsOnly JSON yazmayı reddeder', () async {
@@ -45,5 +44,10 @@ void main() {
       editToken: 'token',
     );
     expect(result.isFailure, isTrue);
+  });
+
+  test('StorePublishPayloadBuilder toStoreUpdateMap includes product_storage_version = 2', () {
+    final map = const StorePublishPayloadBuilder().toStoreUpdateMap(StoreData(name: 'Demo'));
+    expect(map['product_storage_version'], 2);
   });
 }

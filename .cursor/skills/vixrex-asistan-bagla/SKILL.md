@@ -1,7 +1,7 @@
 ---
 name: vixrex-asistan-bagla
 description: >-
-  HER ADIMDA okunur. Vixrex asistan işinde ürünü bozmayı, ölü kod bırakmayı,
+  Görev başında bir kez okunur, HER ADIMDA uygulanır. Vixrex asistan işinde ürünü bozmayı, ölü kod bırakmayı,
   kabuk/boş işlemi, plan sapmasını ve paralel yolu engeller. Çalışan ürün
   üzerine çalışan asistan kurulur; ikinci ürün üretilmez. Use on every asistan
   step: plan, search, edit, test, report — and when user mentions asistan,
@@ -10,14 +10,16 @@ description: >-
 
 # Vixrex Asistan — Bağla, Üretme
 
-## Her adımda oku (zorunlu)
+## Görev başında oku, her adımda uygula (zorunlu)
 
-Bu skill **bir kez okunup unutulmaz.** Asistan işinde her turda, her araç
-çağrısından önce ve sonra yeniden uygula:
+Bu skill görev başında bir kez tamamen okunur. Asistan işinde her araç çağrısından
+önce ve sonra kuralları yeniden uygula; dosya değişmedikçe veya bağlam
+sıkıştırılmadıkça aynı turda dosyayı yeniden açma:
 
 - plan / tarama / kod / test / rapor / “tamam” demeden önce
 
-Okumadan veya kapıyı geçmeden ilerleme = kural ihlali. Yeni iş başlatma; dur.
+Görev başında okumadan veya kapıyı geçmeden ilerleme = kural ihlali. Gereksiz
+yeniden okuma da işlem-bütçesi ihlalidir.
 
 ## Ürün gerçeği (altı üstü bu)
 

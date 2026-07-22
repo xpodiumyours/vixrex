@@ -164,10 +164,12 @@ class VixRexGuidanceService {
       );
     }
 
-    // Yayın sonrası: önce görünüm/ürün (şablon → ürün), paylaşım sonra.
+    // Yayın sonrası: önce görünüm/ürün (kategori → şablon → ürün), paylaşım sonra.
     final improvements = improvementRecommendations(snapshot);
     for (final rec in improvements) {
-      if (rec.id == 'improve_cover' || rec.id == 'improve_catalog') {
+      if (rec.id == 'improve_category' ||
+          rec.id == 'improve_cover' ||
+          rec.id == 'improve_catalog') {
         return rec;
       }
     }
@@ -268,6 +270,21 @@ class VixRexGuidanceService {
     VixRexProfileSnapshot snapshot,
   ) {
     final items = <VixRexRecommendation>[];
+
+    if (!snapshot.categoryCompleted) {
+      items.add(
+        const VixRexRecommendation(
+          id: 'improve_category',
+          phase: VixRexJourneyPhase.improve,
+          title: 'Kategorini seç',
+          description:
+              'Vitrinin yayında! Şimdi kategorini seçelim ki işletmene özel '
+              'şablon ve büyüme önerilerini hazırlayalım.',
+          buttonLabel: 'Kategorini seç',
+          action: VixRexAction.scrollToCategory,
+        ),
+      );
+    }
 
     if (!snapshot.coverCompleted) {
       items.add(

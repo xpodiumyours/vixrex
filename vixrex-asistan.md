@@ -6,7 +6,7 @@ Oturum özeti (ne yapıldı): `vixrex-asistan-OTURUM-YAPILANLAR.md` — planı d
 
 **Üst kurallar (değişmez):** `PROJECT_RULES.md` → `AGENTS.md` → bu dosya.  
 Bu plan üst kuralları gevşetemez.  
-**Asistan skill (her adımda):** `.cursor/skills/vixrex-asistan-bagla/SKILL.md` —
+**Asistan skill (görev başında oku, her adımda uygula):** `.cursor/skills/vixrex-asistan-bagla/SKILL.md` —
 ürünü bozma, ölü kod bırakma, kabuk işlem yok; çalışan ürün üzerine çalışan asistan.
 
 **Tarih:** 16 Temmuz 2026  
@@ -33,7 +33,8 @@ Akış (sırayla):
 
 Her ajan bu plana göre çalışırken:
 
-0. **Her adımda** `.cursor/skills/vixrex-asistan-bagla/SKILL.md` oku ve kapıyı geç.
+0. Görev başında `.cursor/skills/vixrex-asistan-bagla/SKILL.md` dosyasını bir kez
+   oku; **her adımda uygula** ve kapıyı geç. Aynı turda gereksiz yeniden okuma.
 1. **Yeni plan dosyası açma.** Bu dosyayı güncelle veya Furkan’a sor.
 2. **Paralel yol yok.** Yeni kayıt/yayın motoru yok. Kullan: `StoreEditorController`, `StorePublishService`, `link_store_to_user`.
 3. **İkinci asistan/FAQ botu yok.** Landing, badge, VixRex sekmesi aynı motor.

@@ -72,16 +72,41 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   bool get _isUnpublished =>
       widget.snapshot == null || !widget.snapshot!.isPublished;
 
+  List<ChatMessage> _deduplicateHistory(List<ChatMessage> history) {
+    final cleaned = <ChatMessage>[];
+    for (final msg in history) {
+      if (cleaned.isEmpty) {
+        cleaned.add(msg);
+        continue;
+      }
+      final prev = cleaned.last;
+      // If two consecutive messages are bot messages with identical text or snapshotStateKey, drop duplicate
+      if (msg.isBot && prev.isBot) {
+        if (msg.text.trim() == prev.text.trim() ||
+            (msg.snapshotStateKey != null &&
+                msg.snapshotStateKey == prev.snapshotStateKey)) {
+          continue;
+        }
+      }
+      cleaned.add(msg);
+    }
+    return cleaned;
+  }
+
   Future<void> _bootstrap() async {
     final history = await _service.loadHistory();
     if (!mounted) return;
     if (history.isNotEmpty) {
+      final cleanedHistory = _deduplicateHistory(history);
       setState(() {
         _messages
           ..clear()
-          ..addAll(history);
+          ..addAll(cleanedHistory);
         _loading = false;
       });
+      if (cleanedHistory.length != history.length) {
+        await _service.saveHistory(_messages);
+      }
       await _alignUnpublishedInvite();
       await _ensureStepCta();
       _scrollToEnd();
@@ -106,6 +131,24 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     await _service.saveHistory(_messages);
     await _service.markGreeted();
     _scrollToEnd();
+  }
+
+  Future<void> _clearChat() async {
+    await _service.clearHistory();
+    if (!mounted) return;
+    final seed =
+        widget.snapshot == null
+            ? ChatbotConfig.setupInviteMessage
+            : _service.respondWithSnapshot(
+              widget.snapshot!,
+              hasShared: widget.hasShared,
+            );
+    setState(() {
+      _messages
+        ..clear()
+        ..add(seed);
+    });
+    await _service.saveHistory(_messages);
   }
 
   static const _handoffMarker = 'onboarding_handoff_v1';
@@ -159,7 +202,9 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
 
     final hasStepCta = _messages.any(
       (m) =>
-          m.isBot && m.quickReplies.any((q) => q.payload == 'action_step'),
+          m.isBot &&
+          (m.snapshotStateKey != null ||
+              m.quickReplies.any((q) => q.payload == 'action_step')),
     );
     if (hasStepCta) return;
     // Handoff varsa tam karşılama/link tekrarlanmaz — yalnız sıradaki adım.
@@ -201,8 +246,16 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
               widget.snapshot!,
               hasShared: widget.hasShared,
             );
-    final lastKey = _messages.last.snapshotStateKey;
-    if (lastKey == tip.snapshotStateKey) return;
+
+    // Üst üste tekrarlayan ipucu mesajı eklenmesini engelle
+    final alreadyExists = _messages.any(
+      (m) =>
+          m.isBot &&
+          (m.snapshotStateKey == tip.snapshotStateKey ||
+              m.text.trim() == tip.text.trim()),
+    );
+    if (alreadyExists) return;
+
     setState(() => _messages.add(tip));
     _service.saveHistory(_messages);
     _scrollToEnd();
@@ -335,6 +388,52 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     super.dispose();
   }
 
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Vixrex Sohbet',
+            style: TextStyle(
+              color: AppColors.mutedText,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (_messages.isNotEmpty)
+            InkWell(
+              onTap: _clearChat,
+              borderRadius: BorderRadius.circular(6),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.delete_outline_rounded,
+                      size: 14,
+                      color: AppColors.mutedText,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Sohbeti Temizle',
+                      style: TextStyle(
+                        color: AppColors.mutedText,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -351,6 +450,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildHeader(),
         Expanded(
           child: ListView.builder(
             controller: _scrollCtrl,
