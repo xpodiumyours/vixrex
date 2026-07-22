@@ -36,10 +36,18 @@ class VixRexHero extends StatelessWidget {
               ),
               child: ClipOval(
                 child: Image.asset(
-                  'assets/images/vixrex_mascot.webp',
+                  'assets/images/vixrex_v_crystal_mascot.png',
                   width: mascotSize,
                   height: mascotSize,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      'assets/images/vixrex_mascot.webp',
+                      width: mascotSize,
+                      height: mascotSize,
+                      fit: BoxFit.contain,
+                    );
+                  },
                 ),
               ),
             ),

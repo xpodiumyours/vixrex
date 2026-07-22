@@ -212,6 +212,7 @@ class VixRexGuidanceService {
     VixRexNextStep next,
   ) {
     return switch (next) {
+      // Kurulum CTA'ları form dump etmez → Vixrex sekmesi (gömülü onboarding).
       VixRexNextStep.name => const VixRexRecommendation(
         id: 'setup_name',
         phase: VixRexJourneyPhase.setup,
@@ -219,7 +220,7 @@ class VixRexGuidanceService {
         description:
             'Vitrininizde görünecek işletme adınızı ekleyerek başlayın.',
         buttonLabel: 'İşletme Adı Ekle',
-        action: VixRexAction.scrollToName,
+        action: VixRexAction.openVitrim,
       ),
       VixRexNextStep.whatsapp => const VixRexRecommendation(
         id: 'setup_whatsapp',
@@ -228,7 +229,7 @@ class VixRexGuidanceService {
         description:
             'Müşterilerinizin sizi hızlıca ulaşabilmesi için WhatsApp numaranızı girin.',
         buttonLabel: 'WhatsApp Ekle',
-        action: VixRexAction.scrollToWhatsapp,
+        action: VixRexAction.openVitrim,
       ),
       VixRexNextStep.address => const VixRexRecommendation(
         id: 'setup_address',
@@ -237,7 +238,7 @@ class VixRexGuidanceService {
         description:
             'Müşterilerin sizi bulabilmesi için adres ve konum bilgisi ekleyin.',
         buttonLabel: 'Adres Ekle',
-        action: VixRexAction.scrollToAddress,
+        action: VixRexAction.openVitrim,
       ),
       VixRexNextStep.legal => const VixRexRecommendation(
         id: 'setup_legal',
@@ -246,7 +247,7 @@ class VixRexGuidanceService {
         description:
             'Vitrininizi yayınlayabilmeniz için gerekli yasal onayları vermeniz gerekiyor.',
         buttonLabel: 'Onayları İncele',
-        action: VixRexAction.scrollToLegal,
+        action: VixRexAction.openVitrim,
       ),
       _ => const VixRexRecommendation(
         id: 'setup_publish',

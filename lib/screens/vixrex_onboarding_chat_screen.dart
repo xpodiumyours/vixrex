@@ -32,11 +32,19 @@ class VixRexOnboardingChatScreen extends StatefulWidget {
     this.initialName,
     this.compact = false,
     this.onClose,
+    this.embeddedInShell = false,
+    this.onSetupComplete,
   });
 
   final String? initialName;
   final bool compact;
   final VoidCallback? onClose;
+
+  /// HomeShell Vixrex sekmesi içinde: üst bar yok, handoff navigate etmez.
+  final bool embeddedInShell;
+
+  /// [embeddedInShell] iken “Vixrex ile geliştir” → parent snapshot yeniler.
+  final VoidCallback? onSetupComplete;
 
   @override
   State<VixRexOnboardingChatScreen> createState() =>
@@ -156,6 +164,10 @@ class _VixRexOnboardingChatScreenState
   }) async {
     await _handoffTranscriptToRehber();
     if (!mounted) return;
+    if (widget.embeddedInShell && widget.onSetupComplete != null) {
+      widget.onSetupComplete!();
+      return;
+    }
     AppRouter.navigateToHomeShell(
       context,
       initialIndex: initialIndex,
@@ -373,37 +385,37 @@ class _VixRexOnboardingChatScreenState
     final showInput =
         _step == _OnboardingStep.name || _step == _OnboardingStep.whatsapp;
 
+    final column = Column(
+      children: [
+        if (!widget.embeddedInShell) _buildTopBar(),
+        Expanded(
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            itemCount: _lines.length,
+            itemBuilder: (context, index) => _ChatBubble(line: _lines[index]),
+          ),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              _error!,
+              style: const TextStyle(color: AppColors.error, fontSize: 12.5),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        _buildComposer(showInput),
+      ],
+    );
+
+    if (widget.embeddedInShell) {
+      return ColoredBox(color: AppColors.bgEditor, child: column);
+    }
+
     return Scaffold(
       backgroundColor: AppColors.bgEditor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildTopBar(),
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                itemCount: _lines.length,
-                itemBuilder:
-                    (context, index) => _ChatBubble(line: _lines[index]),
-              ),
-            ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  _error!,
-                  style: const TextStyle(
-                    color: AppColors.error,
-                    fontSize: 12.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            _buildComposer(showInput),
-          ],
-        ),
-      ),
+      body: SafeArea(child: column),
     );
   }
 

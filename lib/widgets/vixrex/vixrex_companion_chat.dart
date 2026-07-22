@@ -69,6 +69,9 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     }
   }
 
+  bool get _isUnpublished =>
+      widget.snapshot == null || !widget.snapshot!.isPublished;
+
   Future<void> _bootstrap() async {
     final history = await _service.loadHistory();
     if (!mounted) return;
@@ -79,15 +82,16 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           ..addAll(history);
         _loading = false;
       });
-      // Kurulum handoff’unda CTA olmaz; sıradaki tek adımı ekle.
+      await _alignUnpublishedInvite();
       await _ensureStepCta();
       _scrollToEnd();
       return;
     }
 
+    // Companion yalnız yayın sonrası Vixrex sekmesinde; kurulum gömülü onboarding’de.
     final seed =
         widget.snapshot == null
-            ? ChatbotConfig.welcomeMessage
+            ? ChatbotConfig.setupInviteMessage
             : _service.respondWithSnapshot(
               widget.snapshot!,
               hasShared: widget.hasShared,
@@ -109,8 +113,50 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   bool get _historyHasOnboardingHandoff =>
       _messages.any((m) => m.snapshotStateKey == _handoffMarker);
 
+  /// Eski “İşletme Adı Ekle” / genel karşılama geçmişini tek davete indirger.
+  Future<void> _alignUnpublishedInvite() async {
+    if (!_isUnpublished) return;
+    if (_historyHasOnboardingHandoff) return;
+
+    final hasInvite = _messages.any(
+      (m) => m.snapshotStateKey == ChatbotConfig.setupInviteStateKey,
+    );
+    final hasStale = _messages.any(
+      (m) => m.isBot && ChatbotConfig.isStaleUnpublishedSetupTip(m),
+    );
+    final hasLegacyWelcome = _messages.any(
+      (m) =>
+          m.isBot &&
+          m.snapshotStateKey != ChatbotConfig.setupInviteStateKey &&
+          (m.text.contains('Vixrex rehberiyim') ||
+              m.text.contains('Nasıl yardımcı olayım') ||
+              m.text.contains('İşletme adınızı girin')),
+    );
+    if (hasInvite && !hasStale && !hasLegacyWelcome && _messages.length == 1) {
+      return;
+    }
+    if (!hasStale && !hasLegacyWelcome && hasInvite) return;
+
+    setState(() {
+      _messages
+        ..clear()
+        ..add(ChatbotConfig.setupInviteMessage);
+    });
+    await _service.saveHistory(_messages);
+  }
+
   Future<void> _ensureStepCta() async {
-    if (widget.snapshot == null) return;
+    if (_isUnpublished) {
+      final hasInvite = _messages.any(
+        (m) => m.snapshotStateKey == ChatbotConfig.setupInviteStateKey,
+      );
+      if (hasInvite) return;
+      if (!mounted) return;
+      setState(() => _messages.add(ChatbotConfig.setupInviteMessage));
+      await _service.saveHistory(_messages);
+      return;
+    }
+
     final hasStepCta = _messages.any(
       (m) =>
           m.isBot && m.quickReplies.any((q) => q.payload == 'action_step'),
@@ -133,7 +179,18 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   }
 
   void _refreshGuidanceTip() {
-    if (_messages.isEmpty || widget.snapshot == null) return;
+    if (_messages.isEmpty) return;
+    if (_isUnpublished) {
+      final hasInvite = _messages.any(
+        (m) => m.snapshotStateKey == ChatbotConfig.setupInviteStateKey,
+      );
+      if (hasInvite) return;
+      setState(() => _messages.add(ChatbotConfig.setupInviteMessage));
+      _service.saveHistory(_messages);
+      _scrollToEnd();
+      return;
+    }
+    if (widget.snapshot == null) return;
     final tip =
         _historyHasOnboardingHandoff
             ? ChatbotConfig.nextStepTip(

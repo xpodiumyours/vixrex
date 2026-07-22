@@ -9,20 +9,25 @@ abstract final class ChatbotConfig {
   static const String botSubtitle = 'Vixrex Rehberi';
   static const String systemStatus = 'AKTİF';
 
-  // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
-  static ChatMessage get welcomeMessage => ChatMessage.bot(
-        'Merhaba! Ben $botName, Vixrex rehberiyim.\n\n'
-        'Vitrinini kurman, yayınlaman ve müşterilerine duyurman için sıradaki doğru adımı gösteririm.\n\n'
-        'Nasıl yardımcı olayım?',
-        quickReplies: [
-          const QuickReply(
-            label: 'Vitrin oluştur',
-            payload: 'start_setup',
-            action: VixRexAction.openVitrim,
-          ),
-          ...mainMenuReplies(null),
-        ],
+  /// Eski unpublished davet key (sekme artık onboarding gömer; stale temizlik için).
+  static const String setupInviteStateKey = 'setup_invite';
+
+  static const QuickReply setupInviteReply = QuickReply(
+    label: 'Evet, Oluşturalım',
+    payload: 'start_setup',
+    action: VixRexAction.openVitrim,
+  );
+
+  /// Onboarding ile aynı üslup — rehberde field CTA (“İşletme Adı Ekle”) yok.
+  static ChatMessage get setupInviteMessage => ChatMessage.bot(
+        'Merhaba, ben Vixrex.\n\n'
+        'Sana dijital bir vitrin oluşturmamı ister misin?',
+        quickReplies: const [setupInviteReply],
+        snapshotStateKey: setupInviteStateKey,
       );
+
+  // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
+  static ChatMessage get welcomeMessage => setupInviteMessage;
 
   // ─── Snapshot Tabanlı Karşılama Mesajları ────────────────────────────────
 
@@ -31,6 +36,8 @@ abstract final class ChatbotConfig {
     VixRexProfileSnapshot snapshot, {
     required bool hasShared,
   }) {
+    if (!snapshot.isPublished) return setupInviteMessage;
+
     final recommendation = VixRexGuidanceService.recommendationFor(
       snapshot: snapshot,
       hasShared: hasShared,
@@ -38,12 +45,10 @@ abstract final class ChatbotConfig {
     final link = snapshot.publicLink.trim();
     // Boş geçmişte tek karşılama (kazanım + link bir kez).
     final warmIntro =
-        snapshot.isPublished
-            ? 'Harika, buraya kadar geldik.\n\n'
-                'Vitrinin yayında — adın, WhatsApp’ın ve konumun tek yerde.'
-                '${link.isEmpty ? '' : '\n\n$link'}\n\n'
-                '${recommendation.description}'
-            : '${recommendation.title}. ${recommendation.description}';
+        'Harika, buraya kadar geldik.\n\n'
+        'Vitrinin yayında — adın, WhatsApp’ın ve konumun tek yerde.'
+        '${link.isEmpty ? '' : '\n\n$link'}\n\n'
+        '${recommendation.description}';
     return ChatMessage.bot(
       warmIntro,
       quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
@@ -56,6 +61,8 @@ abstract final class ChatbotConfig {
     VixRexProfileSnapshot snapshot, {
     required bool hasShared,
   }) {
+    if (!snapshot.isPublished) return setupInviteMessage;
+
     final recommendation = VixRexGuidanceService.recommendationFor(
       snapshot: snapshot,
       hasShared: hasShared,
@@ -67,17 +74,34 @@ abstract final class ChatbotConfig {
     );
   }
 
+  /// Eski rehber history’deki field-setup CTA’ları (İşletme Adı Ekle vb.).
+  static bool isStaleUnpublishedSetupTip(ChatMessage message) {
+    final key = message.snapshotStateKey?.trim() ?? '';
+    if (key == setupInviteStateKey) return false;
+    if (key.startsWith('setup_') || key == 'publish' || key == 'welcome') {
+      return true;
+    }
+    return message.quickReplies.any(
+      (q) =>
+          q.label == 'İşletme Adı Ekle' ||
+          q.label == 'WhatsApp Ekle' ||
+          q.label == 'Adres Ekle' ||
+          q.label == 'Onayları İncele' ||
+          q.label == 'Vitrinimi Aç' ||
+          q.label == 'Yayınla' ||
+          q.label == 'Vitrin oluştur' ||
+          q.label == 'Başla',
+    );
+  }
+
   // ─── Ana Menü Quick Reply'ları ───────────────────────────────────────────
   /// Tek (veya en fazla iki) küçük hap — 7’li şerit yok.
   static List<QuickReply> mainMenuReplies(
     VixRexProfileSnapshot? snapshot, {
     bool hasShared = false,
   }) {
-    if (snapshot == null) {
-      return const [
-        QuickReply(label: 'Vixrex Ne İşe Yarar?', payload: 'vixrex_info'),
-        QuickReply(label: 'Üyelik / Kullanım', payload: 'membership_info'),
-      ];
+    if (snapshot == null || !snapshot.isPublished) {
+      return const [setupInviteReply];
     }
 
     final recommendation = VixRexGuidanceService.recommendationFor(

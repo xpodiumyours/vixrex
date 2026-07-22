@@ -420,12 +420,29 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     }
   }
 
+  /// Yayınlanmamış kurulum: Vixrex sekmesindeki gömülü onboarding (route yok).
+  bool get _needsSetupOnboarding {
+    final snapshot = _vixrexSnapshot;
+    return snapshot == null || !snapshot.isPublished;
+  }
+
+  void _openSetupOnboarding() {
+    setState(() => _selectedIndex = 2);
+  }
+
+  Future<void> _onVixRexSetupComplete() async {
+    await _loadVixRexSnapshot();
+    if (!mounted) return;
+    _exploreKey.currentState?.reloadStores();
+    setState(() => _selectedIndex = 2);
+  }
+
   void _handleVixRexAction(VixRexAction action) {
     switch (action) {
       case VixRexAction.openVitrim:
-        // Snapshot yoksa kurulum asistanı; varsa mevcut Vitrinim sekmesi.
-        if (_vixrexSnapshot == null) {
-          AppRouter.navigateToOnboardingChat(context);
+        // Yayın yoksa Vixrex sekmesi (kurulum); yayında Vitrinim.
+        if (_needsSetupOnboarding) {
+          _openSetupOnboarding();
         } else {
           _vixrexNavigateToVitrim();
         }
@@ -442,12 +459,19 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       case VixRexAction.openExplore:
         _openExplore();
         break;
-      case VixRexAction.scrollToCover:
-      case VixRexAction.scrollToGallery:
       case VixRexAction.scrollToName:
       case VixRexAction.scrollToWhatsapp:
       case VixRexAction.scrollToAddress:
       case VixRexAction.scrollToLegal:
+        // Kurulumda Vixrex sekmesi; yayında form scroll.
+        if (_needsSetupOnboarding) {
+          _openSetupOnboarding();
+        } else {
+          _vixrexScrollToAction(action);
+        }
+        break;
+      case VixRexAction.scrollToCover:
+      case VixRexAction.scrollToGallery:
       case VixRexAction.scrollToDesc:
       case VixRexAction.scrollToProducts:
       case VixRexAction.scrollToCategory:
@@ -490,6 +514,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         onAction: _handleVixRexAction,
         onSaveField: _handleVixRexSaveField,
         onDismissRecommendation: _dismissVixRexRecommendation,
+        onSetupComplete: _onVixRexSetupComplete,
       ),
       ProfileScreen(
         publicLink: _publishedInfo?.publicLink,
