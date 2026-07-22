@@ -33,7 +33,7 @@ begin
     select id from public.store_instagram_connections where store_slug = v_slug
   );
   delete from public.store_instagram_connections where store_slug = v_slug;
-  delete from public.vitrin_views where store_id = v_store_id;
+  delete from public.vitrin_views where store_slug = v_slug;
   delete from public.store_category_image_usage where store_id = v_store_id;
   delete from public.booking_settings where store_slug = v_slug;
   delete from public.store_articles where store_slug = v_slug;

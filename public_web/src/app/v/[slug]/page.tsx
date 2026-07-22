@@ -1,6 +1,8 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import {
@@ -16,11 +18,8 @@ import ProductCatalog from "./ProductCatalog";
 
 export const revalidate = 60;
 
-const PAGE_SIZE = 24;
-
 interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string; category?: string; q?: string }>;
 }
 
 interface GalleryItem {
@@ -85,23 +84,13 @@ interface CategoryRow {
   name: string;
 }
 
-interface ProductPagination {
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  hasNext: boolean;
-  category: string;
-  query: string;
-}
-
 const PUBLIC_STORE_SELECT =
   "id,slug,name,business_type,description,corporate_bio,whatsapp,instagram," +
   "website,address,status,marketplace_links,gallery_items,products," +
   "references_link,shelf_image_url,logo_url,working_hours,is_published," +
   "kategori,latitude,longitude,google_business_link,product_storage_version";
 
-async function _getStoreData(slug: string, page = 1, category = "", query = "") {
-  page = Math.max(1, page);
+async function _getStoreData(slug: string) {
   try {
     const { data: storeData, error: storeError } = await supabase
       .from("stores")
@@ -117,105 +106,75 @@ async function _getStoreData(slug: string, page = 1, category = "", query = "") 
     if (!storeData) return null;
     const store = storeData as unknown as PublicStoreRow;
 
-    const { data: bookingSettings } = await supabase
-      .from("booking_settings")
-      .select("*")
-      .eq("store_slug", slug)
-      .maybeSingle();
-
-    const { data: articles } = await supabase
-      .from("store_articles")
-      .select("*")
-      .eq("store_slug", slug)
-      .eq("status", "published")
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
-      .limit(3);
-
-    let visibleProducts: ProductItem[] = [];
-    let categories: CategoryRow[] = [];
-    let productPagination: ProductPagination | null = null;
     const storeId = store.id;
 
-    if (storeId) {
-      const { data: categoryRows } = await supabase
+    const [bookingResult, articlesResult, categoryResult, productResult] = await Promise.all([
+      supabase
+        .from("booking_settings")
+        .select("*")
+        .eq("store_slug", slug)
+        .maybeSingle(),
+      supabase
+        .from("store_articles")
+        .select("*")
+        .eq("store_slug", slug)
+        .eq("status", "published")
+        .order("published_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(3),
+      supabase
         .from("product_categories")
         .select("id,name")
         .eq("store_id", storeId)
         .eq("is_active", true)
-        .order("sort_order");
-
-      categories = categoryRows || [];
-
-      const categoryMap = new Map<string, string>();
-      categories.forEach((cat) => {
-        categoryMap.set(cat.id, cat.name);
-      });
-
-      const from = (page - 1) * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-
-      let productQuery = supabase
+        .order("sort_order"),
+      supabase
         .from("products")
         .select(
-          "id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order",
-          { count: "exact" }
+          "id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order"
         )
         .eq("store_id", storeId)
         .eq("is_active", true)
         .eq("is_visible", true)
         .order("sort_order", { ascending: true })
-        .order("id", { ascending: true });
+        .order("id", { ascending: true }),
+    ]);
 
-      if (category) {
-        productQuery = productQuery.eq("category_id", category);
-      }
+    const categories = (categoryResult.data || []) as CategoryRow[];
 
-      if (query) {
-        productQuery = productQuery.ilike("name", `%${query}%`);
-      }
+    const categoryMap = new Map<string, string>();
+    categories.forEach((cat) => {
+      categoryMap.set(cat.id, cat.name);
+    });
 
-      const { data: productRows, count } = await productQuery.range(from, to);
-
-      const totalCount = count || 0;
-      visibleProducts = (productRows || [])
-        .filter((p) => p.name?.trim())
-        .map((p) => ({
-          id: p.id,
-          slug: p.slug,
-          name: p.name,
-          description: p.description || undefined,
-          price:
-            p.price_text ||
-            (p.price_amount != null
-              ? `${p.price_amount} ${p.currency}`
-              : undefined),
-          imageUrls: Array.isArray(p.image_urls) ? p.image_urls : [],
-          category:
-            (p.category_id ? categoryMap.get(p.category_id) : undefined) ||
-            undefined,
-          stockStatus: p.stock_status || undefined,
-          isVisible: p.is_visible,
-          source: p.source_type,
-        }));
-
-      productPagination = {
-        page,
-        pageSize: PAGE_SIZE,
-        totalCount,
-        hasNext: from + PAGE_SIZE < totalCount,
-        category,
-        query,
-      };
-    }
+    const visibleProducts = (productResult.data || [])
+      .filter((p: Record<string, unknown>) => (p.name as string)?.trim())
+      .map((p: Record<string, unknown>) => ({
+        id: p.id as string,
+        slug: p.slug as string,
+        name: p.name as string,
+        description: (p.description as string) || undefined,
+        price:
+          (p.price_text as string) ||
+          (p.price_amount != null
+            ? `${p.price_amount} ${p.currency}`
+            : undefined),
+        imageUrls: Array.isArray(p.image_urls) ? (p.image_urls as string[]) : [],
+        categoryId: (p.category_id as string) || undefined,
+        category:
+          (p.category_id ? categoryMap.get(p.category_id as string) : undefined) ||
+          undefined,
+        stockStatus: (p.stock_status as string) || undefined,
+        isVisible: p.is_visible as boolean,
+        source: p.source_type as string,
+      }));
 
     return {
       store,
-      bookingSettings,
-      articles: articles || [],
+      bookingSettings: bookingResult.data,
+      articles: articlesResult.data || [],
       visibleProducts,
       categories,
-      productPagination,
     };
   } catch (err) {
     console.error(`Store data fetch error for slug=${slug}:`, err);
@@ -223,20 +182,16 @@ async function _getStoreData(slug: string, page = 1, category = "", query = "") 
   }
 }
 
-const getStoreData = (slug: string, page: number, category: string, query: string) =>
+const getStoreData = (slug: string) =>
   unstable_cache(
-    () => _getStoreData(slug, page, category, query),
-    [`store-${slug}`, `p${page}`, `c${category}`, `q${query}`],
+    () => _getStoreData(slug),
+    [`store-${slug}`],
     { tags: [`store-${slug}`, `products-${slug}`], revalidate: 60 }
   )();
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
-  const searchParams = await props.searchParams;
-  const page = Math.max(1, parseInt(searchParams.page || "1", 10) || 1);
-  const category = searchParams.category || "";
-  const query = searchParams.q || "";
-  const data = await getStoreData(params.slug, page, category, query);
+  const data = await getStoreData(params.slug);
   if (!data) return { robots: { index: false, follow: false } };
 
   const { store } = data;
@@ -277,16 +232,12 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
 export default async function StorePage(props: PageProps) {
   const params = await props.params;
-  const searchParams = await props.searchParams;
-  const page = Math.max(1, parseInt(searchParams.page || "1", 10) || 1);
-  const category = searchParams.category || "";
-  const query = searchParams.q || "";
-  const data = await getStoreData(params.slug, page, category, query);
+  const data = await getStoreData(params.slug);
   if (!data) {
     notFound();
   }
 
-  const { store, bookingSettings, articles, visibleProducts, categories, productPagination } = data;
+  const { store, bookingSettings, articles, visibleProducts, categories } = data;
 
   const galleryItems = safeParseJson<GalleryItem>(store.gallery_items);
   const marketplaceLinks = safeParseJson<MarketplaceLinkItem>(store.marketplace_links);
@@ -438,11 +389,12 @@ export default async function StorePage(props: PageProps) {
         <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-5 animate-fade-in">
           <section className="relative overflow-hidden rounded-[28px] border border-[#25415F] bg-[#0E1B2E] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
             {heroImage && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={heroImage}
                 alt={`${store.name} vitrin görseli`}
-                className="absolute inset-0 h-full w-full object-cover opacity-55"
+                fill
+                className="object-cover opacity-55"
+                priority
               />
             )}
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,19,34,0.96),rgba(7,19,34,0.78),rgba(7,19,34,0.48))]" />
@@ -476,10 +428,11 @@ export default async function StorePage(props: PageProps) {
                 <div className="flex flex-col items-start gap-5">
                   <div className="flex items-center gap-4">
                     {store.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={store.logo_url}
                         alt={`${store.name} logo`}
+                        width={96}
+                        height={96}
                         className="h-24 w-24 rounded-full border-2 border-white/60 object-contain shadow-2xl bg-white"
                       />
                     ) : (
@@ -597,13 +550,31 @@ export default async function StorePage(props: PageProps) {
                 </div>
               )}
 
-              {visibleProducts.length > 0 && productPagination && (
-                <ProductCatalog
-                  storeSlug={store.slug}
-                  products={visibleProducts}
-                  categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
-                  pagination={productPagination}
-                />
+              {visibleProducts.length > 0 && (
+                <Suspense fallback={
+                  <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <h2 className="text-base font-black text-white">Ürünler</h2>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="animate-pulse rounded-2xl border border-[#25415F] bg-[#13243A] p-2">
+                          <div className="aspect-square rounded-xl bg-[#162A42]" />
+                          <div className="mt-3 space-y-2">
+                            <div className="h-4 rounded bg-[#162A42]" />
+                            <div className="h-3 w-1/2 rounded bg-[#162A42]" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                }>
+                  <ProductCatalog
+                    storeSlug={store.slug}
+                    products={visibleProducts}
+                    categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
+                  />
+                </Suspense>
               )}
 
               {store.corporate_bio && (
@@ -654,10 +625,11 @@ export default async function StorePage(props: PageProps) {
               <div className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4">
                 <div className="flex items-center gap-4">
                   <div className="rounded-2xl bg-white p-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(publicUrl)}`}
                       alt={`${store.name} QR kodu`}
+                      width={112}
+                      height={112}
                       className="h-[112px] w-[112px]"
                     />
                   </div>
@@ -725,10 +697,11 @@ export default async function StorePage(props: PageProps) {
                   <div className="grid grid-cols-3 gap-2">
                     {galleryItems.slice(0, 6).map((item: GalleryItem, i: number) => (
                       <div key={item.id || i} className="aspect-square overflow-hidden rounded-xl bg-[#162A42]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={item.imageUrl}
                           alt={item.title || "Vitrin görseli"}
+                          width={200}
+                          height={200}
                           className="h-full w-full object-cover"
                         />
                       </div>

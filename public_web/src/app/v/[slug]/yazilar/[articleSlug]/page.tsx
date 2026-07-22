@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -201,11 +202,11 @@ export default async function ArticleDetailPage(props: PageProps) {
         {/* Cover Photo */}
         {article.cover_image_url && (
           <div className="rounded-2xl overflow-hidden aspect-video border border-[#D0E4E8] dark:border-[#243141] shadow-sm relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
+            <Image 
               src={article.cover_image_url} 
               alt={article.title} 
-              className="w-full h-full object-cover" 
+              fill
+              className="object-cover" 
             />
           </div>
         )}
@@ -246,8 +247,7 @@ export default async function ArticleDetailPage(props: PageProps) {
         <div className="card bg-slate-50/50 dark:bg-slate-900/30 border border-[#D0E4E8] dark:border-[#243141] p-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             {article.store.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={article.store.logo_url} alt="Logo" className="w-10 h-10 rounded-full object-contain border bg-white" />
+              <Image src={article.store.logo_url} alt="Logo" width={40} height={40} className="w-10 h-10 rounded-full object-contain border bg-white" />
             ) : (
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#10D8D8] to-[#38A0E4] text-white flex items-center justify-center font-bold text-base">
                 {article.store.name[0].toUpperCase()}

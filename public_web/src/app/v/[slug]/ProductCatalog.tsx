@@ -1,17 +1,23 @@
-import Link from "next/link";
+"use client";
+
+import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import { useCallback, useMemo } from "react";
 import {
   getProductImages,
   getProductUrlSlug,
   type ProductItem,
 } from "@/lib/products";
 
+interface CatalogProduct extends ProductItem {
+  categoryId?: string;
+}
+
 interface ProductPagination {
   page: number;
   pageSize: number;
   totalCount: number;
   hasNext: boolean;
-  category: string;
-  query: string;
 }
 
 interface CategoryItem {
@@ -21,35 +27,76 @@ interface CategoryItem {
 
 interface ProductCatalogProps {
   storeSlug: string;
-  products: ProductItem[];
+  products: CatalogProduct[];
   categoryMap: CategoryItem[];
-  pagination: ProductPagination;
 }
+
+const PAGE_SIZE = 24;
 
 export default function ProductCatalog({
   storeSlug,
   products,
   categoryMap,
-  pagination,
 }: ProductCatalogProps) {
-  const { page, totalCount, hasNext, category, query } = pagination;
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  function buildPageUrl(pageNum: number) {
-    const params = new URLSearchParams();
-    if (pageNum > 1) params.set("page", String(pageNum));
-    if (category) params.set("category", category);
-    if (query) params.set("q", query);
-    const qs = params.toString();
-    return `/v/${storeSlug}${qs ? `?${qs}` : ""}`;
-  }
+  const currentPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+  const currentCategory = searchParams.get("category") || "";
+  const currentQuery = searchParams.get("q") || "";
 
-  function buildCategoryUrl(catId: string) {
-    const params = new URLSearchParams();
-    if (catId) params.set("category", catId);
-    if (query) params.set("q", query);
-    const qs = params.toString();
-    return `/v/${storeSlug}${qs ? `?${qs}` : ""}`;
-  }
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      if (currentCategory && product.categoryId !== currentCategory) return false;
+      if (currentQuery) {
+        const q = currentQuery.toLowerCase();
+        const matchName = product.name.toLowerCase().includes(q);
+        const matchDesc = product.description?.toLowerCase().includes(q) || false;
+        const matchCat = product.category?.toLowerCase().includes(q) || false;
+        if (!matchName && !matchDesc && !matchCat) return false;
+      }
+      return true;
+    });
+  }, [products, currentCategory, currentQuery]);
+
+  const totalCount = filteredProducts.length;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const safePage = Math.min(currentPage, Math.max(1, totalPages));
+  const from = (safePage - 1) * PAGE_SIZE;
+  const paginatedProducts = filteredProducts.slice(from, from + PAGE_SIZE);
+  const hasNext = safePage < totalPages;
+
+  const pagination: ProductPagination = {
+    page: safePage,
+    pageSize: PAGE_SIZE,
+    totalCount,
+    hasNext,
+  };
+
+  const buildPageUrl = useCallback(
+    (pageNum: number) => {
+      const params = new URLSearchParams();
+      if (pageNum > 1) params.set("page", String(pageNum));
+      if (currentCategory) params.set("category", currentCategory);
+      if (currentQuery) params.set("q", currentQuery);
+      const qs = params.toString();
+      return `/v/${storeSlug}${qs ? `?${qs}` : ""}`;
+    },
+    [storeSlug, currentCategory, currentQuery]
+  );
+
+  const buildCategoryUrl = useCallback(
+    (catId: string) => {
+      const params = new URLSearchParams();
+      if (catId) params.set("category", catId);
+      if (currentQuery) params.set("q", currentQuery);
+      const qs = params.toString();
+      return `/v/${storeSlug}${qs ? `?${qs}` : ""}`;
+    },
+    [storeSlug, currentQuery]
+  );
+
+  const { page } = pagination;
 
   return (
     <section className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:p-5">
@@ -62,47 +109,46 @@ export default function ProductCatalog({
 
       {categoryMap.length > 1 && (
         <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-          <Link
+          <a
             href={buildCategoryUrl("")}
             className={`min-h-11 shrink-0 rounded-full border px-4 text-xs font-black ${
-              category === ""
+              currentCategory === ""
                 ? "border-[#38A0E4] bg-[#38A0E4] text-[#071322]"
                 : "border-[#25415F] bg-[#13243A] text-[#C4D1E3]"
             }`}
           >
             Tümü
-          </Link>
+          </a>
           {categoryMap.map((cat) => (
-            <Link
+            <a
               key={cat.id}
               href={buildCategoryUrl(cat.id)}
               className={`min-h-11 shrink-0 rounded-full border px-4 text-xs font-black ${
-                category === cat.id
+                currentCategory === cat.id
                   ? "border-[#38A0E4] bg-[#38A0E4] text-[#071322]"
                   : "border-[#25415F] bg-[#13243A] text-[#C4D1E3]"
               }`}
             >
               {cat.name}
-            </Link>
+            </a>
           ))}
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-        {products.map((product, index) => {
-          const globalIndex = (page - 1) * pagination.pageSize + index;
+        {paginatedProducts.map((product, index) => {
+          const globalIndex = from + index;
           const productUrl = `/v/${storeSlug}/urun/${getProductUrlSlug(product, globalIndex)}`;
           const image = getProductImages(product)[0];
           return (
-            <Link
+            <a
               key={product.id || `${product.name}-${index}`}
               href={productUrl}
               className="min-w-0 rounded-2xl border border-[#25415F] bg-[#13243A] p-2 transition hover:border-[#38A0E4]/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38A0E4]"
             >
               <div className="aspect-square overflow-hidden rounded-xl bg-[#162A42]">
                 {image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={image} alt={product.name} className="h-full w-full object-cover" />
+                  <Image src={image} alt={product.name} width={200} height={200} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs font-black text-[#9DB2C8]">
                     Ürün görseli bekleniyor
@@ -123,7 +169,7 @@ export default function ProductCatalog({
                   </span>
                 </div>
               </div>
-            </Link>
+            </a>
           );
         })}
       </div>
@@ -131,25 +177,25 @@ export default function ProductCatalog({
       {(page > 1 || hasNext) && (
         <div className="mt-4 flex items-center justify-between gap-3">
           {page > 1 ? (
-            <Link
+            <a
               href={buildPageUrl(page - 1)}
               className="min-h-11 rounded-2xl border border-[#25415F] bg-[#13243A] px-5 text-sm font-black text-[#C4D1E3]"
             >
               Önceki sayfa
-            </Link>
+            </a>
           ) : (
             <div />
           )}
           <span className="text-xs font-bold text-[#9DB2C8]">
-            Sayfa {page} / {Math.ceil(totalCount / pagination.pageSize)}
+            Sayfa {page} / {totalPages}
           </span>
           {hasNext ? (
-            <Link
+            <a
               href={buildPageUrl(page + 1)}
               className="min-h-11 rounded-2xl border border-[#38A0E4]/40 bg-[#38A0E4]/10 px-5 text-sm font-black text-[#B9E1FF]"
             >
               Sonraki sayfa
-            </Link>
+            </a>
           ) : (
             <div />
           )}

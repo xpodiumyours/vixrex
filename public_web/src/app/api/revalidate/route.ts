@@ -19,6 +19,10 @@ import { revalidateTag, revalidatePath } from "next/cache";
 export async function POST(req: NextRequest) {
   const localSecret = process.env.REVALIDATION_SECRET;
 
+  if (!localSecret) {
+    console.warn("[REVALIDATION] REVALIDATION_SECRET env variable is not set! Revalidation webhook will always fail.");
+  }
+
   const headerSecret = req.headers.get("x-revalidate-secret");
 
   if (!localSecret || headerSecret !== localSecret) {

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import {
@@ -22,6 +23,7 @@ interface PageProps {
 }
 
 interface StoreRow {
+  id: string;
   slug: string;
   name: string;
   description?: string;
@@ -62,7 +64,7 @@ async function _getProductData(slug: string, productSlug: string) {
   const { data: store, error } = await supabase
     .from("stores")
     .select(
-      "slug,name,description,corporate_bio,whatsapp,instagram,website,address,logo_url,shelf_image_url,products,is_published,product_storage_version"
+      "id,slug,name,description,corporate_bio,whatsapp,instagram,website,address,logo_url,shelf_image_url,products,is_published,product_storage_version"
     )
     .eq("slug", slug)
     .eq("is_published", true)
@@ -70,20 +72,13 @@ async function _getProductData(slug: string, productSlug: string) {
 
   if (error || !store) return null;
 
-  // İlişkisel products tablosundan oku
-  const { data: storeRow } = await supabase
-    .from("stores")
-    .select("id")
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (storeRow?.id) {
+  if (store.id) {
     const { data: productRow } = await supabase
       .from("products")
       .select(
         "id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type"
       )
-      .eq("store_id", storeRow.id)
+      .eq("store_id", store.id)
       .eq("slug", productSlug)
       .eq("is_active", true)
       .maybeSingle<ProductRow>();
@@ -293,11 +288,13 @@ export default async function ProductDetailPage(props: PageProps) {
                     key={imageUrl}
                     className="aspect-square min-w-full snap-center overflow-hidden rounded-[22px] bg-[#13243A]"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={imageUrl}
                       alt={`${product.name} görsel ${index + 1}`}
+                      width={600}
+                      height={600}
                       className="h-full w-full object-cover"
+                      priority={index === 0}
                     />
                   </div>
                 ))}
