@@ -318,8 +318,7 @@ void main() {
   });
 
   group('StorePublishService.updateProductsOnly', () {
-    test('ürünleri update_store_with_token RPC ile kaydeder', () async {
-      fakeClient.selectResponse = {'slug': 'test-magazasi'};
+    test('JSON ürün yazımını reddeder (tablo yolu zorunlu)', () async {
       sampleStore.products = [Product(id: 'p1', name: 'Tişört', price: '199')];
       sampleStore.slug = 'test-magazasi';
 
@@ -328,18 +327,9 @@ void main() {
         editToken: 'edit-token-12345678901234567890',
       );
 
-      expect(result.isSuccess, isTrue);
-      expect(fakeClient.rpcCalls.length, 1);
-      expect(fakeClient.rpcCalls.first['fn'], 'update_store_with_token');
-      final params =
-          fakeClient.rpcCalls.first['params'] as Map<String, dynamic>;
-      expect(params['p_slug'], 'test-magazasi');
-      expect(params['p_edit_token'], 'edit-token-12345678901234567890');
-      final pStore = params['p_store'] as Map<String, dynamic>;
-      expect(pStore.containsKey('products'), isTrue);
-      expect(pStore.containsKey('product_categories'), isTrue);
-      expect((pStore['products'] as List).length, 1);
-      expect(pStore['products'][0]['name'], 'Tişört');
+      expect(result.isFailure, isTrue);
+      expect(fakeClient.rpcCalls, isEmpty);
+      expect(result.failure?.message, contains('products tablosuna'));
     });
   });
 }

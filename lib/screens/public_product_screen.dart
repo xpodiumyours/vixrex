@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/public_store_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -32,43 +33,50 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
   int _imageIndex = 0;
 
   Future<_PublicProductData?> _load() async {
-    final result = await const PublicStoreService().fetchPublishedStoreProducts(widget.storeSlug);
+    final result = await const PublicStoreService().fetchPublishedStoreProducts(
+      widget.storeSlug,
+    );
+    if (result.isFailure || result.data == null) return null;
+    final row = result.data!;
 
-    return result.when(
-      success: (row) {
-        if (row == null) return null;
+    final storageVersion =
+        (row['product_storage_version'] as num?)?.toInt() ?? 1;
+    final storeId = (row['id'] ?? '').toString().trim();
 
-        final raw = row['products'];
-        final decoded = raw is String ? jsonDecode(raw) : raw;
-        if (decoded is! List) return null;
-        final products =
-            decoded
-                .whereType<Map>()
-                .map((item) => Product.fromJson(Map<String, dynamic>.from(item)))
-                .where((product) => product.isVisible)
-                .toList();
-        final requested = const StorePublishPayloadBuilder().generateSlug(
-          widget.productSlug,
-        );
-        Product? found;
-        for (var index = 0; index < products.length; index++) {
-          final product = products[index];
-          final slug = _productSlug(product, index);
-          if (slug == requested) {
-            found = product;
-            break;
-          }
-        }
-        if (found == null) return null;
-        return _PublicProductData(
-          storeName: (row['name'] ?? '').toString(),
-          whatsapp: (row['whatsapp'] ?? '').toString(),
-          fallbackImage:
-              (row['shelf_image_url'] ?? row['logo_url'] ?? '').toString(),
-          product: found,
-        );
-      },
-      failure: (_) => null,
+    List<Product> products;
+    if (storageVersion == 2 && storeId.isNotEmpty) {
+      products = await ProductService().fetchVisibleProducts(storeId);
+    } else {
+      final raw = row['products'];
+      final decoded = raw is String ? jsonDecode(raw) : raw;
+      if (decoded is! List) return null;
+      products =
+          decoded
+              .whereType<Map>()
+              .map((item) => Product.fromJson(Map<String, dynamic>.from(item)))
+              .where((product) => product.isVisible)
+              .toList();
+    }
+
+    final requested = const StorePublishPayloadBuilder().generateSlug(
+      widget.productSlug,
+    );
+    Product? found;
+    for (var index = 0; index < products.length; index++) {
+      final product = products[index];
+      final slug = _productSlug(product, index);
+      if (slug == requested) {
+        found = product;
+        break;
+      }
+    }
+    if (found == null) return null;
+    return _PublicProductData(
+      storeName: (row['name'] ?? '').toString(),
+      whatsapp: (row['whatsapp'] ?? '').toString(),
+      fallbackImage:
+          (row['shelf_image_url'] ?? row['logo_url'] ?? '').toString(),
+      product: found,
     );
   }
 
@@ -218,12 +226,14 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
                             (_, index) => CachedNetworkImage(
                               imageUrl: images[index],
                               fit: BoxFit.cover,
-                              placeholder: (_, __) => const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                              errorWidget: (_, __, ___) => const Center(
-                                child: Icon(Icons.broken_image_outlined),
-                              ),
+                              placeholder:
+                                  (_, __) => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                              errorWidget:
+                                  (_, __, ___) => const Center(
+                                    child: Icon(Icons.broken_image_outlined),
+                                  ),
                             ),
                       ),
             ),

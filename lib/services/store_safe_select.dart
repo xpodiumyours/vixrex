@@ -16,5 +16,5 @@ class StoreSafeSelect {
       'terms_version,terms_hash,publication_consent_accepted,'
       'publication_consent_accepted_at,publication_consent_withdrawn_at,'
       'publication_consent_version,publication_consent_hash,user_id,updated_at,'
-      'created_at';
+      'created_at,product_storage_version';
 }

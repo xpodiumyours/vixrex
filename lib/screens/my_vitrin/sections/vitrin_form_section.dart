@@ -54,8 +54,15 @@ class VitrinFormSection extends StatelessWidget {
   });
 
   static const _platformOptions = [
-    'Trendyol', 'Hepsiburada', 'N11', 'Amazon', 'Çiçeksepeti',
-    'Shopier', 'Google İşletme', 'Diğer', 'Özel...',
+    'Trendyol',
+    'Hepsiburada',
+    'N11',
+    'Amazon',
+    'Çiçeksepeti',
+    'Shopier',
+    'Google İşletme',
+    'Diğer',
+    'Özel...',
   ];
 
   TextEditingController get _name => textControllers['name']!;
@@ -67,26 +74,38 @@ class VitrinFormSection extends StatelessWidget {
 
   /// EditorGalleryItem → GalleryItem dönüşümü (GalleryEditorSection uyumluluğu)
   List<GalleryItem> get _galleryItemsForEditor =>
-      controller.galleryItems.map((e) => GalleryItem(
-        id: e.id,
-        bytes: e.bytes,
-        imageUrl: e.imageUrl ?? '',
-        extension: e.extension ?? 'jpg',
-        contentType: e.contentType ?? 'image/jpeg',
-        isRemoved: e.isRemoved,
-      )).toList();
+      controller.galleryItems
+          .map(
+            (e) => GalleryItem(
+              id: e.id,
+              bytes: e.bytes,
+              imageUrl: e.imageUrl ?? '',
+              extension: e.extension ?? 'jpg',
+              contentType: e.contentType ?? 'image/jpeg',
+              isRemoved: e.isRemoved,
+            ),
+          )
+          .toList();
 
   /// GalleryItem → EditorGalleryItem dönüşümü (controller uyumluluğu)
   List<EditorGalleryItem> _toEditorItems(List<GalleryItem> items) =>
-      items.where((e) => e.bytes != null).map((e) => EditorGalleryItem.fromBytes(
-        e.bytes!,
-        id: e.id,
-        extension: e.extension,
-        contentType: e.contentType,
-      )).toList();
+      items
+          .where((e) => e.bytes != null)
+          .map(
+            (e) => EditorGalleryItem.fromBytes(
+              e.bytes!,
+              id: e.id,
+              extension: e.extension,
+              contentType: e.contentType,
+            ),
+          )
+          .toList();
 
   /// Kategori galerisi bottom sheet'ini açar
-  Future<void> _showCategoryGallery(BuildContext ctx, {required SheetImageSource source}) async {
+  Future<void> _showCategoryGallery(
+    BuildContext ctx, {
+    required SheetImageSource source,
+  }) async {
     final kategori = controller.selectedKategori.trim();
     if (kategori.isEmpty) {
       state.showSnackBar(ctx, 'Önce bir kategori seçmelisiniz.');
@@ -132,275 +151,311 @@ class VitrinFormSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-          // ÜST ALAN (Tam Ekran / Boydan Boya): Kapak Fotoğrafı & Vitrin Galerisi
-          Align(
-            alignment: Alignment.center,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: _buildMediaSection(context),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          if (isDesktop)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // SOL SÜTUN
-                Expanded(
-                  flex: 5,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildNameField(),
-                      const SizedBox(height: 14),
-                      _buildWhatsappField(),
-                      const SizedBox(height: 14),
-                      _buildLocationSection(),
-                      const SizedBox(height: 14),
-                      _buildDescriptionField(),
-                      const SizedBox(height: 14),
-                      _buildInstagramField(),
-                    ],
-                  ),
+              // ÜST ALAN (Tam Ekran / Boydan Boya): Kapak Fotoğrafı & Vitrin Galerisi
+              Align(
+                alignment: Alignment.center,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: _buildMediaSection(context),
                 ),
-                const SizedBox(width: 32),
-                // SAĞ SÜTUN
-                Expanded(
-                  flex: 5,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Vitrin paylaşım linki (isimden öngörülen / yayın sonrası canlı)
-                      _buildPublicLinkCard(context, hasPublished),
-                      const SizedBox(height: 14),
+              ),
+              const SizedBox(height: 24),
 
-                      // Instagram Sync Section (if active)
-                      if (hasPublished && InstagramSyncConfig.enabled) ...[
-                        InstagramSyncSection(
-                          storeSlug: controller.publishedInfo!.slug,
-                          editToken: controller.publishedInfo!.editToken,
-                          defaultCategory: controller.selectedKategori,
-                          onProductImported: controller.updateProductImported,
-                          onMessage: (msg) => state.showSnackBar(context, msg),
-                          onConnectedUsername: (username) =>
-                              _applyConnectedInstagram(username),
-                        ),
-                        const SizedBox(height: 14),
-                      ],
-
-                      // Randevu / çalışma saatleri — sadece booking paketi kategorilerinde
-                      if (BusinessCategoryConfig.supportsBookingPackage(
-                        controller.selectedKategori,
-                      )) ...[
-                        KeyedSubtree(
-                          key: state.productsKey,
-                          child: WorkingHoursEditor(
-                            bookingIsEnabled: controller.bookingIsEnabled,
-                            bookingCapacity: controller.bookingCapacity,
-                            bookingWorkingHours: controller.bookingWorkingHours,
-                            bookingLunchBreak: controller.bookingLunchBreak,
-                            offerings: controller.offerings,
-                            selectedKategori: controller.selectedKategori,
-                            onBookingEnabledChanged: controller.setBookingIsEnabled,
-                            onBookingCapacityChanged: controller.setBookingCapacity,
-                            onStateChanged: controller.refreshBookingEditor,
-                            showSnackBar: (msg) => state.showSnackBar(context, msg),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                      ],
-
-                      // 2. Ürünlerimi Yönet (Ürün Ekle Kısmı)
-                      ProductManagementEntryCard(
-                        productCount: controller.data.products.length,
-                        onTap: () => _showProductSheet(context),
+              if (isDesktop)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // SOL SÜTUN
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildNameField(),
+                          const SizedBox(height: 14),
+                          _buildWhatsappField(),
+                          const SizedBox(height: 14),
+                          _buildLocationSection(),
+                          const SizedBox(height: 14),
+                          _buildDescriptionField(),
+                          const SizedBox(height: 14),
+                          _buildInstagramField(),
+                        ],
                       ),
-                      const SizedBox(height: 14),
-
-                      // 3. Kategori
-                      KeyedSubtree(
-                        key: state.categoryKey,
-                        child: EditorDropdownField(
-                          label: 'Kategori',
-                          value: controller.selectedKategori,
-                          items: BusinessCategoryConfig.categories.map((c) => c.label).toList(),
-                          icon: Icons.category_rounded,
-                          onChanged: (val) => controller.selectCategory(val ?? 'Diğer'),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // StoreThemePicker (Tema Seçimi)
-                      StoreThemePicker(
-                        selectedTheme: controller.data.theme,
-                        onThemeChanged: (val) => controller.data.theme = val,
-                      ),
-                      const SizedBox(height: 14),
-
-                      // 4. Vitrin Durumu
-                      EditorDropdownField(
-                        label: 'Vitrin Durumu',
-                        value: controller.selectedStatus,
-                        items: const ['Açık', 'Bugün kampanya var', 'Yeni ürünler geldi', 'Stok sınırlı', 'Kapalı'],
-                        icon: Icons.info_outline_rounded,
-                        onChanged: (val) => controller.selectStatus(val ?? 'Açık'),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // 5. Google Yorum Bağlantısı
-                      EditorTextField(
-                        label: 'Google Yorum Bağlantısı',
-                        controller: _google,
-                        hint: 'https://search.google.com/local/writereview?placeid=...',
-                        icon: Icons.rate_review_rounded,
-                        keyboardType: TextInputType.url,
-                        errorText: controller.googleLinkError,
-                        onChanged: (v) {
-                          controller.updateGoogleBusinessLink(v);
-                          controller.clearValidationErrors();
-                        },
-                      ),
-                      const SizedBox(height: 14),
-
-                      // 6. Bağlantılı Platformlar (Trendyol vb.)
-                      FormMarketplaceLinks(
-                        controller: controller,
-                        platformOptions: _platformOptions,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            )
-          else
-            // MOBİL LAYOUT (Tek Sütun)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // İşletme Adı (Zorunlu)
-                _buildNameField(),
-                const SizedBox(height: 14),
-
-                // WhatsApp Numarası (Zorunlu)
-                _buildWhatsappField(),
-                const SizedBox(height: 14),
-
-                // Konum Bilgileri (İl, İlçe, Açık Adres, GPS) (Zorunlu)
-                _buildLocationSection(),
-                const SizedBox(height: 14),
-
-                // Kısa Açıklama
-                _buildDescriptionField(),
-                const SizedBox(height: 14),
-
-                // Instagram
-                _buildInstagramField(),
-                const SizedBox(height: 14),
-
-                // Vitrin paylaşım linki (isimden öngörülen / yayın sonrası canlı)
-                _buildPublicLinkCard(context, hasPublished),
-                const SizedBox(height: 14),
-
-                // Instagram Sync Section (if active)
-                if (hasPublished && InstagramSyncConfig.enabled) ...[
-                  InstagramSyncSection(
-                    storeSlug: controller.publishedInfo!.slug,
-                    editToken: controller.publishedInfo!.editToken,
-                    defaultCategory: controller.selectedKategori,
-                    onProductImported: controller.updateProductImported,
-                    onMessage: (msg) => state.showSnackBar(context, msg),
-                    onConnectedUsername: (username) =>
-                        _applyConnectedInstagram(username),
-                  ),
-                  const SizedBox(height: 14),
-                ],
-
-                // Randevu / çalışma saatleri — sadece booking paketi kategorilerinde
-                if (BusinessCategoryConfig.supportsBookingPackage(
-                  controller.selectedKategori,
-                )) ...[
-                  KeyedSubtree(
-                    key: state.productsKey,
-                    child: WorkingHoursEditor(
-                      bookingIsEnabled: controller.bookingIsEnabled,
-                      bookingCapacity: controller.bookingCapacity,
-                      bookingWorkingHours: controller.bookingWorkingHours,
-                      bookingLunchBreak: controller.bookingLunchBreak,
-                      offerings: controller.offerings,
-                      selectedKategori: controller.selectedKategori,
-                      onBookingEnabledChanged: controller.setBookingIsEnabled,
-                      onBookingCapacityChanged: controller.setBookingCapacity,
-                      onStateChanged: controller.refreshBookingEditor,
-                      showSnackBar: (msg) => state.showSnackBar(context, msg),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                ],
+                    const SizedBox(width: 32),
+                    // SAĞ SÜTUN
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Vitrin paylaşım linki (isimden öngörülen / yayın sonrası canlı)
+                          _buildPublicLinkCard(context, hasPublished),
+                          const SizedBox(height: 14),
 
-                // Ürünlerimi Yönet (Ürün Ekle)
-                ProductManagementEntryCard(
-                  productCount: controller.data.products.length,
-                  onTap: () => _showProductSheet(context),
+                          // Instagram Sync Section (if active)
+                          if (hasPublished && InstagramSyncConfig.enabled) ...[
+                            InstagramSyncSection(
+                              storeSlug: controller.publishedInfo!.slug,
+                              editToken: controller.publishedInfo!.editToken,
+                              defaultCategory: controller.selectedKategori,
+                              onProductImported:
+                                  controller.updateProductImported,
+                              onMessage:
+                                  (msg) => state.showSnackBar(context, msg),
+                              onConnectedUsername:
+                                  (username) =>
+                                      _applyConnectedInstagram(username),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+
+                          // Randevu / çalışma saatleri — sadece booking paketi kategorilerinde
+                          if (BusinessCategoryConfig.supportsBookingPackage(
+                            controller.selectedKategori,
+                          )) ...[
+                            KeyedSubtree(
+                              key: state.productsKey,
+                              child: WorkingHoursEditor(
+                                bookingIsEnabled: controller.bookingIsEnabled,
+                                bookingCapacity: controller.bookingCapacity,
+                                bookingWorkingHours:
+                                    controller.bookingWorkingHours,
+                                bookingLunchBreak: controller.bookingLunchBreak,
+                                offerings: controller.offerings,
+                                selectedKategori: controller.selectedKategori,
+                                onBookingEnabledChanged:
+                                    controller.setBookingIsEnabled,
+                                onBookingCapacityChanged:
+                                    controller.setBookingCapacity,
+                                onStateChanged: controller.refreshBookingEditor,
+                                showSnackBar:
+                                    (msg) => state.showSnackBar(context, msg),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+
+                          // 2. Ürünlerimi Yönet (Ürün Ekle Kısmı)
+                          ProductManagementEntryCard(
+                            productCount: controller.data.products.length,
+                            onTap: () => _showProductSheet(context),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // 3. Kategori
+                          KeyedSubtree(
+                            key: state.categoryKey,
+                            child: EditorDropdownField(
+                              label: 'Kategori',
+                              value: controller.selectedKategori,
+                              items:
+                                  BusinessCategoryConfig.categories
+                                      .map((c) => c.label)
+                                      .toList(),
+                              icon: Icons.category_rounded,
+                              onChanged:
+                                  (val) =>
+                                      controller.selectCategory(val ?? 'Diğer'),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // StoreThemePicker (Tema Seçimi)
+                          StoreThemePicker(
+                            selectedTheme: controller.data.theme,
+                            onThemeChanged:
+                                (val) => controller.data.theme = val,
+                          ),
+                          const SizedBox(height: 14),
+
+                          // 4. Vitrin Durumu
+                          EditorDropdownField(
+                            label: 'Vitrin Durumu',
+                            value: controller.selectedStatus,
+                            items: const [
+                              'Açık',
+                              'Bugün kampanya var',
+                              'Yeni ürünler geldi',
+                              'Stok sınırlı',
+                              'Kapalı',
+                            ],
+                            icon: Icons.info_outline_rounded,
+                            onChanged:
+                                (val) => controller.selectStatus(val ?? 'Açık'),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // 5. Google Yorum Bağlantısı
+                          EditorTextField(
+                            label: 'Google Yorum Bağlantısı',
+                            controller: _google,
+                            hint:
+                                'https://search.google.com/local/writereview?placeid=...',
+                            icon: Icons.rate_review_rounded,
+                            keyboardType: TextInputType.url,
+                            errorText: controller.googleLinkError,
+                            onChanged: (v) {
+                              controller.updateGoogleBusinessLink(v);
+                              controller.clearValidationErrors();
+                            },
+                          ),
+                          const SizedBox(height: 14),
+
+                          // 6. Bağlantılı Platformlar (Trendyol vb.)
+                          FormMarketplaceLinks(
+                            controller: controller,
+                            platformOptions: _platformOptions,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              else
+                // MOBİL LAYOUT (Tek Sütun)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // İşletme Adı (Zorunlu)
+                    _buildNameField(),
+                    const SizedBox(height: 14),
+
+                    // WhatsApp Numarası (Zorunlu)
+                    _buildWhatsappField(),
+                    const SizedBox(height: 14),
+
+                    // Konum Bilgileri (İl, İlçe, Açık Adres, GPS) (Zorunlu)
+                    _buildLocationSection(),
+                    const SizedBox(height: 14),
+
+                    // Kısa Açıklama
+                    _buildDescriptionField(),
+                    const SizedBox(height: 14),
+
+                    // Instagram
+                    _buildInstagramField(),
+                    const SizedBox(height: 14),
+
+                    // Vitrin paylaşım linki (isimden öngörülen / yayın sonrası canlı)
+                    _buildPublicLinkCard(context, hasPublished),
+                    const SizedBox(height: 14),
+
+                    // Instagram Sync Section (if active)
+                    if (hasPublished && InstagramSyncConfig.enabled) ...[
+                      InstagramSyncSection(
+                        storeSlug: controller.publishedInfo!.slug,
+                        editToken: controller.publishedInfo!.editToken,
+                        defaultCategory: controller.selectedKategori,
+                        onProductImported: controller.updateProductImported,
+                        onMessage: (msg) => state.showSnackBar(context, msg),
+                        onConnectedUsername:
+                            (username) => _applyConnectedInstagram(username),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // Randevu / çalışma saatleri — sadece booking paketi kategorilerinde
+                    if (BusinessCategoryConfig.supportsBookingPackage(
+                      controller.selectedKategori,
+                    )) ...[
+                      KeyedSubtree(
+                        key: state.productsKey,
+                        child: WorkingHoursEditor(
+                          bookingIsEnabled: controller.bookingIsEnabled,
+                          bookingCapacity: controller.bookingCapacity,
+                          bookingWorkingHours: controller.bookingWorkingHours,
+                          bookingLunchBreak: controller.bookingLunchBreak,
+                          offerings: controller.offerings,
+                          selectedKategori: controller.selectedKategori,
+                          onBookingEnabledChanged:
+                              controller.setBookingIsEnabled,
+                          onBookingCapacityChanged:
+                              controller.setBookingCapacity,
+                          onStateChanged: controller.refreshBookingEditor,
+                          showSnackBar:
+                              (msg) => state.showSnackBar(context, msg),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // Ürünlerimi Yönet (Ürün Ekle)
+                    ProductManagementEntryCard(
+                      productCount: controller.data.products.length,
+                      onTap: () => _showProductSheet(context),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Kategori
+                    KeyedSubtree(
+                      key: state.categoryKey,
+                      child: EditorDropdownField(
+                        label: 'Kategori',
+                        value: controller.selectedKategori,
+                        items:
+                            BusinessCategoryConfig.categories
+                                .map((c) => c.label)
+                                .toList(),
+                        icon: Icons.category_rounded,
+                        onChanged:
+                            (val) => controller.selectCategory(val ?? 'Diğer'),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // StoreThemePicker (Tema Seçimi)
+                    StoreThemePicker(
+                      selectedTheme: controller.data.theme,
+                      onThemeChanged: (val) => controller.data.theme = val,
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Vitrin Durumu
+                    EditorDropdownField(
+                      label: 'Vitrin Durumu',
+                      value: controller.selectedStatus,
+                      items: const [
+                        'Açık',
+                        'Bugün kampanya var',
+                        'Yeni ürünler geldi',
+                        'Stok sınırlı',
+                        'Kapalı',
+                      ],
+                      icon: Icons.info_outline_rounded,
+                      onChanged:
+                          (val) => controller.selectStatus(val ?? 'Açık'),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Google Yorum Bağlantısı
+                    EditorTextField(
+                      label: 'Google Yorum Bağlantısı',
+                      controller: _google,
+                      hint:
+                          'https://search.google.com/local/writereview?placeid=...',
+                      icon: Icons.rate_review_rounded,
+                      keyboardType: TextInputType.url,
+                      errorText: controller.googleLinkError,
+                      onChanged: (v) {
+                        controller.updateGoogleBusinessLink(v);
+                        controller.clearValidationErrors();
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Bağlantılı Platformlar (Trendyol vb.)
+                    FormMarketplaceLinks(
+                      controller: controller,
+                      platformOptions: _platformOptions,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 14),
 
-                // Kategori
-                KeyedSubtree(
-                  key: state.categoryKey,
-                  child: EditorDropdownField(
-                    label: 'Kategori',
-                    value: controller.selectedKategori,
-                    items: BusinessCategoryConfig.categories.map((c) => c.label).toList(),
-                    icon: Icons.category_rounded,
-                    onChanged: (val) => controller.selectCategory(val ?? 'Diğer'),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // StoreThemePicker (Tema Seçimi)
-                StoreThemePicker(
-                  selectedTheme: controller.data.theme,
-                  onThemeChanged: (val) => controller.data.theme = val,
-                ),
-                const SizedBox(height: 14),
-
-                // Vitrin Durumu
-                EditorDropdownField(
-                  label: 'Vitrin Durumu',
-                  value: controller.selectedStatus,
-                  items: const ['Açık', 'Bugün kampanya var', 'Yeni ürünler geldi', 'Stok sınırlı', 'Kapalı'],
-                  icon: Icons.info_outline_rounded,
-                  onChanged: (val) => controller.selectStatus(val ?? 'Açık'),
-                ),
-                const SizedBox(height: 14),
-
-                // Google Yorum Bağlantısı
-                EditorTextField(
-                  label: 'Google Yorum Bağlantısı',
-                  controller: _google,
-                  hint: 'https://search.google.com/local/writereview?placeid=...',
-                  icon: Icons.rate_review_rounded,
-                  keyboardType: TextInputType.url,
-                  errorText: controller.googleLinkError,
-                  onChanged: (v) {
-                    controller.updateGoogleBusinessLink(v);
-                    controller.clearValidationErrors();
-                  },
-                ),
-                const SizedBox(height: 14),
-
-                // Bağlantılı Platformlar (Trendyol vb.)
-                FormMarketplaceLinks(
-                  controller: controller,
-                  platformOptions: _platformOptions,
-                ),
-              ],
-            ),
-
-          const SizedBox(height: 24),
-          const Divider(color: AppColors.border, height: 1),
-          const SizedBox(height: 24),
+              const SizedBox(height: 24),
+              const Divider(color: AppColors.border, height: 1),
+              const SizedBox(height: 24),
 
               // ALT ALAN (Her iki görünümde de tam genişlik)
               _buildLegalAndPublishSection(context, hasPublished),
@@ -418,7 +473,11 @@ class VitrinFormSection extends StatelessWidget {
       galleryItems: _galleryItemsForEditor,
       onPickCover: () => _pickCover(context),
       onPickCoverFromCamera: () => _pickCoverFromCamera(context),
-      onAutoFillCover: () => _showCategoryGallery(context, source: SheetImageSource.coverPicker),
+      onAutoFillCover:
+          () => _showCategoryGallery(
+            context,
+            source: SheetImageSource.coverPicker,
+          ),
       onPickGallery: () => _pickGallery(context),
     );
   }
@@ -554,24 +613,37 @@ class VitrinFormSection extends StatelessWidget {
     const builder = StorePublishPayloadBuilder();
     final publishedLink = controller.publishedInfo?.publicLink.trim() ?? '';
     final previewLink = builder.previewVitrinLink(controller.data.name);
-    final displayLink = hasPublished && publishedLink.isNotEmpty
-        ? publishedLink
-        : (previewLink.isEmpty ? null : previewLink);
+    final displayLink =
+        hasPublished && publishedLink.isNotEmpty
+            ? publishedLink
+            : (previewLink.isEmpty ? null : previewLink);
 
     return PublicLinkCard(
       displayLink: displayLink,
       isLive: hasPublished && publishedLink.isNotEmpty,
-      onCopyLink: () => _copyDisplayLink(context, displayLink, isLive: hasPublished),
+      onCopyLink:
+          () => _copyDisplayLink(context, displayLink, isLive: hasPublished),
       onPreview: () => _openInAppPreview(context),
       onShareLink: hasPublished ? () => _shareLink(context) : null,
       onOpenLiveLink: hasPublished ? () => _openLink(context) : null,
-      onScrollToPublish: hasPublished
-          ? null
-          : () => state.scrollToVixRexAction(VixRexAction.scrollToLegal),
+      onScrollToPublish:
+          hasPublished
+              ? null
+              : () => state.scrollToVixRexAction(VixRexAction.scrollToLegal),
     );
   }
 
   Future<void> _openInAppPreview(BuildContext ctx) async {
+    final published = controller.publishedInfo;
+    final slug = (published?.slug ?? controller.data.slug).trim();
+    final isLive =
+        published != null && published.canEditRemote && slug.isNotEmpty;
+
+    if (isLive) {
+      await AppRouter.navigateToPublicVitrin(ctx, slug);
+      return;
+    }
+
     await Navigator.of(ctx).push(
       MaterialPageRoute(
         builder: (_) => PreviewScreen(storeData: controller.data),
@@ -646,34 +718,41 @@ class VitrinFormSection extends StatelessWidget {
         SizedBox(
           height: 54,
           child: ElevatedButton.icon(
-            onPressed: controller.isPublishing || !controller.isLegalPublishReady
-                ? null
-                : () => state.handlePublish(context, onPublished),
-            icon: controller.isPublishing
-                ? const SizedBox(
-                    width: 18, height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.onPrimary,
+            onPressed:
+                controller.isPublishing || !controller.isLegalPublishReady
+                    ? null
+                    : () => state.handlePublish(context, onPublished),
+            icon:
+                controller.isPublishing
+                    ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.onPrimary,
+                      ),
+                    )
+                    : Icon(
+                      hasPublished
+                          ? Icons.cloud_upload_rounded
+                          : Icons.rocket_launch_rounded,
+                      size: 19,
                     ),
-                  )
-                : Icon(
-                    hasPublished ? Icons.cloud_upload_rounded : Icons.rocket_launch_rounded,
-                    size: 19,
-                  ),
             label: Text(
               controller.isPublishing
                   ? 'Yayına alınıyor...'
                   : hasPublished
-                      ? 'Değişiklikleri Kaydet & Yayına Al'
-                      : 'Vitrinimi Yayına Al',
+                  ? 'Değişiklikleri Kaydet & Yayına Al'
+                  : 'Vitrinimi Yayına Al',
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.onPrimary,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
         ),
@@ -708,20 +787,26 @@ class VitrinFormSection extends StatelessWidget {
 
   Future<void> _pickCover(BuildContext ctx) async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.image, withData: true,
+      type: FileType.image,
+      withData: true,
     );
     if (result == null || result.files.isEmpty) return;
     if (!ctx.mounted) return;
     final file = result.files.single;
     final v = GalleryImageFileValidator.validate(
-      bytes: file.bytes, reportedSize: file.size,
+      bytes: file.bytes,
+      reportedSize: file.size,
     );
     if (!v.isValid || file.bytes == null) {
-      state.showSnackBar(ctx, 'Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.');
+      state.showSnackBar(
+        ctx,
+        'Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.',
+      );
       return;
     }
     controller.setCoverBytes(
-      file.bytes!, file.name,
+      file.bytes!,
+      file.name,
       v.fileInfo?.extension ?? 'jpg',
       v.fileInfo?.contentType ?? 'image/jpeg',
     );
@@ -730,118 +815,151 @@ class VitrinFormSection extends StatelessWidget {
   Future<void> _pickCoverFromCamera(BuildContext ctx) async {
     try {
       final picker = img_picker.ImagePicker();
-      final pickedFile = await picker.pickImage(source: img_picker.ImageSource.camera);
+      final pickedFile = await picker.pickImage(
+        source: img_picker.ImageSource.camera,
+      );
       if (pickedFile == null) return;
       final bytes = await pickedFile.readAsBytes();
       final size = bytes.length;
       final v = GalleryImageFileValidator.validate(
-        bytes: bytes, reportedSize: size,
+        bytes: bytes,
+        reportedSize: size,
       );
       if (!ctx.mounted) return;
       if (!v.isValid) {
-        state.showSnackBar(ctx, 'Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.');
+        state.showSnackBar(
+          ctx,
+          'Fotoğraf eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.',
+        );
         return;
       }
       controller.setCoverBytes(
-        bytes, pickedFile.name,
+        bytes,
+        pickedFile.name,
         v.fileInfo?.extension ?? 'jpg',
         v.fileInfo?.contentType ?? 'image/jpeg',
       );
     } catch (_) {
       if (ctx.mounted) {
-        state.showSnackBar(ctx, 'Kameraya erişilemedi. Kamera izinlerini kontrol edin veya dosya yüklemeyi kullanın.');
+        state.showSnackBar(
+          ctx,
+          'Kameraya erişilemedi. Kamera izinlerini kontrol edin veya dosya yüklemeyi kullanın.',
+        );
       }
     }
   }
 
   Future<void> _pickGallery(BuildContext ctx) async {
-    final remaining = controller.maxGalleryPhotos - controller.galleryItems.length;
+    final remaining =
+        controller.maxGalleryPhotos - controller.galleryItems.length;
     if (remaining <= 0) {
-      state.showSnackBar(ctx, 'En fazla ${controller.maxGalleryPhotos} galeri fotoğrafı eklenebilir.');
+      state.showSnackBar(
+        ctx,
+        'En fazla ${controller.maxGalleryPhotos} galeri fotoğrafı eklenebilir.',
+      );
       return;
     }
     final result = await FilePicker.platform.pickFiles(
-      allowMultiple: true, type: FileType.image, withData: true,
+      allowMultiple: true,
+      type: FileType.image,
+      withData: true,
     );
     if (result == null || result.files.isEmpty) return;
     if (!ctx.mounted) return;
     var rejected = 0;
     final newItems = <GalleryItem>[];
     for (final file in result.files.take(remaining)) {
-      final v = GalleryImageFileValidator.validate(bytes: file.bytes, reportedSize: file.size);
-      if (!v.isValid || file.bytes == null) { rejected++; continue; }
-      newItems.add(GalleryItem(
-        id: '${DateTime.now().microsecondsSinceEpoch}_${newItems.length}',
-        bytes: file.bytes, imageUrl: '',
-        extension: v.fileInfo?.extension ?? 'jpg',
-        contentType: v.fileInfo?.contentType ?? 'image/jpeg',
-      ));
+      final v = GalleryImageFileValidator.validate(
+        bytes: file.bytes,
+        reportedSize: file.size,
+      );
+      if (!v.isValid || file.bytes == null) {
+        rejected++;
+        continue;
+      }
+      newItems.add(
+        GalleryItem(
+          id: '${DateTime.now().microsecondsSinceEpoch}_${newItems.length}',
+          bytes: file.bytes,
+          imageUrl: '',
+          extension: v.fileInfo?.extension ?? 'jpg',
+          contentType: v.fileInfo?.contentType ?? 'image/jpeg',
+        ),
+      );
     }
-    final editorItems = [...controller.galleryItems, ..._toEditorItems(newItems)];
+    final editorItems = [
+      ...controller.galleryItems,
+      ..._toEditorItems(newItems),
+    ];
     controller.setGalleryItems(editorItems);
     if (rejected > 0) state.showSnackBar(ctx, '$rejected fotoğraf eklenemedi.');
   }
 
   void _showProductSheet(BuildContext ctx) {
-    final slug = controller.data.slug.trim().isNotEmpty
-        ? controller.data.slug.trim()
-        : StorePublishPayloadBuilder().generateSlug(controller.data.name);
+    final slug =
+        controller.data.slug.trim().isNotEmpty
+            ? controller.data.slug.trim()
+            : StorePublishPayloadBuilder().generateSlug(controller.data.name);
     showModalBottomSheet(
-      context: ctx, backgroundColor: AppColors.surface, isScrollControlled: true,
+      context: ctx,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => ProductManagementSheet(
-        products: controller.data.products,
-        categories: controller.data.productCategories,
-        storeSlug: slug,
-        showMessage: (msg) => state.showSnackBar(ctx, msg),
-        onCatalogChanged: (products, categories) async {
-          controller.data.products = products;
-          controller.data.productCategories = categories;
-          await controller.saveLocally();
-          final sync = await controller.syncProductsToSupabase(
-            data: controller.data,
-            publishService: controller.publishService,
-            editToken: controller.publishedInfo?.editToken,
-          );
-          if (sync.isFailure && ctx.mounted) {
-            state.showSnackBar(
-              ctx,
-              sync.failure?.message ??
-                  'Ürünler kaydedilemedi, lütfen tekrar deneyin.',
-            );
-          }
-        },
-        onOcrTap: () {
-          // Alt paneli kapat, sonra root navigator'dan OCR ekranını aç
-          Navigator.of(ctx).pop();
-          // Root navigator'u kullanarak navigasyon yap
-          Navigator.of(ctx, rootNavigator: true).push(
-            MaterialPageRoute(
-              builder: (_) => OcrScannerScreen(
-                ocrController: OcrController(
-                  ocrService: const OcrService(),
-                  editorController: controller,
+      builder:
+          (_) => ProductManagementSheet(
+            products: controller.data.products,
+            categories: controller.data.productCategories,
+            storeSlug: slug,
+            showMessage: (msg) => state.showSnackBar(ctx, msg),
+            onCatalogChanged: (products, categories) async {
+              final sync = await controller.syncCatalogToRemote(
+                products: products,
+                categories: categories,
+              );
+              if (sync.isFailure && ctx.mounted) {
+                state.showSnackBar(
+                  ctx,
+                  sync.failure?.message ??
+                      'Ürünler kaydedilemedi, lütfen tekrar deneyin.',
+                );
+              }
+            },
+            onOcrTap: () {
+              // Alt paneli kapat, sonra root navigator'dan OCR ekranını aç
+              Navigator.of(ctx).pop();
+              // Root navigator'u kullanarak navigasyon yap
+              Navigator.of(ctx, rootNavigator: true).push(
+                MaterialPageRoute(
+                  builder:
+                      (_) => OcrScannerScreen(
+                        ocrController: OcrController(
+                          ocrService: const OcrService(),
+                          editorController: controller,
+                        ),
+                      ),
                 ),
-              ),
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
     );
   }
 
   Future<void> _openLink(BuildContext ctx) async {
     final raw = controller.publishedInfo?.publicLink.trim();
     if (raw == null || raw.isEmpty) {
-      state.showSnackBar(ctx, 'Vitrininizi yayına aldığınızda size özel web linkiniz oluşacak.');
+      state.showSnackBar(
+        ctx,
+        'Vitrininizi yayına aldığınızda size özel web linkiniz oluşacak.',
+      );
       return;
     }
     final link = PublicSiteConfig.repairPublicLink(raw);
     final uri = Uri.tryParse(link);
     if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
-      state.showSnackBar(ctx, 'Vitrin linki açılamadı.'); return;
+      state.showSnackBar(ctx, 'Vitrin linki açılamadı.');
+      return;
     }
     try {
       final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -854,19 +972,26 @@ class VitrinFormSection extends StatelessWidget {
   Future<void> _shareLink(BuildContext ctx) async {
     final raw = controller.publishedInfo?.publicLink.trim();
     if (raw == null || raw.isEmpty) {
-      state.showSnackBar(ctx, 'Vitrininizi yayına aldığınızda size özel web linkiniz oluşacak.');
+      state.showSnackBar(
+        ctx,
+        'Vitrininizi yayına aldığınızda size özel web linkiniz oluşacak.',
+      );
       return;
     }
     final link = PublicSiteConfig.repairPublicLink(raw);
     try {
       final r = await SharePlus.instance.share(
-        ShareParams(text: 'Vixrex web linkim:\n$link', title: 'Vixrex Web Linki'),
+        ShareParams(
+          text: 'Vixrex web linkim:\n$link',
+          title: 'Vixrex Web Linki',
+        ),
       );
       if (r.status != ShareResultStatus.unavailable) return;
     } catch (e) {
       if (kDebugMode) debugPrint('_shareLink error: $e');
     }
     await Clipboard.setData(ClipboardData(text: link));
-    if (ctx.mounted) state.showSnackBar(ctx, 'Paylaşım açılamadı, link kopyalandı.');
+    if (ctx.mounted)
+      state.showSnackBar(ctx, 'Paylaşım açılamadı, link kopyalandı.');
   }
 }

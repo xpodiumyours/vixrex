@@ -36,8 +36,16 @@ mixin StoreCoreMixin on ChangeNotifier {
   String? get legalDocumentsError => _legalDocumentsError;
 
   // --- Methods ---
-  void setLoading(bool val) { _isLoading = val; notifyListeners(); }
-  void setPublishing(bool val) { _isPublishing = val; notifyListeners(); }
+  void setLoading(bool val) {
+    _isLoading = val;
+    notifyListeners();
+  }
+
+  void setPublishing(bool val) {
+    _isPublishing = val;
+    notifyListeners();
+  }
+
   void setLoadingLegalDocuments(bool val) {
     _isLoadingLegalDocuments = val;
     notifyListeners();
@@ -62,39 +70,17 @@ mixin StoreCoreMixin on ChangeNotifier {
     notifyListeners();
   }
 
-  /// Ürünleri Supabase'e senkronize eder.
+  /// Emekli: JSON ürün sync. Yerine [StoreEditorController.syncCatalogToRemote].
+  @Deprecated('Use StoreEditorController.syncCatalogToRemote')
   Future<Result<void>> syncProductsToSupabase({
     required StoreData data,
     required StorePublishService publishService,
     String? editToken,
   }) async {
-    if (editToken == null || editToken.isEmpty) {
-      return const Result.success(null);
-    }
-    try {
-      final result = await publishService.updateProductsOnly(
-        data,
-        editToken: editToken,
-      );
-      if (result.isFailure) {
-        _productSyncError =
-            result.failure?.message ??
-            'Ürünler kaydedilemedi, lütfen tekrar deneyin.';
-        if (kDebugMode) {
-          debugPrint('Ürün senkronizasyon hatası: $_productSyncError');
-        }
-        notifyListeners();
-        return Result.failure(Failure(_productSyncError!));
-      }
-      _productSyncError = null;
-      notifyListeners();
-      return const Result.success(null);
-    } catch (e) {
-      _productSyncError = 'Ürünler kaydedilemedi, lütfen tekrar deneyin.';
-      if (kDebugMode) debugPrint('Ürün senkronizasyon hatası: $e');
-      notifyListeners();
-      return Result.failure(Failure(_productSyncError!));
-    }
+    _productSyncError =
+        'Ürünler products tablosuna yazılır. syncCatalogToRemote kullanın.';
+    notifyListeners();
+    return Result.failure(Failure(_productSyncError!));
   }
 
   /// Blog yazılarını çeker.

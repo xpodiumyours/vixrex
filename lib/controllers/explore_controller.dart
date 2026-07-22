@@ -1,12 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/explore_repository.dart';
+import 'package:vixrex/services/product_service.dart';
 
 class ExploreController extends ChangeNotifier {
   final ExploreRepository _repository;
+  final ProductService _productService;
 
-  ExploreController({required ExploreRepository repository})
-    : _repository = repository;
+  ExploreController({
+    required ExploreRepository repository,
+    ProductService? productService,
+  }) : _repository = repository,
+       _productService = productService ?? ProductService();
 
   List<StoreData> _allStores = [];
   bool _isLoading = true;
@@ -57,6 +62,7 @@ class ExploreController extends ChangeNotifier {
           loadedStores.insert(0, ownStore);
         }
       }
+      await _hydrateTableProducts(loadedStores);
       _allStores = loadedStores;
       _showingExampleStores = false;
       _isLoading = false;
@@ -72,6 +78,30 @@ class ExploreController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// v2 mağazalarda kart/özet için tablodaki görünür ürünleri doldurur.
+  /// JSON dolu v1 mağazalara dokunmaz (tablo boşsa JSON kalır).
+  Future<void> _hydrateTableProducts(List<StoreData> stores) async {
+    final tasks = <Future<void>>[];
+    for (final store in stores) {
+      final storeId = store.id?.trim() ?? '';
+      if (storeId.isEmpty) continue;
+      tasks.add(() async {
+        try {
+          final remote = await _productService.fetchVisibleProducts(storeId);
+          if (remote.isNotEmpty) {
+            store.products = remote;
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('ExploreController._hydrateTableProducts: $e');
+          }
+        }
+      }());
+    }
+    if (tasks.isEmpty) return;
+    await Future.wait(tasks);
   }
 
   void setSearchQuery(String value) {

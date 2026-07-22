@@ -8,15 +8,16 @@ import 'package:vixrex/utils/failure.dart';
 /// Ürün CRUD işlemleri için servis katmanı.
 /// Repository ile controller arasındaki köprüdür.
 class ProductService {
-  final ProductRepository _repository;
+  ProductRepository? _repository;
 
-  ProductService({ProductRepository? repository})
-    : _repository = repository ?? SupabaseProductRepository();
+  ProductService({ProductRepository? repository}) : _repository = repository;
+
+  ProductRepository get _repo => _repository ??= SupabaseProductRepository();
 
   /// Mağazanın tüm ürünlerini getirir.
   Future<List<Product>> fetchProducts(String storeId) async {
     try {
-      return await _repository.getProductsByStoreId(storeId);
+      return await _repo.getProductsByStoreId(storeId);
     } catch (e) {
       if (kDebugMode) debugPrint('fetchProducts hatası: $e');
       return [];
@@ -26,7 +27,7 @@ class ProductService {
   /// Mağazanın görünür ürünlerini getirir.
   Future<List<Product>> fetchVisibleProducts(String storeId) async {
     try {
-      return await _repository.getVisibleProductsByStoreId(storeId);
+      return await _repo.getVisibleProductsByStoreId(storeId);
     } catch (e) {
       if (kDebugMode) debugPrint('fetchVisibleProducts hatası: $e');
       return [];
@@ -50,7 +51,7 @@ class ProductService {
     int sortOrder = 0,
   }) async {
     try {
-      final id = await _repository.createProduct(
+      final id = await _repo.createProduct(
         storeId: storeId,
         editToken: editToken,
         name: name,
@@ -94,7 +95,7 @@ class ProductService {
     bool clearStockStatus = false,
   }) async {
     try {
-      await _repository.updateProduct(
+      await _repo.updateProduct(
         productId: productId,
         editToken: editToken,
         name: name,
@@ -122,9 +123,12 @@ class ProductService {
   }
 
   /// Ürün siler.
-  Future<Result<void>> deleteProduct(String productId, {String? editToken}) async {
+  Future<Result<void>> deleteProduct(
+    String productId, {
+    String? editToken,
+  }) async {
     try {
-      await _repository.deleteProduct(productId, editToken: editToken);
+      await _repo.deleteProduct(productId, editToken: editToken);
       return const Result.success(null);
     } catch (e) {
       final msg = _mapError(e);
@@ -140,7 +144,7 @@ class ProductService {
     List<String> productIds,
   ) async {
     try {
-      await _repository.reorderProducts(storeId, editToken, productIds);
+      await _repo.reorderProducts(storeId, editToken, productIds);
       return const Result.success(null);
     } catch (e) {
       final msg = _mapError(e);
@@ -154,8 +158,10 @@ class ProductService {
     if (msg.contains('STORE_NOT_FOUND')) return 'Mağaza bulunamadı.';
     if (msg.contains('UNAUTHORIZED')) return 'Bu işlem için yetkiniz yok.';
     if (msg.contains('PRODUCT_NOT_FOUND')) return 'Ürün bulunamadı.';
-    if (msg.contains('SLUG_ALREADY_EXISTS')) return 'Bu ürün adı zaten kullanılıyor.';
-    if (msg.contains('CATEGORY_NOT_IN_SAME_STORE')) return 'Kategori bu mağazaya ait değil.';
+    if (msg.contains('SLUG_ALREADY_EXISTS'))
+      return 'Bu ürün adı zaten kullanılıyor.';
+    if (msg.contains('CATEGORY_NOT_IN_SAME_STORE'))
+      return 'Kategori bu mağazaya ait değil.';
     return 'İşlem başarısız oldu.';
   }
 }

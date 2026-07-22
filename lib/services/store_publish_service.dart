@@ -188,39 +188,18 @@ class StorePublishService {
     }
   }
 
-  /// Ürünler Supabase'e anında kaydedilir (publish gerektirmez).
-  /// RLS'i aşmak için doğrudan UPDATE yerine `update_store_with_token` RPC kullanılır.
+  /// Emekli: JSON `stores.products` yazmaz.
+  /// Ürün yazımı [StoreEditorController.syncCatalogToRemote] / ProductService RPC.
+  @Deprecated('Use StoreEditorController.syncCatalogToRemote')
   Future<Result<void>> updateProductsOnly(
     StoreData data, {
     required String editToken,
   }) async {
-    try {
-      final client = supabaseClient ?? Supabase.instance.client;
-      final slug =
-          data.slug.trim().isNotEmpty
-              ? data.slug.trim()
-              : payloadBuilder.generateSlug(data.name);
-
-      if (slug.isEmpty) {
-        return Result.failure(Failure('Vitrin slug\'ı bulunamadı.'));
-      }
-
-      await client.rpc(
-        'update_store_with_token',
-        params: {
-          'p_slug': slug,
-          'p_edit_token': editToken,
-          'p_store': {
-            'products': payloadBuilder.productsToJson(data),
-            'product_categories': payloadBuilder.productCategoriesToJson(data),
-          },
-        },
-      );
-
-      return const Result.success(null);
-    } catch (e, s) {
-      return Result.failure(SupabaseErrorMapper.map(e, s));
-    }
+    return Result.failure(
+      Failure(
+        'Ürünler products tablosuna yazılır. syncCatalogToRemote kullanın.',
+      ),
+    );
   }
 
   /// Yayın sonrası tek alan yaması (ör. Instagram kullanıcı adı).

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/public_store_service.dart';
+import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/vitrin_view_service.dart';
 import 'package:vixrex/widgets/vitrin_view.dart';
@@ -52,7 +53,12 @@ class PublicVitrinScreen extends StatefulWidget {
             ? BookingSettings.fromJson(Map<String, dynamic>.from(bookingMap))
             : null;
 
+    final storageVersion =
+        (data['product_storage_version'] as num?)?.toInt() ?? 1;
+    final storeId = _readString(data['id']);
+
     return StoreData(
+      id: storeId.isEmpty ? null : storeId,
       slug: slug,
       name: _readString(data['name']),
       businessType: _readString(data['business_type']),
@@ -73,13 +79,15 @@ class PublicVitrinScreen extends StatefulWidget {
       corporateBio: corporateBio,
       referencesLink: _readString(data['references_link']),
       shelfImageUrl: _readString(data['shelf_image_url']),
-      logoUrl: _readString(data['logo_url']).isEmpty
-          ? null
-          : _readString(data['logo_url']),
+      logoUrl:
+          _readString(data['logo_url']).isEmpty
+              ? null
+              : _readString(data['logo_url']),
       googleBusinessLink: _readString(data['google_business_link']),
       galleryItems: _parseGalleryItems(data['gallery_items']),
       marketplaceLinks: _parseMarketplaceLinks(data['marketplace_links']),
-      products: _parseProducts(data['products']),
+      // v2 ürünleri _fetchStore içinde tablodan doldurulur
+      products: storageVersion == 2 ? [] : _parseProducts(data['products']),
       offerings: _parseOfferings(data['offerings']),
       kategori: _readString(data['kategori']),
       workingHours: _readString(data['working_hours']),
@@ -222,24 +230,30 @@ class _PublicVitrinScreenState extends State<PublicVitrinScreen> {
       return widget.mockStoreData;
     }
 
-    final result = await const PublicStoreService().fetchPublishedStoreBySlug(widget.slug);
-
-    return result.when(
-      success: (response) {
-        if (response == null) return null;
-        unawaited(
-          const VitrinViewService().recordView(
-            slug: widget.slug,
-            source: _readViewSource(),
-          ),
-        );
-        return PublicVitrinScreen.mapStoreFromSupabase(
-          slug: widget.slug,
-          data: response,
-        );
-      },
-      failure: (_) => null,
+    final result = await const PublicStoreService().fetchPublishedStoreBySlug(
+      widget.slug,
     );
+    if (result.isFailure || result.data == null) return null;
+    final response = result.data!;
+
+    unawaited(
+      const VitrinViewService().recordView(
+        slug: widget.slug,
+        source: _readViewSource(),
+      ),
+    );
+
+    final store = PublicVitrinScreen.mapStoreFromSupabase(
+      slug: widget.slug,
+      data: response,
+    );
+    final storageVersion =
+        (response['product_storage_version'] as num?)?.toInt() ?? 1;
+    final storeId = (response['id'] ?? '').toString().trim();
+    if (storageVersion == 2 && storeId.isNotEmpty) {
+      store.products = await ProductService().fetchVisibleProducts(storeId);
+    }
+    return store;
   }
 
   String _readViewSource() {

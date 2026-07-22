@@ -50,9 +50,9 @@ class StoreEditorController extends ChangeNotifier
        uploadService = uploadService ?? const StoreShelfUploadService(),
        legalDocumentService =
            legalDocumentService ?? const LegalDocumentService(),
-       productService = productService ?? ProductService(
-         repository: SupabaseProductRepository(),
-       ),
+       productService =
+           productService ??
+           ProductService(repository: SupabaseProductRepository()),
        _data = initialData ?? StoreData(kategori: 'Diğer', status: 'Açık') {
     _syncInitialData();
   }
@@ -136,6 +136,8 @@ class StoreEditorController extends ChangeNotifier
 
       _syncInitialData();
       if (_publishedInfo != null) {
+        await ensureRemoteStoreId();
+        await _loadRemoteProductsIfReady();
         await fetchArticles(
           slug: _publishedInfo!.slug,
           supabaseClient: _resolveClient(),
@@ -418,12 +420,177 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
-  /// Yeni ürün ekler (Aşama 5: ProductService üzerinden).
-  Future<Result<void>> addProduct(Product p) async {
-    final storeId = _data.id;
-    final editToken = _publishedInfo?.editToken ?? '';
-    if (storeId == null || storeId.isEmpty) {
+  Future<bool> ensureRemoteStoreId() async {
+    final existing = _data.id?.trim() ?? '';
+    if (existing.isNotEmpty && _isUuid(existing)) return true;
+
+    final slug = (_publishedInfo?.slug ?? _data.slug).trim();
+    if (slug.isEmpty) return false;
+
+    final client = _resolveClient();
+    if (client == null) return false;
+
+    try {
+      final row =
+          await client
+              .from('stores')
+              .select('id')
+              .eq('slug', slug)
+              .maybeSingle();
+      final id = (row?['id'] ?? '').toString().trim();
+      if (id.isEmpty || !_isUuid(id)) return false;
+      _data.id = id;
+      if (_data.slug.trim().isEmpty) _data.slug = slug;
+      await saveLocally();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      if (kDebugMode) debugPrint('ensureRemoteStoreId: $e');
+      return false;
+    }
+  }
+
+  Future<void> _loadRemoteProductsIfReady() async {
+    final storeId = _data.id?.trim() ?? '';
+    if (storeId.isEmpty || !_isUuid(storeId)) return;
+    try {
+      final remote = await productService.fetchProducts(storeId);
+      if (remote.isEmpty) return;
+      _data.products = remote;
+      await saveLocally();
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) debugPrint('_loadRemoteProductsIfReady: $e');
+    }
+  }
+
+  /// Panel/OCR/bulk: yerel katalogu `products` tablosuna yazar (JSON sync değil).
+  Future<Result<void>> syncCatalogToRemote({
+    required List<Product> products,
+    required List<ProductCategory> categories,
+  }) async {
+    final editToken = _publishedInfo?.editToken.trim() ?? '';
+    if (editToken.isEmpty) {
+      return Result.failure(
+        Failure('Ürünleri kaydetmek için önce vitrini yayınlayın.'),
+      );
+    }
+
+    final ready = await ensureRemoteStoreId();
+    final storeId = _data.id?.trim() ?? '';
+    if (!ready || storeId.isEmpty) {
+      return Result.failure(
+        Failure('Mağaza kimliği bulunamadı. Yayınlayıp tekrar deneyin.'),
+      );
+    }
+
+    try {
+      _data.productCategories = List.of(categories);
+
+      final remote = await productService.fetchProducts(storeId);
+      final remoteIds = remote.map((p) => p.id).toSet();
+      final nextProducts = <Product>[];
+
+      for (var i = 0; i < products.length; i++) {
+        final product = products[i];
+        final name = product.name.trim();
+        if (name.isEmpty) continue;
+
+        final rawCatId = product.categoryId.trim();
+        final categoryUuid =
+            rawCatId.isNotEmpty && _isUuid(rawCatId) ? rawCatId : null;
+
+        final slug = (product.slug ?? _generateSlug(name)).trim();
+        final safeSlug = slug.isEmpty ? 'urun-$i' : slug;
+
+        if (_isUuid(product.id) && remoteIds.contains(product.id)) {
+          final updated = await productService.updateProduct(
+            productId: product.id,
+            editToken: editToken,
+            name: name,
+            slug: safeSlug,
+            description: product.description,
+            priceText: product.price,
+            imageUrls: product.displayImageUrls,
+            categoryId: categoryUuid,
+            clearCategory: categoryUuid == null || categoryUuid.isEmpty,
+            isVisible: product.isVisible,
+            stockStatus: product.stockStatus,
+            sortOrder: i,
+          );
+          if (updated.isFailure) {
+            return Result.failure(
+              Failure(updated.failure?.message ?? 'Ürün güncellenemedi.'),
+            );
+          }
+          product.categoryId = categoryUuid ?? '';
+          nextProducts.add(product);
+        } else {
+          final created = await productService.addProduct(
+            storeId: storeId,
+            editToken: editToken,
+            name: name,
+            slug: safeSlug,
+            description: product.description,
+            priceText: product.price,
+            imageUrls: product.displayImageUrls,
+            categoryId: categoryUuid,
+            sourceType: product.source ?? 'manual',
+            isVisible: product.isVisible,
+            sortOrder: i,
+          );
+          if (created.isFailure || created.data == null) {
+            return Result.failure(
+              Failure(created.failure?.message ?? 'Ürün eklenemedi.'),
+            );
+          }
+          product.id = created.data!;
+          product.slug = safeSlug;
+          product.categoryId = categoryUuid ?? '';
+          nextProducts.add(product);
+        }
+      }
+
+      final keepIds = nextProducts.map((p) => p.id).toSet();
+      for (final remoteProduct in remote) {
+        if (keepIds.contains(remoteProduct.id)) continue;
+        final deleted = await productService.deleteProduct(
+          remoteProduct.id,
+          editToken: editToken,
+        );
+        if (deleted.isFailure) {
+          return Result.failure(
+            Failure(deleted.failure?.message ?? 'Ürün silinemedi.'),
+          );
+        }
+      }
+
+      _data.products = nextProducts;
+      await saveLocally();
+      notifyListeners();
       return const Result.success(null);
+    } catch (e) {
+      if (kDebugMode) debugPrint('syncCatalogToRemote: $e');
+      return Result.failure(
+        Failure('Ürünler kaydedilemedi, lütfen tekrar deneyin.'),
+      );
+    }
+  }
+
+  /// Yeni ürün ekler (ilişkisel `products` tablosu).
+  Future<Result<void>> addProduct(Product p) async {
+    final editToken = _publishedInfo?.editToken.trim() ?? '';
+    if (editToken.isEmpty) {
+      return Result.failure(
+        Failure('Ürünleri kaydetmek için önce vitrini yayınlayın.'),
+      );
+    }
+    final ready = await ensureRemoteStoreId();
+    final storeId = _data.id?.trim() ?? '';
+    if (!ready || storeId.isEmpty) {
+      return Result.failure(
+        Failure('Mağaza kimliği bulunamadı. Yayınlayıp tekrar deneyin.'),
+      );
     }
 
     final result = await productService.addProduct(
@@ -434,20 +601,27 @@ class StoreEditorController extends ChangeNotifier
       description: p.description,
       priceText: p.price,
       imageUrls: p.displayImageUrls,
-      categoryId: p.categoryId.isNotEmpty ? p.categoryId : null,
+      categoryId:
+          p.categoryId.isNotEmpty && _isUuid(p.categoryId)
+              ? p.categoryId
+              : null,
       sourceType: p.source ?? 'manual',
       isVisible: p.isVisible,
       sortOrder: _data.products.length,
     );
 
-    if (result.isSuccess) {
+    if (result.isSuccess && result.data != null) {
+      p.id = result.data!;
       _data.products.add(p);
       notifyListeners();
+      return const Result.success(null);
     }
-    return result.isSuccess ? const Result.success(null) : Result.failure(Failure(result.failure?.message ?? 'Ürün eklenemedi'));
+    return Result.failure(
+      Failure(result.failure?.message ?? 'Ürün eklenemedi'),
+    );
   }
 
-  /// Ürün siler (Aşama 5: ProductService üzerinden).
+  /// Ürün siler (ilişkisel `products` tablosu).
   Future<Result<void>> removeProduct(int i) async {
     if (i < 0 || i >= _data.products.length) {
       return const Result.success(null);
@@ -455,20 +629,64 @@ class StoreEditorController extends ChangeNotifier
     final product = _data.products[i];
     final editToken = _publishedInfo?.editToken;
 
-    final result = await productService.deleteProduct(product.id, editToken: editToken);
-    if (result.isSuccess) {
-      _data.products.removeAt(i);
-      notifyListeners();
+    if (_isUuid(product.id) && editToken != null && editToken.isNotEmpty) {
+      final result = await productService.deleteProduct(
+        product.id,
+        editToken: editToken,
+      );
+      if (result.isFailure) return result;
     }
-    return result;
+    _data.products.removeAt(i);
+    notifyListeners();
+    return const Result.success(null);
   }
 
-  /// Ürün günceller (Aşama 5: ProductService üzerinden).
+  /// Ürün günceller (ilişkisel `products` tablosu).
   Future<Result<void>> updateProduct(int i, Product p) async {
     if (i < 0 || i >= _data.products.length) {
       return const Result.success(null);
     }
-    final editToken = _publishedInfo?.editToken;
+    final editToken = _publishedInfo?.editToken.trim() ?? '';
+    if (editToken.isEmpty) {
+      return Result.failure(
+        Failure('Ürünleri kaydetmek için önce vitrini yayınlayın.'),
+      );
+    }
+
+    if (!_isUuid(p.id)) {
+      final ready = await ensureRemoteStoreId();
+      final storeId = _data.id?.trim() ?? '';
+      if (!ready || storeId.isEmpty) {
+        return Result.failure(
+          Failure('Mağaza kimliği bulunamadı. Yayınlayıp tekrar deneyin.'),
+        );
+      }
+      final created = await productService.addProduct(
+        storeId: storeId,
+        editToken: editToken,
+        name: p.name,
+        slug: p.slug ?? _generateSlug(p.name),
+        description: p.description,
+        priceText: p.price,
+        imageUrls: p.displayImageUrls,
+        categoryId:
+            p.categoryId.isNotEmpty && _isUuid(p.categoryId)
+                ? p.categoryId
+                : null,
+        sourceType: p.source ?? 'manual',
+        isVisible: p.isVisible,
+        sortOrder: i,
+      );
+      if (created.isFailure || created.data == null) {
+        return Result.failure(
+          Failure(created.failure?.message ?? 'Ürün eklenemedi'),
+        );
+      }
+      p.id = created.data!;
+      _data.products[i] = p;
+      notifyListeners();
+      return const Result.success(null);
+    }
 
     final result = await productService.updateProduct(
       productId: p.id,
@@ -478,7 +696,11 @@ class StoreEditorController extends ChangeNotifier
       description: p.description,
       priceText: p.price,
       imageUrls: p.displayImageUrls,
-      categoryId: p.categoryId.isNotEmpty ? p.categoryId : null,
+      categoryId:
+          p.categoryId.isNotEmpty && _isUuid(p.categoryId)
+              ? p.categoryId
+              : null,
+      clearCategory: p.categoryId.trim().isEmpty || !_isUuid(p.categoryId),
       isVisible: p.isVisible,
       stockStatus: p.stockStatus,
     );
@@ -490,31 +712,19 @@ class StoreEditorController extends ChangeNotifier
     return result;
   }
 
-  /// İçe aktarılan ürün günceller (Aşama 5: ProductService üzerinden).
+  /// İçe aktarılan ürün günceller (ilişkisel `products` tablosu).
   Future<Result<void>> updateProductImported(Product product) async {
     final index = _data.products.indexWhere((p) => p.id == product.id);
-    final editToken = _publishedInfo?.editToken;
-
     if (index >= 0) {
-      final result = await productService.updateProduct(
-        productId: product.id,
-        editToken: editToken,
-        name: product.name,
-        slug: product.slug,
-        description: product.description,
-        priceText: product.price,
-        imageUrls: product.displayImageUrls,
-        categoryId: product.categoryId.isNotEmpty ? product.categoryId : null,
-        isVisible: product.isVisible,
-      );
-      if (result.isSuccess) {
-        _data.products[index] = product;
-        notifyListeners();
-      }
-      return result;
-    } else {
-      return addProduct(product);
+      return updateProduct(index, product);
     }
+    return addProduct(product);
+  }
+
+  bool _isUuid(String value) {
+    return RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    ).hasMatch(value.trim());
   }
 
   String _generateSlug(String name) {
@@ -613,6 +823,14 @@ class StoreEditorController extends ChangeNotifier
             name: _data.name,
             editToken: publishResult.editToken,
           );
+          _data.slug = publishResult.slug;
+          await ensureRemoteStoreId();
+          if (_data.products.isNotEmpty) {
+            await syncCatalogToRemote(
+              products: List.of(_data.products),
+              categories: List.of(_data.productCategories),
+            );
+          }
           await saveLocally();
           // Next.js cache'ini yenile
           SeoService().revalidateStore(publishResult.slug);
