@@ -26,7 +26,8 @@ class ExploreRepository {
         final response = await _client
             .from('stores')
             .select(StoreSafeSelect.columns)
-            .eq('is_published', true);
+            .eq('is_published', true)
+            .limit(50);
         final List<dynamic> rawList = response as List<dynamic>;
         final stores = rawList.map((json) => StoreData.fromJson(json)).toList();
 

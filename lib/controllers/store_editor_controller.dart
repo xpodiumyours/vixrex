@@ -568,6 +568,7 @@ class StoreEditorController extends ChangeNotifier
       _data.products = nextProducts;
       await saveLocally();
       notifyListeners();
+      _revalidateStoreCache();
       return const Result.success(null);
     } catch (e) {
       if (kDebugMode) debugPrint('syncCatalogToRemote: $e');
@@ -609,6 +610,7 @@ class StoreEditorController extends ChangeNotifier
     _data.products.add(p);
     await saveLocally();
     notifyListeners();
+    _revalidateStoreCache();
     return const Result.success(null);
   }
 
@@ -629,6 +631,7 @@ class StoreEditorController extends ChangeNotifier
     _data.products.removeAt(i);
     await saveLocally();
     notifyListeners();
+    _revalidateStoreCache();
     return const Result.success(null);
   }
 
@@ -661,6 +664,7 @@ class StoreEditorController extends ChangeNotifier
     _data.products[i] = p;
     await saveLocally();
     notifyListeners();
+    _revalidateStoreCache();
     return const Result.success(null);
   }
 
@@ -687,6 +691,13 @@ class StoreEditorController extends ChangeNotifier
         .replaceAll(RegExp(r'\s+'), '-')
         .replaceAll(RegExp(r'-+'), '-')
         .replaceAll(RegExp(r'^-|-$'), '');
+  }
+
+  /// Public vitrin sayfasının ISR cache'ini yeniler.
+  void _revalidateStoreCache() {
+    final slug = _publishedInfo?.slug ?? _data.slug;
+    if (slug.trim().isEmpty) return;
+    SeoService().revalidateStore(slug);
   }
 
   Future<void> withdrawPublicationConsent() async {
