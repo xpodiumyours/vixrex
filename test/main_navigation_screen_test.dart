@@ -5,15 +5,85 @@ import 'package:vixrex/config/chatbot_config.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/product_repository.dart';
+import 'package:vixrex/screens/landing_screen.dart';
 import 'package:vixrex/screens/my_vitrin_screen.dart';
 import 'package:vixrex/screens/profile_screen.dart';
+import 'package:vixrex/screens/vixrex_onboarding_chat_screen.dart';
 import 'package:vixrex/screens/vixrex_screen.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
 import 'package:vixrex/widgets/vixrex/vixrex_hero.dart';
 
 void main() {
+  testWidgets('landing kayıtlı vitrin durumunu Vixrex rozetine aktarır', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    StoreLocalStorageService.resetCache();
+    const storage = StoreLocalStorageService();
+    await storage.saveVitrinData(StoreData(name: 'Kayıtlı Vitrin'));
+    tester.view.physicalSize = const Size(1200, 1920);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: LandingScreen()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final badge = tester.widget<ChatbotBadge>(find.byType(ChatbotBadge));
+    expect(badge.snapshot?.storeName, 'Kayıtlı Vitrin');
+    expect(badge.isLoading, isFalse);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(child: ChatbotBadge(snapshot: badge.snapshot)),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('Sıradaki adım:'), findsOneWidget);
+    expect(find.textContaining('hazırlayayım mı'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('kayıtlı vitrin asistanı kaldığı adımdan devam eder', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    StoreLocalStorageService.resetCache();
+    const storage = StoreLocalStorageService();
+    final savedData = StoreData(name: 'Kayıtlı Vitrin');
+    await storage.saveVitrinData(savedData);
+    final editorController = StoreEditorController(
+      initialData: savedData,
+      productService: ProductService(repository: _NoopProductRepository()),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: VixRexOnboardingChatScreen(
+          editorController: editorController,
+          editorInitialization: Future<void>.value(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Tekrar hoş geldin, Kayıtlı Vitrin'), findsOneWidget);
+    expect(find.textContaining('Kayıtlı vitrinin bulundu'), findsOneWidget);
+    expect(find.textContaining('WhatsApp numaranı ekleyelim'), findsOneWidget);
+    expect(find.textContaining('vitrin oluşturmamı ister misin'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    editorController.dispose();
+  });
+
   testWidgets(
     'gömülü asistan manuel panelle aynı controllerı ve ürünleri korur',
     (tester) async {

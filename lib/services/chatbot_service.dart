@@ -101,39 +101,111 @@ class ChatbotService {
         .replaceAll('Ç', 'c');
   }
 
-  static const String _historyKey = 'vixrex_chat_history';
+  static const String _legacyHistoryKey = 'vixrex_chat_history';
+  static const String _scopedHistoryPrefix = 'vixrex_chat_history_v2_';
+
+  String _historyKeyFor(String? scope) {
+    final rawScope = scope?.trim() ?? '';
+    if (rawScope.isEmpty) return _legacyHistoryKey;
+
+    final uri = Uri.tryParse(rawScope);
+    final normalizedScope =
+        uri != null && uri.pathSegments.isNotEmpty
+            ? uri.pathSegments.last.toLowerCase()
+            : rawScope.toLowerCase();
+    final encodedScope = base64Url
+        .encode(utf8.encode(normalizedScope))
+        .replaceAll('=', '');
+    return '$_scopedHistoryPrefix$encodedScope';
+  }
+
+  List<ChatMessage> _decodeHistory(String? jsonStr) {
+    if (jsonStr == null || jsonStr.isEmpty) return [];
+    final decoded = jsonDecode(jsonStr) as List<dynamic>;
+    return decoded
+        .map((item) => ChatMessage.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  List<ChatMessage> reconcileGuidanceHistory({
+    required List<ChatMessage> history,
+    required ChatMessage currentGuidance,
+    required String handoffMarker,
+  }) {
+    final reconciled = <ChatMessage>[];
+    var handoffKept = false;
+
+    for (final message in history) {
+      final stateKey = message.snapshotStateKey?.trim() ?? '';
+      if (stateKey == handoffMarker) {
+        if (!handoffKept) {
+          reconciled.add(message);
+          handoffKept = true;
+        }
+        continue;
+      }
+
+      final isGeneratedGuidance =
+          message.isBot &&
+          (stateKey.isNotEmpty ||
+              ChatbotConfig.isStaleUnpublishedSetupTip(message) ||
+              message.quickReplies.any(
+                (reply) => reply.payload == 'action_step',
+              ));
+      if (isGeneratedGuidance) continue;
+
+      reconciled.add(message);
+    }
+
+    reconciled.add(currentGuidance);
+    return reconciled;
+  }
 
   /// Sohbet geçmişini kaydeder.
-  Future<void> saveHistory(List<ChatMessage> history) async {
+  Future<void> saveHistory(List<ChatMessage> history, {String? scope}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonList = history.map((m) => m.toJson()).toList();
-      await prefs.setString(_historyKey, jsonEncode(jsonList));
+      await prefs.setString(_historyKeyFor(scope), jsonEncode(jsonList));
     } catch (e) {
       if (kDebugMode) debugPrint('saveHistory error: $e');
     }
   }
 
   /// Sohbet geçmişini yükler.
-  Future<List<ChatMessage>> loadHistory() async {
+  Future<List<ChatMessage>> loadHistory({
+    String? scope,
+    String? legacyIdentity,
+  }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final jsonStr = prefs.getString(_historyKey);
-      if (jsonStr == null || jsonStr.isEmpty) return [];
-      final decoded = jsonDecode(jsonStr) as List<dynamic>;
-      return decoded
-          .map((item) => ChatMessage.fromJson(item as Map<String, dynamic>))
-          .toList();
+      final historyKey = _historyKeyFor(scope);
+      final scopedHistory = _decodeHistory(prefs.getString(historyKey));
+      if (scopedHistory.isNotEmpty || historyKey == _legacyHistoryKey) {
+        return scopedHistory;
+      }
+
+      final identity = legacyIdentity?.trim() ?? '';
+      if (identity.isEmpty) return [];
+
+      final legacyHistory = _decodeHistory(prefs.getString(_legacyHistoryKey));
+      await prefs.remove(_legacyHistoryKey);
+      if (!legacyHistory.any((message) => message.text.contains(identity))) {
+        return [];
+      }
+
+      await saveHistory(legacyHistory, scope: scope);
+      return legacyHistory;
     } catch (_) {
       return [];
     }
   }
 
   /// Geçmişi temizler.
-  Future<void> clearHistory() async {
+  Future<void> clearHistory({String? scope}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_historyKey);
+      await prefs.remove(_historyKeyFor(scope));
     } catch (e) {
       if (kDebugMode) debugPrint('clearHistory error: $e');
     }

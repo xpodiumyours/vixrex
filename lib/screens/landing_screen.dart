@@ -16,6 +16,7 @@ import 'package:vixrex/widgets/landing/landing_template_catalog.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -32,6 +33,7 @@ class _LandingScreenState extends State<LandingScreen>
   final ScrollController _landingScrollController = ScrollController();
   bool _hasSavedVitrin = false;
   bool _isCheckingSavedVitrin = true;
+  VixRexProfileSnapshot? _vixrexSnapshot;
   final TextEditingController _storeNameController = TextEditingController();
 
   /// Kategori sablonlarindan yuklenen galeri gorselleri cache'i
@@ -281,10 +283,14 @@ class _LandingScreenState extends State<LandingScreen>
     try {
       const storage = StoreLocalStorageService();
       final data = await storage.loadVitrinData();
+      final publishedInfo = await storage.loadPublishedVitrinInfo();
       final hasSaved = data != null && data.name.trim().isNotEmpty;
+      final snapshot =
+          data == null ? null : VixRexProfileSnapshot.from(data, publishedInfo);
       if (!mounted) return;
       setState(() {
         _hasSavedVitrin = hasSaved;
+        _vixrexSnapshot = snapshot;
         _isCheckingSavedVitrin = false;
       });
     } catch (e) {
@@ -292,6 +298,7 @@ class _LandingScreenState extends State<LandingScreen>
       if (!mounted) return;
       setState(() {
         _hasSavedVitrin = false;
+        _vixrexSnapshot = null;
         _isCheckingSavedVitrin = false;
       });
     }
@@ -392,7 +399,11 @@ class _LandingScreenState extends State<LandingScreen>
           ),
         ),
       ),
-      floatingActionButton: ChatbotBadge(onOpen: _openMockupChat),
+      floatingActionButton: ChatbotBadge(
+        snapshot: _vixrexSnapshot,
+        isLoading: _isCheckingSavedVitrin,
+        onOpen: _openMockupChat,
+      ),
     );
   }
 }

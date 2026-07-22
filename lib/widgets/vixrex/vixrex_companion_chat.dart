@@ -63,201 +63,92 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   @override
   void didUpdateWidget(covariant VixRexCompanionChat oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.snapshot?.storeName != widget.snapshot?.storeName ||
+    final oldScope = _historyScopeFor(oldWidget.snapshot);
+    if (oldScope != _historyScope) {
+      setState(() {
+        _messages.clear();
+        _loading = true;
+      });
+      _bootstrap();
+      return;
+    }
+    if (oldWidget.recommendation.id != widget.recommendation.id ||
         oldWidget.hasShared != widget.hasShared) {
       _refreshGuidanceTip();
     }
   }
 
-  bool get _isUnpublished =>
-      widget.snapshot == null || !widget.snapshot!.isPublished;
+  String _historyScopeFor(VixRexProfileSnapshot? snapshot) =>
+      snapshot?.publicLink.trim() ?? '';
 
-  List<ChatMessage> _deduplicateHistory(List<ChatMessage> history) {
-    final cleaned = <ChatMessage>[];
-    for (final msg in history) {
-      if (cleaned.isEmpty) {
-        cleaned.add(msg);
-        continue;
-      }
-      final prev = cleaned.last;
-      // If two consecutive messages are bot messages with identical text or snapshotStateKey, drop duplicate
-      if (msg.isBot && prev.isBot) {
-        if (msg.text.trim() == prev.text.trim() ||
-            (msg.snapshotStateKey != null &&
-                msg.snapshotStateKey == prev.snapshotStateKey)) {
-          continue;
-        }
-      }
-      cleaned.add(msg);
+  String get _historyScope => _historyScopeFor(widget.snapshot);
+
+  bool _hasOnboardingHandoff(List<ChatMessage> history) =>
+      history.any((message) => message.snapshotStateKey == _handoffMarker);
+
+  ChatMessage _currentGuidanceFor(List<ChatMessage> history) {
+    final snapshot = widget.snapshot;
+    if (snapshot == null || !snapshot.isPublished) {
+      return ChatbotConfig.setupInviteMessage;
     }
-    return cleaned;
+    return _hasOnboardingHandoff(history)
+        ? ChatbotConfig.nextStepTip(snapshot, hasShared: widget.hasShared)
+        : _service.respondWithSnapshot(snapshot, hasShared: widget.hasShared);
   }
 
   Future<void> _bootstrap() async {
-    final history = await _service.loadHistory();
-    if (!mounted) return;
-    if (history.isNotEmpty) {
-      final cleanedHistory = _deduplicateHistory(history);
-      setState(() {
-        _messages
-          ..clear()
-          ..addAll(cleanedHistory);
-        _loading = false;
-      });
-      if (cleanedHistory.length != history.length) {
-        await _service.saveHistory(_messages);
-      }
-      await _alignUnpublishedInvite();
-      await _ensureStepCta();
-      _scrollToEnd();
-      return;
-    }
+    final scope = _historyScope;
+    final history = await _service.loadHistory(
+      scope: scope,
+      legacyIdentity: widget.snapshot?.publicLink.trim(),
+    );
+    if (!mounted || scope != _historyScope) return;
+
+    final reconciled = _service.reconcileGuidanceHistory(
+      history: history,
+      currentGuidance: _currentGuidanceFor(history),
+      handoffMarker: _handoffMarker,
+    );
 
     // Companion yalnız yayın sonrası Vixrex sekmesinde; kurulum gömülü onboarding’de.
-    final seed =
-        widget.snapshot == null
-            ? ChatbotConfig.setupInviteMessage
-            : _service.respondWithSnapshot(
-              widget.snapshot!,
-              hasShared: widget.hasShared,
-            );
-
     setState(() {
       _messages
         ..clear()
-        ..add(seed);
+        ..addAll(reconciled);
       _loading = false;
     });
-    await _service.saveHistory(_messages);
+    await _service.saveHistory(_messages, scope: scope);
     await _service.markGreeted();
     _scrollToEnd();
   }
 
   Future<void> _clearChat() async {
-    await _service.clearHistory();
+    await _service.clearHistory(scope: _historyScope);
     if (!mounted) return;
-    final seed =
-        widget.snapshot == null
-            ? ChatbotConfig.setupInviteMessage
-            : _service.respondWithSnapshot(
-              widget.snapshot!,
-              hasShared: widget.hasShared,
-            );
+    final seed = _currentGuidanceFor(const []);
     setState(() {
       _messages
         ..clear()
         ..add(seed);
     });
-    await _service.saveHistory(_messages);
+    await _service.saveHistory(_messages, scope: _historyScope);
   }
 
   static const _handoffMarker = 'onboarding_handoff_v1';
 
-  bool get _historyHasOnboardingHandoff =>
-      _messages.any((m) => m.snapshotStateKey == _handoffMarker);
-
-  /// Eski “İşletme Adı Ekle” / genel karşılama geçmişini tek davete indirger.
-  Future<void> _alignUnpublishedInvite() async {
-    if (!_isUnpublished) return;
-    if (_historyHasOnboardingHandoff) return;
-
-    final hasInvite = _messages.any(
-      (m) => m.snapshotStateKey == ChatbotConfig.setupInviteStateKey,
+  void _refreshGuidanceTip() {
+    if (_messages.isEmpty) return;
+    final reconciled = _service.reconcileGuidanceHistory(
+      history: _messages,
+      currentGuidance: _currentGuidanceFor(_messages),
+      handoffMarker: _handoffMarker,
     );
-    final hasStale = _messages.any(
-      (m) => m.isBot && ChatbotConfig.isStaleUnpublishedSetupTip(m),
-    );
-    final hasLegacyWelcome = _messages.any(
-      (m) =>
-          m.isBot &&
-          m.snapshotStateKey != ChatbotConfig.setupInviteStateKey &&
-          (m.text.contains('Vixrex rehberiyim') ||
-              m.text.contains('Nasıl yardımcı olayım') ||
-              m.text.contains('İşletme adınızı girin')),
-    );
-    if (hasInvite && !hasStale && !hasLegacyWelcome && _messages.length == 1) {
-      return;
-    }
-    if (!hasStale && !hasLegacyWelcome && hasInvite) return;
-
     setState(() {
       _messages
         ..clear()
-        ..add(ChatbotConfig.setupInviteMessage);
+        ..addAll(reconciled);
     });
-    await _service.saveHistory(_messages);
-  }
-
-  Future<void> _ensureStepCta() async {
-    if (_isUnpublished) {
-      final hasInvite = _messages.any(
-        (m) => m.snapshotStateKey == ChatbotConfig.setupInviteStateKey,
-      );
-      if (hasInvite) return;
-      if (!mounted) return;
-      setState(() => _messages.add(ChatbotConfig.setupInviteMessage));
-      await _service.saveHistory(_messages);
-      return;
-    }
-
-    final hasStepCta = _messages.any(
-      (m) =>
-          m.isBot &&
-          (m.snapshotStateKey != null ||
-              m.quickReplies.any((q) => q.payload == 'action_step')),
-    );
-    if (hasStepCta) return;
-    // Handoff varsa tam karşılama/link tekrarlanmaz — yalnız sıradaki adım.
-    final tip =
-        _historyHasOnboardingHandoff
-            ? ChatbotConfig.nextStepTip(
-              widget.snapshot!,
-              hasShared: widget.hasShared,
-            )
-            : _service.respondWithSnapshot(
-              widget.snapshot!,
-              hasShared: widget.hasShared,
-            );
-    if (!mounted) return;
-    setState(() => _messages.add(tip));
-    await _service.saveHistory(_messages);
-  }
-
-  void _refreshGuidanceTip() {
-    if (_messages.isEmpty) return;
-    if (_isUnpublished) {
-      final hasInvite = _messages.any(
-        (m) => m.snapshotStateKey == ChatbotConfig.setupInviteStateKey,
-      );
-      if (hasInvite) return;
-      setState(() => _messages.add(ChatbotConfig.setupInviteMessage));
-      _service.saveHistory(_messages);
-      _scrollToEnd();
-      return;
-    }
-    if (widget.snapshot == null) return;
-    final tip =
-        _historyHasOnboardingHandoff
-            ? ChatbotConfig.nextStepTip(
-              widget.snapshot!,
-              hasShared: widget.hasShared,
-            )
-            : _service.respondWithSnapshot(
-              widget.snapshot!,
-              hasShared: widget.hasShared,
-            );
-
-    // Üst üste tekrarlayan ipucu mesajı eklenmesini engelle
-    final alreadyExists = _messages.any(
-      (m) =>
-          m.isBot &&
-          (m.snapshotStateKey == tip.snapshotStateKey ||
-              m.text.trim() == tip.text.trim()),
-    );
-    if (alreadyExists) return;
-
-    setState(() => _messages.add(tip));
-    _service.saveHistory(_messages);
+    _service.saveHistory(_messages, scope: _historyScope);
     _scrollToEnd();
   }
 
@@ -281,7 +172,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
       _typing = true;
     });
     _inputCtrl.clear();
-    _service.saveHistory(_messages);
+    _service.saveHistory(_messages, scope: _historyScope);
     _scrollToEnd();
 
     Future<void>.delayed(const Duration(milliseconds: 450), () async {
@@ -305,7 +196,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
         _typing = false;
         _messages.add(bot);
       });
-      _service.saveHistory(_messages);
+      _service.saveHistory(_messages, scope: _historyScope);
       _scrollToEnd();
     });
   }
@@ -329,7 +220,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
 
   void _appendBotAck(String text) {
     setState(() => _messages.add(ChatMessage.bot(text)));
-    _service.saveHistory(_messages);
+    _service.saveHistory(_messages, scope: _historyScope);
     _scrollToEnd();
   }
 
@@ -362,7 +253,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
       _messages.add(userMsg);
       _typing = true;
     });
-    _service.saveHistory(_messages);
+    _service.saveHistory(_messages, scope: _historyScope);
     _scrollToEnd();
 
     Future<void>.delayed(const Duration(milliseconds: 450), () {
@@ -376,7 +267,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
         _typing = false;
         _messages.add(bot);
       });
-      _service.saveHistory(_messages);
+      _service.saveHistory(_messages, scope: _historyScope);
       _scrollToEnd();
     });
   }

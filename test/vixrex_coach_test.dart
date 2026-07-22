@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/chatbot_config.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/chatbot_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
@@ -174,36 +176,99 @@ void main() {
   });
 
   group('ChatbotService history management', () {
-    test('ChatMessage deduplication prevents consecutive identical bot messages', () {
-      final msg1 = ChatMessage.bot('Test Tip', snapshotStateKey: 'state_1');
-      final msg2 = ChatMessage.bot('Test Tip', snapshotStateKey: 'state_1');
-      final msg3 = ChatMessage.user('User question');
-      final msg4 = ChatMessage.bot('Test Tip', snapshotStateKey: 'state_1');
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
 
-      final rawList = [msg1, msg2, msg3, msg4];
-      final cleaned = <ChatMessage>[];
-      for (final msg in rawList) {
-        if (cleaned.isEmpty) {
-          cleaned.add(msg);
-          continue;
-        }
-        final prev = cleaned.last;
-        if (msg.isBot && prev.isBot) {
-          if (msg.text.trim() == prev.text.trim() ||
-              (msg.snapshotStateKey != null &&
-                  msg.snapshotStateKey == prev.snapshotStateKey)) {
-            continue;
-          }
-        }
-        cleaned.add(msg);
-      }
+    test('aralikli eski rehber mesajlarini siler, sohbeti korur', () {
+      final service = ChatbotService();
+      final userMessage = ChatMessage.user('Kullanici sorusu');
+      final normalBotReply = ChatMessage.bot('Normal asistan cevabi');
+      final handoff = ChatMessage.bot(
+        'Kurulum tamamlandi',
+        snapshotStateKey: 'onboarding_handoff_v1',
+      );
+      final currentGuidance = ChatMessage.bot(
+        'Guncel siradaki adim',
+        snapshotStateKey: 'improve_cover',
+      );
 
-      // msg2 was consecutive duplicate of msg1 -> removed
-      // msg4 came after user message -> kept
-      expect(cleaned, hasLength(3));
-      expect(cleaned[0].text, 'Test Tip');
-      expect(cleaned[1].isBot, isFalse);
-      expect(cleaned[2].text, 'Test Tip');
+      final reconciled = service.reconcileGuidanceHistory(
+        history: [
+          ChatMessage.bot('Eski adim', snapshotStateKey: 'setup_name'),
+          userMessage,
+          ChatMessage.bot('Eski adim', snapshotStateKey: 'setup_name'),
+          normalBotReply,
+          handoff,
+        ],
+        currentGuidance: currentGuidance,
+        handoffMarker: 'onboarding_handoff_v1',
+      );
+
+      expect(reconciled, [
+        userMessage,
+        normalBotReply,
+        handoff,
+        currentGuidance,
+      ]);
+    });
+
+    test('iki vitrinin sohbet gecmisini birbirinden ayirir', () async {
+      final service = ChatbotService();
+      final firstMessage = ChatMessage.user('Birinci vitrin');
+      final secondMessage = ChatMessage.user('Ikinci vitrin');
+
+      await service.saveHistory(
+        [firstMessage],
+        scope: 'https://vixrex-public.vercel.app/v/birinci',
+      );
+      await service.saveHistory(
+        [secondMessage],
+        scope: 'https://vixrex-public.vercel.app/v/ikinci',
+      );
+
+      expect(
+        (await service.loadHistory(
+          scope: 'https://vixrex-public.vercel.app/v/birinci',
+        )).single.text,
+        firstMessage.text,
+      );
+      expect(
+        (await service.loadHistory(
+          scope: 'https://vixrex-public.vercel.app/v/ikinci',
+        )).single.text,
+        secondMessage.text,
+      );
+    });
+
+    test('eski global gecmisi yalniz aktif vitrin linki eslesirse tasir', () async {
+      final service = ChatbotService();
+      const firstLink = 'https://vixrex-public.vercel.app/v/birinci';
+      const secondLink = 'https://vixrex-public.vercel.app/v/ikinci';
+      final legacyMessage = ChatMessage.bot('Vitrinin hazir\n\n$firstLink');
+
+      await service.saveHistory([legacyMessage]);
+      expect(
+        await service.loadHistory(
+          scope: secondLink,
+          legacyIdentity: secondLink,
+        ),
+        isEmpty,
+      );
+      expect(await service.loadHistory(), isEmpty);
+
+      await service.saveHistory([legacyMessage]);
+      final migrated = await service.loadHistory(
+        scope: firstLink,
+        legacyIdentity: firstLink,
+      );
+      expect(migrated.single.text, legacyMessage.text);
+      expect(await service.loadHistory(), isEmpty);
+      expect(
+        (await service.loadHistory(scope: firstLink)).single.text,
+        legacyMessage.text,
+      );
     });
   });
+
 }

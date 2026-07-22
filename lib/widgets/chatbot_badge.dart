@@ -92,7 +92,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   String? get _bubbleMessage {
     if (widget.isLoading) return null;
     final snapshot = widget.snapshot;
-    if (snapshot == null || !snapshot.isPublished) {
+    if (snapshot == null || !snapshot.nameCompleted) {
       return '👋 Dijital vitrinini hazırlayayım mı?';
     }
 
@@ -257,4 +257,3 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
     );
   }
 }
-

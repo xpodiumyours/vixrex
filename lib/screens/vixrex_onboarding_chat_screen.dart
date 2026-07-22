@@ -6,6 +6,7 @@ import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/chatbot_service.dart';
+import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
 import 'package:vixrex/widgets/editor/form_location_info.dart';
@@ -86,6 +87,8 @@ class _VixRexOnboardingChatScreenState
   }
 
   Future<void> _bootstrap() async {
+    final savedData = await _controller.storage.loadVitrinData();
+    final hasSavedVitrin = savedData?.name.trim().isNotEmpty == true;
     final sharedInitialization = widget.editorInitialization;
     if (sharedInitialization != null) {
       await sharedInitialization;
@@ -93,11 +96,57 @@ class _VixRexOnboardingChatScreenState
       await _controller.initialize(widget.initialName);
     }
     if (!mounted) return;
+    if (hasSavedVitrin) {
+      _resumeSavedVitrin();
+      return;
+    }
     _pushBot(
       'Merhaba, ben Vixrex.\n\n'
       'Sana dijital bir vitrin oluşturmamı ister misin?',
     );
     setState(() {});
+  }
+
+  void _resumeSavedVitrin() {
+    final snapshot = VixRexProfileSnapshot.from(
+      _controller.data,
+      _controller.publishedInfo,
+    );
+    final storeName = snapshot.storeName;
+
+    _pushBot(
+      'Tekrar hoş geldin, $storeName.\n\n'
+      'Kayıtlı vitrinin bulundu. Yeni bir vitrin oluşturmuyoruz; '
+      'kaldığın yerden devam ediyoruz.',
+    );
+
+    switch (snapshot.nextMissingField) {
+      case VixRexNextStep.name:
+        setState(() => _step = _OnboardingStep.name);
+        _pushBot('İşletme adını tamamlayalım.');
+        _focusInput();
+      case VixRexNextStep.whatsapp:
+        setState(() => _step = _OnboardingStep.whatsapp);
+        _pushBot('Sıradaki adım: WhatsApp numaranı ekleyelim.');
+        _focusInput();
+      case VixRexNextStep.address:
+        setState(() => _step = _OnboardingStep.location);
+        _pushBot('Sıradaki adım: adres ve konum bilgini tamamlayalım.');
+      case VixRexNextStep.legal:
+        setState(() => _step = _OnboardingStep.legal);
+        _pushBot('Sıradaki adım: yasal yayınlama onaylarını tamamlayalım.');
+      case VixRexNextStep.publish:
+        setState(() => _step = _OnboardingStep.legal);
+        _pushBot('Bilgilerin hazır. Sıradaki adım vitrini yayınlamak.');
+      case VixRexNextStep.share:
+        _publicLink = snapshot.publicLink;
+        setState(() => _step = _OnboardingStep.done);
+        _pushBot(
+          'Vitrinin yayında. Şimdi görünümünü ve ürünlerini geliştirmeye '
+          'devam edebiliriz.',
+          publicLink: _repairedPublicLink,
+        );
+    }
   }
 
   @override
