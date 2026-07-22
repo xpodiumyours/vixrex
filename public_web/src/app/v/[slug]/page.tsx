@@ -18,6 +18,15 @@ import ProductCatalog from "./ProductCatalog";
 
 export const revalidate = 60;
 
+export async function generateStaticParams() {
+  const { data: stores } = await supabase
+    .from("stores")
+    .select("slug")
+    .eq("is_published", true);
+
+  return (stores || []).map((store: { slug: string }) => ({ slug: store.slug }));
+}
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
