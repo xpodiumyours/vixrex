@@ -1,0 +1,207 @@
+# ============================================================================
+# VixRex Supabase CI (M1)
+# Yerel Docker tabanlı migration doğrulama, pgTAP/RLS testi ve schema diff.
+# Production'a bağlanmaz, secret istemez, uzak proje kullanmaz.
+# ============================================================================
+
+name: Supabase Local CI
+
+on:
+  push:
+    branches: [main, feat/supabase-foundation]
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/supabase-local-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/supabase-local-ci.yml'
+  workflow_dispatch:
+
+env:
+  SUPABASE_CLI_VERSION: "2.109.1"
+
+jobs:
+  # ── Job 1: Yerel Supabase başlatma ve migration doğrulama ──
+  migrate-and-verify:
+    name: Migration & Reset
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2.1.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Verify CLI version
+        run: |
+          ACTUAL=$(supabase --version | grep -oP '[\d.]+')
+          if [ "$ACTUAL" != "$SUPABASE_CLI_VERSION" ]; then
+            echo "ERROR: Expected CLI $SUPABASE_CLI_VERSION, got $ACTUAL"
+            exit 1
+          fi
+
+      - name: Start local Supabase
+        run: supabase start --yes
+
+      - name: Run db reset (migrations + seed)
+        run: supabase db reset --local
+
+      - name: Verify tables exist
+        run: |
+          supabase db query --local "
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+            ORDER BY table_name;
+          "
+
+      - name: Verify RLS enabled on all public tables
+        run: |
+          supabase db query --local "
+            SELECT tablename, rowsecurity
+            FROM pg_tables
+            WHERE schemaname = 'public'
+            ORDER BY tablename;
+          "
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
+
+  # ── Job 2: Schema diff — drift CI'ı kırmalı ──
+  schema-diff:
+    name: Schema Diff
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: migrate-and-verify
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2.1.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Start local Supabase
+        run: supabase start --yes
+
+      - name: Run db reset (clean state)
+        run: supabase db reset --local
+
+      - name: Check schema diff — fail on drift
+        run: |
+          DIFF_OUTPUT=$(supabase db diff --local --use-migra 2>&1)
+          if [ -n "$DIFF_OUTPUT" ]; then
+            echo "SCHEMA DRIFT DETECTED:"
+            echo "$DIFF_OUTPUT"
+            echo ""
+            echo "Migration'lar ile yerel şema uyuşmuyor."
+            echo "Drift'i gidermek için migration oluştur veya config.toml'ı güncelle."
+            exit 1
+          fi
+          echo "Schema diff temiz: local db migration'larla eşleşiyor."
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
+
+  # ── Job 3: pgTAP ile RLS ve güvenlik testi ──
+  rls-security-tests:
+    name: RLS & Security Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: migrate-and-verify
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2.1.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Start local Supabase
+        run: supabase start --yes
+
+      - name: Run db reset (clean state)
+        run: supabase db reset --local
+
+      - name: Run RLS tests via supabase test db
+        run: supabase test db --local
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
+
+  # ── Job 4: Config ve yapı doğrulama ──
+  config-validation:
+    name: Config Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify config.toml exists and is tracked
+        run: |
+          if [ ! -f supabase/config.toml ]; then
+            echo "ERROR: supabase/config.toml not found"
+            exit 1
+          fi
+          if git ls-files --error-unmatch supabase/config.toml 2>/dev/null; then
+            echo "config.toml is tracked in git"
+          else
+            echo "ERROR: config.toml is not tracked (should be committed)"
+            exit 1
+          fi
+
+      - name: Verify no production references in config
+        run: |
+          if grep -q "supabase.co" supabase/config.toml; then
+            echo "ERROR: Production URL found in config.toml"
+            exit 1
+          fi
+          echo "No production references in config.toml"
+
+      - name: Verify seed.sql exists
+        run: |
+          if [ ! -f supabase/seed.sql ]; then
+            echo "ERROR: supabase/seed.sql not found"
+            exit 1
+          fi
+          echo "seed.sql found"
+
+      - name: Verify test file exists
+        run: |
+          if [ ! -f supabase/tests/database/rls.test.sql ]; then
+            echo "ERROR: supabase/tests/database/rls.test.sql not found"
+            exit 1
+          fi
+          echo "rls.test.sql found"
+
+      - name: Verify migrations directory
+        run: |
+          MIGRATION_COUNT=$(ls -1 supabase/migrations/*.sql 2>/dev/null | wc -l)
+          echo "Migration files found: $MIGRATION_COUNT"
+          if [ "$MIGRATION_COUNT" -eq 0 ]; then
+            echo "ERROR: No migration files found"
+            exit 1
+          fi
+
+      - name: Check for production secrets in config
+        run: |
+          if grep -qE "(service_role|SERVICE_ROLE|anon_key|ANON_KEY|SUPABASE_URL|supabase\.co)" supabase/config.toml; then
+            echo "ERROR: Production secrets found in config.toml"
+            exit 1
+          fi
+          echo "No production secrets in config.toml"
