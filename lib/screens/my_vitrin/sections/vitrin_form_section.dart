@@ -244,23 +244,6 @@ class VitrinFormSection extends StatelessWidget {
                           ),
                           const SizedBox(height: 14),
 
-                          // 3. Kategori
-                          KeyedSubtree(
-                            key: state.categoryKey,
-                            child: EditorDropdownField(
-                              label: 'Kategori',
-                              value: controller.selectedKategori,
-                              items:
-                                  BusinessCategoryConfig.categories
-                                      .map((c) => c.label)
-                                      .toList(),
-                              icon: Icons.category_rounded,
-                              onChanged:
-                                  (val) =>
-                                      controller.selectCategory(val ?? 'Diğer'),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
 
                           // StoreThemePicker (Tema Seçimi)
                           StoreThemePicker(
@@ -388,22 +371,6 @@ class VitrinFormSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
 
-                    // Kategori
-                    KeyedSubtree(
-                      key: state.categoryKey,
-                      child: EditorDropdownField(
-                        label: 'Kategori',
-                        value: controller.selectedKategori,
-                        items:
-                            BusinessCategoryConfig.categories
-                                .map((c) => c.label)
-                                .toList(),
-                        icon: Icons.category_rounded,
-                        onChanged:
-                            (val) => controller.selectCategory(val ?? 'Diğer'),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
 
                     // StoreThemePicker (Tema Seçimi)
                     StoreThemePicker(

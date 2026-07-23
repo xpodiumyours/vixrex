@@ -22,7 +22,7 @@ class LegalConfig {
   );
   static const String privacyEmail = String.fromEnvironment(
     'LEGAL_PRIVACY_EMAIL',
-    defaultValue: 'Xpodiumyours@gmail.com',
+    defaultValue: 'vixrex.app@gmail.com',
   );
   static const String publicSiteUrl = String.fromEnvironment(
     'PUBLIC_SITE_URL',

@@ -122,18 +122,6 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     _scrollToEnd();
   }
 
-  Future<void> _clearChat() async {
-    await _service.clearHistory(scope: _historyScope);
-    if (!mounted) return;
-    final seed = _currentGuidanceFor(const []);
-    setState(() {
-      _messages
-        ..clear()
-        ..add(seed);
-    });
-    await _service.saveHistory(_messages, scope: _historyScope);
-  }
-
   static const _handoffMarker = 'onboarding_handoff_v1';
 
   void _refreshGuidanceTip() {
@@ -279,52 +267,6 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     super.dispose();
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Vixrex Sohbet',
-            style: TextStyle(
-              color: AppColors.mutedText,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (_messages.isNotEmpty)
-            InkWell(
-              onTap: _clearChat,
-              borderRadius: BorderRadius.circular(6),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.delete_outline_rounded,
-                      size: 14,
-                      color: AppColors.mutedText,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'Sohbeti Temizle',
-                      style: TextStyle(
-                        color: AppColors.mutedText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -341,7 +283,6 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader(),
         Expanded(
           child: ListView.builder(
             controller: _scrollCtrl,

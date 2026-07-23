@@ -101,8 +101,13 @@ class _VixRexOnboardingChatScreenState
       return;
     }
     _pushBot(
-      'Merhaba, ben Vixrex.\n\n'
-      'Sana dijital bir vitrin oluşturmamı ister misin?',
+      'Merhaba, ben Vixrex Asistan.\n\n'
+      'İşletmene ne kazandırıyorum?\n'
+      '• 📱 Tek Link & QR Kod: Dijital vitrin sayfan.\n'
+      '• 💬 WhatsApp Sipariş: Müşterilerin tek tıkla sana ulaşır.\n'
+      '• 🛍️ Ürün & Galeri: Reyon ve ürünlerini sergilersin.\n'
+      '• 📍 Konum & Adres: Dükkanına kolayca ulaşılır.\n\n'
+      'Senin işletmen için de 2 dakikada beraber hazırlayalım mı?',
     );
     setState(() {});
   }
@@ -210,12 +215,15 @@ class _VixRexOnboardingChatScreenState
   /// Onboarding balonlarını mevcut rehber history’sine yazar (tek sefer).
   Future<void> _handoffTranscriptToRehber() async {
     final service = ChatbotService();
-    final existing = await service.loadHistory();
-    if (existing.any((m) => m.snapshotStateKey == _kOnboardingHandoffMarker)) {
-      return;
-    }
+    final scope = _repairedPublicLink;
     final transcript = _transcriptAsChatMessages();
-    await service.saveHistory([...transcript, ...existing]);
+    if (scope != null && scope.isNotEmpty) {
+      await service.saveHistory(transcript, scope: scope);
+    }
+    final existing = await service.loadHistory();
+    if (!existing.any((m) => m.snapshotStateKey == _kOnboardingHandoffMarker)) {
+      await service.saveHistory([...transcript, ...existing]);
+    }
   }
 
   Future<void> _navigateAfterHandoff({
@@ -396,6 +404,16 @@ class _VixRexOnboardingChatScreenState
     });
   }
 
+  Future<void> _submitLocationText(String raw) async {
+    final text = raw.trim();
+    if (text.length < 3) return;
+    _pushUser(text);
+    _controller.updateAddressText(text);
+    await _controller.saveLocally();
+    _inputController.clear();
+    if (mounted) setState(() {});
+  }
+
   Future<void> _onSend() async {
     final text = _inputController.text;
     switch (_step) {
@@ -403,6 +421,8 @@ class _VixRexOnboardingChatScreenState
         await _submitName(text);
       case _OnboardingStep.whatsapp:
         await _submitWhatsapp(text);
+      case _OnboardingStep.location:
+        await _submitLocationText(text);
       default:
         break;
     }

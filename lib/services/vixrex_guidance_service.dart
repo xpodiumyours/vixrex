@@ -95,7 +95,7 @@ class VixRexGuidanceService {
         label: 'Kategoriye özel görseller',
         points: 10,
         completed: snapshot?.autoFillCompleted ?? false,
-        action: VixRexAction.scrollToCategory,
+        action: VixRexAction.openCoverTemplatePicker,
       ),
     ];
   }
@@ -276,12 +276,12 @@ class VixRexGuidanceService {
         const VixRexRecommendation(
           id: 'improve_category',
           phase: VixRexJourneyPhase.improve,
-          title: 'Kategorini seç',
+          title: 'Şablonla güzelleştir',
           description:
-              'Vitrinin yayında! Şimdi kategorini seçelim ki işletmene özel '
-              'şablon ve büyüme önerilerini hazırlayalım.',
-          buttonLabel: 'Kategorini seç',
-          action: VixRexAction.scrollToCategory,
+              'Vitrinin yayında! Şimdi hazır şablonlardan birini seçelim ki '
+              'işletmene özel tasarım ve görselleri ekleyelim.',
+          buttonLabel: 'Hazır şablonları aç',
+          action: VixRexAction.openCoverTemplatePicker,
         ),
       );
     }

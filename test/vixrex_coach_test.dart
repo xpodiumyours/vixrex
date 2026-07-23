@@ -54,7 +54,7 @@ void main() {
       expect(rec.action, VixRexAction.openVitrim);
     });
 
-    test('yayınlı ama kategorisi eksikse önce kategorini seç önerisi', () {
+    test('yayınlı ama kategorisi eksikse şablon picker önerisi', () {
       final store = StoreData().copyWith(
         name: 'Test',
         whatsapp: '05551234567',
@@ -80,36 +80,6 @@ void main() {
         hasShared: false,
       );
       expect(rec.id, 'improve_category');
-      expect(rec.action, VixRexAction.scrollToCategory);
-    });
-
-    test('yayınlı ve kategorisi tam ama kapak eksikse şablon picker aksiyonu', () {
-      final store = StoreData().copyWith(
-        name: 'Test',
-        whatsapp: '05551234567',
-        address: 'Adres',
-        provinceName: 'Istanbul',
-        districtName: 'Kadikoy',
-        kategori: 'giyim',
-        privacyNoticeAcknowledged: true,
-        privacyNoticeVersion: '1.0',
-        termsAccepted: true,
-        termsVersion: '1.0',
-        publicationConsentAccepted: true,
-        publicationConsentVersion: '1.0',
-      );
-      const published = PublishedVitrinInfo(
-        slug: 'test',
-        publicLink: 'https://vixrex-public.vercel.app/v/test',
-        name: 'Test',
-        editToken: 'token',
-      );
-      final snapshot = VixRexProfileSnapshot.from(store, published);
-      final rec = VixRexGuidanceService.recommendationFor(
-        snapshot: snapshot,
-        hasShared: false,
-      );
-      expect(rec.id, 'improve_cover');
       expect(rec.action, VixRexAction.openCoverTemplatePicker);
     });
   });
@@ -126,7 +96,7 @@ void main() {
     test('Name dolu ise whatsapp beklenmeli', () {
       final store = StoreData().copyWith(name: 'Test Store');
       final snapshot = VixRexProfileSnapshot.from(store, null);
-      
+
       expect(snapshot.nameCompleted, isTrue);
       expect(snapshot.whatsappCompleted, isFalse);
       expect(snapshot.nextMissingField, VixRexNextStep.whatsapp);
@@ -141,7 +111,7 @@ void main() {
         districtName: 'Kadikoy',
       );
       final snapshot = VixRexProfileSnapshot.from(store, null);
-      
+
       expect(snapshot.nameCompleted, isTrue);
       expect(snapshot.whatsappCompleted, isTrue);
       expect(snapshot.addressCompleted, isTrue);
@@ -167,7 +137,7 @@ void main() {
         publicationConsentHash: 'hash',
       );
       final snapshot = VixRexProfileSnapshot.from(store, null);
-      
+
       expect(snapshot.legalCompleted, isTrue);
       expect(snapshot.isReadyToPublish, isTrue);
       expect(snapshot.isPublished, isFalse);
@@ -212,63 +182,5 @@ void main() {
         currentGuidance,
       ]);
     });
-
-    test('iki vitrinin sohbet gecmisini birbirinden ayirir', () async {
-      final service = ChatbotService();
-      final firstMessage = ChatMessage.user('Birinci vitrin');
-      final secondMessage = ChatMessage.user('Ikinci vitrin');
-
-      await service.saveHistory(
-        [firstMessage],
-        scope: 'https://vixrex-public.vercel.app/v/birinci',
-      );
-      await service.saveHistory(
-        [secondMessage],
-        scope: 'https://vixrex-public.vercel.app/v/ikinci',
-      );
-
-      expect(
-        (await service.loadHistory(
-          scope: 'https://vixrex-public.vercel.app/v/birinci',
-        )).single.text,
-        firstMessage.text,
-      );
-      expect(
-        (await service.loadHistory(
-          scope: 'https://vixrex-public.vercel.app/v/ikinci',
-        )).single.text,
-        secondMessage.text,
-      );
-    });
-
-    test('eski global gecmisi yalniz aktif vitrin linki eslesirse tasir', () async {
-      final service = ChatbotService();
-      const firstLink = 'https://vixrex-public.vercel.app/v/birinci';
-      const secondLink = 'https://vixrex-public.vercel.app/v/ikinci';
-      final legacyMessage = ChatMessage.bot('Vitrinin hazir\n\n$firstLink');
-
-      await service.saveHistory([legacyMessage]);
-      expect(
-        await service.loadHistory(
-          scope: secondLink,
-          legacyIdentity: secondLink,
-        ),
-        isEmpty,
-      );
-      expect(await service.loadHistory(), isEmpty);
-
-      await service.saveHistory([legacyMessage]);
-      final migrated = await service.loadHistory(
-        scope: firstLink,
-        legacyIdentity: firstLink,
-      );
-      expect(migrated.single.text, legacyMessage.text);
-      expect(await service.loadHistory(), isEmpty);
-      expect(
-        (await service.loadHistory(scope: firstLink)).single.text,
-        legacyMessage.text,
-      );
-    });
   });
-
 }

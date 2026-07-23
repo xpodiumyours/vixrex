@@ -26,32 +26,44 @@ class VixRexBotMessage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 22,
-          height: 22,
+          width: 28,
+          height: 28,
+          padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: AppColors.primary.withAlpha(20),
             shape: BoxShape.circle,
+            color: const Color(0xFF0E1B2E),
+            border: Border.all(
+              color: const Color(0xFF0EA5E9).withValues(alpha: 0.7),
+              width: 1.2,
+            ),
           ),
-          child: const Center(
-            child: Text(
-              'X',
-              style: TextStyle(
-                color: AppColors.primaryDark,
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-              ),
+          child: ClipOval(
+            child: Image.asset(
+              'assets/images/vixrex_v_crystal_mascot.png',
+              width: 24,
+              height: 24,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Image.asset(
+                  'assets/images/vixrex_mascot.webp',
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.contain,
+                );
+              },
             ),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: AppColors.surfaceSoft,
               borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(4),
                 bottomRight: Radius.circular(16),
               ),
               border: Border.all(color: AppColors.border),
@@ -86,9 +98,9 @@ class VixRexBotMessage extends StatelessWidget {
                             Text(
                               line.substring(0, inlineUrl.start),
                               style: const TextStyle(
-                                color: AppColors.darkText,
-                                fontSize: 13,
-                                height: 1.5,
+                                color: AppColors.darkTextAlt,
+                                fontSize: 14.5,
+                                height: 1.45,
                               ),
                             ),
                           GestureDetector(
@@ -97,8 +109,8 @@ class VixRexBotMessage extends StatelessWidget {
                               url,
                               style: const TextStyle(
                                 color: Color(0xFF7DD3FC),
-                                fontSize: 13,
-                                height: 1.5,
+                                fontSize: 14,
+                                height: 1.45,
                                 fontWeight: FontWeight.w700,
                                 decoration: TextDecoration.underline,
                                 decorationColor: Color(0xFF7DD3FC),
@@ -109,9 +121,9 @@ class VixRexBotMessage extends StatelessWidget {
                             Text(
                               line.substring(inlineUrl.end),
                               style: const TextStyle(
-                                color: AppColors.darkText,
-                                fontSize: 13,
-                                height: 1.5,
+                                color: AppColors.darkTextAlt,
+                                fontSize: 14.5,
+                                height: 1.45,
                               ),
                             ),
                           if (isCursor && cursorVisible)
@@ -119,7 +131,7 @@ class VixRexBotMessage extends StatelessWidget {
                               ' ▌',
                               style: TextStyle(
                                 color: AppColors.primary,
-                                fontSize: 13,
+                                fontSize: 14,
                               ),
                             ),
                         ],
@@ -131,12 +143,12 @@ class VixRexBotMessage extends StatelessWidget {
                     child: Text(
                       isCursor && cursorVisible ? '$line ▌' : line,
                       style: TextStyle(
-                        color: AppColors.darkText,
-                        fontSize: 13,
-                        height: 1.5,
+                        color: AppColors.darkTextAlt,
+                        fontSize: 14.5,
+                        height: 1.45,
                         fontWeight:
                             isCursor && cursorVisible
-                                ? FontWeight.w500
+                                ? FontWeight.w600
                                 : FontWeight.w400,
                       ),
                     ),

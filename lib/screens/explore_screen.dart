@@ -269,12 +269,6 @@ class ExploreScreenState extends State<ExploreScreen> {
             backgroundColor: bgColor,
             elevation: 0,
             iconTheme: const IconThemeData(color: darkText),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh_rounded),
-                onPressed: _controller.reloadStores,
-              ),
-            ],
           ),
           body: SafeArea(
             child: Column(
@@ -285,13 +279,13 @@ class ExploreScreenState extends State<ExploreScreen> {
                   color: bgColor,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
-                    vertical: 8,
+                    vertical: 4,
                   ),
                   child: const Text(
-                    'Yayındaki Vixrex profillerini keşfet',
+                    'Yayındaki tüm Vixrex vitrinlerini inceleyin',
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                       color: mutedText,
                     ),
                   ),
@@ -301,26 +295,26 @@ class ExploreScreenState extends State<ExploreScreen> {
                   color: bgColor,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
-                    vertical: 12,
+                    vertical: 10,
                   ),
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'Vitrin, ürün veya kategori ara...',
+                      hintText: 'Vitrin, ürün veya il/ilçe ara...',
                       hintStyle: TextStyle(
                         color: mutedText.withValues(alpha: 0.6),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
                       ),
                       prefixIcon: const Icon(
                         Icons.search_rounded,
                         color: mutedText,
-                        size: 20,
+                        size: 18,
                       ),
                       suffixIcon:
                           _searchController.text.isNotEmpty
                               ? IconButton(
-                                icon: const Icon(Icons.close_rounded, size: 18),
+                                icon: const Icon(Icons.close_rounded, size: 16),
                                 onPressed: () {
                                   _searchController.clear();
                                   _controller.setSearchQuery('');
@@ -330,33 +324,52 @@ class ExploreScreenState extends State<ExploreScreen> {
                       filled: true,
                       fillColor: inputBg,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.border,
+                          width: 1,
+                        ),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                     style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                       color: darkText,
                     ),
                   ),
                 ),
                 // Filter Categories Bar
-                Container(
-                  height: 52,
-                  color: bgColor,
+                SizedBox(
+                  height: 48,
                   child: ListView(
+                    physics: const BouncingScrollPhysics(),
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 8,
+                      vertical: 4,
                     ),
                     children: [
                       // Favorites Filter Chip
                       Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.only(right: 6),
                         child: FilterChip(
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           selected: _controller.onlyFavorites,
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -385,7 +398,15 @@ class ExploreScreenState extends State<ExploreScreen> {
                           ),
                           selectedColor: primaryColor,
                           checkmarkColor: Colors.white,
-                          backgroundColor: bgColor,
+                          backgroundColor: inputBg,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(
+                              color: _controller.onlyFavorites
+                                  ? primaryColor
+                                  : AppColors.border,
+                            ),
+                          ),
                           onSelected: (val) {
                             _controller.setOnlyFavorites(val);
                           },
@@ -395,8 +416,10 @@ class ExploreScreenState extends State<ExploreScreen> {
                         final isSelected =
                             _controller.selectedCategory == category;
                         return Padding(
-                          padding: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.only(right: 6),
                           child: ChoiceChip(
+                            visualDensity: VisualDensity.compact,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             selected: isSelected,
                             label: Text(category),
                             labelStyle: TextStyle(
@@ -405,7 +428,15 @@ class ExploreScreenState extends State<ExploreScreen> {
                               fontSize: 12,
                             ),
                             selectedColor: primaryColor,
-                            backgroundColor: bgColor,
+                            backgroundColor: inputBg,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? primaryColor
+                                    : AppColors.border,
+                              ),
+                            ),
                             onSelected: (val) {
                               if (val) {
                                 _controller.setCategory(category);

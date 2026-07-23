@@ -370,7 +370,7 @@ class LandingHeroSection extends StatelessWidget {
             ),
           ),
           child: const Text(
-            'İŞLETMENİZ İÇİN DİJİTAL VİTRİN',
+            'VİXREX ASİSTAN İLE DİJİTAL VİTRİN',
             style: TextStyle(
               color: AppColors.secondary,
               fontSize: 11,
@@ -381,7 +381,7 @@ class LandingHeroSection extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Text(
-          'İşletmenizin dijital\nvitrini dakikalar\niçinde hazır',
+          'İşletmenizin dijital\nvitrini Vixrex Asistan ile\nbirkaç dakikada hazır',
           textAlign: isDesktop ? TextAlign.left : TextAlign.center,
           style: TextStyle(
             fontSize: isDesktop ? 48 : 36,
@@ -393,7 +393,7 @@ class LandingHeroSection extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Text(
-          'İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrinde toplayın. Linkinizi ve QR kodunuzu müşterilerinizle kolayca paylaşın.',
+          'İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi Vixrex Asistan ile rehberli sohbet ederek tek vitrinde toplayın.',
           textAlign: isDesktop ? TextAlign.left : TextAlign.center,
           style: TextStyle(
             fontSize: 16,
@@ -586,7 +586,7 @@ class LandingHeroSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Vixrex Oluştur',
+                        'Ücretsiz Vitrinimi Hazırla',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 15,
@@ -627,10 +627,10 @@ class LandingHeroSection extends StatelessWidget {
           runSpacing: 10,
           alignment: isDesktop ? WrapAlignment.start : WrapAlignment.center,
           children: [
-            _buildCheckBadge('Kredi kartı gerekmez'),
-            _buildCheckBadge('Teknik bilgi gerekmez'),
-            _buildCheckBadge('Komisyon yok'),
-            _buildCheckBadge('Link ve QR hazır'),
+            _buildCheckBadge('🔒 SSL Güvenli Koruma'),
+            _buildCheckBadge('💳 Kredi kartı gerekmez'),
+            _buildCheckBadge('❌ Komisyon yok'),
+            _buildCheckBadge('📱 Link ve QR hazır'),
           ],
         ),
       ],

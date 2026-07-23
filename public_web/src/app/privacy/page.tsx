@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       <p>
         <strong>Vixrex</strong>, Aksakal Ticaret tarafından işletilmektedir.<br />
         Adres: Ümraniye Esenevler Mahallesi Lokman Hekim Caddesi No 18, İstanbul<br />
-        E-posta: Xpodiumyours@gmail.com
+        E-posta: vixrex.app@gmail.com
       </p>
 
       <h2>2. Toplanan Veriler</h2>

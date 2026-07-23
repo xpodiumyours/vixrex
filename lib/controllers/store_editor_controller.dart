@@ -290,6 +290,11 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
+  void updateAddressText(String address) {
+    _data.address = address;
+    notifyListeners();
+  }
+
   @override
   void selectProvince(StoreData data, String? code, String? name) {
     data.provinceCode = code ?? '';

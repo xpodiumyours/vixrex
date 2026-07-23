@@ -32,15 +32,15 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
 
   String _dbKey(String uiKey) {
     const keyMap = {
-      'butik_giyim': 'butik',
-      'kuafor_guzellik': 'kuafor',
-      'kafe_restoran': 'kafe_lokanta',
-      'berber': 'kuafor',
-      'oto_kuafor': 'oto_arac',
-      'market_bakkal': 'gida',
-      'pastane_tatlici': 'firin',
-      'mobilya_dekorasyon': 'dekorasyon',
-      'spor_salonu': 'spor_fitness',
+      'butik_giyim': 'butik_giyim',
+      'kuafor_guzellik': 'kuafor_guzellik',
+      'kafe_restoran': 'kafe_restoran',
+      'berber': 'berber',
+      'oto_kuafor': 'oto_kuafor',
+      'market_bakkal': 'market_bakkal',
+      'pastane_tatlici': 'pastane_tatlici',
+      'mobilya_dekorasyon': 'mobilya_dekorasyon',
+      'spor_salonu': 'spor_salonu',
       'dis_klinigi': 'dis_klinigi',
       'eczane': 'eczane',
       'teknik_servis': 'teknik_servis',
@@ -52,7 +52,10 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
     for (final cat in templateCategories) {
       setState(() => _loadingKeys.add(cat.key));
       try {
-        final imageSet = await CategoryImageService.getImagesForCategory(_dbKey(cat.key));
+        var imageSet = await CategoryImageService.getImagesForCategory(_dbKey(cat.key));
+        if (imageSet.totalCount == 0) {
+          imageSet = CategoryImageService.getFallbackImageSet(cat.key);
+        }
         if (!mounted) return;
         setState(() {
           _imageSets[cat.key] = imageSet;
@@ -61,7 +64,10 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
       } catch (e) {
         if (kDebugMode) debugPrint('Template load error for ${cat.key}: $e');
         if (!mounted) return;
-        setState(() => _loadingKeys.remove(cat.key));
+        setState(() {
+          _imageSets[cat.key] = CategoryImageService.getFallbackImageSet(cat.key);
+          _loadingKeys.remove(cat.key);
+        });
       }
     }
   }

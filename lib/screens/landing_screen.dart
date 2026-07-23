@@ -328,7 +328,13 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   void _navigateToEditor() {
-    AppRouter.navigateToHomeShell(context);
+    final rawName = _storeNameController.text.trim();
+    final initialVitrinName = rawName.isNotEmpty ? rawName : null;
+    AppRouter.navigateToHomeShell(
+      context,
+      initialIndex: 2,
+      initialVitrinName: initialVitrinName,
+    );
   }
 
   void _openMockupChat() {

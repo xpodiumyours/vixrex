@@ -185,17 +185,13 @@ class ChatbotService {
         return scopedHistory;
       }
 
-      final identity = legacyIdentity?.trim() ?? '';
-      if (identity.isEmpty) return [];
-
       final legacyHistory = _decodeHistory(prefs.getString(_legacyHistoryKey));
-      await prefs.remove(_legacyHistoryKey);
-      if (!legacyHistory.any((message) => message.text.contains(identity))) {
-        return [];
+      if (legacyHistory.isNotEmpty) {
+        await saveHistory(legacyHistory, scope: scope);
+        return legacyHistory;
       }
 
-      await saveHistory(legacyHistory, scope: scope);
-      return legacyHistory;
+      return [];
     } catch (_) {
       return [];
     }
