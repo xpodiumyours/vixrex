@@ -117,8 +117,14 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     CategoryGallerySheet.show(
       context: context,
       source: SheetImageSource.coverPicker,
-      onImageAction: (coverUrl, action) {
+      onImageAction: (coverUrl, action, categoryKey) {
         _controller.setCoverUrl(coverUrl);
+        if (categoryKey != null && categoryKey.trim().isNotEmpty) {
+          final label = BusinessCategoryConfig.labelForKey(categoryKey);
+          if (label != null) {
+            _controller.selectCategory(label);
+          }
+        }
         _controller.saveLocally();
       },
     );

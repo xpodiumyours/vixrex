@@ -18,7 +18,7 @@ enum ImageAction { setAsCover, addToGallery }
 class CategoryGallerySheet extends StatefulWidget {
   final String? preferredCategoryKey;
   final SheetImageSource source;
-  final void Function(String url, ImageAction action) onImageAction;
+  final void Function(String url, ImageAction action, String? categoryKey) onImageAction;
 
   const CategoryGallerySheet({
     super.key,
@@ -31,7 +31,7 @@ class CategoryGallerySheet extends StatefulWidget {
     required BuildContext context,
     String? preferredCategoryKey,
     required SheetImageSource source,
-    required void Function(String url, ImageAction action) onImageAction,
+    required void Function(String url, ImageAction action, String? categoryKey) onImageAction,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -129,7 +129,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
 
   void _handleAction(ImageAction action) {
     if (_selectedImageUrl == null) return;
-    widget.onImageAction(_selectedImageUrl!, action);
+    widget.onImageAction(_selectedImageUrl!, action, _activeCategoryKey);
     Navigator.pop(context);
   }
 

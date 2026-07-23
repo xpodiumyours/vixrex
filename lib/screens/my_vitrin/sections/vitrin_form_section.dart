@@ -107,20 +107,22 @@ class VitrinFormSection extends StatelessWidget {
     required SheetImageSource source,
   }) async {
     final kategori = controller.selectedKategori.trim();
-    if (kategori.isEmpty) {
-      state.showSnackBar(ctx, 'Önce bir kategori seçmelisiniz.');
-      return;
-    }
-    final preferredKey = mapKategoriToKey(kategori);
+    final preferredKey = kategori.isNotEmpty ? mapKategoriToKey(kategori) : null;
 
     await CategoryGallerySheet.show(
       context: ctx,
       preferredCategoryKey: preferredKey,
       source: source,
-      onImageAction: (url, action) {
+      onImageAction: (url, action, categoryKey) {
         switch (action) {
           case ImageAction.setAsCover:
             controller.setCoverUrl(url);
+            if (categoryKey != null && categoryKey.trim().isNotEmpty) {
+              final label = BusinessCategoryConfig.labelForKey(categoryKey);
+              if (label != null) {
+                controller.selectCategory(label);
+              }
+            }
             controller.saveLocally();
             break;
           case ImageAction.addToGallery:
