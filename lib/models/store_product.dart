@@ -30,6 +30,10 @@ class Product {
   String? sourceMediaId;
   String? sourcePermalink;
   String? importedAt;
+  String? brand;
+  String? barcode;
+  int? vatRate;
+  List<ProductVariant> variants;
 
   Product({
     required this.id,
@@ -47,7 +51,12 @@ class Product {
     this.sourceMediaId,
     this.sourcePermalink,
     this.importedAt,
-  }) : imageUrls = _normalizeImageUrls(imageUrls, imagePath);
+    this.brand,
+    this.barcode,
+    this.vatRate,
+    List<ProductVariant>? variants,
+  })  : imageUrls = _normalizeImageUrls(imageUrls, imagePath),
+        variants = variants ?? [];
 
   static List<String> _normalizeImageUrls(
     List<String>? imageUrls,
@@ -97,6 +106,13 @@ class Product {
     putOptional('sourceMediaId', sourceMediaId);
     putOptional('sourcePermalink', sourcePermalink);
     putOptional('importedAt', importedAt);
+    putOptional('brand', brand);
+    putOptional('barcode', barcode);
+
+    if (vatRate != null) json['vatRate'] = vatRate;
+    if (variants.isNotEmpty) {
+      json['variants'] = variants.map((v) => v.toJson()).toList();
+    }
 
     return json;
   }
@@ -145,6 +161,20 @@ class Product {
                 .isEmpty
             ? null
             : (json['importedAt'] ?? json['imported_at']).toString(),
+    brand: (json['brand'] ?? '').toString().trim().isEmpty
+        ? null
+        : json['brand'].toString(),
+    barcode: (json['barcode'] ?? '').toString().trim().isEmpty
+        ? null
+        : json['barcode'].toString(),
+    vatRate: json['vat_rate'] != null
+        ? int.tryParse(json['vat_rate'].toString())
+        : json['vatRate'] != null
+            ? int.tryParse(json['vatRate'].toString())
+            : null,
+    variants: (json['variants'] as List?)
+        ?.map((item) => ProductVariant.fromJson(item as Map<String, dynamic>))
+        .toList(),
   );
 
   Product copyWith({
@@ -163,6 +193,10 @@ class Product {
     String? sourceMediaId,
     String? sourcePermalink,
     String? importedAt,
+    String? brand,
+    String? barcode,
+    int? vatRate,
+    List<ProductVariant>? variants,
   }) {
     return Product(
       id: id ?? this.id,
@@ -180,8 +214,48 @@ class Product {
       sourceMediaId: sourceMediaId ?? this.sourceMediaId,
       sourcePermalink: sourcePermalink ?? this.sourcePermalink,
       importedAt: importedAt ?? this.importedAt,
+      brand: brand ?? this.brand,
+      barcode: barcode ?? this.barcode,
+      vatRate: vatRate ?? this.vatRate,
+      variants: variants ?? List.of(this.variants),
     );
   }
+}
+
+class ProductVariant {
+  String? name;
+  String? sku;
+  String? price;
+  int? stock;
+  Map<String, String>? attributes;
+
+  ProductVariant({
+    this.name,
+    this.sku,
+    this.price,
+    this.stock,
+    this.attributes,
+  });
+
+  Map<String, dynamic> toJson() {
+    final json = <String, dynamic>{};
+    if (name != null) json['name'] = name;
+    if (sku != null) json['sku'] = sku;
+    if (price != null) json['price'] = price;
+    if (stock != null) json['stock'] = stock;
+    if (attributes != null) json['attributes'] = attributes;
+    return json;
+  }
+
+  factory ProductVariant.fromJson(Map<String, dynamic> json) => ProductVariant(
+        name: json['name']?.toString(),
+        sku: json['sku']?.toString(),
+        price: json['price']?.toString(),
+        stock: json['stock'] != null ? int.tryParse(json['stock'].toString()) : null,
+        attributes: json['attributes'] != null
+            ? Map<String, String>.from(json['attributes'] as Map)
+            : null,
+      );
 }
 
 class ProductCategory {

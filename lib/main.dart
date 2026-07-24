@@ -6,7 +6,9 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/services/push_notification_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
@@ -93,7 +95,14 @@ void _initializeOneSignal() {
     required String storeSlug,
   }) {
     if (type == 'booking' || type.isEmpty) {
-      AppRouter.openBookingFromNotification(storeSlug);
+      if (kIsWeb) {
+        // WEB: Next.js public vitrine yönlendir
+        final url = PublicSiteConfig.buildBookingTrackerLink(storeSlug, '');
+        launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      } else {
+        // MOBIL: Flutter içinde aç
+        AppRouter.openBookingFromNotification(storeSlug);
+      }
     }
   });
 

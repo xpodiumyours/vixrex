@@ -54,7 +54,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['xlsx', 'csv'],
+      allowedExtensions: ['xlsx', 'csv', 'xml'],
       withData: true,
     );
     if (result == null || result.files.isEmpty) return;
@@ -215,7 +215,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Excel (.xlsx) veya CSV dosyası seçerek\nürünlerinizi toplu olarak ekleyebilirsiniz.',
+          'Excel (.xlsx), CSV veya XML dosyası seçerek\nürünlerinizi toplu olarak ekleyebilirsiniz.',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 13, color: AppColors.mutedText),
         ),

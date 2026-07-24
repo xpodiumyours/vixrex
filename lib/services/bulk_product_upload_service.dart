@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:excel/excel.dart';
 import 'package:uuid/uuid.dart';
+import 'package:xml/xml.dart';
 import 'package:vixrex/models/store_product.dart';
 
 /// Excel (.xlsx) ve CSV dosyalarından toplu ürün çıkarma servisi.
@@ -27,7 +28,10 @@ class BulkProductUploadService {
     if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
       return _parseExcel(bytes);
     }
-    return BulkParseResult.failure('Desteklenmeyen dosya formatı. .xlsx veya .csv kullanın.');
+    if (lowerName.endsWith('.xml')) {
+      return _parseXml(bytes);
+    }
+    return BulkParseResult.failure('Desteklenmeyen dosya formatı. .xlsx, .csv veya .xml kullanın.');
   }
 
   // ─── CSV PARSE ──────────────────────────────────────────────────
@@ -133,6 +137,260 @@ class BulkProductUploadService {
     } catch (e) {
       return BulkParseResult.failure('Excel okuma hatası: $e');
     }
+  }
+
+  // ─── XML PARSE ─────────────────────────────────────────────────
+
+  BulkParseResult _parseXml(Uint8List bytes) {
+    try {
+      final content = utf8.decode(bytes, allowMalformed: true);
+      final document = XmlDocument.parse(content);
+
+      // Farklı XML kök elementlerini destekle
+      final root = document.rootElement;
+      final productElements = _findProductElements(root);
+
+      if (productElements.isEmpty) {
+        return BulkParseResult.failure(
+          'XML dosyasında ürün bulunamadı. '
+          'Beklenen yapı: <products>, <catalog>, <items> veya <urunler> kök elemanı.',
+        );
+      }
+
+      final products = <Product>[];
+      final errors = <BulkParseError>[];
+      var rowIndex = 0;
+
+      for (final element in productElements) {
+        rowIndex++;
+        final result = _xmlElementToProduct(element, rowIndex);
+        if (result.product != null) {
+          products.add(result.product!);
+        }
+        if (result.error != null) {
+          errors.add(result.error!);
+        }
+      }
+
+      return BulkParseResult.success(products: products, errors: errors);
+    } catch (e) {
+      return BulkParseResult.failure('XML okuma hatası: $e');
+    }
+  }
+
+  /// XML kök elementinden ürün elementlerini bulur.
+  List<XmlElement> _findProductElements(XmlElement root) {
+    final possibleChildren = ['product', 'item', 'urun', 'entry', 'record'];
+
+    // Kök elemanın kendisi ürün listesi olabilir
+    for (final childName in possibleChildren) {
+      if (root.name.local.toLowerCase() == childName) {
+        return [root];
+      }
+    }
+
+    // Çocuk elemanları ara
+    for (final childName in possibleChildren) {
+      final elements = root.findAllElements(childName);
+      if (elements.isNotEmpty) {
+        return elements.toList();
+      }
+    }
+
+    // RSS yapısı kontrolü (Google Merchant Center)
+    final channel = root.findElements('channel');
+    if (channel.isNotEmpty) {
+      final items = channel.first.findAllElements('item');
+      if (items.isNotEmpty) {
+        return items.toList();
+      }
+    }
+
+    return [];
+  }
+
+  /// XML elementini Product'a çevirir.
+  _RowParseResult _xmlElementToProduct(XmlElement element, int rowIndex) {
+    // İsim alanı için farklı XML alan isimlerini dene
+    final name = _xmlChildText(element, [
+      'name', 'title', 'urunadi', 'urun_adi', 'productName',
+      'product_name', 'baslik', 'adi', 'ad',
+    ]);
+
+    if (name.isEmpty) {
+      return _RowParseResult(
+        error: BulkParseError(row: rowIndex, message: 'Ürün adı boş, satır atlandı.'),
+      );
+    }
+
+    // Fiyat
+    final priceRaw = _xmlChildText(element, [
+      'price', 'fiyat', 'satisfiyati', 'satis_fiyati', 'salePrice',
+      'sale_price', 'amount', 'tutar', 'listPrice', 'list_price',
+    ]);
+    final price = _normalizePrice(priceRaw);
+
+    // Açıklama
+    final description = _xmlChildText(element, [
+      'description', 'aciklama', 'detay', 'detail', 'ozet', 'summary',
+      'shortDescription', 'short_description', 'longDescription', 'long_description',
+    ]);
+
+    // Kategori
+    final category = _xmlChildText(element, [
+      'category', 'kategori', 'categoryName', 'category_name', 'grup',
+      'group', 'turu', 'type', 'productType', 'product_type',
+    ]);
+
+    // Barkod/SKU
+    final barcode = _xmlChildText(element, [
+      'barcode', 'barkod', 'sku', 'kod', 'code', 'productId',
+      'product_id', 'externalId', 'external_id', 'id',
+    ]);
+
+    // Stok
+    final stockRaw = _xmlChildText(element, [
+      'stock', 'stok', 'stockQuantity', 'stock_quantity', 'stokAdet',
+      'stok_adet', 'quantity', 'miktar', 'stokDurumu', 'stockStatus',
+    ]);
+    final stockStatus = _normalizeStockStatus(stockRaw);
+
+    // Görseller
+    final imageUrls = _xmlChildTexts(element, [
+      'image', 'image_url', 'imageUrl', 'gorsel', 'gorselUrl', 'gorsel_url',
+      'photo', 'foto', 'resim', 'picture', 'thumbnail', 'thumb',
+      'mainImage', 'main_image', 'coverImage', 'cover_image',
+    ]);
+
+    // Marka
+    final brand = _xmlChildText(element, [
+      'brand', 'marka', 'brandName', 'brand_name', 'manufacturer', 'uretici',
+    ]);
+
+    // KDV oranı
+    final vatRaw = _xmlChildText(element, [
+      'vat', 'kdv', 'vatRate', 'vat_rate', 'taxRate', 'tax_rate', 'vergi',
+    ]);
+    final vatRate = int.tryParse(vatRaw.replaceAll(RegExp(r'[^0-9]'), ''));
+
+    // Varyantlar
+    final variants = _parseVariants(element);
+
+    final product = Product(
+      id: 'xml_${const Uuid().v4()}',
+      name: name,
+      price: price,
+      description: description,
+      imagePath: imageUrls.isNotEmpty ? imageUrls.first : null,
+      imageUrls: imageUrls,
+      category: category.isNotEmpty ? category : 'Genel',
+      stockStatus: stockStatus,
+      isVisible: true,
+      source: 'xml_import',
+      slug: barcode.isNotEmpty ? barcode : null,
+      brand: brand.isNotEmpty ? brand : null,
+      barcode: barcode.isNotEmpty ? barcode : null,
+      vatRate: vatRate,
+      variants: variants,
+    );
+
+    return _RowParseResult(product: product);
+  }
+
+  /// XML'den varyantları parse eder.
+  List<ProductVariant> _parseVariants(XmlElement element) {
+    final variants = <ProductVariant>[];
+
+    // Farklı varyant XML yapılarını dene
+    final variantElements = [
+      ...element.findAllElements('variant'),
+      ...element.findAllElements('varyant'),
+      ...element.findAllElements('variation'),
+      ...element.findAllElements('size'),
+      ...element.findAllElements('beden'),
+    ];
+
+    for (final variantEl in variantElements) {
+      final variantName = _xmlChildText(variantEl, [
+        'name', 'adi', 'beden', 'size', 'color', 'renk',
+      ]);
+      final variantSku = _xmlChildText(variantEl, [
+        'sku', 'barkod', 'stockCode', 'stok_kodu', 'code',
+      ]);
+      final variantPrice = _xmlChildText(variantEl, [
+        'price', 'fiyat', 'satisFiyati',
+      ]);
+      final variantStockRaw = _xmlChildText(variantEl, [
+        'stock', 'stok', 'quantity', 'miktar',
+      ]);
+      final variantStock = int.tryParse(variantStockRaw.replaceAll(RegExp(r'[^0-9]'), ''));
+
+      if (variantName.isNotEmpty || variantSku.isNotEmpty) {
+        variants.add(ProductVariant(
+          name: variantName.isNotEmpty ? variantName : null,
+          sku: variantSku.isNotEmpty ? variantSku : null,
+          price: variantPrice.isNotEmpty ? _normalizePrice(variantPrice) : null,
+          stock: variantStock,
+        ));
+      }
+    }
+
+    return variants;
+  }
+
+  /// XML elementinden tek bir child text'i okur.
+  String _xmlChildText(XmlElement element, List<String> names) {
+    for (final name in names) {
+      // Doğrudan çocuk
+      final child = element.findElements(name);
+      if (child.isNotEmpty) {
+        final text = child.first.innerText.trim();
+        if (text.isNotEmpty) return text;
+      }
+
+      // Alt elemanlarda ara (nested XML)
+      final nested = element.findAllElements(name);
+      if (nested.isNotEmpty) {
+        final text = nested.first.innerText.trim();
+        if (text.isNotEmpty) return text;
+      }
+    }
+    return '';
+  }
+
+  /// XML elementinden birden fazla child text'i okur (görseller için).
+  List<String> _xmlChildTexts(XmlElement element, List<String> names) {
+    final urls = <String>[];
+    for (final name in names) {
+      final children = element.findElements(name);
+      for (final child in children) {
+        final text = child.innerText.trim();
+        if (text.isNotEmpty && _isImageUrl(text)) {
+          urls.add(text);
+        }
+      }
+
+      // Alt elemanlarda da ara
+      final nested = element.findAllElements(name);
+      for (final item in nested) {
+        final text = item.innerText.trim();
+        if (text.isNotEmpty && _isImageUrl(text)) {
+          urls.add(text);
+        }
+      }
+    }
+    return urls.toSet().take(4).toList();
+  }
+
+  /// String'in görsel URL'si olup olmadığını kontrol eder.
+  bool _isImageUrl(String text) {
+    final lower = text.toLowerCase();
+    return lower.startsWith('http') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif');
   }
 
   // ─── ORTAK YARDIMCILAR ─────────────────────────────────────────

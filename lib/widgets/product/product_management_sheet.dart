@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/bulk_product_upload_screen.dart';
 import 'package:vixrex/screens/product_category_management_screen.dart';
+import 'package:vixrex/screens/xml_sync_screen.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/product/product_editor_sheet.dart';
 import 'package:vixrex/widgets/product/vixrex_catalog_assistant_section.dart';
@@ -18,6 +19,8 @@ class ProductManagementSheet extends StatefulWidget {
     required this.products,
     required this.categories,
     required this.storeSlug,
+    this.storeId,
+    this.editToken,
     required this.showMessage,
     required this.onCatalogChanged,
     required this.onOcrTap,
@@ -26,6 +29,8 @@ class ProductManagementSheet extends StatefulWidget {
   final List<Product> products;
   final List<ProductCategory> categories;
   final String storeSlug;
+  final String? storeId;
+  final String? editToken;
   final ValueChanged<String> showMessage;
   final ProductCatalogChanged onCatalogChanged;
   final VoidCallback onOcrTap;
@@ -306,6 +311,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
                 _buildAddProductButton(),
                 SizedBox(height: spacing8),
                 _buildBulkUploadButton(),
+                SizedBox(height: spacing8),
+                _buildXmlSyncButton(),
               ],
             ),
           );
@@ -472,6 +479,37 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     if (result == true && mounted) {
       widget.showMessage('Toplu yükleme tamamlandı.');
     }
+  }
+
+  Widget _buildXmlSyncButton() {
+    return OutlinedButton.icon(
+      onPressed: _openXmlSync,
+      icon: const Icon(Icons.rss_feed_rounded, size: 18),
+      label: const Text(
+        'XML Feed Senkronize',
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.darkText,
+        side: const BorderSide(color: AppColors.border),
+        minimumSize: const Size.fromHeight(44),
+      ),
+    );
+  }
+
+  Future<void> _openXmlSync() async {
+    final storeId = widget.storeId ?? '';
+    final editToken = widget.editToken ?? '';
+    if (storeId.isEmpty || editToken.isEmpty) {
+      widget.showMessage('Mağaza bilgisi bulunamadı. Önce vitrininizi yayınlayın.');
+      return;
+    }
+    await XmlSyncScreen.show(
+      context: context,
+      storeId: storeId,
+      editToken: editToken,
+      categories: _categories,
+    );
   }
 
   Widget _buildEmptyState() {
