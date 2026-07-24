@@ -398,12 +398,11 @@ export default async function StorePage(props: PageProps) {
         <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-5 animate-fade-in">
           <section className="relative overflow-hidden rounded-[28px] border border-[#25415F] bg-[#0E1B2E] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
             {heroImage && (
-              <Image
+              <img
                 src={heroImage}
                 alt={`${store.name} vitrin görseli`}
-                fill
-                className="object-cover opacity-55"
-                priority
+                className="absolute inset-0 h-full w-full object-cover opacity-55"
+                loading="eager"
               />
             )}
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,19,34,0.96),rgba(7,19,34,0.78),rgba(7,19,34,0.48))]" />

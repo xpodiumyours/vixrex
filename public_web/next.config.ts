@@ -15,14 +15,15 @@ function getAppUrl() {
 
 const nextConfig: NextConfig = {
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**.supabase.co",
+        hostname: "**",
       },
       {
-        protocol: "https",
-        hostname: "api.qrserver.com",
+        protocol: "http",
+        hostname: "**",
       },
     ],
   },
