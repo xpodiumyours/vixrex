@@ -28,14 +28,17 @@ class VitrinStoreCard extends StatelessWidget {
     required this.onWhatsAppPressed,
   });
 
-  String? get _visibleProductSummary {
-    final visible = store.products.where((p) => p.isVisible).toList();
-    if (visible.isEmpty) return null;
-    final names = visible.take(2).map((p) => p.name.trim()).where((n) => n.isNotEmpty);
-    final joined = names.join(' · ');
-    if (joined.isEmpty) return '${visible.length} ürün';
-    if (visible.length > 2) return '$joined · +${visible.length - 2}';
-    return '$joined · ${visible.length} ürün';
+  String get _whatsappButtonLabel {
+    final cat = (store.kategori.isNotEmpty ? store.kategori : store.businessType).toLowerCase().trim();
+    if (cat.contains('kuaför') ||
+        cat.contains('güzellik') ||
+        cat.contains('hizmet') ||
+        cat.contains('servis') ||
+        cat.contains('klinik') ||
+        cat.contains('danışmanlık')) {
+      return 'WhatsApp İletişim';
+    }
+    return 'WhatsApp Sipariş';
   }
 
   @override
@@ -44,7 +47,9 @@ class VitrinStoreCard extends StatelessWidget {
     final status = store.status.trim();
     final isOpen = status.isEmpty || status.toLowerCase() == 'açık';
     final location =
-        store.districtName.trim().isNotEmpty
+        store.districtName.trim().isNotEmpty && store.provinceName.trim().isNotEmpty
+            ? '${store.districtName.trim()}, ${store.provinceName.trim()}'
+            : store.districtName.trim().isNotEmpty
             ? store.districtName.trim()
             : store.provinceName.trim().isNotEmpty
             ? store.provinceName.trim()
@@ -52,24 +57,31 @@ class VitrinStoreCard extends StatelessWidget {
             ? store.address.trim()
             : 'Konum belirtilmedi';
 
+    final categoryLabel = (store.kategori.trim().isNotEmpty
+            ? store.kategori.trim()
+            : store.businessType.trim().isNotEmpty
+            ? store.businessType.trim()
+            : 'DİJİTAL VİTRİN')
+        .toUpperCase();
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: isOwnStore ? primaryColor.withValues(alpha: 0.8) : cardBorder,
           width: isOwnStore ? 2.0 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.22),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
           if (isOwnStore)
             BoxShadow(
-              color: primaryColor.withValues(alpha: 0.15),
-              blurRadius: 12,
+              color: primaryColor.withValues(alpha: 0.20),
+              blurRadius: 14,
               spreadRadius: 1,
             ),
         ],
@@ -82,8 +94,9 @@ class VitrinStoreCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // --- Görsel Alanı ---
               Expanded(
-                flex: 3,
+                flex: 4,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -98,31 +111,41 @@ class VitrinStoreCard extends StatelessWidget {
                     else
                       _buildImagePlaceholder(),
 
+                    // İnce Karartma Gradyanı
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
+                              Colors.black.withValues(alpha: 0.15),
                               Colors.transparent,
-                              AppColors.surface.withValues(alpha: 0.85),
+                              AppColors.surface.withValues(alpha: 0.90),
                             ],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
+                            stops: const [0.0, 0.5, 1.0],
                           ),
                         ),
                       ),
                     ),
 
+                    // Durum Rozeti (Sol Üst)
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: _buildStatusBadge(isOpen),
+                    ),
+
                     if (isExample)
                       Positioned(
-                        top: 10,
+                        top: 40,
                         left: 10,
                         child: _buildImageBadge('Örnek'),
                       ),
 
                     if (isOwnStore)
                       Positioned(
-                        bottom: 10,
+                        bottom: 8,
                         left: 10,
                         child: _buildImageBadge(
                           'Senin vitrinin',
@@ -130,18 +153,19 @@ class VitrinStoreCard extends StatelessWidget {
                         ),
                       ),
 
+                    // Favori Butonu (Sağ Üst)
                     Positioned(
                       top: 8,
                       right: 8,
                       child: Container(
-                        width: 44,
-                        height: 44,
+                        width: 36,
+                        height: 36,
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceSoft.withValues(alpha: 0.85),
+                          color: Colors.black.withValues(alpha: 0.45),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AppColors.border,
-                            width: 1.2,
+                            color: Colors.white.withValues(alpha: 0.25),
+                            width: 1,
                           ),
                         ),
                         child: IconButton(
@@ -150,11 +174,11 @@ class VitrinStoreCard extends StatelessWidget {
                             isFavorited
                                 ? Icons.favorite_rounded
                                 : Icons.favorite_border_rounded,
-                            size: 20,
+                            size: 18,
                             color:
                                 isFavorited
                                     ? Colors.redAccent
-                                    : AppColors.mutedText,
+                                    : Colors.white.withValues(alpha: 0.9),
                           ),
                           onPressed: onFavoritePressed,
                         ),
@@ -163,126 +187,99 @@ class VitrinStoreCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Expanded(
-                flex: 3,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 9, 8, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              store.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 14,
-                                color: AppColors.darkText,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color:
-                                  isOpen ? AppColors.success : AppColors.error,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isOpen ? 'Açık' : 'Kapalı',
-                            style: TextStyle(
-                              color:
-                                  isOpen ? AppColors.success : AppColors.error,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
+
+              // --- Detay ve İşlem Alanı ---
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Kategori Etiketi
+                    Text(
+                      categoryLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.6,
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        store.kategori.trim().isEmpty
-                            ? 'Dijital vitrin'
-                            : store.kategori.trim(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
+                    ),
+                    const SizedBox(height: 3),
+
+                    // Mağaza Adı
+                    Text(
+                      store.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        color: AppColors.darkText,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Konum Satırı
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_rounded,
+                          size: 13,
+                          color: Colors.redAccent,
                         ),
-                      ),
-                      if (_visibleProductSummary != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          _visibleProductSummary!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: mutedText,
-                            fontWeight: FontWeight.w600,
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            location,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.mutedText,
+                            ),
                           ),
                         ),
                       ],
-                      const Spacer(),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            size: 13,
-                            color: AppColors.primary,
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Tam Genişlik SaaS WhatsApp Butonu
+                    SizedBox(
+                      width: double.infinity,
+                      height: 38,
+                      child: ElevatedButton.icon(
+                        onPressed: onWhatsAppPressed,
+                        icon: const Icon(
+                          Icons.chat_bubble_rounded,
+                          size: 15,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          _whatsappButtonLabel,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 0.2,
                           ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              location,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.mutedText,
-                              ),
-                            ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00A884),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(width: 4),
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF25D366,
-                              ).withValues(alpha: 0.13),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color(
-                                  0xFF25D366,
-                                ).withValues(alpha: 0.35),
-                                width: 1,
-                              ),
-                            ),
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(
-                                Icons.chat_bubble_rounded,
-                                color: Color(0xFF25D366),
-                                size: 16,
-                              ),
-                              onPressed: onWhatsAppPressed,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -292,9 +289,46 @@ class VitrinStoreCard extends StatelessWidget {
     );
   }
 
+  Widget _buildStatusBadge(bool isOpen) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.60),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: (isOpen ? AppColors.success : AppColors.error).withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: isOpen ? AppColors.success : AppColors.error,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isOpen ? 'CANLI' : 'KAPALI',
+            style: TextStyle(
+              color: isOpen ? AppColors.success : AppColors.error,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildImageBadge(String label, {bool highlighted = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color:
             highlighted
