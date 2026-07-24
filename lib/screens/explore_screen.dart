@@ -475,10 +475,10 @@ class ExploreScreenState extends State<ExploreScreen> {
                                       : 2;
                               final cardHeight =
                                   columnCount == 2
-                                      ? 220.0
+                                      ? 280.0
                                       : columnCount == 3
-                                      ? 240.0
-                                      : 260.0;
+                                      ? 305.0
+                                      : 320.0;
 
                               return GridView.builder(
                                 padding: const EdgeInsets.all(12),
