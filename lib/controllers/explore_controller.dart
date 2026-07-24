@@ -56,6 +56,11 @@ class ExploreController extends ChangeNotifier {
         if (index != -1) {
           final ownStore = loadedStores.removeAt(index);
           loadedStores.insert(0, ownStore);
+        } else {
+          final ownStore = await _repository.fetchStoreBySlug(_localPublishedSlug!);
+          if (ownStore != null) {
+            loadedStores.insert(0, ownStore);
+          }
         }
       }
       _allStores = loadedStores;

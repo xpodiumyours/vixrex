@@ -27,6 +27,7 @@ class ExploreRepository {
             .from('stores')
             .select(StoreSafeSelect.columns)
             .eq('is_published', true)
+            .order('updated_at', ascending: false)
             .limit(50);
         final List<dynamic> rawList = response as List<dynamic>;
         final stores = rawList.map((json) => StoreData.fromJson(json)).toList();
@@ -68,6 +69,48 @@ class ExploreRepository {
         }
 
         return stores;
+      },
+    );
+  }
+
+  Future<StoreData?> fetchStoreBySlug(String slug) async {
+    return AppErrorGuard.run<StoreData?>(
+      label: 'ExploreRepository.fetchStoreBySlug',
+      fallback: null,
+      action: () async {
+        final trimmed = slug.trim();
+        if (trimmed.isEmpty) return null;
+
+        final response = await _client
+            .from('stores')
+            .select(StoreSafeSelect.columns)
+            .eq('slug', trimmed)
+            .maybeSingle();
+
+        if (response == null) return null;
+        final store = StoreData.fromJson(response);
+        final storeId = store.id?.trim() ?? '';
+
+        if (storeId.isNotEmpty) {
+          final productsResponse = await _client
+              .from('products')
+              .select(
+                'id, store_id, name, slug, description, price_text, price_amount, currency, stock_status, image_urls, is_visible, is_active, sort_order',
+              )
+              .eq('store_id', storeId)
+              .eq('is_active', true)
+              .eq('is_visible', true)
+              .order('sort_order');
+
+          final List<dynamic> rawProducts = productsResponse as List<dynamic>;
+          final products = rawProducts
+              .whereType<Map>()
+              .map((m) => Product.fromJson(Map<String, dynamic>.from(m)))
+              .toList();
+          store.products = products;
+        }
+
+        return store;
       },
     );
   }

@@ -81,6 +81,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     // Doğrudan sekme indeksi: 0=Vitrinim, 1=Keşfet, 2=Vixrex, 3=Profil, 4=Moderasyon
     _selectedIndex = widget.initialIndex < 0 ? 0 : widget.initialIndex;
     _editorController = StoreEditorController();
+    _editorController.addListener(_onEditorChanged);
     _editorInitialization = _editorController.initialize(
       widget.initialVitrinName,
     );
@@ -96,9 +97,14 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     }
   }
 
+  void _onEditorChanged() {
+    _loadVixRexSnapshot();
+  }
+
   @override
   void dispose() {
     _globalSearchController.dispose();
+    _editorController.removeListener(_onEditorChanged);
     _editorController.dispose();
     super.dispose();
   }
@@ -133,6 +139,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
 
   void _openExplore() {
     setState(() => _selectedIndex = 1); // Discover
+    _exploreKey.currentState?.reloadStores();
   }
 
   void _applyGlobalSearch(String query) {
@@ -751,6 +758,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                       child: SafeArea(
                         minimum: const EdgeInsets.only(right: 16, bottom: 16),
                         child: ChatbotBadge(
+                          snapshot: _vixrexSnapshot,
+                          hasShared: _vixrexHasShared,
                           // Tek kapı: overlay FAQ yok → mevcut VixRex sekmesi.
                           onOpen: () => setState(() => _selectedIndex = 2),
                         ),
@@ -818,6 +827,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
             selectedIndex: _selectedIndex,
             onDestinationSelected: (index) {
               setState(() => _selectedIndex = index);
+              if (index == 1) _exploreKey.currentState?.reloadStores();
               if (index == 2) _loadVixRexSnapshot();
             },
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
