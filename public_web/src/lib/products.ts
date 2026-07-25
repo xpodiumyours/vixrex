@@ -26,6 +26,60 @@ export function getProductImages(product: ProductItem): string[] {
   ).slice(0, 4);
 }
 
+/** Taslak / test ürün adları — müşteri vitrininde gizlenmeli */
+export function isJunkProductName(name: string): boolean {
+  const n = name.trim().toLowerCase();
+  if (n.length < 2) return true;
+  if (/^(s+|x+|test+|asdf|qwer|deneme|xxx+)(\s*\1)*$/i.test(n)) return true;
+  if (/^[\W_0-9]+$/.test(n) && n.length < 4) return true;
+  return false;
+}
+
+/** Panel / OCR / tarayıcı UI screenshot URL’leri müşteriye çıkmasın */
+export function isLikelyUiScreenshotUrl(url: string): boolean {
+  const u = url.toLowerCase();
+  if (!u.startsWith("http")) return true;
+  if (u.includes("chrome-extension")) return true;
+  if (u.includes("screenshot")) return true;
+  if (u.includes("data:image") && u.includes("base64")) return true;
+  return false;
+}
+
+/**
+ * Katalog görseli: temiz ürün foto → logo/kapak fallback.
+ * OCR kaynaklı şüpheli görseller atlanır (Keşfet kalite barı).
+ */
+export function resolveCatalogImage(
+  product: ProductItem,
+  fallbackImage?: string | null,
+): string | null {
+  const source = String(product.source || "").toLowerCase();
+  const preferFallbackForSource =
+    source.includes("ocr") ||
+    source.includes("receipt") ||
+    source.includes("fatura") ||
+    source.includes("invoice") ||
+    source.includes("scan");
+
+  const cleaned = getProductImages(product).filter((url) => !isLikelyUiScreenshotUrl(url));
+
+  if (!preferFallbackForSource && cleaned[0]) return cleaned[0];
+
+  const fallback = String(fallbackImage || "").trim();
+  if (fallback && !isLikelyUiScreenshotUrl(fallback)) return fallback;
+
+  // OCR’da yine de temiz http görsel varsa kullan
+  if (cleaned[0]) return cleaned[0];
+  return null;
+}
+
+export function isPublicCatalogProduct(product: ProductItem): boolean {
+  if (!String(product.name || "").trim()) return false;
+  if (product.isVisible === false) return false;
+  if (isJunkProductName(product.name)) return false;
+  return true;
+}
+
 export interface ProductCollection {
   name: string;
   count: number;

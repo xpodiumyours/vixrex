@@ -5,6 +5,7 @@ import type { VitrinCategoryProfile, PrimaryActionId } from "@/lib/vitrinProfile
 import { getVitrinCopy, normalizeAddressDisplay } from "@/lib/vitrinCopy";
 import {
   GlobeIcon,
+  GoogleIcon,
   InstagramIcon,
   MapPinIcon,
   WhatsAppIcon,
@@ -43,12 +44,14 @@ export interface VitrinProfileViewProps {
   kategori: string | null;
   businessType: string | null;
   status: string | null;
+  isClosed?: boolean;
   logoUrl: string | null;
   heroImage: string;
   description: string;
   corporateBio: string | null;
   address: string | null;
-  workingHoursText: string | null;
+  workingHoursToday: string | null;
+  workingHoursWeek: Array<{ day: string; hours: string; isToday: boolean }>;
   googleBusinessLink: string | null;
   publicUrl: string;
   whatsappUrl: string | null;
@@ -68,18 +71,6 @@ export interface VitrinProfileViewProps {
 
 function isHttpUrl(href: string) {
   return /^https?:\/\//i.test(href);
-}
-
-function normalizeChip(value: string | null | undefined) {
-  return (value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/ı/g, "i")
-    .replace(/ğ/g, "g")
-    .replace(/ü/g, "u")
-    .replace(/ş/g, "s")
-    .replace(/ö/g, "o")
-    .replace(/ç/g, "c");
 }
 
 function ActionButton({
@@ -183,15 +174,15 @@ function buildVcardHref(name: string, phoneDigits: string | null, address: strin
 export default function VitrinProfileView({
   storeName,
   storeSlug,
-  kategori,
-  businessType,
   status,
+  isClosed: isClosedProp,
   logoUrl,
   heroImage,
   description,
   corporateBio,
   address,
-  workingHoursText,
+  workingHoursToday,
+  workingHoursWeek,
   googleBusinessLink,
   publicUrl,
   whatsappUrl,
@@ -208,7 +199,10 @@ export default function VitrinProfileView({
   articles,
   catalog,
 }: VitrinProfileViewProps) {
-  const isClosed = status === "Kapalı";
+  const isClosed =
+    typeof isClosedProp === "boolean"
+      ? isClosedProp
+      : Boolean(status?.startsWith("Kapalı"));
   const copy = getVitrinCopy(profile.id);
   const displayAddress = normalizeAddressDisplay(address);
   const phoneFromWa = whatsappUrl?.match(/wa\.me\/(\d+)/)?.[1] ?? null;
@@ -285,10 +279,8 @@ export default function VitrinProfileView({
       : []),
   ];
 
-  const showKategoriChip = Boolean(kategori) && normalizeChip(kategori) !== "diger";
-  const showBusinessChip =
-    Boolean(businessType) &&
-    (!showKategoriChip || normalizeChip(businessType) !== normalizeChip(kategori));
+  /** Tek anlamlı chip: resolved kategori etiketi */
+  const categoryChip = profile.label;
 
   return (
     <div className="vitrin-shell min-h-screen bg-[#0c0d10] text-[#f4f1ea]">
@@ -336,7 +328,7 @@ export default function VitrinProfileView({
               <span
                 className={`h-1.5 w-1.5 rounded-full ${isClosed ? "bg-rose-300" : "bg-[#25D366]"}`}
               />
-              {status || "Açık"}
+              {status || (isClosed ? "Kapalı" : "Açık")}
             </span>
           </div>
         </div>
@@ -370,16 +362,9 @@ export default function VitrinProfileView({
             )}
             <div className="min-w-0 flex-1">
               <div className="mb-1.5 flex flex-wrap gap-1.5 sm:mb-2">
-                {showKategoriChip && (
-                  <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/85 sm:px-2.5 sm:py-1 sm:text-[11px]">
-                    {kategori}
-                  </span>
-                )}
-                {showBusinessChip && (
-                  <span className="rounded-full border border-[#E8A87C]/30 bg-[#E8A87C]/15 px-2 py-0.5 text-[10px] font-bold text-[#F0D0B4] sm:px-2.5 sm:py-1 sm:text-[11px]">
-                    {businessType}
-                  </span>
-                )}
+                <span className="rounded-full border border-[#E8A87C]/30 bg-[#E8A87C]/15 px-2 py-0.5 text-[10px] font-bold text-[#F0D0B4] sm:px-2.5 sm:py-1 sm:text-[11px]">
+                  {categoryChip}
+                </span>
               </div>
               <h1
                 className="font-extrabold leading-[1.05] tracking-[-0.03em] text-white"
@@ -450,8 +435,8 @@ export default function VitrinProfileView({
                 </SocialIconLink>
               )}
               {googleBusinessLink && (
-                <SocialIconLink href={googleBusinessLink} label="Google Business">
-                  <MapPinIcon size={18} />
+                <SocialIconLink href={googleBusinessLink} label="Google">
+                  <GoogleIcon size={18} />
                 </SocialIconLink>
               )}
               {articles.length > 0 && (
@@ -642,8 +627,26 @@ export default function VitrinProfileView({
             {displayAddress && (
               <p className="mt-2 text-sm font-semibold text-white/55">{displayAddress}</p>
             )}
-            {workingHoursText && (
-              <p className="mt-1 text-xs font-semibold text-white/40">{workingHoursText}</p>
+            {workingHoursToday && (
+              <p className="mt-1 text-xs font-semibold text-white/55">{workingHoursToday}</p>
+            )}
+            {workingHoursWeek.length > 0 && (
+              <details className="mt-2 group">
+                <summary className="cursor-pointer text-xs font-bold text-white/40 hover:text-white/70">
+                  Tüm hafta
+                </summary>
+                <ul className="mt-2 space-y-1 text-xs font-semibold text-white/45">
+                  {workingHoursWeek.map((row) => (
+                    <li
+                      key={row.day}
+                      className={`flex justify-between gap-4 ${row.isToday ? "text-white/80" : ""}`}
+                    >
+                      <span>{row.day}</span>
+                      <span>{row.hours}</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             )}
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -665,7 +668,12 @@ export default function VitrinProfileView({
                 Rehbere ekle
               </a>
               {googleBusinessLink && (
-                <ActionButton href={googleBusinessLink} variant="ghost">
+                <ActionButton
+                  href={googleBusinessLink}
+                  variant="ghost"
+                  icon={<GoogleIcon className="v-action-icon" size={16} />}
+                  ariaLabel="Google yorum"
+                >
                   Google yorum
                 </ActionButton>
               )}

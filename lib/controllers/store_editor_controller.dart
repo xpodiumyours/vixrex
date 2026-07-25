@@ -198,6 +198,9 @@ class StoreEditorController extends ChangeNotifier
   /// Kategori seçimi: özellik paketini sessiz uygular (randevu vb.).
   void selectCategory(String kategori) {
     _data.kategori = kategori;
+    // Public chip / profil ile senkron: business_type default 'Butik' kalmasın
+    final config = BusinessCategoryConfig.fromCategoryLabel(kategori);
+    _data.businessType = config.label;
     _applyCategoryFeaturePackage(kategori);
     notifyListeners();
   }

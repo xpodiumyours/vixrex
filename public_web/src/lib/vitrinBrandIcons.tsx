@@ -51,3 +51,12 @@ export function GlobeIcon(props: IconProps) {
     </svg>
   );
 }
+
+/** Google “G” marka glifi (tek renk — currentColor) */
+export function GoogleIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)} fill="currentColor">
+      <path d="M21.35 11.1h-9.17v2.98h5.3c-.23 1.25-1.4 3.66-4.07 3.66-2.45 0-4.45-2.03-4.45-4.54s2-4.54 4.45-4.54c1.4 0 2.33.59 2.86 1.1l1.95-1.88C16.84 6.55 15.3 5.8 13.41 5.8 9.76 5.8 6.8 8.78 6.8 12.4s2.96 6.6 6.61 6.6c3.82 0 6.35-2.68 6.35-6.45 0-.43-.05-.75-.11-1.08z" />
+    </svg>
+  );
+}

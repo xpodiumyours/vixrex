@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import {
   deriveCollections,
   getProductUrlSlug,
+  isPublicCatalogProduct,
   normalizeExternalUrl,
   normalizeWhatsappDigits,
   safeParseJson,
@@ -12,6 +13,13 @@ import {
 } from "@/lib/products";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { getVitrinCopy, normalizeAddressDisplay } from "@/lib/vitrinCopy";
+import {
+  formatTodayLine,
+  formatWeekLines,
+  resolveOpenState,
+  resolveWeekMap,
+  toOpeningHoursSpecification,
+} from "@/lib/workingHours";
 import ProductCatalog from "./ProductCatalog";
 import VitrinProfileView from "./VitrinProfileView";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
@@ -176,7 +184,8 @@ async function _getStoreData(slug: string) {
         stockStatus: (p.stock_status as string) || undefined,
         isVisible: p.is_visible as boolean,
         source: p.source_type as string,
-      }));
+      }))
+      .filter((p: ProductItem) => isPublicCatalogProduct(p));
 
     return {
       store,
@@ -300,8 +309,16 @@ export default async function StorePage(props: PageProps) {
     businessType = "BeautySalon";
   }
 
-  const workingHoursText =
-    typeof store.working_hours === "string" ? store.working_hours : null;
+  const weekMap = resolveWeekMap(
+    (bookingSettings as { working_hours?: unknown } | null)?.working_hours,
+    store.working_hours,
+  );
+  const workingHoursToday = weekMap ? formatTodayLine(weekMap) : null;
+  const workingHoursWeek = weekMap ? formatWeekLines(weekMap) : [];
+  const openState = resolveOpenState(weekMap, store.status);
+  const displayStatus = openState.detail
+    ? `${openState.label} · ${openState.detail}`
+    : openState.label;
 
   const breadcrumbSchema = {
     "@type": "BreadcrumbList",
@@ -322,17 +339,8 @@ export default async function StorePage(props: PageProps) {
     ],
   };
 
-  const openingHoursSpecification = store.working_hours
-    ? Object.entries(store.working_hours as Record<string, { start: string; end: string; active: boolean }>)
-        .filter(([, hours]) => hours.active)
-        .map(([day, hours]) => ({
-          "@type": "OpeningHoursSpecification",
-          dayOfWeek: [
-            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-          ][parseInt(day) - 1],
-          opens: hours.start,
-          closes: hours.end,
-        }))
+  const openingHoursSpecification = weekMap
+    ? toOpeningHoursSpecification(weekMap)
     : undefined;
 
   const jsonLd = {
@@ -405,13 +413,15 @@ export default async function StorePage(props: PageProps) {
         storeSlug={store.slug}
         kategori={store.kategori}
         businessType={store.business_type}
-        status={store.status}
+        status={displayStatus}
+        isClosed={!openState.isOpen}
         logoUrl={store.logo_url}
         heroImage={heroImage}
         description={displayDescription}
         corporateBio={store.corporate_bio}
         address={displayAddress}
-        workingHoursText={workingHoursText}
+        workingHoursToday={workingHoursToday}
+        workingHoursWeek={workingHoursWeek}
         googleBusinessLink={store.google_business_link}
         publicUrl={publicUrl}
         whatsappUrl={whatsappActionUrl}
@@ -431,6 +441,8 @@ export default async function StorePage(props: PageProps) {
             storeSlug={store.slug}
             products={visibleProducts}
             categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
+            fallbackImage={store.logo_url || store.shelf_image_url || null}
+            storeInitial={store.name?.trim()?.[0]?.toUpperCase() || "V"}
           />
         }
       />

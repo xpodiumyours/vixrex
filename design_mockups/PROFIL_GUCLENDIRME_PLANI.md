@@ -1,9 +1,37 @@
-# Profil güçlendirme planı — 5 sorun
+# Profil güçlendirme planı — 5 sorun + Keşfet kalite barı
 
 **Kapsam:** Public vitrin (`public_web`) + gerekli panel/payload hizası (Flutter).  
 **Hedef:** Çalışma saatleri, kategori chip, ürün görseli, Google ikonu, Açık/Kapalı.  
+**+ Yeni:** Public ürün kartları, Keşfet `VitrinStoreCard` kalite barına yaklaşsın (OCR/panel sızıntısı yok).  
 **Yöntem:** Mevcut mimari analizi → rakip/UX araştırması → cerrahi fazlar.  
 **Deploy / commerce / analitik P0 bu planda yok.**
+
+---
+
+## 0.1 Keşfet vs public kart — dahil mi?
+
+| | Keşfet (`localhost:5000`) | Public katalog (`/v/slug`) |
+|--|---------------------------|----------------------------|
+| Bileşen | Flutter `VitrinStoreCard` | Next `ProductCatalog` |
+| Nesne | **Vitrin / mağaza** | **Ürün** |
+| Kalite | CANLI badge, temiz kapak, tek kategori, konum, WA CTA | Şu an: OCR ekran görüntüsü, “ssss”, panel UI sızıntısı |
+
+**Cevap:** Eski planda sadece “görsel fallback” vardı — **Keşfet kart kalitesine hizalama tam dahil değildi.**  
+Ekranındaki sorun (fatura/OCR UI’nin ürün görseli gibi çıkması) ayrı kök neden: `products.image_urls` içine panel/OCR screenshot URL’si yazılmış.
+
+Bu belgeye **Faz E** olarak eklendi.
+
+### Keşfet’ten alınacak kalite kuralları (ürün kartına uyarlanmış)
+1. Medya alanı her zaman “vitrin kalitesinde” dolu (gerçek ürün/logo/kapak veya nötr marka placeholder)  
+2. Panel/OCR/Chrome UI görseli **asla** müşteriye çıkmaz  
+3. Tek tip footer: ad + fiyat (placeholder “ssss” jargonu yok; boşsa gizle veya “Fiyat sorun”)  
+4. Kart oranı / radius / koyu zemin Keşfet kartıyla aynı dil (`vitrin-shell` token)  
+5. Keşfet’teki yeşil WA butonu ürün kartında zorunlu değil (kart tıklanınca ürün sayfası + orada WA) — ama görsel dil aynı aile
+
+### OCR görsel sızıntısı — kök neden araştırması
+- [x] Public filtre: junk ad + şüpheli UI screenshot URL heuristic + OCR source görsel yok sayma  
+- [x] Geçici güvenlik ağı: katalogda logo/kapak/harf fallback  
+- [ ] Panel yayın öncesi görsel kalite uyarısı (Faz D)
 
 ---
 
@@ -16,6 +44,7 @@
 | Kategori | Tek birincil kategori | Public’te tek chip = resolved profile label; `business_type` serbest etiket veya gizle |
 | Ürün görseli | Boş kart yok / kaliteli placeholder | Katalog: logo→kapak→kategori placeholder; OCR sızıntısı yok |
 | Google vs Yol | Farklı ikon + metin | `GoogleIcon` + “Google” / “Yorum”; pin sadece Maps |
+| Kart kalitesi | Keşfet store card barı | Public ürün kartı aynı dil + temiz medya |
 
 Kaynak ilkeler: GBP/Yext tarzı “bugün + hafta listesi”; timezone wall-clock (TR için `Europe/Istanbul`).
 
@@ -153,27 +182,33 @@ function resolveOpenState(map: WeekMap | null, manualStatus: string | null, now?
 
 ## 4. Uygulama fazları
 
-### Faz A — Public saat + Açık/Kapalı (çekirdek) — ~1 oturum
-- [ ] `workingHours.ts`  
-- [ ] `page.tsx`: `bookingResult.data?.working_hours` + store string  
-- [ ] Connect’te bugün satırı + (opsiyonel) 7 gün `<details>`  
-- [ ] JSON-LD opening hours map’ten  
-- [ ] Hero pill: `resolveOpenState` (`Kapalı` override)  
-- [ ] Smoke: saatli mağaza + saatleri boş mağaza  
+### Faz A — Public saat + Açık/Kapalı (çekirdek) — DONE
+- [x] `workingHours.ts`  
+- [x] `page.tsx`: `bookingResult.data?.working_hours` + store string  
+- [x] Connect’te bugün satırı + 7 gün `<details>`  
+- [x] JSON-LD opening hours map’ten  
+- [x] Hero pill: `resolveOpenState` (`Kapalı` override)  
+- [ ] Smoke: saatli mağaza + saatleri boş mağaza (lokal doğrula)
 
 **Dokunma:** Flutter yayın modeli (A’da zorunlu değil).
 
-### Faz B — Chip + Google ikon — küçük
-- [ ] Tek chip = `profile.label`  
-- [ ] `business_type` chip kuralı: default/`Butik` ve kategori Diğer senaryosunda gizle; veya tamamen kaldır  
-- [ ] `GoogleIcon` + Maps pin ayrımı  
-- [ ] (Önerilir) Flutter `selectCategory` → `businessType = config.label`  
+### Faz B — Chip + Google ikon — DONE
+- [x] Tek chip = `profile.label`  
+- [x] `business_type` chip kaldırıldı (tek etiket)  
+- [x] `GoogleIcon` + Maps pin ayrımı  
+- [x] Flutter `selectCategory` → `businessType = config.label`  
 
-### Faz C — Katalog görsel fallback — küçük
-- [ ] `ProductCatalog` props: `fallbackImage`, `storeInitial`  
-- [ ] Zincir: ürün → logo → kapak → harf+gradient  
-- [ ] Placeholder metni sadeleştir  
-- [ ] Smoke: görselsiz OCR ürünü  
+### Faz C — Katalog görsel fallback — DONE
+- [x] `ProductCatalog` props: `fallbackImage`, `storeInitial`  
+- [x] Zincir: ürün → logo → kapak → harf+gradient  
+- [x] Placeholder metni sadeleştir  
+- [ ] Smoke: görselsiz OCR ürünü (lokal doğrula)
+
+### Faz E — Keşfet kalite barı (public ürün kartı) — DONE
+- [x] Kart iskeleti: Keşfet dilinde radius / koyu footer / tipografi  
+- [x] OCR/panel screenshot heuristic + source_type görsel yok sayma  
+- [x] Çöp ürün adı (`ssss` vb.) public’te gizle  
+- [ ] Smoke: Keşfet kartı yanında public ürün grid (lokal doğrula)
 
 ### Faz D — Panel güçlendirme (ayrı, isteğe bağlı)
 - [ ] Status: Otomatik / Manuel Açık / Manuel Kapalı  
