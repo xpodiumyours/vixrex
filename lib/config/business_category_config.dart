@@ -86,7 +86,7 @@ class BusinessCategoryConfig {
     BusinessCategoryConfig(
       id: 'kozmetik',
       label: 'Kozmetik',
-      sectionTitle: 'Ürünler ve Bakım',
+      sectionTitle: 'Hizmetler',
       ctaLabel: 'Bilgi Al',
       whatsappTemplate: 'Merhaba, {storeName}. Kişisel bakım hizmetleriniz hakkında bilgi almak istiyorum.',
       emoji: '💄',
@@ -101,7 +101,7 @@ class BusinessCategoryConfig {
     BusinessCategoryConfig(
       id: 'dekorasyon',
       label: 'Dekorasyon',
-      sectionTitle: 'Koleksiyon',
+      sectionTitle: 'Hizmetler',
       ctaLabel: 'Teklif İste',
       whatsappTemplate: 'Merhaba, {storeName}. Ev dekorasyonu / çiçek tasarımı için teklif almak istiyorum.',
       emoji: '🪴',
@@ -116,7 +116,7 @@ class BusinessCategoryConfig {
     BusinessCategoryConfig(
       id: 'elektronik',
       label: 'Elektronik',
-      sectionTitle: 'Ürünler',
+      sectionTitle: 'Hizmetler',
       ctaLabel: 'Ürün Sor',
       whatsappTemplate: 'Merhaba, {storeName}. Elektronik ürünleriniz hakkında bilgi almak istiyorum.',
       emoji: '📱',
@@ -131,7 +131,7 @@ class BusinessCategoryConfig {
     BusinessCategoryConfig(
       id: 'kirtasiye',
       label: 'Kırtasiye',
-      sectionTitle: 'Ürünler',
+      sectionTitle: 'Hizmetler',
       ctaLabel: 'Sipariş Talebi',
       whatsappTemplate: 'Merhaba, {storeName}. Kırtasiye malzemeleri için sipariş talebi oluşturmak istiyorum.',
       emoji: '📚',
