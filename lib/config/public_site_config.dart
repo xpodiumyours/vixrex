@@ -37,6 +37,17 @@ class PublicSiteConfig {
     return buildPublicLink('/v/${Uri.encodeComponent(trimmed)}');
   }
 
+  /// Path-only product page (`/v/{slug}/urun/{productSlug}`) — Next.js ile aynı.
+  static String buildProductPath(String storeSlug, String productSlug) {
+    final store = storeSlug.trim();
+    final product = productSlug.trim();
+    if (store.isEmpty || product.isEmpty) return buildVitrinLink(store);
+    return '/v/${Uri.encodeComponent(store)}/urun/${Uri.encodeComponent(product)}';
+  }
+
+  static String buildProductLink(String storeSlug, String productSlug) =>
+      buildPublicLink(buildProductPath(storeSlug, productSlug));
+
   /// Path-only booking entry (`/v/{slug}/randevu`) — Next.js ile aynı.
   static String buildBookingPath(String slug) {
     final trimmed = slug.trim();

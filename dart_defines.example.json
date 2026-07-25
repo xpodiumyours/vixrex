@@ -1,0 +1,6 @@
+{
+  "SUPABASE_URL": "https://YOUR_PROJECT.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "YOUR_PUBLISHABLE_KEY",
+  "PUBLIC_SITE_URL": "https://vixrex-public.vercel.app",
+  "GOOGLE_WEB_CLIENT_ID": "YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com"
+}

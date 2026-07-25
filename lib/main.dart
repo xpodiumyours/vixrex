@@ -12,7 +12,7 @@ import 'package:vixrex/theme/app_colors.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Path URL: müşteri linki /v/slug tarayıcıda PublicVitrinScreen açar (hash /#/app değil).
+  // Path URL strategy: /app panel; müşteri /v/* Next.js'e yönlendirilir (PublicSiteRedirectScreen).
   if (kIsWeb) {
     usePathUrlStrategy();
   }

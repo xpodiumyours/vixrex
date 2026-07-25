@@ -187,80 +187,103 @@ export default async function ArticleDetailPage(props: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbList) }}
       />
 
-      <div className="container py-8 flex-1 flex flex-col gap-6 max-w-2xl animate-fade-in">
-        {/* Navigation / Header */}
-        <div className="flex justify-between items-center bg-white dark:bg-[#131A22] border border-[#D0E4E8] dark:border-[#243141] rounded-2xl p-4 shadow-sm text-xs font-bold">
-          <Link href={`/v/${article.store.slug}/yazilar`} className="text-[#64748B] hover:text-[#10D8D8] flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            Tüm İçerikler
-          </Link>
-          <Link href={`/v/${article.store.slug}`} className="text-[#38A0E4] hover:text-[#10D8D8]">
-            {article.store.name} Vitrini
-          </Link>
-        </div>
-
-        {/* Cover Photo */}
-        {article.cover_image_url && (
-          <div className="rounded-2xl overflow-hidden aspect-video border border-[#D0E4E8] dark:border-[#243141] shadow-sm relative">
-            <Image 
-              src={article.cover_image_url} 
-              alt={article.title} 
-              fill
-              className="object-cover" 
-            />
+      <div className="min-h-screen bg-[#0c0d10] px-4 py-8 text-[#f4f1ea]">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 animate-fade-in">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-[#15171c] px-4 py-3 text-xs font-bold">
+            <Link
+              href={`/v/${article.store.slug}/yazilar`}
+              className="inline-flex items-center gap-1 text-white/55 hover:text-[#E8A87C]"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              Tüm yazılar
+            </Link>
+            <Link
+              href={`/v/${article.store.slug}`}
+              className="text-[#E8A87C] hover:text-[#f0d0b4]"
+            >
+              {article.store.name}
+            </Link>
           </div>
-        )}
 
-        {/* Article Body Card */}
-        <article className="card bg-white dark:bg-[#131A22] p-6 sm:p-8 space-y-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
-              <span className="text-[#0EA8B0]">{article.article_type || "Yazı"}</span>
-              <span>•</span>
-              <span>{formatDateTR(article.published_at || article.created_at)}</span>
-              {article.target_city && (
-                <>
-                  <span>•</span>
-                  <span className="text-slate-400">{article.target_city}</span>
-                </>
+          {article.cover_image_url && (
+            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/8">
+              <Image
+                src={article.cover_image_url}
+                alt={article.title}
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
+
+          <article className="space-y-6 rounded-2xl border border-white/8 bg-[#15171c] p-6 sm:p-8">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-white/40">
+                <span className="text-[#E8A87C]">{article.article_type || "Yazı"}</span>
+                <span>·</span>
+                <span>{formatDateTR(article.published_at || article.created_at)}</span>
+                {article.target_city && (
+                  <>
+                    <span>·</span>
+                    <span>{article.target_city}</span>
+                  </>
+                )}
+              </div>
+
+              <h1 className="font-vitrin-display text-2xl font-normal leading-tight text-white sm:text-3xl">
+                {article.title}
+              </h1>
+
+              {article.summary && (
+                <p className="border-l-2 border-[#E8A87C] py-1 pl-4 text-sm font-medium italic leading-relaxed text-white/55">
+                  {article.summary}
+                </p>
               )}
             </div>
-            
-            <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight text-slate-800 dark:text-slate-100">
-              {article.title}
-            </h1>
 
-            {article.summary && (
-              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 italic border-l-4 border-[#10D8D8] pl-4 py-1 leading-relaxed">
-                {article.summary}
-              </p>
-            )}
-          </div>
+            <div
+              className="space-y-4 whitespace-pre-wrap border-t border-white/8 pt-6 text-sm leading-relaxed text-white/70 sm:text-base"
+              dangerouslySetInnerHTML={{ __html: formattedHtml }}
+            />
+          </article>
 
-          <div 
-            className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed space-y-4 whitespace-pre-wrap border-t border-slate-50 dark:border-slate-800 pt-6"
-            dangerouslySetInnerHTML={{ __html: formattedHtml }}
-          />
-        </article>
-
-        {/* Author widget */}
-        <div className="card bg-slate-50/50 dark:bg-slate-900/30 border border-[#D0E4E8] dark:border-[#243141] p-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            {article.store.logo_url ? (
-              <Image src={article.store.logo_url} alt="Logo" width={40} height={40} className="w-10 h-10 rounded-full object-contain border bg-white" />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#10D8D8] to-[#38A0E4] text-white flex items-center justify-center font-bold text-base">
-                {article.store.name[0].toUpperCase()}
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/8 bg-[#15171c] p-4">
+            <div className="flex items-center gap-3">
+              {article.store.logo_url ? (
+                <Image
+                  src={article.store.logo_url}
+                  alt="Logo"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full border border-white/15 bg-white object-contain"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E8A87C]/20 text-base font-bold text-[#E8A87C]">
+                  {article.store.name[0].toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="text-xs font-bold text-white">{article.store.name}</div>
+                <div className="text-[10px] font-semibold text-white/40">Vitrin sahibi</div>
               </div>
-            )}
-            <div>
-              <div className="text-xs font-bold">{article.store.name}</div>
-              <div className="text-[10px] text-slate-400 font-semibold">Vitrin Sahibi ve Yazar</div>
             </div>
+            <Link
+              href={`/v/${article.store.slug}`}
+              className="rounded-full border border-white/15 px-4 py-2 text-[10px] font-extrabold text-white/70"
+            >
+              Vitrine git
+            </Link>
           </div>
-          <Link href={`/v/${article.store.slug}`} className="btn-secondary px-4 py-2 text-[10px] rounded-lg">
-            Vitrine Git
-          </Link>
         </div>
       </div>
     </>

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vixrex/screens/public_vitrin_screen.dart';
+import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 import 'package:vixrex/controllers/appointment_tracker_controller.dart';
@@ -112,11 +112,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
         leading: IconButton(
           icon: const Icon(Icons.storefront_rounded, color: AppColors.primaryDark),
           onPressed: () {
-            // Navigate back to public vitrin clearing fragment
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: widget.storeSlug)),
-            );
+            AppRouter.navigateToPublicVitrin(context, widget.storeSlug);
           },
         ),
       ),
@@ -135,9 +131,9 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                         const SizedBox(height: 24),
                         ElevatedButton(
                           onPressed: () {
-                            Navigator.pushReplacement(
+                            AppRouter.navigateToPublicVitrin(
                               context,
-                              MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: widget.storeSlug)),
+                              widget.storeSlug,
                             );
                           },
                           child: const Text('Vitrine Dön'),
@@ -294,10 +290,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
           const SizedBox(height: 30),
           OutlinedButton(
             onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => PublicVitrinScreen(slug: widget.storeSlug)),
-              );
+              AppRouter.navigateToPublicVitrin(context, widget.storeSlug);
             },
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.primaryDark,

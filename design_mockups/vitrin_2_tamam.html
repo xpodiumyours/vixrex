@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vixrex — Vitrin 2 tasarım paketi (A/B/C)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c0d10;
+      --bg-elev: #15171c;
+      --bg-soft: #1c1f27;
+      --line: rgba(255,255,255,.08);
+      --line-strong: rgba(255,255,255,.16);
+      --text: #f4f1ea;
+      --muted: #9a9aa3;
+      --accent: #e8a87c;
+      --accent-2: #7eb8ff;
+      --wa: #25d366;
+      --max: 1080px;
+      --card-ratio: 4/5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "DM Sans", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.45; }
+    img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; border: 0; background: none; color: inherit; cursor: pointer; }
+
+    .studio-bar {
+      position: sticky; top: 0; z-index: 60;
+      background: rgba(12,13,16,.94);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 16px;
+    }
+    .studio-bar h1 { font-size: 13px; font-weight: 800; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+    .studio-bar p { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 10px; max-width: 70ch; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tab {
+      padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line);
+      background: var(--bg-elev); font-size: 12px; font-weight: 800; color: var(--muted);
+    }
+    .tab.is-on { background: var(--text); color: var(--bg); border-color: transparent; }
+
+    .panel { display: none; }
+    .panel.is-on { display: block; }
+
+    .hero {
+      position: relative; min-height: min(86vh, 720px);
+      display: flex; flex-direction: column; justify-content: flex-end;
+      overflow: hidden; isolation: isolate;
+    }
+    .hero__bg { position: absolute; inset: 0; z-index: -2; }
+    .hero__veil {
+      position: absolute; inset: 0; z-index: -1;
+      background: linear-gradient(180deg, rgba(12,13,16,.18), rgba(12,13,16,.55) 45%, rgba(12,13,16,.96));
+    }
+    .hero__top, .hero__body, .wrap {
+      width: min(100% - 32px, var(--max));
+      margin-left: auto; margin-right: auto;
+    }
+    .hero__top {
+      position: absolute; top: 0; left: 0; right: 0;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 0; z-index: 2;
+    }
+    .logo { font-weight: 800; font-size: 15px; }
+    .logo span { color: var(--accent); }
+    .pill {
+      display: inline-flex; gap: 6px; align-items: center;
+      padding: 6px 11px; border-radius: 999px;
+      border: 1px solid rgba(37,211,102,.35); background: rgba(37,211,102,.14);
+      color: #8dffb5; font-size: 11px; font-weight: 800;
+    }
+    .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--wa); }
+
+    .hero__body { padding: 0 0 36px; position: relative; z-index: 2; }
+    .identity { display: flex; gap: 16px; align-items: flex-end; margin-bottom: 14px; }
+    .avatar {
+      width: 88px; height: 88px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,.55); background: var(--bg-soft);
+    }
+    @media (min-width: 720px) { .avatar { width: 104px; height: 104px; } }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .tag {
+      padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong);
+      background: rgba(255,255,255,.08); font-size: 11px; font-weight: 700;
+    }
+    .store-name {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(2.5rem, 7vw, 4.2rem); line-height: .95; font-weight: 400;
+    }
+    .bio { max-width: 40ch; color: rgba(244,241,234,.82); font-size: 15px; font-weight: 500; margin-top: 12px; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-height: 48px; padding: 0 18px; border-radius: 999px; font-size: 14px; font-weight: 800;
+    }
+    .btn--wa { background: var(--wa); color: #04140a; }
+    .btn--map { background: rgba(255,255,255,.1); border: 1px solid var(--line-strong); }
+    .btn--book { border: 1px solid rgba(232,168,124,.55); color: var(--accent); }
+    .icon-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .icon-btn {
+      width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center;
+      border: 1px solid var(--line); background: rgba(255,255,255,.06);
+      font-size: 11px; font-weight: 800; color: var(--muted);
+    }
+
+    .wrap { padding: 28px 0 72px; }
+    .section { margin-bottom: 48px; }
+    .label { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+    .title {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.4rem); font-weight: 400; margin-bottom: 6px;
+    }
+    .hint { color: var(--muted); font-size: 14px; font-weight: 500; margin-bottom: 18px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+    .chip {
+      padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line);
+      background: var(--bg-elev); font-size: 13px; font-weight: 700; color: var(--muted);
+    }
+    .chip.is-on { background: var(--text); color: var(--bg); border-color: transparent; }
+
+    .feed { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    @media (min-width: 720px) { .feed { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; } }
+    .card { border-radius: 16px; overflow: hidden; background: var(--bg-elev); border: 1px solid var(--line); }
+    .card__media { aspect-ratio: var(--card-ratio); background: #2a2e38; }
+    .card__body { padding: 12px 12px 14px; }
+    .card__name { font-size: 13px; font-weight: 800; margin-bottom: 3px; }
+    .card__price { font-size: 12px; font-weight: 700; color: var(--accent); }
+
+    .empty {
+      padding: 28px; border-radius: 20px; border: 1px dashed var(--line-strong);
+      background: var(--bg-elev); text-align: center;
+    }
+    .empty p { color: var(--muted); font-weight: 600; margin-bottom: 14px; }
+
+    .atmosphere { display: grid; gap: 18px; }
+    @media (min-width: 820px) { .atmosphere { grid-template-columns: 1.1fr 1fr; } }
+    .story {
+      padding: 24px; border-radius: 20px; border: 1px solid var(--line);
+      background: linear-gradient(160deg, rgba(232,168,124,.1), transparent 50%), var(--bg-elev);
+    }
+    .story p { margin-top: 12px; color: rgba(244,241,234,.82); font-size: 15px; font-weight: 500; line-height: 1.65; }
+    .gallery { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; border-radius: 20px; overflow: hidden; min-height: 220px; }
+    .gallery figure { margin: 0; background: #2a2e38; min-height: 110px; }
+    .gallery figure:first-child { grid-column: span 2; grid-row: span 2; min-height: 226px; }
+
+    .connect {
+      padding: 26px; border-radius: 24px; border: 1px solid var(--line); background: var(--bg-elev);
+      display: grid; gap: 22px;
+    }
+    @media (min-width: 820px) { .connect { grid-template-columns: 1.4fr auto; align-items: center; } }
+    .connect h2 { font-family: "Instrument Serif", Georgia, serif; font-size: 2rem; font-weight: 400; margin-bottom: 8px; }
+    .addr { color: var(--muted); font-weight: 600; font-size: 14px; margin-bottom: 14px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn--solid { background: var(--text); color: var(--bg); }
+    .btn--ghost2 { border: 1px solid var(--line-strong); }
+    .share-box { text-align: center; padding: 16px; border-radius: 16px; background: var(--bg-soft); border: 1px solid var(--line); min-width: 160px; }
+    .qr {
+      width: 108px; height: 108px; margin: 0 auto 10px; border-radius: 12px;
+      background: repeating-linear-gradient(0deg,#f4f1ea 0 3px,transparent 3px 7px),
+                  repeating-linear-gradient(90deg,#f4f1ea 0 3px,transparent 3px 7px), #111;
+    }
+    .share-box small { display: block; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+    .share-box code { display: block; font-size: 11px; font-weight: 700; color: var(--accent-2); word-break: break-all; }
+    .more { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .more a { font-size: 13px; font-weight: 700; color: var(--muted); }
+    .market { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .market a { padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-size: 12px; font-weight: 700; color: var(--muted); }
+
+    footer { width: min(100% - 32px, var(--max)); margin: 0 auto 36px; text-align: center; color: var(--muted); font-size: 12px; font-weight: 600; }
+
+    .checklist {
+      width: min(100% - 32px, var(--max)); margin: 18px auto 0; padding: 16px 18px;
+      border-radius: 14px; border: 1px dashed var(--line-strong); background: rgba(255,255,255,.02);
+      font-size: 12.5px; color: var(--muted); font-weight: 600;
+    }
+    .checklist h3 { color: var(--accent); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; }
+    .checklist ul { padding-left: 18px; }
+    .checklist li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div class="studio-bar">
+    <h1>Vitrin 2 — tamamlanmış tasarım paketi</h1>
+    <p>
+      Tek iskelet, 3 aile. Plan: ürün / hizmet-randevu / mekân.
+      Canlı kod (`VitrinProfileView`) bu hiyerarşiye bağlı. Manuel test sonda.
+    </p>
+    <div class="tabs" role="tablist">
+      <button class="tab is-on" type="button" data-tab="a">A · Ürün (Butik)</button>
+      <button class="tab" type="button" data-tab="b">B · Hizmet (Kuaför)</button>
+      <button class="tab" type="button" data-tab="c">C · Mekân (Kafe)</button>
+    </div>
+  </div>
+
+  <div class="checklist">
+    <h3>Bu pakette kapanan plan maddeleri (tasarım)</h3>
+    <ul>
+      <li>Hero → primary CTA (max 3) → icon şeridi → feed → atmosfer → gel & bağlan</li>
+      <li>Profil Araçları dashboard yok; QR/vCard/yorum connect’te</li>
+      <li>Aile A/B/C CTA sırası ve bölüm başlığı farklı</li>
+      <li>B’de ürün yoksa boş state (sahte ürün yok)</li>
+      <li>Kart oranı: A/C 4:5 · B 1:1</li>
+    </ul>
+  </div>
+
+  <!-- ========== A PRODUCT ========== -->
+  <div class="panel is-on" id="panel-a" style="--card-ratio: 4/5">
+    <header class="hero">
+      <div class="hero__bg"><img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1800&q=80" alt="" /></div>
+      <div class="hero__veil"></div>
+      <div class="hero__top"><div class="logo">Vix<span>rex</span></div><div class="pill">Açık</div></div>
+      <div class="hero__body">
+        <div class="identity">
+          <div class="avatar"><img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=300&q=80" alt="" /></div>
+          <div>
+            <div class="tags"><span class="tag">Giyim</span><span class="tag">Butik</span></div>
+            <h2 class="store-name">Atelier Noir</h2>
+          </div>
+        </div>
+        <p class="bio">Seçilmiş parçalar, sakin deneme. WhatsApp’tan sorun — mağazada görün.</p>
+        <div class="actions">
+          <a class="btn btn--wa" href="#">Ürün sor</a>
+          <a class="btn btn--map" href="#">Yol tarifi</a>
+          <a class="btn btn--map" href="#">Web sitesi</a>
+        </div>
+        <div class="icon-row">
+          <a class="icon-btn" href="#">IG</a><a class="icon-btn" href="#">G</a><a class="icon-btn" href="#">Yazı</a>
+        </div>
+      </div>
+    </header>
+    <div class="wrap">
+      <section class="section">
+        <div class="label">Vitrin</div>
+        <h3 class="title">Özel Tasarımlar</h3>
+        <p class="hint">Ürün feed — sosyal akış gibi.</p>
+        <div class="chips"><span class="chip is-on">Tümü</span><span class="chip">Yeni sezon</span><span class="chip">Aksesuar</span></div>
+        <div class="feed">
+          <a class="card" href="#"><div class="card__media" style="background:linear-gradient(160deg,#3a342e,#1a1816)"></div><div class="card__body"><div class="card__name">Keten blazer</div><div class="card__price">₺ 2.450</div></div></a>
+          <a class="card" href="#"><div class="card__media" style="background:linear-gradient(160deg,#4a3f38,#211c19)"></div><div class="card__body"><div class="card__name">İpek eşarp</div><div class="card__price">₺ 890</div></div></a>
+          <a class="card" href="#"><div class="card__media" style="background:linear-gradient(160deg,#2e333a,#14171b)"></div><div class="card__body"><div class="card__name">Deri çanta</div><div class="card__price">₺ 3.200</div></div></a>
+          <a class="card" href="#"><div class="card__media" style="background:linear-gradient(160deg,#3d3832,#1b1815)"></div><div class="card__body"><div class="card__name">Yün hırka</div><div class="card__price">₺ 1.750</div></div></a>
+          <a class="card" href="#"><div class="card__media" style="background:linear-gradient(160deg,#353a42,#16191e)"></div><div class="card__body"><div class="card__name">Pamuk gömlek</div><div class="card__price">₺ 1.190</div></div></a>
+          <a class="card" href="#"><div class="card__media" style="background:linear-gradient(160deg,#40352f,#1c1714)"></div><div class="card__body"><div class="card__name">Minimal kemer</div><div class="card__price">₺ 640</div></div></a>
+        </div>
+      </section>
+      <section class="section">
+        <div class="label">Atmosfer</div>
+        <h3 class="title">Mağazanın hali</h3>
+        <div class="atmosphere">
+          <article class="story"><div class="label">Hikâyemiz</div><p>Sınırlı koleksiyonlar ve birebir deneme için kuruldu. Beden ve kumaş için WhatsApp yeter.</p></article>
+          <div class="gallery">
+            <figure style="background:linear-gradient(135deg,#5a4a3c,#2a221c)"></figure>
+            <figure style="background:linear-gradient(135deg,#3a4450,#1a2028)"></figure>
+            <figure style="background:linear-gradient(135deg,#4a4038,#241f1b)"></figure>
+            <figure style="background:linear-gradient(135deg,#2f3a42,#151a1f)"></figure>
+            <figure style="background:linear-gradient(135deg,#52463c,#262019)"></figure>
+          </div>
+        </div>
+      </section>
+      <section class="section connect">
+        <div>
+          <h2>Bize ulaşın</h2>
+          <p class="addr">Çekmeköy, İstanbul</p>
+          <div class="row">
+            <a class="btn btn--solid" href="#">Yol tarifi al</a>
+            <a class="btn btn--ghost2" href="#">Rehbere ekle</a>
+            <a class="btn btn--ghost2" href="#">Google yorum</a>
+          </div>
+          <div class="market"><a href="#">Trendyol</a><a href="#">Shopier</a></div>
+          <div class="more"><a href="#">Yazılar</a><a href="#">Instagram</a><a href="#">Web</a></div>
+        </div>
+        <aside class="share-box"><small>Vitrini paylaş</small><div class="qr"></div><code>vixrex.app/v/atelier-noir</code></aside>
+      </section>
+    </div>
+  </div>
+
+  <!-- ========== B SERVICE ========== -->
+  <div class="panel" id="panel-b" style="--card-ratio: 1/1">
+    <header class="hero">
+      <div class="hero__bg"><img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1800&q=80" alt="" /></div>
+      <div class="hero__veil"></div>
+      <div class="hero__top"><div class="logo">Vix<span>rex</span></div><div class="pill">Açık</div></div>
+      <div class="hero__body">
+        <div class="identity">
+          <div class="avatar"><img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=300&q=80" alt="" /></div>
+          <div>
+            <div class="tags"><span class="tag">Kuaför</span><span class="tag">Güzellik</span></div>
+            <h2 class="store-name">Studio Mira</h2>
+          </div>
+        </div>
+        <p class="bio">Kesim, renk ve bakım. Uygun saati sorun veya randevu alın.</p>
+        <div class="actions">
+          <a class="btn btn--wa" href="#">Randevu sor</a>
+          <a class="btn btn--book" href="#">Randevu al</a>
+          <a class="btn btn--map" href="#">Yol tarifi</a>
+        </div>
+        <div class="icon-row">
+          <a class="icon-btn" href="#">IG</a><a class="icon-btn" href="#">G</a><a class="icon-btn" href="#">Yazı</a>
+        </div>
+      </div>
+    </header>
+    <div class="wrap">
+      <section class="section">
+        <div class="label">Vitrin</div>
+        <h3 class="title">Hizmetler</h3>
+        <p class="hint">Hizmetleri inceleyin — WhatsApp veya randevu ile ilerleyin.</p>
+        <div class="empty">
+          <p>Henüz hizmet kartı yok. WhatsApp veya randevu ile devam edin.</p>
+          <div class="actions" style="justify-content:center">
+            <a class="btn btn--wa" href="#">Randevu sor</a>
+            <a class="btn btn--book" href="#">Randevu al</a>
+          </div>
+        </div>
+      </section>
+      <section class="section">
+        <div class="label">Atmosfer</div>
+        <h3 class="title">Salon</h3>
+        <div class="atmosphere">
+          <article class="story"><div class="label">Hakkımızda</div><p>Sakin bir stüdyo. Renk ve kesimde danışmanlık ön planda; randevu ile çalışıyoruz.</p></article>
+          <div class="gallery">
+            <figure style="background:linear-gradient(135deg,#4a3a42,#241820)"></figure>
+            <figure style="background:linear-gradient(135deg,#3a4048,#1a1e24)"></figure>
+            <figure style="background:linear-gradient(135deg,#524048,#2a2024)"></figure>
+            <figure style="background:linear-gradient(135deg,#2f3840,#151a1f)"></figure>
+            <figure style="background:linear-gradient(135deg,#463a40,#221c20)"></figure>
+          </div>
+        </div>
+      </section>
+      <section class="section connect">
+        <div>
+          <h2>Randevu & iletişim</h2>
+          <p class="addr">Kadıköy, İstanbul · Salı–Cumartesi</p>
+          <div class="row">
+            <a class="btn btn--solid" href="#">Yol tarifi al</a>
+            <a class="btn btn--ghost2" href="#">Rehbere ekle</a>
+            <a class="btn btn--ghost2" href="#">Google yorum</a>
+          </div>
+          <div class="more"><a href="#">Randevu</a><a href="#">Instagram</a><a href="#">Yazılar</a></div>
+        </div>
+        <aside class="share-box"><small>Vitrini paylaş</small><div class="qr"></div><code>vixrex.app/v/studio-mira</code></aside>
+      </section>
+    </div>
+  </div>
+
+  <!-- ========== C VENUE ========== -->
+  <div class="panel" id="panel-c" style="--card-ratio: 4/5">
+    <header class="hero">
+      <div class="hero__bg"><img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1800&q=80" alt="" /></div>
+      <div class="hero__veil"></div>
+      <div class="hero__top"><div class="logo">Vix<span>rex</span></div><div class="pill">Açık</div></div>
+      <div class="hero__body">
+        <div class="identity">
+          <div class="avatar"><img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=300&q=80" alt="" /></div>
+          <div>
+            <div class="tags"><span class="tag">Kafe</span><span class="tag">Lokanta</span></div>
+            <h2 class="store-name">Nord Filter</h2>
+          </div>
+        </div>
+        <p class="bio">Filtre kahve, günlük tatlılar. Gelin oturun — yol tarifi veya WhatsApp.</p>
+        <div class="actions">
+          <a class="btn btn--wa" href="#">Sipariş / rezervasyon</a>
+          <a class="btn btn--map" href="#">Yol tarifi</a>
+          <a class="btn btn--map" href="#">Web sitesi</a>
+        </div>
+        <div class="icon-row">
+          <a class="icon-btn" href="#">IG</a><a class="icon-btn" href="#">G</a>
+        </div>
+      </div>
+    </header>
+    <div class="wrap">
+      <section class="section">
+        <div class="label">Vitrin</div>
+        <h3 class="title">Menü</h3>
+        <p class="hint">Mekân ailesi — menü / bugünün ürünleri.</p>
+        <div class="chips"><span class="chip is-on">Tümü</span><span class="chip">Kahve</span><span class="chip">Tatlı</span></div>
+        <div class="feed">
+          <a class="card" href="#"><div class="card__media" style="background:linear-gradient(160deg,#3a3028,#1a1612)"></div><div class="card__body"><div class="card__name">Filtre kahve</div><div class="card__price">₺ 120</div></div></a>
+          <a class="card" href="#"><div class="card__media" style="background:linear-gradient(160deg,#4a3830,#211c18)"></div><div class="card__body"><div class="card__name">Flat white</div><div class="card__price">₺ 145</div></div></a>
+          <a class="card" href="#"><div class="card__media" style="background:linear-gradient(160deg,#3a342e,#181614)"></div><div class="card__body"><div class="card__name">Cheesecake</div><div class="card__price">₺ 180</div></div></a>
+          <a class="card" href="#"><div class="card__media" style="background:linear-gradient(160deg,#2e3338,#14171a)"></div><div class="card__body"><div class="card__name">Tost tabağı</div><div class="card__price">₺ 220</div></div></a>
+        </div>
+      </section>
+      <section class="section">
+        <div class="label">Atmosfer</div>
+        <h3 class="title">Mekân</h3>
+        <div class="atmosphere">
+          <article class="story"><div class="label">Hikâyemiz</div><p>Küçük bir filtre barı. Sabahları yoğun; masa için WhatsApp’tan yazabilirsiniz.</p></article>
+          <div class="gallery">
+            <figure style="background:linear-gradient(135deg,#5a4a3c,#2a221c)"></figure>
+            <figure style="background:linear-gradient(135deg,#3a4450,#1a2028)"></figure>
+            <figure style="background:linear-gradient(135deg,#4a4038,#241f1b)"></figure>
+            <figure style="background:linear-gradient(135deg,#2f3a42,#151a1f)"></figure>
+            <figure style="background:linear-gradient(135deg,#52463c,#262019)"></figure>
+          </div>
+        </div>
+      </section>
+      <section class="section connect">
+        <div>
+          <h2>Rezervasyon & konum</h2>
+          <p class="addr">Beşiktaş, İstanbul</p>
+          <div class="row">
+            <a class="btn btn--solid" href="#">Yol tarifi al</a>
+            <a class="btn btn--ghost2" href="#">Rehbere ekle</a>
+            <a class="btn btn--ghost2" href="#">Google yorum</a>
+          </div>
+          <div class="more"><a href="#">Instagram</a><a href="#">Web</a></div>
+        </div>
+        <aside class="share-box"><small>Vitrini paylaş</small><div class="qr"></div><code>vixrex.app/v/nord-filter</code></aside>
+      </section>
+    </div>
+  </div>
+
+  <footer>Vixrex tasarım paketi · vitrin_2_tamam.html · canlı deploy / manuel test ayrı adım</footer>
+
+  <script>
+    const tabs = document.querySelectorAll(".tab");
+    const panels = {
+      a: document.getElementById("panel-a"),
+      b: document.getElementById("panel-b"),
+      c: document.getElementById("panel-c"),
+    };
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const key = tab.dataset.tab;
+        tabs.forEach((t) => t.classList.toggle("is-on", t === tab));
+        Object.entries(panels).forEach(([k, el]) => el.classList.toggle("is-on", k === key));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/screens/my_vitrin/sections/vitrin_form_section.dart';
-import 'package:vixrex/screens/my_vitrin/sections/vitrin_publish_section.dart';
 import 'package:vixrex/screens/my_vitrin/sections/vitrin_danger_section.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
-// NOTE: PublishedSummaryCard is exported from publish_actions_section.dart
-import 'package:vixrex/widgets/editor/publish_actions_section.dart';
-import 'package:vixrex/widgets/editor/qr_code_bottom_sheet.dart';
-import 'package:vixrex/widgets/editor/visibility_hub_card.dart';
 import 'package:vixrex/widgets/auto_fill/category_gallery_sheet.dart';
 
 class MyVitrinScreen extends StatefulWidget {
@@ -159,8 +152,6 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
           );
         }
 
-        final hasPublished = _controller.publishedInfo?.isComplete == true;
-
         return Scaffold(
           backgroundColor: AppColors.bgEditor,
           body: SafeArea(
@@ -193,14 +184,9 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                             onPublished: widget.onPublished,
                             onOpenExplore: widget.onOpenExplore,
                           ),
-                          if (hasPublished)
-                            VitrinPublishSection(
-                              publishedSummary: _buildPublishedSummary(),
-                              actionButtons: _buildActionButtons(),
-                              visibilityHubCard: _buildVisibilityHubCard(),
-                            ),
-                          if (hasPublished)
-                            VitrinDangerSection(state: _state),
+                          // Yayın özeti / Google hub / Aç-Kopyala-QR yok.
+                          // Form + yalnızca Vitrini Sil.
+                          VitrinDangerSection(state: _state),
                         ],
                       ),
                     ),
@@ -212,93 +198,5 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
         );
       },
     );
-  }
-
-  Widget _buildPublishedSummary() {
-    return PublishedSummaryCard(
-      info: _controller.publishedInfo!,
-      coverUrl: _controller.coverUrl?.trim() ?? '',
-      onOpenExplore: widget.onOpenExplore,
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return PublishActionsSection(
-      bookingIsEnabled: _controller.bookingIsEnabled,
-      onOpenBookingManagement: () => AppRouter.navigateToBookingManagement(
-        context,
-        slug: _controller.publishedInfo!.slug,
-      ),
-      onOpenPublicVitrin: () => AppRouter.navigateToPublicVitrin(
-        context,
-        _controller.publishedInfo!.slug,
-      ),
-      onCopyLink: () async {
-        final link = _controller.publishedInfo?.publicLink;
-        if (link == null || link.trim().isEmpty) return;
-        await Clipboard.setData(ClipboardData(text: link));
-        if (mounted) _state.showSnackBar(context, 'Vitrin linki kopyalandı.');
-      },
-      onShowQrSheet: () {
-        final link = _controller.publishedInfo?.publicLink;
-        if (link == null || link.trim().isEmpty) return;
-        QrCodeBottomSheet.show(
-          context: context,
-          title: 'QR Kod',
-          link: link,
-        );
-      },
-    );
-  }
-
-  Widget _buildVisibilityHubCard() {
-    final publicLink = (_controller.publishedInfo?.publicLink.trim().isNotEmpty == true)
-        ? _controller.publishedInfo!.publicLink.trim()
-        : _websiteController.text.trim();
-    final publishedArticles = _controller.articles
-        .where((a) => a['status']?.toString() == 'published')
-        .toList();
-
-    return VisibilityHubCard(
-      hasPublished: _controller.publishedInfo?.isComplete == true,
-      hasWebLink: publicLink.isNotEmpty,
-      hasLocation: _addressController.text.trim().isNotEmpty ||
-          (_controller.data.latitude != null && _controller.data.longitude != null),
-      hasGoogleReview: _googleBusinessLinkController.text.trim().isNotEmpty,
-      hasProfileDescription: _descriptionController.text.trim().isNotEmpty,
-      hasPublishedArticle: publishedArticles.isNotEmpty,
-      isLoadingArticles: _controller.isLoadingArticles,
-      publishedArticles: publishedArticles,
-      onShowGoogleReviewQr: () => _showGoogleReviewQrSheet(),
-      onCreateArticle: () => _openBlogEditor(),
-      onOpenArticle: (article) => _openBlogEditor(article: article),
-    );
-  }
-
-  void _showGoogleReviewQrSheet() {
-    final link = _googleBusinessLinkController.text.trim();
-    if (link.isEmpty) {
-      _state.showSnackBar(context,
-        'Lütfen önce Google Yorum Bağlantısı girin ve vitrininizi kaydedin.');
-      return;
-    }
-    QrCodeBottomSheet.show(
-      context: context,
-      title: 'Google Yorum QR Kodu',
-      link: link,
-      warningText: 'Google politikaları gereği yorum karşılığında ödül veya hediye teklif edilmesi yasaktır. Lütfen QR kodunu müşterilerinizden tarafsız ve organik geri bildirimler almak üzere kullanın.',
-    );
-  }
-
-  Future<void> _openBlogEditor({Map<String, dynamic>? article}) async {
-    final slug = _controller.publishedInfo?.slug ?? _controller.data.slug;
-    if (slug.trim().isEmpty) {
-      _state.showSnackBar(context, 'Önce vitrini yayına almanız gerekir.');
-      return;
-    }
-    final result = await AppRouter.navigateToBlogEditor(
-      context, slug: slug, article: article,
-    );
-    if (result == true) await _controller.fetchArticlesUI();
   }
 }

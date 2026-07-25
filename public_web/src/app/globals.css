@@ -1,10 +1,11 @@
 /* VixRex Premium Style System */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 :root {
   --font-sans: var(--font-outfit), var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-outfit: 'Outfit', sans-serif;
+  --font-vitrin-display: 'Instrument Serif', Georgia, serif;
   
   /* Brand Palette (Light Mode Default) */
   --primary: #38A0E4;
@@ -62,6 +63,97 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Micro-Animations & Utilities */
+.font-vitrin-display {
+  font-family: var(--font-vitrin-display);
+}
+
+/*
+ * Public vitrin yoğunluk ölçeği — mobil / masaüstü / APK WebView ortak.
+ * Bileşenler bu değişkenleri kullanır; vh tavanı WebView’de taşmayı önler.
+ */
+.vitrin-shell {
+  --v-hero-min-h: min(48vh, 340px);
+  --v-hero-pad-x: 1rem;
+  --v-hero-pad-top: 4.25rem;
+  --v-hero-pad-bottom: 1.25rem;
+  --v-avatar: 64px;
+  --v-title-size: clamp(1.7rem, 7vw, 2.1rem);
+  --v-bio-size: 0.875rem;
+  --v-btn-h: 2.75rem;
+  --v-btn-px: 0.875rem;
+  --v-btn-text: 0.8125rem;
+  --v-btn-gap: 0.5rem;
+  --v-icon: 16px;
+  --v-section-label: 0.6875rem;
+  --v-section-title: 1.25rem;
+  --v-main-pad-y: 1.5rem;
+  --v-main-pad-x: 1rem;
+  --v-card-gap: 0.5rem;
+  --v-card-pad: 0.625rem;
+  --v-card-name: 0.75rem;
+  --v-card-price: 0.6875rem;
+  --v-card-radius: 0.875rem;
+  --vitrin-card-ratio-mobile: 1 / 1;
+  --v-gallery-hero-min: 140px;
+  --v-gallery-tile-min: 72px;
+  --v-qr: 88px;
+  --v-connect-pad: 1.25rem;
+  --v-connect-title: 1.35rem;
+}
+
+@media (min-width: 640px) {
+  .vitrin-shell {
+    --v-hero-min-h: min(70vh, 640px);
+    --v-hero-pad-x: 1.5rem;
+    --v-hero-pad-top: 7rem;
+    --v-hero-pad-bottom: 2.25rem;
+    --v-avatar: 96px;
+    --v-title-size: clamp(2.2rem, 5vw, 3.4rem);
+    --v-bio-size: 0.9375rem;
+    --v-btn-h: 3rem;
+    --v-btn-px: 1.25rem;
+    --v-btn-text: 0.875rem;
+    --v-btn-gap: 0.625rem;
+    --v-icon: 18px;
+    --v-section-title: 1.75rem;
+    --v-main-pad-y: 3rem;
+    --v-main-pad-x: 1.5rem;
+    --v-card-gap: 0.625rem;
+    --v-card-pad: 0.75rem;
+    --v-card-name: 0.8125rem;
+    --v-card-price: 0.75rem;
+    --v-card-radius: 1rem;
+    --v-gallery-hero-min: 220px;
+    --v-gallery-tile-min: 108px;
+    --v-qr: 112px;
+    --v-connect-pad: 2rem;
+    --v-connect-title: 1.75rem;
+  }
+}
+
+.vitrin-shell .v-action-btn {
+  min-height: var(--v-btn-h);
+  padding-left: var(--v-btn-px);
+  padding-right: var(--v-btn-px);
+  font-size: var(--v-btn-text);
+  gap: 0.4rem;
+}
+
+.vitrin-shell .v-action-icon {
+  width: var(--v-icon);
+  height: var(--v-icon);
+}
+
+.vitrin-shell .v-product-media {
+  aspect-ratio: var(--vitrin-card-ratio-mobile, 1 / 1);
+}
+
+@media (min-width: 640px) {
+  .vitrin-shell .v-product-media {
+    aspect-ratio: var(--vitrin-card-ratio, 4 / 5);
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
 }

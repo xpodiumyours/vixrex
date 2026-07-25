@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/theme/app_colors.dart';
-import 'package:vixrex/theme/app_text_styles.dart';
 
 class VitrinDangerSection extends StatelessWidget {
   final MyVitrinState state;
@@ -15,34 +14,19 @@ class VitrinDangerSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         Center(
           child: TextButton.icon(
-            onPressed: ctrl.isWithdrawingConsent
-                ? null
-                : () => state.handleWithdraw(context),
-            icon: const Icon(Icons.visibility_off_outlined, size: 16),
-            label: Text(
-              ctrl.isWithdrawingConsent
-                  ? 'Yayından kaldırılıyor...'
-                  : 'Yayınlama Rızasını Geri Çek',
-              style: AppTextStyles.labelBold,
-            ),
-          ),
-        ),
-        Center(
-          child: TextButton.icon(
-            onPressed: ctrl.isDeleting
-                ? null
-                : () => _showDeleteConfirmation(context),
+            onPressed:
+                ctrl.isDeleting ? null : () => _showDeleteConfirmation(context),
             icon: const Icon(
               Icons.delete_outline_rounded,
               size: 16,
               color: Color(0xFFDC2626),
             ),
-            label: const Text(
-              'Vitrini Sil',
-              style: TextStyle(
+            label: Text(
+              ctrl.isDeleting ? 'Siliniyor...' : 'Vitrini Sil',
+              style: const TextStyle(
                 color: Color(0xFFDC2626),
                 fontSize: 13,
                 fontWeight: FontWeight.w700,

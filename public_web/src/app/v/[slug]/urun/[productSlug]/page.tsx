@@ -278,21 +278,21 @@ export default async function ProductDetailPage(props: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <main className="min-h-screen bg-[#071322] px-3 py-4 text-white sm:px-6 sm:py-8">
-        <section className="mx-auto grid w-full max-w-[1120px] gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="overflow-hidden rounded-[28px] border border-[#25415F] bg-[#0E1B2E] p-3 shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
+      <main className="min-h-screen bg-[#0c0d10] px-4 py-6 text-[#f4f1ea] sm:px-6 sm:py-10">
+        <section className="mx-auto grid w-full max-w-[1080px] gap-5 lg:grid-cols-[minmax(0,1.1fr)_360px]">
+          <div className="overflow-hidden rounded-[24px] border border-white/8 bg-[#15171c] p-2.5">
             {images.length > 0 ? (
-              <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto">
+              <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto">
                 {images.map((imageUrl, index) => (
                   <div
                     key={imageUrl}
-                    className="aspect-square min-w-full snap-center overflow-hidden rounded-[22px] bg-[#13243A]"
+                    className="aspect-[4/5] min-w-full snap-center overflow-hidden rounded-[20px] bg-[#1c1f27]"
                   >
                     <Image
                       src={imageUrl}
                       alt={`${product.name} görsel ${index + 1}`}
-                      width={600}
-                      height={600}
+                      width={720}
+                      height={900}
                       className="h-full w-full object-cover"
                       priority={index === 0}
                     />
@@ -300,83 +300,79 @@ export default async function ProductDetailPage(props: PageProps) {
                 ))}
               </div>
             ) : (
-              <div className="flex aspect-square items-center justify-center rounded-[22px] bg-[#13243A] text-sm font-black text-[#9DB2C8]">
+              <div className="flex aspect-[4/5] items-center justify-center rounded-[20px] bg-[#1c1f27] text-sm font-bold text-white/40">
                 Ürün görseli bekleniyor
               </div>
             )}
             {images.length > 1 && (
-              <div className="mt-3 text-center text-xs font-bold text-[#9DB2C8]">
-                {images.length} görsel • Kaydırarak inceleyin
+              <div className="mt-3 text-center text-xs font-bold text-white/40">
+                {images.length} görsel · kaydırın
               </div>
             )}
           </div>
 
-          <aside className="flex flex-col gap-4 rounded-[28px] border border-[#25415F] bg-[#0E1B2E]/95 p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:p-6">
-            <Link href={storeUrl} className="text-xs font-black text-[#7BC7FF]">
+          <aside className="flex flex-col gap-4 rounded-[24px] border border-white/8 bg-[#15171c] p-5 sm:p-6">
+            <Link
+              href={storeUrl}
+              className="text-xs font-extrabold text-[#E8A87C] transition hover:text-[#f0d0b4]"
+            >
               ← {store.name} vitrinine dön
             </Link>
 
             <div>
               {product.category && (
-                <span className="rounded-full bg-[#38A0E4]/18 px-3 py-1 text-xs font-extrabold text-[#B9E1FF]">
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-extrabold text-white/70">
                   {product.category}
                 </span>
               )}
-              <h1 className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl">
+              <h1 className="font-vitrin-display mt-4 text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-tight text-white">
                 {product.name}
               </h1>
-              <p className="mt-4 whitespace-pre-wrap text-sm font-semibold leading-7 text-[#C4D1E3]">
+              <p className="mt-4 whitespace-pre-wrap text-sm font-medium leading-relaxed text-white/70">
                 {productDescription}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-[#25415F] bg-[#13243A] p-4">
-                <div className="text-[11px] font-bold text-[#9DB2C8]">Fiyat</div>
-                <div className="mt-1 text-lg font-black text-[#7BC7FF]">
+              <div className="rounded-2xl border border-white/8 bg-[#1c1f27] p-4">
+                <div className="text-[11px] font-bold text-white/40">Fiyat</div>
+                <div className="mt-1 text-lg font-extrabold text-[#E8A87C]">
                   {product.price || "Fiyat sorun"}
                 </div>
               </div>
-              <div className="rounded-2xl border border-[#25415F] bg-[#13243A] p-4">
-                <div className="text-[11px] font-bold text-[#9DB2C8]">Stok</div>
-                <div className="mt-1 text-lg font-black text-emerald-200">
+              <div className="rounded-2xl border border-white/8 bg-[#1c1f27] p-4">
+                <div className="text-[11px] font-bold text-white/40">Stok</div>
+                <div className="mt-1 text-lg font-extrabold text-emerald-200">
                   {product.stockStatus || "Bilgi alın"}
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-3">
+            <div className="grid gap-2.5">
               {whatsappUrl && (
                 <Link
                   href={whatsappUrl}
-                  className="rounded-2xl bg-[#25D366] px-5 py-4 text-center text-sm font-black text-white shadow-lg shadow-emerald-950/20"
+                  className="rounded-full bg-[#25D366] px-5 py-3.5 text-center text-sm font-extrabold text-[#04140a]"
                 >
-                  {"WhatsApp'tan Ürün Sor"}
+                  WhatsApp’tan ürün sor
                 </Link>
               )}
               {instagramUrl && (
                 <Link
                   href={instagramUrl}
-                  className="rounded-2xl border border-[#E1306C]/40 bg-[#E1306C]/18 px-5 py-4 text-center text-sm font-black text-pink-100"
+                  className="rounded-full border border-white/15 bg-white/5 px-5 py-3.5 text-center text-sm font-extrabold text-white"
                 >
-                  Instagram Profiline Git
+                  Instagram
                 </Link>
               )}
               {sourceUrl && (
                 <Link
                   href={sourceUrl}
-                  className="rounded-2xl border border-white/10 bg-white/10 px-5 py-4 text-center text-sm font-black text-white"
+                  className="rounded-full border border-white/10 px-5 py-3.5 text-center text-sm font-extrabold text-white/70"
                 >
-                  Kaynak Paylaşımı Aç
+                  Kaynak paylaşımı
                 </Link>
               )}
-            </div>
-
-            <div className="rounded-2xl border border-[#25415F] bg-[#071322] p-4">
-              <div className="text-xs font-black text-white">Dijital dükkan arşivi</div>
-              <p className="mt-2 text-xs font-semibold leading-5 text-[#9DB2C8]">
-                Bu ürün Vixrex üzerinde kalıcı ürün sayfası olarak yayınlanır ve Google tarafından okunabilir HTML içerik olarak sunulur.
-              </p>
             </div>
           </aside>
         </section>

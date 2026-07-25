@@ -608,11 +608,13 @@ class VitrinFormSection extends StatelessWidget {
     final isLive =
         published != null && published.canEditRemote && slug.isNotEmpty;
 
+    // Yayınlı vitrin: müşteri ile aynı Next.js görünümü.
     if (isLive) {
       await AppRouter.navigateToPublicVitrin(ctx, slug);
       return;
     }
 
+    // Yayın öncesi: henüz public URL yok; yerel taslak önizleme.
     await Navigator.of(ctx).push(
       MaterialPageRoute(
         builder: (_) => PreviewScreen(storeData: controller.data),

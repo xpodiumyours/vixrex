@@ -1,20 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/legal_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/chat_message.dart';
-import 'package:vixrex/screens/appointment_tracker_screen.dart';
 import 'package:vixrex/screens/auth_screen.dart';
 import 'package:vixrex/screens/blog_editor_screen.dart';
 import 'package:vixrex/screens/booking_management_screen.dart';
 import 'package:vixrex/screens/home_shell_screen.dart';
 import 'package:vixrex/screens/landing_screen.dart';
 import 'package:vixrex/screens/legal_screen.dart';
-import 'package:vixrex/screens/public_booking_screen.dart';
-import 'package:vixrex/screens/public_vitrin_screen.dart';
-import 'package:vixrex/screens/public_product_screen.dart';
+import 'package:vixrex/screens/public_site_redirect_screen.dart';
 import 'package:vixrex/screens/vixrex_onboarding_chat_screen.dart';
 
 class AppRouter {
@@ -32,9 +28,13 @@ class AppRouter {
     navigatorKey: navigatorKey,
     initialLocation: landing,
     errorBuilder: (context, state) {
-      final slug = PublicSiteConfig.resolveVitrinSlugFromPath(state.uri.path);
+      final path = state.uri.path;
+      if (path.startsWith('/v/')) {
+        return PublicSiteRedirectScreen.fromPath(path);
+      }
+      final slug = PublicSiteConfig.resolveVitrinSlugFromPath(path);
       if (slug != null) {
-        return PublicVitrinScreen(slug: slug);
+        return PublicSiteRedirectScreen.fromPath('/v/$slug');
       }
       return const LandingScreen();
     },
@@ -42,19 +42,15 @@ class AppRouter {
       GoRoute(
         path: landing,
         builder: (context, state) {
-          // Parse initial path for deep link checking
           final uri = state.uri;
           final legalType = LegalScreen.typeFromRoute(uri.path);
           if (legalType != null) {
             return LegalScreen(type: legalType);
           }
-          
+
           final slugPath = uri.path;
           if (slugPath.startsWith('/v/')) {
-            final slug = Uri.decodeComponent(slugPath.substring(3));
-            if (slug.isNotEmpty) {
-              return PublicVitrinScreen(slug: slug);
-            }
+            return PublicSiteRedirectScreen.fromPath(slugPath);
           }
 
           if (uri.path == app || uri.path == home) {
@@ -72,7 +68,8 @@ class AppRouter {
       GoRoute(
         path: onboardingChat,
         builder: (context, state) {
-          final initialName = state.extra is String ? state.extra as String : null;
+          final initialName =
+              state.extra is String ? state.extra as String : null;
           return VixRexOnboardingChatScreen(initialName: initialName);
         },
       ),
@@ -91,37 +88,29 @@ class AppRouter {
           return BookingManagementScreen(storeSlug: slug);
         },
       ),
+      // Müşteri yüzü tek kaynak: Next.js. Flutter /v/* sadece yönlendirir.
       GoRoute(
         path: '/v/:slug/randevu/:token',
         builder: (context, state) {
-          return AppointmentTrackerScreen(
-            storeSlug: state.pathParameters['slug'] ?? '',
-            token: state.pathParameters['token'] ?? '',
-          );
+          return PublicSiteRedirectScreen.fromPath(state.uri.path);
         },
       ),
       GoRoute(
         path: '/v/:slug/randevu',
         builder: (context, state) {
-          return PublicBookingScreen(
-            slug: state.pathParameters['slug'] ?? '',
-          );
+          return PublicSiteRedirectScreen.fromPath(state.uri.path);
         },
       ),
       GoRoute(
         path: '/v/:slug/urun/:productSlug',
         builder: (context, state) {
-          return PublicProductScreen(
-            storeSlug: state.pathParameters['slug'] ?? '',
-            productSlug: state.pathParameters['productSlug'] ?? '',
-          );
+          return PublicSiteRedirectScreen.fromPath(state.uri.path);
         },
       ),
       GoRoute(
         path: '/v/:slug',
         builder: (context, state) {
-          final slug = state.pathParameters['slug'] ?? '';
-          return PublicVitrinScreen(slug: slug);
+          return PublicSiteRedirectScreen.fromPath(state.uri.path);
         },
       ),
       GoRoute(
@@ -150,12 +139,37 @@ class AppRouter {
         builder: (context, state) {
           final typeParam = state.pathParameters['type'] ?? '';
           final routePath = '/legal/$typeParam';
-          final type = LegalScreen.typeFromRoute(routePath) ?? LegalPageType.privacy;
+          final type =
+              LegalScreen.typeFromRoute(routePath) ?? LegalPageType.privacy;
           return LegalScreen(type: type);
         },
       ),
     ],
   );
+
+  /// Müşteri Next.js URL'sini dış tarayıcıda açar (web + native).
+  static Future<bool> openPublicUrl(
+    BuildContext? context,
+    String url, {
+    String failureMessage = 'Müşteri vitrini açılamadı.',
+  }) async {
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null) return false;
+
+    var launched = false;
+    try {
+      launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      launched = false;
+    }
+
+    if (!launched && context != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(failureMessage)),
+      );
+    }
+    return launched;
+  }
 
   // Centralized Navigators using GoRouter with standard Navigator fallbacks for isolated testing
   static void navigateToLanding(BuildContext context) {
@@ -312,39 +326,30 @@ class AppRouter {
     navigateToBookingManagement(ctx, slug: trimmed);
   }
 
-  static Future<bool?> navigateToAppointmentTracker(BuildContext context,
-      {required String slug, required String token}) {
-    final path = PublicSiteConfig.buildBookingTrackerPath(slug, token);
-    try {
-      return context.push<bool>(path);
-    } catch (_) {
-      return Navigator.push<bool>(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              AppointmentTrackerScreen(storeSlug: slug, token: token),
-        ),
-      );
-    }
+  static Future<void> navigateToAppointmentTracker(
+    BuildContext context, {
+    required String slug,
+    required String token,
+  }) {
+    return openPublicUrl(
+      context,
+      PublicSiteConfig.buildBookingTrackerLink(slug, token),
+      failureMessage: 'Randevu takip sayfası açılamadı.',
+    );
   }
 
-  static Future<dynamic> navigateToPublicBooking(
+  static Future<void> navigateToPublicBooking(
     BuildContext context, {
     required String slug,
   }) {
-    final path = PublicSiteConfig.buildBookingPath(slug);
-    try {
-      return context.push(path);
-    } catch (_) {
-      return Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PublicBookingScreen(slug: slug),
-        ),
-      );
-    }
+    return openPublicUrl(
+      context,
+      PublicSiteConfig.buildBookingLink(slug),
+      failureMessage: 'Randevu sayfası açılamadı.',
+    );
   }
 
+  /// Müşteri vitrini: her platformda Next.js public URL.
   static Future<void> navigateToPublicVitrin(
     BuildContext context,
     String slug,
@@ -352,67 +357,23 @@ class AppRouter {
     final normalizedSlug = slug.trim();
     if (normalizedSlug.isEmpty) return;
 
-    // Web işletme uygulaması public vitrini render etmez. Müşteri yüzünün tek
-    // sahibi Next.js'tir. Native uygulamada ise kullanıcı Flutter içinde kalır.
-    if (kIsWeb) {
-      final publicUri = Uri.tryParse(
-        PublicSiteConfig.buildVitrinLink(normalizedSlug),
-      );
-      var launched = false;
-      if (publicUri != null) {
-        try {
-          launched = await launchUrl(
-            publicUri,
-            mode: LaunchMode.externalApplication,
-          );
-        } catch (_) {
-          launched = false;
-        }
-      }
-
-      if (!launched && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Public vitrin yeni sekmede açılamadı.'),
-          ),
-        );
-      }
-      return;
-    }
-
-    final path = '/v/${Uri.encodeComponent(normalizedSlug)}';
-    try {
-      await context.push(path);
-    } catch (_) {
-      if (!context.mounted) return;
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PublicVitrinScreen(slug: normalizedSlug),
-        ),
-      );
-    }
+    await openPublicUrl(
+      context,
+      PublicSiteConfig.buildVitrinLink(normalizedSlug),
+      failureMessage: 'Public vitrin yeni sekmede açılamadı.',
+    );
   }
 
-  static void navigateToPublicProduct(
+  static Future<void> navigateToPublicProduct(
     BuildContext context, {
     required String storeSlug,
     required String productSlug,
   }) {
-    final path = '/v/$storeSlug/urun/$productSlug';
-    try {
-      context.push(path);
-    } catch (_) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PublicProductScreen(
-            storeSlug: storeSlug,
-            productSlug: productSlug,
-          ),
-        ),
-      );
-    }
+    return openPublicUrl(
+      context,
+      PublicSiteConfig.buildProductLink(storeSlug, productSlug),
+      failureMessage: 'Ürün sayfası açılamadı.',
+    );
   }
 
   static void push(BuildContext context, String path) {

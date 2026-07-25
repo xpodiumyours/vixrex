@@ -99,12 +99,9 @@ export default function ProductCatalog({
   const { page } = pagination;
 
   return (
-    <section className="rounded-[22px] border border-[#25415F] bg-[#0E1B2E]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-base font-black text-white">Ürünler</h2>
-        <span className="text-xs font-extrabold text-[#9DB2C8]">
-          {totalCount} ürün
-        </span>
+    <section>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className="text-xs font-extrabold text-white/45">{totalCount} ürün</span>
       </div>
 
       {categoryMap.length > 1 && (
@@ -113,8 +110,8 @@ export default function ProductCatalog({
             href={buildCategoryUrl("")}
             className={`min-h-11 shrink-0 rounded-full border px-4 text-xs font-black ${
               currentCategory === ""
-                ? "border-[#38A0E4] bg-[#38A0E4] text-[#071322]"
-                : "border-[#25415F] bg-[#13243A] text-[#C4D1E3]"
+                ? "border-transparent bg-[#f4f1ea] text-[#0c0d10]"
+                : "border-white/10 bg-[#15171c] text-white/60"
             }`}
           >
             Tümü
@@ -125,8 +122,8 @@ export default function ProductCatalog({
               href={buildCategoryUrl(cat.id)}
               className={`min-h-11 shrink-0 rounded-full border px-4 text-xs font-black ${
                 currentCategory === cat.id
-                  ? "border-[#38A0E4] bg-[#38A0E4] text-[#071322]"
-                  : "border-[#25415F] bg-[#13243A] text-[#C4D1E3]"
+                  ? "border-transparent bg-[#f4f1ea] text-[#0c0d10]"
+                  : "border-white/10 bg-[#15171c] text-white/60"
               }`}
             >
               {cat.name}
@@ -135,7 +132,10 @@ export default function ProductCatalog({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+      <div
+        className="grid grid-cols-2 md:grid-cols-3"
+        style={{ gap: "var(--v-card-gap, 0.5rem)" }}
+      >
         {paginatedProducts.map((product, index) => {
           const globalIndex = from + index;
           const productUrl = `/v/${storeSlug}/urun/${getProductUrlSlug(product, globalIndex)}`;
@@ -144,30 +144,31 @@ export default function ProductCatalog({
             <a
               key={product.id || `${product.name}-${index}`}
               href={productUrl}
-              className="min-w-0 rounded-2xl border border-[#25415F] bg-[#13243A] p-2 transition hover:border-[#38A0E4]/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38A0E4]"
+              className="min-w-0 overflow-hidden border border-white/8 bg-[#15171c] transition hover:-translate-y-0.5 hover:border-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E8A87C]"
+              style={{ borderRadius: "var(--v-card-radius, 0.875rem)" }}
             >
-              <div className="aspect-square overflow-hidden rounded-xl bg-[#162A42]">
+              <div className="v-product-media overflow-hidden bg-[#1c1f27]">
                 {image ? (
-                  <Image src={image} alt={product.name} width={200} height={200} className="h-full w-full object-cover" />
+                  <Image src={image} alt={product.name} width={320} height={400} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-xs font-black text-[#9DB2C8]">
+                  <div className="flex h-full items-center justify-center px-2 text-center text-[10px] font-bold text-white/40 sm:text-xs">
                     Ürün görseli bekleniyor
                   </div>
                 )}
               </div>
-              <div className="mt-3 min-w-0">
-                <h3 className="truncate text-sm font-black text-white">{product.name}</h3>
-                <p className="mt-1 truncate text-[11px] font-semibold text-[#9DB2C8]">
-                  {product.category || "Genel"}
+              <div style={{ padding: "var(--v-card-pad, 0.625rem)" }}>
+                <h3
+                  className="truncate font-extrabold text-white"
+                  style={{ fontSize: "var(--v-card-name, 0.75rem)" }}
+                >
+                  {product.name}
+                </h3>
+                <p
+                  className="mt-0.5 truncate font-bold text-[#E8A87C] sm:mt-1"
+                  style={{ fontSize: "var(--v-card-price, 0.6875rem)" }}
+                >
+                  {product.price || "Fiyat sorun"}
                 </p>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="truncate text-xs font-black text-[#7BC7FF]">
-                    {product.price || "Fiyat sorun"}
-                  </span>
-                  <span className="truncate rounded-full bg-emerald-400/12 px-2 py-0.5 text-[10px] font-extrabold text-emerald-200">
-                    {product.stockStatus || "Bilgi alın"}
-                  </span>
-                </div>
               </div>
             </a>
           );
@@ -179,22 +180,22 @@ export default function ProductCatalog({
           {page > 1 ? (
             <a
               href={buildPageUrl(page - 1)}
-              className="min-h-11 rounded-2xl border border-[#25415F] bg-[#13243A] px-5 text-sm font-black text-[#C4D1E3]"
+              className="min-h-11 rounded-full border border-white/10 bg-[#15171c] px-5 text-sm font-black text-white/70"
             >
-              Önceki sayfa
+              Önceki
             </a>
           ) : (
             <div />
           )}
-          <span className="text-xs font-bold text-[#9DB2C8]">
-            Sayfa {page} / {totalPages}
+          <span className="text-xs font-bold text-white/40">
+            {page} / {totalPages}
           </span>
           {hasNext ? (
             <a
               href={buildPageUrl(page + 1)}
-              className="min-h-11 rounded-2xl border border-[#38A0E4]/40 bg-[#38A0E4]/10 px-5 text-sm font-black text-[#B9E1FF]"
+              className="min-h-11 rounded-full border border-[#E8A87C]/40 bg-[#E8A87C]/10 px-5 text-sm font-black text-[#E8A87C]"
             >
-              Sonraki sayfa
+              Sonraki
             </a>
           ) : (
             <div />

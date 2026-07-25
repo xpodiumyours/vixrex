@@ -59,8 +59,9 @@ android/*.keystore
 # OAuth client secrets — never commit
 android/app/client_secret_*.json
 
-# Local dev scripts with embedded credentials
+# Local dev scripts / defines with embedded credentials
 run_local.ps1
+dart_defines.local.json
 
 # Local release APKs and scratch scripts
 release_apk/

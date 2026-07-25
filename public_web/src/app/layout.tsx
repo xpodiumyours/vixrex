@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { CookieConsentRoot } from "@/components/cookie-consent/CookieConsentRoot";
 import "./globals.css";
@@ -11,6 +11,15 @@ export const metadata: Metadata = {
   verification: {
     google: "EDYISkto7FZ88bohG5vwlJJgR4UEqRcL8lkV48cu7t0",
   },
+};
+
+/** Mobil tarayıcı + Flutter APK WebView için tutarlı ölçek */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#0c0d10",
 };
 
 export default function RootLayout({
