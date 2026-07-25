@@ -68,9 +68,9 @@ export function resolveCatalogImage(
   const fallback = String(fallbackImage || "").trim();
   if (fallback && !isLikelyUiScreenshotUrl(fallback)) return fallback;
 
-  // OCR’da yine de temiz http görsel varsa kullan
+  // OCR veya görselsiz ürünlerde temiz http görsel yoksa Vixrex Asistan maskotunu kullan
   if (cleaned[0]) return cleaned[0];
-  return null;
+  return "/vixrex_v_crystal_mascot.png";
 }
 
 export function isPublicCatalogProduct(product: ProductItem): boolean {

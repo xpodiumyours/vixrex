@@ -441,7 +441,7 @@ export default async function StorePage(props: PageProps) {
             storeSlug={store.slug}
             products={visibleProducts}
             categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
-            fallbackImage={store.logo_url || store.shelf_image_url || null}
+            fallbackImage={store.logo_url || "/vixrex_v_crystal_mascot.png"}
             storeInitial={store.name?.trim()?.[0]?.toUpperCase() || "V"}
           />
         }
