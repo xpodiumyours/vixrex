@@ -16,7 +16,7 @@ export type CategoryCopy = {
 const COPY: Record<string, CategoryCopy> = {
   giyim: {
     connectTitle: "Bize ulaşın",
-    atmosphereTitle: "Mağazanın hali",
+    atmosphereTitle: "Mağazamız",
     storyTitle: "Hikâyemiz",
     emptyFeed: "Henüz ürün eklenmedi.",
     feedIntro: "Yeni sezon ve seçkiler.",
@@ -25,7 +25,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   butik: {
     connectTitle: "Bize ulaşın",
-    atmosphereTitle: "Atölye / mağaza",
+    atmosphereTitle: "Atölyemiz",
     storyTitle: "Hikâyemiz",
     emptyFeed: "Henüz ürün eklenmedi.",
     feedIntro: "Özel tasarımlar ve seçkiler.",
@@ -34,7 +34,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   gida: {
     connectTitle: "Sipariş & konum",
-    atmosphereTitle: "Tezgâh",
+    atmosphereTitle: "Tezgâhımız",
     storyTitle: "Hikâyemiz",
     emptyFeed: "Henüz ürün eklenmedi.",
     feedIntro: "Taze ürünler — sipariş için yazın.",
@@ -52,7 +52,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   kozmetik: {
     connectTitle: "Bilgi & randevu",
-    atmosphereTitle: "Mağaza",
+    atmosphereTitle: "Mağazamız",
     storyTitle: "Hikâyemiz",
     emptyFeed: "Henüz ürün eklenmedi.",
     feedIntro: "Ürünler ve bakım seçimleri.",
@@ -70,7 +70,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   elektronik: {
     connectTitle: "Ürün sor & konum",
-    atmosphereTitle: "Mağaza",
+    atmosphereTitle: "Mağazamız",
     storyTitle: "Hakkımızda",
     emptyFeed: "Henüz ürün eklenmedi.",
     feedIntro: "Ürünler ve destek.",
@@ -79,7 +79,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   kirtasiye: {
     connectTitle: "Bize ulaşın",
-    atmosphereTitle: "Mağaza",
+    atmosphereTitle: "Mağazamız",
     storyTitle: "Hakkımızda",
     emptyFeed: "Henüz ürün eklenmedi.",
     feedIntro: "Ürünler ve konum.",
@@ -97,7 +97,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   kuafor: {
     connectTitle: "Randevu & iletişim",
-    atmosphereTitle: "Salon",
+    atmosphereTitle: "Salonumuz",
     storyTitle: "Hakkımızda",
     emptyFeed: "Henüz hizmet kartı yok. WhatsApp veya randevu ile devam edin.",
     feedIntro: "Hizmetleri inceleyin — WhatsApp veya randevu ile ilerleyin.",
@@ -106,7 +106,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   pet_shop_veteriner: {
     connectTitle: "Randevu & iletişim",
-    atmosphereTitle: "Klinik / dükkan",
+    atmosphereTitle: "Klinik ve Mağaza",
     storyTitle: "Hakkımızda",
     emptyFeed: "Henüz hizmet kartı yok.",
     feedIntro: "Hizmetler — randevu veya bilgi için yazın.",
@@ -115,7 +115,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   teknik_servis: {
     connectTitle: "Servis talebi",
-    atmosphereTitle: "Atölye",
+    atmosphereTitle: "Servis ve Atölye",
     storyTitle: "Hakkımızda",
     emptyFeed: "Henüz hizmet kartı yok.",
     feedIntro: "Servis seçenekleri — talep için yazın.",
@@ -124,7 +124,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   hizmet_danismanlik: {
     connectTitle: "İletişim",
-    atmosphereTitle: "Çalışma alanı",
+    atmosphereTitle: "Çalışma Alanımız",
     storyTitle: "Hakkımızda",
     emptyFeed: "Henüz hizmet kartı yok.",
     feedIntro: "Hizmetler — görüşme için yazın.",
@@ -133,7 +133,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   egitim_ders: {
     connectTitle: "Kayıt & iletişim",
-    atmosphereTitle: "Ortam",
+    atmosphereTitle: "Eğitim Alanımız",
     storyTitle: "Program hakkında",
     emptyFeed: "Henüz program eklenmedi.",
     feedIntro: "Programlar — kayıt için yazın.",
@@ -142,7 +142,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   ev_temizlik: {
     connectTitle: "Teklif & iletişim",
-    atmosphereTitle: "Hizmet",
+    atmosphereTitle: "Çalışmalarımız",
     storyTitle: "Hakkımızda",
     emptyFeed: "Henüz hizmet kartı yok.",
     feedIntro: "Hizmetler — teklif için yazın.",
@@ -151,7 +151,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   spor_fitness: {
     connectTitle: "Üyelik & randevu",
-    atmosphereTitle: "Salon",
+    atmosphereTitle: "Salonumuz",
     storyTitle: "Hakkımızda",
     emptyFeed: "Henüz program eklenmedi.",
     feedIntro: "Programlar — üyelik veya randevu için yazın.",
@@ -169,7 +169,7 @@ const COPY: Record<string, CategoryCopy> = {
   },
   oto_arac: {
     connectTitle: "Randevu & iletişim",
-    atmosphereTitle: "Servis",
+    atmosphereTitle: "Servisimiz",
     storyTitle: "Hakkımızda",
     emptyFeed: "Henüz hizmet kartı yok.",
     feedIntro: "Hizmetler — randevu için yazın.",
@@ -178,12 +178,12 @@ const COPY: Record<string, CategoryCopy> = {
   },
   kafe_lokanta: {
     connectTitle: "Rezervasyon & konum",
-    atmosphereTitle: "Mekân",
+    atmosphereTitle: "Mekânımız",
     storyTitle: "Hikâyemiz",
     emptyFeed: "Menü henüz eklenmedi. WhatsApp ile sorabilirsiniz.",
     feedIntro: "Menü ve bugünün seçimleri.",
     defaultBio: (name) => `${name} — menü, rezervasyon ve konum.`,
-    whatsappButton: "Sipariş / rezervasyon",
+    whatsappButton: "Sipariş & Rezervasyon",
   },
 };
 
@@ -191,12 +191,14 @@ export function getVitrinCopy(categoryId: string): CategoryCopy {
   return COPY[categoryId] ?? COPY.diger;
 }
 
-/** Görünen adres tekrarı (Mahallesi Mah.) — DB değiştirmez */
+/** Görünen adres tekrarı (Mahallesi Mah. / Sokak Sk.) — DB değiştirmez */
 export function normalizeAddressDisplay(address: string | null | undefined): string | null {
   if (!address) return null;
   const cleaned = address
     .replace(/\bMahallesi\s+Mah\.?\b/gi, "Mahallesi")
     .replace(/\bMah\.?\s+Mahallesi\b/gi, "Mahallesi")
+    .replace(/\bSokak\s+Sk\.?\b/gi, "Sokak")
+    .replace(/\bSk\.?\s+Sokak\b/gi, "Sokak")
     .replace(/\s{2,}/g, " ")
     .trim();
   return cleaned || null;

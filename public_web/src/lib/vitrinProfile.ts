@@ -22,7 +22,7 @@ const PROFILES: VitrinCategoryProfile[] = [
   { id: "butik", label: "Butik", family: "product", sectionTitle: "Özel Tasarımlar", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
   { id: "gida", label: "Gıda", family: "product", sectionTitle: "Taze Ürünler", ctaLabel: "Sipariş Talebi", primaryActions: ["whatsapp", "maps", "website"] },
   { id: "firin", label: "Fırın", family: "product", sectionTitle: "Bugün Neler Var?", ctaLabel: "Sipariş Talebi", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "kozmetik", label: "Kozmetik", family: "product", sectionTitle: "Ürünler ve bakım", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"] },
+  { id: "kozmetik", label: "Kozmetik", family: "product", sectionTitle: "Ürünler ve Bakım", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"] },
   { id: "dekorasyon", label: "Dekorasyon", family: "product", sectionTitle: "Koleksiyon", ctaLabel: "Teklif İste", primaryActions: ["whatsapp", "maps", "website"] },
   { id: "elektronik", label: "Elektronik", family: "product", sectionTitle: "Ürünler", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
   { id: "kirtasiye", label: "Kırtasiye", family: "product", sectionTitle: "Ürünler", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
@@ -36,7 +36,7 @@ const PROFILES: VitrinCategoryProfile[] = [
   { id: "spor_fitness", label: "Spor / Fitness", family: "service", sectionTitle: "Programlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"] },
   { id: "saglik_yasam", label: "Sağlık / Yaşam", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"] },
   { id: "oto_arac", label: "Oto / Araç", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Randevu Sor", primaryActions: ["whatsapp", "booking", "maps"] },
-  { id: "diger", label: "Diğer", family: "product", sectionTitle: "Öne çıkanlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "maps", "website"] },
+  { id: "diger", label: "Diğer", family: "product", sectionTitle: "Öne Çıkanlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "maps", "website"] },
 ];
 
 const BY_ID = new Map(PROFILES.map((p) => [p.id, p]));
