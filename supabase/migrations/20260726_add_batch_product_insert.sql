@@ -13,7 +13,7 @@ DROP FUNCTION IF EXISTS public.batch_create_products(UUID, TEXT, JSONB);
 CREATE OR REPLACE FUNCTION public.batch_create_products(
   p_store_id UUID,
   p_edit_token TEXT,
-  p_products JSONB  -- [{name, slug, description, price_text, price_amount, image_urls, category_id, source_type, external_product_id, isVisible, sort_order}, ...]
+  p_products JSONB  -- [{name, slug, description, price_text, price_amount, image_urls, category_id, source_type, external_product_id, isVisible, sort_order, brand, sku}, ...]
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -52,6 +52,8 @@ BEGIN
         v_external_product_id TEXT := v_product->>'external_product_id';
         v_is_visible BOOLEAN := COALESCE((v_product->>'isVisible')::boolean, true);
         v_sort_order INT := COALESCE((v_product->>'sort_order')::int, 0);
+        v_brand TEXT := v_product->>'brand';
+        v_sku TEXT := v_product->>'sku';
       BEGIN
         -- Boş isim atla
         IF length(trim(v_name)) = 0 THEN
@@ -113,7 +115,9 @@ BEGIN
           price_amount,
           image_urls,
           is_visible,
-          sort_order
+          sort_order,
+          brand,
+          sku
         ) VALUES (
           p_store_id,
           v_category_id,
@@ -126,7 +130,9 @@ BEGIN
           v_price_amount,
           v_image_urls,
           v_is_visible,
-          v_sort_order
+          v_sort_order,
+          v_brand,
+          v_sku
         );
 
         v_success_count := v_success_count + 1;

@@ -67,6 +67,8 @@ class XmlProductUploadService {
                   'image_urls': p.imageUrls.isNotEmpty ? p.imageUrls : [''],
                   'source_type': 'xml_import',
                   'isVisible': p.isVisible,
+                  if (p.brand != null) 'brand': p.brand,
+                  if (p.sku != null) 'sku': p.sku,
                 },
               )
               .toList();
@@ -224,6 +226,10 @@ class XmlProductUploadService {
     // Görsel URL'lerini bul (birden fazla olabilir)
     final imageUrls = _findImageUrls(fields);
 
+    // Marka ve SKU
+    final brand = _findField(fields, _brandAliases);
+    final sku = _findField(fields, _skuAliases);
+
     final product = Product(
       id: 'xml_${const Uuid().v4()}',
       name: name,
@@ -235,6 +241,8 @@ class XmlProductUploadService {
       stockStatus: stockStatus,
       isVisible: true,
       source: 'xml_import',
+      brand: brand.isNotEmpty ? brand : null,
+      sku: sku.isNotEmpty ? sku : null,
     );
 
     return _XmlParseResult(product: product);
@@ -464,6 +472,27 @@ class XmlProductUploadService {
     'foto2',
     'resim1',
     'resim2',
+  };
+
+  static const _brandAliases = {
+    'brand',
+    'marka',
+    'markaadi',
+    'marka adi',
+    'marka adı',
+    'uretici',
+    'manufacturer',
+  };
+
+  static const _skuAliases = {
+    'sku',
+    'stokkodu',
+    'stok kodu',
+    'barkod',
+    'kod',
+    'productcode',
+    'urunkodu',
+    'urun kodu',
   };
 }
 

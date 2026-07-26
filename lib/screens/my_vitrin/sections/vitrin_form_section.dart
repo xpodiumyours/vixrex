@@ -883,6 +883,8 @@ class VitrinFormSection extends StatelessWidget {
             products: controller.data.products,
             categories: controller.data.productCategories,
             storeSlug: slug,
+            storeId: controller.data.id?.trim() ?? '',
+            editToken: controller.publishedInfo?.editToken.trim() ?? '',
             showMessage: (msg) => state.showSnackBar(ctx, msg),
             onCatalogChanged: (products, categories) async {
               final sync = await controller.syncCatalogToRemote(

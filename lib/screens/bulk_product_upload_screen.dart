@@ -6,6 +6,7 @@ import 'package:vixrex/controllers/bulk_product_upload_controller.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/bulk_product_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/xml_upload_dialog.dart';
 
 typedef OnBulkProductsSaved = Future<void> Function(List<Product> products);
 
@@ -14,17 +15,23 @@ typedef OnBulkProductsSaved = Future<void> Function(List<Product> products);
 class BulkProductUploadScreen extends StatefulWidget {
   final OnBulkProductsSaved onSaved;
   final List<ProductCategory> categories;
+  final String storeId;
+  final String editToken;
 
   const BulkProductUploadScreen({
     super.key,
     required this.onSaved,
     this.categories = const [],
+    this.storeId = '',
+    this.editToken = '',
   });
 
   static Future<bool?> show({
     required BuildContext context,
     required OnBulkProductsSaved onSaved,
     List<ProductCategory> categories = const [],
+    String storeId = '',
+    String editToken = '',
   }) {
     return showModalBottomSheet<bool>(
       context: context,
@@ -34,6 +41,8 @@ class BulkProductUploadScreen extends StatefulWidget {
       builder: (_) => BulkProductUploadScreen(
         onSaved: onSaved,
         categories: categories,
+        storeId: storeId,
+        editToken: editToken,
       ),
     );
   }
@@ -841,47 +850,17 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
   }
 
   void _openXmlUpload() {
-    final urlController = TextEditingController();
-    showDialog(
+    if (widget.storeId.isEmpty || widget.editToken.isEmpty) {
+      _showMessage('Önce vitrininizi yayınlayın.');
+      return;
+    }
+    XmlUploadDialog.show(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('XML ile Ürün Yükle'),
-        content: SizedBox(
-          width: 350,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Tedarikçinizin XML linkini yapıştırın.',
-                style: TextStyle(fontSize: 13),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: urlController,
-                decoration: InputDecoration(
-                  hintText: 'https://tedarikci.com/feed.xml',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  prefixIcon: const Icon(Icons.link, size: 18),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // XML yükleme devam edecek
-            },
-            child: const Text('Yükle'),
-          ),
-        ],
-      ),
+      storeId: widget.storeId,
+      editToken: widget.editToken,
+      onUploaded: () {
+        if (mounted) setState(() {});
+      },
     );
   }
 }

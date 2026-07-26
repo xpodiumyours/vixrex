@@ -30,6 +30,8 @@ class Product {
   String? sourceMediaId;
   String? sourcePermalink;
   String? importedAt;
+  String? brand;
+  String? sku;
 
   Product({
     required this.id,
@@ -47,6 +49,8 @@ class Product {
     this.sourceMediaId,
     this.sourcePermalink,
     this.importedAt,
+    this.brand,
+    this.sku,
   }) : imageUrls = _normalizeImageUrls(imageUrls, imagePath);
 
   static List<String> _normalizeImageUrls(
