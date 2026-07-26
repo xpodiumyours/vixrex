@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useRecaptcha } from "@/components/recaptcha/RecaptchaProvider";
 
 interface Offering {
   id: string;
@@ -31,6 +32,7 @@ interface BookingWizardClientProps {
 }
 
 export default function BookingWizardClient({ store }: BookingWizardClientProps) {
+  const { executeRecaptcha } = useRecaptcha();
   const [step, setStep] = useState(1);
   const [selectedService, setSelectedService] = useState<Offering | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -147,6 +149,10 @@ export default function BookingWizardClient({ store }: BookingWizardClientProps)
     setErrorMessage("");
 
     try {
+      // reCAPTCHA token
+      const recaptchaToken = await executeRecaptcha("booking_create");
+      console.log("[reCAPTCHA] token alındı:", Boolean(recaptchaToken));
+
       // Build ISO appointment time: e.g. "2026-06-22T13:00:00Z"
       // Combine date string and slot time
       const dateTimeStr = `${selectedDate}T${selectedSlot.time}:00`;

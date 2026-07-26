@@ -28,6 +28,7 @@ import 'package:vixrex/widgets/editor/gallery_editor_section.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 import 'package:vixrex/widgets/editor/public_link_card.dart';
 import 'package:vixrex/widgets/editor/store_theme_picker.dart';
+import 'package:vixrex/widgets/google_business_guide_card.dart';
 import 'package:vixrex/widgets/editor/working_hours_editor.dart';
 import 'package:vixrex/widgets/instagram_sync_section.dart';
 import 'package:vixrex/widgets/product/product_management_entry_card.dart';
@@ -107,7 +108,8 @@ class VitrinFormSection extends StatelessWidget {
     required SheetImageSource source,
   }) async {
     final kategori = controller.selectedKategori.trim();
-    final preferredKey = kategori.isNotEmpty ? mapKategoriToKey(kategori) : null;
+    final preferredKey =
+        kategori.isNotEmpty ? mapKategoriToKey(kategori) : null;
 
     await CategoryGallerySheet.show(
       context: ctx,
@@ -246,7 +248,6 @@ class VitrinFormSection extends StatelessWidget {
                           ),
                           const SizedBox(height: 14),
 
-
                           // StoreThemePicker (Tema Seçimi)
                           StoreThemePicker(
                             selectedTheme: controller.data.theme,
@@ -372,7 +373,6 @@ class VitrinFormSection extends StatelessWidget {
                       onTap: () => _showProductSheet(context),
                     ),
                     const SizedBox(height: 14),
-
 
                     // StoreThemePicker (Tema Seçimi)
                     StoreThemePicker(
@@ -739,6 +739,12 @@ class VitrinFormSection extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
+        if (hasPublished) ...[
+          const SizedBox(height: 16),
+          GoogleBusinessGuideCard(
+            publishedLink: controller.publishedInfo?.publicLink ?? '',
+          ),
+        ],
       ],
     );
   }

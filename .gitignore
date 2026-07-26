@@ -70,3 +70,6 @@ scratch/
 # Cursor temporary task plans are local-only
 .cursor/plans/
 
+# Database backups — never commit
+supabase/backup/dumps/
+

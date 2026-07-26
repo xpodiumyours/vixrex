@@ -318,6 +318,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.0"
+  flutter_localizations:
+    dependency: "direct main"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -576,6 +581,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2"
+  intl:
+    dependency: "direct main"
+    description:
+      name: intl
+      sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.20.2"
   jni:
     dependency: transitive
     description:
@@ -856,6 +869,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.11.0"
+  recaptcha_v3:
+    dependency: "direct main"
+    description:
+      name: recaptcha_v3
+      sha256: "86b2fe83c44630a93509cfe7d2a556b83e3782dc135196f454d71d970155305a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   record_use:
     dependency: transitive
     description:

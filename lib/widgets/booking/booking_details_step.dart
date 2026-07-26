@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/recaptcha_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 class BookingDetailsStep extends StatefulWidget {
@@ -47,7 +49,7 @@ class _BookingDetailsStepState extends State<BookingDetailsStep> {
       9: 'Eyl',
       10: 'Eki',
       11: 'Kas',
-      12: 'Ara'
+      12: 'Ara',
     };
     return '$day ${monthNames[date.month]}';
   }
@@ -200,7 +202,22 @@ class _BookingDetailsStepState extends State<BookingDetailsStep> {
         SizedBox(
           height: 48,
           child: ElevatedButton(
-            onPressed: widget.isSubmitting ? null : widget.onSubmit,
+            onPressed:
+                widget.isSubmitting
+                    ? null
+                    : () async {
+                      if (kIsWeb) {
+                        final token = await RecaptchaService.instance.getToken(
+                          action: 'booking_create',
+                        );
+                        if (kDebugMode) {
+                          debugPrint(
+                            '[reCAPTCHA] Randevu tokenı alındı: ${token != null}',
+                          );
+                        }
+                      }
+                      widget.onSubmit();
+                    },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -209,19 +226,23 @@ class _BookingDetailsStepState extends State<BookingDetailsStep> {
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
-            child: widget.isSubmitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+            child:
+                widget.isSubmitting
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                    : const Text(
+                      'Randevu Talebi Oluştur',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                      ),
                     ),
-                  )
-                : const Text(
-                    'Randevu Talebi Oluştur',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
-                  ),
           ),
         ),
       ],

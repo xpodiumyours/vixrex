@@ -14,8 +14,11 @@ import { resolve } from "path";
 const nextConfigPath = resolve(__dirname, "../../next.config.ts");
 const configSource = readFileSync(nextConfigPath, "utf-8");
 
-const pagePath = resolve(__dirname, "../../src/app/v/[slug]/page.tsx");
-const pageSource = readFileSync(pagePath, "utf-8");
+const profileViewPath = resolve(
+  __dirname,
+  "../../src/app/v/[slug]/VitrinProfileView.tsx",
+);
+const profileViewSource = readFileSync(profileViewPath, "utf-8");
 
 describe("Public kök navigasyon sözleşmesi", () => {
   it("next.config.ts redirect config'i barındırır", () => {
@@ -37,7 +40,7 @@ describe("Public kök navigasyon sözleşmesi", () => {
   });
 
   it("sayfadaki kök bağlantısı <a href=\"/\"> tam sayfa navigasyonudur", () => {
-    expect(pageSource).toContain('<a href="/"');
-    expect(pageSource).not.toContain('<Link href="/"');
+    expect(profileViewSource).toContain('<a href="/"');
+    expect(profileViewSource).not.toContain('<Link href="/"');
   });
 });

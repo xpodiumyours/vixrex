@@ -2,11 +2,13 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/l10n/app_localizations.dart';
 import 'package:vixrex/services/push_notification_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
@@ -21,13 +23,10 @@ Future<void> main() async {
   await _initializeSupabase();
   _initializeOneSignal();
 
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = const String.fromEnvironment('SENTRY_DSN');
-      options.tracesSampleRate = 1.0;
-    },
-    appRunner: () => runApp(const VixRexApp()),
-  );
+  await SentryFlutter.init((options) {
+    options.dsn = const String.fromEnvironment('SENTRY_DSN');
+    options.tracesSampleRate = 0.2;
+  }, appRunner: () => runApp(const VixRexApp()));
 }
 
 const SystemUiOverlayStyle _systemUiOverlayStyle = SystemUiOverlayStyle(
@@ -51,7 +50,9 @@ void _setupGlobalErrorHandler() {
     }
   };
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    if (kDebugMode) debugPrint('[GlobalError] Captured Platform/Async Error: $error');
+    if (kDebugMode) {
+      debugPrint('[GlobalError] Captured Platform/Async Error: $error');
+    }
     return true;
   };
 }
@@ -63,7 +64,11 @@ Future<void> _initializeSupabase() async {
   );
 
   if (supabaseUrl.isEmpty || supabasePublishableKey.isEmpty) {
-    if (kDebugMode) debugPrint('[FATAL] Supabase config missing - SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be provided via --dart-define');
+    if (kDebugMode) {
+      debugPrint(
+        '[FATAL] Supabase config missing - SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be provided via --dart-define',
+      );
+    }
     return;
   }
 
@@ -115,6 +120,13 @@ class VixRexApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Vixrex',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('tr', 'TR'), Locale('en', 'US')],
       theme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,

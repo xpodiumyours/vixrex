@@ -70,6 +70,11 @@ void main() {
   testWidgets('ürün yönetimi ürünleri gösterir ve aramayı korur', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(1000, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -77,6 +82,8 @@ void main() {
             products: [product],
             categories: [category],
             storeSlug: 'ornek-vitrin',
+            storeId: 'test-store',
+            editToken: 'test-edit-token',
             showMessage: (_) {},
             onCatalogChanged: (_, __) async {},
             onOcrTap: () {},

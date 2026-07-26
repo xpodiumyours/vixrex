@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/legal_config.dart';
 import 'package:vixrex/services/auth_service.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
+import 'package:vixrex/services/recaptcha_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/config/app_router.dart';
 
@@ -38,6 +40,14 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    if (kIsWeb) {
+      final token = await RecaptchaService.instance.getToken(
+        action: 'auth_login',
+      );
+      if (kDebugMode) {
+        debugPrint('[reCAPTCHA] Giriş tokenı alındı: ${token != null}');
+      }
+    }
     final authService = const AuthService();
 
     final email = _emailCtrl.text.trim();
@@ -108,6 +118,14 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
+    if (kIsWeb) {
+      final token = await RecaptchaService.instance.getToken(
+        action: 'auth_google',
+      );
+      if (kDebugMode) {
+        debugPrint('[reCAPTCHA] Google giriş tokenı alındı: ${token != null}');
+      }
+    }
     final result = await const AuthService().signInWithGoogle();
 
     result.when(

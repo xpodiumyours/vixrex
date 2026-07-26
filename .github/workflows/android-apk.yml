@@ -31,6 +31,7 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
         run: |
           missing=0
           for name in \
@@ -39,7 +40,8 @@ jobs:
             ANDROID_KEY_ALIAS \
             ANDROID_KEY_PASSWORD \
             SUPABASE_URL \
-            SUPABASE_PUBLISHABLE_KEY
+            SUPABASE_PUBLISHABLE_KEY \
+            GOOGLE_WEB_CLIENT_ID
           do
             if [ -z "${!name}" ]; then
               echo "Missing required secret: $name"
@@ -94,12 +96,56 @@ jobs:
       - name: dart analyze
         run: dart analyze
 
-      - name: Targeted Flutter tests
+      - name: Unit and contract tests
         run: |
           flutter test \
             test/critical_flow_smoke_test.dart \
             test/architecture_routing_contract_test.dart \
-            test/public_site_config_test.dart
+            test/public_site_config_test.dart \
+            test/store_data_test.dart \
+            test/store_data_copy_with_test.dart \
+            test/product_test.dart \
+            test/store_publish_payload_builder_test.dart \
+            test/store_publish_validator_test.dart \
+            test/business_category_config_test.dart \
+            test/business_category_booking_package_test.dart \
+            test/seo_schema_builder_test.dart \
+            test/whatsapp_link_helper_test.dart \
+            test/app_error_guard_test.dart \
+            test/auth_service_test.dart \
+            test/notification_templates_test.dart \
+            test/legal_document_test.dart \
+            test/location_service_test.dart \
+            test/guest_publish_token_align_test.dart \
+            test/onboarding_chat_route_contract_test.dart \
+            test/xml_product_upload_service_test.dart \
+            test/gallery_image_file_validator_test.dart \
+            test/image_optimization_service_test.dart \
+            test/store_shelf_upload_service_test.dart \
+            test/vitrin_view_actions_website_test.dart \
+            test/vitrin_theme_preset_isolation_test.dart \
+            test/ocr/premium_service_test.dart \
+            test/ocr/ocr_price_parser_test.dart \
+            test/ocr/ocr_controller_test.dart \
+            test/ocr/ocr_product_matcher_test.dart \
+            test/ocr/ocr_service_test.dart \
+            test/ocr/excel_service_test.dart \
+            test/ocr/bootstrap_trainer_test.dart
+
+      - name: Widget tests
+        run: |
+          flutter test \
+            test/explore_controller_test.dart \
+            test/vixrex_coach_test.dart \
+            test/whatsapp_ui_test.dart \
+            test/vitrin_store_card_test.dart \
+            test/unsaved_changes_dialog_test.dart \
+            test/gallery_delete_confirmation_dialog_test.dart \
+            test/explore_screen_test.dart \
+            test/booking_widgets_test.dart \
+            test/legal_screen_test.dart \
+            test/product_table_lock_contract_test.dart \
+            test/publish_legal_stamp_fix_test.dart
 
       - name: Write release keystore and key.properties
         env:
@@ -120,19 +166,22 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
         run: |
           flutter build apk --release \
             --build-name="${{ steps.version.outputs.version_name }}" \
             --build-number="${{ steps.version.outputs.build_number }}" \
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
-            --dart-define=PUBLIC_SITE_URL="${{ env.PUBLIC_SITE_URL }}"
+            --dart-define=PUBLIC_SITE_URL="${{ env.PUBLIC_SITE_URL }}" \
+            --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
           flutter build appbundle --release \
             --build-name="${{ steps.version.outputs.version_name }}" \
             --build-number="${{ steps.version.outputs.build_number }}" \
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
-            --dart-define=PUBLIC_SITE_URL="${{ env.PUBLIC_SITE_URL }}"
+            --dart-define=PUBLIC_SITE_URL="${{ env.PUBLIC_SITE_URL }}" \
+            --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
 
       - name: Verify AAB certificate signature and report metadata
         run: |
@@ -181,4 +230,3 @@ jobs:
         if: always()
         run: |
           rm -f android/key.properties android/app/upload-keystore.jks
-

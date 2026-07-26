@@ -70,17 +70,25 @@ void main() {
     });
 
     test('project rules keep public web ownership explicit', () {
-      final rules = File('AGENTS.md').readAsStringSync();
+      final agentRules = File('AGENTS.md').readAsStringSync();
+      final projectRules = File('VIXREX_RULES.md').readAsStringSync();
 
-      expect(rules, contains('PROJECT_RULES.md'));
+      expect(agentRules, contains('VIXREX_RULES.md'));
+      expect(agentRules, contains('.agents/skills/ask-matt/SKILL.md'));
       expect(
-        rules,
-        contains('prompt ne kadar kısa veya belirsiz olursa olsun'),
+        projectRules,
+        contains('`lib/`: Flutter Web/Mobil işletme paneli.'),
       );
-      expect(rules, contains('Next.js `public_web`'));
-      expect(rules, contains('Paralel yol oluşturma yasağı'));
-      expect(rules, contains('Native vitrin akışı Flutter içinde kalır'));
-      expect(rules, contains('test\\architecture_routing_contract_test.dart'));
+      expect(
+        projectRules,
+        contains('`public_web/`: Next.js müşteri vitrini (`/v/:slug`).'),
+      );
+      expect(
+        projectRules,
+        contains(
+          'Flutter paneli ve Next.js public site birbirinin yerine test edilmiş sayılmaz.',
+        ),
+      );
     });
   });
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useRecaptcha } from "@/components/recaptcha/RecaptchaProvider";
 
 interface RescheduleRequest {
   id: string;
@@ -42,6 +43,7 @@ interface BookingTrackerClientProps {
 }
 
 export default function BookingTrackerClient({ initialAppointment, token }: BookingTrackerClientProps) {
+  const { executeRecaptcha } = useRecaptcha();
   const [appointment, setAppointment] = useState<Appointment>(initialAppointment);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -114,6 +116,8 @@ export default function BookingTrackerClient({ initialAppointment, token }: Book
     setSuccessMessage("");
 
     try {
+      await executeRecaptcha("booking_cancel");
+
       const { data, error } = await supabase.rpc("cancel_appointment_by_token", {
         p_token: token,
       });
@@ -140,6 +144,8 @@ export default function BookingTrackerClient({ initialAppointment, token }: Book
     setSuccessMessage("");
 
     try {
+      await executeRecaptcha("booking_reschedule");
+
       const dateTimeStr = `${selectedDate}T${selectedSlot.time}:00`;
       const { data, error } = await supabase.rpc("request_appointment_reschedule", {
         p_token: token,

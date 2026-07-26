@@ -306,9 +306,9 @@ export default function VitrinProfileView({
           className="absolute left-0 right-0 top-0 z-10 mx-auto flex w-full max-w-[1080px] items-center justify-between pt-3"
           style={{ paddingLeft: "var(--v-hero-pad-x)", paddingRight: "var(--v-hero-pad-x)" }}
         >
-          <Link href="/" className="text-sm font-extrabold tracking-tight text-white sm:text-[15px]">
+          <a href="/" className="text-sm font-extrabold tracking-tight text-white sm:text-[15px]">
             Vix<span className="text-[#E8A87C]">rex</span>
-          </Link>
+          </a>
           <div className="flex items-center gap-2">
             {articles.length > 0 && (
               <Link

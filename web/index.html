@@ -46,5 +46,21 @@
     }
   </script>
   <script src="flutter_bootstrap.js" async></script>
+  <script src="https://www.google.com/recaptcha/api.js?render=6LfjAmctAAAAADJV6icaG7B5Wwf7Mslx1X22PuYj"></script>
+  <script>
+    window.__getRecaptchaToken = function(action) {
+      return new Promise(function(resolve) {
+        if (typeof grecaptcha === 'undefined' || typeof grecaptcha.execute !== 'function') {
+          resolve(null);
+          return;
+        }
+        grecaptcha.ready(function() {
+          grecaptcha.execute('6LfjAmctAAAAADJV6icaG7B5Wwf7Mslx1X22PuYj', {action: action})
+            .then(function(token) { resolve(token); })
+            .catch(function() { resolve(null); });
+        });
+      });
+    };
+  </script>
 </body>
 </html>
