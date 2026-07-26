@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<products>
+  <product>
+    <id>1001</id>
+    <name>Kırmızı Pamuklu Tişört</name>
+    <price>89.90</price>
+    <description>%100 pamuklu, günlük kullanım için uygun tişört.</description>
+    <image>https://picsum.photos/seed/tisort1/400/400</image>
+    <category>Giyim</category>
+    <stock>150</stock>
+    <brand>ModaMarka</brand>
+    <sku>TM-1001</sku>
+  </product>
+  <product>
+    <id>1002</id>
+    <name>Siyah Dar Kesim Pantolon</name>
+    <price>149.90</price>
+    <description>Rahat kesim, iş ve günlük kullanım için ideal.</description>
+    <image>https://picsum.photos/seed/pantolon1/400/400</image>
+    <category>Giyim</category>
+    <stock>80</stock>
+    <brand>ModaMarka</brand>
+    <sku>TM-1002</sku>
+  </product>
+  <product>
+    <id>1003</id>
+    <name>Mavi Oversize Tişört</name>
+    <price>79.90</price>
+    <description>Oversize kesim, rahat ve şık tasarım.</description>
+    <image>https://picsum.photos/seed/tisort2/400/400</image>
+    <category>Giyim</category>
+    <stock>200</stock>
+    <brand>ModaMarka</brand>
+    <sku>TM-1003</sku>
+  </product>
+  <product>
+    <id>1004</id>
+    <name>Beyaz Sneaker</name>
+    <price>199.90</price>
+    <description>Rahat taban, günlük kullanım için uygun sneaker.</description>
+    <image>https://picsum.photos/seed/sneaker1/400/400</image>
+    <category>Ayakkabı</category>
+    <stock>50</stock>
+    <brand>AyakModa</brand>
+    <sku>AM-1004</sku>
+  </product>
+  <product>
+    <id>1005</id>
+    <name>Siyah Deri Ceket</name>
+    <price>349.90</price>
+    <description>Sun'i deri, modern tasarım ceket.</description>
+    <image>https://picsum.photos/seed/ceket1/400/400</image>
+    <category>Giyim</category>
+    <stock>25</stock>
+    <brand>ModaMarka</brand>
+    <sku>TM-1005</sku>
+  </product>
+</products>

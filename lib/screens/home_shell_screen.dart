@@ -22,6 +22,7 @@ import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/vixrex_promotion_service.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
+import 'package:vixrex/widgets/xml_upload_dialog.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 class HomeShellScreen extends StatefulWidget {
@@ -375,6 +376,42 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     );
   }
 
+  void _openXmlUpload() {
+    final editorController = _myVitrinKey.currentState?.controller;
+    if (editorController == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vitrin henüz yüklenmedi. Lütfen bekleyin.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final storeId = editorController.data.id?.trim() ?? '';
+    final editToken = editorController.publishedInfo?.editToken.trim() ?? '';
+
+    if (storeId.isEmpty || editToken.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Önce vitrininizi yayınlayın.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // XML yükleme dialogunu aç
+    XmlUploadDialog.show(
+      context: context,
+      storeId: storeId,
+      editToken: editToken,
+      onUploaded: () {
+        if (mounted) setState(() {});
+      },
+    );
+  }
+
   Future<void> _markVixRexShared() async {
     await ChatbotService().markVitrinShared();
     if (!mounted) return;
@@ -500,6 +537,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         break;
       case VixRexAction.openOcrScannerShelf:
         _openOcrScanner(scanMode: 'shelf_label');
+        break;
+      case VixRexAction.openXmlUpload:
+        _openXmlUpload();
         break;
       case VixRexAction.openAuth:
         AppRouter.navigateToAuth(context);

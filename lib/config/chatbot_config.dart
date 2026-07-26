@@ -178,6 +178,10 @@ abstract final class ChatbotConfig {
       payload: 'ocr_premium',
     ),
     ChatbotIntent(
+      keywords: ['xml', 'feed', 'toplu urun', 'toplu urun yukle', 'tedarikci', 'tedarik'],
+      payload: 'xml_upload',
+    ),
+    ChatbotIntent(
       keywords: [
         'hesap',
         'giris',
@@ -278,6 +282,20 @@ abstract final class ChatbotConfig {
               label: 'Fiş ile tara',
               payload: 'action_ocr',
               action: VixRexAction.openOcrScanner,
+            ),
+            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
+          ],
+        );
+
+      case 'xml_upload':
+        return ChatMessage.bot(
+          'XML ile toplu ürün yüklemek için tedarikçinin XML linkini paylaş. '
+          'Sistem otomatik olarak ürünleri vitrine ekleyecek.',
+          quickReplies: const [
+            QuickReply(
+              label: 'XML linkini paylaş',
+              payload: 'action_xml',
+              action: VixRexAction.openXmlUpload,
             ),
             QuickReply(label: 'Geri Dön', payload: 'merhaba'),
           ],

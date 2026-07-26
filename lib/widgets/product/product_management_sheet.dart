@@ -306,6 +306,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
                 _buildAddProductButton(),
                 SizedBox(height: spacing8),
                 _buildBulkUploadButton(),
+                SizedBox(height: spacing8),
+                _buildXmlUploadButton(),
               ],
             ),
           );
@@ -458,6 +460,22 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     );
   }
 
+  Widget _buildXmlUploadButton() {
+    return OutlinedButton.icon(
+      onPressed: _openXmlUpload,
+      icon: const Icon(Icons.link_rounded, size: 18),
+      label: const Text(
+        'XML ile Yükle',
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.darkText,
+        side: const BorderSide(color: AppColors.border),
+        minimumSize: const Size.fromHeight(44),
+      ),
+    );
+  }
+
   Future<void> _openBulkUpload() async {
     final result = await BulkProductUploadScreen.show(
       context: context,
@@ -472,6 +490,51 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     if (result == true && mounted) {
       widget.showMessage('Toplu yükleme tamamlandı.');
     }
+  }
+
+  void _openXmlUpload() {
+    final urlController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('XML ile Ürün Yükle'),
+        content: SizedBox(
+          width: 350,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Tedarikçinizin XML linkini yapıştırın.',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: urlController,
+                decoration: InputDecoration(
+                  hintText: 'https://tedarikci.com/feed.xml',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  prefixIcon: const Icon(Icons.link, size: 18),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // XML yükleme devam edecek
+            },
+            child: const Text('Yükle'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyState() {

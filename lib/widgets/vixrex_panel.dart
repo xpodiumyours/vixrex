@@ -311,6 +311,7 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
         case VixRexAction.openCoverTemplatePicker:
         case VixRexAction.openOcrScanner:
         case VixRexAction.openOcrScannerShelf:
+        case VixRexAction.openXmlUpload:
           onScroll?.call(action);
           break;
         case VixRexAction.openAuth:

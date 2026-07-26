@@ -107,6 +107,7 @@ enum VixRexAction {
   openCoverTemplatePicker, // Hazır kapak şablonu seç
   openOcrScanner,      // OCR tarama ekranını aç (Fiş/Fatura)
   openOcrScannerShelf, // OCR tarama ekranını aç (Raf/Etiket)
+  openXmlUpload,       // XML ile toplu ürün yükleme
   openAuth,            // Hesap / giriş (mevcut Auth ekranı)
   none,                      // Sadece mesaj tetikler, navigasyon yok
 }

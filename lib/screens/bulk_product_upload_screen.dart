@@ -242,6 +242,12 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
           icon: const Icon(Icons.download_rounded, size: 18),
           label: const Text('Şablon İndir'),
         ),
+        const SizedBox(height: 12),
+        TextButton.icon(
+          onPressed: _openXmlUpload,
+          icon: const Icon(Icons.link_rounded, size: 18),
+          label: const Text('XML ile Yükle'),
+        ),
         const SizedBox(height: 20),
         _buildFormatInfo(),
       ],
@@ -832,6 +838,51 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
       if (!mounted) return;
       _showMessage('Şablon indirilemedi. Lütfen tekrar deneyin.');
     }
+  }
+
+  void _openXmlUpload() {
+    final urlController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('XML ile Ürün Yükle'),
+        content: SizedBox(
+          width: 350,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Tedarikçinizin XML linkini yapıştırın.',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: urlController,
+                decoration: InputDecoration(
+                  hintText: 'https://tedarikci.com/feed.xml',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  prefixIcon: const Icon(Icons.link, size: 18),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // XML yükleme devam edecek
+            },
+            child: const Text('Yükle'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
