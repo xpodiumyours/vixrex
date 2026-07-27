@@ -26,6 +26,18 @@ Future<void> main() async {
   await SentryFlutter.init((options) {
     options.dsn = const String.fromEnvironment('SENTRY_DSN');
     options.tracesSampleRate = 0.2;
+    options.beforeSend = (event, {hint}) {
+      final throwableStr = event.throwable?.toString() ?? '';
+      final messageStr = event.message?.formatted ?? '';
+      if (throwableStr.contains('WipError') ||
+          throwableStr.contains('dartDevEmbedder') ||
+          messageStr.contains('WipError') ||
+          messageStr.contains('dartDevEmbedder') ||
+          messageStr.contains('AppInspector')) {
+        return null;
+      }
+      return event;
+    };
   }, appRunner: () => runApp(const VixRexApp()));
 }
 
