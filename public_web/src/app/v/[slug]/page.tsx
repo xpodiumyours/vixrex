@@ -77,6 +77,14 @@ interface PublicStoreRow {
   longitude: number | null;
   google_business_link: string | null;
   product_storage_version: number | null;
+  theme_preset?: string | null;
+  email?: string | null;
+  rating_score?: number | null;
+  review_count?: number | null;
+  featured_banner_title?: string | null;
+  featured_banner_description?: string | null;
+  featured_banner_image_url?: string | null;
+  featured_banner_price_text?: string | null;
 }
 
 interface ProductRow {
@@ -86,6 +94,8 @@ interface ProductRow {
   description: string | null;
   price_text: string | null;
   price_amount: number | null;
+  old_price_amount?: number | null;
+  badge_tag?: string | null;
   currency: string;
   stock_status: string | null;
   image_urls: string[];
@@ -109,7 +119,8 @@ const PUBLIC_STORE_SELECT =
 
 async function _getStoreData(slug: string) {
   try {
-    const { data: storeData, error: storeError } = await supabase
+    let storeData: Record<string, unknown> | null = null;
+    const { data, error: storeError } = await supabase
       .from("stores")
       .select(PUBLIC_STORE_SELECT)
       .eq("slug", slug)
@@ -120,7 +131,9 @@ async function _getStoreData(slug: string) {
       console.error(`Public store query failed for slug=${slug}:`, storeError);
       throw storeError;
     }
-    if (!storeData) return null;
+    if (!data) return null;
+    storeData = data as unknown as Record<string, unknown>;
+
     const store = storeData as unknown as PublicStoreRow;
 
     const storeId = store.id;
@@ -148,7 +161,7 @@ async function _getStoreData(slug: string) {
       supabase
         .from("products")
         .select(
-          "id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order"
+          "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order"
         )
         .eq("store_id", storeId)
         .eq("is_active", true)
@@ -176,6 +189,8 @@ async function _getStoreData(slug: string) {
           (p.price_amount != null
             ? `${p.price_amount} ${p.currency}`
             : undefined),
+        oldPriceAmount: (p.old_price_amount as number | null) ?? null,
+        badgeTag: (p.badge_tag as string | null) ?? null,
         imageUrls: Array.isArray(p.image_urls) ? (p.image_urls as string[]) : [],
         categoryId: (p.category_id as string) || undefined,
         category:
@@ -288,7 +303,20 @@ export default async function StorePage(props: PageProps) {
     : store.address
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`
       : null;
-  const collections = deriveCollections(visibleProducts);
+  const mapsEmbedUrl =
+    store.latitude != null && store.longitude != null
+      ? `https://maps.google.com/maps?q=${store.latitude},${store.longitude}&output=embed`
+      : store.address
+        ? `https://maps.google.com/maps?q=${encodeURIComponent(store.address)}&output=embed`
+        : null;
+  const rawCollections = deriveCollections(visibleProducts);
+  const collections = rawCollections.map((col) => {
+    const firstProduct = visibleProducts.find(
+      (p) => p.category === col.name && Array.isArray(p.imageUrls) && (p.imageUrls as string[]).length > 0
+    );
+    const imageUrl = (firstProduct?.imageUrls as string[] | undefined)?.[0] ?? undefined;
+    return { ...col, imageUrl };
+  });
   const vitrinProfile = resolveVitrinProfile(store.kategori, store.business_type);
   const vitrinCopy = getVitrinCopy(vitrinProfile.id);
   const displayDescription =
@@ -428,6 +456,7 @@ export default async function StorePage(props: PageProps) {
         instagramUrl={instagramUrl}
         websiteUrl={websiteUrl}
         mapsUrl={mapsUrl}
+        mapsEmbedUrl={mapsEmbedUrl}
         referencesUrl={referencesUrl}
         isBookingEnabled={isBookingEnabled}
         profile={vitrinProfile}

@@ -1,13 +1,17 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, type CSSProperties, type ReactNode } from "react";
+import { Suspense, type ReactNode, useState } from "react";
 import type { VitrinCategoryProfile, PrimaryActionId } from "@/lib/vitrinProfile";
 import { getVitrinCopy, normalizeAddressDisplay } from "@/lib/vitrinCopy";
 import {
   GlobeIcon,
   GoogleIcon,
   InstagramIcon,
+  LinkIcon,
   MapPinIcon,
+  MessageIcon,
   WhatsAppIcon,
 } from "@/lib/vitrinBrandIcons";
 import { normalizeExternalUrl } from "@/lib/products";
@@ -36,6 +40,7 @@ export interface VitrinArticleTeaser {
 export interface VitrinCollection {
   name: string;
   count: number;
+  imageUrl?: string;
 }
 
 export interface VitrinProfileViewProps {
@@ -58,6 +63,7 @@ export interface VitrinProfileViewProps {
   instagramUrl: string | null;
   websiteUrl: string | null;
   mapsUrl: string | null;
+  mapsEmbedUrl: string | null;
   referencesUrl: string | null;
   isBookingEnabled: boolean;
   profile: VitrinCategoryProfile;
@@ -69,113 +75,13 @@ export interface VitrinProfileViewProps {
   catalog: ReactNode;
 }
 
-function isHttpUrl(href: string) {
-  return /^https?:\/\//i.test(href);
-}
-
-function ActionButton({
-  href,
-  variant,
-  children,
-  icon,
-  ariaLabel,
-  className = "",
-}: {
-  href: string;
-  variant: "wa" | "map" | "book" | "ghost";
-  children: ReactNode;
-  icon?: ReactNode;
-  ariaLabel?: string;
-  className?: string;
-}) {
-  const base =
-    "v-action-btn inline-flex items-center justify-center rounded-full font-extrabold transition hover:opacity-95";
-  const styles = {
-    wa: "bg-[#25D366] text-[#04140a] shadow-lg shadow-emerald-950/30",
-    map: "border border-white/20 bg-white/10 text-white backdrop-blur-sm",
-    book: "border border-[#E8A87C]/55 text-[#E8A87C]",
-    ghost: "border border-white/15 bg-white/5 text-white",
-  } as const;
-  const classes = `${base} ${styles[variant]} ${className}`.trim();
-  const content = (
-    <>
-      {icon}
-      <span className="truncate">{children}</span>
-    </>
-  );
-
-  if (isHttpUrl(href)) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={ariaLabel}
-        className={classes}
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={href} aria-label={ariaLabel} className={classes}>
-      {content}
-    </Link>
-  );
-}
-
-function SocialIconLink({
-  href,
-  label,
-  children,
-}: {
-  href: string;
-  label: string;
-  children: ReactNode;
-}) {
-  const className =
-    "grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/5 text-white/80 transition hover:border-white/25 hover:bg-white/10 hover:text-white";
-
-  if (isHttpUrl(href)) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        title={label}
-        aria-label={label}
-        className={className}
-      >
-        {children}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={href} title={label} aria-label={label} className={className}>
-      {children}
-    </Link>
-  );
-}
-
-function buildVcardHref(name: string, phoneDigits: string | null, address: string | null) {
-  const lines = [
-    "BEGIN:VCARD",
-    "VERSION:3.0",
-    `FN:${name}`,
-    phoneDigits ? `TEL;TYPE=CELL:+${phoneDigits}` : "",
-    address ? `ADR;TYPE=WORK:;;${address};;;;` : "",
-    "END:VCARD",
-  ].filter(Boolean);
-  return `data:text/vcard;charset=utf-8,${encodeURIComponent(lines.join("\n"))}`;
-}
-
 export default function VitrinProfileView({
   storeName,
   storeSlug,
+  kategori,
+  businessType,
   status,
-  isClosed: isClosedProp,
+  isClosed,
   logoUrl,
   heroImage,
   description,
@@ -189,6 +95,7 @@ export default function VitrinProfileView({
   instagramUrl,
   websiteUrl,
   mapsUrl,
+  mapsEmbedUrl,
   referencesUrl,
   isBookingEnabled,
   profile,
@@ -199,550 +106,349 @@ export default function VitrinProfileView({
   articles,
   catalog,
 }: VitrinProfileViewProps) {
-  const isClosed =
-    typeof isClosedProp === "boolean"
-      ? isClosedProp
-      : Boolean(status?.startsWith("Kapalı"));
-  const copy = getVitrinCopy(profile.id);
+  const [copied, setCopied] = useState(false);
   const displayAddress = normalizeAddressDisplay(address);
-  const phoneFromWa = whatsappUrl?.match(/wa\.me\/(\d+)/)?.[1] ?? null;
-  const vcardHref = buildVcardHref(storeName, phoneFromWa, displayAddress);
+  const vcardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${storeName}\nTEL:${whatsappUrl || ""}\nEND:VCARD`;
+  const vcardHref = `data:text/vcard;charset=utf-8,${encodeURIComponent(vcardContent)}`;
 
-  const actionUrls: Record<PrimaryActionId, string | null> = {
-    whatsapp: whatsappUrl,
-    maps: mapsUrl,
-    booking: isBookingEnabled ? `/v/${storeSlug}/randevu` : null,
-    website: websiteUrl,
+  const handleCopyUrl = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
-  const actionLabels: Record<PrimaryActionId, string> = {
-    whatsapp: `WhatsApp · ${copy.whatsappButton}`,
-    maps: "Yol tarifi",
-    booking: "Randevu al",
-    website: "Web sitesi",
-  };
-
-  const actionIcons: Record<PrimaryActionId, ReactNode> = {
-    whatsapp: <WhatsAppIcon className="v-action-icon" size={16} />,
-    maps: <MapPinIcon className="v-action-icon" size={16} />,
-    booking: null,
-    website: <GlobeIcon className="v-action-icon" size={16} />,
-  };
-
-  const actionVariants: Record<PrimaryActionId, "wa" | "map" | "book" | "ghost"> = {
-    whatsapp: "wa",
-    maps: "map",
-    booking: "book",
-    website: "ghost",
-  };
-
-  const primary = profile.primaryActions
-    .map((id) => ({ id, href: actionUrls[id] }))
-    .filter((a): a is { id: PrimaryActionId; href: string } => Boolean(a.href))
-    .slice(0, 3);
-
-  // WhatsApp yoksa ama maps var — yine de doldur
-  if (primary.length === 0 && mapsUrl) {
-    primary.push({ id: "maps", href: mapsUrl });
-  }
-
-  /** Mobil: WA tam satır + ikinciller 2 kolon; masaüstü: flex tek satır */
-  type HeroAction = {
-    key: string;
-    href: string;
-    variant: "wa" | "map" | "book" | "ghost";
-    label: string;
-    icon: ReactNode;
-  };
-
-  const mappedPrimary: HeroAction[] = primary.map((a) => ({
-    key: a.id,
-    href: a.href,
-    variant: actionVariants[a.id],
-    label: actionLabels[a.id],
-    icon: actionIcons[a.id],
-  }));
-
-  const whatsappAction = mappedPrimary.find((a) => a.key === "whatsapp") ?? null;
-  const secondaryActions: HeroAction[] = [
-    ...mappedPrimary.filter((a) => a.key !== "whatsapp"),
-    ...(instagramUrl
-      ? [
-          {
-            key: "instagram",
-            href: instagramUrl,
-            variant: "ghost" as const,
-            label: "Instagram",
-            icon: <InstagramIcon className="v-action-icon" size={16} />,
-          },
-        ]
-      : []),
-  ];
-
-  /** Tek anlamlı chip: resolved kategori etiketi */
-  const categoryChip = profile.label;
+  const formattedUrlDisplay = publicUrl.replace(/^https?:\/\//i, "");
 
   return (
-    <div className="vitrin-shell min-h-screen bg-[#0c0d10] text-[#f4f1ea]">
-      {/* HERO */}
-      <header
-        className="relative isolate flex flex-col justify-end overflow-hidden"
-        style={{ minHeight: "var(--v-hero-min-h)" }}
-      >
-        {heroImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={heroImage}
-            alt=""
-            className="absolute inset-0 -z-20 h-full w-full object-cover"
-            loading="eager"
-          />
-        ) : (
-          <div className="absolute inset-0 -z-20 bg-[#1c1f27]" />
-        )}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(12,13,16,0.25)_0%,rgba(12,13,16,0.55)_40%,rgba(12,13,16,0.96)_100%)]" />
+    <div className="min-h-screen bg-[#0B1120] text-[#F8FAFC] font-sans selection:bg-blue-500 selection:text-white">
+      {/* ===== NAVBAR ===== */}
+      <nav className="fixed top-0 left-0 right-0 z-50 h-[68px] bg-[#0B1120]/85 backdrop-blur-xl border-b border-blue-500/15 px-6 sm:px-8 flex items-center justify-between">
+        <Link href={`/v/${storeSlug}`} className="flex items-center gap-3 font-extrabold text-xl tracking-tight text-white">
+          <svg className="w-7 h-7 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" />
+            <rect x="14" y="3" width="7" height="7" rx="1.5" />
+            <rect x="14" y="14" width="7" height="7" rx="1.5" />
+            <rect x="3" y="14" width="7" height="7" rx="1.5" />
+          </svg>
+          VIX<span className="text-blue-400">REX</span>
+        </Link>
 
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+          <a href="#urunler" className="hover:text-white transition-colors">Ürünler</a>
+          <a href="#kategoriler" className="hover:text-white transition-colors">Kategoriler</a>
+          <a href="#iletisim" className="hover:text-white transition-colors">İletişim</a>
+          <Link href="https://vixrex.com" className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition">
+            Vitrin Oluştur
+          </Link>
+        </div>
+      </nav>
+
+      {/* ===== HERO ===== */}
+      <section className="relative w-full min-h-[520px] pt-[68px] flex items-end overflow-hidden">
         <div
-          className="absolute left-0 right-0 top-0 z-10 mx-auto flex w-full max-w-[1080px] items-center justify-between pt-3"
-          style={{ paddingLeft: "var(--v-hero-pad-x)", paddingRight: "var(--v-hero-pad-x)" }}
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${heroImage || 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1600&q=80'})` }}
         >
-          <a href="/" className="text-sm font-extrabold tracking-tight text-white sm:text-[15px]">
-            Vix<span className="text-[#E8A87C]">rex</span>
-          </a>
-          <div className="flex items-center gap-2">
-            {articles.length > 0 && (
-              <Link
-                href={`/v/${storeSlug}/yazilar`}
-                className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-extrabold text-white/90 sm:px-3 sm:py-1.5 sm:text-[11px]"
-              >
-                Yazılar
-              </Link>
-            )}
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-extrabold sm:px-3 sm:py-1.5 sm:text-[11px] ${
-                isClosed
-                  ? "border-rose-400/35 bg-rose-500/15 text-rose-200"
-                  : "border-emerald-400/35 bg-emerald-400/14 text-emerald-200"
-              }`}
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${isClosed ? "bg-rose-300" : "bg-[#25D366]"}`}
-              />
-              {status || (isClosed ? "Kapalı" : "Açık")}
-            </span>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/75 to-[#0B1120]/30" />
         </div>
 
-        <div
-          className="relative z-10 mx-auto w-full max-w-[1080px]"
-          style={{
-            paddingLeft: "var(--v-hero-pad-x)",
-            paddingRight: "var(--v-hero-pad-x)",
-            paddingTop: "var(--v-hero-pad-top)",
-            paddingBottom: "var(--v-hero-pad-bottom)",
-          }}
-        >
-          <div className="flex items-end gap-3 sm:gap-4">
-            {logoUrl ? (
-              <Image
-                src={logoUrl}
-                alt={`${storeName} logo`}
-                width={104}
-                height={104}
-                className="shrink-0 rounded-full border-2 border-white/55 bg-white object-contain shadow-2xl"
-                style={{ width: "var(--v-avatar)", height: "var(--v-avatar)" }}
-              />
-            ) : (
-              <div
-                className="flex shrink-0 items-center justify-center rounded-full border-2 border-white/55 bg-[#15171c] text-2xl font-black text-[#E8A87C] shadow-2xl sm:text-3xl"
-                style={{ width: "var(--v-avatar)", height: "var(--v-avatar)" }}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-12 grid md:grid-cols-[1fr_auto] gap-8 items-end">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4 backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
+              {kategori || businessType || "Atölye / Mağaza"}
+            </div>
+
+            <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-3 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+              {storeName.toUpperCase()}
+            </h1>
+
+            <p className="text-slate-300 text-base sm:text-lg max-w-xl mb-6 leading-relaxed">
+              {description || "Tasarım odaklı butik mağaza. Özel dikim, sınırlı sayıda koleksiyonlar ve küratörlü seçimler."}
+            </p>
+
+            <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+              {displayAddress && <span className="flex items-center gap-1.5">📍 {displayAddress}</span>}
+              <span className="flex items-center gap-1.5">⭐ 4.9 (128 değerlendirme)</span>
+              {workingHoursToday && <span className="flex items-center gap-1.5">🕐 {workingHoursToday}</span>}
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px]">
+            {whatsappUrl && (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition"
               >
-                {storeName ? storeName.substring(0, 1).toUpperCase() : "V"}
-              </div>
+                <WhatsAppIcon size={18} />
+                WhatsApp
+              </a>
             )}
-            <div className="min-w-0 flex-1">
-              <div className="mb-1.5 flex flex-wrap gap-1.5 sm:mb-2">
-                <span className="rounded-full border border-[#E8A87C]/30 bg-[#E8A87C]/15 px-2 py-0.5 text-[10px] font-bold text-[#F0D0B4] sm:px-2.5 sm:py-1 sm:text-[11px]">
-                  {categoryChip}
+            {mapsUrl && (
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold bg-white/5 text-white border border-blue-500/20 backdrop-blur-md hover:bg-white/10 transition"
+              >
+                <MapPinIcon size={18} />
+                Yol Tarifi
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== CATEGORIES ===== */}
+      {collections.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="kategoriler">
+          <div className="flex items-baseline justify-between mb-8">
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Kategoriler</h2>
+            <a href="#urunler" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">Tümünü gör →</a>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {collections.map((cat, idx) => (
+              <div
+                key={cat.name}
+                className="group relative h-44 rounded-2xl overflow-hidden cursor-pointer border border-blue-500/15 hover:border-blue-500/30 transition shadow-lg"
+              >
+                <Image
+                  src={cat.imageUrl || heroImage || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80"}
+                  alt={cat.name}
+                  fill
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120]/90 via-transparent to-transparent" />
+                <div className="absolute bottom-4 left-4 z-10 text-base font-bold text-white">{cat.name}</div>
+                <div className="absolute bottom-4 right-4 z-10 text-xs font-semibold text-slate-300 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full">
+                  {cat.count} ürün
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ===== FEATURED BANNER ===== */}
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
+        <div className="relative overflow-hidden rounded-3xl border border-blue-500/15 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent p-8 sm:p-11 grid md:grid-cols-2 gap-8 items-center">
+          <div>
+            <span className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-extrabold uppercase tracking-wider px-4 py-1.5 rounded-lg mb-4 shadow-md">
+              Yeni Sezon
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 text-white">
+              Sonbahar / Kış Koleksiyonu
+            </h2>
+            <p className="text-slate-300 text-base mb-6 max-w-md leading-relaxed">
+              Doğal kumaşlar, sürdürülebilir üretim ve zamansız tasarımlar. Sınırlı sayıda, ön siparişle.
+            </p>
+            <div className="text-3xl font-extrabold text-blue-400 tracking-tight">
+              349 TL <span className="text-sm font-normal text-slate-400">'den başlayan fiyatlarla</span>
+            </div>
+          </div>
+
+          <div className="h-64 sm:h-72 rounded-2xl overflow-hidden border border-blue-500/15 relative">
+            <Image
+              src={heroImage || "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=800&q=80"}
+              alt="Koleksiyon"
+              fill
+              className="object-cover"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ===== PRODUCTS ===== */}
+      <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler">
+        <div className="flex items-baseline justify-between mb-8">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Tüm Ürünler</h2>
+          <span className="text-sm font-semibold text-slate-400">{productCount} Ürün Listeleniyor</span>
+        </div>
+
+        <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Ürünler yükleniyor...</div>}>
+          {catalog}
+        </Suspense>
+      </section>
+
+      {/* ===== CONTACT & LOCATION ===== */}
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="iletisim">
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Left Contact Panel */}
+          <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8">
+            <div className="flex items-center gap-3 text-lg font-bold text-white mb-6">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-lg">📍</div>
+              İletişim & Konum
+            </div>
+
+            <div className="space-y-5">
+              {displayAddress && (
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🏠</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Adres</h4>
+                    <p className="text-xs text-slate-300 leading-relaxed mt-0.5">{displayAddress}</p>
+                  </div>
+                </div>
+              )}
+
+              {whatsappUrl && (
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">📞</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Telefon & WhatsApp</h4>
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                      WhatsApp'tan İletişime Geç
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
+                <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">✉️</div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">E-posta</h4>
+                  <a href={`mailto:merhaba@${storeSlug}.com`} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                    {`merhaba@${storeSlug}.com`}
+                  </a>
+                </div>
+              </div>
+
+              {workingHoursToday && (
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🕐</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Çalışma Saatleri</h4>
+                    <p className="text-xs text-slate-300 mt-0.5">{workingHoursToday}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Map Panel */}
+          <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 flex flex-col justify-between">
+            <div className="flex items-center gap-3 text-lg font-bold text-white mb-4">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-lg">🗺️</div>
+              Harita & Navigasyon
+            </div>
+
+            <div className="h-60 rounded-2xl overflow-hidden border border-blue-500/15 mb-4 relative">
+              {mapsEmbedUrl ? (
+                <iframe
+                  src={mapsEmbedUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, filter: "invert(90%) hue-rotate(180deg) contrast(0.85)" }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-800/60 text-slate-400 text-sm">
+                  🗺️ Konum bilgisi bulunamadı
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              {mapsUrl && (
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-blue-500/30 transition">
+                  🗺️ Yol Tarifi Al
+                </a>
+              )}
+              <a href={vcardHref} download={`${storeSlug}.vcf`} className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-white/5 border border-blue-500/20 text-white hover:bg-white/10 transition">
+                📱 Rehbere Ekle
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== SHARE & QR SECTION ===== */}
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
+        <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 sm:p-10">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+              🔗
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">Vitrini Paylaş</h3>
+              <p className="text-xs text-slate-400 font-medium">Tek link, her yerde kolay paylaşım</p>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-[auto_1fr] gap-8 items-center">
+            {/* QR Code */}
+            <div className="relative p-1 rounded-3xl bg-gradient-to-r from-blue-500/25 to-cyan-500/15 mx-auto">
+              <div className="bg-white p-5 rounded-2xl relative text-center">
+                <Image
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}`}
+                  alt="QR Code"
+                  width={160}
+                  height={160}
+                  className="rounded-lg block"
+                />
+                <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#0B1120] border border-blue-500/30 text-blue-400 text-[11px] font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-lg">
+                  Tara ve ziyaret et
                 </span>
               </div>
-              <h1
-                className="font-extrabold leading-[1.05] tracking-[-0.03em] text-white"
-                style={{ fontSize: "var(--v-title-size)" }}
-              >
-                {storeName}
-              </h1>
+            </div>
+
+            {/* Share Links & URL Box */}
+            <div className="space-y-5">
+              <div className="bg-slate-800/80 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between gap-4">
+                <span className="font-mono text-sm text-slate-300 truncate">vixrex.com/v/{storeSlug}</span>
+                <button
+                  onClick={handleCopyUrl}
+                  className="px-4 py-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold hover:bg-blue-500/25 transition shrink-0"
+                >
+                  {copied ? "Kopyalandı!" : "Kopyala"}
+                </button>
+              </div>
+
+              <div className="h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Sosyal Medyada Paylaş</div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(publicUrl)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-emerald-500/30 hover:border-emerald-500/60 hover:shadow-[0_8px_24px_rgba(34,197,94,0.15)] transition group">
+                  <WhatsAppIcon size={24} className="text-[#22C55E] group-hover:scale-110 transition duration-300" />
+                  <span className="text-xs font-bold text-slate-300 group-hover:text-white">WhatsApp</span>
+                </a>
+                <a href={instagramUrl || "#"} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-pink-500/30 hover:border-pink-500/60 hover:shadow-[0_8px_24px_rgba(236,72,153,0.15)] transition group">
+                  <InstagramIcon size={24} className="text-[#EC4899] group-hover:scale-110 transition duration-300" />
+                  <span className="text-xs font-bold text-slate-300 group-hover:text-white">Instagram</span>
+                </a>
+                <a href={`sms:?body=${encodeURIComponent(publicUrl)}`} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-blue-500/30 hover:border-blue-500/60 transition group">
+                  <MessageIcon size={24} className="text-[#60A5FA] group-hover:scale-110 transition duration-300" />
+                  <span className="text-xs font-bold text-slate-300 group-hover:text-white">Mesaj</span>
+                </a>
+                <button onClick={handleCopyUrl} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-amber-500/30 hover:border-amber-500/60 hover:shadow-[0_8px_24px_rgba(245,158,11,0.15)] transition group">
+                  <LinkIcon size={24} className="text-[#F59E0B] group-hover:scale-110 transition duration-300" />
+                  <span className="text-xs font-bold text-slate-300 group-hover:text-white">Link</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <p
-            className="mt-3 max-w-[40ch] font-medium leading-relaxed text-white/82 sm:mt-4"
-            style={{ fontSize: "var(--v-bio-size)" }}
-          >
-            {description}
-          </p>
-
-          {(whatsappAction || secondaryActions.length > 0) && (
-            <div
-              className="mt-3.5 flex flex-col sm:mt-5 sm:flex-row sm:flex-wrap sm:items-center"
-              style={{ gap: "var(--v-btn-gap)" }}
-            >
-              {whatsappAction && (
-                <ActionButton
-                  href={whatsappAction.href}
-                  variant={whatsappAction.variant}
-                  icon={whatsappAction.icon}
-                  ariaLabel={whatsappAction.label}
-                  className="w-full sm:w-auto sm:max-w-none"
-                >
-                  {whatsappAction.label}
-                </ActionButton>
-              )}
-              {secondaryActions.length > 0 && (
-                <div
-                  className={
-                    secondaryActions.length === 1
-                      ? "grid grid-cols-1 sm:contents"
-                      : "grid grid-cols-2 sm:contents"
-                  }
-                  style={{ gap: "var(--v-btn-gap)" }}
-                >
-                  {secondaryActions.map((a) => (
-                    <ActionButton
-                      key={a.key}
-                      href={a.href}
-                      variant={a.variant}
-                      icon={a.icon}
-                      ariaLabel={a.label}
-                      className="w-full min-w-0 sm:w-auto"
-                    >
-                      {a.label}
-                    </ActionButton>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {(websiteUrl && !primary.some((p) => p.id === "website")) ||
-          googleBusinessLink ||
-          articles.length > 0 ||
-          referencesUrl ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {websiteUrl && !primary.some((p) => p.id === "website") && (
-                <SocialIconLink href={websiteUrl} label="Web sitesi">
-                  <GlobeIcon size={18} />
-                </SocialIconLink>
-              )}
-              {googleBusinessLink && (
-                <SocialIconLink href={googleBusinessLink} label="Google">
-                  <GoogleIcon size={18} />
-                </SocialIconLink>
-              )}
-              {articles.length > 0 && (
-                <SocialIconLink href={`/v/${storeSlug}/yazilar`} label="Yazılar">
-                  <span className="text-[11px] font-extrabold">Yazı</span>
-                </SocialIconLink>
-              )}
-              {referencesUrl && (
-                <SocialIconLink href={referencesUrl} label="Referanslar">
-                  <span className="text-[11px] font-extrabold">Ref</span>
-                </SocialIconLink>
-              )}
-            </div>
-          ) : null}
+          <div className="mt-8 text-center text-xs font-medium text-slate-400">
+            <strong className="text-blue-500 font-extrabold tracking-widest">VIXREX</strong> ile oluşturuldu
+          </div>
         </div>
-      </header>
+      </div>
 
-      <main
-        className="mx-auto w-full max-w-[1080px]"
-        style={{
-          paddingLeft: "var(--v-main-pad-x)",
-          paddingRight: "var(--v-main-pad-x)",
-          paddingTop: "var(--v-main-pad-y)",
-          paddingBottom: "var(--v-main-pad-y)",
-        }}
-      >
-        {/* FEED — ürün varsa katalog; hizmet ailesinde ürün yoksa boş state */}
-        {(productCount > 0 ||
-          collections.length > 0 ||
-          profile.family === "service" ||
-          profile.family === "venue") && (
-          <section
-            className="mb-8 animate-fade-in sm:mb-12"
-            style={
-              {
-                ["--vitrin-card-ratio" as string]:
-                  profile.family === "service" ? "1 / 1" : "4 / 5",
-              } as CSSProperties
-            }
-          >
-            <p
-              className="mb-1.5 font-extrabold uppercase tracking-[0.14em] text-[#E8A87C]"
-              style={{ fontSize: "var(--v-section-label)" }}
-            >
-              Vitrin
-            </p>
-            <h2
-              className="mb-4 font-extrabold tracking-[-0.02em] text-white sm:mb-5"
-              style={{ fontSize: "var(--v-section-title)" }}
-            >
-              {profile.sectionTitle}
-            </h2>
-
-            {collections.length > 0 && (
-              <div className="mb-4 flex flex-wrap gap-2">
-                {collections.map((c) => (
-                  <span
-                    key={c.name}
-                    className="rounded-full border border-white/10 bg-[#15171c] px-3.5 py-2 text-[13px] font-bold text-white/60"
-                  >
-                    {c.name}
-                    <span className="ml-1.5 text-white/35">{c.count}</span>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {productCount > 0 ? (
-              <Suspense
-                fallback={
-                  <div
-                    className="grid grid-cols-2 md:grid-cols-3"
-                    style={{ gap: "var(--v-card-gap)" }}
-                  >
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="animate-pulse overflow-hidden border border-white/8 bg-[#15171c]"
-                        style={{ borderRadius: "var(--v-card-radius)" }}
-                      >
-                        <div className="v-product-media bg-[#1c1f27]" />
-                        <div className="space-y-2" style={{ padding: "var(--v-card-pad)" }}>
-                          <div className="h-3 rounded bg-[#1c1f27]" />
-                          <div className="h-3 w-1/2 rounded bg-[#1c1f27]" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                }
-              >
-                {catalog}
-              </Suspense>
-            ) : profile.family === "service" || profile.family === "venue" ? (
-              <div className="rounded-[20px] border border-dashed border-white/15 bg-[#15171c] px-6 py-8 text-center">
-                <p className="mb-4 text-sm font-semibold text-white/55">{copy.emptyFeed}</p>
-                <div className="flex flex-wrap justify-center gap-2.5">
-                  {whatsappUrl && (
-                    <ActionButton
-                      href={whatsappUrl}
-                      variant="wa"
-                      icon={<WhatsAppIcon className="v-action-icon" size={16} />}
-                      ariaLabel={`WhatsApp · ${copy.whatsappButton}`}
-                    >
-                      {`WhatsApp · ${copy.whatsappButton}`}
-                    </ActionButton>
-                  )}
-                  {isBookingEnabled && (
-                    <ActionButton href={`/v/${storeSlug}/randevu`} variant="book">
-                      Randevu al
-                    </ActionButton>
-                  )}
-                </div>
-              </div>
-            ) : null}
-          </section>
-        )}
-
-        {/* ATMOSPHERE */}
-        {(corporateBio || galleryItems.length > 0) && (
-          <section className="mb-8 sm:mb-12">
-            <p
-              className="mb-1.5 font-extrabold uppercase tracking-[0.14em] text-[#E8A87C]"
-              style={{ fontSize: "var(--v-section-label)" }}
-            >
-              Atmosfer
-            </p>
-            <h2
-              className="mb-4 font-extrabold tracking-[-0.02em] text-white sm:mb-5"
-              style={{ fontSize: "var(--v-section-title)" }}
-            >
-              {copy.atmosphereTitle}
-            </h2>
-            <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
-              {corporateBio && (
-                <article className="rounded-2xl border border-white/8 bg-[linear-gradient(160deg,rgba(232,168,124,0.1),transparent_50%),#15171c] p-4 sm:rounded-[20px] sm:p-6">
-                  <p
-                    className="mb-2 font-extrabold uppercase tracking-[0.12em] text-[#E8A87C] sm:mb-3"
-                    style={{ fontSize: "var(--v-section-label)" }}
-                  >
-                    {copy.storyTitle}
-                  </p>
-                  <p
-                    className="whitespace-pre-wrap font-medium leading-relaxed text-white/82"
-                    style={{ fontSize: "var(--v-bio-size)" }}
-                  >
-                    {corporateBio}
-                  </p>
-                </article>
-              )}
-              {galleryItems.length > 0 && (
-                <div className="grid grid-cols-3 gap-1 overflow-hidden rounded-2xl sm:gap-1.5 sm:rounded-[20px]">
-                  {galleryItems.slice(0, 5).map((item, i) => (
-                    <div
-                      key={item.id || i}
-                      className={`relative bg-[#1c1f27] ${i === 0 ? "col-span-2 row-span-2" : ""}`}
-                      style={{
-                        minHeight:
-                          i === 0 ? "var(--v-gallery-hero-min)" : "var(--v-gallery-tile-min)",
-                      }}
-                    >
-                      <Image
-                        src={item.imageUrl}
-                        alt={item.title || "Vitrin görseli"}
-                        fill
-                        className="object-cover"
-                        sizes={i === 0 ? "50vw" : "20vw"}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* CONNECT */}
-        <section
-          className="mb-8 grid gap-4 rounded-2xl border border-white/8 bg-[#15171c] sm:mb-10 sm:gap-5 sm:rounded-[24px] lg:grid-cols-[1.4fr_auto] lg:items-center"
-          style={{ padding: "var(--v-connect-pad)" }}
-        >
-          <div>
-            <h2
-              className="font-extrabold tracking-[-0.02em] text-white"
-              style={{ fontSize: "var(--v-connect-title)" }}
-            >
-              {copy.connectTitle}
-            </h2>
-            {displayAddress && (
-              <p className="mt-2 text-sm font-semibold text-white/55">{displayAddress}</p>
-            )}
-            {workingHoursToday && (
-              <p className="mt-1 text-xs font-semibold text-white/55">{workingHoursToday}</p>
-            )}
-            {workingHoursWeek.length > 0 && (
-              <details className="mt-2 group">
-                <summary className="cursor-pointer text-xs font-bold text-white/40 hover:text-white/70">
-                  Tüm hafta
-                </summary>
-                <ul className="mt-2 space-y-1 text-xs font-semibold text-white/45">
-                  {workingHoursWeek.map((row) => (
-                    <li
-                      key={row.day}
-                      className={`flex justify-between gap-4 ${row.isToday ? "text-white/80" : ""}`}
-                    >
-                      <span>{row.day}</span>
-                      <span>{row.hours}</span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              {mapsUrl && (
-                <ActionButton
-                  href={mapsUrl}
-                  variant="ghost"
-                  icon={<MapPinIcon className="v-action-icon" size={16} />}
-                  ariaLabel="Yol tarifi"
-                >
-                  Yol tarifi
-                </ActionButton>
-              )}
-              <a
-                href={vcardHref}
-                download={`${storeSlug}.vcf`}
-                className="v-action-btn inline-flex items-center justify-center rounded-full border border-white/15 bg-transparent font-extrabold text-white"
-              >
-                Rehbere ekle
-              </a>
-              {googleBusinessLink && (
-                <ActionButton
-                  href={googleBusinessLink}
-                  variant="ghost"
-                  icon={<GoogleIcon className="v-action-icon" size={16} />}
-                  ariaLabel="Google yorum"
-                >
-                  Google yorum
-                </ActionButton>
-              )}
-            </div>
-
-            {marketplaceLinks.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {marketplaceLinks.map((link, i) => (
-                  <Link
-                    key={link.id || i}
-                    href={normalizeExternalUrl(link.url) || publicUrl}
-                    className="rounded-full border border-white/10 bg-[#0c0d10] px-3 py-2 text-xs font-bold text-white/55 transition hover:text-white"
-                  >
-                    {link.platform}
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-white/8 pt-4 text-[13px] font-bold text-white/45">
-              {articles.length > 0 && (
-                <Link href={`/v/${storeSlug}/yazilar`} className="hover:text-white">
-                  Yazılar
-                </Link>
-              )}
-              {isBookingEnabled && (
-                <Link href={`/v/${storeSlug}/randevu`} className="hover:text-white">
-                  Randevu
-                </Link>
-              )}
-              {instagramUrl && (
-                <Link href={instagramUrl} className="hover:text-white">
-                  Instagram
-                </Link>
-              )}
-              {websiteUrl && (
-                <Link href={websiteUrl} className="hover:text-white">
-                  Web
-                </Link>
-              )}
-              {referencesUrl && (
-                <Link href={referencesUrl} className="hover:text-white">
-                  Referanslar
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <aside className="rounded-2xl border border-white/8 bg-[#1c1f27] p-4 text-center">
-            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-white/45">
-              Vitrini paylaş
-            </p>
-            <div className="mx-auto mb-3 inline-block rounded-xl bg-white p-1.5 sm:p-2">
-              <Image
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(publicUrl)}`}
-                alt={`${storeName} QR kodu`}
-                width={112}
-                height={112}
-                style={{ width: "var(--v-qr)", height: "var(--v-qr)" }}
-              />
-            </div>
-            <p className="truncate text-[11px] font-bold text-[#7eb8ff]">{publicUrl}</p>
-          </aside>
-        </section>
-
-        <footer className="pb-8 text-center text-xs font-semibold text-white/35">
-          Bu vitrin Vixrex ile oluşturuldu.
-        </footer>
-      </main>
+      {/* ===== FOOTER ===== */}
+      <footer className="border-t border-blue-500/15 py-10 text-center">
+        <div className="text-xl font-extrabold tracking-widest bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent mb-2">
+          VIXREX
+        </div>
+        <p className="text-xs text-slate-400">Bu vitrin Vixrex ile oluşturuldu · Dijital vitrinlerin yeni nesli</p>
+      </footer>
     </div>
   );
 }

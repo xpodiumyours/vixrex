@@ -4,6 +4,8 @@ export interface ProductItem {
   name: string;
   description?: string;
   price?: string;
+  oldPriceAmount?: number | null;
+  badgeTag?: string | null;
   imagePath?: string;
   imageUrls?: string[];
   categoryId?: string;

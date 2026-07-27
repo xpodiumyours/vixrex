@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import {
   getProductUrlSlug,
   isPublicCatalogProduct,
@@ -28,6 +28,50 @@ interface ProductCatalogProps {
 }
 
 const PAGE_SIZE = 24;
+
+function CatalogProductImage({
+  src,
+  alt,
+  fallbackImage,
+  storeInitial,
+}: {
+  src: string | null;
+  alt: string;
+  fallbackImage?: string | null;
+  storeInitial: string;
+}) {
+  const [imgSrc, setImgSrc] = useState<string | null>(src);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setImgSrc(src);
+    setHasError(false);
+  }, [src]);
+
+  if (!imgSrc || hasError) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-2 text-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 text-blue-400 font-extrabold text-lg">
+          {storeInitial}
+        </div>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          Görsel Hazırlanıyor
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      fill
+      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+      onError={() => setHasError(true)}
+      className="object-cover object-center transition duration-500 group-hover:scale-[1.04]"
+    />
+  );
+}
 
 /** Keşfet VitrinStoreCard diline yakın ürün kartı */
 export default function ProductCatalog({
@@ -90,20 +134,14 @@ export default function ProductCatalog({
 
   return (
     <section>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <span className="text-xs font-extrabold uppercase tracking-[0.08em] text-white/45">
-          {totalCount} ürün
-        </span>
-      </div>
-
       {categoryMap.length > 1 && (
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        <div className="mb-8 flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none">
           <a
             href={buildCategoryUrl("")}
-            className={`min-h-10 shrink-0 rounded-full border px-3.5 text-xs font-black sm:min-h-11 sm:px-4 ${
+            className={`inline-flex items-center justify-center shrink-0 px-5 py-2.5 rounded-xl text-xs sm:text-sm transition duration-200 ${
               currentCategory === ""
-                ? "border-transparent bg-[#f4f1ea] text-[#0c0d10]"
-                : "border-white/10 bg-[#15171c] text-white/60"
+                ? "bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-extrabold shadow-lg shadow-blue-500/25 border border-blue-400/40"
+                : "bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl text-slate-300 font-semibold hover:text-white hover:border-blue-500/30"
             }`}
           >
             Tümü
@@ -112,10 +150,10 @@ export default function ProductCatalog({
             <a
               key={cat.id}
               href={buildCategoryUrl(cat.id)}
-              className={`min-h-10 shrink-0 rounded-full border px-3.5 text-xs font-black sm:min-h-11 sm:px-4 ${
+              className={`inline-flex items-center justify-center shrink-0 px-5 py-2.5 rounded-xl text-xs sm:text-sm transition duration-200 ${
                 currentCategory === cat.id
-                  ? "border-transparent bg-[#f4f1ea] text-[#0c0d10]"
-                  : "border-white/10 bg-[#15171c] text-white/60"
+                  ? "bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-extrabold shadow-lg shadow-blue-500/25 border border-blue-400/40"
+                  : "bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl text-slate-300 font-semibold hover:text-white hover:border-blue-500/30"
               }`}
             >
               {cat.name}
@@ -126,7 +164,7 @@ export default function ProductCatalog({
 
       <div
         className="grid grid-cols-2 md:grid-cols-3"
-        style={{ gap: "var(--v-card-gap, 0.625rem)" }}
+        style={{ gap: "var(--v-card-gap, 0.75rem)" }}
       >
         {paginatedProducts.map((product, index) => {
           const globalIndex = from + index;
@@ -138,39 +176,40 @@ export default function ProductCatalog({
             <a
               key={product.id || `${product.name}-${index}`}
               href={productUrl}
-              className="group min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#0E1B2E] shadow-[0_8px_16px_rgba(0,0,0,0.28)] transition hover:-translate-y-0.5 hover:border-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E8A87C]"
+              className="group min-w-0 overflow-hidden rounded-2xl border border-blue-500/15 bg-slate-900/70 shadow-lg shadow-black/40 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-blue-500/35 hover:shadow-blue-500/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
             >
-              <div className="relative v-product-media overflow-hidden bg-[#162A42]">
-                {image ? (
-                  <Image
-                    src={image}
-                    alt={product.name}
-                    width={320}
-                    height={400}
-                    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                  />
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center gap-1 bg-[linear-gradient(160deg,#25415F,#0E1B2E)] px-2 text-center">
-                    <span className="text-2xl font-black text-[#38A0E4]/90">{storeInitial}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-white/35">
-                      Görsel yok
-                    </span>
-                  </div>
-                )}
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_45%,rgba(7,19,34,0.75)_100%)]" />
-                {category && category.toLowerCase() !== "tümü" && (
-                  <span className="absolute left-2 top-2 rounded-full border border-white/15 bg-black/45 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.08em] text-[#7eb8ff] backdrop-blur-sm">
+              <div className="relative w-full aspect-[4/5] v-product-media overflow-hidden bg-slate-950">
+                <CatalogProductImage
+                  src={image}
+                  alt={product.name}
+                  fallbackImage={fallbackImage}
+                  storeInitial={storeInitial}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/80 via-transparent to-transparent" />
+                {product.badgeTag ? (
+                  <span className="absolute left-2.5 top-2.5 z-10 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+                    {product.badgeTag}
+                  </span>
+                ) : category && category.toLowerCase() !== "tümü" ? (
+                  <span className="absolute left-2.5 top-2.5 z-10 rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 backdrop-blur-md shadow-sm">
                     {category}
                   </span>
-                )}
+                ) : null}
               </div>
-              <div className="space-y-1 px-3 py-2.5">
-                <h3 className="truncate text-[13px] font-extrabold leading-snug text-white">
+              <div className="space-y-1.5 px-3.5 py-3">
+                <h3 className="truncate text-xs sm:text-sm font-extrabold leading-snug text-white">
                   {product.name}
                 </h3>
-                <p className="truncate text-xs font-bold text-[#E8A87C]">
-                  {product.price || "Fiyat sorun"}
-                </p>
+                <div className="flex items-baseline gap-2">
+                  <p className="truncate text-xs sm:text-sm font-extrabold text-blue-400">
+                    {product.price || "Fiyat sorun"}
+                  </p>
+                  {product.oldPriceAmount ? (
+                    <span className="text-[11px] font-medium text-slate-500 line-through">
+                      {product.oldPriceAmount} TL
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </a>
           );

@@ -110,6 +110,7 @@ class StoreDataDto {
       galleryItems: parsedGalleryItems,
       offerings: parsedOfferings,
       isStore: (json['is_store'] ?? json['isStore'] ?? false) as bool,
+      isDemo: (json['is_demo'] ?? json['isDemo'] ?? false) as bool,
       kategori: _getString(json, 'kategori', 'category') ?? '',
       workingHours: _getString(json, 'workingHours', 'working_hours') ?? '',
       provinceCode: _getString(json, 'provinceCode', 'province_code') ?? '',

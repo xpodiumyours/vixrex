@@ -32,6 +32,8 @@ class Product {
   String? importedAt;
   String? brand;
   String? sku;
+  double? oldPriceAmount;
+  String? badgeTag;
 
   Product({
     required this.id,
@@ -51,6 +53,8 @@ class Product {
     this.importedAt,
     this.brand,
     this.sku,
+    this.oldPriceAmount,
+    this.badgeTag,
   }) : imageUrls = _normalizeImageUrls(imageUrls, imagePath);
 
   static List<String> _normalizeImageUrls(
@@ -101,6 +105,10 @@ class Product {
     putOptional('sourceMediaId', sourceMediaId);
     putOptional('sourcePermalink', sourcePermalink);
     putOptional('importedAt', importedAt);
+    putOptional('badgeTag', badgeTag);
+    if (oldPriceAmount != null) {
+      json['oldPriceAmount'] = oldPriceAmount;
+    }
 
     return json;
   }
@@ -120,6 +128,10 @@ class Product {
     stockStatus:
         (json['stockStatus'] ?? json['stock_status'] ?? StockStatus.available.label).toString(),
     isVisible: (json['isVisible'] ?? json['is_visible'] ?? true) as bool,
+    oldPriceAmount: (json['oldPriceAmount'] ?? json['old_price_amount']) != null
+        ? double.tryParse((json['oldPriceAmount'] ?? json['old_price_amount']).toString())
+        : null,
+    badgeTag: (json['badgeTag'] ?? json['badge_tag']) as String?,
     slug:
         (json['slug'] ?? '').toString().trim().isEmpty
             ? null

@@ -37,6 +37,7 @@ class StoreData {
   List<StoreGalleryItem> galleryItems;
   List<StoreOffering> offerings;
   bool isStore;
+  bool isDemo;
   String kategori;
   String workingHours;
 
@@ -93,6 +94,7 @@ class StoreData {
     List<StoreGalleryItem>? galleryItems,
     List<StoreOffering>? offerings,
     this.isStore = false,
+    this.isDemo = false,
     this.kategori = '',
     this.workingHours = '',
     this.provinceCode = '',
@@ -151,6 +153,7 @@ class StoreData {
     List<StoreGalleryItem>? galleryItems,
     List<StoreOffering>? offerings,
     bool? isStore,
+    bool? isDemo,
     String? kategori,
     String? workingHours,
     String? provinceCode,

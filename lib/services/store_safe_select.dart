@@ -8,7 +8,7 @@ class StoreSafeSelect {
       'id,slug,name,business_type,description,corporate_bio,whatsapp,instagram,'
       'website,address,theme,status,marketplace_links,gallery_items,products,'
       'product_categories,offerings,catalog_link,references_link,vcard_link,'
-      'shelf_image_url,logo_url,working_hours,is_published,is_store,kategori,'
+      'shelf_image_url,logo_url,working_hours,is_published,is_store,is_demo,kategori,'
       'latitude,longitude,location_accuracy_meters,location_consent_at,'
       'location_source,province_code,province_name,district_code,district_name,'
       'google_business_link,privacy_notice_acknowledged,privacy_notice_acknowledged_at,'

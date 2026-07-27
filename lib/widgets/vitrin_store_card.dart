@@ -129,12 +129,54 @@ class VitrinStoreCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Durum Rozeti (Sol Üst)
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: _buildStatusBadge(isOpen),
-                    ),
+                    // Durum Rozeti (Sol Üst) — kiralık vitrinlerde gizle
+                    if (!store.isDemo)
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: _buildStatusBadge(isOpen),
+                      ),
+
+                    // KİRALIK Köşegen Şerit (Sol Üst — sadece kiralık vitrinde)
+                    if (store.isDemo)
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        child: ClipRect(
+                          child: SizedBox(
+                            width: 90,
+                            height: 90,
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  top: -30,
+                                  left: -30,
+                                  child: Transform.rotate(
+                                    angle: -0.785398, // -45°
+                                    child: Container(
+                                      width: 120,
+                                      height: 36,
+                                      alignment: Alignment.center,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFF59E0B),
+                                      ),
+                                      child: const Text(
+                                        'KİRALIK',
+                                        style: TextStyle(
+                                          color: Color(0xFF1C1917),
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 0.8,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
 
                     if (isExample)
                       Positioned(
