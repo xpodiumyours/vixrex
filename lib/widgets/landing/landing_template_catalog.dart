@@ -143,7 +143,12 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  if (hasImages) ...[
+                  if (hasImages)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                     if (imageSet.coverImages.isNotEmpty) ...[
                       const Text(
                         'Kapak Görselleri',
@@ -216,7 +221,11 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                       ),
                       const SizedBox(height: 20),
                     ],
-                  ] else if (_loadingKeys.contains(category.key)) ...[
+                          ],
+                        ),
+                      ),
+                    )
+                  else if (_loadingKeys.contains(category.key)) ...[
                     const Expanded(
                       child: Center(
                         child: CircularProgressIndicator(),
@@ -248,7 +257,7 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                       ),
                     ),
                   ],
-                  const Spacer(),
+                  const SizedBox(height: 20),
                   SizedBox(
                     height: 54,
                     child: ElevatedButton.icon(
