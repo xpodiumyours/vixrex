@@ -59,6 +59,13 @@ class FailedLocationService extends Fake implements LocationService {
   }
 }
 
+class ProvinceOnlyLocationService extends FakeLocationService {
+  @override
+  Future<String?> getAddressFromCoordinates(double lat, double lng) async {
+    return 'İstanbul Eşleşmeyen İlçe';
+  }
+}
+
 class FakeStorePublishService extends Fake implements StorePublishService {
   Result<void> deleteResult = const Result.success(null);
   String? deletedSlug;
@@ -228,6 +235,31 @@ void main() {
       expect(fakePublish.publishCount, 0);
     });
 
+    test('selecting cover bytes keeps them as a draft until publish', () async {
+      await storageService.savePublishedVitrinInfo(
+        slug: 'published-store',
+        publicLink: 'https://vixrex-public.vercel.app/v/published-store',
+        name: 'Published Store',
+        editToken: 'edit-token-12345678901234567890',
+      );
+      final fakePublish = FakeStorePublishService();
+      final controller = StoreEditorController(
+        storage: storageService,
+        publishService: fakePublish,
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+
+      controller.setCoverBytes(
+        Uint8List.fromList([0xFF, 0xD8, 0xFF]),
+        'cover.jpg',
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.coverBytes, isNotNull);
+      expect(fakePublish.publishCount, 0);
+    });
+
     test(
       'form inputs modify controller state and trigger notifyListeners',
       () async {
@@ -314,6 +346,29 @@ void main() {
       expect(controller.locationStatusMessage, 'Konum izni reddedildi.');
       expect(controller.isLocating, isFalse);
     });
+
+    test(
+      'partially matched GPS address keeps manual address province and district',
+      () async {
+        final controller = StoreEditorController(
+          storage: storageService,
+          locationService: ProvinceOnlyLocationService(),
+          supabaseClient: fakeSupabase,
+        );
+        await controller.initialize(null);
+        controller.updateAddress(controller.data, 'Mevcut adres');
+        controller.selectProvince(controller.data, '06', 'Ankara');
+        controller.selectDistrict(controller.data, 'Çankaya', 'Çankaya');
+
+        await controller.triggerFetchLocation();
+
+        expect(controller.data.address, 'Mevcut adres');
+        expect(controller.selectedProvinceName, 'Ankara');
+        expect(controller.selectedDistrictName, 'Çankaya');
+        expect(controller.latitude, 41.0082);
+        expect(controller.longitude, 28.9784);
+      },
+    );
 
     testWidgets(
       'GPS button uses controller flow and keeps the manual address on failure',
