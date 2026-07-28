@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vixrex/config/turkey_cities_config.dart';
 import 'package:vixrex/theme/app_colors.dart';
-import 'package:vixrex/services/location_service.dart';
-import 'package:vixrex/utils/text_utils.dart';
 
 class LocationEditorSection extends StatefulWidget {
   final String? selectedProvinceCode;
@@ -23,18 +20,7 @@ class LocationEditorSection extends StatefulWidget {
   final void Function(String? provinceCode, String? provinceName) onProvinceChanged;
   final void Function(String? districtCode, String? districtName) onDistrictChanged;
   final void Function(String address) onAddressChanged;
-  final void Function({
-    double? latitude,
-    double? longitude,
-    double? accuracy,
-    String? statusMessage,
-    String? address,
-    String? provinceCode,
-    String? provinceName,
-    String? districtCode,
-    String? districtName,
-  }) onLocationUpdated;
-  final void Function(bool locating) onLocatingStateChanged;
+  final Future<void> Function() onLocateRequested;
 
   const LocationEditorSection({
     super.key,
@@ -54,8 +40,7 @@ class LocationEditorSection extends StatefulWidget {
     required this.onProvinceChanged,
     required this.onDistrictChanged,
     required this.onAddressChanged,
-    required this.onLocationUpdated,
-    required this.onLocatingStateChanged,
+    required this.onLocateRequested,
   });
 
   @override
@@ -70,106 +55,9 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
   static const Color cardBorder = AppColors.cardBorderDark;
   static const Color inputBg = AppColors.inputBg;
 
-  bool _isInternalLocating = false;
-
-  Future<void> _getCurrentLocation() async {
-    if (mounted) {
-      setState(() {
-        _isInternalLocating = true;
-      });
-    }
-    widget.onLocatingStateChanged(true);
-    widget.onLocationUpdated(statusMessage: 'Konum aranıyor...');
-
-    try {
-      final result = await const LocationService().getCurrentLocation();
-      if (!mounted) return;
-
-      if (!result.isSuccess && !result.hasApproximatePosition) {
-        widget.onLocationUpdated(statusMessage: result.errorMessage);
-        return;
-      }
-
-      final position = result.position ?? result.approximatePosition!;
-      widget.onLocationUpdated(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracy: position.accuracy,
-        statusMessage: 'Adres çözümleniyor...',
-      );
-
-      final geoAddress = await const LocationService().getAddressFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (!mounted) return;
-
-      String? updatedProvinceCode = widget.selectedProvinceCode;
-      String? updatedProvinceName = widget.selectedProvinceName;
-      String? updatedDistrictCode = widget.selectedDistrictCode;
-      String? updatedDistrictName = widget.selectedDistrictName;
-      String? newAddress = geoAddress;
-
-      if (geoAddress != null && geoAddress.isNotEmpty) {
-        // Auto-detect Province and District
-        final normalizedAddress = TextUtils.normalizeTurkish(geoAddress);
-        Province? matchedProvince;
-        for (final province in turkeyProvinces) {
-          final normalizedProvince = TextUtils.normalizeTurkish(province.name);
-          if (normalizedAddress.contains(normalizedProvince)) {
-            matchedProvince = province;
-            break;
-          }
-        }
-
-        if (matchedProvince != null) {
-          updatedProvinceCode = matchedProvince.code;
-          updatedProvinceName = matchedProvince.name;
-
-          final districts = turkeyDistricts[matchedProvince.code] ?? [];
-          String? matchedDistrict;
-          for (final district in districts) {
-            final normalizedDistrict = TextUtils.normalizeTurkish(district);
-            if (normalizedAddress.contains(normalizedDistrict)) {
-              matchedDistrict = district;
-              break;
-            }
-          }
-          if (matchedDistrict != null) {
-            updatedDistrictCode = matchedDistrict;
-            updatedDistrictName = matchedDistrict;
-          } else {
-            updatedDistrictCode = null;
-            updatedDistrictName = null;
-          }
-        }
-      }
-
-      widget.onLocationUpdated(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracy: position.accuracy,
-        statusMessage: LocationService.buildAccuracyMessage(position.accuracy),
-        address: newAddress,
-        provinceCode: updatedProvinceCode,
-        provinceName: updatedProvinceName,
-        districtCode: updatedDistrictCode,
-        districtName: updatedDistrictName,
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isInternalLocating = false;
-        });
-        widget.onLocatingStateChanged(false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isLocatingActive = widget.isLocating || _isInternalLocating;
+    final isLocatingActive = widget.isLocating;
     final districts = widget.selectedProvinceCode != null
         ? (turkeyDistricts[widget.selectedProvinceCode] ?? [])
         : <String>[];
@@ -380,7 +268,8 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
         SizedBox(
           height: 42,
           child: OutlinedButton(
-            onPressed: isLocatingActive ? null : _getCurrentLocation,
+            onPressed:
+                isLocatingActive ? null : () => widget.onLocateRequested(),
             style: OutlinedButton.styleFrom(
               side: BorderSide(
                 color: isLocatingActive ? const Color(0xFF0EA5E9) : primaryColor,
