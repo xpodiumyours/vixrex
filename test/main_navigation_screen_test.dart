@@ -220,6 +220,8 @@ void main() {
         ),
       ),
     );
+    final semanticsHandle = tester.ensureSemantics();
+    addTearDown(semanticsHandle.dispose);
     await tester.tap(find.bySemanticsLabel('Vixrex asistanını aç'));
     await tester.pump();
 
