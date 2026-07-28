@@ -586,11 +586,16 @@ class LandingHeroSection extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Ücretsiz Vitrinimi Hazırla',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Ücretsiz Vitrinimi Hazırla',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                            ),
+                          ),
                         ),
                       ),
                       SizedBox(width: 8),
