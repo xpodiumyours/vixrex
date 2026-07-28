@@ -199,6 +199,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
             ),
             builder: (context, mascot) {
               return Container(
+                key: const ValueKey('vixrex_badge_mascot'),
                 width: _vixrexBadgeSize,
                 height: _vixrexBadgeSize,
                 decoration: BoxDecoration(
