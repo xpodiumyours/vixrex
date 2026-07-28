@@ -92,7 +92,7 @@ mixin StoreLocationMixin on ChangeNotifier {
       if (isDisposed) return;
       final pos = result.bestPosition;
       if (pos == null) {
-        _locationStatus = _failureStatus(result.errorMessage);
+        _locationStatus = _failureStatus(result.failureReason);
         _locationStatusMessage =
             result.errorMessage ?? 'Konum alınamadı. Lütfen tekrar deneyin.';
         return;
@@ -178,14 +178,13 @@ mixin StoreLocationMixin on ChangeNotifier {
     }
   }
 
-  StoreLocationStatus _failureStatus(String? message) {
-    final normalized = TextUtils.normalizeTurkish(message ?? '');
-    if (normalized.contains('izin') || normalized.contains('izn')) {
-      return StoreLocationStatus.permissionDenied;
-    }
-    if (normalized.contains('servis')) {
-      return StoreLocationStatus.serviceDisabled;
-    }
-    return StoreLocationStatus.error;
+  StoreLocationStatus _failureStatus(LocationFailureReason reason) {
+    return switch (reason) {
+      LocationFailureReason.permissionDenied =>
+        StoreLocationStatus.permissionDenied,
+      LocationFailureReason.serviceDisabled =>
+        StoreLocationStatus.serviceDisabled,
+      _ => StoreLocationStatus.error,
+    };
   }
 }
