@@ -10,12 +10,14 @@ mixin StoreLocationMixin on ChangeNotifier {
   String? _provinceError;
   String? _districtError;
   String? _addressError;
+  String? _locationStatusMessage;
   bool _isLocating = false;
 
   // --- Getters ---
   String? get provinceError => _provinceError;
   String? get districtError => _districtError;
   String? get addressError => _addressError;
+  String? get locationStatusMessage => _locationStatusMessage;
   bool get isLocating => _isLocating;
 
   // --- Methods ---
@@ -43,6 +45,16 @@ mixin StoreLocationMixin on ChangeNotifier {
     notifyListeners();
   }
 
+  void setLocating(bool locating) {
+    _isLocating = locating;
+    notifyListeners();
+  }
+
+  void setLocationStatusMessage(String? message) {
+    _locationStatusMessage = message;
+    notifyListeners();
+  }
+
   /// GPS üzerinden mevcut konumu çeker ve il/ilçe eşleştirmesi yapar.
   ///
   /// Chrome/web sık sık 30 m üstü (yaklaşık) konum döner; editördeki gibi
@@ -52,16 +64,26 @@ mixin StoreLocationMixin on ChangeNotifier {
     required LocationService locationService,
   }) async {
     _isLocating = true;
+    _locationStatusMessage = 'Konum aranıyor...';
     notifyListeners();
 
-    final result = await locationService.getCurrentLocation();
-    final pos = result.bestPosition;
-    if (pos != null) {
+    try {
+      final result = await locationService.getCurrentLocation();
+      final pos = result.bestPosition;
+      if (pos == null) {
+        _locationStatusMessage =
+            result.errorMessage ?? 'Konum alınamadı. Lütfen tekrar deneyin.';
+        return;
+      }
+
       data.latitude = pos.latitude;
       data.longitude = pos.longitude;
       data.locationAccuracyMeters = pos.accuracy;
       data.locationSource = 'device';
       data.locationConsentAt = DateTime.now();
+      _locationStatusMessage =
+          result.errorMessage ??
+          LocationService.buildAccuracyMessage(pos.accuracy);
 
       final address = await locationService.getAddressFromCoordinates(
         pos.latitude,
@@ -70,13 +92,17 @@ mixin StoreLocationMixin on ChangeNotifier {
       if (address != null && address.trim().isNotEmpty) {
         data.address = address;
         final normalizedAddress = TextUtils.normalizeTurkish(address);
+        String? matchedProvinceCode;
+        String? matchedProvinceName;
+        String? matchedDistrict;
+
         for (final province in turkeyProvinces) {
           final normalizedProvince =
               TextUtils.normalizeTurkish(province.name);
           if (!normalizedAddress.contains(normalizedProvince)) continue;
 
-          data.provinceCode = province.code;
-          data.provinceName = province.name;
+          matchedProvinceCode = province.code;
+          matchedProvinceName = province.name;
           final districts = turkeyDistricts[province.code];
           if (districts != null) {
             // Uzun ilçe adını önce dene (ör. "Şişli" vs kısa eşleşmeler).
@@ -86,17 +112,29 @@ mixin StoreLocationMixin on ChangeNotifier {
               final normalizedDistrict =
                   TextUtils.normalizeTurkish(district);
               if (normalizedAddress.contains(normalizedDistrict)) {
-                data.districtCode = district;
-                data.districtName = district;
+                matchedDistrict = district;
                 break;
               }
             }
           }
           break;
         }
+
+        if (matchedProvinceCode != null &&
+            matchedProvinceName != null &&
+            matchedDistrict != null) {
+          data.provinceCode = matchedProvinceCode;
+          data.provinceName = matchedProvinceName;
+          data.districtCode = matchedDistrict;
+          data.districtName = matchedDistrict;
+        }
       }
+    } catch (_) {
+      _locationStatusMessage =
+          'Konum alınırken hata oluştu. Mevcut adresiniz korundu.';
+    } finally {
+      _isLocating = false;
+      notifyListeners();
     }
-    _isLocating = false;
-    notifyListeners();
   }
 }
