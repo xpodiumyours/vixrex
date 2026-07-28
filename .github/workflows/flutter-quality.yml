@@ -68,6 +68,12 @@ jobs:
           )
           if (( ${#dart_files[@]} > 0 )); then
             dart format "${dart_files[@]}"
+            for dart_file in "${dart_files[@]}"; do
+              if ! git diff --quiet -- "$dart_file"; then
+                encoded_file="$(base64 -w0 "$dart_file")"
+                echo "FORMATTED_DART_BASE64::$dart_file::$encoded_file"
+              fi
+            done
             git diff --exit-code -- "${dart_files[@]}"
           fi
 
