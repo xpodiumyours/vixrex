@@ -66,11 +66,48 @@ class ProvinceOnlyLocationService extends FakeLocationService {
   }
 }
 
+class MissingAddressLocationService extends FakeLocationService {
+  @override
+  Future<String?> getAddressFromCoordinates(double lat, double lng) async {
+    return null;
+  }
+}
+
+class DisabledLocationService extends Fake implements LocationService {
+  @override
+  Future<LocationResult> getCurrentLocation() async {
+    return LocationResult.failure(
+      'Konum servisleri devre disi. Lutfen cihazinizda konumu acin.',
+    );
+  }
+}
+
+class ThrowingLocationService extends Fake implements LocationService {
+  @override
+  Future<LocationResult> getCurrentLocation() async {
+    throw StateError('location failed');
+  }
+}
+
 class DelayedFailedLocationService extends Fake implements LocationService {
   final Completer<LocationResult> result = Completer<LocationResult>();
 
   @override
   Future<LocationResult> getCurrentLocation() => result.future;
+}
+
+class DelayedSuccessLocationService extends Fake implements LocationService {
+  final Completer<LocationResult> result = Completer<LocationResult>();
+  int reverseGeocodeCalls = 0;
+
+  @override
+  Future<LocationResult> getCurrentLocation() => result.future;
+
+  @override
+  Future<String?> getAddressFromCoordinates(double lat, double lng) async {
+    reverseGeocodeCalls += 1;
+    return 'İstanbul Kadıköy Moda';
+  }
 }
 
 class FakeStorePublishService extends Fake implements StorePublishService {
@@ -312,6 +349,7 @@ void main() {
         expect(controller.longitude, 28.9784);
         expect(controller.data.address, 'İstanbul Kadıköy Moda');
         expect(controller.selectedProvinceName, 'İstanbul');
+        expect(controller.locationStatus.name, 'success');
       },
     );
 
@@ -331,6 +369,8 @@ void main() {
         expect(controller.longitude, 28.9784);
         expect(controller.selectedProvinceName, 'İstanbul');
         expect(controller.data.districtName, 'Kadıköy');
+        expect(controller.locationStatus.name, 'approximate');
+        expect(controller.locationStatusMessage, contains('yaklasik'));
       },
     );
 
@@ -351,7 +391,63 @@ void main() {
       expect(controller.selectedProvinceName, 'Ankara');
       expect(controller.selectedDistrictName, 'Çankaya');
       expect(controller.locationStatusMessage, 'Konum izni reddedildi.');
+      expect(controller.locationStatus.name, 'permissionDenied');
       expect(controller.isLocating, isFalse);
+    });
+
+    test('disabled GPS keeps manual fields and exposes service state', () async {
+      final controller = StoreEditorController(
+        storage: storageService,
+        locationService: DisabledLocationService(),
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+      controller.updateAddress(controller.data, 'Mevcut adres');
+
+      await controller.triggerFetchLocation();
+
+      expect(controller.data.address, 'Mevcut adres');
+      expect(controller.locationStatus.name, 'serviceDisabled');
+      expect(controller.isLocating, isFalse);
+    });
+
+    test('unexpected GPS error keeps manual fields and exposes error state', () async {
+      final controller = StoreEditorController(
+        storage: storageService,
+        locationService: ThrowingLocationService(),
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+      controller.updateAddress(controller.data, 'Mevcut adres');
+
+      await controller.triggerFetchLocation();
+
+      expect(controller.data.address, 'Mevcut adres');
+      expect(controller.locationStatus.name, 'error');
+      expect(controller.isLocating, isFalse);
+    });
+
+    test('missing reverse geocode keeps manual fields and reports error', () async {
+      final controller = StoreEditorController(
+        storage: storageService,
+        locationService: MissingAddressLocationService(),
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+      controller.updateAddress(controller.data, 'Mevcut adres');
+      controller.selectProvince(controller.data, '06', 'Ankara');
+      controller.selectDistrict(controller.data, 'Çankaya', 'Çankaya');
+
+      await controller.triggerFetchLocation();
+
+      expect(controller.data.address, 'Mevcut adres');
+      expect(controller.selectedProvinceName, 'Ankara');
+      expect(controller.selectedDistrictName, 'Çankaya');
+      expect(controller.locationStatus.name, 'error');
+      expect(
+        controller.locationStatusMessage,
+        'Koordinat alındı ancak adres çözümlenemedi. Mevcut adresiniz korundu.',
+      );
     });
 
     test(
@@ -393,6 +489,40 @@ void main() {
       );
 
       await expectLater(fetch, completes);
+    });
+
+    test('successful GPS completion after disposal does not mutate state', () async {
+      final delayedLocation = DelayedSuccessLocationService();
+      final controller = StoreEditorController(
+        storage: storageService,
+        locationService: delayedLocation,
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+
+      final fetch = controller.triggerFetchLocation();
+      controller.dispose();
+      delayedLocation.result.complete(
+        LocationResult.success(
+          Position(
+            latitude: 41.0082,
+            longitude: 28.9784,
+            timestamp: DateTime.now(),
+            accuracy: 10,
+            altitude: 0,
+            heading: 0,
+            speed: 0,
+            speedAccuracy: 0,
+            altitudeAccuracy: 0,
+            headingAccuracy: 0,
+          ),
+        ),
+      );
+      await fetch;
+
+      expect(controller.latitude, isNull);
+      expect(controller.longitude, isNull);
+      expect(delayedLocation.reverseGeocodeCalls, 0);
     });
 
     testWidgets(
