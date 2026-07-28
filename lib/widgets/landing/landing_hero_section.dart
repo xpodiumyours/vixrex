@@ -583,6 +583,7 @@ class LandingHeroSection extends StatelessWidget {
                     ),
                   ),
                   child: const Row(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
