@@ -6,6 +6,8 @@ import 'package:vixrex/utils/text_utils.dart';
 
 /// Konum (GPS) ve Adres (İl/İlçe) işlemlerini yöneten Mixin.
 mixin StoreLocationMixin on ChangeNotifier {
+  bool get isDisposed;
+
   // --- States ---
   String? _provinceError;
   String? _districtError;
@@ -47,12 +49,16 @@ mixin StoreLocationMixin on ChangeNotifier {
 
   void setLocating(bool locating) {
     _isLocating = locating;
-    notifyListeners();
+    _notifyLocationListeners();
   }
 
   void setLocationStatusMessage(String? message) {
     _locationStatusMessage = message;
-    notifyListeners();
+    _notifyLocationListeners();
+  }
+
+  void _notifyLocationListeners() {
+    if (!isDisposed) notifyListeners();
   }
 
   /// GPS üzerinden mevcut konumu çeker ve il/ilçe eşleştirmesi yapar.
@@ -63,9 +69,10 @@ mixin StoreLocationMixin on ChangeNotifier {
     required StoreData data,
     required LocationService locationService,
   }) async {
+    if (isDisposed) return;
     _isLocating = true;
     _locationStatusMessage = 'Konum aranıyor...';
-    notifyListeners();
+    _notifyLocationListeners();
 
     try {
       final result = await locationService.getCurrentLocation();
@@ -90,7 +97,6 @@ mixin StoreLocationMixin on ChangeNotifier {
         pos.longitude,
       );
       if (address != null && address.trim().isNotEmpty) {
-        data.address = address;
         final normalizedAddress = TextUtils.normalizeTurkish(address);
         String? matchedProvinceCode;
         String? matchedProvinceName;
@@ -123,10 +129,14 @@ mixin StoreLocationMixin on ChangeNotifier {
         if (matchedProvinceCode != null &&
             matchedProvinceName != null &&
             matchedDistrict != null) {
+          data.address = address;
           data.provinceCode = matchedProvinceCode;
           data.provinceName = matchedProvinceName;
           data.districtCode = matchedDistrict;
           data.districtName = matchedDistrict;
+        } else {
+          _locationStatusMessage =
+              'Adres il ve ilçe olarak doğrulanamadı. Mevcut adresiniz korundu.';
         }
       }
     } catch (_) {
@@ -134,7 +144,7 @@ mixin StoreLocationMixin on ChangeNotifier {
           'Konum alınırken hata oluştu. Mevcut adresiniz korundu.';
     } finally {
       _isLocating = false;
-      notifyListeners();
+      _notifyLocationListeners();
     }
   }
 }
