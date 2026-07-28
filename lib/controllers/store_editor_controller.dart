@@ -34,6 +34,7 @@ class StoreEditorController extends ChangeNotifier
 
   StoreData _data;
   PublishedVitrinInfo? _publishedInfo;
+  bool _isDisposed = false;
 
   StoreEditorController({
     StoreLocalStorageService? storage,
@@ -62,6 +63,8 @@ class StoreEditorController extends ChangeNotifier
   // --- Getters (UI Uyumluluğu için) ---
   StoreData get data => _data;
   PublishedVitrinInfo? get publishedInfo => _publishedInfo;
+  @override
+  bool get isDisposed => _isDisposed;
 
   bool get bookingIsEnabled => _data.bookingSettings?.isEnabled ?? false;
   int get bookingCapacity => _data.bookingSettings?.capacity ?? 1;
@@ -110,9 +113,13 @@ class StoreEditorController extends ChangeNotifier
           .map((item) => EditorGalleryItem.fromStoreItem(item))
           .toList(),
     );
-    if (_data.shelfImageUrl.isNotEmpty) {
-      super.setCoverUrl(_data.shelfImageUrl);
-    }
+    super.setCoverUrl(_data.shelfImageUrl);
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 
   Future<void> initialize(String? initialName) async {
