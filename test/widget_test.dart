@@ -116,6 +116,8 @@ void main() {
     final beforeOpeningChat = landingScroll.position.pixels;
     expect(beforeOpeningChat, greaterThan(0));
 
+    final semanticsHandle = tester.ensureSemantics();
+    addTearDown(semanticsHandle.dispose);
     await tester.tap(find.bySemanticsLabel('Vixrex asistanını aç'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
