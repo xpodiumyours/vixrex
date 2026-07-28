@@ -180,7 +180,7 @@ mixin StoreLocationMixin on ChangeNotifier {
 
   StoreLocationStatus _failureStatus(String? message) {
     final normalized = TextUtils.normalizeTurkish(message ?? '');
-    if (normalized.contains('izin')) {
+    if (normalized.contains('izin') || normalized.contains('izn')) {
       return StoreLocationStatus.permissionDenied;
     }
     if (normalized.contains('servis')) {
