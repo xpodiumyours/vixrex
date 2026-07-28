@@ -79,7 +79,6 @@ class StoreEditorController extends ChangeNotifier
   double? get latitude => _data.latitude;
   double? get longitude => _data.longitude;
   double? get locationAccuracyMeters => _data.locationAccuracyMeters;
-  String? get locationStatusMessage => null;
 
   String? get selectedProvinceCode =>
       _data.provinceCode.isNotEmpty ? _data.provinceCode : null;
