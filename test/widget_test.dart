@@ -117,7 +117,7 @@ void main() {
     final beforeOpeningChat = landingScroll.position.pixels;
     expect(beforeOpeningChat, greaterThan(0));
 
-    await tester.tap(find.byType(ChatbotBadge));
+    await tester.tap(find.byKey(const ValueKey('vixrex_badge_mascot')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
     await tester.pump(const Duration(milliseconds: 450));
