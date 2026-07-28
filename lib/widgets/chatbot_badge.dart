@@ -200,8 +200,10 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
               ),
               builder: (context, mascot) {
                 return Semantics(
+                  container: true,
                   button: true,
                   label: 'Vixrex asistanını aç',
+                  onTap: () => _openChat(context),
                   child: Container(
                     width: _vixrexBadgeSize,
                     height: _vixrexBadgeSize,
