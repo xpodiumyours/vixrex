@@ -644,10 +644,7 @@ class StoreEditorController extends ChangeNotifier
     final editToken = _publishedInfo?.editToken.trim() ?? '';
 
     if (_isUuid(product.id) && editToken.isNotEmpty) {
-      await productService.deleteProduct(
-        product.id,
-        editToken: editToken,
-      );
+      await productService.deleteProduct(product.id, editToken: editToken);
     }
     _data.products.removeAt(i);
     await saveLocally();
