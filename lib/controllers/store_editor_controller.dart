@@ -108,12 +108,16 @@ class StoreEditorController extends ChangeNotifier
 
   // --- Core Lifecycle ---
   void _syncInitialData() {
+    if (_data.shelfImageUrl.isEmpty) {
+      super.resetMedia();
+    } else {
+      super.setCoverUrl(_data.shelfImageUrl);
+    }
     setGalleryItems(
       _data.galleryItems
           .map((item) => EditorGalleryItem.fromStoreItem(item))
           .toList(),
     );
-    super.setCoverUrl(_data.shelfImageUrl);
   }
 
   @override
