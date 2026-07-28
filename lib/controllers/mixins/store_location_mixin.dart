@@ -59,16 +59,6 @@ mixin StoreLocationMixin on ChangeNotifier {
     notifyListeners();
   }
 
-  void setLocating(bool locating) {
-    _isLocating = locating;
-    _notifyLocationListeners();
-  }
-
-  void setLocationStatusMessage(String? message) {
-    _locationStatusMessage = message;
-    _notifyLocationListeners();
-  }
-
   void _notifyLocationListeners() {
     if (!isDisposed) notifyListeners();
   }
