@@ -18,8 +18,10 @@ class LocationEditorSection extends StatefulWidget {
   final String? locationStatusMessage;
   final bool isLocating;
 
-  final void Function(String? provinceCode, String? provinceName) onProvinceChanged;
-  final void Function(String? districtCode, String? districtName) onDistrictChanged;
+  final void Function(String? provinceCode, String? provinceName)
+  onProvinceChanged;
+  final void Function(String? districtCode, String? districtName)
+  onDistrictChanged;
   final void Function(String address) onAddressChanged;
   final Future<void> Function() onLocateRequested;
 
@@ -59,9 +61,10 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
   @override
   Widget build(BuildContext context) {
     final isLocatingActive = widget.isLocating;
-    final districts = widget.selectedProvinceCode != null
-        ? (turkeyDistricts[widget.selectedProvinceCode] ?? [])
-        : <String>[];
+    final districts =
+        widget.selectedProvinceCode != null
+            ? (turkeyDistricts[widget.selectedProvinceCode] ?? [])
+            : <String>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,12 +123,13 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
               vertical: 12,
             ),
           ),
-          items: turkeyProvinces.map((province) {
-            return DropdownMenuItem<String>(
-              value: province.code,
-              child: Text(province.name),
-            );
-          }).toList(),
+          items:
+              turkeyProvinces.map((province) {
+                return DropdownMenuItem<String>(
+                  value: province.code,
+                  child: Text(province.name),
+                );
+              }).toList(),
           onChanged: (code) {
             final found = turkeyProvinces.firstWhere(
               (p) => p.code == code,
@@ -170,9 +174,10 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
-            hintText: widget.selectedProvinceCode == null
-                ? 'Önce il seçiniz'
-                : 'İlçe seçiniz',
+            hintText:
+                widget.selectedProvinceCode == null
+                    ? 'Önce il seçiniz'
+                    : 'İlçe seçiniz',
             hintStyle: const TextStyle(color: softText, fontSize: 13),
             errorText: widget.districtError,
             errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 11),
@@ -195,17 +200,19 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
               vertical: 12,
             ),
           ),
-          items: districts.map((district) {
-            return DropdownMenuItem<String>(
-              value: district,
-              child: Text(district),
-            );
-          }).toList(),
-          onChanged: widget.selectedProvinceCode == null
-              ? null
-              : (val) {
-                  widget.onDistrictChanged(val, val);
-                },
+          items:
+              districts.map((district) {
+                return DropdownMenuItem<String>(
+                  value: district,
+                  child: Text(district),
+                );
+              }).toList(),
+          onChanged:
+              widget.selectedProvinceCode == null
+                  ? null
+                  : (val) {
+                    widget.onDistrictChanged(val, val);
+                  },
         ),
         const SizedBox(height: 14),
 
@@ -273,7 +280,8 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
                 isLocatingActive ? null : () => widget.onLocateRequested(),
             style: OutlinedButton.styleFrom(
               side: BorderSide(
-                color: isLocatingActive ? const Color(0xFF0EA5E9) : primaryColor,
+                color:
+                    isLocatingActive ? const Color(0xFF0EA5E9) : primaryColor,
                 width: isLocatingActive ? 1.8 : 1.0,
               ),
               shape: RoundedRectangleBorder(
@@ -281,27 +289,28 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 14),
             ),
-            child: isLocatingActive
-                ? const _ScanningLocationWidget()
-                : const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.my_location_rounded,
-                        size: 16,
-                        color: primaryColor,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'GPS ile Konumumu Al',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+            child:
+                isLocatingActive
+                    ? const _ScanningLocationWidget()
+                    : const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.my_location_rounded,
+                          size: 16,
                           color: primaryColor,
                         ),
-                      ),
-                    ],
-                  ),
+                        SizedBox(width: 8),
+                        Text(
+                          'GPS ile Konumumu Al',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
           ),
         ),
         if (widget.locationStatusMessage != null) ...[
@@ -345,7 +354,8 @@ class _ScanningLocationWidget extends StatefulWidget {
   const _ScanningLocationWidget();
 
   @override
-  State<_ScanningLocationWidget> createState() => _ScanningLocationWidgetState();
+  State<_ScanningLocationWidget> createState() =>
+      _ScanningLocationWidgetState();
 }
 
 class _ScanningLocationWidgetState extends State<_ScanningLocationWidget>
@@ -411,5 +421,3 @@ class _ScanningLocationWidgetState extends State<_ScanningLocationWidget>
     );
   }
 }
-
-
