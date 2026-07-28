@@ -174,11 +174,6 @@ class StoreEditorController extends ChangeNotifier
     super.setCoverUrl(trimmed);
   }
 
-  @override
-  void setCoverBytes(Uint8List bytes, String fileName, [String? ext, String? contentType]) {
-    super.setCoverBytes(bytes, fileName, ext, contentType);
-  }
-
   void setName(String name) {
     _data.name = name;
     notifyListeners();
