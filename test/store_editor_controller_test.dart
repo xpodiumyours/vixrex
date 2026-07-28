@@ -49,6 +49,13 @@ class FakeLocationService extends Fake implements LocationService {
   }
 }
 
+class FailedLocationService extends Fake implements LocationService {
+  @override
+  Future<LocationResult> getCurrentLocation() async {
+    return LocationResult.failure('Konum izni reddedildi.');
+  }
+}
+
 class FakeStorePublishService extends Fake implements StorePublishService {
   Result<void> deleteResult = const Result.success(null);
   String? deletedSlug;
@@ -284,6 +291,26 @@ void main() {
         expect(controller.data.districtName, 'Kadıköy');
       },
     );
+
+    test('failed GPS keeps the manual address and exposes the error', () async {
+      final controller = StoreEditorController(
+        storage: storageService,
+        locationService: FailedLocationService(),
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+      controller.updateAddress(controller.data, 'Mevcut adres');
+      controller.selectProvince(controller.data, '06', 'Ankara');
+      controller.selectDistrict(controller.data, 'Çankaya', 'Çankaya');
+
+      await controller.triggerFetchLocation();
+
+      expect(controller.data.address, 'Mevcut adres');
+      expect(controller.selectedProvinceName, 'Ankara');
+      expect(controller.selectedDistrictName, 'Çankaya');
+      expect(controller.locationStatusMessage, 'Konum izni reddedildi.');
+      expect(controller.isLocating, isFalse);
+    });
 
     test('publish validation throws error on invalid fields', () async {
       final controller = StoreEditorController(
