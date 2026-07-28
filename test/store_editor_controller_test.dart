@@ -439,6 +439,48 @@ void main() {
       },
     );
 
+    testWidgets('leaving the editor during GPS completion is safe', (
+      tester,
+    ) async {
+      final delayedLocation = DelayedFailedLocationService();
+      final controller = StoreEditorController(
+        storage: storageService,
+        locationService: delayedLocation,
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+      final state = MyVitrinState(controller: controller);
+      final addressController = TextEditingController(text: 'Mevcut adres');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AnimatedBuilder(
+              animation: controller,
+              builder: (_, __) => FormLocationInfo(
+                controller: controller,
+                state: state,
+                addressController: addressController,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('GPS ile Konumumu Al'));
+      await tester.pump();
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      addressController.dispose();
+      state.dispose();
+      controller.dispose();
+      delayedLocation.result.complete(
+        LocationResult.failure('Konum izni reddedildi.'),
+      );
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
     test('publish validation throws error on invalid fields', () async {
       final controller = StoreEditorController(
         storage: storageService,
