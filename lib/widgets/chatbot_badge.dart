@@ -116,9 +116,13 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   Widget build(BuildContext context) {
     final bubbleText = _bubbleMessage;
 
-    return GestureDetector(
-      onTap: () => _openChat(context),
-      child: Column(
+    return Align(
+      alignment: Alignment.centerRight,
+      widthFactor: 1,
+      heightFactor: 1,
+      child: GestureDetector(
+        onTap: () => _openChat(context),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -256,7 +260,8 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
               );
             },
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
