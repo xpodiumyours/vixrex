@@ -71,7 +71,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(categoryFinder);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Kuaför').last);
+    final kuaforOption = find.text('Kuaför').last;
+    await tester.ensureVisible(kuaforOption);
+    await tester.pumpAndSettle();
+    await tester.tap(kuaforOption);
     await tester.pumpAndSettle();
 
     final bookingTitle = find.textContaining('Randevu Ayarları');
