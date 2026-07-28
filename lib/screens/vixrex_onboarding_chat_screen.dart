@@ -565,8 +565,7 @@ class _VixRexOnboardingChatScreenState
           ),
           TextButton(
             onPressed:
-                widget.onClose ??
-                () => AppRouter.navigateToLanding(context),
+                widget.onClose ?? () => AppRouter.navigateToLanding(context),
             child: const Text(
               'Kapat',
               style: TextStyle(color: AppColors.mutedText),
@@ -668,7 +667,11 @@ class _VixRexOnboardingChatScreenState
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.visibility_outlined, size: 14, color: AppColors.mutedText),
+                        Icon(
+                          Icons.visibility_outlined,
+                          size: 14,
+                          color: AppColors.mutedText,
+                        ),
                         SizedBox(width: 6),
                         Text(
                           'Bakınıyorum',
@@ -800,7 +803,6 @@ class _VixRexOnboardingChatScreenState
       child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
     );
   }
-
 }
 
 class _ChatLine {
