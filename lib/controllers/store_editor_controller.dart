@@ -52,7 +52,9 @@ class StoreEditorController extends ChangeNotifier
            legalDocumentService ?? const LegalDocumentService(),
        productService =
            productService ??
-           ProductService(repository: SupabaseProductRepository()),
+           ProductService(
+             repository: SupabaseProductRepository(client: supabaseClient),
+           ),
        _data = initialData ?? StoreData(kategori: 'Diğer', status: 'Açık') {
     _syncInitialData();
   }
