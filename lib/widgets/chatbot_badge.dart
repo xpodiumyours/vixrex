@@ -129,41 +129,45 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
               builder: (context, child) {
                 return Transform.translate(
                   offset: Offset(0, _floatAnim.value),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: const Color(0xEE0E1B2E),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(14),
-                        topRight: Radius.circular(14),
-                        bottomLeft: Radius.circular(14),
-                        bottomRight: Radius.circular(3),
-                      ),
-                      border: Border.all(
-                        color: const Color(0xFF0EA5E9).withAlpha(180),
-                        width: 1.2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0EA5E9).withAlpha(70),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.sizeOf(context).width - 32,
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          bubbleText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                          ),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xEE0E1B2E),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(14),
+                          topRight: Radius.circular(14),
+                          bottomLeft: Radius.circular(14),
+                          bottomRight: Radius.circular(3),
                         ),
-                      ],
+                        border: Border.all(
+                          color: const Color(0xFF0EA5E9).withAlpha(180),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0EA5E9).withAlpha(70),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        bubbleText,
+                        softWrap: true,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
                 );
