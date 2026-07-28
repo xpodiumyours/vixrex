@@ -53,12 +53,14 @@ class FakeStorePublishService extends Fake implements StorePublishService {
   Result<void> deleteResult = const Result.success(null);
   String? deletedSlug;
   String? deletedEditToken;
+  int publishCount = 0;
 
   @override
   Future<Result<StorePublishResult>> publishStore(
     StoreData data, {
     required String editToken,
   }) async {
+    publishCount += 1;
     return Result.success(
       StorePublishResult(
         slug: 'test-store',
@@ -161,6 +163,59 @@ void main() {
       expect(controller.data.name, 'New Store');
       expect(controller.selectedKategori, 'Diğer');
       expect(controller.selectedStatus, 'Açık');
+    });
+
+    test('loading a published store does not publish it again', () async {
+      await storageService.saveVitrinData(
+        StoreData(
+          name: 'Published Store',
+          shelfImageUrl: 'https://dummy.co/existing-cover.jpg',
+        ),
+      );
+      await storageService.savePublishedVitrinInfo(
+        slug: 'published-store',
+        publicLink: 'https://vixrex-public.vercel.app/v/published-store',
+        name: 'Published Store',
+        editToken: 'edit-token-12345678901234567890',
+      );
+      final fakePublish = FakeStorePublishService();
+      final controller = StoreEditorController(
+        storage: storageService,
+        publishService: fakePublish,
+        supabaseClient: fakeSupabase,
+      );
+
+      await controller.initialize(null);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fakePublish.publishCount, 0);
+      expect(
+        controller.coverUrl,
+        'https://dummy.co/existing-cover.jpg',
+      );
+    });
+
+    test('selecting a cover keeps it as a draft until publish', () async {
+      await storageService.savePublishedVitrinInfo(
+        slug: 'published-store',
+        publicLink: 'https://vixrex-public.vercel.app/v/published-store',
+        name: 'Published Store',
+        editToken: 'edit-token-12345678901234567890',
+      );
+      final fakePublish = FakeStorePublishService();
+      final controller = StoreEditorController(
+        storage: storageService,
+        publishService: fakePublish,
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+
+      controller.setCoverUrl('https://dummy.co/new-cover.jpg');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.coverUrl, 'https://dummy.co/new-cover.jpg');
+      expect(controller.data.shelfImageUrl, 'https://dummy.co/new-cover.jpg');
+      expect(fakePublish.publishCount, 0);
     });
 
     test(
