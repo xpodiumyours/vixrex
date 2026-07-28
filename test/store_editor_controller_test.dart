@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
@@ -9,11 +10,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/core/result.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/utils/failure.dart';
+import 'package:vixrex/widgets/editor/form_location_info.dart';
 
 class FakeLocationService extends Fake implements LocationService {
   FakeLocationService({this.useApproximate = false});
@@ -311,6 +314,50 @@ void main() {
       expect(controller.locationStatusMessage, 'Konum izni reddedildi.');
       expect(controller.isLocating, isFalse);
     });
+
+    testWidgets(
+      'GPS button uses controller flow and keeps the manual address on failure',
+      (tester) async {
+        final controller = StoreEditorController(
+          storage: storageService,
+          locationService: FailedLocationService(),
+          supabaseClient: fakeSupabase,
+        );
+        await controller.initialize(null);
+        controller.updateAddress(controller.data, 'Mevcut adres');
+        controller.selectProvince(controller.data, '06', 'Ankara');
+        controller.selectDistrict(controller.data, 'Çankaya', 'Çankaya');
+        final state = MyVitrinState(controller: controller);
+        final addressController = TextEditingController(text: 'Mevcut adres');
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: AnimatedBuilder(
+                animation: controller,
+                builder: (_, __) => FormLocationInfo(
+                  controller: controller,
+                  state: state,
+                  addressController: addressController,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('GPS ile Konumumu Al'));
+        await tester.pumpAndSettle();
+
+        expect(controller.data.address, 'Mevcut adres');
+        expect(controller.selectedProvinceName, 'Ankara');
+        expect(controller.selectedDistrictName, 'Çankaya');
+        expect(find.text('Konum izni reddedildi.'), findsOneWidget);
+
+        addressController.dispose();
+        state.dispose();
+        controller.dispose();
+      },
+    );
 
     test('publish validation throws error on invalid fields', () async {
       final controller = StoreEditorController(
