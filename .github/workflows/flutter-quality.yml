@@ -42,6 +42,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -52,6 +54,22 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Dart format check
+        shell: bash
+        run: |
+          base_ref="${{ github.base_ref }}"
+          if [[ -z "$base_ref" ]]; then
+            base_ref="main"
+          fi
+          mapfile -t dart_files < <(
+            git diff --name-only --diff-filter=ACMRT \
+              "origin/$base_ref...HEAD" -- "*.dart"
+          )
+          if (( ${#dart_files[@]} > 0 )); then
+            dart format "${dart_files[@]}"
+            git diff --exit-code -- "${dart_files[@]}"
+          fi
 
       - name: P0 regression tests
         run: flutter test test/store_editor_controller_test.dart
