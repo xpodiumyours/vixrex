@@ -5,6 +5,9 @@ on:
     paths:
       - "lib/**"
       - "test/**"
+      - "android/**"
+      - "ios/**"
+      - "web/**"
       - "pubspec.yaml"
       - "pubspec.lock"
       - ".github/workflows/flutter-quality.yml"
@@ -14,6 +17,9 @@ on:
     paths:
       - "lib/**"
       - "test/**"
+      - "android/**"
+      - "ios/**"
+      - "web/**"
       - "pubspec.yaml"
       - "pubspec.lock"
       - ".github/workflows/flutter-quality.yml"
