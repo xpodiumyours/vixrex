@@ -1,0 +1,43 @@
+amaç: >
+  GitHub ana dal kilidi ve kapsam kontrol altyapısını kurmak.
+  Bu iş hiçbir uygulama davranışını değiştirmez.
+
+izinli_dosyalar:
+  - .github/CODEOWNERS
+  - .github/pull_request_template.md
+  - .github/workflows/change-scope.yml
+  - .github/workflows/protected-tests.yml
+  - .github/scripts/verify_change_scope.py
+  - .github/scripts/verify_protected_tests.py
+  - .changes/SEC-002-security-bootstrap.yml
+
+yasak_alanlar:
+  - lib/**
+  - public_web/**
+  - supabase/migrations/**
+  - supabase/functions/**
+  - docs/**
+
+korunan_davranışlar:
+  - Mevcut CI/CD workflow'ları çalışmaya devam eder
+  - Hiçbir uygulama dosyası değişmez
+  - Hiçbir test dosyası değişmez
+
+doğru_sonuç:
+  - GitHub ruleset main dalını korur
+  - CODEOWNERS kritik dosyalarda kullanıcı onayı ister
+  - Kapsam dışı dosya değişikliği CI tarafından reddedilir
+  - Kritik test silme/skip CI tarafından reddedilir
+
+hata_senaryoları:
+  - ruleset yanlış yapılandırılırsa kullanıcı da merge yapamaz
+  - verify_change_scope.py çalışma zamanı hatası verirse workflow başarısız olur
+  - GitHub API rate limit'i aşılırsa kullanıcıya bildirilir
+
+çalıştırılacak_kontroller:
+  - Python script sözdizimi kontrolü
+  - Workflow YAML geçerlilik kontrolü
+
+rollback:
+  commit: a51ae6a8a39b5c6be09cd20f7add5c6756129934
+  feature_flag: ~

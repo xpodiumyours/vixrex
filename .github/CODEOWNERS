@@ -1,0 +1,25 @@
+# Vixrex CODEOWNERS
+# Bu dosyadaki değişiklikler kullanıcı onayı gerektirir.
+
+# GitHub altyapısı — her zaman kullanıcı onayı
+.github/ @xpodiumyours
+.changes/ @xpodiumyours
+.github/scripts/ @xpodiumyours
+.github/workflows/ @xpodiumyours
+
+# Test sözleşmeleri — kullanıcı onayı
+test/contracts/ @xpodiumyours
+integration_test/ @xpodiumyours
+public_web/src/**/__tests__/contracts/ @xpodiumyours
+
+# Veritabanı — kullanıcı onayı
+supabase/migrations/ @xpodiumyours
+supabase/tests/ @xpodiumyours
+
+# Ödeme ve admin yetkisi — henüz yok, hazırlık
+# payment/ @xpodiumyours
+# admin/ @xpodiumyours
+
+# Dokümantasyon — kullanıcı onayı
+docs/product/ @xpodiumyours
+docs/operations/ @xpodiumyours
