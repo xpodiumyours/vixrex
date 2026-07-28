@@ -70,20 +70,21 @@ class _FormLocationInfoState extends State<FormLocationInfo> {
         locationAccuracyMeters: widget.controller.locationAccuracyMeters,
         locationStatusMessage: widget.controller.locationStatusMessage,
         isLocating: widget.controller.isLocating,
-        onProvinceChanged: (code, name) => widget.controller.selectProvince(
-          widget.controller.data,
-          code,
-          name,
-        ),
-        onDistrictChanged: (code, name) => widget.controller.selectDistrict(
-          widget.controller.data,
-          code,
-          name,
-        ),
-        onAddressChanged: (value) => widget.controller.updateAddress(
-          widget.controller.data,
-          value,
-        ),
+        onProvinceChanged:
+            (code, name) => widget.controller.selectProvince(
+              widget.controller.data,
+              code,
+              name,
+            ),
+        onDistrictChanged:
+            (code, name) => widget.controller.selectDistrict(
+              widget.controller.data,
+              code,
+              name,
+            ),
+        onAddressChanged:
+            (value) =>
+                widget.controller.updateAddress(widget.controller.data, value),
         onLocateRequested: widget.controller.triggerFetchLocation,
       ),
     );
