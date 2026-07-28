@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' as img_picker;
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
@@ -27,6 +28,7 @@ import 'package:vixrex/widgets/editor/common_form_fields.dart';
 import 'package:vixrex/widgets/editor/gallery_editor_section.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 import 'package:vixrex/widgets/editor/public_link_card.dart';
+import 'package:vixrex/widgets/editor/publish_actions_section.dart';
 import 'package:vixrex/widgets/editor/store_theme_picker.dart';
 import 'package:vixrex/widgets/google_business_guide_card.dart';
 import 'package:vixrex/widgets/editor/working_hours_editor.dart';
@@ -177,6 +179,8 @@ class VitrinFormSection extends StatelessWidget {
                         children: [
                           _buildNameField(),
                           const SizedBox(height: 14),
+                          _buildCategoryField(),
+                          const SizedBox(height: 14),
                           _buildWhatsappField(),
                           const SizedBox(height: 14),
                           _buildLocationSection(),
@@ -306,6 +310,10 @@ class VitrinFormSection extends StatelessWidget {
                   children: [
                     // İşletme Adı (Zorunlu)
                     _buildNameField(),
+                    const SizedBox(height: 14),
+
+                    // İşletme kategorisi (özellik paketlerini belirler)
+                    _buildCategoryField(),
                     const SizedBox(height: 14),
 
                     // WhatsApp Numarası (Zorunlu)
@@ -549,6 +557,28 @@ class VitrinFormSection extends StatelessWidget {
     );
   }
 
+  Widget _buildCategoryField() {
+    final categoryLabels = [
+      'Diğer',
+      ...BusinessCategoryConfig.categories
+          .where((category) => category.label != 'Diğer')
+          .map((category) => category.label),
+    ];
+
+    return KeyedSubtree(
+      key: state.categoryKey,
+      child: EditorDropdownField(
+        label: 'İşletme Kategorisi',
+        value: controller.selectedKategori,
+        items: categoryLabels,
+        icon: Icons.category_rounded,
+        onChanged: (value) {
+          if (value != null) controller.selectCategory(value);
+        },
+      ),
+    );
+  }
+
   Widget _buildDescriptionField() {
     return KeyedSubtree(
       key: state.descriptionKey,
@@ -744,8 +774,78 @@ class VitrinFormSection extends StatelessWidget {
           GoogleBusinessGuideCard(
             publishedLink: controller.publishedInfo?.publicLink ?? '',
           ),
+          const SizedBox(height: 16),
+          PublishActionsSection(
+            bookingIsEnabled: controller.bookingIsEnabled,
+            onOpenBookingManagement: () {
+              final slug = controller.publishedInfo?.slug.trim() ?? '';
+              if (slug.isEmpty) return;
+              AppRouter.navigateToBookingManagement(context, slug: slug);
+            },
+            onOpenPublicVitrin: () => _openLink(context),
+            onCopyLink: () {
+              _copyDisplayLink(
+                context,
+                controller.publishedInfo?.publicLink,
+                isLive: true,
+              );
+            },
+            onShowQrSheet: () => _showQrSheet(context),
+          ),
         ],
       ],
+    );
+  }
+
+  void _showQrSheet(BuildContext context) {
+    final raw = controller.publishedInfo?.publicLink.trim() ?? '';
+    if (raw.isEmpty) {
+      state.showSnackBar(context, 'QR kodu için önce vitrininizi yayınlayın.');
+      return;
+    }
+    final link = PublicSiteConfig.repairPublicLink(raw);
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Vitrin QR Kodunuz',
+                style: TextStyle(
+                  color: AppColors.darkText,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                color: Colors.white,
+                child: QrImageView(data: link, size: 200),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: link));
+                  if (!sheetContext.mounted) return;
+                  Navigator.pop(sheetContext);
+                  state.showSnackBar(context, 'Vitrin linki kopyalandı.');
+                },
+                icon: const Icon(Icons.copy_rounded),
+                label: const Text('Linki Kopyala'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
