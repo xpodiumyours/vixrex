@@ -8,7 +8,6 @@ import 'package:vixrex/screens/my_vitrin_screen.dart';
 import 'package:vixrex/screens/vixrex_onboarding_chat_screen.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
-import 'package:vixrex/widgets/chatbot_badge.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:vixrex/config/app_router.dart';
