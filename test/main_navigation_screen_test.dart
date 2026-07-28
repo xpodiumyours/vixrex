@@ -75,7 +75,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Tekrar hoş geldin, Kayıtlı Vitrin'), findsOneWidget);
+    expect(
+      find.textContaining('Tekrar hoş geldin, Kayıtlı Vitrin'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Kayıtlı vitrinin bulundu'), findsOneWidget);
     expect(find.textContaining('WhatsApp numaranı ekleyelim'), findsOneWidget);
     expect(find.textContaining('vitrin oluşturmamı ister misin'), findsNothing);
@@ -136,7 +139,10 @@ void main() {
         editorInitialization: Future<void>.value(),
       );
 
-      expect(identical(manualScreen.editorController, editorController), isTrue);
+      expect(
+        identical(manualScreen.editorController, editorController),
+        isTrue,
+      );
       expect(editorController.data.products, hasLength(1));
 
       await tester.pumpWidget(const SizedBox.shrink());
