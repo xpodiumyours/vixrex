@@ -4,6 +4,16 @@ import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/utils/text_utils.dart';
 
+enum StoreLocationStatus {
+  idle,
+  loading,
+  success,
+  approximate,
+  permissionDenied,
+  serviceDisabled,
+  error,
+}
+
 /// Konum (GPS) ve Adres (İl/İlçe) işlemlerini yöneten Mixin.
 mixin StoreLocationMixin on ChangeNotifier {
   bool get isDisposed;
@@ -13,6 +23,7 @@ mixin StoreLocationMixin on ChangeNotifier {
   String? _districtError;
   String? _addressError;
   String? _locationStatusMessage;
+  StoreLocationStatus _locationStatus = StoreLocationStatus.idle;
   bool _isLocating = false;
 
   // --- Getters ---
@@ -20,6 +31,7 @@ mixin StoreLocationMixin on ChangeNotifier {
   String? get districtError => _districtError;
   String? get addressError => _addressError;
   String? get locationStatusMessage => _locationStatusMessage;
+  StoreLocationStatus get locationStatus => _locationStatus;
   bool get isLocating => _isLocating;
 
   // --- Methods ---
@@ -71,18 +83,24 @@ mixin StoreLocationMixin on ChangeNotifier {
   }) async {
     if (isDisposed) return;
     _isLocating = true;
+    _locationStatus = StoreLocationStatus.loading;
     _locationStatusMessage = 'Konum aranıyor...';
     _notifyLocationListeners();
 
     try {
       final result = await locationService.getCurrentLocation();
+      if (isDisposed) return;
       final pos = result.bestPosition;
       if (pos == null) {
+        _locationStatus = _failureStatus(result.errorMessage);
         _locationStatusMessage =
             result.errorMessage ?? 'Konum alınamadı. Lütfen tekrar deneyin.';
         return;
       }
 
+      _locationStatus = result.hasApproximatePosition
+          ? StoreLocationStatus.approximate
+          : StoreLocationStatus.success;
       data.latitude = pos.latitude;
       data.longitude = pos.longitude;
       data.locationAccuracyMeters = pos.accuracy;
@@ -96,7 +114,15 @@ mixin StoreLocationMixin on ChangeNotifier {
         pos.latitude,
         pos.longitude,
       );
-      if (address != null && address.trim().isNotEmpty) {
+      if (isDisposed) return;
+      if (address == null || address.trim().isEmpty) {
+        _locationStatus = StoreLocationStatus.error;
+        _locationStatusMessage =
+            'Koordinat alındı ancak adres çözümlenemedi. '
+            'Mevcut adresiniz korundu.';
+        return;
+      }
+      if (address.trim().isNotEmpty) {
         final normalizedAddress = TextUtils.normalizeTurkish(address);
         String? matchedProvinceCode;
         String? matchedProvinceName;
@@ -135,16 +161,31 @@ mixin StoreLocationMixin on ChangeNotifier {
           data.districtCode = matchedDistrict;
           data.districtName = matchedDistrict;
         } else {
+          _locationStatus = StoreLocationStatus.error;
           _locationStatusMessage =
               'Adres il ve ilçe olarak doğrulanamadı. Mevcut adresiniz korundu.';
         }
       }
     } catch (_) {
-      _locationStatusMessage =
-          'Konum alınırken hata oluştu. Mevcut adresiniz korundu.';
+      if (!isDisposed) {
+        _locationStatus = StoreLocationStatus.error;
+        _locationStatusMessage =
+            'Konum alınırken hata oluştu. Mevcut adresiniz korundu.';
+      }
     } finally {
       _isLocating = false;
       _notifyLocationListeners();
     }
+  }
+
+  StoreLocationStatus _failureStatus(String? message) {
+    final normalized = TextUtils.normalizeTurkish(message ?? '');
+    if (normalized.contains('izin')) {
+      return StoreLocationStatus.permissionDenied;
+    }
+    if (normalized.contains('servis')) {
+      return StoreLocationStatus.serviceDisabled;
+    }
+    return StoreLocationStatus.error;
   }
 }
