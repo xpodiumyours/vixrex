@@ -88,9 +88,10 @@ mixin StoreLocationMixin on ChangeNotifier {
         return;
       }
 
-      _locationStatus = result.hasApproximatePosition
-          ? StoreLocationStatus.approximate
-          : StoreLocationStatus.success;
+      _locationStatus =
+          result.hasApproximatePosition
+              ? StoreLocationStatus.approximate
+              : StoreLocationStatus.success;
       data.latitude = pos.latitude;
       data.longitude = pos.longitude;
       data.locationAccuracyMeters = pos.accuracy;
@@ -119,8 +120,7 @@ mixin StoreLocationMixin on ChangeNotifier {
         String? matchedDistrict;
 
         for (final province in turkeyProvinces) {
-          final normalizedProvince =
-              TextUtils.normalizeTurkish(province.name);
+          final normalizedProvince = TextUtils.normalizeTurkish(province.name);
           if (!normalizedAddress.contains(normalizedProvince)) continue;
 
           matchedProvinceCode = province.code;
@@ -131,8 +131,7 @@ mixin StoreLocationMixin on ChangeNotifier {
             final ordered = [...districts]
               ..sort((a, b) => b.length.compareTo(a.length));
             for (final district in ordered) {
-              final normalizedDistrict =
-                  TextUtils.normalizeTurkish(district);
+              final normalizedDistrict = TextUtils.normalizeTurkish(district);
               if (normalizedAddress.contains(normalizedDistrict)) {
                 matchedDistrict = district;
                 break;
