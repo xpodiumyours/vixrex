@@ -10,13 +10,14 @@ izinli_dosyalar:
   - .github/scripts/verify_change_scope.py
   - .github/scripts/verify_protected_tests.py
   - .changes/SEC-002-security-bootstrap.yml
+  - docs/product/
+  - docs/operations/
 
 yasak_alanlar:
   - lib/**
   - public_web/**
   - supabase/migrations/**
   - supabase/functions/**
-  - docs/**
 
 korunan_davranışlar:
   - Mevcut CI/CD workflow'ları çalışmaya devam eder

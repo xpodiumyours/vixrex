@@ -64,12 +64,12 @@ def check_file_permissions(changed_files: list[str], contract: dict) -> bool:
     all_ok = True
     for f in changed_files:
         if is_allowed(f):
-            print(f"  ✓ {f} (izinli)")
+            print(f"  [OK] {f} (izinli)")
         elif is_forbidden(f):
-            print(f"  ✗ {f} (YASAK ALAN)")
+            print(f"  [HATA] {f} (YASAK ALAN)")
             all_ok = False
         else:
-            print(f"  ? {f} (izinli listede yok)")
+            print(f"  [UYARI] {f} (izinli listede yok)")
             all_ok = False
 
     return all_ok
@@ -115,7 +115,7 @@ def main():
     if not check_production_file_limit(changed):
         sys.exit(1)
 
-    print("\n✓ Kapsam kontrolü başarılı")
+    print("\n[OK] Kapsam kontrolu basarili")
 
 
 if __name__ == "__main__":

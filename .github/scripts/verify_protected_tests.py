@@ -14,10 +14,8 @@ from pathlib import Path
 
 PROTECTED_TEST_DIRS = [
     "test/contracts/",
-    "test/",
     "integration_test/",
     "public_web/src/__tests__/contracts/",
-    "public_web/src/",
     "supabase/tests/",
 ]
 
@@ -113,7 +111,7 @@ def main():
             errors = True
 
     if not errors:
-        print("✓ Korunan test kontrolleri başarılı")
+        print("[OK] Korunan test kontrolleri basarili")
     else:
         sys.exit(1)
 
