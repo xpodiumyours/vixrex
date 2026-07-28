@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' as img_picker;
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
@@ -29,6 +28,7 @@ import 'package:vixrex/widgets/editor/gallery_editor_section.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 import 'package:vixrex/widgets/editor/public_link_card.dart';
 import 'package:vixrex/widgets/editor/publish_actions_section.dart';
+import 'package:vixrex/widgets/editor/qr_code_bottom_sheet.dart';
 import 'package:vixrex/widgets/editor/store_theme_picker.dart';
 import 'package:vixrex/widgets/google_business_guide_card.dart';
 import 'package:vixrex/widgets/editor/working_hours_editor.dart';
@@ -805,47 +805,10 @@ class VitrinFormSection extends StatelessWidget {
     }
     final link = PublicSiteConfig.repairPublicLink(raw);
 
-    showModalBottomSheet<void>(
+    QrCodeBottomSheet.show(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Vitrin QR Kodunuz',
-                style: TextStyle(
-                  color: AppColors.darkText,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: Colors.white,
-                child: QrImageView(data: link, size: 200),
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: link));
-                  if (!sheetContext.mounted) return;
-                  Navigator.pop(sheetContext);
-                  state.showSnackBar(context, 'Vitrin linki kopyalandı.');
-                },
-                icon: const Icon(Icons.copy_rounded),
-                label: const Text('Linki Kopyala'),
-              ),
-            ],
-          ),
-        ),
-      ),
+      title: 'Vitrin QR Kodunuz',
+      link: link,
     );
   }
 
