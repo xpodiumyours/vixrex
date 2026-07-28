@@ -146,7 +146,7 @@ export default function VitrinProfileView({
       </nav>
 
       {/* ===== HERO ===== */}
-      <section className="relative w-full min-h-[520px] pt-[68px] flex items-end overflow-hidden">
+      <section className="relative w-full min-h-[360px] sm:min-h-[420px] pt-[68px] flex items-end overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroImage || 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1600&q=80'})` }}
@@ -154,18 +154,18 @@ export default function VitrinProfileView({
           <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/75 to-[#0B1120]/30" />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-12 grid md:grid-cols-[1fr_auto] gap-8 items-end">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4 backdrop-blur-md">
+            <div className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 backdrop-blur-md">
               <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
               {kategori || businessType || "Atölye / Mağaza"}
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-3 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
               {storeName.toUpperCase()}
             </h1>
 
-            <p className="text-slate-300 text-base sm:text-lg max-w-xl mb-6 leading-relaxed">
+            <p className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2">
               {description || "Tasarım odaklı butik mağaza. Özel dikim, sınırlı sayıda koleksiyonlar ve küratörlü seçimler."}
             </p>
 

@@ -34,6 +34,7 @@ class StoreEditorController extends ChangeNotifier
 
   StoreData _data;
   PublishedVitrinInfo? _publishedInfo;
+  bool _isDisposed = false;
 
   StoreEditorController({
     StoreLocalStorageService? storage,
@@ -52,7 +53,9 @@ class StoreEditorController extends ChangeNotifier
            legalDocumentService ?? const LegalDocumentService(),
        productService =
            productService ??
-           ProductService(repository: SupabaseProductRepository()),
+           ProductService(
+             repository: SupabaseProductRepository(client: supabaseClient),
+           ),
        _data = initialData ?? StoreData(kategori: 'Diğer', status: 'Açık') {
     _syncInitialData();
   }
@@ -60,6 +63,8 @@ class StoreEditorController extends ChangeNotifier
   // --- Getters (UI Uyumluluğu için) ---
   StoreData get data => _data;
   PublishedVitrinInfo? get publishedInfo => _publishedInfo;
+  @override
+  bool get isDisposed => _isDisposed;
 
   bool get bookingIsEnabled => _data.bookingSettings?.isEnabled ?? false;
   int get bookingCapacity => _data.bookingSettings?.capacity ?? 1;
@@ -77,7 +82,6 @@ class StoreEditorController extends ChangeNotifier
   double? get latitude => _data.latitude;
   double? get longitude => _data.longitude;
   double? get locationAccuracyMeters => _data.locationAccuracyMeters;
-  String? get locationStatusMessage => null;
 
   String? get selectedProvinceCode =>
       _data.provinceCode.isNotEmpty ? _data.provinceCode : null;
@@ -104,14 +108,22 @@ class StoreEditorController extends ChangeNotifier
 
   // --- Core Lifecycle ---
   void _syncInitialData() {
+    if (_data.shelfImageUrl.isEmpty) {
+      super.resetMedia();
+    } else {
+      super.setCoverUrl(_data.shelfImageUrl);
+    }
     setGalleryItems(
       _data.galleryItems
           .map((item) => EditorGalleryItem.fromStoreItem(item))
           .toList(),
     );
-    if (_data.shelfImageUrl.isNotEmpty) {
-      setCoverUrl(_data.shelfImageUrl);
-    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 
   Future<void> initialize(String? initialName) async {
@@ -163,29 +175,16 @@ class StoreEditorController extends ChangeNotifier
 
   // --- Delegated Methods (UI Compatibility) ---
   /// Hazır şablon kapak URL'sini hem editör state'ine hem StoreData.shelfImageUrl'e yazar.
+  /// Kapak değişikliği TASLAK kalır — canlıya geçmek için kullanıcının
+  /// açıkça "Yayınla" butonuna basması gerekir.
   @override
   void setCoverUrl(String url) {
     final trimmed = url.trim();
-    super.setCoverUrl(trimmed);
     if (trimmed.isNotEmpty) {
       _data.shelfImageUrl = trimmed;
       _data.coverImageUrl = trimmed;
     }
-    saveLocally();
-    if (_publishedInfo != null && _publishedInfo!.slug.isNotEmpty) {
-      publish();
-    }
-    notifyListeners();
-  }
-
-  @override
-  void setCoverBytes(Uint8List bytes, String fileName, [String? ext, String? contentType]) {
-    super.setCoverBytes(bytes, fileName, ext, contentType);
-    saveLocally();
-    if (_publishedInfo != null && _publishedInfo!.slug.isNotEmpty) {
-      publish();
-    }
-    notifyListeners();
+    super.setCoverUrl(trimmed);
   }
 
   void setName(String name) {
