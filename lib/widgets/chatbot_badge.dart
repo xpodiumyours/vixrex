@@ -198,64 +198,72 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
               ),
             ),
             builder: (context, mascot) {
-              return Container(
-                key: const ValueKey('vixrex_badge_mascot'),
-                width: _vixrexBadgeSize,
-                height: _vixrexBadgeSize,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF0E1B2E).withAlpha(200),
-                  border: Border.all(color: const Color(0xFF38A0E4).withAlpha(160), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF0EA5E9).withAlpha((255 * 0.45 * _pulseAnim.value).round()),
-                      blurRadius: 16,
-                      spreadRadius: 2,
+              return Semantics(
+                button: true,
+                label: 'Vixrex asistanını aç',
+                child: Container(
+                  width: _vixrexBadgeSize,
+                  height: _vixrexBadgeSize,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF0E1B2E).withAlpha(200),
+                    border: Border.all(
+                      color: const Color(0xFF38A0E4).withAlpha(160),
+                      width: 1.5,
                     ),
-                  ],
-                ),
-                child: ClipOval(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      mascot!,
-                      Positioned(
-                        top: (_vixrexBadgeSize / 2) +
-                            (_scanAnim.value * (_vixrexBadgeSize * 0.35)),
-                        left: 6,
-                        right: 6,
-                        child: Container(
-                          height: 1.5,
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Color(0x000EA5E9),
-                                Color(0xCC0EA5E9),
-                                Color(0x000EA5E9),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0EA5E9).withAlpha(
+                          (255 * 0.45 * _pulseAnim.value).round(),
+                        ),
+                        blurRadius: 16,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        mascot!,
+                        Positioned(
+                          top: (_vixrexBadgeSize / 2) +
+                              (_scanAnim.value * (_vixrexBadgeSize * 0.35)),
+                          left: 6,
+                          right: 6,
+                          child: Container(
+                            height: 1.5,
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color(0x000EA5E9),
+                                  Color(0xCC0EA5E9),
+                                  Color(0x000EA5E9),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 4,
+                          right: 4,
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xCC10B981),
+                                  blurRadius: 4,
+                                ),
                               ],
                             ),
                           ),
                         ),
-                      ),
-                      Positioned(
-                        bottom: 4,
-                        right: 4,
-                        child: Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF10B981),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(0xCC10B981),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );
