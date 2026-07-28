@@ -66,6 +66,13 @@ class ProvinceOnlyLocationService extends FakeLocationService {
   }
 }
 
+class DelayedFailedLocationService extends Fake implements LocationService {
+  final Completer<LocationResult> result = Completer<LocationResult>();
+
+  @override
+  Future<LocationResult> getCurrentLocation() => result.future;
+}
+
 class FakeStorePublishService extends Fake implements StorePublishService {
   Result<void> deleteResult = const Result.success(null);
   String? deletedSlug;
@@ -370,6 +377,24 @@ void main() {
       },
     );
 
+    test('GPS completion after controller disposal is ignored safely', () async {
+      final delayedLocation = DelayedFailedLocationService();
+      final controller = StoreEditorController(
+        storage: storageService,
+        locationService: delayedLocation,
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+
+      final fetch = controller.triggerFetchLocation();
+      controller.dispose();
+      delayedLocation.result.complete(
+        LocationResult.failure('Konum izni reddedildi.'),
+      );
+
+      await expectLater(fetch, completes);
+    });
+
     testWidgets(
       'GPS button uses controller flow and keeps the manual address on failure',
       (tester) async {
@@ -467,6 +492,34 @@ void main() {
       expect(fakePublish.deletedSlug, 'owner-store');
       expect(fakePublish.deletedEditToken, isEmpty);
       expect(await storageService.loadPublishedVitrinInfo(), isNull);
+    });
+
+    test('deleting a vitrin clears the hydrated cover state', () async {
+      await storageService.saveVitrinData(
+        StoreData(
+          name: 'Owner Store',
+          shelfImageUrl: 'https://dummy.co/existing-cover.jpg',
+        ),
+      );
+      await storageService.savePublishedVitrinInfo(
+        slug: 'owner-store',
+        publicLink: 'https://vixrex-public.vercel.app/v/owner-store',
+        name: 'Owner Store',
+        editToken: 'edit-token-12345678901234567890',
+      );
+      final controller = StoreEditorController(
+        storage: storageService,
+        publishService: FakeStorePublishService(),
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+      expect(controller.coverUrl, isNotEmpty);
+
+      await controller.deleteVitrin();
+
+      expect(controller.coverUrl, isNull);
+      expect(controller.coverBytes, isNull);
+      expect(controller.hasCover, isFalse);
     });
 
     test('remote delete failure keeps local published store data', () async {
