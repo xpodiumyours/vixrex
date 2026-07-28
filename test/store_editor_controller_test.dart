@@ -55,7 +55,10 @@ class FakeLocationService extends Fake implements LocationService {
 class FailedLocationService extends Fake implements LocationService {
   @override
   Future<LocationResult> getCurrentLocation() async {
-    return LocationResult.failure('Konum izni reddedildi.');
+    return LocationResult.failure(
+      'Konum izni reddedildi.',
+      reason: LocationFailureReason.permissionDenied,
+    );
   }
 }
 
@@ -77,7 +80,8 @@ class DisabledLocationService extends Fake implements LocationService {
   @override
   Future<LocationResult> getCurrentLocation() async {
     return LocationResult.failure(
-      'Konum servisleri devre disi. Lutfen cihazinizda konumu acin.',
+      'Kullanıcıya gösterilen servis mesajı.',
+      reason: LocationFailureReason.serviceDisabled,
     );
   }
 }
