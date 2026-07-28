@@ -624,20 +624,27 @@ class _VixRexOnboardingChatScreenState
                         ],
                       ),
                       alignment: Alignment.center,
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.auto_awesome, size: 14, color: Colors.white),
-                          SizedBox(width: 6),
-                          Text(
-                            'Evet, Oluşturalım',
-                            style: TextStyle(
+                      child: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome,
+                              size: 14,
                               color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 6),
+                            Text(
+                              'Evet, Oluşturalım',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
