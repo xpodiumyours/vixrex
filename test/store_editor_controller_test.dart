@@ -254,10 +254,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(fakePublish.publishCount, 0);
-      expect(
-        controller.coverUrl,
-        'https://dummy.co/existing-cover.jpg',
-      );
+      expect(controller.coverUrl, 'https://dummy.co/existing-cover.jpg');
     });
 
     test('selecting a cover keeps it as a draft until publish', () async {
@@ -399,60 +396,69 @@ void main() {
       expect(controller.isLocating, isFalse);
     });
 
-    test('disabled GPS keeps manual fields and exposes service state', () async {
-      final controller = StoreEditorController(
-        storage: storageService,
-        locationService: DisabledLocationService(),
-        supabaseClient: fakeSupabase,
-      );
-      await controller.initialize(null);
-      controller.updateAddress(controller.data, 'Mevcut adres');
+    test(
+      'disabled GPS keeps manual fields and exposes service state',
+      () async {
+        final controller = StoreEditorController(
+          storage: storageService,
+          locationService: DisabledLocationService(),
+          supabaseClient: fakeSupabase,
+        );
+        await controller.initialize(null);
+        controller.updateAddress(controller.data, 'Mevcut adres');
 
-      await controller.triggerFetchLocation();
+        await controller.triggerFetchLocation();
 
-      expect(controller.data.address, 'Mevcut adres');
-      expect(controller.locationStatus.name, 'serviceDisabled');
-      expect(controller.isLocating, isFalse);
-    });
+        expect(controller.data.address, 'Mevcut adres');
+        expect(controller.locationStatus.name, 'serviceDisabled');
+        expect(controller.isLocating, isFalse);
+      },
+    );
 
-    test('unexpected GPS error keeps manual fields and exposes error state', () async {
-      final controller = StoreEditorController(
-        storage: storageService,
-        locationService: ThrowingLocationService(),
-        supabaseClient: fakeSupabase,
-      );
-      await controller.initialize(null);
-      controller.updateAddress(controller.data, 'Mevcut adres');
+    test(
+      'unexpected GPS error keeps manual fields and exposes error state',
+      () async {
+        final controller = StoreEditorController(
+          storage: storageService,
+          locationService: ThrowingLocationService(),
+          supabaseClient: fakeSupabase,
+        );
+        await controller.initialize(null);
+        controller.updateAddress(controller.data, 'Mevcut adres');
 
-      await controller.triggerFetchLocation();
+        await controller.triggerFetchLocation();
 
-      expect(controller.data.address, 'Mevcut adres');
-      expect(controller.locationStatus.name, 'error');
-      expect(controller.isLocating, isFalse);
-    });
+        expect(controller.data.address, 'Mevcut adres');
+        expect(controller.locationStatus.name, 'error');
+        expect(controller.isLocating, isFalse);
+      },
+    );
 
-    test('missing reverse geocode keeps manual fields and reports error', () async {
-      final controller = StoreEditorController(
-        storage: storageService,
-        locationService: MissingAddressLocationService(),
-        supabaseClient: fakeSupabase,
-      );
-      await controller.initialize(null);
-      controller.updateAddress(controller.data, 'Mevcut adres');
-      controller.selectProvince(controller.data, '06', 'Ankara');
-      controller.selectDistrict(controller.data, 'Çankaya', 'Çankaya');
+    test(
+      'missing reverse geocode keeps manual fields and reports error',
+      () async {
+        final controller = StoreEditorController(
+          storage: storageService,
+          locationService: MissingAddressLocationService(),
+          supabaseClient: fakeSupabase,
+        );
+        await controller.initialize(null);
+        controller.updateAddress(controller.data, 'Mevcut adres');
+        controller.selectProvince(controller.data, '06', 'Ankara');
+        controller.selectDistrict(controller.data, 'Çankaya', 'Çankaya');
 
-      await controller.triggerFetchLocation();
+        await controller.triggerFetchLocation();
 
-      expect(controller.data.address, 'Mevcut adres');
-      expect(controller.selectedProvinceName, 'Ankara');
-      expect(controller.selectedDistrictName, 'Çankaya');
-      expect(controller.locationStatus.name, 'error');
-      expect(
-        controller.locationStatusMessage,
-        'Koordinat alındı ancak adres çözümlenemedi. Mevcut adresiniz korundu.',
-      );
-    });
+        expect(controller.data.address, 'Mevcut adres');
+        expect(controller.selectedProvinceName, 'Ankara');
+        expect(controller.selectedDistrictName, 'Çankaya');
+        expect(controller.locationStatus.name, 'error');
+        expect(
+          controller.locationStatusMessage,
+          'Koordinat alındı ancak adres çözümlenemedi. Mevcut adresiniz korundu.',
+        );
+      },
+    );
 
     test(
       'partially matched GPS address keeps manual address province and district',
@@ -477,57 +483,63 @@ void main() {
       },
     );
 
-    test('GPS completion after controller disposal is ignored safely', () async {
-      final delayedLocation = DelayedFailedLocationService();
-      final controller = StoreEditorController(
-        storage: storageService,
-        locationService: delayedLocation,
-        supabaseClient: fakeSupabase,
-      );
-      await controller.initialize(null);
+    test(
+      'GPS completion after controller disposal is ignored safely',
+      () async {
+        final delayedLocation = DelayedFailedLocationService();
+        final controller = StoreEditorController(
+          storage: storageService,
+          locationService: delayedLocation,
+          supabaseClient: fakeSupabase,
+        );
+        await controller.initialize(null);
 
-      final fetch = controller.triggerFetchLocation();
-      controller.dispose();
-      delayedLocation.result.complete(
-        LocationResult.failure('Konum izni reddedildi.'),
-      );
+        final fetch = controller.triggerFetchLocation();
+        controller.dispose();
+        delayedLocation.result.complete(
+          LocationResult.failure('Konum izni reddedildi.'),
+        );
 
-      await expectLater(fetch, completes);
-    });
+        await expectLater(fetch, completes);
+      },
+    );
 
-    test('successful GPS completion after disposal does not mutate state', () async {
-      final delayedLocation = DelayedSuccessLocationService();
-      final controller = StoreEditorController(
-        storage: storageService,
-        locationService: delayedLocation,
-        supabaseClient: fakeSupabase,
-      );
-      await controller.initialize(null);
+    test(
+      'successful GPS completion after disposal does not mutate state',
+      () async {
+        final delayedLocation = DelayedSuccessLocationService();
+        final controller = StoreEditorController(
+          storage: storageService,
+          locationService: delayedLocation,
+          supabaseClient: fakeSupabase,
+        );
+        await controller.initialize(null);
 
-      final fetch = controller.triggerFetchLocation();
-      controller.dispose();
-      delayedLocation.result.complete(
-        LocationResult.success(
-          Position(
-            latitude: 41.0082,
-            longitude: 28.9784,
-            timestamp: DateTime.now(),
-            accuracy: 10,
-            altitude: 0,
-            heading: 0,
-            speed: 0,
-            speedAccuracy: 0,
-            altitudeAccuracy: 0,
-            headingAccuracy: 0,
+        final fetch = controller.triggerFetchLocation();
+        controller.dispose();
+        delayedLocation.result.complete(
+          LocationResult.success(
+            Position(
+              latitude: 41.0082,
+              longitude: 28.9784,
+              timestamp: DateTime.now(),
+              accuracy: 10,
+              altitude: 0,
+              heading: 0,
+              speed: 0,
+              speedAccuracy: 0,
+              altitudeAccuracy: 0,
+              headingAccuracy: 0,
+            ),
           ),
-        ),
-      );
-      await fetch;
+        );
+        await fetch;
 
-      expect(controller.latitude, isNull);
-      expect(controller.longitude, isNull);
-      expect(delayedLocation.reverseGeocodeCalls, 0);
-    });
+        expect(controller.latitude, isNull);
+        expect(controller.longitude, isNull);
+        expect(delayedLocation.reverseGeocodeCalls, 0);
+      },
+    );
 
     testWidgets(
       'GPS button uses controller flow and keeps the manual address on failure',
@@ -549,11 +561,12 @@ void main() {
             home: Scaffold(
               body: AnimatedBuilder(
                 animation: controller,
-                builder: (_, __) => FormLocationInfo(
-                  controller: controller,
-                  state: state,
-                  addressController: addressController,
-                ),
+                builder:
+                    (_, __) => FormLocationInfo(
+                      controller: controller,
+                      state: state,
+                      addressController: addressController,
+                    ),
               ),
             ),
           ),
@@ -591,11 +604,12 @@ void main() {
           home: Scaffold(
             body: AnimatedBuilder(
               animation: controller,
-              builder: (_, __) => FormLocationInfo(
-                controller: controller,
-                state: state,
-                addressController: addressController,
-              ),
+              builder:
+                  (_, __) => FormLocationInfo(
+                    controller: controller,
+                    state: state,
+                    addressController: addressController,
+                  ),
             ),
           ),
         ),
