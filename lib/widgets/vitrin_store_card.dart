@@ -29,7 +29,10 @@ class VitrinStoreCard extends StatelessWidget {
   });
 
   String get _whatsappButtonLabel {
-    final cat = (store.kategori.isNotEmpty ? store.kategori : store.businessType).toLowerCase().trim();
+    final cat =
+        (store.kategori.isNotEmpty ? store.kategori : store.businessType)
+            .toLowerCase()
+            .trim();
     if (cat.contains('kuaför') ||
         cat.contains('güzellik') ||
         cat.contains('hizmet') ||
@@ -47,7 +50,8 @@ class VitrinStoreCard extends StatelessWidget {
     final status = store.status.trim();
     final isOpen = status.isEmpty || status.toLowerCase() == 'açık';
     final location =
-        store.districtName.trim().isNotEmpty && store.provinceName.trim().isNotEmpty
+        store.districtName.trim().isNotEmpty &&
+                store.provinceName.trim().isNotEmpty
             ? '${store.districtName.trim()}, ${store.provinceName.trim()}'
             : store.districtName.trim().isNotEmpty
             ? store.districtName.trim()
@@ -57,14 +61,15 @@ class VitrinStoreCard extends StatelessWidget {
             ? store.address.trim()
             : 'Konum belirtilmedi';
 
-    final categoryLabel = (store.kategori.trim().isNotEmpty
-            ? store.kategori.trim()
-            : store.businessType.trim().isNotEmpty
-            ? store.businessType.trim()
-            : 'DİJİTAL VİTRİN')
-        .replaceAll('i', 'İ')
-        .replaceAll('ı', 'I')
-        .toUpperCase();
+    final categoryLabel =
+        (store.kategori.trim().isNotEmpty
+                ? store.kategori.trim()
+                : store.businessType.trim().isNotEmpty
+                ? store.businessType.trim()
+                : 'DİJİTAL VİTRİN')
+            .replaceAll('i', 'İ')
+            .replaceAll('ı', 'I')
+            .toUpperCase();
 
     return Container(
       decoration: BoxDecoration(
@@ -340,7 +345,9 @@ class VitrinStoreCard extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.60),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: (isOpen ? AppColors.success : AppColors.error).withValues(alpha: 0.5),
+          color: (isOpen ? AppColors.success : AppColors.error).withValues(
+            alpha: 0.5,
+          ),
           width: 1,
         ),
       ),
