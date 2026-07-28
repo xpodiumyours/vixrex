@@ -58,7 +58,7 @@ void main() {
     );
 
     expect(find.text('Test Mağazası'), findsOneWidget);
-    expect(find.text('Giyim & Butik'), findsOneWidget);
+    expect(find.text('GİYİM & BUTİK'), findsOneWidget);
   });
 
   testWidgets('2. isExample true olduğunda Örnek etiketi gösteriliyor', (
