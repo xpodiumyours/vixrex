@@ -58,14 +58,26 @@ jobs:
       - name: Dart format check
         shell: bash
         run: |
-          base_ref="${{ github.base_ref }}"
-          if [[ -z "$base_ref" ]]; then
-            base_ref="main"
+          event_name="${{ github.event_name }}"
+          if [[ "$event_name" == "pull_request" ]]; then
+            mapfile -t dart_files < <(
+              git diff --name-only --diff-filter=ACMRT \
+                "origin/${{ github.base_ref }}...HEAD" -- "*.dart"
+            )
+          else
+            before_sha="${{ github.event.before }}"
+            head_sha="${{ github.sha }}"
+            zero_sha="0000000000000000000000000000000000000000"
+            if [[ -z "$before_sha" || "$before_sha" == "$zero_sha" ]] ||
+              ! git cat-file -e "$before_sha^{commit}" 2>/dev/null; then
+              mapfile -t dart_files < <(git ls-files -- "*.dart")
+            else
+              mapfile -t dart_files < <(
+                git diff --name-only --diff-filter=ACMRT \
+                  "$before_sha" "$head_sha" -- "*.dart"
+              )
+            fi
           fi
-          mapfile -t dart_files < <(
-            git diff --name-only --diff-filter=ACMRT \
-              "origin/$base_ref...HEAD" -- "*.dart"
-          )
           if (( ${#dart_files[@]} > 0 )); then
             dart format "${dart_files[@]}"
             git diff --exit-code -- "${dart_files[@]}"
