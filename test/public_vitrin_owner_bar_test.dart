@@ -42,7 +42,8 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues({
       LocalStorageKeys.lastPublishedSlug: 'test-vitrin',
-      LocalStorageKeys.lastPublishedLink: 'https://vixrex-public.vercel.app/v/test-vitrin',
+      LocalStorageKeys.lastPublishedLink:
+          'https://vixrex-public.vercel.app/v/test-vitrin',
       LocalStorageKeys.lastPublishedName: 'Test Vitrin',
       LocalStorageKeys.lastPublishedEditToken: 'token123',
     });
@@ -97,7 +98,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     SharedPreferences.setMockInitialValues({
       LocalStorageKeys.lastPublishedSlug: 'test-vitrin',
-      LocalStorageKeys.lastPublishedLink: 'https://vixrex-public.vercel.app/v/test-vitrin',
+      LocalStorageKeys.lastPublishedLink:
+          'https://vixrex-public.vercel.app/v/test-vitrin',
       LocalStorageKeys.lastPublishedName: 'Test Vitrin',
       LocalStorageKeys.lastPublishedEditToken: 'token123',
     });
