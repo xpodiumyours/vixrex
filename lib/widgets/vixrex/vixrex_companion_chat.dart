@@ -9,6 +9,7 @@ import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/vixrex_message_bubble.dart';
 import 'package:vixrex/widgets/vixrex_quick_replies.dart';
+import 'package:vixrex/widgets/vixrex/vixrex_recommendation_card.dart';
 
 const String _nluConfirmPrefix = 'nlu_confirm:';
 const String _nluCancelPayload = 'nlu_cancel';
@@ -283,6 +284,13 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        VixRexRecommendationCard(
+          recommendation: widget.recommendation,
+          isRecommendationDismissed: widget.isRecommendationDismissed,
+          onDismissRecommendation: widget.onDismissRecommendation,
+          onAction: widget.onAction,
+        ),
+        const SizedBox(height: 10),
         Expanded(
           child: ListView.builder(
             controller: _scrollCtrl,
