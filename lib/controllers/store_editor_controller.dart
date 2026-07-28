@@ -112,7 +112,7 @@ class StoreEditorController extends ChangeNotifier
           .toList(),
     );
     if (_data.shelfImageUrl.isNotEmpty) {
-      setCoverUrl(_data.shelfImageUrl);
+      super.setCoverUrl(_data.shelfImageUrl);
     }
   }
 
@@ -168,26 +168,16 @@ class StoreEditorController extends ChangeNotifier
   @override
   void setCoverUrl(String url) {
     final trimmed = url.trim();
-    super.setCoverUrl(trimmed);
     if (trimmed.isNotEmpty) {
       _data.shelfImageUrl = trimmed;
       _data.coverImageUrl = trimmed;
     }
-    saveLocally();
-    if (_publishedInfo != null && _publishedInfo!.slug.isNotEmpty) {
-      publish();
-    }
-    notifyListeners();
+    super.setCoverUrl(trimmed);
   }
 
   @override
   void setCoverBytes(Uint8List bytes, String fileName, [String? ext, String? contentType]) {
     super.setCoverBytes(bytes, fileName, ext, contentType);
-    saveLocally();
-    if (_publishedInfo != null && _publishedInfo!.slug.isNotEmpty) {
-      publish();
-    }
-    notifyListeners();
   }
 
   void setName(String name) {
