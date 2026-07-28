@@ -495,14 +495,19 @@ void main() {
     test(
       'publish updates status and stores published info successfully on valid data',
       () async {
+        final fakePublish = FakeStorePublishService();
         final controller = StoreEditorController(
           storage: storageService,
-          publishService: FakeStorePublishService(),
+          publishService: fakePublish,
           uploadService: FakeStoreShelfUploadService(),
           supabaseClient: fakeSupabase,
         );
 
         await controller.initialize('Valid Store');
+        controller.setCoverBytes(
+          Uint8List.fromList([0xFF, 0xD8, 0xFF]),
+          'cover.jpg',
+        );
         controller.updateWhatsapp('05551234567');
         controller.updateAddress(controller.data, 'Valid Address');
         controller.selectProvince(controller.data, '34', 'İstanbul');
@@ -511,6 +516,8 @@ void main() {
         final publicLink = await controller.publish();
         expect(publicLink, contains('test-store'));
         expect(controller.publishedInfo?.slug, 'test-store');
+        expect(controller.data.shelfImageUrl, 'https://dummy.co/cover.jpg');
+        expect(fakePublish.publishCount, 1);
       },
     );
 
