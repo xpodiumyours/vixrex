@@ -62,6 +62,8 @@ class VitrinStoreCard extends StatelessWidget {
             : store.businessType.trim().isNotEmpty
             ? store.businessType.trim()
             : 'DİJİTAL VİTRİN')
+        .replaceAll('i', 'İ')
+        .replaceAll('ı', 'I')
         .toUpperCase();
 
     return Container(
