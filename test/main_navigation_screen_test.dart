@@ -214,7 +214,7 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.byKey(const ValueKey('vixrex_badge_mascot')));
+    await tester.tap(find.bySemanticsLabel('Vixrex asistanını aç'));
     await tester.pump();
 
     expect(opened, isTrue);
