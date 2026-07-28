@@ -117,8 +117,11 @@ void main() {
     expect(beforeOpeningChat, greaterThan(0));
 
     final semanticsHandle = tester.ensureSemantics();
-    addTearDown(semanticsHandle.dispose);
-    await tester.tap(find.bySemanticsLabel('Vixrex asistanını aç'));
+    try {
+      await tester.tap(find.bySemanticsLabel('Vixrex asistanını aç'));
+    } finally {
+      semanticsHandle.dispose();
+    }
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
     await tester.pump(const Duration(milliseconds: 450));
