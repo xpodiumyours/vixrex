@@ -5,11 +5,20 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
+enum LocationFailureReason {
+  none,
+  permissionDenied,
+  serviceDisabled,
+  timeout,
+  unknown,
+}
+
 class LocationResult {
   const LocationResult._({
     this.position,
     this.approximatePosition,
     this.errorMessage,
+    this.failureReason = LocationFailureReason.none,
   });
 
   factory LocationResult.success(Position position) =>
@@ -18,12 +27,15 @@ class LocationResult {
   factory LocationResult.approximate(Position position, String message) =>
       LocationResult._(approximatePosition: position, errorMessage: message);
 
-  factory LocationResult.failure(String message) =>
-      LocationResult._(errorMessage: message);
+  factory LocationResult.failure(
+    String message, {
+    LocationFailureReason reason = LocationFailureReason.unknown,
+  }) => LocationResult._(errorMessage: message, failureReason: reason);
 
   final Position? position;
   final Position? approximatePosition;
   final String? errorMessage;
+  final LocationFailureReason failureReason;
 
   bool get isSuccess => position != null;
   bool get hasApproximatePosition => approximatePosition != null;
@@ -42,6 +54,7 @@ class LocationService {
     if (!serviceEnabled) {
       return LocationResult.failure(
         'Konum servisleri devre disi. Lutfen cihazinizda konumu acin.',
+        reason: LocationFailureReason.serviceDisabled,
       );
     }
 
@@ -51,6 +64,7 @@ class LocationService {
       if (permission == LocationPermission.denied) {
         return LocationResult.failure(
           'Konum izni reddedildi. Konum almak icin izin vermelisiniz.',
+          reason: LocationFailureReason.permissionDenied,
         );
       }
     }
@@ -59,6 +73,7 @@ class LocationService {
       return LocationResult.failure(
         'Konum izinleri kalici olarak reddedildi. '
         'Tarayici ayarlarindan izin verin.',
+        reason: LocationFailureReason.permissionDenied,
       );
     }
 
@@ -74,15 +89,20 @@ class LocationService {
     } on TimeoutException {
       return LocationResult.failure(
         'Konum alinamadi. Lutfen tekrar deneyin veya adresi elle yazin.',
+        reason: LocationFailureReason.timeout,
       );
     } catch (error) {
       final errorText = error.toString().toLowerCase();
       if (errorText.contains('timeout') || errorText.contains('time out')) {
         return LocationResult.failure(
           'Konum alinamadi. Lutfen tekrar deneyin veya adresi elle yazin.',
+          reason: LocationFailureReason.timeout,
         );
       }
-      return LocationResult.failure('Konum alinirken hata olustu: $error');
+      return LocationResult.failure(
+        'Konum alinirken hata olustu: $error',
+        reason: LocationFailureReason.unknown,
+      );
     }
   }
 
