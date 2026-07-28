@@ -36,31 +36,11 @@ class FormLocationInfo extends StatelessWidget {
         onProvinceChanged: (code, name) => controller.selectProvince(controller.data, code, name),
         onDistrictChanged: (code, name) => controller.selectDistrict(controller.data, code, name),
         onAddressChanged: (value) => controller.updateAddress(controller.data, value),
-        onLocatingStateChanged: (_) {},
-        onLocationUpdated: ({
-          latitude,
-          longitude,
-          accuracy,
-          statusMessage,
-          address,
-          provinceCode,
-          provinceName,
-          districtCode,
-          districtName,
-        }) {
-          if (latitude != null && longitude != null) {
-            controller.data.latitude = latitude;
-            controller.data.longitude = longitude;
-            controller.data.locationAccuracyMeters = accuracy;
-            controller.data.locationSource = 'device';
-            controller.data.locationConsentAt = DateTime.now();
+        onLocateRequested: () async {
+          await controller.triggerFetchLocation();
+          if (addressController.text != controller.data.address) {
+            addressController.text = controller.data.address;
           }
-          if (address != null) {
-            addressController.text = address;
-            controller.updateAddress(controller.data, address);
-          }
-          controller.selectProvince(controller.data, provinceCode, provinceName);
-          controller.selectDistrict(controller.data, districtCode, districtName);
         },
       ),
     );
