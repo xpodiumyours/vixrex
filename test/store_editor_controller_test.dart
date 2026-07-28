@@ -634,6 +634,7 @@ void main() {
         );
 
         await controller.initialize('Valid Store');
+        controller.data.slug = 'valid-store';
         controller.setCoverBytes(
           Uint8List.fromList([0xFF, 0xD8, 0xFF]),
           'cover.jpg',
