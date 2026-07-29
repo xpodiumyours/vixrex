@@ -4,6 +4,8 @@ class StoreSafeSelect {
   const StoreSafeSelect._();
 
   /// `edit_token` hariç StoreData / public vitrin alanları.
+  /// Not: Yeni sütunlar migration uygulanmadan buraya eklenmez;
+  /// aksi halde Keşfet/select tüm vitrin listesini düşürür.
   static const columns =
       'id,slug,name,business_type,description,corporate_bio,whatsapp,instagram,'
       'website,address,theme,status,marketplace_links,gallery_items,products,'

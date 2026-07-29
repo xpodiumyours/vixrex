@@ -222,6 +222,103 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
+  void updatePhone(String value) {
+    _data.phone = value.trim();
+    notifyListeners();
+  }
+
+  void updateEmail(String value) {
+    _data.email = value.trim();
+    notifyListeners();
+  }
+
+  void updateHeroBadge(String value) {
+    _data.heroBadge = value.trim();
+    notifyListeners();
+  }
+
+  void updateCorporateBio(String value) {
+    _data.corporateBio = value;
+    notifyListeners();
+  }
+
+  void updateAboutSection({
+    required String kicker,
+    required String title,
+    required String body,
+    required String imageUrl,
+    required String imageCaption,
+    required List<StoreAboutValue> values,
+  }) {
+    _data.aboutKicker = kicker.trim();
+    _data.aboutTitle = title.trim();
+    _data.corporateBio = body;
+    _data.aboutImageUrl = imageUrl.trim();
+    _data.aboutImageCaption = imageCaption.trim();
+    _data.aboutValues = List.of(values.take(3));
+    notifyListeners();
+  }
+
+  bool get hasAboutSection {
+    return _data.aboutKicker.trim().isNotEmpty ||
+        _data.aboutTitle.trim().isNotEmpty ||
+        _data.corporateBio.trim().isNotEmpty ||
+        _data.aboutImageUrl.trim().isNotEmpty ||
+        _data.aboutValues.any((v) => v.title.trim().isNotEmpty);
+  }
+
+  void updateGallerySectionMeta({
+    required String kicker,
+    required String title,
+  }) {
+    _data.gallerySectionKicker = kicker.trim();
+    _data.gallerySectionTitle = title.trim();
+    notifyListeners();
+  }
+
+  void updateShowStorefrontRating(bool value) {
+    _data.showStorefrontRating = value;
+    notifyListeners();
+  }
+
+  void updateShowDirectionsLink(bool value) {
+    _data.showDirectionsLink = value;
+    notifyListeners();
+  }
+
+  void updateFeaturedCampaign({
+    required String label,
+    required String title,
+    required String description,
+    required String priceText,
+    required String imageUrl,
+  }) {
+    _data.featuredBannerLabel = label.trim();
+    _data.featuredBannerTitle = title.trim();
+    _data.featuredBannerDescription = description.trim();
+    _data.featuredBannerPriceText = priceText.trim();
+    _data.featuredBannerImageUrl = imageUrl.trim();
+    notifyListeners();
+  }
+
+  bool get hasFeaturedCampaign {
+    return _data.featuredBannerTitle.trim().isNotEmpty ||
+        _data.featuredBannerDescription.trim().isNotEmpty ||
+        _data.featuredBannerImageUrl.trim().isNotEmpty ||
+        _data.featuredBannerPriceText.trim().isNotEmpty ||
+        _data.featuredBannerLabel.trim().isNotEmpty;
+  }
+
+  void updateFaqItems(List<StoreFaqItem> items) {
+    _data.faqItems = List.of(items);
+    notifyListeners();
+  }
+
+  void updateWorkingHoursText(String value) {
+    _data.workingHours = value.trim();
+    notifyListeners();
+  }
+
   void updateInstagram(String value) {
     _data.instagram = value.trim();
     notifyListeners();
@@ -833,6 +930,7 @@ class StoreEditorController extends ChangeNotifier
   }
 
   Future<void> saveLocally() async {
+    _syncEditorGalleryIntoStoreData();
     await storage.saveVitrinData(_data);
     if (_publishedInfo != null) {
       await storage.savePublishedVitrinInfo(
@@ -842,6 +940,19 @@ class StoreEditorController extends ChangeNotifier
         editToken: _publishedInfo!.editToken,
       );
     }
+  }
+
+  /// Editör galeri etiketlerini StoreData'ya yazar (yerel kayıt / yayın).
+  void _syncEditorGalleryIntoStoreData() {
+    _data.galleryItems =
+        activeGalleryItems.map((item) {
+          return StoreGalleryItem(
+            id: item.id,
+            imageUrl: item.imageUrl ?? '',
+            title: item.title ?? '',
+            description: item.description ?? '',
+          );
+        }).toList();
   }
 
   void clearValidationErrors() {

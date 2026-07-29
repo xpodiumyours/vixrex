@@ -34,6 +34,7 @@ class Product {
   String? sku;
   double? oldPriceAmount;
   String? badgeTag;
+  String? fulfillmentLocation;
 
   Product({
     required this.id,
@@ -55,6 +56,7 @@ class Product {
     this.sku,
     this.oldPriceAmount,
     this.badgeTag,
+    this.fulfillmentLocation,
   }) : imageUrls = _normalizeImageUrls(imageUrls, imagePath);
 
   static List<String> _normalizeImageUrls(
@@ -106,6 +108,7 @@ class Product {
     putOptional('sourcePermalink', sourcePermalink);
     putOptional('importedAt', importedAt);
     putOptional('badgeTag', badgeTag);
+    putOptional('fulfillmentLocation', fulfillmentLocation);
     if (oldPriceAmount != null) {
       json['oldPriceAmount'] = oldPriceAmount;
     }
@@ -132,6 +135,14 @@ class Product {
         ? double.tryParse((json['oldPriceAmount'] ?? json['old_price_amount']).toString())
         : null,
     badgeTag: (json['badgeTag'] ?? json['badge_tag']) as String?,
+    fulfillmentLocation:
+        (json['fulfillmentLocation'] ?? json['fulfillment_region'] ?? '')
+                .toString()
+                .trim()
+                .isEmpty
+            ? null
+            : (json['fulfillmentLocation'] ?? json['fulfillment_region'])
+                .toString(),
     slug:
         (json['slug'] ?? '').toString().trim().isEmpty
             ? null
@@ -179,6 +190,9 @@ class Product {
     String? sourceMediaId,
     String? sourcePermalink,
     String? importedAt,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentLocation,
   }) {
     return Product(
       id: id ?? this.id,
@@ -196,6 +210,9 @@ class Product {
       sourceMediaId: sourceMediaId ?? this.sourceMediaId,
       sourcePermalink: sourcePermalink ?? this.sourcePermalink,
       importedAt: importedAt ?? this.importedAt,
+      oldPriceAmount: oldPriceAmount ?? this.oldPriceAmount,
+      badgeTag: badgeTag ?? this.badgeTag,
+      fulfillmentLocation: fulfillmentLocation ?? this.fulfillmentLocation,
     );
   }
 }

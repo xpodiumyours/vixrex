@@ -86,6 +86,22 @@ void main() {
       expect(p.importedAt, '2026-06-26T10:00:00Z');
     });
 
+    test('parses Dilim B discount and fulfillment fields', () {
+      final p = Product.fromJson({
+        'id': 'p2',
+        'name': 'Kazak',
+        'old_price_amount': 799,
+        'badge_tag': '-31%',
+        'fulfillment_region': 'Çekmeköy mağaza',
+      });
+      expect(p.oldPriceAmount, 799);
+      expect(p.badgeTag, '-31%');
+      expect(p.fulfillmentLocation, 'Çekmeköy mağaza');
+      expect(p.toJson()['oldPriceAmount'], 799);
+      expect(p.toJson()['badgeTag'], '-31%');
+      expect(p.toJson()['fulfillmentLocation'], 'Çekmeköy mağaza');
+    });
+
     test('uses defaults for missing fields', () {
       final p = Product.fromJson({'id': 'x'});
       expect(p.name, '');

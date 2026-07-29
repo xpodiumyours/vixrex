@@ -37,7 +37,24 @@ class StorePublishPayloadBuilder {
       'business_type': data.businessType.trim(),
       'description': data.description.trim(),
       'corporate_bio': data.corporateBio.trim(),
+      'about_kicker': data.aboutKicker.trim(),
+      'about_title': data.aboutTitle.trim(),
+      'about_image_url': data.aboutImageUrl.trim(),
+      'about_image_caption': data.aboutImageCaption.trim(),
+      'about_values': aboutValuesToJson(data),
+      'gallery_section_kicker': data.gallerySectionKicker.trim(),
+      'gallery_section_title': data.gallerySectionTitle.trim(),
+      'show_storefront_rating': data.showStorefrontRating,
+      'show_directions_link': data.showDirectionsLink,
+      'featured_banner_label': data.featuredBannerLabel.trim(),
+      'featured_banner_title': data.featuredBannerTitle.trim(),
+      'featured_banner_description': data.featuredBannerDescription.trim(),
+      'featured_banner_image_url': data.featuredBannerImageUrl.trim(),
+      'featured_banner_price_text': data.featuredBannerPriceText.trim(),
       'whatsapp': data.whatsapp.trim(),
+      'phone': data.phone.trim(),
+      'email': data.email.trim(),
+      'hero_badge': data.heroBadge.trim(),
       'instagram': data.instagram.trim(),
       'website': data.website.trim(),
       'address': data.address.trim(),
@@ -68,6 +85,7 @@ class StorePublishPayloadBuilder {
       'product_storage_version': 2,
       'product_categories': productCategoriesToJson(data),
       'offerings': offeringsToJson(data),
+      'faq_items': faqItemsToJson(data),
       'privacy_notice_acknowledged': data.privacyNoticeAcknowledged,
       'privacy_notice_version': data.privacyNoticeVersion.trim(),
       'privacy_notice_hash': data.privacyNoticeHash.trim(),
@@ -114,6 +132,11 @@ class StorePublishPayloadBuilder {
       putOptional('sourceMediaId', p.sourceMediaId);
       putOptional('sourcePermalink', p.sourcePermalink);
       putOptional('importedAt', p.importedAt);
+      putOptional('badgeTag', p.badgeTag);
+      putOptional('fulfillmentLocation', p.fulfillmentLocation);
+      if (p.oldPriceAmount != null) {
+        item['oldPriceAmount'] = p.oldPriceAmount;
+      }
 
       return item;
     }).toList();
@@ -168,6 +191,41 @@ class StorePublishPayloadBuilder {
             'price': o.price.trim(),
             'durationMinutes': o.durationMinutes,
             'isBookable': o.isBookable,
+          },
+        )
+        .toList();
+  }
+
+  List<Map<String, String>> faqItemsToJson(StoreData data) {
+    return data.faqItems
+        .where(
+          (item) =>
+              item.question.trim().isNotEmpty && item.answer.trim().isNotEmpty,
+        )
+        .take(20)
+        .map(
+          (item) => {
+            'id': item.id.trim().isEmpty
+                ? DateTime.now().microsecondsSinceEpoch.toString()
+                : item.id.trim(),
+            'question': item.question.trim(),
+            'answer': item.answer.trim(),
+          },
+        )
+        .toList();
+  }
+
+  List<Map<String, String>> aboutValuesToJson(StoreData data) {
+    return data.aboutValues
+        .where((item) => item.title.trim().isNotEmpty)
+        .take(3)
+        .map(
+          (item) => {
+            'id': item.id.trim().isEmpty
+                ? DateTime.now().microsecondsSinceEpoch.toString()
+                : item.id.trim(),
+            'title': item.title.trim(),
+            'description': item.description.trim(),
           },
         )
         .toList();

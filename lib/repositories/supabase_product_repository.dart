@@ -195,6 +195,16 @@ class SupabaseProductRepository implements ProductRepository {
       isVisible: row['is_visible'] as bool? ?? true,
       slug: row['slug'] as String?,
       source: row['source_type'] as String?,
+      oldPriceAmount: row['old_price_amount'] != null
+          ? double.tryParse(row['old_price_amount'].toString())
+          : null,
+      badgeTag: (row['badge_tag'] as String?)?.trim().isEmpty == true
+          ? null
+          : row['badge_tag'] as String?,
+      fulfillmentLocation:
+          (row['fulfillment_region'] as String?)?.trim().isEmpty == true
+              ? null
+              : row['fulfillment_region'] as String?,
     );
   }
 }
