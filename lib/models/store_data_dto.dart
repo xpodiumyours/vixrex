@@ -15,6 +15,9 @@ class StoreDataDto {
       'businessType': data.businessType,
       'description': data.description,
       'whatsapp': data.whatsapp,
+      'phone': data.phone,
+      'email': data.email,
+      'heroBadge': data.heroBadge,
       'instagram': data.instagram,
       'website': data.website,
       'address': data.address,
@@ -27,11 +30,30 @@ class StoreDataDto {
       'productCategories': data.productCategories.map((e) => e.toJson()).toList(),
       'marketplaceLinks': data.marketplaceLinks.map((e) => e.toJson()).toList(),
       'corporateBio': data.corporateBio,
+      'aboutKicker': data.aboutKicker,
+      'aboutTitle': data.aboutTitle,
+      'aboutImageUrl': data.aboutImageUrl,
+      'aboutImageCaption': data.aboutImageCaption,
+      'aboutValues': data.aboutValues.map((e) => e.toJson()).toList(),
+      'gallerySectionKicker': data.gallerySectionKicker,
+      'gallerySectionTitle': data.gallerySectionTitle,
+      'showStorefrontRating': data.showStorefrontRating,
+      'showDirectionsLink': data.showDirectionsLink,
+      'featuredBannerLabel': data.featuredBannerLabel,
+      'featuredBannerTitle': data.featuredBannerTitle,
+      'featuredBannerDescription': data.featuredBannerDescription,
+      'featuredBannerImageUrl': data.featuredBannerImageUrl,
+      'featuredBannerPriceText': data.featuredBannerPriceText,
       'referencesLink': data.referencesLink,
       'shelfImageUrl': shelfImageUrl,
       'galleryItems': data.galleryItems.map((e) => e.toJson()).toList(),
       'offerings': data.offerings.map((e) => e.toJson()).toList(),
+      'faqItems': data.faqItems.map((e) => e.toJson()).toList(),
       'isStore': data.isStore,
+      'isDemo': data.isDemo,
+      'storefront_kind': data.storefrontKind,
+      'rental_access_status': data.rentalAccessStatus,
+      'rental_access_until': data.rentalAccessUntil?.toIso8601String(),
       'kategori': data.kategori,
       'workingHours': data.workingHours,
       'province_code': data.provinceCode,
@@ -76,6 +98,10 @@ class StoreDataDto {
       json['galleryItems'] ?? json['gallery_items'],
     );
     final parsedOfferings = _parseOfferings(json['offerings']);
+    final parsedFaqItems = _parseFaqItems(json['faqItems'] ?? json['faq_items']);
+    final parsedAboutValues = _parseAboutValues(
+      json['aboutValues'] ?? json['about_values'],
+    );
     final parsedProductCategories = _parseProductCategories(
       json['productCategories'] ?? json['product_categories'],
       parsedProducts,
@@ -88,6 +114,9 @@ class StoreDataDto {
           _getString(json, 'businessType', 'business_type') ?? 'Butik',
       description: _getString(json, 'description') ?? '',
       whatsapp: _getString(json, 'whatsapp') ?? '',
+      phone: _getString(json, 'phone') ?? '',
+      email: _getString(json, 'email') ?? '',
+      heroBadge: _getString(json, 'heroBadge', 'hero_badge') ?? '',
       instagram: _getString(json, 'instagram') ?? '',
       website: _getString(json, 'website') ?? '',
       address: _getString(json, 'address') ?? '',
@@ -104,13 +133,68 @@ class StoreDataDto {
               ?.map((e) => MarketplaceLink.fromJson(e as Map<String, dynamic>))
               .toList(),
       corporateBio: _getString(json, 'corporateBio', 'corporate_bio') ?? '',
+      aboutKicker: _getString(json, 'aboutKicker', 'about_kicker') ?? '',
+      aboutTitle: _getString(json, 'aboutTitle', 'about_title') ?? '',
+      aboutImageUrl: _getString(json, 'aboutImageUrl', 'about_image_url') ?? '',
+      aboutImageCaption:
+          _getString(json, 'aboutImageCaption', 'about_image_caption') ?? '',
+      aboutValues: parsedAboutValues,
+      gallerySectionKicker:
+          _getString(json, 'gallerySectionKicker', 'gallery_section_kicker') ??
+          '',
+      gallerySectionTitle:
+          _getString(json, 'gallerySectionTitle', 'gallery_section_title') ??
+          '',
+      showStorefrontRating:
+          (json['showStorefrontRating'] ??
+                  json['show_storefront_rating'] ??
+                  false)
+              as bool,
+      showDirectionsLink:
+          (json['showDirectionsLink'] ?? json['show_directions_link'] ?? true)
+              as bool,
+      featuredBannerLabel:
+          _getString(json, 'featuredBannerLabel', 'featured_banner_label') ??
+          '',
+      featuredBannerTitle:
+          _getString(json, 'featuredBannerTitle', 'featured_banner_title') ??
+          '',
+      featuredBannerDescription:
+          _getString(
+            json,
+            'featuredBannerDescription',
+            'featured_banner_description',
+          ) ??
+          '',
+      featuredBannerImageUrl:
+          _getString(
+            json,
+            'featuredBannerImageUrl',
+            'featured_banner_image_url',
+          ) ??
+          '',
+      featuredBannerPriceText:
+          _getString(
+            json,
+            'featuredBannerPriceText',
+            'featured_banner_price_text',
+          ) ??
+          '',
       referencesLink:
           _getString(json, 'referencesLink', 'references_link') ?? '',
       shelfImageUrl: _getString(json, 'shelfImageUrl', 'shelf_image_url') ?? '',
       galleryItems: parsedGalleryItems,
       offerings: parsedOfferings,
+      faqItems: parsedFaqItems,
       isStore: (json['is_store'] ?? json['isStore'] ?? false) as bool,
       isDemo: (json['is_demo'] ?? json['isDemo'] ?? false) as bool,
+      storefrontKind:
+          _getString(json, 'storefrontKind', 'storefront_kind') ?? 'standard',
+      rentalAccessStatus:
+          _getString(json, 'rentalAccessStatus', 'rental_access_status') ?? '',
+      rentalAccessUntil: _parseDateTime(
+        json['rentalAccessUntil'] ?? json['rental_access_until'],
+      ),
       kategori: _getString(json, 'kategori', 'category') ?? '',
       workingHours: _getString(json, 'workingHours', 'working_hours') ?? '',
       provinceCode: _getString(json, 'provinceCode', 'province_code') ?? '',
@@ -223,6 +307,33 @@ class StoreDataDto {
         .map((item) => StoreOffering.fromJson(Map<String, dynamic>.from(item)))
         .where((item) => item.title.trim().isNotEmpty)
         .take(6)
+        .toList();
+  }
+
+  static List<StoreFaqItem> _parseFaqItems(Object? rawItems) {
+    if (rawItems is! List) return [];
+
+    return rawItems
+        .whereType<Map>()
+        .map((item) => StoreFaqItem.fromJson(Map<String, dynamic>.from(item)))
+        .where(
+          (item) =>
+              item.question.trim().isNotEmpty && item.answer.trim().isNotEmpty,
+        )
+        .take(20)
+        .toList();
+  }
+
+  static List<StoreAboutValue> _parseAboutValues(Object? rawItems) {
+    if (rawItems is! List) return [];
+
+    return rawItems
+        .whereType<Map>()
+        .map(
+          (item) => StoreAboutValue.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .where((item) => item.title.trim().isNotEmpty)
+        .take(3)
         .toList();
   }
 

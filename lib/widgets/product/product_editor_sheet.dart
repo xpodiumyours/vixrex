@@ -34,6 +34,9 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
 
   late final TextEditingController _nameController;
   late final TextEditingController _priceController;
+  late final TextEditingController _oldPriceController;
+  late final TextEditingController _badgeTagController;
+  late final TextEditingController _fulfillmentController;
   late final TextEditingController _descriptionController;
   late final List<_ProductImageDraft> _images;
   late String _categoryId;
@@ -47,6 +50,15 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     final product = widget.product;
     _nameController = TextEditingController(text: product?.name ?? '');
     _priceController = TextEditingController(text: product?.price ?? '');
+    _oldPriceController = TextEditingController(
+      text: product?.oldPriceAmount == null
+          ? ''
+          : _formatAmount(product!.oldPriceAmount!),
+    );
+    _badgeTagController = TextEditingController(text: product?.badgeTag ?? '');
+    _fulfillmentController = TextEditingController(
+      text: product?.fulfillmentLocation ?? '',
+    );
     _descriptionController = TextEditingController(
       text: product?.description ?? '',
     );
@@ -78,8 +90,29 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   void dispose() {
     _nameController.dispose();
     _priceController.dispose();
+    _oldPriceController.dispose();
+    _badgeTagController.dispose();
+    _fulfillmentController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  String _formatAmount(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toStringAsFixed(0);
+    }
+    return value.toStringAsFixed(2);
+  }
+
+  double? _parseAmount(String raw) {
+    var cleaned = raw.trim().replaceAll(RegExp(r'[^\d,.]'), '');
+    if (cleaned.isEmpty) return null;
+    if (cleaned.contains(',') && cleaned.contains('.')) {
+      cleaned = cleaned.replaceAll('.', '').replaceAll(',', '.');
+    } else if (cleaned.contains(',')) {
+      cleaned = cleaned.replaceAll(',', '.');
+    }
+    return double.tryParse(cleaned);
   }
 
   Future<void> _pickImages() async {
@@ -191,6 +224,13 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         sourceMediaId: widget.product?.sourceMediaId,
         sourcePermalink: widget.product?.sourcePermalink,
         importedAt: widget.product?.importedAt,
+        oldPriceAmount: _parseAmount(_oldPriceController.text),
+        badgeTag: _badgeTagController.text.trim().isEmpty
+            ? null
+            : _badgeTagController.text.trim(),
+        fulfillmentLocation: _fulfillmentController.text.trim().isEmpty
+            ? null
+            : _fulfillmentController.text.trim(),
       );
       if (!mounted) return;
       Navigator.of(context).pop(result);
@@ -237,6 +277,16 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
               _field(_nameController, 'Ürün adı *', 80),
               const SizedBox(height: 12),
               _field(_priceController, 'Fiyat', 30),
+              const SizedBox(height: 12),
+              _field(_oldPriceController, 'Eski fiyat (üstü çizili)', 30),
+              const SizedBox(height: 12),
+              _field(_badgeTagController, 'Rozet (örn. Yeni, -31%)', 20),
+              const SizedBox(height: 12),
+              _field(
+                _fulfillmentController,
+                'Teslim bölgesi (isteğe bağlı)',
+                80,
+              ),
               const SizedBox(height: 12),
               _field(_descriptionController, 'Kısa açıklama', 500, maxLines: 4),
               const SizedBox(height: 12),

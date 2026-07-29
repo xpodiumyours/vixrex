@@ -91,6 +91,104 @@ void main() {
       expect(payload['publication_consent_version'], 'consent-v1');
     });
 
+    test('Dilim A: e-posta, telefon, kapak rozeti ve saatleri payload’a yazar', () {
+      final data = StoreData(
+        name: 'Atmosfer',
+        email: '  merhaba@atmosfer.com  ',
+        phone: '  0532 123 45 67  ',
+        heroBadge: '  Atölye / Mağaza  ',
+        workingHours: '  Pzt—Cmt 09:00-20:00  ',
+        corporateBio: '  Hikâye metni  ',
+      );
+
+      final payload = builder.toStoreUpdateMap(data);
+
+      expect(payload['email'], 'merhaba@atmosfer.com');
+      expect(payload['phone'], '0532 123 45 67');
+      expect(payload['hero_badge'], 'Atölye / Mağaza');
+      expect(payload['working_hours'], 'Pzt—Cmt 09:00-20:00');
+      expect(payload['corporate_bio'], 'Hikâye metni');
+    });
+
+    test('Dilim G: hakkımızda / galeri meta alanlarını payload’a yazar', () {
+      final data = StoreData(
+        name: 'Atmosfer',
+        aboutKicker: '  Hikâye  ',
+        aboutTitle: '  Başlık  ',
+        aboutImageUrl: '  https://example.com/about.jpg  ',
+        aboutImageCaption: '  Alt yazı  ',
+        aboutValues: [
+          StoreAboutValue(
+            id: '1',
+            title: '  Seçili koleksiyon  ',
+            description: '  Az sayıda ürün  ',
+          ),
+        ],
+        gallerySectionKicker: '  Mağazadan kareler  ',
+        gallerySectionTitle: '  Yakından tanı  ',
+        showStorefrontRating: true,
+        showDirectionsLink: false,
+      );
+
+      final payload = builder.toStoreUpdateMap(data);
+      expect(payload['about_kicker'], 'Hikâye');
+      expect(payload['about_title'], 'Başlık');
+      expect(payload['about_image_url'], 'https://example.com/about.jpg');
+      expect(payload['about_image_caption'], 'Alt yazı');
+      expect(payload['about_values'], [
+        {
+          'id': '1',
+          'title': 'Seçili koleksiyon',
+          'description': 'Az sayıda ürün',
+        },
+      ]);
+      expect(payload['gallery_section_kicker'], 'Mağazadan kareler');
+      expect(payload['gallery_section_title'], 'Yakından tanı');
+      expect(payload['show_storefront_rating'], isTrue);
+      expect(payload['show_directions_link'], isFalse);
+    });
+
+    test('Dilim D: öne çıkan kampanya alanlarını payload’a yazar', () {
+      final data = StoreData(
+        name: 'Atmosfer',
+        featuredBannerLabel: '  Yeni Sezon  ',
+        featuredBannerTitle: '  Sonbahar Koleksiyonu  ',
+        featuredBannerDescription: '  Doğal kumaşlar  ',
+        featuredBannerImageUrl: '  https://example.com/kampanya.jpg  ',
+        featuredBannerPriceText: '  349 TL’den  ',
+      );
+
+      final payload = builder.toStoreUpdateMap(data);
+      expect(payload['featured_banner_label'], 'Yeni Sezon');
+      expect(payload['featured_banner_title'], 'Sonbahar Koleksiyonu');
+      expect(payload['featured_banner_description'], 'Doğal kumaşlar');
+      expect(payload['featured_banner_image_url'], 'https://example.com/kampanya.jpg');
+      expect(payload['featured_banner_price_text'], '349 TL’den');
+    });
+
+    test('Dilim E: SSS listesini payload’a yazar', () {
+      final data = StoreData(
+        name: 'Atmosfer',
+        faqItems: [
+          StoreFaqItem(
+            id: '1',
+            question: '  Deneyebilir miyim?  ',
+            answer: '  Evet, mağazada.  ',
+          ),
+          StoreFaqItem(id: '2', question: '', answer: 'boş'),
+        ],
+      );
+
+      final payload = builder.toStoreUpdateMap(data);
+      expect(payload['faq_items'], [
+        {
+          'id': '1',
+          'question': 'Deneyebilir miyim?',
+          'answer': 'Evet, mağazada.',
+        },
+      ]);
+    });
+
     test('insert payload slug ve edit token ekler', () {
       final payload = builder.toStoreInsertMap(
         StoreData(name: 'Aymira'),
@@ -270,6 +368,26 @@ void main() {
           'importedAt': '2026-06-26T10:00:00Z',
         },
       ]);
+    });
+
+    test('Dilim B: eski fiyat, rozet ve teslim bölgesini ekler', () {
+      final data = StoreData(
+        products: [
+          Product(
+            id: 'p1',
+            name: 'Kazak',
+            price: '549 TL',
+            oldPriceAmount: 799,
+            badgeTag: '-31%',
+            fulfillmentLocation: 'Çekmeköy mağaza',
+          ),
+        ],
+      );
+
+      final products = builder.productsToJson(data);
+      expect(products.single['oldPriceAmount'], 799);
+      expect(products.single['badgeTag'], '-31%');
+      expect(products.single['fulfillmentLocation'], 'Çekmeköy mağaza');
     });
   });
 }

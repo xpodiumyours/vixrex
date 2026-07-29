@@ -8,6 +8,7 @@ class GalleryItem {
   String imageUrl;
   String extension;
   String contentType;
+  String title;
   bool isRemoved;
 
   GalleryItem({
@@ -16,6 +17,7 @@ class GalleryItem {
     required this.imageUrl,
     this.extension = 'jpg',
     this.contentType = 'image/jpeg',
+    this.title = '',
     this.isRemoved = false,
   });
 
@@ -28,6 +30,7 @@ class GalleryEditorSection extends StatelessWidget {
   final int maxGalleryPhotos;
   final VoidCallback onPickPhotos;
   final ValueChanged<int> onRemovePhoto;
+  final void Function(int index, String title)? onTitleChanged;
 
   const GalleryEditorSection({
     super.key,
@@ -35,12 +38,61 @@ class GalleryEditorSection extends StatelessWidget {
     this.maxGalleryPhotos = 12,
     required this.onPickPhotos,
     required this.onRemovePhoto,
+    this.onTitleChanged,
   });
 
   static const Color primaryColor = AppColors.primary;
   static const Color mutedText = AppColors.mutedText;
   static const Color cardBorder = AppColors.cardBorderDark;
   static const Color inputBg = AppColors.inputBg;
+
+  Future<void> _editTitle(
+    BuildContext context,
+    int index,
+    GalleryItem item,
+  ) async {
+    if (onTitleChanged == null) return;
+    final controller = TextEditingController(text: item.title);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text(
+            'Görsel etiketi',
+            style: TextStyle(
+              color: AppColors.darkText,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLength: 40,
+            style: const TextStyle(color: AppColors.darkText),
+            decoration: const InputDecoration(
+              hintText: 'Örn: Yeni sezon seçkisi',
+              counterText: '',
+            ),
+            onSubmitted: (value) => Navigator.of(ctx).pop(value.trim()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Vazgeç'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+              child: const Text('Kaydet'),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    if (result == null) return;
+    onTitleChanged!(index, result);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,11 +110,19 @@ class GalleryEditorSection extends StatelessWidget {
             fontWeight: FontWeight.w800,
           ),
         ),
+        const SizedBox(height: 4),
+        Text(
+          'Görsele dokunarak etiket ekleyebilirsin.',
+          style: TextStyle(
+            color: mutedText.withOpacity(0.75),
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Add button
             if (canAdd)
               Padding(
                 padding: const EdgeInsets.only(right: 6),
@@ -99,7 +159,6 @@ class GalleryEditorSection extends StatelessWidget {
                   ),
                 ),
               ),
-            // Thumbnails or empty state explanation
             Expanded(
               child: galleryItems.isEmpty
                   ? Column(
@@ -150,19 +209,28 @@ class GalleryEditorSection extends StatelessWidget {
                             );
                           }
 
+                          final hasTitle = item.title.trim().isNotEmpty;
+
                           return Stack(
                             clipBehavior: Clip.none,
                             children: [
-                              Container(
-                                width: thumbSize,
-                                height: thumbSize,
-                                decoration: BoxDecoration(
-                                  color: inputBg,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: cardBorder),
+                              GestureDetector(
+                                onTap: () => _editTitle(context, index, item),
+                                child: Container(
+                                  width: thumbSize,
+                                  height: thumbSize,
+                                  decoration: BoxDecoration(
+                                    color: inputBg,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: hasTitle
+                                          ? primaryColor.withOpacity(0.55)
+                                          : cardBorder,
+                                    ),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: img,
                                 ),
-                                clipBehavior: Clip.antiAlias,
-                                child: img,
                               ),
                               if (index == 0)
                                 Positioned(
@@ -183,6 +251,32 @@ class GalleryEditorSection extends StatelessWidget {
                                         color: Colors.black,
                                         fontSize: 8,
                                         fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (hasTitle && index != 0)
+                                Positioned(
+                                  bottom: 3,
+                                  left: 3,
+                                  right: 3,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 3,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      item.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
@@ -213,7 +307,6 @@ class GalleryEditorSection extends StatelessWidget {
                       ),
                     ),
             ),
-            // Count badge
             if (galleryItems.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 8, top: 24),

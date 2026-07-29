@@ -74,6 +74,14 @@ mixin StoreMediaMixin on ChangeNotifier {
     }
   }
 
+  void updateGalleryItemTitle(int index, String title) {
+    if (index < 0 || index >= _editorGalleryItems.length) return;
+    final item = _editorGalleryItems[index];
+    if (item.isRemoved) return;
+    _editorGalleryItems[index] = item.copyWith(title: title.trim());
+    notifyListeners();
+  }
+
   /// Görselleri (Kapak ve Galeri) Supabase Storage'a yükler.
   Future<void> uploadMedia({
     required StoreData storeData,

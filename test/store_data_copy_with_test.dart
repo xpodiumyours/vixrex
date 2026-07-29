@@ -103,6 +103,9 @@ void main() {
         'working_hours': '10:00-20:00',
         'is_store': true,
         'logo_url': 'https://cdn.example.com/logo.png',
+        'email': 'info@magaza.com',
+        'phone': '05321112233',
+        'hero_badge': 'Atölye / Mağaza',
       });
       expect(data.businessType, 'Erkek Giyim');
       expect(data.corporateBio, 'Kurumsal bio');
@@ -111,6 +114,9 @@ void main() {
       expect(data.workingHours, '10:00-20:00');
       expect(data.isStore, isTrue);
       expect(data.logoUrl, 'https://cdn.example.com/logo.png');
+      expect(data.email, 'info@magaza.com');
+      expect(data.phone, '05321112233');
+      expect(data.heroBadge, 'Atölye / Mağaza');
     });
 
     test('camelCase takes priority over snake_case', () {
