@@ -1,8 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:vixrex/core/result.dart';
-import 'package:vixrex/models/store_data.dart';
-import 'package:vixrex/services/store_publish_service.dart';
-import 'package:vixrex/utils/failure.dart';
 
 /// Temel dükkan bilgileri, yasal onaylar ve yayınlama akışını yöneten Mixin.
 mixin StoreCoreMixin on ChangeNotifier {
@@ -13,7 +9,6 @@ mixin StoreCoreMixin on ChangeNotifier {
   bool _isLoadingArticles = false;
   bool _isLoadingLegalDocuments = false;
   List<Map<String, dynamic>> _articles = [];
-  String? _productSyncError;
 
   // Validation Errors
   String? _nameError;
@@ -28,7 +23,6 @@ mixin StoreCoreMixin on ChangeNotifier {
   bool get isLoadingArticles => _isLoadingArticles;
   bool get isLoadingLegalDocuments => _isLoadingLegalDocuments;
   List<Map<String, dynamic>> get articles => _articles;
-  String? get productSyncError => _productSyncError;
 
   String? get nameError => _nameError;
   String? get whatsappError => _whatsappError;
@@ -51,12 +45,6 @@ mixin StoreCoreMixin on ChangeNotifier {
     notifyListeners();
   }
 
-  void clearProductSyncError() {
-    if (_productSyncError == null) return;
-    _productSyncError = null;
-    notifyListeners();
-  }
-
   void setLegalDocumentsError(String? message) {
     _legalDocumentsError = message;
     notifyListeners();
@@ -68,19 +56,6 @@ mixin StoreCoreMixin on ChangeNotifier {
     _googleLinkError = null;
     _legalDocumentsError = null;
     notifyListeners();
-  }
-
-  /// Emekli: JSON ürün sync. Yerine [StoreEditorController.syncCatalogToRemote].
-  @Deprecated('Use StoreEditorController.syncCatalogToRemote')
-  Future<Result<void>> syncProductsToSupabase({
-    required StoreData data,
-    required StorePublishService publishService,
-    String? editToken,
-  }) async {
-    _productSyncError =
-        'Ürünler products tablosuna yazılır. syncCatalogToRemote kullanın.';
-    notifyListeners();
-    return Result.failure(Failure(_productSyncError!));
   }
 
   /// Blog yazılarını çeker.
