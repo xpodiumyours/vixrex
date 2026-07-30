@@ -61,6 +61,9 @@ class SupabaseProductRepository implements ProductRepository {
     String description = '',
     String priceText = '',
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String> imageUrls = const [],
     String? categoryId,
     String sourceType = 'manual',
@@ -76,6 +79,9 @@ class SupabaseProductRepository implements ProductRepository {
       'p_description': description,
       'p_price_text': priceText,
       'p_price_amount': priceAmount,
+      'p_old_price_amount': oldPriceAmount,
+      'p_badge_tag': badgeTag,
+      'p_fulfillment_region': fulfillmentRegion,
       'p_image_urls': imageUrls,
       'p_category_id': categoryId,
       'p_source_type': sourceType,
@@ -99,6 +105,9 @@ class SupabaseProductRepository implements ProductRepository {
     String? description,
     String? priceText,
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String>? imageUrls,
     String? categoryId,
     bool? isVisible,
@@ -107,6 +116,9 @@ class SupabaseProductRepository implements ProductRepository {
     String? stockStatus,
     bool clearCategory = false,
     bool clearPriceAmount = false,
+    bool clearOldPriceAmount = false,
+    bool clearBadgeTag = false,
+    bool clearFulfillmentRegion = false,
     bool clearStockQuantity = false,
     bool clearStockStatus = false,
   }) async {
@@ -118,6 +130,9 @@ class SupabaseProductRepository implements ProductRepository {
       if (description != null) 'p_description': description,
       if (priceText != null) 'p_price_text': priceText,
       if (priceAmount != null) 'p_price_amount': priceAmount,
+      if (oldPriceAmount != null) 'p_old_price_amount': oldPriceAmount,
+      if (badgeTag != null) 'p_badge_tag': badgeTag,
+      if (fulfillmentRegion != null) 'p_fulfillment_region': fulfillmentRegion,
       if (imageUrls != null) 'p_image_urls': imageUrls,
       if (categoryId != null) 'p_category_id': categoryId,
       if (isVisible != null) 'p_is_visible': isVisible,
@@ -126,6 +141,9 @@ class SupabaseProductRepository implements ProductRepository {
       if (stockStatus != null) 'p_stock_status': stockStatus,
       'p_clear_category': clearCategory,
       'p_clear_price_amount': clearPriceAmount,
+      'p_clear_old_price_amount': clearOldPriceAmount,
+      'p_clear_badge_tag': clearBadgeTag,
+      'p_clear_fulfillment_region': clearFulfillmentRegion,
       'p_clear_stock_quantity': clearStockQuantity,
       'p_clear_stock_status': clearStockStatus,
     };
@@ -160,8 +178,6 @@ class SupabaseProductRepository implements ProductRepository {
         .maybeSingle();
     return response?['name'] as String? ?? '';
   }
-
-  // --- Yardımcı metodlar ---
 
   Future<Map<String, String>> _fetchCategoryMap(String storeId) async {
     final response = await _client

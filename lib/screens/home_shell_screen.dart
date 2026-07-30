@@ -790,8 +790,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                 clipBehavior: Clip.none,
                 children: [
                   IndexedStack(index: safeIndex, children: pages),
-                  // Vixrex robot rozeti
-                  if (_selectedIndex != 2)
+                  // Vitrinim ekraninda alt butonlari kapatmasin.
+                  if (_selectedIndex != 0 && _selectedIndex != 2)
                     Positioned(
                       right: 0,
                       bottom: 0,
@@ -819,8 +819,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         clipBehavior: Clip.none,
         children: [
           IndexedStack(index: safeIndex, children: pages),
-          // Vixrex: Sağ alt köşede yüzen robot rozeti (sadece Vixrex tabında değilken gösterilir)
-          if (_selectedIndex != 2)
+          // Vitrinim ekraninda alt butonlari kapatmasin.
+          if (_selectedIndex != 0 && _selectedIndex != 2)
             Positioned(
               right: 0,
               bottom: 0,

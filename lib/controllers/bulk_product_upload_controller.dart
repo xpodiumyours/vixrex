@@ -76,27 +76,8 @@ class BulkProductUploadController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Tüm ürünleri onayla.
-  void approveAll() {
-    if (_parseResult == null) return;
-    for (final product in _parseResult!.products) {
-      product.isVisible = true;
-    }
-    notifyListeners();
-  }
-
-  /// Tüm ürünleri gizle.
-  void hideAll() {
-    if (_parseResult == null) return;
-    for (final product in _parseResult!.products) {
-      product.isVisible = false;
-    }
-    notifyListeners();
-  }
-
-  /// Tümünü seç (tümünü sil için).
-  void selectAllForRemoval() {
-    // Bu özellik isteğe bağlı — products listesini temizler
+  /// Tümünü listeden kaldır.
+  void clearAllProducts() {
     _parseResult?.products.clear();
     _state = BulkUploadState.review;
     notifyListeners();
@@ -104,7 +85,7 @@ class BulkProductUploadController extends ChangeNotifier {
 
   // ─── Kaydetme ──────────────────────────────────────────────────
 
-  /// Onaylanan ürünleri geri çağrım fonksiyonuna aktar.
+  /// Listedeki ürünleri geri çağrım fonksiyonuna aktar.
   Future<bool> saveProducts({
     required Future<void> Function(List<Product> products) onSave,
   }) async {
@@ -115,17 +96,19 @@ class BulkProductUploadController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Sadece görünür ürünleri kaydet
-      final visibleProducts = products.where((p) => p.isVisible).toList();
-      if (visibleProducts.isEmpty) {
-        _errorMessage = 'Görünen ürün yok. En az bir ürünü vitrinde gösterilmek üzere işaretleyin.';
+      final toSave = products.map((p) {
+        p.isVisible = true;
+        return p;
+      }).toList();
+      if (toSave.isEmpty) {
+        _errorMessage = 'Eklenecek ürün yok.';
         _isSaving = false;
         notifyListeners();
         return false;
       }
 
-      await onSave(visibleProducts);
-      _savedCount = visibleProducts.length;
+      await onSave(toSave);
+      _savedCount = toSave.length;
       _state = BulkUploadState.saved;
       _isSaving = false;
       notifyListeners();

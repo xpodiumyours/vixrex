@@ -41,7 +41,6 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   late final List<_ProductImageDraft> _images;
   late String _categoryId;
   late String _stockStatus;
-  late bool _isVisible;
   bool _isSaving = false;
 
   @override
@@ -71,7 +70,6 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         _stockOptions.contains(product?.stockStatus)
             ? product!.stockStatus
             : _stockOptions.first;
-    _isVisible = product?.isVisible ?? true;
   }
 
   String _resolveInitialCategoryId(Product? product) {
@@ -218,7 +216,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         categoryId: category.first.id,
         category: category.first.name,
         stockStatus: _stockStatus,
-        isVisible: _isVisible,
+        isVisible: true,
         slug: slug,
         source: widget.product?.source,
         sourceMediaId: widget.product?.sourceMediaId,
@@ -327,17 +325,6 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                         ? null
                         : (value) =>
                             setState(() => _stockStatus = value ?? StockStatus.available.label),
-              ),
-              const SizedBox(height: 10),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Vitrinde göster'),
-                subtitle: const Text('Kapalıysa ürün taslakta kalır.'),
-                value: _isVisible,
-                onChanged:
-                    _isSaving
-                        ? null
-                        : (value) => setState(() => _isVisible = value),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(

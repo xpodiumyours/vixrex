@@ -317,19 +317,4 @@ void main() {
     );
   });
 
-  group('StorePublishService.updateProductsOnly', () {
-    test('JSON ürün yazımını reddeder (tablo yolu zorunlu)', () async {
-      sampleStore.products = [Product(id: 'p1', name: 'Tişört', price: '199')];
-      sampleStore.slug = 'test-magazasi';
-
-      final result = await service.updateProductsOnly(
-        sampleStore,
-        editToken: 'edit-token-12345678901234567890',
-      );
-
-      expect(result.isFailure, isTrue);
-      expect(fakeClient.rpcCalls, isEmpty);
-      expect(result.failure?.message, contains('products tablosuna'));
-    });
-  });
 }

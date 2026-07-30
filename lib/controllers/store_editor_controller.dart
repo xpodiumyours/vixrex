@@ -631,10 +631,20 @@ class StoreEditorController extends ChangeNotifier
             slug: safeSlug,
             description: product.description,
             priceText: product.price,
+            priceAmount: _parsePriceAmount(product.price),
+            oldPriceAmount: product.oldPriceAmount,
+            badgeTag: product.badgeTag,
+            fulfillmentRegion: product.fulfillmentLocation,
+            clearOldPriceAmount: product.oldPriceAmount == null,
+            clearBadgeTag:
+                product.badgeTag == null || product.badgeTag!.trim().isEmpty,
+            clearFulfillmentRegion:
+                product.fulfillmentLocation == null ||
+                product.fulfillmentLocation!.trim().isEmpty,
             imageUrls: product.displayImageUrls,
             categoryId: categoryUuid,
             clearCategory: categoryUuid == null || categoryUuid.isEmpty,
-            isVisible: product.isVisible,
+            isVisible: true,
             stockStatus: product.stockStatus,
             sortOrder: i,
           );
@@ -653,10 +663,14 @@ class StoreEditorController extends ChangeNotifier
             slug: safeSlug,
             description: product.description,
             priceText: product.price,
+            priceAmount: _parsePriceAmount(product.price),
+            oldPriceAmount: product.oldPriceAmount,
+            badgeTag: product.badgeTag,
+            fulfillmentRegion: product.fulfillmentLocation,
             imageUrls: product.displayImageUrls,
             categoryId: categoryUuid,
             sourceType: product.source ?? 'manual',
-            isVisible: product.isVisible,
+            isVisible: true,
             sortOrder: i,
           );
           if (created.isFailure || created.data == null) {
@@ -671,19 +685,8 @@ class StoreEditorController extends ChangeNotifier
         }
       }
 
-      final keepIds = nextProducts.map((p) => p.id).toSet();
-      for (final remoteProduct in remote) {
-        if (keepIds.contains(remoteProduct.id)) continue;
-        final deleted = await productService.deleteProduct(
-          remoteProduct.id,
-          editToken: editToken,
-        );
-        if (deleted.isFailure) {
-          return Result.failure(
-            Failure(deleted.failure?.message ?? 'Ürün silinemedi.'),
-          );
-        }
-      }
+      // Eksik uzak ürünleri burada silme. Kalıcı silme yalnız açık
+      // removeProduct / kullanıcı onayı ile yapılır (canlı veri koruması).
 
       _data.products = nextProducts;
       await saveLocally();
@@ -712,13 +715,17 @@ class StoreEditorController extends ChangeNotifier
         slug: p.slug ?? _generateSlug(p.name),
         description: p.description,
         priceText: p.price,
+        priceAmount: _parsePriceAmount(p.price),
+        oldPriceAmount: p.oldPriceAmount,
+        badgeTag: p.badgeTag,
+        fulfillmentRegion: p.fulfillmentLocation,
         imageUrls: p.displayImageUrls,
         categoryId:
             p.categoryId.isNotEmpty && _isUuid(p.categoryId)
                 ? p.categoryId
                 : null,
         sourceType: p.source ?? 'manual',
-        isVisible: p.isVisible,
+        isVisible: true,
         sortOrder: _data.products.length,
       );
 
@@ -734,7 +741,7 @@ class StoreEditorController extends ChangeNotifier
     return const Result.success(null);
   }
 
-  /// Ürün siler (ilişkisel `products` tablosu).
+  /// Ürün siler (ilişkisel `products` tablosu). Kalıcı; geri alınamaz.
   Future<Result<void>> removeProduct(int i) async {
     if (i < 0 || i >= _data.products.length) {
       return const Result.success(null);
@@ -743,16 +750,30 @@ class StoreEditorController extends ChangeNotifier
     final editToken = _publishedInfo?.editToken.trim() ?? '';
 
     if (_isUuid(product.id) && editToken.isNotEmpty) {
-      await productService.deleteProduct(
+      final deleted = await productService.deleteProduct(
         product.id,
         editToken: editToken,
       );
+      if (deleted.isFailure) {
+        return Result.failure(
+          Failure(deleted.failure?.message ?? 'Ürün silinemedi.'),
+        );
+      }
     }
     _data.products.removeAt(i);
     await saveLocally();
     notifyListeners();
     _revalidateStoreCache();
     return const Result.success(null);
+  }
+
+  /// Kimlik ile kalıcı ürün siler. Geri alınamaz.
+  Future<Result<void>> removeProductById(String productId) async {
+    final index = _data.products.indexWhere((p) => p.id == productId);
+    if (index < 0) {
+      return Result.failure(Failure('Ürün bulunamadı.'));
+    }
+    return removeProduct(index);
   }
 
   /// Ürün günceller (ilişkisel `products` tablosu).
@@ -771,12 +792,21 @@ class StoreEditorController extends ChangeNotifier
         slug: p.slug ?? _generateSlug(p.name),
         description: p.description,
         priceText: p.price,
+        priceAmount: _parsePriceAmount(p.price),
+        oldPriceAmount: p.oldPriceAmount,
+        badgeTag: p.badgeTag,
+        fulfillmentRegion: p.fulfillmentLocation,
+        clearOldPriceAmount: p.oldPriceAmount == null,
+        clearBadgeTag: p.badgeTag == null || p.badgeTag!.trim().isEmpty,
+        clearFulfillmentRegion:
+            p.fulfillmentLocation == null ||
+            p.fulfillmentLocation!.trim().isEmpty,
         imageUrls: p.displayImageUrls,
         categoryId:
             p.categoryId.isNotEmpty && _isUuid(p.categoryId)
                 ? p.categoryId
                 : null,
-        isVisible: p.isVisible,
+        isVisible: true,
         stockStatus: p.stockStatus,
       );
     }
@@ -801,6 +831,17 @@ class StoreEditorController extends ChangeNotifier
     return RegExp(
       r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     ).hasMatch(value.trim());
+  }
+
+  double? _parsePriceAmount(String raw) {
+    var cleaned = raw.trim().replaceAll(RegExp(r'[^\d,.]'), '');
+    if (cleaned.isEmpty) return null;
+    if (cleaned.contains(',') && cleaned.contains('.')) {
+      cleaned = cleaned.replaceAll('.', '').replaceAll(',', '.');
+    } else if (cleaned.contains(',')) {
+      cleaned = cleaned.replaceAll(',', '.');
+    }
+    return double.tryParse(cleaned);
   }
 
   String _generateSlug(String name) {

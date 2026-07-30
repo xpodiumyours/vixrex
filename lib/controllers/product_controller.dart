@@ -51,11 +51,13 @@ class ProductController extends ChangeNotifier {
     String description = '',
     String priceText = '',
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String> imageUrls = const [],
     String? categoryId,
     String sourceType = 'manual',
     String? externalProductId,
-    bool isVisible = true,
   }) async {
     _isLoading = true;
     _error = null;
@@ -70,11 +72,14 @@ class ProductController extends ChangeNotifier {
         description: description,
         priceText: priceText,
         priceAmount: priceAmount,
+        oldPriceAmount: oldPriceAmount,
+        badgeTag: badgeTag,
+        fulfillmentRegion: fulfillmentRegion,
         imageUrls: imageUrls,
         categoryId: categoryId,
         sourceType: sourceType,
         externalProductId: externalProductId,
-        isVisible: isVisible,
+        isVisible: true,
         sortOrder: _products.length,
       );
 
@@ -88,7 +93,10 @@ class ProductController extends ChangeNotifier {
           imageUrls: imageUrls,
           categoryId: categoryId ?? '',
           source: sourceType,
-          isVisible: isVisible,
+          isVisible: true,
+          oldPriceAmount: oldPriceAmount,
+          badgeTag: badgeTag,
+          fulfillmentLocation: fulfillmentRegion,
         ));
       } else {
         _error = result.failure?.message ?? 'Ürün eklenemedi.';
@@ -113,14 +121,19 @@ class ProductController extends ChangeNotifier {
     String? description,
     String? priceText,
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String>? imageUrls,
     String? categoryId,
-    bool? isVisible,
     int? sortOrder,
     int? stockQuantity,
     String? stockStatus,
     bool clearCategory = false,
     bool clearPriceAmount = false,
+    bool clearOldPriceAmount = false,
+    bool clearBadgeTag = false,
+    bool clearFulfillmentRegion = false,
     bool clearStockQuantity = false,
     bool clearStockStatus = false,
   }) async {
@@ -137,14 +150,20 @@ class ProductController extends ChangeNotifier {
         description: description,
         priceText: priceText,
         priceAmount: priceAmount,
+        oldPriceAmount: oldPriceAmount,
+        badgeTag: badgeTag,
+        fulfillmentRegion: fulfillmentRegion,
         imageUrls: imageUrls,
         categoryId: categoryId,
-        isVisible: isVisible,
+        isVisible: true,
         sortOrder: sortOrder,
         stockQuantity: stockQuantity,
         stockStatus: stockStatus,
         clearCategory: clearCategory,
         clearPriceAmount: clearPriceAmount,
+        clearOldPriceAmount: clearOldPriceAmount,
+        clearBadgeTag: clearBadgeTag,
+        clearFulfillmentRegion: clearFulfillmentRegion,
         clearStockQuantity: clearStockQuantity,
         clearStockStatus: clearStockStatus,
       );
@@ -160,8 +179,11 @@ class ProductController extends ChangeNotifier {
             price: priceText,
             imageUrls: imageUrls,
             categoryId: categoryId,
-            isVisible: isVisible,
+            isVisible: true,
             stockStatus: stockStatus,
+            oldPriceAmount: oldPriceAmount,
+            badgeTag: badgeTag,
+            fulfillmentLocation: fulfillmentRegion,
           );
         }
       } else {
