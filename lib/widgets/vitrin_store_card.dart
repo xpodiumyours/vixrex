@@ -28,6 +28,8 @@ class VitrinStoreCard extends StatelessWidget {
     required this.onWhatsAppPressed,
   });
 
+  bool get _isRentalTemplate => store.isRentalTemplate;
+
   String get _whatsappButtonLabel {
     final cat = (store.kategori.isNotEmpty ? store.kategori : store.businessType).toLowerCase().trim();
     if (cat.contains('kuaför') ||
@@ -130,7 +132,7 @@ class VitrinStoreCard extends StatelessWidget {
                     ),
 
                     // Durum Rozeti (Sol Üst) — kiralık vitrinlerde gizle
-                    if (!store.isDemo)
+                    if (!_isRentalTemplate)
                       Positioned(
                         top: 10,
                         left: 10,
@@ -138,7 +140,7 @@ class VitrinStoreCard extends StatelessWidget {
                       ),
 
                     // KİRALIK Köşegen Şerit (Sol Üst — sadece kiralık vitrinde)
-                    if (store.isDemo)
+                    if (_isRentalTemplate)
                       Positioned(
                         top: 0,
                         left: 0,
@@ -290,19 +292,22 @@ class VitrinStoreCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
 
-                    // Tam Genişlik SaaS WhatsApp Butonu
+                    // Kiralık kart hem gövdesinden hem butonundan kategoriye
+                    // özel hazırlanmış vitrini açar. Deneme/ödeme detaydadır.
                     SizedBox(
                       width: double.infinity,
                       height: 38,
                       child: ElevatedButton.icon(
-                        onPressed: onWhatsAppPressed,
-                        icon: const Icon(
-                          Icons.chat_bubble_rounded,
+                        onPressed: _isRentalTemplate ? onTap : onWhatsAppPressed,
+                        icon: Icon(
+                          _isRentalTemplate
+                              ? Icons.storefront_rounded
+                              : Icons.chat_bubble_rounded,
                           size: 15,
                           color: Colors.white,
                         ),
                         label: Text(
-                          _whatsappButtonLabel,
+                          _isRentalTemplate ? 'Vitrini İncele' : _whatsappButtonLabel,
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
@@ -311,7 +316,9 @@ class VitrinStoreCard extends StatelessWidget {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00A884),
+                          backgroundColor: _isRentalTemplate
+                              ? AppColors.primary
+                              : const Color(0xFF00A884),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(horizontal: 10),
