@@ -702,12 +702,19 @@ class StoreEditorController extends ChangeNotifier
   }
 
   /// Yeni ürün ekler (ilişkisel `products` tablosuna senkronize eder).
+  /// Yayınlı vitrinde uzak yazma başarısızsa yerel listeye eklemez.
   Future<Result<void>> addProduct(Product p) async {
     final editToken = _publishedInfo?.editToken.trim() ?? '';
     final ready = editToken.isNotEmpty ? await ensureRemoteStoreId() : false;
     final storeId = _data.id?.trim() ?? '';
 
-    if (editToken.isNotEmpty && ready && storeId.isNotEmpty) {
+    if (editToken.isNotEmpty) {
+      if (!ready || storeId.isEmpty) {
+        return Result.failure(
+          Failure('Mağaza hazır değil. Ürün müşteri vitrine yazılamadı.'),
+        );
+      }
+
       final result = await productService.addProduct(
         storeId: storeId,
         editToken: editToken,
@@ -729,9 +736,16 @@ class StoreEditorController extends ChangeNotifier
         sortOrder: _data.products.length,
       );
 
-      if (result.isSuccess && result.data != null) {
-        p.id = result.data!;
+      if (result.isFailure ||
+          result.data == null ||
+          result.data!.trim().isEmpty) {
+        return Result.failure(
+          Failure(
+            result.failure?.message ?? 'Ürün müşteri vitrine yazılamadı.',
+          ),
+        );
       }
+      p.id = result.data!;
     }
 
     _data.products.add(p);

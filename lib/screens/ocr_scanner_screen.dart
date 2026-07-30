@@ -300,15 +300,26 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
   Future<void> _saveProducts() async {
     try {
       await widget.ocrController.saveApprovedProducts();
-      if (mounted) {
+      if (!mounted) return;
+
+      final error = widget.ocrController.errorMessage;
+      if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ürünler vitrine eklendi!'),
-            backgroundColor: AppColors.success,
+          SnackBar(
+            content: Text(error),
+            backgroundColor: AppColors.error,
           ),
         );
-        Navigator.of(context).pop();
+        return;
       }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ürünler vitrine eklendi!'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
