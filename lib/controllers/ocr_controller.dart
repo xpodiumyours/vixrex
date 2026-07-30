@@ -140,11 +140,29 @@ class OcrController extends ChangeNotifier {
         imageHash: 'hash_${_result!.rawText.hashCode.abs()}',
       );
 
-      // 2. Ürünleri editör kontrolcüsüne ekle
+      // 2. Ürünleri editör kontrolcüsüne ekle (uzak yazma başarısızsa yerelde yok)
+      final editor = _editorController;
+      if (editor == null) {
+        _errorMessage =
+            'Vitrin düzenleyici hazır değil. Ürünler kaydedilemedi.';
+        notifyListeners();
+        return;
+      }
+
+      var savedCount = 0;
       for (final product in validProducts) {
-        await _editorController?.addProduct(
-          _convertToProduct(product),
-        );
+        final result = await editor.addProduct(_convertToProduct(product));
+        if (result.isFailure) {
+          final detail =
+              result.failure?.message ?? 'Ürün müşteri vitrine yazılamadı.';
+          _errorMessage = savedCount > 0
+              ? '$savedCount ürün kaydedildi, sonra hata: $detail'
+              : detail;
+          notifyListeners();
+          return;
+        }
+        product.isApproved = false;
+        savedCount++;
       }
       _result = null;
       notifyListeners();
@@ -167,6 +185,7 @@ class OcrController extends ChangeNotifier {
       category: detected.category,
       stockStatus: StockStatus.available.label,
       isVisible: true,
+      source: 'ocr',
     );
   }
 
