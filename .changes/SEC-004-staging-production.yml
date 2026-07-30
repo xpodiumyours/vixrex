@@ -1,0 +1,33 @@
+amaç: >
+  Staging ve production ortamlari icin hazirlik yapmak.
+  Deployment, monitoring, backup ve recovery planlarini olusturmak.
+
+izinli_dosyalar:
+  - docs/operations/STAGING_SETUP.md
+  - docs/operations/PRODUCTION_CHECKLIST.md
+  - docs/operations/MONITORING_PLAN.md
+  - docs/operations/BACKUP_PLAN.md
+  - .changes/SEC-004-staging-production.yml
+
+yasak_alanlar:
+  - lib/**
+  - public_web/src/**
+  - supabase/migrations/**
+  - supabase/functions/**
+  - .github/**
+
+korunan_davranislar:
+  - Mevcut CI/CD workflow'lari calismaya devam eder
+  - Hiçbir uygulama dosyasi degismez
+  - Hiçbir test dosyasi degismez
+
+dogru_sonuc:
+  - Staging ortami yapilandirmasi olusturulur
+  - Production deployment kontrol listesi hazirlanir
+  - Monitoring ve alerting altyapisi tanimlanir
+  - Backup ve recovery plani hazirlanir
+
+hata_senaryolari:
+  - Eksik environment variable'lar
+  - Yanlis Supabase proje referansi
+  - Yanlis Vercel proje referansi

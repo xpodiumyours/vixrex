@@ -86,6 +86,7 @@ void main() {
             editToken: 'test-edit-token',
             showMessage: (_) {},
             onCatalogChanged: (_, __) async {},
+            onProductDelete: (_) async => true,
             onOcrTap: () {},
           ),
         ),

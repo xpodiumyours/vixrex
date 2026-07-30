@@ -88,6 +88,7 @@ void main() {
     'gömülü asistan manuel panelle aynı controllerı ve ürünleri korur',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
+      StoreLocalStorageService.resetCache();
       tester.view.physicalSize = const Size(1200, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -193,7 +194,7 @@ void main() {
 
     expect(text, isNot(contains('**')));
     expect(text, isNot(contains('👋')));
-    expect(text, contains('Merhaba! Ben Vixrex'));
+    expect(text, contains('Merhaba, ben Vixrex'));
   });
 
   testWidgets('ChatbotBadge onOpen tek kapıyı çağırır, overlay açmaz', (
@@ -240,6 +241,9 @@ class _NoopProductRepository implements ProductRepository {
     String description = '',
     String priceText = '',
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String> imageUrls = const [],
     String? categoryId,
     String sourceType = 'manual',
@@ -276,6 +280,9 @@ class _NoopProductRepository implements ProductRepository {
     String? description,
     String? priceText,
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String>? imageUrls,
     String? categoryId,
     bool? isVisible,
@@ -284,6 +291,9 @@ class _NoopProductRepository implements ProductRepository {
     String? stockStatus,
     bool clearCategory = false,
     bool clearPriceAmount = false,
+    bool clearOldPriceAmount = false,
+    bool clearBadgeTag = false,
+    bool clearFulfillmentRegion = false,
     bool clearStockQuantity = false,
     bool clearStockStatus = false,
   }) async {}

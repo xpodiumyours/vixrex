@@ -1,0 +1,36 @@
+amaç: >
+  Flutter, Next.js ve Supabase için kalite kapıları kurmak.
+  Her PR'da otomatik kontrol çalışacak, hatalı kod merge edilemeyecek.
+
+izinli_dosyalar:
+  - .github/workflows/flutter-quality.yml
+  - .github/workflows/public-web-quality.yml
+  - .github/workflows/supabase-quality.yml
+  - .changes/SEC-003-platform-quality-gates.yml
+
+yasak_alanlar:
+  - lib/**
+  - public_web/src/**
+  - supabase/migrations/**
+  - supabase/functions/**
+  - docs/**
+
+korunan_davranışlar:
+  - Mevcut CI/CD workflow'ları çalışmaya devam eder
+  - Hiçbir uygulama dosyası değişmez
+  - Hiçbir test dosyası değişmez
+
+doğru_sonuç:
+  - Flutter workflow'u analyze, test ve build kontrol eder
+  - Next.js workflow'u lint, type-check, test ve build kontrol eder
+  - Supabase workflow'u migration ve RLS kontrol eder
+  - Hatalı PR otomatik olarak engellenir
+
+hata_senaryoları:
+  - Flutter SDK versiyon uyumsuzluğu
+  - Node.js cache sorunu
+  - Supabase CLI bağlantı hatası
+
+çalıştırılacak_kontroller:
+  - Workflow YAML geçerlilik kontrolü
+  - Script sözdizimi kontrolü
