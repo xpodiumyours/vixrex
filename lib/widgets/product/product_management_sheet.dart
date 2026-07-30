@@ -23,6 +23,7 @@ class ProductManagementSheet extends StatefulWidget {
     required this.editToken,
     required this.showMessage,
     required this.onCatalogChanged,
+    required this.onProductDelete,
     required this.onOcrTap,
   });
 
@@ -33,6 +34,8 @@ class ProductManagementSheet extends StatefulWidget {
   final String editToken;
   final ValueChanged<String> showMessage;
   final ProductCatalogChanged onCatalogChanged;
+  /// Seçilen ürünü kalıcı siler. Başarılıysa true.
+  final Future<bool> Function(Product product) onProductDelete;
   final VoidCallback onOcrTap;
 
   @override
@@ -178,7 +181,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       categoryId: product.categoryId,
       category: product.category,
       stockStatus: product.stockStatus,
-      isVisible: false,
+      isVisible: true,
       slug: null,
     );
     setState(() {
@@ -186,7 +189,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       _products.insert(index < 0 ? 0 : index + 1, copy);
     });
     await _persist();
-    widget.showMessage('Ürün kopyalandı ve gizli taslak olarak eklendi.');
+    widget.showMessage('Ürün kopyalandı.');
   }
 
   Future<void> _delete(Product product) async {
@@ -195,7 +198,9 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       builder:
           (dialogContext) => AlertDialog(
             title: const Text('Ürünü Sil'),
-            content: Text('${product.name} taslaktan silinecek.'),
+            content: Text(
+              '${product.name} kalıcı olarak silinecek. Bu işlem geri alınamaz.',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
@@ -203,17 +208,22 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('Sil'),
+                child: const Text('Kalıcı Sil'),
               ),
             ],
           ),
     );
     if (confirmed != true || !mounted) return;
+
+    final ok = await widget.onProductDelete(product);
+    if (!mounted) return;
+    if (!ok) {
+      widget.showMessage('Ürün silinemedi. Lütfen tekrar deneyin.');
+      return;
+    }
+
     setState(() => _products.removeWhere((item) => item.id == product.id));
-    await _persist();
-    widget.showMessage(
-      'Ürün taslaktan silindi. Değişikliği yayınlamayı unutmayın.',
-    );
+    widget.showMessage('Ürün kalıcı olarak silindi.');
   }
 
   /// Ürün başlıklarını düzenler (boşluk/büyük-küçük harf) — VixRex önerileri Complete.
@@ -257,11 +267,6 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
           return '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}';
         })
         .join(' ');
-  }
-
-  Future<void> _toggleVisibility(Product product, bool value) async {
-    setState(() => product.isVisible = value);
-    await _persist();
   }
 
   Future<void> _reorderProducts(int oldIndex, int newIndex) async {
@@ -586,24 +591,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
                     fontSize: 11,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  product.isVisible ? 'Vitrinde görünüyor' : 'Gizli taslak',
-                  style: TextStyle(
-                    color:
-                        product.isVisible
-                            ? AppColors.success
-                            : AppColors.mutedText,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
               ],
             ),
-          ),
-          Switch.adaptive(
-            value: product.isVisible,
-            onChanged: (value) => _toggleVisibility(product, value),
           ),
           PopupMenuButton<String>(
             onSelected: (value) {

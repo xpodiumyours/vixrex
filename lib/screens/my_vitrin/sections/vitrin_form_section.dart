@@ -1091,6 +1091,17 @@ class VitrinFormSection extends StatelessWidget {
                 );
               }
             },
+            onProductDelete: (product) async {
+              final result = await controller.removeProductById(product.id);
+              if (result.isFailure && ctx.mounted) {
+                state.showSnackBar(
+                  ctx,
+                  result.failure?.message ?? 'Ürün silinemedi.',
+                );
+                return false;
+              }
+              return result.isSuccess;
+            },
             onOcrTap: () {
               // Alt paneli kapat, sonra root navigator'dan OCR ekranını aç
               Navigator.of(ctx).pop();
