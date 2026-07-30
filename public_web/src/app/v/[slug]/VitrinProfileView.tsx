@@ -43,6 +43,41 @@ export interface VitrinCollection {
   imageUrl?: string;
 }
 
+export interface VitrinFeaturedBanner {
+  label: string;
+  title: string;
+  description: string;
+  priceText: string;
+  imageUrl: string;
+}
+
+export interface VitrinAboutValue {
+  id?: string;
+  title: string;
+  description: string;
+}
+
+export interface VitrinAboutSection {
+  kicker: string;
+  title: string;
+  body: string;
+  imageUrl: string;
+  imageCaption: string;
+  values: VitrinAboutValue[];
+}
+
+export interface VitrinGallerySection {
+  kicker: string;
+  title: string;
+  items: VitrinGalleryItem[];
+}
+
+export interface VitrinFaqItem {
+  id?: string;
+  question: string;
+  answer: string;
+}
+
 export interface VitrinProfileViewProps {
   storeName: string;
   storeSlug: string;
@@ -52,9 +87,20 @@ export interface VitrinProfileViewProps {
   isClosed?: boolean;
   logoUrl: string | null;
   heroImage: string;
+  heroBadge?: string | null;
   description: string;
   corporateBio: string | null;
   address: string | null;
+  phone?: string | null;
+  phoneUrl?: string | null;
+  email?: string | null;
+  featuredBanner?: VitrinFeaturedBanner | null;
+  aboutSection?: VitrinAboutSection | null;
+  gallerySection?: VitrinGallerySection | null;
+  faqItems?: VitrinFaqItem[];
+  showStorefrontRating?: boolean;
+  ratingScore?: number | null;
+  reviewCount?: number | null;
   workingHoursToday: string | null;
   workingHoursWeek: Array<{ day: string; hours: string; isToday: boolean }>;
   googleBusinessLink: string | null;
@@ -84,9 +130,20 @@ export default function VitrinProfileView({
   isClosed,
   logoUrl,
   heroImage,
+  heroBadge,
   description,
   corporateBio,
   address,
+  phone,
+  phoneUrl,
+  email,
+  featuredBanner,
+  aboutSection,
+  gallerySection,
+  faqItems = [],
+  showStorefrontRating = false,
+  ratingScore = null,
+  reviewCount = null,
   workingHoursToday,
   workingHoursWeek,
   googleBusinessLink,
@@ -108,8 +165,74 @@ export default function VitrinProfileView({
 }: VitrinProfileViewProps) {
   const [copied, setCopied] = useState(false);
   const displayAddress = normalizeAddressDisplay(address);
-  const vcardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${storeName}\nTEL:${whatsappUrl || ""}\nEND:VCARD`;
+  const displayBadge = String(heroBadge || kategori || businessType || "").trim();
+  const displayPhone = String(phone || "").trim();
+  const displayEmail = String(email || "").trim();
+  const hasPhone = Boolean(phoneUrl && displayPhone);
+  const featuredLabel = String(featuredBanner?.label || "").trim();
+  const featuredTitle = String(featuredBanner?.title || "").trim();
+  const featuredDescription = String(featuredBanner?.description || "").trim();
+  const featuredPriceText = String(featuredBanner?.priceText || "").trim();
+  const featuredImageUrl = String(featuredBanner?.imageUrl || "").trim();
+  const showFeaturedBanner = Boolean(
+    featuredLabel ||
+      featuredTitle ||
+      featuredDescription ||
+      featuredPriceText ||
+      featuredImageUrl
+  );
+  const aboutTitle = String(aboutSection?.title || "").trim();
+  const aboutKicker = String(aboutSection?.kicker || "").trim();
+  const aboutBody = String(aboutSection?.body || "").trim();
+  const aboutImageUrl = String(aboutSection?.imageUrl || "").trim();
+  const aboutImageCaption = String(aboutSection?.imageCaption || "").trim();
+  const aboutParagraphs = aboutBody
+    .split(/\n+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const aboutValues = (aboutSection?.values || []).filter(
+    (value) => value.title.trim() && value.description.trim()
+  );
+  const showAbout =
+    Boolean(aboutTitle) && (aboutParagraphs.length > 0 || aboutValues.length > 0);
+  const galleryMeta = gallerySection || {
+    kicker: "",
+    title: "",
+    items: galleryItems,
+  };
+  const visibleGalleryItems = (galleryMeta.items || []).filter((item) =>
+    String(item.imageUrl || "").trim()
+  );
+  const showGallery = visibleGalleryItems.length > 0;
+  const galleryKicker = String(galleryMeta.kicker || "").trim();
+  const galleryTitle = String(galleryMeta.title || "").trim() || "Galeri";
+  const visibleFaqItems = (faqItems || []).filter(
+    (item) => item.question.trim() && item.answer.trim()
+  );
+  const showFaq = visibleFaqItems.length > 0;
+  const visibleArticles = (articles || []).filter((article) =>
+    String(article.title || "").trim()
+  );
+  const showArticles = visibleArticles.length > 0;
+  const showRating =
+    showStorefrontRating &&
+    typeof ratingScore === "number" &&
+    Number.isFinite(ratingScore);
+  const showContact =
+    Boolean(displayAddress) ||
+    hasPhone ||
+    Boolean(whatsappUrl) ||
+    Boolean(displayEmail) ||
+    Boolean(workingHoursToday) ||
+    Boolean(mapsEmbedUrl) ||
+    Boolean(mapsUrl);
+  const telForVcard = displayPhone || "";
+  const vcardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${storeName}\nTEL:${telForVcard}\nEMAIL:${displayEmail}\nEND:VCARD`;
   const vcardHref = `data:text/vcard;charset=utf-8,${encodeURIComponent(vcardContent)}`;
+  const primaryActionClass =
+    "flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition";
+  const ghostActionClass =
+    "flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold bg-white/5 text-white border border-blue-500/20 backdrop-blur-md hover:bg-white/10 transition";
 
   const handleCopyUrl = () => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -136,9 +259,24 @@ export default function VitrinProfileView({
         </Link>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-          <a href="#urunler" className="hover:text-white transition-colors">Ürünler</a>
-          <a href="#kategoriler" className="hover:text-white transition-colors">Kategoriler</a>
-          <a href="#iletisim" className="hover:text-white transition-colors">İletişim</a>
+          {productCount > 0 && (
+            <a href="#urunler" className="hover:text-white transition-colors">Ürünler</a>
+          )}
+          {collections.length > 0 && (
+            <a href="#kategoriler" className="hover:text-white transition-colors">Kategoriler</a>
+          )}
+          {showAbout && (
+            <a href="#hakkimizda" className="hover:text-white transition-colors">Hakkımızda</a>
+          )}
+          {showGallery && (
+            <a href="#galeri" className="hover:text-white transition-colors">Galeri</a>
+          )}
+          {showFaq && (
+            <a href="#sss" className="hover:text-white transition-colors">SSS</a>
+          )}
+          {showContact && (
+            <a href="#iletisim" className="hover:text-white transition-colors">İletişim</a>
+          )}
           <Link href="https://vixrex.com" className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition">
             Vitrin Oluştur
           </Link>
@@ -156,50 +294,78 @@ export default function VitrinProfileView({
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 backdrop-blur-md">
-              <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
-              {kategori || businessType || "Atölye / Mağaza"}
-            </div>
+            {displayBadge && (
+              <div className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
+                {displayBadge}
+              </div>
+            )}
 
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
               {storeName.toUpperCase()}
             </h1>
 
-            <p className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2">
-              {description || "Tasarım odaklı butik mağaza. Özel dikim, sınırlı sayıda koleksiyonlar ve küratörlü seçimler."}
-            </p>
+            {description.trim() && (
+              <p className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2">
+                {description}
+              </p>
+            )}
 
-            <div className="flex flex-wrap gap-4 text-sm text-slate-400">
-              {displayAddress && <span className="flex items-center gap-1.5">📍 {displayAddress}</span>}
-              <span className="flex items-center gap-1.5">⭐ 4.9 (128 değerlendirme)</span>
-              {workingHoursToday && <span className="flex items-center gap-1.5">🕐 {workingHoursToday}</span>}
+            {(displayAddress || displayEmail || workingHoursToday || showRating) && (
+              <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                {displayAddress && <span className="flex items-center gap-1.5">📍 {displayAddress}</span>}
+                {showRating && (
+                  <span className="flex items-center gap-1.5">
+                    ⭐ {ratingScore!.toFixed(1)}
+                    {typeof reviewCount === "number" && reviewCount > 0
+                      ? ` (${reviewCount} değerlendirme)`
+                      : ""}
+                  </span>
+                )}
+                {displayEmail && (
+                  <a href={`mailto:${displayEmail}`} className="flex items-center gap-1.5 hover:text-blue-300 transition">
+                    ✉️ {displayEmail}
+                  </a>
+                )}
+                {workingHoursToday && <span className="flex items-center gap-1.5">🕐 {workingHoursToday}</span>}
+              </div>
+            )}
+          </div>
+
+          {(hasPhone || whatsappUrl || mapsUrl) && (
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px]">
+              {hasPhone && (
+                <a href={phoneUrl!} className={primaryActionClass}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  Hemen Ara
+                </a>
+              )}
+              {whatsappUrl && (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={hasPhone ? ghostActionClass : primaryActionClass}
+                >
+                  <WhatsAppIcon size={18} />
+                  WhatsApp
+                </a>
+              )}
+              {mapsUrl && (
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={ghostActionClass}
+                >
+                  <MapPinIcon size={18} />
+                  Yol Tarifi
+                </a>
+              )}
             </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px]">
-            {whatsappUrl && (
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition"
-              >
-                <WhatsAppIcon size={18} />
-                WhatsApp
-              </a>
-            )}
-            {mapsUrl && (
-              <a
-                href={mapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold bg-white/5 text-white border border-blue-500/20 backdrop-blur-md hover:bg-white/10 transition"
-              >
-                <MapPinIcon size={18} />
-                Yol Tarifi
-              </a>
-            )}
-          </div>
+          )}
         </div>
       </section>
 
@@ -235,47 +401,223 @@ export default function VitrinProfileView({
       )}
 
       {/* ===== FEATURED BANNER ===== */}
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
-        <div className="relative overflow-hidden rounded-3xl border border-blue-500/15 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent p-8 sm:p-11 grid md:grid-cols-2 gap-8 items-center">
-          <div>
-            <span className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-extrabold uppercase tracking-wider px-4 py-1.5 rounded-lg mb-4 shadow-md">
-              Yeni Sezon
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 text-white">
-              Sonbahar / Kış Koleksiyonu
-            </h2>
-            <p className="text-slate-300 text-base mb-6 max-w-md leading-relaxed">
-              Doğal kumaşlar, sürdürülebilir üretim ve zamansız tasarımlar. Sınırlı sayıda, ön siparişle.
-            </p>
-            <div className="text-3xl font-extrabold text-blue-400 tracking-tight">
-              349 TL <span className="text-sm font-normal text-slate-400">'den başlayan fiyatlarla</span>
+      {showFeaturedBanner && (
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
+          <div
+            className={`relative overflow-hidden rounded-3xl border border-blue-500/15 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent p-8 sm:p-11 ${
+              featuredImageUrl ? "grid md:grid-cols-2 gap-8 items-center" : ""
+            }`}
+          >
+            <div>
+              {featuredLabel && (
+                <span className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-extrabold uppercase tracking-wider px-4 py-1.5 rounded-lg mb-4 shadow-md">
+                  {featuredLabel}
+                </span>
+              )}
+              {featuredTitle && (
+                <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 text-white">
+                  {featuredTitle}
+                </h2>
+              )}
+              {featuredDescription && (
+                <p className="text-slate-300 text-base mb-6 max-w-md leading-relaxed">
+                  {featuredDescription}
+                </p>
+              )}
+              {featuredPriceText && (
+                <div className="text-3xl font-extrabold text-blue-400 tracking-tight">
+                  {featuredPriceText}
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="h-64 sm:h-72 rounded-2xl overflow-hidden border border-blue-500/15 relative">
-            <Image
-              src={heroImage || "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=800&q=80"}
-              alt="Koleksiyon"
-              fill
-              className="object-cover"
-            />
+            {featuredImageUrl && (
+              <div className="h-64 sm:h-72 rounded-2xl overflow-hidden border border-blue-500/15 relative">
+                <Image
+                  src={featuredImageUrl}
+                  alt={featuredTitle || featuredLabel || "Öne çıkan kampanya"}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
       {/* ===== PRODUCTS ===== */}
-      <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler">
-        <div className="flex items-baseline justify-between mb-8">
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Tüm Ürünler</h2>
-          <span className="text-sm font-semibold text-slate-400">{productCount} Ürün Listeleniyor</span>
-        </div>
+      {productCount > 0 && (
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler">
+          <div className="flex items-baseline justify-between mb-8">
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Tüm Ürünler</h2>
+            <span className="text-sm font-semibold text-slate-400">{productCount} Ürün Listeleniyor</span>
+          </div>
 
-        <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Ürünler yükleniyor...</div>}>
-          {catalog}
-        </Suspense>
-      </section>
+          <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Ürünler yükleniyor...</div>}>
+            {catalog}
+          </Suspense>
+        </section>
+      )}
+
+      {/* ===== ABOUT ===== */}
+      {showAbout && (
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="hakkimizda">
+          <div className={`grid gap-10 items-start ${aboutImageUrl ? "md:grid-cols-2" : ""}`}>
+            {aboutImageUrl && (
+              <div className="relative min-h-[280px] rounded-3xl overflow-hidden border border-blue-500/15">
+                <Image
+                  src={aboutImageUrl}
+                  alt={aboutTitle}
+                  fill
+                  className="object-cover"
+                />
+                {aboutImageCaption && (
+                  <p className="absolute bottom-0 left-0 right-0 bg-[#0B1120]/80 px-4 py-3 text-xs text-slate-200">
+                    {aboutImageCaption}
+                  </p>
+                )}
+              </div>
+            )}
+            <div>
+              {aboutKicker && (
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
+                  {aboutKicker}
+                </p>
+              )}
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-5 leading-tight">
+                {aboutTitle}
+              </h2>
+              <div className="space-y-4 text-slate-300 text-sm sm:text-base leading-relaxed">
+                {aboutParagraphs.map((paragraph) => (
+                  <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+                ))}
+              </div>
+              {aboutValues.length > 0 && (
+                <div className="mt-8 grid sm:grid-cols-3 gap-4">
+                  {aboutValues.map((value, index) => (
+                    <div
+                      key={value.id || value.title}
+                      className="rounded-2xl border border-blue-500/15 bg-slate-900/50 p-4"
+                    >
+                      <span className="text-xs font-extrabold text-blue-400">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <h3 className="mt-2 text-sm font-bold text-white">{value.title}</h3>
+                      <p className="mt-1 text-xs text-slate-400 leading-relaxed">{value.description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===== GALLERY ===== */}
+      {showGallery && (
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="galeri">
+          <div className="flex items-baseline justify-between mb-8 gap-4">
+            <div>
+              {galleryKicker && (
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-2">
+                  {galleryKicker}
+                </p>
+              )}
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                {galleryTitle}
+              </h2>
+            </div>
+            {showContact && (
+              <a href="#iletisim" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition shrink-0">
+                Mağazaya gel →
+              </a>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 auto-rows-[160px] sm:auto-rows-[200px]">
+            {visibleGalleryItems.slice(0, 8).map((item, index) => (
+              <figure
+                key={item.id || item.imageUrl}
+                className={`relative overflow-hidden rounded-2xl border border-blue-500/15 ${
+                  index === 0 ? "md:col-span-2 md:row-span-2" : ""
+                }`}
+              >
+                <Image
+                  src={item.imageUrl}
+                  alt={item.title || "Galeri"}
+                  fill
+                  className="object-cover transition duration-500 hover:scale-105"
+                />
+                {item.title && (
+                  <figcaption className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0B1120]/90 to-transparent px-3 py-3 text-xs font-semibold text-white">
+                    {item.title}
+                  </figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ===== ARTICLES ===== */}
+      {showArticles && (
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="blog">
+          <div className="flex items-baseline justify-between mb-8">
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Yazılar</h2>
+            <Link href={`/v/${storeSlug}/yazilar`} className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">
+              {visibleArticles.length} yazı →
+            </Link>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visibleArticles.slice(0, 3).map((article) => (
+              <Link
+                key={article.id}
+                href={`/v/${storeSlug}/yazilar/${article.slug}`}
+                className="rounded-2xl border border-blue-500/15 bg-slate-900/60 p-5 hover:border-blue-500/30 transition"
+              >
+                <h3 className="text-base font-bold text-white mb-2 line-clamp-2">{article.title}</h3>
+                <p className="text-xs text-slate-400 line-clamp-3">
+                  {article.summary || article.content}
+                </p>
+                <span className="mt-4 inline-block text-xs font-semibold text-blue-400">Yazıyı oku →</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ===== FAQ ===== */}
+      {showFaq && (
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="sss">
+          <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">SSS</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
+                Sıkça sorulan sorular
+              </h2>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Sipariş, stok ve mağaza ziyareti hakkında merak edilenler.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {visibleFaqItems.map((item, index) => (
+                <details
+                  key={item.id || item.question}
+                  open={index === 0}
+                  className="rounded-2xl border border-blue-500/15 bg-slate-900/60 px-5 py-4"
+                >
+                  <summary className="cursor-pointer list-none text-sm font-bold text-white pr-6 relative after:content-['+'] after:absolute after:right-0 after:top-0 after:text-blue-400">
+                    {item.question}
+                  </summary>
+                  <p className="mt-3 text-sm text-slate-300 leading-relaxed">{item.answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== CONTACT & LOCATION ===== */}
+      {showContact && (
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="iletisim">
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Contact Panel */}
@@ -296,27 +638,41 @@ export default function VitrinProfileView({
                 </div>
               )}
 
-              {whatsappUrl && (
+              {hasPhone && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">📞</div>
                   <div>
-                    <h4 className="text-sm font-bold text-white">Telefon & WhatsApp</h4>
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
-                      WhatsApp'tan İletişime Geç
+                    <h4 className="text-sm font-bold text-white">Telefon</h4>
+                    <a href={phoneUrl!} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                      {displayPhone}
                     </a>
                   </div>
                 </div>
               )}
 
-              <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
-                <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">✉️</div>
-                <div>
-                  <h4 className="text-sm font-bold text-white">E-posta</h4>
-                  <a href={`mailto:merhaba@${storeSlug}.com`} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
-                    {`merhaba@${storeSlug}.com`}
-                  </a>
+              {whatsappUrl && (
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">💬</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">WhatsApp</h4>
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                      WhatsApp&apos;tan İletişime Geç
+                    </a>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {displayEmail && (
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">✉️</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">E-posta</h4>
+                    <a href={`mailto:${displayEmail}`} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                      {displayEmail}
+                    </a>
+                  </div>
+                </div>
+              )}
 
               {workingHoursToday && (
                 <div className="flex items-start gap-4">
@@ -331,6 +687,7 @@ export default function VitrinProfileView({
           </div>
 
           {/* Right Map Panel */}
+          {(mapsEmbedUrl || mapsUrl) && (
           <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 flex flex-col justify-between">
             <div className="flex items-center gap-3 text-lg font-bold text-white mb-4">
               <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-lg">🗺️</div>
@@ -366,8 +723,10 @@ export default function VitrinProfileView({
               </a>
             </div>
           </div>
+          )}
         </div>
       </div>
+      )}
 
       {/* ===== SHARE & QR SECTION ===== */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
