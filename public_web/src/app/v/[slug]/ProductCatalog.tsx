@@ -210,6 +210,11 @@ export default function ProductCatalog({
                     </span>
                   ) : null}
                 </div>
+                {product.fulfillmentRegion ? (
+                  <p className="truncate text-[11px] text-slate-500">
+                    {product.fulfillmentRegion}
+                  </p>
+                ) : null}
               </div>
             </a>
           );

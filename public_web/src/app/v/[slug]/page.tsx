@@ -60,6 +60,9 @@ interface PublicStoreRow {
   description: string | null;
   corporate_bio: string | null;
   whatsapp: string | null;
+  phone: string | null;
+  email: string | null;
+  hero_badge: string | null;
   instagram: string | null;
   website: string | null;
   address: string | null;
@@ -67,6 +70,16 @@ interface PublicStoreRow {
   marketplace_links: unknown;
   gallery_items: unknown;
   products: unknown;
+  faq_items: unknown;
+  about_kicker: string | null;
+  about_title: string | null;
+  about_image_url: string | null;
+  about_image_caption: string | null;
+  about_values: unknown;
+  gallery_section_kicker: string | null;
+  gallery_section_title: string | null;
+  show_storefront_rating: boolean | null;
+  show_directions_link: boolean | null;
   references_link: string | null;
   shelf_image_url: string | null;
   logo_url: string | null;
@@ -78,13 +91,13 @@ interface PublicStoreRow {
   google_business_link: string | null;
   product_storage_version: number | null;
   theme_preset?: string | null;
-  email?: string | null;
   rating_score?: number | null;
   review_count?: number | null;
-  featured_banner_title?: string | null;
-  featured_banner_description?: string | null;
-  featured_banner_image_url?: string | null;
-  featured_banner_price_text?: string | null;
+  featured_banner_label: string | null;
+  featured_banner_title: string | null;
+  featured_banner_description: string | null;
+  featured_banner_image_url: string | null;
+  featured_banner_price_text: string | null;
 }
 
 interface ProductRow {
@@ -96,6 +109,7 @@ interface ProductRow {
   price_amount: number | null;
   old_price_amount?: number | null;
   badge_tag?: string | null;
+  fulfillment_region?: string | null;
   currency: string;
   stock_status: string | null;
   image_urls: string[];
@@ -112,10 +126,15 @@ interface CategoryRow {
 }
 
 const PUBLIC_STORE_SELECT =
-  "id,slug,name,business_type,description,corporate_bio,whatsapp,instagram," +
-  "website,address,status,marketplace_links,gallery_items,products," +
-  "references_link,shelf_image_url,logo_url,working_hours,is_published," +
-  "kategori,latitude,longitude,google_business_link,product_storage_version";
+  "id,slug,name,business_type,description,corporate_bio,whatsapp,phone,email," +
+  "hero_badge,instagram,website,address,status,marketplace_links,gallery_items," +
+  "products,faq_items,about_kicker,about_title,about_image_url,about_image_caption," +
+  "about_values,gallery_section_kicker,gallery_section_title," +
+  "show_storefront_rating,show_directions_link,references_link,shelf_image_url," +
+  "logo_url,working_hours,is_published,kategori,latitude,longitude," +
+  "google_business_link,product_storage_version,featured_banner_label," +
+  "featured_banner_title,featured_banner_description,featured_banner_image_url," +
+  "featured_banner_price_text,rating_score,review_count";
 
 async function _getStoreData(slug: string) {
   try {
@@ -131,8 +150,8 @@ async function _getStoreData(slug: string) {
       console.error(`Public store query failed for slug=${slug}:`, storeError);
       throw storeError;
     }
-    if (!data) return null;
-    storeData = data as unknown as Record<string, unknown>;
+    storeData = (data as unknown as Record<string, unknown> | null) ?? null;
+    if (!storeData) return null;
 
     const store = storeData as unknown as PublicStoreRow;
 
@@ -161,7 +180,7 @@ async function _getStoreData(slug: string) {
       supabase
         .from("products")
         .select(
-          "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order"
+          "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order"
         )
         .eq("store_id", storeId)
         .eq("is_active", true)
@@ -191,6 +210,7 @@ async function _getStoreData(slug: string) {
             : undefined),
         oldPriceAmount: (p.old_price_amount as number | null) ?? null,
         badgeTag: (p.badge_tag as string | null) ?? null,
+        fulfillmentRegion: (p.fulfillment_region as string | null) ?? null,
         imageUrls: Array.isArray(p.image_urls) ? (p.image_urls as string[]) : [],
         categoryId: (p.category_id as string) || undefined,
         category:
@@ -274,6 +294,49 @@ export default async function StorePage(props: PageProps) {
 
   const galleryItems = safeParseJson<GalleryItem>(store.gallery_items);
   const marketplaceLinks = safeParseJson<MarketplaceLinkItem>(store.marketplace_links);
+  const faqItems = safeParseJson<{ id?: string; question?: string; answer?: string }>(
+    store.faq_items
+  )
+    .map((item) => ({
+      id: String(item.id || ""),
+      question: String(item.question || "").trim(),
+      answer: String(item.answer || "").trim(),
+    }))
+    .filter((item) => item.question && item.answer);
+  const aboutValues = safeParseJson<{ id?: string; title?: string; description?: string }>(
+    store.about_values
+  )
+    .map((item) => ({
+      id: String(item.id || ""),
+      title: String(item.title || "").trim(),
+      description: String(item.description || "").trim(),
+    }))
+    .filter((item) => item.title && item.description);
+  const aboutSection = {
+    kicker: String(store.about_kicker || "").trim(),
+    title: String(store.about_title || "").trim(),
+    body: String(store.corporate_bio || "").trim(),
+    imageUrl: String(store.about_image_url || "").trim(),
+    imageCaption: String(store.about_image_caption || "").trim(),
+    values: aboutValues,
+  };
+  const gallerySection = {
+    kicker: String(store.gallery_section_kicker || "").trim(),
+    title: String(store.gallery_section_title || "").trim(),
+    items: galleryItems
+      .map((item) => ({
+        id: item.id,
+        imageUrl: String(item.imageUrl || "").trim(),
+        title: String(item.title || "").trim(),
+      }))
+      .filter((item) => item.imageUrl),
+  };
+  const showDirectionsLink = store.show_directions_link !== false;
+  const showStorefrontRating = store.show_storefront_rating === true;
+  const ratingScore =
+    typeof store.rating_score === "number" ? store.rating_score : null;
+  const reviewCount =
+    typeof store.review_count === "number" ? store.review_count : null;
 
   const siteUrl = getSiteUrl();
   const publicUrl = buildSiteUrl(`/v/${store.slug}`);
@@ -282,11 +345,28 @@ export default async function StorePage(props: PageProps) {
   const hasPhysicalLocation =
     store.address && store.latitude != null && store.longitude != null;
   const isBookingEnabled = bookingSettings?.is_enabled ?? false;
-  const phoneDigits = normalizeWhatsappDigits(store.whatsapp);
-  const waBaseUrl = phoneDigits ? `https://wa.me/${phoneDigits}` : null;
+  const whatsappDigits = normalizeWhatsappDigits(store.whatsapp);
+  const waBaseUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null;
   const whatsappActionUrl = waBaseUrl
     ? `${waBaseUrl}?text=${encodeURIComponent(`Merhaba, ${store.name} vitrininiz hakkında bilgi almak istiyorum.`)}`
     : null;
+  const displayPhone = String(store.phone || "").trim();
+  const phoneDigits = normalizeWhatsappDigits(displayPhone);
+  const phoneUrl = phoneDigits ? `tel:+${phoneDigits}` : null;
+  const displayEmail = String(store.email || "").trim();
+  const displayHeroBadge = String(store.hero_badge || "").trim();
+  const phoneDigitsForSchema = phoneDigits || whatsappDigits;
+  const featuredBanner = (() => {
+    const label = String(store.featured_banner_label || "").trim();
+    const title = String(store.featured_banner_title || "").trim();
+    const description = String(store.featured_banner_description || "").trim();
+    const priceText = String(store.featured_banner_price_text || "").trim();
+    const imageUrl = String(store.featured_banner_image_url || "").trim();
+    if (!label && !title && !description && !priceText && !imageUrl) {
+      return null;
+    }
+    return { label, title, description, priceText, imageUrl };
+  })();
   const instagramValue = String(store.instagram || "").trim();
   const instagramUrl = (() => {
     if (!instagramValue) return null;
@@ -298,11 +378,13 @@ export default async function StorePage(props: PageProps) {
   })();
   const websiteUrl = normalizeExternalUrl(store.website);
   const referencesUrl = normalizeExternalUrl(store.references_link);
-  const mapsUrl = hasPhysicalLocation
-    ? `https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}`
-    : store.address
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`
-      : null;
+  const mapsUrl = showDirectionsLink
+    ? hasPhysicalLocation
+      ? `https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}`
+      : store.address
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`
+        : null
+    : null;
   const mapsEmbedUrl =
     store.latitude != null && store.longitude != null
       ? `https://maps.google.com/maps?q=${store.latitude},${store.longitude}&output=embed`
@@ -381,7 +463,7 @@ export default async function StorePage(props: PageProps) {
         description: store.description || store.corporate_bio,
         image: store.shelf_image_url || store.logo_url,
         logo: store.logo_url,
-        telephone: phoneDigits ? `+${phoneDigits}` : undefined,
+        telephone: phoneDigitsForSchema ? `+${phoneDigitsForSchema}` : undefined,
         url: publicUrl,
         address: hasPhysicalLocation
           ? {
@@ -445,9 +527,20 @@ export default async function StorePage(props: PageProps) {
         isClosed={!openState.isOpen}
         logoUrl={store.logo_url}
         heroImage={heroImage}
+        heroBadge={displayHeroBadge || null}
         description={displayDescription}
         corporateBio={store.corporate_bio}
         address={displayAddress}
+        phone={displayPhone || null}
+        phoneUrl={phoneUrl}
+        email={displayEmail || null}
+        featuredBanner={featuredBanner}
+        aboutSection={aboutSection}
+        gallerySection={gallerySection}
+        faqItems={faqItems}
+        showStorefrontRating={showStorefrontRating}
+        ratingScore={ratingScore}
+        reviewCount={reviewCount}
         workingHoursToday={workingHoursToday}
         workingHoursWeek={workingHoursWeek}
         googleBusinessLink={store.google_business_link}
@@ -462,7 +555,7 @@ export default async function StorePage(props: PageProps) {
         profile={vitrinProfile}
         collections={collections}
         productCount={visibleProducts.length}
-        galleryItems={galleryItems}
+        galleryItems={gallerySection.items}
         marketplaceLinks={marketplaceLinks}
         articles={articles}
         catalog={
