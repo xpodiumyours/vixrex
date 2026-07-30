@@ -46,6 +46,9 @@ interface ProductRow {
   description: string | null;
   price_text: string | null;
   price_amount: number | null;
+  old_price_amount?: number | null;
+  badge_tag?: string | null;
+  fulfillment_region?: string | null;
   currency: string;
   stock_status: string | null;
   image_urls: string[];
@@ -76,7 +79,7 @@ async function _getProductData(slug: string, productSlug: string) {
     const { data: productRow } = await supabase
       .from("products")
       .select(
-        "id,name,slug,description,price_text,price_amount,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type"
+        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type"
       )
       .eq("store_id", store.id)
       .eq("slug", productSlug)
@@ -104,6 +107,9 @@ async function _getProductData(slug: string, productSlug: string) {
           (productRow.price_amount != null
             ? `${productRow.price_amount} ${productRow.currency}`
             : undefined),
+        oldPriceAmount: productRow.old_price_amount ?? null,
+        badgeTag: productRow.badge_tag ?? null,
+        fulfillmentRegion: productRow.fulfillment_region ?? null,
         imageUrls: Array.isArray(productRow.image_urls)
           ? productRow.image_urls
           : [],

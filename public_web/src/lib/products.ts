@@ -6,6 +6,7 @@ export interface ProductItem {
   price?: string;
   oldPriceAmount?: number | null;
   badgeTag?: string | null;
+  fulfillmentRegion?: string | null;
   imagePath?: string;
   imageUrls?: string[];
   categoryId?: string;

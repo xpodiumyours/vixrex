@@ -222,6 +222,103 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
+  void updatePhone(String value) {
+    _data.phone = value.trim();
+    notifyListeners();
+  }
+
+  void updateEmail(String value) {
+    _data.email = value.trim();
+    notifyListeners();
+  }
+
+  void updateHeroBadge(String value) {
+    _data.heroBadge = value.trim();
+    notifyListeners();
+  }
+
+  void updateCorporateBio(String value) {
+    _data.corporateBio = value;
+    notifyListeners();
+  }
+
+  void updateAboutSection({
+    required String kicker,
+    required String title,
+    required String body,
+    required String imageUrl,
+    required String imageCaption,
+    required List<StoreAboutValue> values,
+  }) {
+    _data.aboutKicker = kicker.trim();
+    _data.aboutTitle = title.trim();
+    _data.corporateBio = body;
+    _data.aboutImageUrl = imageUrl.trim();
+    _data.aboutImageCaption = imageCaption.trim();
+    _data.aboutValues = List.of(values.take(3));
+    notifyListeners();
+  }
+
+  bool get hasAboutSection {
+    return _data.aboutKicker.trim().isNotEmpty ||
+        _data.aboutTitle.trim().isNotEmpty ||
+        _data.corporateBio.trim().isNotEmpty ||
+        _data.aboutImageUrl.trim().isNotEmpty ||
+        _data.aboutValues.any((v) => v.title.trim().isNotEmpty);
+  }
+
+  void updateGallerySectionMeta({
+    required String kicker,
+    required String title,
+  }) {
+    _data.gallerySectionKicker = kicker.trim();
+    _data.gallerySectionTitle = title.trim();
+    notifyListeners();
+  }
+
+  void updateShowStorefrontRating(bool value) {
+    _data.showStorefrontRating = value;
+    notifyListeners();
+  }
+
+  void updateShowDirectionsLink(bool value) {
+    _data.showDirectionsLink = value;
+    notifyListeners();
+  }
+
+  void updateFeaturedCampaign({
+    required String label,
+    required String title,
+    required String description,
+    required String priceText,
+    required String imageUrl,
+  }) {
+    _data.featuredBannerLabel = label.trim();
+    _data.featuredBannerTitle = title.trim();
+    _data.featuredBannerDescription = description.trim();
+    _data.featuredBannerPriceText = priceText.trim();
+    _data.featuredBannerImageUrl = imageUrl.trim();
+    notifyListeners();
+  }
+
+  bool get hasFeaturedCampaign {
+    return _data.featuredBannerTitle.trim().isNotEmpty ||
+        _data.featuredBannerDescription.trim().isNotEmpty ||
+        _data.featuredBannerImageUrl.trim().isNotEmpty ||
+        _data.featuredBannerPriceText.trim().isNotEmpty ||
+        _data.featuredBannerLabel.trim().isNotEmpty;
+  }
+
+  void updateFaqItems(List<StoreFaqItem> items) {
+    _data.faqItems = List.of(items);
+    notifyListeners();
+  }
+
+  void updateWorkingHoursText(String value) {
+    _data.workingHours = value.trim();
+    notifyListeners();
+  }
+
   void updateInstagram(String value) {
     _data.instagram = value.trim();
     notifyListeners();
@@ -534,10 +631,20 @@ class StoreEditorController extends ChangeNotifier
             slug: safeSlug,
             description: product.description,
             priceText: product.price,
+            priceAmount: _parsePriceAmount(product.price),
+            oldPriceAmount: product.oldPriceAmount,
+            badgeTag: product.badgeTag,
+            fulfillmentRegion: product.fulfillmentLocation,
+            clearOldPriceAmount: product.oldPriceAmount == null,
+            clearBadgeTag:
+                product.badgeTag == null || product.badgeTag!.trim().isEmpty,
+            clearFulfillmentRegion:
+                product.fulfillmentLocation == null ||
+                product.fulfillmentLocation!.trim().isEmpty,
             imageUrls: product.displayImageUrls,
             categoryId: categoryUuid,
             clearCategory: categoryUuid == null || categoryUuid.isEmpty,
-            isVisible: product.isVisible,
+            isVisible: true,
             stockStatus: product.stockStatus,
             sortOrder: i,
           );
@@ -556,10 +663,14 @@ class StoreEditorController extends ChangeNotifier
             slug: safeSlug,
             description: product.description,
             priceText: product.price,
+            priceAmount: _parsePriceAmount(product.price),
+            oldPriceAmount: product.oldPriceAmount,
+            badgeTag: product.badgeTag,
+            fulfillmentRegion: product.fulfillmentLocation,
             imageUrls: product.displayImageUrls,
             categoryId: categoryUuid,
             sourceType: product.source ?? 'manual',
-            isVisible: product.isVisible,
+            isVisible: true,
             sortOrder: i,
           );
           if (created.isFailure || created.data == null) {
@@ -574,19 +685,8 @@ class StoreEditorController extends ChangeNotifier
         }
       }
 
-      final keepIds = nextProducts.map((p) => p.id).toSet();
-      for (final remoteProduct in remote) {
-        if (keepIds.contains(remoteProduct.id)) continue;
-        final deleted = await productService.deleteProduct(
-          remoteProduct.id,
-          editToken: editToken,
-        );
-        if (deleted.isFailure) {
-          return Result.failure(
-            Failure(deleted.failure?.message ?? 'Ürün silinemedi.'),
-          );
-        }
-      }
+      // Eksik uzak ürünleri burada silme. Kalıcı silme yalnız açık
+      // removeProduct / kullanıcı onayı ile yapılır (canlı veri koruması).
 
       _data.products = nextProducts;
       await saveLocally();
@@ -602,12 +702,19 @@ class StoreEditorController extends ChangeNotifier
   }
 
   /// Yeni ürün ekler (ilişkisel `products` tablosuna senkronize eder).
+  /// Yayınlı vitrinde uzak yazma başarısızsa yerel listeye eklemez.
   Future<Result<void>> addProduct(Product p) async {
     final editToken = _publishedInfo?.editToken.trim() ?? '';
     final ready = editToken.isNotEmpty ? await ensureRemoteStoreId() : false;
     final storeId = _data.id?.trim() ?? '';
 
-    if (editToken.isNotEmpty && ready && storeId.isNotEmpty) {
+    if (editToken.isNotEmpty) {
+      if (!ready || storeId.isEmpty) {
+        return Result.failure(
+          Failure('Mağaza hazır değil. Ürün müşteri vitrine yazılamadı.'),
+        );
+      }
+
       final result = await productService.addProduct(
         storeId: storeId,
         editToken: editToken,
@@ -615,19 +722,30 @@ class StoreEditorController extends ChangeNotifier
         slug: p.slug ?? _generateSlug(p.name),
         description: p.description,
         priceText: p.price,
+        priceAmount: _parsePriceAmount(p.price),
+        oldPriceAmount: p.oldPriceAmount,
+        badgeTag: p.badgeTag,
+        fulfillmentRegion: p.fulfillmentLocation,
         imageUrls: p.displayImageUrls,
         categoryId:
             p.categoryId.isNotEmpty && _isUuid(p.categoryId)
                 ? p.categoryId
                 : null,
         sourceType: p.source ?? 'manual',
-        isVisible: p.isVisible,
+        isVisible: true,
         sortOrder: _data.products.length,
       );
 
-      if (result.isSuccess && result.data != null) {
-        p.id = result.data!;
+      if (result.isFailure ||
+          result.data == null ||
+          result.data!.trim().isEmpty) {
+        return Result.failure(
+          Failure(
+            result.failure?.message ?? 'Ürün müşteri vitrine yazılamadı.',
+          ),
+        );
       }
+      p.id = result.data!;
     }
 
     _data.products.add(p);
@@ -637,7 +755,7 @@ class StoreEditorController extends ChangeNotifier
     return const Result.success(null);
   }
 
-  /// Ürün siler (ilişkisel `products` tablosu).
+  /// Ürün siler (ilişkisel `products` tablosu). Kalıcı; geri alınamaz.
   Future<Result<void>> removeProduct(int i) async {
     if (i < 0 || i >= _data.products.length) {
       return const Result.success(null);
@@ -646,16 +764,30 @@ class StoreEditorController extends ChangeNotifier
     final editToken = _publishedInfo?.editToken.trim() ?? '';
 
     if (_isUuid(product.id) && editToken.isNotEmpty) {
-      await productService.deleteProduct(
+      final deleted = await productService.deleteProduct(
         product.id,
         editToken: editToken,
       );
+      if (deleted.isFailure) {
+        return Result.failure(
+          Failure(deleted.failure?.message ?? 'Ürün silinemedi.'),
+        );
+      }
     }
     _data.products.removeAt(i);
     await saveLocally();
     notifyListeners();
     _revalidateStoreCache();
     return const Result.success(null);
+  }
+
+  /// Kimlik ile kalıcı ürün siler. Geri alınamaz.
+  Future<Result<void>> removeProductById(String productId) async {
+    final index = _data.products.indexWhere((p) => p.id == productId);
+    if (index < 0) {
+      return Result.failure(Failure('Ürün bulunamadı.'));
+    }
+    return removeProduct(index);
   }
 
   /// Ürün günceller (ilişkisel `products` tablosu).
@@ -674,12 +806,21 @@ class StoreEditorController extends ChangeNotifier
         slug: p.slug ?? _generateSlug(p.name),
         description: p.description,
         priceText: p.price,
+        priceAmount: _parsePriceAmount(p.price),
+        oldPriceAmount: p.oldPriceAmount,
+        badgeTag: p.badgeTag,
+        fulfillmentRegion: p.fulfillmentLocation,
+        clearOldPriceAmount: p.oldPriceAmount == null,
+        clearBadgeTag: p.badgeTag == null || p.badgeTag!.trim().isEmpty,
+        clearFulfillmentRegion:
+            p.fulfillmentLocation == null ||
+            p.fulfillmentLocation!.trim().isEmpty,
         imageUrls: p.displayImageUrls,
         categoryId:
             p.categoryId.isNotEmpty && _isUuid(p.categoryId)
                 ? p.categoryId
                 : null,
-        isVisible: p.isVisible,
+        isVisible: true,
         stockStatus: p.stockStatus,
       );
     }
@@ -704,6 +845,17 @@ class StoreEditorController extends ChangeNotifier
     return RegExp(
       r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     ).hasMatch(value.trim());
+  }
+
+  double? _parsePriceAmount(String raw) {
+    var cleaned = raw.trim().replaceAll(RegExp(r'[^\d,.]'), '');
+    if (cleaned.isEmpty) return null;
+    if (cleaned.contains(',') && cleaned.contains('.')) {
+      cleaned = cleaned.replaceAll('.', '').replaceAll(',', '.');
+    } else if (cleaned.contains(',')) {
+      cleaned = cleaned.replaceAll(',', '.');
+    }
+    return double.tryParse(cleaned);
   }
 
   String _generateSlug(String name) {
@@ -833,6 +985,7 @@ class StoreEditorController extends ChangeNotifier
   }
 
   Future<void> saveLocally() async {
+    _syncEditorGalleryIntoStoreData();
     await storage.saveVitrinData(_data);
     if (_publishedInfo != null) {
       await storage.savePublishedVitrinInfo(
@@ -842,6 +995,19 @@ class StoreEditorController extends ChangeNotifier
         editToken: _publishedInfo!.editToken,
       );
     }
+  }
+
+  /// Editör galeri etiketlerini StoreData'ya yazar (yerel kayıt / yayın).
+  void _syncEditorGalleryIntoStoreData() {
+    _data.galleryItems =
+        activeGalleryItems.map((item) {
+          return StoreGalleryItem(
+            id: item.id,
+            imageUrl: item.imageUrl ?? '',
+            title: item.title ?? '',
+            description: item.description ?? '',
+          );
+        }).toList();
   }
 
   void clearValidationErrors() {

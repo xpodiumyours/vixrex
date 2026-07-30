@@ -9,6 +9,10 @@ class _FakeProductRepository implements ProductRepository {
   final List<Product> remote = [];
   final List<String> createdNames = [];
   final List<String> deletedIds = [];
+  double? lastPriceAmount;
+  double? lastOldPriceAmount;
+  String? lastBadgeTag;
+  String? lastFulfillmentRegion;
 
   @override
   Future<List<Product>> getProductsByStoreId(String storeId) async =>
@@ -27,6 +31,9 @@ class _FakeProductRepository implements ProductRepository {
     String description = '',
     String priceText = '',
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String> imageUrls = const [],
     String? categoryId,
     String sourceType = 'manual',
@@ -35,6 +42,10 @@ class _FakeProductRepository implements ProductRepository {
     int sortOrder = 0,
   }) async {
     createdNames.add(name);
+    lastPriceAmount = priceAmount;
+    lastOldPriceAmount = oldPriceAmount;
+    lastBadgeTag = badgeTag;
+    lastFulfillmentRegion = fulfillmentRegion;
     final suffix = createdNames.length.toString().padLeft(12, '0');
     final id = '11111111-1111-1111-1111-$suffix';
     remote.add(
@@ -48,6 +59,9 @@ class _FakeProductRepository implements ProductRepository {
         isVisible: isVisible,
         slug: slug,
         source: sourceType,
+        oldPriceAmount: oldPriceAmount,
+        badgeTag: badgeTag,
+        fulfillmentLocation: fulfillmentRegion,
       ),
     );
     return id;
@@ -62,6 +76,9 @@ class _FakeProductRepository implements ProductRepository {
     String? description,
     String? priceText,
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String>? imageUrls,
     String? categoryId,
     bool? isVisible,
@@ -70,9 +87,17 @@ class _FakeProductRepository implements ProductRepository {
     String? stockStatus,
     bool clearCategory = false,
     bool clearPriceAmount = false,
+    bool clearOldPriceAmount = false,
+    bool clearBadgeTag = false,
+    bool clearFulfillmentRegion = false,
     bool clearStockQuantity = false,
     bool clearStockStatus = false,
-  }) async {}
+  }) async {
+    if (priceAmount != null) lastPriceAmount = priceAmount;
+    if (oldPriceAmount != null) lastOldPriceAmount = oldPriceAmount;
+    if (badgeTag != null) lastBadgeTag = badgeTag;
+    if (fulfillmentRegion != null) lastFulfillmentRegion = fulfillmentRegion;
+  }
 
   @override
   Future<void> deleteProduct(String productId, {String? editToken}) async {
@@ -180,7 +205,7 @@ void main() {
     expect(controller.data.products.single.id, startsWith('11111111-'));
   });
 
-  test('yerelde olmayan remote ürünü siler', () async {
+  test('yerelde olmayan remote ürünü otomatik silmez', () async {
     await storage.saveVitrinData(
       StoreData(
         id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
@@ -207,7 +232,81 @@ void main() {
     );
 
     expect(result.isSuccess, isTrue);
-    expect(repo.deletedIds, ['22222222-2222-2222-2222-222222222222']);
+    expect(repo.deletedIds, isEmpty);
+    expect(repo.remote.any((p) => p.id == '22222222-2222-2222-2222-222222222222'), isTrue);
     expect(repo.createdNames, ['Yeni']);
+  });
+
+  test('sync create Atmosfer alanlarını yazar', () async {
+    await storage.saveVitrinData(
+      StoreData(
+        id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+        slug: 'demo-magaza',
+        name: 'Demo',
+        kategori: 'Diğer',
+        status: 'Açık',
+      ),
+    );
+    await storage.savePublishedVitrinInfo(
+      slug: 'demo-magaza',
+      publicLink: 'https://vixrex-public.vercel.app/v/demo-magaza',
+      name: 'Demo',
+      editToken: 'edit-token-12345678901234567890',
+    );
+    await controller.initialize(null);
+
+    final result = await controller.syncCatalogToRemote(
+      products: [
+        Product(
+          id: 'local-1',
+          name: 'Kazak',
+          price: '549 TL',
+          oldPriceAmount: 799,
+          badgeTag: '-31%',
+          fulfillmentLocation: 'Çekmeköy',
+        ),
+      ],
+      categories: const [],
+    );
+
+    expect(result.isSuccess, isTrue);
+    expect(repo.lastPriceAmount, 549);
+    expect(repo.lastOldPriceAmount, 799);
+    expect(repo.lastBadgeTag, '-31%');
+    expect(repo.lastFulfillmentRegion, 'Çekmeköy');
+  });
+
+  test('removeProduct yalnız seçilen ürünü kalıcı siler', () async {
+    await storage.saveVitrinData(
+      StoreData(
+        id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+        slug: 'demo-magaza',
+        name: 'Demo',
+        kategori: 'Diğer',
+        status: 'Açık',
+        products: [
+          Product(id: '22222222-2222-2222-2222-222222222222', name: 'Silinecek'),
+          Product(id: '33333333-3333-3333-3333-333333333333', name: 'Kalacak'),
+        ],
+      ),
+    );
+    await storage.savePublishedVitrinInfo(
+      slug: 'demo-magaza',
+      publicLink: 'https://vixrex-public.vercel.app/v/demo-magaza',
+      name: 'Demo',
+      editToken: 'edit-token-12345678901234567890',
+    );
+    repo.remote.addAll([
+      Product(id: '22222222-2222-2222-2222-222222222222', name: 'Silinecek'),
+      Product(id: '33333333-3333-3333-3333-333333333333', name: 'Kalacak'),
+    ]);
+    await controller.initialize(null);
+
+    final result = await controller.removeProduct(0);
+
+    expect(result.isSuccess, isTrue);
+    expect(repo.deletedIds, ['22222222-2222-2222-2222-222222222222']);
+    expect(controller.data.products.map((p) => p.name), ['Kalacak']);
+    expect(repo.remote.map((p) => p.name), ['Kalacak']);
   });
 }

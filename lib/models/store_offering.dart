@@ -96,3 +96,56 @@ class StoreGalleryItem {
     );
   }
 }
+
+class StoreFaqItem {
+  String id;
+  String question;
+  String answer;
+
+  StoreFaqItem({
+    required this.id,
+    this.question = '',
+    this.answer = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'question': question,
+    'answer': answer,
+  };
+
+  factory StoreFaqItem.fromJson(Map<String, dynamic> json) {
+    return StoreFaqItem(
+      id: (json['id'] ?? '').toString(),
+      question: (json['question'] ?? '').toString(),
+      answer: (json['answer'] ?? '').toString(),
+    );
+  }
+}
+
+/// Atmosfer Hakkımızda bölümündeki değer kartı (örn. "Seçili koleksiyon").
+class StoreAboutValue {
+  String id;
+  String title;
+  String description;
+
+  StoreAboutValue({
+    required this.id,
+    this.title = '',
+    this.description = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+  };
+
+  factory StoreAboutValue.fromJson(Map<String, dynamic> json) {
+    return StoreAboutValue(
+      id: (json['id'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+    );
+  }
+}

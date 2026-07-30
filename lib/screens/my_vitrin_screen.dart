@@ -38,6 +38,13 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
 
   final _nameController = TextEditingController();
   final _whatsappController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _heroBadgeController = TextEditingController();
+  final _corporateBioController = TextEditingController();
+  final _galleryKickerController = TextEditingController();
+  final _galleryTitleController = TextEditingController();
+  final _workingHoursController = TextEditingController();
   final _addressController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _instagramController = TextEditingController();
@@ -77,6 +84,13 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   void _syncControllers() {
     _syncText(_nameController, _controller.data.name);
     _syncText(_whatsappController, _controller.data.whatsapp);
+    _syncText(_phoneController, _controller.data.phone);
+    _syncText(_emailController, _controller.data.email);
+    _syncText(_heroBadgeController, _controller.data.heroBadge);
+    _syncText(_corporateBioController, _controller.data.corporateBio);
+    _syncText(_galleryKickerController, _controller.data.gallerySectionKicker);
+    _syncText(_galleryTitleController, _controller.data.gallerySectionTitle);
+    _syncText(_workingHoursController, _controller.data.workingHours);
     _syncText(_addressController, _controller.data.address);
     _syncText(_descriptionController, _controller.data.description);
     _syncText(_instagramController, _controller.data.instagram);
@@ -128,6 +142,13 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _controller.removeListener(_syncControllers);
     _nameController.dispose();
     _whatsappController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _heroBadgeController.dispose();
+    _corporateBioController.dispose();
+    _galleryKickerController.dispose();
+    _galleryTitleController.dispose();
+    _workingHoursController.dispose();
     _addressController.dispose();
     _descriptionController.dispose();
     _instagramController.dispose();
@@ -175,6 +196,13 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                             textControllers: {
                               'name': _nameController,
                               'whatsapp': _whatsappController,
+                              'phone': _phoneController,
+                              'email': _emailController,
+                              'heroBadge': _heroBadgeController,
+                              'corporateBio': _corporateBioController,
+                              'galleryKicker': _galleryKickerController,
+                              'galleryTitle': _galleryTitleController,
+                              'workingHours': _workingHoursController,
                               'address': _addressController,
                               'description': _descriptionController,
                               'instagram': _instagramController,

@@ -188,20 +188,6 @@ class StorePublishService {
     }
   }
 
-  /// Emekli: JSON `stores.products` yazmaz.
-  /// Ürün yazımı [StoreEditorController.syncCatalogToRemote] / ProductService RPC.
-  @Deprecated('Use StoreEditorController.syncCatalogToRemote')
-  Future<Result<void>> updateProductsOnly(
-    StoreData data, {
-    required String editToken,
-  }) async {
-    return Result.failure(
-      Failure(
-        'Ürünler products tablosuna yazılır. syncCatalogToRemote kullanın.',
-      ),
-    );
-  }
-
   /// Yayın sonrası tek alan yaması (ör. Instagram kullanıcı adı).
   Future<Result<void>> updateStorePatch({
     required String slug,

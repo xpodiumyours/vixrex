@@ -13,6 +13,7 @@ import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/models/editor_gallery_item.dart';
+import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/ocr_scanner_screen.dart';
 import 'package:vixrex/screens/preview_screen.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
@@ -29,12 +30,18 @@ import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 import 'package:vixrex/widgets/editor/public_link_card.dart';
 import 'package:vixrex/widgets/editor/store_theme_picker.dart';
 import 'package:vixrex/widgets/google_business_guide_card.dart';
+import 'package:vixrex/widgets/editor/blog_entry_card.dart';
+import 'package:vixrex/widgets/editor/about_entry_card.dart';
+import 'package:vixrex/widgets/editor/about_editor_sheet.dart';
+import 'package:vixrex/widgets/editor/faq_entry_card.dart';
+import 'package:vixrex/widgets/editor/faq_editor_sheet.dart';
+import 'package:vixrex/widgets/editor/featured_campaign_entry_card.dart';
+import 'package:vixrex/widgets/editor/featured_campaign_sheet.dart';
+import 'package:vixrex/widgets/editor/form_media_picker.dart';
 import 'package:vixrex/widgets/editor/working_hours_editor.dart';
 import 'package:vixrex/widgets/instagram_sync_section.dart';
 import 'package:vixrex/widgets/product/product_management_entry_card.dart';
 import 'package:vixrex/widgets/product/product_management_sheet.dart';
-
-import 'package:vixrex/widgets/editor/form_media_picker.dart';
 import 'package:vixrex/widgets/editor/form_location_info.dart';
 import 'package:vixrex/widgets/editor/form_marketplace_links.dart';
 
@@ -68,6 +75,12 @@ class VitrinFormSection extends StatelessWidget {
 
   TextEditingController get _name => textControllers['name']!;
   TextEditingController get _whatsapp => textControllers['whatsapp']!;
+  TextEditingController get _phone => textControllers['phone']!;
+  TextEditingController get _email => textControllers['email']!;
+  TextEditingController get _heroBadge => textControllers['heroBadge']!;
+  TextEditingController get _galleryKicker => textControllers['galleryKicker']!;
+  TextEditingController get _galleryTitle => textControllers['galleryTitle']!;
+  TextEditingController get _workingHours => textControllers['workingHours']!;
   TextEditingController get _address => textControllers['address']!;
   TextEditingController get _desc => textControllers['description']!;
   TextEditingController get _insta => textControllers['instagram']!;
@@ -83,6 +96,7 @@ class VitrinFormSection extends StatelessWidget {
               imageUrl: e.imageUrl ?? '',
               extension: e.extension ?? 'jpg',
               contentType: e.contentType ?? 'image/jpeg',
+              title: e.title ?? '',
               isRemoved: e.isRemoved,
             ),
           )
@@ -93,11 +107,12 @@ class VitrinFormSection extends StatelessWidget {
       items
           .where((e) => e.bytes != null)
           .map(
-            (e) => EditorGalleryItem.fromBytes(
-              e.bytes!,
+            (e) => EditorGalleryItem(
               id: e.id,
+              bytes: e.bytes,
               extension: e.extension,
               contentType: e.contentType,
+              title: e.title.trim().isEmpty ? null : e.title.trim(),
             ),
           )
           .toList();
@@ -179,11 +194,26 @@ class VitrinFormSection extends StatelessWidget {
                           const SizedBox(height: 14),
                           _buildWhatsappField(),
                           const SizedBox(height: 14),
+                          _buildPhoneField(),
+                          const SizedBox(height: 14),
+                          _buildEmailField(),
+                          const SizedBox(height: 14),
                           _buildLocationSection(),
                           const SizedBox(height: 14),
                           _buildDescriptionField(),
                           const SizedBox(height: 14),
+                          _buildHeroBadgeField(),
+                          const SizedBox(height: 14),
                           _buildInstagramField(),
+                          const SizedBox(height: 14),
+                          _buildWorkingHoursField(),
+                          const SizedBox(height: 14),
+                          AboutEntryCard(
+                            hasContent: controller.hasAboutSection,
+                            onTap: () => _showAboutSheet(context),
+                          ),
+                          const SizedBox(height: 14),
+                          _buildDirectionsToggle(),
                         ],
                       ),
                     ),
@@ -247,6 +277,24 @@ class VitrinFormSection extends StatelessWidget {
                             onTap: () => _showProductSheet(context),
                           ),
                           const SizedBox(height: 14),
+                          FeaturedCampaignEntryCard(
+                            hasCampaign: controller.hasFeaturedCampaign,
+                            onTap: () => _showFeaturedCampaignSheet(context),
+                          ),
+                          const SizedBox(height: 14),
+                          FaqEntryCard(
+                            faqCount: controller.data.faqItems.length,
+                            onTap: () => _showFaqSheet(context),
+                          ),
+                          const SizedBox(height: 14),
+                          BlogEntryCard(
+                            canOpen:
+                                (controller.publishedInfo?.slug.trim().isNotEmpty ??
+                                    false) ||
+                                controller.data.slug.trim().isNotEmpty,
+                            onTap: () => _openBlogEditor(context),
+                          ),
+                          const SizedBox(height: 14),
 
                           // StoreThemePicker (Tema Seçimi)
                           StoreThemePicker(
@@ -287,6 +335,8 @@ class VitrinFormSection extends StatelessWidget {
                               controller.clearValidationErrors();
                             },
                           ),
+                          const SizedBox(height: 10),
+                          _buildRatingToggle(),
                           const SizedBox(height: 14),
 
                           // 6. Bağlantılı Platformlar (Trendyol vb.)
@@ -312,16 +362,36 @@ class VitrinFormSection extends StatelessWidget {
                     _buildWhatsappField(),
                     const SizedBox(height: 14),
 
+                    _buildPhoneField(),
+                    const SizedBox(height: 14),
+
+                    _buildEmailField(),
+                    const SizedBox(height: 14),
+
                     // Konum Bilgileri (İl, İlçe, Açık Adres, GPS) (Zorunlu)
                     _buildLocationSection(),
+                    const SizedBox(height: 10),
+                    _buildDirectionsToggle(),
                     const SizedBox(height: 14),
 
                     // Kısa Açıklama
                     _buildDescriptionField(),
                     const SizedBox(height: 14),
 
+                    _buildHeroBadgeField(),
+                    const SizedBox(height: 14),
+
                     // Instagram
                     _buildInstagramField(),
+                    const SizedBox(height: 14),
+
+                    _buildWorkingHoursField(),
+                    const SizedBox(height: 14),
+
+                    AboutEntryCard(
+                      hasContent: controller.hasAboutSection,
+                      onTap: () => _showAboutSheet(context),
+                    ),
                     const SizedBox(height: 14),
 
                     // Vitrin paylaşım linki (isimden öngörülen / yayın sonrası canlı)
@@ -373,6 +443,24 @@ class VitrinFormSection extends StatelessWidget {
                       onTap: () => _showProductSheet(context),
                     ),
                     const SizedBox(height: 14),
+                    FeaturedCampaignEntryCard(
+                      hasCampaign: controller.hasFeaturedCampaign,
+                      onTap: () => _showFeaturedCampaignSheet(context),
+                    ),
+                    const SizedBox(height: 14),
+                    FaqEntryCard(
+                      faqCount: controller.data.faqItems.length,
+                      onTap: () => _showFaqSheet(context),
+                    ),
+                    const SizedBox(height: 14),
+                    BlogEntryCard(
+                      canOpen:
+                          (controller.publishedInfo?.slug.trim().isNotEmpty ??
+                              false) ||
+                          controller.data.slug.trim().isNotEmpty,
+                      onTap: () => _openBlogEditor(context),
+                    ),
+                    const SizedBox(height: 14),
 
                     // StoreThemePicker (Tema Seçimi)
                     StoreThemePicker(
@@ -412,6 +500,8 @@ class VitrinFormSection extends StatelessWidget {
                         controller.clearValidationErrors();
                       },
                     ),
+                    const SizedBox(height: 10),
+                    _buildRatingToggle(),
                     const SizedBox(height: 14),
 
                     // Bağlantılı Platformlar (Trendyol vb.)
@@ -440,6 +530,8 @@ class VitrinFormSection extends StatelessWidget {
       controller: controller,
       state: state,
       galleryItems: _galleryItemsForEditor,
+      galleryKickerController: _galleryKicker,
+      galleryTitleController: _galleryTitle,
       onPickCover: () => _pickCover(context),
       onPickCoverFromCamera: () => _pickCoverFromCamera(context),
       onAutoFillCover:
@@ -448,6 +540,10 @@ class VitrinFormSection extends StatelessWidget {
             source: SheetImageSource.coverPicker,
           ),
       onPickGallery: () => _pickGallery(context),
+      onGalleryTitleChanged: (index, title) {
+        controller.updateGalleryItemTitle(index, title);
+        controller.saveLocally();
+      },
     );
   }
 
@@ -575,6 +671,96 @@ class VitrinFormSection extends StatelessWidget {
       icon: Icons.camera_alt_rounded,
       keyboardType: TextInputType.url,
       onChanged: (v) => controller.updateInstagram(v),
+    );
+  }
+
+  Widget _buildPhoneField() {
+    return EditorTextField(
+      label: 'Telefon',
+      controller: _phone,
+      hint: '05xx xxx xx xx (isteğe bağlı)',
+      icon: Icons.phone_rounded,
+      keyboardType: TextInputType.phone,
+      onChanged: (v) => controller.updatePhone(v),
+    );
+  }
+
+  Widget _buildEmailField() {
+    return EditorTextField(
+      label: 'E-posta',
+      controller: _email,
+      hint: 'ornek@isletme.com',
+      icon: Icons.email_outlined,
+      keyboardType: TextInputType.emailAddress,
+      onChanged: (v) => controller.updateEmail(v),
+    );
+  }
+
+  Widget _buildHeroBadgeField() {
+    return EditorTextField(
+      label: 'Kapak Rozeti',
+      controller: _heroBadge,
+      hint: 'Örn: Atölye / Mağaza',
+      icon: Icons.sell_outlined,
+      onChanged: (v) => controller.updateHeroBadge(v),
+    );
+  }
+
+  Widget _buildWorkingHoursField() {
+    return EditorTextField(
+      label: 'Çalışma Saatleri',
+      controller: _workingHours,
+      hint: 'Örn: Pzt — Cmt 09:00 - 20:00',
+      icon: Icons.schedule_rounded,
+      onChanged: (v) => controller.updateWorkingHoursText(v),
+    );
+  }
+
+  Widget _buildRatingToggle() {
+    return SwitchListTile.adaptive(
+      contentPadding: EdgeInsets.zero,
+      title: const Text(
+        'Vitrinde puan bandı göster',
+        style: TextStyle(
+          color: AppColors.darkText,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      subtitle: const Text(
+        'Gerçek puanın yoksa kapalı kalsın; örnek puan görünmesin.',
+        style: TextStyle(color: AppColors.mutedText, fontSize: 11),
+      ),
+      value: controller.data.showStorefrontRating,
+      activeThumbColor: AppColors.primary,
+      onChanged: (value) {
+        controller.updateShowStorefrontRating(value);
+        controller.saveLocally();
+      },
+    );
+  }
+
+  Widget _buildDirectionsToggle() {
+    return SwitchListTile.adaptive(
+      contentPadding: EdgeInsets.zero,
+      title: const Text(
+        'Yol tarifi butonu göster',
+        style: TextStyle(
+          color: AppColors.darkText,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      subtitle: const Text(
+        'Adres veya GPS varsa vitrinde yol tarifi linki çıkar.',
+        style: TextStyle(color: AppColors.mutedText, fontSize: 11),
+      ),
+      value: controller.data.showDirectionsLink,
+      activeThumbColor: AppColors.primary,
+      onChanged: (value) {
+        controller.updateShowDirectionsLink(value);
+        controller.saveLocally();
+      },
     );
   }
 
@@ -905,6 +1091,17 @@ class VitrinFormSection extends StatelessWidget {
                 );
               }
             },
+            onProductDelete: (product) async {
+              final result = await controller.removeProductById(product.id);
+              if (result.isFailure && ctx.mounted) {
+                state.showSnackBar(
+                  ctx,
+                  result.failure?.message ?? 'Ürün silinemedi.',
+                );
+                return false;
+              }
+              return result.isSuccess;
+            },
             onOcrTap: () {
               // Alt paneli kapat, sonra root navigator'dan OCR ekranını aç
               Navigator.of(ctx).pop();
@@ -923,6 +1120,86 @@ class VitrinFormSection extends StatelessWidget {
             },
           ),
     );
+  }
+
+  Future<void> _showFeaturedCampaignSheet(BuildContext ctx) async {
+    final result = await showModalBottomSheet<Map<String, String>>(
+      context: ctx,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => FeaturedCampaignSheet(storeData: controller.data),
+    );
+    if (result == null) return;
+    controller.updateFeaturedCampaign(
+      label: result['label'] ?? '',
+      title: result['title'] ?? '',
+      description: result['description'] ?? '',
+      priceText: result['priceText'] ?? '',
+      imageUrl: result['imageUrl'] ?? '',
+    );
+    await controller.saveLocally();
+    if (ctx.mounted) {
+      state.showSnackBar(ctx, 'Kampanya bilgileri kaydedildi.');
+    }
+  }
+
+  Future<void> _showAboutSheet(BuildContext ctx) async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: ctx,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => AboutEditorSheet(storeData: controller.data),
+    );
+    if (result == null) return;
+    final values = (result['values'] as List<StoreAboutValue>?) ?? const [];
+    controller.updateAboutSection(
+      kicker: (result['kicker'] as String?) ?? '',
+      title: (result['title'] as String?) ?? '',
+      body: (result['body'] as String?) ?? '',
+      imageUrl: (result['imageUrl'] as String?) ?? '',
+      imageCaption: (result['imageCaption'] as String?) ?? '',
+      values: values,
+    );
+    await controller.saveLocally();
+    if (ctx.mounted) {
+      state.showSnackBar(ctx, 'Hakkımızda kaydedildi.');
+    }
+  }
+
+  Future<void> _showFaqSheet(BuildContext ctx) async {
+    final result = await showModalBottomSheet<List<StoreFaqItem>>(
+      context: ctx,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => FaqEditorSheet(items: controller.data.faqItems),
+    );
+    if (result == null) return;
+    controller.updateFaqItems(result);
+    await controller.saveLocally();
+    if (ctx.mounted) {
+      state.showSnackBar(ctx, 'SSS kaydedildi.');
+    }
+  }
+
+  Future<void> _openBlogEditor(BuildContext ctx) async {
+    final slug =
+        (controller.publishedInfo?.slug.trim().isNotEmpty ?? false)
+            ? controller.publishedInfo!.slug.trim()
+            : controller.data.slug.trim();
+    if (slug.isEmpty) {
+      state.showSnackBar(ctx, 'Blog için önce vitrini yayınlayın.');
+      return;
+    }
+    await AppRouter.navigateToBlogEditor(ctx, slug: slug);
   }
 
   Future<void> _openLink(BuildContext ctx) async {

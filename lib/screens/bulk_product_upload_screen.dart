@@ -390,7 +390,6 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
   }
 
   Widget _buildReviewStats(List<Product> products) {
-    final visibleCount = products.where((p) => p.isVisible).length;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -401,10 +400,6 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
       child: Row(
         children: [
           _statItem('${products.length}', 'Toplam'),
-          _statDivider(),
-          _statItem('$visibleCount', 'Vitrinde'),
-          _statDivider(),
-          _statItem('${products.length - visibleCount}', 'Gizli'),
           const Spacer(),
           TextButton.icon(
             onPressed: _pickFile,
@@ -434,15 +429,6 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _statDivider() {
-    return Container(
-      width: 1,
-      height: 28,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      color: AppColors.border,
     );
   }
 
@@ -476,9 +462,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: product.isVisible ? AppColors.border : AppColors.border.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -537,22 +521,12 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
               ],
             ),
           ),
-          // Düzenle butonu
           IconButton(
             onPressed: () => _editProduct(index, product),
             icon: const Icon(Icons.edit_rounded, size: 18),
             color: AppColors.mutedText,
             tooltip: 'Düzenle',
           ),
-          // Görünürlük switch'i
-          Switch.adaptive(
-            value: product.isVisible,
-            onChanged: (val) {
-              product.isVisible = val;
-              _controller.updateProduct(index, product);
-            },
-          ),
-          // Sil butonu
           IconButton(
             onPressed: () => _controller.removeProduct(index),
             icon: const Icon(Icons.delete_outline_rounded, size: 18),
@@ -713,7 +687,6 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
 
   Widget _buildBottomActions() {
     final products = _controller.products;
-    final visibleCount = products.where((p) => p.isVisible).length;
     return Row(
       children: [
         Expanded(
@@ -731,10 +704,10 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
         Expanded(
           flex: 2,
           child: ElevatedButton.icon(
-            onPressed: visibleCount > 0 ? _save : null,
+            onPressed: products.isNotEmpty ? _save : null,
             icon: const Icon(Icons.check_rounded, size: 18),
             label: Text(
-              '$visibleCount Ürünü Ekle',
+              '${products.length} Ürünü Ekle',
               style: const TextStyle(fontWeight: FontWeight.w900),
             ),
             style: ElevatedButton.styleFrom(
@@ -776,19 +749,11 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
             ),
             const SizedBox(height: 12),
             ListTile(
-              leading: const Icon(Icons.visibility_rounded, color: AppColors.success),
-              title: const Text('Tümünü Vitrinde Göster'),
+              leading: const Icon(Icons.delete_sweep_rounded, color: AppColors.error),
+              title: const Text('Tümünü listeden kaldır'),
               onTap: () {
                 Navigator.pop(context);
-                _controller.approveAll();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.visibility_off_rounded, color: AppColors.mutedText),
-              title: const Text('Tümünü Gizle'),
-              onTap: () {
-                Navigator.pop(context);
-                _controller.hideAll();
+                _controller.clearAllProducts();
               },
             ),
             const SizedBox(height: 8),

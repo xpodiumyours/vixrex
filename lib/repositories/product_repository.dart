@@ -17,6 +17,9 @@ abstract class ProductRepository {
     String description = '',
     String priceText = '',
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String> imageUrls = const [],
     String? categoryId,
     String sourceType = 'manual',
@@ -26,8 +29,7 @@ abstract class ProductRepository {
   });
 
   /// Ürün günceller.
-  /// clearCategory, clearPriceAmount, clearStockQuantity, clearStockStatus
-  /// TRUE ise ilgili alan NULL yapılır.
+  /// clear* TRUE ise ilgili alan NULL yapılır.
   Future<void> updateProduct({
     required String productId,
     String? editToken,
@@ -36,6 +38,9 @@ abstract class ProductRepository {
     String? description,
     String? priceText,
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String>? imageUrls,
     String? categoryId,
     bool? isVisible,
@@ -44,6 +49,9 @@ abstract class ProductRepository {
     String? stockStatus,
     bool clearCategory = false,
     bool clearPriceAmount = false,
+    bool clearOldPriceAmount = false,
+    bool clearBadgeTag = false,
+    bool clearFulfillmentRegion = false,
     bool clearStockQuantity = false,
     bool clearStockStatus = false,
   });

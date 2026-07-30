@@ -13,6 +13,9 @@ class StoreData {
   String businessType;
   String description;
   String whatsapp;
+  String phone;
+  String email;
+  String heroBadge;
   String instagram;
   String website;
   String address;
@@ -30,14 +33,42 @@ class StoreData {
   // Kurumsal Mod Özel Alanları
   String corporateBio;
 
+  /// Atmosfer Hakkımızda geniş alanları
+  String aboutKicker;
+  String aboutTitle;
+  String aboutImageUrl;
+  String aboutImageCaption;
+  List<StoreAboutValue> aboutValues;
+
+  /// Galeri bölüm başlıkları
+  String gallerySectionKicker;
+  String gallerySectionTitle;
+
+  /// Vitrinde sahte/boş puan bandını gösterme (varsayılan kapalı)
+  bool showStorefrontRating;
+
+  /// Konum varsa yol tarifi butonu (varsayılan açık)
+  bool showDirectionsLink;
+
+  /// Öne çıkan kampanya / koleksiyon bandı
+  String featuredBannerLabel;
+  String featuredBannerTitle;
+  String featuredBannerDescription;
+  String featuredBannerImageUrl;
+  String featuredBannerPriceText;
+
   /// Referans / müşteri yorum sayfası linki.
   /// Dolu ise public vitrinde Referanslarımız kartı görünür.
   String referencesLink;
   String shelfImageUrl;
   List<StoreGalleryItem> galleryItems;
   List<StoreOffering> offerings;
+  List<StoreFaqItem> faqItems;
   bool isStore;
   bool isDemo;
+  String storefrontKind;
+  String rentalAccessStatus;
+  DateTime? rentalAccessUntil;
   String kategori;
   String workingHours;
 
@@ -77,6 +108,9 @@ class StoreData {
     this.businessType = 'Butik',
     this.description = '',
     this.whatsapp = '',
+    this.phone = '',
+    this.email = '',
+    this.heroBadge = '',
     this.instagram = '',
     this.website = '',
     this.address = '',
@@ -89,12 +123,30 @@ class StoreData {
     List<ProductCategory>? productCategories,
     List<MarketplaceLink>? marketplaceLinks,
     this.corporateBio = '',
+    this.aboutKicker = '',
+    this.aboutTitle = '',
+    this.aboutImageUrl = '',
+    this.aboutImageCaption = '',
+    List<StoreAboutValue>? aboutValues,
+    this.gallerySectionKicker = '',
+    this.gallerySectionTitle = '',
+    this.showStorefrontRating = false,
+    this.showDirectionsLink = true,
+    this.featuredBannerLabel = '',
+    this.featuredBannerTitle = '',
+    this.featuredBannerDescription = '',
+    this.featuredBannerImageUrl = '',
+    this.featuredBannerPriceText = '',
     this.referencesLink = '',
     this.shelfImageUrl = '',
     List<StoreGalleryItem>? galleryItems,
     List<StoreOffering>? offerings,
+    List<StoreFaqItem>? faqItems,
     this.isStore = false,
     this.isDemo = false,
+    this.storefrontKind = 'standard',
+    this.rentalAccessStatus = '',
+    this.rentalAccessUntil,
     this.kategori = '',
     this.workingHours = '',
     this.provinceCode = '',
@@ -125,7 +177,9 @@ class StoreData {
        productCategories = productCategories ?? [],
        marketplaceLinks = marketplaceLinks ?? [MarketplaceLink(id: '1')],
        galleryItems = galleryItems ?? [],
-       offerings = offerings ?? [];
+       offerings = offerings ?? [],
+       faqItems = faqItems ?? [],
+       aboutValues = aboutValues ?? [];
 
   Map<String, dynamic> toJson() => StoreDataDto.toJson(this);
 
@@ -136,6 +190,9 @@ class StoreData {
     String? businessType,
     String? description,
     String? whatsapp,
+    String? phone,
+    String? email,
+    String? heroBadge,
     String? instagram,
     String? website,
     String? address,
@@ -148,12 +205,30 @@ class StoreData {
     List<ProductCategory>? productCategories,
     List<MarketplaceLink>? marketplaceLinks,
     String? corporateBio,
+    String? aboutKicker,
+    String? aboutTitle,
+    String? aboutImageUrl,
+    String? aboutImageCaption,
+    List<StoreAboutValue>? aboutValues,
+    String? gallerySectionKicker,
+    String? gallerySectionTitle,
+    bool? showStorefrontRating,
+    bool? showDirectionsLink,
+    String? featuredBannerLabel,
+    String? featuredBannerTitle,
+    String? featuredBannerDescription,
+    String? featuredBannerImageUrl,
+    String? featuredBannerPriceText,
     String? referencesLink,
     String? shelfImageUrl,
     List<StoreGalleryItem>? galleryItems,
     List<StoreOffering>? offerings,
+    List<StoreFaqItem>? faqItems,
     bool? isStore,
     bool? isDemo,
+    String? storefrontKind,
+    String? rentalAccessStatus,
+    DateTime? rentalAccessUntil,
     String? kategori,
     String? workingHours,
     String? provinceCode,
@@ -187,6 +262,9 @@ class StoreData {
       businessType: businessType ?? this.businessType,
       description: description ?? this.description,
       whatsapp: whatsapp ?? this.whatsapp,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      heroBadge: heroBadge ?? this.heroBadge,
       instagram: instagram ?? this.instagram,
       website: website ?? this.website,
       address: address ?? this.address,
@@ -199,11 +277,33 @@ class StoreData {
       productCategories: productCategories ?? List.of(this.productCategories),
       marketplaceLinks: marketplaceLinks ?? List.of(this.marketplaceLinks),
       corporateBio: corporateBio ?? this.corporateBio,
+      aboutKicker: aboutKicker ?? this.aboutKicker,
+      aboutTitle: aboutTitle ?? this.aboutTitle,
+      aboutImageUrl: aboutImageUrl ?? this.aboutImageUrl,
+      aboutImageCaption: aboutImageCaption ?? this.aboutImageCaption,
+      aboutValues: aboutValues ?? List.of(this.aboutValues),
+      gallerySectionKicker: gallerySectionKicker ?? this.gallerySectionKicker,
+      gallerySectionTitle: gallerySectionTitle ?? this.gallerySectionTitle,
+      showStorefrontRating: showStorefrontRating ?? this.showStorefrontRating,
+      showDirectionsLink: showDirectionsLink ?? this.showDirectionsLink,
+      featuredBannerLabel: featuredBannerLabel ?? this.featuredBannerLabel,
+      featuredBannerTitle: featuredBannerTitle ?? this.featuredBannerTitle,
+      featuredBannerDescription:
+          featuredBannerDescription ?? this.featuredBannerDescription,
+      featuredBannerImageUrl:
+          featuredBannerImageUrl ?? this.featuredBannerImageUrl,
+      featuredBannerPriceText:
+          featuredBannerPriceText ?? this.featuredBannerPriceText,
       referencesLink: referencesLink ?? this.referencesLink,
       shelfImageUrl: shelfImageUrl ?? this.shelfImageUrl,
       galleryItems: galleryItems ?? List.of(this.galleryItems),
       offerings: offerings ?? List.of(this.offerings),
+      faqItems: faqItems ?? List.of(this.faqItems),
       isStore: isStore ?? this.isStore,
+      isDemo: isDemo ?? this.isDemo,
+      storefrontKind: storefrontKind ?? this.storefrontKind,
+      rentalAccessStatus: rentalAccessStatus ?? this.rentalAccessStatus,
+      rentalAccessUntil: rentalAccessUntil ?? this.rentalAccessUntil,
       kategori: kategori ?? this.kategori,
       workingHours: workingHours ?? this.workingHours,
       provinceCode: provinceCode ?? this.provinceCode,
@@ -232,6 +332,10 @@ class StoreData {
       publicationConsentHash: publicationConsentHash ?? this.publicationConsentHash,
     );
   }
+
+  /// Keşfet'te seçilip kullanıcıya kopyalanabilen hazır vitrin.
+  bool get isRentalTemplate =>
+      storefrontKind == 'rental_template' || isDemo;
 
   List<StoreGalleryItem> get displayGalleryItems {
     final validItems =
