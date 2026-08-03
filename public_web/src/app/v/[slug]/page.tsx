@@ -26,6 +26,14 @@ import PreviewEditorPanel from "./PreviewEditorPanel";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 
 export const revalidate = 60;
+// generateStaticParams yalnızca yayınlı slug'ları önceden üretiyor. Taslak/
+// demo slug'ları (preview_token ile) bu listede değil ve searchParams okuyor
+// — Next.js bu ikisini aynı anda "statik" modda çalıştırmaya çalışınca
+// DYNAMIC_SERVER_USAGE hatasıyla çöküyordu (canlıda doğrulandı). Route'u
+// tamamen dinamik yapmak bu çakışmayı ortadan kaldırıyor; asıl veri sorgusu
+// zaten unstable_cache ile ayrıca 60sn önbelleklendiği için performans kaybı
+// sınırlı.
+export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
   const { data: stores } = await supabase
