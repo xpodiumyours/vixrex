@@ -288,7 +288,9 @@ class VitrinFormSection extends StatelessWidget {
                           const SizedBox(height: 14),
                           BlogEntryCard(
                             canOpen:
-                                (controller.publishedInfo?.slug.trim().isNotEmpty ??
+                                (controller.publishedInfo?.slug
+                                        .trim()
+                                        .isNotEmpty ??
                                     false) ||
                                 controller.data.slug.trim().isNotEmpty,
                             onTap: () => _openBlogEditor(context),
@@ -787,26 +789,16 @@ class VitrinFormSection extends StatelessWidget {
     );
   }
 
+  // Taslak/yayın ayrımı controller.openOwnerPreview() arkasında saklanır
+  // (implementation_plan.md §5.1) — bu ekran hangi durumda olduğunu bilmez.
   Future<void> _openInAppPreview(BuildContext ctx) async {
-    final published = controller.publishedInfo;
-    final slug = (published?.slug ?? controller.data.slug).trim();
-    final isLive =
-        published != null && published.canEditRemote && slug.isNotEmpty;
-
-    // Yayınlı vitrin: müşteri ile aynı Next.js görünümü.
-    if (isLive) {
-      await AppRouter.navigateToPublicVitrin(ctx, slug);
-      return;
-    }
-
-    // Yayın öncesi: taslağı kaydet, Next.js'in gerçek şablonunda göster.
     try {
-      final previewLink = await controller.previewDraftLink();
+      final owner = await controller.openOwnerPreview();
       if (!ctx.mounted) return;
       await AppRouter.openPublicUrl(
         ctx,
-        previewLink,
-        failureMessage: 'Taslak önizleme açılamadı.',
+        owner.url,
+        failureMessage: 'Önizleme açılamadı.',
       );
     } catch (e) {
       if (!ctx.mounted) return;

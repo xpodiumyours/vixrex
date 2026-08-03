@@ -55,6 +55,10 @@ class FakeStorePublishService extends Fake implements StorePublishService {
   String? deletedEditToken;
 
   @override
+  final StorePublishPayloadBuilder payloadBuilder =
+      const StorePublishPayloadBuilder();
+
+  @override
   Future<Result<StorePublishResult>> publishStore(
     StoreData data, {
     required String editToken,
@@ -86,6 +90,16 @@ class FakeStorePublishService extends Fake implements StorePublishService {
     deletedSlug = slug;
     deletedEditToken = editToken;
     return deleteResult;
+  }
+
+  @override
+  Future<Result<StoreDraftResult>> saveDraft(
+    StoreData data, {
+    required String editToken,
+  }) async {
+    return Result.success(
+      StoreDraftResult(slug: 'draft-store', editToken: editToken),
+    );
   }
 }
 
@@ -298,5 +312,42 @@ void main() {
       expect(controller.deleteVitrin(), throwsA('remote delete failed'));
       expect(await storageService.loadPublishedVitrinInfo(), isNotNull);
     });
+
+    test('openOwnerPreview taslak için preview_token linki döndürür', () async {
+      final controller = StoreEditorController(
+        storage: storageService,
+        publishService: FakeStorePublishService(),
+        supabaseClient: fakeSupabase,
+      );
+
+      await controller.initialize('Taslak Mağaza');
+      final owner = await controller.openOwnerPreview();
+
+      expect(owner.url, contains('draft-store'));
+      expect(owner.url, contains('preview_token='));
+    });
+
+    test(
+      'openOwnerPreview yayınlanmış vitrin için bugün düz müşteri linkini döndürür',
+      () async {
+        await storageService.savePublishedVitrinInfo(
+          slug: 'owner-store',
+          publicLink: 'https://vixrex-public.vercel.app/v/owner-store',
+          name: 'Owner Store',
+          editToken: 'edit-token-12345678901234567890',
+        );
+        final controller = StoreEditorController(
+          storage: storageService,
+          publishService: FakeStorePublishService(),
+          supabaseClient: fakeSupabase,
+        );
+
+        await controller.initialize(null);
+        final owner = await controller.openOwnerPreview();
+
+        expect(owner.url, 'https://vixrex-public.vercel.app/v/owner-store');
+        expect(owner.url, isNot(contains('preview_token')));
+      },
+    );
   });
 }

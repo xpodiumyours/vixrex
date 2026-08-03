@@ -20,6 +20,13 @@ import 'mixins/store_media_mixin.dart';
 import 'mixins/store_location_mixin.dart';
 import 'mixins/store_core_mixin.dart';
 
+/// Tek sahip önizleme sonucu (implementation_plan.md §5.1) — taslak/yayın
+/// ayrımını çağırandan gizler.
+class OwnerPreviewLink {
+  const OwnerPreviewLink(this.url);
+  final String url;
+}
+
 /// VixRex Vitrin Editörü Ana Controller'ı.
 /// UI ile iş mantığı arasındaki köprüdür. Alt görevleri Mixin'lere delege eder.
 class StoreEditorController extends ChangeNotifier
@@ -1026,6 +1033,23 @@ class StoreEditorController extends ChangeNotifier
     await saveLocally();
     notifyListeners();
     return PublicSiteConfig.buildVitrinPreviewLink(draft.slug, draft.editToken);
+  }
+
+  /// Tek sahip önizleme girişi (implementation_plan.md §5.1): taslak/yayın
+  /// ayrımını çağırandan saklar. NOT: kısa süreli sahip oturumu (Commit 3/4)
+  /// eklenene kadar, yayınlanmış vitrin için bugünkü müşteri linkini
+  /// döndürür — geçici uyumluluk yolu, davranış henüz değişmiyor.
+  Future<OwnerPreviewLink> openOwnerPreview() async {
+    final published = publishedInfo;
+    final slug = (published?.slug ?? _data.slug).trim();
+    final isLive =
+        published != null && published.canEditRemote && slug.isNotEmpty;
+
+    if (isLive) {
+      return OwnerPreviewLink(PublicSiteConfig.buildVitrinLink(slug));
+    }
+
+    return OwnerPreviewLink(await previewDraftLink());
   }
 
   /// Editör galeri etiketlerini StoreData'ya yazar (yerel kayıt / yayın).
