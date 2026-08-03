@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Tek seferlik, elle çalıştırılan yönetim betiği — uygulama kodu değil.
+    "_run_index.js",
   ]),
 ]);
 
