@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
@@ -39,25 +39,44 @@ export default function PreviewEditorPanel({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // lg breakpoint (1024px) üstünde panel her zaman görünür — kapalı
+  // sayılıp klavye/ekran okuyucudan gizlenmemeli.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  const hiddenOnMobile = !open && !isDesktop;
 
   const handleSave = async () => {
     setSaving(true);
     setError(null);
-    const { error: rpcError } = await supabaseBrowser.rpc(
-      "save_store_draft_with_token",
-      {
-        p_slug: slug,
-        p_edit_token: editToken,
-        p_store: { name, whatsapp, address, description, kategori },
+    try {
+      const { error: rpcError } = await supabaseBrowser.rpc(
+        "save_store_draft_with_token",
+        {
+          p_slug: slug,
+          p_edit_token: editToken,
+          p_store: { name, whatsapp, address, description, kategori },
+        }
+      );
+      if (rpcError) {
+        setError("Kaydedilemedi: " + rpcError.message);
+        return;
       }
-    );
-    setSaving(false);
-    if (rpcError) {
-      setError("Kaydedilemedi: " + rpcError.message);
-      return;
+      setSavedAt(Date.now());
+      router.refresh();
+    } catch (e) {
+      setError("Kaydedilemedi: bağlantı hatası. Lütfen tekrar deneyin.");
+      console.error("save_store_draft_with_token failed", e);
+    } finally {
+      setSaving(false);
     }
-    setSavedAt(Date.now());
-    router.refresh();
   };
 
   const fieldClass =
@@ -76,6 +95,8 @@ export default function PreviewEditorPanel({
       </button>
 
       <aside
+        aria-hidden={hiddenOnMobile ? true : undefined}
+        {...(hiddenOnMobile ? { inert: true } : {})}
         className={`fixed top-0 right-0 z-[65] h-full w-full sm:w-96 bg-[#0B1120] border-l border-white/10 shadow-2xl overflow-y-auto transition-transform duration-200 ${
           open ? "translate-x-0" : "translate-x-full"
         } lg:translate-x-0`}
@@ -96,16 +117,22 @@ export default function PreviewEditorPanel({
 
           <div className="space-y-4">
             <div>
-              <label className={labelClass}>İşletme adı</label>
+              <label className={labelClass} htmlFor="preview-name">
+                İşletme adı
+              </label>
               <input
+                id="preview-name"
                 className={fieldClass}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div>
-              <label className={labelClass}>WhatsApp numarası</label>
+              <label className={labelClass} htmlFor="preview-whatsapp">
+                WhatsApp numarası
+              </label>
               <input
+                id="preview-whatsapp"
                 className={fieldClass}
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
@@ -113,24 +140,33 @@ export default function PreviewEditorPanel({
               />
             </div>
             <div>
-              <label className={labelClass}>Adres</label>
+              <label className={labelClass} htmlFor="preview-address">
+                Adres
+              </label>
               <input
+                id="preview-address"
                 className={fieldClass}
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
             </div>
             <div>
-              <label className={labelClass}>Açıklama</label>
+              <label className={labelClass} htmlFor="preview-description">
+                Açıklama
+              </label>
               <textarea
+                id="preview-description"
                 className={fieldClass + " min-h-[90px] resize-none"}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
             <div>
-              <label className={labelClass}>Kategori</label>
+              <label className={labelClass} htmlFor="preview-kategori">
+                Kategori
+              </label>
               <input
+                id="preview-kategori"
                 className={fieldClass}
                 value={kategori}
                 onChange={(e) => setKategori(e.target.value)}

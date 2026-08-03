@@ -120,7 +120,7 @@ class PublicStoreMapper {
           .whereType<Map>()
           .map(
             (link) => MarketplaceLink(
-              id: UniqueKey().toString(),
+              id: _readString(link['id'], fallback: UniqueKey().toString()),
               platform: _readString(link['platform']),
               url: _readString(link['url']),
               subtitle: _readString(link['subtitle'] ?? ''),

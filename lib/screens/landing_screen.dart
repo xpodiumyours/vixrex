@@ -343,7 +343,12 @@ class _LandingScreenState extends State<LandingScreen>
   void _navigateToPreview() {
     final profile = _heroDemoProfiles[_activeProfileIndex];
     final draft = _landingDemoDrafts[profile.name];
-    if (draft == null) return;
+    if (draft == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Demo vitrin önizlemesi açılamadı.')),
+      );
+      return;
+    }
     AppRouter.openPublicUrl(
       context,
       PublicSiteConfig.buildVitrinPreviewLink(draft.slug, draft.editToken),

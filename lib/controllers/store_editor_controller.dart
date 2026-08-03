@@ -1018,16 +1018,14 @@ class StoreEditorController extends ChangeNotifier
     }
     final editToken = await ensureDraftEditToken();
     final result = await publishService.saveDraft(_data, editToken: editToken);
-    return result.when(
-      success: (draft) {
-        _data.slug = draft.slug;
-        return PublicSiteConfig.buildVitrinPreviewLink(
-          draft.slug,
-          draft.editToken,
-        );
-      },
-      failure: (failure) => throw StorePublishException(failure.message),
-    );
+    if (result.isFailure) {
+      throw StorePublishException(result.failure!.message);
+    }
+    final draft = result.data!;
+    _data.slug = draft.slug;
+    await saveLocally();
+    notifyListeners();
+    return PublicSiteConfig.buildVitrinPreviewLink(draft.slug, draft.editToken);
   }
 
   /// Editör galeri etiketlerini StoreData'ya yazar (yerel kayıt / yayın).
