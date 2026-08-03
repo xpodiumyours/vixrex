@@ -257,7 +257,9 @@ export default function VitrinProfileView({
       <nav
         className={`fixed left-0 right-0 z-50 h-[68px] bg-[#0B1120]/85 backdrop-blur-xl border-b border-blue-500/15 px-6 sm:px-8 flex items-center justify-between ${isPreviewMode ? "top-9" : "top-0"}`}
       >
-        <Link href={`/v/${storeSlug}`} className="flex items-center gap-3 font-extrabold text-xl tracking-tight text-white">
+        {/* Kök rota başka uygulama hostuna yönlenir; RSC yerine tam sayfa geçişi gerekir. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a href="/" className="flex items-center gap-3 font-extrabold text-xl tracking-tight text-white">
           <svg className="w-7 h-7 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="3" width="7" height="7" rx="1.5" />
             <rect x="14" y="3" width="7" height="7" rx="1.5" />
@@ -265,7 +267,7 @@ export default function VitrinProfileView({
             <rect x="3" y="14" width="7" height="7" rx="1.5" />
           </svg>
           VIX<span className="text-blue-400">REX</span>
-        </Link>
+        </a>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
           {productCount > 0 && (

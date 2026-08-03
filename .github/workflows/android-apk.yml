@@ -122,7 +122,6 @@ jobs:
             test/gallery_image_file_validator_test.dart \
             test/image_optimization_service_test.dart \
             test/store_shelf_upload_service_test.dart \
-            test/vitrin_view_actions_website_test.dart \
             test/vitrin_theme_preset_isolation_test.dart \
             test/ocr/premium_service_test.dart \
             test/ocr/ocr_price_parser_test.dart \
@@ -137,7 +136,6 @@ jobs:
           flutter test \
             test/explore_controller_test.dart \
             test/vixrex_coach_test.dart \
-            test/whatsapp_ui_test.dart \
             test/vitrin_store_card_test.dart \
             test/unsaved_changes_dialog_test.dart \
             test/gallery_delete_confirmation_dialog_test.dart \

@@ -66,7 +66,11 @@ export default function PreviewEditorPanel({
         }
       );
       if (rpcError) {
-        setError("Kaydedilemedi: " + rpcError.message);
+        setError(
+          rpcError.message.includes("DEMO_STORE_IMMUTABLE")
+            ? "Bu demo vitrini salt okunur."
+            : "Kaydedilemedi: " + rpcError.message
+        );
         return;
       }
       setSavedAt(Date.now());

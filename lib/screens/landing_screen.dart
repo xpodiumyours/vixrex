@@ -318,7 +318,7 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   /// Landing demo profillerinin Supabase'deki sabit taslak karşılığı
-  /// (bkz. supabase/migrations/20260803140000_landing_demo_drafts_seed.sql).
+  /// (bkz. supabase/migrations/20260803190248_20260803140000_landing_demo_drafts_seed.sql).
   /// Gerçek kullanıcı verisi değil, herkese açık pazarlama içeriği.
   static const Map<String, ({String slug, String editToken})>
   _landingDemoDrafts = {
