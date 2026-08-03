@@ -119,6 +119,7 @@ export interface VitrinProfileViewProps {
   marketplaceLinks: VitrinMarketplaceLink[];
   articles: VitrinArticleTeaser[];
   catalog: ReactNode;
+  isPreviewMode?: boolean;
 }
 
 export default function VitrinProfileView({
@@ -162,6 +163,7 @@ export default function VitrinProfileView({
   marketplaceLinks,
   articles,
   catalog,
+  isPreviewMode = false,
 }: VitrinProfileViewProps) {
   const [copied, setCopied] = useState(false);
   const displayAddress = normalizeAddressDisplay(address);
@@ -246,9 +248,18 @@ export default function VitrinProfileView({
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-[#F8FAFC] font-sans selection:bg-blue-500 selection:text-white">
+      {isPreviewMode && (
+        <div className="fixed top-0 left-0 right-0 z-[60] h-9 bg-amber-500 text-[#0B1120] text-xs sm:text-sm font-bold flex items-center justify-center gap-2">
+          Taslak önizleme — bu vitrin henüz yayında değil, müşteriler göremez.
+        </div>
+      )}
       {/* ===== NAVBAR ===== */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-[68px] bg-[#0B1120]/85 backdrop-blur-xl border-b border-blue-500/15 px-6 sm:px-8 flex items-center justify-between">
-        <Link href={`/v/${storeSlug}`} className="flex items-center gap-3 font-extrabold text-xl tracking-tight text-white">
+      <nav
+        className={`fixed left-0 right-0 z-50 h-[68px] bg-[#0B1120]/85 backdrop-blur-xl border-b border-blue-500/15 px-6 sm:px-8 flex items-center justify-between ${isPreviewMode ? "top-9" : "top-0"}`}
+      >
+        {/* Kök rota başka uygulama hostuna yönlenir; RSC yerine tam sayfa geçişi gerekir. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a href="/" className="flex items-center gap-3 font-extrabold text-xl tracking-tight text-white">
           <svg className="w-7 h-7 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="3" width="7" height="7" rx="1.5" />
             <rect x="14" y="3" width="7" height="7" rx="1.5" />
@@ -256,7 +267,7 @@ export default function VitrinProfileView({
             <rect x="3" y="14" width="7" height="7" rx="1.5" />
           </svg>
           VIX<span className="text-blue-400">REX</span>
-        </Link>
+        </a>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
           {productCount > 0 && (
@@ -284,7 +295,9 @@ export default function VitrinProfileView({
       </nav>
 
       {/* ===== HERO ===== */}
-      <section className="relative w-full min-h-[360px] sm:min-h-[420px] pt-[68px] flex items-end overflow-hidden">
+      <section
+        className={`relative w-full min-h-[360px] sm:min-h-[420px] flex items-end overflow-hidden ${isPreviewMode ? "pt-[104px]" : "pt-[68px]"}`}
+      >
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroImage || 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1600&q=80'})` }}

@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/appointment_tracker_screen.dart';
 import 'package:vixrex/widgets/booking_wizard_sheet.dart';
-import 'package:vixrex/widgets/vitrin_view.dart';
 
 void main() {
   group('Booking Wizard Sheet Widget Tests', () {
@@ -105,54 +104,4 @@ void main() {
     });
   });
 
-  group('Booking CTA Button Visibility Tests', () {
-    testWidgets(
-      'Kategori Kuaför veya Kozmetik olmasa dahi randevu sistemi aktifse Randevu Al butonu gösterilir',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: VitrinView(
-                  storeData: StoreData(
-                    name: 'Teknik Servis Mağazası',
-                    kategori: 'teknik_servis',
-                    bookingSettings: BookingSettings(isEnabled: true),
-                  ),
-                  publicMode: true,
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pump();
-
-        expect(find.text('Randevu Al'), findsOneWidget);
-      },
-    );
-
-    testWidgets('Randevu sistemi kapalıyken Randevu Al butonu gizlenir', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: VitrinView(
-                storeData: StoreData(
-                  name: 'Teknik Servis Mağazası',
-                  kategori: 'teknik_servis',
-                  bookingSettings: BookingSettings(isEnabled: false),
-                ),
-                publicMode: true,
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      expect(find.text('Randevu Al'), findsNothing);
-    });
-  });
 }

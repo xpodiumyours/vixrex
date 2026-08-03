@@ -945,7 +945,7 @@ class StoreEditorController extends ChangeNotifier
       final String effectiveEditToken =
           (_publishedInfo != null && _publishedInfo!.editToken.isNotEmpty)
               ? _publishedInfo!.editToken
-              : SecureTokenGenerator.generateUuid();
+              : await ensureDraftEditToken();
       final result = await publishService.publishStore(
         _data,
         editToken: effectiveEditToken,
@@ -995,6 +995,37 @@ class StoreEditorController extends ChangeNotifier
         editToken: _publishedInfo!.editToken,
       );
     }
+  }
+
+  /// Yayın öncesi taslak için cihaza özel edit token. Aynı token daha sonra
+  /// yayınlanırken de kullanılır — böylece taslak satırı yeni bir satıra
+  /// değil, doğrudan yayınlanan satıra dönüşür.
+  Future<String> ensureDraftEditToken() async {
+    final existing = (await storage.loadVitrinEditToken())?.trim() ?? '';
+    if (existing.isNotEmpty) return existing;
+    final token = SecureTokenGenerator.generateUuid();
+    await storage.saveVitrinEditToken(token);
+    return token;
+  }
+
+  /// Taslağı Supabase'e kaydeder ve Next.js'in gerçek şablonundaki
+  /// taslak önizleme linkini döndürür. Zaten yayınlı bir vitrin için
+  /// çağrılmamalı (çağıran taraf `isLive` kontrolünü yapmalı).
+  Future<String> previewDraftLink() async {
+    _syncEditorGalleryIntoStoreData();
+    if (_data.slug.trim().isEmpty) {
+      _data.slug = publishService.payloadBuilder.generateSlug(_data.name);
+    }
+    final editToken = await ensureDraftEditToken();
+    final result = await publishService.saveDraft(_data, editToken: editToken);
+    if (result.isFailure) {
+      throw StorePublishException(result.failure!.message);
+    }
+    final draft = result.data!;
+    _data.slug = draft.slug;
+    await saveLocally();
+    notifyListeners();
+    return PublicSiteConfig.buildVitrinPreviewLink(draft.slug, draft.editToken);
   }
 
   /// Editör galeri etiketlerini StoreData'ya yazar (yerel kayıt / yayın).

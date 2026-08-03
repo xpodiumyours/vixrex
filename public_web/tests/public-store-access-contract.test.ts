@@ -5,19 +5,23 @@ import { resolve } from "path";
 const pagePath = resolve(__dirname, "../src/app/v/[slug]/page.tsx");
 const errorPath = resolve(__dirname, "../src/app/v/[slug]/error.tsx");
 const pageSource = readFileSync(pagePath, "utf-8");
+const publicStoreQuery = pageSource.slice(
+  pageSource.indexOf("async function _getStoreData"),
+  pageSource.indexOf("const getStoreData")
+);
 
 describe("public vitrin veri erişim sözleşmesi", () => {
   it("stores sorgusu edit_token isteyen wildcard select kullanmaz", () => {
     expect(pageSource).toContain("PUBLIC_STORE_SELECT");
-    expect(pageSource).not.toContain('.from("stores")\n      .select("*")');
-    expect(pageSource).not.toContain("edit_token");
+    expect(publicStoreQuery).not.toContain('.from("stores")\n      .select("*")');
+    expect(publicStoreQuery).not.toContain("edit_token");
   });
 
   it("olmayan vitrini sorgu hatasından ayırır", () => {
     expect(pageSource).toContain(".maybeSingle()");
     expect(pageSource).toContain("if (storeError)");
     expect(pageSource).toContain("throw storeError");
-    expect(pageSource).toContain("if (!storeData) return null");
+    expect(pageSource).toContain("if (!data) return null");
   });
 
   it("veritabanı hatası için yeniden deneme yüzeyi vardır", () => {

@@ -15,7 +15,6 @@ import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/models/editor_gallery_item.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/ocr_scanner_screen.dart';
-import 'package:vixrex/screens/preview_screen.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/category_image_service.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
@@ -800,12 +799,19 @@ class VitrinFormSection extends StatelessWidget {
       return;
     }
 
-    // Yayın öncesi: henüz public URL yok; yerel taslak önizleme.
-    await Navigator.of(ctx).push(
-      MaterialPageRoute(
-        builder: (_) => PreviewScreen(storeData: controller.data),
-      ),
-    );
+    // Yayın öncesi: taslağı kaydet, Next.js'in gerçek şablonunda göster.
+    try {
+      final previewLink = await controller.previewDraftLink();
+      if (!ctx.mounted) return;
+      await AppRouter.openPublicUrl(
+        ctx,
+        previewLink,
+        failureMessage: 'Taslak önizleme açılamadı.',
+      );
+    } catch (e) {
+      if (!ctx.mounted) return;
+      state.showSnackBar(ctx, 'Önizleme hazırlanamadı: $e');
+    }
   }
 
   Future<void> _copyDisplayLink(

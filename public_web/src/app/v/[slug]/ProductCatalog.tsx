@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   getProductUrlSlug,
   isPublicCatalogProduct,
@@ -40,13 +40,18 @@ function CatalogProductImage({
   fallbackImage?: string | null;
   storeInitial: string;
 }) {
+  const [prevSrc, setPrevSrc] = useState(src);
   const [imgSrc, setImgSrc] = useState<string | null>(src);
   const [hasError, setHasError] = useState(false);
 
-  useEffect(() => {
+  // "src" değişince yerel durumu render sırasında sıfırlar (React'ın
+  // önerdiği desen) — effect içinde setState çağırıp basamaklı render'a
+  // yol açmaz.
+  if (src !== prevSrc) {
+    setPrevSrc(src);
     setImgSrc(src);
     setHasError(false);
-  }, [src]);
+  }
 
   if (!imgSrc || hasError) {
     return (

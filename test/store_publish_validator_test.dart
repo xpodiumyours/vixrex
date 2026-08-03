@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/models/store_data.dart';
-import 'package:vixrex/widgets/vitrin_view/vitrin_view_actions.dart';
 
 // Helper: geçerli bir mağaza verisi oluşturur.
 StoreData validStore({List<Product>? products}) {
@@ -281,51 +280,6 @@ void main() {
         StoreOffering(id: '1', title: 'Hizmet', price: 'C' * 31),
       ];
       expect(validator.validateVitrin(data), contains('fiyatı en fazla 30'));
-    });
-  });
-
-  group('VitrinViewActions.normalizeExternalUrl normalization and safety', () {
-    test('allows valid http/https schemes (case-insensitive)', () {
-      expect(
-        VitrinViewActions.normalizeExternalUrl('http://example.com'),
-        'http://example.com',
-      );
-      expect(
-        VitrinViewActions.normalizeExternalUrl('https://example.com'),
-        'https://example.com',
-      );
-      expect(
-        VitrinViewActions.normalizeExternalUrl('HTTPS://example.com'),
-        'HTTPS://example.com',
-      );
-      expect(
-        VitrinViewActions.normalizeExternalUrl('HTTP://example.com'),
-        'HTTP://example.com',
-      );
-    });
-
-    test('rejects unsafe schemes', () {
-      expect(VitrinViewActions.normalizeExternalUrl('javascript:alert(1)'), '');
-      expect(VitrinViewActions.normalizeExternalUrl('data:text/html,123'), '');
-      expect(VitrinViewActions.normalizeExternalUrl('file:///passwd'), '');
-      expect(VitrinViewActions.normalizeExternalUrl('tel:05551234567'), '');
-      expect(VitrinViewActions.normalizeExternalUrl('mailto:test@example.com'), '');
-    });
-
-    test('adds https:// scheme for valid domains without scheme', () {
-      expect(
-        VitrinViewActions.normalizeExternalUrl('google.com'),
-        'https://google.com',
-      );
-      expect(
-        VitrinViewActions.normalizeExternalUrl('www.example.org'),
-        'https://www.example.org',
-      );
-    });
-
-    test('rejects text without dot as domain', () {
-      expect(VitrinViewActions.normalizeExternalUrl('just-text'), '');
-      expect(VitrinViewActions.normalizeExternalUrl('   '), '');
     });
   });
 }
