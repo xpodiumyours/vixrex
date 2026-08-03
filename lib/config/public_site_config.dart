@@ -37,6 +37,18 @@ class PublicSiteConfig {
     return buildPublicLink('/v/${Uri.encodeComponent(trimmed)}');
   }
 
+  /// Yayın öncesi taslak önizleme linki — Next.js'in gerçek şablonunu
+  /// `get_store_preview` RPC'si üzerinden, yalnızca edit_token sahibine gösterir.
+  static String buildVitrinPreviewLink(String slug, String editToken) {
+    final trimmedSlug = slug.trim();
+    final trimmedToken = editToken.trim();
+    if (trimmedSlug.isEmpty || trimmedToken.isEmpty) {
+      return buildVitrinLink(trimmedSlug);
+    }
+    final query = Uri(queryParameters: {'preview_token': trimmedToken}).query;
+    return '${buildVitrinLink(trimmedSlug)}?$query';
+  }
+
   /// Path-only product page (`/v/{slug}/urun/{productSlug}`) — Next.js ile aynı.
   static String buildProductPath(String storeSlug, String productSlug) {
     final store = storeSlug.trim();

@@ -13,6 +13,7 @@ VixRex, işletmeler için dijital vitrin ve müşteri yönetim platformudur.
 - Supabase: PostgreSQL, Auth ve Storage.
 - Vercel: Flutter paneli ve Next.js public site iki ayrı projedir.
 - Bir yüzeyde çalışırken diğer yüzey yalnızca gerçek bir bağlantı kanıtlanırsa kapsama alınır.
+- **Değişmez kural — vitrin görünümü yalnızca Next.js'te render edilir:** Flutter, müşterinin veya esnafın göreceği vitrin/önizleme sayfasını kendi başına bir daha ASLA çizmez (özel bir widget ağacıyla, `PreviewScreen` benzeri bir ekranla veya başka bir yöntemle). Esnafın "önizleme" ihtiyacı da dahil, her görünüm `public_web`'in gerçek `/v/:slug` şablonu üzerinden karşılanır — yayın öncesi taslaklar için `?preview_token=` ile (bkz. `save_store_draft_with_token` / `get_store_preview` Supabase fonksiyonları). Flutter yalnızca: veriyi düzenler, Supabase'e yazar, Next.js linkini (yayın veya taslak) açar. Bu kural 2026-08-03'te, aylarca süren Flutter/Next.js vitrin tekrarı karmaşasından sonra kesinleşti — yeniden açılması kullanıcının açık isteğini gerektirir.
 
 ## 2. Kullanıcıyla İletişim
 

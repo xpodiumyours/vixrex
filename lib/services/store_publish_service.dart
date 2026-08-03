@@ -188,6 +188,60 @@ class StorePublishService {
     }
   }
 
+  /// Yayın öncesi taslak kaydeder (Next.js taslak önizlemesi için).
+  /// Satır zaten yayındaysa RPC `STORE_ALREADY_PUBLISHED` ile reddeder —
+  /// canlı vitrin taslak yazmayla asla ezilemez.
+  Future<Result<StoreDraftResult>> saveDraft(
+    StoreData data, {
+    required String editToken,
+  }) async {
+    final trimmedToken = editToken.trim();
+    if (trimmedToken.isEmpty) {
+      return Result.failure(Failure('Önizleme için edit token gerekli.'));
+    }
+
+    final slug =
+        data.slug.trim().isNotEmpty
+            ? data.slug.trim()
+            : payloadBuilder.generateSlug(data.name);
+    if (slug.isEmpty) {
+      return Result.failure(Failure('Önizleme için işletme adı gerekli.'));
+    }
+
+    try {
+      final client = supabaseClient ?? Supabase.instance.client;
+      await client.rpc(
+        'save_store_draft_with_token',
+        params: {
+          'p_slug': slug,
+          'p_edit_token': trimmedToken,
+          'p_store': payloadBuilder.toStoreUpdateMap(data),
+        },
+      );
+      return Result.success(
+        StoreDraftResult(slug: slug, editToken: trimmedToken),
+      );
+    } on PostgrestException catch (error) {
+      if (_isAlreadyPublished(error)) {
+        return Result.failure(
+          Failure('Bu vitrin zaten yayında; taslak önizleme kullanılamaz.'),
+        );
+      }
+      return Result.failure(SupabaseErrorMapper.map(error));
+    } catch (error) {
+      return Result.failure(SupabaseErrorMapper.map(error));
+    }
+  }
+
+  bool _isAlreadyPublished(PostgrestException error) {
+    final searchableText =
+        [error.message, error.code, error.details?.toString(), error.hint]
+            .whereType<String>()
+            .join(' ')
+            .toLowerCase();
+    return searchableText.contains('store_already_published');
+  }
+
   /// Yayın sonrası tek alan yaması (ör. Instagram kullanıcı adı).
   Future<Result<void>> updateStorePatch({
     required String slug,
@@ -334,6 +388,13 @@ class StorePublishResult {
     required this.wasUpdated,
     required this.editToken,
   });
+}
+
+class StoreDraftResult {
+  final String slug;
+  final String editToken;
+
+  const StoreDraftResult({required this.slug, required this.editToken});
 }
 
 class StorePublishException implements Exception {

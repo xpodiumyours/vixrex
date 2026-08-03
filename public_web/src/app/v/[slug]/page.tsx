@@ -22,6 +22,7 @@ import {
 } from "@/lib/workingHours";
 import ProductCatalog from "./ProductCatalog";
 import VitrinProfileView from "./VitrinProfileView";
+import PreviewEditorPanel from "./PreviewEditorPanel";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 
 export const revalidate = 60;
@@ -37,6 +38,7 @@ export async function generateStaticParams() {
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview_token?: string }>;
 }
 
 interface GalleryItem {
@@ -136,25 +138,9 @@ const PUBLIC_STORE_SELECT =
   "featured_banner_title,featured_banner_description,featured_banner_image_url," +
   "featured_banner_price_text,rating_score,review_count";
 
-async function _getStoreData(slug: string) {
+async function _buildStoreDataBundle(store: PublicStoreRow) {
+  const slug = store.slug;
   try {
-    let storeData: Record<string, unknown> | null = null;
-    const { data, error: storeError } = await supabase
-      .from("stores")
-      .select(PUBLIC_STORE_SELECT)
-      .eq("slug", slug)
-      .eq("is_published", true)
-      .maybeSingle();
-
-    if (storeError) {
-      console.error(`Public store query failed for slug=${slug}:`, storeError);
-      throw storeError;
-    }
-    storeData = (data as unknown as Record<string, unknown> | null) ?? null;
-    if (!storeData) return null;
-
-    const store = storeData as unknown as PublicStoreRow;
-
     const storeId = store.id;
 
     const [bookingResult, articlesResult, categoryResult, productResult] = await Promise.all([
@@ -235,6 +221,23 @@ async function _getStoreData(slug: string) {
   }
 }
 
+async function _getStoreData(slug: string) {
+  const { data, error: storeError } = await supabase
+    .from("stores")
+    .select(PUBLIC_STORE_SELECT)
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .maybeSingle();
+
+  if (storeError) {
+    console.error(`Public store query failed for slug=${slug}:`, storeError);
+    throw storeError;
+  }
+  if (!data) return null;
+
+  return _buildStoreDataBundle(data as unknown as PublicStoreRow);
+}
+
 const getStoreData = (slug: string) =>
   unstable_cache(
     () => _getStoreData(slug),
@@ -242,8 +245,33 @@ const getStoreData = (slug: string) =>
     { tags: [`store-${slug}`, `products-${slug}`], revalidate: 60 }
   )();
 
+/// Taslak (yayınlanmamış) önizleme: edit_token doğrulaması RPC içinde yapılır,
+/// public is_published=true filtresine hiç dokunmaz. Asla cache'lenmez —
+/// esnaf her kaydettiğinde anında görmeli.
+async function getStorePreviewData(slug: string, editToken: string) {
+  const { data, error } = await supabase.rpc("get_store_preview", {
+    p_slug: slug,
+    p_edit_token: editToken,
+  });
+
+  if (error) {
+    console.error(`Preview store query failed for slug=${slug}:`, error);
+    return null;
+  }
+  if (!data) return null;
+
+  return _buildStoreDataBundle(data as unknown as PublicStoreRow);
+}
+
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
+  const searchParams = await props.searchParams;
+  const previewToken = searchParams.preview_token?.trim();
+
+  if (previewToken) {
+    return { robots: { index: false, follow: false } };
+  }
+
   const data = await getStoreData(params.slug);
   if (!data) return { robots: { index: false, follow: false } };
 
@@ -285,7 +313,13 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
 export default async function StorePage(props: PageProps) {
   const params = await props.params;
-  const data = await getStoreData(params.slug);
+  const searchParams = await props.searchParams;
+  const previewToken = searchParams.preview_token?.trim();
+  const isPreviewMode = Boolean(previewToken);
+
+  const data = isPreviewMode
+    ? await getStorePreviewData(params.slug, previewToken!)
+    : await getStoreData(params.slug);
   if (!data) {
     notFound();
   }
@@ -567,7 +601,19 @@ export default async function StorePage(props: PageProps) {
             storeInitial={store.name?.trim()?.[0]?.toUpperCase() || "V"}
           />
         }
+        isPreviewMode={isPreviewMode}
       />
+      {isPreviewMode && (
+        <PreviewEditorPanel
+          slug={store.slug}
+          editToken={previewToken!}
+          initialName={store.name}
+          initialWhatsapp={store.whatsapp || ""}
+          initialAddress={store.address || ""}
+          initialDescription={store.description || store.corporate_bio || ""}
+          initialKategori={store.kategori || ""}
+        />
+      )}
     </>
   );
 }

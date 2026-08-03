@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:vixrex/screens/preview_screen.dart';
+import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/landing_demo_profile.dart';
 import 'package:vixrex/services/category_image_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -317,13 +317,37 @@ class _LandingScreenState extends State<LandingScreen>
     AppRouter.navigateToHomeShell(context);
   }
 
+  /// Landing demo profillerinin Supabase'deki sabit taslak karşılığı
+  /// (bkz. supabase/migrations/20260803140000_landing_demo_drafts_seed.sql).
+  /// Gerçek kullanıcı verisi değil, herkese açık pazarlama içeriği.
+  static const Map<String, ({String slug, String editToken})>
+  _landingDemoDrafts = {
+    'Aymira Giyim': (
+      slug: 'demo-aymira-giyim',
+      editToken: 'landing-demo-aymira-giyim-2026',
+    ),
+    'Lezzet Durağı': (
+      slug: 'demo-lezzet-duragi',
+      editToken: 'landing-demo-lezzet-duragi-2026',
+    ),
+    'Nova Kuaför': (
+      slug: 'demo-nova-kuafor',
+      editToken: 'landing-demo-nova-kuafor-2026',
+    ),
+    'TeknoFix': (
+      slug: 'demo-teknofix',
+      editToken: 'landing-demo-teknofix-2026',
+    ),
+  };
+
   void _navigateToPreview() {
     final profile = _heroDemoProfiles[_activeProfileIndex];
-    Navigator.push(
+    final draft = _landingDemoDrafts[profile.name];
+    if (draft == null) return;
+    AppRouter.openPublicUrl(
       context,
-      MaterialPageRoute(
-        builder: (_) => PreviewScreen(storeData: profile.toStoreData()),
-      ),
+      PublicSiteConfig.buildVitrinPreviewLink(draft.slug, draft.editToken),
+      failureMessage: 'Demo vitrin önizlemesi açılamadı.',
     );
   }
 

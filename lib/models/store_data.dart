@@ -23,7 +23,7 @@ class StoreData {
   String status;
   String slug;
 
-  /// Esnaf modu flag'i. [PreviewScreen] tarafından kullanıldığı için kaldırılamaz.
+  /// Esnaf modu flag'i.
   bool isEsnafMode;
   String? logoUrl;
   List<Product> products;

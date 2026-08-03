@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/models/store_data.dart';
-import 'package:vixrex/screens/public_vitrin_screen.dart';
+import 'package:vixrex/services/public_store_mapper.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 
 void main() {
   test('v2 mapStoreFromSupabase ürünleri JSON’dan doldurmaz', () {
-    final store = PublicVitrinScreen.mapStoreFromSupabase(
+    final store = PublicStoreMapper.mapStoreFromSupabase(
       slug: 'demo',
       data: {
         'id': 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
@@ -23,7 +23,7 @@ void main() {
   });
 
   test('mapStoreFromSupabase JSON ürünleri hicbir kosulda okumaz', () {
-    final store = PublicVitrinScreen.mapStoreFromSupabase(
+    final store = PublicStoreMapper.mapStoreFromSupabase(
       slug: 'demo',
       data: {
         'product_storage_version': 1,
