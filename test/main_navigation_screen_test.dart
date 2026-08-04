@@ -14,6 +14,7 @@ import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
+import 'package:vixrex/widgets/vixrex/vixrex_companion_chat.dart';
 import 'package:vixrex/widgets/vixrex/vixrex_hero.dart';
 
 void main() {
@@ -88,6 +89,9 @@ void main() {
     'gömülü asistan manuel panelle aynı controllerı ve ürünleri korur',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
+      // Önceki testler statik cache'e kayıtlı vitrin yazıyor; temizlenmezse
+      // asistan "kaldığın yerden devam" moduna düşer ve kurulum adımı çıkmaz.
+      StoreLocalStorageService.resetCache();
       tester.view.physicalSize = const Size(1200, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -145,6 +149,7 @@ void main() {
 
   testWidgets('Vixrex ekranı Türkçe başlıkları gösterir', (tester) async {
     SharedPreferences.setMockInitialValues({});
+    StoreLocalStorageService.resetCache();
     tester.view.physicalSize = const Size(1200, 1920);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -179,7 +184,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Vixrex'), findsWidgets);
-    expect(find.text('SIRADAKİ ADIM'), findsOneWidget);
+    // 22 Temmuz 2026'daki tasarım değişikliğinde (132c831) "SIRADAKİ ADIM"
+    // kartı kaldırıldı; öneri artık rehber sohbetinin içinde mesaj olarak
+    // geliyor. Doğrulanan şey: yayınlanmış vitrinde kurulum ekranı değil,
+    // rehber sohbeti gösterilir.
+    expect(find.byType(VixRexCompanionChat), findsOneWidget);
+    expect(find.byType(VixRexOnboardingChatScreen), findsNothing);
     expect(find.text('Vitrin araçları'), findsNothing);
 
     await tester.tap(find.byType(VixRexHero));
@@ -193,7 +203,7 @@ void main() {
 
     expect(text, isNot(contains('**')));
     expect(text, isNot(contains('👋')));
-    expect(text, contains('Merhaba! Ben Vixrex'));
+    expect(text, contains('Merhaba, ben Vixrex'));
   });
 
   testWidgets('ChatbotBadge onOpen tek kapıyı çağırır, overlay açmaz', (
@@ -213,7 +223,12 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.byType(ChatbotBadge));
+    // ChatbotBadge, HitTestBehavior.deferToChild kullanır (balon alttaki
+    // butonları yutmasın diye). Widget'ın ortası balonun altındaki boşluğa
+    // denk geldiği için oraya dokunmak kayboluyordu. Gerçek dokunulabilir
+    // öğe, Column'un son çocuğu olan sağa hizalı 60x60 rozet dairesidir.
+    final badgeRect = tester.getRect(find.byType(ChatbotBadge));
+    await tester.tapAt(badgeRect.bottomRight - const Offset(30, 30));
     await tester.pump();
 
     expect(opened, isTrue);
@@ -240,6 +255,9 @@ class _NoopProductRepository implements ProductRepository {
     String description = '',
     String priceText = '',
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String> imageUrls = const [],
     String? categoryId,
     String sourceType = 'manual',
@@ -276,6 +294,9 @@ class _NoopProductRepository implements ProductRepository {
     String? description,
     String? priceText,
     double? priceAmount,
+    double? oldPriceAmount,
+    String? badgeTag,
+    String? fulfillmentRegion,
     List<String>? imageUrls,
     String? categoryId,
     bool? isVisible,
@@ -284,6 +305,9 @@ class _NoopProductRepository implements ProductRepository {
     String? stockStatus,
     bool clearCategory = false,
     bool clearPriceAmount = false,
+    bool clearOldPriceAmount = false,
+    bool clearBadgeTag = false,
+    bool clearFulfillmentRegion = false,
     bool clearStockQuantity = false,
     bool clearStockStatus = false,
   }) async {}
