@@ -72,7 +72,7 @@ Tek değer taşırlar. Komut tipi: **"şu alanı şu değere ayarla"**.
 | `isletmeAdi` | metin | İşletme Adı | `name` | zorunlu, 2–60 |
 | `heroRozet` | metin | Hero Rozet Metni | `hero_badge` | 0–60 |
 | `kisaTanitim` | uzunMetin | Kısa Tanıtım | `description` | 0–300 |
-| `konumMetni` | metin | Hero Konum Metni | *(yeni — §8)* | 0–60 |
+| `konumMetni` | metin | Hero Konum Metni | `hero_location_text` | 0–60 |
 | `kategori` | seçim | İşletme Kategorisi | `kategori` | `business_category_config.dart` listesinden |
 | `isletmeTuru` | metin | İşletme Türü | `business_type` | 0–40 |
 | `logo` | görsel | Logo | `logo_url` | güvenli URL, kendi depomuz |
@@ -87,7 +87,7 @@ Tek değer taşırlar. Komut tipi: **"şu alanı şu değere ayarla"**.
 | `telefon` | telefon | Telefon | `phone` | yalnız rakam, 10–13 hane |
 | `eposta` | eposta | E-posta | `email` | geçerli e-posta |
 | `adres` | uzunMetin | Açık Adres | `address` | 0–200 |
-| `haritaEtiketi` | metin | Harita Kartı Etiketi | *(yeni — §8)* | 0–120 |
+| `haritaEtiketi` | metin | Harita Kartı Etiketi | `map_label` | 0–120 |
 | `calismaSaatleri` | metin | Çalışma Saatleri | `working_hours` | serbest metin veya haftalık yapı |
 | `instagram` | metin | Instagram Kullanıcı Adı | `instagram` | `@` olmadan, 0–30 |
 | `website` | url | Web Sitesi | `website` | `http`/`https` |
@@ -99,8 +99,8 @@ Tek değer taşırlar. Komut tipi: **"şu alanı şu değere ayarla"**.
 
 | anahtar | tip | etiket | kolon | doğrulama |
 |---|---|---|---|---|
-| `kategoriBolumBaslik` | metin | Kategori Bölümü Başlığı | *(yeni — §8)* | 0–60 |
-| `urunBolumBaslik` | metin | Ürün Bölümü Başlığı | *(yeni — §8)* | 0–60 |
+| `kategoriBolumBaslik` | metin | Kategori Bölümü Başlığı | `category_section_title` | 0–60 |
+| `urunBolumBaslik` | metin | Ürün Bölümü Başlığı | `product_section_title` | 0–60 |
 
 ### 5.4 Öne çıkan kampanya bandı — bölüm: `featured`
 
@@ -128,23 +128,23 @@ Tek değer taşırlar. Komut tipi: **"şu alanı şu değere ayarla"**.
 |---|---|---|---|---|
 | `galeriUstBaslik` | metin | Galeri Üst Başlık | `gallery_section_kicker` | 0–40 |
 | `galeriBaslik` | metin | Galeri Başlığı | `gallery_section_title` | 0–90 |
-| `galeriAksiyonMetni` | metin | Galeri Buton Metni | *(yeni — §8)* | 0–40 |
-| `galeriAksiyonLinki` | url | Galeri Buton Bağlantısı | *(yeni — §8)* | `http`/`https` veya `#bölüm` |
+| `galeriAksiyonMetni` | metin | Galeri Buton Metni | `gallery_action_label` | 0–40 |
+| `galeriAksiyonLinki` | url | Galeri Buton Bağlantısı | `gallery_action_href` | `http`/`https` veya `#bölüm` |
 
 ### 5.7 Blog başlıkları — bölüm: `blog`
 
 | anahtar | tip | etiket | kolon | doğrulama |
 |---|---|---|---|---|
-| `blogUstBaslik` | metin | Blog Üst Başlık | *(yeni — §8)* | 0–40 |
-| `blogBaslik` | metin | Blog Bölüm Başlığı | *(yeni — §8)* | 0–90 |
+| `blogUstBaslik` | metin | Blog Üst Başlık | `blog_section_kicker` | 0–40 |
+| `blogBaslik` | metin | Blog Bölüm Başlığı | `blog_section_title` | 0–90 |
 
 ### 5.8 SSS başlıkları — bölüm: `faq`
 
 | anahtar | tip | etiket | kolon | doğrulama |
 |---|---|---|---|---|
-| `sssUstBaslik` | metin | SSS Üst Başlık | *(yeni — §8)* | 0–40 |
-| `sssBaslik` | metin | SSS Bölüm Başlığı | *(yeni — §8)* | 0–90 |
-| `sssAciklama` | uzunMetin | SSS Bölüm Açıklaması | *(yeni — §8)* | 0–200 |
+| `sssUstBaslik` | metin | SSS Üst Başlık | `faq_section_kicker` | 0–40 |
+| `sssBaslik` | metin | SSS Bölüm Başlığı | `faq_section_title` | 0–90 |
+| `sssAciklama` | uzunMetin | SSS Bölüm Açıklaması | `faq_section_description` | 0–200 |
 
 ### 5.9 Görünürlük
 
@@ -153,7 +153,7 @@ Tek değer taşırlar. Komut tipi: **"şu alanı şu değere ayarla"**.
 | `puanGoster` | açıkKapalı | Değerlendirme Puanını Göster | `show_storefront_rating` | — |
 | `yolTarifiGoster` | açıkKapalı | Yol Tarifi Butonunu Göster | `show_directions_link` | — |
 | `referansLinki` | url | Referanslar Bağlantısı | `references_link` | `http`/`https` |
-| `bolumGorunurluk` | *(yapı)* | Bölüm Açık/Kapalı | *(yeni — §8)* | sekiz bölüm için açık/kapalı |
+| `bolumGorunurluk` | *(yapı)* | Bölüm Açık/Kapalı | `section_visibility` | sekiz bölüm için açık/kapalı |
 
 ---
 
@@ -198,13 +198,44 @@ Birden çok kayıt taşırlar. Skalerlerden **farklı komutlar** gerektirirler: 
 
 ---
 
-## 8. Veritabanında karşılığı olmayan alanlar
+## 8. Bölüm başlıkları — sabitten sahibe
 
-Yukarıda *(yeni)* işaretli on üç alanın `stores` tablosunda karşılığı yok. Hepsi kısa metin veya küçük yapı; **tek migration ile eklenebilir**:
+### Sorun neydi
 
-`konumMetni`, `haritaEtiketi`, `kategoriBolumBaslik`, `urunBolumBaslik`, `galeriAksiyonMetni`, `galeriAksiyonLinki`, `blogUstBaslik`, `blogBaslik`, `sssUstBaslik`, `sssBaslik`, `sssAciklama`, `bolumGorunurluk`
+Bölüm başlıkları `public_web/src/lib/vitrinCopy.ts` içinde **kategoriye göre sabit** yazılıydı. Her kuaför vitrini aynı "Hakkımızda" başlığını, her kafe aynı tanıtım cümlesini gösteriyordu. Sahip bunları değiştiremiyordu.
 
-**`bolumGorunurluk` özel olarak önemli.** Bugün Next.js bölümleri veri doluluğundan gizliyor. Sahibin "blog istemiyorum" diyebilmesi için sekiz bölümün her biri için açık/kapalı bilgisi gerekir; tek bir JSONB kolon yeterlidir.
+Bu, vitrinin boş görünmesine değil, **hepsinin aynı görünmesine** yol açar. Gerçek bir web sitesinde sahibi başlığı kendi yazar: "Hakkımızda" yerine "Kadıköy'ün 12 yıllık teknik servisi" yazabilir. Yüz vitrin aynı başlıklarla dizilirse şablon oldukları anlaşılır — farkı yok eden şey budur.
+
+Ayrıca bölümler yalnız verisi boşsa gizleniyordu. Sahibin "ben blog istemiyorum" deme hakkı yoktu.
+
+### Ne yapıldı
+
+`supabase/migrations/20260804220000_add_owner_editable_section_labels.sql` ile 12 kolon eklendi. Hepsi NULL olabilir. Kolon adları yukarıdaki tablolarda yazılı.
+
+### Varsayılan kuralı — en önemli kısım
+
+**`vitrinCopy.ts` kaldırılmaz. Varsayılan olur.**
+
+| Durum | Ne gösterilir |
+|---|---|
+| Kolon NULL | Kategorinin hazır metni (`vitrinCopy.ts`) |
+| Sahip bir değer yazmış | Sahibin yazdığı |
+
+Böylece yayındaki mevcut vitrinler hiç etkilenmez, yeni açılan vitrin boş başlıklarla görünmez, isteyen sahip kendi cümlesini yazar.
+
+Bu kural Commit 10'da render tarafına uygulanır. Uygulanırken `vitrinCopy.ts` silinmez; yalnız "önce kolona bak, boşsa buraya düş" sırası kurulur.
+
+### `section_visibility` nasıl çalışır
+
+JSONB, varsayılanı boş nesne. Boş = bugünkü davranış (bölüm yalnız verisi boşsa gizlenir). Anahtar yazılmışsa **sahibin kararı üstün gelir.**
+
+Anahtarlar: `categories`, `products`, `about`, `gallery`, `blog`, `faq`, `contact`
+
+Örnek: `{"blog": false}` → blog yazısı olsa bile bölüm gösterilmez.
+
+### Kalan iş
+
+Bu kolonların müşteri yanıtına girmesi için `public_web/src/app/v/[slug]/page.tsx` içindeki `PUBLIC_STORE_SELECT` listesine eklenmeleri gerekir. Commit 10 kapsamındadır; migration tek başına görünürlük sağlamaz.
 
 ---
 
