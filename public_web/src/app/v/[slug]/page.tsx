@@ -1,7 +1,9 @@
 import { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import {
   deriveCollections,
   getProductUrlSlug,
@@ -277,6 +279,12 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const previewToken = searchParams.preview_token?.trim();
 
   if (previewToken) {
+    return { robots: { index: false, follow: false } };
+  }
+
+  const ownerToken = (await cookies()).get(OWNER_SESSION_COOKIE)?.value;
+  const ownerSession = verifyOwnerSession(ownerToken, params.slug);
+  if (ownerSession) {
     return { robots: { index: false, follow: false } };
   }
 
