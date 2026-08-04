@@ -34,6 +34,25 @@ Bu kurallar 2026-08-04'te, 13 açık PR'ın 5'inin ölü çıkması ve birleşti
 - **Bir aydan eski açık PR ya birleştirilir ya kapatılır.** Kod hızla değişiyor; eski PR'ın dosyaları artık var olmayabilir. Karar vermeden önce `gh pr diff <n> --name-only` ile dosyaların hâlâ mevcut olup olmadığı kontrol edilir.
 - **PR kapatılırken dal silinmez** (`--delete-branch` kullanılmaz) ve kapatma sebebi yoruma yazılır.
 
+## Yayına çıkış sırası
+
+Kullanıcı bu adımları ezberlemek zorunda değildir; ajan sırayı uygular ve her adımda ne yaptığını söyler.
+
+**Değişmez sıra: önce veritabanı, sonra kod.**
+
+Yayına çıkarken iki ayrı şey gider ve aynı anda gitmezler:
+
+1. **Kod** — `main`'e merge edilince Vercel otomatik yayınlar. **Yani merge etmek yayınlamaktır.**
+2. **Migration** — otomatik gitmez, ayrıca uygulanır.
+
+Kod önce giderse site kırılır: kod olmayan bir kolonu bekler. Migration önce giderse yeni tablolar bir süre boş durur, kimse fark etmez. Bu yüzden sıra tersine çevrilmez.
+
+- Merge öncesi, o kodun beklediği tüm migration'ların canlıya uygulanmış olduğu **kontrol edilir**. Uygulanmamışsa merge durdurulur ve kullanıcıya söylenir.
+- Migration geri alınamaz kabul edilir. Kod `git revert` ile geri alınabilir; silinen kolon geri gelmez. `DROP`, tür değiştirme ve toplu `UPDATE/DELETE` içeren migration için önce yedek ve geri dönüş SQL'i hazırlanır.
+- **İki ayrı Vercel projesi vardır:** `vixrex-app` (Flutter paneli) ve `vixrex-public` (müşteri vitrini). Birinin başarılı olması diğeri hakkında bilgi vermez; ikisi ayrı ayrı doğrulanır.
+- Deploy'un "başarılı" görünmesi sitenin çalıştığı anlamına gelmez. Yayın sonrası gerçek bir vitrin açılıp göz ile doğrulanır; doğrulanmadıysa "canlıda doğrulanmadı" denir.
+- Bu depoda `main` production dalıdır. Feature dalı preview içindir.
+
 ## Agent skills
 
 ### Issue tracker
