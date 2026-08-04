@@ -14,6 +14,8 @@ Hedef davranış:
 6. Düzenlemeler çalışma taslağına yazılır; kullanıcı **Yayınla** demeden müşteri vitrini değişmez.
 7. Normal müşteri bağlantısında sahip araçları hiçbir koşulda görünmez.
 8. İleride kiralık vitrin şablonundan kullanıcıya özel taslak üretildiğinde aynı sahip modu yeniden kullanılır.
+9. **Düzenlenebilir alan sayısı beşten 41'e çıkar.** Bugün kullanıcı beş alanla (isim, WhatsApp, adres, açıklama, kategori) vitrin oluşturup yayınlayabiliyor. Plan bittiğinde vitrinde görünen her alan — bölüm başlıkları ve bölüm gizleme dahil — hem tıklayarak hem Vixrex Asistan sohbetinden düzenlenebilir olur. Alanların tek kaynağı `docs/vitrin-alan-semasi.md`'dir.
+10. **Hedef, referans HTML'lerin üstüdür.** `teknik_vitrin_asistan.html` görünüş kalitesinin referansıdır, düzenleme kabiliyetinin değil — o dosyadaki asistan alanların ancak onda birine dokunabiliyor, Hakkımızda ve SSS bölümleri tıklanamıyor bile. Bu plan görünüşü referans alır, düzenlemede referansı aşar.
 
 Bu bir yeniden yazım değildir. Mevcut Flutter Vixrex Asistan motoru, Next.js vitrin şablonu, Supabase yayınlama kuralları ve yerel editör verisi mümkün olan en küçük değişikliklerle korunur.
 
@@ -187,9 +189,14 @@ Her commit sonunda ilgili statik kontroller ve dar test grubu geçmelidir. Bir c
 
 ### Commit 8 — Onaylı sahip düzenleme komutlarını ekle
 
-- Alan güncelleme komutlarını tipli ve izin listeli hale getir.
-- Sunucu tarafında uzunluk, biçim, kategori ve yetki doğrulaması yap.
-- İşletme adı, WhatsApp, adres, açıklama ve kategori düzenlemelerini çalışma taslağına uygula.
+**Önkoşul: `docs/vitrin-alan-semasi.md`.** Düzenlenebilir alanların tek kaynağı o dosyadır; 41 tekil alan ve 7 liste orada tanımlıdır.
+
+**Bu adımın asıl amacı beş alanı çalıştırmak değil, mekanizmayı kurmaktır.** Bugün kullanıcı beş alanla vitrin oluşturup yayınlayabiliyor (`PreviewEditorPanel`: isim, WhatsApp, adres, açıklama, kategori). Hedef 41'dir. Aradaki fark kod değil, sıradır — mekanizma şemadan beslenirse kalan 36 alan Commit 10'da satır eklemekle açılır.
+
+- Alan güncelleme komutlarını tipli ve izin listeli hale getir. **İzin listesi şemadan okunur; elle yazılmaz.**
+- Sunucu doğrulaması da şemadaki `tip` ve `doğrulama` sütunlarından üretilir. **Alan başına ayrı doğrulayıcı yazılmaz.**
+- İlk küme olarak işletme adı, WhatsApp, adres, açıklama ve kategori çalıştırılır — fakat **beş ayrı dallanma yazılarak değil**, şemanın beş satırı olarak.
+- Kabul ölçütü: altıncı bir alanı açmak için **yalnız şemaya satır eklemek** yeterli olmalı. Kod değişikliği gerekiyorsa mekanizma yanlış kurulmuştur.
 - Başarılı kayıttan sonra Next.js vitrini güncelle.
 - Geçersiz alan, izinsiz vitrin, demo şablon ve süresi dolmuş oturum testlerini ekle.
 
@@ -202,12 +209,23 @@ Her commit sonunda ilgili statik kontroller ve dar test grubu geçmelidir. Bir c
 - Asistan kapalı/ulaşılamaz olduğunda manuel düzenlemeyi koru.
 - Flutter'daki mevcut asistanı silme; iki yüzey aynı işlem adlarını kullanmalı.
 
-### Commit 10 — Karmaşık düzenleme bölümlerini bağla
+### Commit 10 — Kalan alanları aç ve karmaşık bölümleri bağla
 
-- Kapak, galeri, ürün/kategori, konum, çalışma saatleri ve yayınlama eylemlerini birer birer sahip çalışma alanına bağla.
-- Her bölüm için mevcut doğrulama ve depolama kurallarını yeniden kullan.
-- Görsel yüklemelerde tür, boyut, sahiplik ve güvenli URL kontrolünü koru.
-- Bir bölüm tamamlanmadan diğerine geçme; her biri ayrı küçük commit olabilir.
+Commit 8'in mekanizması doğru kurulduysa bu adım **kod yazmak değil, şemaya satır eklemektir.** Beş alandan 41'e çıkış burada tamamlanır.
+
+**Sırayla açılacak tekil alanlar** (`docs/vitrin-alan-semasi.md` §5): hero rozet ve konum metni, işletme türü, logo, kapak görseli, tema ön ayarı, telefon, e-posta, harita etiketi ve bağlantısı, çalışma saatleri, Instagram, web sitesi, kampanya bandının beş alanı, Hakkımızda'nın beş alanı, galeri ve blog ve SSS bölüm başlıkları, görünürlük anahtarları.
+
+**Bölüm başlıkları için varsayılan kuralı korunur** (§8): kolon boşsa `vitrinCopy.ts` içindeki kategori varsayılanı gösterilir, sahip yazdıysa onunki. `vitrinCopy.ts` silinmez.
+
+**`section_visibility` bağlanır:** sahip bir bölümü kapatabilsin. Boş nesne bugünkü davranışı korur.
+
+**Listeler ayrı komut tipi ister** (§6): ürünler, kategoriler, galeri kareleri, SSS, değer kartları, pazaryeri bağlantıları, blog yazıları. Bunlar `ekle` / `düzenle` / `sil` / `sırala` komutlarıyla yönetilir; tekil alan komutuyla değil.
+
+- 2026-08-04'te eklenen 12 kolon `PUBLIC_STORE_SELECT` listesine eklenir; aksi hâlde müşteri yanıtına girmezler.
+- Kapak, galeri, ürün/kategori, konum ve çalışma saatleri için mevcut doğrulama ve depolama kuralları yeniden kullanılır.
+- Görsel yüklemelerde tür, boyut, sahiplik ve güvenli URL kontrolü korunur.
+- Bir bölüm tamamlanmadan diğerine geçilmez; her biri ayrı küçük commit olabilir.
+- **Ürün kaynağı netleştirilir:** ürünler bugün hem `products` JSONB kolonunda hem ayrı tabloda tutulabiliyor (`product_storage_version`). Ürün komutları yazılmadan önce tek kaynak seçilir.
 
 ### Commit 11 — Taslaktan yayınlama ve vazgeçme akışını tamamla
 
