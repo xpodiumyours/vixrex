@@ -239,12 +239,29 @@ Bu kolonların müşteri yanıtına girmesi için `public_web/src/app/v/[slug]/p
 
 ---
 
-## 9. Uygulama sırası
+## 9. Koddaki karşılığı
 
-1. Bu şemayı koda dök — tek dosya, her alan bir satır. Henüz komut yazma.
-2. Commit 8'in beş alanını bu şemadan üret. Beş ayrı dallanma yazma.
-3. §8'deki eksik alanlar için tek migration.
-4. Commit 10'da bölüm bölüm ilerle — her bölüm satır eklemek olsun.
+Bu belge insan tarafıdır. Koddaki tek kaynak:
+
+| Dosya | İşi |
+|---|---|
+| `public_web/src/lib/vitrinFieldSchema.ts` | 41 alanın tamamı — anahtar, tip, etiket, kolon, sınırlar, bölüm |
+| `public_web/src/lib/vitrinFieldValidation.ts` | Tek genel doğrulayıcı. **Alan başına dallanma yoktur** |
+| `public_web/src/app/api/owner-draft/route.ts` | Çerezden oturum → şema doğrulaması → RPC |
+| `supabase/migrations/20260805100000_...sql` | Veritabanının **bağımsız** yetki kontrolü |
+| `public_web/tests/vitrin-field-schema.test.ts` | Şema bütünlüğü + kabul ölçütü testleri |
+
+**İki katmanlı savunma:** TypeScript tipi ve sınırı denetler; SQL ise sunucu katmanı atlansa bile `edit_token`, `is_published` veya yasal onay alanlarına yazılmasına izin vermez. Kurallar iki dile kopyalanmaz — SQL yalnız yasak listesini ve kolonun gerçekten var olduğunu bilir.
+
+**Yeni alan eklemek:** yalnız `vitrinFieldSchema.ts`'e satır ekle. Başka hiçbir dosya değişmez. Bu, `vitrin-field-schema.test.ts` içindeki "Commit 8 kabul ölçütü" testleriyle kilitlidir.
+
+### Kalan sıra
+
+1. ~~Şemayı koda dök~~ ✅ Commit 8
+2. ~~Komut katmanı ve doğrulama~~ ✅ Commit 8
+3. ~~§8'deki eksik alanlar için migration~~ ✅ `20260804220000`
+4. Commit 9 — asistan paneli ve tıkla-düzenle; işaretler bu şemadan üretilir
+5. Commit 10 — alanları bölüm bölüm arayüze bağla
 
 ## 10. Değiştirme kuralı
 
