@@ -21,7 +21,8 @@ describe("Dilim 1 hero kimlik alanları", () => {
   });
 
   it("view boş alanları gizler ve sahte e-posta/puan kullanmaz", () => {
-    expect(viewSource).toContain("Hemen Ara");
+    expect(viewSource).toContain("heroButonlari.length > 0 &&");
+    expect(viewSource).toContain("heroActions(profile,");
     expect(viewSource).toContain("displayBadge &&");
     expect(viewSource).toContain("hasPhone &&");
     expect(viewSource).toContain("displayEmail &&");

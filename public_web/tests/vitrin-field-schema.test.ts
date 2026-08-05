@@ -145,7 +145,7 @@ describe("Commit 8 kabul ölçütü — yeni alan kod değişikliği istemez", (
 
   it("doğrulayıcı alan ADINA göre dallanmaz, yalnız TİPE göre dallanır", () => {
     // Alan başına dallanma yazılmışsa burada yakalanır. Referans
-    // teknik_vitrin_asistan.html'de sekiz elle yazılmış dal var ve bu yüzden
+    // sablonlar/hedef-vitrin.html'de sekiz elle yazılmış dal var ve bu yüzden
     // orada yalnız dokuz alan düzenlenebiliyor; Hakkımızda ve SSS tıklanamıyor.
     //
     // Not: bazı alan adları tip adlarıyla çakışır (örn. "telefon" hem alan
@@ -191,6 +191,8 @@ describe("Commit 8 kabul ölçütü — yeni alan kod değişikliği istemez", (
           ? "https://vixrex.com/x.png"
           : f.tip === "telefon"
           ? "05551234567"
+          : f.tip === "secim"
+          ? (f.secenekler?.[0] ?? "Örnek")
           : "Örnek";
       const r = validateField(f.anahtar, ornek);
       expect(r.ok, `${f.anahtar} (${f.tip}) doğrulanamadı`).toBe(true);

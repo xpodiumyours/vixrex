@@ -353,6 +353,30 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
                   JPG, PNG veya WebP · en fazla 5 MB
                 </p>
               </div>
+            ) : seciliAlan?.tip === "secim" && seciliAlan.secenekler ? (
+            <div className="flex items-end gap-2">
+              <select
+                value={giris}
+                onChange={(e) => setGiris(e.target.value)}
+                disabled={kaydediliyor}
+                className="flex-1 rounded-lg border border-white/10 bg-slate-900/70 px-3 py-2 text-xs text-white outline-none focus:border-blue-500/60"
+              >
+                <option value="" disabled>Kategori seçin…</option>
+                {seciliAlan.secenekler.map((secenek) => (
+                  <option key={secenek} value={secenek}>
+                    {secenek}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => void gonder()}
+                disabled={kaydediliyor || !giris}
+                className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {kaydediliyor ? "…" : "Gönder"}
+              </button>
+            </div>
             ) : (
             <div className="flex items-end gap-2">
               <textarea

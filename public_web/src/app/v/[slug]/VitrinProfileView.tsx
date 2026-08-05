@@ -6,6 +6,7 @@ import { Suspense, type ReactNode, useState } from "react";
 import type { VitrinCategoryProfile } from "@/lib/vitrinProfile";
 import { normalizeAddressDisplay } from "@/lib/vitrinCopy";
 import {
+  GlobeIcon,
   InstagramIcon,
   LinkIcon,
   MapPinIcon,
@@ -13,6 +14,7 @@ import {
   WhatsAppIcon,
 } from "@/lib/vitrinBrandIcons";
 import { editableProps } from "@/lib/vitrinEditableProps";
+import { heroActions } from "@/lib/vitrinHeroActions";
 
 export interface VitrinGalleryItem {
   id?: string;
@@ -241,6 +243,14 @@ export default function VitrinProfileView({
   const ghostActionClass =
     "flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold bg-white/5 text-white border border-blue-500/20 backdrop-blur-md hover:bg-white/10 transition";
 
+  // Hero butonları kategori profiline göre üretilir (vitrinHeroActions).
+  const heroButonlari = heroActions(profile, {
+    phoneUrl: phoneUrl ?? null,
+    whatsappNumarasi: whatsappUrl?.match(/wa\.me\/([0-9]+)/)?.[1] ?? null,
+    mapsUrl: mapsUrl ?? null,
+    websiteUrl: websiteUrl ?? null,
+  });
+
   const handleCopyUrl = () => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(publicUrl);
@@ -359,38 +369,28 @@ export default function VitrinProfileView({
             )}
           </div>
 
-          {(hasPhone || whatsappUrl || mapsUrl) && (
+          {heroButonlari.length > 0 && (
             <div className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px]">
-              {hasPhone && (
-                <a href={phoneUrl!} className={primaryActionClass}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                  Hemen Ara
-                </a>
-              )}
-              {whatsappUrl && (
+              {heroButonlari.map((buton, index) => (
                 <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={hasPhone ? ghostActionClass : primaryActionClass}
+                  key={buton.anahtar}
+                  href={buton.href}
+                  {...(buton.disKapi
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
+                  className={index === 0 ? primaryActionClass : ghostActionClass}
                 >
-                  <WhatsAppIcon size={18} />
-                  WhatsApp
+                  {buton.anahtar === "telefon" && (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                  )}
+                  {buton.anahtar === "whatsapp" && <WhatsAppIcon size={18} />}
+                  {buton.anahtar === "maps" && <MapPinIcon size={18} />}
+                  {buton.anahtar === "website" && <GlobeIcon size={18} />}
+                  {buton.etiket}
                 </a>
-              )}
-              {mapsUrl && (
-                <a
-                  href={mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={ghostActionClass}
-                >
-                  <MapPinIcon size={18} />
-                  Yol Tarifi
-                </a>
-              )}
+              ))}
             </div>
           )}
         </div>

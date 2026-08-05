@@ -5,7 +5,7 @@
 //
 // NEDEN BU DOSYA VAR
 // Alan başına ayrı dallanma yazılırsa kırk alanda tıkanılır. Referans
-// teknik_vitrin_asistan.html'de tam olarak bu oldu: sekiz elle yazılmış
+// sablonlar/hedef-vitrin.html'de tam olarak bu oldu: sekiz elle yazılmış
 // dal var, o yüzden orada yalnız dokuz alan tıklanabiliyor; Hakkımızda ve
 // SSS bölümleri tıklanamıyor bile.
 //
@@ -21,6 +21,8 @@
 //
 // `anahtar` yayına çıktıktan sonra DEĞİŞTİRİLMEZ: asistan komutları ve
 // kayıtlı taslaklar ona bağlıdır. Yeni alan eklenir, eski anahtar silinmez.
+
+import { PROFILES } from "./vitrinProfile";
 
 export type VitrinFieldType =
   | "metin"
@@ -111,6 +113,8 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "kategori",
     bolum: "hero",
     maxUzunluk: 40,
+    // Tek kaynak vitrinProfile.ts — ayrı liste tutulmaz.
+    secenekler: PROFILES.map((p) => p.label),
   },
   {
     anahtar: "isletmeTuru",
