@@ -18,6 +18,7 @@ interface PreviewEditorPanelProps {
   initialAddress: string;
   initialDescription: string;
   initialKategori: string;
+  disabled?: boolean;
 }
 
 export default function PreviewEditorPanel({
@@ -28,6 +29,7 @@ export default function PreviewEditorPanel({
   initialAddress,
   initialDescription,
   initialKategori,
+  disabled = false,
 }: PreviewEditorPanelProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -54,6 +56,7 @@ export default function PreviewEditorPanel({
   const hiddenOnMobile = !open && !isDesktop;
 
   const handleSave = async () => {
+    if (disabled) return;
     setSaving(true);
     setError(null);
     try {
@@ -86,17 +89,22 @@ export default function PreviewEditorPanel({
   const fieldClass =
     "w-full rounded-lg bg-white/5 border border-white/15 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-blue-400";
   const labelClass = "block text-xs font-semibold text-white/60 mb-1";
+  const disabledFieldClass = fieldClass + " opacity-50 cursor-not-allowed";
 
   return (
     <>
-      {/* Mobilde aç/kapa düğmesi */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-5 right-5 z-[70] lg:hidden bg-blue-600 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-xl"
-        aria-label="Düzenleme panelini aç"
-      >
-        ✎
-      </button>
+      {!disabled ? (
+        <>
+          {/* Mobilde aç/kapa düğmesi */}
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="fixed bottom-5 right-5 z-[70] lg:hidden bg-blue-600 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-xl"
+            aria-label="Düzenleme panelini aç"
+          >
+            ✎
+          </button>
+        </>
+      ) : null}
 
       <aside
         aria-hidden={hiddenOnMobile ? true : undefined}
@@ -108,15 +116,17 @@ export default function PreviewEditorPanel({
         <div className="p-5 pt-14">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-bold text-base">
-              Vitrini Düzenle (Taslak)
+              {disabled ? "Sahip Çalışma Alanı (Salt Okunur)" : "Vitrini Düzenle (Taslak)"}
             </h2>
-            <button
-              onClick={() => setOpen(false)}
-              className="lg:hidden text-white/60 text-lg"
-              aria-label="Kapat"
-            >
-              ✕
-            </button>
+            {!disabled && (
+              <button
+                onClick={() => setOpen(false)}
+                className="lg:hidden text-white/60 text-lg"
+                aria-label="Kapat"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -126,9 +136,10 @@ export default function PreviewEditorPanel({
               </label>
               <input
                 id="preview-name"
-                className={fieldClass}
+                className={disabled ? disabledFieldClass : fieldClass}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={disabled ? undefined : (e) => setName(e.target.value)}
+                disabled={disabled}
               />
             </div>
             <div>
@@ -137,10 +148,11 @@ export default function PreviewEditorPanel({
               </label>
               <input
                 id="preview-whatsapp"
-                className={fieldClass}
+                className={disabled ? disabledFieldClass : fieldClass}
                 value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
+                onChange={disabled ? undefined : (e) => setWhatsapp(e.target.value)}
                 placeholder="05XXXXXXXXX"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -149,9 +161,10 @@ export default function PreviewEditorPanel({
               </label>
               <input
                 id="preview-address"
-                className={fieldClass}
+                className={disabled ? disabledFieldClass : fieldClass}
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={disabled ? undefined : (e) => setAddress(e.target.value)}
+                disabled={disabled}
               />
             </div>
             <div>
@@ -160,9 +173,10 @@ export default function PreviewEditorPanel({
               </label>
               <textarea
                 id="preview-description"
-                className={fieldClass + " min-h-[90px] resize-none"}
+                className={(disabled ? disabledFieldClass : fieldClass) + " min-h-[90px] resize-none"}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={disabled ? undefined : (e) => setDescription(e.target.value)}
+                disabled={disabled}
               />
             </div>
             <div>
@@ -171,9 +185,10 @@ export default function PreviewEditorPanel({
               </label>
               <input
                 id="preview-kategori"
-                className={fieldClass}
+                className={disabled ? disabledFieldClass : fieldClass}
                 value={kategori}
-                onChange={(e) => setKategori(e.target.value)}
+                onChange={disabled ? undefined : (e) => setKategori(e.target.value)}
+                disabled={disabled}
               />
             </div>
           </div>
@@ -187,13 +202,23 @@ export default function PreviewEditorPanel({
             </p>
           )}
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="mt-5 w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-lg py-2.5 text-sm transition"
-          >
-            {saving ? "Kaydediliyor..." : "Kaydet ve Önizlemeyi Güncelle"}
-          </button>
+          {!disabled && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="mt-5 w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-lg py-2.5 text-sm transition"
+            >
+              {saving ? "Kaydediliyor..." : "Kaydet ve Önizlemeyi Güncelle"}
+            </button>
+          )}
+          {disabled && (
+            <button
+              disabled
+              className="mt-5 w-full bg-white/5 border border-white/10 text-white/50 font-semibold rounded-lg py-2.5 text-sm cursor-not-allowed"
+            >
+              Kaydet — Commit 8&apos;de aktif olacak
+            </button>
+          )}
         </div>
       </aside>
     </>

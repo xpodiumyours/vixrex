@@ -7,14 +7,15 @@ import {
   signOwnerSession,
 } from "@/lib/ownerSession";
 
-// Sahip giriş rotası (implementation_plan.md §5.2, Commit 4).
+// Sahip giriş rotası (implementation_plan.md §5.2, Commit 4 & 7).
 //
-// GET /api/owner-session?slug=<vitrin>&ocode=<tek kullanımlık kod>
-//
-// Tek kullanımlık kodu sunucu tarafında consume_owner_session ile doğrular ve
-// hemen tüketir. Başarıda güvenli HttpOnly çerezi kurar, gizli sorgu değerini
-// adres çubuğundan kaldırarak temiz /v/:slug adresine yönlendirir. Hatalı,
-// kullanılmış veya süresi dolmuş kodu açık hata sayfasıyla reddeder.
+// Zincir: Flutter tek kullanımlık kod → consume_owner_session
+//   → 256-bit session_token (tek kez döner) → SHA-256 hash DB'ye
+//   → Next.js session_token'ı HMAC imzalı HttpOnly çerez payload'ına koyar
+//   → page.tsx çerezi doğrular, payload içindeki session_token alır
+//   → Supabase RPC tokenı hashleyerek owner_sessions kaydıyla eşleştirir
+//   → çalışma taslağını döndürür
+//   → herhangi bir halka başarısızsa owner modu fail-closed kapanır.
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ const ERROR_COPY: Record<string, string> = {
 interface ConsumeOwnerSessionResult {
   store_id: string;
   slug: string;
+  session_token: string;
 }
 
 function ownerErrorPage(title: string, message: string): Response {
@@ -104,18 +106,27 @@ export async function GET(request: Request) {
   }
 
   const session = data as ConsumeOwnerSessionResult | null;
-  if (!session?.store_id) {
+  if (!session?.store_id || !session.session_token) {
     return ownerErrorPage(
       "Önizleme bağlantısı geçersiz",
       ERROR_COPY.INVALID_OR_EXPIRED_OWNER_CODE
     );
   }
 
+  // Veritabanının döndürdüğü slug ile istek slug'ını doğrula
+  if (session.slug !== slug) {
+    return ownerErrorPage(
+      "Önizleme bağlantısı geçersiz",
+      "Slug uyuşmazlığı."
+    );
+  }
+
   let token: string;
   try {
-    token = signOwnerSession(session.store_id, slug);
+    // HMAC payload: storeId, slug, sessionToken, exp
+    token = signOwnerSession(session.store_id, session.slug, session.session_token);
   } catch (err) {
-    console.error("[owner-session] signOwnerSession failed", err);
+    console.error("[owner-session] signOwnerSession failed");
     return ownerErrorPage(
       "Önizleme açılamadı",
       "Sunucu sahip oturumunu oluşturamadı. Lütfen tekrar deneyin."
@@ -133,5 +144,6 @@ export async function GET(request: Request) {
     maxAge: OWNER_SESSION_MAX_AGE_SECONDS,
   });
 
+  // session_token loga/hata mesajına GİRMESİN
   return response;
 }

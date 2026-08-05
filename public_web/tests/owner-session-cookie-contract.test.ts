@@ -11,7 +11,7 @@ import proxy from "../src/proxy";
 import { NextRequest } from "next/server";
 
 /**
- * implementation_plan.md Commit 4: sahip kodu değişimi ve güvenli çerez.
+ * implementation_plan.md Commit 4 & 7: sahip kodu değişimi ve güvenli çerez.
  *
  * Davranış testleri imzalı çerezin slug'a ve süreye bağlı olduğunu, kurcalanmış
  * veya süresi dolmuş değerin reddedildiğini kilitler. Kaynak sözleşme testleri
@@ -23,6 +23,9 @@ import { NextRequest } from "next/server";
 const SECRET = "test-owner-session-secret-0123456789abcdef";
 const STORE_ID = "11111111-1111-1111-1111-111111111111";
 const SLUG = "deneme-vitrin";
+
+// Geçerli 64 hex char (32 byte) session token for tests
+const TEST_SESSION_TOKEN = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 function b64url(value: string): string {
   return Buffer.from(value, "utf8").toString("base64url");
@@ -41,28 +44,41 @@ describe("sahip oturumu çerezi — imzalı değer davranışı", () => {
     expect(OWNER_SESSION_COOKIE).toBe("vixrex_owner_session");
   });
 
-  it("geçerli çerez doğrulanır ve vitrin/store kimliğini döner", () => {
-    const token = signOwnerSession(STORE_ID, SLUG);
+  it("geçerli çerez doğrulanır ve vitrin/store kimliğini + sessionToken döner", () => {
+    const token = signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN);
     expect(verifyOwnerSession(token, SLUG)).toEqual({
       storeId: STORE_ID,
       slug: SLUG,
+      sessionToken: TEST_SESSION_TOKEN,
     });
   });
 
+  it("geçersiz sessionToken (kısa) ile imzalama başarısız olur", () => {
+    expect(() => signOwnerSession(STORE_ID, SLUG, "kisa")).toThrow(
+      "sessionToken must be 64 hex characters"
+    );
+  });
+
+  it("geçersiz sessionToken (non-hex) ile imzalama başarısız olur", () => {
+    expect(() => signOwnerSession(STORE_ID, SLUG, "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg")).toThrow(
+      "sessionToken must be 64 hex characters"
+    );
+  });
+
   it("bir vitrin için üretilen çerez başka slug'ta kullanılamaz", () => {
-    const token = signOwnerSession(STORE_ID, SLUG);
+    const token = signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN);
     expect(verifyOwnerSession(token, "baska-vitrin")).toBeNull();
   });
 
   it("imzası bozulmuş çerez reddedilir", () => {
-    const token = signOwnerSession(STORE_ID, SLUG);
+    const token = signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN);
     const tampered = token.slice(0, -4) + "aaaa";
     expect(verifyOwnerSession(tampered, SLUG)).toBeNull();
   });
 
   it("süresi dolmuş çerez reddedilir", () => {
     const payload = b64url(
-      JSON.stringify({ storeId: STORE_ID, slug: SLUG, exp: Date.now() - 1000 })
+      JSON.stringify({ storeId: STORE_ID, slug: SLUG, sessionToken: TEST_SESSION_TOKEN, exp: Date.now() - 1000 })
     );
     const signature = createHmac("sha256", SECRET)
       .update(payload)
@@ -79,7 +95,7 @@ describe("sahip oturumu çerezi — imzalı değer davranışı", () => {
 
   it("gizli anahtar yokken imzalama başarısız, doğrulama güvenli kapalıdır", () => {
     vi.stubEnv("OWNER_SESSION_SECRET", "");
-    expect(() => signOwnerSession(STORE_ID, SLUG)).toThrow(
+    expect(() => signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN)).toThrow(
       "OWNER_SESSION_SECRET"
     );
     expect(verifyOwnerSession("gecerli.gorunen", SLUG)).toBeNull();
@@ -87,10 +103,17 @@ describe("sahip oturumu çerezi — imzalı değer davranışı", () => {
 
   it("32 karakterden kısa gizli anahtarı reddeder", () => {
     vi.stubEnv("OWNER_SESSION_SECRET", "cok-kisa-secret");
-    expect(() => signOwnerSession(STORE_ID, SLUG)).toThrow(
+    expect(() => signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN)).toThrow(
       "at least 32 characters"
     );
     expect(verifyOwnerSession("gecerli.gorunen", SLUG)).toBeNull();
+  });
+
+  it("sessionToken olmadan imzalama başarısız olur", () => {
+    // @ts-expect-error testing missing arg
+    expect(() => signOwnerSession(STORE_ID, SLUG)).toThrow(
+      "sessionToken must be 64 hex characters"
+    );
   });
 });
 
@@ -172,7 +195,7 @@ describe("sahip oturumu proxy katmanı — yanıt önbelleği", () => {
   }
 
   it("yalnız geçerli ve aynı slug'a bağlı çerez için sahip modunu açar", () => {
-    const response = proxy(requestWith(signOwnerSession(STORE_ID, SLUG)));
+    const response = proxy(requestWith(signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN)));
 
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(response.headers.get("x-middleware-request-x-owner-mode")).toBe("1");
@@ -186,12 +209,13 @@ describe("sahip oturumu proxy katmanı — yanıt önbelleği", () => {
     expect(response.headers.get("x-middleware-request-x-owner-mode")).not.toBe("1");
   });
 
-  it("başka slug'a ait çerezle sahip modunu açmaz", () => {
-    const token = signOwnerSession(STORE_ID, SLUG);
+it("başka slug'a ait çerezle sahip modunu açmaz", () => {
+    const token = signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN);
     const response = proxy(requestWith(token, "baska-vitrin", "1"));
 
     expect(response.headers.get("cache-control")).toBeNull();
     expect(response.headers.get("x-middleware-request-x-owner-mode")).toBeNull();
+    expect(response.headers.get("x-middleware-request-x-owner-mode")).not.toBe("1");
   });
 
   it("yalnız vitrin yollarında (/v/:path*) çalışır", () => {

@@ -194,19 +194,26 @@ Her commit sonunda ilgili statik kontroller ve dar test grubu geçmelidir. Bir c
 **Bu adımın asıl amacı beş alanı çalıştırmak değil, mekanizmayı kurmaktır.** Bugün kullanıcı beş alanla vitrin oluşturup yayınlayabiliyor (`PreviewEditorPanel`: isim, WhatsApp, adres, açıklama, kategori). Hedef 41'dir. Aradaki fark kod değil, sıradır — mekanizma şemadan beslenirse kalan 36 alan Commit 10'da satır eklemekle açılır.
 
 - Alan güncelleme komutlarını tipli ve izin listeli hale getir. **İzin listesi şemadan okunur; elle yazılmaz.**
+- Komut katmanı **arayüzden bağımsız** olmalı: Commit 9'da hem asistan sohbeti hem tıkla-düzenle aynı komutları çağıracak. Komutlar belirli bir panele veya bileşene bağlanmaz.
 - Sunucu doğrulaması da şemadaki `tip` ve `doğrulama` sütunlarından üretilir. **Alan başına ayrı doğrulayıcı yazılmaz.**
 - İlk küme olarak işletme adı, WhatsApp, adres, açıklama ve kategori çalıştırılır — fakat **beş ayrı dallanma yazılarak değil**, şemanın beş satırı olarak.
 - Kabul ölçütü: altıncı bir alanı açmak için **yalnız şemaya satır eklemek** yeterli olmalı. Kod değişikliği gerekiyorsa mekanizma yanlış kurulmuştur.
 - Başarılı kayıttan sonra Next.js vitrini güncelle.
 - Geçersiz alan, izinsiz vitrin, demo şablon ve süresi dolmuş oturum testlerini ekle.
 
-### Commit 9 — Mevcut Vixrex Asistan rehberliğini sahip moduna bağla
+### Commit 9 — Sahip panelini Vixrex Asistan'a çevir ve tıkla-düzenleyi bağla
+
+**Karar (2026-08-05):** Sahip paneli bir form DEĞİL, asistan sohbetidir. Commit 7'de geçici olarak taşınan beş alanlı `PreviewEditorPanel` burada **kaldırılır**; yerine asistan geçer. Aksi hâlde Flutter formu + Next.js formu + asistan olmak üzere üç kapı oluşur ve aynı alan için iki kayıt yolu doğar (bkz. `VIXREX_RULES.md` §1).
 
 - Mevcut Vixrex yolculuk durumunu Next.js'in tüketebileceği ortak bir özet sözleşmesine dönüştür.
-- Sahip paneline Vixrex Asistan sohbeti ve hızlı eylemleri ekle.
+- Sahip paneline Vixrex Asistan sohbetini ve hızlı eylemleri ekle; `PreviewEditorPanel`'i panelden çıkar.
+- **Tıkla-düzenle mekanizmasını kur.** Referans: `teknik_vitrin_asistan.html`. Üç parçadan oluşur:
+  1. Vitrindeki öğelere `data-vixrex-editable="<anahtar>"` ve `data-vixrex-label="<Türkçe ad>"` konur. Değerler `docs/vitrin-alan-semasi.md` şemasından gelir, elle yazılmaz.
+  2. Sayfada tek bir tıklama dinleyicisi en yakın işaretli öğeyi bulur, paneli açar, o alanı vurgular ve kullanıcıya hangi alanı seçtiğini söyler.
+  3. Kullanıcının yazdığı değer Commit 8'in tipli komutuna gider. **Alan başına ayrı dallanma yazılmaz** — referans HTML'de sekiz elle yazılmış dal var ve bu yüzden orada yalnız dokuz alan tıklanabiliyor, Hakkımızda ve SSS tıklanamıyor bile. Biz bunu şemadan üretiyoruz.
+- Sohbet tek yol değildir: tıklanan alan için panelde uygun giriş kutusu da açılabilir (görsel yükleme, çalışma saati gibi alanlar sohbetle zor).
 - Asistan önerisini kullanıcı onaylamadan kaydetme.
-- Desteklenmeyen karmaşık işlemlerde ilgili düzenleme bölümünü aç.
-- Asistan kapalı/ulaşılamaz olduğunda manuel düzenlemeyi koru.
+- Asistan kapalı/ulaşılamaz olduğunda Flutter manuel paneli yedek yol olarak çalışmaya devam eder.
 - Flutter'daki mevcut asistanı silme; iki yüzey aynı işlem adlarını kullanmalı.
 
 ### Commit 10 — Kalan alanları aç ve karmaşık bölümleri bağla
@@ -235,10 +242,12 @@ Commit 8'in mekanizması doğru kurulduysa bu adım **kod yazmak değil, şemaya
 - Başarısız yayınlamada canlı vitrini ve çalışma taslağını koru.
 - Vazgeçmede yalnız çalışma taslağını kaldır; canlı veriye dokunma.
 
-### Commit 12 — Eski geçici paneli ve kalıcı token URL yolunu kaldır
+### Commit 12 — Kalıcı token URL yolunu kaldır
 
-- Yeni sahip modu bütün kabul testlerini geçtikten sonra eski `PreviewEditorPanel` kayıt yolunu kaldır.
-- Kalıcı `preview_token` URL desteğini önce kullanımdan kaldırılmış olarak işaretle, sonra güvenli geçiş süresi sonunda kaldır.
+**Not (2026-08-05):** `PreviewEditorPanel`'in sahip panelinden çıkarılması bu adımdan **Commit 9'a alındı** — asistan onun yerine geçtiği için orada kaldırılıyor. Burada yalnız eski URL yolu kalıyor.
+
+- Kalıcı `preview_token` URL desteğini önce kullanımdan kaldırılmış olarak işaretle, sonra güvenli geçiş süresi sonunda kaldır. Buna bağlı `openLegacyDraft` yolu da temizlenir.
+- `PreviewEditorPanel` bileşeni Commit 9'da panelden çıkarıldıysa ve başka kullanan kalmadıysa dosyası burada silinir.
 - Silinen eski Flutter vitrin render kodunu geri getirme.
 - Mimari sözleşme testini güncelle: vitrin yalnız Next.js'te, sahip araçları yalnız sahip oturumunda.
 

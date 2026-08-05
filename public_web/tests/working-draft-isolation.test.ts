@@ -6,13 +6,15 @@ import { resolve } from "path";
 // müşteri yanıtına, SEO verisine, sitemap'e veya paylaşım bağlantısına sızmaz.
 
 const CUSTOMER_PATHS = [
-  resolve(__dirname, "../src/app/v/[slug]/page.tsx"),
   resolve(__dirname, "../src/app/v/[slug]/urun/[productSlug]/page.tsx"),
   resolve(__dirname, "../src/app/v/[slug]/yazilar/page.tsx"),
   resolve(__dirname, "../src/app/v/[slug]/yazilar/[articleSlug]/page.tsx"),
   resolve(__dirname, "../src/app/sitemap.xml/route.ts"),
   resolve(__dirname, "../src/app/robots.txt/route.ts"),
 ];
+
+const MAIN_PAGE_PATH = resolve(__dirname, "../src/app/v/[slug]/page.tsx");
+const pageSource = readFileSync(MAIN_PAGE_PATH, "utf-8");
 
 const MIGRATION_PATH = resolve(
   __dirname,
@@ -29,12 +31,32 @@ const functionSource = migrationSource.slice(
 );
 
 describe("çalışma taslağı yalıtımı — müşteri yolu taslağa dokunmaz", () => {
-  it("müşteri vitrin, ürün, yazı, sitemap ve robots yolları çalışma taslağını hiç kullanmaz", () => {
+  it("müşteri vitrin (ürün, yazı), sitemap ve robots yolları çalışma taslağını hiç kullanmaz", () => {
     for (const filePath of CUSTOMER_PATHS) {
       const source = readFileSync(filePath, "utf-8");
       expect(source, filePath).not.toContain("store_working_drafts");
       expect(source, filePath).not.toContain("get_or_create_working_draft");
     }
+  });
+
+  it("ana sayfa müşteri veri sorgusu (_getStoreData) taslağa bakmaz", () => {
+    const customerQuery = pageSource.slice(
+      pageSource.indexOf("async function _getStoreData"),
+      pageSource.indexOf("const getStoreData")
+    );
+    expect(customerQuery).not.toContain("store_working_drafts");
+    expect(customerQuery).not.toContain("get_or_create_working_draft");
+    expect(customerQuery).not.toContain("getWorkingDraft");
+  });
+
+  it("ana sayfa preview_token veri sorgusu (getStorePreviewData) taslağa bakmaz", () => {
+    const previewQuery = pageSource.slice(
+      pageSource.indexOf("async function getStorePreviewData"),
+      pageSource.indexOf("/// Sahip çalışma alanı:")
+    );
+    expect(previewQuery).not.toContain("store_working_drafts");
+    expect(previewQuery).not.toContain("get_or_create_working_draft");
+    expect(previewQuery).not.toContain("getWorkingDraft");
   });
 });
 

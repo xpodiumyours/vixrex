@@ -1,11 +1,12 @@
-// Sahip önizleme oturumu çerezi (implementation_plan.md §5.2, Commit 4).
+// Sahip önizleme oturumu çerezi (implementation_plan.md §5.2, Commit 4 & 7).
 //
-// Tek kullanımlık kod, giriş rotasında tüketilir; burada kod tekrar saklanmaz.
-// Çereze, yalnız ilgili vitrini (slug) ve sınırlı süreyi (TTL) bağlayan
-// HMAC-SHA256 imzalı bir değer yazılır. Sayfa her istekte imzayı ve slug
-// eşleşmesini doğrular; başka bir vitrinin çerezi burada reddedilir.
-//
-// Yalnızca sunucu tarafında kullanılır. Gizli anahtar tarayıcıya sızmaz.
+// Zincir: Flutter tek kullanımlık kod → consume_owner_session
+//   → 256-bit session_token (tek kez döner) → SHA-256 hash DB'ye
+//   → Next.js session_token'ı HMAC imzalı HttpOnly çerez payload'ına koyar
+//   → page.tsx çerezi doğrular, payload içindeki session_token alır
+//   → Supabase RPC tokenı hashleyerek owner_sessions kaydıyla eşleştirir
+//   → çalışma taslağını döndürür
+//   → herhangi bir halka başarısızsa owner modu fail-closed kapanır.
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 
@@ -14,9 +15,11 @@ export const OWNER_SESSION_TTL_MS = 15 * 60 * 1000;
 export const OWNER_SESSION_MAX_AGE_SECONDS = OWNER_SESSION_TTL_MS / 1000;
 const OWNER_SESSION_SECRET_MIN_LENGTH = 32;
 
+// Payload: storeId, slug, sessionToken, exp
 export interface OwnerSession {
   storeId: string;
   slug: string;
+  sessionToken: string;
 }
 
 interface OwnerSessionPayload extends OwnerSession {
@@ -43,13 +46,23 @@ function signPayload(payload: string, secret: string): Buffer {
   return createHmac("sha256", secret).update(payload).digest();
 }
 
-export function signOwnerSession(storeId: string, slug: string): string {
+// sessionToken: 64 hex char (32 byte) olmalı
+export function signOwnerSession(
+  storeId: string,
+  slug: string,
+  sessionToken: string
+): string {
   assertOwnerSessionConfigured();
   const secret = getSecret();
+
+  if (!sessionToken || sessionToken.length !== 64 || !/^[0-9a-f]{64}$/i.test(sessionToken)) {
+    throw new Error("sessionToken must be 64 hex characters (32 bytes)");
+  }
 
   const payload = encodePayload({
     storeId,
     slug,
+    sessionToken,
     exp: Date.now() + OWNER_SESSION_TTL_MS,
   });
   const signature = signPayload(payload, secret).toString("base64url");
@@ -94,6 +107,7 @@ export function verifyOwnerSession(
   if (
     typeof parsed.storeId !== "string" ||
     typeof parsed.slug !== "string" ||
+    typeof parsed.sessionToken !== "string" ||
     typeof parsed.exp !== "number"
   ) {
     return null;
@@ -102,5 +116,10 @@ export function verifyOwnerSession(
   if (parsed.slug !== slug) return null;
   if (parsed.exp <= Date.now()) return null;
 
-  return { storeId: parsed.storeId, slug: parsed.slug };
+  // sessionToken biçimi: 64 hex char
+  if (parsed.sessionToken.length !== 64 || !/^[0-9a-f]{64}$/i.test(parsed.sessionToken)) {
+    return null;
+  }
+
+  return { storeId: parsed.storeId, slug: parsed.slug, sessionToken: parsed.sessionToken };
 }

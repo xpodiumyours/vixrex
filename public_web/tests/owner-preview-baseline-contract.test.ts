@@ -25,9 +25,16 @@ const demoProtectionSource = readFileSync(
 );
 
 describe("sahip önizleme temeli — müşteri isteğinde sahip araçları görünmez", () => {
-  it("PreviewEditorPanel yalnızca isPreviewMode true iken render edilir", () => {
+  it("OwnerWorkspaceShell yalnızca isOwnerMode true iken render edilir", () => {
     const renderBlock = pageSource.slice(pageSource.indexOf("return (\n    <>"));
-    expect(renderBlock).toContain("{isPreviewMode && (\n        <PreviewEditorPanel");
+    expect(renderBlock).toContain("{isOwnerMode ? (");
+    expect(renderBlock).toContain("<OwnerWorkspaceShell");
+  });
+
+  it("PreviewEditorPanel yalnızca isPreviewMode true ve isOwnerMode false iken render edilir", () => {
+    const renderBlock = pageSource.slice(pageSource.indexOf("return (\n    <>"));
+    expect(renderBlock).toContain("isPreviewMode ? (");
+    expect(renderBlock).toContain("<PreviewEditorPanel");
   });
 
   it("isPreviewMode yalnızca boş olmayan preview_token'dan türer", () => {
@@ -37,6 +44,20 @@ describe("sahip önizleme temeli — müşteri isteğinde sahip araçları gör�
     expect(pageSource).toContain(
       "const isPreviewMode = Boolean(previewToken);"
     );
+  });
+
+  it("isOwnerMode owner cookie doğrulamasıyla belirlenir ve fail-closed uygulanır", () => {
+    // Çerezin adı, içindeki tokenden AYRI olmalı. Aynı ada sahip olduğunda
+    // (2026-08-05) RPC'ye imzalı paketin tamamı gitti ve sahip modu hiç
+    // açılmadı. Bkz. owner-workspace-shell-behavior.test.ts.
+    expect(pageSource).toContain(
+      "const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value"
+    );
+    expect(pageSource).toContain("verifyOwnerSession(ownerSessionCookie, params.slug)");
+    expect(pageSource).toContain("let isOwnerMode = Boolean(ownerSession)");
+    // Fail-closed: draft yoksa isOwnerMode false
+    expect(pageSource).toContain("if (!draft) {");
+    expect(pageSource).toContain("isOwnerMode = false");
   });
 });
 
