@@ -131,6 +131,61 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
 
   useEffect(() => vurguyuTemizle, [vurguyuTemizle]);
 
+  // Görsel alanları: URL yazdırmak yerine dosya yükletiyoruz. Esnafın
+  // elinde adres yok, telefonunda fotoğraf var.
+  const gorselYukle = async (dosya: File) => {
+    if (!seciliAlan || seciliAlan.tip !== "gorsel") return;
+    const alan = seciliAlan;
+
+    mesajEkle("kullanici", `📷 ${dosya.name}`);
+    setKaydediliyor(true);
+
+    try {
+      const form = new FormData();
+      form.append("slug", slug);
+      form.append("anahtar", alan.anahtar);
+      form.append("dosya", dosya);
+
+      const yukleme = await fetch("/api/owner-upload", {
+        method: "POST",
+        body: form,
+      });
+      const yuklemeGovde = await yukleme.json();
+
+      if (!yukleme.ok) {
+        mesajEkle("asistan", yuklemeGovde?.hata ?? "Görsel yüklenemedi.");
+        return;
+      }
+
+      // Yükleme başarılı — adres NORMAL alan kayıt yolundan geçer. Böylece
+      // doğrulama ve yetki kontrolü tek yerde kalır, ikinci kayıt yolu açılmaz.
+      const kayit = await fetch("/api/owner-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          anahtar: alan.anahtar,
+          deger: yuklemeGovde.url,
+        }),
+      });
+      const kayitGovde = await kayit.json();
+
+      if (!kayit.ok) {
+        mesajEkle("asistan", kayitGovde?.hata ?? "Görsel kaydedilemedi.");
+        return;
+      }
+
+      mesajEkle("asistan", `${alan.etiket} güncellendi.`);
+      setSeciliAlan(null);
+      vurguyuTemizle();
+      router.refresh();
+    } catch {
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+    } finally {
+      setKaydediliyor(false);
+    }
+  };
+
   const gonder = async () => {
     const metin = giris.trim();
 
@@ -273,6 +328,32 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
                   : ""}
               </p>
             )}
+            {seciliAlan?.tip === "gorsel" ? (
+              <div>
+                <label
+                  className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-blue-500/40 bg-blue-500/[0.06] px-4 py-4 text-xs font-semibold text-blue-300 transition hover:bg-blue-500/10 ${
+                    kaydediliyor ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  <span className="text-base">📷</span>
+                  {kaydediliyor ? "Yükleniyor…" : "Fotoğraf Seç"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={kaydediliyor}
+                    className="hidden"
+                    onChange={(e) => {
+                      const dosya = e.target.files?.[0];
+                      e.target.value = ""; // aynı dosya tekrar seçilebilsin
+                      if (dosya) void gorselYukle(dosya);
+                    }}
+                  />
+                </label>
+                <p className="mt-2 text-center text-[11px] text-slate-500">
+                  JPG, PNG veya WebP · en fazla 5 MB
+                </p>
+              </div>
+            ) : (
             <div className="flex items-end gap-2">
               <textarea
                 ref={girisRef}
@@ -303,6 +384,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
                 {kaydediliyor ? "…" : "Gönder"}
               </button>
             </div>
+            )}
           </div>
         </div>
       )}
