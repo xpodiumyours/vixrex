@@ -143,7 +143,16 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  if (hasImages) ...[
+                  // Görsel bölümleri sabit yükseklikte ve sayıları kategoriye
+                  // göre değişiyor (kapak + galeri + ürün). Üçü birden varsa
+                  // sayfaya sığmıyordu. Ortayı kaydırılabilir yapmak, bölüm
+                  // sayısı ne olursa olsun taşmayı bitirir.
+                  if (hasImages)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                     if (imageSet.coverImages.isNotEmpty) ...[
                       const Text(
                         'Kapak Görselleri',
@@ -216,13 +225,17 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                       ),
                       const SizedBox(height: 20),
                     ],
-                  ] else if (_loadingKeys.contains(category.key)) ...[
+                          ],
+                        ),
+                      ),
+                    )
+                  else if (_loadingKeys.contains(category.key))
                     const Expanded(
                       child: Center(
                         child: CircularProgressIndicator(),
                       ),
-                    ),
-                  ] else ...[
+                    )
+                  else
                     Expanded(
                       child: Center(
                         child: Column(
@@ -247,8 +260,10 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                         ),
                       ),
                     ),
-                  ],
-                  const Spacer(),
+                  // Spacer kaldırıldı: boşluğu artık yukarıdaki Expanded
+                  // alıyor. İkisi birlikteyken Spacer sıkışıp taşmaya
+                  // yol açıyordu.
+                  const SizedBox(height: 16),
                   SizedBox(
                     height: 54,
                     child: ElevatedButton.icon(

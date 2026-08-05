@@ -103,6 +103,33 @@ void main() {
       }
     });
 
+    test('labelForKey resolves all new landing category keys', () {
+      for (final entry in const {
+        'butik': 'Butik',
+        'kozmetik': 'Kozmetik',
+        'elektronik': 'Elektronik',
+        'kirtasiye': 'Kırtasiye',
+        'pet_shop_veteriner': 'Pet Shop & Veteriner',
+        'hizmet_danismanlik': 'Hizmet & Danışmanlık',
+        'egitim_ders': 'Eğitim & Ders',
+        'ev_temizlik': 'Ev & Temizlik',
+      }.entries) {
+        expect(
+          BusinessCategoryConfig.labelForKey(entry.key),
+          entry.value,
+          reason: 'labelForKey("${entry.key}") did not resolve',
+        );
+      }
+    });
+
+    test('fromCategoryLabel resolves Next.js "/" formatted labels', () {
+      expect(BusinessCategoryConfig.fromCategoryLabel('Oto / Araç').id, 'oto_arac');
+      expect(BusinessCategoryConfig.fromCategoryLabel('Spor / Fitness').id, 'spor_fitness');
+      expect(BusinessCategoryConfig.fromCategoryLabel('Sağlık / Yaşam').id, 'saglik_yasam');
+      expect(BusinessCategoryConfig.fromCategoryLabel('Pet / Veteriner').id, 'pet_shop_veteriner');
+      expect(BusinessCategoryConfig.fromCategoryLabel('Kafe / Lokanta').id, 'kafe_lokanta');
+    });
+
     test('all 19 categories are configured with valid fields', () {
       expect(BusinessCategoryConfig.categories, hasLength(19));
       for (final category in BusinessCategoryConfig.categories) {

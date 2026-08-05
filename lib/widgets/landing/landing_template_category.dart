@@ -77,4 +77,47 @@ const List<TemplateCategory> templateCategories = [
     Icons.build_circle_rounded,
     Color(0xFF4F46E5),
   ),
+  TemplateCategory('butik', 'Butik', Icons.local_mall_rounded, Color(0xFF8B5CF6)),
+  TemplateCategory(
+    'kozmetik',
+    'Kozmetik',
+    Icons.face_retouching_natural_rounded,
+    Color(0xFFF472B6),
+  ),
+  TemplateCategory(
+    'elektronik',
+    'Elektronik',
+    Icons.devices_rounded,
+    Color(0xFF6366F1),
+  ),
+  TemplateCategory(
+    'kirtasiye',
+    'Kırtasiye',
+    Icons.menu_book_rounded,
+    Color(0xFFFBBF24),
+  ),
+  TemplateCategory(
+    'pet_shop_veteriner',
+    'Pet Shop & Veteriner',
+    Icons.pets_rounded,
+    Color(0xFF14B8A2),
+  ),
+  TemplateCategory(
+    'hizmet_danismanlik',
+    'Hizmet & Danışmanlık',
+    Icons.business_center_rounded,
+    Color(0xFF84CC16),
+  ),
+  TemplateCategory(
+    'egitim_ders',
+    'Eğitim & Ders',
+    Icons.school_rounded,
+    Color(0xFF38BDF8),
+  ),
+  TemplateCategory(
+    'ev_temizlik',
+    'Ev & Temizlik',
+    Icons.clean_hands_rounded,
+    Color(0xFF4ADE80),
+  ),
 ];

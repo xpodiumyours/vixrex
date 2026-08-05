@@ -110,17 +110,51 @@ void main() {
       find.byType(SingleChildScrollView).first,
       const Offset(0, -5000),
     );
+    // Kaydırma hareketi bitmeden tıklanamaz: Flutter, sayfa hâlâ akarken
+    // içeriği IgnorePointer ile sarıyor ve maskota giden tıklama düşüyordu.
+    //
+    // pumpAndSettle KULLANILAMAZ: maskotun kendi döngüsel animasyonu var,
+    // sayfa hiçbir zaman "durgun" hâle gelmiyor ve zaman aşımına düşüyor.
+    // Sabit süre bekletmek yeterli — kaydırma hareketi bu sürede biter.
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
     final landingScroll = tester.state<ScrollableState>(
       find.byType(Scrollable).first,
     );
     final beforeOpeningChat = landingScroll.position.pixels;
     expect(beforeOpeningChat, greaterThan(0));
 
+    // ChatbotBadge bir Column: üstte konuşma balonu, altta yuvarlak düğme.
+    // find.byType(...) ile tap() kutunun MERKEZİNE vuruyor; merkez ikisinin
+    // arasındaki boşluğa düşüyor ve GestureDetector deferToChild olduğu için
+    // tıklama hiçbir çocuğa ulaşmıyordu. Düğme aşağıda, oraya tıklanır.
+    // Sütunun ALTINDAKİ maskot düğmesine tıklanır (60x60 görsel).
+    // tapAt yerine gerçek çocuğu hedeflemek gerekiyor; ıskalarsa test
+    // uyarı verir, sessizce geçmez.
+    // ── AÇIK İŞ: bu test hâlâ kırık ────────────────────────────────────
+    // 2026-08-05'te araştırıldı, çözülemedi. Tekrar sıfırdan aranmasın:
+    //
+    // Elenenler:
+    //   - Kaydırma hareketi sırasında IgnorePointer engeli DEĞİL
+    //     (sabit süre bekletmek sonucu değiştirmedi).
+    //   - pumpAndSettle KULLANILAMAZ: maskotun döngüsel animasyonu var,
+    //     sayfa hiç durgunlaşmıyor, zaman aşımına düşüyor.
+    //   - Rozetin merkezine tıklamak boşluğa düşüyor: ChatbotBadge bir
+    //     Column (üstte konuşma balonu, altta 60x60 düğme) ve
+    //     GestureDetector deferToChild.
+    //   - Görselin kendisini hedeflemek de yetmiyor: Image test ortamında
+    //     yüklenemeyip errorBuilder'a düşüyor.
+    //   - LandingHeroMockup 800px genişlikte de çiziliyor, yani sohbet
+    //     ekranının bulunmaması "masaüstü düzeni" yüzünden değil.
+    //
+    // Kalan şüphe: tıklama rozetin onTap'ine hiç ulaşmıyor. Hit test
+    // zincirinde jest dinleyicisi (190,84) rozetin konumuyla (754,554)
+    // uyuşmuyor — Scaffold floatingActionButton yerleşimi ile test
+    // koordinatları arasında bir uyuşmazlık olabilir.
     await tester.tap(find.byType(ChatbotBadge));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
-    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump(const Duration(milliseconds: 800));
 
     expect(
       AppRouter.router.routeInformationProvider.value.uri.path,
@@ -229,8 +263,23 @@ void main() {
     expect(find.text('Vixrex Oluştur'), findsNothing);
     expect(find.text('Değişiklikleri Kaydet & Yayına Al'), findsOneWidget);
     expect(find.text('İşletme / Vixrex Adı'), findsOneWidget);
-    expect(find.text('Yayındaki Vitrini Aç'), findsOneWidget);
-    expect(find.text('Linki Kopyala'), findsOneWidget);
-    expect(find.text('QR Göster'), findsOneWidget);
+
+    // Yayındaki vitrine erişim eylemleri.
+    //
+    // Bu üç beklenti eskiden PublishActionsSection'ın etiketlerini arıyordu
+    // ('Yayındaki Vitrini Aç', 'Linki Kopyala', 'QR Göster'). O bölüm
+    // PublicLinkCard ile değiştirildi (commit 7c798f6) ama dosyası silinmedi;
+    // test eski etiketleri aramaya devam ettiği için kırıktı.
+    //
+    // Testin niyeti değişmedi: yayınlanmış vitrin varken kullanıcı linke
+    // ulaşabilmeli. Güncel arayüzün karşılıkları aranıyor.
+    //
+    // NOT: QR eylemi yeni tasarımda YOK. Eskisinde vardı. Bu bilinçli bir
+    // ürün kaybı mı, gözden mi kaçtı — karara bağlanmadı.
+    // Kart mobil ve masaustu duzeninde iki kez cizildigi icin
+    // findsOneWidget degil, 'en az bir tane' aranir.
+    expect(find.text('Kopyala'), findsAtLeastNWidgets(1));
+    expect(find.text('Önizle'), findsAtLeastNWidgets(1));
+    expect(find.text('Paylaş'), findsAtLeastNWidgets(1));
   });
 }

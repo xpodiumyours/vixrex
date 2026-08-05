@@ -717,51 +717,62 @@ class VitrinFormSection extends StatelessWidget {
     );
   }
 
+  // ListTile türevleri mürekkep efektini en yakın Material üzerine çizer.
+  // Bu iki anahtar, arka planı olan bir Container'ın (_cardDecoration) içinde
+  // duruyor; araya Material konmazsa Flutter "efektler görünmez olacak" diye
+  // assertion fırlatıyor ve test ortamında ekranın kalanı hiç çizilmiyor.
+  // Şeffaf Material efekti kendi üstüne çizdirir, görünümü değiştirmez.
   Widget _buildRatingToggle() {
-    return SwitchListTile.adaptive(
-      contentPadding: EdgeInsets.zero,
-      title: const Text(
-        'Vitrinde puan bandı göster',
-        style: TextStyle(
-          color: AppColors.darkText,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+    return Material(
+      type: MaterialType.transparency,
+      child: SwitchListTile.adaptive(
+        contentPadding: EdgeInsets.zero,
+        title: const Text(
+          'Vitrinde puan bandı göster',
+          style: TextStyle(
+            color: AppColors.darkText,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
         ),
+        subtitle: const Text(
+          'Gerçek puanın yoksa kapalı kalsın; örnek puan görünmesin.',
+          style: TextStyle(color: AppColors.mutedText, fontSize: 11),
+        ),
+        value: controller.data.showStorefrontRating,
+        activeThumbColor: AppColors.primary,
+        onChanged: (value) {
+          controller.updateShowStorefrontRating(value);
+          controller.saveLocally();
+        },
       ),
-      subtitle: const Text(
-        'Gerçek puanın yoksa kapalı kalsın; örnek puan görünmesin.',
-        style: TextStyle(color: AppColors.mutedText, fontSize: 11),
-      ),
-      value: controller.data.showStorefrontRating,
-      activeThumbColor: AppColors.primary,
-      onChanged: (value) {
-        controller.updateShowStorefrontRating(value);
-        controller.saveLocally();
-      },
     );
   }
 
   Widget _buildDirectionsToggle() {
-    return SwitchListTile.adaptive(
-      contentPadding: EdgeInsets.zero,
-      title: const Text(
-        'Yol tarifi butonu göster',
-        style: TextStyle(
-          color: AppColors.darkText,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+    return Material(
+      type: MaterialType.transparency,
+      child: SwitchListTile.adaptive(
+        contentPadding: EdgeInsets.zero,
+        title: const Text(
+          'Yol tarifi butonu göster',
+          style: TextStyle(
+            color: AppColors.darkText,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
         ),
+        subtitle: const Text(
+          'Adres veya GPS varsa vitrinde yol tarifi linki çıkar.',
+          style: TextStyle(color: AppColors.mutedText, fontSize: 11),
+        ),
+        value: controller.data.showDirectionsLink,
+        activeThumbColor: AppColors.primary,
+        onChanged: (value) {
+          controller.updateShowDirectionsLink(value);
+          controller.saveLocally();
+        },
       ),
-      subtitle: const Text(
-        'Adres veya GPS varsa vitrinde yol tarifi linki çıkar.',
-        style: TextStyle(color: AppColors.mutedText, fontSize: 11),
-      ),
-      value: controller.data.showDirectionsLink,
-      activeThumbColor: AppColors.primary,
-      onChanged: (value) {
-        controller.updateShowDirectionsLink(value);
-        controller.saveLocally();
-      },
     );
   }
 
