@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import PreviewEditorPanel from "./PreviewEditorPanel";
+import OwnerAssistantPanel from "./OwnerAssistantPanel";
 import type {
   VitrinFeaturedBanner,
   VitrinAboutSection,
@@ -123,7 +123,7 @@ export default function OwnerWorkspaceShell({
 
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-5 right-5 z-[70] lg:hidden bg-blue-600 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-xl"
+        className="fixed bottom-5 left-5 z-[70] lg:hidden bg-slate-700 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-xl"
         aria-label="Sahip çalışma alanını aç"
       >
         ✎
@@ -170,24 +170,15 @@ export default function OwnerWorkspaceShell({
             )}
           </div>
 
-          <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
-            <p className="font-semibold">Commit 7 — Sahip Çalışma Alanı Kabuğu</p>
-            <p>
-              Bu form geçicidir. Commit 9&apos;da yerini Vixrex Asistan alacak: vitrindeki
-              alana tıklayıp sohbetle düzenleyeceksiniz. Şu an salt görüntüleme modunda.
+          <div className="rounded-lg border border-dashed border-white/15 bg-white/[0.02] p-4 text-center">
+            <p className="text-sm font-medium text-slate-300">
+              Düzenleme Vixrex Asistan&apos;da
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+              Sağ alttaki 🦊 düğmesine basın veya vitrinde değiştirmek
+              istediğiniz yazıya tıklayın.
             </p>
           </div>
-
-          <PreviewEditorPanel
-            slug={vitrinProps.storeSlug}
-            editToken=""
-            initialName={(draft?.draft_data?.name as string) || vitrinProps.storeName}
-            initialWhatsapp={(draft?.draft_data?.whatsapp as string) || ""}
-            initialAddress={(draft?.draft_data?.address as string) || ""}
-            initialDescription={(draft?.draft_data?.description as string) || ""}
-            initialKategori={(draft?.draft_data?.kategori as string) || ""}
-            disabled={true}
-          />
 
           <div className="mt-6 pt-4 border-t border-white/10 text-xs text-slate-500 space-y-1">
             <p>Değişiklikler çalışma taslağına kaydedilir.</p>
@@ -196,6 +187,11 @@ export default function OwnerWorkspaceShell({
           </div>
         </div>
       </aside>
+
+      <OwnerAssistantPanel
+        slug={vitrinProps.storeSlug}
+        draftData={(draft?.draft_data ?? {}) as Record<string, unknown>}
+      />
     </>
   );
 }

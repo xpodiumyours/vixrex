@@ -15,6 +15,7 @@ import {
   WhatsAppIcon,
 } from "@/lib/vitrinBrandIcons";
 import { normalizeExternalUrl } from "@/lib/products";
+import { editableProps } from "@/lib/vitrinEditableProps";
 
 export interface VitrinGalleryItem {
   id?: string;
@@ -120,6 +121,12 @@ export interface VitrinProfileViewProps {
   articles: VitrinArticleTeaser[];
   catalog: ReactNode;
   isPreviewMode?: boolean;
+  /**
+   * Sahip modu. Yalnız true iken vitrindeki öğelere tıkla-düzenle
+   * işaretleri eklenir. Müşteri görünümünde bu öznitelikler DOM'a hiç
+   * yazılmaz — koruma sınırı 3 (sahip araçları müşteri yanıtına sızmaz).
+   */
+  ownerMode?: boolean;
 }
 
 export default function VitrinProfileView({
@@ -164,6 +171,7 @@ export default function VitrinProfileView({
   articles,
   catalog,
   isPreviewMode = false,
+  ownerMode = false,
 }: VitrinProfileViewProps) {
   const [copied, setCopied] = useState(false);
   const displayAddress = normalizeAddressDisplay(address);
@@ -308,18 +316,27 @@ export default function VitrinProfileView({
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
           <div className="max-w-2xl">
             {displayBadge && (
-              <div className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 backdrop-blur-md">
+              <div
+                {...editableProps("heroRozet", ownerMode)}
+                className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 backdrop-blur-md"
+              >
                 <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
                 {displayBadge}
               </div>
             )}
 
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+            <h1
+              {...editableProps("isletmeAdi", ownerMode)}
+              className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent"
+            >
               {storeName.toUpperCase()}
             </h1>
 
             {description.trim() && (
-              <p className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2">
+              <p
+                {...editableProps("kisaTanitim", ownerMode)}
+                className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2"
+              >
                 {description}
               </p>
             )}
@@ -493,11 +510,17 @@ export default function VitrinProfileView({
             )}
             <div>
               {aboutKicker && (
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
+                <p
+                  {...editableProps("hakkindaUstBaslik", ownerMode)}
+                  className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3"
+                >
                   {aboutKicker}
                 </p>
               )}
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-5 leading-tight">
+              <h2
+                {...editableProps("hakkindaBaslik", ownerMode)}
+                className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-5 leading-tight"
+              >
                 {aboutTitle}
               </h2>
               <div className="space-y-4 text-slate-300 text-sm sm:text-base leading-relaxed">
@@ -532,11 +555,17 @@ export default function VitrinProfileView({
           <div className="flex items-baseline justify-between mb-8 gap-4">
             <div>
               {galleryKicker && (
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-2">
+                <p
+                  {...editableProps("galeriUstBaslik", ownerMode)}
+                  className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-2"
+                >
                   {galleryKicker}
                 </p>
               )}
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              <h2
+                {...editableProps("galeriBaslik", ownerMode)}
+                className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white"
+              >
                 {galleryTitle}
               </h2>
             </div>
@@ -646,7 +675,7 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🏠</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Adres</h4>
-                    <p className="text-xs text-slate-300 leading-relaxed mt-0.5">{displayAddress}</p>
+                    <p {...editableProps("adres", ownerMode)} className="text-xs text-slate-300 leading-relaxed mt-0.5">{displayAddress}</p>
                   </div>
                 </div>
               )}

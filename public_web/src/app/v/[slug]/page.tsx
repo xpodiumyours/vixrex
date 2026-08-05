@@ -683,6 +683,7 @@ export default async function StorePage(props: PageProps) {
           />
         }
         isPreviewMode={isPreviewMode || isOwnerMode}
+        ownerMode={isOwnerMode}
       />
       {isOwnerMode ? (
         <OwnerWorkspaceShell

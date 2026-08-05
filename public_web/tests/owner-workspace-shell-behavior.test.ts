@@ -73,14 +73,16 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
     expect(draftSuccessBlock).not.toContain("* 1000");
   });
 
-  it("sahip panelinde PreviewEditorPanel disabled ile yeniden kullanılır (form kopyası yok)", () => {
-    // OwnerWorkspaceShell PreviewEditorPanel'i disabled=true ile çağırıyor
-    expect(shellSource).toContain("import PreviewEditorPanel from");
-    expect(shellSource).toContain("<PreviewEditorPanel");
-    expect(shellSource).toContain("disabled={true}");
-    // Kendi içinde form input kopyası YOK
+  it("sahip panelinde form değil, tıkla-düzenle editörü bulunur (üçüncü kapı yok)", () => {
+    // 2026-08-05 kararı (VIXREX_RULES.md §1): düzenlemenin iki kapısı vardır
+    // — Flutter manuel paneli ve Next.js'teki Vixrex Asistan. Next.js
+    // tarafında ikinci bir FORM paneli açılmaz; o üçüncü kapı olur ve aynı
+    // alan için iki kayıt yolu doğurur.
+    expect(shellSource).toContain("import OwnerAssistantPanel from");
+    expect(shellSource).toContain("<OwnerAssistantPanel");
+    expect(shellSource).not.toContain("PreviewEditorPanel");
+    // Kabuk kendi içinde form kopyası tutmaz; düzenleme asistana aittir.
     expect(shellSource).not.toContain("htmlFor=");
-    expect(shellSource).not.toContain("onChange=");
     expect(shellSource).not.toContain("handleSave");
   });
 

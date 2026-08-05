@@ -306,3 +306,22 @@ h1, h2, h3, h4, h5, h6 {
 .grecaptcha-badge {
   visibility: hidden !important;
 }
+
+/* Tıkla-düzenle (implementation_plan.md Commit 9) — yalnız sahip modunda
+   DOM'a giren [data-vixrex-editable] öğeleri için. Müşteri görünümünde bu
+   öznitelik hiç bulunmadığından bu kurallar hiçbir şeye uygulanmaz. */
+[data-vixrex-editable] {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: outline-color 0.15s, background-color 0.15s;
+  outline: 2px dashed transparent;
+  outline-offset: 3px;
+}
+[data-vixrex-editable]:hover {
+  outline-color: rgba(59, 130, 246, 0.55);
+  background-color: rgba(59, 130, 246, 0.07);
+}
+.vixrex-secili-alan {
+  outline: 2px solid rgb(59, 130, 246) !important;
+  background-color: rgba(59, 130, 246, 0.12) !important;
+}
