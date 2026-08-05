@@ -25,9 +25,10 @@ void main() {
           jsonEncode({
             'document_type': docType,
             'version': '$docType-2026-07-05',
-            'title': docType == 'privacy'
-                ? 'Gizlilik'
-                : (docType == 'terms' ? 'Kullanım Koşulları' : 'Açık Rıza'),
+            'title':
+                docType == 'privacy'
+                    ? 'Gizlilik'
+                    : (docType == 'terms' ? 'Kullanım Koşulları' : 'Açık Rıza'),
             'subtitle': '',
             'content_hash': 'hash',
             'sections': [],
@@ -126,10 +127,7 @@ void main() {
     await pumpEditor(tester);
 
     expect(find.text('Yasal Bilgilendirme ve Yayınlama Onayı'), findsOneWidget);
-    expect(
-      find.textContaining('Taslağınızı onay vermeden'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Taslağınızı onay vermeden'), findsOneWidget);
     await tester.pumpAndSettle();
   });
 

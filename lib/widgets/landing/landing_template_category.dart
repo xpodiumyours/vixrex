@@ -77,7 +77,12 @@ const List<TemplateCategory> templateCategories = [
     Icons.build_circle_rounded,
     Color(0xFF4F46E5),
   ),
-  TemplateCategory('butik', 'Butik', Icons.local_mall_rounded, Color(0xFF8B5CF6)),
+  TemplateCategory(
+    'butik',
+    'Butik',
+    Icons.local_mall_rounded,
+    Color(0xFF8B5CF6),
+  ),
   TemplateCategory(
     'kozmetik',
     'Kozmetik',

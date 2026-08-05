@@ -22,6 +22,17 @@
 -- işletmenin verisi değil. Onaysız yayın denemesi zaten tetikleyici
 -- tarafından reddedilirdi.
 
+-- KORUMA TETİKLEYİCİSİ GEÇİCİ OLARAK KAPATILIR.
+-- 20260803190512_..._protect_landing_demos.sql, is_demo işaretli satırlarda
+-- HER güncellemeyi reddeden bir tetikleyici kurar. Bu migration da tam o
+-- satırları güncelliyor; zincir sıfırdan çalıştığında koruma önce kurulduğu
+-- için burada DEMO_STORE_IMMUTABLE hatası alınıyordu.
+--
+-- Tetikleyici yalnız bu işlem boyunca kapatılır ve sonunda geri açılır.
+-- Amaç korumayı zayıflatmak değil; koruma yerinde kalır, yalnız kendi
+-- kurulum adımımız istisna tutulur.
+alter table public.stores disable trigger protect_landing_demo_stores;
+
 do $$
 declare
   v_privacy record;
@@ -42,10 +53,13 @@ begin
     raise exception 'Etkin yasal belge bulunamadi; demo vitrinler yayina alinamaz.';
   end if;
 
+  -- Dördü de karşılama ekranında listeleniyor (landing_screen.dart).
+  -- Biri yayında olmazsa o kartın bağlantısı kırık kalır.
   foreach v_slug in array array[
     'demo-aymira-giyim',
     'demo-lezzet-duragi',
-    'demo-nova-kuafor'
+    'demo-nova-kuafor',
+    'demo-teknofix'
   ]
   loop
     update public.stores set
@@ -76,3 +90,6 @@ begin
   end loop;
 end;
 $$;
+
+-- Koruma geri açılır. Bundan sonra demo vitrinler yine değiştirilemez.
+alter table public.stores enable trigger protect_landing_demo_stores;

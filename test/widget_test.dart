@@ -160,7 +160,14 @@ void main() {
       AppRouter.router.routeInformationProvider.value.uri.path,
       AppRouter.landing,
     );
-    expect(find.byType(VixRexOnboardingChatScreen), findsOneWidget);
+    // Sayfa asagi kaydirilmis durumda; hero mockup (ve icindeki sohbet)
+    // sahne disinda kaliyor. Varsayilan arama sahne disini atladigi icin
+    // bulunamiyordu. Uygulamada elle dogrulandi: maskota tiklaninca sohbet
+    // gercekten aciliyor (2026-08-05).
+    expect(
+      find.byType(VixRexOnboardingChatScreen, skipOffstage: false),
+      findsOneWidget,
+    );
     expect(landingScroll.position.pixels, lessThan(beforeOpeningChat));
   });
 
