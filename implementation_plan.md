@@ -261,6 +261,36 @@ Commit 8'in mekanizması doğru kurulduysa bu adım **kod yazmak değil, şemaya
 - Preview deploy'da doğru commit ve iki Vercel projesini ayrı ayrı doğrula.
 - Production deploy, migration uygulama ve canlı smoke test için ayrıca açık yetki al.
 
+## 6.1 Keşfedilen açık işler (planda yoktu)
+
+Bunlar plan yazılırken görülmemiş, çalışma sırasında ortaya çıktı. Plan adımı değildirler; sırası geldiğinde ele alınır.
+
+### A. Kategoriye göre aksiyon butonları bağlanmadı
+
+`public_web/src/lib/vitrinProfile.ts` her kategori için hangi butonların çıkacağını tanımlıyor (`primaryActions`), fakat bu liste hiçbir yerde okunmuyor. Vitrindeki butonlar sabit: "Hemen Ara", "WhatsApp", "Yol Tarifi".
+
+Sonucu iki yönlü:
+- Kuaför, teknik servis, kozmetik gibi hizmet kategorilerinde **randevu butonu çıkmıyor** — randevu altyapısı tamamen kurulu (`/v/:slug/randevu`, sihirbaz, takip ekranı) ama müşteri erişemiyor.
+- Butik, giyim gibi ürün kategorilerinde randevu zaten çıkmamalı — bu doğru ama tesadüfen doğru; kural işlemiyor.
+
+Bağlanacak veri sayfadan zaten gönderiliyor (`profile` prop'u, şu an kullanılmadığı için lint uyarısı veriyor). Randevu butonu iki koşula bağlanmalı: kategori uygun **ve** `isBookingEnabled` true.
+
+### B. Landing şablon kataloğunda 7 kategori eksik
+
+`lib/widgets/landing/landing_template_category.dart` **12** kategori gösteriyor; sistemde **19** var. Landing'de teklif edilmeyen 7 kategori:
+
+`kozmetik`, `elektronik`, `kirtasiye`, `hizmet_danismanlik`, `egitim_ders`, `ev_temizlik`, `pet_shop_veteriner`
+
+Bunlar **bozuk değil** — `business_category_config.dart`, `vitrinProfile.ts` ve `vitrinCopy.ts` içinde tanımları tam; seçilirlerse doğru çalışırlar. Yalnızca landing sayfasından seçilemiyorlar.
+
+Tercih mi, gözden kaçma mı belirsiz. "19 kategoriye özel vitrin" hedefi için kullanıcının hepsini seçebilmesi gerekir.
+
+**Not:** kategori zinciri denetlendi ve SAĞLAM. Landing anahtarları (`berber`, `butik_giyim` gibi) `BusinessCategoryConfig.labelForKey` ile Türkçe etikete çevriliyor, `stores.kategori` etiketi saklıyor, Next.js `resolveVitrinProfile` üç katmanlı çözüyor (tam eşleşme → Türkçe normalleştirme → anahtar kelime). Flutter `&`, Next.js `/` kullanmasına rağmen üçüncü katman yakalıyor. 12 landing kategorisinin 12'si de doğru profile düşüyor.
+
+### C. Bağlanmamış diğer prop'lar
+
+`status`, `isClosed`, `workingHoursWeek`, `marketplaceLinks`, `logoUrl`, `googleBusinessLink`, `referencesUrl` sayfadan gönderiliyor ama vitrinde çizilmiyor. Silinmemeli — her biri için "kayıp özellik mi, bilerek mi kaldırıldı" kararı ayrı verilecek. Özellikle `status`/`isClosed`: açık/kapalı mantığı `workingHours.ts` içinde var ama hiçbir gösterge çizilmiyor.
+
 ## 7. Kabul Kriterleri
 
 1. Taslak vitrinde Önizle, Next.js sahip modunu açar.
