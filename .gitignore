@@ -73,3 +73,8 @@ scratch/
 # Database backups — never commit
 supabase/backup/dumps/
 
+
+# Obsidian — kisisel calisma durumu (her acilisla degisir)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
