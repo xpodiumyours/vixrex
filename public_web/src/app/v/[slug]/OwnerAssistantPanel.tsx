@@ -40,6 +40,8 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
   const [seciliAlan, setSeciliAlan] = useState<VitrinField | null>(null);
   const [giris, setGiris] = useState("");
   const [kaydediliyor, setKaydediliyor] = useState(false);
+  const [yayinlaniyor, setYayinlaniyor] = useState(false);
+  const [silmeOnayi, setSilmeOnayi] = useState(false);
 
   const girisRef = useRef<HTMLTextAreaElement>(null);
   const akisRef = useRef<HTMLDivElement>(null);
@@ -237,6 +239,75 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
     }
   };
 
+  const yayinla = async () => {
+    mesajEkle("kullanici", "Yayınla");
+    setYayinlaniyor(true);
+
+    try {
+      const yanit = await fetch("/api/owner-publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const govde = await yanit.json();
+
+      if (!yanit.ok) {
+        // Sunucunun mesajı OLDUĞU GİBİ gösterilir; kendi metnimiz uydurulmaz.
+        mesajEkle("asistan", govde?.hata ?? "Yayınlanamadı. Lütfen tekrar deneyin.");
+        return;
+      }
+
+      mesajEkle(
+        "asistan",
+        "Vitrininiz yayınlandı. Müşterileriniz artık yeni hâlini görüyor."
+      );
+      router.refresh();
+    } catch {
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+    } finally {
+      setYayinlaniyor(false);
+    }
+  };
+
+  // "Değişiklikleri bırak" TEK TIKLA silmez: önce onay istenir.
+  // Bu düğme kullanıcının saatlerce yaptığı işi silebilir.
+  const silmeOnayla = () => {
+    mesajEkle(
+      "asistan",
+      "Yaptığınız tüm değişiklikler silinecek ve vitrin son yayınlanan hâline dönecek. Emin misiniz?"
+    );
+    setSilmeOnayi(true);
+  };
+
+  const sil = async () => {
+    setYayinlaniyor(true);
+
+    try {
+      const yanit = await fetch("/api/owner-discard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const govde = await yanit.json();
+
+      if (!yanit.ok) {
+        mesajEkle("asistan", govde?.hata ?? "Değişiklikler geri alınamadı.");
+        return;
+      }
+
+      setSilmeOnayi(false);
+      mesajEkle(
+        "asistan",
+        "Değişiklikler silindi. Vitrin son yayınlanan hâlinde."
+      );
+      router.refresh();
+    } catch {
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+    } finally {
+      setYayinlaniyor(false);
+    }
+  };
+
   return (
     <>
       {/* Maskot düğmesi */}
@@ -408,6 +479,47 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
                 {kaydediliyor ? "…" : "Gönder"}
               </button>
             </div>
+            )}
+          </div>
+
+          {/* Yayınla / Değişiklikleri bırak — panelin altı */}
+          <div className="border-t border-white/10 px-4 py-3">
+            <button
+              type="button"
+              onClick={() => void yayinla()}
+              disabled={yayinlaniyor}
+              className="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {yayinlaniyor ? "Yayınlanıyor…" : "Yayınla"}
+            </button>
+            {silmeOnayi ? (
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void sil()}
+                  disabled={yayinlaniyor}
+                  className="flex-1 rounded-lg bg-red-600/80 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {yayinlaniyor ? "Siliniyor…" : "Evet, sil"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSilmeOnayi(false)}
+                  disabled={yayinlaniyor}
+                  className="flex-1 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10 disabled:opacity-50"
+                >
+                  Vazgeç
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={silmeOnayla}
+                disabled={yayinlaniyor}
+                className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10 disabled:opacity-50"
+              >
+                Değişiklikleri bırak
+              </button>
             )}
           </div>
         </div>
