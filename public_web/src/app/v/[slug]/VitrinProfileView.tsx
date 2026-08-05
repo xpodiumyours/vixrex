@@ -440,29 +440,41 @@ export default function VitrinProfileView({
           >
             <div>
               {featuredLabel && (
-                <span className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-extrabold uppercase tracking-wider px-4 py-1.5 rounded-lg mb-4 shadow-md">
+                <span
+                  {...editableProps("bantEtiket", ownerMode)}
+                  className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-extrabold uppercase tracking-wider px-4 py-1.5 rounded-lg mb-4 shadow-md"
+                >
                   {featuredLabel}
                 </span>
               )}
               {featuredTitle && (
-                <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 text-white">
+                <h2
+                  {...editableProps("bantBaslik", ownerMode)}
+                  className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 text-white"
+                >
                   {featuredTitle}
                 </h2>
               )}
               {featuredDescription && (
-                <p className="text-slate-300 text-base mb-6 max-w-md leading-relaxed">
+                <p
+                  {...editableProps("bantAciklama", ownerMode)}
+                  className="text-slate-300 text-base mb-6 max-w-md leading-relaxed"
+                >
                   {featuredDescription}
                 </p>
               )}
               {featuredPriceText && (
-                <div className="text-3xl font-extrabold text-blue-400 tracking-tight">
+                <div
+                  {...editableProps("bantFiyat", ownerMode)}
+                  className="text-3xl font-extrabold text-blue-400 tracking-tight"
+                >
                   {featuredPriceText}
                 </div>
               )}
             </div>
 
             {featuredImageUrl && (
-              <div className="h-64 sm:h-72 rounded-2xl overflow-hidden border border-blue-500/15 relative">
+              <div {...editableProps("bantGorsel", ownerMode)} className="h-64 sm:h-72 rounded-2xl overflow-hidden border border-blue-500/15 relative">
                 <Image
                   src={featuredImageUrl}
                   alt={featuredTitle || featuredLabel || "Öne çıkan kampanya"}
@@ -494,7 +506,7 @@ export default function VitrinProfileView({
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="hakkimizda">
           <div className={`grid gap-10 items-start ${aboutImageUrl ? "md:grid-cols-2" : ""}`}>
             {aboutImageUrl && (
-              <div className="relative min-h-[280px] rounded-3xl overflow-hidden border border-blue-500/15">
+              <div {...editableProps("hakkindaGorsel", ownerMode)} className="relative min-h-[280px] rounded-3xl overflow-hidden border border-blue-500/15">
                 <Image
                   src={aboutImageUrl}
                   alt={aboutTitle}
@@ -502,7 +514,10 @@ export default function VitrinProfileView({
                   className="object-cover"
                 />
                 {aboutImageCaption && (
-                  <p className="absolute bottom-0 left-0 right-0 bg-[#0B1120]/80 px-4 py-3 text-xs text-slate-200">
+                  <p
+                    {...editableProps("hakkindaGorselAlt", ownerMode)}
+                    className="absolute bottom-0 left-0 right-0 bg-[#0B1120]/80 px-4 py-3 text-xs text-slate-200"
+                  >
                     {aboutImageCaption}
                   </p>
                 )}
@@ -523,7 +538,10 @@ export default function VitrinProfileView({
               >
                 {aboutTitle}
               </h2>
-              <div className="space-y-4 text-slate-300 text-sm sm:text-base leading-relaxed">
+              <div
+                {...editableProps("hakkindaMetin", ownerMode)}
+                className="space-y-4 text-slate-300 text-sm sm:text-base leading-relaxed"
+              >
                 {aboutParagraphs.map((paragraph) => (
                   <p key={paragraph.slice(0, 24)}>{paragraph}</p>
                 ))}
@@ -675,7 +693,12 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🏠</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Adres</h4>
-                    <p {...editableProps("adres", ownerMode)} className="text-xs text-slate-300 leading-relaxed mt-0.5">{displayAddress}</p>
+                    <p
+                      {...editableProps("adres", ownerMode)}
+                      className="text-xs text-slate-300 leading-relaxed mt-0.5"
+                    >
+                      {displayAddress}
+                    </p>
                   </div>
                 </div>
               )}
@@ -683,7 +706,9 @@ export default function VitrinProfileView({
               {hasPhone && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">📞</div>
-                  <div>
+                  <div
+                    {...editableProps("telefon", ownerMode)}
+                  >
                     <h4 className="text-sm font-bold text-white">Telefon</h4>
                     <a href={phoneUrl!} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
                       {displayPhone}
@@ -707,7 +732,9 @@ export default function VitrinProfileView({
               {displayEmail && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">✉️</div>
-                  <div>
+                  <div
+                    {...editableProps("eposta", ownerMode)}
+                  >
                     <h4 className="text-sm font-bold text-white">E-posta</h4>
                     <a href={`mailto:${displayEmail}`} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
                       {displayEmail}
@@ -721,7 +748,12 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🕐</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Çalışma Saatleri</h4>
-                    <p className="text-xs text-slate-300 mt-0.5">{workingHoursToday}</p>
+                    <p
+                      {...editableProps("calismaSaatleri", ownerMode)}
+                      className="text-xs text-slate-300 mt-0.5"
+                    >
+                      {workingHoursToday}
+                    </p>
                   </div>
                 </div>
               )}
