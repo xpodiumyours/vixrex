@@ -24,6 +24,24 @@ Bu depoda çalışmaya başlayan her ajan, herhangi bir işlemden önce aşağı
 - Yeni özellik başlamadan plan, özelliğin sahibi modülü ve arayüzünü adlandırır. Uygun sahip yoksa kodlama durur ve önce mimari ayrıştırma yapılır.
 - Zorunlu hata düzeltmesi büyük modülde yapılabilir; fakat modülün dış arayüzü veya sorumluluk sayısı büyütülemez.
 
+## Zorunlu skill çağrıları
+
+Depoda 41 skill kurulu (`.agents/skills/`, ayrıca global olarak `~/.claude/skills/`). Codex, OpenCode, Gemini ve Claude Code hepsini görebilir. **Sorun erişim değil, çağrılmaması olmuştur** — 2026-08-05'e kadar hiçbir ajan bunları kullanmadı ve önlenebilir hatalar canlıya kadar gitti.
+
+Aşağıdaki durumlarda ilgili skill **çağrılır**, atlanmaz:
+
+| Durum | Zorunlu skill |
+|---|---|
+| Commit önerilmeden önce | `code-review` — değişikliği standart ve istek eksenlerinde inceler |
+| Bir şey bozuk, sebebi belirsiz | `diagnosing-bugs` — tahmin etmeden önce hatayı üreten tek komut ister |
+| Yeni davranış yazılacak | `tdd` — önce kırmızı test, sonra kod |
+| Bir modülün arayüzü tasarlanacak | `codebase-design` |
+| Hangi skill'in uyduğu belirsiz | `ask-matt` — skill haritası |
+
+Skill çağrılmadan commit önerilmez. Çağrılamıyorsa sebebi raporda yazılır ("skill çağrılamadı: …"), sessizce atlanmaz.
+
+**Neden bu kural var:** 2026-08-05'te tek bir oturumda beş gerçek hata çıktı — sahip paneli hiç açılmıyordu, `edit_token` tarayıcıya sızıyordu, migration hiç uygulanamıyordu, iki test hatayı doğruymuş gibi kilitliyordu, React anahtarları çakışıyordu. Hiçbiri kod okunarak bulunamadı; hepsi çalıştırılınca çıktı. `code-review` ve `diagnosing-bugs` bunların çoğunu daha erken yakalardı.
+
 ## Dal ve PR kuralları
 
 Bu kurallar 2026-08-04'te, 13 açık PR'ın 5'inin ölü çıkması ve birleştirilmiş bir dalda çalışmaya devam edilmesi yüzünden yazıldı.
