@@ -15,7 +15,7 @@ Hedef davranış:
 7. Normal müşteri bağlantısında sahip araçları hiçbir koşulda görünmez.
 8. İleride kiralık vitrin şablonundan kullanıcıya özel taslak üretildiğinde aynı sahip modu yeniden kullanılır.
 9. **Düzenlenebilir alan sayısı beşten 41'e çıkar.** Bugün kullanıcı beş alanla (isim, WhatsApp, adres, açıklama, kategori) vitrin oluşturup yayınlayabiliyor. Plan bittiğinde vitrinde görünen her alan — bölüm başlıkları ve bölüm gizleme dahil — hem tıklayarak hem Vixrex Asistan sohbetinden düzenlenebilir olur. Alanların tek kaynağı `docs/vitrin-alan-semasi.md`'dir.
-10. **Hedef, referans HTML'lerin üstüdür.** `teknik_vitrin_asistan.html` görünüş kalitesinin referansıdır, düzenleme kabiliyetinin değil — o dosyadaki asistan alanların ancak onda birine dokunabiliyor, Hakkımızda ve SSS bölümleri tıklanamıyor bile. Bu plan görünüşü referans alır, düzenlemede referansı aşar.
+10. **Hedef, referans HTML'lerin üstüdür.** `sablonlar/hedef-vitrin.html` görünüş kalitesinin referansıdır, düzenleme kabiliyetinin değil — o dosyadaki asistan alanların ancak onda birine dokunabiliyor, Hakkımızda ve SSS bölümleri tıklanamıyor bile. Bu plan görünüşü referans alır, düzenlemede referansı aşar.
 
 Bu bir yeniden yazım değildir. Mevcut Flutter Vixrex Asistan motoru, Next.js vitrin şablonu, Supabase yayınlama kuralları ve yerel editör verisi mümkün olan en küçük değişikliklerle korunur.
 
@@ -207,7 +207,7 @@ Her commit sonunda ilgili statik kontroller ve dar test grubu geçmelidir. Bir c
 
 - Mevcut Vixrex yolculuk durumunu Next.js'in tüketebileceği ortak bir özet sözleşmesine dönüştür.
 - Sahip paneline Vixrex Asistan sohbetini ve hızlı eylemleri ekle; `PreviewEditorPanel`'i panelden çıkar.
-- **Tıkla-düzenle mekanizmasını kur.** Referans: `teknik_vitrin_asistan.html`. Üç parçadan oluşur:
+- **Tıkla-düzenle mekanizmasını kur.** Referans: `sablonlar/hedef-vitrin.html`. Üç parçadan oluşur:
   1. Vitrindeki öğelere `data-vixrex-editable="<anahtar>"` ve `data-vixrex-label="<Türkçe ad>"` konur. Değerler `docs/vitrin-alan-semasi.md` şemasından gelir, elle yazılmaz.
   2. Sayfada tek bir tıklama dinleyicisi en yakın işaretli öğeyi bulur, paneli açar, o alanı vurgular ve kullanıcıya hangi alanı seçtiğini söyler.
   3. Kullanıcının yazdığı değer Commit 8'in tipli komutuna gider. **Alan başına ayrı dallanma yazılmaz** — referans HTML'de sekiz elle yazılmış dal var ve bu yüzden orada yalnız dokuz alan tıklanabiliyor, Hakkımızda ve SSS tıklanamıyor bile. Biz bunu şemadan üretiyoruz.

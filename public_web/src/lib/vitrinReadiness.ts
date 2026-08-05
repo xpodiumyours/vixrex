@@ -1,7 +1,7 @@
 // Vitrin hazırlık raporu (implementation_plan.md Commit 9).
 //
 // "Hangi alanlar boş?" sorusunu ŞEMADAN hesaplar. Alan başına kontrol
-// yazılmaz — referans teknik_vitrin_asistan.html'deki getReadiness() beş
+// yazılmaz — referans sablonlar/hedef-vitrin.html'deki getReadiness() beş
 // kontrolü elle sayıyordu ve o yüzden yalnız beş şeyi görebiliyordu.
 //
 // Yeni alan eklendiğinde bu dosya değişmez.

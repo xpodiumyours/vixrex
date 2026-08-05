@@ -17,7 +17,7 @@ Beş alan bu şemanın beş satırıdır. Kırk alan kırk satır.
 
 ## 2. Kaynak: HTML'in çizdiği, asistanının yapabildiği değil
 
-Alan listesi `teknik_vitrin_asistan.html` içindeki `MASTER_CONFIG`'den çıkarıldı — yani **vitrinin ekrana çizdiği her alandan**.
+Alan listesi `sablonlar/hedef-vitrin.html` içindeki `MASTER_CONFIG`'den çıkarıldı — yani **vitrinin ekrana çizdiği her alandan**.
 
 Dikkat: o dosyadaki asistan bu alanların ancak onda birine dokunabiliyor. Tıkla-düzenle işareti yalnız hero başlığı, rozet, tanıtım, telefon, e-posta, adres ve saatlere konmuş. Hakkımızda, SSS, galeri, blog bölümleri tıklanamıyor.
 
@@ -161,7 +161,7 @@ Tek değer taşırlar. Komut tipi: **"şu alanı şu değere ayarla"**.
 
 Birden çok kayıt taşırlar. Skalerlerden **farklı komutlar** gerektirirler: `ekle`, `düzenle`, `sil`, `sırala`.
 
-Öğe alanları `teknik_vitrin_asistan.html`'den birebir çıkarıldı.
+Öğe alanları `sablonlar/hedef-vitrin.html`'den birebir çıkarıldı.
 
 | anahtar | etiket | kolon | öğe alanları |
 |---|---|---|---|
