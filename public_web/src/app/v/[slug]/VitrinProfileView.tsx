@@ -3,18 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense, type ReactNode, useState } from "react";
-import type { VitrinCategoryProfile, PrimaryActionId } from "@/lib/vitrinProfile";
-import { getVitrinCopy, normalizeAddressDisplay } from "@/lib/vitrinCopy";
+import type { VitrinCategoryProfile } from "@/lib/vitrinProfile";
+import { normalizeAddressDisplay } from "@/lib/vitrinCopy";
 import {
-  GlobeIcon,
-  GoogleIcon,
   InstagramIcon,
   LinkIcon,
   MapPinIcon,
   MessageIcon,
   WhatsAppIcon,
 } from "@/lib/vitrinBrandIcons";
-import { normalizeExternalUrl } from "@/lib/products";
 import { editableProps } from "@/lib/vitrinEditableProps";
 
 export interface VitrinGalleryItem {
@@ -738,6 +735,20 @@ export default function VitrinProfileView({
                     <h4 className="text-sm font-bold text-white">E-posta</h4>
                     <a href={`mailto:${displayEmail}`} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
                       {displayEmail}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {websiteUrl && (
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🌐</div>
+                  <div
+                    {...editableProps("website", ownerMode)}
+                  >
+                    <h4 className="text-sm font-bold text-white">Web Sitesi</h4>
+                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                      {websiteUrl.replace(/^https?:\/\//i, "")}
                     </a>
                   </div>
                 </div>
