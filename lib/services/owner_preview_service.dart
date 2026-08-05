@@ -68,14 +68,6 @@ class OwnerPreviewService {
     );
   }
 
-  Future<OwnerPreviewResult> openLegacyDraft(StoreData storeData) async {
-    final draft = await _saveDraft(storeData);
-    return OwnerPreviewResult(
-      url: PublicSiteConfig.buildVitrinPreviewLink(draft.slug, draft.editToken),
-      slug: draft.slug,
-    );
-  }
-
   Future<StoreDraftResult> _saveDraft(StoreData storeData) async {
     final editToken = await _draftEditTokenProvider();
     final result = await _publishService.saveDraft(

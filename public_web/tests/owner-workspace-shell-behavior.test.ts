@@ -11,8 +11,6 @@ const pageSource = readFileSync(MAIN_PAGE_PATH, "utf-8");
 const SHELL_PATH = resolve(__dirname, "../src/app/v/[slug]/OwnerWorkspaceShell.tsx");
 const shellSource = readFileSync(SHELL_PATH, "utf-8");
 
-const PREVIEW_PANEL_PATH = resolve(__dirname, "../src/app/v/[slug]/PreviewEditorPanel.tsx");
-const previewPanelSource = readFileSync(PREVIEW_PANEL_PATH, "utf-8");
 
 describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
   it("müşteri modunda (owner cookie yok) OwnerWorkspaceShell render edilmez", () => {
@@ -20,8 +18,8 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
     // isOwnerMode false olduğunda ternary'nin else kolu çalışır
     expect(renderBlock).toContain("isOwnerMode ? (");
     expect(renderBlock).toContain("<OwnerWorkspaceShell");
-    // PreviewEditorPanel sadece isPreviewMode true ise render edilir
-    expect(renderBlock).toContain("isPreviewMode ? (");
+    // Sahip degilse hicbir sahip araci cizilmez.
+    expect(renderBlock).toContain(") : null}");
   });
 
   it("sahip modunda vitrin (VitrinProfileView) tam olarak bir kez render edilir", () => {
@@ -31,12 +29,13 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
     expect(vitrinProfileViewCount).toBe(1);
   });
 
-  it("legacy preview_token akışı bozulmamış — PreviewEditorPanel hala var", () => {
-    // PreviewEditorPanel import edildi ve legacy branch'te kullanılıyor
-    expect(pageSource).toContain("import PreviewEditorPanel from");
-    const renderBlock = pageSource.slice(pageSource.indexOf("return (\n    <>"));
-    expect(renderBlock).toContain("<PreviewEditorPanel");
-    expect(renderBlock).toContain("previewToken!");
+  it("legacy preview_token akışı KALDIRILDI (Commit 12)", () => {
+    // Eskiden sahip oturumu OLMADAN da açılabilen ikinci bir düzenleme
+    // yolu vardı: ?preview_token=... ile gelen herkes forma erişiyordu.
+    // Kaldırıldı; bu test geri gelmesini engeller.
+    expect(pageSource).not.toContain("PreviewEditorPanel");
+    expect(pageSource).not.toContain("preview_token");
+    expect(pageSource).not.toContain("previewToken");
   });
 
   it("geçersiz/başka slug'a ait sahip çerezi taslağı açamaz (verifyOwnerSession slug kontrolü)", () => {
@@ -50,7 +49,7 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
     // page.tsx içinde edit_token okunmuyor, getWorkingDraft empty string ile çağrılıyor
     const ownerModeBlock = pageSource.slice(
       pageSource.indexOf("if (isOwnerMode && ownerSession)"),
-      pageSource.indexOf("} else if (isPreviewMode)")
+      pageSource.indexOf("  if (!data) {")
     );
     expect(ownerModeBlock).not.toContain("edit_token");
     expect(ownerModeBlock).not.toContain("select(\"edit_token\")");
@@ -67,7 +66,7 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
     // sessionExpiresAt, draft başarılı olduğunda (else bloğu içinde) set edilir
     const draftSuccessBlock = pageSource.slice(
       pageSource.indexOf("if (!draft) {"),
-      pageSource.indexOf("} else if (isPreviewMode)")
+      pageSource.indexOf("  if (!data) {")
     );
     expect(draftSuccessBlock).toContain("sessionExpiresAt = decoded.exp ?? null");
     expect(draftSuccessBlock).not.toContain("* 1000");
@@ -99,20 +98,9 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
     const shellCount = (renderBlock.match(/<OwnerWorkspaceShell/g) || []).length;
     expect(shellCount).toBe(1);
     
-    // PreviewEditorPanel sadece isPreviewMode true ve isOwnerMode false iken
+    // Sahip araci tek dal: ya kabuk ya hicbir sey.
     const previewPanelCount = (renderBlock.match(/<PreviewEditorPanel/g) || []).length;
-    expect(previewPanelCount).toBe(1);
-  });
-
-  it("PreviewEditorPanel disabled modunda save butonu devre dışı ve mesaj gösterir", () => {
-    expect(previewPanelSource).toContain("disabled={disabled}");
-    // Metnin tamamı yerine parçalarına bakılır: JSX'te kesme işareti
-    // &apos; olarak kaçırılmak zorunda (react/no-unescaped-entities), bu da
-    // birebir metin karşılaştırmasını kırıyordu.
-    expect(previewPanelSource).toContain("Kaydet");
-    expect(previewPanelSource).toContain("Commit 8");
-    expect(previewPanelSource).toContain("aktif olacak");
-    expect(previewPanelSource).toContain("cursor-not-allowed");
+    expect(previewPanelCount).toBe(0);
   });
 
   it("OwnerWorkspaceShell kendi içinde VitrinProfileView render etmez", () => {
@@ -122,7 +110,7 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
   it("getWorkingDraft ÇEREZLE değil, paketten çıkarılan gerçek token ile çağrılır", () => {
     const ownerModeBlock = pageSource.slice(
       pageSource.indexOf("if (isOwnerMode && ownerSession && ownerSessionCookie)"),
-      pageSource.indexOf("} else if (isPreviewMode)")
+      pageSource.indexOf("  if (!data) {")
     );
 
     // 2026-08-05'te bulunan hata: çereze ve içindeki tokene aynı ad

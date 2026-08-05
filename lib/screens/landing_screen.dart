@@ -317,41 +317,34 @@ class _LandingScreenState extends State<LandingScreen>
     AppRouter.navigateToHomeShell(context);
   }
 
-  /// Landing demo profillerinin Supabase'deki sabit taslak karşılığı
-  /// (bkz. supabase/migrations/20260803190248_20260803140000_landing_demo_drafts_seed.sql).
+  /// Landing demo profillerinin Supabase'deki karşılığı.
   /// Gerçek kullanıcı verisi değil, herkese açık pazarlama içeriği.
-  static const Map<String, ({String slug, String editToken})>
-  _landingDemoDrafts = {
-    'Aymira Giyim': (
-      slug: 'demo-aymira-giyim',
-      editToken: 'landing-demo-aymira-giyim-2026',
-    ),
-    'Lezzet Durağı': (
-      slug: 'demo-lezzet-duragi',
-      editToken: 'landing-demo-lezzet-duragi-2026',
-    ),
-    'Nova Kuaför': (
-      slug: 'demo-nova-kuafor',
-      editToken: 'landing-demo-nova-kuafor-2026',
-    ),
-    'TeknoFix': (
-      slug: 'demo-teknofix',
-      editToken: 'landing-demo-teknofix-2026',
-    ),
+  ///
+  /// Bu vitrinler artık YAYINDA ve `is_demo` işaretli
+  /// (bkz. 20260805210000_publish_landing_demo_stores.sql). Eskiden
+  /// yayınlanmamış taslaktılar ve düzenleme anahtarları burada, yani
+  /// tarayıcıya inen kodda, açıkta duruyordu. Anahtarlar kaldırıldı;
+  /// yayındaki bir vitrin için gizli bağlantı gerekmez.
+  static const Map<String, String> _landingDemoDrafts = {
+    'Aymira Giyim': 'demo-aymira-giyim',
+    'Lezzet Durağı': 'demo-lezzet-duragi',
+    'Nova Kuaför': 'demo-nova-kuafor',
+    'TeknoFix': 'demo-teknofix',
   };
 
   void _navigateToPreview() {
     final profile = _heroDemoProfiles[_activeProfileIndex];
-    final draft = _landingDemoDrafts[profile.name];
-    if (draft == null) {
+    final slug = _landingDemoDrafts[profile.name];
+    if (slug == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Demo vitrin önizlemesi açılamadı.')),
       );
       return;
     }
+    // Düz yayın adresi — gizli anahtar yok. Demo vitrinler yayında.
     AppRouter.openPublicUrl(
       context,
-      PublicSiteConfig.buildVitrinPreviewLink(draft.slug, draft.editToken),
+      PublicSiteConfig.buildVitrinLink(slug),
       failureMessage: 'Demo vitrin önizlemesi açılamadı.',
     );
   }

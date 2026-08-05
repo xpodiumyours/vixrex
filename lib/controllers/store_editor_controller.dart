@@ -1027,17 +1027,6 @@ class StoreEditorController extends ChangeNotifier
     return token;
   }
 
-  /// Legacy: Commit 2'nin geçici `preview_token` uyumluluk linki. Yeni akış
-  /// bu linki üretmez; kalıcı olarak Commit 12'de kaldırılır.
-  Future<String> previewDraftLink() async {
-    await saveLocally();
-    final result = await _ownerPreviewService.openLegacyDraft(_data);
-    _data.slug = result.slug;
-    await saveLocally();
-    notifyListeners();
-    return result.url;
-  }
-
   /// Tek sahip önizleme girişi (implementation_plan.md §5.1/5.2, Commit 5/6):
   /// taslak/yayın ayrımını çağırandan saklar.
   ///

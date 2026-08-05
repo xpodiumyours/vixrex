@@ -37,20 +37,6 @@ class PublicSiteConfig {
     return buildPublicLink('/v/${Uri.encodeComponent(trimmed)}');
   }
 
-  /// Yayın öncesi taslak önizleme linki — Next.js'in gerçek şablonunu
-  /// `get_store_preview` RPC'si üzerinden, yalnızca edit_token sahibine gösterir.
-  /// Commit 5'ten itibaren yerine [buildOwnerSessionEntryLink] kullanılır;
-  /// geçici uyumluluk yolu olarak Commit 12'ye kadar kalır.
-  static String buildVitrinPreviewLink(String slug, String editToken) {
-    final trimmedSlug = slug.trim();
-    final trimmedToken = editToken.trim();
-    if (trimmedSlug.isEmpty || trimmedToken.isEmpty) {
-      return buildVitrinLink(trimmedSlug);
-    }
-    final query = Uri(queryParameters: {'preview_token': trimmedToken}).query;
-    return '${buildVitrinLink(trimmedSlug)}?$query';
-  }
-
   /// Sahip önizleme giriş adresi (implementation_plan.md §5.2, Commit 4/5):
   /// tek kullanımlık kodu Next.js `/api/owner-session` sunucu rotasına taşır.
   /// Kalıcı `edit_token` bu adrese asla yazılmaz (koruma #7).

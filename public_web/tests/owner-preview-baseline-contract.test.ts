@@ -31,19 +31,23 @@ describe("sahip önizleme temeli — müşteri isteğinde sahip araçları gör�
     expect(renderBlock).toContain("<OwnerWorkspaceShell");
   });
 
-  it("PreviewEditorPanel yalnızca isPreviewMode true ve isOwnerMode false iken render edilir", () => {
+  // Commit 12'de değişti: eskiden sahip oturumu YOKKEN de açılan ikinci bir
+  // düzenleme yolu vardı (preview_token + PreviewEditorPanel). O yol
+  // kaldırıldı; artık sahip aracı yalnız doğrulanmış oturumla çıkar.
+  // Aşağıdaki iki test o yolun geri gelmediğini bekçilik eder.
+  it("sahip oturumu dışında ikinci bir düzenleme yolu yoktur", () => {
     const renderBlock = pageSource.slice(pageSource.indexOf("return (\n    <>"));
-    expect(renderBlock).toContain("isPreviewMode ? (");
-    expect(renderBlock).toContain("<PreviewEditorPanel");
+
+    // isOwnerMode dışında dallanma yok: ya sahip kabuğu, ya hiçbir şey.
+    expect(renderBlock).toContain("{isOwnerMode ? (");
+    expect(renderBlock).toContain(") : null}");
+    expect(renderBlock).not.toContain("<PreviewEditorPanel");
+    expect(renderBlock).not.toContain("isPreviewMode ? (");
   });
 
-  it("isPreviewMode yalnızca boş olmayan preview_token'dan türer", () => {
-    expect(pageSource).toContain(
-      "const previewToken = searchParams.preview_token?.trim();"
-    );
-    expect(pageSource).toContain(
-      "const isPreviewMode = Boolean(previewToken);"
-    );
+  it("preview_token sorgu parametresi artık hiç okunmaz", () => {
+    expect(pageSource).not.toContain("preview_token");
+    expect(pageSource).not.toContain("previewToken");
   });
 
   it("isOwnerMode owner cookie doğrulamasıyla belirlenir ve fail-closed uygulanır", () => {

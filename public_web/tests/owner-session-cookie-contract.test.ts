@@ -244,8 +244,22 @@ describe("sahip oturumu sayfa meta — müşteri SEO davranışı korunur", () =
     );
   });
 
-  it("müşteri isteğinin mevcut public metadata akışı değişmez", () => {
-    expect(pageSource).toContain("const previewToken = searchParams.preview_token?.trim();");
-    expect(pageSource).toContain("const isPreviewMode = Boolean(previewToken);");
+  it("sahip görünümü Google'a kapalı, müşteri görünümü açık kalır", () => {
+    // Commit 12'de değişti: eskiden noindex kararı preview_token'a bakıyordu.
+    // O yol kaldırıldı; karar artık doğrulanmış sahip oturumuna bakıyor.
+    //
+    // Koruma aynı: sahip kendi taslağını görürken sayfa Google'a
+    // kapatılmalı, yoksa yayınlanmamış içerik aramada çıkar. Müşteri
+    // görünümü ise indekslenmeye devam etmeli — vitrinin bulunması
+    // ürünün tüm amacı.
+    const metadataBlock = pageSource.slice(
+      pageSource.indexOf("export async function generateMetadata"),
+      pageSource.indexOf("export default async function StorePage")
+    );
+
+    expect(metadataBlock).toContain("verifyOwnerSession(ownerToken, params.slug)");
+    expect(metadataBlock).toContain("if (ownerSession) {");
+    expect(metadataBlock).toContain("robots: { index: false, follow: false }");
+    expect(metadataBlock).not.toContain("preview_token");
   });
 });
