@@ -792,11 +792,127 @@ class VitrinFormSection extends StatelessWidget {
           () => _copyDisplayLink(context, displayLink, isLive: hasPublished),
       onPreview: () => _openInAppPreview(context),
       onShareLink: hasPublished ? () => _shareLink(context) : null,
+      onShowQr: hasPublished ? () => _showQrSheet(context) : null,
       onOpenLiveLink: hasPublished ? () => _openLink(context) : null,
       onScrollToPublish:
           hasPublished
               ? null
               : () => state.scrollToVixRexAction(VixRexAction.scrollToLegal),
+    );
+  }
+
+  /// Yayındaki vitrinin QR kodunu gösterir.
+  ///
+  /// Esnaf bunu tezgâha yapıştırıyor; kiralama vaadinde de "özel paylaşım
+  /// linki ve QR kod" diye geçiyor. Eski PublishActionsSection'da vardı,
+  /// PublicLinkCard'a geçişte düşmüştü.
+  ///
+  /// Görsel, vitrin sayfasının kullandığı aynı hizmetten geliyor — iki
+  /// yerde iki farklı QR üretmemek için.
+  void _showQrSheet(BuildContext ctx) {
+    final raw = controller.publishedInfo?.publicLink.trim() ?? '';
+    if (raw.isEmpty) {
+      state.showSnackBar(ctx, 'Önce vitrini yayına al.');
+      return;
+    }
+    final link = PublicSiteConfig.repairPublicLink(raw);
+    final qrUrl =
+        'https://api.qrserver.com/v1/create-qr-code/?size=320x320&data='
+        '${Uri.encodeComponent(link)}';
+
+    showModalBottomSheet<void>(
+      context: ctx,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder:
+          (sheetContext) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Vitrin QR Kodun',
+                    style: TextStyle(
+                      color: AppColors.darkText,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Yazdırıp tezgâhına koyabilirsin. Müşteri okuttuğunda '
+                    'doğrudan vitrinine gelir.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.mutedText,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(12),
+                      child: Image.network(
+                        qrUrl,
+                        width: 220,
+                        height: 220,
+                        errorBuilder:
+                            (_, __, ___) => const SizedBox(
+                              width: 220,
+                              height: 220,
+                              child: Center(
+                                child: Text(
+                                  'QR kodu getirilemedi.\nİnternet bağlantını '
+                                  'kontrol et.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: AppColors.mutedText,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SelectableText(
+                    link,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.softText,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(sheetContext);
+                      _copyDisplayLink(ctx, link, isLive: true);
+                    },
+                    icon: const Icon(Icons.copy_rounded, size: 18),
+                    label: const Text('Linki Kopyala'),
+                  ),
+                ],
+              ),
+            ),
+          ),
     );
   }
 
