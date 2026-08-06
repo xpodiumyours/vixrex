@@ -199,29 +199,42 @@ class VixRexProfileSnapshot {
       category.trim().toLowerCase() != 'diger' &&
       category.trim().toLowerCase() != 'diğer';
 
-  bool get isReadyToPublish =>
-      nameCompleted &&
-      whatsappCompleted &&
-      addressCompleted &&
-      legalCompleted &&
-      !isPublished;
+  bool get isReadyToPublish => areRequiredFieldsCompleted && !isPublished;
 
+  /// Zorunlu alanların HEPSİ dolu mu — küme şemadan gelir.
+  ///
+  /// Yasal onay şema alanı değil, akış aşamasıdır: onu veritabanı
+  /// tetikleyicisi zorunlu tutuyor (PUBLICATION_CONSENT_REQUIRED).
+  /// Bu yüzden ayrıca eklenir.
   bool get areRequiredFieldsCompleted =>
-      nameCompleted && whatsappCompleted && addressCompleted && legalCompleted;
+      zorunluAlanlar.every((a) => _alanDolu(a.anahtar)) && legalCompleted;
 
+  /// Tamamlanan zorunlu adım sayısı — şemadaki alanlar + yasal onay.
+  /// Elle sayı tutulmaz; şemaya zorunlu alan eklenince kendiliğinden artar.
   int get completedRequiredStepCount =>
-      [
-        nameCompleted,
-        whatsappCompleted,
-        addressCompleted,
-        legalCompleted,
-      ].where((completed) => completed).length;
+      zorunluAlanlar.where((a) => _alanDolu(a.anahtar)).length +
+      (legalCompleted ? 1 : 0);
+
+  /// Toplam zorunlu adım sayısı — şemadan + yasal onay.
+  int get totalRequiredStepCount => zorunluAlanlar.length + 1;
 
   VixRexJourneyPhase journeyPhase({required bool hasShared}) {
+    // YAYIN ÖNCE SORULUR.
+    //
+    // Eskiden önce "zorunlu alanlar tamam mı" bakılıyordu. Kategori zorunlu
+    // olunca (2026-08-06) daha önce yayınlanmış vitrinler "kurulum"
+    // aşamasına düştü ve asistan zaten yayında olana "yayınla" demeye
+    // başladı.
+    //
+    // Yayınlanmış bir vitrin kurulumu geçmiştir. Eksik alanı varsa bu
+    // geliştirme işidir, kurulum değil.
+    if (isPublished) {
+      return hasShared
+          ? VixRexJourneyPhase.improve
+          : VixRexJourneyPhase.share;
+    }
     if (!areRequiredFieldsCompleted) return VixRexJourneyPhase.setup;
-    if (!isPublished) return VixRexJourneyPhase.publish;
-    if (!hasShared) return VixRexJourneyPhase.share;
-    return VixRexJourneyPhase.improve;
+    return VixRexJourneyPhase.publish;
   }
 }
 

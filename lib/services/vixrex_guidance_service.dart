@@ -204,6 +204,13 @@ class VixRexGuidanceService {
   static VixRexRecommendation? setupRecommendation(
     VixRexProfileSnapshot snapshot,
   ) {
+    // Yayınlanmış vitrine kurulum önerisi verilmez.
+    //
+    // Kategori zorunlu olunca (2026-08-06) daha önce yayınlanmış vitrinler
+    // "zorunlu alan eksik" durumuna düştü ve asistan zaten yayında olana
+    // "vitrinini yayınla" demeye başladı. Yayınlanmış vitrinin eksiği
+    // geliştirme işidir, kurulum değil.
+    if (snapshot.isPublished) return null;
     if (snapshot.areRequiredFieldsCompleted) return null;
 
     final next = snapshot.nextMissingField;
