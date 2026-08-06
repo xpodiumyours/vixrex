@@ -132,6 +132,15 @@ class _VixRexOnboardingChatScreenState
         setState(() => _step = _OnboardingStep.name);
         _pushBot('İşletme adını tamamlayalım.');
         _focusInput();
+      case VixRexNextStep.category:
+        // Kategori artık ZORUNLU (şemadan gelir). Kurulum sohbetinde henüz
+        // kendi adımı yok; kullanıcı Vitrinim panelinden seçer.
+        // Sonraki iş: sohbete kategori adımı eklemek.
+        setState(() => _step = _OnboardingStep.location);
+        _pushBot(
+          'Sıradaki adım: işletme kategorini seçelim — vitrinin ona göre '
+          'hazırlanıyor.',
+        );
       case VixRexNextStep.whatsapp:
         setState(() => _step = _OnboardingStep.whatsapp);
         _pushBot('Sıradaki adım: WhatsApp numaranı ekleyelim.');

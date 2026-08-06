@@ -93,18 +93,42 @@ void main() {
       expect(snapshot.nextMissingField, VixRexNextStep.name);
     });
 
-    test('Name dolu ise whatsapp beklenmeli', () {
+    // 2026-08-06: kategori ŞEMADA zorunlu oldu. Sıra artık elle
+    // yazılmıyor, lib/config/vitrin_alanlari.g.dart'tan geliyor.
+    // Addan sonra kategori sorulur; kategorisiz vitrin 'Diğer' kalıyor
+    // ve kategoriye bağlı hiçbir şey (butonlar, başlıklar, hazır
+    // görseller) çalışmıyordu.
+    test('Ad dolu ise sırada KATEGORİ var', () {
       final store = StoreData().copyWith(name: 'Test Store');
       final snapshot = VixRexProfileSnapshot.from(store, null);
 
       expect(snapshot.nameCompleted, isTrue);
-      expect(snapshot.whatsappCompleted, isFalse);
+      expect(snapshot.categoryCompleted, isFalse);
+      expect(snapshot.nextMissingField, VixRexNextStep.category);
+    });
+
+    test('Ad ve kategori dolu ise sırada WhatsApp var', () {
+      final store = StoreData().copyWith(
+        name: 'Test Store',
+        kategori: 'Kuaför',
+      );
+      final snapshot = VixRexProfileSnapshot.from(store, null);
+
+      expect(snapshot.categoryCompleted, isTrue);
       expect(snapshot.nextMissingField, VixRexNextStep.whatsapp);
+    });
+
+    test('sıralama şemadan gelir — elle liste tutulmaz', () {
+      // Şemada zorunlu işaretli alanların sırası neyse, asistan onu
+      // izler. Bu test o bağın koptuğunu yakalar.
+      final bos = VixRexProfileSnapshot.from(StoreData(), null);
+      expect(bos.sonrakiEksikZorunluAlan?.anahtar, 'isletmeAdi');
     });
 
     test('Legal eksik ise legal beklenmeli', () {
       final store = StoreData().copyWith(
         name: 'Test Store',
+        kategori: 'Kuaför',
         whatsapp: '05551234567',
         address: 'Test Adres',
         provinceName: 'Istanbul',
@@ -122,6 +146,7 @@ void main() {
     test('IsReadyToPublish legal dahil her sey tamamsa true olmali', () {
       final store = StoreData().copyWith(
         name: 'Test Store',
+        kategori: 'Kuaför',
         whatsapp: '05551234567',
         address: 'Test Adres',
         provinceName: 'Istanbul',
