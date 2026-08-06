@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
@@ -379,10 +380,17 @@ class _VixRexOnboardingChatScreenState
         'İşletme adına özel vitrinin hazır. Web siten var — domain masrafın yok.',
         publicLink: _repairedPublicLink,
       );
+      // TEK ASİSTAN — SERT DEVİR YOK (C2).
+      //
+      // Burası eskiden link verip "VixRex rehberinde devam et" diyordu:
+      // kullanıcı başka bir ekrana düşüyor, aynı Vixrex'le konuşmaya devam
+      // ettiğini hissetmiyordu. Artık aynı asistan vitrini kendisi açıyor
+      // ve birlikte devam ediyor.
       _pushBot(
-        'Sırada görünüm ve ürünler var.\n'
-        'Kapak şablonunu seç; galeri, açıklama, ürün ve fiş tarayıcı '
-        'için VixRex rehberinde devam et.',
+        'Şimdi birlikte güzelleştirelim.\n'
+        'Vitrinini açıyorum — değiştirmek istediğin yazıya tıkla, ben '
+        'oradan hallederim. Kapak görselini de kategorine özel hazır '
+        'görsellerden seçebilirsin.',
       );
     } catch (e) {
       if (!mounted) return;
@@ -432,6 +440,37 @@ class _VixRexOnboardingChatScreenState
     final raw = _publicLink?.trim() ?? '';
     if (raw.isEmpty) return null;
     return PublicSiteConfig.repairPublicLink(raw);
+  }
+
+  /// Vitrini SAHİP olarak açar — yani Vixrex Asistan'lı hâliyle.
+  ///
+  /// Düz yayın linki müşteri görünümüdür; orada asistan yoktur ve esnaf
+  /// "hani birlikte düzenleyecektik" diye kalır. Sahip oturumu kısa
+  /// ömürlü tek kullanımlık kodla açılır (openOwnerPreview).
+  Future<void> _openOwnerWorkspace() async {
+    setState(() => _busy = true);
+    try {
+      final owner = await _controller.openOwnerPreview();
+      if (!mounted) return;
+      final uri = Uri.tryParse(owner.url);
+      if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
+        _pushBot('Vitrin açılamadı. Aşağıdaki linkten kendin açabilirsin.');
+        return;
+      }
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && mounted) {
+        _pushBot('Tarayıcı açılamadı. Aşağıdaki linkten kendin açabilirsin.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _pushBot(
+        'Vitrini düzenleme modunda açamadım. Aşağıdaki linkten görüntüleyebilir, '
+        'sonra Vitrinim sekmesinden Önizle ile tekrar deneyebilirsin.',
+      );
+      if (kDebugMode) debugPrint('openOwnerPreview failed: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _openPublicLink() async {
@@ -765,10 +804,27 @@ class _VixRexOnboardingChatScreenState
                 ),
               ],
             ),
-          if (_step == _OnboardingStep.done)
-            _primaryButton('Vixrex ile geliştir', () {
-              _navigateAfterHandoff(initialIndex: 2);
-            }),
+          // TEK ASİSTAN (C2): birincil yol vitrini AÇIP birlikte devam
+          // etmek. Manuel panel ikincil kalıyor — silinmedi, yerinde
+          // duruyor (VIXREX_RULES §1) ama artık varsayılan değil.
+          if (_step == _OnboardingStep.done) ...[
+            _primaryButton(
+              _busy ? 'Vitrinin açılıyor…' : 'Vitrinimi birlikte düzenleyelim',
+              _busy ? null : () => _openOwnerWorkspace(),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => _navigateAfterHandoff(initialIndex: 2),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.mutedText,
+                minimumSize: const Size.fromHeight(40),
+              ),
+              child: const Text(
+                'Detaylı formu aç',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+          ],
           if (_step == _OnboardingStep.publishing)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
