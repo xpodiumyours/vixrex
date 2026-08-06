@@ -227,7 +227,7 @@ abstract final class ChatbotConfig {
 
       case 'kapak':
         return ChatMessage.bot(
-          'Hazır kapak şablonundan birini seç — vitrinin hemen daha profesyonel görünür.',
+          'Hazır kapak görselleri artık vitrinin kendi sayfasında: Önizle ile aç, kapak alanına tıkla, Vixrex Asistan sana kategorine özel görselleri gösterir. İstersen buradan da seçebilirsin.',
           quickReplies: const [
             QuickReply(
               label: 'Kapak şablonu seç',
