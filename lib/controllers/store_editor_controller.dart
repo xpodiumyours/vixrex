@@ -10,6 +10,7 @@ import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/seo_service.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
+import 'package:vixrex/services/store_safe_select.dart';
 import 'package:vixrex/services/legal_document_service.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/owner_preview_service.dart';
@@ -165,6 +166,19 @@ class StoreEditorController extends ChangeNotifier
         await _fetchPublishedInfoFromSupabase();
       }
 
+      // Buluttaki sürüm yerelden yeniyse onu al.
+      //
+      // Esnaf vitrinini tarayıcıdaki Vixrex Asistan ile düzenleyebiliyor;
+      // o düzenleme doğrudan buluta yazılıyor. Burası yalnız yerel kopyayı
+      // okuduğu için uygulama eski hâli göstermeye devam ediyordu — aynı
+      // Vixrex'in iki farklı şey söylemesi gibi.
+      //
+      // Zaman damgası karşılaştırılır: uygulamada yapılıp henüz
+      // yayınlanmamış düzenleme varsa (yerel daha yeni) EZİLMEZ.
+      if (_publishedInfo != null) {
+        await _pullFromCloudIfNewer();
+      }
+
       _syncInitialData();
       if (_publishedInfo != null) {
         await ensureRemoteStoreId();
@@ -180,6 +194,45 @@ class StoreEditorController extends ChangeNotifier
       if (kDebugMode) debugPrint('StoreEditorController.initialize failed: $e');
     } finally {
       setLoading(false);
+    }
+  }
+
+  /// Yayındaki vitrini buluttan çeker; bulut daha yeniyse yerele yazar.
+  ///
+  /// Sessizce başarısız olur: internet yoksa ya da sorgu düşerse uygulama
+  /// yerel kopyayla çalışmaya devam eder. Çevrimdışı çalışabilmek manuel
+  /// panelin varlık sebebi (VIXREX_RULES §1) — bu senkron onu bozamaz.
+  Future<void> _pullFromCloudIfNewer() async {
+    final slug = _publishedInfo?.slug.trim() ?? '';
+    if (slug.isEmpty) return;
+
+    final client = _resolveClient();
+    if (client == null) return;
+
+    try {
+      final row =
+          await client
+              .from('stores')
+              .select('${StoreSafeSelect.columns},updated_at')
+              .eq('slug', slug)
+              .maybeSingle();
+      if (row == null) return;
+
+      final bulutZamani = DateTime.tryParse(
+        (row['updated_at'] as String?) ?? '',
+      )?.toUtc();
+      if (bulutZamani == null) return;
+
+      final yerelZamani = await storage.loadVitrinDataSavedAt();
+
+      // Yerel damga yoksa bulut kazanır: yerel veri eski bir sürümden
+      // kalmış olabilir ve ne zaman yazıldığı bilinmiyor.
+      if (yerelZamani != null && yerelZamani.isAfter(bulutZamani)) return;
+
+      _data = StoreData.fromJson(Map<String, dynamic>.from(row));
+      await storage.saveVitrinData(_data);
+    } catch (e) {
+      if (kDebugMode) debugPrint('Bulut senkronu atlandı: $e');
     }
   }
 
