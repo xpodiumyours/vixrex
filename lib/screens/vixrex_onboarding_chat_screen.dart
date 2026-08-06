@@ -9,6 +9,7 @@ import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/chatbot_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/utils/address_validator.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
 import 'package:vixrex/widgets/editor/form_location_info.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
@@ -320,12 +321,18 @@ class _VixRexOnboardingChatScreenState
 
   Future<void> _confirmLocationFromEditor() async {
     final data = _controller.data;
-    if (data.provinceCode.trim().isEmpty ||
-        data.districtName.trim().isEmpty ||
-        data.address.trim().isEmpty) {
+    if (data.provinceCode.trim().isEmpty || data.districtName.trim().isEmpty) {
       setState(
-        () => _error = 'İl, ilçe ve adres gerekli. GPS veya listeden seç.',
+        () => _error = 'İl ve ilçe gerekli. GPS ile bul ya da listeden seç.',
       );
+      return;
+    }
+    // Adres ayrı kontrol edilir: eskiden yalnız "boş değil" bakılıyordu ve
+    // "asd" yazan esnaf vitrinini öyle yayınlayabiliyordu. Yarım adres,
+    // adres olmamasından beterdir — müşteri yola çıkar, bulamaz.
+    final adresHatasi = AddressValidator.hataMesaji(data.address);
+    if (adresHatasi != null) {
+      setState(() => _error = adresHatasi);
       return;
     }
     final label =
