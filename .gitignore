@@ -78,3 +78,5 @@ supabase/backup/dumps/
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
 .obsidian/cache
+
+supabase/.temp/

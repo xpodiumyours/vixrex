@@ -29,6 +29,12 @@
 
 drop policy if exists "Admins can view admins" on public.admins;
 
+-- Yeni politikanın kendisi de düşürülür: temel şema (baseline) bu düzeltmeyi
+-- zaten içeriyor, dolayısıyla zincir sıfırdan çalıştığında politika var
+-- oluyor ve "already exists" hatası veriyordu. Düşür-yeniden oluştur, hem
+-- taze kurulumda hem mevcut veritabanında aynı sonucu verir.
+drop policy if exists "Admins can view own admin row" on public.admins;
+
 create policy "Admins can view own admin row"
   on public.admins
   for select

@@ -49,8 +49,12 @@ begin
   select version, content_hash into v_consent
   from public.legal_documents where document_type = 'consent' and is_active limit 1;
 
+  -- Taze bir veritabanında yasal belgeler henüz yok — ama demo vitrinler de
+  -- yok. Yapacak iş kalmıyor, hata vermek yanlış olur; zinciri boş yere
+  -- durdurur. Var olan bir veritabanında ise belgeler mutlaka bulunur.
   if v_privacy is null or v_terms is null or v_consent is null then
-    raise exception 'Etkin yasal belge bulunamadi; demo vitrinler yayina alinamaz.';
+    raise notice 'Etkin yasal belge yok; demo yayinlama adimi atlandi.';
+    return;
   end if;
 
   -- Dördü de karşılama ekranında listeleniyor (landing_screen.dart).
