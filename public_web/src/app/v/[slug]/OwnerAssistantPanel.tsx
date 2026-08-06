@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
 import { hazirlikRaporu } from "@/lib/vitrinReadiness";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
+import { useCanliVitrinSenkron } from "@/lib/canliVitrinSenkron";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9).
 //
@@ -49,6 +50,9 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
   const router = useRouter();
   const rapor = useMemo(() => hazirlikRaporu(draftData), [draftData]);
 
+  // Uygulamadan yayınlanan değişiklik bu sekmeye anında düşsün.
+  useCanliVitrinSenkron(slug, true);
+
   const [acik, setAcik] = useState(false);
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [seciliAlan, setSeciliAlan] = useState<VitrinField | null>(null);
@@ -77,8 +81,8 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
   useEffect(() => {
     if (mesajlar.length > 0) return;
     const selam = rapor.temelTamam
-      ? `Vitrininiz yayına hazır görünüyor. Doluluk: %${rapor.yuzde}.`
-      : `Vitrininizin doluluk oranı %${rapor.yuzde}. Birkaç alan eksik.`;
+      ? `Vitrinin yayına hazır görünüyor. Doluluk: %${rapor.yuzde}.`
+      : `Vitrininin doluluk oranı %${rapor.yuzde}. Birkaç alan eksik.`;
     mesajEkle("asistan", selam);
     if (rapor.sonrakiAdim) mesajEkle("asistan", rapor.sonrakiAdim);
     mesajEkle(
@@ -122,7 +126,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       setAcik(true);
       mesajEkle(
         "asistan",
-        `"${alan.etiket}" alanını seçtiniz. Yeni değeri yazıp gönderin.${
+        `"${alan.etiket}" alanını seçtin. Yeni değeri yaz ve gönder.${
           alan.ipucu ? ` (${alan.ipucu})` : ""
         }`
       );

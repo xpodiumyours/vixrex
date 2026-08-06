@@ -143,6 +143,7 @@ class StoreEditorController extends ChangeNotifier
   @override
   void dispose() {
     _isDisposed = true;
+    _canliDinlemeyiDurdur();
     super.dispose();
   }
 
@@ -177,6 +178,7 @@ class StoreEditorController extends ChangeNotifier
       // yayınlanmamış düzenleme varsa (yerel daha yeni) EZİLMEZ.
       if (_publishedInfo != null) {
         await _pullFromCloudIfNewer();
+        _canliDinlemeyiBaslat();
       }
 
       _syncInitialData();
@@ -195,6 +197,63 @@ class StoreEditorController extends ChangeNotifier
     } finally {
       setLoading(false);
     }
+  }
+
+  /// Canlı dinleme kanalı — vitrin satırı buluttan değişince haber verir.
+  RealtimeChannel? _canliKanal;
+
+  /// Yayındaki vitrini CANLI dinlemeye başlar.
+  ///
+  /// Esnaf vitrinini tarayıcıdaki Vixrex Asistan ile de düzenleyebiliyor.
+  /// Açılıştaki tek seferlik senkron yetmiyordu: uygulama açıkken tarayıcıda
+  /// yayınlanan değişiklikten habersiz kalıyordu.
+  ///
+  /// Yalnız YAYINLANMIŞ veri dinlenir. Yayınlanmamış taslaklar kasten
+  /// ayrıdır — iki taraf birbirinin yarım işini görmez.
+  void _canliDinlemeyiBaslat() {
+    final slug = _publishedInfo?.slug.trim() ?? '';
+    if (slug.isEmpty) return;
+
+    final client = _resolveClient();
+    if (client == null) return;
+
+    _canliDinlemeyiDurdur();
+
+    try {
+      _canliKanal = client
+          .channel('vitrin_$slug')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.update,
+            schema: 'public',
+            table: 'stores',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'slug',
+              value: slug,
+            ),
+            callback: (_) async {
+              // Satır değişti; hangi alan olduğuna bakmadan taze hâlini al.
+              // Zaman damgası karşılaştırması _pullFromCloudIfNewer içinde:
+              // uygulamada yapılıp henüz yayınlanmamış düzenleme ezilmez.
+              await _pullFromCloudIfNewer();
+              if (!_isDisposed) notifyListeners();
+            },
+          )
+          .subscribe();
+    } catch (e) {
+      // Canlı dinleme kurulmazsa uygulama çalışmaya devam eder; yalnız
+      // açılıştaki senkronla yetinir. Çevrimdışı çalışabilmek esastır.
+      if (kDebugMode) debugPrint('Canlı dinleme kurulamadı: $e');
+    }
+  }
+
+  void _canliDinlemeyiDurdur() {
+    final kanal = _canliKanal;
+    if (kanal == null) return;
+    _canliKanal = null;
+    try {
+      _resolveClient()?.removeChannel(kanal);
+    } catch (_) {}
   }
 
   /// Yayındaki vitrini buluttan çeker; bulut daha yeniyse yerele yazar.
