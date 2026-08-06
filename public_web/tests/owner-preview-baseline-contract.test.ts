@@ -11,7 +11,7 @@ import { resolve } from "path";
 const pagePath = resolve(__dirname, "../src/app/v/[slug]/page.tsx");
 const pageSource = readFileSync(pagePath, "utf-8");
 
-const migrationsDir = resolve(__dirname, "../../supabase/migrations");
+const migrationsDir = resolve(__dirname, "../../supabase/migrations_arsiv");
 const fixPreviewRpcSource = readFileSync(
   resolve(
     migrationsDir,

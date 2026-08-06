@@ -18,7 +18,7 @@ const landingPath = resolve(__dirname, "../../lib/screens/landing_screen.dart");
 const configPath = resolve(__dirname, "../../lib/config/public_site_config.dart");
 const korumaMigration = resolve(
   __dirname,
-  "../../supabase/migrations/20260803190512_20260803160000_protect_landing_demos.sql"
+  "../../supabase/migrations_arsiv/20260803190512_20260803160000_protect_landing_demos.sql"
 );
 const yayinMigration = resolve(
   __dirname,
