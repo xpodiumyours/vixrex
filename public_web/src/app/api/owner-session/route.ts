@@ -89,7 +89,7 @@ export async function GET(request: Request) {
     console.error("[owner-session] configuration invalid", err);
     return ownerErrorPage(
       "Önizleme açılamadı",
-      "Sunucu sahip oturumunu oluşturamadı. Lütfen tekrar deneyin."
+      "Sunucu sahip oturumunu oluşturamadı. Lütfen tekrar dene."
     );
   }
 
@@ -101,7 +101,7 @@ export async function GET(request: Request) {
   if (error) {
     const message =
       ERROR_COPY[error.message] ??
-      "Önizleme açılamadı. Lütfen tekrar deneyin.";
+      "Önizleme açılamadı. Lütfen tekrar dene.";
     return ownerErrorPage("Önizleme bağlantısı geçersiz", message);
   }
 
@@ -129,7 +129,7 @@ export async function GET(request: Request) {
     console.error("[owner-session] signOwnerSession failed");
     return ownerErrorPage(
       "Önizleme açılamadı",
-      "Sunucu sahip oturumunu oluşturamadı. Lütfen tekrar deneyin."
+      "Sunucu sahip oturumunu oluşturamadı. Lütfen tekrar dene."
     );
   }
 

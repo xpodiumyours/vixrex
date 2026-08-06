@@ -98,6 +98,27 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
         statusMessage: 'Adres çözümleniyor...',
       );
 
+      // 10 METREDEN KÖTÜ KONUM KAYDEDİLMEZ.
+      //
+      // Eskiden hata payı ne olursa olsun konum yazılıyor, adres çözülüyor
+      // ve il/ilçe otomatik dolduruluyordu. Masaüstü tarayıcıda konum
+      // Wi-Fi/IP'den geldiği için kilometrelerce sapıyor; kullanıcı dolu
+      // görünen yanlış il/ilçeye güvenip yanlış konumla vitrin açıyordu.
+      // Küçük uyarı yazısı okunmuyor — dolu alan okunuyor.
+      //
+      // Vitrinin işi "yakınındaki dükkânı" bulmak. Yanlış konum müşteriyi
+      // yanlış sokağa gönderir; yokluğundan beterdir. Bu yüzden koordinat
+      // da yazılmaz — kullanıcı telefondan tekrar dener ya da adresi elle
+      // yazar.
+      if (position.accuracy > LocationService.maxAcceptedAccuracyMeters) {
+        widget.onLocationUpdated(
+          statusMessage: LocationService.buildAccuracyMessage(
+            position.accuracy,
+          ),
+        );
+        return;
+      }
+
       final geoAddress = await const LocationService().getAddressFromCoordinates(
         position.latitude,
         position.longitude,

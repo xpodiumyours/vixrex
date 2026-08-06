@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
@@ -8,6 +10,7 @@ import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/chatbot_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/utils/address_validator.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
 import 'package:vixrex/widgets/editor/form_location_info.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
@@ -18,6 +21,7 @@ const String _kOnboardingHandoffMarker = 'onboarding_handoff_v1';
 enum _OnboardingStep {
   welcome,
   name,
+  category,
   whatsapp,
   location,
   legal,
@@ -130,6 +134,12 @@ class _VixRexOnboardingChatScreenState
         setState(() => _step = _OnboardingStep.name);
         _pushBot('İşletme adını tamamlayalım.');
         _focusInput();
+      case VixRexNextStep.category:
+        setState(() => _step = _OnboardingStep.category);
+        _pushBot(
+          'Sıradaki adım: ne iş yaptığını seçelim — vitrinin ona göre '
+          'hazırlanıyor.',
+        );
       case VixRexNextStep.whatsapp:
         setState(() => _step = _OnboardingStep.whatsapp);
         _pushBot('Sıradaki adım: WhatsApp numaranı ekleyelim.');
@@ -288,9 +298,30 @@ class _VixRexOnboardingChatScreenState
     _controller.updateName(name);
     await _controller.saveLocally();
     setState(() {
-      _step = _OnboardingStep.whatsapp;
+      _step = _OnboardingStep.category;
       _error = null;
       _inputController.clear();
+    });
+    // Kategori şemada ZORUNLU (lib/config/vitrin_alanlari.g.dart).
+    // Eskiden hiç sorulmuyordu; sohbetle açılan her vitrin "Diğer" kalıyor,
+    // kategoriye bağlı hiçbir şey (butonlar, bölüm başlıkları, kategoriye
+    // özel hazır görseller) çalışmıyordu.
+    _pushBot(
+      'Ne iş yapıyorsun?\n'
+      'Seçtiğin işe göre vitrinini hazır kuruyorum.',
+    );
+  }
+
+  /// Kategori seçimi — 19 kategori, tek dokunuş. Yazdırmıyoruz: esnaf
+  /// "kuaför" yerine "Kuafor" yazınca eşleşme kaybolur.
+  Future<void> _selectCategory(String label) async {
+    _pushUser(label);
+    _controller.selectCategory(label);
+    await _controller.saveLocally();
+    if (!mounted) return;
+    setState(() {
+      _step = _OnboardingStep.whatsapp;
+      _error = null;
     });
     _pushBot('Müşteriler seni nasıl bulsun?\nWhatsApp numaranı yaz.');
     _focusInput();
@@ -319,12 +350,18 @@ class _VixRexOnboardingChatScreenState
 
   Future<void> _confirmLocationFromEditor() async {
     final data = _controller.data;
-    if (data.provinceCode.trim().isEmpty ||
-        data.districtName.trim().isEmpty ||
-        data.address.trim().isEmpty) {
+    if (data.provinceCode.trim().isEmpty || data.districtName.trim().isEmpty) {
       setState(
-        () => _error = 'İl, ilçe ve adres gerekli. GPS veya listeden seç.',
+        () => _error = 'İl ve ilçe gerekli. GPS ile bul ya da listeden seç.',
       );
+      return;
+    }
+    // Adres ayrı kontrol edilir: eskiden yalnız "boş değil" bakılıyordu ve
+    // "asd" yazan esnaf vitrinini öyle yayınlayabiliyordu. Yarım adres,
+    // adres olmamasından beterdir — müşteri yola çıkar, bulamaz.
+    final adresHatasi = AddressValidator.hataMesaji(data.address);
+    if (adresHatasi != null) {
+      setState(() => _error = adresHatasi);
       return;
     }
     final label =
@@ -379,10 +416,17 @@ class _VixRexOnboardingChatScreenState
         'İşletme adına özel vitrinin hazır. Web siten var — domain masrafın yok.',
         publicLink: _repairedPublicLink,
       );
+      // TEK ASİSTAN — SERT DEVİR YOK (C2).
+      //
+      // Burası eskiden link verip "VixRex rehberinde devam et" diyordu:
+      // kullanıcı başka bir ekrana düşüyor, aynı Vixrex'le konuşmaya devam
+      // ettiğini hissetmiyordu. Artık aynı asistan vitrini kendisi açıyor
+      // ve birlikte devam ediyor.
       _pushBot(
-        'Sırada görünüm ve ürünler var.\n'
-        'Kapak şablonunu seç; galeri, açıklama, ürün ve fiş tarayıcı '
-        'için VixRex rehberinde devam et.',
+        'Şimdi birlikte güzelleştirelim.\n'
+        'Vitrinini açıyorum — değiştirmek istediğin yazıya tıkla, ben '
+        'oradan hallederim. Kapak görselini de kategorine özel hazır '
+        'görsellerden seçebilirsin.',
       );
     } catch (e) {
       if (!mounted) return;
@@ -432,6 +476,37 @@ class _VixRexOnboardingChatScreenState
     final raw = _publicLink?.trim() ?? '';
     if (raw.isEmpty) return null;
     return PublicSiteConfig.repairPublicLink(raw);
+  }
+
+  /// Vitrini SAHİP olarak açar — yani Vixrex Asistan'lı hâliyle.
+  ///
+  /// Düz yayın linki müşteri görünümüdür; orada asistan yoktur ve esnaf
+  /// "hani birlikte düzenleyecektik" diye kalır. Sahip oturumu kısa
+  /// ömürlü tek kullanımlık kodla açılır (openOwnerPreview).
+  Future<void> _openOwnerWorkspace() async {
+    setState(() => _busy = true);
+    try {
+      final owner = await _controller.openOwnerPreview();
+      if (!mounted) return;
+      final uri = Uri.tryParse(owner.url);
+      if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
+        _pushBot('Vitrin açılamadı. Aşağıdaki linkten kendin açabilirsin.');
+        return;
+      }
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && mounted) {
+        _pushBot('Tarayıcı açılamadı. Aşağıdaki linkten kendin açabilirsin.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _pushBot(
+        'Vitrini düzenleme modunda açamadım. Aşağıdaki linkten görüntüleyebilir, '
+        'sonra Vitrinim sekmesinden Önizle ile tekrar deneyebilirsin.',
+      );
+      if (kDebugMode) debugPrint('openOwnerPreview failed: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _openPublicLink() async {
@@ -678,6 +753,59 @@ class _VixRexOnboardingChatScreenState
               ],
             ),
           ],
+          // Kategori seçimi — sohbetin içinde, ayrı ekrana götürmeden.
+          if (_step == _OnboardingStep.category) ...[
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text(
+                'İşini seç',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.mutedText,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (final kategori in BusinessCategoryConfig.categories)
+                      InkWell(
+                        onTap:
+                            _busy ? null : () => _selectCategory(kategori.label),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Text(
+                            kategori.label,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.darkText,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           if (_step == _OnboardingStep.legal) ...[
             LegalConsentSection(
               canAccept: !_controller.isLoadingLegalDocuments,
@@ -765,10 +893,27 @@ class _VixRexOnboardingChatScreenState
                 ),
               ],
             ),
-          if (_step == _OnboardingStep.done)
-            _primaryButton('Vixrex ile geliştir', () {
-              _navigateAfterHandoff(initialIndex: 2);
-            }),
+          // TEK ASİSTAN (C2): birincil yol vitrini AÇIP birlikte devam
+          // etmek. Manuel panel ikincil kalıyor — silinmedi, yerinde
+          // duruyor (VIXREX_RULES §1) ama artık varsayılan değil.
+          if (_step == _OnboardingStep.done) ...[
+            _primaryButton(
+              _busy ? 'Vitrinin açılıyor…' : 'Vitrinimi birlikte düzenleyelim',
+              _busy ? null : () => _openOwnerWorkspace(),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => _navigateAfterHandoff(initialIndex: 2),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.mutedText,
+                minimumSize: const Size.fromHeight(40),
+              ),
+              child: const Text(
+                'Detaylı formu aç',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+          ],
           if (_step == _OnboardingStep.publishing)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),

@@ -87,7 +87,7 @@ describe("panel — yayınla / vazgeç sözleşmesi", () => {
     expect(panelSource).toContain("Evet, sil");
     expect(panelSource).toContain("Vazgeç");
     expect(panelSource).toContain(
-      "Yaptığınız tüm değişiklikler silinecek ve vitrin son yayınlanan hâline dönecek. Emin misiniz?"
+      "Yaptığın tüm değişiklikler silinecek ve vitrin son yayınlanan hâline dönecek. Emin misin?"
     );
   });
 
@@ -98,7 +98,7 @@ describe("panel — yayınla / vazgeç sözleşmesi", () => {
 
   it("başarılı yayın ve silme sonrası sayfa tazelenir", () => {
     expect(panelSource).toContain(
-      "Vitrininiz yayınlandı. Müşterileriniz artık yeni hâlini görüyor."
+      "Vitrinin yayınlandı. Müşterilerin artık yeni hâlini görüyor."
     );
     expect(panelSource).toContain(
       "Değişiklikler silindi. Vitrin son yayınlanan hâlinde."

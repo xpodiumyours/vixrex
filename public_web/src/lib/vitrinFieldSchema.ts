@@ -113,6 +113,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "kategori",
     bolum: "hero",
     maxUzunluk: 40,
+    zorunlu: true,
     // Tek kaynak vitrinProfile.ts — ayrı liste tutulmaz.
     secenekler: PROFILES.map((p) => p.label),
   },
@@ -154,6 +155,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     etiket: "WhatsApp Numarası",
     kolon: "whatsapp",
     bolum: "contact",
+    zorunlu: true,
   },
   {
     anahtar: "telefon",
@@ -176,6 +178,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     etiket: "Açık Adres",
     kolon: "address",
     bolum: "contact",
+    zorunlu: true,
     maxUzunluk: 200,
   },
   {

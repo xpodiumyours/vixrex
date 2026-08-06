@@ -24,7 +24,13 @@ class RecaptchaService {
     }
 
     try {
-      final token = await requestRecaptchaToken(normalizedAction);
+      // İKİNCİ EMNİYET. Asıl süre sınırı web/index.html içindeki köprüde
+      // (3 sn). Burası köprünün kendisi hiç cevap vermezse devreye girer —
+      // fiş alma işlemi giriş akışının önünde ASLA duramaz.
+      final token = await requestRecaptchaToken(normalizedAction).timeout(
+        const Duration(seconds: 4),
+        onTimeout: () => null,
+      );
       if (token != null && token.isNotEmpty) {
         _cache[normalizedAction] = (
           token: token,

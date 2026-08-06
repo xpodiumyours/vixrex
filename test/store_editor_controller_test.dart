@@ -259,8 +259,15 @@ void main() {
     );
 
     test(
-      'fetchLocation accepts approximate web GPS and still matches il/ilçe',
+      'fetchLocation YAKLAŞIK konumu REDDEDER — koordinat yazılmaz',
       () async {
+        // 2026-08-06 ürün kararı: konum en fazla 10 metre sapmayla kabul
+        // edilir. Bu test eskiden tersini kilitliyordu ("accepts approximate
+        // web GPS") ve masaüstünde kilometrelerce sapmış konum sessizce
+        // kaydediliyordu — esnaf yanlış konumla vitrin yayınlıyordu.
+        //
+        // Vitrinin işi "yakınındaki dükkânı" bulmak. Yanlış pin müşteriyi
+        // yanlış sokağa gönderir; yokluğundan beterdir.
         final controller = StoreEditorController(
           storage: storageService,
           locationService: FakeLocationService(useApproximate: true),
@@ -270,10 +277,19 @@ void main() {
         await controller.initialize(null);
         await controller.triggerFetchLocation();
 
-        expect(controller.latitude, 41.0082);
-        expect(controller.longitude, 28.9784);
-        expect(controller.selectedProvinceName, 'İstanbul');
-        expect(controller.data.districtName, 'Kadıköy');
+        // Koordinat YAZILMAZ.
+        expect(controller.latitude, isNull);
+        expect(controller.longitude, isNull);
+
+        // Adres de çözülmez, il/ilçe otomatik doldurulmaz.
+        expect(controller.data.districtName, isEmpty);
+
+        // Kullanıcı neden kabul edilmediğini ve ne yapacağını öğrenir.
+        expect(controller.locationStatusMessage, isNotNull);
+        expect(
+          controller.locationStatusMessage,
+          contains('TELEFONDAN'),
+        );
       },
     );
 

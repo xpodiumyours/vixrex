@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
 import { hazirlikRaporu } from "@/lib/vitrinReadiness";
+import { resolveVitrinProfile } from "@/lib/vitrinProfile";
+import { useCanliVitrinSenkron } from "@/lib/canliVitrinSenkron";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9).
 //
@@ -29,16 +31,34 @@ interface Mesaj {
   metin: string;
 }
 
+interface HazirGorsel {
+  image_url: string;
+  title?: string | null;
+}
+
+/** Hangi alan hangi tür hazır görsele karşılık geliyor. */
+const GORSEL_TURU: Record<string, "cover" | "logo_placeholder" | "gallery" | "product"> = {
+  kapakGorseli: "cover",
+  logo: "logo_placeholder",
+  hakkindaGorsel: "gallery",
+  bantGorsel: "product",
+};
+
 const VURGU_SINIFI = "vixrex-secili-alan";
 
 export default function OwnerAssistantPanel({ slug, draftData }: Props) {
   const router = useRouter();
   const rapor = useMemo(() => hazirlikRaporu(draftData), [draftData]);
 
+  // Uygulamadan yayınlanan değişiklik bu sekmeye anında düşsün.
+  useCanliVitrinSenkron(slug, true);
+
   const [acik, setAcik] = useState(false);
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [seciliAlan, setSeciliAlan] = useState<VitrinField | null>(null);
   const [giris, setGiris] = useState("");
+  const [hazirGorseller, setHazirGorseller] = useState<HazirGorsel[]>([]);
+  const [hazirYukleniyor, setHazirYukleniyor] = useState(false);
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [yayinlaniyor, setYayinlaniyor] = useState(false);
   const [silmeOnayi, setSilmeOnayi] = useState(false);
@@ -61,13 +81,13 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
   useEffect(() => {
     if (mesajlar.length > 0) return;
     const selam = rapor.temelTamam
-      ? `Vitrininiz yayına hazır görünüyor. Doluluk: %${rapor.yuzde}.`
-      : `Vitrininizin doluluk oranı %${rapor.yuzde}. Birkaç alan eksik.`;
+      ? `Vitrinin yayına hazır görünüyor. Doluluk: %${rapor.yuzde}.`
+      : `Vitrininin doluluk oranı %${rapor.yuzde}. Birkaç alan eksik.`;
     mesajEkle("asistan", selam);
     if (rapor.sonrakiAdim) mesajEkle("asistan", rapor.sonrakiAdim);
     mesajEkle(
       "asistan",
-      "Değiştirmek istediğiniz yazıya vitrinde tıklayın — buradan düzenleriz."
+      "Değiştirmek istediğin yazıya vitrinde tıkla — buradan düzenleriz."
     );
   }, [mesajlar.length, rapor, mesajEkle]);
 
@@ -106,7 +126,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       setAcik(true);
       mesajEkle(
         "asistan",
-        `"${alan.etiket}" alanını seçtiniz. Yeni değeri yazıp gönderin.${
+        `"${alan.etiket}" alanını seçtin. Yeni değeri yaz ve gönder.${
           alan.ipucu ? ` (${alan.ipucu})` : ""
         }`
       );
@@ -182,7 +202,80 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       vurguyuTemizle();
       router.refresh();
     } catch {
-      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+    } finally {
+      setKaydediliyor(false);
+    }
+  };
+
+  // Kategorinin hazır görsellerini getirir. Kategori anahtarı
+  // vitrinProfile'dan çözülür — veritabanındaki category_key ile birebir
+  // aynı (butik, kuafor, kafe_lokanta ...). 19 kategori × 10 görsel.
+  const hazirGorselleriAc = async () => {
+    if (!seciliAlan || seciliAlan.tip !== "gorsel") return;
+
+    if (hazirGorseller.length > 0) {
+      setHazirGorseller([]); // ikinci tıklamada kapanır
+      return;
+    }
+
+    setHazirYukleniyor(true);
+    try {
+      const profil = resolveVitrinProfile(
+        (draftData.kategori as string) ?? null,
+        (draftData.business_type as string) ?? null
+      );
+      const yanit = await fetch(
+        `/api/category-images?category=${encodeURIComponent(profil.id)}`
+      );
+      const govde = await yanit.json();
+
+      const tur = GORSEL_TURU[seciliAlan.anahtar] ?? "gallery";
+      const liste: HazirGorsel[] = govde?.images?.[tur] ?? [];
+
+      if (liste.length === 0) {
+        mesajEkle(
+          "asistan",
+          `${profil.label} kategorisi için hazır görsel bulunamadı. Kendi fotoğrafını yükleyebilirsin.`
+        );
+        return;
+      }
+      setHazirGorseller(liste);
+    } catch {
+      mesajEkle("asistan", "Hazır görseller getirilemedi. Tekrar dene.");
+    } finally {
+      setHazirYukleniyor(false);
+    }
+  };
+
+  // Seçilen hazır görsel NORMAL alan kayıt yolundan geçer — yükleme
+  // yolundan değil. Doğrulama ve yetki tek yerde kalır.
+  const hazirGorselSec = async (url: string) => {
+    if (!seciliAlan) return;
+    const alan = seciliAlan;
+
+    mesajEkle("kullanici", "🖼️ hazır görsel seçildi");
+    setKaydediliyor(true);
+    try {
+      const yanit = await fetch("/api/owner-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, anahtar: alan.anahtar, deger: url }),
+      });
+      const govde = await yanit.json();
+
+      if (!yanit.ok) {
+        mesajEkle("asistan", govde?.hata ?? "Görsel kaydedilemedi.");
+        return;
+      }
+
+      mesajEkle("asistan", `${alan.etiket} güncellendi.`);
+      setHazirGorseller([]);
+      setSeciliAlan(null);
+      vurguyuTemizle();
+      router.refresh();
+    } catch {
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setKaydediliyor(false);
     }
@@ -196,7 +289,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       if (metin) mesajEkle("kullanici", metin);
       mesajEkle(
         "asistan",
-        "Hangi alanı değiştireceğinizi bilmiyorum. Vitrinde düzenlemek istediğiniz yazıya tıklayın, sonra yeni değeri yazın."
+        "Hangi alanı değiştireceğini bilmiyorum. Vitrinde düzenlemek istediğin yazıya tıkla, sonra yeni değeri yaz."
       );
       setGiris("");
       return;
@@ -233,7 +326,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       vurguyuTemizle();
       router.refresh();
     } catch {
-      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setKaydediliyor(false);
     }
@@ -253,17 +346,17 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
 
       if (!yanit.ok) {
         // Sunucunun mesajı OLDUĞU GİBİ gösterilir; kendi metnimiz uydurulmaz.
-        mesajEkle("asistan", govde?.hata ?? "Yayınlanamadı. Lütfen tekrar deneyin.");
+        mesajEkle("asistan", govde?.hata ?? "Yayınlanamadı. Lütfen tekrar dene.");
         return;
       }
 
       mesajEkle(
         "asistan",
-        "Vitrininiz yayınlandı. Müşterileriniz artık yeni hâlini görüyor."
+        "Vitrinin yayınlandı. Müşterilerin artık yeni hâlini görüyor."
       );
       router.refresh();
     } catch {
-      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setYayinlaniyor(false);
     }
@@ -274,7 +367,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
   const silmeOnayla = () => {
     mesajEkle(
       "asistan",
-      "Yaptığınız tüm değişiklikler silinecek ve vitrin son yayınlanan hâline dönecek. Emin misiniz?"
+      "Yaptığın tüm değişiklikler silinecek ve vitrin son yayınlanan hâline dönecek. Emin misin?"
     );
     setSilmeOnayi(true);
   };
@@ -302,7 +395,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       );
       router.refresh();
     } catch {
-      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setYayinlaniyor(false);
     }
@@ -420,6 +513,41 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
                     }}
                   />
                 </label>
+                {/* HAZIR GÖRSELLER — kütüphane BURADA açılır.
+                    Eskiden "hazır şablon seç" denince kütüphane Flutter
+                    manuel panelinde açılıyordu; esnaf o sırada yayındaki
+                    vitrinini düzenliyordu, yani yanlış taraftaydı. */}
+                <button
+                  type="button"
+                  onClick={() => void hazirGorselleriAc()}
+                  disabled={kaydediliyor}
+                  className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2.5 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:opacity-50"
+                >
+                  🖼️ {hazirYukleniyor ? "Getiriliyor…" : "Hazır görsellerden seç"}
+                </button>
+
+                {hazirGorseller.length > 0 && (
+                  <div className="mt-2 grid max-h-44 grid-cols-3 gap-2 overflow-y-auto rounded-lg border border-white/10 bg-black/20 p-2">
+                    {hazirGorseller.map((g) => (
+                      <button
+                        key={g.image_url}
+                        type="button"
+                        disabled={kaydediliyor}
+                        onClick={() => void hazirGorselSec(g.image_url)}
+                        title={g.title ?? ""}
+                        className="group relative aspect-square overflow-hidden rounded-md border border-white/10 transition hover:border-blue-500/60 disabled:opacity-50"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={g.image_url}
+                          alt={g.title ?? "Hazır görsel"}
+                          className="h-full w-full object-cover transition group-hover:scale-105"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <p className="mt-2 text-center text-[11px] text-slate-500">
                   JPG, PNG veya WebP · en fazla 5 MB
                 </p>
@@ -466,7 +594,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
                 placeholder={
                   seciliAlan
                     ? "Yeni değeri yazın…"
-                    : "Vitrinde bir yazıya tıklayın…"
+                    : "Vitrinde bir yazıya tıkla…"
                 }
                 className="flex-1 resize-none rounded-lg border border-white/10 bg-slate-900/70 px-3 py-2 text-xs text-white outline-none focus:border-blue-500/60"
               />

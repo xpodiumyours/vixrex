@@ -9,6 +9,9 @@ class PublicLinkCard extends StatelessWidget {
   final VoidCallback onCopyLink;
   final VoidCallback onPreview;
   final VoidCallback? onShareLink;
+
+  /// Yayındaki vitrinin QR kodunu gösterir. Yalnız yayındayken anlamlı.
+  final VoidCallback? onShowQr;
   final VoidCallback? onOpenLiveLink;
   final VoidCallback? onScrollToPublish;
 
@@ -19,6 +22,7 @@ class PublicLinkCard extends StatelessWidget {
     required this.onCopyLink,
     required this.onPreview,
     this.onShareLink,
+    this.onShowQr,
     this.onOpenLiveLink,
     this.onScrollToPublish,
   });
@@ -155,6 +159,16 @@ class PublicLinkCard extends StatelessWidget {
                   icon: Icons.ios_share_rounded,
                   label: 'Paylaş',
                   onTap: onShareLink!,
+                ),
+              // QR: eski PublishActionsSection'da vardı, yeni tasarıma
+              // taşınmamıştı. Esnafın tezgâha yapıştıracağı şey bu —
+              // kiralama vaadinde de "özel paylaşım linki ve QR kod"
+              // diye geçiyor.
+              if (isLive && onShowQr != null)
+                _ActionChip(
+                  icon: Icons.qr_code_2_rounded,
+                  label: 'QR Göster',
+                  onTap: onShowQr!,
                 ),
               if (!isLive && onScrollToPublish != null)
                 _ActionChip(

@@ -21,7 +21,10 @@ class VixRexProgressCard extends StatelessWidget {
     final completedSteps = completedRequiredSteps +
         (isPublished ? 1 : 0) +
         (isPublished && hasShared ? 1 : 0);
-    const totalSteps = VixRexProfileSnapshot.requiredStepCount + 2;
+    // Toplam adım sayısı ŞEMADAN gelir; elle sabit tutulmaz.
+    // Şemaya zorunlu alan eklenince yüzde kendiliğinden doğru hesaplanır.
+    // +2 → yayınlama ve paylaşma (alan değil, akış aşaması).
+    final totalSteps = (snapshot?.totalRequiredStepCount ?? 5) + 2;
     final progress = completedSteps / totalSteps;
     final phaseLabel = switch (phase) {
       VixRexJourneyPhase.setup => 'Kurulum',

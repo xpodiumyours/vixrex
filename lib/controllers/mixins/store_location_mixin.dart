@@ -90,25 +90,32 @@ mixin StoreLocationMixin on ChangeNotifier {
         return;
       }
 
-      _locationStatus =
-          result.hasApproximatePosition
-              ? StoreLocationStatus.approximate
-              : StoreLocationStatus.success;
+      // TEK KURAL: 10 metreden kötü konum KAYDEDİLMEZ.
+      //
+      // Bu kontrol eskiden yalnız location_editor_section.dart'ta vardı;
+      // GPS düğmesi ise BU yoldan geçiyordu ve sapma ne olursa olsun
+      // koordinatı yazıyordu (yalnız 2 km üstünde adres çözmeyi bırakıyordu).
+      // Yani 900 metrelik sapma sessizce kabul ediliyordu.
+      //
+      // İki ayrı yerde iki ayrı kural olması hatanın kendisiydi. Karar
+      // tek yerde: LocationService.maxAcceptedAccuracyMeters.
+      //
+      // Neden bu kadar katı: vitrinin işi "yakınındaki dükkânı" bulmak.
+      // Yanlış pin müşteriyi yanlış sokağa gönderir — yokluğundan beterdir.
+      if (pos.accuracy > LocationService.maxAcceptedAccuracyMeters) {
+        _locationStatus = StoreLocationStatus.error;
+        _locationStatusMessage = LocationService.buildAccuracyMessage(
+          pos.accuracy,
+        );
+        return;
+      }
+
+      _locationStatus = StoreLocationStatus.success;
       data.latitude = pos.latitude;
       data.longitude = pos.longitude;
       data.locationAccuracyMeters = pos.accuracy;
       data.locationSource = 'device';
       data.locationConsentAt = DateTime.now();
-
-      // 2 km'yi (2000 m) aşan sapmalarda adres yazmak güvenli değil
-      // (web IP tabanlı konum 20 km sapabilir). Sadece koordinat kaydedilir.
-      if (pos.accuracy > 2000) {
-        _locationStatus = StoreLocationStatus.approximate;
-        _locationStatusMessage =
-            'Konum çok geniş kapsamlı (yaklaşık ${(pos.accuracy / 1000).toStringAsFixed(0)} km sapma). '
-            'Harita pini kaydedildi, adresinizi lütfen elle girin.';
-        return;
-      }
 
       _locationStatusMessage =
           result.errorMessage ??

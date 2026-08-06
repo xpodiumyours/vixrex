@@ -33,7 +33,17 @@ class LocationResult {
 class LocationService {
   const LocationService();
 
-  static const double maxAcceptedAccuracyMeters = 30.0;
+  /// Kabul edilen en büyük sapma. Bunun üstündeki konum KULLANILMAZ.
+  ///
+  /// Neden 10: esnafın vitrini "yakınındaki dükkân" aramasında çıkacak.
+  /// Yüz metrelik sapma müşteriyi yanlış sokağa gönderir; iş kaybettirir.
+  /// Bu yüzden "yaklaşık konum" diye bir kabul yok — ya kesin, ya hiç.
+  ///
+  /// UYARI — masaüstü tarayıcıda bu eşiğe ULAŞILAMAZ. Orada konum
+  /// Wi-Fi/IP'den gelir (100 m – kilometreler). 10 metre telefon GPS'i
+  /// ister. Bu bilinçli: masaüstünde yanlış konum kaydetmektense
+  /// kullanıcıyı telefona yönlendirmek doğrudur.
+  static const double maxAcceptedAccuracyMeters = 10.0;
   static const Duration _streamWaitDuration = Duration(seconds: 10);
   static const Duration _totalTimeout = Duration(seconds: 12);
 
@@ -91,9 +101,11 @@ class LocationService {
     if (accuracyMeters <= maxAcceptedAccuracyMeters) {
       return 'Konum basariyla alindi. Hata payi: yaklasik $accuracyText m.';
     }
-    return 'Konum yaklasik bulundu. Hata payi: yaklasik $accuracyText m. '
-        '30 metre alti dogruluk icin acik alanda bekleyin, Wi-Fi acik deneyin '
-        'veya Google Maps uzerinden kontrol edin.';
+    return 'Konum yeterince kesin degil: yaklasik $accuracyText m sapma. '
+        'Musteri seni bulamayacagi icin bu konum kaydedilmedi. '
+        'Vixrex\'i TELEFONDAN ac ve acik alanda tekrar dene — bilgisayar '
+        'tarayicisi konumu Wi-Fi uzerinden tahmin ettigi icin bu kadar '
+        'sapiyor. Dilersen il, ilce ve adresi elle de yazabilirsin.';
   }
 
   static Uri buildGoogleMapsSearchUri(double latitude, double longitude) {

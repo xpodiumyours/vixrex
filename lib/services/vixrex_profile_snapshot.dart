@@ -1,10 +1,25 @@
+import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/auto_fill_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 // ─── Eksik alan enum'u ────────────────────────────────────────────────────────
-enum VixRexNextStep { name, whatsapp, address, legal, publish, share }
+/// Kurulum akışındaki duraklar.
+///
+/// Alan durakları (name, category, whatsapp, address) ŞEMADAN gelir —
+/// hangisinin zorunlu olduğu ve hangi sırayla sorulacağı
+/// lib/config/vitrin_alanlari.g.dart içinde tanımlıdır.
+/// legal / publish / share alan değil, akış aşamasıdır.
+enum VixRexNextStep {
+  name,
+  category,
+  whatsapp,
+  address,
+  legal,
+  publish,
+  share,
+}
 
 /// VixRex'in kullanıcıya göstereceği rehberlik aşaması.
 enum VixRexJourneyPhase { setup, publish, share, improve }
@@ -14,6 +29,8 @@ extension VixRexNextStepLabel on VixRexNextStep {
     switch (this) {
       case VixRexNextStep.name:
         return 'İşletme adı';
+      case VixRexNextStep.category:
+        return 'İşletme kategorisi';
       case VixRexNextStep.whatsapp:
         return 'WhatsApp numarası';
       case VixRexNextStep.address:
@@ -121,10 +138,55 @@ class VixRexProfileSnapshot {
   // ── Sıradaki Zorunlu Adım ─────────────────────────────────────────────────
 
   /// Yalnızca ilk eksik alanı döndürür.
+  /// Sıradaki eksik ZORUNLU alan — sıra ve küme ŞEMADAN gelir.
+  ///
+  /// Buraya kadar zorunlu alanlar elle sayılıyordu (ad → WhatsApp → adres).
+  /// Next.js tarafı ise kendi listesini tutuyordu ve kategoriyi de zorunlu
+  /// sayıyordu. İki farklı tanım yüzünden sohbetle açılan her vitrin
+  /// kategorisiz ("Diğer") kalıyordu.
+  ///
+  /// Artık tek kaynak var: şemadaki `zorunlu` işareti. Yeni bir alanı
+  /// zorunlu yapmak için şemaya tek satır yeter; burası kendiliğinden
+  /// öğrenir.
+  VitrinAlani? get sonrakiEksikZorunluAlan {
+    for (final alan in zorunluAlanlar) {
+      if (!_alanDolu(alan.anahtar)) return alan;
+    }
+    return null;
+  }
+
+  bool _alanDolu(String anahtar) {
+    switch (anahtar) {
+      case 'isletmeAdi':
+        return nameCompleted;
+      case 'whatsapp':
+        return whatsappCompleted;
+      case 'adres':
+        return addressCompleted;
+      case 'kategori':
+        return categoryCompleted;
+      default:
+        // Şemaya yeni zorunlu alan eklenmiş ama buraya bağlanmamış.
+        // Akışı tıkamamak için dolu sayılır; sözleşme testi bu boşluğu
+        // yakalar ve bağlanmasını zorunlu kılar.
+        return true;
+    }
+  }
+
   VixRexNextStep get nextMissingField {
-    if (!nameCompleted) return VixRexNextStep.name;
-    if (!whatsappCompleted) return VixRexNextStep.whatsapp;
-    if (!addressCompleted) return VixRexNextStep.address;
+    final eksik = sonrakiEksikZorunluAlan;
+    if (eksik != null) {
+      switch (eksik.anahtar) {
+        case 'isletmeAdi':
+          return VixRexNextStep.name;
+        case 'kategori':
+          return VixRexNextStep.category;
+        case 'whatsapp':
+          return VixRexNextStep.whatsapp;
+        case 'adres':
+          return VixRexNextStep.address;
+      }
+    }
     if (!legalCompleted) return VixRexNextStep.legal;
     if (!isPublished) return VixRexNextStep.publish;
     return VixRexNextStep.share;
@@ -137,29 +199,42 @@ class VixRexProfileSnapshot {
       category.trim().toLowerCase() != 'diger' &&
       category.trim().toLowerCase() != 'diğer';
 
-  bool get isReadyToPublish =>
-      nameCompleted &&
-      whatsappCompleted &&
-      addressCompleted &&
-      legalCompleted &&
-      !isPublished;
+  bool get isReadyToPublish => areRequiredFieldsCompleted && !isPublished;
 
+  /// Zorunlu alanların HEPSİ dolu mu — küme şemadan gelir.
+  ///
+  /// Yasal onay şema alanı değil, akış aşamasıdır: onu veritabanı
+  /// tetikleyicisi zorunlu tutuyor (PUBLICATION_CONSENT_REQUIRED).
+  /// Bu yüzden ayrıca eklenir.
   bool get areRequiredFieldsCompleted =>
-      nameCompleted && whatsappCompleted && addressCompleted && legalCompleted;
+      zorunluAlanlar.every((a) => _alanDolu(a.anahtar)) && legalCompleted;
 
+  /// Tamamlanan zorunlu adım sayısı — şemadaki alanlar + yasal onay.
+  /// Elle sayı tutulmaz; şemaya zorunlu alan eklenince kendiliğinden artar.
   int get completedRequiredStepCount =>
-      [
-        nameCompleted,
-        whatsappCompleted,
-        addressCompleted,
-        legalCompleted,
-      ].where((completed) => completed).length;
+      zorunluAlanlar.where((a) => _alanDolu(a.anahtar)).length +
+      (legalCompleted ? 1 : 0);
+
+  /// Toplam zorunlu adım sayısı — şemadan + yasal onay.
+  int get totalRequiredStepCount => zorunluAlanlar.length + 1;
 
   VixRexJourneyPhase journeyPhase({required bool hasShared}) {
+    // YAYIN ÖNCE SORULUR.
+    //
+    // Eskiden önce "zorunlu alanlar tamam mı" bakılıyordu. Kategori zorunlu
+    // olunca (2026-08-06) daha önce yayınlanmış vitrinler "kurulum"
+    // aşamasına düştü ve asistan zaten yayında olana "yayınla" demeye
+    // başladı.
+    //
+    // Yayınlanmış bir vitrin kurulumu geçmiştir. Eksik alanı varsa bu
+    // geliştirme işidir, kurulum değil.
+    if (isPublished) {
+      return hasShared
+          ? VixRexJourneyPhase.improve
+          : VixRexJourneyPhase.share;
+    }
     if (!areRequiredFieldsCompleted) return VixRexJourneyPhase.setup;
-    if (!isPublished) return VixRexJourneyPhase.publish;
-    if (!hasShared) return VixRexJourneyPhase.share;
-    return VixRexJourneyPhase.improve;
+    return VixRexJourneyPhase.publish;
   }
 }
 

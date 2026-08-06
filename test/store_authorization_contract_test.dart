@@ -34,7 +34,7 @@ void main() {
     'migration keeps guest credentials write-only and locks booking writes',
     () {
       final migration = read(
-        'supabase/migrations/20260717_close_store_authorization_gap.sql',
+        'supabase/migrations_arsiv/20260717000002_close_store_authorization_gap.sql',
       );
 
       expect(
@@ -58,7 +58,7 @@ void main() {
 
   test('forward migration repairs owner-or-token store deletion', () {
     final migration = read(
-      'supabase/migrations/20260718210900_fix_delete_store_with_token.sql',
+      'supabase/migrations_arsiv/20260718210900_fix_delete_store_with_token.sql',
     );
 
     expect(migration, contains('user_id = auth.uid()'));
