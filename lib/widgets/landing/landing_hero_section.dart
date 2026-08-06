@@ -583,13 +583,20 @@ class LandingHeroSection extends StatelessWidget {
                     ),
                   ),
                   child: const Row(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Ücretsiz Vitrinimi Hazırla',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
+                      // Flexible: dar ekranda buton sıkışsa bile satır taşmasın.
+                      // Taşma testi kırmızıya düşürüyordu (RenderFlex overflow).
+                      Flexible(
+                        child: Text(
+                          'Ücretsiz Vitrinimi Hazırla',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                       SizedBox(width: 8),

@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "type": "file",
+      "title": "★ Başlangıç",
+      "path": "docs/Vixrex Baslangic.md"
+    },
+    {
+      "type": "file",
+      "title": "Kurallar",
+      "path": "VIXREX_RULES.md"
+    },
+    {
+      "type": "file",
+      "title": "Plan",
+      "path": "implementation_plan.md"
+    },
+    {
+      "type": "file",
+      "title": "Yayın kontrol listesi",
+      "path": "docs/yayina-cikis-kontrol-listesi.md"
+    }
+  ]
+}

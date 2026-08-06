@@ -1,7 +1,9 @@
 import { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import {
   deriveCollections,
   getProductUrlSlug,
@@ -22,12 +24,12 @@ import {
 } from "@/lib/workingHours";
 import ProductCatalog from "./ProductCatalog";
 import VitrinProfileView from "./VitrinProfileView";
-import PreviewEditorPanel from "./PreviewEditorPanel";
+import OwnerWorkspaceShell, { WorkingDraftData } from "./OwnerWorkspaceShell";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 
 export const revalidate = 60;
-// generateStaticParams yalnızca yayınlı slug'ları önceden üretiyor. Taslak/
-// demo slug'ları (preview_token ile) bu listede değil ve searchParams okuyor
+// generateStaticParams yalnızca yayınlı slug'ları önceden üretiyor. Sahip
+// oturumu çerezi okunduğu için sayfa isteğe göre değişiyor
 // — Next.js bu ikisini aynı anda "statik" modda çalıştırmaya çalışınca
 // DYNAMIC_SERVER_USAGE hatasıyla çöküyordu (canlıda doğrulandı). Route'u
 // tamamen dinamik yapmak bu çakışmayı ortadan kaldırıyor; asıl veri sorgusu
@@ -46,7 +48,7 @@ export async function generateStaticParams() {
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ preview_token?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 interface GalleryItem {
@@ -253,30 +255,31 @@ const getStoreData = (slug: string) =>
     { tags: [`store-${slug}`, `products-${slug}`], revalidate: 60 }
   )();
 
-/// Taslak (yayınlanmamış) önizleme: edit_token doğrulaması RPC içinde yapılır,
-/// public is_published=true filtresine hiç dokunmaz. Asla cache'lenmez —
-/// esnaf her kaydettiğinde anında görmeli.
-async function getStorePreviewData(slug: string, editToken: string) {
-  const { data, error } = await supabase.rpc("get_store_preview", {
-    p_slug: slug,
-    p_edit_token: editToken,
+// getStorePreviewData KALDIRILDI (Commit 12): kalıcı edit_token ile açılan
+// önizleme yolu tamamen kapatıldı. Taslağı görmenin tek yolu doğrulanmış
+// sahip oturumudur — aşağıdaki getWorkingDraft.
+
+/// Sahip çalışma alanı: get_working_draft_for_session RPC'si ile çalışma taslağını getirir.
+/// HMAC çerezi doğrulanır; session_token çerezden okunur; yetki owner_sessions tablosundan gelir.
+async function getWorkingDraft(sessionToken: string): Promise<WorkingDraftData | null> {
+  const { data, error } = await supabase.rpc("get_working_draft_for_session", {
+    p_session_token: sessionToken,
   });
 
   if (error) {
-    console.error(`Preview store query failed for slug=${slug}:`, error);
+    console.error(`Working draft query failed:`, error);
     return null;
   }
   if (!data) return null;
 
-  return _buildStoreDataBundle(data as unknown as PublicStoreRow);
+  return data as unknown as WorkingDraftData;
 }
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
-  const searchParams = await props.searchParams;
-  const previewToken = searchParams.preview_token?.trim();
-
-  if (previewToken) {
+  const ownerToken = (await cookies()).get(OWNER_SESSION_COOKIE)?.value;
+  const ownerSession = verifyOwnerSession(ownerToken, params.slug);
+  if (ownerSession) {
     return { robots: { index: false, follow: false } };
   }
 
@@ -321,13 +324,57 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
 export default async function StorePage(props: PageProps) {
   const params = await props.params;
-  const searchParams = await props.searchParams;
-  const previewToken = searchParams.preview_token?.trim();
-  const isPreviewMode = Boolean(previewToken);
 
-  const data = isPreviewMode
-    ? await getStorePreviewData(params.slug, previewToken!)
-    : await getStoreData(params.slug);
+  const cookieStore = await cookies();
+  // DİKKAT: bu çerezin TAMAMI (imzalı paket), oturum tokenının kendisi DEĞİL.
+  // Gerçek 64 hex karakterlik token paketin içindedir ve yalnız
+  // verifyOwnerSession() ile çıkarılır. İkisine aynı ad verilirse RPC'ye
+  // yanlış değer gider ve INVALID_SESSION_TOKEN alınır.
+  const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
+  const ownerSession = ownerSessionCookie
+    ? verifyOwnerSession(ownerSessionCookie, params.slug)
+    : null;
+  let isOwnerMode = Boolean(ownerSession);
+
+  let data;
+  let draft: WorkingDraftData | null = null;
+  let sessionExpiresAt: number | null = null;
+
+  if (isOwnerMode && ownerSession && ownerSessionCookie) {
+    // RPC'ye çerez değil, paketin içinden çıkarılan gerçek token gider.
+    draft = await getWorkingDraft(ownerSession.sessionToken);
+
+    // Fail-closed: draft yüklenemezse owner modunu kapat
+    if (!draft) {
+      isOwnerMode = false;
+    } else {
+      if (ownerSession) {
+        try {
+          const payloadPart = ownerSessionCookie.split(".")[0];
+          const decoded = JSON.parse(
+            Buffer.from(payloadPart.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf-8")
+          );
+          sessionExpiresAt = decoded.exp ?? null;
+        } catch {
+          sessionExpiresAt = null;
+        }
+      }
+    }
+  }
+
+  if (isOwnerMode && draft) {
+    data = draft?.draft_data
+      ? await _buildStoreDataBundle({
+          ...draft.draft_data,
+          id: draft.store_id,
+          slug: draft.slug,
+          is_published: true,
+        } as unknown as PublicStoreRow)
+      : await getStoreData(params.slug);
+  } else {
+    data = await getStoreData(params.slug);
+  }
+
   if (!data) {
     notFound();
   }
@@ -559,7 +606,6 @@ export default async function StorePage(props: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-
       <VitrinProfileView
         storeName={store.name}
         storeSlug={store.slug}
@@ -609,19 +655,64 @@ export default async function StorePage(props: PageProps) {
             storeInitial={store.name?.trim()?.[0]?.toUpperCase() || "V"}
           />
         }
-        isPreviewMode={isPreviewMode}
+        isPreviewMode={isOwnerMode}
+        ownerMode={isOwnerMode}
       />
-      {isPreviewMode && (
-        <PreviewEditorPanel
-          slug={store.slug}
-          editToken={previewToken!}
-          initialName={store.name}
-          initialWhatsapp={store.whatsapp || ""}
-          initialAddress={store.address || ""}
-          initialDescription={store.description || store.corporate_bio || ""}
-          initialKategori={store.kategori || ""}
+      {isOwnerMode ? (
+        <OwnerWorkspaceShell
+          storeName={store.name}
+          storeSlug={store.slug}
+          kategori={store.kategori}
+          businessType={store.business_type}
+          status={displayStatus}
+          isClosed={!openState.isOpen}
+          logoUrl={store.logo_url}
+          heroImage={heroImage}
+          heroBadge={displayHeroBadge || null}
+          description={displayDescription}
+          corporateBio={store.corporate_bio}
+          address={displayAddress}
+          phone={displayPhone || null}
+          phoneUrl={phoneUrl}
+          email={displayEmail || null}
+          featuredBanner={featuredBanner}
+          aboutSection={aboutSection}
+          gallerySection={gallerySection}
+          faqItems={faqItems}
+          showStorefrontRating={showStorefrontRating}
+          ratingScore={ratingScore}
+          reviewCount={reviewCount}
+          workingHoursToday={workingHoursToday}
+          workingHoursWeek={workingHoursWeek}
+          googleBusinessLink={store.google_business_link}
+          publicUrl={publicUrl}
+          whatsappUrl={whatsappActionUrl}
+          instagramUrl={instagramUrl}
+          websiteUrl={websiteUrl}
+          mapsUrl={mapsUrl}
+          mapsEmbedUrl={mapsEmbedUrl}
+          referencesUrl={referencesUrl}
+          isBookingEnabled={isBookingEnabled}
+          profile={vitrinProfile}
+          collections={collections}
+          productCount={visibleProducts.length}
+          galleryItems={gallerySection.items}
+          marketplaceLinks={marketplaceLinks}
+          articles={articles}
+          catalog={
+            <ProductCatalog
+              storeSlug={store.slug}
+              products={visibleProducts}
+              categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
+              fallbackImage={store.logo_url || "/vixrex_v_crystal_mascot.png"}
+              storeInitial={store.name?.trim()?.[0]?.toUpperCase() || "V"}
+            />
+          }
+          isPreviewMode={true}
+          draft={draft}
+          sessionExpiresAt={sessionExpiresAt}
         />
-      )}
+      ) : null}
     </>
   );
 }

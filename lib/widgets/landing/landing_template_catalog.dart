@@ -11,10 +11,7 @@ import 'package:vixrex/widgets/landing/landing_template_card.dart';
 class LandingTemplateCatalog extends StatefulWidget {
   final ValueChanged<String?> onNavigateToAuth;
 
-  const LandingTemplateCatalog({
-    super.key,
-    required this.onNavigateToAuth,
-  });
+  const LandingTemplateCatalog({super.key, required this.onNavigateToAuth});
 
   @override
   State<LandingTemplateCatalog> createState() => _LandingTemplateCatalogState();
@@ -52,7 +49,9 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
     for (final cat in templateCategories) {
       setState(() => _loadingKeys.add(cat.key));
       try {
-        var imageSet = await CategoryImageService.getImagesForCategory(_dbKey(cat.key));
+        var imageSet = await CategoryImageService.getImagesForCategory(
+          _dbKey(cat.key),
+        );
         if (imageSet.totalCount == 0) {
           imageSet = CategoryImageService.getFallbackImageSet(cat.key);
         }
@@ -65,7 +64,9 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
         if (kDebugMode) debugPrint('Template load error for ${cat.key}: $e');
         if (!mounted) return;
         setState(() {
-          _imageSets[cat.key] = CategoryImageService.getFallbackImageSet(cat.key);
+          _imageSets[cat.key] = CategoryImageService.getFallbackImageSet(
+            cat.key,
+          );
           _loadingKeys.remove(cat.key);
         });
       }
@@ -111,7 +112,11 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                           color: category.color.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(category.icon, color: category.color, size: 24),
+                        child: Icon(
+                          category.icon,
+                          color: category.color,
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -143,86 +148,103 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  if (hasImages) ...[
-                    if (imageSet.coverImages.isNotEmpty) ...[
-                      const Text(
-                        'Kapak Görselleri',
-                        style: TextStyle(
-                          color: AppColors.darkText,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
+                  // Görsel bölümleri sabit yükseklikte ve sayıları kategoriye
+                  // göre değişiyor (kapak + galeri + ürün). Üçü birden varsa
+                  // sayfaya sığmıyordu. Ortayı kaydırılabilir yapmak, bölüm
+                  // sayısı ne olursa olsun taşmayı bitirir.
+                  if (hasImages)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (imageSet.coverImages.isNotEmpty) ...[
+                              const Text(
+                                'Kapak Görselleri',
+                                style: TextStyle(
+                                  color: AppColors.darkText,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                height: 120,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: imageSet.coverImages.length,
+                                  separatorBuilder:
+                                      (_, __) => const SizedBox(width: 10),
+                                  itemBuilder:
+                                      (_, i) => _ImageThumb(
+                                        url: imageSet.coverImages[i].imageUrl,
+                                        label: imageSet.coverImages[i].title,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                            if (imageSet.galleryImages.isNotEmpty) ...[
+                              const Text(
+                                'Galeri Görselleri',
+                                style: TextStyle(
+                                  color: AppColors.darkText,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                height: 120,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: imageSet.galleryImages.length,
+                                  separatorBuilder:
+                                      (_, __) => const SizedBox(width: 10),
+                                  itemBuilder:
+                                      (_, i) => _ImageThumb(
+                                        url: imageSet.galleryImages[i].imageUrl,
+                                        label: imageSet.galleryImages[i].title,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                            if (imageSet.productImages.isNotEmpty) ...[
+                              const Text(
+                                'Ürün Görselleri',
+                                style: TextStyle(
+                                  color: AppColors.darkText,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                height: 120,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: imageSet.productImages.length,
+                                  separatorBuilder:
+                                      (_, __) => const SizedBox(width: 10),
+                                  itemBuilder:
+                                      (_, i) => _ImageThumb(
+                                        url: imageSet.productImages[i].imageUrl,
+                                        label: imageSet.productImages[i].title,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 120,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: imageSet.coverImages.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 10),
-                          itemBuilder: (_, i) => _ImageThumb(
-                            url: imageSet.coverImages[i].imageUrl,
-                            label: imageSet.coverImages[i].title,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                    if (imageSet.galleryImages.isNotEmpty) ...[
-                      const Text(
-                        'Galeri Görselleri',
-                        style: TextStyle(
-                          color: AppColors.darkText,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 120,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: imageSet.galleryImages.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 10),
-                          itemBuilder: (_, i) => _ImageThumb(
-                            url: imageSet.galleryImages[i].imageUrl,
-                            label: imageSet.galleryImages[i].title,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                    if (imageSet.productImages.isNotEmpty) ...[
-                      const Text(
-                        'Ürün Görselleri',
-                        style: TextStyle(
-                          color: AppColors.darkText,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 120,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: imageSet.productImages.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 10),
-                          itemBuilder: (_, i) => _ImageThumb(
-                            url: imageSet.productImages[i].imageUrl,
-                            label: imageSet.productImages[i].title,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                  ] else if (_loadingKeys.contains(category.key)) ...[
+                    )
+                  else if (_loadingKeys.contains(category.key))
                     const Expanded(
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                  ] else ...[
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else
                     Expanded(
                       child: Center(
                         child: Column(
@@ -247,8 +269,10 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                         ),
                       ),
                     ),
-                  ],
-                  const Spacer(),
+                  // Spacer kaldırıldı: boşluğu artık yukarıdaki Expanded
+                  // alıyor. İkisi birlikteyken Spacer sıkışıp taşmaya
+                  // yol açıyordu.
+                  const SizedBox(height: 16),
                   SizedBox(
                     height: 54,
                     child: ElevatedButton.icon(
@@ -343,9 +367,10 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                 const SizedBox(height: 40),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final crossAxisCount = constraints.maxWidth > 900
-                        ? 4
-                        : constraints.maxWidth > 600
+                    final crossAxisCount =
+                        constraints.maxWidth > 900
+                            ? 4
+                            : constraints.maxWidth > 600
                             ? 3
                             : 2;
                     return GridView.builder(
@@ -361,9 +386,10 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                       itemBuilder: (context, index) {
                         final cat = templateCategories[index];
                         final imageSet = _imageSets[cat.key];
-                        final previewUrl = imageSet?.coverImages.isNotEmpty == true
-                            ? imageSet!.coverImages.first.imageUrl
-                            : null;
+                        final previewUrl =
+                            imageSet?.coverImages.isNotEmpty == true
+                                ? imageSet!.coverImages.first.imageUrl
+                                : null;
 
                         return TemplateCard(
                           category: cat,
@@ -401,12 +427,16 @@ class _ImageThumb extends StatelessWidget {
             width: 160,
             height: 120,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              width: 160,
-              height: 120,
-              color: AppColors.surfaceSoft,
-              child: const Icon(Icons.broken_image, color: AppColors.mutedText),
-            ),
+            errorBuilder:
+                (_, __, ___) => Container(
+                  width: 160,
+                  height: 120,
+                  color: AppColors.surfaceSoft,
+                  child: const Icon(
+                    Icons.broken_image,
+                    color: AppColors.mutedText,
+                  ),
+                ),
           ),
           if (label != null && label!.isNotEmpty)
             Positioned(

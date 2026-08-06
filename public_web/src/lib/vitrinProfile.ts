@@ -15,27 +15,29 @@ export interface VitrinCategoryProfile {
   ctaLabel: string;
   /** Birincil CTA sırası (max 3 gösterilir; URL yoksa atlanır) */
   primaryActions: PrimaryActionId[];
+  /** WhatsApp hazır mesajı — yoksa mesajsız düz wa.me linki gider */
+  waMesaji?: string;
 }
 
-const PROFILES: VitrinCategoryProfile[] = [
+export const PROFILES: VitrinCategoryProfile[] = [
   { id: "giyim", label: "Giyim", family: "product", sectionTitle: "Yeni Sezon", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
   { id: "butik", label: "Butik", family: "product", sectionTitle: "Özel Tasarımlar", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
   { id: "gida", label: "Gıda", family: "product", sectionTitle: "Taze Ürünler", ctaLabel: "Sipariş Talebi", primaryActions: ["whatsapp", "maps", "website"] },
   { id: "firin", label: "Fırın", family: "product", sectionTitle: "Bugün Neler Var?", ctaLabel: "Sipariş Talebi", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "kozmetik", label: "Kozmetik", family: "product", sectionTitle: "Ürünler ve bakım", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"] },
+  { id: "kozmetik", label: "Kozmetik", family: "product", sectionTitle: "Ürünler ve bakım", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, ürünleriniz hakkında bilgi almak istiyorum." },
   { id: "dekorasyon", label: "Dekorasyon", family: "product", sectionTitle: "Koleksiyon", ctaLabel: "Teklif İste", primaryActions: ["whatsapp", "maps", "website"] },
   { id: "elektronik", label: "Elektronik", family: "product", sectionTitle: "Ürünler", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
   { id: "kirtasiye", label: "Kırtasiye", family: "product", sectionTitle: "Ürünler", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "pet_shop_veteriner", label: "Pet / Veteriner", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"] },
+  { id: "pet_shop_veteriner", label: "Pet / Veteriner", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, randevu ve fiyat bilgisi almak istiyorum." },
   { id: "kafe_lokanta", label: "Kafe / Lokanta", family: "venue", sectionTitle: "Menü", ctaLabel: "Sipariş / Rezervasyon", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "kuafor", label: "Kuaför", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Randevu Sor", primaryActions: ["whatsapp", "booking", "maps"] },
-  { id: "teknik_servis", label: "Teknik Servis", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Servis Talebi", primaryActions: ["whatsapp", "booking", "maps"] },
-  { id: "hizmet_danismanlik", label: "Danışmanlık", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"] },
-  { id: "egitim_ders", label: "Eğitim", family: "service", sectionTitle: "Programlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"] },
-  { id: "ev_temizlik", label: "Ev Temizlik", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Teklif İste", primaryActions: ["whatsapp", "booking", "maps"] },
-  { id: "spor_fitness", label: "Spor / Fitness", family: "service", sectionTitle: "Programlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"] },
-  { id: "saglik_yasam", label: "Sağlık / Yaşam", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"] },
-  { id: "oto_arac", label: "Oto / Araç", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Randevu Sor", primaryActions: ["whatsapp", "booking", "maps"] },
+  { id: "kuafor", label: "Kuaför", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Randevu Sor", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, randevu almak istiyorum." },
+  { id: "teknik_servis", label: "Teknik Servis", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Servis Talebi", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, cihazım için servis talebinde bulunmak istiyorum." },
+  { id: "hizmet_danismanlik", label: "Danışmanlık", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, hizmetleriniz hakkında bilgi almak istiyorum." },
+  { id: "egitim_ders", label: "Eğitim", family: "service", sectionTitle: "Programlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, dersleriniz hakkında bilgi almak istiyorum." },
+  { id: "ev_temizlik", label: "Ev Temizlik", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Teklif İste", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, temizlik hizmeti için teklif almak istiyorum." },
+  { id: "spor_fitness", label: "Spor / Fitness", family: "service", sectionTitle: "Programlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, üyelik ve fiyat bilgisi almak istiyorum." },
+  { id: "saglik_yasam", label: "Sağlık / Yaşam", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, randevu ve bilgi almak istiyorum." },
+  { id: "oto_arac", label: "Oto / Araç", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Randevu Sor", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, aracım için randevu almak istiyorum." },
   { id: "diger", label: "Diğer", family: "product", sectionTitle: "Öne çıkanlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "maps", "website"] },
 ];
 

@@ -37,16 +37,18 @@ class PublicSiteConfig {
     return buildPublicLink('/v/${Uri.encodeComponent(trimmed)}');
   }
 
-  /// Yayın öncesi taslak önizleme linki — Next.js'in gerçek şablonunu
-  /// `get_store_preview` RPC'si üzerinden, yalnızca edit_token sahibine gösterir.
-  static String buildVitrinPreviewLink(String slug, String editToken) {
+  /// Sahip önizleme giriş adresi (implementation_plan.md §5.2, Commit 4/5):
+  /// tek kullanımlık kodu Next.js `/api/owner-session` sunucu rotasına taşır.
+  /// Kalıcı `edit_token` bu adrese asla yazılmaz (koruma #7).
+  static String buildOwnerSessionEntryLink(String slug, String code) {
     final trimmedSlug = slug.trim();
-    final trimmedToken = editToken.trim();
-    if (trimmedSlug.isEmpty || trimmedToken.isEmpty) {
-      return buildVitrinLink(trimmedSlug);
+    final trimmedCode = code.trim();
+    if (trimmedSlug.isEmpty || trimmedCode.isEmpty) {
+      return buildPublicLink('/api/owner-session');
     }
-    final query = Uri(queryParameters: {'preview_token': trimmedToken}).query;
-    return '${buildVitrinLink(trimmedSlug)}?$query';
+    final query =
+        Uri(queryParameters: {'slug': trimmedSlug, 'ocode': trimmedCode}).query;
+    return '${buildPublicLink('/api/owner-session')}?$query';
   }
 
   /// Path-only product page (`/v/{slug}/urun/{productSlug}`) — Next.js ile aynı.
@@ -126,8 +128,10 @@ class PublicSiteConfig {
 
   /// GoRouter / deep-link: path'ten vitrin slug çıkarır (`/v/x`, `/v/x/`, `/x`).
   static String? resolveVitrinSlugFromPath(String path) {
-    final segments =
-        path.split('/').where((s) => s.isNotEmpty).toList(growable: false);
+    final segments = path
+        .split('/')
+        .where((s) => s.isNotEmpty)
+        .toList(growable: false);
     if (segments.isEmpty) return null;
 
     if (segments.first == 'v' && segments.length >= 2) {

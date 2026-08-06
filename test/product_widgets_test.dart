@@ -86,6 +86,7 @@ void main() {
             editToken: 'test-edit-token',
             showMessage: (_) {},
             onCatalogChanged: (_, __) async {},
+            onProductDelete: (_) async => true,
             onOcrTap: () {},
           ),
         ),
@@ -111,11 +112,22 @@ void main() {
       ),
     );
 
-    final fields =
-        tester.widgetList<TextField>(find.byType(TextField)).toList();
-    expect(fields[0].controller?.text, 'Keten Gömlek');
-    expect(fields[1].controller?.text, '750 TL');
-    expect(fields[2].controller?.text, 'Yazlık keten gömlek');
+    // Alanlar indeksle değil ETİKETLE aranır. Düzenleyiciye yeni alan
+    // eklendiğinde (eski fiyat, rozet, teslim bölgesi) indeks kayıyor ve
+    // test yanlış alana bakıyordu.
+    String textOfFieldLabeled(String label) {
+      final field = tester.widget<TextField>(
+        find.ancestor(
+          of: find.text(label),
+          matching: find.byType(TextField),
+        ),
+      );
+      return field.controller?.text ?? '';
+    }
+
+    expect(textOfFieldLabeled('Ürün adı *'), 'Keten Gömlek');
+    expect(textOfFieldLabeled('Fiyat'), '750 TL');
+    expect(textOfFieldLabeled('Kısa açıklama'), 'Yazlık keten gömlek');
     expect(find.text('Ürünü Düzenle'), findsOneWidget);
   });
 }

@@ -1302,10 +1302,148 @@
     .featured-text .price-big { font-size: 28px; }
     .share-btn .icon { width: 44px; height: 44px; font-size: 20px; }
   }
+
+  /* ===== VIXREX ASİSTAN STYLE ===== */
+  .vixrex-fab {
+    position: fixed !important; bottom: 30px !important; right: 30px !important; z-index: 999999 !important;
+    display: flex !important; align-items: center !important; gap: 10px !important;
+    background: linear-gradient(135deg, #2563EB, #1D4ED8) !important;
+    color: #ffffff !important; border: 2px solid rgba(255,255,255,0.4) !important;
+    padding: 14px 22px !important; border-radius: 999px !important; font-weight: 700 !important; font-size: 15px !important;
+    box-shadow: 0 10px 40px rgba(37, 99, 235, 0.6) !important; cursor: pointer !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+    animation: vixrexFabPulse 2s infinite !important;
+  }
+  .vixrex-fab:hover { transform: scale(1.06) !important; box-shadow: 0 14px 45px rgba(37, 99, 235, 0.75) !important; }
+  .vixrex-fab-badge {
+    background: #22C55E !important; color: #000 !important; font-size: 10px !important; font-weight: 800 !important;
+    padding: 2px 6px !important; border-radius: 6px !important; text-transform: uppercase !important;
+  }
+  @keyframes vixrexFabPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); }
+    50% { box-shadow: 0 0 0 18px rgba(59, 130, 246, 0); }
+  }
+  .vixrex-chat-drawer {
+    position: fixed !important; bottom: 95px !important; right: 30px !important; z-index: 999999 !important;
+    width: 390px !important; max-width: calc(100vw - 32px) !important; height: 550px !important; max-height: calc(100vh - 120px) !important;
+    background: #0F172A !important; border: 1px solid rgba(59, 130, 246, 0.4) !important;
+    border-radius: 20px !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9) !important;
+    display: flex !important; flex-direction: column !important; overflow: hidden !important;
+    backdrop-filter: blur(20px) !important;
+  }
+  .vixrex-chat-drawer[hidden] {
+    display: none !important;
+  }
+  .vixrex-chat-header {
+    background: rgba(15, 23, 42, 0.95); padding: 14px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .vixrex-chat-title { font-weight: 700; font-size: 15px; color: #F8FAFC; }
+  .vixrex-chat-close-btn {
+    background: none; border: none; color: #94A3B8; font-size: 24px; cursor: pointer; line-height: 1;
+  }
+  .vixrex-progress-track { height: 4px; background: rgba(255,255,255,0.08); width: 100%; }
+  .vixrex-progress-fill { height: 100%; background: linear-gradient(90deg, #3B82F6, #06B6D4); transition: width 0.3s; }
+  .vixrex-chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .vixrex-msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; }
+  .vixrex-msg.assistant { background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); color: #F8FAFC; align-self: flex-start; }
+  .vixrex-msg.user { background: #2563EB; color: #fff; align-self: flex-end; }
+  .vixrex-chat-input-area { padding: 12px 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; gap: 8px; background: rgba(15, 23, 42, 0.95); }
+  .vixrex-chat-input { flex: 1; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 9px 12px; border-radius: 10px; font-size: 13.5px; outline: none; }
+  .vixrex-send-btn { background: #3B82F6; color: #fff; border: none; padding: 9px 15px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+  /* ===== SPOTLIGHT & FOCUS HIGHLIGHTS ===== */
+  .vixrex-spotlight {
+    outline: 3px solid #3B82F6 !important;
+    outline-offset: 8px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6) !important;
+    transition: outline 0.3s, box-shadow 0.3s !important;
+    animation: vixrexSpotlightPulse 2s infinite !important;
+  }
+  @keyframes vixrexSpotlightPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+    50% { box-shadow: 0 0 35px rgba(59, 130, 246, 0.85); }
+  }
+  .vixrex-success-flash {
+    outline: 3px solid #22C55E !important;
+    outline-offset: 6px !important;
+    box-shadow: 0 0 25px rgba(34, 197, 94, 0.7) !important;
+    transition: all 0.4s ease-out !important;
+  }
+  /* ===== CLICK-TO-EDIT & QUICK ACTION PILLS ===== */
+  [data-vixrex-editable] {
+    cursor: pointer !important;
+    transition: outline 0.2s, box-shadow 0.2s !important;
+  }
+  [data-vixrex-editable]:hover {
+    outline: 2px dashed #60A5FA !important;
+    outline-offset: 4px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 15px rgba(96, 165, 250, 0.35) !important;
+  }
+  .vixrex-pills-bar {
+    padding: 8px 12px;
+    background: rgba(15, 23, 42, 0.95);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex; gap: 6px; overflow-x: auto; white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .vixrex-pills-bar::-webkit-scrollbar { display: none; }
+  .vixrex-pill {
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #E2E8F0; padding: 5px 11px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .vixrex-pill:hover {
+    background: #2563EB; color: #fff; border-color: #3B82F6; transform: translateY(-1px);
+  }
 </style>
 <base target="_blank">
 </head>
 <body>
+
+<!-- VIXREX ASİSTAN WIDGET -->
+<div id="vixrex-assistant-container">
+  <button id="vixrex-fab" class="vixrex-fab" aria-label="Vixrex Asistanı Aç">
+    <span class="vixrex-fab-icon">🦊</span>
+    <span class="vixrex-fab-text">Asistan ile Kur</span>
+    <span class="vixrex-fab-badge">Canlı</span>
+  </button>
+
+  <div id="vixrex-chat-drawer" class="vixrex-chat-drawer" hidden>
+    <div class="vixrex-chat-header">
+      <div class="vixrex-chat-title">
+        <span>🦊 Vixrex Kurulum Asistanı</span>
+      </div>
+      <button id="vixrex-chat-close" class="vixrex-chat-close-btn">&times;</button>
+    </div>
+    <div id="vixrex-location-bar" style="padding: 6px 14px; background: rgba(30,41,59,0.7); font-size: 11.5px; color: #94A3B8; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 6px;">
+      <span>📍 Düzenlenen Bölüm:</span> <strong id="vixrex-active-section-name" style="color: #60A5FA; font-weight: 700;">Hero / Genel Giriş</strong>
+    </div>
+    <div class="vixrex-progress-track">
+      <div id="vixrex-progress-bar" class="vixrex-progress-fill" style="width: 0%;"></div>
+    </div>
+    <div id="vixrex-chat-messages" class="vixrex-chat-messages"></div>
+    
+    <div id="vixrex-pills-bar" class="vixrex-pills-bar">
+      <button class="vixrex-pill" data-pill="theme">🎨 Tema Rengi</button>
+      <button class="vixrex-pill" data-pill="herobg">🖼️ Hero Resim</button>
+      <button class="vixrex-pill" data-pill="sections">👁️ Bölümler</button>
+      <button class="vixrex-pill" data-pill="presets">📦 Paket Ekle</button>
+      <button class="vixrex-pill" data-pill="product">➕ Hizmet</button>
+      <button class="vixrex-pill" data-pill="faq">❓ Soru</button>
+      <button class="vixrex-pill" data-pill="undo">↩️ Geri Al</button>
+    </div>
+
+    <div class="vixrex-chat-input-area">
+      <input type="text" id="vixrex-chat-input" placeholder="Yanıtınızı buraya yazın..." autocomplete="off" />
+      <button id="vixrex-chat-send" class="vixrex-send-btn">Gönder</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== NAVBAR ===== -->
 <nav class="navbar">
@@ -2015,9 +2153,29 @@
       const hero = document.querySelector('.hero');
       if (!hero) return;
       const business = config.business;
-      hero.querySelector('.hero-badge').textContent = business.heroBadge;
-      hero.querySelector('.hero-title').textContent = business.name;
-      hero.querySelector('.hero-desc').textContent = business.description;
+
+      const bgEl = hero.querySelector('.hero-bg');
+      if (bgEl) {
+        if (business.heroBg) bgEl.style.backgroundImage = `url('${business.heroBg}')`;
+        bgEl.dataset.vixrexEditable = 'heroBg';
+        bgEl.dataset.vixrexLabel = 'Hero Arka Plan Görseli';
+      }
+
+      const badgeEl = hero.querySelector('.hero-badge');
+      badgeEl.textContent = business.heroBadge;
+      badgeEl.dataset.vixrexEditable = 'heroBadge';
+      badgeEl.dataset.vixrexLabel = 'Hero Rozet Metni';
+
+      const titleEl = hero.querySelector('.hero-title');
+      titleEl.textContent = business.name;
+      titleEl.dataset.vixrexEditable = 'heroTitle';
+      titleEl.dataset.vixrexLabel = 'İşletme Adı';
+
+      const descEl = hero.querySelector('.hero-desc');
+      descEl.textContent = business.description;
+      descEl.dataset.vixrexEditable = 'heroDesc';
+      descEl.dataset.vixrexLabel = 'Kısa Tanıtım Metni';
+
       const meta = [
         business.location ? `📍 ${business.location}` : '',
         business.hours ? `🕐 ${business.hours}` : '',
@@ -2025,13 +2183,17 @@
       hero.querySelector('.hero-meta').innerHTML = meta.map((item) => `<span>${escapeHtml(item)}</span>`).join('');
 
       const [phoneAction, whatsappAction] = hero.querySelectorAll('.hero-actions .hero-btn');
+      if (phoneAction) {
+        phoneAction.dataset.vixrexEditable = 'heroCta';
+        phoneAction.dataset.vixrexLabel = 'Hero Ana Aksiyon Butonu';
+      }
       const hasPhone = hasText(business.phone);
-      phoneAction.hidden = !hasPhone;
-      if (hasPhone) phoneAction.href = phoneHref(business.phone);
+      if (phoneAction) phoneAction.hidden = !hasPhone;
+      if (hasPhone && phoneAction) phoneAction.href = phoneHref(business.phone);
 
       const hasWhatsapp = hasText(business.whatsappNumber);
-      whatsappAction.hidden = !hasWhatsapp;
-      if (hasWhatsapp) {
+      if (whatsappAction) whatsappAction.hidden = !hasWhatsapp;
+      if (hasWhatsapp && whatsappAction) {
         whatsappAction.href = `https://wa.me/${String(business.whatsappNumber).replace(/\D/g, '')}?text=${encodeURIComponent(`${business.name} hakkında bilgi almak istiyorum.`)}`;
       }
     }
@@ -2245,22 +2407,22 @@
       setSectionVisible('contact', visible);
       if (!visible) return;
       const phone = hasText(business.phone) ? `
-        <div class="contact-item">
+        <div class="contact-item" data-vixrex-editable="phone" data-vixrex-label="Telefon & WhatsApp">
           <div class="contact-icon">📞</div>
           <div class="contact-body"><h4>Telefon & WhatsApp</h4><a href="${escapeHtml(phoneHref(business.phone))}">${escapeHtml(business.phone)}</a></div>
         </div>` : '';
       const email = hasText(business.email) ? `
-        <div class="contact-item">
+        <div class="contact-item" data-vixrex-editable="email" data-vixrex-label="E-posta Adresi">
           <div class="contact-icon">✉️</div>
           <div class="contact-body"><h4>E-posta</h4><a href="mailto:${escapeHtml(business.email)}">${escapeHtml(business.email)}</a></div>
         </div>` : '';
       const hours = hasText(business.hours) ? `
-        <div class="contact-item">
+        <div class="contact-item" data-vixrex-editable="hours" data-vixrex-label="Çalışma Saatleri">
           <div class="contact-icon">🕐</div>
           <div class="contact-body"><h4>Çalışma Saatleri</h4><p>${escapeHtml(business.hours)}</p></div>
         </div>` : '';
       const addressBlock = address.length ? `
-        <div class="contact-item">
+        <div class="contact-item" data-vixrex-editable="address" data-vixrex-label="İşletme Adresi">
           <div class="contact-icon">🏠</div>
           <div class="contact-body"><h4>Adres</h4>${address.map((line) => `<p>${escapeHtml(line)}</p>`).join('')}</div>
         </div>` : '';
@@ -2407,10 +2569,700 @@
     renderContact();
     renderShare();
 
-    window.VixrexRentalStorefront = Object.freeze({
+    // Expose render methods and mutable config for Assistant
+    window.VixrexRentalStorefront = {
       config,
       getReadiness,
-    });
+      renderHero,
+      renderCatalog,
+      renderAbout,
+      renderGallery,
+      renderBlog,
+      renderFaq,
+      renderRental,
+      renderContact,
+      renderShare,
+      renderAll: () => {
+        renderHero(); renderCatalog(); renderAbout(); renderGallery();
+        renderBlog(); renderFaq(); renderRental(); renderContact(); renderShare();
+      }
+    };
+
+    // VIXREX ASSISTANT INTERACTIVE ONBOARDING & FULL CUSTOMIZATION ENGINE
+    (() => {
+      const fab = document.getElementById('vixrex-fab');
+      const drawer = document.getElementById('vixrex-chat-drawer');
+      const closeBtn = document.getElementById('vixrex-chat-close');
+      const messagesContainer = document.getElementById('vixrex-chat-messages');
+      const input = document.getElementById('vixrex-chat-input');
+      const sendBtn = document.getElementById('vixrex-chat-send');
+      const progressBar = document.getElementById('vixrex-progress-bar');
+
+      if (!fab || !drawer) return;
+
+      let currentStep = 0;
+      let activeSubMode = null; // null | 'business' | 'product' | 'about' | 'gallery' | 'blog' | 'faq' | 'contact' | 'rental'
+      let activeEditTargetKey = null;
+
+      // UNDO / REDO HISTORY ENGINE
+      let configHistory = [];
+      let historyIndex = -1;
+
+      function pushHistory() {
+        if (historyIndex < configHistory.length - 1) {
+          configHistory = configHistory.slice(0, historyIndex + 1);
+        }
+        configHistory.push(JSON.parse(JSON.stringify(config)));
+        if (configHistory.length > 25) configHistory.shift();
+        else historyIndex++;
+      }
+
+      function undo() {
+        if (historyIndex > 0) {
+          historyIndex--;
+          const prev = JSON.parse(JSON.stringify(configHistory[historyIndex]));
+          Object.assign(config, prev);
+          window.VixrexRentalStorefront.renderAll();
+          flashSuccess('.hero');
+          addMessage('↩️ **Son değişiklik geri alındı.**');
+        } else {
+          addMessage('⚠️ Geri alınacak başka değişiklik yok.');
+        }
+      }
+
+      // LIVE THEME COLOR SWITCHER
+      function setThemeColor(colorKey) {
+        pushHistory();
+        const themes = {
+          blue: { primary: '#3B82F6', hover: '#2563EB', glow: 'rgba(59,130,246,0.5)' },
+          purple: { primary: '#8B5CF6', hover: '#7C3AED', glow: 'rgba(139,92,246,0.5)' },
+          green: { primary: '#10B981', hover: '#059669', glow: 'rgba(16,185,129,0.5)' },
+          orange: { primary: '#F97316', hover: '#EA580C', glow: 'rgba(249,115,22,0.5)' },
+          red: { primary: '#EF4444', hover: '#DC2626', glow: 'rgba(239,68,68,0.5)' }
+        };
+        const t = themes[colorKey] || themes.blue;
+        document.documentElement.style.setProperty('--primary', t.primary);
+        document.documentElement.style.setProperty('--primary-hover', t.hover);
+        document.documentElement.style.setProperty('--primary-glow', t.glow);
+        addMessage(`🎨 **Tema Rengi Değiştirildi:** ${colorKey.toUpperCase()}`);
+      }
+
+      function focusSection(selector, sectionName) {
+        const el = document.querySelector(selector);
+        if (!el) return;
+        
+        const badgeEl = document.getElementById('vixrex-active-section-name');
+        if (badgeEl) badgeEl.textContent = sectionName;
+
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        document.querySelectorAll('.vixrex-spotlight').forEach(item => item.classList.remove('vixrex-spotlight'));
+        el.classList.add('vixrex-spotlight');
+
+        setTimeout(() => {
+          el.classList.remove('vixrex-spotlight');
+        }, 4000);
+      }
+
+      function flashSuccess(selector) {
+        const el = document.querySelector(selector);
+        if (!el) return;
+        el.classList.add('vixrex-success-flash');
+        setTimeout(() => {
+          el.classList.remove('vixrex-success-flash');
+        }, 1500);
+      }
+
+      // CLICK-TO-EDIT DELEGATION
+      document.addEventListener('click', (e) => {
+        const target = e.target.closest('[data-vixrex-editable]');
+        if (!target) return;
+
+        const key = target.dataset.vixrexEditable;
+        const label = target.dataset.vixrexLabel || 'Öğe';
+
+        openDrawer();
+        focusSection(`[data-vixrex-editable="${key}"]`, label);
+        activeEditTargetKey = key;
+
+        addMessage(`🎯 **"${label}"** alanını seçtiniz!\n\nYeni değeri aşağıya yazabilir veya hazır butonları kullanabilirsiniz.`);
+      });
+
+      // INTERACTIVE CLICK-CUSTOMIZERS
+      function renderColorPalettePicker() {
+        addMessage(
+          '🎨 **Canlı Tema Rengi Seçin:**\n\n' +
+          '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;" class="vixrex-interactive-palette">' +
+            '<button type="button" class="vixrex-pill" data-theme-color="blue" style="background:#3B82F6; color:#fff; border:none; padding:8px 14px; font-weight:700;">🟦 Mavi</button>' +
+            '<button type="button" class="vixrex-pill" data-theme-color="purple" style="background:#8B5CF6; color:#fff; border:none; padding:8px 14px; font-weight:700;">🟪 Mor</button>' +
+            '<button type="button" class="vixrex-pill" data-theme-color="green" style="background:#10B981; color:#fff; border:none; padding:8px 14px; font-weight:700;">🟩 Yeşil</button>' +
+            '<button type="button" class="vixrex-pill" data-theme-color="orange" style="background:#F97316; color:#fff; border:none; padding:8px 14px; font-weight:700;">🟧 Turuncu</button>' +
+            '<button type="button" class="vixrex-pill" data-theme-color="red" style="background:#EF4444; color:#fff; border:none; padding:8px 14px; font-weight:700;">🟥 Kızıl</button>' +
+          '</div>'
+        );
+      }
+
+      function renderHeroBgPicker() {
+        focusSection('.hero', 'Hero Arka Plan Görseli');
+        addMessage(
+          '🖼️ **Hero Arka Plan Görseli Seçin:**\n\n' +
+          '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:8px;" class="vixrex-interactive-bgpicker">' +
+            '<button type="button" class="vixrex-pill" data-hero-bg="https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=1600&q=80" style="padding:10px; font-size:11px; text-align:left;">📸 1. Atölye Masası</button>' +
+            '<button type="button" class="vixrex-pill" data-hero-bg="https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=1600&q=80" style="padding:10px; font-size:11px; text-align:left;">📸 2. Laptop & Mac Stüdyosu</button>' +
+            '<button type="button" class="vixrex-pill" data-hero-bg="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1600&q=80" style="padding:10px; font-size:11px; text-align:left;">📸 3. Çip & Telefon Servisi</button>' +
+            '<button type="button" class="vixrex-pill" data-hero-bg="https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1600&q=80" style="padding:10px; font-size:11px; text-align:left;">📸 4. Anti-Statik Çalışma Alanı</button>' +
+          '</div>'
+        );
+      }
+
+      function renderSectionToggles() {
+        addMessage(
+          '👁️ **Bölüm Görünürlük Kontrolleri:**\nBölümleri vitrininizden gizlemek veya açmak için tıklayın:\n\n' +
+          '<div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;" class="vixrex-interactive-toggles">' +
+            '<button type="button" class="vixrex-pill" data-toggle-section="blog" style="justify-content:space-between;">📝 Teknik Rehber / Blog <span>' + (document.getElementById('blog')?.hidden ? '❌ Gizli' : '✅ Açık') + '</span></button>' +
+            '<button type="button" class="vixrex-pill" data-toggle-section="gallery" style="justify-content:space-between;">📸 Atölye Galerisi <span>' + (document.getElementById('galeri')?.hidden ? '❌ Gizli' : '✅ Açık') + '</span></button>' +
+            '<button type="button" class="vixrex-pill" data-toggle-section="faq" style="justify-content:space-between;">❓ Sıkça Sorulan Sorular <span>' + (document.getElementById('sss')?.hidden ? '❌ Gizli' : '✅ Açık') + '</span></button>' +
+            '<button type="button" class="vixrex-pill" data-toggle-section="rental" style="justify-content:space-between;">💰 Kiralama Paketi <span>' + (document.getElementById('kirala')?.hidden ? '❌ Gizli' : '✅ Açık') + '</span></button>' +
+          '</div>'
+        );
+      }
+
+      function renderPresetPackages() {
+        addMessage(
+          '📦 **Tek Tıkla Hazır Paket Yükleyin:**\n\n' +
+          '<div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;" class="vixrex-interactive-presets">' +
+            '<button type="button" class="vixrex-pill" data-preset-pack="iphone" style="padding:10px; background:#2563EB; color:#fff; border:none;">📱 iPhone Tamir Paketini Ekle (Ekran, Batarya, Sıvı Teması)</button>' +
+            '<button type="button" class="vixrex-pill" data-preset-pack="faq" style="padding:10px; background:#059669; color:#fff; border:none;">❓ Garanti & Teslimat SSS Paketini Ekle (3 Adet Hazır Soru)</button>' +
+          '</div>'
+        );
+      }
+
+      // MESSAGE DELEGATION FOR INTERACTIVE BUTTONS
+      if (messagesContainer) {
+        messagesContainer.addEventListener('click', (e) => {
+          const themeBtn = e.target.closest('[data-theme-color]');
+          if (themeBtn) {
+            setThemeColor(themeBtn.dataset.themeColor);
+            return;
+          }
+
+          const bgBtn = e.target.closest('[data-hero-bg]');
+          if (bgBtn) {
+            pushHistory();
+            config.business.heroBg = bgBtn.dataset.heroBg;
+            renderHero();
+            flashSuccess('.hero');
+            addMessage('✅ **Hero Arka Plan Görseli Güncellendi!**');
+            return;
+          }
+
+          const toggleBtn = e.target.closest('[data-toggle-section]');
+          if (toggleBtn) {
+            pushHistory();
+            const secKey = toggleBtn.dataset.toggleSection;
+            const mapSecId = { blog: 'blog', gallery: 'galeri', faq: 'sss', rental: 'kirala' };
+            const targetId = mapSecId[secKey] || secKey;
+            const el = document.getElementById(targetId);
+            if (el) {
+              el.hidden = !el.hidden;
+              flashSuccess('#' + targetId);
+              addMessage(`✅ **Bölüm Durumu Değiştirildi:** ${secKey.toUpperCase()} (${el.hidden ? 'Gizlendi' : 'Gösterildi'})`);
+            }
+            return;
+          }
+
+          const presetBtn = e.target.closest('[data-preset-pack]');
+          if (presetBtn) {
+            pushHistory();
+            const pack = presetBtn.dataset.presetPack;
+            if (pack === 'iphone') {
+              config.catalog.products.unshift(
+                { name: 'iPhone Orijinal Kalite Ekran Değişimi', category: 'Ekran & Batarya', price: '850 TL', description: '30 dakikada montaj, 6 ay dokunmatik garantili.', image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80' },
+                { name: 'iPhone Deji Batarya Değişimi', category: 'Ekran & Batarya', price: '450 TL', description: 'Yüksek kapasiteli batarya değişimi ve sağlık kalibrasyonu.', image: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=600&q=80' },
+                { name: 'Sıvı Teması Ultrasonik Temizlik', category: 'Telefon Onarımı', price: '650 TL', description: 'Oksitlenme önleyici özel solüsyonla anakart banyosu.', image: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=600&q=80' }
+              );
+              renderCatalog();
+              focusSection('#urunler', 'Servis Kataloğu & Ürünler');
+              flashSuccess('#urunler');
+              addMessage('✅ **iPhone Onarım Hizmet Paketi Kataloğa Eklendi!**');
+            } else if (pack === 'faq') {
+              config.faq.items.unshift(
+                { question: 'Yapılan tamirler garantili mi?', answer: 'Evet, tüm parça değişimlerimiz 6 ay yazılı servis garantisi kapsamındadır.' },
+                { question: 'Cihazı ne zaman teslim alabilirim?', answer: 'Ekran ve batarya değişimleri ortalama 30-45 dakikada tamamlanmaktadır.' },
+                { question: 'Arıza tespiti ücretli mi?', answer: 'Hayır, 18 maddelik cihaz kontrolü ve arıza tespiti ücretsizdir.' }
+              );
+              renderFaq();
+              focusSection('#sss', 'Sıkça Sorulan Sorular');
+              flashSuccess('#sss');
+              addMessage('✅ **Garanti & Teslimat SSS Paketi Eklendi!**');
+            }
+            return;
+          }
+        });
+      }
+
+      // PILLS DELEGATION
+      const pillsBar = document.getElementById('vixrex-pills-bar');
+      if (pillsBar) {
+        pillsBar.addEventListener('click', (e) => {
+          const pill = e.target.closest('[data-pill]');
+          if (!pill) return;
+          const action = pill.dataset.pill;
+
+          if (action === 'undo') {
+            undo();
+          } else if (action === 'theme') {
+            renderColorPalettePicker();
+          } else if (action === 'herobg') {
+            renderHeroBgPicker();
+          } else if (action === 'sections') {
+            renderSectionToggles();
+          } else if (action === 'presets') {
+            renderPresetPackages();
+          } else if (action === 'product') {
+            focusSection('#urunler', 'Servis Kataloğu & Ürünler');
+            addMessage('🛠️ **Yeni Hizmet / Ürün Ekle:**\nFormat: `ürün: Hizmet Adı | Fiyat`\nÖrn: `ürün: MacBook Klavye Değişimi | 1200 TL`');
+          } else if (action === 'faq') {
+            focusSection('#sss', 'Sıkça Sorulan Sorular');
+            addMessage('❓ **Yeni Soru/Cevap Ekle:**\nFormat: `soru: Soru Metni? | Cevap Metni`\nÖrn: `soru: Cihaz yedeklenmeli mi? | Hayır, verileriniz korunur.`');
+          }
+        });
+      }
+
+      const steps = [
+        {
+          key: 'businessName',
+          progress: 10,
+          sectionSelector: '.hero',
+          sectionName: 'Hero / İşletme Kimliği',
+          prompt: 'Merhaba! Ben Vixrex Canlı Kurulum Asistanı 🦊\n\nVitrininizin **tüm 150+ alanını** canlı olarak özelleştirebiliriz!\n\n**Adım 1:** İşletmenizin adı nedir?',
+          placeholder: 'Örn: Kadıköy FixTech Servis',
+          action: (val) => {
+            pushHistory();
+            config.business.name = val;
+            config.business.heroBadge = `Profesyonel Servis / ${val}`;
+            renderHero(); renderContact(); renderShare();
+            flashSuccess('.hero');
+          }
+        },
+        {
+          key: 'phone',
+          progress: 20,
+          sectionSelector: '#iletisim',
+          sectionName: 'İletişim & WhatsApp',
+          prompt: 'Harika! Müşterilerinizin size ulaşacağı **WhatsApp / Telefon numaranız** nedir?',
+          placeholder: 'Örn: 0555 123 45 67',
+          action: (val) => {
+            pushHistory();
+            config.business.phone = val;
+            const cleanDigits = val.replace(/\D/g, '');
+            config.business.whatsappNumber = cleanDigits.length === 10 ? '90' + cleanDigits : cleanDigits;
+            renderHero(); renderContact();
+            flashSuccess('#iletisim');
+          }
+        },
+        {
+          key: 'email',
+          progress: 30,
+          sectionSelector: '#iletisim',
+          sectionName: 'İletişim & E-Posta',
+          prompt: 'Süper! Müşterilerinizden e-posta almak için **E-posta adresiniz** nedir?',
+          placeholder: 'Örn: servis@fixtech.com',
+          action: (val) => {
+            pushHistory();
+            config.business.email = val;
+            renderContact();
+            flashSuccess('#iletisim');
+          }
+        },
+        {
+          key: 'address',
+          progress: 40,
+          sectionSelector: '#iletisim',
+          sectionName: 'İletişim & Açık Adres',
+          prompt: 'Mükemmel! İşletmenizin **Açık Adresi ve İlçesi** nedir?',
+          placeholder: 'Örn: Söğütlüçeşme Caddesi No: 112, Kadıköy / İstanbul',
+          action: (val) => {
+            pushHistory();
+            config.contact.address = [val];
+            config.contact.mapLabel = val;
+            renderContact();
+            flashSuccess('#iletisim');
+          }
+        },
+        {
+          key: 'hours',
+          progress: 50,
+          sectionSelector: '#iletisim',
+          sectionName: 'İletişim & Çalışma Saatleri',
+          prompt: 'İşletmenizin **Haftalık Çalışma Saatleri** nedir?',
+          placeholder: 'Örn: Açık — 09:00 / 19:30',
+          action: (val) => {
+            pushHistory();
+            config.business.hours = val;
+            renderHero(); renderContact();
+            flashSuccess('#iletisim');
+          }
+        },
+        {
+          key: 'firstProduct',
+          progress: 60,
+          sectionSelector: '#urunler',
+          sectionName: 'Servis Listesi & Ürünler',
+          prompt: 'Şimdi servisinize/mağazanıza **ilk hizmet/ürün ve fiyatını** ekleyelim:\n(Biçim: Ürün Adı | Fiyat)',
+          placeholder: 'Örn: iPhone Orijinal Ekran Değişimi | 850 TL',
+          action: (val) => {
+            pushHistory();
+            const parts = val.split('|');
+            const pName = parts[0] ? parts[0].trim() : val;
+            const pPrice = parts[1] ? parts[1].trim() : '850 TL';
+            config.catalog.products.unshift({
+              name: pName,
+              category: 'Özel Hizmetlerimiz',
+              price: pPrice,
+              description: 'Vixrex Asistan ile eklenen hızlı hizmet.',
+              availability: 'Aynı Gün Teslim',
+              fulfillmentLocation: config.business.name,
+              image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80'
+            });
+            renderCatalog();
+            flashSuccess('#urunler');
+          }
+        },
+        {
+          key: 'faq',
+          progress: 60,
+          sectionSelector: '#sss',
+          sectionName: 'Sıkça Sorulan Sorular',
+          prompt: 'Müşterilerinizin sık sorabileceği bir **Soru ve Cevap** ekleyelim:\n(Biçim: Soru? | Cevap)',
+          placeholder: 'Örn: Garanti var mı? | Evet, 6 ay servis garantilidir.',
+          action: (val) => {
+            pushHistory();
+            const parts = val.split('|');
+            const q = parts[0] ? parts[0].trim() : val;
+            const a = parts[1] ? parts[1].trim() : 'Detaylar için iletişim hatlarımızdan ulaşabilirsiniz.';
+            config.faq.items.unshift({ question: q, answer: a });
+            renderFaq();
+            flashSuccess('#sss');
+          }
+        },
+        {
+          key: 'campaign',
+          progress: 75,
+          sectionSelector: '.featured-banner',
+          sectionName: 'Öne Çıkan Kampanya',
+          prompt: 'Öne çıkarmak istediğiniz bir **Kampanya veya Duyuru Başlığı** yazın:',
+          placeholder: 'Örn: Yaz Sezonuna Özel Tüm Onarımlarda %15 İndirim!',
+          action: (val) => {
+            pushHistory();
+            config.catalog.featured.title = val;
+            config.catalog.featured.description = `${config.business.name} müşterilerine özel dönemsel fırsat ve hızlı teslimat avantajı.`;
+            renderCatalog();
+            flashSuccess('.featured-banner');
+          }
+        },
+        {
+          key: 'about',
+          progress: 90,
+          sectionSelector: '#hakkimizda',
+          sectionName: 'Hakkımızda & Hikâyemiz',
+          prompt: 'İşletmenizin **Hakkımızda hikâye başlığı** nedir?',
+          placeholder: 'Örn: Güvenli teknik servis, şeffaf süreç, garantili onarım.',
+          action: (val) => {
+            pushHistory();
+            config.about.title = val;
+            renderAbout();
+            flashSuccess('#hakkimizda');
+          }
+        }
+      ];
+
+      function showMainMenu() {
+        activeSubMode = null;
+        updateProgress(100);
+        focusSection('.hero', 'Vitrin Geneli');
+        addMessage(
+          '🌟 **Temel Kurulum Tamamlandı!** Arkadaki vitrininiz anında güncellendi.\n\nSimdi vitrininizin **diğer bölümlerini özelleştirmek** için aşağıdaki numarayı yazın veya doğrudan komut girin:\n\n' +
+          '1️⃣ **İşletme Kimliği** (Adres, E-posta, Saatler, Şehir)\n' +
+          '2️⃣ **Ürün / Hizmet Kataloğu** (Yeni Ürün, Fiyat, Kategori)\n' +
+          '3️⃣ **Hakkımızda & Değer Kartları** (Hikaye, Değerler)\n' +
+          '4️⃣ **Atölye & Galeri** (Görsel Ekle, Galeri Başlığı)\n' +
+          '5️⃣ **Teknik Rehber (Blog)** (Makale Ekle)\n' +
+          '6️⃣ **Sıkça Sorulan Sorular** (Yeni Soru/Cevap)\n' +
+          '7️⃣ **İletişim & Harita Linki** (Adres, Harita URL)\n' +
+          '8️⃣ **Kiralama Paketi & Fiyatı** (Fiyat, İndirim)'
+        );
+      }
+
+      function addMessage(text, isUser = false) {
+        const msg = document.createElement('div');
+        msg.className = `vixrex-msg ${isUser ? 'user' : 'assistant'}`;
+        msg.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        messagesContainer.appendChild(msg);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      function updateProgress(pct) {
+        if (progressBar) progressBar.style.width = pct + '%';
+      }
+
+      function openDrawer() {
+        drawer.hidden = false;
+        if (currentStep === 0 && messagesContainer.children.length === 0) {
+          addMessage(steps[0].prompt);
+          input.placeholder = steps[0].placeholder;
+          updateProgress(steps[0].progress);
+          focusSection(steps[0].sectionSelector, steps[0].sectionName);
+        }
+      }
+
+      function closeDrawer() {
+        drawer.hidden = true;
+      }
+
+      function parseFreeformCommand(text) {
+        const lower = text.toLowerCase();
+
+        // Tema rengi
+        if (['mavi', 'mor', 'yeşil', 'yesil', 'turuncu', 'kırmızı', 'kirmizi'].includes(lower)) {
+          const keyMap = { mavi: 'blue', mor: 'purple', yeşil: 'green', yesil: 'green', turuncu: 'orange', kırmızı: 'red', kirmizi: 'red' };
+          setThemeColor(keyMap[lower] || 'blue');
+          return true;
+        }
+
+        // Tıklanan hedef ögeyi doğrudan güncelleme
+        if (activeEditTargetKey) {
+          pushHistory();
+          if (activeEditTargetKey === 'heroTitle') {
+            config.business.name = text;
+            renderHero(); renderContact();
+          } else if (activeEditTargetKey === 'heroBadge') {
+            config.business.heroBadge = text;
+            renderHero();
+          } else if (activeEditTargetKey === 'heroDesc') {
+            config.business.description = text;
+            renderHero();
+          } else if (activeEditTargetKey === 'aboutTitle') {
+            config.about.title = text;
+            renderAbout();
+          } else if (activeEditTargetKey === 'phone') {
+            config.business.phone = text;
+            const cleanDigits = text.replace(/\D/g, '');
+            config.business.whatsappNumber = cleanDigits.length === 10 ? '90' + cleanDigits : cleanDigits;
+            renderHero(); renderContact();
+            flashSuccess('#iletisim');
+          } else if (activeEditTargetKey === 'email') {
+            config.business.email = text;
+            renderContact();
+            flashSuccess('#iletisim');
+          } else if (activeEditTargetKey === 'address') {
+            config.contact.address = [text];
+            config.contact.mapLabel = text;
+            renderContact();
+            flashSuccess('#iletisim');
+          } else if (activeEditTargetKey === 'hours') {
+            config.business.hours = text;
+            renderHero(); renderContact();
+            flashSuccess('#iletisim');
+          }
+          activeEditTargetKey = null;
+          addMessage(`✅ **Seçilen Alan Güncellendi:** ${text}`);
+          return true;
+        }
+        
+        // E-posta
+        if (lower.includes('eposta:') || lower.includes('e-posta:') || lower.includes('email:')) {
+          pushHistory();
+          const val = text.split(':')[1]?.trim();
+          if (val) {
+            config.business.email = val;
+            renderContact();
+            focusSection('#iletisim', 'İletişim & E-Posta');
+            flashSuccess('#iletisim');
+            addMessage(`✅ **E-posta Adresi Güncellendi:** ${val}`);
+            return true;
+          }
+        }
+        // Adres
+        if (lower.includes('adres:')) {
+          const val = text.split(':')[1]?.trim();
+          if (val) {
+            config.contact.address = [val];
+            config.contact.mapLabel = val;
+            renderContact();
+            focusSection('#iletisim', 'İletişim & Harita');
+            flashSuccess('#iletisim');
+            addMessage(`✅ **Adres Güncellendi:** ${val}`);
+            return true;
+          }
+        }
+        // Saatler
+        if (lower.includes('saat:') || lower.includes('saatler:')) {
+          const val = text.split(':')[1]?.trim();
+          if (val) {
+            config.business.hours = val;
+            renderHero();
+            focusSection('.hero', 'Hero & Çalışma Saatleri');
+            flashSuccess('.hero');
+            addMessage(`✅ **Çalışma Saatleri Güncellendi:** ${val}`);
+            return true;
+          }
+        }
+        // Şehir / Konum
+        if (lower.includes('konum:') || lower.includes('şehir:') || lower.includes('sehir:')) {
+          const val = text.split(':')[1]?.trim();
+          if (val) {
+            config.business.location = val;
+            renderHero();
+            focusSection('.hero', 'Hero & Lokasyon');
+            flashSuccess('.hero');
+            addMessage(`✅ **Lokasyon Güncellendi:** ${val}`);
+            return true;
+          }
+        }
+        // Yeni Ürün
+        if (lower.includes('ürün:') || lower.includes('urun:') || lower.includes('hizmet:')) {
+          const raw = text.substring(text.indexOf(':') + 1).trim();
+          const parts = raw.split('|');
+          const pName = parts[0] ? parts[0].trim() : raw;
+          const pPrice = parts[1] ? parts[1].trim() : 'Fiyat Belirtilmedi';
+          config.catalog.products.unshift({
+            name: pName,
+            category: 'Özel Hizmetlerimiz',
+            price: pPrice,
+            description: 'Vixrex Asistan ile eklenen hizmet.',
+            availability: 'Stokta / Hizmette',
+            fulfillmentLocation: config.business.name,
+            image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80'
+          });
+          renderCatalog();
+          focusSection('#urunler', 'Servis Fiyat Listesi');
+          flashSuccess('#urunler');
+          addMessage(`✅ **Yeni Ürün Eklendi:** ${pName} (${pPrice})`);
+          return true;
+        }
+        // Yeni Soru
+        if (lower.includes('soru:')) {
+          const raw = text.substring(text.indexOf(':') + 1).trim();
+          const parts = raw.split('|');
+          const q = parts[0] ? parts[0].trim() : raw;
+          const a = parts[1] ? parts[1].trim() : 'Detaylı bilgi için bize ulaşabilirsiniz.';
+          config.faq.items.unshift({ question: q, answer: a });
+          renderFaq();
+          focusSection('#sss', 'Sıkça Sorulan Sorular');
+          flashSuccess('#sss');
+          addMessage(`✅ **Yeni Soru/Cevap Eklendi:** Soru: ${q}`);
+          return true;
+        }
+        // Yeni Galeri
+        if (lower.includes('galeri:') || lower.includes('görsel:')) {
+          const raw = text.substring(text.indexOf(':') + 1).trim();
+          config.gallery.items.unshift({
+            label: raw,
+            image: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=1000&q=85',
+            alt: raw
+          });
+          renderGallery();
+          focusSection('.gallery-grid', 'Atölye Galerisi');
+          flashSuccess('.gallery-grid');
+          addMessage(`✅ **Galeriye Yeni Kare Eklendi:** ${raw}`);
+          return true;
+        }
+        // Hakkımızda Paragraf
+        if (lower.includes('hakkımızda:') || lower.includes('hakkimizda:')) {
+          const raw = text.substring(text.indexOf(':') + 1).trim();
+          config.about.paragraphs.unshift(raw);
+          renderAbout();
+          focusSection('#hakkimizda', 'Hakkımızda & Hikâyemiz');
+          flashSuccess('#hakkimizda');
+          addMessage(`✅ **Hakkımızda Yazısı Güncellendi.**`);
+          return true;
+        }
+
+        return false;
+      }
+
+      function handleSend() {
+        const val = input.value.trim();
+        if (!val) return;
+
+        addMessage(val, true);
+        input.value = '';
+
+        // 1. Serbest Komut Denemesi
+        if (parseFreeformCommand(val)) {
+          return;
+        }
+
+        // 2. Zorunlu Kurulum Adımları
+        if (currentStep < steps.length) {
+          steps[currentStep].action(val);
+          currentStep++;
+
+          if (currentStep < steps.length) {
+            setTimeout(() => {
+              addMessage(steps[currentStep].prompt);
+              input.placeholder = steps[currentStep].placeholder;
+              updateProgress(steps[currentStep].progress);
+              focusSection(steps[currentStep].sectionSelector, steps[currentStep].sectionName);
+            }, 400);
+          } else {
+            setTimeout(() => {
+              showMainMenu();
+            }, 400);
+          }
+          return;
+        }
+
+        // 3. Menü Seçimleri (1-8)
+        if (val === '1') {
+          activeSubMode = 'business';
+          focusSection('.hero', 'İşletme Kimliği & Saatler');
+          addMessage('🏢 **İşletme Kimliği Güncelleme:**\nE-posta, Adres veya Çalışma Saatlerinizi değiştirebilirsiniz.\n\nÖrnek formatlar:\n- `eposta: info@isletme.com`\n- `adres: Kadıköy No: 12`\n- `saat: 09:00 - 20:00`');
+        } else if (val === '2') {
+          activeSubMode = 'product';
+          focusSection('#urunler', 'Servis Kataloğu & Ürünler');
+          addMessage('🛠️ **Ürün / Hizmet Ekleme:**\nYeni bir hizmet veya ürün eklemek için şu formatı yazın:\n- `ürün: Ekran Tamiri | 900 TL`');
+        } else if (val === '3') {
+          activeSubMode = 'about';
+          focusSection('#hakkimizda', 'Hakkımızda & Hikâyemiz');
+          addMessage('📖 **Hakkımızda & Hikaye:**\nHakkımızda yazısına yeni paragraf eklemek için:\n- `hakkımızda: 10 yıllık deneyimli kadromuzla hizmet veriyoruz.`');
+        } else if (val === '4') {
+          activeSubMode = 'gallery';
+          focusSection('.gallery-grid', 'Atölye Galerisi');
+          addMessage('🖼️ **Galeriye Kare Ekleme:**\n- `galeri: Yeni Atölye Masamız`');
+        } else if (val === '5') {
+          activeSubMode = 'blog';
+          focusSection('#blog', 'Teknik Rehber & Blog');
+          addMessage('📝 **Teknik Rehber / Blog:**\nRehber bölüm başlığını değiştirmek için yazabilirsiniz.');
+        } else if (val === '6') {
+          activeSubMode = 'faq';
+          focusSection('#sss', 'Sıkça Sorulan Sorular');
+          addMessage('❓ **Sıkça Sorulan Soru Ekleme:**\n- `soru: Şarj soketi ne kadar sürer? | 20 dakikada montaj edilir.`');
+        } else if (val === '7') {
+          activeSubMode = 'contact';
+          focusSection('#iletisim', 'İletişim & Harita');
+          addMessage('📍 **İletişim & Harita:**\n- `adres: Moda Caddesi No: 5 Kadıköy`');
+        } else if (val === '8') {
+          activeSubMode = 'rental';
+          focusSection('.rental-panel', 'Kiralama Paketi');
+          addMessage('💰 **Kiralama Paketi Ayarları:**\nKiralama etiketi ve teklif paneli yayındadır.');
+        } else {
+          setTimeout(() => {
+            addMessage(`"${val}" içeriği işlendi! Arka plandaki canlı vitrininizi inceleyebilirsiniz.\n\nDiğer bölümler için menüden bir rakam (1-8) seçebilir veya komut (Örn: \`ürün: Test | 100 TL\`) yazabilirsiniz.`);
+          }, 300);
+        }
+      }
+
+      fab.addEventListener('click', () => {
+        if (drawer.hidden) openDrawer(); else closeDrawer();
+      });
+      closeBtn.addEventListener('click', closeDrawer);
+      sendBtn.addEventListener('click', handleSend);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleSend();
+      });
+    })();
   })();
 </script>
 

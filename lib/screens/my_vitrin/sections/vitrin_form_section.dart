@@ -288,7 +288,9 @@ class VitrinFormSection extends StatelessWidget {
                           const SizedBox(height: 14),
                           BlogEntryCard(
                             canOpen:
-                                (controller.publishedInfo?.slug.trim().isNotEmpty ??
+                                (controller.publishedInfo?.slug
+                                        .trim()
+                                        .isNotEmpty ??
                                     false) ||
                                 controller.data.slug.trim().isNotEmpty,
                             onTap: () => _openBlogEditor(context),
@@ -715,51 +717,62 @@ class VitrinFormSection extends StatelessWidget {
     );
   }
 
+  // ListTile türevleri mürekkep efektini en yakın Material üzerine çizer.
+  // Bu iki anahtar, arka planı olan bir Container'ın (_cardDecoration) içinde
+  // duruyor; araya Material konmazsa Flutter "efektler görünmez olacak" diye
+  // assertion fırlatıyor ve test ortamında ekranın kalanı hiç çizilmiyor.
+  // Şeffaf Material efekti kendi üstüne çizdirir, görünümü değiştirmez.
   Widget _buildRatingToggle() {
-    return SwitchListTile.adaptive(
-      contentPadding: EdgeInsets.zero,
-      title: const Text(
-        'Vitrinde puan bandı göster',
-        style: TextStyle(
-          color: AppColors.darkText,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+    return Material(
+      type: MaterialType.transparency,
+      child: SwitchListTile.adaptive(
+        contentPadding: EdgeInsets.zero,
+        title: const Text(
+          'Vitrinde puan bandı göster',
+          style: TextStyle(
+            color: AppColors.darkText,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
         ),
+        subtitle: const Text(
+          'Gerçek puanın yoksa kapalı kalsın; örnek puan görünmesin.',
+          style: TextStyle(color: AppColors.mutedText, fontSize: 11),
+        ),
+        value: controller.data.showStorefrontRating,
+        activeThumbColor: AppColors.primary,
+        onChanged: (value) {
+          controller.updateShowStorefrontRating(value);
+          controller.saveLocally();
+        },
       ),
-      subtitle: const Text(
-        'Gerçek puanın yoksa kapalı kalsın; örnek puan görünmesin.',
-        style: TextStyle(color: AppColors.mutedText, fontSize: 11),
-      ),
-      value: controller.data.showStorefrontRating,
-      activeThumbColor: AppColors.primary,
-      onChanged: (value) {
-        controller.updateShowStorefrontRating(value);
-        controller.saveLocally();
-      },
     );
   }
 
   Widget _buildDirectionsToggle() {
-    return SwitchListTile.adaptive(
-      contentPadding: EdgeInsets.zero,
-      title: const Text(
-        'Yol tarifi butonu göster',
-        style: TextStyle(
-          color: AppColors.darkText,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+    return Material(
+      type: MaterialType.transparency,
+      child: SwitchListTile.adaptive(
+        contentPadding: EdgeInsets.zero,
+        title: const Text(
+          'Yol tarifi butonu göster',
+          style: TextStyle(
+            color: AppColors.darkText,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
         ),
+        subtitle: const Text(
+          'Adres veya GPS varsa vitrinde yol tarifi linki çıkar.',
+          style: TextStyle(color: AppColors.mutedText, fontSize: 11),
+        ),
+        value: controller.data.showDirectionsLink,
+        activeThumbColor: AppColors.primary,
+        onChanged: (value) {
+          controller.updateShowDirectionsLink(value);
+          controller.saveLocally();
+        },
       ),
-      subtitle: const Text(
-        'Adres veya GPS varsa vitrinde yol tarifi linki çıkar.',
-        style: TextStyle(color: AppColors.mutedText, fontSize: 11),
-      ),
-      value: controller.data.showDirectionsLink,
-      activeThumbColor: AppColors.primary,
-      onChanged: (value) {
-        controller.updateShowDirectionsLink(value);
-        controller.saveLocally();
-      },
     );
   }
 
@@ -787,26 +800,16 @@ class VitrinFormSection extends StatelessWidget {
     );
   }
 
+  // Taslak/yayın ayrımı controller.openOwnerPreview() arkasında saklanır
+  // (implementation_plan.md §5.1) — bu ekran hangi durumda olduğunu bilmez.
   Future<void> _openInAppPreview(BuildContext ctx) async {
-    final published = controller.publishedInfo;
-    final slug = (published?.slug ?? controller.data.slug).trim();
-    final isLive =
-        published != null && published.canEditRemote && slug.isNotEmpty;
-
-    // Yayınlı vitrin: müşteri ile aynı Next.js görünümü.
-    if (isLive) {
-      await AppRouter.navigateToPublicVitrin(ctx, slug);
-      return;
-    }
-
-    // Yayın öncesi: taslağı kaydet, Next.js'in gerçek şablonunda göster.
     try {
-      final previewLink = await controller.previewDraftLink();
+      final owner = await controller.openOwnerPreview();
       if (!ctx.mounted) return;
       await AppRouter.openPublicUrl(
         ctx,
-        previewLink,
-        failureMessage: 'Taslak önizleme açılamadı.',
+        owner.url,
+        failureMessage: 'Önizleme açılamadı.',
       );
     } catch (e) {
       if (!ctx.mounted) return;

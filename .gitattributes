@@ -1,1 +1,45 @@
-*.sh text eol=lf
+# Satır sonu (line ending) normalizasyonu.
+#
+# Sorun: Windows'ta çalışıldığı ve farklı araçlar (editör, Flutter, ajanlar)
+# dosyaları farklı satır sonuyla yazdığı için git tüm dosyayı "değişmiş"
+# gösteriyordu. 2026-08-04'te 77 satırlık gerçek bir değişiklik 2263 satırlık
+# diff olarak göründü.
+#
+# Çözüm: depoda her metin dosyası LF olarak saklanır. Windows'a özgü
+# betikler çalışma alanında CRLF kalır (cmd/bat bunu ister).
+
+# Varsayılan: metin dosyalarını otomatik algıla, LF olarak sakla ve çıkar.
+* text=auto eol=lf
+
+# ── Windows betikleri: çalışma alanında CRLF kalmalı ────────────────────────
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# ── Unix betikleri: her koşulda LF ──────────────────────────────────────────
+*.sh   text eol=lf
+
+# ── İkili dosyalar: git asla dokunmasın ─────────────────────────────────────
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.ttf  binary
+*.otf  binary
+*.woff  binary
+*.woff2 binary
+*.zip  binary
+*.jar  binary
+*.apk  binary
+*.aab  binary
+*.jks  binary
+*.keystore binary
+*.xlsx binary
+*.xls  binary
+
+# ── Kilit dosyaları: diff gürültüsünü azalt ─────────────────────────────────
+pubspec.lock       -diff
+package-lock.json  -diff linguist-generated

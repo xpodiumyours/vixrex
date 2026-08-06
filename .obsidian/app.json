@@ -1,0 +1,30 @@
+{
+  "alwaysUpdateLinks": true,
+  "newLinkFormat": "shortest",
+  "useMarkdownLinks": false,
+  "attachmentFolderPath": "docs/ekler",
+  "defaultViewMode": "preview",
+  "showLineNumber": false,
+  "readableLineLength": true,
+  "userIgnoreFilters": [
+    "node_modules/",
+    "build/",
+    ".dart_tool/",
+    ".git/",
+    ".agents/",
+    "agent/",
+    ".github/",
+    "android/",
+    "ios/",
+    "macos/",
+    "linux/",
+    "windows/",
+    "web/",
+    "public_web/node_modules/",
+    "public_web/.next/",
+    "supabase/",
+    "assets/",
+    "test/",
+    "lib/"
+  ]
+}

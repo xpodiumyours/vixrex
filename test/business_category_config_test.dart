@@ -83,24 +83,86 @@ void main() {
       expect(categoryRestoran.id, 'kafe_lokanta');
     });
 
-    test('fromCategoryLabel is tolerant to English-character Turkish inputs (normalization)', () {
-      // Test exact matches without Turkish characters
-      expect(BusinessCategoryConfig.fromCategoryLabel('kuafor').id, 'kuafor');
-      expect(BusinessCategoryConfig.fromCategoryLabel('gida').id, 'gida');
-      expect(BusinessCategoryConfig.fromCategoryLabel('firin').id, 'firin');
-      
-      // Test partial/keyword matches without Turkish characters
-      expect(BusinessCategoryConfig.fromCategoryLabel('kuafor salonu').id, 'kuafor');
-      expect(BusinessCategoryConfig.fromCategoryLabel('ozel egitim dersleri').id, 'egitim_ders');
-      expect(BusinessCategoryConfig.fromCategoryLabel('saglik yasam koçu').id, 'saglik_yasam');
-      expect(BusinessCategoryConfig.fromCategoryLabel('oto yikama servisi').id, 'oto_arac');
-    });
+    test(
+      'fromCategoryLabel is tolerant to English-character Turkish inputs (normalization)',
+      () {
+        // Test exact matches without Turkish characters
+        expect(BusinessCategoryConfig.fromCategoryLabel('kuafor').id, 'kuafor');
+        expect(BusinessCategoryConfig.fromCategoryLabel('gida').id, 'gida');
+        expect(BusinessCategoryConfig.fromCategoryLabel('firin').id, 'firin');
+
+        // Test partial/keyword matches without Turkish characters
+        expect(
+          BusinessCategoryConfig.fromCategoryLabel('kuafor salonu').id,
+          'kuafor',
+        );
+        expect(
+          BusinessCategoryConfig.fromCategoryLabel('ozel egitim dersleri').id,
+          'egitim_ders',
+        );
+        expect(
+          BusinessCategoryConfig.fromCategoryLabel('saglik yasam koçu').id,
+          'saglik_yasam',
+        );
+        expect(
+          BusinessCategoryConfig.fromCategoryLabel('oto yikama servisi').id,
+          'oto_arac',
+        );
+      },
+    );
 
     test('all category labels map back to themselves', () {
       for (final category in BusinessCategoryConfig.categories) {
         final mapped = BusinessCategoryConfig.fromCategoryLabel(category.label);
-        expect(mapped.id, category.id, reason: 'Failed for label: ${category.label}');
+        expect(
+          mapped.id,
+          category.id,
+          reason: 'Failed for label: ${category.label}',
+        );
       }
+    });
+
+    test('labelForKey resolves all new landing category keys', () {
+      for (final entry
+          in const {
+            'butik': 'Butik',
+            'kozmetik': 'Kozmetik',
+            'elektronik': 'Elektronik',
+            'kirtasiye': 'Kırtasiye',
+            'pet_shop_veteriner': 'Pet Shop & Veteriner',
+            'hizmet_danismanlik': 'Hizmet & Danışmanlık',
+            'egitim_ders': 'Eğitim & Ders',
+            'ev_temizlik': 'Ev & Temizlik',
+          }.entries) {
+        expect(
+          BusinessCategoryConfig.labelForKey(entry.key),
+          entry.value,
+          reason: 'labelForKey("${entry.key}") did not resolve',
+        );
+      }
+    });
+
+    test('fromCategoryLabel resolves Next.js "/" formatted labels', () {
+      expect(
+        BusinessCategoryConfig.fromCategoryLabel('Oto / Araç').id,
+        'oto_arac',
+      );
+      expect(
+        BusinessCategoryConfig.fromCategoryLabel('Spor / Fitness').id,
+        'spor_fitness',
+      );
+      expect(
+        BusinessCategoryConfig.fromCategoryLabel('Sağlık / Yaşam').id,
+        'saglik_yasam',
+      );
+      expect(
+        BusinessCategoryConfig.fromCategoryLabel('Pet / Veteriner').id,
+        'pet_shop_veteriner',
+      );
+      expect(
+        BusinessCategoryConfig.fromCategoryLabel('Kafe / Lokanta').id,
+        'kafe_lokanta',
+      );
     });
 
     test('all 19 categories are configured with valid fields', () {

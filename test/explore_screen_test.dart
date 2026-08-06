@@ -61,8 +61,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text("Vixrex'leri Keşfet"), findsOneWidget);
-    expect(find.text('Yayındaki Vixrex profillerini keşfet'), findsOneWidget);
-    expect(find.text('Vitrin, ürün veya kategori ara...'), findsOneWidget);
+    expect(
+      find.text('Yayındaki tüm Vixrex vitrinlerini inceleyin'),
+      findsOneWidget,
+    );
+    expect(find.text('Vitrin, ürün veya il/ilçe ara...'), findsOneWidget);
     expect(find.text('Tümü'), findsAtLeastNWidgets(1));
     expect(find.text('Giyim'), findsAtLeastNWidgets(1));
   });

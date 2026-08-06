@@ -12,6 +12,7 @@ import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/services/legal_document_service.dart';
 import 'package:vixrex/services/product_service.dart';
+import 'package:vixrex/services/owner_preview_service.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
 import 'package:vixrex/utils/secure_token_generator.dart';
 import 'package:vixrex/utils/failure.dart';
@@ -19,6 +20,15 @@ import 'package:vixrex/utils/failure.dart';
 import 'mixins/store_media_mixin.dart';
 import 'mixins/store_location_mixin.dart';
 import 'mixins/store_core_mixin.dart';
+
+/// Tek sahip önizleme sonucu (implementation_plan.md §5.1) — taslak/yayın
+/// ayrımını çağırandan gizler. `versionConflict`: canlı vitrin taslakla
+/// çalışırken güncellendiyse true (Commit 6, §5.3 sessiz ezme yok).
+class OwnerPreviewLink {
+  const OwnerPreviewLink(this.url, {this.versionConflict = false});
+  final String url;
+  final bool versionConflict;
+}
 
 /// VixRex Vitrin Editörü Ana Controller'ı.
 /// UI ile iş mantığı arasındaki köprüdür. Alt görevleri Mixin'lere delege eder.
@@ -31,6 +41,7 @@ class StoreEditorController extends ChangeNotifier
   final LegalDocumentService legalDocumentService;
   final ProductService productService;
   final SupabaseClient? supabaseClient;
+  late final OwnerPreviewService _ownerPreviewService;
 
   StoreData _data;
   PublishedVitrinInfo? _publishedInfo;
@@ -43,6 +54,7 @@ class StoreEditorController extends ChangeNotifier
     StoreShelfUploadService? uploadService,
     LegalDocumentService? legalDocumentService,
     ProductService? productService,
+    OwnerPreviewService? ownerPreviewService,
     this.supabaseClient,
     StoreData? initialData,
   }) : storage = storage ?? const StoreLocalStorageService(),
@@ -57,6 +69,13 @@ class StoreEditorController extends ChangeNotifier
              repository: SupabaseProductRepository(client: supabaseClient),
            ),
        _data = initialData ?? StoreData(kategori: 'Diğer', status: 'Açık') {
+    _ownerPreviewService =
+        ownerPreviewService ??
+        OwnerPreviewService(
+          clientProvider: _resolveClient,
+          draftEditTokenProvider: ensureDraftEditToken,
+          publishService: this.publishService,
+        );
     _syncInitialData();
   }
 
@@ -1008,24 +1027,29 @@ class StoreEditorController extends ChangeNotifier
     return token;
   }
 
-  /// Taslağı Supabase'e kaydeder ve Next.js'in gerçek şablonundaki
-  /// taslak önizleme linkini döndürür. Zaten yayınlı bir vitrin için
-  /// çağrılmamalı (çağıran taraf `isLive` kontrolünü yapmalı).
-  Future<String> previewDraftLink() async {
-    _syncEditorGalleryIntoStoreData();
-    if (_data.slug.trim().isEmpty) {
-      _data.slug = publishService.payloadBuilder.generateSlug(_data.name);
-    }
-    final editToken = await ensureDraftEditToken();
-    final result = await publishService.saveDraft(_data, editToken: editToken);
-    if (result.isFailure) {
-      throw StorePublishException(result.failure!.message);
-    }
-    final draft = result.data!;
-    _data.slug = draft.slug;
+  /// Tek sahip önizleme girişi (implementation_plan.md §5.1/5.2, Commit 5/6):
+  /// taslak/yayın ayrımını çağırandan saklar.
+  ///
+  /// - Önizleme tıklamasında editör verisini yerel olarak senkronlar.
+  /// - Yayın öncesi taslak vitrini güvenli şekilde kaydeder.
+  /// - Yayınlanmış vitrin için çalışma taslağını garantiler (ilk açılışta
+  ///   canlı veriden üretilir, sonraki açılışlarda korunur — Commit 6) ve
+  ///   canlı kayıt güncellendiyse çakışmayı algılar.
+  /// - Her iki durumda Next.js sahip giriş adresini (`/api/owner-session`)
+  ///   döndürür; kalıcı `edit_token` asla URL'ye yazılmaz (koruma #7).
+  Future<OwnerPreviewLink> openOwnerPreview() async {
+    await saveLocally();
+    final result = await _ownerPreviewService.open(
+      storeData: _data,
+      publishedInfo: _publishedInfo,
+    );
+    _data.slug = result.slug;
     await saveLocally();
     notifyListeners();
-    return PublicSiteConfig.buildVitrinPreviewLink(draft.slug, draft.editToken);
+    return OwnerPreviewLink(
+      result.url,
+      versionConflict: result.versionConflict,
+    );
   }
 
   /// Editör galeri etiketlerini StoreData'ya yazar (yerel kayıt / yayın).

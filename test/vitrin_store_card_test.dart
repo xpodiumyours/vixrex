@@ -58,7 +58,9 @@ void main() {
     );
 
     expect(find.text('Test Mağazası'), findsOneWidget);
-    expect(find.text('Giyim & Butik'), findsOneWidget);
+    // Kart kategori etiketini büyük harfe çevirerek gösterir
+    // (VitrinStoreCard içindeki categoryLabel .toUpperCase()).
+    expect(find.text('Giyim & Butik'.toUpperCase()), findsOneWidget);
   });
 
   testWidgets('2. isExample true olduğunda Örnek etiketi gösteriliyor', (
