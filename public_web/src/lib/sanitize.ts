@@ -1,30 +1,65 @@
+import sanitizeHtmlLib from "sanitize-html";
+
 /**
- * Sanitizes HTML content to prevent XSS attacks while keeping basic layout formatting tags.
- * Preserves safe tags: <p>, <br>, <strong>, <b>, <em>, <i>, <u>, <ul>, <ol>, <li>, <a>.
+ * Esnafın yazdığı blog içeriğini güvenli hâle getirir.
+ *
+ * NEDEN KÜTÜPHANE, NEDEN DÜZENLİ İFADE DEĞİL
+ * Bu dosya eskiden regex ile etiket siliyordu. O yöntem atlatılabilir:
+ *
+ *     <scr<script>ipt>alert(1)</scr</script>ipt>
+ *
+ * İçteki `<script>` silinince geriye çalışan bir `<script>` kalır. CodeQL
+ * bunu "Bad HTML filtering regexp" ve "Incomplete multi-character
+ * sanitization" olarak üç ayrı yüksek önemli uyarıyla bildirdi
+ * (2026-07-18'den beri açıktı).
+ *
+ * İçerik `dangerouslySetInnerHTML` ile doğrudan sayfaya basılıyor ve
+ * yazıyı esnaf giriyor — yani girdi güvenilmez, çıktı herkese görünür.
+ * Bu ikisi bir aradayken regex temizleme yeterli değildir.
+ *
+ * YAKLAŞIM: izin listesi (allowlist). Aşağıda sayılmayan her etiket ve
+ * her öznitelik atılır — yeni bir saldırı yöntemi çıktığında listeyi
+ * güncellemek gerekmez, çünkü bilinmeyen her şey zaten reddedilir.
  */
+
+const IZINLI_ETIKETLER = [
+  "p", "br", "strong", "b", "em", "i", "u",
+  "ul", "ol", "li",
+  "h2", "h3", "h4",
+  "blockquote",
+  "a",
+];
+
 export function sanitizeHtml(html: string): string {
   if (!html) return "";
 
-  // 1. Remove script tags and all content inside them
-  let clean = html.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "");
+  return sanitizeHtmlLib(html, {
+    allowedTags: IZINLI_ETIKETLER,
 
-  // 2. Remove iframe tags and all content inside them
-  clean = clean.replace(/<iframe[^>]*>([\s\S]*?)<\/iframe>/gi, "");
+    allowedAttributes: {
+      // Bağlantıda yalnız adres, başlık ve sekme davranışı.
+      // class/style/id yok: sayfa düzeni ele geçirilemesin.
+      a: ["href", "title", "target", "rel"],
+      p: ["class"],
+    },
 
-  // 3. Remove inline event handlers (e.g. onload, onerror, onclick, onmouseover)
-  clean = clean.replace(/\s+on\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]*)/gi, "");
+    // javascript: ve data: adresleri düşer; yalnız bunlar kalır.
+    allowedSchemes: ["http", "https", "mailto", "tel"],
+    allowedSchemesAppliedToAttributes: ["href"],
 
-  // 4. Sanitize javascript: and data: URIs in href or src attributes
-  clean = clean.replace(/(href|src)\s*=\s*["']\s*(javascript|data):[^"']*["']/gi, '$1="#"');
-  clean = clean.replace(/(href|src)\s*=\s*(javascript|data):[^\s>]*/gi, '$1="#"');
+    // Dış bağlantılar yeni sekmede ve referans sızdırmadan açılır.
+    transformTags: {
+      a: (etiket, oz) => ({
+        tagName: "a",
+        attribs: {
+          ...oz,
+          rel: "noopener noreferrer nofollow",
+        },
+      }),
+    },
 
-  // 5. Remove object, embed, applet, and form/input tags
-  clean = clean.replace(/<(object|embed|applet|form|input|button|textarea|select|option)[^>]*>([\s\S]*?)<\/\1>/gi, "");
-  clean = clean.replace(/<(object|embed|applet|form|input|button|textarea|select|option)[^>]*\/?>/gi, "");
-
-  // 6. Remove style and link tags to prevent arbitrary layout hijacking
-  clean = clean.replace(/<(style|link)[^>]*>([\s\S]*?)<\/\1>/gi, "");
-  clean = clean.replace(/<(style|link)[^>]*\/?>/gi, "");
-
-  return clean;
+    // İzinsiz etiketin İÇERİĞİ korunur, etiketin kendisi atılır —
+    // böylece yazı kaybolmaz, yalnız biçimlendirme düşer.
+    disallowedTagsMode: "discard",
+  });
 }
