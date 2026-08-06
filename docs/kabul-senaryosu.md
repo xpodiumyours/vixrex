@@ -114,20 +114,32 @@ senaryosunun sonu şimdilik 7. adım.
 
 ---
 
-## Bugünkü boşluk listesi (sıralı)
+## Boşluk listesi — 2026-08-06 durumu
 
-Yolu bozan, sırayla temizlenecek:
+| # | Adım | İş | Durum |
+|---|---|---|---|
+| 1 | 2 | A1 — giriş takılıyor / yavaş açılıyor | ✅ `6c83ef2` |
+| 2 | 3 | A2 — konum yanlış tespit ediliyor | ✅ `0d23052` |
+| 3 | 4 | B1 — istenmeyen kapak fotoğrafı | ✅ `772abd1` |
+| 4 | 5 | C1 — şablon kütüphanesi yanlış tarafta | ✅ `d397eec` |
+| 5 | 7 | C3 — canlı düzenleme uygulamaya yansımıyor | ✅ `6408082` |
+| 6 | 7 | C2 — tek asistan, kesintisiz devir | ✅ `7fafe9c` |
+| 7 | 1 | Kiralama bandı vitrine bağlansın | ✅ `171ef73` |
+| 8 | 6 | QR kod geri gelsin | ✅ `fed3e72` |
+| 9 | 5 | D2 — arayüz ince işçiliği | ⬜ E2E turunda toplanacak |
 
-| # | Adım | İş |
-|---|---|---|
-| 1 | 3 | A2 — konum yanlış tespit ediliyor |
-| 2 | 4 | B1 — istenmeyen kapak fotoğrafı |
-| 3 | 5 | C1 — şablon kütüphanesi yanlış tarafta |
-| 4 | 7 | C3 — canlı düzenleme uygulamaya yansımıyor |
-| 5 | 7 | C2 — tek asistan: aynı yüz, kesintisiz devir |
-| 6 | 5 | D1/D2 — UI kalitesi ve ince işçilik |
-| 7 | 1 | Kiralama bandı gerçek vitrine bağlansın |
-| 8 | 6 | QR kod geri gelsin |
+**Ölçülebilir her madde kapandı.** Kalan tek şey göz gerektiriyor: D2,
+arayüzün ince işçiliği. O da tek tek tahmin ederek değil, baştan sona
+tek bir E2E turunda toplanacak.
+
+### Test düzeni — kural
+
+- **Parça testi yok.** Bir düzeltmeden sonra "şunu bir dene" denmez.
+- Liste bitmeden kullanıcıya test ettirilmez.
+- Test tek oturumda, bu belgedeki 8 adım sırayla yürünerek yapılır.
+- Her adım için tek soru: **vaat edilen oldu mu?**
+- Takılan yer not edilir, tur DEVAM EDER — ortasında düzeltmeye
+  girilmez. Tur bitince liste birlikte ele alınır.
 
 ---
 
