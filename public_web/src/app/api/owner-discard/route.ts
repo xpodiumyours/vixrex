@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 
 const HATA_METNI: Record<string, string> = {
   INVALID_SESSION_TOKEN:
-    "Oturumunuz geçersiz veya süresi dolmuş. Önizlemeyi tekrar açın.",
+    "Oturumun geçersiz veya süresi dolmuş. Önizlemeyi tekrar aç.",
 };
 
 function supabaseAnon() {
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     const metin =
-      HATA_METNI[error.message] ?? "Değişiklikler geri alınamadı. Lütfen tekrar deneyin.";
+      HATA_METNI[error.message] ?? "Değişiklikler geri alınamadı. Lütfen tekrar dene.";
     // Hata kodu loglanır; oturum tokenı loglanmaz.
     console.error("[owner-discard] discard failed:", error.message);
     const durum = error.message === "INVALID_SESSION_TOKEN" ? 401 : 400;

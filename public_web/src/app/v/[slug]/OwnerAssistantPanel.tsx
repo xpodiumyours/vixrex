@@ -83,7 +83,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
     if (rapor.sonrakiAdim) mesajEkle("asistan", rapor.sonrakiAdim);
     mesajEkle(
       "asistan",
-      "Değiştirmek istediğiniz yazıya vitrinde tıklayın — buradan düzenleriz."
+      "Değiştirmek istediğin yazıya vitrinde tıkla — buradan düzenleriz."
     );
   }, [mesajlar.length, rapor, mesajEkle]);
 
@@ -198,7 +198,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       vurguyuTemizle();
       router.refresh();
     } catch {
-      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setKaydediliyor(false);
     }
@@ -238,7 +238,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       }
       setHazirGorseller(liste);
     } catch {
-      mesajEkle("asistan", "Hazır görseller getirilemedi. Tekrar deneyin.");
+      mesajEkle("asistan", "Hazır görseller getirilemedi. Tekrar dene.");
     } finally {
       setHazirYukleniyor(false);
     }
@@ -271,7 +271,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       vurguyuTemizle();
       router.refresh();
     } catch {
-      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setKaydediliyor(false);
     }
@@ -285,7 +285,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       if (metin) mesajEkle("kullanici", metin);
       mesajEkle(
         "asistan",
-        "Hangi alanı değiştireceğinizi bilmiyorum. Vitrinde düzenlemek istediğiniz yazıya tıklayın, sonra yeni değeri yazın."
+        "Hangi alanı değiştireceğini bilmiyorum. Vitrinde düzenlemek istediğin yazıya tıkla, sonra yeni değeri yaz."
       );
       setGiris("");
       return;
@@ -322,7 +322,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       vurguyuTemizle();
       router.refresh();
     } catch {
-      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setKaydediliyor(false);
     }
@@ -342,17 +342,17 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
 
       if (!yanit.ok) {
         // Sunucunun mesajı OLDUĞU GİBİ gösterilir; kendi metnimiz uydurulmaz.
-        mesajEkle("asistan", govde?.hata ?? "Yayınlanamadı. Lütfen tekrar deneyin.");
+        mesajEkle("asistan", govde?.hata ?? "Yayınlanamadı. Lütfen tekrar dene.");
         return;
       }
 
       mesajEkle(
         "asistan",
-        "Vitrininiz yayınlandı. Müşterileriniz artık yeni hâlini görüyor."
+        "Vitrinin yayınlandı. Müşterilerin artık yeni hâlini görüyor."
       );
       router.refresh();
     } catch {
-      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setYayinlaniyor(false);
     }
@@ -363,7 +363,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
   const silmeOnayla = () => {
     mesajEkle(
       "asistan",
-      "Yaptığınız tüm değişiklikler silinecek ve vitrin son yayınlanan hâline dönecek. Emin misiniz?"
+      "Yaptığın tüm değişiklikler silinecek ve vitrin son yayınlanan hâline dönecek. Emin misin?"
     );
     setSilmeOnayi(true);
   };
@@ -391,7 +391,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       );
       router.refresh();
     } catch {
-      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar deneyin.");
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setYayinlaniyor(false);
     }
@@ -590,7 +590,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
                 placeholder={
                   seciliAlan
                     ? "Yeni değeri yazın…"
-                    : "Vitrinde bir yazıya tıklayın…"
+                    : "Vitrinde bir yazıya tıkla…"
                 }
                 className="flex-1 resize-none rounded-lg border border-white/10 bg-slate-900/70 px-3 py-2 text-xs text-white outline-none focus:border-blue-500/60"
               />

@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
 
   if (!ownerSession) {
     return NextResponse.json(
-      { hata: "Oturumunuz geçersiz veya süresi dolmuş. Önizlemeyi tekrar açın." },
+      { hata: "Oturumun geçersiz veya süresi dolmuş. Önizlemeyi tekrar aç." },
       { status: 401 }
     );
   }
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
   const uzanti = tur ? IZINLI_TURLER.get(tur) : null;
   if (!tur || !uzanti) {
     return NextResponse.json(
-      { hata: "Yalnız JPG, PNG veya WebP yükleyebilirsiniz." },
+      { hata: "Yalnız JPG, PNG veya WebP yükleyebilirsin." },
       { status: 415 }
     );
   }
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error("[owner-upload] storage error:", error.message);
       return NextResponse.json(
-        { hata: "Görsel yüklenemedi. Tekrar deneyin." },
+        { hata: "Görsel yüklenemedi. Tekrar dene." },
         { status: 500 }
       );
     }
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
       err instanceof Error ? err.message : "unknown"
     );
     return NextResponse.json(
-      { hata: "Görsel yüklenemedi. Tekrar deneyin." },
+      { hata: "Görsel yüklenemedi. Tekrar dene." },
       { status: 500 }
     );
   }

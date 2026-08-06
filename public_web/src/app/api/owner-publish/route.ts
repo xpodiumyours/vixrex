@@ -23,23 +23,23 @@ export const dynamic = "force-dynamic";
 
 const HATA_METNI: Record<string, string> = {
   INVALID_SESSION_TOKEN:
-    "Oturumunuz geçersiz veya süresi dolmuş. Önizlemeyi tekrar açın.",
+    "Oturumun geçersiz veya süresi dolmuş. Önizlemeyi tekrar aç.",
   DEMO_STORE_IMMUTABLE: "Bu örnek vitrin yayınlanamaz.",
   WORKING_DRAFT_NOT_FOUND: "Yayınlanacak bir değişiklik yok.",
   DRAFT_STALE:
-    "Vitrininiz başka bir yerden değiştirilmiş. Sayfayı yenileyip değişikliklerinizi tekrar yapın.",
+    "Vitrinin başka bir yerden değiştirilmiş. Sayfayı yenileyip değişikliklerini tekrar yap.",
   PRIVACY_NOTICE_REQUIRED:
-    "Yayınlamak için gizlilik bildirimini onaylamanız gerekiyor. Bu onay üyelik panelinizden verilir.",
+    "Yayınlamak için gizlilik bildirimini onaylaman gerekiyor. Bu onay üyelik panelinden verilir.",
   TERMS_ACCEPTANCE_REQUIRED:
-    "Yayınlamak için kullanım şartlarını kabul etmeniz gerekiyor. Bu onay üyelik panelinizden verilir.",
+    "Yayınlamak için kullanım şartlarını kabul etmen gerekiyor. Bu onay üyelik panelinden verilir.",
   PUBLICATION_CONSENT_REQUIRED:
-    "Vitrininizin yayınlanmasına izin vermeniz gerekiyor. Bu izin üyelik panelinizden verilir.",
+    "Vitrininin yayınlanmasına izin vermen gerekiyor. Bu izin üyelik panelinden verilir.",
   PRIVACY_NOTICE_VERSION_INVALID:
-    "Sözleşme metinleri güncellenmiş. Üyelik panelinizden yeni metinleri onaylayın.",
+    "Sözleşme metinleri güncellenmiş. Üyelik panelinden yeni metinleri onayla.",
   TERMS_VERSION_INVALID:
-    "Sözleşme metinleri güncellenmiş. Üyelik panelinizden yeni metinleri onaylayın.",
+    "Sözleşme metinleri güncellenmiş. Üyelik panelinden yeni metinleri onayla.",
   PUBLICATION_CONSENT_VERSION_INVALID:
-    "Sözleşme metinleri güncellenmiş. Üyelik panelinizden yeni metinleri onaylayın.",
+    "Sözleşme metinleri güncellenmiş. Üyelik panelinden yeni metinleri onayla.",
 };
 
 const DURUM_MAP: Record<string, number> = {
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     const metin =
-      HATA_METNI[error.message] ?? "Yayınlanamadı. Lütfen tekrar deneyin.";
+      HATA_METNI[error.message] ?? "Yayınlanamadı. Lütfen tekrar dene.";
     // Hata kodu loglanır; oturum tokenı ve taslak içeriği loglanmaz.
     console.error("[owner-publish] publish failed:", error.message);
     const durum = DURUM_MAP[error.message] ?? 400;
