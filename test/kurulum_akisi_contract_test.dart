@@ -46,6 +46,7 @@ void main() {
       for (final adim in [
         'welcome',
         'name',
+        'category',
         'whatsapp',
         'location',
         'legal',
@@ -60,6 +61,14 @@ void main() {
       expect(chat, contains('_submitName'));
       expect(chat, contains('_submitWhatsapp'));
       expect(chat, contains('_submitLocationText'));
+    });
+
+    test('kategori adımı sohbetin içinde, ayrı ekrana götürmüyor', () {
+      // Kategori şemada zorunlu; sorulmazsa vitrin 'Diğer' kalıyor ve
+      // kategoriye bağlı hiçbir şey çalışmıyor. Seçim sohbetin içinde
+      // yapılır — kullanıcı başka ekrana atılmaz.
+      expect(chat, contains('_selectCategory'));
+      expect(chat, contains('BusinessCategoryConfig.categories'));
     });
 
     test('kurulum sonrası asistan devri duruyor', () {

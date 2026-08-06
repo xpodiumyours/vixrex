@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
@@ -20,6 +21,7 @@ const String _kOnboardingHandoffMarker = 'onboarding_handoff_v1';
 enum _OnboardingStep {
   welcome,
   name,
+  category,
   whatsapp,
   location,
   legal,
@@ -133,12 +135,9 @@ class _VixRexOnboardingChatScreenState
         _pushBot('İşletme adını tamamlayalım.');
         _focusInput();
       case VixRexNextStep.category:
-        // Kategori artık ZORUNLU (şemadan gelir). Kurulum sohbetinde henüz
-        // kendi adımı yok; kullanıcı Vitrinim panelinden seçer.
-        // Sonraki iş: sohbete kategori adımı eklemek.
-        setState(() => _step = _OnboardingStep.location);
+        setState(() => _step = _OnboardingStep.category);
         _pushBot(
-          'Sıradaki adım: işletme kategorini seçelim — vitrinin ona göre '
+          'Sıradaki adım: ne iş yaptığını seçelim — vitrinin ona göre '
           'hazırlanıyor.',
         );
       case VixRexNextStep.whatsapp:
@@ -299,9 +298,30 @@ class _VixRexOnboardingChatScreenState
     _controller.updateName(name);
     await _controller.saveLocally();
     setState(() {
-      _step = _OnboardingStep.whatsapp;
+      _step = _OnboardingStep.category;
       _error = null;
       _inputController.clear();
+    });
+    // Kategori şemada ZORUNLU (lib/config/vitrin_alanlari.g.dart).
+    // Eskiden hiç sorulmuyordu; sohbetle açılan her vitrin "Diğer" kalıyor,
+    // kategoriye bağlı hiçbir şey (butonlar, bölüm başlıkları, kategoriye
+    // özel hazır görseller) çalışmıyordu.
+    _pushBot(
+      'Ne iş yapıyorsun?\n'
+      'Seçtiğin işe göre vitrinini hazır kuruyorum.',
+    );
+  }
+
+  /// Kategori seçimi — 19 kategori, tek dokunuş. Yazdırmıyoruz: esnaf
+  /// "kuaför" yerine "Kuafor" yazınca eşleşme kaybolur.
+  Future<void> _selectCategory(String label) async {
+    _pushUser(label);
+    _controller.selectCategory(label);
+    await _controller.saveLocally();
+    if (!mounted) return;
+    setState(() {
+      _step = _OnboardingStep.whatsapp;
+      _error = null;
     });
     _pushBot('Müşteriler seni nasıl bulsun?\nWhatsApp numaranı yaz.');
     _focusInput();
@@ -731,6 +751,59 @@ class _VixRexOnboardingChatScreenState
                   ),
                 ),
               ],
+            ),
+          ],
+          // Kategori seçimi — sohbetin içinde, ayrı ekrana götürmeden.
+          if (_step == _OnboardingStep.category) ...[
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text(
+                'İşini seç',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.mutedText,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (final kategori in BusinessCategoryConfig.categories)
+                      InkWell(
+                        onTap:
+                            _busy ? null : () => _selectCategory(kategori.label),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Text(
+                            kategori.label,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.darkText,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ],
           if (_step == _OnboardingStep.legal) ...[
