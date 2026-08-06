@@ -9,13 +9,19 @@
 import { VITRIN_FIELDS, type VitrinField, type VitrinSection } from "./vitrinFieldSchema";
 
 /** Vitrinin ayakta durması için doldurulması beklenen alanlar. */
-const TEMEL_ALANLAR = new Set([
-  "isletmeAdi",
-  "kisaTanitim",
-  "whatsapp",
-  "adres",
-  "kategori",
-]);
+// TEK DOĞRU KAYNAK: şemadaki `zorunlu` işareti.
+//
+// Burada eskiden elle yazılmış ayrı bir liste vardı ve üç yerde üç farklı
+// "zorunlu" tanımı oluşmuştu: şema yalnız işletme adını, bu liste beş
+// alanı, Flutter'ın kendi mantığı dört şeyi zorunlu sayıyordu. Kategoriyi
+// yalnız bu liste sayıyordu — Flutter hiç sormadığı için sohbetle açılan
+// her vitrin "Diğer" kalıyordu.
+//
+// Artık zorunluluk yalnız şemada tanımlanır; buraya ve Flutter'a oradan
+// gelir. Yeni bir alanı zorunlu yapmak = şemaya tek satır.
+const TEMEL_ALANLAR = new Set(
+  VITRIN_FIELDS.filter((alan) => alan.zorunlu).map((alan) => alan.anahtar)
+);
 
 /** Vitrini web sitesi kalitesine çıkaran, ama şart olmayan alanlar. */
 const KALITE_ALANLARI = new Set([

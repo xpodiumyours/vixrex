@@ -126,6 +126,8 @@ export interface VitrinProfileViewProps {
    * yazılmaz — koruma sınırı 3 (sahip araçları müşteri yanıtına sızmaz).
    */
   ownerMode?: boolean;
+  /** Kiralık demo vitrin mi — kiralama bandı yalnız burada çıkar. */
+  isDemo?: boolean;
 }
 
 export default function VitrinProfileView({
@@ -171,6 +173,7 @@ export default function VitrinProfileView({
   catalog,
   isPreviewMode = false,
   ownerMode = false,
+  isDemo = false,
 }: VitrinProfileViewProps) {
   const [copied, setCopied] = useState(false);
   const displayAddress = normalizeAddressDisplay(address);
@@ -313,9 +316,20 @@ export default function VitrinProfileView({
       <section
         className={`relative w-full min-h-[360px] sm:min-h-[420px] flex items-end overflow-hidden ${isPreviewMode ? "pt-[104px]" : "pt-[68px]"}`}
       >
+        {/* Kapak yoksa SAHTE FOTOĞRAF BASILMAZ.
+            Eskiden burada sabit bir Unsplash adresi vardı: kapak
+            koymamış her işletme — butikçi de, kuaför de — aynı yabancı
+            fotoğrafla açılıyordu. Esnaf "ben bunu koymadım" diyordu ve
+            haklıydı; kendi vitrini gibi hissettirmiyordu.
+            Yerine kendi renk dilimizde sade bir zemin: boş görünmüyor,
+            ama sahip olmadığı bir şeyi de sahiplenmiyor. */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroImage || 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1600&q=80'})` }}
+          className={
+            heroImage
+              ? "absolute inset-0 bg-cover bg-center"
+              : "absolute inset-0 bg-gradient-to-br from-[#111C33] via-[#0B1120] to-[#16223D]"
+          }
+          style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/75 to-[#0B1120]/30" />
         </div>
@@ -410,12 +424,19 @@ export default function VitrinProfileView({
                 key={cat.name}
                 className="group relative h-44 rounded-2xl overflow-hidden cursor-pointer border border-blue-500/15 hover:border-blue-500/30 transition shadow-lg"
               >
-                <Image
-                  src={cat.imageUrl || heroImage || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80"}
-                  alt={cat.name}
-                  fill
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                />
+                {/* Aynı kural: görseli olmayan kategoriye yabancı bir
+                    fotoğraf konmaz. Kendi kapağı varsa o kullanılır,
+                    yoksa sade zemin — ad zaten üstünde yazıyor. */}
+                {cat.imageUrl || heroImage ? (
+                  <Image
+                    src={cat.imageUrl || heroImage}
+                    alt={cat.name}
+                    fill
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#16223D] to-[#0B1120]" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120]/90 via-transparent to-transparent" />
                 <div className="absolute bottom-4 left-4 z-10 text-base font-bold text-white">{cat.name}</div>
                 <div className="absolute bottom-4 right-4 z-10 text-xs font-semibold text-slate-300 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full">
@@ -885,6 +906,70 @@ export default function VitrinProfileView({
           </div>
         </div>
       </div>
+
+      {/* ===== KİRALA — yalnız hazır demo vitrinlerde =====
+          Hedef HTML'de bu bölüm vardı, gerçek vitrinde yoktu. İş modelinin
+          giriş kapısı burası: esnaf Google'dan hazır bir vitrine düşüyor,
+          beğeniyor, buradan kiralıyor.
+          Para ödeyen esnafın kendi vitrininde ÇIKMAZ — isDemo şartı bunun
+          içindir. */}
+      {isDemo && (
+        <section
+          id="kirala"
+          className="border-t border-blue-500/15 bg-gradient-to-b from-blue-950/30 to-transparent py-14"
+        >
+          <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400">
+              Kiralık vitrin standardı
+            </p>
+            <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-white">
+              Bu hazır {profile.label.toLowerCase()} vitrinini işletmenize göre
+              kişiselleştirin
+            </h2>
+            <p className="mt-3 text-sm text-slate-300 leading-relaxed">
+              Kiraladığınızda bu vitrin sizin olur: adınız, ürünleriniz,
+              fotoğraflarınız. Vixrex Asistan ile yazıya tıklayıp
+              değiştirirsiniz — kod bilmeniz gerekmez.
+            </p>
+
+            <ul className="mt-6 grid gap-3 sm:grid-cols-3 text-left">
+              {[
+                `${profile.label} sektörüne özel hazır içerik ve görseller`,
+                "Her yazıyı, fotoğrafı ve bölümü değiştirme imkânı",
+                "İşletmenize özel paylaşım linki ve QR kod",
+              ].map((madde) => (
+                <li
+                  key={madde}
+                  className="rounded-xl border border-blue-500/15 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-slate-300"
+                >
+                  {madde}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8 inline-flex flex-col items-center rounded-2xl border border-blue-500/25 bg-[#0B1120] px-8 py-6">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Başlangıç paketi
+              </span>
+              <span className="mt-1 text-3xl font-extrabold text-white">
+                499 TL
+                <span className="ml-1 text-sm font-semibold text-slate-400">
+                  + KDV / ay
+                </span>
+              </span>
+              <Link
+                href="https://vixrex.com"
+                className="mt-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-blue-500/40"
+              >
+                Bu vitrini kirala
+              </Link>
+              <span className="mt-3 text-[11px] text-slate-400">
+                İlk 14 gün ücretsiz deneme
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== FOOTER ===== */}
       <footer className="border-t border-blue-500/15 py-10 text-center">

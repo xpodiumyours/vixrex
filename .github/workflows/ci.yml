@@ -1,0 +1,90 @@
+name: CI
+
+# Her pull request'te ve main'e her push'ta otomatik çalışır.
+# Amaç: bir değişiklik başka bir yeri bozduğunda CANLIYA ÇIKMADAN ÖNCE haber vermek.
+#
+# Not: android-apk.yml testleri tek tek adıyla sayıyor ve yalnız elle tetikleniyor.
+# Bu dosya ondan farklı olarak TÜM test paketini otomatik koşar; yeni eklenen
+# testin listeye eklenmesi gerekmez.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  flutter:
+    name: Flutter — analiz ve testler
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: Biçim kontrolü
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Statik analiz
+        run: dart analyze --fatal-infos
+
+      - name: Testler
+        run: flutter test --reporter expanded
+
+  public_web:
+    name: Next.js — lint, tip, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tip kontrolü
+        run: npx tsc --noEmit
+
+      - name: Testler
+        run: npm run test
+
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}

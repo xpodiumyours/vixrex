@@ -91,6 +91,18 @@ class StoreLocalStorageService {
       LocalStorageKeys.vitrinData,
       jsonEncode(data.toJson()),
     );
+    await prefs.setString(
+      LocalStorageKeys.vitrinDataSavedAt,
+      DateTime.now().toUtc().toIso8601String(),
+    );
+  }
+
+  /// Vitrin verisinin yerele en son yazılma zamanı. Yoksa `null`.
+  Future<DateTime?> loadVitrinDataSavedAt() async {
+    final prefs = await _getPrefs();
+    final raw = prefs.getString(LocalStorageKeys.vitrinDataSavedAt);
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw)?.toUtc();
   }
 
   /// Kayıtlı vitrin verisini okur. Yoksa `null` döner.

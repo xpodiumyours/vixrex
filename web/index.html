@@ -46,19 +46,53 @@
     }
   </script>
   <script src="flutter_bootstrap.js" async></script>
-  <script src="https://www.google.com/recaptcha/api.js?render=6LfjAmctAAAAADJV6icaG7B5Wwf7Mslx1X22PuYj"></script>
+  <!-- async defer ZORUNLU: bu satır eskiden düz <script> idi ve tarayıcı,
+       Google'dan dosya inene kadar sayfayı çizmiyordu. Türkiye'den
+       reCAPTCHA yavaş cevap verdiğinde açılış onu bekliyordu. -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6LfjAmctAAAAADJV6icaG7B5Wwf7Mslx1X22PuYj" async defer></script>
   <script>
+    // reCAPTCHA fişi istenirken SÜRE SINIRI şart.
+    //
+    // Eski hâlinde sınır yoktu: kontrol yalnız "grecaptcha yüklendi mi"
+    // diye bakıyordu. Yüklenip de cevap vermediğinde grecaptcha.ready()
+    // veya execute() hiç sonuçlanmıyor, söz askıda kalıyor ve giriş
+    // düğmesi sonsuza kadar dönüyordu.
+    //
+    // Artık en fazla 3 saniye beklenir; cevap gelmezse null döner ve
+    // giriş akışı devam eder. Fiş almak girişin önünde duramaz.
+    window.__RECAPTCHA_TIMEOUT_MS = 3000;
+
     window.__getRecaptchaToken = function(action) {
       return new Promise(function(resolve) {
+        var bitti = false;
+        function tamamla(token) {
+          if (bitti) return;
+          bitti = true;
+          resolve(token);
+        }
+
+        var sayac = setTimeout(function() { tamamla(null); },
+                               window.__RECAPTCHA_TIMEOUT_MS);
+
+        function bitir(token) {
+          clearTimeout(sayac);
+          tamamla(token);
+        }
+
         if (typeof grecaptcha === 'undefined' || typeof grecaptcha.execute !== 'function') {
-          resolve(null);
+          bitir(null);
           return;
         }
-        grecaptcha.ready(function() {
-          grecaptcha.execute('6LfjAmctAAAAADJV6icaG7B5Wwf7Mslx1X22PuYj', {action: action})
-            .then(function(token) { resolve(token); })
-            .catch(function() { resolve(null); });
-        });
+
+        try {
+          grecaptcha.ready(function() {
+            grecaptcha.execute('6LfjAmctAAAAADJV6icaG7B5Wwf7Mslx1X22PuYj', {action: action})
+              .then(function(token) { bitir(token); })
+              .catch(function() { bitir(null); });
+          });
+        } catch (e) {
+          bitir(null);
+        }
       });
     };
   </script>

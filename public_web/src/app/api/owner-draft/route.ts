@@ -19,7 +19,7 @@ import { validateField } from "@/lib/vitrinFieldValidation";
 export const dynamic = "force-dynamic";
 
 const HATA_METNI: Record<string, string> = {
-  INVALID_SESSION_TOKEN: "Oturumunuz geçersiz veya süresi dolmuş. Önizlemeyi tekrar açın.",
+  INVALID_SESSION_TOKEN: "Oturumun geçersiz veya süresi dolmuş. Önizlemeyi tekrar aç.",
   DEMO_STORE_IMMUTABLE: "Bu örnek vitrin düzenlenemez.",
   FIELD_NOT_EDITABLE: "Bu alan düzenlenemez.",
   UNKNOWN_FIELD: "Bilinmeyen alan.",
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    const metin = HATA_METNI[error.message] ?? "Kaydedilemedi. Lütfen tekrar deneyin.";
+    const metin = HATA_METNI[error.message] ?? "Kaydedilemedi. Lütfen tekrar dene.";
     // Hata mesajı loglanır; oturum tokenı ve alan değeri loglanmaz.
     console.error("[owner-draft] update failed:", error.message);
     const durum = error.message === "INVALID_SESSION_TOKEN" ? 401 : 400;

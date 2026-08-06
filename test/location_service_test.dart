@@ -12,24 +12,24 @@ void main() {
   });
 
   group('LocationService.buildAccuracyMessage', () {
-    test('success message for <= 30m', () {
-      final message = LocationService.buildAccuracyMessage(30);
-      expect(message, contains('30'));
+    test('success message for <= 10m', () {
+      final message = LocationService.buildAccuracyMessage(10);
+      expect(message, contains('10'));
       expect(message, contains('basariyla'));
       expect(message, isNot(contains('hata payi yuksek')));
     });
 
-    test('warning message for > 30m', () {
+    test('warning message for > 10m', () {
       final message = LocationService.buildAccuracyMessage(31);
       expect(message, contains('31'));
-      expect(message, contains('yaklasik bulundu'));
-      expect(message, contains('30 metre'));
-      expect(message, contains('Google Maps'));
+      expect(message, contains('yeterince kesin degil'));
+      expect(message, contains('TELEFONDAN'));
+
     });
 
-    test('edge case: 30.1m shows warning message', () {
-      final message = LocationService.buildAccuracyMessage(30.1);
-      expect(message, contains('yaklasik bulundu'));
+    test('edge case: 10.1m shows warning message', () {
+      final message = LocationService.buildAccuracyMessage(10.1);
+      expect(message, contains('yeterince kesin degil'));
     });
 
     test('builds free Google Maps search uri', () {

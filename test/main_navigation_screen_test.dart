@@ -78,7 +78,10 @@ void main() {
 
     expect(find.textContaining('Tekrar hoş geldin, Kayıtlı Vitrin'), findsOneWidget);
     expect(find.textContaining('Kayıtlı vitrinin bulundu'), findsOneWidget);
-    expect(find.textContaining('WhatsApp numaranı ekleyelim'), findsOneWidget);
+    // 2026-08-06: kategori şemada zorunlu oldu; kaydedilmiş vitrinde yalnız
+    // ad dolu olduğu için asistan artık KATEGORİDEN devam ediyor.
+    // Sıra elle yazılmıyor, lib/config/vitrin_alanlari.g.dart'tan geliyor.
+    expect(find.textContaining('ne iş yaptığını seçelim'), findsOneWidget);
     expect(find.textContaining('vitrin oluşturmamı ister misin'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
