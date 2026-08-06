@@ -97,6 +97,7 @@ interface PublicStoreRow {
   logo_url: string | null;
   working_hours: unknown;
   is_published: boolean;
+  is_demo?: boolean | null;
   kategori: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -143,7 +144,7 @@ const PUBLIC_STORE_SELECT =
   "products,faq_items,about_kicker,about_title,about_image_url,about_image_caption," +
   "about_values,gallery_section_kicker,gallery_section_title," +
   "show_storefront_rating,show_directions_link,references_link,shelf_image_url," +
-  "logo_url,working_hours,is_published,kategori,latitude,longitude," +
+  "logo_url,working_hours,is_published,is_demo,kategori,latitude,longitude," +
   "google_business_link,product_storage_version,featured_banner_label," +
   "featured_banner_title,featured_banner_description,featured_banner_image_url," +
   "featured_banner_price_text,rating_score,review_count";
@@ -657,6 +658,7 @@ export default async function StorePage(props: PageProps) {
         }
         isPreviewMode={isOwnerMode}
         ownerMode={isOwnerMode}
+        isDemo={Boolean(store.is_demo)}
       />
       {isOwnerMode ? (
         <OwnerWorkspaceShell

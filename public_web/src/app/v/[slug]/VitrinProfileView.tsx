@@ -126,6 +126,8 @@ export interface VitrinProfileViewProps {
    * yazılmaz — koruma sınırı 3 (sahip araçları müşteri yanıtına sızmaz).
    */
   ownerMode?: boolean;
+  /** Kiralık demo vitrin mi — kiralama bandı yalnız burada çıkar. */
+  isDemo?: boolean;
 }
 
 export default function VitrinProfileView({
@@ -171,6 +173,7 @@ export default function VitrinProfileView({
   catalog,
   isPreviewMode = false,
   ownerMode = false,
+  isDemo = false,
 }: VitrinProfileViewProps) {
   const [copied, setCopied] = useState(false);
   const displayAddress = normalizeAddressDisplay(address);
@@ -903,6 +906,70 @@ export default function VitrinProfileView({
           </div>
         </div>
       </div>
+
+      {/* ===== KİRALA — yalnız hazır demo vitrinlerde =====
+          Hedef HTML'de bu bölüm vardı, gerçek vitrinde yoktu. İş modelinin
+          giriş kapısı burası: esnaf Google'dan hazır bir vitrine düşüyor,
+          beğeniyor, buradan kiralıyor.
+          Para ödeyen esnafın kendi vitrininde ÇIKMAZ — isDemo şartı bunun
+          içindir. */}
+      {isDemo && (
+        <section
+          id="kirala"
+          className="border-t border-blue-500/15 bg-gradient-to-b from-blue-950/30 to-transparent py-14"
+        >
+          <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400">
+              Kiralık vitrin standardı
+            </p>
+            <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-white">
+              Bu hazır {profile.label.toLowerCase()} vitrinini işletmenize göre
+              kişiselleştirin
+            </h2>
+            <p className="mt-3 text-sm text-slate-300 leading-relaxed">
+              Kiraladığınızda bu vitrin sizin olur: adınız, ürünleriniz,
+              fotoğraflarınız. Vixrex Asistan ile yazıya tıklayıp
+              değiştirirsiniz — kod bilmeniz gerekmez.
+            </p>
+
+            <ul className="mt-6 grid gap-3 sm:grid-cols-3 text-left">
+              {[
+                `${profile.label} sektörüne özel hazır içerik ve görseller`,
+                "Her yazıyı, fotoğrafı ve bölümü değiştirme imkânı",
+                "İşletmenize özel paylaşım linki ve QR kod",
+              ].map((madde) => (
+                <li
+                  key={madde}
+                  className="rounded-xl border border-blue-500/15 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-slate-300"
+                >
+                  {madde}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8 inline-flex flex-col items-center rounded-2xl border border-blue-500/25 bg-[#0B1120] px-8 py-6">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Başlangıç paketi
+              </span>
+              <span className="mt-1 text-3xl font-extrabold text-white">
+                499 TL
+                <span className="ml-1 text-sm font-semibold text-slate-400">
+                  + KDV / ay
+                </span>
+              </span>
+              <Link
+                href="https://vixrex.com"
+                className="mt-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-blue-500/40"
+              >
+                Bu vitrini kirala
+              </Link>
+              <span className="mt-3 text-[11px] text-slate-400">
+                İlk 14 gün ücretsiz deneme
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== FOOTER ===== */}
       <footer className="border-t border-blue-500/15 py-10 text-center">
