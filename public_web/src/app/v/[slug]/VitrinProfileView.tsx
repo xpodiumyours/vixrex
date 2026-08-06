@@ -313,9 +313,20 @@ export default function VitrinProfileView({
       <section
         className={`relative w-full min-h-[360px] sm:min-h-[420px] flex items-end overflow-hidden ${isPreviewMode ? "pt-[104px]" : "pt-[68px]"}`}
       >
+        {/* Kapak yoksa SAHTE FOTOĞRAF BASILMAZ.
+            Eskiden burada sabit bir Unsplash adresi vardı: kapak
+            koymamış her işletme — butikçi de, kuaför de — aynı yabancı
+            fotoğrafla açılıyordu. Esnaf "ben bunu koymadım" diyordu ve
+            haklıydı; kendi vitrini gibi hissettirmiyordu.
+            Yerine kendi renk dilimizde sade bir zemin: boş görünmüyor,
+            ama sahip olmadığı bir şeyi de sahiplenmiyor. */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroImage || 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1600&q=80'})` }}
+          className={
+            heroImage
+              ? "absolute inset-0 bg-cover bg-center"
+              : "absolute inset-0 bg-gradient-to-br from-[#111C33] via-[#0B1120] to-[#16223D]"
+          }
+          style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/75 to-[#0B1120]/30" />
         </div>
@@ -410,12 +421,19 @@ export default function VitrinProfileView({
                 key={cat.name}
                 className="group relative h-44 rounded-2xl overflow-hidden cursor-pointer border border-blue-500/15 hover:border-blue-500/30 transition shadow-lg"
               >
-                <Image
-                  src={cat.imageUrl || heroImage || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80"}
-                  alt={cat.name}
-                  fill
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                />
+                {/* Aynı kural: görseli olmayan kategoriye yabancı bir
+                    fotoğraf konmaz. Kendi kapağı varsa o kullanılır,
+                    yoksa sade zemin — ad zaten üstünde yazıyor. */}
+                {cat.imageUrl || heroImage ? (
+                  <Image
+                    src={cat.imageUrl || heroImage}
+                    alt={cat.name}
+                    fill
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#16223D] to-[#0B1120]" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120]/90 via-transparent to-transparent" />
                 <div className="absolute bottom-4 left-4 z-10 text-base font-bold text-white">{cat.name}</div>
                 <div className="absolute bottom-4 right-4 z-10 text-xs font-semibold text-slate-300 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full">
