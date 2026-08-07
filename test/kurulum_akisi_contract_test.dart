@@ -92,6 +92,14 @@ void main() {
       );
     });
 
+    test('konum düğmesi zorunlu alanlar eksikken pasif', () {
+      // 2026-08-07: doğrulama vardı ve boş alanla geçmiyordu, ama düğme
+      // hazır görünüyordu. Casper: "zorunluluk işareti var, karşılığı yok".
+      // Aynı kural hem düğmenin görünümünü hem geçişi belirlemeli.
+      expect(chat, contains('_konumEksigi'));
+      expect(chat, contains('Devam etmek için:'));
+    });
+
     test('kurulum sonrası asistan devri duruyor', () {
       // 2026-08-06 tek asistan kararı: kurulum bitince aynı Vixrex
       // vitrini sahip modunda açar. Bu kaldırılırsa sert devir geri gelir.

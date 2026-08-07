@@ -348,6 +348,22 @@ class _VixRexOnboardingChatScreenState
     );
   }
 
+  /// Konum adımında hangi zorunlu alan eksik — sırayla ilki.
+  ///
+  /// Doğrulama zaten `_confirmLocationFromEditor` içinde vardı ve boş
+  /// alanla geçmiyordu. Sorun görsel: düğme hazır görünüyor, basınca
+  /// reddediyordu. Casper (2026-08-07): "zorunluluk işareti var,
+  /// karşılığı yok". Aynı kural artık düğmenin görünümünü de belirliyor —
+  /// iki ayrı doğruluk olmasın diye tek yerde.
+  String? get _konumEksigi {
+    final data = _controller.data;
+    if (data.provinceCode.trim().isEmpty) return 'İl seç';
+    if (data.districtName.trim().isEmpty) return 'İlçe seç';
+    return AddressValidator.hataMesaji(data.address) == null
+        ? null
+        : 'Açık adresi yaz';
+  }
+
   Future<void> _confirmLocationFromEditor() async {
     final data = _controller.data;
     if (data.provinceCode.trim().isEmpty || data.districtName.trim().isEmpty) {
@@ -891,8 +907,23 @@ class _VixRexOnboardingChatScreenState
             const SizedBox(height: 10),
             _primaryButton(
               'Konumu onayla, devam',
-              _busy ? null : _confirmLocationFromEditor,
+              (_busy || _konumEksigi != null)
+                  ? null
+                  : _confirmLocationFromEditor,
             ),
+            if (_konumEksigi != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'Devam etmek için: ${_konumEksigi!}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.mutedText,
+                  ),
+                ),
+              ),
             const SizedBox(height: 8),
           ],
           if (showInput)
