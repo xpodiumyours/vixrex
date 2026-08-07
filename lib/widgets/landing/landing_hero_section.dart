@@ -393,7 +393,7 @@ class LandingHeroSection extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Text(
-          'İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi Vixrex Asistan ile rehberli sohbet ederek tek vitrinde toplayın.',
+          'İşletme bilgilerini, fotoğraflarını, ürün ve hizmetlerini, adresini ve WhatsApp iletişimini Vixrex Asistan ile konuşarak tek vitrinde topla.',
           textAlign: isDesktop ? TextAlign.left : TextAlign.center,
           style: TextStyle(
             fontSize: 16,
@@ -501,7 +501,7 @@ class LandingHeroSection extends StatelessWidget {
             child: TextButton(
               onPressed: onNavigateToExploreApp,
               child: const Text(
-                'Farklı vitrinleri inceleyin',
+                'Farklı vitrinleri incele',
                 style: TextStyle(
                   color: AppColors.secondary,
                   fontWeight: FontWeight.w900,

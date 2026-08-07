@@ -106,6 +106,26 @@ void main() {
       expect(chat, contains('Devam etmek için:'));
     });
 
+    test('kurulum sonunda tek kapı var', () {
+      // 2026-08-07 (bulgu 8): iki düğme aynı sayfayı açıyordu — biri
+      // "Canlı vitrini aç", diğeri "Vitrinimi birlikte düzenleyelim".
+      // Esnaf önce bakıp geri dönüyor, sonra ikincisine basıyordu.
+      //
+      // Artık asıl kapı tek: "Vitrinini aç" (sahip modunda). Diğeri
+      // ikincil ve işi değişti — müşterinin gördüğü hâli göstermek
+      // (bulgu 7).
+      expect(chat, contains("'Vitrinini aç'"));
+      expect(chat, contains('Müşterinin gördüğü hâli'));
+      expect(
+        // Dart dizisi olarak aranır; açıklama satırındaki geçiş sayılmaz.
+        chat.contains("'Canlı vitrini aç'"),
+        isFalse,
+        reason:
+            'İkinci birincil kapı geri gelmiş; esnaf yine iki kez '
+            'yolculuk yapar.',
+      );
+    });
+
     test('kurulum sonrası asistan devri duruyor', () {
       // 2026-08-06 tek asistan kararı: kurulum bitince aynı Vixrex
       // vitrini sahip modunda açar. Bu kaldırılırsa sert devir geri gelir.
