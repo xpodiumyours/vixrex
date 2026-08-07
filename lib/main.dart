@@ -132,7 +132,13 @@ class VixRexApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
-        fontFamily: 'Helvetica',
+        // TEK YAZI TİPİ — tüm ekranlar buradan miras alır.
+        //
+        // 'Helvetica' yazıyordu ama o yazı tipi uygulamayla gelmiyordu;
+        // her cihaz kendi bulduğuna düşüyordu. Vitrin tarafı Outfit
+        // kullanıyor; iki yüzey iki ayrı marka gibi görünüyordu.
+        // Ekranlar kendi yazı tipini BELİRLEMEZ, buradan alır.
+        fontFamily: 'Outfit',
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
           brightness: Brightness.dark,
