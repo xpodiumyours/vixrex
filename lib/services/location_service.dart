@@ -35,15 +35,18 @@ class LocationService {
 
   /// Kabul edilen en büyük sapma. Bunun üstündeki konum KULLANILMAZ.
   ///
-  /// Neden 10: esnafın vitrini "yakınındaki dükkân" aramasında çıkacak.
-  /// Yüz metrelik sapma müşteriyi yanlış sokağa gönderir; iş kaybettirir.
-  /// Bu yüzden "yaklaşık konum" diye bir kabul yok — ya kesin, ya hiç.
+  /// NEDEN 100 (2026-08-07'de 10'dan yükseltildi):
+  /// 10 metre yalnız yerel GPS donanımıyla tutturulabilir. Esnafın büyük
+  /// çoğunluğu vitrinini TARAYICIDAN kuruyor ve tarayıcı konumu 20-60
+  /// metre sapmayla verir — telefonda bile. Sonuç: eşik hiç geçilemiyor,
+  /// adres çözümleme adımına HİÇ ULAŞILAMIYORDU. Casper 2026-08-07'de
+  /// bunu yaşadı: "koordinat kaydedildi diyor ama il/ilçe/adres boş".
   ///
-  /// UYARI — masaüstü tarayıcıda bu eşiğe ULAŞILAMAZ. Orada konum
-  /// Wi-Fi/IP'den gelir (100 m – kilometreler). 10 metre telefon GPS'i
-  /// ister. Bu bilinçli: masaüstünde yanlış konum kaydetmektense
-  /// kullanıcıyı telefona yönlendirmek doğrudur.
-  static const double maxAcceptedAccuracyMeters = 10.0;
+  /// 100 metre hem gerçekçi hem güvenli: masaüstünde Wi-Fi/IP'den gelen
+  /// kilometrelerce sapmayı hâlâ eler, telefondan gelen gerçek konumu
+  /// kabul eder. Asıl teslim edilen zaten ADRES METNİ (mahalle + sokak);
+  /// pin 50 metre kaysa da müşteri doğru sokağa gider.
+  static const double maxAcceptedAccuracyMeters = 100.0;
   static const Duration _streamWaitDuration = Duration(seconds: 10);
   static const Duration _totalTimeout = Duration(seconds: 12);
 
