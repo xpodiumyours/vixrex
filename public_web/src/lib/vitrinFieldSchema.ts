@@ -451,6 +451,32 @@ export const EDITABLE_COLUMNS: readonly string[] = VITRIN_FIELDS.map(
 );
 
 /** Belirli bir bölümün alanları — tıkla-düzenle ve panel gruplaması için. */
+/** Bölümlerin Türkçe adı — panelde başlık olarak kullanılır. */
+export const SECTION_LABELS: Record<VitrinSection, string> = {
+  hero: "Üst bölüm",
+  contact: "İletişim ve konum",
+  categories: "Kategoriler",
+  products: "Ürünler",
+  featured: "Öne çıkan",
+  about: "Hakkında",
+  gallery: "Galeri",
+  blog: "Yazılar",
+  faq: "Sık sorulanlar",
+};
+
+/** Bölümlerin panelde görünme sırası — vitrindeki sırayla aynı. */
+export const SECTION_ORDER: readonly VitrinSection[] = [
+  "hero",
+  "contact",
+  "featured",
+  "about",
+  "gallery",
+  "products",
+  "categories",
+  "blog",
+  "faq",
+];
+
 export function fieldsOfSection(bolum: VitrinSection): VitrinField[] {
   return VITRIN_FIELDS.filter((f) => f.bolum === bolum);
 }
