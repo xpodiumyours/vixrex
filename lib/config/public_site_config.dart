@@ -1,7 +1,10 @@
 class PublicSiteConfig {
+  /// Vitrinlerin yayınlandığı adres. Uygulamanın kendi adresi DEĞİL.
+  static const String varsayilanKoken = 'https://vixrex-public.vercel.app';
+
   static const String configuredOrigin = String.fromEnvironment(
     'PUBLIC_SITE_URL',
-    defaultValue: 'https://vixrex-public.vercel.app',
+    defaultValue: varsayilanKoken,
   );
 
   static String buildPublicLink(
@@ -16,6 +19,22 @@ class PublicSiteConfig {
 
     if (preferredOrigin != null) {
       return '$preferredOrigin$normalizedPath';
+    }
+
+    // Ayar BOŞ geldiyse burası çalışır.
+    //
+    // `String.fromEnvironment` yalnız anahtar hiç yoksa varsayılanı kullanır;
+    // derleme `--dart-define=PUBLIC_SITE_URL=` diye boş bir değer geçerse
+    // "değer var" sayılır ve varsayılan devreye girmez. 2026-08-07'de tam
+    // olarak bu oldu: uygulama vitrin linklerini KENDİ adresiyle kurdu,
+    // sahip önizlemesi `vixrex-app.vercel.app/api/owner-session?...` gibi
+    // var olmayan bir yola gitti ve karşılama sayfasına düştü.
+    //
+    // Bu yüzden Uri.base'e düşmeden önce sabit köken denenir. Uri.base yalnız
+    // sabit de geçersizse (teoride imkânsız) son çare olarak kalır.
+    final sabitKoken = _normalizeOrigin(varsayilanKoken);
+    if (sabitKoken != null) {
+      return '$sabitKoken$normalizedPath';
     }
 
     final base = baseUriOverride ?? Uri.base;
