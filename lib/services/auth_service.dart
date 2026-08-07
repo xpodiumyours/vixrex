@@ -70,6 +70,68 @@ class AuthService {
   }
 
   /// Sign in with Google using native ID token authentication.
+  /// Anonim hesabı Google'a bağlar. AYNI hesap kalır, veri taşınmaz.
+  ///
+  /// NEDEN VAR (docs/kok-neden-arastirmasi.md — kimlik kökü):
+  /// Uygulama açılışta anonim oturum kuruyor; vitrin ilk andan sahipli
+  /// oluyor. Ama anonim hesap CİHAZA bağlıdır — esnaf telefonunu
+  /// değiştirse ya da tarayıcı verisini silse vitrinine bir daha
+  /// erişemez. Bu adım o riski kapatır.
+  ///
+  /// signInWithGoogle'dan farkı: o YENİ bir hesaba geçirir ve anonim
+  /// hesapta duran vitrin sahipsiz kalır. Bu ise mevcut hesabın üstüne
+  /// Google kimliğini ekler — `user_id` değişmez, vitrin sahibini korur.
+  Future<Result<void>> hesabiGoogleaBagla() async {
+    try {
+      final auth = Supabase.instance.client.auth;
+      final kullanici = auth.currentUser;
+
+      if (kullanici == null) {
+        return Result.failure(Failure('Önce oturum kurulmalı.'));
+      }
+      if (!kullanici.isAnonymous) {
+        // Zaten kalıcı hesabı var; yapacak bir şey yok.
+        return Result.success(null);
+      }
+
+      const webClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+      const iosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+
+      final googleSignIn =
+          kIsWeb
+              ? GoogleSignIn(clientId: webClientId)
+              : GoogleSignIn(
+                clientId: iosClientId.isNotEmpty ? iosClientId : null,
+                serverClientId: webClientId.isNotEmpty ? webClientId : null,
+              );
+
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        return Result.failure(Failure('Google ile bağlama iptal edildi.'));
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        return Result.failure(Failure('Google kimliği alınamadı.'));
+      }
+
+      await auth.linkIdentityWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: googleAuth.accessToken,
+      );
+
+      final userId = auth.currentUser?.id;
+      if (userId != null) {
+        await PushNotificationService.instance.loginUser(userId);
+      }
+      return Result.success(null);
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
+
   Future<Result<AuthResponse>> signInWithGoogle() async {
     try {
       const webClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
