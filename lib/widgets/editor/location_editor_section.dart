@@ -94,25 +94,18 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
       }
 
       final position = result.position ?? result.approximatePosition!;
-      widget.onLocationUpdated(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracy: position.accuracy,
-        statusMessage: 'Adres çözümleniyor...',
-      );
 
-      // 10 METREDEN KÖTÜ KONUM KAYDEDİLMEZ.
+      // SAPMA EŞİĞİ — kararı LocationService veriyor, burada tekrarlanmaz.
       //
-      // Eskiden hata payı ne olursa olsun konum yazılıyor, adres çözülüyor
-      // ve il/ilçe otomatik dolduruluyordu. Masaüstü tarayıcıda konum
-      // Wi-Fi/IP'den geldiği için kilometrelerce sapıyor; kullanıcı dolu
-      // görünen yanlış il/ilçeye güvenip yanlış konumla vitrin açıyordu.
-      // Küçük uyarı yazısı okunmuyor — dolu alan okunuyor.
+      // Masaüstü tarayıcıda konum Wi-Fi/IP'den gelir ve kilometrelerce
+      // sapar; dolu görünen yanlış il/ilçe müşteriyi yanlış sokağa
+      // gönderir. Bu yüzden eşiği geçemeyen konum HİÇ yazılmaz.
       //
-      // Vitrinin işi "yakınındaki dükkânı" bulmak. Yanlış konum müşteriyi
-      // yanlış sokağa gönderir; yokluğundan beterdir. Bu yüzden koordinat
-      // da yazılmaz — kullanıcı telefondan tekrar dener ya da adresi elle
-      // yazar.
+      // KOORDİNAT ARTIK EŞİKTEN SONRA YAZILIYOR.
+      // Eskiden eşik kontrolünden ÖNCE yazılıyordu: kontrol başarısız
+      // olunca akış duruyor ama koordinat kayıtlı kalıyordu. Ekran
+      // "Koordinat kaydedildi" diyor, il/ilçe/adres boş kalıyordu —
+      // esnaf işin bittiğini sanıyordu (2026-08-07, bulgu 2).
       if (position.accuracy > LocationService.maxAcceptedAccuracyMeters) {
         widget.onLocationUpdated(
           statusMessage: LocationService.buildAccuracyMessage(
@@ -121,6 +114,13 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
         );
         return;
       }
+
+      widget.onLocationUpdated(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
+        statusMessage: 'Adres çözümleniyor...',
+      );
 
       final geoAddress = await const LocationService()
           .getAddressFromCoordinates(position.latitude, position.longitude);

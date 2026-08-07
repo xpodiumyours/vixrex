@@ -19,16 +19,27 @@ void main() {
       expect(message, isNot(contains('hata payi yuksek')));
     });
 
-    test('warning message for > 10m', () {
-      final message = LocationService.buildAccuracyMessage(31);
-      expect(message, contains('31'));
+    // 2026-08-07: esik 10'dan 100 metreye cikti. 10 metre yalniz yerel
+    // GPS donanimiyla tutturulur; tarayici konumu telefonda bile 20-60
+    // metre sapar. Eski esikle adres cozumleme adimina HIC ulasilamiyordu.
+    test('warning message beyond the accepted threshold', () {
+      final message = LocationService.buildAccuracyMessage(320);
+      expect(message, contains('320'));
       expect(message, contains('yeterince kesin degil'));
       expect(message, contains('TELEFONDAN'));
     });
 
-    test('edge case: 10.1m shows warning message', () {
-      final message = LocationService.buildAccuracyMessage(10.1);
+    test('edge case: just past the threshold shows warning', () {
+      final message = LocationService.buildAccuracyMessage(
+        LocationService.maxAcceptedAccuracyMeters + 0.1,
+      );
       expect(message, contains('yeterince kesin degil'));
+    });
+
+    test('browser-grade accuracy is accepted', () {
+      // Telefon tarayicisindan gelen tipik deger. Eskiden reddediliyordu.
+      final message = LocationService.buildAccuracyMessage(45);
+      expect(message, contains('basariyla'));
     });
 
     test('builds free Google Maps search uri', () {
