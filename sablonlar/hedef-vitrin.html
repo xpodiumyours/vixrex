@@ -2997,7 +2997,10 @@
       function addMessage(text, isUser = false) {
         const msg = document.createElement('div');
         msg.className = `vixrex-msg ${isUser ? 'user' : 'assistant'}`;
-        msg.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        // Metin ONCE kacirilir, sonra bicimlendirilir. Ters sirada
+        // yapilirsa sohbete yazilan bir etiket gercekten calisir —
+        // burasi referans sablon, kalip koda kopyalaniyor.
+        msg.innerHTML = escapeHtml(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
         messagesContainer.appendChild(msg);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       }
