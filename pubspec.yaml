@@ -47,3 +47,25 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+
+  # Tek yazı tipi: Outfit.
+  #
+  # Önceden tema 'Helvetica' diyordu ama o yazı tipi uygulamayla birlikte
+  # GELMİYORDU; her cihaz kendi bulduğuna düşüyordu (Android'de Roboto,
+  # tarayıcıda Arial). Vitrin tarafı (Next.js) zaten Outfit kullanıyor.
+  # İki yüzey iki ayrı marka gibi görünüyordu.
+  #
+  # Casper (2026-08-07): "her ekranda aynı tarz yazı tipi olmalı".
+  #
+  # Lisans: SIL Open Font License 1.1 — ticari kullanım serbest.
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Outfit-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Outfit-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Outfit-Bold.ttf
+          weight: 700
