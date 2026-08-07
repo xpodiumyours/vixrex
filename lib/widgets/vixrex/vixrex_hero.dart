@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vixrex/widgets/vixrex_avatar.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 /// Kompakt başlık şeridi: küçük mascot + isim + rol rozeti.
@@ -20,37 +21,8 @@ class VixRexHero extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: Row(
           children: [
-            Container(
-              width: mascotSize,
-              height: mascotSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.transparent,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withAlpha(30),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/images/vixrex_v_crystal_mascot.png',
-                  width: mascotSize,
-                  height: mascotSize,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      'assets/images/vixrex_mascot.webp',
-                      width: mascotSize,
-                      height: mascotSize,
-                      fit: BoxFit.contain,
-                    );
-                  },
-                ),
-              ),
-            ),
+            // Vixrex'in yüzü tek yerden gelir — bkz. VixrexAvatar.
+            VixrexAvatar(boyut: mascotSize, hale: true),
             const SizedBox(width: 10),
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
