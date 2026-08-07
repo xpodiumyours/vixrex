@@ -13,24 +13,34 @@ void main() {
       expect(link, 'https://public.example.com/v/test-magaza');
     });
 
-    test('PUBLIC_SITE_URL yoksa mevcut web origin değerine düşer', () {
+    // 2026-08-07 DAVRANIŞ DEĞİŞİKLİĞİ.
+    //
+    // Bu iki test eskiden şunu kilitliyordu: ayar boşsa link MEVCUT WEB
+    // ORIGIN'İ ile kurulsun. Canlıda tam olarak bu oldu — derleme betiği
+    // boş bir değer geçirdi, uygulama vitrin linklerini KENDİ adresiyle
+    // kurdu ve sahip önizlemesi karşılama sayfasına düştü. Testler yeşildi
+    // çünkü yanlış davranışı doğru sayıyorlardı.
+    //
+    // Artık ayar boş veya bozuksa sabit vitrin adresine düşülür.
+    test('ayar boşsa uygulamanın kendi adresine DÜŞMEZ', () {
       final link = PublicSiteConfig.buildPublicLink(
         'v/test-magaza',
         configuredOriginOverride: '',
-        baseUriOverride: Uri.parse('http://localhost:7357/editor'),
+        baseUriOverride: Uri.parse('https://vixrex-app.vercel.app/editor'),
       );
 
-      expect(link, 'http://localhost:7357/v/test-magaza');
+      expect(link, 'https://vixrex-public.vercel.app/v/test-magaza');
+      expect(link.contains('vixrex-app'), isFalse);
     });
 
-    test('geçersiz origin varsa sadece path döner', () {
+    test('ayar bozuksa da vitrin adresine düşer', () {
       final link = PublicSiteConfig.buildPublicLink(
         '/v/test-magaza',
         configuredOriginOverride: 'public.example.com',
         baseUriOverride: Uri.parse('about:blank'),
       );
 
-      expect(link, '/v/test-magaza');
+      expect(link, 'https://vixrex-public.vercel.app/v/test-magaza');
     });
 
     test('bare slug linkini /v/ slug olarak onarır', () {

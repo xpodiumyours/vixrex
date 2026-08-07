@@ -37,15 +37,15 @@ açık adres alanları boş kalıyor.
 
 ---
 
-## 3. Kapak fotoğrafı kategoriye uymuyor ve seçilmemiş
+## 3. Kapak fotoğrafı kategoriye uymuyor ve seçilmemiş — ✅ KAPANDI
 
 **Nerede:** Yayınlanmış vitrin, `/v/dene-dene-yoruldum`
 
 **Ne oluyor:** İşletme dekorasyon kategorisinde, kapakta kot pantolon
 fotoğrafı var. Esnaf böyle bir fotoğraf seçmedi.
 
-**Not:** Görüntü production adresinden alındı; B1 düzeltmesi orada yok.
-Önizleme adresinde tekrar bakılacak.
+**Durum:** 2026-08-07 turunda doğrulandı — yeni kurulan vitrinde
+(claude22, ELEKTRONİK) uydurma kapak fotoğrafı gelmiyor. Kapandı.
 
 ---
 
@@ -178,3 +178,63 @@ demek; kimse basmaz.
 **Olması gereken:** "Canlı sürümü al" düğmesi — taslağı yayındaki
 vitrinden tazeler, uyarı kapanır. Esnafın taslakta bekleyen değişikliği
 varsa önce sorulmalı.
+
+---
+
+## 11. Maskot balonu rozetlerin üstüne biniyor
+
+**Nerede:** Karşılama ekranı, telefon
+
+**Ne oluyor:** "Dijital vitrinini hazırlayayım mı?" balonu "Kredi kartı
+gerekmez" ve "Link ve QR hazır" rozetlerini kapatıyor. Yazılar okunmuyor.
+
+**Olması gereken:** Balon rozetlerin üstüne binmemeli; ya yukarı kaysın
+ya rozetler için yer bıraksın.
+
+---
+
+## 12. Karşılama metni "siz" kipinde
+
+**Nerede:** Karşılama ekranı, giriş paragrafı
+
+**Ne oluyor:** "İşletme bilgilerinizi... tek vitrinde toplayın." Tek
+asistan kararı (2026-08-06) her yerde "sen" idi; Next.js tarafı çevrildi,
+Flutter karşılama metni kaldı.
+
+**Olması gereken:** "İşletme bilgilerini... tek vitrinde topla."
+
+---
+
+## 13. Zorunlu alanlar boşken "devam" basılabiliyor
+
+**Nerede:** Kurulum sohbeti, konum adımı
+
+**Ne oluyor:** İl, İlçe ve Açık Adres yıldızlı (zorunlu) ama üçü de boşken
+"Konumu onayla, devam" düğmesi çalışıyor. Zorunluluk işareti var,
+karşılığı yok.
+
+**Olması gereken:** Ya alanlar dolana kadar düğme pasif olsun, ya da
+yıldız kaldırılsın. İkisinden biri — ikisi birden yanlış.
+
+---
+
+## 14. 119 deneme vitrini yayında ve Google'a açık
+
+**Nerede:** Bulut veritabanı, `stores` tablosu
+
+**Ne oluyor (2026-08-07 sayımı):**
+- 128 vitrin kayıtlı, hepsi yayında
+- 9'u demo (`is_demo=true`) — karşılama ekranının örnekleri, kalmalı
+- **119'u deneme çöpü** — `xxxx`, `deneme-55`, `cccc`, `sxxx`, `xxxd`...
+
+`robots.txt` dizine almaya izin veriyor, site haritası da onları listeliyor.
+Marka adıyla arandığında çıkacak ilk sayfalar bunlar olabilir.
+
+**Neden şimdi önemli:** Casper'ın kendi ifadesiyle "temiz defter açmak"
+isteniyor. Gerçek esnaf gelmeden önce temizlenmezse ilk izlenim bu olur.
+
+**Olması gereken:** 119 deneme kaydı silinsin, 9 demo kalsın. Silme
+geri alınamaz; önce yedek alınmalı.
+
+**Ayrıca:** Deneme vitrinlerinin bir daha birikmemesi için yol lazım —
+ya kurulum sırasında işaretlensinler ya da düzenli temizlik.
