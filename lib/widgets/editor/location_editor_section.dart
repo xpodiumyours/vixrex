@@ -95,29 +95,30 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
 
       final position = result.position ?? result.approximatePosition!;
 
-      // SAPMA EŞİĞİ — kararı LocationService veriyor, burada tekrarlanmaz.
+      // SAPMA: KONUM REDDEDİLMEZ, İĞNE AYRI DEĞERLENDİRİLİR.
       //
-      // Masaüstü tarayıcıda konum Wi-Fi/IP'den gelir ve kilometrelerce
-      // sapar; dolu görünen yanlış il/ilçe müşteriyi yanlış sokağa
-      // gönderir. Bu yüzden eşiği geçemeyen konum HİÇ yazılmaz.
+      // 2026-08-07'de eşiği 10'dan 100 metreye çıkardım ve koordinatı
+      // eşikten sonra yazacak şekilde sıraladım. Casper aynı gün denedi:
+      // "gps yine çalışmıyor, koordinatı da bulamıyor, hatta önceden
+      // koordinatı buluyordu yazmıyordu, şimdi hiç bulamadı."
       //
-      // KOORDİNAT ARTIK EŞİKTEN SONRA YAZILIYOR.
-      // Eskiden eşik kontrolünden ÖNCE yazılıyordu: kontrol başarısız
-      // olunca akış duruyor ama koordinat kayıtlı kalıyordu. Ekran
-      // "Koordinat kaydedildi" diyor, il/ilçe/adres boş kalıyordu —
-      // esnaf işin bittiğini sanıyordu (2026-08-07, bulgu 2).
-      if (position.accuracy > LocationService.maxAcceptedAccuracyMeters) {
-        widget.onLocationUpdated(
-          statusMessage: LocationService.buildAccuracyMessage(
-            position.accuracy,
-          ),
-        );
-        return;
-      }
+      // Hata tasarımdaydı. Sapma eşiği geçilmeyince HİÇBİR ŞEY
+      // yapılmıyordu — ne adres, ne il, ne ilçe. Oysa 300 metre sapmayla
+      // bile il, ilçe ve mahalle DOĞRU çıkar. Müşteriyi yanlış sokağa
+      // gönderen şey harita iğnesidir, adres metni değil.
+      //
+      // Artık ikisi ayrı:
+      //   Adres metni → her hâlükârda çözülür ve doldurulur
+      //   Harita iğnesi → yalnız sapma eşiği geçilirse kaydedilir
+      //
+      // Esnaf en kötü ihtimalle doğru mahalleyi görür ve sokağı düzeltir.
+      // Hiç yoktan iyidir; eskisi hiç yoktu.
+      final igneKabul =
+          position.accuracy <= LocationService.maxAcceptedAccuracyMeters;
 
       widget.onLocationUpdated(
-        latitude: position.latitude,
-        longitude: position.longitude,
+        latitude: igneKabul ? position.latitude : null,
+        longitude: igneKabul ? position.longitude : null,
         accuracy: position.accuracy,
         statusMessage: 'Adres çözümleniyor...',
       );
@@ -169,8 +170,9 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
       }
 
       widget.onLocationUpdated(
-        latitude: position.latitude,
-        longitude: position.longitude,
+        // İğne yalnız yeterince kesinse kaydedilir; adres her hâlükârda.
+        latitude: igneKabul ? position.latitude : null,
+        longitude: igneKabul ? position.longitude : null,
         accuracy: position.accuracy,
         statusMessage: LocationService.buildAccuracyMessage(position.accuracy),
         address: newAddress,

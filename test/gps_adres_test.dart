@@ -26,25 +26,35 @@ void main() {
     expect(LocationService.maxAcceptedAccuracyMeters, lessThanOrEqualTo(150));
   });
 
-  test('koordinat eşik kontrolünden SONRA yazılıyor', () {
+  test('sapma büyükse adres yine doldurulur, yalnız iğne bekletilir', () {
+    // 2026-08-07 ikinci düzeltme. İlk düzeltmede koordinat eşikten sonra
+    // yazılıyordu ama eşik geçilmezse HİÇBİR ŞEY yapılmıyordu — ne adres,
+    // ne il, ne ilçe. Casper: "gps yine çalışmıyor, koordinatı da
+    // bulamıyor... şimdi hiç bulamadı."
+    //
+    // 300 metre sapmayla bile il, ilçe ve mahalle DOĞRU çıkar. Müşteriyi
+    // yanlış sokağa gönderen şey harita iğnesidir, adres metni değil.
     final kaynak =
         File(
           '$kok/lib/widgets/editor/location_editor_section.dart',
         ).readAsStringSync();
 
-    final esikYeri = kaynak.indexOf(
-      'position.accuracy > LocationService.maxAcceptedAccuracyMeters',
-    );
-    final yazmaYeri = kaynak.indexOf('latitude: position.latitude');
-
-    expect(esikYeri, greaterThan(0));
-    expect(yazmaYeri, greaterThan(0));
+    expect(kaynak, contains('igneKabul'));
+    // İğne koşullu, adres koşulsuz.
+    expect(kaynak, contains('igneKabul ? position.latitude : null'));
+    expect(kaynak, contains('address: newAddress'));
+    // Eşiğe takılıp AKIŞTAN ÇIKAN eski kalıp geri gelmemeli.
+    // (if (!mounted) return; ayrı bir şey — widget yaşam döngüsü koruması.)
     expect(
-      yazmaYeri,
-      greaterThan(esikYeri),
+      RegExp(
+        r'accuracy > LocationService\.maxAcceptedAccuracyMeters\)\s*\{'
+        r'[^}]*return;',
+        multiLine: true,
+      ).hasMatch(kaynak),
+      isFalse,
       reason:
-          'Koordinat eşikten önce yazılırsa ekran "kaydedildi" der '
-          'ama adres hiç çözülmez.',
+          'Eşik geçilmeyince akıştan çıkılırsa adres hiç çözülmez, '
+          'esnaf boş ekrana bakar.',
     );
   });
 

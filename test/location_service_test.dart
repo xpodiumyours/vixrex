@@ -25,7 +25,7 @@ void main() {
     test('warning message beyond the accepted threshold', () {
       final message = LocationService.buildAccuracyMessage(320);
       expect(message, contains('320'));
-      expect(message, contains('yeterince kesin degil'));
+      expect(message, contains('isaret bekletildi'));
       expect(message, contains('TELEFONDAN'));
     });
 
@@ -33,7 +33,7 @@ void main() {
       final message = LocationService.buildAccuracyMessage(
         LocationService.maxAcceptedAccuracyMeters + 0.1,
       );
-      expect(message, contains('yeterince kesin degil'));
+      expect(message, contains('isaret bekletildi'));
     });
 
     test('browser-grade accuracy is accepted', () {
