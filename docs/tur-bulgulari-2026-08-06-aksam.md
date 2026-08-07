@@ -215,3 +215,26 @@ karşılığı yok.
 
 **Olması gereken:** Ya alanlar dolana kadar düğme pasif olsun, ya da
 yıldız kaldırılsın. İkisinden biri — ikisi birden yanlış.
+
+---
+
+## 14. 119 deneme vitrini yayında ve Google'a açık
+
+**Nerede:** Bulut veritabanı, `stores` tablosu
+
+**Ne oluyor (2026-08-07 sayımı):**
+- 128 vitrin kayıtlı, hepsi yayında
+- 9'u demo (`is_demo=true`) — karşılama ekranının örnekleri, kalmalı
+- **119'u deneme çöpü** — `xxxx`, `deneme-55`, `cccc`, `sxxx`, `xxxd`...
+
+`robots.txt` dizine almaya izin veriyor, site haritası da onları listeliyor.
+Marka adıyla arandığında çıkacak ilk sayfalar bunlar olabilir.
+
+**Neden şimdi önemli:** Casper'ın kendi ifadesiyle "temiz defter açmak"
+isteniyor. Gerçek esnaf gelmeden önce temizlenmezse ilk izlenim bu olur.
+
+**Olması gereken:** 119 deneme kaydı silinsin, 9 demo kalsın. Silme
+geri alınamaz; önce yedek alınmalı.
+
+**Ayrıca:** Deneme vitrinlerinin bir daha birikmemesi için yol lazım —
+ya kurulum sırasında işaretlensinler ya da düzenli temizlik.
