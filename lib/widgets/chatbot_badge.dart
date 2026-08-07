@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
@@ -48,6 +50,21 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   late Animation<double> _scanAnim;
   late Animation<double> _floatAnim;
 
+  /// Balon açık mı. Bir süre sonra kendiliğinden kapanır.
+  ///
+  /// NEDEN: balon sağ altta sürekli duruyordu ve telefonda karşılama
+  /// ekranındaki rozetlerin ("Kredi kartı gerekmez", "Link ve QR hazır")
+  /// üstünü kapatıyordu. Casper 2026-08-07'de ekran görüntüsüyle gösterdi.
+  ///
+  /// Maskot yerinde kalır — kaybolan yalnız yazı. Mesaj değişince (yeni
+  /// adım, yeni durum) tekrar açılır; esnaf haberi kaçırmaz.
+  bool _balonAcik = true;
+  Timer? _balonZamanlayici;
+  String? _sonMesaj;
+
+  /// Balon ekranda ne kadar kalsın.
+  static const Duration _balonSuresi = Duration(seconds: 6);
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +97,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
 
   @override
   void dispose() {
+    _balonZamanlayici?.cancel();
     _pulseController.dispose();
     _scanController.dispose();
     _floatController.dispose();
@@ -88,6 +106,18 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
 
   void _openChat(BuildContext context) {
     widget.onOpen?.call();
+  }
+
+  /// Mesaj değiştiyse balonu yeniden açar ve sayacı sıfırlar.
+  void _balonuTazele(String? mesaj) {
+    if (mesaj == _sonMesaj) return;
+    _sonMesaj = mesaj;
+    _balonZamanlayici?.cancel();
+    if (mesaj == null || mesaj.isEmpty) return;
+    _balonAcik = true;
+    _balonZamanlayici = Timer(_balonSuresi, () {
+      if (mounted) setState(() => _balonAcik = false);
+    });
   }
 
   String? get _bubbleMessage {
@@ -116,6 +146,11 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   @override
   Widget build(BuildContext context) {
     final bubbleText = _bubbleMessage;
+    // Mesaj değiştiyse balon yeniden açılır. Build içinde çağrılır ama
+    // setState tetiklemez; yalnız aynı karede durumu ayarlar.
+    _balonuTazele(bubbleText);
+    final balonGoruluyor =
+        _balonAcik && bubbleText != null && bubbleText.isNotEmpty;
 
     // Balon genişleyip alttaki butonları yutmasın.
     return GestureDetector(
@@ -125,7 +160,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (bubbleText != null && bubbleText.isNotEmpty)
+          if (balonGoruluyor)
             AnimatedBuilder(
               animation: _floatAnim,
               builder: (context, child) {
@@ -133,41 +168,46 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
                   offset: Offset(0, _floatAnim.value),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 220),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 6),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xEE0E1B2E),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(14),
-                          topRight: Radius.circular(14),
-                          bottomLeft: Radius.circular(14),
-                          bottomRight: Radius.circular(3),
+                    child: GestureDetector(
+                      // Balona dokunmak onu kapatır — esnaf istemiyorsa
+                      // beklemeden kaldırabilsin.
+                      onTap: () => setState(() => _balonAcik = false),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
                         ),
-                        border: Border.all(
-                          color: const Color(0xFF0EA5E9).withAlpha(180),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0EA5E9).withAlpha(70),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xEE0E1B2E),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(14),
+                            topRight: Radius.circular(14),
+                            bottomLeft: Radius.circular(14),
+                            bottomRight: Radius.circular(3),
                           ),
-                        ],
-                      ),
-                      child: Text(
-                        bubbleText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
+                          border: Border.all(
+                            color: const Color(0xFF0EA5E9).withAlpha(180),
+                            width: 1.2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0EA5E9).withAlpha(70),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        child: Text(
+                          bubbleText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                   ),
