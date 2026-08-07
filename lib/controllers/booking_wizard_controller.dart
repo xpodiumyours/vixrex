@@ -129,7 +129,12 @@ class BookingWizardController extends ChangeNotifier {
     final phone = phoneController.text.trim();
     final notes = notesController.text.trim();
 
-    if (name.isEmpty || phone.isEmpty || !_kvkkConsent || _selectedDate == null || _selectedSlotTime == null || _selectedService == null) {
+    if (name.isEmpty ||
+        phone.isEmpty ||
+        !_kvkkConsent ||
+        _selectedDate == null ||
+        _selectedSlotTime == null ||
+        _selectedService == null) {
       _errorMsg = 'Lütfen tüm zorunlu alanları doldurun ve onay verin.';
       notifyListeners();
       return;
@@ -145,8 +150,12 @@ class BookingWizardController extends ChangeNotifier {
     _errorMsg = null;
     notifyListeners();
 
-    final datePart = '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
-    final apptTime = DateTime.parse('$datePart $_selectedSlotTime:00').toUtc().toIso8601String();
+    final datePart =
+        '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
+    final apptTime =
+        DateTime.parse(
+          '$datePart $_selectedSlotTime:00',
+        ).toUtc().toIso8601String();
 
     final result = await _bookingService.createAppointmentRequest(
       storeSlug: storeData.slug,

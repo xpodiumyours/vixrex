@@ -72,7 +72,9 @@ class BlogEditorController extends ChangeNotifier {
   }
 
   void updateSeoAnalysis() {
-    final hasCover = coverBytes != null || (coverImageUrl != null && coverImageUrl!.isNotEmpty);
+    final hasCover =
+        coverBytes != null ||
+        (coverImageUrl != null && coverImageUrl!.isNotEmpty);
     final result = seoService.analyze(
       title: titleController.text,
       summary: summaryController.text,
@@ -102,7 +104,7 @@ class BlogEditorController extends ChangeNotifier {
       coverBytes = file.bytes;
       coverExtension = file.extension ?? 'jpg';
       coverContentType = coverExtension == 'png' ? 'image/png' : 'image/jpeg';
-      
+
       updateSeoAnalysis();
       return true;
     } catch (_) {
@@ -132,12 +134,13 @@ class BlogEditorController extends ChangeNotifier {
         isUploadingCover = true;
         notifyListeners();
         try {
-          finalCoverUrl = await const StoreShelfUploadService().uploadShelfImage(
-            coverBytes!,
-            '$storeSlug/blog/${DateTime.now().millisecondsSinceEpoch}',
-            fileExtension: coverExtension,
-            contentType: coverContentType,
-          );
+          finalCoverUrl = await const StoreShelfUploadService()
+              .uploadShelfImage(
+                coverBytes!,
+                '$storeSlug/blog/${DateTime.now().millisecondsSinceEpoch}',
+                fileExtension: coverExtension,
+                contentType: coverContentType,
+              );
         } catch (e) {
           throw Exception('Kapak fotoğrafı sunucuya yüklenemedi: $e');
         } finally {
@@ -170,8 +173,12 @@ class BlogEditorController extends ChangeNotifier {
 
       if (initialArticle != null) {
         final artId = initialArticle!['id'] as String;
-        final updatePayload = Map<String, dynamic>.from(payload)..remove('slug');
-        final result = await const ArticleService().updateArticle(id: artId, payload: updatePayload);
+        final updatePayload = Map<String, dynamic>.from(payload)
+          ..remove('slug');
+        final result = await const ArticleService().updateArticle(
+          id: artId,
+          payload: updatePayload,
+        );
         result.when(
           success: (_) {},
           failure: (failure) => throw Exception(failure.message),

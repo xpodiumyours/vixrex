@@ -71,9 +71,10 @@ class BookingSlotStep extends StatelessWidget {
           textCol = AppColors.disabled;
           subTextCol = AppColors.disabled;
           final confirmedList = slot['confirmed_names'] as List?;
-          statusLabel = (confirmedList != null && confirmedList.isNotEmpty)
-              ? confirmedList.join(', ')
-              : 'Dolu';
+          statusLabel =
+              (confirmedList != null && confirmedList.isNotEmpty)
+                  ? confirmedList.join(', ')
+                  : 'Dolu';
         } else if (hasPending) {
           cardBg = Colors.amber.withValues(alpha: 0.1);
           borderCol = Colors.amber.withValues(alpha: 0.3);
@@ -95,10 +96,7 @@ class BookingSlotStep extends StatelessWidget {
             decoration: BoxDecoration(
               color: cardBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: borderCol,
-                width: isSelected ? 1.6 : 1,
-              ),
+              border: Border.all(color: borderCol, width: isSelected ? 1.6 : 1),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

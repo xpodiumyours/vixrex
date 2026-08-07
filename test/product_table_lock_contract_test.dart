@@ -38,8 +38,13 @@ void main() {
     expect(store.products, isEmpty);
   });
 
-  test('StorePublishPayloadBuilder toStoreUpdateMap includes product_storage_version = 2', () {
-    final map = const StorePublishPayloadBuilder().toStoreUpdateMap(StoreData(name: 'Demo'));
-    expect(map['product_storage_version'], 2);
-  });
+  test(
+    'StorePublishPayloadBuilder toStoreUpdateMap includes product_storage_version = 2',
+    () {
+      final map = const StorePublishPayloadBuilder().toStoreUpdateMap(
+        StoreData(name: 'Demo'),
+      );
+      expect(map['product_storage_version'], 2);
+    },
+  );
 }

@@ -146,11 +146,15 @@ class _MarketplaceLinkRow extends StatelessWidget {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cardBorderDark),
+                    borderSide: const BorderSide(
+                      color: AppColors.cardBorderDark,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cardBorderDark),
+                    borderSide: const BorderSide(
+                      color: AppColors.cardBorderDark,
+                    ),
                   ),
                 ),
                 items:
@@ -195,11 +199,15 @@ class _MarketplaceLinkRow extends StatelessWidget {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cardBorderDark),
+                    borderSide: const BorderSide(
+                      color: AppColors.cardBorderDark,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cardBorderDark),
+                    borderSide: const BorderSide(
+                      color: AppColors.cardBorderDark,
+                    ),
                   ),
                 ),
               ),

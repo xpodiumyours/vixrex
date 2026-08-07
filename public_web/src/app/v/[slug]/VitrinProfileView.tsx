@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { getAppUrl } from "@/lib/siteUrl";
 import Link from "next/link";
 import { Suspense, type ReactNode, useState } from "react";
 import type { VitrinCategoryProfile } from "@/lib/vitrinProfile";
@@ -306,7 +307,7 @@ export default function VitrinProfileView({
           {showContact && (
             <a href="#iletisim" className="hover:text-white transition-colors">İletişim</a>
           )}
-          <Link href="https://vixrex.com" className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition">
+          <Link href={getAppUrl()} className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition">
             Vitrin Oluştur
           </Link>
         </div>
@@ -867,7 +868,7 @@ export default function VitrinProfileView({
             {/* Share Links & URL Box */}
             <div className="space-y-5">
               <div className="bg-slate-800/80 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between gap-4">
-                <span className="font-mono text-sm text-slate-300 truncate">vixrex.com/v/{storeSlug}</span>
+                <span className="font-mono text-sm text-slate-300 truncate">{formattedUrlDisplay}</span>
                 <button
                   onClick={handleCopyUrl}
                   className="px-4 py-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold hover:bg-blue-500/25 transition shrink-0"
@@ -958,7 +959,7 @@ export default function VitrinProfileView({
                 </span>
               </span>
               <Link
-                href="https://vixrex.com"
+                href={getAppUrl()}
                 className="mt-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-blue-500/40"
               >
                 Bu vitrini kirala

@@ -117,10 +117,7 @@ void main() {
     // test yanlış alana bakıyordu.
     String textOfFieldLabeled(String label) {
       final field = tester.widget<TextField>(
-        find.ancestor(
-          of: find.text(label),
-          matching: find.byType(TextField),
-        ),
+        find.ancestor(of: find.text(label), matching: find.byType(TextField)),
       );
       return field.controller?.text ?? '';
     }

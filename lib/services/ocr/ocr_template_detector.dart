@@ -11,20 +11,39 @@ class OcrTemplateDetector {
     // Market/shopping center
     if (lower.contains('migros')) return InvoiceTemplate.migros;
     if (lower.contains('carrefour')) return InvoiceTemplate.carrefourSA;
-    if (lower.contains('bim') || lower.contains('bİM')) return InvoiceTemplate.bim;
+    if (lower.contains('bim') || lower.contains('bİM')) {
+      return InvoiceTemplate.bim;
+    }
     if (lower.contains('a101')) return InvoiceTemplate.a101;
-    if (lower.contains('şok') || lower.contains('sok')) return InvoiceTemplate.sok;
-    if (lower.contains('market') || lower.contains('bakkal')) return InvoiceTemplate.market;
+    if (lower.contains('şok') || lower.contains('sok')) {
+      return InvoiceTemplate.sok;
+    }
+    if (lower.contains('market') || lower.contains('bakkal')) {
+      return InvoiceTemplate.market;
+    }
 
     // Tekstil/toptan
-    if (lower.contains('satış teklif') || lower.contains('irsaliye')) return InvoiceTemplate.textileWholesale;
-    if (lower.contains('fatura') && (lower.contains('stok') || lower.contains('model'))) return InvoiceTemplate.textileWholesale;
+    if (lower.contains('satış teklif') || lower.contains('irsaliye')) {
+      return InvoiceTemplate.textileWholesale;
+    }
+    if (lower.contains('fatura') &&
+        (lower.contains('stok') || lower.contains('model'))) {
+      return InvoiceTemplate.textileWholesale;
+    }
 
     // Elektronik
-    if (lower.contains('teknoloji') || lower.contains('elektronik') || lower.contains('bilgisayar')) return InvoiceTemplate.electronics;
+    if (lower.contains('teknoloji') ||
+        lower.contains('elektronik') ||
+        lower.contains('bilgisayar')) {
+      return InvoiceTemplate.electronics;
+    }
 
     // Restoran/kafe
-    if (lower.contains('adisyon') || lower.contains('hesap') || lower.contains('garson')) return InvoiceTemplate.restaurant;
+    if (lower.contains('adisyon') ||
+        lower.contains('hesap') ||
+        lower.contains('garson')) {
+      return InvoiceTemplate.restaurant;
+    }
 
     return InvoiceTemplate.generic;
   }

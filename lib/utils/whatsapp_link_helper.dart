@@ -54,11 +54,18 @@ class WhatsAppLinkHelper {
 
     final config = BusinessCategoryConfig.categories.firstWhere(
       (c) => c.id == categoryId || c.label == categoryId,
-      orElse: () => BusinessCategoryConfig.categories.firstWhere((c) => c.id == 'diger'),
+      orElse:
+          () => BusinessCategoryConfig.categories.firstWhere(
+            (c) => c.id == 'diger',
+          ),
     );
 
-    final cleanName = storeName.trim().isEmpty ? 'işletmeniz' : storeName.trim();
-    final message = config.whatsappTemplate.replaceAll('{storeName}', cleanName);
+    final cleanName =
+        storeName.trim().isEmpty ? 'işletmeniz' : storeName.trim();
+    final message = config.whatsappTemplate.replaceAll(
+      '{storeName}',
+      cleanName,
+    );
     return _buildUrl(normalized, message);
   }
 
@@ -90,10 +97,14 @@ class WhatsAppLinkHelper {
 
     final config = BusinessCategoryConfig.categories.firstWhere(
       (c) => c.id == categoryId || c.label == categoryId,
-      orElse: () => BusinessCategoryConfig.categories.firstWhere((c) => c.id == 'diger'),
+      orElse:
+          () => BusinessCategoryConfig.categories.firstWhere(
+            (c) => c.id == 'diger',
+          ),
     );
 
-    final cleanName = storeName.trim().isEmpty ? 'işletmeniz' : storeName.trim();
+    final cleanName =
+        storeName.trim().isEmpty ? 'işletmeniz' : storeName.trim();
     final cleanTitle = offeringTitle.trim();
 
     String action = 'hakkında bilgi almak';

@@ -18,7 +18,9 @@ class BlogCoverPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasCover = coverBytes != null || (coverImageUrl != null && coverImageUrl!.isNotEmpty);
+    final hasCover =
+        coverBytes != null ||
+        (coverImageUrl != null && coverImageUrl!.isNotEmpty);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,61 +46,62 @@ class BlogCoverPicker extends StatelessWidget {
                 border: Border.all(color: AppColors.cardBorderDark),
               ),
               clipBehavior: Clip.antiAlias,
-              child: isUploading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    )
-                  : hasCover
+              child:
+                  isUploading
+                      ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      )
+                      : hasCover
                       ? Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            coverBytes != null
-                                ? Image.memory(coverBytes!, fit: BoxFit.cover)
-                                : Image.network(
-                                    coverImageUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: AppColors.surface,
-                                        child: const Icon(
-                                          Icons.broken_image_rounded,
-                                          color: AppColors.mutedText,
-                                          size: 32,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                            Container(color: Colors.black38),
-                            const Center(
-                              child: Icon(
-                                Icons.photo_library_rounded,
-                                color: Colors.white,
-                                size: 28,
+                        fit: StackFit.expand,
+                        children: [
+                          coverBytes != null
+                              ? Image.memory(coverBytes!, fit: BoxFit.cover)
+                              : Image.network(
+                                coverImageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: AppColors.surface,
+                                    child: const Icon(
+                                      Icons.broken_image_rounded,
+                                      color: AppColors.mutedText,
+                                      size: 32,
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
-                          ],
-                        )
-                      : const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_photo_alternate_rounded,
-                              color: AppColors.mutedText,
+                          Container(color: Colors.black38),
+                          const Center(
+                            child: Icon(
+                              Icons.photo_library_rounded,
+                              color: Colors.white,
                               size: 28,
                             ),
-                            SizedBox(height: AppColors.spacing8),
-                            Text(
-                              'Fotoğraf Seç',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.mutedText,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          ),
+                        ],
+                      )
+                      : const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_rounded,
+                            color: AppColors.mutedText,
+                            size: 28,
+                          ),
+                          SizedBox(height: AppColors.spacing8),
+                          Text(
+                            'Fotoğraf Seç',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.mutedText,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
+                      ),
             ),
           ),
         ),

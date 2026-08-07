@@ -76,7 +76,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Tekrar hoş geldin, Kayıtlı Vitrin'), findsOneWidget);
+    expect(
+      find.textContaining('Tekrar hoş geldin, Kayıtlı Vitrin'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Kayıtlı vitrinin bulundu'), findsOneWidget);
     // 2026-08-06: kategori şemada zorunlu oldu; kaydedilmiş vitrinde yalnız
     // ad dolu olduğu için asistan artık KATEGORİDEN devam ediyor.
@@ -142,7 +145,10 @@ void main() {
         editorInitialization: Future<void>.value(),
       );
 
-      expect(identical(manualScreen.editorController, editorController), isTrue);
+      expect(
+        identical(manualScreen.editorController, editorController),
+        isTrue,
+      );
       expect(editorController.data.products, hasLength(1));
 
       await tester.pumpWidget(const SizedBox.shrink());

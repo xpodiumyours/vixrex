@@ -96,12 +96,8 @@ void main() {
       await tester.pump();
 
       // Assert error fallback UI is shown
-      expect(
-        find.textContaining('Supabase'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Supabase'), findsOneWidget);
       expect(find.text('Vitrine Dön'), findsOneWidget);
     });
   });
-
 }

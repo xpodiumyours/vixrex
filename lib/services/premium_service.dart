@@ -13,11 +13,12 @@ class PremiumService {
   /// Kullanıcının premium olup olmadığını kontrol et.
   Future<Result<bool>> isPremium(String userId) async {
     try {
-      final res = await _resolveClient
-          .from('profiles')
-          .select('is_premium, premium_expires_at')
-          .eq('id', userId)
-          .maybeSingle();
+      final res =
+          await _resolveClient
+              .from('profiles')
+              .select('is_premium, premium_expires_at')
+              .eq('id', userId)
+              .maybeSingle();
 
       if (res == null) return const Result.success(false);
 
@@ -39,12 +40,13 @@ class PremiumService {
     try {
       final today = DateTime.now().toIso8601String().substring(0, 10);
 
-      final res = await _resolveClient
-          .from('ocr_usage')
-          .select('usage_count')
-          .eq('user_id', userId)
-          .eq('usage_date', today)
-          .maybeSingle();
+      final res =
+          await _resolveClient
+              .from('ocr_usage')
+              .select('usage_count')
+              .eq('user_id', userId)
+              .eq('usage_date', today)
+              .maybeSingle();
 
       if (res == null) return const Result.success(0);
 
@@ -64,12 +66,14 @@ class PremiumService {
       );
 
       final data = res as Map<String, dynamic>;
-      return Result.success(OcrUsageCheck(
-        allowed: data['allowed'] as bool? ?? false,
-        remaining: data['remaining'] as int? ?? 0,
-        isPremium: data['is_premium'] as bool? ?? false,
-        message: data['message'] as String?,
-      ));
+      return Result.success(
+        OcrUsageCheck(
+          allowed: data['allowed'] as bool? ?? false,
+          remaining: data['remaining'] as int? ?? 0,
+          isPremium: data['is_premium'] as bool? ?? false,
+          message: data['message'] as String?,
+        ),
+      );
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
     }
@@ -103,9 +107,10 @@ class PremiumService {
     required String plan, // 'monthly' veya 'yearly'
   }) async {
     try {
-      final expiresAt = plan == 'yearly'
-          ? DateTime.now().add(const Duration(days: 365))
-          : DateTime.now().add(const Duration(days: 30));
+      final expiresAt =
+          plan == 'yearly'
+              ? DateTime.now().add(const Duration(days: 365))
+              : DateTime.now().add(const Duration(days: 30));
 
       await _resolveClient
           .from('profiles')

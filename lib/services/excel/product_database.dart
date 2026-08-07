@@ -18,13 +18,19 @@ class ProductDatabase {
       final normalized = TextUtils.normalizeTurkish(query);
       final res = await _resolveClient
           .from('product_database')
-          .select('id, urun_adi, normalize_urun_adi, marka, marka_alias, kategori, alt_kategori, aciklama, anahtar_kelimeler, ocr_eslesme_kelimeleri, ambalaj_tipi, hacim_miktar, birim')
+          .select(
+            'id, urun_adi, normalize_urun_adi, marka, marka_alias, kategori, alt_kategori, aciklama, anahtar_kelimeler, ocr_eslesme_kelimeleri, ambalaj_tipi, hacim_miktar, birim',
+          )
           .textSearch('ocr_eslesme_kelimeleri', normalized)
           .limit(5);
 
-      final entries = (res as List)
-          .map((json) => ProductDatabaseEntry.fromJson(json as Map<String, dynamic>))
-          .toList();
+      final entries =
+          (res as List)
+              .map(
+                (json) =>
+                    ProductDatabaseEntry.fromJson(json as Map<String, dynamic>),
+              )
+              .toList();
 
       return Result.success(entries);
     } catch (e, s) {
@@ -41,7 +47,9 @@ class ProductDatabase {
         if (entries.isEmpty) return Result.success(null);
 
         // En yüksek skorlu olanı seç
-        entries.sort((a, b) => b.matchScore(query).compareTo(a.matchScore(query)));
+        entries.sort(
+          (a, b) => b.matchScore(query).compareTo(a.matchScore(query)),
+        );
         final best = entries.first;
 
         // Minimum eşik kontrolü
@@ -77,17 +85,25 @@ class ProductDatabase {
   }
 
   /// Kategorilere göre ürün listele.
-  Future<Result<List<ProductDatabaseEntry>>> getByCategory(String category) async {
+  Future<Result<List<ProductDatabaseEntry>>> getByCategory(
+    String category,
+  ) async {
     try {
       final res = await _resolveClient
           .from('product_database')
-          .select('id, urun_adi, normalize_urun_adi, marka, marka_alias, kategori, alt_kategori, aciklama, anahtar_kelimeler, ocr_eslesme_kelimeleri, ambalaj_tipi, hacim_miktar, birim')
+          .select(
+            'id, urun_adi, normalize_urun_adi, marka, marka_alias, kategori, alt_kategori, aciklama, anahtar_kelimeler, ocr_eslesme_kelimeleri, ambalaj_tipi, hacim_miktar, birim',
+          )
           .eq('kategori', category)
           .order('urun_adi');
 
-      final entries = (res as List)
-          .map((json) => ProductDatabaseEntry.fromJson(json as Map<String, dynamic>))
-          .toList();
+      final entries =
+          (res as List)
+              .map(
+                (json) =>
+                    ProductDatabaseEntry.fromJson(json as Map<String, dynamic>),
+              )
+              .toList();
 
       return Result.success(entries);
     } catch (e, s) {

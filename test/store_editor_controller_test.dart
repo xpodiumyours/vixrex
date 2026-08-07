@@ -286,10 +286,7 @@ void main() {
 
         // Kullanıcı neden kabul edilmediğini ve ne yapacağını öğrenir.
         expect(controller.locationStatusMessage, isNotNull);
-        expect(
-          controller.locationStatusMessage,
-          contains('TELEFONDAN'),
-        );
+        expect(controller.locationStatusMessage, contains('TELEFONDAN'));
       },
     );
 

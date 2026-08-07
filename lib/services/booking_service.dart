@@ -34,11 +34,14 @@ class BookingService {
     String? rescheduleAction,
   }) async {
     try {
-      await _resolveClient.rpc('respond_to_appointment', params: {
-        'p_appointment_id': appointmentId,
-        'p_action': action,
-        'p_reschedule_action': rescheduleAction,
-      });
+      await _resolveClient.rpc(
+        'respond_to_appointment',
+        params: {
+          'p_appointment_id': appointmentId,
+          'p_action': action,
+          'p_reschedule_action': rescheduleAction,
+        },
+      );
       return const Result.success(null);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
@@ -50,9 +53,10 @@ class BookingService {
   /// Token ile randevu detayı getirir.
   Future<Result<dynamic>> getAppointmentByToken(String token) async {
     try {
-      final res = await _resolveClient.rpc('get_appointment_by_token', params: {
-        'p_token': token,
-      });
+      final res = await _resolveClient.rpc(
+        'get_appointment_by_token',
+        params: {'p_token': token},
+      );
       return Result.success(res);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
@@ -62,9 +66,10 @@ class BookingService {
   /// Randevuyu iptal eder.
   Future<Result<void>> cancelAppointmentByToken(String token) async {
     try {
-      await _resolveClient.rpc('cancel_appointment_by_token', params: {
-        'p_token': token,
-      });
+      await _resolveClient.rpc(
+        'cancel_appointment_by_token',
+        params: {'p_token': token},
+      );
       return const Result.success(null);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
@@ -79,10 +84,10 @@ class BookingService {
     try {
       final dateStr =
           '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      final res = await _resolveClient.rpc('get_public_booking_slots', params: {
-        'p_store_slug': storeSlug,
-        'p_date': dateStr,
-      });
+      final res = await _resolveClient.rpc(
+        'get_public_booking_slots',
+        params: {'p_store_slug': storeSlug, 'p_date': dateStr},
+      );
       return Result.success(res as List<dynamic>);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
@@ -95,10 +100,13 @@ class BookingService {
     required DateTime newTime,
   }) async {
     try {
-      await _resolveClient.rpc('request_appointment_reschedule', params: {
-        'p_token': token,
-        'p_new_time': newTime.toUtc().toIso8601String(),
-      });
+      await _resolveClient.rpc(
+        'request_appointment_reschedule',
+        params: {
+          'p_token': token,
+          'p_new_time': newTime.toUtc().toIso8601String(),
+        },
+      );
       return const Result.success(null);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
@@ -117,16 +125,19 @@ class BookingService {
     required String appointmentTime,
   }) async {
     try {
-      final res = await _resolveClient.rpc('create_appointment_request', params: {
-        'p_store_slug': storeSlug,
-        'p_customer_name': customerName,
-        'p_customer_phone': customerPhone,
-        'p_customer_notes': customerNotes,
-        'p_service_title': serviceTitle,
-        'p_service_price': servicePrice,
-        'p_service_duration': serviceDuration,
-        'p_appointment_time': appointmentTime,
-      });
+      final res = await _resolveClient.rpc(
+        'create_appointment_request',
+        params: {
+          'p_store_slug': storeSlug,
+          'p_customer_name': customerName,
+          'p_customer_phone': customerPhone,
+          'p_customer_notes': customerNotes,
+          'p_service_title': serviceTitle,
+          'p_service_price': servicePrice,
+          'p_service_duration': serviceDuration,
+          'p_appointment_time': appointmentTime,
+        },
+      );
       return Result.success(res as Map<String, dynamic>);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));

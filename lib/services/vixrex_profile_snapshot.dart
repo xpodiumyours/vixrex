@@ -11,15 +11,7 @@ import 'package:vixrex/utils/whatsapp_link_helper.dart';
 /// hangisinin zorunlu olduğu ve hangi sırayla sorulacağı
 /// lib/config/vitrin_alanlari.g.dart içinde tanımlıdır.
 /// legal / publish / share alan değil, akış aşamasıdır.
-enum VixRexNextStep {
-  name,
-  category,
-  whatsapp,
-  address,
-  legal,
-  publish,
-  share,
-}
+enum VixRexNextStep { name, category, whatsapp, address, legal, publish, share }
 
 /// VixRex'in kullanıcıya göstereceği rehberlik aşaması.
 enum VixRexJourneyPhase { setup, publish, share, improve }
@@ -229,9 +221,7 @@ class VixRexProfileSnapshot {
     // Yayınlanmış bir vitrin kurulumu geçmiştir. Eksik alanı varsa bu
     // geliştirme işidir, kurulum değil.
     if (isPublished) {
-      return hasShared
-          ? VixRexJourneyPhase.improve
-          : VixRexJourneyPhase.share;
+      return hasShared ? VixRexJourneyPhase.improve : VixRexJourneyPhase.share;
     }
     if (!areRequiredFieldsCompleted) return VixRexJourneyPhase.setup;
     return VixRexJourneyPhase.publish;

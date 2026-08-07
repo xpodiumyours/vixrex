@@ -30,6 +30,12 @@ void main() {
       expect(landing, contains('_navigateToEditor'));
     });
 
+    test('maskot sayfanın son satırlarını kapatmıyor', () {
+      // 2026-08-07: maskot sağ altta yüzüyor ve içeriğin üstünde duruyor.
+      // Bu boşluk olmadan sayfanın sonu maskotun altında kalıyordu.
+      expect(landing, contains('SizedBox(height: 96)'));
+    });
+
     test('şablon kataloğu duruyor', () {
       expect(landing, contains('LandingTemplateCatalog('));
     });
@@ -69,6 +75,35 @@ void main() {
       // yapılır — kullanıcı başka ekrana atılmaz.
       expect(chat, contains('_selectCategory'));
       expect(chat, contains('BusinessCategoryConfig.categories'));
+    });
+
+    test('kategori seçimi ikili ızgara, gizli kaydırma kutusu yok', () {
+      // 2026-08-07: kategoriler `Wrap` ile diziliyordu; satırlar 5/3/3/2/2
+      // diye kırılıyor, kutular farklı genişlikte çıkıyordu. Üstelik 220
+      // piksellik gizli bir kaydırma kutusu vardı — 19 kategorinin 5'i hiç
+      // görünmüyor, kaydırılabildiğine dair işaret de yoktu.
+      //
+      // Casper'ın ifadesi: "bu kategori çekmesi hiç UI UX mu deniyor artık".
+      expect(chat, contains('SliverGridDelegateWithFixedCrossAxisCount'));
+      expect(chat, contains('crossAxisCount: 2'));
+      // Izgara sohbetin altındaki sabit panelde; yükseklik sınırı kalmalı
+      // (yoksa taşar). Ama devamı olduğu GÖRÜNMELİ — alttaki solma bunu
+      // söyler. Solma kaldırılırsa 5 kategori yine görünmez olur.
+      expect(
+        chat,
+        contains('ShaderMask'),
+        reason:
+            'Alttaki solma kaldırılmış; kategorilerin devamı olduğu '
+            'anlaşılmaz, esnaf 5 kategoriyi hiç göremez.',
+      );
+    });
+
+    test('konum düğmesi zorunlu alanlar eksikken pasif', () {
+      // 2026-08-07: doğrulama vardı ve boş alanla geçmiyordu, ama düğme
+      // hazır görünüyordu. Casper: "zorunluluk işareti var, karşılığı yok".
+      // Aynı kural hem düğmenin görünümünü hem geçişi belirlemeli.
+      expect(chat, contains('_konumEksigi'));
+      expect(chat, contains('Devam etmek için:'));
     });
 
     test('kurulum sonrası asistan devri duruyor', () {

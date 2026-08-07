@@ -8,14 +8,10 @@ class Validators {
   );
 
   /// Genel telefon numarası (uluslararası).
-  static final RegExp _phone = RegExp(
-    r'^\+?[0-9]{7,15}$',
-  );
+  static final RegExp _phone = RegExp(r'^\+?[0-9]{7,15}$');
 
   /// URL doğrulama.
-  static final RegExp _url = RegExp(
-    r'^https?://[^\s/$.?#].[^\s]*$',
-  );
+  static final RegExp _url = RegExp(r'^https?://[^\s/$.?#].[^\s]*$');
 
   /// Instagram kullanıcı adı veya URL'i.
   static final RegExp _instagram = RegExp(
@@ -64,7 +60,8 @@ class Validators {
   static String formatPhone(String raw) {
     final digits = raw.replaceAll(RegExp(r'\D'), '');
     if (digits.length < 10) return raw;
-    final body = digits.length > 10 ? digits.substring(digits.length - 10) : digits;
+    final body =
+        digits.length > 10 ? digits.substring(digits.length - 10) : digits;
     if (body.length != 10) return raw;
     return '${body.substring(0, 4)} ${body.substring(4, 7)} ${body.substring(7, 9)} ${body.substring(9)}';
   }

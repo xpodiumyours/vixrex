@@ -39,9 +39,10 @@ class VitrinProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayImage = imagePath?.trim().isNotEmpty == true
-        ? imagePath!.trim()
-        : (imageUrls.isNotEmpty ? imageUrls.first.trim() : '');
+    final displayImage =
+        imagePath?.trim().isNotEmpty == true
+            ? imagePath!.trim()
+            : (imageUrls.isNotEmpty ? imageUrls.first.trim() : '');
     final hasImage = displayImage.isNotEmpty;
     final trimmedDesc = description.trim();
 
@@ -74,7 +75,8 @@ class VitrinProductCard extends StatelessWidget {
                       imageUrl: displayImage,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => _buildImagePlaceholder(),
-                      errorWidget: (context, url, error) => _buildImagePlaceholder(),
+                      errorWidget:
+                          (context, url, error) => _buildImagePlaceholder(),
                     )
                   else
                     _buildImagePlaceholder(),

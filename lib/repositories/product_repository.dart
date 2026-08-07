@@ -60,7 +60,11 @@ abstract class ProductRepository {
   Future<void> deleteProduct(String productId, {String? editToken});
 
   /// Ürün sırasını günceller.
-  Future<void> reorderProducts(String storeId, String editToken, List<String> productIds);
+  Future<void> reorderProducts(
+    String storeId,
+    String editToken,
+    List<String> productIds,
+  );
 
   /// Ürünün aynı mağazadaki kategori adını getirir.
   Future<String> getCategoryName(String? categoryId);

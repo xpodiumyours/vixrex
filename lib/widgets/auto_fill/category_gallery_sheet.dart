@@ -18,7 +18,8 @@ enum ImageAction { setAsCover, addToGallery }
 class CategoryGallerySheet extends StatefulWidget {
   final String? preferredCategoryKey;
   final SheetImageSource source;
-  final void Function(String url, ImageAction action, String? categoryKey) onImageAction;
+  final void Function(String url, ImageAction action, String? categoryKey)
+  onImageAction;
 
   const CategoryGallerySheet({
     super.key,
@@ -31,17 +32,19 @@ class CategoryGallerySheet extends StatefulWidget {
     required BuildContext context,
     String? preferredCategoryKey,
     required SheetImageSource source,
-    required void Function(String url, ImageAction action, String? categoryKey) onImageAction,
+    required void Function(String url, ImageAction action, String? categoryKey)
+    onImageAction,
   }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => CategoryGallerySheet(
-        preferredCategoryKey: preferredCategoryKey,
-        source: source,
-        onImageAction: onImageAction,
-      ),
+      builder:
+          (_) => CategoryGallerySheet(
+            preferredCategoryKey: preferredCategoryKey,
+            source: source,
+            onImageAction: onImageAction,
+          ),
     );
   }
 
@@ -82,9 +85,10 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       );
 
       for (final entry in categorySets) {
-        final hasImages = widget.source == SheetImageSource.coverPicker
-            ? entry.value.coverImages.isNotEmpty
-            : entry.value.galleryImages.isNotEmpty;
+        final hasImages =
+            widget.source == SheetImageSource.coverPicker
+                ? entry.value.coverImages.isNotEmpty
+                : entry.value.galleryImages.isNotEmpty;
 
         if (hasImages) {
           images[entry.key] = entry.value;
@@ -197,10 +201,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                 const SizedBox(height: 2),
                 const Text(
                   'İşletmeniz için özenle tasarlanmış görseller',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.mutedText,
-                  ),
+                  style: TextStyle(fontSize: 13, color: AppColors.mutedText),
                 ),
               ],
             ),
@@ -220,10 +221,7 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       child: Row(
         children: [
           // Sol: Kategori Seçici
-          Expanded(
-            flex: 4,
-            child: _buildCategorySelector(keys, activeKey),
-          ),
+          Expanded(flex: 4, child: _buildCategorySelector(keys, activeKey)),
         ],
       ),
     );
@@ -237,7 +235,8 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       (c) => c.id == activeKey,
       orElse: () => BusinessCategoryConfig.categories.last,
     );
-    final emoji = activeKey == widget.preferredCategoryKey ? '📌' : categoryConfig.emoji;
+    final emoji =
+        activeKey == widget.preferredCategoryKey ? '📌' : categoryConfig.emoji;
 
     return PopupMenuButton<String>(
       onSelected: (key) {
@@ -273,21 +272,34 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                   child: Text(
                     set.categoryLabel,
                     style: TextStyle(
-                      color: key == activeKey ? AppColors.primary : AppColors.darkText,
-                      fontWeight: key == activeKey ? FontWeight.bold : FontWeight.normal,
+                      color:
+                          key == activeKey
+                              ? AppColors.primary
+                              : AppColors.darkText,
+                      fontWeight:
+                          key == activeKey
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                     ),
                   ),
                 ),
                 if (isPreferred)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text(
                       'ÖNERİLEN',
-                      style: TextStyle(fontSize: 8, color: AppColors.primary, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
               ],
@@ -335,7 +347,12 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_categoryKeys.isEmpty) {
-      return const Center(child: Text('Hazır görsel bulunamadı.', style: TextStyle(color: AppColors.mutedText)));
+      return const Center(
+        child: Text(
+          'Hazır görsel bulunamadı.',
+          style: TextStyle(color: AppColors.mutedText),
+        ),
+      );
     }
 
     final keys = _categoryKeys;
@@ -362,12 +379,14 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
     final set = _categoryImages[activeKey];
     if (set == null) return const SizedBox.shrink();
 
-    final rawImages = widget.source == SheetImageSource.coverPicker
-        ? set.coverImages
-        : set.galleryImages;
+    final rawImages =
+        widget.source == SheetImageSource.coverPicker
+            ? set.coverImages
+            : set.galleryImages;
 
     final seenUrls = <String>{};
-    final allImages = rawImages.where((img) => seenUrls.add(img.imageUrl)).toList();
+    final allImages =
+        rawImages.where((img) => seenUrls.add(img.imageUrl)).toList();
 
     if (allImages.isEmpty) {
       return const Center(
@@ -417,9 +436,10 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                 if (widget.source == SheetImageSource.coverPicker) ...[
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: hasSelection
-                          ? () => _handleAction(ImageAction.setAsCover)
-                          : null,
+                      onPressed:
+                          hasSelection
+                              ? () => _handleAction(ImageAction.setAsCover)
+                              : null,
                       icon: const Icon(Icons.image_rounded, size: 18),
                       label: const Text('Kapak Olarak Kullan'),
                       style: ElevatedButton.styleFrom(
@@ -437,9 +457,10 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                 ] else ...[
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: hasSelection
-                          ? () => _handleAction(ImageAction.addToGallery)
-                          : null,
+                      onPressed:
+                          hasSelection
+                              ? () => _handleAction(ImageAction.addToGallery)
+                              : null,
                       icon: const Icon(
                         Icons.add_photo_alternate_rounded,
                         size: 18,

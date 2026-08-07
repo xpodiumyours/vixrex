@@ -20,17 +20,23 @@ class OcrService {
     OcrPriceParser? priceParser,
     OcrImagePreprocessor? preprocessor,
     OcrProductMatcher? matcher,
-  })  : _textParser = textParser ?? const OcrTextParser(),
-        _priceParser = priceParser ?? const OcrPriceParser(),
-        _preprocessor = preprocessor ?? const OcrImagePreprocessor(),
-        _matcher = matcher ?? const OcrProductMatcher();
+  }) : _textParser = textParser ?? const OcrTextParser(),
+       _priceParser = priceParser ?? const OcrPriceParser(),
+       _preprocessor = preprocessor ?? const OcrImagePreprocessor(),
+       _matcher = matcher ?? const OcrProductMatcher();
 
   /// Görüntüden ürün kataloğu oluşturur.
-  Future<Result<OcrCatalogResult>> analyzeImage(Uint8List imageBytes, {String scanMode = 'receipt'}) async {
+  Future<Result<OcrCatalogResult>> analyzeImage(
+    Uint8List imageBytes, {
+    String scanMode = 'receipt',
+  }) async {
     try {
       // 1. OCR ile metni oku (preprocessing olmadan — test için)
-      final textResult = await _textParser.parseFromImage(imageBytes, scanMode: scanMode);
-      
+      final textResult = await _textParser.parseFromImage(
+        imageBytes,
+        scanMode: scanMode,
+      );
+
       if (kDebugMode) {
         debugPrint('=== OCR RAW TEXT START ===');
         debugPrint(textResult.rawText);
@@ -43,7 +49,7 @@ class OcrService {
 
       // 2. Fiyatları çıkar
       final prices = _priceParser.extractPrices(textResult.rawText);
-      
+
       if (kDebugMode) {
         debugPrint('Extracted prices: ${prices.length}');
         for (final p in prices) {
@@ -52,17 +58,23 @@ class OcrService {
       }
 
       // 3. Ürünleri eşleştir
-      final products = await _matcher.matchProducts(textResult.lines, prices, scanMode: scanMode);
-      
+      final products = await _matcher.matchProducts(
+        textResult.lines,
+        prices,
+        scanMode: scanMode,
+      );
+
       if (kDebugMode) {
         debugPrint('Matched products: ${products.length}');
       }
 
-      return Result.success(OcrCatalogResult(
-        rawText: textResult.rawText,
-        products: products,
-        confidence: _calculateConfidence(products),
-      ));
+      return Result.success(
+        OcrCatalogResult(
+          rawText: textResult.rawText,
+          products: products,
+          confidence: _calculateConfidence(products),
+        ),
+      );
     } catch (e, s) {
       if (kDebugMode) debugPrint('OCR ERROR: $e');
       return Result.failure(SupabaseErrorMapper.map(e, s));
@@ -70,12 +82,22 @@ class OcrService {
   }
 
   /// Ürün adaylarını listele (kullanıcı seçimi için).
-  Future<Result<List<DetectedProduct>>> extractProducts(Uint8List imageBytes, {String scanMode = 'receipt'}) async {
+  Future<Result<List<DetectedProduct>>> extractProducts(
+    Uint8List imageBytes, {
+    String scanMode = 'receipt',
+  }) async {
     try {
       final preprocessed = await _preprocessor.preprocess(imageBytes);
-      final textResult = await _textParser.parseFromImage(preprocessed, scanMode: scanMode);
+      final textResult = await _textParser.parseFromImage(
+        preprocessed,
+        scanMode: scanMode,
+      );
       final prices = _priceParser.extractPrices(textResult.rawText);
-      final products = await _matcher.matchProducts(textResult.lines, prices, scanMode: scanMode);
+      final products = await _matcher.matchProducts(
+        textResult.lines,
+        prices,
+        scanMode: scanMode,
+      );
 
       return Result.success(products);
     } catch (e, s) {

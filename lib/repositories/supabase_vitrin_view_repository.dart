@@ -12,8 +12,8 @@ class SupabaseVitrinViewRepository implements VitrinViewRepository {
   SupabaseVitrinViewRepository({
     SupabaseClient? client,
     required SharedPreferences prefs,
-  })  : _client = client ?? Supabase.instance.client,
-        _prefs = prefs;
+  }) : _client = client ?? Supabase.instance.client,
+       _prefs = prefs;
 
   static const String _sessionKeyPrefsKey = 'vitrin_view_session_key';
 
@@ -42,10 +42,7 @@ class SupabaseVitrinViewRepository implements VitrinViewRepository {
 
     final response = await _client.rpc(
       'get_today_vitrin_view_count',
-      params: {
-        'p_slug': slug.trim(),
-        'p_edit_token': editToken.trim(),
-      },
+      params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
     );
 
     if (response is int) return response;

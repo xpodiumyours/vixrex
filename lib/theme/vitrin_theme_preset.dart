@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class VitrinThemePreset {
   final String name;
   final Color background;

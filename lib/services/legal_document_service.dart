@@ -54,10 +54,12 @@ class LegalDocumentService {
     if (termsResult.isFailure) return Result.failure(termsResult.failure!);
     if (consentResult.isFailure) return Result.failure(consentResult.failure!);
 
-    return Result.success(PublishingLegalDocuments(
-      privacy: privacyResult.data!,
-      terms: termsResult.data!,
-      consent: consentResult.data!,
-    ));
+    return Result.success(
+      PublishingLegalDocuments(
+        privacy: privacyResult.data!,
+        terms: termsResult.data!,
+        consent: consentResult.data!,
+      ),
+    );
   }
 }

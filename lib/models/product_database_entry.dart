@@ -74,7 +74,9 @@ class ProductDatabaseEntry {
     if (normalizedQuery.contains(normalizedTarget)) return 0.9;
 
     // OCR eşleme kelimelerini kontrol et
-    final keywords = ocrEslesmeKelimeleri.split(',').map((k) => k.trim().toLowerCase());
+    final keywords = ocrEslesmeKelimeleri
+        .split(',')
+        .map((k) => k.trim().toLowerCase());
     for (final keyword in keywords) {
       if (keyword.isNotEmpty && normalizedQuery.contains(keyword)) {
         return 0.8;

@@ -80,29 +80,30 @@ class _VixRexScreenState extends State<VixRexScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: _needsSetup
-            ? VixRexOnboardingChatScreen(
-                key: const ValueKey('vixrex_setup'),
-                editorController: widget.editorController,
-                editorInitialization: widget.editorInitialization,
-                embeddedInShell: true,
-                onSetupComplete: widget.onSetupComplete,
-              )
-            : Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-                child: VixRexCompanionChat(
-                  key: const ValueKey('vixrex_rehber'),
-                  snapshot: widget.snapshot,
-                  hasShared: widget.hasShared,
-                  recommendation: recommendation,
-                  isRecommendationDismissed:
-                      widget.dismissedRecommendationId == recommendation.id,
-                  onAction: widget.onAction,
-                  onDismissRecommendation: widget.onDismissRecommendation,
-                  onSaveField: widget.onSaveField,
-                  inputFocusNode: _chatInputFocusNode,
+        child:
+            _needsSetup
+                ? VixRexOnboardingChatScreen(
+                  key: const ValueKey('vixrex_setup'),
+                  editorController: widget.editorController,
+                  editorInitialization: widget.editorInitialization,
+                  embeddedInShell: true,
+                  onSetupComplete: widget.onSetupComplete,
+                )
+                : Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                  child: VixRexCompanionChat(
+                    key: const ValueKey('vixrex_rehber'),
+                    snapshot: widget.snapshot,
+                    hasShared: widget.hasShared,
+                    recommendation: recommendation,
+                    isRecommendationDismissed:
+                        widget.dismissedRecommendationId == recommendation.id,
+                    onAction: widget.onAction,
+                    onDismissRecommendation: widget.onDismissRecommendation,
+                    onSaveField: widget.onSaveField,
+                    inputFocusNode: _chatInputFocusNode,
+                  ),
                 ),
-              ),
       ),
     );
   }

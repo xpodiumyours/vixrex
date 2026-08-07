@@ -15,9 +15,8 @@ class ProductController extends ChangeNotifier {
   String? _error;
 
   ProductController({ProductService? service})
-    : _service = service ?? ProductService(
-        repository: SupabaseProductRepository(),
-      );
+    : _service =
+          service ?? ProductService(repository: SupabaseProductRepository());
 
   List<Product> get products => List.unmodifiable(_products);
   bool get isLoading => _isLoading;
@@ -84,20 +83,22 @@ class ProductController extends ChangeNotifier {
       );
 
       if (result.isSuccess) {
-        _products.add(Product(
-          id: result.data!,
-          name: name,
-          slug: slug,
-          description: description,
-          price: priceText,
-          imageUrls: imageUrls,
-          categoryId: categoryId ?? '',
-          source: sourceType,
-          isVisible: true,
-          oldPriceAmount: oldPriceAmount,
-          badgeTag: badgeTag,
-          fulfillmentLocation: fulfillmentRegion,
-        ));
+        _products.add(
+          Product(
+            id: result.data!,
+            name: name,
+            slug: slug,
+            description: description,
+            price: priceText,
+            imageUrls: imageUrls,
+            categoryId: categoryId ?? '',
+            source: sourceType,
+            isVisible: true,
+            oldPriceAmount: oldPriceAmount,
+            badgeTag: badgeTag,
+            fulfillmentLocation: fulfillmentRegion,
+          ),
+        );
       } else {
         _error = result.failure?.message ?? 'Ürün eklenemedi.';
       }
@@ -201,13 +202,19 @@ class ProductController extends ChangeNotifier {
   }
 
   /// Ürün siler.
-  Future<Result<void>> deleteProduct(String productId, {String? editToken}) async {
+  Future<Result<void>> deleteProduct(
+    String productId, {
+    String? editToken,
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final result = await _service.deleteProduct(productId, editToken: editToken);
+      final result = await _service.deleteProduct(
+        productId,
+        editToken: editToken,
+      );
       if (result.isSuccess) {
         _products.removeWhere((p) => p.id == productId);
       } else {
@@ -225,9 +232,17 @@ class ProductController extends ChangeNotifier {
   }
 
   /// Ürün sırasını değiştirir.
-  Future<Result<void>> reorderProducts(String storeId, String editToken, List<String> productIds) async {
+  Future<Result<void>> reorderProducts(
+    String storeId,
+    String editToken,
+    List<String> productIds,
+  ) async {
     try {
-      final result = await _service.reorderProducts(storeId, editToken, productIds);
+      final result = await _service.reorderProducts(
+        storeId,
+        editToken,
+        productIds,
+      );
       if (result.isSuccess) {
         final reordered = <Product>[];
         for (final id in productIds) {

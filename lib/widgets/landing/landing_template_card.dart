@@ -48,13 +48,14 @@ class TemplateCard extends StatelessWidget {
                   ),
                   child: Container(
                     color: category.color.withValues(alpha: 0.08),
-                    child: previewUrl != null
-                        ? Image.network(
-                            previewUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _fallbackContent(),
-                          )
-                        : _fallbackContent(),
+                    child:
+                        previewUrl != null
+                            ? Image.network(
+                              previewUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _fallbackContent(),
+                            )
+                            : _fallbackContent(),
                   ),
                 ),
               ),
@@ -91,18 +92,18 @@ class TemplateCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       isLoading
                           ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                           : const Text(
-                              'Hazır görseller →',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            'Hazır görseller →',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
                             ),
+                          ),
                     ],
                   ),
                 ),

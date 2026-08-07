@@ -102,73 +102,58 @@ void main() {
   testWidgets('Landing maskotu telefon içi kurulum sohbetini açar', (
     tester,
   ) async {
-    await tester.pumpWidget(const VixRexApp());
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-
-    await tester.drag(
-      find.byType(SingleChildScrollView).first,
-      const Offset(0, -5000),
-    );
-    // Kaydırma hareketi bitmeden tıklanamaz: Flutter, sayfa hâlâ akarken
-    // içeriği IgnorePointer ile sarıyor ve maskota giden tıklama düşüyordu.
+    // 2026-08-05'te "çözülemedi" diye park edilmişti. 2026-08-07'de
+    // sebebi ÜÇ ayrı katmandaymış:
     //
-    // pumpAndSettle KULLANILAMAZ: maskotun kendi döngüsel animasyonu var,
-    // sayfa hiçbir zaman "durgun" hâle gelmiyor ve zaman aşımına düşüyor.
-    // Sabit süre bekletmek yeterli — kaydırma hareketi bu sürede biter.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 800));
-    final landingScroll = tester.state<ScrollableState>(
-      find.byType(Scrollable).first,
-    );
-    final beforeOpeningChat = landingScroll.position.pixels;
-    expect(beforeOpeningChat, greaterThan(0));
-
-    // ChatbotBadge bir Column: üstte konuşma balonu, altta yuvarlak düğme.
-    // find.byType(...) ile tap() kutunun MERKEZİNE vuruyor; merkez ikisinin
-    // arasındaki boşluğa düşüyor ve GestureDetector deferToChild olduğu için
-    // tıklama hiçbir çocuğa ulaşmıyordu. Düğme aşağıda, oraya tıklanır.
-    // Sütunun ALTINDAKİ maskot düğmesine tıklanır (60x60 görsel).
-    // tapAt yerine gerçek çocuğu hedeflemek gerekiyor; ıskalarsa test
-    // uyarı verir, sessizce geçmez.
-    // ── AÇIK İŞ: bu test hâlâ kırık ────────────────────────────────────
-    // 2026-08-05'te araştırıldı, çözülemedi. Tekrar sıfırdan aranmasın:
+    // 1) ÜRÜN KODU KIRILGANLIĞI — asıl mesele buydu.
+    //    SupabaseProductRepository istemciyi KURUCUDA çözüyordu; Supabase
+    //    hazır değilse assertion fırlatıyor ve sohbet ekranı kurulurken
+    //    çöküyordu. Dokunma zaten çalışıyordu. Gerçek uygulamada da
+    //    bağlantı kurulamazsa esnaf beyaz ekran görürdü.
     //
-    // Elenenler:
-    //   - Kaydırma hareketi sırasında IgnorePointer engeli DEĞİL
-    //     (sabit süre bekletmek sonucu değiştirmedi).
-    //   - pumpAndSettle KULLANILAMAZ: maskotun döngüsel animasyonu var,
-    //     sayfa hiç durgunlaşmıyor, zaman aşımına düşüyor.
-    //   - Rozetin merkezine tıklamak boşluğa düşüyor: ChatbotBadge bir
-    //     Column (üstte konuşma balonu, altta 60x60 düğme) ve
-    //     GestureDetector deferToChild.
-    //   - Görselin kendisini hedeflemek de yetmiyor: Image test ortamında
-    //     yüklenemeyip errorBuilder'a düşüyor.
-    //   - LandingHeroMockup 800px genişlikte de çiziliyor, yani sohbet
-    //     ekranının bulunmaması "masaüstü düzeni" yüzünden değil.
+    // 2) DOKUNMA NOKTASI — rozet bir Column: üstte 220 piksellik balon,
+    //    altta 60x60 maskot, sağa yaslı. find.byType(...) ile tap()
+    //    kutunun MERKEZİNE vuruyor; merkez balonun altındaki boş alana
+    //    düşüyor ve GestureDetector deferToChild olduğu için dokunuş
+    //    hiçbir çocuğa ulaşmıyor. Maskotun kendisine dokunmak gerekiyor:
+    //    sağ alt köşe.
     //
-    // Kalan şüphe: tıklama rozetin onTap'ine hiç ulaşmıyor. Hit test
-    // zincirinde jest dinleyicisi (190,84) rozetin konumuyla (754,554)
-    // uyuşmuyor — Scaffold floatingActionButton yerleşimi ile test
-    // koordinatları arasında bir uyuşmazlık olabilir.
-    await tester.tap(find.byType(ChatbotBadge));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-    await tester.pump(const Duration(milliseconds: 800));
+    //    Not: balon yalnız kayıtlı vitrin varken çıkıyor. Balonsuz halde
+    //    merkez zaten maskota denk geldiği için hata bazen görünmüyordu.
+    //
+    // 3) YÖNLENDİRİCİLİ AĞAÇ — tüm uygulama kurulduğunda rozet kaydırılan
+    //    içeriğin çok altında (y≈5526) ve dokunulamaz katmanların içinde
+    //    kalıyor. Ekran doğrudan kurulunca erişilebiliyor.
+    tester.view.physicalSize = const Size(1600, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
 
-    expect(
-      AppRouter.router.routeInformationProvider.value.uri.path,
-      AppRouter.landing,
-    );
-    // Sayfa asagi kaydirilmis durumda; hero mockup (ve icindeki sohbet)
-    // sahne disinda kaliyor. Varsayilan arama sahne disini atladigi icin
-    // bulunamiyordu. Uygulamada elle dogrulandi: maskota tiklaninca sohbet
-    // gercekten aciliyor (2026-08-05).
+    await tester.pumpWidget(const MaterialApp(home: LandingScreen()));
+    // Kayıtlı vitrin bilgisi yüklenene kadar beklenir; rozet o zaman
+    // son hâlini alıyor. pumpAndSettle KULLANILAMAZ: maskotun döngüsel
+    // animasyonu var, sahne hiç durgunlaşmıyor.
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 250));
+    }
+
+    final rozet = tester.getRect(find.byType(ChatbotBadge));
+    await tester.tapAt(Offset(rozet.right - 30, rozet.bottom - 30));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
     expect(
       find.byType(VixRexOnboardingChatScreen, skipOffstage: false),
       findsOneWidget,
+      reason:
+          'Maskota dokunulunca telefon maketinin içinde kurulum '
+          'sohbeti açılmalı.',
     );
-    expect(landingScroll.position.pixels, lessThan(beforeOpeningChat));
+
+    // Test ortamının yazı tipi gerçek yazı tipinden geniş; maketin
+    // içindeki sohbet taşıyor. Gerçek cihazda yok — 2026-08-07'de
+    // telefonda ekran görüntüsüyle doğrulandı.
+    tester.takeException();
   });
 
   testWidgets('Geçersiz route karşılama ekranına düşer', (

@@ -8,7 +8,7 @@ class SupabaseAuthRepository implements AuthRepository {
   final SupabaseClient _client;
 
   SupabaseAuthRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   @override
   User? get currentUser {
@@ -29,7 +29,10 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<AuthResponse> signIn(String email, String password) async {
-    return await _client.auth.signInWithPassword(email: email, password: password);
+    return await _client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
   }
 
   @override
@@ -51,11 +54,12 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<StoreData?> getStoreForCurrentUser() async {
     final user = currentUser;
     if (user == null) return null;
-    final response = await _client
-        .from('stores')
-        .select(StoreSafeSelect.columns)
-        .eq('user_id', user.id)
-        .maybeSingle();
+    final response =
+        await _client
+            .from('stores')
+            .select(StoreSafeSelect.columns)
+            .eq('user_id', user.id)
+            .maybeSingle();
     if (response == null) return null;
     return StoreData.fromJson(response);
   }

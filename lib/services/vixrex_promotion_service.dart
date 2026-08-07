@@ -2,11 +2,7 @@ import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/category_image_service.dart';
 
-enum VixRexPromotionTone {
-  short,
-  friendly,
-  professional,
-}
+enum VixRexPromotionTone { short, friendly, professional }
 
 class VixRexPromotionDraft {
   final VixRexPromotionTone tone;
@@ -27,9 +23,8 @@ abstract final class VixRexPromotionService {
     final category = _valueOrFallback(snapshot?.category, 'ürün ve hizmetler');
     final district = snapshot?.district.trim() ?? '';
     final rawLink = snapshot?.publicLink.trim() ?? '';
-    final link = rawLink.isEmpty
-        ? ''
-        : PublicSiteConfig.repairPublicLink(rawLink);
+    final link =
+        rawLink.isEmpty ? '' : PublicSiteConfig.repairPublicLink(rawLink);
     final locationText = district.isEmpty ? '' : ' $district’te';
     final linkText = link.isEmpty ? '' : '\n$link';
 
@@ -66,7 +61,8 @@ abstract final class VixRexPromotionService {
     required String category,
     int? availableCount,
   }) {
-    final countText = availableCount != null ? '$availableCount adet' : 'onlarca';
+    final countText =
+        availableCount != null ? '$availableCount adet' : 'onlarca';
     final categoryLabel = category.trim().isEmpty ? 'bu kategori' : category;
 
     return [

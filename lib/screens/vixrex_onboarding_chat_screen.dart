@@ -348,6 +348,22 @@ class _VixRexOnboardingChatScreenState
     );
   }
 
+  /// Konum adımında hangi zorunlu alan eksik — sırayla ilki.
+  ///
+  /// Doğrulama zaten `_confirmLocationFromEditor` içinde vardı ve boş
+  /// alanla geçmiyordu. Sorun görsel: düğme hazır görünüyor, basınca
+  /// reddediyordu. Casper (2026-08-07): "zorunluluk işareti var,
+  /// karşılığı yok". Aynı kural artık düğmenin görünümünü de belirliyor —
+  /// iki ayrı doğruluk olmasın diye tek yerde.
+  String? get _konumEksigi {
+    final data = _controller.data;
+    if (data.provinceCode.trim().isEmpty) return 'İl seç';
+    if (data.districtName.trim().isEmpty) return 'İlçe seç';
+    return AddressValidator.hataMesaji(data.address) == null
+        ? null
+        : 'Açık adresi yaz';
+  }
+
   Future<void> _confirmLocationFromEditor() async {
     final data = _controller.data;
     if (data.provinceCode.trim().isEmpty || data.districtName.trim().isEmpty) {
@@ -640,8 +656,7 @@ class _VixRexOnboardingChatScreenState
           ),
           TextButton(
             onPressed:
-                widget.onClose ??
-                () => AppRouter.navigateToLanding(context),
+                widget.onClose ?? () => AppRouter.navigateToLanding(context),
             child: const Text(
               'Kapat',
               style: TextStyle(color: AppColors.mutedText),
@@ -702,7 +717,11 @@ class _VixRexOnboardingChatScreenState
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.auto_awesome, size: 14, color: Colors.white),
+                          Icon(
+                            Icons.auto_awesome,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                           SizedBox(width: 6),
                           Text(
                             'Evet, Oluşturalım',
@@ -736,7 +755,11 @@ class _VixRexOnboardingChatScreenState
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.visibility_outlined, size: 14, color: AppColors.mutedText),
+                        Icon(
+                          Icons.visibility_outlined,
+                          size: 14,
+                          color: AppColors.mutedText,
+                        ),
                         SizedBox(width: 6),
                         Text(
                           'Bakınıyorum',
@@ -768,40 +791,81 @@ class _VixRexOnboardingChatScreenState
                 ),
               ),
             ),
+            // İkonlu ikili ızgara.
+            //
+            // ÖNCEKİ HÂLİ: `Wrap` kutuları ortalayıp sığdığı kadar yan yana
+            // diziyordu; satırlar 5/3/3/2/2 diye kırılıyor, kutular farklı
+            // genişlikte çıkıyordu. Casper'ın ifadesi (2026-08-07): "bu
+            // kategori çekmesi hiç UI UX mu deniyor artık".
+            //
+            // ŞİMDİ: her hücre aynı genişlik ve yükseklikte, ikonuyla.
+            //
+            // YÜKSEKLİK NEDEN SINIRLI: bu ızgara sohbetin ALTINDAKİ sabit
+            // panelde duruyor, panel kaydırmıyor. Sınır kaldırılırsa 19
+            // kategori 700 pikseli aşıp taşar. Sınır kalır, ama eskiden
+            // devamı olduğuna dair hiçbir işaret yoktu — 5 kategori
+            // görünmez kalıyordu. Alttaki solma o yüzden var: içeriğin
+            // sürdüğünü söyler.
             ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 220),
-              child: SingleChildScrollView(
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    for (final kategori in BusinessCategoryConfig.categories)
-                      InkWell(
-                        onTap:
-                            _busy ? null : () => _selectCategory(kategori.label),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 9,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Text(
-                            kategori.label,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.darkText,
+              constraints: const BoxConstraints(maxHeight: 272),
+              child: ShaderMask(
+                shaderCallback:
+                    (rect) => const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.white, Colors.white, Colors.transparent],
+                      stops: [0.0, 0.88, 1.0],
+                    ).createShader(rect),
+                blendMode: BlendMode.dstIn,
+                child: GridView.builder(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  itemCount: BusinessCategoryConfig.categories.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    // Geniş ve alçak hücre: ikon üstte, ad altta.
+                    childAspectRatio: 2.35,
+                  ),
+                  itemBuilder: (context, index) {
+                    final kategori = BusinessCategoryConfig.categories[index];
+                    return InkWell(
+                      onTap:
+                          _busy ? null : () => _selectCategory(kategori.label),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              kategori.icon,
+                              size: 20,
+                              color: AppColors.primary,
                             ),
-                          ),
+                            const SizedBox(height: 5),
+                            Text(
+                              kategori.label,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.darkText,
+                                height: 1.15,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -843,8 +907,23 @@ class _VixRexOnboardingChatScreenState
             const SizedBox(height: 10),
             _primaryButton(
               'Konumu onayla, devam',
-              _busy ? null : _confirmLocationFromEditor,
+              (_busy || _konumEksigi != null)
+                  ? null
+                  : _confirmLocationFromEditor,
             ),
+            if (_konumEksigi != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'Devam etmek için: ${_konumEksigi!}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.mutedText,
+                  ),
+                ),
+              ),
             const SizedBox(height: 8),
           ],
           if (showInput)
@@ -938,7 +1017,6 @@ class _VixRexOnboardingChatScreenState
       child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
     );
   }
-
 }
 
 class _ChatLine {

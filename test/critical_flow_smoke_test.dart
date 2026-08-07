@@ -42,18 +42,14 @@ void main() {
           description: 'Giyim',
           kategori: 'Giyim',
           slug: 'moda-evi',
-          products: [
-            Product(id: '1', name: 'Kırmızı Elbise', price: '500'),
-          ],
+          products: [Product(id: '1', name: 'Kırmızı Elbise', price: '500')],
         ),
         StoreData(
           name: 'Lezzet',
           description: 'Yemek',
           kategori: 'Gıda',
           slug: 'lezzet',
-          products: [
-            Product(id: '2', name: 'Lahmacun', price: '100'),
-          ],
+          products: [Product(id: '2', name: 'Lahmacun', price: '100')],
         ),
       ]);
       final controller = ExploreController(repository: repo);

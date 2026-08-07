@@ -5,9 +5,8 @@ import 'package:vixrex/repositories/explore_repository.dart';
 class ExploreController extends ChangeNotifier {
   final ExploreRepository _repository;
 
-  ExploreController({
-    required ExploreRepository repository,
-  }) : _repository = repository;
+  ExploreController({required ExploreRepository repository})
+    : _repository = repository;
 
   List<StoreData> _allStores = [];
   bool _isLoading = true;
@@ -57,7 +56,9 @@ class ExploreController extends ChangeNotifier {
           final ownStore = loadedStores.removeAt(index);
           loadedStores.insert(0, ownStore);
         } else {
-          final ownStore = await _repository.fetchStoreBySlug(_localPublishedSlug!);
+          final ownStore = await _repository.fetchStoreBySlug(
+            _localPublishedSlug!,
+          );
           if (ownStore != null) {
             loadedStores.insert(0, ownStore);
           }

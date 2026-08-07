@@ -40,11 +40,7 @@ class OcrImagePreprocessor {
     // 4. Hafif sharpening (kenar netliği için)
     final sharpened = img.convolution(
       contrasted,
-      filter: [
-         0, -1,  0,
-        -1,  5, -1,
-         0, -1,  0,
-      ],
+      filter: [0, -1, 0, -1, 5, -1, 0, -1, 0],
     );
 
     // JPEG kalitesi 90 (kalite + hız dengesi)
