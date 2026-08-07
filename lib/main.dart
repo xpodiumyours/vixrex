@@ -80,8 +80,37 @@ Future<void> _initializeSupabase() async {
       anonKey: supabasePublishableKey,
     );
     if (kDebugMode) debugPrint('[OK] Supabase initialized successfully');
+    await _oturumuGuvenceyeAl();
   } catch (error) {
     if (kDebugMode) debugPrint('[FATAL] Supabase initialize failed: $error');
+  }
+}
+
+/// Her kullanıcı ilk saniyeden itibaren bir hesaba sahip olur.
+///
+/// NEDEN VAR (docs/kok-neden-arastirmasi.md — kimlik kökü):
+/// 2026-08-07 sayımında buluttaki 128 vitrinin 128'i SAHİPSİZDİ
+/// (`user_id` boş). Veritabanındaki sahiplik politikaları doğru yazılmıştı
+/// ama hiç eşleşmiyordu; bu yüzden her işlem RLS'i atlayan 25 fonksiyondan
+/// ve elden ele taşınan bir anahtardan geçiyordu. Kimlik gerçekte
+/// tarayıcının hafızasında duruyordu — silinen vitrin uygulamada görünmeye
+/// devam ediyor, silinemiyordu.
+///
+/// NEDEN ANONİM: esnafa form göstermeden kimlik vermek için. "45 saniyede
+/// vitrin" vaadi bozulmaz, kayıt ekranı yok. Vitrin ilk andan itibaren
+/// sahipli olur; `create_store_with_token` içindeki `auth.uid()` dolar.
+/// Esnaf sonra hesabını Google'a bağlar — AYNI hesap kalır, veri taşınmaz.
+///
+/// SESSİZ BAŞARISIZLIK: oturum kurulamazsa uygulama eskisi gibi çalışır.
+/// Bu adım bir kapı değil, bir kolaylık.
+Future<void> _oturumuGuvenceyeAl() async {
+  try {
+    final auth = Supabase.instance.client.auth;
+    if (auth.currentSession != null) return;
+    await auth.signInAnonymously();
+    if (kDebugMode) debugPrint('[OK] Anonim oturum kuruldu');
+  } catch (error) {
+    if (kDebugMode) debugPrint('[WARN] Anonim oturum kurulamadı: $error');
   }
 }
 
