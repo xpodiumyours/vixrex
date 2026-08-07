@@ -1,0 +1,32 @@
+name: Kalite Kapıları
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-protected-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Korunan testler
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: python .github/scripts/verify_protected_tests.py
+
+      - name: Migration zinciri
+        run: python .github/scripts/verify_migrations.py
