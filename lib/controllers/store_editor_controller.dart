@@ -1025,21 +1025,34 @@ class StoreEditorController extends ChangeNotifier
     );
   }
 
+  /// Vitrini siler.
+  ///
+  /// SORUN (2026-08-07): Eskiden önce buluttaki kaydı silmeye çalışıyordu
+  /// ve slug yoksa hata fırlatıp YEREL VERİYİ HİÇ TEMİZLEMİYORDU. Hiç
+  /// yayınlanmamış ya da bulutta zaten silinmiş bir vitrin uygulamadan
+  /// asla silinemiyordu; karşılama ekranı sonsuza kadar "Kayıtlı
+  /// Vitrinimi Düzenle" diyordu. Casper: "vitrin yok ortada, vitrini sil
+  /// diyorum ama silinmiyor".
+  ///
+  /// KURAL
+  /// - Bulutta karşılığı yoksa (slug boş): yerel temizlenir, bitti.
+  /// - Bulut silme başarılıysa: yerel temizlenir.
+  /// - Bulut silme başarısızsa: yerel KORUNUR ve hata söylenir. Çünkü
+  ///   yerel kayıtta düzenleme anahtarı var; onu silersek esnaf buluttaki
+  ///   vitrinini bir daha silemez.
   Future<void> deleteVitrin() async {
     setLoading(true);
     try {
       final slug = (_publishedInfo?.slug ?? _data.slug).trim();
-      final editToken = _publishedInfo?.editToken;
-      if (slug.isEmpty) {
-        throw 'Silinecek vitrin bilgisi bulunamadı.';
-      }
 
-      final result = await publishService.deleteStore(
-        slug: slug,
-        editToken: editToken,
-      );
-      if (result.isFailure) {
-        throw result.failure!.message;
+      if (slug.isNotEmpty) {
+        final result = await publishService.deleteStore(
+          slug: slug,
+          editToken: _publishedInfo?.editToken,
+        );
+        if (result.isFailure) {
+          throw result.failure!.message;
+        }
       }
 
       await storage.clearVitrinData();
