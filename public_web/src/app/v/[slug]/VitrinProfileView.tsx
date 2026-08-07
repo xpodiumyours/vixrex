@@ -2,6 +2,23 @@
 
 import Image from "next/image";
 import { getAppUrl } from "@/lib/siteUrl";
+
+/** Eylem butonunun arkasındaki şema alanı.
+ *
+ * Sahip modunda bu butonlar LİNK DEĞİL, düzenleme kancasıdır. Eskiden
+ * esnaf kendi WhatsApp'ına mesaj atıyor ya da kendi haritasına gidiyordu;
+ * düzenleme kutusu hiç açılmıyordu (2026-08-07, bulgu 6). Casper:
+ * "whatsaptan kendi kendimize mesaj atmak veya instagramda kendi
+ * sayfamızı açmak için değil".
+ *
+ * Ziyaretçi modunda hiçbir şey değişmez — editableProps boş nesne döner.
+ */
+const EYLEM_ALANI: Record<string, string> = {
+  telefon: "telefon",
+  whatsapp: "whatsapp",
+  maps: "adres",
+  website: "website",
+};
 import Link from "next/link";
 import { Suspense, type ReactNode, useState } from "react";
 import type { VitrinCategoryProfile } from "@/lib/vitrinProfile";
@@ -393,6 +410,7 @@ export default function VitrinProfileView({
                   {...(buton.disKapi
                     ? { target: "_blank", rel: "noopener noreferrer" }
                     : {})}
+                  {...editableProps(EYLEM_ALANI[buton.anahtar] ?? "", ownerMode)}
                   className={index === 0 ? primaryActionClass : ghostActionClass}
                 >
                   {buton.anahtar === "telefon" && (
@@ -741,7 +759,7 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">💬</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">WhatsApp</h4>
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" {...editableProps("whatsapp", ownerMode)} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
                       WhatsApp&apos;tan İletişime Geç
                     </a>
                   </div>
