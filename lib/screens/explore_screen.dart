@@ -51,9 +51,11 @@ class ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _initController() async {
-    final repository = widget.repository ?? ExploreRepository(
-      sharedPreferences: await SharedPreferences.getInstance(),
-    );
+    final repository =
+        widget.repository ??
+        ExploreRepository(
+          sharedPreferences: await SharedPreferences.getInstance(),
+        );
     _controller = ExploreController(repository: repository);
     await _controller.initialize();
     if (mounted) {
@@ -369,7 +371,8 @@ class ExploreScreenState extends State<ExploreScreen> {
                         padding: const EdgeInsets.only(right: 6),
                         child: FilterChip(
                           visualDensity: VisualDensity.compact,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                           selected: _controller.onlyFavorites,
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -402,9 +405,10 @@ class ExploreScreenState extends State<ExploreScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                             side: BorderSide(
-                              color: _controller.onlyFavorites
-                                  ? primaryColor
-                                  : AppColors.border,
+                              color:
+                                  _controller.onlyFavorites
+                                      ? primaryColor
+                                      : AppColors.border,
                             ),
                           ),
                           onSelected: (val) {
@@ -419,7 +423,8 @@ class ExploreScreenState extends State<ExploreScreen> {
                           padding: const EdgeInsets.only(right: 6),
                           child: ChoiceChip(
                             visualDensity: VisualDensity.compact,
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                             selected: isSelected,
                             label: Text(category),
                             labelStyle: TextStyle(
@@ -432,9 +437,10 @@ class ExploreScreenState extends State<ExploreScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                               side: BorderSide(
-                                color: isSelected
-                                    ? primaryColor
-                                    : AppColors.border,
+                                color:
+                                    isSelected
+                                        ? primaryColor
+                                        : AppColors.border,
                               ),
                             ),
                             onSelected: (val) {
@@ -494,14 +500,9 @@ class ExploreScreenState extends State<ExploreScreen> {
                                   final store = stores[index];
                                   return VitrinStoreCard(
                                     store: store,
-                                    isExample:
-                                        _controller.showingExampleStores,
-                                    isFavorited: _controller.isFavorite(
-                                      store,
-                                    ),
-                                    isOwnStore: _controller.isOwnStore(
-                                      store,
-                                    ),
+                                    isExample: _controller.showingExampleStores,
+                                    isFavorited: _controller.isFavorite(store),
+                                    isOwnStore: _controller.isOwnStore(store),
                                     onTap: () {
                                       final slug =
                                           store.slug.isNotEmpty
@@ -518,8 +519,7 @@ class ExploreScreenState extends State<ExploreScreen> {
                                           store.name,
                                         ),
                                     onWhatsAppPressed:
-                                        () =>
-                                            _showWhatsAppBottomSheet(store),
+                                        () => _showWhatsAppBottomSheet(store),
                                   );
                                 },
                               );
@@ -588,9 +588,7 @@ class ExploreScreenState extends State<ExploreScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              hasError
-                  ? Icons.wifi_off_rounded
-                  : Icons.storefront_rounded,
+              hasError ? Icons.wifi_off_rounded : Icons.storefront_rounded,
               size: 48,
               color: mutedText,
             ),
@@ -599,8 +597,8 @@ class ExploreScreenState extends State<ExploreScreen> {
               hasError
                   ? 'Vitrinler şu an yüklenemedi.'
                   : _controller.onlyFavorites
-                      ? 'Favorilere ekli vitrin bulunamadı.'
-                      : 'Aramanızla eşleşen vitrin bulunamadı.',
+                  ? 'Favorilere ekli vitrin bulunamadı.'
+                  : 'Aramanızla eşleşen vitrin bulunamadı.',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 14,

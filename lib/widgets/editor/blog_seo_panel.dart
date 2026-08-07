@@ -94,7 +94,9 @@ class BlogSeoPanel extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppColors.spacing8),
-            ...seoRecommendations.take(3).map(
+            ...seoRecommendations
+                .take(3)
+                .map(
                   (rec) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2.0),
                     child: Text(

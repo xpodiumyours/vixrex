@@ -9,7 +9,10 @@ class MockOcrExcelVerifier extends OcrExcelVerifier {
   const MockOcrExcelVerifier() : super(client: null);
 
   @override
-  Future<ProductMatch?> findBestMatch(String normalized, {double threshold = 0.7}) async {
+  Future<ProductMatch?> findBestMatch(
+    String normalized, {
+    double threshold = 0.7,
+  }) async {
     return null; // Test veritabanı bağımlılığını kes
   }
 }
@@ -53,7 +56,11 @@ void main() {
           ),
         ];
 
-        final result = await matcher.matchProducts(lines, prices, scanMode: 'receipt');
+        final result = await matcher.matchProducts(
+          lines,
+          prices,
+          scanMode: 'receipt',
+        );
         expect(result.length, 1);
         expect(result.first.name.toUpperCase(), contains('DANKEK'));
         expect(result.first.price, 55.0);
@@ -85,7 +92,11 @@ void main() {
           ),
         ];
 
-        final result = await matcher.matchProducts(lines, prices, scanMode: 'shelf_label');
+        final result = await matcher.matchProducts(
+          lines,
+          prices,
+          scanMode: 'shelf_label',
+        );
         expect(result.length, 1);
         expect(result.first.name.toUpperCase(), contains('BİSCOLATA'));
         expect(result.first.price, 54.99);
@@ -107,7 +118,11 @@ void main() {
             lineIndex: 1,
           ),
         ];
-        final result = await matcher.matchProducts(lines, [], scanMode: 'receipt');
+        final result = await matcher.matchProducts(
+          lines,
+          [],
+          scanMode: 'receipt',
+        );
         expect(result.isEmpty, true);
       });
     });

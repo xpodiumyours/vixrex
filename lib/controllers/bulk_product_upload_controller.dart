@@ -6,9 +6,8 @@ import 'package:vixrex/services/bulk_product_upload_service.dart';
 class BulkProductUploadController extends ChangeNotifier {
   final BulkProductUploadService _uploadService;
 
-  BulkProductUploadController({
-    BulkProductUploadService? uploadService,
-  }) : _uploadService = uploadService ?? const BulkProductUploadService();
+  BulkProductUploadController({BulkProductUploadService? uploadService})
+    : _uploadService = uploadService ?? const BulkProductUploadService();
 
   // ─── State ─────────────────────────────────────────────────────
   BulkUploadState _state = BulkUploadState.initial;
@@ -60,14 +59,22 @@ class BulkProductUploadController extends ChangeNotifier {
 
   /// Tek bir ürünü güncelle.
   void updateProduct(int index, Product updated) {
-    if (_parseResult == null || index < 0 || index >= _parseResult!.products.length) return;
+    if (_parseResult == null ||
+        index < 0 ||
+        index >= _parseResult!.products.length) {
+      return;
+    }
     _parseResult!.products[index] = updated;
     notifyListeners();
   }
 
   /// Ürünü listeden kaldır.
   void removeProduct(int index) {
-    if (_parseResult == null || index < 0 || index >= _parseResult!.products.length) return;
+    if (_parseResult == null ||
+        index < 0 ||
+        index >= _parseResult!.products.length) {
+      return;
+    }
     _parseResult!.products.removeAt(index);
     if (_parseResult!.products.isEmpty) {
       _state = BulkUploadState.review;
@@ -96,10 +103,11 @@ class BulkProductUploadController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final toSave = products.map((p) {
-        p.isVisible = true;
-        return p;
-      }).toList();
+      final toSave =
+          products.map((p) {
+            p.isVisible = true;
+            return p;
+          }).toList();
       if (toSave.isEmpty) {
         _errorMessage = 'Eklenecek ürün yok.';
         _isSaving = false;
@@ -138,11 +146,4 @@ class BulkProductUploadController extends ChangeNotifier {
   }
 }
 
-enum BulkUploadState {
-  initial,
-  parsing,
-  review,
-  saving,
-  saved,
-  error,
-}
+enum BulkUploadState { initial, parsing, review, saving, saved, error }

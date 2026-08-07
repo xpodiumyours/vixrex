@@ -29,11 +29,12 @@ class QrCodeBottomSheet extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => QrCodeBottomSheet(
-        title: title,
-        link: link,
-        warningText: warningText,
-      ),
+      builder:
+          (_) => QrCodeBottomSheet(
+            title: title,
+            link: link,
+            warningText: warningText,
+          ),
     );
   }
 

@@ -25,13 +25,21 @@ class ChatbotService {
     for (final intent in ChatbotConfig.intents) {
       for (final keyword in intent.keywords) {
         if (normalized.contains(_normalize(keyword))) {
-          return ChatbotConfig.responseFor(intent.payload, snapshot: snapshot, hasShared: hasShared);
+          return ChatbotConfig.responseFor(
+            intent.payload,
+            snapshot: snapshot,
+            hasShared: hasShared,
+          );
         }
       }
     }
 
     // Eşleşme bulunamadı
-    return ChatbotConfig.responseFor('default', snapshot: snapshot, hasShared: hasShared);
+    return ChatbotConfig.responseFor(
+      'default',
+      snapshot: snapshot,
+      hasShared: hasShared,
+    );
   }
 
   /// Quick Reply payload'ına göre yanıt döner.
@@ -40,7 +48,11 @@ class ChatbotService {
     VixRexProfileSnapshot? snapshot,
     bool hasShared = false,
   ]) {
-    return ChatbotConfig.responseFor(payload, snapshot: snapshot, hasShared: hasShared);
+    return ChatbotConfig.responseFor(
+      payload,
+      snapshot: snapshot,
+      hasShared: hasShared,
+    );
   }
 
   /// Vitrin snapshot'ına göre kişiselleştirilmiş karşılama mesajı döner.

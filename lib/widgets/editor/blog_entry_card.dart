@@ -5,11 +5,7 @@ class BlogEntryCard extends StatelessWidget {
   final bool canOpen;
   final VoidCallback onTap;
 
-  const BlogEntryCard({
-    super.key,
-    required this.canOpen,
-    required this.onTap,
-  });
+  const BlogEntryCard({super.key, required this.canOpen, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

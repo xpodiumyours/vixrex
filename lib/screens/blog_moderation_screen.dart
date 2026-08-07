@@ -59,10 +59,7 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
     );
   }
 
-  Future<void> _moderate(
-    Map<String, dynamic> article,
-    String newStatus,
-  ) async {
+  Future<void> _moderate(Map<String, dynamic> article, String newStatus) async {
     final id = article['id']?.toString() ?? '';
     if (id.isEmpty || _processingIds.contains(id)) return;
 
@@ -82,7 +79,9 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
         }
 
         if (!mounted) return;
-        setState(() => _pendingArticles.removeWhere((a) => a['id']?.toString() == id));
+        setState(
+          () => _pendingArticles.removeWhere((a) => a['id']?.toString() == id),
+        );
 
         _showSnackBar(
           newStatus == 'published' ? '✓ Yazı yayınlandı' : '✗ Yazı reddedildi',
@@ -133,7 +132,9 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: _primaryColor));
+      return const Center(
+        child: CircularProgressIndicator(color: _primaryColor),
+      );
     }
 
     if (_error != null) {
@@ -143,9 +144,17 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline_rounded, size: 48, color: Colors.red),
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: Colors.red,
+              ),
               const SizedBox(height: 12),
-              Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: _darkText)),
+              Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: _darkText),
+              ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: _fetchPending,
@@ -163,7 +172,11 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle_outline_rounded, size: 64, color: Color(0xFF10B981)),
+            Icon(
+              Icons.check_circle_outline_rounded,
+              size: 64,
+              color: Color(0xFF10B981),
+            ),
             SizedBox(height: 16),
             Text(
               'İncelenecek yazı yok',
@@ -265,7 +278,11 @@ class _ArticleReviewCard extends StatelessWidget {
               summary,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: _mutedText, height: 1.4),
+              style: const TextStyle(
+                fontSize: 12,
+                color: _mutedText,
+                height: 1.4,
+              ),
             ),
           ],
           const SizedBox(height: 10),
@@ -290,7 +307,10 @@ class _ArticleReviewCard extends StatelessWidget {
               child: SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
               ),
             )
           else
@@ -341,9 +361,10 @@ class _SeoScoreBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = score >= 70
-        ? const Color(0xFF10B981)
-        : score >= 40
+    final color =
+        score >= 70
+            ? const Color(0xFF10B981)
+            : score >= 40
             ? const Color(0xFFF59E0B)
             : const Color(0xFFEF4444);
 

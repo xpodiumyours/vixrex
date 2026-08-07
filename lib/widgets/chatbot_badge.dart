@@ -64,9 +64,10 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
-    _scanAnim = Tween<double>(begin: -1.0, end: 1.0).animate(
-      CurvedAnimation(parent: _scanController, curve: Curves.linear),
-    );
+    _scanAnim = Tween<double>(
+      begin: -1.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _scanController, curve: Curves.linear));
 
     _floatController = AnimationController(
       vsync: this,
@@ -199,10 +200,15 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFF0E1B2E).withAlpha(200),
-                  border: Border.all(color: const Color(0xFF38A0E4).withAlpha(160), width: 1.5),
+                  border: Border.all(
+                    color: const Color(0xFF38A0E4).withAlpha(160),
+                    width: 1.5,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF0EA5E9).withAlpha((255 * 0.45 * _pulseAnim.value).round()),
+                      color: const Color(
+                        0xFF0EA5E9,
+                      ).withAlpha((255 * 0.45 * _pulseAnim.value).round()),
                       blurRadius: 16,
                       spreadRadius: 2,
                     ),
@@ -214,7 +220,8 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
                     children: [
                       mascot!,
                       Positioned(
-                        top: (_vixrexBadgeSize / 2) +
+                        top:
+                            (_vixrexBadgeSize / 2) +
                             (_scanAnim.value * (_vixrexBadgeSize * 0.35)),
                         left: 6,
                         right: 6,

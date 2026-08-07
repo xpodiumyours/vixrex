@@ -19,9 +19,12 @@ class FormMarketplaceLinks extends StatelessWidget {
       links: controller.marketplaceLinks,
       customPlatformLinkIds: controller.customPlatformLinkIds,
       platformOptions: platformOptions,
-      onAddLink: () => controller.addMarketplaceLink(
-        MarketplaceLink(id: DateTime.now().millisecondsSinceEpoch.toString()),
-      ),
+      onAddLink:
+          () => controller.addMarketplaceLink(
+            MarketplaceLink(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+            ),
+          ),
       onRemoveLink: controller.removeMarketplaceLink,
       onPlatformChanged: (index, value) {
         final link = controller.marketplaceLinks[index];
@@ -33,11 +36,14 @@ class FormMarketplaceLinks extends StatelessWidget {
           controller.toggleCustomPlatformLinkId(link.id, false);
         }
       },
-      onUrlChanged: (index, value) => controller.marketplaceLinks[index].url = value,
-      onCustomPlatformChanged: (index, value) =>
-          controller.marketplaceLinks[index].platform = value.trim(),
-      onSubtitleChanged: (index, value) =>
-          controller.marketplaceLinks[index].subtitle = value.trim(),
+      onUrlChanged:
+          (index, value) => controller.marketplaceLinks[index].url = value,
+      onCustomPlatformChanged:
+          (index, value) =>
+              controller.marketplaceLinks[index].platform = value.trim(),
+      onSubtitleChanged:
+          (index, value) =>
+              controller.marketplaceLinks[index].subtitle = value.trim(),
     );
   }
 }

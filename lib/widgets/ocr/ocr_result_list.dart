@@ -61,9 +61,7 @@ class OcrResultList extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: product.isApproved
-              ? AppColors.success
-              : AppColors.border,
+          color: product.isApproved ? AppColors.success : AppColors.border,
           width: product.isApproved ? 2 : 1,
         ),
       ),
@@ -122,9 +120,10 @@ class OcrResultList extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: product.price != null
-                            ? AppColors.success
-                            : AppColors.mutedText,
+                        color:
+                            product.price != null
+                                ? AppColors.success
+                                : AppColors.mutedText,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -146,7 +145,8 @@ class OcrResultList extends StatelessWidget {
               product.isApproved
                   ? Icons.check_circle
                   : Icons.check_circle_outline,
-              color: product.isApproved ? AppColors.success : AppColors.mutedText,
+              color:
+                  product.isApproved ? AppColors.success : AppColors.mutedText,
             ),
             onPressed: () {
               if (product.isApproved) {

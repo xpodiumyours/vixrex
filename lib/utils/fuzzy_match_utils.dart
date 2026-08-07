@@ -86,7 +86,11 @@ class FuzzyMatchUtils {
       }
     }
 
-    double jaro = ((matches / len1) + (matches / len2) + ((matches - transpositions / 2) / matches)) / 3.0;
+    double jaro =
+        ((matches / len1) +
+            (matches / len2) +
+            ((matches - transpositions / 2) / matches)) /
+        3.0;
 
     // Winkler prefix scale
     double p = 0.1;
@@ -118,8 +122,10 @@ class FuzzyMatchUtils {
     final diff2to1 = tokens2.difference(tokens1);
 
     final sortedIntersection = intersection.join(' ');
-    final sortedDiff1 = (Set<String>.from(intersection)..addAll(diff1to2)).join(' ');
-    final sortedDiff2 = (Set<String>.from(intersection)..addAll(diff2to1)).join(' ');
+    final sortedDiff1 = (Set<String>.from(intersection)
+      ..addAll(diff1to2)).join(' ');
+    final sortedDiff2 = (Set<String>.from(intersection)
+      ..addAll(diff2to1)).join(' ');
 
     double r1 = similarityRatio(sortedIntersection, sortedDiff1);
     double r2 = similarityRatio(sortedIntersection, sortedDiff2);

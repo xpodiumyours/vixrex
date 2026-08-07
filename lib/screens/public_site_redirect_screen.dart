@@ -9,10 +9,7 @@ import 'package:vixrex/theme/app_colors.dart';
 class PublicSiteRedirectScreen extends StatefulWidget {
   final String publicPath;
 
-  const PublicSiteRedirectScreen({
-    super.key,
-    required this.publicPath,
-  });
+  const PublicSiteRedirectScreen({super.key, required this.publicPath});
 
   factory PublicSiteRedirectScreen.fromPath(String path) {
     final normalized = path.startsWith('/') ? path : '/$path';
@@ -40,10 +37,7 @@ class _PublicSiteRedirectScreenState extends State<PublicSiteRedirectScreen> {
     var launched = false;
     if (uri != null) {
       try {
-        launched = await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       } catch (_) {
         launched = false;
       }

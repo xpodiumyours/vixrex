@@ -6,11 +6,7 @@ class PhoneMockup extends StatelessWidget {
   final HeroDemoProfile profile;
   final VoidCallback? onPreviewTap;
 
-  const PhoneMockup({
-    super.key,
-    required this.profile,
-    this.onPreviewTap,
-  });
+  const PhoneMockup({super.key, required this.profile, this.onPreviewTap});
 
   @override
   Widget build(BuildContext context) {
@@ -71,513 +67,597 @@ class PhoneMockup extends StatelessWidget {
                             height: 156,
                             child: Stack(
                               fit: StackFit.expand,
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    profile.accentColor.withValues(alpha: 0.18),
-                                    AppColors.bgLight,
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Image.network(
-                              profile.coverImageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (context, error, stackTrace) => Container(
-                                    color: AppColors.bgLight,
-                                    alignment: Alignment.center,
-                                    child: Icon(
-                                      profile.icon,
-                                      color: profile.accentColor.withValues(alpha: 0.9),
-                                      size: 42,
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        profile.accentColor.withValues(
+                                          alpha: 0.18,
+                                        ),
+                                        AppColors.bgLight,
+                                      ],
                                     ),
                                   ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.black.withValues(alpha: 0.16),
-                                    Colors.black.withValues(alpha: 0.52),
-                                  ],
                                 ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          color: profile.accentColor.withValues(alpha: 0.16),
-                                          borderRadius: BorderRadius.circular(16),
-                                          border: Border.all(
-                                            color: profile.accentColor.withValues(alpha: 0.3),
-                                          ),
-                                        ),
+                                Image.network(
+                                  profile.coverImageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder:
+                                      (context, error, stackTrace) => Container(
+                                        color: AppColors.bgLight,
+                                        alignment: Alignment.center,
                                         child: Icon(
                                           profile.icon,
-                                          color: profile.accentColor,
-                                          size: 22,
+                                          color: profile.accentColor.withValues(
+                                            alpha: 0.9,
+                                          ),
+                                          size: 42,
                                         ),
                                       ),
-                                      const Spacer(),
-                                      InkWell(
-                                        onTap: onPreviewTap,
-                                        borderRadius: BorderRadius.circular(999),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 8,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.3),
-                                            borderRadius: BorderRadius.circular(999),
-                                            border: Border.all(
-                                              color: Colors.white.withValues(alpha: 0.16),
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                profile.badgeIcon,
-                                                color: profile.accentColor,
-                                                size: 14,
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                profile.badgeText,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w800,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    profile.name,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: -0.8,
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.black.withValues(alpha: 0.16),
+                                        Colors.black.withValues(alpha: 0.52),
+                                      ],
                                     ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 6),
-                                  Row(
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    14,
+                                    12,
+                                    14,
+                                    14,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Flexible(
-                                        child: Text(
-                                          profile.category,
-                                          style: TextStyle(
-                                            color: profile.accentColor,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          color: profile.secondaryBadgeColor,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Flexible(
-                                        child: Text(
-                                          profile.secondaryBadgeText,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          color: AppColors.surface,
-                          padding: const EdgeInsets.all(14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Hakkında',
-                                style: TextStyle(
-                                  color: AppColors.darkText,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                profile.description,
-                                style: const TextStyle(
-                                  color: AppColors.darkTextAlt,
-                                  fontSize: 12,
-                                  height: 1.5,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 6),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children:
-                                    profile.actions.map((action) {
-                                      final title = action.title?.trim() ?? '';
-                                      return InkWell(
-                                        onTap: onPreviewTap,
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: action.color.withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                action.icon,
-                                                color: action.color,
-                                                size: 16,
-                                              ),
-                                              if (title.isNotEmpty) ...[
-                                                const SizedBox(width: 6),
-                                                Text(
-                                                  title,
-                                                  style: TextStyle(
-                                                    color: action.color,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w800,
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                              ),
-                              if (profile.links.isNotEmpty) ...[
-                                const SizedBox(height: 6),
-                                ...profile.links.take(2).map((link) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
-                                    child: InkWell(
-                                      onTap: onPreviewTap,
-                                      borderRadius: BorderRadius.circular(14),
-                                      child: Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.bgLight,
-                                          borderRadius: BorderRadius.circular(14),
-                                          border: Border.all(color: AppColors.border),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              width: 30,
-                                              height: 30,
-                                              decoration: BoxDecoration(
-                                                color: link.color.withValues(alpha: 0.14),
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              child: Icon(
-                                                link.icon,
-                                                color: link.color,
-                                                size: 16,
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: profile.accentColor
+                                                  .withValues(alpha: 0.16),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border.all(
+                                                color: profile.accentColor
+                                                    .withValues(alpha: 0.3),
                                               ),
                                             ),
-                                            const SizedBox(width: 10),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    link.title,
-                                                    style: const TextStyle(
-                                                      color: AppColors.darkText,
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.w800,
-                                                    ),
-                                                    overflow: TextOverflow.ellipsis,
+                                            child: Icon(
+                                              profile.icon,
+                                              color: profile.accentColor,
+                                              size: 22,
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          InkWell(
+                                            onTap: onPreviewTap,
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
                                                   ),
-                                                  const SizedBox(height: 2),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.3,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                                border: Border.all(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.16),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    profile.badgeIcon,
+                                                    color: profile.accentColor,
+                                                    size: 14,
+                                                  ),
+                                                  const SizedBox(width: 6),
                                                   Text(
-                                                    link.subtitle,
+                                                    profile.badgeText,
                                                     style: const TextStyle(
-                                                      color: AppColors.mutedText,
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.w600,
+                                                      color: Colors.white,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w800,
                                                     ),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
                                                   ),
                                                 ],
                                               ),
                                             ),
-                                            const Icon(
-                                              Icons.arrow_forward_ios_rounded,
-                                              size: 12,
-                                              color: AppColors.mutedText,
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  );
-                                }),
-                              ],
-                              if (profile.galleryImages.isNotEmpty) ...[
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    const Expanded(
-                                      child: Text(
-                                        'Vitrin galerisi',
-                                        style: TextStyle(
-                                          color: AppColors.darkText,
-                                          fontSize: 13,
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        profile.name,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
                                           fontWeight: FontWeight.w900,
+                                          letterSpacing: -0.8,
                                         ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: profile.accentColor.withValues(alpha: 0.14),
-                                        borderRadius: BorderRadius.circular(999),
-                                      ),
-                                      child: Text(
-                                        '${profile.galleryImages.length} fotoğraf',
-                                        style: TextStyle(
-                                          color: profile.accentColor,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                SizedBox(
-                                  height: 52,
-                                  child: Row(
-                                    children: List.generate(
-                                      profile.galleryImages.take(3).length,
-                                      (index) {
-                                        final imageUrl =
-                                            profile.galleryImages.take(3).elementAt(index);
-                                        return Expanded(
-                                          child: Padding(
-                                            padding: EdgeInsets.only(
-                                              right: index == 2 ? 0 : 8,
-                                            ),
-                                            child: InkWell(
-                                              onTap: onPreviewTap,
-                                              borderRadius: BorderRadius.circular(12),
-                                              child: ClipRRect(
-                                                borderRadius: BorderRadius.circular(12),
-                                                child: Container(
-                                                  color: AppColors.bgLight,
-                                                  child: Image.network(
-                                                    imageUrl,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder:
-                                                        (context, error, stackTrace) =>
-                                                            Container(
-                                                              color: AppColors.bgLight,
-                                                              alignment: Alignment.center,
-                                                              child: Icon(
-                                                                Icons.image_outlined,
-                                                                color: profile.accentColor,
-                                                                size: 20,
-                                                              ),
-                                                            ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              const Spacer(),
-                              // Vitrin hazır alt bölümü
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.bgLight,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: AppColors.border),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                      const SizedBox(height: 6),
+                                      Row(
                                         children: [
-                                          const Text(
-                                            'Vitrin hazır',
-                                            style: TextStyle(
-                                              color: AppColors.darkText,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w900,
+                                          Flexible(
+                                            child: Text(
+                                              profile.category,
+                                              style: TextStyle(
+                                                color: profile.accentColor,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            '${profile.links.length} bağlantı',
-                                            style: const TextStyle(
-                                              color: AppColors.mutedText,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
+                                          const SizedBox(width: 10),
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  profile.secondaryBadgeColor,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Flexible(
+                                            child: Text(
+                                              profile.secondaryBadgeText,
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         ],
                                       ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              color: AppColors.surface,
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Hakkında',
+                                    style: TextStyle(
+                                      color: AppColors.darkText,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
                                     ),
-                                    Container(
-                                      width: 32,
-                                      height: 32,
-                                      decoration: BoxDecoration(
-                                        color: profile.accentColor.withValues(alpha: 0.14),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        Icons.qr_code_2_rounded,
-                                        color: profile.accentColor,
-                                        size: 18,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    profile.description,
+                                    style: const TextStyle(
+                                      color: AppColors.darkTextAlt,
+                                      fontSize: 12,
+                                      height: 1.5,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children:
+                                        profile.actions.map((action) {
+                                          final title =
+                                              action.title?.trim() ?? '';
+                                          return InkWell(
+                                            onTap: onPreviewTap,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: action.color.withValues(
+                                                  alpha: 0.1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    action.icon,
+                                                    color: action.color,
+                                                    size: 16,
+                                                  ),
+                                                  if (title.isNotEmpty) ...[
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      title,
+                                                      style: TextStyle(
+                                                        color: action.color,
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                  ),
+                                  if (profile.links.isNotEmpty) ...[
+                                    const SizedBox(height: 6),
+                                    ...profile.links.take(2).map((link) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 6,
+                                        ),
+                                        child: InkWell(
+                                          onTap: onPreviewTap,
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.bgLight,
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                              border: Border.all(
+                                                color: AppColors.border,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  width: 30,
+                                                  height: 30,
+                                                  decoration: BoxDecoration(
+                                                    color: link.color
+                                                        .withValues(
+                                                          alpha: 0.14,
+                                                        ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
+                                                  ),
+                                                  child: Icon(
+                                                    link.icon,
+                                                    color: link.color,
+                                                    size: 16,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        link.title,
+                                                        style: const TextStyle(
+                                                          color:
+                                                              AppColors
+                                                                  .darkText,
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                        ),
+                                                        overflow:
+                                                            TextOverflow
+                                                                .ellipsis,
+                                                      ),
+                                                      const SizedBox(height: 2),
+                                                      Text(
+                                                        link.subtitle,
+                                                        style: const TextStyle(
+                                                          color:
+                                                              AppColors
+                                                                  .mutedText,
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow:
+                                                            TextOverflow
+                                                                .ellipsis,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const Icon(
+                                                  Icons
+                                                      .arrow_forward_ios_rounded,
+                                                  size: 12,
+                                                  color: AppColors.mutedText,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  ],
+                                  if (profile.galleryImages.isNotEmpty) ...[
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        const Expanded(
+                                          child: Text(
+                                            'Vitrin galerisi',
+                                            style: TextStyle(
+                                              color: AppColors.darkText,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: profile.accentColor
+                                                .withValues(alpha: 0.14),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '${profile.galleryImages.length} fotoğraf',
+                                            style: TextStyle(
+                                              color: profile.accentColor,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    SizedBox(
+                                      height: 52,
+                                      child: Row(
+                                        children: List.generate(
+                                          profile.galleryImages.take(3).length,
+                                          (index) {
+                                            final imageUrl = profile
+                                                .galleryImages
+                                                .take(3)
+                                                .elementAt(index);
+                                            return Expanded(
+                                              child: Padding(
+                                                padding: EdgeInsets.only(
+                                                  right: index == 2 ? 0 : 8,
+                                                ),
+                                                child: InkWell(
+                                                  onTap: onPreviewTap,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  child: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                    child: Container(
+                                                      color: AppColors.bgLight,
+                                                      child: Image.network(
+                                                        imageUrl,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder:
+                                                            (
+                                                              context,
+                                                              error,
+                                                              stackTrace,
+                                                            ) => Container(
+                                                              color:
+                                                                  AppColors
+                                                                      .bgLight,
+                                                              alignment:
+                                                                  Alignment
+                                                                      .center,
+                                                              child: Icon(
+                                                                Icons
+                                                                    .image_outlined,
+                                                                color:
+                                                                    profile
+                                                                        .accentColor,
+                                                                size: 20,
+                                                              ),
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
                                       ),
                                     ),
                                   ],
+                                  const Spacer(),
+                                  // Vitrin hazır alt bölümü
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.bgLight,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: AppColors.border,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Vitrin hazır',
+                                                style: TextStyle(
+                                                  color: AppColors.darkText,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w900,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                '${profile.links.length} bağlantı',
+                                                style: const TextStyle(
+                                                  color: AppColors.mutedText,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 32,
+                                          height: 32,
+                                          decoration: BoxDecoration(
+                                            color: profile.accentColor
+                                                .withValues(alpha: 0.14),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            Icons.qr_code_2_rounded,
+                                            color: profile.accentColor,
+                                            size: 18,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Dynamic Island Notch
+                      Positioned(
+                        top: 10,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            width: 96,
+                            height: 22,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black87,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2),
                                 ),
-                               ),
-                             ],
-                           ),
-                         ),
-                       ),
-                     ],
-                   ),
-                   // Dynamic Island Notch
-                   Positioned(
-                     top: 10,
-                     left: 0,
-                     right: 0,
-                     child: Center(
-                       child: Container(
-                         width: 96,
-                         height: 22,
-                         padding: const EdgeInsets.symmetric(horizontal: 10),
-                         decoration: BoxDecoration(
-                           color: Colors.black,
-                           borderRadius: BorderRadius.circular(20),
-                           boxShadow: const [
-                             BoxShadow(
-                               color: Colors.black87,
-                               blurRadius: 8,
-                               offset: Offset(0, 2),
-                             ),
-                           ],
-                         ),
-                         child: Row(
-                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                           children: [
-                             Container(
-                               width: 10,
-                               height: 10,
-                               decoration: BoxDecoration(
-                                 color: const Color(0xFF0D131F),
-                                 shape: BoxShape.circle,
-                                 border: Border.all(
-                                   color: Colors.white.withValues(alpha: 0.1),
-                                 ),
-                               ),
-                             ),
-                             Container(
-                               width: 6,
-                               height: 6,
-                               decoration: const BoxDecoration(
-                                 color: Color(0xFF0A2540),
-                                 shape: BoxShape.circle,
-                               ),
-                             ),
-                           ],
-                         ),
-                       ),
-                     ),
-                   ),
-                   // Home indicator
-                   Positioned(
-                     bottom: 8,
-                     left: 0,
-                     right: 0,
-                     child: Center(
-                       child: Container(
-                         width: 110,
-                         height: 4,
-                         decoration: BoxDecoration(
-                           color: Colors.white.withValues(alpha: 0.3),
-                           borderRadius: BorderRadius.circular(10),
-                         ),
-                       ),
-                     ),
-                   ),
-                 ],
-               ),
-             ),
-           ),
-         ),
-       ),
-     );
-   },
- );
-}
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0D131F),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF0A2540),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Home indicator
+                      Positioned(
+                        bottom: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            width: 110,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

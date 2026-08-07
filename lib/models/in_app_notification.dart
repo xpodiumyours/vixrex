@@ -33,14 +33,14 @@ class InAppNotification {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'body': body,
-        'storeSlug': storeSlug,
-        'type': type,
-        'createdAt': createdAt.toIso8601String(),
-        'read': read,
-      };
+    'id': id,
+    'title': title,
+    'body': body,
+    'storeSlug': storeSlug,
+    'type': type,
+    'createdAt': createdAt.toIso8601String(),
+    'read': read,
+  };
 
   factory InAppNotification.fromJson(Map<String, dynamic> json) {
     return InAppNotification(
@@ -49,7 +49,8 @@ class InAppNotification {
       body: (json['body'] ?? '').toString(),
       storeSlug: json['storeSlug']?.toString(),
       type: (json['type'] ?? 'booking').toString(),
-      createdAt: DateTime.tryParse((json['createdAt'] ?? '').toString()) ??
+      createdAt:
+          DateTime.tryParse((json['createdAt'] ?? '').toString()) ??
           DateTime.now(),
       read: json['read'] == true,
     );

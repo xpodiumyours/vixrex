@@ -18,8 +18,8 @@ class OcrController extends ChangeNotifier {
   OcrController({
     required OcrService ocrService,
     StoreEditorController? editorController,
-  })  : _ocrService = ocrService,
-        _editorController = editorController;
+  }) : _ocrService = ocrService,
+       _editorController = editorController;
 
   String _scanMode = 'receipt';
   String get scanMode => _scanMode;
@@ -41,7 +41,10 @@ class OcrController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _ocrService.analyzeImage(imageBytes, scanMode: _scanMode);
+    final result = await _ocrService.analyzeImage(
+      imageBytes,
+      scanMode: _scanMode,
+    );
 
     result.when(
       success: (catalog) {
@@ -105,32 +108,44 @@ class OcrController extends ChangeNotifier {
     if (approved == null || approved.isEmpty) return;
 
     // Validation: boş isim veya negatif fiyat filtresi
-    final validProducts = approved.where((p) {
-      if (p.name.trim().isEmpty) return false;
-      if (p.price != null && p.price! < 0) return false;
-      return true;
-    }).toList();
+    final validProducts =
+        approved.where((p) {
+          if (p.name.trim().isEmpty) return false;
+          if (p.price != null && p.price! < 0) return false;
+          return true;
+        }).toList();
 
     if (validProducts.isEmpty) {
-      _errorMessage = 'Kaydedilecek geçerli ürün yok. Ürün adı boş veya fiyat geçersiz.';
+      _errorMessage =
+          'Kaydedilecek geçerli ürün yok. Ürün adı boş veya fiyat geçersiz.';
       notifyListeners();
       return;
     }
 
     try {
       // 1. Düzeltilmiş feedback verilerini Supabase'e gönder (Active Learning Loop)
-      final feedbackList = _result!.products.map((p) => {
-        'name': p.name,
-        'price': p.price,
-        'is_approved': p.isApproved,
-        'confidence': p.confidence,
-      }).toList();
+      final feedbackList =
+          _result!.products
+              .map(
+                (p) => {
+                  'name': p.name,
+                  'price': p.price,
+                  'is_approved': p.isApproved,
+                  'confidence': p.confidence,
+                },
+              )
+              .toList();
 
-      final parsedList = _result!.products.map((p) => {
-        'name': p.name,
-        'price': p.price,
-        'confidence': p.confidence,
-      }).toList();
+      final parsedList =
+          _result!.products
+              .map(
+                (p) => {
+                  'name': p.name,
+                  'price': p.price,
+                  'confidence': p.confidence,
+                },
+              )
+              .toList();
 
       await const OcrFeedbackService().saveFeedback(
         rawOcrText: _result!.rawText,
@@ -155,9 +170,10 @@ class OcrController extends ChangeNotifier {
         if (result.isFailure) {
           final detail =
               result.failure?.message ?? 'Ürün müşteri vitrine yazılamadı.';
-          _errorMessage = savedCount > 0
-              ? '$savedCount ürün kaydedildi, sonra hata: $detail'
-              : detail;
+          _errorMessage =
+              savedCount > 0
+                  ? '$savedCount ürün kaydedildi, sonra hata: $detail'
+                  : detail;
           notifyListeners();
           return;
         }

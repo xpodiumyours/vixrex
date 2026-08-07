@@ -6,10 +6,8 @@ import 'package:vixrex/services/notification_inbox_service.dart';
 import 'package:vixrex/services/notification_preferences_service.dart';
 import 'package:vixrex/services/notification_templates.dart';
 
-typedef NotificationDeepLinkHandler = void Function({
-  required String type,
-  required String storeSlug,
-});
+typedef NotificationDeepLinkHandler =
+    void Function({required String type, required String storeSlug});
 
 /// OneSignal kimlik + deep link + inbox + sunucu push (Edge Function).
 class PushNotificationService {
@@ -101,8 +99,8 @@ class PushNotificationService {
 
     for (final appt in newAppointments) {
       final name = (appt['customer_name'] ?? 'Müşteri').toString();
-      final id = (appt['id'] ?? DateTime.now().microsecondsSinceEpoch)
-          .toString();
+      final id =
+          (appt['id'] ?? DateTime.now().microsecondsSinceEpoch).toString();
       final tpl = NotificationTemplates.forBookingAction(
         action: 'pending',
         customerName: name,

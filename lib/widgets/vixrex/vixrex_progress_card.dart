@@ -18,7 +18,8 @@ class VixRexProgressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final completedRequiredSteps = snapshot?.completedRequiredStepCount ?? 0;
     final isPublished = snapshot?.isPublished ?? false;
-    final completedSteps = completedRequiredSteps +
+    final completedSteps =
+        completedRequiredSteps +
         (isPublished ? 1 : 0) +
         (isPublished && hasShared ? 1 : 0);
     // Toplam adım sayısı ŞEMADAN gelir; elle sabit tutulmaz.

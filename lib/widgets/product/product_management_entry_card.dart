@@ -81,17 +81,17 @@ class ProductManagementEntryCard extends StatelessWidget {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.black,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 child: const Text(
                   'Ürünleri Yönet',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
                 ),
               ),
             ],

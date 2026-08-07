@@ -10,6 +10,7 @@ class InstagramSyncSection extends StatefulWidget {
   final String defaultCategory;
   final ValueChanged<Product> onProductImported;
   final ValueChanged<String> onMessage;
+
   /// Bağlantı kurulunca Instagram kullanıcı adını vitrin alanına yazar.
   final ValueChanged<String>? onConnectedUsername;
   final InstagramSyncService service;

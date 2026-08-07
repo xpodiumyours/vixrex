@@ -51,12 +51,13 @@ class _WorkingHoursServiceRowState extends State<WorkingHoursServiceRow> {
                     widget.onStateChanged();
                   },
                   maxLength: 60,
-                  buildCounter: (
-                    context, {
-                    required currentLength,
-                    required isFocused,
-                    maxLength,
-                  }) => null,
+                  buildCounter:
+                      (
+                        context, {
+                        required currentLength,
+                        required isFocused,
+                        maxLength,
+                      }) => null,
                   style: const TextStyle(
                     fontSize: 13,
                     color: darkText,
@@ -89,12 +90,13 @@ class _WorkingHoursServiceRowState extends State<WorkingHoursServiceRow> {
                     widget.onStateChanged();
                   },
                   maxLength: 30,
-                  buildCounter: (
-                    context, {
-                    required currentLength,
-                    required isFocused,
-                    maxLength,
-                  }) => null,
+                  buildCounter:
+                      (
+                        context, {
+                        required currentLength,
+                        required isFocused,
+                        maxLength,
+                      }) => null,
                   style: const TextStyle(
                     fontSize: 13,
                     color: primaryColor,
@@ -140,12 +142,13 @@ class _WorkingHoursServiceRowState extends State<WorkingHoursServiceRow> {
               widget.onStateChanged();
             },
             maxLength: 120,
-            buildCounter: (
-              context, {
-              required currentLength,
-              required isFocused,
-              maxLength,
-            }) => null,
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => null,
             maxLines: 2,
             style: const TextStyle(
               fontSize: 12,
@@ -185,19 +188,20 @@ class _WorkingHoursServiceRowState extends State<WorkingHoursServiceRow> {
               const Spacer(),
               DropdownButton<int>(
                 value: widget.offering.durationMinutes,
-                items: [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
-                  return DropdownMenuItem<int>(
-                    value: val,
-                    child: Text(
-                      '$val dk',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: darkText,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
-                }).toList(),
+                items:
+                    [15, 30, 45, 60, 90, 120, 180, 240].map((int val) {
+                      return DropdownMenuItem<int>(
+                        value: val,
+                        child: Text(
+                          '$val dk',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: darkText,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }).toList(),
                 onChanged: (val) {
                   setState(() {
                     if (val != null) {

@@ -23,7 +23,8 @@ class CoverPickerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasCover = coverBytes != null || (coverUrl?.trim().isNotEmpty ?? false);
+    final hasCover =
+        coverBytes != null || (coverUrl?.trim().isNotEmpty ?? false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,25 +97,27 @@ class CoverPickerSection extends StatelessWidget {
             imageFilter: ui.ImageFilter.blur(sigmaX: 18.0, sigmaY: 18.0),
             child: Opacity(
               opacity: 0.55,
-              child: coverBytes != null
-                  ? Image.memory(coverBytes!, fit: BoxFit.cover)
-                  : Image.network(
-                      coverUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                    ),
+              child:
+                  coverBytes != null
+                      ? Image.memory(coverBytes!, fit: BoxFit.cover)
+                      : Image.network(
+                        coverUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
             ),
           ),
         ),
         // Ön plan: Orijinal en-boy oranında tam sığdırılan görsel (BoxFit.contain)
         Center(
-          child: coverBytes != null
-              ? Image.memory(coverBytes!, fit: BoxFit.contain)
-              : Image.network(
-                  coverUrl!,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const _CoverPlaceholder(),
-                ),
+          child:
+              coverBytes != null
+                  ? Image.memory(coverBytes!, fit: BoxFit.contain)
+                  : Image.network(
+                    coverUrl!,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const _CoverPlaceholder(),
+                  ),
         ),
         Positioned(
           right: 10,
@@ -164,9 +167,7 @@ class CoverPickerSection extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.darkText,
         padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         side: const BorderSide(color: AppColors.border),
       ),
       child: Row(

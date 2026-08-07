@@ -44,7 +44,8 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
   @override
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.of(context).viewInsets;
-    final bookableServices = widget.storeData.offerings.where((o) => o.isBookable).toList();
+    final bookableServices =
+        widget.storeData.offerings.where((o) => o.isBookable).toList();
 
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets.bottom),
@@ -77,22 +78,37 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  if (_controller.currentStep > 1 && _controller.currentStep < 5)
+                  if (_controller.currentStep > 1 &&
+                      _controller.currentStep < 5)
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 18,
+                      ),
                       onPressed: _controller.previousStep,
                     ),
                   Expanded(
                     child: Text(
                       _stepTitle,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.darkText),
-                      textAlign: _controller.currentStep == 5 ? TextAlign.center : TextAlign.start,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        color: AppColors.darkText,
+                      ),
+                      textAlign:
+                          _controller.currentStep == 5
+                              ? TextAlign.center
+                              : TextAlign.start,
                     ),
                   ),
                   if (_controller.currentStep < 5)
                     Text(
                       '${_controller.currentStep}/4',
-                      style: const TextStyle(color: AppColors.mutedText, fontWeight: FontWeight.bold, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppColors.mutedText,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                 ],
               ),
@@ -114,7 +130,11 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
                         ),
                         child: Text(
                           _controller.errorMsg!,
-                          style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),

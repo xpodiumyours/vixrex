@@ -50,9 +50,10 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     _nameController = TextEditingController(text: product?.name ?? '');
     _priceController = TextEditingController(text: product?.price ?? '');
     _oldPriceController = TextEditingController(
-      text: product?.oldPriceAmount == null
-          ? ''
-          : _formatAmount(product!.oldPriceAmount!),
+      text:
+          product?.oldPriceAmount == null
+              ? ''
+              : _formatAmount(product!.oldPriceAmount!),
     );
     _badgeTagController = TextEditingController(text: product?.badgeTag ?? '');
     _fulfillmentController = TextEditingController(
@@ -223,12 +224,14 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         sourcePermalink: widget.product?.sourcePermalink,
         importedAt: widget.product?.importedAt,
         oldPriceAmount: _parseAmount(_oldPriceController.text),
-        badgeTag: _badgeTagController.text.trim().isEmpty
-            ? null
-            : _badgeTagController.text.trim(),
-        fulfillmentLocation: _fulfillmentController.text.trim().isEmpty
-            ? null
-            : _fulfillmentController.text.trim(),
+        badgeTag:
+            _badgeTagController.text.trim().isEmpty
+                ? null
+                : _badgeTagController.text.trim(),
+        fulfillmentLocation:
+            _fulfillmentController.text.trim().isEmpty
+                ? null
+                : _fulfillmentController.text.trim(),
       );
       if (!mounted) return;
       Navigator.of(context).pop(result);
@@ -323,8 +326,11 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                 onChanged:
                     _isSaving
                         ? null
-                        : (value) =>
-                            setState(() => _stockStatus = value ?? StockStatus.available.label),
+                        : (value) => setState(
+                          () =>
+                              _stockStatus =
+                                  value ?? StockStatus.available.label,
+                        ),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(

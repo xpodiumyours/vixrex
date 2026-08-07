@@ -20,8 +20,7 @@ class PublishedVitrinInfo {
   });
 
   /// Panelde yayın kartı için slug+link yeterli.
-  bool get isComplete =>
-      slug.trim().isNotEmpty && publicLink.trim().isNotEmpty;
+  bool get isComplete => slug.trim().isNotEmpty && publicLink.trim().isNotEmpty;
 
   bool get canEditRemote => editToken.trim().isNotEmpty;
 }
@@ -162,9 +161,10 @@ class StoreLocalStorageService {
     required String editToken,
   }) async {
     final prefs = await _getPrefs();
-    final canonicalLink = slug.trim().isNotEmpty
-        ? PublicSiteConfig.buildVitrinLink(slug)
-        : PublicSiteConfig.repairPublicLink(publicLink);
+    final canonicalLink =
+        slug.trim().isNotEmpty
+            ? PublicSiteConfig.buildVitrinLink(slug)
+            : PublicSiteConfig.repairPublicLink(publicLink);
     await prefs.setString(LocalStorageKeys.lastPublishedSlug, slug);
     await prefs.setString(LocalStorageKeys.lastPublishedLink, canonicalLink);
     await prefs.setString(LocalStorageKeys.lastPublishedName, name);
@@ -189,16 +189,18 @@ class StoreLocalStorageService {
     var editToken =
         prefs.getString(LocalStorageKeys.lastPublishedEditToken) ?? '';
     if (editToken.trim().isEmpty) {
-      editToken = prefs.getString(LocalStorageKeys.vitrinEditToken) ??
+      editToken =
+          prefs.getString(LocalStorageKeys.vitrinEditToken) ??
           prefs.getString(LocalStorageKeys.storeEditToken) ??
           '';
     }
     final slug = prefs.getString(LocalStorageKeys.lastPublishedSlug) ?? '';
     final rawLink = prefs.getString(LocalStorageKeys.lastPublishedLink) ?? '';
     // Canonical müşteri linki: her zaman public Next.js origin'indeki /v/{slug}.
-    final publicLink = slug.trim().isNotEmpty
-        ? PublicSiteConfig.buildVitrinLink(slug)
-        : PublicSiteConfig.repairPublicLink(rawLink);
+    final publicLink =
+        slug.trim().isNotEmpty
+            ? PublicSiteConfig.buildVitrinLink(slug)
+            : PublicSiteConfig.repairPublicLink(rawLink);
     final info = PublishedVitrinInfo(
       slug: slug,
       publicLink: publicLink,

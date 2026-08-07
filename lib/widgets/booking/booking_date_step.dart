@@ -27,7 +27,7 @@ class BookingDateStep extends StatelessWidget {
       9: 'Eyl',
       10: 'Eki',
       11: 'Kas',
-      12: 'Ara'
+      12: 'Ara',
     };
     return '$day ${monthNames[date.month]}';
   }
@@ -75,7 +75,8 @@ class BookingDateStep extends StatelessWidget {
       itemCount: dates.length,
       itemBuilder: (context, index) {
         final date = dates[index];
-        final isSelected = selectedDate?.year == date.year &&
+        final isSelected =
+            selectedDate?.year == date.year &&
             selectedDate?.month == date.month &&
             selectedDate?.day == date.day;
 
@@ -100,7 +101,9 @@ class BookingDateStep extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color:
-                        isSelected ? AppColors.primaryDark : AppColors.mutedText,
+                        isSelected
+                            ? AppColors.primaryDark
+                            : AppColors.mutedText,
                   ),
                 ),
                 const SizedBox(height: 4),

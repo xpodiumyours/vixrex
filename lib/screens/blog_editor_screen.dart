@@ -60,9 +60,10 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
             : 'Yazı taslak olarak kaydedildi.',
       );
 
-      final slug = _controller.initialArticle != null
-          ? (_controller.initialArticle!['slug'] as String?)?.trim() ?? ''
-          : 'yazi-${DateTime.now().millisecondsSinceEpoch}';
+      final slug =
+          _controller.initialArticle != null
+              ? (_controller.initialArticle!['slug'] as String?)?.trim() ?? ''
+              : 'yazi-${DateTime.now().millisecondsSinceEpoch}';
 
       const SeoService().revalidateAll(
         storeSlug: widget.storeSlug,
@@ -102,7 +103,9 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
             actions: [
               if (_controller.isSaving)
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppColors.spacing16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppColors.spacing16,
+                  ),
                   child: Center(
                     child: SizedBox(
                       width: 20,
@@ -182,7 +185,8 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                           coverBytes: _controller.coverBytes,
                           coverImageUrl: _controller.coverImageUrl,
                           isUploading: _controller.isUploadingCover,
-                          onTap: () => _controller.pickCoverPhoto(_showSnackBar),
+                          onTap:
+                              () => _controller.pickCoverPhoto(_showSnackBar),
                         ),
                         const SizedBox(height: AppColors.spacing16),
 
@@ -195,11 +199,15 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                             hintText: 'Örn: 2026 Erkek Saç Kesim Trendleri',
                             filled: true,
                             fillColor: inputBg,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                            ),
                           ),
-                          validator: (v) => v == null || v.trim().isEmpty
-                              ? 'Başlık zorunludur'
-                              : null,
+                          validator:
+                              (v) =>
+                                  v == null || v.trim().isEmpty
+                                      ? 'Başlık zorunludur'
+                                      : null,
                         ),
                         const SizedBox(height: AppColors.spacing12),
 
@@ -214,11 +222,15 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                                 'Arama sonuçlarında başlığın altında çıkacak kısa özet...',
                             filled: true,
                             fillColor: inputBg,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                            ),
                           ),
-                          validator: (v) => v == null || v.trim().isEmpty
-                              ? 'Özet zorunludur'
-                              : null,
+                          validator:
+                              (v) =>
+                                  v == null || v.trim().isEmpty
+                                      ? 'Özet zorunludur'
+                                      : null,
                         ),
                         const SizedBox(height: AppColors.spacing12),
 
@@ -233,12 +245,16 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                                 'Makalenizi buraya yazın. Arama motorları en az 300 kelimelik zengin içerikleri ödüllendirir...',
                             filled: true,
                             fillColor: inputBg,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                            ),
                             alignLabelWithHint: true,
                           ),
-                          validator: (v) => v == null || v.trim().isEmpty
-                              ? 'İçerik zorunludur'
-                              : null,
+                          validator:
+                              (v) =>
+                                  v == null || v.trim().isEmpty
+                                      ? 'İçerik zorunludur'
+                                      : null,
                         ),
                       ],
                     ),
@@ -272,7 +288,9 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                             labelText: 'Yazı Türü',
                             filled: true,
                             fillColor: inputBg,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                           items: const [
                             DropdownMenuItem(
@@ -304,33 +322,41 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
                             hintText: 'Örn: cilt bakımı',
                             filled: true,
                             fillColor: inputBg,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                         ),
                         const SizedBox(height: AppColors.spacing12),
 
                         // Target City dropdown / autocomplete
                         DropdownButtonFormField<String>(
-                          value: _controller.cityController.text.isEmpty
-                              ? null
-                              : turkeyProvinces.any(
-                                  (p) => p.name == _controller.cityController.text,
-                                )
+                          value:
+                              _controller.cityController.text.isEmpty
+                                  ? null
+                                  : turkeyProvinces.any(
+                                    (p) =>
+                                        p.name ==
+                                        _controller.cityController.text,
+                                  )
                                   ? _controller.cityController.text
                                   : null,
                           decoration: const InputDecoration(
                             labelText: 'Hedef Şehir (Yerel SEO)',
                             filled: true,
                             fillColor: inputBg,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                           hint: const Text('Şehir Seçiniz'),
-                          items: turkeyProvinces.map((Province p) {
-                            return DropdownMenuItem<String>(
-                              value: p.name,
-                              child: Text(p.name),
-                            );
-                          }).toList(),
+                          items:
+                              turkeyProvinces.map((Province p) {
+                                return DropdownMenuItem<String>(
+                                  value: p.name,
+                                  child: Text(p.name),
+                                );
+                              }).toList(),
                           onChanged: (val) {
                             if (val != null) {
                               _controller.setCity(val);

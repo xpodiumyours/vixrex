@@ -27,7 +27,9 @@ class BulkProductUploadService {
     if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
       return _parseExcel(bytes);
     }
-    return BulkParseResult.failure('Desteklenmeyen dosya formatı. .xlsx veya .csv kullanın.');
+    return BulkParseResult.failure(
+      'Desteklenmeyen dosya formatı. .xlsx veya .csv kullanın.',
+    );
   }
 
   // ─── CSV PARSE ──────────────────────────────────────────────────
@@ -35,15 +37,23 @@ class BulkProductUploadService {
   BulkParseResult _parseCsv(Uint8List bytes) {
     try {
       final content = utf8.decode(bytes, allowMalformed: true);
-      final lines = content.split(RegExp(r'\r?\n')).where((l) => l.trim().isNotEmpty).toList();
+      final lines =
+          content
+              .split(RegExp(r'\r?\n'))
+              .where((l) => l.trim().isNotEmpty)
+              .toList();
       if (lines.length < 2) {
-        return BulkParseResult.failure('CSV dosyasında en az 2 satır olmalı (başlık + veri).');
+        return BulkParseResult.failure(
+          'CSV dosyasında en az 2 satır olmalı (başlık + veri).',
+        );
       }
 
       final header = _parseCsvLine(lines[0]);
       final columnMap = _mapColumns(header);
       if (columnMap['name'] == null) {
-        return BulkParseResult.failure('CSV dosyasında "Ürün Adı" veya "Name" başlığı bulunamadı.');
+        return BulkParseResult.failure(
+          'CSV dosyasında "Ürün Adı" veya "Name" başlığı bulunamadı.',
+        );
       }
 
       final products = <Product>[];
@@ -102,24 +112,30 @@ class BulkProductUploadService {
 
       final table = excel.tables.values.first;
       if (table.rows.length < 2) {
-        return BulkParseResult.failure('Excel dosyasında en az 2 satır olmalı (başlık + veri).');
+        return BulkParseResult.failure(
+          'Excel dosyasında en az 2 satır olmalı (başlık + veri).',
+        );
       }
 
-      final header = table.rows.first
-          .map((cell) => cell?.value?.toString() ?? '')
-          .toList();
+      final header =
+          table.rows.first
+              .map((cell) => cell?.value?.toString() ?? '')
+              .toList();
       final columnMap = _mapColumns(header);
       if (columnMap['name'] == null) {
-        return BulkParseResult.failure('Excel dosyasında "Ürün Adı" veya "Name" başlığı bulunamadı.');
+        return BulkParseResult.failure(
+          'Excel dosyasında "Ürün Adı" veya "Name" başlığı bulunamadı.',
+        );
       }
 
       final products = <Product>[];
       final errors = <BulkParseError>[];
 
       for (var row = 1; row < table.rows.length; row++) {
-        final values = table.rows[row]
-            .map((cell) => cell?.value?.toString() ?? '')
-            .toList();
+        final values =
+            table.rows[row]
+                .map((cell) => cell?.value?.toString() ?? '')
+                .toList();
         final result = _rowToProduct(values, columnMap, rowIndex: row + 1);
         if (result.product != null) {
           products.add(result.product!);
@@ -166,21 +182,98 @@ class BulkProductUploadService {
         .trim();
   }
 
-  static const _nameAliases = {'urunadi', 'urunad', 'urun', 'adi', 'ad', 'name', 'urunname', 'baslik', 'title', 'product', 'productname', 'urunadii', 'urunadi '};
-  static const _priceAliases = {'fiyat', 'price', 'fiyatitl', 'satisfiyati', 'satis', 'tutar', 'amount', 'saleprice', 'fiyat '};
-  static const _descAliases = {'aciklama', 'description', 'detay', 'detail', 'not', 'note', 'ozet', 'summary', 'aciklama '};
-  static const _categoryAliases = {'kategori', 'category', 'kat', 'grup', 'group', 'turu', 'type', 'kategori '};
-  static const _stockAliases = {'stok', 'stock', 'stokdurumu', 'stockstatus', 'stokdurum', 'stok '};
-  static const _barcodeAliases = {'barkod', 'barcode', 'sku', 'kod', 'code', 'barkod '};
-  static const _imageUrlAliases = {'gorselurl', 'gorsel', 'imageurl', 'image', 'foto', 'fotoğraf', 'resim', 'kapak', 'cover', 'gorselurl ',};
+  static const _nameAliases = {
+    'urunadi',
+    'urunad',
+    'urun',
+    'adi',
+    'ad',
+    'name',
+    'urunname',
+    'baslik',
+    'title',
+    'product',
+    'productname',
+    'urunadii',
+    'urunadi ',
+  };
+  static const _priceAliases = {
+    'fiyat',
+    'price',
+    'fiyatitl',
+    'satisfiyati',
+    'satis',
+    'tutar',
+    'amount',
+    'saleprice',
+    'fiyat ',
+  };
+  static const _descAliases = {
+    'aciklama',
+    'description',
+    'detay',
+    'detail',
+    'not',
+    'note',
+    'ozet',
+    'summary',
+    'aciklama ',
+  };
+  static const _categoryAliases = {
+    'kategori',
+    'category',
+    'kat',
+    'grup',
+    'group',
+    'turu',
+    'type',
+    'kategori ',
+  };
+  static const _stockAliases = {
+    'stok',
+    'stock',
+    'stokdurumu',
+    'stockstatus',
+    'stokdurum',
+    'stok ',
+  };
+  static const _barcodeAliases = {
+    'barkod',
+    'barcode',
+    'sku',
+    'kod',
+    'code',
+    'barkod ',
+  };
+  static const _imageUrlAliases = {
+    'gorselurl',
+    'gorsel',
+    'imageurl',
+    'image',
+    'foto',
+    'fotoğraf',
+    'resim',
+    'kapak',
+    'cover',
+    'gorselurl ',
+  };
 
   /// Satırı Product'a çevirir.
-  _RowParseResult _rowToProduct(List<String> values, Map<String, int> columnMap, {required int rowIndex}) {
+  _RowParseResult _rowToProduct(
+    List<String> values,
+    Map<String, int> columnMap, {
+    required int rowIndex,
+  }) {
     final nameIndex = columnMap['name']!;
     final name = _cellValue(values, nameIndex);
 
     if (name.isEmpty) {
-      return _RowParseResult(error: BulkParseError(row: rowIndex, message: 'Ürün adı boş, satır atlandı.'));
+      return _RowParseResult(
+        error: BulkParseError(
+          row: rowIndex,
+          message: 'Ürün adı boş, satır atlandı.',
+        ),
+      );
     }
 
     final priceRaw = _cellValue(values, columnMap['price'] ?? -1);
@@ -219,10 +312,11 @@ class BulkProductUploadService {
   /// Fiyat string'ini normalize eder: "125,50 TL" → "125.50"
   String _normalizePrice(String raw) {
     if (raw.isEmpty) return '';
-    var normalized = raw
-        .replaceAll(RegExp(r'\b(TL|TRY|₺|tl|try)\b'), '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    var normalized =
+        raw
+            .replaceAll(RegExp(r'\b(TL|TRY|₺|tl|try)\b'), '')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
 
     if (normalized.isEmpty) return '';
 
@@ -250,16 +344,22 @@ class BulkProductUploadService {
 
     final number = num.tryParse(normalized);
     if (number == null) return raw.trim();
-    return number % 1 == 0 ? number.toInt().toString() : number.toStringAsFixed(2);
+    return number % 1 == 0
+        ? number.toInt().toString()
+        : number.toStringAsFixed(2);
   }
 
   /// Stok durumunu normalize eder.
   String _normalizeStockStatus(String raw) {
     final lower = raw.toLowerCase();
-    if (lower.contains('tükendi') || lower.contains('yok') || lower.contains('0')) {
+    if (lower.contains('tükendi') ||
+        lower.contains('yok') ||
+        lower.contains('0')) {
       return StockStatus.soldOut.label;
     }
-    if (lower.contains('son') || lower.contains('az') || lower.contains('limit')) {
+    if (lower.contains('son') ||
+        lower.contains('az') ||
+        lower.contains('limit')) {
       return StockStatus.lowStock.label;
     }
     return StockStatus.available.label;
@@ -269,8 +369,12 @@ class BulkProductUploadService {
   Uint8List generateTemplateCsv() {
     final buffer = StringBuffer();
     buffer.writeln('Ürün Adı,Fiyat,Açıklama,Kategori,Stok Durumu,Görsel URL');
-    buffer.writeln('Örnek Ürün 1,125.50,Günlük kullanım için uygun,Genel,Mevcut,');
-    buffer.writeln('Örnek Ürün 2,"1,250.00",Özel tasarım elbise,Elbise,Mevcut,https://ornek.com/gorsel.jpg');
+    buffer.writeln(
+      'Örnek Ürün 1,125.50,Günlük kullanım için uygun,Genel,Mevcut,',
+    );
+    buffer.writeln(
+      'Örnek Ürün 2,"1,250.00",Özel tasarım elbise,Elbise,Mevcut,https://ornek.com/gorsel.jpg',
+    );
     buffer.writeln('Örnek Ürün 3,,Kampanyalı fiyat,Genel,Tükendi,');
     return Uint8List.fromList(utf8.encode(buffer.toString()));
   }

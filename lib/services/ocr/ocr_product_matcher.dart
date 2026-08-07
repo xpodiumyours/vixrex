@@ -15,8 +15,7 @@ import 'ocr_fuzzy_matcher.dart';
 class OcrProductMatcher {
   final OcrFuzzyMatcher _fuzzyMatcher;
 
-  const OcrProductMatcher()
-      : _fuzzyMatcher = const OcrFuzzyMatcher();
+  const OcrProductMatcher() : _fuzzyMatcher = const OcrFuzzyMatcher();
 
   Future<List<DetectedProduct>> matchProducts(
     List<OcrLine> lines,
@@ -36,7 +35,11 @@ class OcrProductMatcher {
 
     // Her fiyat için en yakın ürün satırını bul
     for (final price in sortedPrices) {
-      final productLine = _findBestProductLine(sortedLines, price, usedLineIndices);
+      final productLine = _findBestProductLine(
+        sortedLines,
+        price,
+        usedLineIndices,
+      );
 
       if (productLine != null) {
         usedLineIndices.add(productLine.lineIndex);
@@ -53,20 +56,28 @@ class OcrProductMatcher {
         );
 
         // Confidence hesapla
-        final baseConfidence = _calculateConfidence(cleanedName, price, productLine);
-        final finalConfidence = fuzzyResult.isNotEmpty
-            ? (baseConfidence + fuzzyResult.score) / 2
-            : baseConfidence;
+        final baseConfidence = _calculateConfidence(
+          cleanedName,
+          price,
+          productLine,
+        );
+        final finalConfidence =
+            fuzzyResult.isNotEmpty
+                ? (baseConfidence + fuzzyResult.score) / 2
+                : baseConfidence;
 
-        final finalName = fuzzyResult.isNotEmpty ? fuzzyResult.matchedText : cleanedName;
+        final finalName =
+            fuzzyResult.isNotEmpty ? fuzzyResult.matchedText : cleanedName;
 
-        products.add(DetectedProduct(
-          id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${products.length}',
-          name: finalName,
-          price: price.amount,
-          confidence: finalConfidence,
-          source: fuzzyResult.isNotEmpty ? 'ocr_fuzzy_matched' : 'ocr_priced',
-        ));
+        products.add(
+          DetectedProduct(
+            id: 'ocr_${DateTime.now().microsecondsSinceEpoch}_${products.length}',
+            name: finalName,
+            price: price.amount,
+            confidence: finalConfidence,
+            source: fuzzyResult.isNotEmpty ? 'ocr_fuzzy_matched' : 'ocr_priced',
+          ),
+        );
       }
     }
 
@@ -112,9 +123,15 @@ class OcrProductMatcher {
   String _cleanProductName(String text, String priceText) {
     var cleaned = text;
     cleaned = cleaned.replaceAll(priceText, '');
-    cleaned = cleaned.replaceAll(RegExp(r'(?:₺|TL|TRY|tl|try|KR|KURUŞ)', caseSensitive: false), '');
+    cleaned = cleaned.replaceAll(
+      RegExp(r'(?:₺|TL|TRY|tl|try|KR|KURUŞ)', caseSensitive: false),
+      '',
+    );
     cleaned = cleaned.replaceAll(RegExp(r'\b\d{13}\b'), '');
-    cleaned = cleaned.replaceAll(RegExp(r'\b\d+\s*(ad|adet|dz|pcs|ADET)\b', caseSensitive: false), '');
+    cleaned = cleaned.replaceAll(
+      RegExp(r'\b\d+\s*(ad|adet|dz|pcs|ADET)\b', caseSensitive: false),
+      '',
+    );
     cleaned = cleaned.replaceAll(RegExp(r'\b[A-Z]{2,4}\d{4,6}\b'), '');
     cleaned = cleaned.trim();
     return cleaned;
@@ -131,12 +148,27 @@ class OcrProductMatcher {
   bool _isNoiseLine(String text) {
     final lower = text.toLowerCase();
     const noiseKeywords = [
-      'kargo', 'teslimat', 'kupon', 'puan', 'yorum',
-      'bedava', 'indirim', 'sepet',
-      'taksit', 'kampanya', 'hakkımızda', 'iletişim',
-      'fiş no', 'fiş tarihi', 'mağaza',
-      'toplam', 'ara toplam', 'genel toplam', 'mal bedeli',
-      'net tutar', 'kdv',
+      'kargo',
+      'teslimat',
+      'kupon',
+      'puan',
+      'yorum',
+      'bedava',
+      'indirim',
+      'sepet',
+      'taksit',
+      'kampanya',
+      'hakkımızda',
+      'iletişim',
+      'fiş no',
+      'fiş tarihi',
+      'mağaza',
+      'toplam',
+      'ara toplam',
+      'genel toplam',
+      'mal bedeli',
+      'net tutar',
+      'kdv',
     ];
     return noiseKeywords.any((kw) => lower.contains(kw));
   }
@@ -168,7 +200,8 @@ class OcrProductMatcher {
     if (name.length < 4) score -= 0.2;
 
     // 2. Ürün adında harf oranı: Sayısal değerler güvenilir değil
-    final letterRatio = name.replaceAll(RegExp(r'[^a-zA-Zà-üÀ-Ü]'), '').length / name.length;
+    final letterRatio =
+        name.replaceAll(RegExp(r'[^a-zA-Zà-üÀ-Ü]'), '').length / name.length;
     if (letterRatio > 0.7) score += 0.1;
     if (letterRatio < 0.3) score -= 0.2;
 
@@ -200,7 +233,9 @@ class OcrProductMatcher {
     if (name.split(RegExp(r'\s+')).length == 1) score -= 0.1;
 
     // 9. Para birimi içeriğe yazılı mı (TL, ₺)
-    if (price.rawText.contains('TL') || price.rawText.contains('₺')) score += 0.05;
+    if (price.rawText.contains('TL') || price.rawText.contains('₺')) {
+      score += 0.05;
+    }
 
     return score.clamp(0.0, 1.0);
   }

@@ -41,17 +41,22 @@ class PublishedSummaryCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.inputBg,
                   borderRadius: BorderRadius.circular(14),
-                  image: coverUrl.isNotEmpty
-                      ? DecorationImage(
-                          image: NetworkImage(coverUrl),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
+                  image:
+                      coverUrl.isNotEmpty
+                          ? DecorationImage(
+                            image: NetworkImage(coverUrl),
+                            fit: BoxFit.cover,
+                          )
+                          : null,
                 ),
-                child: coverUrl.isEmpty
-                    ? const Icon(Icons.storefront_rounded,
-                        color: AppColors.mutedText, size: 28)
-                    : null,
+                child:
+                    coverUrl.isEmpty
+                        ? const Icon(
+                          Icons.storefront_rounded,
+                          color: AppColors.mutedText,
+                          size: 28,
+                        )
+                        : null,
               ),
               const SizedBox(width: 14),
               Expanded(

@@ -11,7 +11,9 @@ class ArticleService {
   SupabaseClient get _resolveClient => _client ?? Supabase.instance.client;
 
   /// Mağazanın tüm yazılarını getirir.
-  Future<Result<List<Map<String, dynamic>>>> fetchArticles(String storeSlug) async {
+  Future<Result<List<Map<String, dynamic>>>> fetchArticles(
+    String storeSlug,
+  ) async {
     try {
       final res = await _resolveClient
           .from('store_articles')
@@ -25,11 +27,14 @@ class ArticleService {
   }
 
   /// İnceleme bekleyen yazıları getirir (moderasyon için).
-  Future<Result<List<Map<String, dynamic>>>> fetchPendingReviewArticles() async {
+  Future<Result<List<Map<String, dynamic>>>>
+  fetchPendingReviewArticles() async {
     try {
       final res = await _resolveClient
           .from('store_articles')
-          .select('id, store_slug, title, summary, status, created_at, seo_score, article_type, target_city')
+          .select(
+            'id, store_slug, title, summary, status, created_at, seo_score, article_type, target_city',
+          )
           .eq('status', 'review')
           .order('created_at', ascending: true);
       return Result.success(List<Map<String, dynamic>>.from(res as List));
@@ -54,10 +59,7 @@ class ArticleService {
     required Map<String, dynamic> payload,
   }) async {
     try {
-      await _resolveClient
-          .from('store_articles')
-          .update(payload)
-          .eq('id', id);
+      await _resolveClient.from('store_articles').update(payload).eq('id', id);
       return const Result.success(null);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));

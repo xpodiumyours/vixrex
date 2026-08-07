@@ -37,23 +37,30 @@ class BookingManagementController extends ChangeNotifier {
   }
 
   Future<void> _detectNewPending(List<dynamic> data) async {
-    final pending = data.whereType<Map>().where((appt) {
-      final map = Map<String, dynamic>.from(appt);
-      final status = (map['status'] as String?) ?? '';
-      final hasPendingReschedule =
-          (map['appointment_reschedule_requests'] as List?)?.any(
-                (r) => r is Map && r['status'] == 'pending',
-              ) ??
-              false;
-      return status == 'pending' || hasPendingReschedule;
-    }).map((e) => Map<String, dynamic>.from(e)).toList();
+    final pending =
+        data
+            .whereType<Map>()
+            .where((appt) {
+              final map = Map<String, dynamic>.from(appt);
+              final status = (map['status'] as String?) ?? '';
+              final hasPendingReschedule =
+                  (map['appointment_reschedule_requests'] as List?)?.any(
+                    (r) => r is Map && r['status'] == 'pending',
+                  ) ??
+                  false;
+              return status == 'pending' || hasPendingReschedule;
+            })
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
 
-    final seen =
-        await const NotificationInboxService().getSeenPendingIds(storeSlug);
-    final fresh = pending.where((a) {
-      final id = (a['id'] ?? '').toString();
-      return id.isNotEmpty && !seen.contains(id);
-    }).toList();
+    final seen = await const NotificationInboxService().getSeenPendingIds(
+      storeSlug,
+    );
+    final fresh =
+        pending.where((a) {
+          final id = (a['id'] ?? '').toString();
+          return id.isNotEmpty && !seen.contains(id);
+        }).toList();
 
     if (fresh.isNotEmpty) {
       await PushNotificationService.instance.recordNewPendingAppointments(
@@ -62,10 +69,11 @@ class BookingManagementController extends ChangeNotifier {
       );
     }
 
-    final allIds = pending
-        .map((a) => (a['id'] ?? '').toString())
-        .where((id) => id.isNotEmpty)
-        .toSet();
+    final allIds =
+        pending
+            .map((a) => (a['id'] ?? '').toString())
+            .where((id) => id.isNotEmpty)
+            .toSet();
     await const NotificationInboxService().setSeenPendingIds(storeSlug, allIds);
   }
 
@@ -85,8 +93,7 @@ class BookingManagementController extends ChangeNotifier {
         break;
       }
     }
-    final customerName =
-        (apptMap?['customer_name'] ?? 'Müşteri').toString();
+    final customerName = (apptMap?['customer_name'] ?? 'Müşteri').toString();
 
     final result = await _bookingService.respondToAppointment(
       appointmentId: apptId,
@@ -119,9 +126,9 @@ class BookingManagementController extends ChangeNotifier {
       final status = appt['status'] as String? ?? '';
       final hasPendingReschedule =
           (appt['appointment_reschedule_requests'] as List?)?.any(
-                (r) => r['status'] == 'pending',
-              ) ??
-              false;
+            (r) => r['status'] == 'pending',
+          ) ??
+          false;
       return status == 'pending' || hasPendingReschedule;
     }).toList();
   }

@@ -44,14 +44,19 @@ class OcrExcelVerifier {
   }
 
   /// Veritabanında ürün ara.
-  Future<Result<Map<String, dynamic>?>> _searchProduct(String normalized) async {
+  Future<Result<Map<String, dynamic>?>> _searchProduct(
+    String normalized,
+  ) async {
     try {
-      final res = await _resolveClient
-          .from('product_database')
-          .select('id, urun_adi, marka, kategori, aciklama, ocr_eslesme_kelimeleri')
-          .textSearch('ocr_eslesme_kelimeleri', normalized)
-          .limit(1)
-          .maybeSingle();
+      final res =
+          await _resolveClient
+              .from('product_database')
+              .select(
+                'id, urun_adi, marka, kategori, aciklama, ocr_eslesme_kelimeleri',
+              )
+              .textSearch('ocr_eslesme_kelimeleri', normalized)
+              .limit(1)
+              .maybeSingle();
 
       return Result.success(res);
     } catch (e, s) {
@@ -60,7 +65,10 @@ class OcrExcelVerifier {
   }
 
   /// En iyi eşleşmeyi bul.
-  Future<ProductMatch?> findBestMatch(String normalized, {double threshold = 0.7}) async {
+  Future<ProductMatch?> findBestMatch(
+    String normalized, {
+    double threshold = 0.7,
+  }) async {
     final result = await _searchProduct(normalized);
 
     return result.when(

@@ -25,18 +25,18 @@ class AutoFillOptions {
   factory AutoFillOptions.all() => const AutoFillOptions();
 
   factory AutoFillOptions.galleryOnly() => const AutoFillOptions(
-        fillCover: false,
-        fillLogo: false,
-        fillGallery: true,
-        fillProducts: false,
-      );
+    fillCover: false,
+    fillLogo: false,
+    fillGallery: true,
+    fillProducts: false,
+  );
 
   factory AutoFillOptions.coverOnly() => const AutoFillOptions(
-        fillCover: true,
-        fillLogo: false,
-        fillGallery: false,
-        fillProducts: false,
-      );
+    fillCover: true,
+    fillLogo: false,
+    fillGallery: false,
+    fillProducts: false,
+  );
 
   List<String> get enabledFields {
     final fields = <String>[];
@@ -77,7 +77,8 @@ class AutoFillResult {
 
 class AutoFillService {
   static SupabaseClient? _supabaseClient;
-  static SupabaseClient get _client => _supabaseClient ??= Supabase.instance.client;
+  static SupabaseClient get _client =>
+      _supabaseClient ??= Supabase.instance.client;
 
   /// Vitrini kategori sablonuyla otomatik doldur (RPC fonksiyonunu kullanir)
   static Future<AutoFillResult> applyCategoryTemplate({
@@ -146,11 +147,12 @@ class AutoFillService {
       );
 
       // 2. Mevcut store verisini cek
-      final storeResponse = await _client
-          .from('stores')
-          .select('shelf_image_url, logo_url, gallery_items, products')
-          .eq('id', storeId)
-          .single();
+      final storeResponse =
+          await _client
+              .from('stores')
+              .select('shelf_image_url, logo_url, gallery_items, products')
+              .eq('id', storeId)
+              .single();
 
       final updates = <String, dynamic>{};
       final appliedFields = <String>[];
@@ -158,16 +160,20 @@ class AutoFillService {
       // 3. Kapak gorseli
       if (options.fillGallery && imageSet.galleryImages.isNotEmpty) {
         final currentGallery = storeResponse['gallery_items'];
-        final galleryEmpty = currentGallery == null ||
+        final galleryEmpty =
+            currentGallery == null ||
             (currentGallery is List && currentGallery.isEmpty);
 
         if (galleryEmpty) {
-          final galleryItems = imageSet.galleryImages
-              .map((img) => {
-                    'imageUrl': img.imageUrl,
-                    'title': img.title ?? 'Gorsel',
-                  })
-              .toList();
+          final galleryItems =
+              imageSet.galleryImages
+                  .map(
+                    (img) => {
+                      'imageUrl': img.imageUrl,
+                      'title': img.title ?? 'Gorsel',
+                    },
+                  )
+                  .toList();
           updates['gallery_items'] = galleryItems;
           appliedFields.add('galeri');
         }
@@ -177,7 +183,8 @@ class AutoFillService {
       if (options.fillCover && imageSet.coverImages.isNotEmpty) {
         final currentCover = storeResponse['shelf_image_url'] as String? ?? '';
         if (currentCover.isEmpty) {
-          updates['shelf_image_url'] = selectedCoverUrl ?? imageSet.coverImages.first.imageUrl;
+          updates['shelf_image_url'] =
+              selectedCoverUrl ?? imageSet.coverImages.first.imageUrl;
           appliedFields.add('kapak');
         }
       }
@@ -194,7 +201,8 @@ class AutoFillService {
       // 6. Urunler
       if (options.fillProducts && imageSet.productImages.isNotEmpty) {
         final currentProducts = storeResponse['products'];
-        final productsEmpty = currentProducts == null ||
+        final productsEmpty =
+            currentProducts == null ||
             (currentProducts is List && currentProducts.isEmpty);
 
         if (productsEmpty) {
@@ -257,7 +265,12 @@ class AutoFillService {
       case 'kafe_restoran':
         return ['Kahve', 'Tatli', 'Ana Yemek', 'Icecek'];
       case 'teknik_servis':
-        return ['Ekran Degisimi', 'Batarya Degisimi', 'Yazilim Guncelleme', 'Koruyucu Kilif'];
+        return [
+          'Ekran Degisimi',
+          'Batarya Degisimi',
+          'Yazilim Guncelleme',
+          'Koruyucu Kilif',
+        ];
       case 'berber':
         return ['Sakal Tiras', 'Sac Kesimi', 'Cilt Bakimi', 'Bakim Paketi'];
       case 'oto_kuafor':
@@ -273,7 +286,12 @@ class AutoFillService {
       case 'dis_klinigi':
         return ['Dis Beyazlatma', 'Dolgu', 'Kanal Tedavisi', 'Muayene'];
       case 'eczane':
-        return ['Vitamin', 'Bebek Urunleri', 'Kisisel Bakim', 'Saglik Urunleri'];
+        return [
+          'Vitamin',
+          'Bebek Urunleri',
+          'Kisisel Bakim',
+          'Saglik Urunleri',
+        ];
       default:
         return ['Urun 1', 'Urun 2', 'Urun 3', 'Urun 4'];
     }
@@ -293,11 +311,12 @@ class AutoFillService {
   /// Supabase'den taze veri çekip yerel depolamaya kaydeder.
   static Future<void> _refreshLocalStoreData(String storeId) async {
     try {
-      final response = await _client
-          .from('stores')
-          .select(StoreSafeSelect.columns)
-          .eq('id', storeId)
-          .single();
+      final response =
+          await _client
+              .from('stores')
+              .select(StoreSafeSelect.columns)
+              .eq('id', storeId)
+              .single();
       final rawJson = jsonEncode(response);
       final decoded = jsonDecode(rawJson);
       if (decoded is Map<String, dynamic>) {

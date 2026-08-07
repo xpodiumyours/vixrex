@@ -42,68 +42,69 @@ class VitrinDangerSection extends StatelessWidget {
   void _showDeleteConfirmation(BuildContext context) {
     showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Row(
-          children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              color: Color(0xFFDC2626),
-              size: 22,
+      builder:
+          (ctx) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            SizedBox(width: 8),
-            Text(
-              'Vitrini Sil',
+            title: const Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Color(0xFFDC2626),
+                  size: 22,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Vitrini Sil',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 17,
+                    color: AppColors.darkText,
+                  ),
+                ),
+              ],
+            ),
+            content: const Text(
+              'Bu işlem geri alınamaz. Vitrininiz kalıcı olarak silinecektir.',
               style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 17,
-                color: AppColors.darkText,
+                color: AppColors.softText,
+                fontSize: 14,
+                height: 1.5,
               ),
             ),
-          ],
-        ),
-        content: const Text(
-          'Bu işlem geri alınamaz. Vitrininiz kalıcı olarak silinecektir.',
-          style: TextStyle(
-            color: AppColors.softText,
-            fontSize: 14,
-            height: 1.5,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              'Vazgeç',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppColors.mutedText,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  'Vazgeç',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.mutedText,
+                  ),
+                ),
               ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              state.handleDelete(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  state.handleDelete(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'Sil',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            child: const Text(
-              'Sil',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

@@ -9,10 +9,7 @@ import 'package:vixrex/widgets/ocr/ocr_result_list.dart';
 class OcrScannerScreen extends StatefulWidget {
   final OcrController ocrController;
 
-  const OcrScannerScreen({
-    super.key,
-    required this.ocrController,
-  });
+  const OcrScannerScreen({super.key, required this.ocrController});
 
   @override
   State<OcrScannerScreen> createState() => _OcrScannerScreenState();
@@ -95,16 +92,13 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
               ),
 
             // Hata mesajı
-            if (widget.ocrController.errorMessage != null)
-              _buildErrorMessage(),
+            if (widget.ocrController.errorMessage != null) _buildErrorMessage(),
 
             // Yükleme göstergesi
-            if (widget.ocrController.isProcessing)
-              _buildProgressIndicator(),
+            if (widget.ocrController.isProcessing) _buildProgressIndicator(),
 
             // Sonuç listesi
-            if (widget.ocrController.hasResult)
-              _buildResultSection(),
+            if (widget.ocrController.hasResult) _buildResultSection(),
           ],
         ),
       ),
@@ -184,7 +178,10 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
               Text(
                 '$approved onaylandı',
                 style: TextStyle(
-                  color: approved == total ? AppColors.success : AppColors.mutedText,
+                  color:
+                      approved == total
+                          ? AppColors.success
+                          : AppColors.mutedText,
                 ),
               ),
             ],
@@ -251,49 +248,55 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Ürünü Düzenle', style: TextStyle(color: AppColors.darkText)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Ürün Adı',
-                labelStyle: TextStyle(color: AppColors.mutedText),
-              ),
-              style: const TextStyle(color: AppColors.darkText),
+      builder:
+          (ctx) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: const Text(
+              'Ürünü Düzenle',
+              style: TextStyle(color: AppColors.darkText),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: priceController,
-              decoration: const InputDecoration(
-                labelText: 'Fiyat (₺)',
-                labelStyle: TextStyle(color: AppColors.mutedText),
-              ),
-              style: const TextStyle(color: AppColors.darkText),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Ürün Adı',
+                    labelStyle: TextStyle(color: AppColors.mutedText),
+                  ),
+                  style: const TextStyle(color: AppColors.darkText),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Fiyat (₺)',
+                    labelStyle: TextStyle(color: AppColors.mutedText),
+                  ),
+                  style: const TextStyle(color: AppColors.darkText),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('İptal'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('İptal'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final updated = product;
+                  updated.name = nameController.text;
+                  updated.price = double.tryParse(priceController.text);
+                  widget.ocrController.updateProduct(index, updated);
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Kaydet'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              final updated = product;
-              updated.name = nameController.text;
-              updated.price = double.tryParse(priceController.text);
-              widget.ocrController.updateProduct(index, updated);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Kaydet'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -305,10 +308,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       final error = widget.ocrController.errorMessage;
       if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
         return;
       }
