@@ -154,3 +154,27 @@ paylaşıyor.
 Link ölüyse geri kalan her şey anlamsız.
 
 **Olması gereken:** Alan adı bağlanana kadar çalışan adres gösterilmeli.
+
+---
+
+## 10. Sürüm uyarısının çaresi yok — taslak tazelenemiyor
+
+**Nerede:** Sahip paneli, turuncu "canlı vitrin değişmiş" kutusu
+
+**Ne oluyor:** Esnaf manuel üyelik panelinden vitrinini düzenleyip
+yayınlıyor. Keşfet güncelleniyor (doğrudan `stores` okur), Next.js paneli
+güncellenmiyor (taslağı okur). Turuncu kutu farkı bildiriyor ama
+"yeniden yükle" aynı eski taslağı tekrar getiriyor.
+
+**Sebep:** `get_working_draft_for_session` taslağı YALNIZ ilk seferde
+`stores`'tan kopyalıyor. Taslak varsa olduğu gibi dönüyor; sadece
+`version_conflict = true` işaretleniyor. Taslağı canlı sürümden
+tazeleyen bir yol yok.
+
+**Bugünkü tek çıkış:** "Değişiklikleri bırak" — taslağı siler, sonraki
+açılışta canlıdan yeniden kurulur. Ama esnaf için bu "işimi kaybedeceğim"
+demek; kimse basmaz.
+
+**Olması gereken:** "Canlı sürümü al" düğmesi — taslağı yayındaki
+vitrinden tazeler, uyarı kapanır. Esnafın taslakta bekleyen değişikliği
+varsa önce sorulmalı.
