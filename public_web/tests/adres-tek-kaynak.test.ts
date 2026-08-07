@@ -14,6 +14,12 @@ import { resolve } from "path";
 // Casper'ın turunda çıktı. Ürünün tek cümlelik vaadi "tek linkte hazır
 // vitrin" — link ölüyse geri kalan her şey anlamsız.
 
+// Aranan kalıp düz metin `includes("vixrex.com")` ile yazılmıyor: CodeQL
+// bunu "eksik URL doğrulaması" sanıp yüksek öncelikli uyarı üretiyor
+// (js/incomplete-url-substring-sanitization) ve PR'ları tıkıyor. Burada
+// URL denetlenmiyor, kaynak metinde arama yapılıyor.
+const OLU_ADRES = /vixrex\.com/i;
+
 /** Yorumları çıkarır — açıklamada adı geçmesi hata değil, kodda geçmesi hata. */
 function kodSatirlari(kaynak: string): string {
   const blokYorumsuz = kaynak.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -35,7 +41,7 @@ describe("Adresler tek kaynaktan gelir", () => {
     it(`${yol.split("/").pop()} içinde elle yazılmış vixrex.com yok`, () => {
       const kod = kodSatirlari(readFileSync(resolve(__dirname, yol), "utf-8"));
       expect(
-        kod.includes("vixrex.com"),
+        OLU_ADRES.test(kod),
         "Elle yazılmış vixrex.com bulundu. O alan adı kayıtlı değil; " +
           "adres getSiteUrl() / getAppUrl() üzerinden gelmeli."
       ).toBe(false);
