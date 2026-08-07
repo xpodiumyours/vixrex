@@ -135,7 +135,6 @@ mixin StoreLocationMixin on ChangeNotifier {
         return;
       }
 
-
       final normalizedAddress = TextUtils.normalizeTurkish(address);
       String? matchedProvinceCode;
       String? matchedProvinceName;
@@ -193,7 +192,9 @@ mixin StoreLocationMixin on ChangeNotifier {
   StoreLocationStatus _failureStatusFromMessage(String? message) {
     if (message == null) return StoreLocationStatus.error;
     final lower = message.toLowerCase();
-    if (lower.contains('reddedildi')) return StoreLocationStatus.permissionDenied;
+    if (lower.contains('reddedildi')) {
+      return StoreLocationStatus.permissionDenied;
+    }
     if (lower.contains('devre disi') || lower.contains('devre dışı')) {
       return StoreLocationStatus.serviceDisabled;
     }

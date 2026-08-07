@@ -24,7 +24,6 @@ void main() {
       expect(message, contains('31'));
       expect(message, contains('yeterince kesin degil'));
       expect(message, contains('TELEFONDAN'));
-
     });
 
     test('edge case: 10.1m shows warning message', () {

@@ -160,152 +160,158 @@ class GalleryEditorSection extends StatelessWidget {
                 ),
               ),
             Expanded(
-              child: galleryItems.isEmpty
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 22),
-                          child: Text(
-                            'Vitrin galerisi için en fazla $maxGalleryPhotos fotoğraf ekleyin.',
-                            style: TextStyle(
-                              color: mutedText.withOpacity(0.7),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+              child:
+                  galleryItems.isEmpty
+                      ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 22),
+                            child: Text(
+                              'Vitrin galerisi için en fazla $maxGalleryPhotos fotoğraf ekleyin.',
+                              style: TextStyle(
+                                color: mutedText.withOpacity(0.7),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                  : SizedBox(
-                      height: thumbSize,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: galleryItems.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 6),
-                        itemBuilder: (_, index) {
-                          final item = galleryItems[index];
-                          if (item.isRemoved) {
-                            return const SizedBox.shrink();
-                          }
-                          Widget img;
-                          if (item.hasLocalBytes) {
-                            img = Image.memory(item.bytes!, fit: BoxFit.cover);
-                          } else if (item.hasUrl) {
-                            img = Image.network(
-                              item.imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.broken_image_rounded,
+                        ],
+                      )
+                      : SizedBox(
+                        height: thumbSize,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: galleryItems.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 6),
+                          itemBuilder: (_, index) {
+                            final item = galleryItems[index];
+                            if (item.isRemoved) {
+                              return const SizedBox.shrink();
+                            }
+                            Widget img;
+                            if (item.hasLocalBytes) {
+                              img = Image.memory(
+                                item.bytes!,
+                                fit: BoxFit.cover,
+                              );
+                            } else if (item.hasUrl) {
+                              img = Image.network(
+                                item.imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (_, __, ___) => const Icon(
+                                      Icons.broken_image_rounded,
+                                      color: mutedText,
+                                      size: 20,
+                                    ),
+                              );
+                            } else {
+                              img = const Icon(
+                                Icons.image_rounded,
                                 color: mutedText,
                                 size: 20,
-                              ),
-                            );
-                          } else {
-                            img = const Icon(
-                              Icons.image_rounded,
-                              color: mutedText,
-                              size: 20,
-                            );
-                          }
+                              );
+                            }
 
-                          final hasTitle = item.title.trim().isNotEmpty;
+                            final hasTitle = item.title.trim().isNotEmpty;
 
-                          return Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              GestureDetector(
-                                onTap: () => _editTitle(context, index, item),
-                                child: Container(
-                                  width: thumbSize,
-                                  height: thumbSize,
-                                  decoration: BoxDecoration(
-                                    color: inputBg,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: hasTitle
-                                          ? primaryColor.withOpacity(0.55)
-                                          : cardBorder,
-                                    ),
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: img,
-                                ),
-                              ),
-                              if (index == 0)
-                                Positioned(
-                                  bottom: 3,
-                                  left: 3,
+                            return Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                GestureDetector(
+                                  onTap: () => _editTitle(context, index, item),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                      vertical: 1,
-                                    ),
+                                    width: thumbSize,
+                                    height: thumbSize,
                                     decoration: BoxDecoration(
-                                      color: primaryColor,
-                                      borderRadius: BorderRadius.circular(4),
+                                      color: inputBg,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color:
+                                            hasTitle
+                                                ? primaryColor.withOpacity(0.55)
+                                                : cardBorder,
+                                      ),
                                     ),
-                                    child: const Text(
-                                      'Kapak',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.w800,
+                                    clipBehavior: Clip.antiAlias,
+                                    child: img,
+                                  ),
+                                ),
+                                if (index == 0)
+                                  Positioned(
+                                    bottom: 3,
+                                    left: 3,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: primaryColor,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'Kapak',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.w800,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              if (hasTitle && index != 0)
+                                if (hasTitle && index != 0)
+                                  Positioned(
+                                    bottom: 3,
+                                    left: 3,
+                                    right: 3,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 3,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        item.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 Positioned(
-                                  bottom: 3,
-                                  left: 3,
-                                  right: 3,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 3,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black54,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      item.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                  top: -4,
+                                  right: -4,
+                                  child: GestureDetector(
+                                    onTap: () => onRemovePhoto(index),
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close_rounded,
+                                        size: 12,
                                         color: Colors.white,
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
                                 ),
-                              Positioned(
-                                top: -4,
-                                right: -4,
-                                child: GestureDetector(
-                                  onTap: () => onRemovePhoto(index),
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.black54,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.close_rounded,
-                                      size: 12,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                              ],
+                            );
+                          },
+                        ),
                       ),
-                    ),
             ),
             if (galleryItems.isNotEmpty)
               Padding(

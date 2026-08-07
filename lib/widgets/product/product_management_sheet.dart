@@ -34,6 +34,7 @@ class ProductManagementSheet extends StatefulWidget {
   final String editToken;
   final ValueChanged<String> showMessage;
   final ProductCatalogChanged onCatalogChanged;
+
   /// Seçilen ürünü kalıcı siler. Başarılıysa true.
   final Future<bool> Function(Product product) onProductDelete;
   final VoidCallback onOcrTap;
@@ -288,9 +289,10 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isCompact = constraints.maxHeight < 550;
-          final padding = isCompact
-              ? const EdgeInsets.fromLTRB(16, 6, 16, 8)
-              : const EdgeInsets.fromLTRB(20, 12, 20, 16);
+          final padding =
+              isCompact
+                  ? const EdgeInsets.fromLTRB(16, 6, 16, 8)
+                  : const EdgeInsets.fromLTRB(20, 12, 20, 16);
           final spacing14 = isCompact ? 6.0 : 14.0;
           final spacing10 = isCompact ? 6.0 : 10.0;
           final spacing12 = isCompact ? 6.0 : 12.0;

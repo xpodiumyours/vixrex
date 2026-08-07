@@ -38,17 +38,19 @@ class BulkProductUploadScreen extends StatefulWidget {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: AppColors.surface,
-      builder: (_) => BulkProductUploadScreen(
-        onSaved: onSaved,
-        categories: categories,
-        storeId: storeId,
-        editToken: editToken,
-      ),
+      builder:
+          (_) => BulkProductUploadScreen(
+            onSaved: onSaved,
+            categories: categories,
+            storeId: storeId,
+            editToken: editToken,
+          ),
     );
   }
 
   @override
-  State<BulkProductUploadScreen> createState() => _BulkProductUploadScreenState();
+  State<BulkProductUploadScreen> createState() =>
+      _BulkProductUploadScreenState();
 }
 
 class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
@@ -150,7 +152,11 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
             color: AppColors.primary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.upload_file_rounded, color: AppColors.primary, size: 20),
+          child: const Icon(
+            Icons.upload_file_rounded,
+            color: AppColors.primary,
+            size: 20,
+          ),
         ),
         const SizedBox(width: 12),
         const Expanded(
@@ -287,7 +293,11 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
           _formatRow('Fiyat', 'İsteğe bağlı', false),
           _formatRow('Açıklama', 'İsteğe bağlı', false),
           _formatRow('Kategori', 'İsteğe bağlı, varsayılan: Genel', false),
-          _formatRow('Stok Durumu', 'Mevcut / Tükendi / Son birkaç adet', false),
+          _formatRow(
+            'Stok Durumu',
+            'Mevcut / Tükendi / Son birkaç adet',
+            false,
+          ),
           const SizedBox(height: 10),
           const Text(
             'Sütun başlıkları büyük/küçük harf duyarsızdır. '
@@ -382,7 +392,9 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
           child: ListView.separated(
             itemCount: products.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) => _buildProductReviewItem(index, products[index]),
+            itemBuilder:
+                (context, index) =>
+                    _buildProductReviewItem(index, products[index]),
           ),
         ),
       ],
@@ -443,7 +455,11 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 18),
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: AppColors.error,
+            size: 18,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -474,16 +490,17 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: product.primaryImageUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      product.primaryImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _productIcon(),
-                    ),
-                  )
-                : _productIcon(),
+            child:
+                product.primaryImageUrl != null
+                    ? ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        product.primaryImageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _productIcon(),
+                      ),
+                    )
+                    : _productIcon(),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -504,17 +521,25 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
                 Row(
                   children: [
                     Text(
-                      product.price.isEmpty ? 'Fiyat yok' : '${product.price} ₺',
+                      product.price.isEmpty
+                          ? 'Fiyat yok'
+                          : '${product.price} ₺',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: product.price.isEmpty ? AppColors.mutedText : AppColors.primary,
+                        color:
+                            product.price.isEmpty
+                                ? AppColors.mutedText
+                                : AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       product.category,
-                      style: const TextStyle(fontSize: 11, color: AppColors.mutedText),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.mutedText,
+                      ),
                     ),
                   ],
                 ),
@@ -540,7 +565,11 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
 
   Widget _productIcon() {
     return const Center(
-      child: Icon(Icons.shopping_bag_outlined, color: AppColors.primary, size: 22),
+      child: Icon(
+        Icons.shopping_bag_outlined,
+        color: AppColors.primary,
+        size: 22,
+      ),
     );
   }
 
@@ -550,10 +579,11 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: AppColors.surface,
-      builder: (_) => _BulkProductEditSheet(
-        product: product,
-        categories: widget.categories,
-      ),
+      builder:
+          (_) => _BulkProductEditSheet(
+            product: product,
+            categories: widget.categories,
+          ),
     );
     if (result != null) {
       _controller.updateProduct(index, result);
@@ -624,7 +654,10 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
               foregroundColor: Colors.black,
               minimumSize: const Size.fromHeight(48),
             ),
-            child: const Text('Tamam', style: TextStyle(fontWeight: FontWeight.w900)),
+            child: const Text(
+              'Tamam',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
           ),
         ),
       ],
@@ -725,41 +758,45 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder:
+          (_) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Toplu İşlemler',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.darkText,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  leading: const Icon(
+                    Icons.delete_sweep_rounded,
+                    color: AppColors.error,
+                  ),
+                  title: const Text('Tümünü listeden kaldır'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _controller.clearAllProducts();
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Toplu İşlemler',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: AppColors.darkText,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: const Icon(Icons.delete_sweep_rounded, color: AppColors.error),
-              title: const Text('Tümünü listeden kaldır'),
-              onTap: () {
-                Navigator.pop(context);
-                _controller.clearAllProducts();
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -787,15 +824,10 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
     try {
       final result = await SharePlus.instance.share(
         ShareParams(
-          files: [
-            XFile.fromData(
-              bytes,
-              mimeType: 'text/csv',
-              name: fileName,
-            ),
-          ],
+          files: [XFile.fromData(bytes, mimeType: 'text/csv', name: fileName)],
           subject: 'Vixrex ürün CSV şablonu',
-          text: 'Ürün Adı, Fiyat, Açıklama, Kategori, Stok Durumu sütunlarını doldurun.',
+          text:
+              'Ürün Adı, Fiyat, Açıklama, Kategori, Stok Durumu sütunlarını doldurun.',
         ),
       );
       if (result.status == ShareResultStatus.unavailable) {
@@ -864,9 +896,10 @@ class _BulkProductEditSheetState extends State<_BulkProductEditSheet> {
     _nameController = TextEditingController(text: widget.product.name);
     _priceController = TextEditingController(text: widget.product.price);
     _descController = TextEditingController(text: widget.product.description);
-    _stockStatus = _stockOptions.contains(widget.product.stockStatus)
-        ? widget.product.stockStatus
-        : StockStatus.available.label;
+    _stockStatus =
+        _stockOptions.contains(widget.product.stockStatus)
+            ? widget.product.stockStatus
+            : StockStatus.available.label;
     _categoryId = _resolveCategoryId();
   }
 
@@ -891,9 +924,9 @@ class _BulkProductEditSheetState extends State<_BulkProductEditSheet> {
   void _save() {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ürün adı zorunludur.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Ürün adı zorunludur.')));
       return;
     }
     final category = widget.categories.where((c) => c.id == _categoryId);
@@ -936,21 +969,30 @@ class _BulkProductEditSheetState extends State<_BulkProductEditSheet> {
               TextField(
                 controller: _nameController,
                 maxLength: 80,
-                decoration: const InputDecoration(labelText: 'Ürün adı *', counterText: ''),
+                decoration: const InputDecoration(
+                  labelText: 'Ürün adı *',
+                  counterText: '',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _priceController,
                 maxLength: 30,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Fiyat (₺)', counterText: ''),
+                decoration: const InputDecoration(
+                  labelText: 'Fiyat (₺)',
+                  counterText: '',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _descController,
                 maxLength: 500,
                 maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Açıklama', counterText: ''),
+                decoration: const InputDecoration(
+                  labelText: 'Açıklama',
+                  counterText: '',
+                ),
               ),
               const SizedBox(height: 12),
               if (widget.categories.isNotEmpty)
@@ -958,9 +1000,15 @@ class _BulkProductEditSheetState extends State<_BulkProductEditSheet> {
                   value: _categoryId.isEmpty ? null : _categoryId,
                   dropdownColor: AppColors.surfaceSoft,
                   decoration: const InputDecoration(labelText: 'Kategori'),
-                  items: widget.categories
-                      .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
-                      .toList(),
+                  items:
+                      widget.categories
+                          .map(
+                            (c) => DropdownMenuItem(
+                              value: c.id,
+                              child: Text(c.name),
+                            ),
+                          )
+                          .toList(),
                   onChanged: (v) => setState(() => _categoryId = v ?? ''),
                 ),
               const SizedBox(height: 12),
@@ -968,16 +1016,23 @@ class _BulkProductEditSheetState extends State<_BulkProductEditSheet> {
                 value: _stockStatus,
                 dropdownColor: AppColors.surfaceSoft,
                 decoration: const InputDecoration(labelText: 'Stok durumu'),
-                items: _stockOptions
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (v) => setState(() => _stockStatus = v ?? StockStatus.available.label),
+                items:
+                    _stockOptions
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                onChanged:
+                    (v) => setState(
+                      () => _stockStatus = v ?? StockStatus.available.label,
+                    ),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: _save,
                 icon: const Icon(Icons.save_rounded, size: 18),
-                label: const Text('Kaydet', style: TextStyle(fontWeight: FontWeight.w900)),
+                label: const Text(
+                  'Kaydet',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.black,

@@ -33,6 +33,7 @@ class HeroDemoProfile {
   final List<HeroDemoLink> links;
   final String coverImageUrl;
   final List<String> galleryImages;
+
   /// Kategori sablon sistemi icin key
   /// Ornek: 'butik_giyim', 'kuafor_guzellik', 'kafe_restoran', 'teknik_servis'
   final String? templateCategoryKey;
@@ -175,20 +176,22 @@ class HeroDemoProfile {
       kategori: mappedKategori,
       galleryItems: galleryItems,
       offerings: parsedOfferings,
-      marketplaceLinks: links
-          .asMap()
-          .entries
-          .map(
-            (e) => MarketplaceLink(
-              id: '${e.key}',
-              platform: e.value.title,
-              url: e.value.title == 'Trendyol'
-                  ? 'trendyol.com/magaza/demo'
-                  : 'google.com',
-              subtitle: e.value.subtitle,
-            ),
-          )
-          .toList(),
+      marketplaceLinks:
+          links
+              .asMap()
+              .entries
+              .map(
+                (e) => MarketplaceLink(
+                  id: '${e.key}',
+                  platform: e.value.title,
+                  url:
+                      e.value.title == 'Trendyol'
+                          ? 'trendyol.com/magaza/demo'
+                          : 'google.com',
+                  subtitle: e.value.subtitle,
+                ),
+              )
+              .toList(),
     );
   }
 }

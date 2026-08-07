@@ -27,7 +27,8 @@ class OcrFeedbackService {
         'parsed_products': parsedProducts,
         'corrected_products': correctedProducts,
         'scan_mode': scanMode,
-        'image_hash': imageHash ?? 'hash_${DateTime.now().millisecondsSinceEpoch}',
+        'image_hash':
+            imageHash ?? 'hash_${DateTime.now().millisecondsSinceEpoch}',
         'timestamp': DateTime.now().toIso8601String(),
         'is_verified': false,
       });

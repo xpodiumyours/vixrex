@@ -28,11 +28,11 @@ class ChatMessage {
 
   factory ChatMessage.bot(
     String text, {
-      List<QuickReply> quickReplies = const [],
-      ChatMessageType type = ChatMessageType.text,
-      String? snapshotStateKey,
-      int? snapshotScore,
-    }) {
+    List<QuickReply> quickReplies = const [],
+    ChatMessageType type = ChatMessageType.text,
+    String? snapshotStateKey,
+    int? snapshotScore,
+  }) {
     return ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       text: text,
@@ -55,15 +55,15 @@ class ChatMessage {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'text': text,
-        'isBot': isBot,
-        'timestamp': timestamp.toIso8601String(),
-        'type': type.name,
-        'snapshotStateKey': snapshotStateKey,
-        'snapshotScore': snapshotScore,
-        'quickReplies': quickReplies.map((r) => r.toJson()).toList(),
-      };
+    'id': id,
+    'text': text,
+    'isBot': isBot,
+    'timestamp': timestamp.toIso8601String(),
+    'type': type.name,
+    'snapshotStateKey': snapshotStateKey,
+    'snapshotScore': snapshotScore,
+    'quickReplies': quickReplies.map((r) => r.toJson()).toList(),
+  };
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     final repliesJson = json['quickReplies'] as List<dynamic>? ?? [];
@@ -78,9 +78,10 @@ class ChatMessage {
       ),
       snapshotStateKey: json['snapshotStateKey'] as String?,
       snapshotScore: json['snapshotScore'] as int?,
-      quickReplies: repliesJson
-          .map((r) => QuickReply.fromJson(r as Map<String, dynamic>))
-          .toList(),
+      quickReplies:
+          repliesJson
+              .map((r) => QuickReply.fromJson(r as Map<String, dynamic>))
+              .toList(),
     );
   }
 }
@@ -90,26 +91,26 @@ enum ChatMessageType { text, loading, system }
 // ─── Type-safe VixRex Aksiyonları ──────────────────────────────────────────────
 /// Quick Reply butonlarının tetikleyebileceği navigasyon aksiyonları.
 enum VixRexAction {
-  openVitrim,           // Vitrinim sekmesine git
-  copyLink,             // Public linki panoya kopyala
-  shareWhatsapp,        // WhatsApp paylaşım ekranı
-  showQr,               // QR bottom sheet
-  openExplore,          // Keşfet sekmesi
-  scrollToCover,        // Kapak fotoğrafına git
-  scrollToGallery,      // Galeriye git
-  scrollToName,         // İşletme adına git
-  scrollToWhatsapp,     // WhatsApp alanına git
-  scrollToAddress,      // Adrese git
-  scrollToLegal,        // Yasal onaylara git
-  scrollToDesc,         // Açıklamaya git
-  scrollToProducts,     // Ürün/Hizmet alanına git
-  scrollToCategory,     // Kategori seçim alanına git
+  openVitrim, // Vitrinim sekmesine git
+  copyLink, // Public linki panoya kopyala
+  shareWhatsapp, // WhatsApp paylaşım ekranı
+  showQr, // QR bottom sheet
+  openExplore, // Keşfet sekmesi
+  scrollToCover, // Kapak fotoğrafına git
+  scrollToGallery, // Galeriye git
+  scrollToName, // İşletme adına git
+  scrollToWhatsapp, // WhatsApp alanına git
+  scrollToAddress, // Adrese git
+  scrollToLegal, // Yasal onaylara git
+  scrollToDesc, // Açıklamaya git
+  scrollToProducts, // Ürün/Hizmet alanına git
+  scrollToCategory, // Kategori seçim alanına git
   openCoverTemplatePicker, // Hazır kapak şablonu seç
-  openOcrScanner,      // OCR tarama ekranını aç (Fiş/Fatura)
+  openOcrScanner, // OCR tarama ekranını aç (Fiş/Fatura)
   openOcrScannerShelf, // OCR tarama ekranını aç (Raf/Etiket)
-  openXmlUpload,       // XML ile toplu ürün yükleme
-  openAuth,            // Hesap / giriş (mevcut Auth ekranı)
-  none,                      // Sadece mesaj tetikler, navigasyon yok
+  openXmlUpload, // XML ile toplu ürün yükleme
+  openAuth, // Hesap / giriş (mevcut Auth ekranı)
+  none, // Sadece mesaj tetikler, navigasyon yok
 }
 
 /// Hızlı cevap butonu modeli.
@@ -129,10 +130,10 @@ class QuickReply {
   });
 
   Map<String, dynamic> toJson() => {
-        'label': label,
-        'payload': payload,
-        'action': action.name,
-      };
+    'label': label,
+    'payload': payload,
+    'action': action.name,
+  };
 
   factory QuickReply.fromJson(Map<String, dynamic> json) {
     return QuickReply(

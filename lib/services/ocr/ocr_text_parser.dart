@@ -16,7 +16,10 @@ class OcrTextParser {
 
   // ─── ANA METOT ──────────────────────────────────────────────────
 
-  Future<OcrTextResult> parseFromImage(List<int> imageBytes, {String scanMode = 'receipt'}) async {
+  Future<OcrTextResult> parseFromImage(
+    List<int> imageBytes, {
+    String scanMode = 'receipt',
+  }) async {
     if (kIsWeb) {
       return _generateWebSimulatedOcrResult(scanMode);
     }
@@ -26,32 +29,37 @@ class OcrTextParser {
 
     try {
       final inputImage = InputImage.fromFilePath(tempFile.path);
-      final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+      final textRecognizer = TextRecognizer(
+        script: TextRecognitionScript.latin,
+      );
 
       try {
         final recognizedText = await textRecognizer.processImage(inputImage);
         final lines = <OcrLine>[];
 
-        for (var blockIndex = 0; blockIndex < recognizedText.blocks.length; blockIndex++) {
+        for (
+          var blockIndex = 0;
+          blockIndex < recognizedText.blocks.length;
+          blockIndex++
+        ) {
           final block = recognizedText.blocks[blockIndex];
           for (var lineIndex = 0; lineIndex < block.lines.length; lineIndex++) {
             final line = block.lines[lineIndex];
             final text = line.text.trim();
             if (text.isEmpty) continue;
 
-            lines.add(OcrLine(
-              text: text,
-              boundingBox: line.boundingBox,
-              blockIndex: blockIndex,
-              lineIndex: lineIndex,
-            ));
+            lines.add(
+              OcrLine(
+                text: text,
+                boundingBox: line.boundingBox,
+                blockIndex: blockIndex,
+                lineIndex: lineIndex,
+              ),
+            );
           }
         }
 
-        return OcrTextResult(
-          rawText: recognizedText.text.trim(),
-          lines: lines,
-        );
+        return OcrTextResult(rawText: recognizedText.text.trim(), lines: lines);
       } finally {
         await textRecognizer.close();
       }
@@ -85,9 +93,12 @@ class OcrTextParser {
         continue;
       }
 
-      if (lower.contains('toplam') || lower.contains('genel toplam') ||
-          lower.contains('ara toplam') || lower.contains('mal bedeli') ||
-          lower.contains('net tutar') || lower.contains('kdv')) {
+      if (lower.contains('toplam') ||
+          lower.contains('genel toplam') ||
+          lower.contains('ara toplam') ||
+          lower.contains('mal bedeli') ||
+          lower.contains('net tutar') ||
+          lower.contains('kdv')) {
         sections['total']!.add(line);
         continue;
       }
@@ -112,7 +123,9 @@ class OcrTextParser {
     if (RegExp(r'^[-=]{3,}$').hasMatch(trimmed)) return true;
     if (trimmed.length >= 3) {
       final firstChar = trimmed[0];
-      if (trimmed.split('').every((c) => c == firstChar || c == ' ')) return true;
+      if (trimmed.split('').every((c) => c == firstChar || c == ' ')) {
+        return true;
+      }
     }
     return false;
   }
@@ -132,7 +145,8 @@ class OcrTextParser {
   // ─── YARDIMCI METOTLAR ──────────────────────────────────────────
 
   List<String> extractProductCandidates(String rawText) {
-    final lines = rawText.split('\n').where((l) => l.trim().isNotEmpty).toList();
+    final lines =
+        rawText.split('\n').where((l) => l.trim().isNotEmpty).toList();
     final candidates = <String>[];
     for (final line in lines) {
       final trimmed = line.trim();
@@ -147,10 +161,21 @@ class OcrTextParser {
   bool _isNoiseLine(String text) {
     final lower = text.toLowerCase();
     const noiseKeywords = [
-      'kargo', 'teslimat', 'kupon', 'puan', 'yorum',
-      'bedava', 'indirim', 'sepet',
-      'taksit', 'kampanya', 'hakkımızda', 'iletişim',
-      'fiş no', 'fiş tarihi', 'mağaza',
+      'kargo',
+      'teslimat',
+      'kupon',
+      'puan',
+      'yorum',
+      'bedava',
+      'indirim',
+      'sepet',
+      'taksit',
+      'kampanya',
+      'hakkımızda',
+      'iletişim',
+      'fiş no',
+      'fiş tarihi',
+      'mağaza',
     ];
     return noiseKeywords.any((kw) => lower.contains(kw));
   }
@@ -168,21 +193,24 @@ class OcrTextParser {
 
   OcrTextResult _generateWebSimulatedOcrResult(String scanMode) {
     final generator = SyntheticReceiptGenerator();
-    final rawText = scanMode == 'shelf_label'
-        ? generator.generateShelfLabelText()
-        : generator.generateReceiptText();
+    final rawText =
+        scanMode == 'shelf_label'
+            ? generator.generateShelfLabelText()
+            : generator.generateReceiptText();
 
     final rawLines = rawText.split('\n');
     final lines = <OcrLine>[];
     for (var i = 0; i < rawLines.length; i++) {
       final text = rawLines[i].trim();
       if (text.isEmpty) continue;
-      lines.add(OcrLine(
-        text: text,
-        boundingBox: Rect.fromLTWH(10, i * 30.0, 300, 20),
-        blockIndex: scanMode == 'shelf_label' ? i ~/ 4 : 0,
-        lineIndex: i,
-      ));
+      lines.add(
+        OcrLine(
+          text: text,
+          boundingBox: Rect.fromLTWH(10, i * 30.0, 300, 20),
+          blockIndex: scanMode == 'shelf_label' ? i ~/ 4 : 0,
+          lineIndex: i,
+        ),
+      );
     }
 
     return OcrTextResult(rawText: rawText, lines: lines);

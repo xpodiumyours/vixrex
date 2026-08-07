@@ -20,7 +20,8 @@ mixin StoreMediaMixin on ChangeNotifier {
   Uint8List? get coverBytes => _coverBytes;
   String? get coverFileName => _coverFileName;
   String? get coverUrl => _coverUrl;
-  bool get hasCover => _coverBytes != null || (_coverUrl != null && _coverUrl!.isNotEmpty);
+  bool get hasCover =>
+      _coverBytes != null || (_coverUrl != null && _coverUrl!.isNotEmpty);
 
   List<EditorGalleryItem> get editorGalleryItems => _editorGalleryItems;
   List<EditorGalleryItem> get galleryItems => _editorGalleryItems;
@@ -30,7 +31,12 @@ mixin StoreMediaMixin on ChangeNotifier {
       _editorGalleryItems.where((item) => !item.isRemoved).toList();
 
   // --- Methods ---
-  void setCoverBytes(Uint8List bytes, String fileName, [String? ext, String? contentType]) {
+  void setCoverBytes(
+    Uint8List bytes,
+    String fileName, [
+    String? ext,
+    String? contentType,
+  ]) {
     _coverBytes = bytes;
     _coverFileName = fileName;
     _coverUrl = null;
@@ -89,7 +95,9 @@ mixin StoreMediaMixin on ChangeNotifier {
     required StorePublishService publishService,
   }) async {
     final hasPendingCover = _coverBytes != null && _coverFileName != null;
-    final hasPendingGallery = _editorGalleryItems.any((item) => !item.isRemoved && item.isFromBytes && item.bytes != null);
+    final hasPendingGallery = _editorGalleryItems.any(
+      (item) => !item.isRemoved && item.isFromBytes && item.bytes != null,
+    );
 
     // Hazır şablon / uzak URL kapak: byte yüklemesi yoksa StoreData'ya yaz
     if (!hasPendingCover) {
@@ -100,25 +108,33 @@ mixin StoreMediaMixin on ChangeNotifier {
     }
 
     if (!hasPendingCover && !hasPendingGallery) {
-      storeData.galleryItems = _editorGalleryItems.where((item) => !item.isRemoved).map((item) {
-        return StoreGalleryItem(
-          id: item.id,
-          imageUrl: item.imageUrl ?? '',
-          title: item.title ?? '',
-        );
-      }).toList();
+      storeData.galleryItems =
+          _editorGalleryItems.where((item) => !item.isRemoved).map((item) {
+            return StoreGalleryItem(
+              id: item.id,
+              imageUrl: item.imageUrl ?? '',
+              title: item.title ?? '',
+            );
+          }).toList();
       return;
     }
 
-    final storeSlug = storeData.slug.isNotEmpty
-        ? storeData.slug
-        : publishService.payloadBuilder.generateSlug(storeData.name);
+    final storeSlug =
+        storeData.slug.isNotEmpty
+            ? storeData.slug
+            : publishService.payloadBuilder.generateSlug(storeData.name);
 
     // 1. Kapak Yükleme
     if (hasPendingCover) {
-      final ext = (_coverFileName!.split('.').lastOrNull ?? 'jpg').toLowerCase();
+      final ext =
+          (_coverFileName!.split('.').lastOrNull ?? 'jpg').toLowerCase();
       final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
-      final url = await uploadService.uploadShelfImage(_coverBytes!, storeSlug, fileExtension: ext, contentType: mime);
+      final url = await uploadService.uploadShelfImage(
+        _coverBytes!,
+        storeSlug,
+        fileExtension: ext,
+        contentType: mime,
+      );
       storeData.shelfImageUrl = url;
       storeData.coverImageUrl = url;
       _coverUrl = url;
@@ -133,22 +149,31 @@ mixin StoreMediaMixin on ChangeNotifier {
 
       if (item.isFromBytes && item.bytes != null) {
         final ext = (item.extension ?? 'jpg').toLowerCase();
-        final url = await uploadService.uploadGalleryImage(item.bytes!, storeSlug, fileExtension: ext);
-        updatedGallery.add(StoreGalleryItem(
-          id: item.id,
-          imageUrl: url,
-          title: item.title ?? 'Galeri ${i + 1}',
-        ));
+        final url = await uploadService.uploadGalleryImage(
+          item.bytes!,
+          storeSlug,
+          fileExtension: ext,
+        );
+        updatedGallery.add(
+          StoreGalleryItem(
+            id: item.id,
+            imageUrl: url,
+            title: item.title ?? 'Galeri ${i + 1}',
+          ),
+        );
       } else if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
-        updatedGallery.add(StoreGalleryItem(
-          id: item.id,
-          imageUrl: item.imageUrl!,
-          title: item.title ?? 'Galeri ${i + 1}',
-        ));
+        updatedGallery.add(
+          StoreGalleryItem(
+            id: item.id,
+            imageUrl: item.imageUrl!,
+            title: item.title ?? 'Galeri ${i + 1}',
+          ),
+        );
       }
     }
     storeData.galleryItems = updatedGallery;
-    _editorGalleryItems = updatedGallery.map((i) => EditorGalleryItem.fromStoreItem(i)).toList();
+    _editorGalleryItems =
+        updatedGallery.map((i) => EditorGalleryItem.fromStoreItem(i)).toList();
     notifyListeners();
   }
 

@@ -27,8 +27,14 @@ void main() {
   });
 
   test('sahip oturumu girişi vitrin adresinde kurulur', () {
-    final link = PublicSiteConfig.buildOwnerSessionEntryLink('deneme', 'abc123');
-    expect(link.startsWith('https://vixrex-public.vercel.app/api/owner-session'), isTrue);
+    final link = PublicSiteConfig.buildOwnerSessionEntryLink(
+      'deneme',
+      'abc123',
+    );
+    expect(
+      link.startsWith('https://vixrex-public.vercel.app/api/owner-session'),
+      isTrue,
+    );
     expect(link.contains('slug=deneme'), isTrue);
   });
 }

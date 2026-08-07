@@ -11,7 +11,9 @@ class ExcelService {
   const ExcelService();
 
   /// Excel dosyasından ürün listesi oku.
-  Future<Result<List<ProductDatabaseEntry>>> readFromFile(String filePath) async {
+  Future<Result<List<ProductDatabaseEntry>>> readFromFile(
+    String filePath,
+  ) async {
     try {
       final file = File(filePath);
       if (!await file.exists()) {
@@ -26,7 +28,9 @@ class ExcelService {
   }
 
   /// Byte'lardan ürün listesi oku.
-  Future<Result<List<ProductDatabaseEntry>>> readFromBytes(Uint8List bytes) async {
+  Future<Result<List<ProductDatabaseEntry>>> readFromBytes(
+    Uint8List bytes,
+  ) async {
     try {
       return _parseExcel(bytes);
     } catch (e, s) {
@@ -44,9 +48,12 @@ class ExcelService {
         if (table.rows.isEmpty) continue;
 
         // İlk satırı başlık olarak al
-        final headers = table.rows.first
-            .map((cell) => cell?.value?.toString().toLowerCase().trim() ?? '')
-            .toList();
+        final headers =
+            table.rows.first
+                .map(
+                  (cell) => cell?.value?.toString().toLowerCase().trim() ?? '',
+                )
+                .toList();
 
         // Veri satırlarını işle
         for (var i = 1; i < table.rows.length; i++) {
@@ -78,18 +85,38 @@ class ExcelService {
 
     // Başlık satırı
     final sheet = excel['Ürünler'];
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).value = TextCellValue('urun_adi');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0)).value = TextCellValue('marka');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 0)).value = TextCellValue('kategori');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: 0)).value = TextCellValue('aciklama');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: 0)).value = TextCellValue('ocr_eslesme_kelimeleri');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+        .value = TextCellValue('urun_adi');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0))
+        .value = TextCellValue('marka');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 0))
+        .value = TextCellValue('kategori');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: 0))
+        .value = TextCellValue('aciklama');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: 0))
+        .value = TextCellValue('ocr_eslesme_kelimeleri');
 
     // Örnek veri
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1)).value = TextCellValue('Ülker Çikolata 80g');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 1)).value = TextCellValue('Ülker');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 1)).value = TextCellValue('Çikolata');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: 1)).value = TextCellValue('80 gramlık çikolata');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: 1)).value = TextCellValue('ulker,cikolata,80g');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1))
+        .value = TextCellValue('Ülker Çikolata 80g');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 1))
+        .value = TextCellValue('Ülker');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 1))
+        .value = TextCellValue('Çikolata');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: 1))
+        .value = TextCellValue('80 gramlık çikolata');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: 1))
+        .value = TextCellValue('ulker,cikolata,80g');
 
     final fileBytes = excel.save()!;
     return Uint8List.fromList(fileBytes);

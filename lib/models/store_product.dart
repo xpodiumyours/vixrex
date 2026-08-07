@@ -129,11 +129,17 @@ class Product {
     categoryId: (json['categoryId'] ?? json['category_id'] ?? '').toString(),
     category: (json['category'] ?? 'Tümü').toString(),
     stockStatus:
-        (json['stockStatus'] ?? json['stock_status'] ?? StockStatus.available.label).toString(),
+        (json['stockStatus'] ??
+                json['stock_status'] ??
+                StockStatus.available.label)
+            .toString(),
     isVisible: (json['isVisible'] ?? json['is_visible'] ?? true) as bool,
-    oldPriceAmount: (json['oldPriceAmount'] ?? json['old_price_amount']) != null
-        ? double.tryParse((json['oldPriceAmount'] ?? json['old_price_amount']).toString())
-        : null,
+    oldPriceAmount:
+        (json['oldPriceAmount'] ?? json['old_price_amount']) != null
+            ? double.tryParse(
+              (json['oldPriceAmount'] ?? json['old_price_amount']).toString(),
+            )
+            : null,
     badgeTag: (json['badgeTag'] ?? json['badge_tag']) as String?,
     fulfillmentLocation:
         (json['fulfillmentLocation'] ?? json['fulfillment_region'] ?? '')
@@ -222,11 +228,7 @@ class ProductCategory {
   String name;
   int sortOrder;
 
-  ProductCategory({
-    required this.id,
-    required this.name,
-    this.sortOrder = 0,
-  });
+  ProductCategory({required this.id, required this.name, this.sortOrder = 0});
 
   Map<String, dynamic> toJson() => {
     'id': id,

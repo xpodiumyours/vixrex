@@ -34,7 +34,8 @@ class LegalConsentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAllAccepted = privacyNoticeAcknowledged &&
+    final isAllAccepted =
+        privacyNoticeAcknowledged &&
         termsAccepted &&
         publicationConsentAccepted;
 
@@ -46,9 +47,10 @@ class LegalConsentSection extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isAllAccepted
-                ? const Color(0xFF0EA5E9).withAlpha(160)
-                : AppColors.border,
+            color:
+                isAllAccepted
+                    ? const Color(0xFF0EA5E9).withAlpha(160)
+                    : AppColors.border,
             width: isAllAccepted ? 1.4 : 1.0,
           ),
         ),
@@ -107,14 +109,15 @@ class LegalConsentSection extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
-                    onChanged: canAccept
-                        ? (value) {
-                            final newValue = value ?? false;
-                            onPrivacyChanged(newValue);
-                            onTermsChanged(newValue);
-                            onPublicationChanged(newValue);
-                          }
-                        : null,
+                    onChanged:
+                        canAccept
+                            ? (value) {
+                              final newValue = value ?? false;
+                              onPrivacyChanged(newValue);
+                              onTermsChanged(newValue);
+                              onPublicationChanged(newValue);
+                            }
+                            : null,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -135,8 +138,11 @@ class LegalConsentSection extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                             decoration: TextDecoration.underline,
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () => onOpenLegalPage(LegalPageType.privacy),
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap =
+                                    () =>
+                                        onOpenLegalPage(LegalPageType.privacy),
                         ),
                         const TextSpan(text: ', '),
                         TextSpan(
@@ -146,8 +152,10 @@ class LegalConsentSection extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                             decoration: TextDecoration.underline,
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () => onOpenLegalPage(LegalPageType.terms),
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap =
+                                    () => onOpenLegalPage(LegalPageType.terms),
                         ),
                         const TextSpan(text: ' ve '),
                         TextSpan(
@@ -157,8 +165,11 @@ class LegalConsentSection extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                             decoration: TextDecoration.underline,
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () => onOpenLegalPage(LegalPageType.consent),
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap =
+                                    () =>
+                                        onOpenLegalPage(LegalPageType.consent),
                         ),
                         const TextSpan(
                           text: '\'nı okudum, anladım ve kabul ediyorum.',
@@ -175,4 +186,3 @@ class LegalConsentSection extends StatelessWidget {
     );
   }
 }
-

@@ -44,7 +44,9 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
   static const Color cardBorder = AppColors.cardBorderDark;
 
   Widget _buildBookingServicesSection() {
-    final config = BusinessCategoryConfig.fromCategoryLabel(widget.selectedKategori);
+    final config = BusinessCategoryConfig.fromCategoryLabel(
+      widget.selectedKategori,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +103,8 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
           ],
         ),
         const SizedBox(height: 6),
-        if (config.suggestedOfferings.isNotEmpty && widget.offerings.length < 6) ...[
+        if (config.suggestedOfferings.isNotEmpty &&
+            widget.offerings.length < 6) ...[
           const Text(
             'Hazır hizmetler (eklemek için dokunun):',
             style: TextStyle(
@@ -114,55 +117,59 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: config.suggestedOfferings.map((sug) {
-              return ActionChip(
-                backgroundColor: AppColors.surfaceSoft,
-                side: const BorderSide(color: cardBorder),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                avatar: const Icon(
-                  Icons.add_circle_outline_rounded,
-                  color: primaryColor,
-                  size: 16,
-                ),
-                label: Text(
-                  'Ekle: ${sug.title}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: darkText,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: () {
-                  if (widget.offerings.length >= 6) {
-                    widget.showSnackBar('En fazla 6 adet hizmet ekleyebilirsiniz.');
-                    return;
-                  }
-                  final trimmedTitle = sug.title.trim().toLowerCase();
-                  final isDuplicate = widget.offerings.any(
-                    (o) => o.title.trim().toLowerCase() == trimmedTitle,
-                  );
-                  if (isDuplicate) {
-                    widget.showSnackBar('Bu hizmet zaten eklenmiş.');
-                    return;
-                  }
-                  setState(() {
-                    widget.offerings.add(
-                      StoreOffering(
-                        id: '${DateTime.now().millisecondsSinceEpoch}_${sug.title.hashCode}',
-                        title: sug.title,
-                        description: sug.description,
-                        price: sug.price,
-                        durationMinutes: sug.durationMinutes,
-                        isBookable: true,
+            children:
+                config.suggestedOfferings.map((sug) {
+                  return ActionChip(
+                    backgroundColor: AppColors.surfaceSoft,
+                    side: const BorderSide(color: cardBorder),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    avatar: const Icon(
+                      Icons.add_circle_outline_rounded,
+                      color: primaryColor,
+                      size: 16,
+                    ),
+                    label: Text(
+                      'Ekle: ${sug.title}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: darkText,
+                        fontWeight: FontWeight.bold,
                       ),
-                    );
-                  });
-                  widget.onStateChanged();
-                },
-              );
-            }).toList(),
+                    ),
+                    onPressed: () {
+                      if (widget.offerings.length >= 6) {
+                        widget.showSnackBar(
+                          'En fazla 6 adet hizmet ekleyebilirsiniz.',
+                        );
+                        return;
+                      }
+                      final trimmedTitle = sug.title.trim().toLowerCase();
+                      final isDuplicate = widget.offerings.any(
+                        (o) => o.title.trim().toLowerCase() == trimmedTitle,
+                      );
+                      if (isDuplicate) {
+                        widget.showSnackBar('Bu hizmet zaten eklenmiş.');
+                        return;
+                      }
+                      setState(() {
+                        widget.offerings.add(
+                          StoreOffering(
+                            id:
+                                '${DateTime.now().millisecondsSinceEpoch}_${sug.title.hashCode}',
+                            title: sug.title,
+                            description: sug.description,
+                            price: sug.price,
+                            durationMinutes: sug.durationMinutes,
+                            isBookable: true,
+                          ),
+                        );
+                      });
+                      widget.onStateChanged();
+                    },
+                  );
+                }).toList(),
           ),
           const SizedBox(height: 10),
         ],
@@ -271,19 +278,20 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
                 const Spacer(),
                 DropdownButton<int>(
                   value: widget.bookingCapacity,
-                  items: [1, 2, 3, 4, 5].map((int val) {
-                    return DropdownMenuItem<int>(
-                      value: val,
-                      child: Text(
-                        '$val kişi',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: darkText,
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                  items:
+                      [1, 2, 3, 4, 5].map((int val) {
+                        return DropdownMenuItem<int>(
+                          value: val,
+                          child: Text(
+                            '$val kişi',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: darkText,
+                            ),
+                          ),
+                        );
+                      }).toList(),
                   onChanged: (val) {
                     if (val != null) {
                       widget.onBookingCapacityChanged(val);
@@ -312,22 +320,23 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
                       labelText: 'Başlangıç',
                       isDense: true,
                     ),
-                    items: [
-                      '11:00',
-                      '11:30',
-                      '12:00',
-                      '12:30',
-                      '13:00',
-                      '13:30',
-                    ].map((String val) {
-                      return DropdownMenuItem<String>(
-                        value: val,
-                        child: Text(
-                          val,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      );
-                    }).toList(),
+                    items:
+                        [
+                          '11:00',
+                          '11:30',
+                          '12:00',
+                          '12:30',
+                          '13:00',
+                          '13:30',
+                        ].map((String val) {
+                          return DropdownMenuItem<String>(
+                            value: val,
+                            child: Text(
+                              val,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          );
+                        }).toList(),
                     onChanged: (val) {
                       setState(() {
                         if (val != null) {
@@ -346,22 +355,23 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
                       labelText: 'Bitiş',
                       isDense: true,
                     ),
-                    items: [
-                      '12:00',
-                      '12:30',
-                      '13:00',
-                      '13:30',
-                      '14:00',
-                      '14:30',
-                    ].map((String val) {
-                      return DropdownMenuItem<String>(
-                        value: val,
-                        child: Text(
-                          val,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      );
-                    }).toList(),
+                    items:
+                        [
+                          '12:00',
+                          '12:30',
+                          '13:00',
+                          '13:30',
+                          '14:00',
+                          '14:30',
+                        ].map((String val) {
+                          return DropdownMenuItem<String>(
+                            value: val,
+                            child: Text(
+                              val,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          );
+                        }).toList(),
                     onChanged: (val) {
                       setState(() {
                         if (val != null) {

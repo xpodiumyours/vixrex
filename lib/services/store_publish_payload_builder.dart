@@ -89,7 +89,8 @@ class StorePublishPayloadBuilder {
       'privacy_notice_acknowledged': data.privacyNoticeAcknowledged,
       'privacy_notice_version': data.privacyNoticeVersion.trim(),
       'privacy_notice_hash': data.privacyNoticeHash.trim(),
-      'privacy_notice_acknowledged_at': data.privacyNoticeAcknowledgedAt?.toIso8601String(),
+      'privacy_notice_acknowledged_at':
+          data.privacyNoticeAcknowledgedAt?.toIso8601String(),
       'terms_accepted': data.termsAccepted,
       'terms_version': data.termsVersion.trim(),
       'terms_hash': data.termsHash.trim(),
@@ -97,8 +98,10 @@ class StorePublishPayloadBuilder {
       'explicit_consent_given': data.publicationConsentAccepted,
       'publication_consent_version': data.publicationConsentVersion.trim(),
       'publication_consent_hash': data.publicationConsentHash.trim(),
-      'publication_consent_accepted_at': data.publicationConsentAcceptedAt?.toIso8601String(),
-      'consent_accepted_at': data.privacyNoticeAcknowledgedAt?.toIso8601String(),
+      'publication_consent_accepted_at':
+          data.publicationConsentAcceptedAt?.toIso8601String(),
+      'consent_accepted_at':
+          data.privacyNoticeAcknowledgedAt?.toIso8601String(),
     };
   }
 
@@ -205,9 +208,10 @@ class StorePublishPayloadBuilder {
         .take(20)
         .map(
           (item) => {
-            'id': item.id.trim().isEmpty
-                ? DateTime.now().microsecondsSinceEpoch.toString()
-                : item.id.trim(),
+            'id':
+                item.id.trim().isEmpty
+                    ? DateTime.now().microsecondsSinceEpoch.toString()
+                    : item.id.trim(),
             'question': item.question.trim(),
             'answer': item.answer.trim(),
           },
@@ -221,9 +225,10 @@ class StorePublishPayloadBuilder {
         .take(3)
         .map(
           (item) => {
-            'id': item.id.trim().isEmpty
-                ? DateTime.now().microsecondsSinceEpoch.toString()
-                : item.id.trim(),
+            'id':
+                item.id.trim().isEmpty
+                    ? DateTime.now().microsecondsSinceEpoch.toString()
+                    : item.id.trim(),
             'title': item.title.trim(),
             'description': item.description.trim(),
           },

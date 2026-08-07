@@ -7,14 +7,14 @@ class _GalleryTitleHost extends ChangeNotifier with StoreMediaMixin {}
 
 void main() {
   test('Dilim C: galeri görsel etiketi güncellenir', () {
-    final host = _GalleryTitleHost()
-      ..setGalleryItems([
-        const EditorGalleryItem(
-          id: 'g1',
-          imageUrl: 'https://example.com/a.jpg',
-          title: '',
-        ),
-      ]);
+    final host =
+        _GalleryTitleHost()..setGalleryItems([
+          const EditorGalleryItem(
+            id: 'g1',
+            imageUrl: 'https://example.com/a.jpg',
+            title: '',
+          ),
+        ]);
 
     host.updateGalleryItemTitle(0, '  Yeni sezon seçkisi  ');
 

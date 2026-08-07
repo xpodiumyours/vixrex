@@ -61,10 +61,7 @@ class AppRouter {
           return const LandingScreen();
         },
       ),
-      GoRoute(
-        path: auth,
-        builder: (context, state) => const AuthScreen(),
-      ),
+      GoRoute(path: auth, builder: (context, state) => const AuthScreen()),
       GoRoute(
         path: onboardingChat,
         builder: (context, state) {
@@ -164,9 +161,9 @@ class AppRouter {
     }
 
     if (!launched && context != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failureMessage)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failureMessage)));
     }
     return launched;
   }
@@ -210,18 +207,20 @@ class AppRouter {
     String? initialVitrinName,
     VixRexAction? initialVixRexAction,
   }) {
-    final needsFreshShell = initialVitrinName != null ||
+    final needsFreshShell =
+        initialVitrinName != null ||
         initialIndex > 1 ||
         initialVixRexAction != null;
     if (needsFreshShell) {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => HomeShellScreen(
-            initialIndex: initialIndex,
-            initialVitrinName: initialVitrinName,
-            initialVixRexAction: initialVixRexAction,
-          ),
+          builder:
+              (_) => HomeShellScreen(
+                initialIndex: initialIndex,
+                initialVitrinName: initialVitrinName,
+                initialVixRexAction: initialVixRexAction,
+              ),
         ),
         (route) => false,
       );
@@ -238,11 +237,12 @@ class AppRouter {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => HomeShellScreen(
-            initialIndex: initialIndex,
-            initialVitrinName: initialVitrinName,
-            initialVixRexAction: initialVixRexAction,
-          ),
+          builder:
+              (_) => HomeShellScreen(
+                initialIndex: initialIndex,
+                initialVitrinName: initialVitrinName,
+                initialVixRexAction: initialVixRexAction,
+              ),
         ),
         (route) => false,
       );
@@ -256,10 +256,11 @@ class AppRouter {
   }) {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (_) => HomeShellScreen(
-          initialIndex: 0,
-          initialVitrinName: initialVitrinName,
-        ),
+        builder:
+            (_) => HomeShellScreen(
+              initialIndex: 0,
+              initialVitrinName: initialVitrinName,
+            ),
       ),
       (_) => false,
     );
@@ -290,21 +291,24 @@ class AppRouter {
     }
   }
 
-  static Future<dynamic> navigateToBlogEditor(BuildContext context,
-      {required String slug, Map<String, dynamic>? article}) {
+  static Future<dynamic> navigateToBlogEditor(
+    BuildContext context, {
+    required String slug,
+    Map<String, dynamic>? article,
+  }) {
     return Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BlogEditorScreen(
-          storeSlug: slug,
-          initialArticle: article,
-        ),
+        builder:
+            (_) => BlogEditorScreen(storeSlug: slug, initialArticle: article),
       ),
     );
   }
 
-  static Future<dynamic> navigateToBookingManagement(BuildContext context,
-      {required String slug}) {
+  static Future<dynamic> navigateToBookingManagement(
+    BuildContext context, {
+    required String slug,
+  }) {
     try {
       return context.push('/bookings/$slug');
     } catch (_) {

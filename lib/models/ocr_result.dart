@@ -5,20 +5,14 @@ class OcrResult {
   final String rawText;
   final List<OcrLine> lines;
 
-  const OcrResult({
-    required this.rawText,
-    required this.lines,
-  });
+  const OcrResult({required this.rawText, required this.lines});
 
-  const OcrResult.empty()
-      : rawText = '',
-        lines = const [];
+  const OcrResult.empty() : rawText = '', lines = const [];
 
   bool get isEmpty => rawText.isEmpty && lines.isEmpty;
   bool get isNotEmpty => !isEmpty;
 
   int get lineCount => lines.length;
 
-  List<String> get uniqueTexts =>
-      lines.map((l) => l.text).toSet().toList();
+  List<String> get uniqueTexts => lines.map((l) => l.text).toSet().toList();
 }

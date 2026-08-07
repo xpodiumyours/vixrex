@@ -68,10 +68,7 @@ class _FaqEditorSheetState extends State<FaqEditorSheet> {
                 answer: draft.answer.text.trim(),
               ),
             )
-            .where(
-              (item) =>
-                  item.question.isNotEmpty && item.answer.isNotEmpty,
-            )
+            .where((item) => item.question.isNotEmpty && item.answer.isNotEmpty)
             .toList();
     Navigator.of(context).pop(items);
   }
@@ -163,11 +160,7 @@ class _FaqDraft {
   final TextEditingController question;
   final TextEditingController answer;
 
-  _FaqDraft({
-    required this.id,
-    required this.question,
-    required this.answer,
-  });
+  _FaqDraft({required this.id, required this.question, required this.answer});
 
   void dispose() {
     question.dispose();

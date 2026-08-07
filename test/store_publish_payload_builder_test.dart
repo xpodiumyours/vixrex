@@ -91,24 +91,27 @@ void main() {
       expect(payload['publication_consent_version'], 'consent-v1');
     });
 
-    test('Dilim A: e-posta, telefon, kapak rozeti ve saatleri payload’a yazar', () {
-      final data = StoreData(
-        name: 'Atmosfer',
-        email: '  merhaba@atmosfer.com  ',
-        phone: '  0532 123 45 67  ',
-        heroBadge: '  Atölye / Mağaza  ',
-        workingHours: '  Pzt—Cmt 09:00-20:00  ',
-        corporateBio: '  Hikâye metni  ',
-      );
+    test(
+      'Dilim A: e-posta, telefon, kapak rozeti ve saatleri payload’a yazar',
+      () {
+        final data = StoreData(
+          name: 'Atmosfer',
+          email: '  merhaba@atmosfer.com  ',
+          phone: '  0532 123 45 67  ',
+          heroBadge: '  Atölye / Mağaza  ',
+          workingHours: '  Pzt—Cmt 09:00-20:00  ',
+          corporateBio: '  Hikâye metni  ',
+        );
 
-      final payload = builder.toStoreUpdateMap(data);
+        final payload = builder.toStoreUpdateMap(data);
 
-      expect(payload['email'], 'merhaba@atmosfer.com');
-      expect(payload['phone'], '0532 123 45 67');
-      expect(payload['hero_badge'], 'Atölye / Mağaza');
-      expect(payload['working_hours'], 'Pzt—Cmt 09:00-20:00');
-      expect(payload['corporate_bio'], 'Hikâye metni');
-    });
+        expect(payload['email'], 'merhaba@atmosfer.com');
+        expect(payload['phone'], '0532 123 45 67');
+        expect(payload['hero_badge'], 'Atölye / Mağaza');
+        expect(payload['working_hours'], 'Pzt—Cmt 09:00-20:00');
+        expect(payload['corporate_bio'], 'Hikâye metni');
+      },
+    );
 
     test('Dilim G: hakkımızda / galeri meta alanlarını payload’a yazar', () {
       final data = StoreData(
@@ -162,7 +165,10 @@ void main() {
       expect(payload['featured_banner_label'], 'Yeni Sezon');
       expect(payload['featured_banner_title'], 'Sonbahar Koleksiyonu');
       expect(payload['featured_banner_description'], 'Doğal kumaşlar');
-      expect(payload['featured_banner_image_url'], 'https://example.com/kampanya.jpg');
+      expect(
+        payload['featured_banner_image_url'],
+        'https://example.com/kampanya.jpg',
+      );
       expect(payload['featured_banner_price_text'], '349 TL’den');
     });
 

@@ -58,9 +58,7 @@ class VixRexQualityReport {
 class VixRexGuidanceService {
   // ── Kalite Kontrol Listesi ───────────────────────────────────────────────
 
-  static List<VixRexQualityItem> qualityItems(
-    VixRexProfileSnapshot? snapshot,
-  ) {
+  static List<VixRexQualityItem> qualityItems(VixRexProfileSnapshot? snapshot) {
     return [
       VixRexQualityItem(
         id: 'cover',
@@ -111,13 +109,14 @@ class VixRexGuidanceService {
     required bool hasShared,
   }) {
     final items = qualityItems(snapshot);
-    final rawScore = items.where((i) => i.completed).fold(0, (s, i) => s + i.points);
+    final rawScore = items
+        .where((i) => i.completed)
+        .fold(0, (s, i) => s + i.points);
     final maxScore = maxQualityScore();
 
     /// Normalize: raw 0-50 → 0-100 ölçek
-    final normalizedScore = maxScore > 0
-        ? ((rawScore / maxScore) * 100).round().clamp(0, 100)
-        : 0;
+    final normalizedScore =
+        maxScore > 0 ? ((rawScore / maxScore) * 100).round().clamp(0, 100) : 0;
 
     final next = items.firstWhere(
       (i) => !i.completed,
@@ -142,7 +141,8 @@ class VixRexGuidanceService {
         id: 'welcome',
         phase: VixRexJourneyPhase.setup,
         title: 'Vitrininizi Oluşturun',
-        description: 'Vixrex ile dijital vitrininizi oluşturmak için ilk adımı atın.',
+        description:
+            'Vixrex ile dijital vitrininizi oluşturmak için ilk adımı atın.',
         buttonLabel: 'Başla',
         action: VixRexAction.openVitrim,
       );
@@ -158,7 +158,8 @@ class VixRexGuidanceService {
         id: 'publish',
         phase: VixRexJourneyPhase.publish,
         title: 'Vitrininizi Yayınlayın',
-        description: 'Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz.',
+        description:
+            'Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz.',
         buttonLabel: 'Yayınla',
         action: VixRexAction.openVitrim,
       );
@@ -192,7 +193,8 @@ class VixRexGuidanceService {
       id: 'all_done',
       phase: VixRexJourneyPhase.improve,
       title: 'Tebrikler!',
-      description: 'Vitrininiz harika görünüyor. Daha fazla özellik için bize ulaşabilirsiniz.',
+      description:
+          'Vitrininiz harika görünüyor. Daha fazla özellik için bize ulaşabilirsiniz.',
       buttonLabel: 'Vitrinime Git',
       action: VixRexAction.openVitrim,
     );
@@ -217,9 +219,7 @@ class VixRexGuidanceService {
     return _setupRecommendationFor(next);
   }
 
-  static VixRexRecommendation _setupRecommendationFor(
-    VixRexNextStep next,
-  ) {
+  static VixRexRecommendation _setupRecommendationFor(VixRexNextStep next) {
     return switch (next) {
       // Kurulum CTA'ları form dump etmez → Vixrex sekmesi (gömülü onboarding).
       VixRexNextStep.name => const VixRexRecommendation(
@@ -314,8 +314,7 @@ class VixRexGuidanceService {
           id: 'improve_gallery',
           phase: VixRexJourneyPhase.improve,
           title: 'Galeri görselleri ekleyin',
-          description:
-              'Ürün veya hizmet fotoğraflarınızı galeriye ekleyin.',
+          description: 'Ürün veya hizmet fotoğraflarınızı galeriye ekleyin.',
           buttonLabel: 'Galeriye Git',
           action: VixRexAction.scrollToGallery,
         ),
@@ -328,8 +327,7 @@ class VixRexGuidanceService {
           id: 'improve_desc',
           phase: VixRexJourneyPhase.improve,
           title: 'İşletme açıklaması ekleyin',
-          description:
-              'İşletmenizi tanıtan kısa bir açıklama ekleyin.',
+          description: 'İşletmenizi tanıtan kısa bir açıklama ekleyin.',
           buttonLabel: 'Açıklamaya Git',
           action: VixRexAction.scrollToDesc,
         ),
@@ -357,8 +355,7 @@ class VixRexGuidanceService {
         id: 'improve_booking',
         phase: VixRexJourneyPhase.improve,
         title: 'Randevu sistemi kurun',
-        description:
-            'Müşterileriniz online randevu alsın — 7/24 açık kalın.',
+        description: 'Müşterileriniz online randevu alsın — 7/24 açık kalın.',
         buttonLabel: 'Randevu ayarları',
         action: VixRexAction.scrollToCategory,
       ),

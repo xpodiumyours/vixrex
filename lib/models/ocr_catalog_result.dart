@@ -15,10 +15,10 @@ class OcrCatalogResult {
   }) : analyzedAt = analyzedAt ?? DateTime.now();
 
   OcrCatalogResult.empty()
-      : rawText = '',
-        products = const [],
-        confidence = 0.0,
-        analyzedAt = DateTime.now();
+    : rawText = '',
+      products = const [],
+      confidence = 0.0,
+      analyzedAt = DateTime.now();
 
   bool get isEmpty => products.isEmpty;
   bool get isNotEmpty => !isEmpty;

@@ -32,10 +32,11 @@ class ExploreRepository {
         final List<dynamic> rawList = response as List<dynamic>;
         final stores = rawList.map((json) => StoreData.fromJson(json)).toList();
 
-        final storeIds = stores
-            .map((s) => s.id?.trim() ?? '')
-            .where((id) => id.isNotEmpty)
-            .toList();
+        final storeIds =
+            stores
+                .map((s) => s.id?.trim() ?? '')
+                .where((id) => id.isNotEmpty)
+                .toList();
 
         if (storeIds.isNotEmpty) {
           final productsResponse = await _client
@@ -81,11 +82,12 @@ class ExploreRepository {
         final trimmed = slug.trim();
         if (trimmed.isEmpty) return null;
 
-        final response = await _client
-            .from('stores')
-            .select(StoreSafeSelect.columns)
-            .eq('slug', trimmed)
-            .maybeSingle();
+        final response =
+            await _client
+                .from('stores')
+                .select(StoreSafeSelect.columns)
+                .eq('slug', trimmed)
+                .maybeSingle();
 
         if (response == null) return null;
         final store = StoreData.fromJson(response);
@@ -103,10 +105,11 @@ class ExploreRepository {
               .order('sort_order');
 
           final List<dynamic> rawProducts = productsResponse as List<dynamic>;
-          final products = rawProducts
-              .whereType<Map>()
-              .map((m) => Product.fromJson(Map<String, dynamic>.from(m)))
-              .toList();
+          final products =
+              rawProducts
+                  .whereType<Map>()
+                  .map((m) => Product.fromJson(Map<String, dynamic>.from(m)))
+                  .toList();
           store.products = products;
         }
 

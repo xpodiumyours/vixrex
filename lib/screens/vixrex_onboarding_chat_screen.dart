@@ -640,8 +640,7 @@ class _VixRexOnboardingChatScreenState
           ),
           TextButton(
             onPressed:
-                widget.onClose ??
-                () => AppRouter.navigateToLanding(context),
+                widget.onClose ?? () => AppRouter.navigateToLanding(context),
             child: const Text(
               'Kapat',
               style: TextStyle(color: AppColors.mutedText),
@@ -702,7 +701,11 @@ class _VixRexOnboardingChatScreenState
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.auto_awesome, size: 14, color: Colors.white),
+                          Icon(
+                            Icons.auto_awesome,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                           SizedBox(width: 6),
                           Text(
                             'Evet, Oluşturalım',
@@ -736,7 +739,11 @@ class _VixRexOnboardingChatScreenState
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.visibility_outlined, size: 14, color: AppColors.mutedText),
+                        Icon(
+                          Icons.visibility_outlined,
+                          size: 14,
+                          color: AppColors.mutedText,
+                        ),
                         SizedBox(width: 6),
                         Text(
                           'Bakınıyorum',
@@ -786,18 +793,18 @@ class _VixRexOnboardingChatScreenState
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 272),
               child: ShaderMask(
-                shaderCallback: (rect) => const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.white, Colors.white, Colors.transparent],
-                  stops: [0.0, 0.88, 1.0],
-                ).createShader(rect),
+                shaderCallback:
+                    (rect) => const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.white, Colors.white, Colors.transparent],
+                      stops: [0.0, 0.88, 1.0],
+                    ).createShader(rect),
                 blendMode: BlendMode.dstIn,
                 child: GridView.builder(
                   padding: const EdgeInsets.only(bottom: 12),
                   itemCount: BusinessCategoryConfig.categories.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
@@ -805,12 +812,10 @@ class _VixRexOnboardingChatScreenState
                     childAspectRatio: 2.35,
                   ),
                   itemBuilder: (context, index) {
-                    final kategori =
-                        BusinessCategoryConfig.categories[index];
+                    final kategori = BusinessCategoryConfig.categories[index];
                     return InkWell(
-                      onTap: _busy
-                          ? null
-                          : () => _selectCategory(kategori.label),
+                      onTap:
+                          _busy ? null : () => _selectCategory(kategori.label),
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -981,7 +986,6 @@ class _VixRexOnboardingChatScreenState
       child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
     );
   }
-
 }
 
 class _ChatLine {

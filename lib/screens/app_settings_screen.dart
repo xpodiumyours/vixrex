@@ -76,9 +76,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
       if (!mounted) return;
       setState(() => _bookingPushEnabled = !value);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tercih kaydedilemedi. Tekrar deneyin.'),
-        ),
+        const SnackBar(content: Text('Tercih kaydedilemedi. Tekrar deneyin.')),
       );
     }
   }
@@ -93,9 +91,9 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
         AppRouter.navigateToLanding(context);
       },
       failure: (f) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(f.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(f.message)));
       },
     );
   }
@@ -161,15 +159,15 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
 
     result.when(
       success: (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hesabınız silindi.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Hesabınız silindi.')));
         AppRouter.navigateToLanding(context);
       },
       failure: (f) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(f.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(f.message)));
       },
     );
   }
@@ -181,9 +179,9 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
 
     if (result.isFailure) {
       setState(() => _exportingData = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.failure!.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.failure!.message)));
       return;
     }
 
@@ -243,172 +241,177 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.darkText),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-              children: [
-                _sectionTitle('Bildirimler'),
-                const SizedBox(height: 8),
-                if (_showBookingPushSetting) ...[
+      body:
+          _loading
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                children: [
+                  _sectionTitle('Bildirimler'),
+                  const SizedBox(height: 8),
+                  if (_showBookingPushSetting) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: SwitchListTile(
+                        value: _bookingPushEnabled,
+                        onChanged: _setBookingPush,
+                        title: const Text(
+                          'Randevu bildirimleri',
+                          style: TextStyle(
+                            color: AppColors.darkText,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Randevu onay, red ve hatırlatma push bildirimleri',
+                          style: TextStyle(
+                            color: AppColors.mutedText,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        activeThumbColor: Colors.black,
+                        activeTrackColor: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  _linkTile(
+                    'Bildirim geçmişi',
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationsScreen(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _sectionTitle('Hesap'),
+                  const SizedBox(height: 8),
                   Container(
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.border),
                     ),
-                    child: SwitchListTile(
-                      value: _bookingPushEnabled,
-                      onChanged: _setBookingPush,
-                      title: const Text(
-                        'Randevu bildirimleri',
-                        style: TextStyle(
-                          color: AppColors.darkText,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          email == null || email.isEmpty
+                              ? 'Misafir oturum (giriş yapılmamış)'
+                              : email,
+                          style: const TextStyle(
+                            color: AppColors.darkText,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
-                      subtitle: const Text(
-                        'Randevu onay, red ve hatırlatma push bildirimleri',
-                        style: TextStyle(
-                          color: AppColors.mutedText,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      activeThumbColor: Colors.black,
-                      activeTrackColor: AppColors.primary,
+                        const SizedBox(height: 12),
+                        if (email != null && email.isNotEmpty) ...[
+                          OutlinedButton(
+                            onPressed:
+                                _signingOut ||
+                                        _deletingAccount ||
+                                        _exportingData
+                                    ? null
+                                    : _signOut,
+                            child:
+                                _signingOut
+                                    ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                    : const Text('Çıkış yap'),
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton(
+                            onPressed:
+                                _signingOut ||
+                                        _deletingAccount ||
+                                        _exportingData
+                                    ? null
+                                    : _exportMyData,
+                            child:
+                                _exportingData
+                                    ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                    : const Text('Verilerimi dışa aktar'),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed:
+                                _signingOut ||
+                                        _deletingAccount ||
+                                        _exportingData
+                                    ? null
+                                    : _confirmDeleteAccount,
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red.shade700,
+                            ),
+                            child:
+                                _deletingAccount
+                                    ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                    : const Text('Hesabı kalıcı sil'),
+                          ),
+                        ] else
+                          FilledButton(
+                            onPressed: () => AppRouter.navigateToAuth(context),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.black,
+                            ),
+                            child: const Text('Giriş yap'),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _sectionTitle('Yasal'),
+                  const SizedBox(height: 8),
+                  _linkTile(
+                    'Gizlilik politikası',
+                    () => AppRouter.navigateToLegal(
+                      context,
+                      LegalPageType.privacy,
                     ),
                   ),
                   const SizedBox(height: 8),
-                ],
-                _linkTile(
-                  'Bildirim geçmişi',
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationsScreen(),
+                  _linkTile(
+                    'Kullanım koşulları',
+                    () =>
+                        AppRouter.navigateToLegal(context, LegalPageType.terms),
+                  ),
+                  const SizedBox(height: 8),
+                  _linkTile(
+                    'Veri silme talebi',
+                    () => AppRouter.navigateToLegal(
+                      context,
+                      LegalPageType.dataDeletion,
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                _sectionTitle('Hesap'),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        email == null || email.isEmpty
-                            ? 'Misafir oturum (giriş yapılmamış)'
-                            : email,
-                        style: const TextStyle(
-                          color: AppColors.darkText,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      if (email != null && email.isNotEmpty) ...[
-                        OutlinedButton(
-                          onPressed: _signingOut ||
-                                  _deletingAccount ||
-                                  _exportingData
-                              ? null
-                              : _signOut,
-                          child: _signingOut
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Çıkış yap'),
-                        ),
-                        const SizedBox(height: 8),
-                        OutlinedButton(
-                          onPressed: _signingOut ||
-                                  _deletingAccount ||
-                                  _exportingData
-                              ? null
-                              : _exportMyData,
-                          child: _exportingData
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Verilerimi dışa aktar'),
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: _signingOut ||
-                                  _deletingAccount ||
-                                  _exportingData
-                              ? null
-                              : _confirmDeleteAccount,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red.shade700,
-                          ),
-                          child: _deletingAccount
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Hesabı kalıcı sil'),
-                        ),
-                      ] else
-                        FilledButton(
-                          onPressed: () => AppRouter.navigateToAuth(context),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.black,
-                          ),
-                          child: const Text('Giriş yap'),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _sectionTitle('Yasal'),
-                const SizedBox(height: 8),
-                _linkTile(
-                  'Gizlilik politikası',
-                  () => AppRouter.navigateToLegal(
-                    context,
-                    LegalPageType.privacy,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _linkTile(
-                  'Kullanım koşulları',
-                  () => AppRouter.navigateToLegal(
-                    context,
-                    LegalPageType.terms,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _linkTile(
-                  'Veri silme talebi',
-                  () => AppRouter.navigateToLegal(
-                    context,
-                    LegalPageType.dataDeletion,
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
     );
   }
 

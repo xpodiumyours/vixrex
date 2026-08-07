@@ -86,7 +86,8 @@ void main() {
       expect(
         chat,
         contains('ShaderMask'),
-        reason: 'Alttaki solma kaldırılmış; kategorilerin devamı olduğu '
+        reason:
+            'Alttaki solma kaldırılmış; kategorilerin devamı olduğu '
             'anlaşılmaz, esnaf 5 kategoriyi hiç göremez.',
       );
     });

@@ -220,26 +220,27 @@ class StoreEditorController extends ChangeNotifier
     _canliDinlemeyiDurdur();
 
     try {
-      _canliKanal = client
-          .channel('vitrin_$slug')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.update,
-            schema: 'public',
-            table: 'stores',
-            filter: PostgresChangeFilter(
-              type: PostgresChangeFilterType.eq,
-              column: 'slug',
-              value: slug,
-            ),
-            callback: (_) async {
-              // Satır değişti; hangi alan olduğuna bakmadan taze hâlini al.
-              // Zaman damgası karşılaştırması _pullFromCloudIfNewer içinde:
-              // uygulamada yapılıp henüz yayınlanmamış düzenleme ezilmez.
-              await _pullFromCloudIfNewer();
-              if (!_isDisposed) notifyListeners();
-            },
-          )
-          .subscribe();
+      _canliKanal =
+          client
+              .channel('vitrin_$slug')
+              .onPostgresChanges(
+                event: PostgresChangeEvent.update,
+                schema: 'public',
+                table: 'stores',
+                filter: PostgresChangeFilter(
+                  type: PostgresChangeFilterType.eq,
+                  column: 'slug',
+                  value: slug,
+                ),
+                callback: (_) async {
+                  // Satır değişti; hangi alan olduğuna bakmadan taze hâlini al.
+                  // Zaman damgası karşılaştırması _pullFromCloudIfNewer içinde:
+                  // uygulamada yapılıp henüz yayınlanmamış düzenleme ezilmez.
+                  await _pullFromCloudIfNewer();
+                  if (!_isDisposed) notifyListeners();
+                },
+              )
+              .subscribe();
     } catch (e) {
       // Canlı dinleme kurulmazsa uygulama çalışmaya devam eder; yalnız
       // açılıştaki senkronla yetinir. Çevrimdışı çalışabilmek esastır.
@@ -277,9 +278,8 @@ class StoreEditorController extends ChangeNotifier
               .maybeSingle();
       if (row == null) return;
 
-      final bulutZamani = DateTime.tryParse(
-        (row['updated_at'] as String?) ?? '',
-      )?.toUtc();
+      final bulutZamani =
+          DateTime.tryParse((row['updated_at'] as String?) ?? '')?.toUtc();
       if (bulutZamani == null) return;
 
       final yerelZamani = await storage.loadVitrinDataSavedAt();

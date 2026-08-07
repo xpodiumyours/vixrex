@@ -118,7 +118,8 @@ class AppointmentTrackerController extends ChangeNotifier {
     _errorMsg = null;
     notifyListeners();
 
-    final datePart = '${_newDate!.year}-${_newDate!.month.toString().padLeft(2, '0')}-${_newDate!.day.toString().padLeft(2, '0')}';
+    final datePart =
+        '${_newDate!.year}-${_newDate!.month.toString().padLeft(2, '0')}-${_newDate!.day.toString().padLeft(2, '0')}';
     final apptTime = DateTime.parse('$datePart $_newSlotTime:00');
 
     final result = await _bookingService.requestReschedule(

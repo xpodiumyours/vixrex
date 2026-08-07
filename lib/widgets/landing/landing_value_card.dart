@@ -72,54 +72,60 @@ class _LandingValueCardState extends State<LandingValueCard> {
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
         width: widget.isHorizontal ? 420 : 260,
-        transform: shouldLift
-            ? (Matrix4.identity()..translate(0.0, -6.0)..scale(1.01))
-            : Matrix4.identity(),
+        transform:
+            shouldLift
+                ? (Matrix4.identity()
+                  ..translate(0.0, -6.0)
+                  ..scale(1.01))
+                : Matrix4.identity(),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
-            color: _hovered
-                ? widget.color.withValues(alpha: 0.3)
-                : AppColors.border.withValues(alpha: 0.85),
+            color:
+                _hovered
+                    ? widget.color.withValues(alpha: 0.3)
+                    : AppColors.border.withValues(alpha: 0.85),
             width: 1.2,
           ),
-          boxShadow: _hovered
-              ? [
-                  BoxShadow(
-                    color: widget.color.withValues(alpha: 0.16),
-                    blurRadius: 30,
-                    offset: const Offset(0, 16),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 30,
-                    offset: const Offset(0, 18),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 24,
-                    offset: const Offset(0, 14),
-                  ),
-                ],
+          boxShadow:
+              _hovered
+                  ? [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.16),
+                      blurRadius: 30,
+                      offset: const Offset(0, 16),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 30,
+                      offset: const Offset(0, 18),
+                    ),
+                  ]
+                  : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 24,
+                      offset: const Offset(0, 14),
+                    ),
+                  ],
         ),
-        child: widget.isHorizontal
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  icon,
-                  const SizedBox(width: 15),
-                  Expanded(child: content),
-                ],
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [icon, const SizedBox(height: 18), content],
-              ),
+        child:
+            widget.isHorizontal
+                ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    icon,
+                    const SizedBox(width: 15),
+                    Expanded(child: content),
+                  ],
+                )
+                : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [icon, const SizedBox(height: 18), content],
+                ),
       ),
     );
   }

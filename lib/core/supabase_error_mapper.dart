@@ -32,7 +32,7 @@ class SupabaseErrorMapper {
         );
       }
 
-      if (searchableText.contains('privacy_notice_required') || 
+      if (searchableText.contains('privacy_notice_required') ||
           searchableText.contains('privacy_notice_version_invalid')) {
         return Failure(
           'Güncel Aydınlatma Metni hakkında bilgilendirildiğinizi onaylamalısınız.',
@@ -40,7 +40,7 @@ class SupabaseErrorMapper {
         );
       }
 
-      if (searchableText.contains('terms_acceptance_required') || 
+      if (searchableText.contains('terms_acceptance_required') ||
           searchableText.contains('terms_version_invalid')) {
         return Failure(
           'Güncel Kullanım Şartları’nı kabul etmelisiniz.',
@@ -48,7 +48,7 @@ class SupabaseErrorMapper {
         );
       }
 
-      if (searchableText.contains('publication_consent_required') || 
+      if (searchableText.contains('publication_consent_required') ||
           searchableText.contains('publication_consent_version_invalid')) {
         return Failure(
           'Vitrininizi yayınlamak için güncel açık rıza beyanını onaylamalısınız.',
@@ -56,7 +56,7 @@ class SupabaseErrorMapper {
         );
       }
 
-      if (searchableText.contains('update_store_with_token') || 
+      if (searchableText.contains('update_store_with_token') ||
           searchableText.contains('could not find the function')) {
         return Failure(
           'Güncelleme altyapısı Supabase tarafında henüz kurulmamış.',
@@ -65,7 +65,10 @@ class SupabaseErrorMapper {
       }
 
       // Postgres code match (23505 = unique_violation, e.g. duplicate slug or record)
-      if (code == '23505' || message.contains('duplicate key') || message.contains('already exists') || message.contains('stores_slug_key')) {
+      if (code == '23505' ||
+          message.contains('duplicate key') ||
+          message.contains('already exists') ||
+          message.contains('stores_slug_key')) {
         return Failure(
           'Bu isim veya slug zaten kullanımda. Lütfen başka bir ad belirleyin.',
           stackTrace: stackTrace,
@@ -73,7 +76,10 @@ class SupabaseErrorMapper {
       }
 
       // Postgres code match (42501 = insufficient_privilege, e.g. RLS failure)
-      if (code == '42501' || message.contains('row-level security') || message.contains('permission denied') || message.contains('violates row-level security')) {
+      if (code == '42501' ||
+          message.contains('row-level security') ||
+          message.contains('permission denied') ||
+          message.contains('violates row-level security')) {
         return Failure(
           'Vitrin güncelleme izni Supabase tarafında eksik görünüyor (Erişim reddedildi).',
           stackTrace: stackTrace,
@@ -104,10 +110,7 @@ class SupabaseErrorMapper {
     if (error is StorageException) {
       final message = error.message.toLowerCase();
       if (message.contains('object not found')) {
-        return Failure(
-          'Dosya bulunamadı.',
-          stackTrace: stackTrace,
-        );
+        return Failure('Dosya bulunamadı.', stackTrace: stackTrace);
       }
       if (message.contains('payload too large')) {
         return Failure(

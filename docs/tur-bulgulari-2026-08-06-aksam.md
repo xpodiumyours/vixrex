@@ -238,3 +238,42 @@ geri alınamaz; önce yedek alınmalı.
 
 **Ayrıca:** Deneme vitrinlerinin bir daha birikmemesi için yol lazım —
 ya kurulum sırasında işaretlensinler ya da düzenli temizlik.
+
+---
+
+## 15. Yazı tipi yüzeyler arasında tutarsız
+
+**Nerede:** Uygulama (Flutter) ve vitrin (Next.js)
+
+**Ne oluyor:**
+- Uygulama: `lib/main.dart:135` → `fontFamily: 'Helvetica'`. O yazı tipi
+  uygulamayla birlikte GELMİYOR; her cihaz kendi bulduğuna düşüyor
+  (Android'de Roboto, tarayıcıda Arial). Cihazdan cihaza değişiyor.
+- Vitrin: `Outfit` (gövde), `Instrument Serif` (başlık).
+
+İki yüzey iki ayrı marka gibi duruyor.
+
+**Casper (2026-08-07):** "landing ekranındaki Vixrex'in yazı tipi ve
+diğer ekranlardaki yazı tipi farklı... her ekranda aynı tarz yazı tipi
+olmalı."
+
+**Olması gereken:** Tek yazı tipi — `Outfit`. Müşterinin gördüğü yüzeyde
+zaten o var; kalite çıtası orası. Uygulamaya gömülür (pubspec'e eklenir),
+temada tanımlanır, ekranlar ondan miras alır. Ayrıca sözleşme testi:
+`fontFamily` tek bir yerde tanımlı olmalı, ekranlar kendi yazı tipini
+belirlememeli.
+
+---
+
+## 16. Asistanın yüzü ekrandan ekrana değişiyor
+
+**Nerede:** Kurulum sohbeti ve uygulama içi asistan
+
+**Ne oluyor:** Kurulum sohbetinde her cümlenin başında Vixrex maskotu
+duruyor; uygulama içindeki asistanda yok. Aynı asistan, iki farklı yüz.
+
+**Neden önemli:** 2026-08-06'da "tek asistan" kararı verildi ve dil
+birleştirildi ("sen" kipi). Görünüm birleştirilmedi — karar yarım kaldı.
+
+**Olması gereken:** Balon biçimi tek yerde tanımlansın; maskotun görünüp
+görünmeyeceği her ekranda ayrı ayrı değil, tek kuraldan gelsin.

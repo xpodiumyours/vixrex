@@ -80,7 +80,9 @@ class PublishedSummaryCard extends StatelessWidget {
                       color: AppColors.primary,
                       tooltip: 'Keşfet\'te Gör',
                       style: IconButton.styleFrom(
-                        backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                        backgroundColor: AppColors.primary.withValues(
+                          alpha: 0.12,
+                        ),
                         minimumSize: const Size(36, 36),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),

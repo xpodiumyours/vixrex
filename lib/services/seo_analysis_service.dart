@@ -2,10 +2,7 @@ class SeoAnalysisResult {
   final int score;
   final List<String> recommendations;
 
-  const SeoAnalysisResult({
-    required this.score,
-    required this.recommendations,
-  });
+  const SeoAnalysisResult({required this.score, required this.recommendations});
 }
 
 class SeoAnalysisService {
@@ -63,7 +60,8 @@ class SeoAnalysisService {
     }
 
     // 3. Word count checks (Max 20 pts)
-    final words = cleanContent.isEmpty ? 0 : cleanContent.split(RegExp(r'\s+')).length;
+    final words =
+        cleanContent.isEmpty ? 0 : cleanContent.split(RegExp(r'\s+')).length;
     if (words == 0) {
       recs.add("• İçerik metni yazın (En az 300 kelime)");
     } else if (words < 150) {

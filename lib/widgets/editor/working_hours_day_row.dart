@@ -33,7 +33,8 @@ class _WorkingHoursDayRowState extends State<WorkingHoursDayRow> {
       '6': 'Cumartesi',
       '7': 'Pazar',
     };
-    final dayHours = widget.bookingWorkingHours[widget.day] ??
+    final dayHours =
+        widget.bookingWorkingHours[widget.day] ??
         {'start': '09:00', 'end': '19:00', 'active': true};
     final isActive = dayHours['active'] ?? false;
 
@@ -68,12 +69,15 @@ class _WorkingHoursDayRowState extends State<WorkingHoursDayRow> {
             Expanded(
               child: DropdownButton<String>(
                 value: dayHours['start'] ?? '09:00',
-                items: ['07:00', '08:00', '08:30', '09:00', '09:30', '10:00'].map((String val) {
-                  return DropdownMenuItem<String>(
-                    value: val,
-                    child: Text(val, style: const TextStyle(fontSize: 11)),
-                  );
-                }).toList(),
+                items:
+                    ['07:00', '08:00', '08:30', '09:00', '09:30', '10:00'].map((
+                      String val,
+                    ) {
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(val, style: const TextStyle(fontSize: 11)),
+                      );
+                    }).toList(),
                 onChanged: (val) {
                   setState(() {
                     if (val != null) {
@@ -90,21 +94,22 @@ class _WorkingHoursDayRowState extends State<WorkingHoursDayRow> {
             Expanded(
               child: DropdownButton<String>(
                 value: dayHours['end'] ?? '19:00',
-                items: [
-                  '16:00',
-                  '17:00',
-                  '18:00',
-                  '19:00',
-                  '20:00',
-                  '21:00',
-                  '22:00',
-                  '23:00',
-                ].map((String val) {
-                  return DropdownMenuItem<String>(
-                    value: val,
-                    child: Text(val, style: const TextStyle(fontSize: 11)),
-                  );
-                }).toList(),
+                items:
+                    [
+                      '16:00',
+                      '17:00',
+                      '18:00',
+                      '19:00',
+                      '20:00',
+                      '21:00',
+                      '22:00',
+                      '23:00',
+                    ].map((String val) {
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(val, style: const TextStyle(fontSize: 11)),
+                      );
+                    }).toList(),
                 onChanged: (val) {
                   setState(() {
                     if (val != null) {

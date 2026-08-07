@@ -102,11 +102,7 @@ class StoreFaqItem {
   String question;
   String answer;
 
-  StoreFaqItem({
-    required this.id,
-    this.question = '',
-    this.answer = '',
-  });
+  StoreFaqItem({required this.id, this.question = '', this.answer = ''});
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -129,11 +125,7 @@ class StoreAboutValue {
   String title;
   String description;
 
-  StoreAboutValue({
-    required this.id,
-    this.title = '',
-    this.description = '',
-  });
+  StoreAboutValue({required this.id, this.title = '', this.description = ''});
 
   Map<String, dynamic> toJson() => {
     'id': id,

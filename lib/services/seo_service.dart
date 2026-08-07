@@ -102,7 +102,10 @@ class SeoService {
   }
 
   /// SEO Schema JSON-LD üreticisi
-  static Map<String, dynamic> buildStoreSchemas(StoreData store, {String? publicUrl}) {
+  static Map<String, dynamic> buildStoreSchemas(
+    StoreData store, {
+    String? publicUrl,
+  }) {
     final name = store.name.trim();
     final description = _effectiveDescription(store);
     final url = publicUrl?.trim() ?? '';
