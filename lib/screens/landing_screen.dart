@@ -16,6 +16,7 @@ import 'package:vixrex/widgets/landing/landing_template_catalog.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 
 class LandingScreen extends StatefulWidget {
@@ -282,8 +283,32 @@ class _LandingScreenState extends State<LandingScreen>
   Future<void> _loadSavedVitrinState() async {
     try {
       const storage = StoreLocalStorageService();
-      final data = await storage.loadVitrinData();
-      final publishedInfo = await storage.loadPublishedVitrinInfo();
+      var data = await storage.loadVitrinData();
+      var publishedInfo = await storage.loadPublishedVitrinInfo();
+
+      // HAYALET VİTRİN KONTROLÜ (2026-08-07, bulgu 17).
+      //
+      // Burası "vitrinin var mı" sorusunu yalnız tarayıcının hafızasına
+      // soruyordu. Orada isim yazıyorsa vitrin var sayılıyordu. Bulutta
+      // silinmiş ya da hiç oluşmamış bir vitrin uygulamada sonsuza kadar
+      // görünüyordu; esnaf "Kayıtlı Vitrinimi Düzenle" ile karşılanıyor
+      // ama ortada vitrin yoktu ve silinemiyordu da.
+      //
+      // Artık yerel kayıt bir yayın iddiasında bulunuyorsa buluta
+      // sorulur. ŞÜPHEDE HİÇBİR ŞEY SİLİNMEZ: bulut kesin olarak "yok"
+      // demedikçe (null = bağlantı yok / hata) yerel kayıt korunur.
+      final iddiaEdilenSlug = (publishedInfo?.slug ?? data?.slug ?? '').trim();
+      if (iddiaEdilenSlug.isNotEmpty) {
+        final varMi = await const StorePublishService().yayindaMi(
+          iddiaEdilenSlug,
+        );
+        if (varMi == false) {
+          await storage.clearVitrinData();
+          data = null;
+          publishedInfo = null;
+        }
+      }
+
       final hasSaved = data != null && data.name.trim().isNotEmpty;
       final snapshot =
           data == null ? null : VixRexProfileSnapshot.from(data, publishedInfo);
