@@ -183,7 +183,8 @@ class StoreData {
 
   Map<String, dynamic> toJson() => StoreDataDto.toJson(this);
 
-  factory StoreData.fromJson(Map<String, dynamic> json) => StoreDataDto.fromJson(json);
+  factory StoreData.fromJson(Map<String, dynamic> json) =>
+      StoreDataDto.fromJson(json);
 
   StoreData copyWith({
     String? name,
@@ -313,29 +314,36 @@ class StoreData {
       googleBusinessLink: googleBusinessLink ?? this.googleBusinessLink,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
-      locationAccuracyMeters: locationAccuracyMeters ?? this.locationAccuracyMeters,
+      locationAccuracyMeters:
+          locationAccuracyMeters ?? this.locationAccuracyMeters,
       locationConsentAt: locationConsentAt ?? this.locationConsentAt,
       locationSource: locationSource ?? this.locationSource,
       bookingSettings: bookingSettings ?? this.bookingSettings,
-      privacyNoticeAcknowledged: privacyNoticeAcknowledged ?? this.privacyNoticeAcknowledged,
-      privacyNoticeAcknowledgedAt: privacyNoticeAcknowledgedAt ?? this.privacyNoticeAcknowledgedAt,
+      privacyNoticeAcknowledged:
+          privacyNoticeAcknowledged ?? this.privacyNoticeAcknowledged,
+      privacyNoticeAcknowledgedAt:
+          privacyNoticeAcknowledgedAt ?? this.privacyNoticeAcknowledgedAt,
       privacyNoticeVersion: privacyNoticeVersion ?? this.privacyNoticeVersion,
       privacyNoticeHash: privacyNoticeHash ?? this.privacyNoticeHash,
       termsAccepted: termsAccepted ?? this.termsAccepted,
       termsAcceptedAt: termsAcceptedAt ?? this.termsAcceptedAt,
       termsVersion: termsVersion ?? this.termsVersion,
       termsHash: termsHash ?? this.termsHash,
-      publicationConsentAccepted: publicationConsentAccepted ?? this.publicationConsentAccepted,
-      publicationConsentAcceptedAt: publicationConsentAcceptedAt ?? this.publicationConsentAcceptedAt,
-      publicationConsentWithdrawnAt: publicationConsentWithdrawnAt ?? this.publicationConsentWithdrawnAt,
-      publicationConsentVersion: publicationConsentVersion ?? this.publicationConsentVersion,
-      publicationConsentHash: publicationConsentHash ?? this.publicationConsentHash,
+      publicationConsentAccepted:
+          publicationConsentAccepted ?? this.publicationConsentAccepted,
+      publicationConsentAcceptedAt:
+          publicationConsentAcceptedAt ?? this.publicationConsentAcceptedAt,
+      publicationConsentWithdrawnAt:
+          publicationConsentWithdrawnAt ?? this.publicationConsentWithdrawnAt,
+      publicationConsentVersion:
+          publicationConsentVersion ?? this.publicationConsentVersion,
+      publicationConsentHash:
+          publicationConsentHash ?? this.publicationConsentHash,
     );
   }
 
   /// Keşfet'te seçilip kullanıcıya kopyalanabilen hazır vitrin.
-  bool get isRentalTemplate =>
-      storefrontKind == 'rental_template' || isDemo;
+  bool get isRentalTemplate => storefrontKind == 'rental_template' || isDemo;
 
   List<StoreGalleryItem> get displayGalleryItems {
     final validItems =

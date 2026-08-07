@@ -87,8 +87,9 @@ class VixRexBotMessage extends StatelessWidget {
                   final isCursor = showCursor && lines.last == line;
                   final inlineUrl = _urlPattern.firstMatch(line);
                   if (inlineUrl != null) {
-                    final url =
-                        inlineUrl.group(0)!.replaceAll(RegExp(r'[.,)>]+$'), '');
+                    final url = inlineUrl
+                        .group(0)!
+                        .replaceAll(RegExp(r'[.,)>]+$'), '');
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 2),
                       child: Wrap(
@@ -183,7 +184,10 @@ class _LinkChip extends StatelessWidget {
               onTap: () => _openUrl(url),
               borderRadius: BorderRadius.circular(10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 9,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
@@ -209,9 +213,9 @@ class _LinkChip extends StatelessWidget {
           onPressed: () async {
             await Clipboard.setData(ClipboardData(text: url));
             if (!context.mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Link kopyalandı.')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Link kopyalandı.')));
           },
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.darkText,

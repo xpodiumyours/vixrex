@@ -31,17 +31,11 @@ void main() {
 
   group('AddressValidator — kabul edilenler', () {
     test('kapı numaralı normal adres kabul edilir', () {
-      expect(
-        AddressValidator.gecerliMi('Atatürk Cad. No:24'),
-        isTrue,
-      );
+      expect(AddressValidator.gecerliMi('Atatürk Cad. No:24'), isTrue);
     });
 
     test('mahalle ve sokak yazılı adres kabul edilir', () {
-      expect(
-        AddressValidator.gecerliMi('Yeni Mahalle Gül Sokak'),
-        isTrue,
-      );
+      expect(AddressValidator.gecerliMi('Yeni Mahalle Gül Sokak'), isTrue);
     });
 
     test('sanayi ve çarşı adresleri kabul edilir', () {

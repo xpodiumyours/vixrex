@@ -233,7 +233,10 @@ void main() {
 
     expect(result.isSuccess, isTrue);
     expect(repo.deletedIds, isEmpty);
-    expect(repo.remote.any((p) => p.id == '22222222-2222-2222-2222-222222222222'), isTrue);
+    expect(
+      repo.remote.any((p) => p.id == '22222222-2222-2222-2222-222222222222'),
+      isTrue,
+    );
     expect(repo.createdNames, ['Yeni']);
   });
 
@@ -285,7 +288,10 @@ void main() {
         kategori: 'Diğer',
         status: 'Açık',
         products: [
-          Product(id: '22222222-2222-2222-2222-222222222222', name: 'Silinecek'),
+          Product(
+            id: '22222222-2222-2222-2222-222222222222',
+            name: 'Silinecek',
+          ),
           Product(id: '33333333-3333-3333-3333-333333333333', name: 'Kalacak'),
         ],
       ),

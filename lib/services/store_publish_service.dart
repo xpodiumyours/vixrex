@@ -235,10 +235,12 @@ class StorePublishService {
 
   bool _isAlreadyPublished(PostgrestException error) {
     final searchableText =
-        [error.message, error.code, error.details?.toString(), error.hint]
-            .whereType<String>()
-            .join(' ')
-            .toLowerCase();
+        [
+          error.message,
+          error.code,
+          error.details?.toString(),
+          error.hint,
+        ].whereType<String>().join(' ').toLowerCase();
     return searchableText.contains('store_already_published');
   }
 

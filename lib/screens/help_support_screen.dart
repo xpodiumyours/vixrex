@@ -11,28 +11,23 @@ class HelpSupportScreen extends StatelessWidget {
   static const _faqs = <({String q, String a})>[
     (
       q: 'Vitrin nasıl yayınlanır?',
-      a:
-          'Vitrinim sekmesinde işletme bilgilerinizi doldurun, yasal onayları işaretleyin ve Yayınla butonuna basın. Yayın sonrası size özel web linki oluşur.',
+      a: 'Vitrinim sekmesinde işletme bilgilerinizi doldurun, yasal onayları işaretleyin ve Yayınla butonuna basın. Yayın sonrası size özel web linki oluşur.',
     ),
     (
       q: 'Ürünleri nasıl eklerim?',
-      a:
-          'Vitrinim içinde Ürün Yönetimi’nden tek tek ekleyebilir, fotoğraftan OCR ile çıkarabilir veya CSV/Excel ile toplu yükleyebilirsiniz.',
+      a: 'Vitrinim içinde Ürün Yönetimi’nden tek tek ekleyebilir, fotoğraftan OCR ile çıkarabilir veya CSV/Excel ile toplu yükleyebilirsiniz.',
     ),
     (
       q: 'Müşteriler vitrinimi nasıl görür?',
-      a:
-          'Yayınlanan vitrin herkese açık web linki ve QR kod ile paylaşılır. Keşfet sekmesinde yayınlı vitrinler listelenir.',
+      a: 'Yayınlanan vitrin herkese açık web linki ve QR kod ile paylaşılır. Keşfet sekmesinde yayınlı vitrinler listelenir.',
     ),
     (
       q: 'Randevu sistemi nasıl çalışır?',
-      a:
-          'Kuaför ve benzeri kategorilerde randevu ayarlarını açabilirsiniz. Gelen talepleri Randevu Yönetimi’nden onaylayıp WhatsApp ile bilgilendirebilirsiniz.',
+      a: 'Kuaför ve benzeri kategorilerde randevu ayarlarını açabilirsiniz. Gelen talepleri Randevu Yönetimi’nden onaylayıp WhatsApp ile bilgilendirebilirsiniz.',
     ),
     (
       q: 'Verilerimi nasıl silebilirim?',
-      a:
-          'Gizlilik sayfasındaki veri silme talebi veya hesap silme işlemi ile kişisel verilerinizin silinmesini talep edebilirsiniz.',
+      a: 'Gizlilik sayfasındaki veri silme talebi veya hesap silme işlemi ile kişisel verilerinizin silinmesini talep edebilirsiniz.',
     ),
   ];
 
@@ -45,14 +40,10 @@ class HelpSupportScreen extends StatelessWidget {
     try {
       final launched = await launchUrl(uri);
       if (!launched && context.mounted) {
-        await Clipboard.setData(
-          ClipboardData(text: LegalConfig.privacyEmail),
-        );
+        await Clipboard.setData(ClipboardData(text: LegalConfig.privacyEmail));
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('E-posta adresi panoya kopyalandı.'),
-          ),
+          const SnackBar(content: Text('E-posta adresi panoya kopyalandı.')),
         );
       }
     } catch (_) {

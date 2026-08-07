@@ -27,7 +27,8 @@ class StoreDataDto {
       'isEsnafMode': data.isEsnafMode,
       'logoUrl': data.logoUrl,
       'products': data.products.map((e) => e.toJson()).toList(),
-      'productCategories': data.productCategories.map((e) => e.toJson()).toList(),
+      'productCategories':
+          data.productCategories.map((e) => e.toJson()).toList(),
       'marketplaceLinks': data.marketplaceLinks.map((e) => e.toJson()).toList(),
       'corporateBio': data.corporateBio,
       'aboutKicker': data.aboutKicker,
@@ -98,7 +99,9 @@ class StoreDataDto {
       json['galleryItems'] ?? json['gallery_items'],
     );
     final parsedOfferings = _parseOfferings(json['offerings']);
-    final parsedFaqItems = _parseFaqItems(json['faqItems'] ?? json['faq_items']);
+    final parsedFaqItems = _parseFaqItems(
+      json['faqItems'] ?? json['faq_items'],
+    );
     final parsedAboutValues = _parseAboutValues(
       json['aboutValues'] ?? json['about_values'],
     );
@@ -346,9 +349,8 @@ class StoreDataDto {
             ? rawItems
                 .whereType<Map>()
                 .map(
-                  (item) => ProductCategory.fromJson(
-                    Map<String, dynamic>.from(item),
-                  ),
+                  (item) =>
+                      ProductCategory.fromJson(Map<String, dynamic>.from(item)),
                 )
                 .where(
                   (category) =>

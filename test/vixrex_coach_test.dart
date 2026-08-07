@@ -44,15 +44,18 @@ void main() {
   });
 
   group('VixRexGuidanceService setup', () {
-    test('yayınlanmamış kurulum CTA onboarding kapısına gider (openVitrim)', () {
-      final snapshot = VixRexProfileSnapshot.from(StoreData(), null);
-      final rec = VixRexGuidanceService.recommendationFor(
-        snapshot: snapshot,
-        hasShared: false,
-      );
-      expect(rec.id, 'setup_name');
-      expect(rec.action, VixRexAction.openVitrim);
-    });
+    test(
+      'yayınlanmamış kurulum CTA onboarding kapısına gider (openVitrim)',
+      () {
+        final snapshot = VixRexProfileSnapshot.from(StoreData(), null);
+        final rec = VixRexGuidanceService.recommendationFor(
+          snapshot: snapshot,
+          hasShared: false,
+        );
+        expect(rec.id, 'setup_name');
+        expect(rec.action, VixRexAction.openVitrim);
+      },
+    );
 
     test('yayınlı ama kategorisi eksikse şablon picker önerisi', () {
       final store = StoreData().copyWith(
@@ -88,7 +91,7 @@ void main() {
     test('Bos magaza icin name beklenmeli', () {
       final store = StoreData();
       final snapshot = VixRexProfileSnapshot.from(store, null);
-      
+
       expect(snapshot.nameCompleted, isFalse);
       expect(snapshot.nextMissingField, VixRexNextStep.name);
     });

@@ -70,9 +70,10 @@ class PublicLinkCard extends StatelessWidget {
           decoration: InputDecoration(
             prefixIcon: IconButton(
               tooltip: isLive ? 'Canlı vitrin linkini aç' : 'Önizlemeyi aç',
-              onPressed: hasLink
-                  ? (isLive ? (onOpenLiveLink ?? onPreview) : onPreview)
-                  : null,
+              onPressed:
+                  hasLink
+                      ? (isLive ? (onOpenLiveLink ?? onPreview) : onPreview)
+                      : null,
               icon: Container(
                 width: 32,
                 height: 32,
@@ -109,23 +110,24 @@ class PublicLinkCard extends StatelessWidget {
               vertical: 14,
             ),
           ),
-          child: hasLink
-              ? SelectableText(
-                  trimmedLink,
-                  style: const TextStyle(
-                    color: AppColors.darkText,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
+          child:
+              hasLink
+                  ? SelectableText(
+                    trimmedLink,
+                    style: const TextStyle(
+                      color: AppColors.darkText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  )
+                  : Text(
+                    'İşletme adı yazınca oluşur.',
+                    style: TextStyle(
+                      color: AppColors.mutedText.withValues(alpha: 0.62),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                )
-              : Text(
-                  'İşletme adı yazınca oluşur.',
-                  style: TextStyle(
-                    color: AppColors.mutedText.withValues(alpha: 0.62),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
         ),
         if (hasLink && !isLive) ...[
           const SizedBox(height: 6),
@@ -200,9 +202,10 @@ class _ActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = emphasized
-        ? AppColors.primary.withValues(alpha: 0.18)
-        : AppColors.inputBg;
+    final bg =
+        emphasized
+            ? AppColors.primary.withValues(alpha: 0.18)
+            : AppColors.inputBg;
     final fg = emphasized ? AppColors.primary : AppColors.darkText;
 
     return Material(

@@ -24,11 +24,12 @@ class XmlUploadDialog extends StatefulWidget {
   }) {
     return showDialog(
       context: context,
-      builder: (_) => XmlUploadDialog(
-        storeId: storeId,
-        editToken: editToken,
-        onUploaded: onUploaded,
-      ),
+      builder:
+          (_) => XmlUploadDialog(
+            storeId: storeId,
+            editToken: editToken,
+            onUploaded: onUploaded,
+          ),
     );
   }
 
@@ -121,9 +122,10 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _result!.isSuccess
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.red.withOpacity(0.1),
+                  color:
+                      _result!.isSuccess
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -147,16 +149,15 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _upload,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Yükle'),
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+          child:
+              _isLoading
+                  ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Text('Yükle'),
         ),
       ],
     );

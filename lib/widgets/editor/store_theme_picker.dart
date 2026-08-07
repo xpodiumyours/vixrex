@@ -18,10 +18,7 @@ class StoreThemePicker extends StatelessWidget {
   static const Color cardBorder = AppColors.cardBorderDark;
   static const Color inputBg = AppColors.inputBg;
 
-  static const List<String> themes = [
-    'Premium',
-    'Sade',
-  ];
+  static const List<String> themes = ['Premium', 'Sade'];
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +37,11 @@ class StoreThemePicker extends StatelessWidget {
         DropdownButtonFormField<String>(
           value: themes.contains(selectedTheme) ? selectedTheme : themes.first,
           decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.palette_rounded, color: mutedText, size: 18),
+            prefixIcon: const Icon(
+              Icons.palette_rounded,
+              color: mutedText,
+              size: 18,
+            ),
             filled: true,
             fillColor: inputBg,
             contentPadding: const EdgeInsets.symmetric(
@@ -56,19 +57,20 @@ class StoreThemePicker extends StatelessWidget {
               borderSide: const BorderSide(color: cardBorder),
             ),
           ),
-          items: themes.map((theme) {
-            return DropdownMenuItem<String>(
-              value: theme,
-              child: Text(
-                theme,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: darkText,
-                ),
-              ),
-            );
-          }).toList(),
+          items:
+              themes.map((theme) {
+                return DropdownMenuItem<String>(
+                  value: theme,
+                  child: Text(
+                    theme,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: darkText,
+                    ),
+                  ),
+                );
+              }).toList(),
           onChanged: (val) {
             if (val != null) {
               onThemeChanged(val);

@@ -29,9 +29,8 @@ class NotificationInboxService {
   Future<void> markRead(String id) async {
     final prefs = await SharedPreferences.getInstance();
     final items = InAppNotification.decodeList(prefs.getString(_inboxKey));
-    final updated = items
-        .map((e) => e.id == id ? e.copyWith(read: true) : e)
-        .toList();
+    final updated =
+        items.map((e) => e.id == id ? e.copyWith(read: true) : e).toList();
     await prefs.setString(_inboxKey, InAppNotification.encodeList(updated));
   }
 
@@ -50,9 +49,6 @@ class NotificationInboxService {
 
   Future<void> setSeenPendingIds(String storeSlug, Set<String> ids) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-      '$_seenPendingKeyPrefix$storeSlug',
-      ids.toList(),
-    );
+    await prefs.setStringList('$_seenPendingKeyPrefix$storeSlug', ids.toList());
   }
 }

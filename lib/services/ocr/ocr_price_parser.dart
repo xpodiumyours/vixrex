@@ -52,10 +52,16 @@ class OcrPriceParser {
       // Header/Footer satırlarını atla
       if (_isHeaderOrFooter(lowerLine)) {
         // Ama toplam satırlarını yakala
-        if (lowerLine.contains('toplam') && (lowerLine.contains('tl') || lowerLine.contains('₺') || lowerLine.contains('kuruş') || lowerLine.contains('kr'))) {
+        if (lowerLine.contains('toplam') &&
+            (lowerLine.contains('tl') ||
+                lowerLine.contains('₺') ||
+                lowerLine.contains('kuruş') ||
+                lowerLine.contains('kr'))) {
           final price = _extractSinglePrice(line, lineIndex);
           if (price != null) {
-            prices.add(price.copyWith(confidence: _priceConfidence(price.rawText, line)));
+            prices.add(
+              price.copyWith(confidence: _priceConfidence(price.rawText, line)),
+            );
           }
         }
         continue;
@@ -64,7 +70,11 @@ class OcrPriceParser {
       // Strateji 2: Yapısal pattern kontrolü
       final structuralPrice = _extractStructuralPrice(line, lineIndex);
       if (structuralPrice != null) {
-        prices.add(structuralPrice.copyWith(confidence: _priceConfidence(structuralPrice.rawText, line)));
+        prices.add(
+          structuralPrice.copyWith(
+            confidence: _priceConfidence(structuralPrice.rawText, line),
+          ),
+        );
         continue;
       }
 
@@ -79,14 +89,21 @@ class OcrPriceParser {
 
         if (!_looksLikePrice(rawPrice, line)) continue;
 
-        prices.add(OcrPrice(
-          rawText: rawPrice,
-          amount: amount.toDouble(),
-          lineNumber: lineIndex,
-          blockIndex: 0,
-          confidence: _priceConfidence(rawPrice, line),
-          boundingBox: Rect.fromLTWH(0, lineIndex * 30.0, line.length * 8.0, 20),
-        ));
+        prices.add(
+          OcrPrice(
+            rawText: rawPrice,
+            amount: amount.toDouble(),
+            lineNumber: lineIndex,
+            blockIndex: 0,
+            confidence: _priceConfidence(rawPrice, line),
+            boundingBox: Rect.fromLTWH(
+              0,
+              lineIndex * 30.0,
+              line.length * 8.0,
+              20,
+            ),
+          ),
+        );
         break; // Satırdaki ilk geçerli fiyatı al
       }
     }
@@ -108,7 +125,12 @@ class OcrPriceParser {
           amount: unitPrice.toDouble(),
           lineNumber: lineIndex,
           blockIndex: 0,
-          boundingBox: Rect.fromLTWH(0, lineIndex * 30.0, line.length * 8.0, 20),
+          boundingBox: Rect.fromLTWH(
+            0,
+            lineIndex * 30.0,
+            line.length * 8.0,
+            20,
+          ),
         );
       }
     }
@@ -123,7 +145,12 @@ class OcrPriceParser {
           amount: unitPrice.toDouble(),
           lineNumber: lineIndex,
           blockIndex: 0,
-          boundingBox: Rect.fromLTWH(0, lineIndex * 30.0, line.length * 8.0, 20),
+          boundingBox: Rect.fromLTWH(
+            0,
+            lineIndex * 30.0,
+            line.length * 8.0,
+            20,
+          ),
         );
       }
     }
@@ -141,7 +168,11 @@ class OcrPriceParser {
     final lower = fullLine.toLowerCase();
 
     // Para birimi varsa +0.3
-    if (lower.contains('tl') || lower.contains('₺') || lower.contains('try') || lower.contains('kr') || lower.contains('kuruş')) {
+    if (lower.contains('tl') ||
+        lower.contains('₺') ||
+        lower.contains('try') ||
+        lower.contains('kr') ||
+        lower.contains('kuruş')) {
       confidence += 0.3;
     }
 
@@ -151,12 +182,18 @@ class OcrPriceParser {
     }
 
     // "TOPMAL", "GENEL TOPLAM" gibi ifadeler varsa bu bir fiyat
-    if (lower.contains('toplam') || lower.contains('genel') || lower.contains('tutar')) {
+    if (lower.contains('toplam') ||
+        lower.contains('genel') ||
+        lower.contains('tutar')) {
       confidence += 0.2;
     }
 
     // Sadece sayısal değer ve para birimi yoksa -0.2
-    if (!lower.contains('tl') && !lower.contains('₺') && !lower.contains('try') && !lower.contains('kr') && !lower.contains('kuruş')) {
+    if (!lower.contains('tl') &&
+        !lower.contains('₺') &&
+        !lower.contains('try') &&
+        !lower.contains('kr') &&
+        !lower.contains('kuruş')) {
       confidence -= 0.2;
     }
 
@@ -178,7 +215,12 @@ class OcrPriceParser {
           amount: amount.toDouble(),
           lineNumber: lineNumber,
           blockIndex: 0,
-          boundingBox: Rect.fromLTWH(0, lineNumber * 30.0, rawPrice.length * 8.0, 20),
+          boundingBox: Rect.fromLTWH(
+            0,
+            lineNumber * 30.0,
+            rawPrice.length * 8.0,
+            20,
+          ),
         );
       }
     }
@@ -188,19 +230,34 @@ class OcrPriceParser {
   /// Header/footer satırı mı kontrol et.
   bool _isHeaderOrFooter(String lowerLine) {
     const headerFooterKeywords = [
-      'tarih', 'saat :', 'fiş no', 'sayfa', 'model stok',
-      'mağaza', 'firma', 'adres', 'telefon', 'vergi no',
-      'kasiyer', 'işlem no', 'pos', 'terminal',
+      'tarih',
+      'saat :',
+      'fiş no',
+      'sayfa',
+      'model stok',
+      'mağaza',
+      'firma',
+      'adres',
+      'telefon',
+      'vergi no',
+      'kasiyer',
+      'işlem no',
+      'pos',
+      'terminal',
     ];
     return headerFooterKeywords.any((kw) => lowerLine.contains(kw));
   }
 
   /// Fiyat string'inden sayısal değeri çıkar.
   num? parseAmount(String rawPrice) {
-    var normalized = rawPrice
-        .replaceAll(RegExp(r'sepette|tl|try|₺|\$|kr|kuruş', caseSensitive: false), '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    var normalized =
+        rawPrice
+            .replaceAll(
+              RegExp(r'sepette|tl|try|₺|\$|kr|kuruş', caseSensitive: false),
+              '',
+            )
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
 
     if (normalized.isEmpty) return null;
     normalized = normalized.replaceAll(' ', '');
@@ -226,7 +283,9 @@ class OcrPriceParser {
         final fractionalLength = parts.last.length;
         if (fractionalLength == 3) {
           normalized = normalized.replaceAll(separator, '');
-        } else if (fractionalLength == 1 || fractionalLength == 2 || fractionalLength == 4) {
+        } else if (fractionalLength == 1 ||
+            fractionalLength == 2 ||
+            fractionalLength == 4) {
           if (separator == ',') {
             normalized = normalized.replaceAll(',', '.');
           }
@@ -247,13 +306,19 @@ class OcrPriceParser {
     final normalizedLine = fullLine.toLowerCase();
 
     // 1. Saat formatı
-    if (RegExp(r'\b\d{1,2}:\d{2}(:\d{2})?\b').hasMatch(normalizedLine)) return false;
+    if (RegExp(r'\b\d{1,2}:\d{2}(:\d{2})?\b').hasMatch(normalizedLine)) {
+      return false;
+    }
 
     // 2. Yıldız ve emoji
-    if (normalizedLine.contains('★') || normalizedLine.contains('⭐')) return false;
+    if (normalizedLine.contains('★') || normalizedLine.contains('⭐')) {
+      return false;
+    }
 
     // 3. Puan/yorum
-    if (normalizedLine.contains('puan') || normalizedLine.contains('yorum')) return false;
+    if (normalizedLine.contains('puan') || normalizedLine.contains('yorum')) {
+      return false;
+    }
 
     // 4. Yüzde
     if (normalizedLine.contains('%')) return false;
@@ -266,10 +331,16 @@ class OcrPriceParser {
     if (digitsOnly.length >= 10) return false;
 
     // 7. Tarih formatı
-    if (RegExp(r'\b\d{2}[./-]\d{2}[./-]\d{2,4}\b').hasMatch(value)) return false;
+    if (RegExp(r'\b\d{2}[./-]\d{2}[./-]\d{2,4}\b').hasMatch(value)) {
+      return false;
+    }
 
     // 8. Adet/miktar
-    if (RegExp(value.replaceAll('.', r'\.') + r'\s*(ad|adet|dz|pcs|kg|g|lt|l|kutu|paket)\b', caseSensitive: false).hasMatch(normalizedLine)) {
+    if (RegExp(
+      value.replaceAll('.', r'\.') +
+          r'\s*(ad|adet|dz|pcs|kg|g|lt|l|kutu|paket)\b',
+      caseSensitive: false,
+    ).hasMatch(normalizedLine)) {
       return false;
     }
 
@@ -279,7 +350,8 @@ class OcrPriceParser {
     // 9. Aşırı büyük/sıfıra yakın
     if (numeric <= 0.5 || numeric > 150000) return false;
 
-    final hasCurrency = normalizedLine.contains('tl') ||
+    final hasCurrency =
+        normalizedLine.contains('tl') ||
         normalizedLine.contains('try') ||
         normalizedLine.contains('₺') ||
         normalizedLine.contains(r'$') ||
@@ -287,14 +359,18 @@ class OcrPriceParser {
         normalizedLine.contains('kuruş');
 
     // 10. Para birimi varsa ve düz tamsayıysa skip et
-    if (!value.contains('TL') && !value.contains('₺') && !value.contains('tl')) {
+    if (!value.contains('TL') &&
+        !value.contains('₺') &&
+        !value.contains('tl')) {
       if (lineHasCurrency(fullLine)) {
         if (numeric % 1 == 0 && numeric < 1000) return false;
       }
     }
 
     // 11. Başı 0 ile başlayan kodlar
-    if (value.trim().startsWith('0') && !value.contains('.') && !value.contains(',')) {
+    if (value.trim().startsWith('0') &&
+        !value.contains('.') &&
+        !value.contains(',')) {
       return false;
     }
 

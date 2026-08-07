@@ -22,13 +22,13 @@ class ProfileScreen extends StatelessWidget {
   final VoidCallback? onShowQr;
   final VoidCallback? onCopyLink;
 
-  bool get _hasLink =>
-      publicLink != null && publicLink!.trim().isNotEmpty;
+  bool get _hasLink => publicLink != null && publicLink!.trim().isNotEmpty;
 
   String get _displayLink {
     if (!_hasLink) return 'Henüz yayınlanmamış';
-    return PublicSiteConfig.repairPublicLink(publicLink!)
-        .replaceFirst(RegExp(r'^https?://'), '');
+    return PublicSiteConfig.repairPublicLink(
+      publicLink!,
+    ).replaceFirst(RegExp(r'^https?://'), '');
   }
 
   String get _userLabel {
@@ -43,9 +43,7 @@ class ProfileScreen extends StatelessWidget {
     if (!_hasLink) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Link kopyalamak için önce vitrininizi yayınlayın.',
-          ),
+          content: Text('Link kopyalamak için önce vitrininizi yayınlayın.'),
         ),
       );
       return;
@@ -57,9 +55,9 @@ class ProfileScreen extends StatelessWidget {
     final link = PublicSiteConfig.repairPublicLink(publicLink!);
     await Clipboard.setData(ClipboardData(text: link));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Vitrin linki kopyalandı.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Vitrin linki kopyalandı.')));
   }
 
   void _openQr(BuildContext context) {
@@ -69,9 +67,7 @@ class ProfileScreen extends StatelessWidget {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text(
-          'QR kodu göstermek için önce vitrininizi yayınlayın.',
-        ),
+        content: Text('QR kodu göstermek için önce vitrininizi yayınlayın.'),
       ),
     );
   }
@@ -110,9 +106,7 @@ class ProfileScreen extends StatelessWidget {
                 'Uygulama Ayarları',
                 () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const AppSettingsScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const AppSettingsScreen()),
                 ),
               ),
               const SizedBox(height: 10),
@@ -121,19 +115,14 @@ class ProfileScreen extends StatelessWidget {
                 'Kullanım Bilgisi & Destek',
                 () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const HelpSupportScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
                 ),
               ),
               const SizedBox(height: 10),
               _option(
                 Icons.shield_outlined,
                 'Gizlilik ve Güvenlik politikası',
-                () => AppRouter.navigateToLegal(
-                  context,
-                  LegalPageType.privacy,
-                ),
+                () => AppRouter.navigateToLegal(context, LegalPageType.privacy),
               ),
             ],
           ),
@@ -241,9 +230,10 @@ class ProfileScreen extends StatelessWidget {
                       child: Text(
                         _displayLink,
                         style: TextStyle(
-                          color: _hasLink
-                              ? AppColors.darkText
-                              : AppColors.mutedText,
+                          color:
+                              _hasLink
+                                  ? AppColors.darkText
+                                  : AppColors.mutedText,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),

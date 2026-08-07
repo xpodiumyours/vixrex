@@ -33,16 +33,18 @@ class _AboutEditorSheetState extends State<AboutEditorSheet> {
 
     final values = List<StoreAboutValue>.from(data.aboutValues);
     while (values.length < 3) {
-      values.add(
-        StoreAboutValue(id: 'about-value-${values.length + 1}'),
-      );
+      values.add(StoreAboutValue(id: 'about-value-${values.length + 1}'));
     }
     _valueTitles =
-        values.take(3).map((v) => TextEditingController(text: v.title)).toList();
-    _valueDescriptions = values
-        .take(3)
-        .map((v) => TextEditingController(text: v.description))
-        .toList();
+        values
+            .take(3)
+            .map((v) => TextEditingController(text: v.title))
+            .toList();
+    _valueDescriptions =
+        values
+            .take(3)
+            .map((v) => TextEditingController(text: v.description))
+            .toList();
   }
 
   @override

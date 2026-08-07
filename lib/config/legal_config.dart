@@ -10,7 +10,8 @@ class LegalConfig {
   static const String productOwnershipText = '$appName, $ownerName ürünüdür.';
   static const String dataControllerAddress = String.fromEnvironment(
     'LEGAL_DATA_CONTROLLER_ADDRESS',
-    defaultValue: 'Ümraniye Esenevler Mahallesi Lokman Hekim Caddesi No 18, İstanbul',
+    defaultValue:
+        'Ümraniye Esenevler Mahallesi Lokman Hekim Caddesi No 18, İstanbul',
   );
   static const String mersisNumber = String.fromEnvironment(
     'LEGAL_MERSIS_NUMBER',

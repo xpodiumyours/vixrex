@@ -13,9 +13,9 @@ class OcrTextResult {
   }) : parsedAt = parsedAt ?? DateTime.now();
 
   OcrTextResult.empty()
-      : rawText = '',
-        lines = const [],
-        parsedAt = DateTime.now();
+    : rawText = '',
+      lines = const [],
+      parsedAt = DateTime.now();
 
   bool get isEmpty => rawText.isEmpty && lines.isEmpty;
   bool get isNotEmpty => !isEmpty;

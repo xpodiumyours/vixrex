@@ -77,9 +77,7 @@ class AuthService {
 
       if (kIsWeb) {
         try {
-          final googleSignIn = GoogleSignIn(
-            clientId: webClientId,
-          );
+          final googleSignIn = GoogleSignIn(clientId: webClientId);
           final googleUser = await googleSignIn.signIn();
           if (googleUser == null) {
             return Result.failure(Failure('Google ile giriş iptal edildi.'));

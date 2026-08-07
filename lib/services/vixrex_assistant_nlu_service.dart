@@ -21,9 +21,10 @@ class VixRexAssistantNluService {
         body: {
           'input': input,
           'client_id': await _clientId(),
-          'allowed_categories': BusinessCategoryConfig.categories
-              .map((item) => {'id': item.id, 'label': item.label})
-              .toList(),
+          'allowed_categories':
+              BusinessCategoryConfig.categories
+                  .map((item) => {'id': item.id, 'label': item.label})
+                  .toList(),
         },
       );
       if (response.status != 200) {
@@ -65,10 +66,8 @@ class VixRexAssistantNluService {
     if (current != null && current.isNotEmpty) return current;
 
     final random = Random.secure();
-    final value = List.generate(
-      32,
-      (_) => random.nextInt(16).toRadixString(16),
-    ).join();
+    final value =
+        List.generate(32, (_) => random.nextInt(16).toRadixString(16)).join();
     await preferences.setString(_clientIdKey, value);
     return value;
   }
@@ -87,8 +86,8 @@ class VixRexNluRemoteResult {
   }) : isAvailable = true;
 
   const VixRexNluRemoteResult.unavailable()
-      : reply = 'Asistan şu an yanıt veremiyor. Lütfen biraz sonra tekrar dene.',
-        field = null,
-        value = null,
-        isAvailable = false;
+    : reply = 'Asistan şu an yanıt veremiyor. Lütfen biraz sonra tekrar dene.',
+      field = null,
+      value = null,
+      isAvailable = false;
 }

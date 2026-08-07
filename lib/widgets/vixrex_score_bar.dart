@@ -21,8 +21,10 @@ class _VixRexScoreBarState extends State<VixRexScoreBar>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    _fillAnim = Tween<double>(begin: 0, end: widget.score / 100)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+    _fillAnim = Tween<double>(
+      begin: 0,
+      end: widget.score / 100,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _ctrl.forward();
   }
 
@@ -35,7 +37,7 @@ class _VixRexScoreBarState extends State<VixRexScoreBar>
   Color _barColor(int score) {
     if (score >= 80) return const Color(0xFF22C55E); // yeşil
     if (score >= 50) return const Color(0xFFF59E0B); // sarı
-    return const Color(0xFFEF4444);                  // kırmızı
+    return const Color(0xFFEF4444); // kırmızı
   }
 
   @override
@@ -57,14 +59,15 @@ class _VixRexScoreBarState extends State<VixRexScoreBar>
             ),
             AnimatedBuilder(
               animation: _fillAnim,
-              builder: (_, __) => Text(
-                '%${(widget.score * _fillAnim.value).round()}',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+              builder:
+                  (_, __) => Text(
+                    '%${(widget.score * _fillAnim.value).round()}',
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
             ),
           ],
         ),
@@ -73,12 +76,13 @@ class _VixRexScoreBarState extends State<VixRexScoreBar>
           borderRadius: BorderRadius.circular(4),
           child: AnimatedBuilder(
             animation: _fillAnim,
-            builder: (_, __) => LinearProgressIndicator(
-              value: _fillAnim.value,
-              minHeight: 6,
-              backgroundColor: AppColors.border,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-            ),
+            builder:
+                (_, __) => LinearProgressIndicator(
+                  value: _fillAnim.value,
+                  minHeight: 6,
+                  backgroundColor: AppColors.border,
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                ),
           ),
         ),
       ],

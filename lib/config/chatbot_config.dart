@@ -20,11 +20,11 @@ abstract final class ChatbotConfig {
 
   /// Onboarding ile aynı üslup — rehberde field CTA (“İşletme Adı Ekle”) yok.
   static ChatMessage get setupInviteMessage => ChatMessage.bot(
-        'Merhaba, ben Vixrex.\n\n'
-        'Sana dijital bir vitrin oluşturmamı ister misin?',
-        quickReplies: const [setupInviteReply],
-        snapshotStateKey: setupInviteStateKey,
-      );
+    'Merhaba, ben Vixrex.\n\n'
+    'Sana dijital bir vitrin oluşturmamı ister misin?',
+    quickReplies: const [setupInviteReply],
+    snapshotStateKey: setupInviteStateKey,
+  );
 
   // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
   static ChatMessage get welcomeMessage => setupInviteMessage;
@@ -122,15 +122,40 @@ abstract final class ChatbotConfig {
   // ─── Intent Tanımları ────────────────────────────────────────────────────
   static const List<ChatbotIntent> intents = [
     ChatbotIntent(
-      keywords: ['merhaba', 'selam', 'nasil', 'baslat', 'baslayalim', 'yardim', 'ne yapabilirsin'],
+      keywords: [
+        'merhaba',
+        'selam',
+        'nasil',
+        'baslat',
+        'baslayalim',
+        'yardim',
+        'ne yapabilirsin',
+      ],
       payload: 'merhaba',
     ),
     ChatbotIntent(
-      keywords: ['vixrex', 'nedir', 'ne işe yarar', 'nasil calisir', 'kurulum', 'vitrin'],
+      keywords: [
+        'vixrex',
+        'nedir',
+        'ne işe yarar',
+        'nasil calisir',
+        'kurulum',
+        'vitrin',
+      ],
       payload: 'vixrex_info',
     ),
     ChatbotIntent(
-      keywords: ['ucret', 'fiyat', 'para', 'komisyon', 'ucretsiz', 'odeme', 'bedava', 'uyelik', 'kullanim'],
+      keywords: [
+        'ucret',
+        'fiyat',
+        'para',
+        'komisyon',
+        'ucretsiz',
+        'odeme',
+        'bedava',
+        'uyelik',
+        'kullanim',
+      ],
       payload: 'membership_info',
     ),
     ChatbotIntent(
@@ -162,7 +187,14 @@ abstract final class ChatbotConfig {
       payload: 'whatsapp',
     ),
     ChatbotIntent(
-      keywords: ['adres', 'konum', 'harita', 'nerede', 'yol tarifi', 'lokasyon'],
+      keywords: [
+        'adres',
+        'konum',
+        'harita',
+        'nerede',
+        'yol tarifi',
+        'lokasyon',
+      ],
       payload: 'adres',
     ),
     ChatbotIntent(
@@ -178,7 +210,14 @@ abstract final class ChatbotConfig {
       payload: 'ocr_premium',
     ),
     ChatbotIntent(
-      keywords: ['xml', 'feed', 'toplu urun', 'toplu urun yukle', 'tedarikci', 'tedarik'],
+      keywords: [
+        'xml',
+        'feed',
+        'toplu urun',
+        'toplu urun yukle',
+        'tedarikci',
+        'tedarik',
+      ],
       payload: 'xml_upload',
     ),
     ChatbotIntent(
@@ -212,7 +251,7 @@ abstract final class ChatbotConfig {
           'Vixrex ile işletme bilgilerini tek yerde toplar, vitrinini yayınlar ve link, QR veya WhatsApp ile müşterilerine duyurursun.',
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
-        
+
       case 'membership_info':
         return ChatMessage.bot(
           'Temel vitrin oluşturma şu an ücretsizdir. Gelişmiş özellikler uygulama içinde ayrıca gösterilecektir.',

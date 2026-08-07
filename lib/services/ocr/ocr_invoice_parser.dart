@@ -74,9 +74,23 @@ class OcrInvoiceParser {
   /// Header satırı mı kontrol et.
   bool _isHeaderLine(String lower) {
     const headerKeywords = [
-      'tarih', 'saat', 'fiş no', 'sayfa', 'firma', 'mağaza',
-      'adres', 'telefon', 'vergi', 'kasiyer', 'işlem', 'pos',
-      'terminal', 'batch', 'referans', 'irsaliye', 'fatura',
+      'tarih',
+      'saat',
+      'fiş no',
+      'sayfa',
+      'firma',
+      'mağaza',
+      'adres',
+      'telefon',
+      'vergi',
+      'kasiyer',
+      'işlem',
+      'pos',
+      'terminal',
+      'batch',
+      'referans',
+      'irsaliye',
+      'fatura',
     ];
     return headerKeywords.any((kw) => lower.contains(kw));
   }
@@ -84,9 +98,18 @@ class OcrInvoiceParser {
   /// Footer satırı mı kontrol et.
   bool _isFooterLine(String lower) {
     const footerKeywords = [
-      'toplam', 'ara toplam', 'genel toplam', 'mal bedeli',
-      'net tutar', 'kdv', 'ötv', 'iskonto', 'teşekkür',
-      'iyi günler', 'bizi tercih', 'müşteri memnuniyeti',
+      'toplam',
+      'ara toplam',
+      'genel toplam',
+      'mal bedeli',
+      'net tutar',
+      'kdv',
+      'ötv',
+      'iskonto',
+      'teşekkür',
+      'iyi günler',
+      'bizi tercih',
+      'müşteri memnuniyeti',
     ];
     return footerKeywords.any((kw) => lower.contains(kw));
   }
@@ -98,7 +121,9 @@ class OcrInvoiceParser {
     if (RegExp(r'^[-=]{3,}$').hasMatch(trimmed)) return true;
     if (trimmed.length >= 3) {
       final firstChar = trimmed[0];
-      if (trimmed.split('').every((c) => c == firstChar || c == ' ')) return true;
+      if (trimmed.split('').every((c) => c == firstChar || c == ' ')) {
+        return true;
+      }
     }
     return false;
   }
@@ -152,8 +177,12 @@ class OcrInvoiceParser {
     }
 
     // Miktarı tespit et
-    final qtyMatch = RegExp(r'(\d+)\s*(?:adet|ad|pcs|kutu|paket|kg|lt|g)', caseSensitive: false).firstMatch(text);
-    final quantity = qtyMatch != null ? int.tryParse(qtyMatch.group(1)!) ?? 1 : 1;
+    final qtyMatch = RegExp(
+      r'(\d+)\s*(?:adet|ad|pcs|kutu|paket|kg|lt|g)',
+      caseSensitive: false,
+    ).firstMatch(text);
+    final quantity =
+        qtyMatch != null ? int.tryParse(qtyMatch.group(1)!) ?? 1 : 1;
 
     // İsmi temizle
     name = _cleanName(name);
@@ -171,9 +200,15 @@ class OcrInvoiceParser {
   /// İsmi temizle.
   String _cleanName(String name) {
     var cleaned = name;
-    cleaned = cleaned.replaceAll(RegExp(r'(?:₺|TL|TRY|tl|try|KR|KURUŞ)', caseSensitive: false), '');
+    cleaned = cleaned.replaceAll(
+      RegExp(r'(?:₺|TL|TRY|tl|try|KR|KURUŞ)', caseSensitive: false),
+      '',
+    );
     cleaned = cleaned.replaceAll(RegExp(r'\b\d{13}\b'), '');
-    cleaned = cleaned.replaceAll(RegExp(r'\b\d+\s*(ad|adet|dz|pcs|ADET)\b', caseSensitive: false), '');
+    cleaned = cleaned.replaceAll(
+      RegExp(r'\b\d+\s*(ad|adet|dz|pcs|ADET)\b', caseSensitive: false),
+      '',
+    );
     cleaned = cleaned.replaceAll(RegExp(r'\b[A-Z]{2,4}\d{4,6}\b'), '');
     cleaned = cleaned.trim();
     return cleaned;

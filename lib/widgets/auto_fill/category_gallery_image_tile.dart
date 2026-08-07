@@ -36,10 +36,11 @@ class CategoryGalleryImageTile extends StatelessWidget {
                 image.thumbnailUrl ?? image.imageUrl,
                 fit: BoxFit.cover,
                 cacheWidth: 300,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey.shade200,
-                  child: const Icon(Icons.broken_image),
-                ),
+                errorBuilder:
+                    (_, __, ___) => Container(
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.broken_image),
+                    ),
               ),
               if (isSelected)
                 Container(

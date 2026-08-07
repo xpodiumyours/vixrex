@@ -11,27 +11,30 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    test('savePublishedVitrinInfo mirrors edit token for Auth link path', () async {
-      final storage = StoreLocalStorageService();
-      const token = 'edit-token-1234567890123456';
+    test(
+      'savePublishedVitrinInfo mirrors edit token for Auth link path',
+      () async {
+        final storage = StoreLocalStorageService();
+        const token = 'edit-token-1234567890123456';
 
-      await storage.savePublishedVitrinInfo(
-        slug: 'aymira-giyim',
-        publicLink: 'https://vixrex-public.vercel.app/v/aymira-giyim',
-        name: 'Aymira Giyim',
-        editToken: token,
-      );
+        await storage.savePublishedVitrinInfo(
+          slug: 'aymira-giyim',
+          publicLink: 'https://vixrex-public.vercel.app/v/aymira-giyim',
+          name: 'Aymira Giyim',
+          editToken: token,
+        );
 
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString(LocalStorageKeys.lastPublishedEditToken), token);
-      expect(prefs.getString(LocalStorageKeys.vitrinEditToken), token);
-      expect(prefs.getString(LocalStorageKeys.storeEditToken), token);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString(LocalStorageKeys.lastPublishedEditToken), token);
+        expect(prefs.getString(LocalStorageKeys.vitrinEditToken), token);
+        expect(prefs.getString(LocalStorageKeys.storeEditToken), token);
 
-      final loaded = await storage.loadPublishedVitrinInfo();
-      expect(loaded, isNotNull);
-      expect(loaded!.editToken, token);
-      expect(loaded.slug, 'aymira-giyim');
-    });
+        final loaded = await storage.loadPublishedVitrinInfo();
+        expect(loaded, isNotNull);
+        expect(loaded!.editToken, token);
+        expect(loaded.slug, 'aymira-giyim');
+      },
+    );
 
     test('Auth token candidate order prefers last_published first', () {
       final candidates = <String>[

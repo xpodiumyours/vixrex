@@ -33,7 +33,9 @@ class OcrScannerWidget extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            isShelf ? 'Raf veya Fiyat Etiketi Çekin' : 'Fotoğraf veya Fatura Çekin',
+            isShelf
+                ? 'Raf veya Fiyat Etiketi Çekin'
+                : 'Fotoğraf veya Fatura Çekin',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -45,10 +47,7 @@ class OcrScannerWidget extends StatelessWidget {
             isShelf
                 ? 'Sarı/beyaz etiketler ve ürünler eşleştirilecek'
                 : 'Ürünler ve fiyatlar faturadan otomatik tanınacak',
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.mutedText,
-            ),
+            style: const TextStyle(fontSize: 13, color: AppColors.mutedText),
           ),
           const SizedBox(height: 16),
           Row(
@@ -88,9 +87,7 @@ class OcrScannerWidget extends StatelessWidget {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

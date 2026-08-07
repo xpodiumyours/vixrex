@@ -53,7 +53,9 @@ class _VixRexPanelWrapperState extends State<VixRexPanelWrapper>
     _slideAnim = Tween<Offset>(
       begin: const Offset(1.0, 0),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+    );
     _slideController.forward();
   }
 
@@ -137,7 +139,8 @@ class VixRexPanel extends StatefulWidget {
   State<VixRexPanel> createState() => _VixRexPanelState();
 }
 
-class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin {
+class _VixRexPanelState extends State<VixRexPanel>
+    with TickerProviderStateMixin {
   final ChatbotService _service = ChatbotService();
   late final List<ChatMessage> _messages;
   final TextEditingController _inputCtrl = TextEditingController();
@@ -201,8 +204,7 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
     }
 
     final alreadyAdded = _messages.any(
-      (message) =>
-          message.isBot && message.snapshotStateKey == currentStateKey,
+      (message) => message.isBot && message.snapshotStateKey == currentStateKey,
     );
     if (alreadyAdded) return;
 
@@ -264,22 +266,18 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
       if (!mounted) return;
       setState(() => _isTyping = false);
       _addBotMessage(
-        _service.respondToPayload(
-          reply.payload,
-          widget.snapshot,
-          _hasShared,
-        ),
+        _service.respondToPayload(reply.payload, widget.snapshot, _hasShared),
       );
     });
   }
 
   void _handleAction(VixRexAction action) {
-    final onVitrim   = widget.onNavigateToVitrim;
-    final onExplore  = widget.onNavigateToExplore;
-    final onCopy     = widget.onCopyLink;
-    final onQr       = widget.onShowQr;
+    final onVitrim = widget.onNavigateToVitrim;
+    final onExplore = widget.onNavigateToExplore;
+    final onCopy = widget.onCopyLink;
+    final onQr = widget.onShowQr;
     final onWhatsapp = widget.onShareWhatsapp;
-    final onScroll   = widget.onScrollToAction;
+    final onScroll = widget.onScrollToAction;
 
     widget.onClose();
     Future.delayed(const Duration(milliseconds: 320), () {
@@ -336,25 +334,39 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
   Future<void> _clearHistory() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Sohbeti Temizle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: const Text('Tüm konuşma geçmişini silmek istediğinize emin misiniz?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c, false),
-            child: const Text('İptal', style: TextStyle(color: AppColors.mutedText)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(c, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade600,
-              elevation: 0,
+      builder:
+          (c) => AlertDialog(
+            title: const Text(
+              'Sohbeti Temizle',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            child: const Text('Temizle', style: TextStyle(color: Colors.white)),
+            content: const Text(
+              'Tüm konuşma geçmişini silmek istediğinize emin misiniz?',
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c, false),
+                child: const Text(
+                  'İptal',
+                  style: TextStyle(color: AppColors.mutedText),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(c, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade600,
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Temizle',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     if (confirm == true) {
@@ -367,7 +379,8 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     final lastMsg = _messages.isNotEmpty ? _messages.last : null;
-    final quickReplies = (lastMsg?.isBot == true) ? lastMsg!.quickReplies : <QuickReply>[];
+    final quickReplies =
+        (lastMsg?.isBot == true) ? lastMsg!.quickReplies : <QuickReply>[];
 
     return Container(
       decoration: BoxDecoration(
@@ -389,7 +402,10 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
             Expanded(
               child: ListView.builder(
                 controller: _scrollCtrl,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 itemCount: _messages.length + (_isTyping ? 1 : 0),
                 itemBuilder: (context, i) {
                   if (_isTyping && i == _messages.length) {
@@ -398,13 +414,14 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
                   final msg = _messages[i];
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: msg.isBot
-                        ? VixRexBotMessage(
-                            msg: msg,
-                            showCursor: !_isTyping,
-                            cursorVisible: _cursorVisible,
-                          )
-                        : VixRexUserMessage(msg: msg),
+                    child:
+                        msg.isBot
+                            ? VixRexBotMessage(
+                              msg: msg,
+                              showCursor: !_isTyping,
+                              cursorVisible: _cursorVisible,
+                            )
+                            : VixRexUserMessage(msg: msg),
                   );
                 },
               ),
@@ -431,7 +448,12 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
             decoration: BoxDecoration(
               color: AppColors.success,
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: AppColors.success.withAlpha(180), blurRadius: 4)],
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.success.withAlpha(180),
+                  blurRadius: 4,
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 8),
@@ -449,7 +471,10 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
                 ),
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withAlpha(25),
                     borderRadius: BorderRadius.circular(4),
@@ -476,7 +501,14 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.border),
               ),
-              child: const Text('Temizle', style: TextStyle(fontSize: 10, color: AppColors.mutedText, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Temizle',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.mutedText,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -484,7 +516,11 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
             onTap: widget.onClose,
             child: Container(
               padding: const EdgeInsets.all(6),
-              child: const Icon(Icons.close_rounded, color: AppColors.mutedText, size: 18),
+              child: const Icon(
+                Icons.close_rounded,
+                color: AppColors.mutedText,
+                size: 18,
+              ),
             ),
           ),
         ],
@@ -581,7 +617,10 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
                 ),
                 decoration: const InputDecoration.collapsed(
                   hintText: 'Bir şey sorun...',
-                  hintStyle: TextStyle(color: AppColors.mutedText, fontSize: 12.5),
+                  hintStyle: TextStyle(
+                    color: AppColors.mutedText,
+                    fontSize: 12.5,
+                  ),
                 ),
                 onSubmitted: _sendMessage,
               ),
@@ -597,7 +636,11 @@ class _VixRexPanelState extends State<VixRexPanel> with TickerProviderStateMixin
                 gradient: AppColors.ctaGradient,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ),
         ],

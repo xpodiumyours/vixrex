@@ -31,7 +31,10 @@ class VitrinStoreCard extends StatelessWidget {
   bool get _isRentalTemplate => store.isRentalTemplate;
 
   String get _whatsappButtonLabel {
-    final cat = (store.kategori.isNotEmpty ? store.kategori : store.businessType).toLowerCase().trim();
+    final cat =
+        (store.kategori.isNotEmpty ? store.kategori : store.businessType)
+            .toLowerCase()
+            .trim();
     if (cat.contains('kuaför') ||
         cat.contains('güzellik') ||
         cat.contains('hizmet') ||
@@ -49,7 +52,8 @@ class VitrinStoreCard extends StatelessWidget {
     final status = store.status.trim();
     final isOpen = status.isEmpty || status.toLowerCase() == 'açık';
     final location =
-        store.districtName.trim().isNotEmpty && store.provinceName.trim().isNotEmpty
+        store.districtName.trim().isNotEmpty &&
+                store.provinceName.trim().isNotEmpty
             ? '${store.districtName.trim()}, ${store.provinceName.trim()}'
             : store.districtName.trim().isNotEmpty
             ? store.districtName.trim()
@@ -59,12 +63,13 @@ class VitrinStoreCard extends StatelessWidget {
             ? store.address.trim()
             : 'Konum belirtilmedi';
 
-    final categoryLabel = (store.kategori.trim().isNotEmpty
-            ? store.kategori.trim()
-            : store.businessType.trim().isNotEmpty
-            ? store.businessType.trim()
-            : 'DİJİTAL VİTRİN')
-        .toUpperCase();
+    final categoryLabel =
+        (store.kategori.trim().isNotEmpty
+                ? store.kategori.trim()
+                : store.businessType.trim().isNotEmpty
+                ? store.businessType.trim()
+                : 'DİJİTAL VİTRİN')
+            .toUpperCase();
 
     return Container(
       decoration: BoxDecoration(
@@ -298,7 +303,8 @@ class VitrinStoreCard extends StatelessWidget {
                       width: double.infinity,
                       height: 38,
                       child: ElevatedButton.icon(
-                        onPressed: _isRentalTemplate ? onTap : onWhatsAppPressed,
+                        onPressed:
+                            _isRentalTemplate ? onTap : onWhatsAppPressed,
                         icon: Icon(
                           _isRentalTemplate
                               ? Icons.storefront_rounded
@@ -307,7 +313,9 @@ class VitrinStoreCard extends StatelessWidget {
                           color: Colors.white,
                         ),
                         label: Text(
-                          _isRentalTemplate ? 'Vitrini İncele' : _whatsappButtonLabel,
+                          _isRentalTemplate
+                              ? 'Vitrini İncele'
+                              : _whatsappButtonLabel,
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
@@ -316,9 +324,10 @@ class VitrinStoreCard extends StatelessWidget {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _isRentalTemplate
-                              ? AppColors.primary
-                              : const Color(0xFF00A884),
+                          backgroundColor:
+                              _isRentalTemplate
+                                  ? AppColors.primary
+                                  : const Color(0xFF00A884),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -345,7 +354,9 @@ class VitrinStoreCard extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.60),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: (isOpen ? AppColors.success : AppColors.error).withValues(alpha: 0.5),
+          color: (isOpen ? AppColors.success : AppColors.error).withValues(
+            alpha: 0.5,
+          ),
           width: 1,
         ),
       ),

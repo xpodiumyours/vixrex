@@ -35,8 +35,10 @@ class SyntheticReceiptGenerator {
 
   /// Fiş/Fatura formatında ham metin üretir.
   String generateReceiptText({
-    String paperType = 'thermal', // thermal (sarımsı), normal, wrinkled, stained
-    String lighting = 'fluorescent', // fluorescent, dim, daylight, flash, shadow
+    String paperType =
+        'thermal', // thermal (sarımsı), normal, wrinkled, stained
+    String lighting =
+        'fluorescent', // fluorescent, dim, daylight, flash, shadow
     double angle = 0.0, // ±15, ±30 vb.
     String noise = 'none', // gaussian, salt_pepper, compression, ink_fade
   }) {
@@ -67,7 +69,7 @@ class SyntheticReceiptGenerator {
     for (int i = 0; i < numItems; i++) {
       String product = _products[_random.nextInt(_products.length)];
       final qty = _random.nextInt(4) + 1;
-      
+
       // Mürekkep solması augmentasyonu
       if (noise == 'ink_fade' && _random.nextBool()) {
         product = product.replaceAll('A', '^').replaceAll('E', '_');
@@ -81,7 +83,9 @@ class SyntheticReceiptGenerator {
       if (_random.nextBool()) {
         lines.add('$product    $qty AD x $price = $lineTotal TL');
       } else {
-        lines.add('${_random.nextInt(900) + 100} $product $qty ADET $price TL $lineTotal TL');
+        lines.add(
+          '${_random.nextInt(900) + 100} $product $qty ADET $price TL $lineTotal TL',
+        );
       }
     }
 

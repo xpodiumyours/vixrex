@@ -300,12 +300,14 @@ class VisibilityHubCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            ...publishedArticles.take(2).map(
-              (article) => ArticleSummaryRow(
-                article: article,
-                onTap: () => onOpenArticle(article),
-              ),
-            ),
+            ...publishedArticles
+                .take(2)
+                .map(
+                  (article) => ArticleSummaryRow(
+                    article: article,
+                    onTap: () => onOpenArticle(article),
+                  ),
+                ),
           ],
         ],
       ),

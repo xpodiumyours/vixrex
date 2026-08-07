@@ -6,21 +6,13 @@ import 'package:vixrex/config/app_router.dart';
 class LandingBottomCta extends StatelessWidget {
   final VoidCallback onNavigateToEditor;
 
-  const LandingBottomCta({
-    super.key,
-    required this.onNavigateToEditor,
-  });
+  const LandingBottomCta({super.key, required this.onNavigateToEditor});
 
   static const Color brandBlue = AppColors.primary;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _buildBottomCTA(context),
-        _buildFooter(context),
-      ],
-    );
+    return Column(children: [_buildBottomCTA(context), _buildFooter(context)]);
   }
 
   Widget _buildBottomCTA(BuildContext context) {

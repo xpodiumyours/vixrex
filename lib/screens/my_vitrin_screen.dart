@@ -70,7 +70,8 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     }
     if (!mounted) return;
     _syncControllers();
-    final pendingCategoryKey = await const StoreLocalStorageService().loadPendingCategoryKey();
+    final pendingCategoryKey =
+        await const StoreLocalStorageService().loadPendingCategoryKey();
     if (!mounted) return;
     if (pendingCategoryKey != null) {
       final label = BusinessCategoryConfig.labelForKey(pendingCategoryKey);

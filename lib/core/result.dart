@@ -9,13 +9,9 @@ class Result<T> {
   T? get data => _data;
   Failure? get failure => _failure;
 
-  const Result.success(T data)
-      : _data = data,
-        _failure = null;
+  const Result.success(T data) : _data = data, _failure = null;
 
-  const Result.failure(Failure failure)
-      : _data = null,
-        _failure = failure;
+  const Result.failure(Failure failure) : _data = null, _failure = failure;
 
   R when<R>({
     required R Function(T data) success,

@@ -5,11 +5,7 @@ class FaqEntryCard extends StatelessWidget {
   final int faqCount;
   final VoidCallback onTap;
 
-  const FaqEntryCard({
-    super.key,
-    required this.faqCount,
-    required this.onTap,
-  });
+  const FaqEntryCard({super.key, required this.faqCount, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

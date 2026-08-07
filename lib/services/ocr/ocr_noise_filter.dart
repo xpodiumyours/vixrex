@@ -6,36 +6,89 @@ class OcrNoiseFilter {
 
   // ─── GENEL GÜRÜLTÜ TERİMLERİ ────────────────────────────────────
   static const _generalNoise = [
-    'kargo', 'teslimat', 'kupon', 'puan', 'yorum',
-    'bedava', 'indirim', 'sepet', 'taksit', 'kampanya',
-    'hakkımızda', 'iletişim', 'fiş no', 'fiş tarihi', 'mağaza',
-    'sayfa', 'tarih', 'saat', 'adet', 'toplam',
-    'ara toplam', 'genel toplam', 'mal bedeli', 'net tutar',
-    'kdv', 'ötv', 'iskonto', 'iskontolu', 'iskontosuz',
+    'kargo',
+    'teslimat',
+    'kupon',
+    'puan',
+    'yorum',
+    'bedava',
+    'indirim',
+    'sepet',
+    'taksit',
+    'kampanya',
+    'hakkımızda',
+    'iletişim',
+    'fiş no',
+    'fiş tarihi',
+    'mağaza',
+    'sayfa',
+    'tarih',
+    'saat',
+    'adet',
+    'toplam',
+    'ara toplam',
+    'genel toplam',
+    'mal bedeli',
+    'net tutar',
+    'kdv',
+    'ötv',
+    'iskonto',
+    'iskontolu',
+    'iskontosuz',
   ];
 
   // ─── POS/MARKET TERİMLERİ ──────────────────────────────────────
   static const _posNoise = [
-    'pos', 'terminal', 'kasiyer', 'işlem no', 'kart no',
-    'ödeme yöntemi', 'nakit', 'kredi kartı', 'banka kartı',
-    'taksit sayısı', 'kart son dört', 'onay kodu',
-    'terminal no', 'işyeri no', 'batch no', 'referans no',
+    'pos',
+    'terminal',
+    'kasiyer',
+    'işlem no',
+    'kart no',
+    'ödeme yöntemi',
+    'nakit',
+    'kredi kartı',
+    'banka kartı',
+    'taksit sayısı',
+    'kart son dört',
+    'onay kodu',
+    'terminal no',
+    'işyeri no',
+    'batch no',
+    'referans no',
   ];
 
   // ─── MARKET ZARFI TERİMLERİ ─────────────────────────────────────
   static const _storeNoise = [
-    'müşteri no', 'kart no', 'üyelik no', 'puan bakiyesi',
-    'indirim kuponu', 'hediye çeki', 'değişim-iade',
-    'garanti süresi', 'kullanım kılavuzu', 'barkod',
-    'üretim yeri', 'son kullanma', 'raf ömrü',
+    'müşteri no',
+    'kart no',
+    'üyelik no',
+    'puan bakiyesi',
+    'indirim kuponu',
+    'hediye çeki',
+    'değişim-iade',
+    'garanti süresi',
+    'kullanım kılavuzu',
+    'barkod',
+    'üretim yeri',
+    'son kullanma',
+    'raf ömrü',
   ];
 
   // ─── FATURA TERİMLERİ ────────────────────────────────────────────
   static const _invoiceNoise = [
-    'vergi numarası', 'vergi dairesi', 'mükellef',
-    'fatura numarası', 'irsaliye numarası', 'sevk irsaliyesi',
-    'ödeme vadesi', 'banka hesap', 'iban', 'swift',
-    'teslim tarihi', 'sevk tarihi', 'düzenleme tarihi',
+    'vergi numarası',
+    'vergi dairesi',
+    'mükellef',
+    'fatura numarası',
+    'irsaliye numarası',
+    'sevk irsaliyesi',
+    'ödeme vadesi',
+    'banka hesap',
+    'iban',
+    'swift',
+    'teslim tarihi',
+    'sevk tarihi',
+    'düzenleme tarihi',
   ];
 
   // ─── SAAT/TARİH FORMATLARI ───────────────────────────────────────
@@ -57,7 +110,9 @@ class OcrNoiseFilter {
     if (_repeatedCharPattern.hasMatch(lower)) return true;
 
     // Saat formatı
-    if (_timePattern.hasMatch(lower) && !lower.contains('tl') && !lower.contains('₺')) {
+    if (_timePattern.hasMatch(lower) &&
+        !lower.contains('tl') &&
+        !lower.contains('₺')) {
       return true;
     }
 
@@ -91,9 +146,20 @@ class OcrNoiseFilter {
   /// Header bölümündeki gürültü.
   bool _isHeaderNoise(String lower) {
     const headerNoise = [
-      'tarih', 'saat', 'fiş no', 'sayfa', 'firma',
-      'adres', 'telefon', 'vergi', 'kasiyer', 'işlem',
-      'pos', 'terminal', 'batch', 'referans',
+      'tarih',
+      'saat',
+      'fiş no',
+      'sayfa',
+      'firma',
+      'adres',
+      'telefon',
+      'vergi',
+      'kasiyer',
+      'işlem',
+      'pos',
+      'terminal',
+      'batch',
+      'referans',
     ];
     return headerNoise.any((kw) => lower.contains(kw));
   }
@@ -101,9 +167,13 @@ class OcrNoiseFilter {
   /// Footer bölümündeki gürültü.
   bool _isFooterNoise(String lower) {
     const footerNoise = [
-      'teşekkür', 'iyi günler', 'gorüşmek üzere',
-      'bizi tercih ettiğiniz', 'müşteri memnuniyeti',
-      'öneri ve şikayet', 'çağrı merkezi',
+      'teşekkür',
+      'iyi günler',
+      'gorüşmek üzere',
+      'bizi tercih ettiğiniz',
+      'müşteri memnuniyeti',
+      'öneri ve şikayet',
+      'çağrı merkezi',
     ];
     return footerNoise.any((kw) => lower.contains(kw));
   }
@@ -137,7 +207,10 @@ class OcrNoiseFilter {
     final trimmed = text.trim();
 
     // Para birimi içermeli
-    if (!RegExp(r'(?:₺|TL|TRY|tl|try|KR|KURUŞ)', caseSensitive: false).hasMatch(trimmed)) {
+    if (!RegExp(
+      r'(?:₺|TL|TRY|tl|try|KR|KURUŞ)',
+      caseSensitive: false,
+    ).hasMatch(trimmed)) {
       return false;
     }
 
