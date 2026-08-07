@@ -23,6 +23,38 @@ class StorePublishService {
     this.supabaseClient,
   });
 
+  /// Verilen slug bulutta YAYINDA duruyor mu?
+  ///
+  /// Üç cevap verir, ikisi değil:
+  ///   true  — kayıt bulutta var
+  ///   false — bulut kesin olarak "yok" dedi
+  ///   null  — BİLİNMİYOR (bağlantı yok, istemci yok, hata)
+  ///
+  /// NEDEN ÜÇ CEVAP: karşılama ekranı "vitrinin var" derken tarayıcının
+  /// hafızasına bakıyordu. Bulutta silinmiş bir vitrin uygulamada
+  /// sonsuza kadar görünüyordu (2026-08-07, bulgu 17). Ama yalnız
+  /// true/false dönseydik, internet yokken de "yok" der ve esnafın
+  /// yerel kaydını silerdik. Bilinmeyen hâli ayrı olmalı: şüphede
+  /// hiçbir şey silinmez.
+  Future<bool?> yayindaMi(String slug) async {
+    final temiz = slug.trim();
+    if (temiz.isEmpty) return false;
+
+    final client = supabaseClient ?? Supabase.instance.client;
+    try {
+      final response =
+          await client
+              .from('stores')
+              .select('slug')
+              .eq('slug', temiz)
+              .eq('is_published', true)
+              .maybeSingle();
+      return response != null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Result<StorePublishResult>> publishStore(
     StoreData data, {
     required String editToken,
