@@ -95,30 +95,32 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
 
       final position = result.position ?? result.approximatePosition!;
 
-      // SAPMA: KONUM REDDEDİLMEZ, İĞNE AYRI DEĞERLENDİRİLİR.
+      // SAPMA EŞİĞİ GEÇİLMEZSE HİÇBİR ŞEY DOLDURULMAZ.
       //
-      // 2026-08-07'de eşiği 10'dan 100 metreye çıkardım ve koordinatı
-      // eşikten sonra yazacak şekilde sıraladım. Casper aynı gün denedi:
-      // "gps yine çalışmıyor, koordinatı da bulamıyor, hatta önceden
-      // koordinatı buluyordu yazmıyordu, şimdi hiç bulamadı."
+      // 2026-08-08'de bunu bir kez YANLIŞ yaptım: "adres her hâlükârda
+      // dolsun, yalnız iğne bekletilsin" dedim. Sonuç: Casper masaüstü
+      // tarayıcıdan denedi ve 20 KM sapmalı bir adres yazıldı —
+      // Çekmeköy'deyken Ümraniye/Adem Yavuz Mahallesi.
       //
-      // Hata tasarımdaydı. Sapma eşiği geçilmeyince HİÇBİR ŞEY
-      // yapılmıyordu — ne adres, ne il, ne ilçe. Oysa 300 metre sapmayla
-      // bile il, ilçe ve mahalle DOĞRU çıkar. Müşteriyi yanlış sokağa
-      // gönderen şey harita iğnesidir, adres metni değil.
+      // Koddaki eski açıklama zaten uyarıyordu: masaüstü tarayıcıda
+      // konum Wi-Fi/IP'den gelir ve kilometrelerce sapar; DOLU GÖRÜNEN
+      // yanlış il/ilçe, boş alandan beterdir. Kullanıcı dolu alana
+      // güvenir, küçük uyarı yazısını okumaz.
       //
-      // Artık ikisi ayrı:
-      //   Adres metni → her hâlükârda çözülür ve doldurulur
-      //   Harita iğnesi → yalnız sapma eşiği geçilirse kaydedilir
-      //
-      // Esnaf en kötü ihtimalle doğru mahalleyi görür ve sokağı düzeltir.
-      // Hiç yoktan iyidir; eskisi hiç yoktu.
-      final igneKabul =
-          position.accuracy <= LocationService.maxAcceptedAccuracyMeters;
+      // Doğru davranış: eşik geçilmezse ne iğne ne adres yazılır,
+      // esnaf telefona yönlendirilir ya da adresi elle yazar.
+      if (position.accuracy > LocationService.maxAcceptedAccuracyMeters) {
+        widget.onLocationUpdated(
+          statusMessage: LocationService.buildAccuracyMessage(
+            position.accuracy,
+          ),
+        );
+        return;
+      }
 
       widget.onLocationUpdated(
-        latitude: igneKabul ? position.latitude : null,
-        longitude: igneKabul ? position.longitude : null,
+        latitude: position.latitude,
+        longitude: position.longitude,
         accuracy: position.accuracy,
         statusMessage: 'Adres çözümleniyor...',
       );

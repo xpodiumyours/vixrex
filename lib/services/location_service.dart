@@ -104,17 +104,18 @@ class LocationService {
     if (accuracyMeters <= maxAcceptedAccuracyMeters) {
       return 'Konum basariyla alindi. Hata payi: yaklasik $accuracyText m.';
     }
-    // ADRES DOLDURULDU, IGNE BEKLETILDI.
+    // KILOMETRELERCE SAPAN KONUM KULLANILMAZ.
     //
-    // Eskiden bu durumda hicbir sey yapilmiyordu — ne adres, ne il, ne
-    // ilce. Esnaf bos ekrana bakiyordu (2026-08-07). Oysa 300 metre
-    // sapmayla bile il, ilce ve mahalle DOGRU cikar; musteriyi yanlis
-    // sokaga gonderen sey harita ignesidir, adres metni degil.
-    return 'Adres bulundu, haritadaki isaret bekletildi: yaklasik '
-        '$accuracyText m sapma var. Adresi kontrol et, gerekirse duzelt. '
-        'Isaretin tam yerine oturmasi icin Vixrex\'i TELEFONDAN ac ve '
-        'acik alanda tekrar dene — bilgisayar tarayicisi konumu Wi-Fi '
-        'uzerinden tahmin ettigi icin bu kadar sapiyor.';
+    // 2026-08-08'de bir kez "adres yine dolsun" denendi ve masaustu
+    // tarayicidan 20 KM sapmali adres yazildi. DOLU GORUNEN yanlis
+    // il/ilce, bos alandan beterdir: kullanici dolu alana guvenir,
+    // kucuk uyari yazisini okumaz.
+    return 'Konum yeterince kesin degil: yaklasik $accuracyText m sapma. '
+        'Bu kadar sapmayla yazilacak adres yanlis olur, o yuzden '
+        'doldurulmadi. Vixrex'i TELEFONDAN ac ve acik alanda tekrar dene '
+        '— bilgisayar tarayicisi konumu Wi-Fi uzerinden tahmin ettigi '
+        'icin kilometrelerce sapiyor. Dilersen il, ilce ve adresi elle '
+        'de yazabilirsin.';
   }
 
   static Uri buildGoogleMapsSearchUri(double latitude, double longitude) {
