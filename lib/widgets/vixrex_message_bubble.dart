@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vixrex/widgets/vixrex_avatar.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/models/chat_message.dart';
@@ -25,35 +26,8 @@ class VixRexBotMessage extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 28,
-          height: 28,
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFF0E1B2E),
-            border: Border.all(
-              color: const Color(0xFF0EA5E9).withValues(alpha: 0.7),
-              width: 1.2,
-            ),
-          ),
-          child: ClipOval(
-            child: Image.asset(
-              'assets/images/vixrex_v_crystal_mascot.png',
-              width: 24,
-              height: 24,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Image.asset(
-                  'assets/images/vixrex_mascot.webp',
-                  width: 24,
-                  height: 24,
-                  fit: BoxFit.contain,
-                );
-              },
-            ),
-          ),
-        ),
+        // Vixrex'in yüzü tek yerden gelir — bkz. VixrexAvatar.
+        const VixrexAvatar(boyut: 28),
         const SizedBox(width: 8),
         Expanded(
           child: Container(

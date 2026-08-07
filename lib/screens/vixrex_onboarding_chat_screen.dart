@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vixrex/widgets/vixrex_avatar.dart';
 import 'package:vixrex/services/auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -634,41 +635,7 @@ class _VixRexOnboardingChatScreenState
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF0E1B2E),
-              border: Border.all(
-                color: const Color(0xFF0EA5E9).withAlpha(180),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF0EA5E9).withAlpha(80),
-                  blurRadius: 8,
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/vixrex_v_crystal_mascot.png',
-                width: 36,
-                height: 36,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Image.asset(
-                    'assets/images/vixrex_mascot.webp',
-                    width: 36,
-                    height: 36,
-                    fit: BoxFit.contain,
-                  );
-                },
-              ),
-            ),
-          ),
+          VixrexAvatar(boyut: 40, hale: true),
           const SizedBox(width: 10),
           const Expanded(
             child: Column(
@@ -1121,91 +1088,115 @@ class _ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final align = line.isBot ? Alignment.centerLeft : Alignment.centerRight;
-    return Align(
-      alignment: align,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.86,
+
+    // TEK YÜZ (2026-08-07, bulgu 16).
+    //
+    // Uygulama içi asistanda her bot mesajının başında maskot vardı,
+    // burada hiç yoktu. Aynı Vixrex iki farklı yüzle konuşuyordu.
+    // 6 Ağustos'ta dil birleştirilmişti ("sen" kipi), görünüm değil.
+    //
+    // Maskot yalnız BOT mesajlarında çıkar; kullanıcının kendi
+    // cümlesinin başında Vixrex'in yüzü olmaz.
+    final balon = Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.sizeOf(context).width * 0.86,
+      ),
+      decoration: BoxDecoration(
+        color:
+            line.isBot
+                ? AppColors.surfaceSoft
+                : AppColors.primary.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(16),
+          topRight: const Radius.circular(16),
+          bottomLeft: Radius.circular(line.isBot ? 4 : 16),
+          bottomRight: Radius.circular(line.isBot ? 16 : 4),
         ),
-        decoration: BoxDecoration(
+        border: Border.all(
           color:
               line.isBot
-                  ? AppColors.surfaceSoft
-                  : AppColors.primary.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(line.isBot ? 4 : 16),
-            bottomRight: Radius.circular(line.isBot ? 16 : 4),
-          ),
-          border: Border.all(
-            color:
-                line.isBot
-                    ? AppColors.border
-                    : AppColors.primary.withValues(alpha: 0.25),
-          ),
+                  ? AppColors.border
+                  : AppColors.primary.withValues(alpha: 0.25),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              line.text,
-              style: const TextStyle(
-                color: AppColors.darkTextAlt,
-                fontSize: 14.5,
-                height: 1.45,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            line.text,
+            style: const TextStyle(
+              color: AppColors.darkTextAlt,
+              fontSize: 14.5,
+              height: 1.45,
+            ),
+          ),
+          if (line.publicLink != null && line.onOpenPublicLink != null) ...[
+            const SizedBox(height: 12),
+            // TEK KAPI (bulgu 8).
+            //
+            // Burada eskiden birincil bir "Canlı vitrini aç" düğmesi
+            // vardı; aşağıda da "Vitrinimi birlikte düzenleyelim". İkisi
+            // de aynı sayfayı açıyordu. Esnaf önce bakıyor, geri dönüyor,
+            // sonra ikinci düğmeye basıyordu — tek iş için iki yolculuk.
+            //
+            // Artık asıl kapı aşağıdaki "Vitrinini aç" (sahip modunda).
+            // Burası ikincil kaldı ve işi değişti: müşterinin gördüğü
+            // hâli göstermek (bulgu 7 — sahip kendi vitrinini müşteri
+            // gözüyle göremiyordu).
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: line.onOpenPublicLink,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.mutedText,
+                  side: const BorderSide(color: AppColors.border),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.visibility_outlined, size: 16),
+                label: const Text(
+                  'Müşterinin gördüğü hâli',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                ),
               ),
             ),
-            if (line.publicLink != null && line.onOpenPublicLink != null) ...[
-              const SizedBox(height: 12),
-              // TEK KAPI (bulgu 8).
-              //
-              // Burada eskiden birincil bir "Canlı vitrini aç" düğmesi
-              // vardı; aşağıda da "Vitrinimi birlikte düzenleyelim". İkisi
-              // de aynı sayfayı açıyordu. Esnaf önce bakıyor, geri dönüyor,
-              // sonra ikinci düğmeye basıyordu — tek iş için iki yolculuk.
-              //
-              // Artık asıl kapı aşağıdaki "Vitrinini aç" (sahip modunda).
-              // Burası ikincil kaldı ve işi değişti: müşterinin gördüğü
-              // hâli göstermek (bulgu 7 — sahip kendi vitrinini müşteri
-              // gözüyle göremiyordu).
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: line.onOpenPublicLink,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.mutedText,
-                    side: const BorderSide(color: AppColors.border),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  icon: const Icon(Icons.visibility_outlined, size: 16),
-                  label: const Text(
-                    'Müşterinin gördüğü hâli',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ),
+            const SizedBox(height: 8),
+            SelectableText(
+              line.publicLink!,
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 11.5,
+                height: 1.35,
               ),
-              const SizedBox(height: 8),
-              SelectableText(
-                line.publicLink!,
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 11.5,
-                  height: 1.35,
-                ),
-              ),
-            ],
+            ),
           ],
-        ),
+        ],
+      ),
+    );
+
+    // Bot mesajının solunda Vixrex'in yüzü. Kullanıcının kendi
+    // cümlesinde yoktur — o konuşan Vixrex değil.
+    if (!line.isBot) {
+      return Align(alignment: align, child: balon);
+    }
+
+    return Align(
+      alignment: align,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2, right: 8),
+            child: VixrexAvatar(boyut: 28),
+          ),
+          Flexible(child: balon),
+        ],
       ),
     );
   }
