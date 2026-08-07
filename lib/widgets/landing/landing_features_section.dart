@@ -22,7 +22,7 @@ class LandingFeaturesSection extends StatelessWidget {
           child: Column(
             children: [
               const Text(
-                'Dijital vitrininizi kolayca hazırlayın',
+                'Dijital vitrinini kolayca hazırla',
                 style: TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -33,7 +33,7 @@ class LandingFeaturesSection extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               const Text(
-                'Müşterilerinizin ihtiyaç duyduğu bilgileri tek vitrinde toplayın, panelden yönetin ve istediğiniz yerde paylaşın.',
+                'Müşterinin ihtiyaç duyduğu bilgileri tek vitrinde topla, panelden yönet, istediğin yerde paylaş.',
                 style: TextStyle(
                   fontSize: 18,
                   color: AppColors.darkTextAlt,
@@ -58,43 +58,48 @@ class LandingFeaturesSection extends StatelessWidget {
                     alignment: WrapAlignment.center,
                     children:
                         [
-                          LandingValueCard(
-                            icon: Icons.bolt_rounded,
-                            color: brandBlue,
-                            title: 'Dakikalar içinde yayına alın',
-                            desc:
-                                'Temel bilgilerinizi ekleyin ve vitrininizi oluşturun.',
-                            isHorizontal: !isTablet,
-                            enableHover: isDesktop,
-                          ),
-                          LandingValueCard(
-                            icon: Icons.contact_phone_rounded,
-                            color: mint,
-                            title: 'Müşteriler size doğrudan ulaşsın',
-                            desc:
-                                'WhatsApp, adres ve yol tarifi seçeneklerini tek yerde sunun.',
-                            isHorizontal: !isTablet,
-                            enableHover: isDesktop,
-                          ),
-                          LandingValueCard(
-                            icon: Icons.share_rounded,
-                            color: pinkAccent,
-                            title: 'Her kanalda aynı vitrini paylaşın',
-                            desc:
-                                'Linkinizi sosyal medyada, QR kodunuzu işletmenizde kullanın.',
-                            isHorizontal: !isTablet,
-                            enableHover: isDesktop,
-                          ),
-                          LandingValueCard(
-                            icon: Icons.edit_note_rounded,
-                            color: blueAccent,
-                            title: 'Bilgilerinizi panelden güncelleyin',
-                            desc:
-                                'Fotoğraf, ürün, hizmet ve iletişim bilgilerinizi istediğiniz zaman düzenleyin.',
-                            isHorizontal: !isTablet,
-                            enableHover: isDesktop,
-                          ),
-                        ].map((widget) => SizedBox(width: cardWidth, child: widget)).toList(),
+                              LandingValueCard(
+                                icon: Icons.bolt_rounded,
+                                color: brandBlue,
+                                title: 'Dakikalar içinde yayına alın',
+                                desc:
+                                    'Temel bilgilerini ekle, vitrinini oluştur.',
+                                isHorizontal: !isTablet,
+                                enableHover: isDesktop,
+                              ),
+                              LandingValueCard(
+                                icon: Icons.contact_phone_rounded,
+                                color: mint,
+                                title: 'Müşteriler size doğrudan ulaşsın',
+                                desc:
+                                    'WhatsApp, adres ve yol tarifi seçeneklerini tek yerde sunun.',
+                                isHorizontal: !isTablet,
+                                enableHover: isDesktop,
+                              ),
+                              LandingValueCard(
+                                icon: Icons.share_rounded,
+                                color: pinkAccent,
+                                title: 'Her kanalda aynı vitrini paylaşın',
+                                desc:
+                                    'Linkinizi sosyal medyada, QR kodunuzu işletmenizde kullanın.',
+                                isHorizontal: !isTablet,
+                                enableHover: isDesktop,
+                              ),
+                              LandingValueCard(
+                                icon: Icons.edit_note_rounded,
+                                color: blueAccent,
+                                title: 'Bilgilerini panelden güncelle',
+                                desc:
+                                    'Fotoğraf, ürün, hizmet ve iletişim bilgilerini istediğin zaman düzenle.',
+                                isHorizontal: !isTablet,
+                                enableHover: isDesktop,
+                              ),
+                            ]
+                            .map(
+                              (widget) =>
+                                  SizedBox(width: cardWidth, child: widget),
+                            )
+                            .toList(),
                   );
                 },
               ),

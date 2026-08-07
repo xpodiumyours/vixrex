@@ -34,7 +34,7 @@ class LandingComparisonSection extends StatelessWidget {
           child: Column(
             children: [
               const Text(
-                'Dijital vitrininiz için gerekenler tek yerde',
+                'Dijital vitrinin için gerekenler tek yerde',
                 style: TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -45,7 +45,7 @@ class LandingComparisonSection extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme bilgilerinizi Vixrex’e ekleyin ve paylaşmaya başlayın.',
+                'Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme bilgilerini Vixrex’e ekle, paylaşmaya başla.',
                 style: TextStyle(
                   fontSize: 16,
                   color: AppColors.mutedText,

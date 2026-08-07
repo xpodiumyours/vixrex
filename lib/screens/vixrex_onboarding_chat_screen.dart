@@ -1058,7 +1058,7 @@ class _VixRexOnboardingChatScreenState
               const SizedBox(height: 10),
             ],
             _primaryButton(
-              _busy ? 'Vitrinin açılıyor…' : 'Vitrinimi birlikte düzenleyelim',
+              _busy ? 'Vitrinin açılıyor…' : 'Vitrinini aç',
               _busy ? null : () => _openOwnerWorkspace(),
             ),
             const SizedBox(height: 8),
@@ -1161,22 +1161,36 @@ class _ChatBubble extends StatelessWidget {
             ),
             if (line.publicLink != null && line.onOpenPublicLink != null) ...[
               const SizedBox(height: 12),
+              // TEK KAPI (bulgu 8).
+              //
+              // Burada eskiden birincil bir "Canlı vitrini aç" düğmesi
+              // vardı; aşağıda da "Vitrinimi birlikte düzenleyelim". İkisi
+              // de aynı sayfayı açıyordu. Esnaf önce bakıyor, geri dönüyor,
+              // sonra ikinci düğmeye basıyordu — tek iş için iki yolculuk.
+              //
+              // Artık asıl kapı aşağıdaki "Vitrinini aç" (sahip modunda).
+              // Burası ikincil kaldı ve işi değişti: müşterinin gördüğü
+              // hâli göstermek (bulgu 7 — sahip kendi vitrinini müşteri
+              // gözüyle göremiyordu).
               SizedBox(
                 width: double.infinity,
-                child: FilledButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: line.onOpenPublicLink,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.mutedText,
+                    side: const BorderSide(color: AppColors.border),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  icon: const Icon(Icons.open_in_new_rounded, size: 17),
+                  icon: const Icon(Icons.visibility_outlined, size: 16),
                   label: const Text(
-                    'Canlı vitrini aç',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                    'Müşterinin gördüğü hâli',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ),
               ),

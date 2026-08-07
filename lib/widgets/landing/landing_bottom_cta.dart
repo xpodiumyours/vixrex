@@ -44,7 +44,7 @@ class LandingBottomCta extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                'Vixrex’inizi oluşturun; linkinizi, QR kodunuzu ve WhatsApp iletişiminizi paylaşmaya başlayın.',
+                'Vixrex’ini oluştur; linkini, QR kodunu ve WhatsApp iletişimini paylaşmaya başla.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.border,

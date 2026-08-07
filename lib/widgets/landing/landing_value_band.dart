@@ -23,7 +23,7 @@ class LandingValueBand extends StatelessWidget {
                         : CrossAxisAlignment.center,
                 children: [
                   Text(
-                    'Müşterileriniz ihtiyaç duyduğu her bilgiye tek linkten ulaşsın',
+                    'Müşterin ihtiyaç duyduğu her bilgiye tek linkten ulaşsın',
                     textAlign: isDesktop ? TextAlign.left : TextAlign.center,
                     style: const TextStyle(
                       color: AppColors.darkText,

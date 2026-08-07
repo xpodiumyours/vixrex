@@ -18,7 +18,7 @@ class LandingStepsSection extends StatelessWidget {
           child: Column(
             children: [
               const Text(
-                'Üç adımda dijital vitrininiz hazır',
+                'Üç adımda dijital vitrinin hazır',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
@@ -35,11 +35,11 @@ class LandingStepsSection extends StatelessWidget {
                     _buildStepTimeline(
                       1,
                       'Vitrininizi kurun',
-                      'İşletme bilgilerinizi, görsellerinizi, ürün ve hizmetlerinizi ekleyin.',
+                      'İşletme bilgilerini, görsellerini, ürün ve hizmetlerini ekle.',
                     ),
                     _buildStepTimeline(
                       2,
-                      'Yayınlayın',
+                      'Yayınla',
                       'Bilgilerinizi kontrol edin; vitrin linkinizi ve QR kodunuzu hazır edin.',
                     ),
                     _buildStepTimeline(
