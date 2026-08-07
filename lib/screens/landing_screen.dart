@@ -423,6 +423,11 @@ class _LandingScreenState extends State<LandingScreen>
                 onNavigateToAuth: (key) => _navigateToExploreApp(key),
               ),
               LandingBottomCta(onNavigateToEditor: _navigateToEditor),
+              // Maskot sağ altta YÜZÜYOR — içeriğin üstünde durur. Bu
+              // boşluk olmadan sayfanın son satırları maskotun altında
+              // kalıyor ve okunmuyor. Sayfa biraz daha kaydırılabilir olur,
+              // görünüm değişmez.
+              const SizedBox(height: 96),
             ],
           ),
         ),

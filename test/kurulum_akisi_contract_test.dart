@@ -30,6 +30,12 @@ void main() {
       expect(landing, contains('_navigateToEditor'));
     });
 
+    test('maskot sayfanın son satırlarını kapatmıyor', () {
+      // 2026-08-07: maskot sağ altta yüzüyor ve içeriğin üstünde duruyor.
+      // Bu boşluk olmadan sayfanın sonu maskotun altında kalıyordu.
+      expect(landing, contains('SizedBox(height: 96)'));
+    });
+
     test('şablon kataloğu duruyor', () {
       expect(landing, contains('LandingTemplateCatalog('));
     });
