@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vixrex/services/auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/config/business_category_config.dart';
@@ -392,6 +394,39 @@ class _VixRexOnboardingChatScreenState
     _pushBot(
       'Son adım: editördeki yasal onayları işaretle, sonra yayınla.\n'
       'Kısa tutuyoruz.',
+    );
+  }
+
+  /// Vitrin anonim bir hesaba bağlıysa true — yani cihaz kaybolursa
+  /// erişim de kaybolur.
+  bool get _hesapKorumasiz {
+    final kullanici = Supabase.instance.client.auth.currentUser;
+    return kullanici != null && kullanici.isAnonymous;
+  }
+
+  /// Vitrini kalıcı bir hesaba bağlar.
+  ///
+  /// Anonim hesap CİHAZA bağlıdır. Esnaf telefonunu değiştirse ya da
+  /// tarayıcı verisini silse vitrinine bir daha erişemez. Bu adım
+  /// yayından SONRA çıkar — o ana kadar korunacak bir şey yok, kimseyi
+  /// formla karşılamayız.
+  Future<void> _hesabiBagla() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final sonuc = await const AuthService().hesabiGoogleaBagla();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (sonuc.isFailure) {
+      setState(() => _error = sonuc.failure!.message);
+      return;
+    }
+    setState(() {});
+    _pushBot(
+      'Tamam, vitrinin artık hesabına bağlı.\n'
+      'Telefonunu değiştirsen de buradan devam edersin.',
     );
   }
 
@@ -976,6 +1011,52 @@ class _VixRexOnboardingChatScreenState
           // etmek. Manuel panel ikincil kalıyor — silinmedi, yerinde
           // duruyor (VIXREX_RULES §1) ama artık varsayılan değil.
           if (_step == _OnboardingStep.done) ...[
+            if (_hesapKorumasiz) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Vitrinini hesabına bağla',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.darkText,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Şu an vitrinin bu cihaza bağlı. Telefonunu '
+                      'değiştirirsen ya da tarayıcı verilerini silersen '
+                      'erişimini kaybedersin.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.35,
+                        color: AppColors.mutedText,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _hesabiBagla,
+                      icon: const Icon(Icons.link_rounded, size: 18),
+                      label: const Text('Google ile bağla'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.border),
+                        minimumSize: const Size.fromHeight(42),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             _primaryButton(
               _busy ? 'Vitrinin açılıyor…' : 'Vitrinimi birlikte düzenleyelim',
               _busy ? null : () => _openOwnerWorkspace(),
