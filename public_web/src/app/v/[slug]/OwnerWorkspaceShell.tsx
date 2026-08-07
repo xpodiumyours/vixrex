@@ -101,6 +101,37 @@ export default function OwnerWorkspaceShell({
 
   const hiddenOnMobile = !open && !isDesktop;
 
+  const [tazeleniyor, setTazeleniyor] = useState(false);
+  const [tazelemeHatasi, setTazelemeHatasi] = useState<string | null>(null);
+
+  /// Taslağı canlı vitrinden tazeler.
+  ///
+  /// Uyarının ÇARESİ buydu (bulgu 10). Eskiden sadece "Yeniden Yükle"
+  /// vardı ve o aynı eski taslağı tekrar getiriyordu; tek çıkış yolu
+  /// "Değişiklikleri bırak"tı — esnaf için "işimi kaybedeceğim" demek.
+  const taslagiTazele = async () => {
+    if (tazeleniyor || !draft?.slug) return;
+    setTazeleniyor(true);
+    setTazelemeHatasi(null);
+    try {
+      const yanit = await fetch("/api/owner-refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: draft.slug }),
+      });
+      const govde = await yanit.json();
+      if (!yanit.ok) {
+        setTazelemeHatasi(govde?.hata ?? "Taslak tazelenemedi.");
+        return;
+      }
+      window.location.reload();
+    } catch {
+      setTazelemeHatasi("Bağlantı kurulamadı. Tekrar dene.");
+    } finally {
+      setTazeleniyor(false);
+    }
+  };
+
   const formatSessionTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -110,13 +141,17 @@ export default function OwnerWorkspaceShell({
   return (
     <>
       {draft?.version_conflict && (
-        <div className="fixed top-0 left-0 right-0 z-[70] bg-amber-600 text-white text-xs font-bold px-4 py-2 flex items-center justify-between">
-          <span>⚠️ Canlı vitrin değişmiş — taslak sürümü eski. </span>
+        <div className="fixed top-0 left-0 right-0 z-[70] bg-amber-600 text-white text-xs font-bold px-4 py-2 flex items-center justify-between gap-3">
+          <span>
+            {tazelemeHatasi ??
+              "Canlı vitrin değişmiş — burada gördüğün eski hâli."}
+          </span>
           <button
-            onClick={() => window.location.reload()}
-            className="underline hover:no-underline"
+            onClick={taslagiTazele}
+            disabled={tazeleniyor}
+            className="shrink-0 rounded bg-white/20 px-2.5 py-1 hover:bg-white/30 disabled:opacity-60"
           >
-            Yeniden Yükle
+            {tazeleniyor ? "Alınıyor…" : "Canlı sürümü al"}
           </button>
         </div>
       )}
