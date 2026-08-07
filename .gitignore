@@ -80,3 +80,8 @@ supabase/backup/dumps/
 .obsidian/cache
 
 supabase/.temp/
+
+# Playwright
+public_web/test-results/
+public_web/playwright-report/
+public_web/blob-report/
