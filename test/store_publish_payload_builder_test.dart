@@ -187,24 +187,27 @@ void main() {
       },
     );
 
-    test('boş bölüm alanları ve görünürlük payload’a boş/değer olarak yazılır', () {
-      final data = StoreData(name: 'Atmosfer');
+    test(
+      'boş bölüm alanları ve görünürlük payload’a boş/değer olarak yazılır',
+      () {
+        final data = StoreData(name: 'Atmosfer');
 
-      final payload = builder.toStoreUpdateMap(data);
+        final payload = builder.toStoreUpdateMap(data);
 
-      expect(payload['hero_location_text'], '');
-      expect(payload['map_label'], '');
-      expect(payload['category_section_title'], '');
-      expect(payload['product_section_title'], '');
-      expect(payload['gallery_action_label'], '');
-      expect(payload['gallery_action_href'], '');
-      expect(payload['blog_section_kicker'], '');
-      expect(payload['blog_section_title'], '');
-      expect(payload['faq_section_kicker'], '');
-      expect(payload['faq_section_title'], '');
-      expect(payload['faq_section_description'], '');
-      expect(payload['section_visibility'], isEmpty);
-    });
+        expect(payload['hero_location_text'], '');
+        expect(payload['map_label'], '');
+        expect(payload['category_section_title'], '');
+        expect(payload['product_section_title'], '');
+        expect(payload['gallery_action_label'], '');
+        expect(payload['gallery_action_href'], '');
+        expect(payload['blog_section_kicker'], '');
+        expect(payload['blog_section_title'], '');
+        expect(payload['faq_section_kicker'], '');
+        expect(payload['faq_section_title'], '');
+        expect(payload['faq_section_description'], '');
+        expect(payload['section_visibility'], isEmpty);
+      },
+    );
 
     test('Dilim D: öne çıkan kampanya alanlarını payload’a yazar', () {
       final data = StoreData(

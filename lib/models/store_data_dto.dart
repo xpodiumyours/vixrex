@@ -164,11 +164,7 @@ class StoreDataDto {
           _getString(json, 'heroLocationText', 'hero_location_text') ?? '',
       mapLabel: _getString(json, 'mapLabel', 'map_label') ?? '',
       categorySectionTitle:
-          _getString(
-            json,
-            'categorySectionTitle',
-            'category_section_title',
-          ) ??
+          _getString(json, 'categorySectionTitle', 'category_section_title') ??
           '',
       productSectionTitle:
           _getString(json, 'productSectionTitle', 'product_section_title') ??

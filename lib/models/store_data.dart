@@ -329,8 +329,7 @@ class StoreData {
       gallerySectionTitle: gallerySectionTitle ?? this.gallerySectionTitle,
       heroLocationText: heroLocationText ?? this.heroLocationText,
       mapLabel: mapLabel ?? this.mapLabel,
-      categorySectionTitle:
-          categorySectionTitle ?? this.categorySectionTitle,
+      categorySectionTitle: categorySectionTitle ?? this.categorySectionTitle,
       productSectionTitle: productSectionTitle ?? this.productSectionTitle,
       galleryActionLabel: galleryActionLabel ?? this.galleryActionLabel,
       galleryActionHref: galleryActionHref ?? this.galleryActionHref,
@@ -340,8 +339,7 @@ class StoreData {
       faqSectionTitle: faqSectionTitle ?? this.faqSectionTitle,
       faqSectionDescription:
           faqSectionDescription ?? this.faqSectionDescription,
-      sectionVisibility:
-          sectionVisibility ?? Map.of(this.sectionVisibility),
+      sectionVisibility: sectionVisibility ?? Map.of(this.sectionVisibility),
       showStorefrontRating: showStorefrontRating ?? this.showStorefrontRating,
       showDirectionsLink: showDirectionsLink ?? this.showDirectionsLink,
       featuredBannerLabel: featuredBannerLabel ?? this.featuredBannerLabel,

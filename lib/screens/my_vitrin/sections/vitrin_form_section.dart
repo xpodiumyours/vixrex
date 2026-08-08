@@ -1394,15 +1394,17 @@ class VitrinFormSection extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => FaqEditorSheet(
-        items: controller.data.faqItems,
-        kickerController: _faqKicker,
-        titleController: _faqTitle,
-        descriptionController: _faqDescription,
-        onKickerChanged: (v) => controller.updateFaqSectionKicker(v),
-        onTitleChanged: (v) => controller.updateFaqSectionTitle(v),
-        onDescriptionChanged: (v) => controller.updateFaqSectionDescription(v),
-      ),
+      builder:
+          (_) => FaqEditorSheet(
+            items: controller.data.faqItems,
+            kickerController: _faqKicker,
+            titleController: _faqTitle,
+            descriptionController: _faqDescription,
+            onKickerChanged: (v) => controller.updateFaqSectionKicker(v),
+            onTitleChanged: (v) => controller.updateFaqSectionTitle(v),
+            onDescriptionChanged:
+                (v) => controller.updateFaqSectionDescription(v),
+          ),
     );
     if (result == null) return;
     controller.updateFaqItems(result);

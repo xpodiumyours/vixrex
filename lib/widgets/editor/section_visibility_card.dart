@@ -17,7 +17,11 @@ class SectionVisibilityCard extends StatelessWidget {
     (key: 'about', label: 'Hakkımızda', icon: Icons.info_outline_rounded),
     (key: 'gallery', label: 'Galeri', icon: Icons.photo_library_outlined),
     (key: 'blog', label: 'Blog', icon: Icons.article_outlined),
-    (key: 'faq', label: 'Sık Sorulan Sorular', icon: Icons.help_outline_rounded),
+    (
+      key: 'faq',
+      label: 'Sık Sorulan Sorular',
+      icon: Icons.help_outline_rounded,
+    ),
     (key: 'contact', label: 'İletişim & Konum', icon: Icons.place_outlined),
   ];
 

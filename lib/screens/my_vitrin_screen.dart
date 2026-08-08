@@ -109,10 +109,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _syncText(_galleryActionHrefController, _controller.data.galleryActionHref);
     _syncText(_workingHoursController, _controller.data.workingHours);
     _syncText(_addressController, _controller.data.address);
-    _syncText(
-      _heroLocationTextController,
-      _controller.data.heroLocationText,
-    );
+    _syncText(_heroLocationTextController, _controller.data.heroLocationText);
     _syncText(_mapLabelController, _controller.data.mapLabel);
     _syncText(_descriptionController, _controller.data.description);
     _syncText(_instagramController, _controller.data.instagram);
@@ -253,8 +250,7 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                               'galleryTitle': _galleryTitleController,
                               'galleryActionLabel':
                                   _galleryActionLabelController,
-                              'galleryActionHref':
-                                  _galleryActionHrefController,
+                              'galleryActionHref': _galleryActionHrefController,
                               'workingHours': _workingHoursController,
                               'address': _addressController,
                               'heroLocationText': _heroLocationTextController,
