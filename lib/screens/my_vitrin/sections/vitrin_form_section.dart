@@ -27,7 +27,6 @@ import 'package:vixrex/widgets/editor/common_form_fields.dart';
 import 'package:vixrex/widgets/editor/gallery_editor_section.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 import 'package:vixrex/widgets/editor/public_link_card.dart';
-import 'package:vixrex/widgets/editor/store_theme_picker.dart';
 import 'package:vixrex/widgets/google_business_guide_card.dart';
 import 'package:vixrex/widgets/editor/blog_entry_card.dart';
 import 'package:vixrex/widgets/editor/about_entry_card.dart';
@@ -297,14 +296,6 @@ class VitrinFormSection extends StatelessWidget {
                           ),
                           const SizedBox(height: 14),
 
-                          // StoreThemePicker (Tema Seçimi)
-                          StoreThemePicker(
-                            selectedTheme: controller.data.theme,
-                            onThemeChanged:
-                                (val) => controller.data.theme = val,
-                          ),
-                          const SizedBox(height: 14),
-
                           // 4. Vitrin Durumu
                           EditorDropdownField(
                             label: 'Vitrin Durumu',
@@ -460,13 +451,6 @@ class VitrinFormSection extends StatelessWidget {
                               false) ||
                           controller.data.slug.trim().isNotEmpty,
                       onTap: () => _openBlogEditor(context),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // StoreThemePicker (Tema Seçimi)
-                    StoreThemePicker(
-                      selectedTheme: controller.data.theme,
-                      onThemeChanged: (val) => controller.data.theme = val,
                     ),
                     const SizedBox(height: 14),
 
