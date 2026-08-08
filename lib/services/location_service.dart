@@ -225,7 +225,22 @@ class LocationService {
           final city = addressData['city'] ?? addressData['province'] ?? '';
 
           final parts = <String>[];
-          if (suburb.isNotEmpty) parts.add('$suburb Mah.');
+          // MAHALLE EKI TEKRARLANMAZ.
+          //
+          // OpenStreetMap mahalle adini cogu zaman zaten "... Mahallesi"
+          // diye veriyor. Sonuna bir de "Mah." eklenince vitrinin yuzunde
+          // "Adem Yavuz Mahallesi., Umraniye" gibi bozuk bir satir cikti
+          // (2026-08-08, Casper'in vitrininde goruldu).
+          if (suburb.isNotEmpty) {
+            final ad = suburb.toString().trim();
+            final kucuk = ad.toLowerCase();
+            final ekVar =
+                kucuk.endsWith('mahallesi') ||
+                kucuk.endsWith('mahalle') ||
+                kucuk.endsWith('mah.') ||
+                kucuk.endsWith('mah');
+            parts.add(ekVar ? ad : '$ad Mah.');
+          }
           if (road.isNotEmpty) parts.add(road.toString());
           if (town.isNotEmpty) parts.add(town.toString());
           if (city.isNotEmpty && city != town) parts.add(city.toString());

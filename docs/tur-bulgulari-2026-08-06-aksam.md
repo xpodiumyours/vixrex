@@ -8,7 +8,7 @@ liste burada birikir.
 
 ---
 
-## 1. Kategori balonları dağınık
+## 1. Kategori balonları dağınık — ✅ KAPANDI (#45)
 
 **Nerede:** Kurulum sohbeti, "İşini seç" adımı
 
@@ -21,7 +21,7 @@ Kategori sayısı katalogla aynı olmalı.
 
 ---
 
-## 2. GPS koordinat alıyor, adresi bulmuyor
+## 2. GPS koordinat alıyor, adresi bulmuyor — ⚠️ AÇIK (kötüleşti)
 
 **Nerede:** Kurulum sohbeti, konum adımı
 
@@ -49,7 +49,7 @@ fotoğrafı var. Esnaf böyle bir fotoğraf seçmedi.
 
 ---
 
-## 4. Sahip oturumu 15 dakikada ölüyor, yenilenmiyor
+## 4. Sahip oturumu 15 dakikada ölüyor, yenilenmiyor — ⚠️ AÇIK (hiç ele alınmadı)
 
 **Nerede:** `public_web/src/lib/ownerSession.ts:14`
 
@@ -67,7 +67,7 @@ Esnaf orada 15 dakikadan fazla kalıyor.
 
 ---
 
-## 5. 44 alanın 32'sine ulaşılamıyor
+## 5. 44 alanın 32'sine ulaşılamıyor — ✅ KAPANDI (#58)
 
 **Nerede:** Sahip paneli, `/v/dene-dene-yoruldum`
 
@@ -90,7 +90,7 @@ ayrılmış ve hepsi tıklanabilir. Yüzde 12 üzerinden kalabilir (hazırlık
 
 ---
 
-## 6. Sahip modunda eylem butonları düzenlenmiyor, dışarı atıyor
+## 6. Sahip modunda eylem butonları düzenlenmiyor, dışarı atıyor — ✅ KAPANDI (#59)
 
 **Nerede:** `VitrinProfileView.tsx:389` (hero butonları) ve
 "İletişim & Konum" kartındaki bağlantılar
@@ -112,7 +112,7 @@ sahip araçları müşteri yanıtına sızmaz).
 
 ---
 
-## 7. Sahip, müşterinin gördüğünü göremiyor
+## 7. Sahip, müşterinin gördüğünü göremiyor — ✅ KAPANDI (#54)
 
 **Nerede:** Sahip paneli
 
@@ -128,7 +128,7 @@ aynı adresi sahip modu kapalı olarak açar.
 
 ---
 
-## 8. Kurulum sonu iki kapı, ikisi de aynı yere
+## 8. Kurulum sonu iki kapı, ikisi de aynı yere — ✅ KAPANDI (#54)
 
 **Nerede:** Kurulum sohbetinin son ekranı
 
@@ -142,7 +142,7 @@ sekmede. Müşteri görünümü panelin içinde bir bağlantı olur.
 
 ---
 
-## 9. Paylaş kutusundaki adres ölü
+## 9. Paylaş kutusundaki adres ölü — ✅ KAPANDI (#46)
 
 **Nerede:** Yayınlanmış vitrin, paylaşım bölümü
 
@@ -157,7 +157,7 @@ Link ölüyse geri kalan her şey anlamsız.
 
 ---
 
-## 10. Sürüm uyarısının çaresi yok — taslak tazelenemiyor
+## 10. Sürüm uyarısının çaresi yok — taslak tazelenemiyor — ✅ KAPANDI (#60)
 
 **Nerede:** Sahip paneli, turuncu "canlı vitrin değişmiş" kutusu
 
@@ -181,7 +181,7 @@ varsa önce sorulmalı.
 
 ---
 
-## 11. Maskot balonu rozetlerin üstüne biniyor
+## 11. Maskot balonu rozetlerin üstüne biniyor — ✅ KAPANDI (#49)
 
 **Nerede:** Karşılama ekranı, telefon
 
@@ -193,7 +193,7 @@ ya rozetler için yer bıraksın.
 
 ---
 
-## 12. Karşılama metni "siz" kipinde
+## 12. Karşılama metni "siz" kipinde — ✅ KAPANDI (#54)
 
 **Nerede:** Karşılama ekranı, giriş paragrafı
 
@@ -205,7 +205,7 @@ Flutter karşılama metni kaldı.
 
 ---
 
-## 13. Zorunlu alanlar boşken "devam" basılabiliyor
+## 13. Zorunlu alanlar boşken "devam" basılabiliyor — ✅ KAPANDI (#48)
 
 **Nerede:** Kurulum sohbeti, konum adımı
 
@@ -218,7 +218,7 @@ yıldız kaldırılsın. İkisinden biri — ikisi birden yanlış.
 
 ---
 
-## 14. 119 deneme vitrini yayında ve Google'a açık
+## 14. 119 deneme vitrini yayında ve Google'a açık — ✅ KAPANDI (temizlik)
 
 **Nerede:** Bulut veritabanı, `stores` tablosu
 
@@ -241,7 +241,7 @@ ya kurulum sırasında işaretlensinler ya da düzenli temizlik.
 
 ---
 
-## 15. Yazı tipi yüzeyler arasında tutarsız
+## 15. Yazı tipi yüzeyler arasında tutarsız — ✅ KAPANDI (#50)
 
 **Nerede:** Uygulama (Flutter) ve vitrin (Next.js)
 
@@ -265,7 +265,7 @@ belirlememeli.
 
 ---
 
-## 16. Asistanın yüzü ekrandan ekrana değişiyor
+## 16. Asistanın yüzü ekrandan ekrana değişiyor — ✅ KAPANDI (#61)
 
 **Nerede:** Kurulum sohbeti ve uygulama içi asistan
 
@@ -277,3 +277,44 @@ birleştirildi ("sen" kipi). Görünüm birleştirilmedi — karar yarım kaldı
 
 **Olması gereken:** Balon biçimi tek yerde tanımlansın; maskotun görünüp
 görünmeyeceği her ekranda ayrı ayrı değil, tek kuraldan gelsin.
+
+
+---
+
+## DURUM — 8 Ağustos 2026
+
+**Kapanan: 14 / 16**
+
+**Açık kalan 2:**
+
+- **2 — GPS.** 7 Ağustos'ta kapandı sanıldı, sonra KÖTÜLEŞTİ. Adres
+  hassasiyetten bağımsız doldurulunca masaüstü tarayıcıdan 20 KM sapmalı
+  adres yazıldı (Çekmeköy'deyken Ümraniye). Dolu görünen yanlış adres,
+  boş alandan beterdir. Geri alma hazır, uygulanmadı.
+- **4 — 15 dakikalık oturum.** Bugün hiç ele alınmadı, listede unutuldu.
+  `OWNER_SESSION_TTL_MS` hâlâ 15 dakika, yenileme yok.
+
+## YENİ — 8 Ağustos'ta ortaya çıktı
+
+## 17. İkinci vitrin yayınlanamıyor
+
+**Ne oluyor:** Yayınlama şu hatayla düşüyor:
+`duplicate key value violates unique constraint "unique_user_store"`
+
+**Sebep:** 7 Ağustos'ta anonim oturum eklendi; artık her kullanıcının
+`user_id`'si dolu. Veritabanında "bir kullanıcı bir vitrin" kısıtı var,
+eskiden `user_id` boş olduğu için hiç tetiklenmiyordu.
+
+**Olması gereken:** Kullanıcının vitrini varsa yenisini kurmak yerine
+mevcudu güncellemeli. Ham veritabanı hatası esnafa gösterilmemeli.
+
+## 18. Vitrinler birbirinin aynı görünüyor
+
+**Nereden çıktı:** Checkly'nin bağımsız incelemesi (8 Ağustos).
+
+**Ne oluyor:** İsim, ürün ve Instagram vitrinden vitrine değişiyor;
+görünüm değişmiyor. Aynı renk paleti, aynı bölüm sırası, aynı ızgara.
+Logo yok — başlık düz metin. Görseller Unsplash stok fotoğrafı.
+
+**Neden önemli:** Ürünün vaadi "işletmeni tanısın". Beş vitrin yan yana
+konsa hangisinin kimin olduğu ancak yazıdan anlaşılır.
