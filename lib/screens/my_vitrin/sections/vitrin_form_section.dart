@@ -42,6 +42,7 @@ import 'package:vixrex/widgets/product/product_management_entry_card.dart';
 import 'package:vixrex/widgets/product/product_management_sheet.dart';
 import 'package:vixrex/widgets/editor/form_location_info.dart';
 import 'package:vixrex/widgets/editor/form_marketplace_links.dart';
+import 'package:vixrex/widgets/editor/section_visibility_card.dart';
 
 class VitrinFormSection extends StatelessWidget {
   final StoreEditorController controller;
@@ -78,11 +79,28 @@ class VitrinFormSection extends StatelessWidget {
   TextEditingController get _heroBadge => textControllers['heroBadge']!;
   TextEditingController get _galleryKicker => textControllers['galleryKicker']!;
   TextEditingController get _galleryTitle => textControllers['galleryTitle']!;
+  TextEditingController get _galleryActionLabel =>
+      textControllers['galleryActionLabel']!;
+  TextEditingController get _galleryActionHref =>
+      textControllers['galleryActionHref']!;
   TextEditingController get _workingHours => textControllers['workingHours']!;
   TextEditingController get _address => textControllers['address']!;
+  TextEditingController get _heroLocationText =>
+      textControllers['heroLocationText']!;
+  TextEditingController get _mapLabel => textControllers['mapLabel']!;
   TextEditingController get _desc => textControllers['description']!;
   TextEditingController get _insta => textControllers['instagram']!;
   TextEditingController get _google => textControllers['googleBusiness']!;
+  TextEditingController get _categorySectionTitle =>
+      textControllers['categorySectionTitle']!;
+  TextEditingController get _productSectionTitle =>
+      textControllers['productSectionTitle']!;
+  TextEditingController get _blogKicker => textControllers['blogKicker']!;
+  TextEditingController get _blogTitle => textControllers['blogTitle']!;
+  TextEditingController get _faqKicker => textControllers['faqKicker']!;
+  TextEditingController get _faqTitle => textControllers['faqTitle']!;
+  TextEditingController get _faqDescription =>
+      textControllers['faqDescription']!;
 
   /// EditorGalleryItem → GalleryItem dönüşümü (GalleryEditorSection uyumluluğu)
   List<GalleryItem> get _galleryItemsForEditor =>
@@ -270,6 +288,8 @@ class VitrinFormSection extends StatelessWidget {
                           ],
 
                           // 2. Ürünlerimi Yönet (Ürün Ekle Kısmı)
+                          _buildCatalogSectionTitles(),
+                          const SizedBox(height: 14),
                           ProductManagementEntryCard(
                             productCount: controller.data.products.length,
                             onTap: () => _showProductSheet(context),
@@ -284,6 +304,8 @@ class VitrinFormSection extends StatelessWidget {
                             faqCount: controller.data.faqItems.length,
                             onTap: () => _showFaqSheet(context),
                           ),
+                          const SizedBox(height: 14),
+                          _buildBlogSectionTitles(),
                           const SizedBox(height: 14),
                           BlogEntryCard(
                             canOpen:
@@ -430,6 +452,8 @@ class VitrinFormSection extends StatelessWidget {
                     ],
 
                     // Ürünlerimi Yönet (Ürün Ekle)
+                    _buildCatalogSectionTitles(),
+                    const SizedBox(height: 14),
                     ProductManagementEntryCard(
                       productCount: controller.data.products.length,
                       onTap: () => _showProductSheet(context),
@@ -444,6 +468,8 @@ class VitrinFormSection extends StatelessWidget {
                       faqCount: controller.data.faqItems.length,
                       onTap: () => _showFaqSheet(context),
                     ),
+                    const SizedBox(height: 14),
+                    _buildBlogSectionTitles(),
                     const SizedBox(height: 14),
                     BlogEntryCard(
                       canOpen:
@@ -501,6 +527,13 @@ class VitrinFormSection extends StatelessWidget {
               const Divider(color: AppColors.border, height: 1),
               const SizedBox(height: 24),
 
+              // GELİŞMİŞ AYARLAR — bölüm görünürlüğü (sahip kararı)
+              SectionVisibilityCard(
+                visibility: controller.data.sectionVisibility,
+                onChanged: controller.updateSectionVisibility,
+              ),
+              const SizedBox(height: 24),
+
               // ALT ALAN (Her iki görünümde de tam genişlik)
               _buildLegalAndPublishSection(context, hasPublished),
             ],
@@ -517,6 +550,8 @@ class VitrinFormSection extends StatelessWidget {
       galleryItems: _galleryItemsForEditor,
       galleryKickerController: _galleryKicker,
       galleryTitleController: _galleryTitle,
+      galleryActionLabelController: _galleryActionLabel,
+      galleryActionHrefController: _galleryActionHref,
       onPickCover: () => _pickCover(context),
       onPickCoverFromCamera: () => _pickCoverFromCamera(context),
       onAutoFillCover:
@@ -529,6 +564,8 @@ class VitrinFormSection extends StatelessWidget {
         controller.updateGalleryItemTitle(index, title);
         controller.saveLocally();
       },
+      onGalleryActionLabelChanged: controller.updateGalleryActionLabel,
+      onGalleryActionHrefChanged: controller.updateGalleryActionHref,
     );
   }
 
@@ -698,6 +735,56 @@ class VitrinFormSection extends StatelessWidget {
       hint: 'Örn: Pzt — Cmt 09:00 - 20:00',
       icon: Icons.schedule_rounded,
       onChanged: (v) => controller.updateWorkingHoursText(v),
+    );
+  }
+
+  Widget _buildCatalogSectionTitles() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        EditorTextField(
+          label: 'Kategori Bölümü Başlığı',
+          controller: _categorySectionTitle,
+          hint: 'Örn: Servis Alanlarımız',
+          icon: Icons.category_outlined,
+          maxLength: 60,
+          onChanged: (v) => controller.updateCategorySectionTitle(v),
+        ),
+        const SizedBox(height: 12),
+        EditorTextField(
+          label: 'Ürün Bölümü Başlığı',
+          controller: _productSectionTitle,
+          hint: 'Örn: Servis Fiyat Listesi',
+          icon: Icons.inventory_2_outlined,
+          maxLength: 60,
+          onChanged: (v) => controller.updateProductSectionTitle(v),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBlogSectionTitles() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        EditorTextField(
+          label: 'Blog Üst Başlık',
+          controller: _blogKicker,
+          hint: 'Örn: Teknik rehber',
+          icon: Icons.label_outline_rounded,
+          maxLength: 40,
+          onChanged: (v) => controller.updateBlogSectionKicker(v),
+        ),
+        const SizedBox(height: 12),
+        EditorTextField(
+          label: 'Blog Bölüm Başlığı',
+          controller: _blogTitle,
+          hint: 'Örn: Mağazadan Haberler',
+          icon: Icons.article_outlined,
+          maxLength: 90,
+          onChanged: (v) => controller.updateBlogSectionTitle(v),
+        ),
+      ],
     );
   }
 
@@ -957,6 +1044,8 @@ class VitrinFormSection extends StatelessWidget {
       controller: controller,
       state: state,
       addressController: _address,
+      heroLocationTextController: _heroLocationText,
+      mapLabelController: _mapLabel,
     );
   }
 
@@ -1289,7 +1378,17 @@ class VitrinFormSection extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => FaqEditorSheet(items: controller.data.faqItems),
+      builder:
+          (_) => FaqEditorSheet(
+            items: controller.data.faqItems,
+            kickerController: _faqKicker,
+            titleController: _faqTitle,
+            descriptionController: _faqDescription,
+            onKickerChanged: (v) => controller.updateFaqSectionKicker(v),
+            onTitleChanged: (v) => controller.updateFaqSectionTitle(v),
+            onDescriptionChanged:
+                (v) => controller.updateFaqSectionDescription(v),
+          ),
     );
     if (result == null) return;
     controller.updateFaqItems(result);

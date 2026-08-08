@@ -5,8 +5,23 @@ import 'package:vixrex/widgets/editor/common_form_fields.dart';
 
 class FaqEditorSheet extends StatefulWidget {
   final List<StoreFaqItem> items;
+  final TextEditingController kickerController;
+  final TextEditingController titleController;
+  final TextEditingController descriptionController;
+  final ValueChanged<String> onKickerChanged;
+  final ValueChanged<String> onTitleChanged;
+  final ValueChanged<String> onDescriptionChanged;
 
-  const FaqEditorSheet({super.key, required this.items});
+  const FaqEditorSheet({
+    super.key,
+    required this.items,
+    required this.kickerController,
+    required this.titleController,
+    required this.descriptionController,
+    required this.onKickerChanged,
+    required this.onTitleChanged,
+    required this.onDescriptionChanged,
+  });
 
   @override
   State<FaqEditorSheet> createState() => _FaqEditorSheetState();
@@ -99,6 +114,34 @@ class _FaqEditorSheetState extends State<FaqEditorSheet> {
               const Text(
                 'Boş soru/cevaplar kaydedilmez.',
                 style: TextStyle(color: AppColors.mutedText, fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              EditorTextField(
+                label: 'SSS Üst Başlık',
+                controller: widget.kickerController,
+                hint: 'Örn: Merak edilenler',
+                icon: Icons.label_outline_rounded,
+                maxLength: 40,
+                onChanged: widget.onKickerChanged,
+              ),
+              const SizedBox(height: 12),
+              EditorTextField(
+                label: 'SSS Bölüm Başlığı',
+                controller: widget.titleController,
+                hint: 'Örn: Sık Sorulan Sorular',
+                icon: Icons.title_rounded,
+                maxLength: 90,
+                onChanged: widget.onTitleChanged,
+              ),
+              const SizedBox(height: 12),
+              EditorTextField(
+                label: 'SSS Bölüm Açıklaması',
+                controller: widget.descriptionController,
+                hint: 'Bölümün altındaki kısa açıklama',
+                icon: Icons.notes_rounded,
+                maxLines: 3,
+                maxLength: 200,
+                onChanged: widget.onDescriptionChanged,
               ),
               const SizedBox(height: 16),
               for (var i = 0; i < _drafts.length; i++) ...[

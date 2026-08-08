@@ -44,6 +44,23 @@ class StoreData {
   String gallerySectionKicker;
   String gallerySectionTitle;
 
+  /// Sahibin düzenleyebildiği vitrin bölümü alanları (Aşama 1).
+  /// Kolon sözleşmesi: docs/vitrin-alan-semasi.md
+  String heroLocationText;
+  String mapLabel;
+  String categorySectionTitle;
+  String productSectionTitle;
+  String galleryActionLabel;
+  String galleryActionHref;
+  String blogSectionKicker;
+  String blogSectionTitle;
+  String faqSectionKicker;
+  String faqSectionTitle;
+  String faqSectionDescription;
+
+  /// Bölüm açık/kapalı kararı. Boş harita = otomatik (veri doluluğuna göre).
+  Map<String, bool> sectionVisibility;
+
   /// Vitrinde sahte/boş puan bandını gösterme (varsayılan kapalı)
   bool showStorefrontRating;
 
@@ -130,6 +147,18 @@ class StoreData {
     List<StoreAboutValue>? aboutValues,
     this.gallerySectionKicker = '',
     this.gallerySectionTitle = '',
+    this.heroLocationText = '',
+    this.mapLabel = '',
+    this.categorySectionTitle = '',
+    this.productSectionTitle = '',
+    this.galleryActionLabel = '',
+    this.galleryActionHref = '',
+    this.blogSectionKicker = '',
+    this.blogSectionTitle = '',
+    this.faqSectionKicker = '',
+    this.faqSectionTitle = '',
+    this.faqSectionDescription = '',
+    Map<String, bool>? sectionVisibility,
     this.showStorefrontRating = false,
     this.showDirectionsLink = true,
     this.featuredBannerLabel = '',
@@ -179,7 +208,8 @@ class StoreData {
        galleryItems = galleryItems ?? [],
        offerings = offerings ?? [],
        faqItems = faqItems ?? [],
-       aboutValues = aboutValues ?? [];
+       aboutValues = aboutValues ?? [],
+       sectionVisibility = sectionVisibility ?? {};
 
   Map<String, dynamic> toJson() => StoreDataDto.toJson(this);
 
@@ -213,6 +243,18 @@ class StoreData {
     List<StoreAboutValue>? aboutValues,
     String? gallerySectionKicker,
     String? gallerySectionTitle,
+    String? heroLocationText,
+    String? mapLabel,
+    String? categorySectionTitle,
+    String? productSectionTitle,
+    String? galleryActionLabel,
+    String? galleryActionHref,
+    String? blogSectionKicker,
+    String? blogSectionTitle,
+    String? faqSectionKicker,
+    String? faqSectionTitle,
+    String? faqSectionDescription,
+    Map<String, bool>? sectionVisibility,
     bool? showStorefrontRating,
     bool? showDirectionsLink,
     String? featuredBannerLabel,
@@ -285,6 +327,19 @@ class StoreData {
       aboutValues: aboutValues ?? List.of(this.aboutValues),
       gallerySectionKicker: gallerySectionKicker ?? this.gallerySectionKicker,
       gallerySectionTitle: gallerySectionTitle ?? this.gallerySectionTitle,
+      heroLocationText: heroLocationText ?? this.heroLocationText,
+      mapLabel: mapLabel ?? this.mapLabel,
+      categorySectionTitle: categorySectionTitle ?? this.categorySectionTitle,
+      productSectionTitle: productSectionTitle ?? this.productSectionTitle,
+      galleryActionLabel: galleryActionLabel ?? this.galleryActionLabel,
+      galleryActionHref: galleryActionHref ?? this.galleryActionHref,
+      blogSectionKicker: blogSectionKicker ?? this.blogSectionKicker,
+      blogSectionTitle: blogSectionTitle ?? this.blogSectionTitle,
+      faqSectionKicker: faqSectionKicker ?? this.faqSectionKicker,
+      faqSectionTitle: faqSectionTitle ?? this.faqSectionTitle,
+      faqSectionDescription:
+          faqSectionDescription ?? this.faqSectionDescription,
+      sectionVisibility: sectionVisibility ?? Map.of(this.sectionVisibility),
       showStorefrontRating: showStorefrontRating ?? this.showStorefrontRating,
       showDirectionsLink: showDirectionsLink ?? this.showDirectionsLink,
       featuredBannerLabel: featuredBannerLabel ?? this.featuredBannerLabel,

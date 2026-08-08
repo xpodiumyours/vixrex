@@ -71,6 +71,8 @@ class _VixRexOnboardingChatScreenState
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
   final _addressController = TextEditingController();
+  final _heroLocationTextController = TextEditingController();
+  final _mapLabelController = TextEditingController();
   final _inputFocus = FocusNode();
 
   final List<_ChatLine> _lines = [];
@@ -175,6 +177,8 @@ class _VixRexOnboardingChatScreenState
     _scrollController.dispose();
     _inputController.dispose();
     _addressController.dispose();
+    _heroLocationTextController.dispose();
+    _mapLabelController.dispose();
     _inputFocus.dispose();
     super.dispose();
   }
@@ -905,6 +909,8 @@ class _VixRexOnboardingChatScreenState
               controller: _controller,
               state: _vitrinState,
               addressController: _addressController,
+              heroLocationTextController: _heroLocationTextController,
+              mapLabelController: _mapLabelController,
             ),
             const SizedBox(height: 10),
             _primaryButton(

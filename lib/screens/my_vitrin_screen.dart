@@ -44,12 +44,23 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   final _corporateBioController = TextEditingController();
   final _galleryKickerController = TextEditingController();
   final _galleryTitleController = TextEditingController();
+  final _galleryActionLabelController = TextEditingController();
+  final _galleryActionHrefController = TextEditingController();
   final _workingHoursController = TextEditingController();
   final _addressController = TextEditingController();
+  final _heroLocationTextController = TextEditingController();
+  final _mapLabelController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _instagramController = TextEditingController();
   final _websiteController = TextEditingController();
   final _googleBusinessLinkController = TextEditingController();
+  final _categorySectionTitleController = TextEditingController();
+  final _productSectionTitleController = TextEditingController();
+  final _blogKickerController = TextEditingController();
+  final _blogTitleController = TextEditingController();
+  final _faqKickerController = TextEditingController();
+  final _faqTitleController = TextEditingController();
+  final _faqDescriptionController = TextEditingController();
 
   @override
   void initState() {
@@ -91,8 +102,15 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _syncText(_corporateBioController, _controller.data.corporateBio);
     _syncText(_galleryKickerController, _controller.data.gallerySectionKicker);
     _syncText(_galleryTitleController, _controller.data.gallerySectionTitle);
+    _syncText(
+      _galleryActionLabelController,
+      _controller.data.galleryActionLabel,
+    );
+    _syncText(_galleryActionHrefController, _controller.data.galleryActionHref);
     _syncText(_workingHoursController, _controller.data.workingHours);
     _syncText(_addressController, _controller.data.address);
+    _syncText(_heroLocationTextController, _controller.data.heroLocationText);
+    _syncText(_mapLabelController, _controller.data.mapLabel);
     _syncText(_descriptionController, _controller.data.description);
     _syncText(_instagramController, _controller.data.instagram);
     _syncText(
@@ -102,6 +120,22 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _syncText(
       _googleBusinessLinkController,
       _controller.data.googleBusinessLink,
+    );
+    _syncText(
+      _categorySectionTitleController,
+      _controller.data.categorySectionTitle,
+    );
+    _syncText(
+      _productSectionTitleController,
+      _controller.data.productSectionTitle,
+    );
+    _syncText(_blogKickerController, _controller.data.blogSectionKicker);
+    _syncText(_blogTitleController, _controller.data.blogSectionTitle);
+    _syncText(_faqKickerController, _controller.data.faqSectionKicker);
+    _syncText(_faqTitleController, _controller.data.faqSectionTitle);
+    _syncText(
+      _faqDescriptionController,
+      _controller.data.faqSectionDescription,
     );
   }
 
@@ -149,12 +183,23 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _corporateBioController.dispose();
     _galleryKickerController.dispose();
     _galleryTitleController.dispose();
+    _galleryActionLabelController.dispose();
+    _galleryActionHrefController.dispose();
     _workingHoursController.dispose();
     _addressController.dispose();
+    _heroLocationTextController.dispose();
+    _mapLabelController.dispose();
     _descriptionController.dispose();
     _instagramController.dispose();
     _websiteController.dispose();
     _googleBusinessLinkController.dispose();
+    _categorySectionTitleController.dispose();
+    _productSectionTitleController.dispose();
+    _blogKickerController.dispose();
+    _blogTitleController.dispose();
+    _faqKickerController.dispose();
+    _faqTitleController.dispose();
+    _faqDescriptionController.dispose();
     _state.dispose();
     if (_ownsController) _controller.dispose();
     super.dispose();
@@ -203,12 +248,26 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                               'corporateBio': _corporateBioController,
                               'galleryKicker': _galleryKickerController,
                               'galleryTitle': _galleryTitleController,
+                              'galleryActionLabel':
+                                  _galleryActionLabelController,
+                              'galleryActionHref': _galleryActionHrefController,
                               'workingHours': _workingHoursController,
                               'address': _addressController,
+                              'heroLocationText': _heroLocationTextController,
+                              'mapLabel': _mapLabelController,
                               'description': _descriptionController,
                               'instagram': _instagramController,
                               'website': _websiteController,
                               'googleBusiness': _googleBusinessLinkController,
+                              'categorySectionTitle':
+                                  _categorySectionTitleController,
+                              'productSectionTitle':
+                                  _productSectionTitleController,
+                              'blogKicker': _blogKickerController,
+                              'blogTitle': _blogTitleController,
+                              'faqKicker': _faqKickerController,
+                              'faqTitle': _faqTitleController,
+                              'faqDescription': _faqDescriptionController,
                             },
                             onPublished: widget.onPublished,
                             onOpenExplore: widget.onOpenExplore,

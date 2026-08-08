@@ -11,11 +11,15 @@ class FormMediaPicker extends StatelessWidget {
   final List<GalleryItem> galleryItems;
   final TextEditingController galleryKickerController;
   final TextEditingController galleryTitleController;
+  final TextEditingController galleryActionLabelController;
+  final TextEditingController galleryActionHrefController;
   final VoidCallback onPickCover;
   final VoidCallback onPickCoverFromCamera;
   final VoidCallback onAutoFillCover;
   final VoidCallback onPickGallery;
   final void Function(int index, String title)? onGalleryTitleChanged;
+  final ValueChanged<String> onGalleryActionLabelChanged;
+  final ValueChanged<String> onGalleryActionHrefChanged;
 
   const FormMediaPicker({
     super.key,
@@ -24,11 +28,15 @@ class FormMediaPicker extends StatelessWidget {
     required this.galleryItems,
     required this.galleryKickerController,
     required this.galleryTitleController,
+    required this.galleryActionLabelController,
+    required this.galleryActionHrefController,
     required this.onPickCover,
     required this.onPickCoverFromCamera,
     required this.onAutoFillCover,
     required this.onPickGallery,
     this.onGalleryTitleChanged,
+    required this.onGalleryActionLabelChanged,
+    required this.onGalleryActionHrefChanged,
   });
 
   @override
@@ -82,6 +90,10 @@ class FormMediaPicker extends StatelessWidget {
             onPickPhotos: onPickGallery,
             onRemovePhoto: controller.removeGalleryItem,
             onTitleChanged: onGalleryTitleChanged,
+            galleryActionLabelController: galleryActionLabelController,
+            galleryActionHrefController: galleryActionHrefController,
+            onGalleryActionLabelChanged: onGalleryActionLabelChanged,
+            onGalleryActionHrefChanged: onGalleryActionHrefChanged,
           ),
         ),
       ],

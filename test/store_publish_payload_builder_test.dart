@@ -151,6 +151,64 @@ void main() {
       expect(payload['show_directions_link'], isFalse);
     });
 
+    test(
+      'Dilim H: sahibin düzenlediği 11 bölüm alanını ve görünürlüğü payload’a yazar',
+      () {
+        final data = StoreData(
+          name: 'Atmosfer',
+          heroLocationText: '  Kadıköy, İstanbul  ',
+          mapLabel: '  Atatürk Cad. No:24  ',
+          categorySectionTitle: '  Servis Alanlarımız  ',
+          productSectionTitle: '  Servis Fiyat Listesi  ',
+          galleryActionLabel: '  Kataloğu Gör  ',
+          galleryActionHref: '  https://example.com/katalog  ',
+          blogSectionKicker: '  Teknik rehber  ',
+          blogSectionTitle: '  Mağazadan Haberler  ',
+          faqSectionKicker: '  Merak edilenler  ',
+          faqSectionTitle: '  Sık Sorulan Sorular  ',
+          faqSectionDescription: '  Kısa açıklama  ',
+          sectionVisibility: {'blog': false, 'faq': false},
+        );
+
+        final payload = builder.toStoreUpdateMap(data);
+
+        expect(payload['hero_location_text'], 'Kadıköy, İstanbul');
+        expect(payload['map_label'], 'Atatürk Cad. No:24');
+        expect(payload['category_section_title'], 'Servis Alanlarımız');
+        expect(payload['product_section_title'], 'Servis Fiyat Listesi');
+        expect(payload['gallery_action_label'], 'Kataloğu Gör');
+        expect(payload['gallery_action_href'], 'https://example.com/katalog');
+        expect(payload['blog_section_kicker'], 'Teknik rehber');
+        expect(payload['blog_section_title'], 'Mağazadan Haberler');
+        expect(payload['faq_section_kicker'], 'Merak edilenler');
+        expect(payload['faq_section_title'], 'Sık Sorulan Sorular');
+        expect(payload['faq_section_description'], 'Kısa açıklama');
+        expect(payload['section_visibility'], {'blog': false, 'faq': false});
+      },
+    );
+
+    test(
+      'boş bölüm alanları ve görünürlük payload’a boş/değer olarak yazılır',
+      () {
+        final data = StoreData(name: 'Atmosfer');
+
+        final payload = builder.toStoreUpdateMap(data);
+
+        expect(payload['hero_location_text'], '');
+        expect(payload['map_label'], '');
+        expect(payload['category_section_title'], '');
+        expect(payload['product_section_title'], '');
+        expect(payload['gallery_action_label'], '');
+        expect(payload['gallery_action_href'], '');
+        expect(payload['blog_section_kicker'], '');
+        expect(payload['blog_section_title'], '');
+        expect(payload['faq_section_kicker'], '');
+        expect(payload['faq_section_title'], '');
+        expect(payload['faq_section_description'], '');
+        expect(payload['section_visibility'], isEmpty);
+      },
+    );
+
     test('Dilim D: öne çıkan kampanya alanlarını payload’a yazar', () {
       final data = StoreData(
         name: 'Atmosfer',

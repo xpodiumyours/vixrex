@@ -80,6 +80,7 @@ class EditorTextField extends StatelessWidget {
   final IconData icon;
   final bool requiredField;
   final int maxLines;
+  final int? maxLength;
   final TextInputType? keyboardType;
   final String? errorText;
   final FocusNode? focusNode;
@@ -93,6 +94,7 @@ class EditorTextField extends StatelessWidget {
     required this.icon,
     this.requiredField = false,
     this.maxLines = 1,
+    this.maxLength,
     this.keyboardType,
     this.errorText,
     this.focusNode,
@@ -129,6 +131,7 @@ class EditorTextField extends StatelessWidget {
           controller: controller,
           focusNode: focusNode,
           maxLines: maxLines,
+          maxLength: maxLength,
           keyboardType: keyboardType,
           onChanged: onChanged,
           style: const TextStyle(

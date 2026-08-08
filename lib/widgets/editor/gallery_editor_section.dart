@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/editor/common_form_fields.dart';
 
 class GalleryItem {
   String id;
@@ -31,6 +32,10 @@ class GalleryEditorSection extends StatelessWidget {
   final VoidCallback onPickPhotos;
   final ValueChanged<int> onRemovePhoto;
   final void Function(int index, String title)? onTitleChanged;
+  final TextEditingController galleryActionLabelController;
+  final TextEditingController galleryActionHrefController;
+  final ValueChanged<String> onGalleryActionLabelChanged;
+  final ValueChanged<String> onGalleryActionHrefChanged;
 
   const GalleryEditorSection({
     super.key,
@@ -39,6 +44,10 @@ class GalleryEditorSection extends StatelessWidget {
     required this.onPickPhotos,
     required this.onRemovePhoto,
     this.onTitleChanged,
+    required this.galleryActionLabelController,
+    required this.galleryActionHrefController,
+    required this.onGalleryActionLabelChanged,
+    required this.onGalleryActionHrefChanged,
   });
 
   static const Color primaryColor = AppColors.primary;
@@ -118,6 +127,24 @@ class GalleryEditorSection extends StatelessWidget {
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
+        ),
+        const SizedBox(height: 16),
+        EditorTextField(
+          label: 'Galeri Buton Metni',
+          controller: galleryActionLabelController,
+          hint: 'Örn: Kataloğu Gör',
+          icon: Icons.smart_button_outlined,
+          maxLength: 40,
+          onChanged: onGalleryActionLabelChanged,
+        ),
+        const SizedBox(height: 12),
+        EditorTextField(
+          label: 'Galeri Buton Bağlantısı',
+          controller: galleryActionHrefController,
+          hint: 'https://... veya #sayfa-icı',
+          icon: Icons.link_rounded,
+          keyboardType: TextInputType.url,
+          onChanged: onGalleryActionHrefChanged,
         ),
         const SizedBox(height: 8),
         Row(
