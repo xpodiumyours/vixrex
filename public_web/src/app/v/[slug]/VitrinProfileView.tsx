@@ -837,7 +837,7 @@ export default function VitrinProfileView({
               )}
 
               {workingHoursToday && (
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🕐</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Çalışma Saatleri</h4>
@@ -847,6 +847,52 @@ export default function VitrinProfileView({
                     >
                       {workingHoursToday}
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {marketplaceLinks.length > 0 && (
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🛒</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Pazaryeri Bağlantıları</h4>
+                    <div className="mt-0.5 space-y-0.5">
+                      {marketplaceLinks.map((link) => (
+                        <a
+                          key={link.id || link.url || link.platform}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-xs font-semibold text-blue-400 hover:text-blue-300"
+                        >
+                          {link.platform}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {googleBusinessLink && (
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🏢</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Google İşletme Profili</h4>
+                    <a href={googleBusinessLink} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                      {googleBusinessLink.replace(/^https?:\/\//i, "")}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {referencesUrl && (
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">📇</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Referanslar</h4>
+                    <a href={referencesUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                      {referencesUrl.replace(/^https?:\/\//i, "")}
+                    </a>
                   </div>
                 </div>
               )}
