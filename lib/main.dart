@@ -11,6 +11,7 @@ import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/l10n/app_localizations.dart';
 import 'package:vixrex/services/push_notification_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -180,11 +181,26 @@ class VixRexApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: AppColors.bgEditor,
         disabledColor: AppColors.disabled,
+        textTheme: const TextTheme(
+          displayLarge: AppTextStyles.displayTitle,
+          titleLarge: AppTextStyles.sectionTitle,
+          titleMedium: AppTextStyles.subTitle,
+          titleSmall: AppTextStyles.formLabel,
+          bodyMedium: AppTextStyles.body,
+          bodySmall: AppTextStyles.caption,
+          labelLarge: AppTextStyles.labelBold,
+          labelSmall: AppTextStyles.labelSmall,
+        ),
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.bgEditor,
           foregroundColor: AppColors.darkText,
           elevation: 0,
           systemOverlayStyle: _systemUiOverlayStyle,
+          titleTextStyle: TextStyle(
+            color: AppColors.darkText,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
         ),
         cardTheme: CardThemeData(
           color: AppColors.surface,

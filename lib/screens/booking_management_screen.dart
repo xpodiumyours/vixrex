@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/widgets/common/app_card.dart';
+import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 
 import 'package:vixrex/controllers/booking_management_controller.dart';
 
@@ -110,31 +113,18 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgEditor,
-      appBar: AppBar(
-        title: const Text(
-          'Randevuları Yönet',
-          style: TextStyle(
-            color: AppColors.darkText,
-            fontWeight: FontWeight.w900,
-            fontSize: 20,
-          ),
-        ),
-        backgroundColor: AppColors.surface,
-        elevation: 0.5,
-        iconTheme: const IconThemeData(color: AppColors.darkText),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primaryDark,
-          unselectedLabelColor: AppColors.mutedText,
-          indicatorColor: AppColors.primary,
-          tabs: [
-            Tab(text: 'Bekleyen (${_controller.pendingList.length})'),
-            Tab(text: 'Bugün (${_controller.todayList.length})'),
-            Tab(text: 'Yaklaşan (${_controller.upcomingList.length})'),
-          ],
-        ),
+    return AppScreenScaffold(
+      title: 'Randevuları Yönet',
+      bottom: TabBar(
+        controller: _tabController,
+        labelColor: AppColors.primaryDark,
+        unselectedLabelColor: AppColors.mutedText,
+        indicatorColor: AppColors.primary,
+        tabs: [
+          Tab(text: 'Bekleyen (${_controller.pendingList.length})'),
+          Tab(text: 'Bugün (${_controller.todayList.length})'),
+          Tab(text: 'Yaklaşan (${_controller.upcomingList.length})'),
+        ],
       ),
       body:
           _controller.isLoading
@@ -233,25 +223,18 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
       statusText = 'Onay Bekliyor';
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Row(
             children: [
               Text(
                 _formatDateTime(appt['appointment_time']),
-                style: const TextStyle(
-                  color: AppColors.darkText,
+                style: AppTextStyles.labelBold.copyWith(
                   fontWeight: FontWeight.w900,
-                  fontSize: 14,
                 ),
               ),
               const Spacer(),
@@ -275,10 +258,9 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
           const SizedBox(height: 12),
           Text(
             appt['service_title'] ?? '',
-            style: const TextStyle(
-              color: AppColors.darkText,
-              fontWeight: FontWeight.bold,
+            style: AppTextStyles.labelBold.copyWith(
               fontSize: 15,
+              fontWeight: FontWeight.bold,
             ),
           ),
           if (appt['service_price'] != null &&
@@ -296,11 +278,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
             const SizedBox(height: 4),
             Text(
               '${appt['service_duration']} dk',
-              style: const TextStyle(
-                color: AppColors.mutedText,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.labelSmall,
             ),
           ],
           const Divider(height: 24, color: AppColors.border),
@@ -353,9 +331,8 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
               ),
               child: Text(
                 'Not: ${appt['customer_notes']}',
-                style: const TextStyle(
+                style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.softText,
-                  fontSize: 12,
                   height: 1.4,
                 ),
               ),
@@ -395,10 +372,9 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
                   const SizedBox(height: 6),
                   Text(
                     'Yeni Önerilen Saat: ${_formatDateTime(pendingReschedule['requested_time'])}',
-                    style: const TextStyle(
+                    style: AppTextStyles.labelSmall.copyWith(
                       color: AppColors.softText,
                       fontWeight: FontWeight.w700,
-                      fontSize: 13,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -508,6 +484,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
             ),
           ),
         ],
+        ),
       ),
     );
   }
