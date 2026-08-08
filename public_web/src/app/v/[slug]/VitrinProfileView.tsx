@@ -388,12 +388,30 @@ export default function VitrinProfileView({
               </div>
             )}
 
-            <h1
-              {...editableProps("isletmeAdi", ownerMode)}
-              className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent"
-            >
-              {storeName.toUpperCase()}
-            </h1>
+            <div className="flex items-center gap-3 sm:gap-4 mb-2">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-blue-500/20 bg-blue-500/10 flex items-center justify-center shrink-0">
+                {logoUrl ? (
+                  <Image
+                    src={logoUrl}
+                    alt={storeName}
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-blue-400 font-extrabold text-xl sm:text-2xl uppercase">
+                    {storeName.charAt(0)}
+                  </span>
+                )}
+              </div>
+
+              <h1
+                {...editableProps("isletmeAdi", ownerMode)}
+                className="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent"
+              >
+                {storeName.toUpperCase()}
+              </h1>
+            </div>
 
             {description.trim() && (
               <p
