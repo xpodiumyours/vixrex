@@ -847,6 +847,36 @@ export default function VitrinProfileView({
                     >
                       {workingHoursToday}
                     </p>
+                    {workingHoursWeek.length > 0 && (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer list-none inline-flex items-center gap-1 text-xs font-semibold text-blue-400 hover:text-blue-300">
+                          Haftalık saatleri gör
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </summary>
+                        <div className="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
+                          {workingHoursWeek.map((gun) => (
+                            <div key={gun.day} className="contents">
+                              <span
+                                className={`text-xs ${gun.isToday ? "font-bold text-white" : "text-slate-400"}`}
+                              >
+                                {gun.day}
+                              </span>
+                              <span
+                                className={`text-xs text-right tabular-nums ${
+                                  gun.hours === "Kapalı"
+                                    ? "text-red-400/80"
+                                    : "text-slate-300"
+                                } ${gun.isToday ? "font-bold" : ""}`}
+                              >
+                                {gun.hours}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                   </div>
                 </div>
               )}
