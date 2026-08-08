@@ -11,6 +11,10 @@ import 'package:vixrex/services/auth_service.dart';
 import 'package:vixrex/services/notification_preferences_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
+import 'package:vixrex/widgets/common/app_card.dart';
+import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
+import 'package:vixrex/widgets/common/app_section_header.dart';
 
 /// Uygulama ayarları — bildirim tercihi + hesap. Tema ayrı state uydurulmaz (app dark-first).
 class AppSettingsScreen extends StatefulWidget {
@@ -226,54 +230,29 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
   Widget build(BuildContext context) {
     final email = _auth.currentUser?.email;
 
-    return Scaffold(
-      backgroundColor: AppColors.bgEditor,
-      appBar: AppBar(
-        title: const Text(
-          'Uygulama Ayarları',
-          style: TextStyle(
-            color: AppColors.darkText,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
-          ),
-        ),
-        backgroundColor: AppColors.bgEditor,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.darkText),
-      ),
+    return AppScreenScaffold(
+      title: 'Uygulama Ayarları',
       body:
           _loading
               ? const Center(child: CircularProgressIndicator())
               : ListView(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                padding: EdgeInsets.zero,
                 children: [
-                  _sectionTitle('Bildirimler'),
+                  const AppSectionHeader(title: 'Bildirimler'),
                   const SizedBox(height: 8),
                   if (_showBookingPushSetting) ...[
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
+                    AppCard(
+                      padding: EdgeInsets.zero,
                       child: SwitchListTile(
                         value: _bookingPushEnabled,
                         onChanged: _setBookingPush,
                         title: const Text(
                           'Randevu bildirimleri',
-                          style: TextStyle(
-                            color: AppColors.darkText,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                          ),
+                          style: AppTextStyles.formLabel,
                         ),
                         subtitle: const Text(
                           'Randevu onay, red ve hatırlatma push bildirimleri',
-                          style: TextStyle(
-                            color: AppColors.mutedText,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyles.labelSmall,
                         ),
                         activeThumbColor: Colors.black,
                         activeTrackColor: AppColors.primary,
@@ -281,25 +260,34 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                     ),
                     const SizedBox(height: 8),
                   ],
-                  _linkTile(
-                    'Bildirim geçmişi',
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const NotificationsScreen(),
-                      ),
+                  AppCard(
+                    onTap:
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        ),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Bildirim geçmişi',
+                            style: AppTextStyles.labelBold,
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: AppColors.mutedText,
+                          size: 12,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _sectionTitle('Hesap'),
+                  const AppSectionHeader(title: 'Hesap'),
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
+                  AppCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -307,11 +295,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                           email == null || email.isEmpty
                               ? 'Misafir oturum (giriş yapılmamış)'
                               : email,
-                          style: const TextStyle(
-                            color: AppColors.darkText,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: AppTextStyles.formLabel,
                         ),
                         const SizedBox(height: 12),
                         if (email != null && email.isNotEmpty) ...[
@@ -379,7 +363,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                             onPressed: () => AppRouter.navigateToAuth(context),
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.black,
+                              foregroundColor: AppColors.onPrimary,
                             ),
                             child: const Text('Giriş yap'),
                           ),
@@ -387,79 +371,78 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _sectionTitle('Yasal'),
+                  const AppSectionHeader(title: 'Yasal'),
                   const SizedBox(height: 8),
-                  _linkTile(
-                    'Gizlilik politikası',
-                    () => AppRouter.navigateToLegal(
-                      context,
-                      LegalPageType.privacy,
+                  AppCard(
+                    onTap:
+                        () => AppRouter.navigateToLegal(
+                          context,
+                          LegalPageType.privacy,
+                        ),
+                    child: const Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Gizlilik politikası',
+                            style: AppTextStyles.labelBold,
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: AppColors.mutedText,
+                          size: 12,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _linkTile(
-                    'Kullanım koşulları',
-                    () =>
-                        AppRouter.navigateToLegal(context, LegalPageType.terms),
+                  AppCard(
+                    onTap:
+                        () => AppRouter.navigateToLegal(
+                          context,
+                          LegalPageType.terms,
+                        ),
+                    child: const Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Kullanım koşulları',
+                            style: AppTextStyles.labelBold,
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: AppColors.mutedText,
+                          size: 12,
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  _linkTile(
-                    'Veri silme talebi',
-                    () => AppRouter.navigateToLegal(
-                      context,
-                      LegalPageType.dataDeletion,
+                  AppCard(
+                    onTap:
+                        () => AppRouter.navigateToLegal(
+                          context,
+                          LegalPageType.dataDeletion,
+                        ),
+                    child: const Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Veri silme talebi',
+                            style: AppTextStyles.labelBold,
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: AppColors.mutedText,
+                          size: 12,
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-    );
-  }
-
-  Widget _sectionTitle(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: AppColors.darkText,
-        fontSize: 14,
-        fontWeight: FontWeight.w900,
-      ),
-    );
-  }
-
-  Widget _linkTile(String title, VoidCallback onTap) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.darkText,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: AppColors.mutedText,
-                size: 12,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

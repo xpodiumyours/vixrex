@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/widgets/common/app_card.dart';
+import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 
 import 'package:vixrex/controllers/booking_management_controller.dart';
 
@@ -110,31 +113,18 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgEditor,
-      appBar: AppBar(
-        title: const Text(
-          'Randevuları Yönet',
-          style: TextStyle(
-            color: AppColors.darkText,
-            fontWeight: FontWeight.w900,
-            fontSize: 20,
-          ),
-        ),
-        backgroundColor: AppColors.surface,
-        elevation: 0.5,
-        iconTheme: const IconThemeData(color: AppColors.darkText),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primaryDark,
-          unselectedLabelColor: AppColors.mutedText,
-          indicatorColor: AppColors.primary,
-          tabs: [
-            Tab(text: 'Bekleyen (${_controller.pendingList.length})'),
-            Tab(text: 'Bugün (${_controller.todayList.length})'),
-            Tab(text: 'Yaklaşan (${_controller.upcomingList.length})'),
-          ],
-        ),
+    return AppScreenScaffold(
+      title: 'Randevuları Yönet',
+      bottom: TabBar(
+        controller: _tabController,
+        labelColor: AppColors.primaryDark,
+        unselectedLabelColor: AppColors.mutedText,
+        indicatorColor: AppColors.primary,
+        tabs: [
+          Tab(text: 'Bekleyen (${_controller.pendingList.length})'),
+          Tab(text: 'Bugün (${_controller.todayList.length})'),
+          Tab(text: 'Yaklaşan (${_controller.upcomingList.length})'),
+        ],
       ),
       body:
           _controller.isLoading
@@ -233,281 +223,273 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
       statusText = 'Onay Bekliyor';
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                _formatDateTime(appt['appointment_time']),
-                style: const TextStyle(
-                  color: AppColors.darkText,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            appt['service_title'] ?? '',
-            style: const TextStyle(
-              color: AppColors.darkText,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
-          ),
-          if (appt['service_price'] != null &&
-              appt['service_price'].toString().isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              '${appt['service_price']} · ${appt['service_duration']} dk',
-              style: const TextStyle(
-                color: AppColors.primaryDark,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ] else ...[
-            const SizedBox(height: 4),
-            Text(
-              '${appt['service_duration']} dk',
-              style: const TextStyle(
-                color: AppColors.mutedText,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          const Divider(height: 24, color: AppColors.border),
-          Row(
-            children: [
-              const Icon(
-                Icons.person_rounded,
-                size: 16,
-                color: AppColors.mutedText,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                appt['customer_name'] ?? '',
-                style: const TextStyle(
-                  color: AppColors.softText,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(
-                Icons.phone_android_rounded,
-                size: 16,
-                color: AppColors.mutedText,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                appt['customer_phone'] ?? '',
-                style: const TextStyle(
-                  color: AppColors.softText,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          if (appt['customer_notes'] != null &&
-              appt['customer_notes'].toString().trim().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.inputBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Not: ${appt['customer_notes']}',
-                style: const TextStyle(
-                  color: AppColors.softText,
-                  fontSize: 12,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-          if (pendingReschedule != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.1),
-                border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.amber,
-                        size: 16,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'Müşteri Tarih Değişikliği İstedi',
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Yeni Önerilen Saat: ${_formatDateTime(pendingReschedule['requested_time'])}',
-                    style: const TextStyle(
-                      color: AppColors.softText,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed:
-                              () => _respond(
-                                appt['id'],
-                                rescheduleAction: 'reject',
-                              ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.red),
-                            foregroundColor: Colors.red,
-                          ),
-                          child: const Text(
-                            'Talebi Reddet',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed:
-                              () => _respond(
-                                appt['id'],
-                                rescheduleAction: 'approve',
-                              ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.success,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            'Onayla & Güncelle',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-          if (status == 'pending' && pendingReschedule == null) ...[
-            const SizedBox(height: 12),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _respond(appt['id'], action: 'reject'),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.red),
-                      foregroundColor: Colors.red,
-                    ),
-                    child: const Text(
-                      'Reddet',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                Text(
+                  _formatDateTime(appt['appointment_time']),
+                  style: AppTextStyles.labelBold.copyWith(
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _respond(appt['id'], action: 'confirm'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Onayla',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    statusText,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
                     ),
                   ),
                 ),
               ],
             ),
-          ],
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 40,
-            child: OutlinedButton.icon(
-              onPressed: () => _showNotificationMenu(appt),
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-              label: const Text(
-                'WhatsApp ile Bilgilendir',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            const SizedBox(height: 12),
+            Text(
+              appt['service_title'] ?? '',
+              style: AppTextStyles.labelBold.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
               ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryDark,
-                side: const BorderSide(color: AppColors.border),
-                shape: RoundedRectangleBorder(
+            ),
+            if (appt['service_price'] != null &&
+                appt['service_price'].toString().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                '${appt['service_price']} · ${appt['service_duration']} dk',
+                style: const TextStyle(
+                  color: AppColors.primaryDark,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 4),
+              Text(
+                '${appt['service_duration']} dk',
+                style: AppTextStyles.labelSmall,
+              ),
+            ],
+            const Divider(height: 24, color: AppColors.border),
+            Row(
+              children: [
+                const Icon(
+                  Icons.person_rounded,
+                  size: 16,
+                  color: AppColors.mutedText,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  appt['customer_name'] ?? '',
+                  style: const TextStyle(
+                    color: AppColors.softText,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(
+                  Icons.phone_android_rounded,
+                  size: 16,
+                  color: AppColors.mutedText,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  appt['customer_phone'] ?? '',
+                  style: const TextStyle(
+                    color: AppColors.softText,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            if (appt['customer_notes'] != null &&
+                appt['customer_notes'].toString().trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.inputBg,
                   borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  'Not: ${appt['customer_notes']}',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.softText,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+            if (pendingReschedule != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.1),
+                  border: Border.all(
+                    color: Colors.amber.withValues(alpha: 0.3),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: Colors.amber,
+                          size: 16,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Müşteri Tarih Değişikliği İstedi',
+                          style: TextStyle(
+                            color: Colors.orange,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Yeni Önerilen Saat: ${_formatDateTime(pendingReschedule['requested_time'])}',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.softText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed:
+                                () => _respond(
+                                  appt['id'],
+                                  rescheduleAction: 'reject',
+                                ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.red),
+                              foregroundColor: Colors.red,
+                            ),
+                            child: const Text(
+                              'Talebi Reddet',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed:
+                                () => _respond(
+                                  appt['id'],
+                                  rescheduleAction: 'approve',
+                                ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.success,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'Onayla & Güncelle',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (status == 'pending' && pendingReschedule == null) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _respond(appt['id'], action: 'reject'),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: Colors.red,
+                      ),
+                      child: const Text(
+                        'Reddet',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _respond(appt['id'], action: 'confirm'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Onayla',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: OutlinedButton.icon(
+                onPressed: () => _showNotificationMenu(appt),
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+                label: const Text(
+                  'WhatsApp ile Bilgilendir',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primaryDark,
+                  side: const BorderSide(color: AppColors.border),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
