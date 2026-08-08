@@ -196,6 +196,8 @@ export default function VitrinProfileView({
   const [copied, setCopied] = useState(false);
   const displayAddress = normalizeAddressDisplay(address);
   const displayBadge = String(heroBadge || kategori || businessType || "").trim();
+  const showOpenBadge =
+    typeof isClosed === "boolean" && (Boolean(workingHoursToday) || isClosed);
   const displayPhone = String(phone || "").trim();
   const displayEmail = String(email || "").trim();
   const hasPhone = Boolean(phoneUrl && displayPhone);
@@ -354,22 +356,62 @@ export default function VitrinProfileView({
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
           <div className="max-w-2xl">
-            {displayBadge && (
-              <div
-                {...editableProps("heroRozet", ownerMode)}
-                className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 backdrop-blur-md"
-              >
-                <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
-                {displayBadge}
+            {(displayBadge || showOpenBadge) && (
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                {displayBadge && (
+                  <div
+                    {...editableProps("heroRozet", ownerMode)}
+                    className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
+                    {displayBadge}
+                  </div>
+                )}
+                {showOpenBadge && (
+                  <div
+                    className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md ${
+                      isClosed
+                        ? "bg-red-500/12 border border-red-500/25 text-red-300"
+                        : "bg-green-500/12 border border-green-500/25 text-green-300"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        isClosed
+                          ? "bg-red-500 shadow-[0_0_10px_#EF4444]"
+                          : "bg-green-500 shadow-[0_0_10px_#22C55E]"
+                      }`}
+                    />
+                    {isClosed ? "Şu an kapalı" : "Şu an açık"}
+                  </div>
+                )}
               </div>
             )}
 
-            <h1
-              {...editableProps("isletmeAdi", ownerMode)}
-              className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent"
-            >
-              {storeName.toUpperCase()}
-            </h1>
+            <div className="flex items-center gap-3 sm:gap-4 mb-2">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-blue-500/20 bg-blue-500/10 flex items-center justify-center shrink-0">
+                {logoUrl ? (
+                  <Image
+                    src={logoUrl}
+                    alt={storeName}
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-blue-400 font-extrabold text-xl sm:text-2xl uppercase">
+                    {storeName.charAt(0)}
+                  </span>
+                )}
+              </div>
+
+              <h1
+                {...editableProps("isletmeAdi", ownerMode)}
+                className="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent"
+              >
+                {storeName.toUpperCase()}
+              </h1>
+            </div>
 
             {description.trim() && (
               <p
@@ -795,7 +837,7 @@ export default function VitrinProfileView({
               )}
 
               {workingHoursToday && (
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🕐</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Çalışma Saatleri</h4>
@@ -805,6 +847,82 @@ export default function VitrinProfileView({
                     >
                       {workingHoursToday}
                     </p>
+                    {workingHoursWeek.length > 0 && (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer list-none inline-flex items-center gap-1 text-xs font-semibold text-blue-400 hover:text-blue-300">
+                          Haftalık saatleri gör
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </summary>
+                        <div className="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
+                          {workingHoursWeek.map((gun) => (
+                            <div key={gun.day} className="contents">
+                              <span
+                                className={`text-xs ${gun.isToday ? "font-bold text-white" : "text-slate-400"}`}
+                              >
+                                {gun.day}
+                              </span>
+                              <span
+                                className={`text-xs text-right tabular-nums ${
+                                  gun.hours === "Kapalı"
+                                    ? "text-red-400/80"
+                                    : "text-slate-300"
+                                } ${gun.isToday ? "font-bold" : ""}`}
+                              >
+                                {gun.hours}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {marketplaceLinks.length > 0 && (
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🛒</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Pazaryeri Bağlantıları</h4>
+                    <div className="mt-0.5 space-y-0.5">
+                      {marketplaceLinks.map((link) => (
+                        <a
+                          key={link.id || link.url || link.platform}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-xs font-semibold text-blue-400 hover:text-blue-300"
+                        >
+                          {link.platform}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {googleBusinessLink && (
+                <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🏢</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Google İşletme Profili</h4>
+                    <a href={googleBusinessLink} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                      {googleBusinessLink.replace(/^https?:\/\//i, "")}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {referencesUrl && (
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">📇</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Referanslar</h4>
+                    <a href={referencesUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                      {referencesUrl.replace(/^https?:\/\//i, "")}
+                    </a>
                   </div>
                 </div>
               )}

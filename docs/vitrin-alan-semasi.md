@@ -77,7 +77,6 @@ Tek değer taşırlar. Komut tipi: **"şu alanı şu değere ayarla"**.
 | `isletmeTuru` | metin | İşletme Türü | `business_type` | 0–40 |
 | `logo` | görsel | Logo | `logo_url` | güvenli URL, kendi depomuz |
 | `kapakGorseli` | görsel | Kapak / Hero Görseli | `shelf_image_url` | güvenli URL, kendi depomuz |
-| `tema` | seçim | Tema Ön Ayarı | `theme_preset` | tanımlı ön ayar listesinden |
 
 ### 5.2 İletişim — bölüm: `contact`
 
@@ -245,7 +244,7 @@ Bu belge insan tarafıdır. Koddaki tek kaynak:
 
 | Dosya | İşi |
 |---|---|
-| `public_web/src/lib/vitrinFieldSchema.ts` | 41 alanın tamamı — anahtar, tip, etiket, kolon, sınırlar, bölüm |
+| `public_web/src/lib/vitrinFieldSchema.ts` | 40 alanın tamamı — anahtar, tip, etiket, kolon, sınırlar, bölüm |
 | `public_web/src/lib/vitrinFieldValidation.ts` | Tek genel doğrulayıcı. **Alan başına dallanma yoktur** |
 | `public_web/src/app/api/owner-draft/route.ts` | Çerezden oturum → şema doğrulaması → RPC |
 | `supabase/migrations/20260805100000_...sql` | Veritabanının **bağımsız** yetki kontrolü |

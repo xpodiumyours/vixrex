@@ -139,14 +139,6 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "shelf_image_url",
     bolum: "hero",
   },
-  {
-    anahtar: "tema",
-    tip: "secim",
-    etiket: "Tema Ön Ayarı",
-    kolon: "theme_preset",
-    bolum: "hero",
-    maxUzunluk: 40,
-  },
 
   // ── İletişim ──────────────────────────────────────────────────────────
   {
