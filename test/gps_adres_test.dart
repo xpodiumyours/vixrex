@@ -26,36 +26,49 @@ void main() {
     expect(LocationService.maxAcceptedAccuracyMeters, lessThanOrEqualTo(150));
   });
 
-  test('sapma büyükse adres yine doldurulur, yalnız iğne bekletilir', () {
-    // 2026-08-07 ikinci düzeltme. İlk düzeltmede koordinat eşikten sonra
-    // yazılıyordu ama eşik geçilmezse HİÇBİR ŞEY yapılmıyordu — ne adres,
-    // ne il, ne ilçe. Casper: "gps yine çalışmıyor, koordinatı da
-    // bulamıyor... şimdi hiç bulamadı."
+  test('adres onaylanmadan hiçbir alana yazılmıyor', () {
+    // 2026-08-08. Bu noktada iki kez yanlış yapıldı:
+    //   1) Eşik 10 metre yapıldı → her şey reddedildi, esnaf boş ekrana
+    //      baktı ("koordinatı da bulamıyor").
+    //   2) Eşik gevşetilip adres koşulsuz yazıldı → 20 KM sapmalı adres
+    //      vitrine düştü (Çekmeköy'deyken Ümraniye).
     //
-    // 300 metre sapmayla bile il, ilçe ve mahalle DOĞRU çıkar. Müşteriyi
-    // yanlış sokağa gönderen şey harita iğnesidir, adres metni değil.
+    // Sabit eşik bu işi çözmüyor: tarayıcı bazen 30 metre bazen 20 km
+    // sapıyor, hangisi olduğu önceden bilinemiyor. Karar esnafa ait.
     final kaynak =
         File(
           '$kok/lib/widgets/editor/location_editor_section.dart',
         ).readAsStringSync();
 
-    expect(kaynak, contains('igneKabul'));
-    // İğne koşullu, adres koşulsuz.
-    expect(kaynak, contains('igneKabul ? position.latitude : null'));
-    expect(kaynak, contains('address: newAddress'));
-    // Eşiğe takılıp AKIŞTAN ÇIKAN eski kalıp geri gelmemeli.
-    // (if (!mounted) return; ayrı bir şey — widget yaşam döngüsü koruması.)
-    expect(
-      RegExp(
-        r'accuracy > LocationService\.maxAcceptedAccuracyMeters\)\s*\{'
-        r'[^}]*return;',
-        multiLine: true,
-      ).hasMatch(kaynak),
-      isFalse,
-      reason:
-          'Eşik geçilmeyince akıştan çıkılırsa adres hiç çözülmez, '
-          'esnaf boş ekrana bakar.',
+    expect(kaynak, contains('_bekleyenOneri'));
+    expect(kaynak, contains('Burası mı?'));
+    expect(kaynak, contains('Evet, burası'));
+    expect(kaynak, contains('Hayır, elle yazayım'));
+
+    // Alanlar YALNIZ onay eyleminde yazılmalı.
+    final kabul = kaynak.substring(
+      kaynak.indexOf('void _oneriyiKabulEt()'),
+      kaynak.indexOf('void _oneriyiReddet()'),
     );
+    expect(kabul, contains('address: o.adres'));
+    expect(kabul, contains('latitude: o.enlem'));
+
+    // Red eyleminde hiçbir alan yazılmamalı — yanlış adres, boş
+    // adresten beterdir.
+    final red = kaynak.substring(
+      kaynak.indexOf('void _oneriyiReddet()'),
+      kaynak.indexOf('Widget build(BuildContext context)'),
+    );
+    expect(red.contains('address:'), isFalse);
+    expect(red.contains('latitude:'), isFalse);
+  });
+
+  test('mahalle eki tekrarlanmıyor', () {
+    // OpenStreetMap mahalle adını "... Mahallesi" diye veriyor; koda
+    // bir de "Mah." eklenince vitrinde "Adem Yavuz Mahallesi.," çıktı.
+    final servis =
+        File('$kok/lib/services/location_service.dart').readAsStringSync();
+    expect(servis, contains("endsWith('mahallesi')"));
   });
 
   test('adres çözümleme her iki GPS yolunda da çağrılıyor', () {

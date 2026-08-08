@@ -75,6 +75,22 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
 
   bool _isInternalLocating = false;
 
+  /// GPS'ten çözülen ama HENÜZ YAZILMAMIŞ adres önerisi.
+  ///
+  /// NEDEN VAR (2026-08-08):
+  /// Kod koordinatı alıp adresi sessizce yazıyordu. Tarayıcının verdiği
+  /// koordinat bazen 30 metre, bazen 20 KM sapıyor — hangisi olduğu
+  /// önceden bilinemiyor. Casper 8 Ağustos'ta Çekmeköy'deyken vitrinine
+  /// "Ümraniye, Adem Yavuz Mahallesi" yazıldı.
+  ///
+  /// Sabit bir sapma eşiği bunu çözmüyor: eşik dar olursa hiç konum
+  /// alınamıyor, geniş olursa yanlış adres yazılıyor. İki denemede de
+  /// bunu yaşadık.
+  ///
+  /// Doğru yer kararı verecek olan ESNAF. Adres çözülür, gösterilir,
+  /// onaylanmadan hiçbir alana yazılmaz.
+  _AdresOnerisi? _bekleyenOneri;
+
   Future<void> _getCurrentLocation() async {
     if (mounted) {
       setState(() {
@@ -95,33 +111,18 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
 
       final position = result.position ?? result.approximatePosition!;
 
-      // SAPMA: KONUM REDDEDİLMEZ, İĞNE AYRI DEĞERLENDİRİLİR.
+      // ONAYA KADAR HİÇBİR ŞEY YAZILMAZ — koordinat da adres de.
       //
-      // 2026-08-07'de eşiği 10'dan 100 metreye çıkardım ve koordinatı
-      // eşikten sonra yazacak şekilde sıraladım. Casper aynı gün denedi:
-      // "gps yine çalışmıyor, koordinatı da bulamıyor, hatta önceden
-      // koordinatı buluyordu yazmıyordu, şimdi hiç bulamadı."
+      // Bu noktada iki kez yanlış yaptım (2026-08-07/08):
+      // önce eşiği 10 metre yapıp her şeyi reddettim (esnaf boş ekrana
+      // baktı), sonra eşiği gevşetip adresi koşulsuz yazdırdım (20 km
+      // sapmalı adres vitrine düştü). Sabit eşik bu işi çözmüyor:
+      // tarayıcı bazen 30 metre, bazen 20 km sapıyor ve hangisi olduğu
+      // önceden bilinemiyor.
       //
-      // Hata tasarımdaydı. Sapma eşiği geçilmeyince HİÇBİR ŞEY
-      // yapılmıyordu — ne adres, ne il, ne ilçe. Oysa 300 metre sapmayla
-      // bile il, ilçe ve mahalle DOĞRU çıkar. Müşteriyi yanlış sokağa
-      // gönderen şey harita iğnesidir, adres metni değil.
-      //
-      // Artık ikisi ayrı:
-      //   Adres metni → her hâlükârda çözülür ve doldurulur
-      //   Harita iğnesi → yalnız sapma eşiği geçilirse kaydedilir
-      //
-      // Esnaf en kötü ihtimalle doğru mahalleyi görür ve sokağı düzeltir.
-      // Hiç yoktan iyidir; eskisi hiç yoktu.
-      final igneKabul =
-          position.accuracy <= LocationService.maxAcceptedAccuracyMeters;
-
-      widget.onLocationUpdated(
-        latitude: igneKabul ? position.latitude : null,
-        longitude: igneKabul ? position.longitude : null,
-        accuracy: position.accuracy,
-        statusMessage: 'Adres çözümleniyor...',
-      );
+      // Karar esnafa bırakıldı: adres çözülür, gösterilir, onaylanmadan
+      // yazılmaz. Sapma da kartta yazar; esnaf ikisine birden bakar.
+      widget.onLocationUpdated(statusMessage: 'Adres çözümleniyor...');
 
       final geoAddress = await const LocationService()
           .getAddressFromCoordinates(position.latitude, position.longitude);
@@ -169,18 +170,20 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
         }
       }
 
-      widget.onLocationUpdated(
-        // İğne yalnız yeterince kesinse kaydedilir; adres her hâlükârda.
-        latitude: igneKabul ? position.latitude : null,
-        longitude: igneKabul ? position.longitude : null,
-        accuracy: position.accuracy,
-        statusMessage: LocationService.buildAccuracyMessage(position.accuracy),
-        address: newAddress,
-        provinceCode: updatedProvinceCode,
-        provinceName: updatedProvinceName,
-        districtCode: updatedDistrictCode,
-        districtName: updatedDistrictName,
-      );
+      // HİÇBİR ALANA YAZILMAZ — önce esnafa gösterilir.
+      setState(() {
+        _bekleyenOneri = _AdresOnerisi(
+          adres: newAddress ?? '',
+          ilKodu: updatedProvinceCode,
+          ilAdi: updatedProvinceName,
+          ilceKodu: updatedDistrictCode,
+          ilceAdi: updatedDistrictName,
+          enlem: position.latitude,
+          boylam: position.longitude,
+          sapmaMetre: position.accuracy,
+        );
+      });
+      widget.onLocationUpdated(statusMessage: null);
     } finally {
       if (mounted) {
         setState(() {
@@ -189,6 +192,33 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
         widget.onLocatingStateChanged(false);
       }
     }
+  }
+
+  /// Esnaf "burası" dedi — ancak şimdi yazılır.
+  void _oneriyiKabulEt() {
+    final o = _bekleyenOneri;
+    if (o == null) return;
+    widget.onLocationUpdated(
+      latitude: o.enlem,
+      longitude: o.boylam,
+      accuracy: o.sapmaMetre,
+      address: o.adres,
+      provinceCode: o.ilKodu,
+      provinceName: o.ilAdi,
+      districtCode: o.ilceKodu,
+      districtName: o.ilceAdi,
+      statusMessage: 'Konum kaydedildi.',
+    );
+    setState(() => _bekleyenOneri = null);
+  }
+
+  /// Esnaf "burası değil" dedi — hiçbir şey yazılmaz, alanlar elle
+  /// doldurulur. Yanlış adres, boş adresten beterdir.
+  void _oneriyiReddet() {
+    setState(() => _bekleyenOneri = null);
+    widget.onLocationUpdated(
+      statusMessage: 'Konum kullanılmadı. İl, ilçe ve adresi elle yaz.',
+    );
   }
 
   @override
@@ -445,6 +475,84 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
                     ),
           ),
         ),
+        // ONAY KARTI — adres yazılmadan önce esnafa sorulur.
+        if (_bekleyenOneri != null) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Konumunu buldum. Burası mı?',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: darkText,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _bekleyenOneri!.adres.isEmpty
+                      ? 'Adres çözülemedi'
+                      : _bekleyenOneri!.adres,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                    color: primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'yaklaşık ${_bekleyenOneri!.sapmaMetre.toStringAsFixed(0)} m sapma',
+                  style: const TextStyle(fontSize: 11, color: mutedText),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: _oneriyiKabulEt,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          minimumSize: const Size.fromHeight(40),
+                        ),
+                        child: const Text(
+                          'Evet, burası',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _oneriyiReddet,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: mutedText,
+                          side: const BorderSide(color: cardBorder),
+                          minimumSize: const Size.fromHeight(40),
+                        ),
+                        child: const Text(
+                          'Hayır, elle yazayım',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
         if (widget.locationStatusMessage != null) ...[
           const SizedBox(height: 6),
           Text(
@@ -552,4 +660,31 @@ class _ScanningLocationWidgetState extends State<_ScanningLocationWidget>
       },
     );
   }
+}
+
+/// GPS'ten çözülen, onay bekleyen adres.
+///
+/// Esnaf "Evet, burası" demeden hiçbir alana yazılmaz. Tarayıcının
+/// verdiği koordinat bazen 30 metre bazen 20 KM sapıyor; hangisi olduğu
+/// önceden bilinemiyor. Kararı veren esnaf olmalı — 2026-08-08.
+class _AdresOnerisi {
+  const _AdresOnerisi({
+    required this.adres,
+    required this.ilKodu,
+    required this.ilAdi,
+    required this.ilceKodu,
+    required this.ilceAdi,
+    required this.enlem,
+    required this.boylam,
+    required this.sapmaMetre,
+  });
+
+  final String adres;
+  final String? ilKodu;
+  final String? ilAdi;
+  final String? ilceKodu;
+  final String? ilceAdi;
+  final double enlem;
+  final double boylam;
+  final double sapmaMetre;
 }
