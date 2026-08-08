@@ -407,6 +407,62 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
+  void updateCategorySectionTitle(String value) {
+    _data.categorySectionTitle = value.trim();
+    notifyListeners();
+  }
+
+  void updateProductSectionTitle(String value) {
+    _data.productSectionTitle = value.trim();
+    notifyListeners();
+  }
+
+  void updateGalleryActionLabel(String value) {
+    _data.galleryActionLabel = value.trim();
+    notifyListeners();
+  }
+
+  void updateGalleryActionHref(String value) {
+    _data.galleryActionHref = value.trim();
+    notifyListeners();
+  }
+
+  void updateBlogSectionKicker(String value) {
+    _data.blogSectionKicker = value.trim();
+    notifyListeners();
+  }
+
+  void updateBlogSectionTitle(String value) {
+    _data.blogSectionTitle = value.trim();
+    notifyListeners();
+  }
+
+  void updateFaqSectionKicker(String value) {
+    _data.faqSectionKicker = value.trim();
+    notifyListeners();
+  }
+
+  void updateFaqSectionTitle(String value) {
+    _data.faqSectionTitle = value.trim();
+    notifyListeners();
+  }
+
+  void updateFaqSectionDescription(String value) {
+    _data.faqSectionDescription = value.trim();
+    notifyListeners();
+  }
+
+  /// Anahtar yoksa/true ise bölüm görünür (veri doluluğuna göre otomatik);
+  /// yalnız kapatılan bölümler haritaya `false` olarak yazılır.
+  void updateSectionVisibility(String key, bool visible) {
+    if (visible) {
+      _data.sectionVisibility.remove(key);
+    } else {
+      _data.sectionVisibility[key] = false;
+    }
+    notifyListeners();
+  }
+
   void updateShowStorefrontRating(bool value) {
     _data.showStorefrontRating = value;
     notifyListeners();

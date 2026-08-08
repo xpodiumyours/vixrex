@@ -47,6 +47,16 @@ mixin StoreLocationMixin on ChangeNotifier {
     notifyListeners();
   }
 
+  void updateHeroLocationText(StoreData data, String value) {
+    data.heroLocationText = value;
+    notifyListeners();
+  }
+
+  void updateMapLabel(StoreData data, String value) {
+    data.mapLabel = value;
+    notifyListeners();
+  }
+
   void selectProvince(StoreData data, String? code, String? name) {
     data.provinceCode = code ?? '';
     data.provinceName = name ?? '';

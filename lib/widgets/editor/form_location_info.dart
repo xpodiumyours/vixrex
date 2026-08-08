@@ -7,12 +7,16 @@ class FormLocationInfo extends StatelessWidget {
   final StoreEditorController controller;
   final MyVitrinState state;
   final TextEditingController addressController;
+  final TextEditingController heroLocationTextController;
+  final TextEditingController mapLabelController;
 
   const FormLocationInfo({
     super.key,
     required this.controller,
     required this.state,
     required this.addressController,
+    required this.heroLocationTextController,
+    required this.mapLabelController,
   });
 
   @override
@@ -28,6 +32,8 @@ class FormLocationInfo extends StatelessWidget {
         districtError: controller.districtError,
         addressError: controller.addressError,
         addressController: addressController,
+        heroLocationTextController: heroLocationTextController,
+        mapLabelController: mapLabelController,
         latitude: controller.latitude,
         longitude: controller.longitude,
         locationAccuracyMeters: controller.locationAccuracyMeters,
@@ -41,6 +47,11 @@ class FormLocationInfo extends StatelessWidget {
                 controller.selectDistrict(controller.data, code, name),
         onAddressChanged:
             (value) => controller.updateAddress(controller.data, value),
+        onHeroLocationTextChanged:
+            (value) =>
+                controller.updateHeroLocationText(controller.data, value),
+        onMapLabelChanged:
+            (value) => controller.updateMapLabel(controller.data, value),
         onLocatingStateChanged: (_) {},
         onLocationUpdated: ({
           latitude,

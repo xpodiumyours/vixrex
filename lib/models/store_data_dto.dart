@@ -38,6 +38,18 @@ class StoreDataDto {
       'aboutValues': data.aboutValues.map((e) => e.toJson()).toList(),
       'gallerySectionKicker': data.gallerySectionKicker,
       'gallerySectionTitle': data.gallerySectionTitle,
+      'heroLocationText': data.heroLocationText,
+      'mapLabel': data.mapLabel,
+      'categorySectionTitle': data.categorySectionTitle,
+      'productSectionTitle': data.productSectionTitle,
+      'galleryActionLabel': data.galleryActionLabel,
+      'galleryActionHref': data.galleryActionHref,
+      'blogSectionKicker': data.blogSectionKicker,
+      'blogSectionTitle': data.blogSectionTitle,
+      'faqSectionKicker': data.faqSectionKicker,
+      'faqSectionTitle': data.faqSectionTitle,
+      'faqSectionDescription': data.faqSectionDescription,
+      'sectionVisibility': data.sectionVisibility,
       'showStorefrontRating': data.showStorefrontRating,
       'showDirectionsLink': data.showDirectionsLink,
       'featuredBannerLabel': data.featuredBannerLabel,
@@ -148,6 +160,37 @@ class StoreDataDto {
       gallerySectionTitle:
           _getString(json, 'gallerySectionTitle', 'gallery_section_title') ??
           '',
+      heroLocationText:
+          _getString(json, 'heroLocationText', 'hero_location_text') ?? '',
+      mapLabel: _getString(json, 'mapLabel', 'map_label') ?? '',
+      categorySectionTitle:
+          _getString(json, 'categorySectionTitle', 'category_section_title') ??
+          '',
+      productSectionTitle:
+          _getString(json, 'productSectionTitle', 'product_section_title') ??
+          '',
+      galleryActionLabel:
+          _getString(json, 'galleryActionLabel', 'gallery_action_label') ?? '',
+      galleryActionHref:
+          _getString(json, 'galleryActionHref', 'gallery_action_href') ?? '',
+      blogSectionKicker:
+          _getString(json, 'blogSectionKicker', 'blog_section_kicker') ?? '',
+      blogSectionTitle:
+          _getString(json, 'blogSectionTitle', 'blog_section_title') ?? '',
+      faqSectionKicker:
+          _getString(json, 'faqSectionKicker', 'faq_section_kicker') ?? '',
+      faqSectionTitle:
+          _getString(json, 'faqSectionTitle', 'faq_section_title') ?? '',
+      faqSectionDescription:
+          _getString(
+            json,
+            'faqSectionDescription',
+            'faq_section_description',
+          ) ??
+          '',
+      sectionVisibility: _parseSectionVisibility(
+        json['sectionVisibility'] ?? json['section_visibility'],
+      ),
       showStorefrontRating:
           (json['showStorefrontRating'] ??
                   json['show_storefront_rating'] ??
@@ -287,6 +330,20 @@ class StoreDataDto {
   static DateTime? _parseDateTime(Object? raw) {
     if (raw == null) return null;
     return DateTime.tryParse(raw.toString());
+  }
+
+  static Map<String, bool> _parseSectionVisibility(Object? raw) {
+    if (raw is! Map) return {};
+    final result = <String, bool>{};
+    for (final entry in raw.entries) {
+      final value = entry.value;
+      if (value is bool) {
+        result[entry.key.toString()] = value;
+      } else if (value is String && (value == 'true' || value == 'false')) {
+        result[entry.key.toString()] = value == 'true';
+      }
+    }
+    return result;
   }
 
   static List<StoreGalleryItem> _parseGalleryItems(Object? rawItems) {
