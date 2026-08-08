@@ -196,6 +196,8 @@ export default function VitrinProfileView({
   const [copied, setCopied] = useState(false);
   const displayAddress = normalizeAddressDisplay(address);
   const displayBadge = String(heroBadge || kategori || businessType || "").trim();
+  const showOpenBadge =
+    typeof isClosed === "boolean" && (Boolean(workingHoursToday) || isClosed);
   const displayPhone = String(phone || "").trim();
   const displayEmail = String(email || "").trim();
   const hasPhone = Boolean(phoneUrl && displayPhone);
@@ -354,13 +356,35 @@ export default function VitrinProfileView({
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
           <div className="max-w-2xl">
-            {displayBadge && (
-              <div
-                {...editableProps("heroRozet", ownerMode)}
-                className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 backdrop-blur-md"
-              >
-                <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
-                {displayBadge}
+            {(displayBadge || showOpenBadge) && (
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                {displayBadge && (
+                  <div
+                    {...editableProps("heroRozet", ownerMode)}
+                    className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
+                    {displayBadge}
+                  </div>
+                )}
+                {showOpenBadge && (
+                  <div
+                    className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md ${
+                      isClosed
+                        ? "bg-red-500/12 border border-red-500/25 text-red-300"
+                        : "bg-green-500/12 border border-green-500/25 text-green-300"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        isClosed
+                          ? "bg-red-500 shadow-[0_0_10px_#EF4444]"
+                          : "bg-green-500 shadow-[0_0_10px_#22C55E]"
+                      }`}
+                    />
+                    {isClosed ? "Şu an kapalı" : "Şu an açık"}
+                  </div>
+                )}
               </div>
             )}
 
