@@ -261,12 +261,13 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                     const SizedBox(height: 8),
                   ],
                   AppCard(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const NotificationsScreen(),
-                      ),
-                    ),
+                    onTap:
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        ),
                     child: Row(
                       children: [
                         const Expanded(
@@ -373,10 +374,11 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                   const AppSectionHeader(title: 'Yasal'),
                   const SizedBox(height: 8),
                   AppCard(
-                    onTap: () => AppRouter.navigateToLegal(
-                      context,
-                      LegalPageType.privacy,
-                    ),
+                    onTap:
+                        () => AppRouter.navigateToLegal(
+                          context,
+                          LegalPageType.privacy,
+                        ),
                     child: const Row(
                       children: [
                         Expanded(
@@ -395,10 +397,11 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                   ),
                   const SizedBox(height: 8),
                   AppCard(
-                    onTap: () => AppRouter.navigateToLegal(
-                      context,
-                      LegalPageType.terms,
-                    ),
+                    onTap:
+                        () => AppRouter.navigateToLegal(
+                          context,
+                          LegalPageType.terms,
+                        ),
                     child: const Row(
                       children: [
                         Expanded(
@@ -417,10 +420,11 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                   ),
                   const SizedBox(height: 8),
                   AppCard(
-                    onTap: () => AppRouter.navigateToLegal(
-                      context,
-                      LegalPageType.dataDeletion,
-                    ),
+                    onTap:
+                        () => AppRouter.navigateToLegal(
+                          context,
+                          LegalPageType.dataDeletion,
+                        ),
                     child: const Row(
                       children: [
                         Expanded(

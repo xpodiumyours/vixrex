@@ -161,10 +161,7 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Vitrin Bağlantısı',
-            style: AppTextStyles.labelBold,
-          ),
+          const Text('Vitrin Bağlantısı', style: AppTextStyles.labelBold),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -184,7 +181,8 @@ class ProfileScreen extends StatelessWidget {
                   child: Text(
                     _displayLink,
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: _hasLink ? AppColors.darkText : AppColors.mutedText,
+                      color:
+                          _hasLink ? AppColors.darkText : AppColors.mutedText,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -225,10 +223,7 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Hızlı QR Kod Paylaşımı',
-                  style: AppTextStyles.labelBold,
-                ),
+                Text('Hızlı QR Kod Paylaşımı', style: AppTextStyles.labelBold),
                 SizedBox(height: 2),
                 Text(
                   'Vitrin QR kodunuza hızlıca ulaşın.',
@@ -254,9 +249,7 @@ class ProfileScreen extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.mutedText, size: 20),
           const SizedBox(width: 14),
-          Expanded(
-            child: Text(title, style: AppTextStyles.labelBold),
-          ),
+          Expanded(child: Text(title, style: AppTextStyles.labelBold)),
           const Icon(
             Icons.arrow_forward_ios_rounded,
             color: AppColors.mutedText,

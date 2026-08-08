@@ -83,9 +83,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     final item = _items[index];
                     return AppCard(
                       onTap: () => _open(item),
-                      color: item.read
-                          ? AppColors.surface
-                          : AppColors.surfaceSoft,
+                      color:
+                          item.read ? AppColors.surface : AppColors.surfaceSoft,
                       padding: const EdgeInsets.all(14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,9 +95,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 child: Text(
                                   item.title,
                                   style: AppTextStyles.body.copyWith(
-                                    fontWeight: item.read
-                                        ? FontWeight.w700
-                                        : FontWeight.w900,
+                                    fontWeight:
+                                        item.read
+                                            ? FontWeight.w700
+                                            : FontWeight.w900,
                                   ),
                                 ),
                               ),
@@ -114,10 +114,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            item.body,
-                            style: AppTextStyles.labelSmall,
-                          ),
+                          Text(item.body, style: AppTextStyles.labelSmall),
                         ],
                       ),
                     );

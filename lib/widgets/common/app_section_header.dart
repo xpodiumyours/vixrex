@@ -3,11 +3,7 @@ import 'package:vixrex/theme/app_text_styles.dart';
 
 /// Ekran içi bölüm başlığı — başlık + isteğe bağlı açıklama, tek stil.
 class AppSectionHeader extends StatelessWidget {
-  const AppSectionHeader({
-    super.key,
-    required this.title,
-    this.description,
-  });
+  const AppSectionHeader({super.key, required this.title, this.description});
 
   final String title;
   final String? description;
