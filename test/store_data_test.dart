@@ -114,6 +114,101 @@ void main() {
     });
   });
 
+  group('StoreData sahip bölüm alanları round-trip', () {
+    test('12 bölüm alanı toJson ve fromJson arasında korunur', () {
+      final store = StoreData(
+        name: 'Aymira Giyim',
+        heroLocationText: 'Kadıköy, İstanbul',
+        mapLabel: 'Atatürk Cad. No:24',
+        categorySectionTitle: 'Servis Alanlarımız',
+        productSectionTitle: 'Servis Fiyat Listesi',
+        galleryActionLabel: 'Kataloğu Gör',
+        galleryActionHref: 'https://example.com/katalog',
+        blogSectionKicker: 'Teknik rehber',
+        blogSectionTitle: 'Mağazadan Haberler',
+        faqSectionKicker: 'Merak edilenler',
+        faqSectionTitle: 'Sık Sorulan Sorular',
+        faqSectionDescription: 'Kısa açıklama',
+        sectionVisibility: {'blog': false, 'faq': false},
+      );
+
+      final json = store.toJson();
+      expect(json['heroLocationText'], 'Kadıköy, İstanbul');
+      expect(json['mapLabel'], 'Atatürk Cad. No:24');
+      expect(json['categorySectionTitle'], 'Servis Alanlarımız');
+      expect(json['productSectionTitle'], 'Servis Fiyat Listesi');
+      expect(json['galleryActionLabel'], 'Kataloğu Gör');
+      expect(json['galleryActionHref'], 'https://example.com/katalog');
+      expect(json['blogSectionKicker'], 'Teknik rehber');
+      expect(json['blogSectionTitle'], 'Mağazadan Haberler');
+      expect(json['faqSectionKicker'], 'Merak edilenler');
+      expect(json['faqSectionTitle'], 'Sık Sorulan Sorular');
+      expect(json['faqSectionDescription'], 'Kısa açıklama');
+      expect(json['sectionVisibility'], {'blog': false, 'faq': false});
+
+      final restored = StoreData.fromJson(json);
+      expect(restored.heroLocationText, 'Kadıköy, İstanbul');
+      expect(restored.mapLabel, 'Atatürk Cad. No:24');
+      expect(restored.categorySectionTitle, 'Servis Alanlarımız');
+      expect(restored.productSectionTitle, 'Servis Fiyat Listesi');
+      expect(restored.galleryActionLabel, 'Kataloğu Gör');
+      expect(restored.galleryActionHref, 'https://example.com/katalog');
+      expect(restored.blogSectionKicker, 'Teknik rehber');
+      expect(restored.blogSectionTitle, 'Mağazadan Haberler');
+      expect(restored.faqSectionKicker, 'Merak edilenler');
+      expect(restored.faqSectionTitle, 'Sık Sorulan Sorular');
+      expect(restored.faqSectionDescription, 'Kısa açıklama');
+      expect(restored.sectionVisibility, {'blog': false, 'faq': false});
+    });
+
+    test('snake_case kolon adlarıyla gelen json da okunur', () {
+      final restored = StoreData.fromJson({
+        'hero_location_text': 'Kadıköy, İstanbul',
+        'map_label': 'Atatürk Cad. No:24',
+        'category_section_title': 'Servis Alanlarımız',
+        'product_section_title': 'Servis Fiyat Listesi',
+        'gallery_action_label': 'Kataloğu Gör',
+        'gallery_action_href': 'https://example.com/katalog',
+        'blog_section_kicker': 'Teknik rehber',
+        'blog_section_title': 'Mağazadan Haberler',
+        'faq_section_kicker': 'Merak edilenler',
+        'faq_section_title': 'Sık Sorulan Sorular',
+        'faq_section_description': 'Kısa açıklama',
+        'section_visibility': {'blog': false, 'faq': false},
+      });
+
+      expect(restored.heroLocationText, 'Kadıköy, İstanbul');
+      expect(restored.mapLabel, 'Atatürk Cad. No:24');
+      expect(restored.categorySectionTitle, 'Servis Alanlarımız');
+      expect(restored.productSectionTitle, 'Servis Fiyat Listesi');
+      expect(restored.galleryActionLabel, 'Kataloğu Gör');
+      expect(restored.galleryActionHref, 'https://example.com/katalog');
+      expect(restored.blogSectionKicker, 'Teknik rehber');
+      expect(restored.blogSectionTitle, 'Mağazadan Haberler');
+      expect(restored.faqSectionKicker, 'Merak edilenler');
+      expect(restored.faqSectionTitle, 'Sık Sorulan Sorular');
+      expect(restored.faqSectionDescription, 'Kısa açıklama');
+      expect(restored.sectionVisibility, {'blog': false, 'faq': false});
+    });
+
+    test('boş bölüm alanları round-trip’te kaybolmaz', () {
+      final restored = StoreData.fromJson(StoreData(name: 'A').toJson());
+
+      expect(restored.heroLocationText, '');
+      expect(restored.mapLabel, '');
+      expect(restored.categorySectionTitle, '');
+      expect(restored.productSectionTitle, '');
+      expect(restored.galleryActionLabel, '');
+      expect(restored.galleryActionHref, '');
+      expect(restored.blogSectionKicker, '');
+      expect(restored.blogSectionTitle, '');
+      expect(restored.faqSectionKicker, '');
+      expect(restored.faqSectionTitle, '');
+      expect(restored.faqSectionDescription, '');
+      expect(restored.sectionVisibility, isEmpty);
+    });
+  });
+
   group('StoreOffering and StoreData offerings round-trip', () {
     test('StoreOffering toJson ve fromJson round-trip', () {
       final offering = StoreOffering(
