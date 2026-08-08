@@ -184,10 +184,18 @@ void main() {
       expect(fakeClient.queries['slug'], 'test-magazasi');
       expect(fakeClient.queries.containsKey('edit_token'), isFalse);
       expect(fakeClient.insertedPayloads, isEmpty);
-      expect(fakeClient.rpcCalls.length, 1);
+      // İKİ ÇAĞRI BEKLENIR (2026-08-08).
+      //
+      // create_store_with_token, Hakkımızda ve SSS sütunlarını YAZMIYOR
+      // (about_title, about_values, faq_items, gallery_section_*).
+      // update_store_with_token yazıyor. İlk yayında girilen bu veriler
+      // sessizce kayboluyordu; artık kurulumdan hemen sonra güncelleme
+      // de çağrılıyor.
+      expect(fakeClient.rpcCalls.length, 2);
       expect(fakeClient.rpcCalls.first['fn'], 'create_store_with_token');
       expect(fakeClient.rpcCalls.first['params']['p_edit_token'], editToken);
       expect(fakeClient.rpcCalls.first['params']['p_slug'], 'test-magazasi');
+      expect(fakeClient.rpcCalls[1]['fn'], 'update_store_with_token');
     });
 
     test('Validasyondan geçemeyen mağaza Result.failure döner', () async {

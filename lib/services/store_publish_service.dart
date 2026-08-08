@@ -125,6 +125,33 @@ class StorePublishService {
             'p_store': payloadBuilder.toStoreInsertMap(data, slug, editToken),
           },
         );
+
+        // İLK YAYINDAN SONRA BÖLÜMLER AYRICA YAZILIR.
+        //
+        // SORUN (2026-08-08 tespiti): Manuel panelde Hakkımızda ve SSS
+        // doldurulup yayınlanıyor ama vitrinde görünmüyordu. Zincir şurada
+        // kopuyordu:
+        //   Flutter modeli          → alanlar var
+        //   Panel formu             → düzenleme ekranı var
+        //   Yayın yükü              → about_title, faq_items gönderiliyor
+        //   create_store_with_token → BU SÜTUNLARI YAZMIYOR   ← kopma
+        //   update_store_with_token → yazıyor
+        //   Vitrin çizimi           → about_title boşsa bölümü hiç çizmiyor
+        //
+        // Yani ilk yayında girilen veri sessizce kayboluyordu; sonradan
+        // panelden kaydedince görünüyordu.
+        //
+        // NEDEN VERİTABANI DEĞİL BURASI DÜZELTİLDİ: eksik sekiz sütunu
+        // create fonksiyonuna eklemek 170 satırlık bir fonksiyonu elle
+        // yeniden yazmayı gerektiriyordu ve iki denemede de yapıştırma
+        // hatasıyla düştü. Güncelleme fonksiyonu zaten doğru çalışıyor;
+        // onu bir kez daha çağırmak hem kısa hem risksiz.
+        //
+        // Başarısız olursa yayın YİNE DE geçerlidir: vitrin yayında,
+        // yalnız Hakkımızda/SSS bölümleri eksik kalır. Esnafı yayından
+        // etmemek için hata yutulur.
+        await _updateStoreWithToken(client, data, slug, editToken);
+
         return Result.success(
           StorePublishResult(
             publicPath: '/v/$slug',
