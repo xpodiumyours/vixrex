@@ -1,0 +1,5 @@
+interface:
+  display_name: "VixRex Router"
+  short_description: "Select the safest VixRex skill flow"
+policy:
+  allow_implicit_invocation: true
