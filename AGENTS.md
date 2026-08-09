@@ -5,14 +5,14 @@ Bu depoda çalışmaya başlayan her ajan, herhangi bir işlemden önce aşağı
 1. `VIXREX_RULES.md` muhafız kural dosyasını baştan sona oku.
 2. Salt-okunur yönlendirici olarak `.agents/skills/vixrex-router/SKILL.md` dosyasını oku ve göreve uyan skill akışını belirle.
 3. Seçilen her skill’in `SKILL.md` dosyasını ve zorunlu gördüğü bağlantılı dosyaları baştan sona oku. Rota belirsizse `.agents/skills/ask-matt/SKILL.md` haritasını kullan.
-4. Değişiklik/geliştirme işinde ilgili GitHub issue’sunu gövdesi, yorumları ve etiketleriyle oku. Issue, görevin plan ve ilerleme kaynağıdır.
-5. Ardından ilgili kodu, `git status` çıktısını ve mevcut diff’i inceleyerek çalışmaya başla.
+4. Değişiklik/geliştirme işinde ilgili GitHub issue’sunu gövdesi, yorumları ve etiketleriyle oku; plan kurmadan önce `python .github/scripts/vixrex_evidence.py --issue <n> --base origin/main` çalıştır.
+5. Üretilen özetteki `contradicted` ve `unverified` bulguları açık tutarak ilgili kodu incele ve çalışmaya başla. Ayrıntı: `docs/agents/evidence-contract.md`.
 
 ## Zorunlu ilişki
 
 - `VIXREX_RULES.md`, VixRex’e özel ürün, güvenlik, kanıt ve canlı sistem sınırlarını tanımlar.
 - `.agents/skills/`, görevin nasıl araştırılacağını, planlanacağını, uygulanacağını ve inceleneceğini tanımlar.
-- GitHub issue, uygulanacak işin kapsamını, kararlarını, kanıtlarını ve ilerlemesini taşır. Kök dizinde `implementation_plan.md` tutulmaz.
+- GitHub issue, uygulanacak işin hedefini, kapsamını, kararlarını ve ilerlemesini taşır. Mevcut repo ve çalışır durum aynı HEAD’e bağlı kanıt artefaktıyla doğrulanır. Kök dizinde `implementation_plan.md` tutulmaz.
 - Rules, ilgili issue ve göreve uygun skill okunmadan kod, veritabanı, Git veya deploy işlemi başlatılmaz.
 - Skill paketi kurulu diye bütün skill dosyaları her görevde yüklenmez; yalnız `vixrex-router`, seçtiği skill’ler ve gerektiğinde `ask-matt` okunur.
 - `vixrex-router` ve diğer skill’ler yetki üretmez. Issue açma/düzenleme, commit, push, PR, handoff, canlı sistem veya başka yan etkiler yalnız kullanıcının verdiği yetki sınırında yapılır.

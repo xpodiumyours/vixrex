@@ -32,6 +32,11 @@ Yol: 100 hazır vitrin → kiralama → satış / B2B.
 - [[vitrin-alan-semasi]] — esnafın düzenleyebildiği 41 alan
 - [[domain]] — kavramlar
 - [[issue-tracker]] — iş takibi; aktif plan ve durum GitHub Issues içindedir
+- [[evidence-contract]] — plan öncesi salt-okunur durum ve çelişki özeti
+
+## Araştırma
+
+- [[research/vixrex-vibe-engineering-katmanlari-2026-08-09]] — kanıtlı doğal dil mühendisliği hedefi ve katman sırası
 
 ## Şablon
 
