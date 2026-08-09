@@ -133,6 +133,18 @@ export interface VitrinProfileViewProps {
   profile: VitrinCategoryProfile;
   collections: VitrinCollection[];
   productCount: number;
+  sectionVisibility: Record<string, boolean> | null;
+  heroLocationText: string | null;
+  mapLabel: string | null;
+  categorySectionTitle: string | null;
+  productSectionTitle: string | null;
+  galleryActionLabel: string | null;
+  galleryActionHref: string | null;
+  blogSectionKicker: string | null;
+  blogSectionTitle: string | null;
+  faqSectionKicker: string | null;
+  faqSectionTitle: string | null;
+  faqSectionDescription: string | null;
   galleryItems: VitrinGalleryItem[];
   marketplaceLinks: VitrinMarketplaceLink[];
   articles: VitrinArticleTeaser[];
@@ -185,6 +197,18 @@ export default function VitrinProfileView({
   profile,
   collections,
   productCount,
+  sectionVisibility,
+  heroLocationText,
+  mapLabel,
+  categorySectionTitle,
+  productSectionTitle,
+  galleryActionLabel,
+  galleryActionHref,
+  blogSectionKicker,
+  blogSectionTitle,
+  faqSectionKicker,
+  faqSectionTitle,
+  faqSectionDescription,
   galleryItems,
   marketplaceLinks,
   articles,
@@ -200,6 +224,8 @@ export default function VitrinProfileView({
     typeof isClosed === "boolean" && (Boolean(workingHoursToday) || isClosed);
   const displayPhone = String(phone || "").trim();
   const displayEmail = String(email || "").trim();
+  const bolumGorunur = (anahtar: string, varsayilan: boolean) =>
+    sectionVisibility?.[anahtar] === false ? false : varsayilan;
   const hasPhone = Boolean(phoneUrl && displayPhone);
   const featuredLabel = String(featuredBanner?.label || "").trim();
   const featuredTitle = String(featuredBanner?.title || "").trim();
@@ -225,8 +251,10 @@ export default function VitrinProfileView({
   const aboutValues = (aboutSection?.values || []).filter(
     (value) => value.title.trim() && value.description.trim()
   );
-  const showAbout =
-    Boolean(aboutTitle) && (aboutParagraphs.length > 0 || aboutValues.length > 0);
+  const showAbout = bolumGorunur(
+    "about",
+    Boolean(aboutTitle) && (aboutParagraphs.length > 0 || aboutValues.length > 0),
+  );
   const galleryMeta = gallerySection || {
     kicker: "",
     title: "",
@@ -235,29 +263,33 @@ export default function VitrinProfileView({
   const visibleGalleryItems = (galleryMeta.items || []).filter((item) =>
     String(item.imageUrl || "").trim()
   );
-  const showGallery = visibleGalleryItems.length > 0;
+  const showGallery = bolumGorunur("gallery", visibleGalleryItems.length > 0);
   const galleryKicker = String(galleryMeta.kicker || "").trim();
   const galleryTitle = String(galleryMeta.title || "").trim() || "Galeri";
   const visibleFaqItems = (faqItems || []).filter(
     (item) => item.question.trim() && item.answer.trim()
   );
-  const showFaq = visibleFaqItems.length > 0;
+  const showFaq = bolumGorunur("faq", visibleFaqItems.length > 0);
   const visibleArticles = (articles || []).filter((article) =>
     String(article.title || "").trim()
   );
-  const showArticles = visibleArticles.length > 0;
+  const showArticles = bolumGorunur("blog", visibleArticles.length > 0);
   const showRating =
     showStorefrontRating &&
     typeof ratingScore === "number" &&
     Number.isFinite(ratingScore);
-  const showContact =
+  const showContact = bolumGorunur(
+    "contact",
     Boolean(displayAddress) ||
-    hasPhone ||
-    Boolean(whatsappUrl) ||
-    Boolean(displayEmail) ||
-    Boolean(workingHoursToday) ||
-    Boolean(mapsEmbedUrl) ||
-    Boolean(mapsUrl);
+      hasPhone ||
+      Boolean(whatsappUrl) ||
+      Boolean(displayEmail) ||
+      Boolean(workingHoursToday) ||
+      Boolean(mapsEmbedUrl) ||
+      Boolean(mapsUrl),
+  );
+  const showCategories = bolumGorunur("categories", collections.length > 0);
+  const showProducts = bolumGorunur("products", productCount > 0);
   const telForVcard = displayPhone || "";
   const vcardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${storeName}\nTEL:${telForVcard}\nEMAIL:${displayEmail}\nEND:VCARD`;
   const vcardHref = `data:text/vcard;charset=utf-8,${encodeURIComponent(vcardContent)}`;
@@ -308,11 +340,11 @@ export default function VitrinProfileView({
         </a>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-          {productCount > 0 && (
-            <a href="#urunler" className="hover:text-white transition-colors">Ürünler</a>
+          {showProducts && (
+            <a href="#urunler" className="hover:text-white transition-colors">{productSectionTitle || "Ürünler"}</a>
           )}
-          {collections.length > 0 && (
-            <a href="#kategoriler" className="hover:text-white transition-colors">Kategoriler</a>
+          {showCategories && (
+            <a href="#kategoriler" className="hover:text-white transition-colors">{categorySectionTitle || "Kategoriler"}</a>
           )}
           {showAbout && (
             <a href="#hakkimizda" className="hover:text-white transition-colors">Hakkımızda</a>
@@ -422,8 +454,9 @@ export default function VitrinProfileView({
               </p>
             )}
 
-            {(displayAddress || displayEmail || workingHoursToday || showRating) && (
+            {(heroLocationText || displayAddress || displayEmail || workingHoursToday || showRating) && (
               <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                {heroLocationText && <span className="flex items-center gap-1.5">📍 {heroLocationText}</span>}
                 {displayAddress && <span className="flex items-center gap-1.5">📍 {displayAddress}</span>}
                 {showRating && (
                   <span className="flex items-center gap-1.5">
@@ -472,10 +505,10 @@ export default function VitrinProfileView({
       </section>
 
       {/* ===== CATEGORIES ===== */}
-      {collections.length > 0 && (
+      {showCategories && (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="kategoriler">
           <div className="flex items-baseline justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Kategoriler</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{categorySectionTitle || "Kategoriler"}</h2>
             <a href="#urunler" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">Tümünü gör →</a>
           </div>
 
@@ -567,10 +600,10 @@ export default function VitrinProfileView({
       )}
 
       {/* ===== PRODUCTS ===== */}
-      {productCount > 0 && (
+      {showProducts && (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler">
           <div className="flex items-baseline justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Tüm Ürünler</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{productSectionTitle || "Tüm Ürünler"}</h2>
             <span className="text-sm font-semibold text-slate-400">{productCount} Ürün Listeleniyor</span>
           </div>
 
@@ -666,11 +699,15 @@ export default function VitrinProfileView({
                 {galleryTitle}
               </h2>
             </div>
-            {showContact && (
+            {galleryActionLabel && galleryActionHref ? (
+              <a href={galleryActionHref} className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition shrink-0">
+                {galleryActionLabel}
+              </a>
+            ) : showContact ? (
               <a href="#iletisim" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition shrink-0">
                 Mağazaya gel →
               </a>
-            )}
+            ) : null}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 auto-rows-[160px] sm:auto-rows-[200px]">
             {visibleGalleryItems.slice(0, 8).map((item, index) => (
@@ -701,7 +738,14 @@ export default function VitrinProfileView({
       {showArticles && (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="blog">
           <div className="flex items-baseline justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Yazılar</h2>
+            <div>
+              {blogSectionKicker && (
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-2">
+                  {blogSectionKicker}
+                </p>
+              )}
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{blogSectionTitle || "Yazılar"}</h2>
+            </div>
             <Link href={`/v/${storeSlug}/yazilar`} className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">
               {visibleArticles.length} yazı →
             </Link>
@@ -729,12 +773,12 @@ export default function VitrinProfileView({
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="sss">
           <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">SSS</p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">{faqSectionKicker || "SSS"}</p>
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
-                Sıkça sorulan sorular
+                {faqSectionTitle || "Sıkça sorulan sorular"}
               </h2>
               <p className="text-sm text-slate-400 leading-relaxed">
-                Sipariş, stok ve mağaza ziyareti hakkında merak edilenler.
+                {faqSectionDescription || "Sipariş, stok ve mağaza ziyareti hakkında merak edilenler."}
               </p>
             </div>
             <div className="space-y-3">
@@ -776,7 +820,7 @@ export default function VitrinProfileView({
                       {...editableProps("adres", ownerMode)}
                       className="text-xs text-slate-300 leading-relaxed mt-0.5"
                     >
-                      {displayAddress}
+                      {mapLabel || displayAddress}
                     </p>
                   </div>
                 </div>
@@ -984,7 +1028,7 @@ export default function VitrinProfileView({
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-[auto_1fr] gap-8 items-center">
+          <div className="grid min-w-0 lg:grid-cols-[auto_1fr] gap-8 items-center">
             {/* QR Code */}
             <div className="relative p-1 rounded-3xl bg-gradient-to-r from-blue-500/25 to-cyan-500/15 mx-auto">
               <div className="bg-white p-5 rounded-2xl relative text-center">
@@ -1002,9 +1046,9 @@ export default function VitrinProfileView({
             </div>
 
             {/* Share Links & URL Box */}
-            <div className="space-y-5">
+            <div className="space-y-5 min-w-0">
               <div className="bg-slate-800/80 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between gap-4">
-                <span className="font-mono text-sm text-slate-300 truncate">{formattedUrlDisplay}</span>
+                <span className="font-mono text-sm text-slate-300 truncate min-w-0 flex-1">{formattedUrlDisplay}</span>
                 <button
                   onClick={handleCopyUrl}
                   className="px-4 py-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold hover:bg-blue-500/25 transition shrink-0"
@@ -1017,7 +1061,7 @@ export default function VitrinProfileView({
 
               <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Sosyal Medyada Paylaş</div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid min-w-0 grid-cols-2 sm:grid-cols-4 gap-3">
                 <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(publicUrl)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-emerald-500/30 hover:border-emerald-500/60 hover:shadow-[0_8px_24px_rgba(34,197,94,0.15)] transition group">
                   <WhatsAppIcon size={24} className="text-[#22C55E] group-hover:scale-110 transition duration-300" />
                   <span className="text-xs font-bold text-slate-300 group-hover:text-white">WhatsApp</span>

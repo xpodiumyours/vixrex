@@ -111,6 +111,18 @@ interface PublicStoreRow {
   featured_banner_description: string | null;
   featured_banner_image_url: string | null;
   featured_banner_price_text: string | null;
+  hero_location_text: string | null;
+  map_label: string | null;
+  category_section_title: string | null;
+  product_section_title: string | null;
+  gallery_action_label: string | null;
+  gallery_action_href: string | null;
+  blog_section_kicker: string | null;
+  blog_section_title: string | null;
+  faq_section_kicker: string | null;
+  faq_section_title: string | null;
+  faq_section_description: string | null;
+  section_visibility: Record<string, boolean> | null;
 }
 
 interface ProductRow {
@@ -147,7 +159,10 @@ const PUBLIC_STORE_SELECT =
   "logo_url,working_hours,is_published,is_demo,kategori,latitude,longitude," +
   "google_business_link,product_storage_version,featured_banner_label," +
   "featured_banner_title,featured_banner_description,featured_banner_image_url," +
-  "featured_banner_price_text,rating_score,review_count";
+  "featured_banner_price_text,rating_score,review_count,hero_location_text,map_label," +
+  "category_section_title,product_section_title,gallery_action_label,gallery_action_href," +
+  "blog_section_kicker,blog_section_title,faq_section_kicker,faq_section_title," +
+  "faq_section_description,section_visibility";
 
 async function _buildStoreDataBundle(store: PublicStoreRow) {
   const slug = store.slug;
@@ -644,6 +659,18 @@ export default async function StorePage(props: PageProps) {
         profile={vitrinProfile}
         collections={collections}
         productCount={visibleProducts.length}
+        sectionVisibility={store.section_visibility}
+        heroLocationText={store.hero_location_text}
+        mapLabel={store.map_label}
+        categorySectionTitle={store.category_section_title}
+        productSectionTitle={store.product_section_title}
+        galleryActionLabel={store.gallery_action_label}
+        galleryActionHref={store.gallery_action_href}
+        blogSectionKicker={store.blog_section_kicker}
+        blogSectionTitle={store.blog_section_title}
+        faqSectionKicker={store.faq_section_kicker}
+        faqSectionTitle={store.faq_section_title}
+        faqSectionDescription={store.faq_section_description}
         galleryItems={gallerySection.items}
         marketplaceLinks={marketplaceLinks}
         articles={articles}
