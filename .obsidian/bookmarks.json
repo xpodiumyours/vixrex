@@ -12,8 +12,8 @@
     },
     {
       "type": "file",
-      "title": "Plan",
-      "path": "implementation_plan.md"
+      "title": "Ajan Akışları",
+      "path": "docs/Ajan Calisma Akislari.md"
     },
     {
       "type": "file",
