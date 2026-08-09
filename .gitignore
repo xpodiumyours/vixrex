@@ -67,6 +67,9 @@ dart_defines.local.json
 release_apk/
 scratch/
 
+# Per-worktree agent evidence artifacts
+.vixrex-dev/
+
 # Cursor temporary task plans are local-only
 .cursor/plans/
 
