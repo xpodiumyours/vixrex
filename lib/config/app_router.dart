@@ -6,6 +6,7 @@ import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/screens/auth_screen.dart';
 import 'package:vixrex/screens/blog_editor_screen.dart';
+import 'package:vixrex/screens/blog_post_list_screen.dart';
 import 'package:vixrex/screens/booking_management_screen.dart';
 import 'package:vixrex/screens/home_shell_screen.dart';
 import 'package:vixrex/screens/landing_screen.dart';
@@ -302,6 +303,18 @@ class AppRouter {
         builder:
             (_) => BlogEditorScreen(storeSlug: slug, initialArticle: article),
       ),
+    );
+  }
+
+  /// Mevcut blog yazılarını listeler — yeni yazı ekleme ve var olanı
+  /// düzenleme buradan dallanır (bkz. [BlogPostListScreen]).
+  static Future<dynamic> navigateToBlogPostList(
+    BuildContext context, {
+    required String slug,
+  }) {
+    return Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => BlogPostListScreen(storeSlug: slug)),
     );
   }
 
