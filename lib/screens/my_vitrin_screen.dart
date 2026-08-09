@@ -54,6 +54,8 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
   final _instagramController = TextEditingController();
   final _websiteController = TextEditingController();
   final _googleBusinessLinkController = TextEditingController();
+  final _referencesLinkController = TextEditingController();
+  final _businessTypeController = TextEditingController();
   final _categorySectionTitleController = TextEditingController();
   final _productSectionTitleController = TextEditingController();
   final _blogKickerController = TextEditingController();
@@ -121,6 +123,8 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
       _googleBusinessLinkController,
       _controller.data.googleBusinessLink,
     );
+    _syncText(_referencesLinkController, _controller.data.referencesLink);
+    _syncText(_businessTypeController, _controller.data.businessType);
     _syncText(
       _categorySectionTitleController,
       _controller.data.categorySectionTitle,
@@ -193,6 +197,8 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
     _instagramController.dispose();
     _websiteController.dispose();
     _googleBusinessLinkController.dispose();
+    _referencesLinkController.dispose();
+    _businessTypeController.dispose();
     _categorySectionTitleController.dispose();
     _productSectionTitleController.dispose();
     _blogKickerController.dispose();
@@ -259,6 +265,8 @@ class MyVitrinScreenState extends State<MyVitrinScreen> {
                               'instagram': _instagramController,
                               'website': _websiteController,
                               'googleBusiness': _googleBusinessLinkController,
+                              'references': _referencesLinkController,
+                              'businessType': _businessTypeController,
                               'categorySectionTitle':
                                   _categorySectionTitleController,
                               'productSectionTitle':

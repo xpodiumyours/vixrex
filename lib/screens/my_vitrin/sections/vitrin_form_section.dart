@@ -91,6 +91,8 @@ class VitrinFormSection extends StatelessWidget {
   TextEditingController get _desc => textControllers['description']!;
   TextEditingController get _insta => textControllers['instagram']!;
   TextEditingController get _google => textControllers['googleBusiness']!;
+  TextEditingController get _references => textControllers['references']!;
+  TextEditingController get _businessType => textControllers['businessType']!;
   TextEditingController get _categorySectionTitle =>
       textControllers['categorySectionTitle']!;
   TextEditingController get _productSectionTitle =>
@@ -220,6 +222,8 @@ class VitrinFormSection extends StatelessWidget {
                           const SizedBox(height: 14),
                           _buildHeroBadgeField(),
                           const SizedBox(height: 14),
+                          _buildBusinessTypeField(),
+                          const SizedBox(height: 14),
                           _buildInstagramField(),
                           const SizedBox(height: 14),
                           _buildWorkingHoursField(),
@@ -228,6 +232,8 @@ class VitrinFormSection extends StatelessWidget {
                             hasContent: controller.hasAboutSection,
                             onTap: () => _showAboutSheet(context),
                           ),
+                          const SizedBox(height: 14),
+                          _buildReferencesLinkField(),
                           const SizedBox(height: 14),
                           _buildDirectionsToggle(),
                         ],
@@ -395,6 +401,9 @@ class VitrinFormSection extends StatelessWidget {
                     _buildHeroBadgeField(),
                     const SizedBox(height: 14),
 
+                    _buildBusinessTypeField(),
+                    const SizedBox(height: 14),
+
                     // Instagram
                     _buildInstagramField(),
                     const SizedBox(height: 14),
@@ -406,6 +415,9 @@ class VitrinFormSection extends StatelessWidget {
                       hasContent: controller.hasAboutSection,
                       onTap: () => _showAboutSheet(context),
                     ),
+                    const SizedBox(height: 14),
+
+                    _buildReferencesLinkField(),
                     const SizedBox(height: 14),
 
                     // Vitrin paylaşım linki (isimden öngörülen / yayın sonrası canlı)
@@ -725,6 +737,28 @@ class VitrinFormSection extends StatelessWidget {
       hint: 'Örn: Atölye / Mağaza',
       icon: Icons.sell_outlined,
       onChanged: (v) => controller.updateHeroBadge(v),
+    );
+  }
+
+  Widget _buildBusinessTypeField() {
+    return EditorTextField(
+      label: 'İşletme Türü',
+      controller: _businessType,
+      hint: 'Örn: Kadın giyim / butik',
+      icon: Icons.storefront_outlined,
+      maxLength: 40,
+      onChanged: (v) => controller.updateBusinessType(v),
+    );
+  }
+
+  Widget _buildReferencesLinkField() {
+    return EditorTextField(
+      label: 'Referanslar Bağlantısı',
+      controller: _references,
+      hint: 'https://...',
+      icon: Icons.link_rounded,
+      keyboardType: TextInputType.url,
+      onChanged: (v) => controller.updateReferencesLink(v),
     );
   }
 
@@ -1407,7 +1441,7 @@ class VitrinFormSection extends StatelessWidget {
       state.showSnackBar(ctx, 'Blog için önce vitrini yayınlayın.');
       return;
     }
-    await AppRouter.navigateToBlogEditor(ctx, slug: slug);
+    await AppRouter.navigateToBlogPostList(ctx, slug: slug);
   }
 
   Future<void> _openLink(BuildContext ctx) async {

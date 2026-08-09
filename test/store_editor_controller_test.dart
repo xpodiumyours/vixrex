@@ -239,6 +239,41 @@ void main() {
       },
     );
 
+    test('updateReferencesLink alanı gerçekten günceller', () async {
+      final controller = StoreEditorController(
+        storage: storageService,
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+
+      expect(controller.data.referencesLink, isEmpty);
+      controller.updateReferencesLink('https://maps.google.com/?q=Test');
+      expect(controller.data.referencesLink, 'https://maps.google.com/?q=Test');
+    });
+
+    test('İşletme Türü: kategori seçimi otomatik doldurur, ama elle '
+        'değiştirildikten sonra bir daha kör üzerine yazmaz', () async {
+      final controller = StoreEditorController(
+        storage: storageService,
+        supabaseClient: fakeSupabase,
+      );
+      await controller.initialize(null);
+
+      // Elle dokunulmadan önce: kategori seçimi otomatik dolduruyor
+      // (eski davranış korunuyor).
+      controller.selectCategory('Giyim & Butik');
+      final autoFilled = controller.data.businessType;
+      expect(autoFilled, isNotEmpty);
+
+      // Kullanıcı elle değiştirir.
+      controller.updateBusinessType('Kadın giyim / butik');
+      expect(controller.data.businessType, 'Kadın giyim / butik');
+
+      // Kategori tekrar değişse bile artık üzerine yazılmaz.
+      controller.selectCategory('Kuaför');
+      expect(controller.data.businessType, 'Kadın giyim / butik');
+    });
+
     test(
       'fetchLocation retrieves coordinates and matched province/district',
       () async {
