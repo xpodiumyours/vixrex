@@ -1,0 +1,7 @@
+{
+  "userIgnoreFilters": [
+    ".agents/",
+    ".github/",
+    ".cursor/"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "pull_request": {
+    "body": "## Bağlı Issue\n\nFixes #76\n\n## Kullanılan Skill Akışı\n\n`vixrex-router` → `tdd` → `code-review`\n\n## Kırmızı Kanıt\n\n`python -m unittest ...` production betiği yokken exit 1 verdi.\n\n## Yeşil Kanıt\n\nAynı komut 5 testle exit 0 verdi.\n\n## Kapsam Dışı\n\nMerge, branch protection ve deploy bu PR'ın dışındadır.\n\n## Geri Dönüş\n\nCommitler ters sırada `git revert` ile geri alınabilir."
+  }
+}

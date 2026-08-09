@@ -1,0 +1,43 @@
+{
+  "missing_adapter": {
+    "delete": "GEMINI.md",
+    "expect": "GEMINI.md"
+  },
+  "disabled_router": {
+    "replace": {
+      "path": ".agents/skills/vixrex-router/agents/openai.yaml",
+      "old": "allow_implicit_invocation: true",
+      "new": "allow_implicit_invocation: false"
+    },
+    "expect": "vixrex-router"
+  },
+  "missing_skill": {
+    "replace": {
+      "path": "docs/Ajan Calisma Akislari.md",
+      "old": "`diagnosing-bugs`",
+      "new": "`bulunmayan-skill`"
+    },
+    "expect": "bulunmayan-skill"
+  },
+  "root_plan": {
+    "create": {
+      "path": "implementation_plan.md",
+      "content": "# Aktif plan yanlış yerde\n"
+    },
+    "expect": "implementation_plan.md"
+  },
+  "active_prompt": {
+    "create": {
+      "path": "docs/prompt-active.md",
+      "content": "# Aktif prompt yanlış yerde\n"
+    },
+    "expect": "prompt-active.md"
+  },
+  "ambiguous_link": {
+    "create": {
+      "path": "docs/duplicate/AGENTS.md",
+      "content": "# İkinci AGENTS\n"
+    },
+    "expect": "AGENTS"
+  }
+}

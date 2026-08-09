@@ -1,7 +1,7 @@
 # Google Görünürlüğü ve Ürün Konumu
 
 > Ürün kararı ve plan sonrası iş listesi. Karar tarihi: 2026-08-05.
-> Bu bir kural değil; uygulanınca `implementation_plan.md`'ye adım olarak girer.
+> Bu bir kural değil; uygulanacak çalışma ilgili GitHub issue’sunda planlanır.
 
 ## 1. Hedef
 
