@@ -13,6 +13,10 @@
 -- tablolara yaziyor.
 
 -- 1) stores tablosundaki metin/JSON alanlari
+-- Demo satirlari normal kullanici islemlerinde degistirilemez. Migration tek
+-- transaction icinde calistigi icin bir hata olursa bu kapatma da geri alinir.
+alter table public.stores disable trigger protect_landing_demo_stores;
+
 update public.stores set
   hero_badge = 'Yetkili Teknik Servis · Şişli',
   description = '10 yıllık tecrübeyle telefon, tablet ve bilgisayar onarımında hızlı, garantili ve şeffaf hizmet.',
@@ -38,6 +42,7 @@ update public.stores set
 
 Müşterilerimize açık fiyatlandırma ve yazılı garanti veriyoruz — onarım başlamadan önce net fiyat söylenir, sürpriz ek ücret çıkmaz. Ekibimiz düzenli olarak üretici sertifikalı eğitimlerden geçiyor.',
   about_image_caption = 'Atölyemizde titiz bir onarım süreci',
+  about_image_url = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&q=85',
   about_values = '[
     {"id":"1","title":"Şeffaf Fiyatlandırma","description":"Tespit sonrası net fiyat, onayınız alınmadan işlem başlamaz."},
     {"id":"2","title":"Orijinal Parça Garantisi","description":"Kullanılan tüm parçalarda 6 ay yazılı garanti, iş takibi SMS ile bildirilir."},
@@ -53,7 +58,8 @@ Müşterilerimize açık fiyatlandırma ve yazılı garanti veriyoruz — onarı
     {"id":"cover","imageUrl":"https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=800&q=80","title":"Atölyemizden bir kare — hassas komponent onarımı"},
     {"id":"gallery-0","imageUrl":"https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=800&q=80","title":"Orijinal parça stok alanımız"},
     {"id":"gallery-1","imageUrl":"https://images.unsplash.com/photo-1545259741-2ea3ebf61fa3?auto=format&fit=crop&w=800&q=80","title":"iPhone ekran değişimi anı"},
-    {"id":"gallery-2","imageUrl":"https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=800&q=80","title":"Laptop anakart tamiri, mikroskop altında"}
+    {"id":"gallery-2","imageUrl":"https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=800&q=80","title":"Laptop anakart tamiri, mikroskop altında"},
+    {"id":"gallery-3","imageUrl":"https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=85","title":"Teslim öncesi son kalite kontrolü"}
   ]'::jsonb,
   featured_banner_label = 'Bu Ay Öne Çıkan',
   featured_banner_title = 'Ekran Değişiminde %15 İndirim',
@@ -61,6 +67,8 @@ Müşterilerimize açık fiyatlandırma ve yazılı garanti veriyoruz — onarı
   featured_banner_price_text = '%15 İndirim',
   featured_banner_image_url = 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=1200&q=80'
 where slug = 'demo-teknofix';
+
+alter table public.stores enable trigger protect_landing_demo_stores;
 
 -- 2) Kategoriler (product_categories) — yalnizca yoksa ekle
 with hedef as (
@@ -75,7 +83,9 @@ kategori_listesi (isim, sira) as (
 )
 insert into public.product_categories (store_id, name, slug, is_active, sort_order)
 select hedef.store_id, kl.isim,
-  lower(regexp_replace(kl.isim, '[^a-zA-Z0-9şüğıçöŞÜĞİÇÖ\s-]', '', 'g')),
+  trim(both '-' from regexp_replace(
+    translate(lower(kl.isim), 'çğıöşü', 'cgiosu'), '[^a-z0-9]+', '-', 'g'
+  )),
   true, kl.sira
 from hedef, kategori_listesi kl
 where not exists (
@@ -91,16 +101,16 @@ kat as (
   select pc.id, pc.name from public.product_categories pc, hedef
   where pc.store_id = hedef.store_id
 ),
-urun_listesi (ad, aciklama, fiyat_metin, fiyat_sayi, eski_fiyat, kategori_adi, teslim, sira) as (
+urun_listesi (ad, aciklama, fiyat_metin, fiyat_sayi, eski_fiyat, kategori_adi, teslim, gorsel, sira) as (
   values
-    ('iPhone Orijinal Ekran Değişimi', 'Apple onaylı orijinal ekran, dokunmatik ve renk kalibrasyonu test edilerek teslim edilir.', '2.450 TL', 2450, null::numeric, 'Telefon Ekran & Batarya Değişimi', 'Şişli ve çevresi aynı gün, İstanbul geneli kargo', 0),
-    ('Samsung Galaxy Batarya Değişimi', 'Orijinal kapasiteli batarya, değişim sonrası kalibrasyon yapılır.', '850 TL', 850, null::numeric, 'Telefon Ekran & Batarya Değişimi', 'Şişli ve çevresi aynı gün, İstanbul geneli kargo', 1),
-    ('Telefon Kamera Modülü Değişimi', 'Otofokus ve netlik testi yapılarak teslim edilir.', '1.100 TL', 1100, null::numeric, 'Telefon Ekran & Batarya Değişimi', 'Şişli ve çevresi aynı gün, İstanbul geneli kargo', 2),
-    ('MacBook Klavye & Tuş Takımı Değişimi', 'Kelebek/makas mekanizma değişimi, tüm tuşlar test edilir.', '1.850 TL', 1850, null::numeric, 'Bilgisayar & Laptop Servisi', '2 iş günü, teslimat İstanbul geneli kargo', 0),
-    ('Laptop Anakart Arıza Tespiti & Onarımı', 'Ücretsiz ön inceleme sonrası net onarım fiyatı bildirilir.', '600 TL (tespit)', 600, null::numeric, 'Bilgisayar & Laptop Servisi', '2-3 iş günü', 1),
-    ('Data Kurtarma (HDD/SSD)', 'Fiziksel/mantıksal arızalı disklerden veri kurtarma.', '950 TL''den başlar', 950, null::numeric, 'Bilgisayar & Laptop Servisi', '3-5 iş günü', 2),
-    ('iPad Ekran Değişimi', 'Orijinal ekran + dokunmatik katman, su sızdırmazlık testiyle teslim.', '1.950 TL', 1950, null::numeric, 'Tablet Onarımı', 'Aynı gün, İstanbul geneli kargo', 0),
-    ('Orijinal Şarj Aleti & Kablo Seti', 'Apple/Samsung uyumlu, orijinal amper değeriyle hızlı şarj.', '450 TL', 450, null::numeric, 'Aksesuar & Yedek Parça', 'Stoktan aynı gün', 0)
+    ('iPhone Orijinal Ekran Değişimi', 'Apple onaylı orijinal ekran, dokunmatik ve renk kalibrasyonu test edilerek teslim edilir.', '2.450 TL', 2450, null::numeric, 'Telefon Ekran & Batarya Değişimi', 'Aynı gün, 6 ay garanti', 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80', 0),
+    ('Samsung Galaxy Batarya Değişimi', 'Orijinal kapasiteli batarya, değişim sonrası kalibrasyon yapılır.', '850 TL', 850, null::numeric, 'Telefon Ekran & Batarya Değişimi', 'Aynı gün, 6 ay garanti', 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=600&q=80', 1),
+    ('Telefon Kamera Modülü Değişimi', 'Otofokus ve netlik testi yapılarak teslim edilir.', '1.100 TL', 1100, null::numeric, 'Telefon Ekran & Batarya Değişimi', 'Aynı gün, 6 ay garanti', 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=600&q=80', 2),
+    ('MacBook Klavye & Tuş Takımı Değişimi', 'Kelebek/makas mekanizma değişimi, tüm tuşlar test edilir.', '1.850 TL', 1850, null::numeric, 'Bilgisayar & Laptop Servisi', '2 iş günü, 6 ay garanti', 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&q=80', 0),
+    ('Laptop Anakart Arıza Tespiti & Onarımı', 'Ücretsiz ön inceleme sonrası net onarım fiyatı bildirilir.', '600 TL (tespit)', 600, null::numeric, 'Bilgisayar & Laptop Servisi', '2-3 iş günü, 3 ay garanti', 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&q=80', 1),
+    ('Data Kurtarma (HDD/SSD)', 'Fiziksel/mantıksal arızalı disklerden veri kurtarma.', '950 TL''den başlar', 950, null::numeric, 'Bilgisayar & Laptop Servisi', '3-5 iş günü', 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&q=80', 2),
+    ('iPad Ekran Değişimi', 'Orijinal ekran + dokunmatik katman, su sızdırmazlık testiyle teslim.', '1.950 TL', 1950, null::numeric, 'Tablet Onarımı', 'Aynı gün, 6 ay garanti', 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=600&q=80', 0),
+    ('Orijinal Şarj Aleti & Kablo Seti', 'Apple/Samsung uyumlu, orijinal amper değeriyle hızlı şarj.', '450 TL', 450, null::numeric, 'Aksesuar & Yedek Parça', 'Stoktan aynı gün', 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=600&q=80', 0)
 )
 insert into public.products (
   store_id, name, slug, description, price_text, price_amount,
@@ -110,11 +120,13 @@ insert into public.products (
 select
   hedef.store_id,
   ul.ad,
-  lower(regexp_replace(ul.ad, '[^a-zA-Z0-9şüğıçöŞÜĞİÇÖ\s-]', '', 'g')),
+  trim(both '-' from regexp_replace(
+    translate(lower(ul.ad), 'çğıöşü', 'cgiosu'), '[^a-z0-9]+', '-', 'g'
+  )),
   ul.aciklama,
   ul.fiyat_metin,
   ul.fiyat_sayi,
-  '["https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80"]'::jsonb,
+  jsonb_build_array(ul.gorsel),
   kat.id,
   'manual',
   true, true,
