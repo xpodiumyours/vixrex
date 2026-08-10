@@ -123,14 +123,6 @@ const List<VitrinAlani> vitrinAlanlari = [
     bolum: 'hero',
   ),
   VitrinAlani(
-    anahtar: 'tema',
-    tip: 'secim',
-    etiket: 'Tema Ön Ayarı',
-    kolon: 'theme_preset',
-    bolum: 'hero',
-    maxUzunluk: 40,
-  ),
-  VitrinAlani(
     anahtar: 'whatsapp',
     tip: 'telefon',
     etiket: 'WhatsApp Numarası',
