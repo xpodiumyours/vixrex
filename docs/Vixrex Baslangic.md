@@ -12,9 +12,10 @@ Yol: 100 hazır vitrin → kiralama → satış / B2B.
 ## Karar ve kurallar
 
 - [[VIXREX_RULES]] — **değişmez kurallar.** Bir tartışma çıktığında buraya bakılır
-- [[implementation_plan]] — 13 fazlık plan, nerede kaldığımız
+- [[Ajan Calisma Akislari]] — **hangi işte hangi skill akışı kullanılır**
+- [[vixrex-asistan-13-faz-plani-2026-08-06]] — tamamlanmış 13 fazın tarihsel planı
 - [[AGENTS]] — yapay zekâ ajanlarının uyacağı kurallar
-- [[CLAUDE]] — projenin teknik özeti
+- [[repository-guide]] — modelden bağımsız teknik depo haritası
 
 ## Yayına çıkarken
 
@@ -30,7 +31,12 @@ Yol: 100 hazır vitrin → kiralama → satış / B2B.
 
 - [[vitrin-alan-semasi]] — esnafın düzenleyebildiği 41 alan
 - [[domain]] — kavramlar
-- [[issue-tracker]] — iş takibi
+- [[issue-tracker]] — iş takibi; aktif plan ve durum GitHub Issues içindedir
+- [[evidence-contract]] — plan öncesi salt-okunur durum ve çelişki özeti
+
+## Araştırma
+
+- [[research/vixrex-vibe-engineering-katmanlari-2026-08-09]] — kanıtlı doğal dil mühendisliği hedefi ve katman sırası
 
 ## Şablon
 

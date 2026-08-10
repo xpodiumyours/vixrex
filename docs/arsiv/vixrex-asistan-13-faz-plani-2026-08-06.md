@@ -1,4 +1,6 @@
-# VixRex Next.js Sahip Önizlemesi — Tamamlama Ana Planı
+# VixRex Asistan — 13 Fazlık Tarihsel Tamamlama Planı (2026-08-06)
+
+> Arşiv kaydıdır. Aktif görev ve planlar GitHub Issues içindedir.
 
 ## 1. Sonuç
 

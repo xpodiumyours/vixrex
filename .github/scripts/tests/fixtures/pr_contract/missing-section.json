@@ -1,0 +1,5 @@
+{
+  "pull_request": {
+    "body": "## Bağlı Issue\n\nFixes #76\n\n## Kullanılan Skill Akışı\n\n`vixrex-router` → `tdd` → `code-review`\n\n## Kırmızı Kanıt\n\nKırmızı komut exit 1.\n\n## Yeşil Kanıt\n\nYeşil komut exit 0.\n\n## Kapsam Dışı\n\nDeploy kapsam dışı."
+  }
+}

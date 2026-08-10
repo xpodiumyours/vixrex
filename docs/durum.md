@@ -1,38 +1,25 @@
-# VixRex — Durum
+# VixRex — durum ve iş kaynağı
 
-> Tek güncel durum belgesi. Eski plan/tur bulgusu dosyaları `docs/arsiv/`
-> klasörüne kaldırıldı — geçmişe bakmak gerekirse orada durur, günlük işte
-> kullanılmaz. Bundan sonra proje durumu **yalnız bu dosyada** tutulur.
-> Her önemli değişiklikte bu dosya güncellenir.
+> Aktif görevlerin kapsamı, planı ve ilerlemesi GitHub Issues içindedir. Bu not değişken PR/issue sayıları veya kısa sürede eskiyen iş listeleri tutmaz.
 
----
+## Ürün durumu
 
-## Giriş
+VixRex, esnafın Flutter panelinden düzenlediği veriyi Supabase’e yazar ve müşteriye tek Next.js `/v/:slug` vitrini sunar. Flutter ve Next.js iki ayrı Vercel projesidir; yayın ve doğrulama sonuçları birbirinin yerine geçmez.
 
-VixRex, esnafın tek linkle dijital vitrin açmasını sağlıyor: Flutter
-uygulaması kurulumu yapıyor, Next.js tarafı yayınlanan vitrini gösteriyor
-ve sahibin düzenlemesine izin veriyor. Hedef: 100 hazır vitrin → kiralık →
-satılık/B2B (bkz. hedef notu).
+İlk 13 fazlık sahip önizleme/asistan çalışması tamamlanmış ve tarihsel planı [[vixrex-asistan-13-faz-plani-2026-08-06]] adıyla arşivlenmiştir. Geçmiş canlı test ve tur bulguları `docs/arsiv/` altındadır; yeni görev planı olarak kullanılmaz.
 
-## Gelişme
+## Aktif işi bulma
 
-- **İlk 13 adımlık plan tamamlandı ve yayına alındı.** (`docs/arsiv/implementation_plan.md`)
-- Yayından sonra iki tur canlı test yapıldı, 18 bulgu çıktı; çoğu kapandı.
-  (`docs/arsiv/canli-test-bulgulari-2026-08-06.md`,
-  `docs/arsiv/tur-bulgulari-2026-08-06-aksam.md`)
-- 6 Ağustos'ta geliştirme ortamı **yerelden canlı Supabase'e** geçti.
-- Bugüne kadar `main`'e 64 PR indi.
+- GitHub: [açık issue’lar](https://github.com/xpodiumyours/vixrex/issues)
+- Komut: `gh issue list --state open`
+- İş akışı: [[Ajan Calisma Akislari]]
+- Issue kullanımı: [[issue-tracker]]
 
-## Sonuç — şu an açık olan / doğrulanması gereken
+Bir issue uygulanırken kapsam, karar, kırmızı/yeşil kanıt, kapsam dışı ve geri dönüş bilgisi issue/PR sözleşmesinde tutulur. Kök dizinde `implementation_plan.md`, `docs/` kökünde aktif `prompt*.md` tutulmaz.
 
-- **Sahip oturumu 15 dakikada düşüyor, yenilenmiyor.** (`ownerSession.ts`)
-- **"İkinci vitrin yayınlanamıyor" düzeltmesi yazıldı**, canlı veritabanına
-  gerçekten uygulandığı doğrulanmadı.
-- **Vitrinler birbirine çok benziyor** (renk/düzen/logo aynı) — düzeltme
-  bulunamadı.
-- **`.env.local`'de görsel yükleme anahtarı hâlâ eski yerel test değeri**,
-  canlı adresle uyuşmuyor — görsel yükleme bozuk çıkabilir.
+## Kalıcı kaynaklar
 
----
-
-*Son güncelleme: 2026-08-08.*
+- Ürün, güvenlik ve canlı sistem sınırları: [[VIXREX_RULES]]
+- Ajan başlangıcı: [[AGENTS]]
+- Teknik depo haritası: [[repository-guide]]
+- Alan sözleşmesi: [[vitrin-alan-semasi]]

@@ -3,19 +3,22 @@
 Bu depoda çalışmaya başlayan her ajan, herhangi bir işlemden önce aşağıdaki sırayı uygular:
 
 1. `VIXREX_RULES.md` muhafız kural dosyasını baştan sona oku.
-2. Skill haritası olarak `.agents/skills/ask-matt/SKILL.md` dosyasını oku.
-3. Göreve uyan skill veya skill’leri belirle.
-4. Seçilen her skill’in `SKILL.md` dosyasını ve gerekli gördüğü bağlantılı dosyaları baştan sona oku.
-5. Bir uygulama planı (`implementation_plan.md`) varsa, herhangi bir kod/sorgu değişikliği yapmadan önce plan adımlarını ve koruma sınırlarını oku ve plana tam sadık kal.
-6. Ardından ilgili kodu, `git status` çıktısını ve mevcut diff’i inceleyerek çalışmaya başla.
+2. Salt-okunur yönlendirici olarak `.agents/skills/vixrex-router/SKILL.md` dosyasını oku ve göreve uyan skill akışını belirle.
+3. Seçilen her skill’in `SKILL.md` dosyasını ve zorunlu gördüğü bağlantılı dosyaları baştan sona oku. Rota belirsizse `.agents/skills/ask-matt/SKILL.md` haritasını kullan.
+4. Değişiklik/geliştirme işinde ilgili GitHub issue’sunu gövdesi, yorumları ve etiketleriyle oku; plan kurmadan önce `python .github/scripts/vixrex_evidence.py --issue <n> --base origin/main` çalıştır.
+5. Üretilen özetteki `contradicted` ve `unverified` bulguları açık tutarak ilgili kodu incele ve çalışmaya başla. Ayrıntı: `docs/agents/evidence-contract.md`.
 
 ## Zorunlu ilişki
 
 - `VIXREX_RULES.md`, VixRex’e özel ürün, güvenlik, kanıt ve canlı sistem sınırlarını tanımlar.
 - `.agents/skills/`, görevin nasıl araştırılacağını, planlanacağını, uygulanacağını ve inceleneceğini tanımlar.
-- Rules, plan ve göreve uygun skill okunmadan kod, veritabanı, Git veya deploy işlemi başlatılmaz.
-- Skill paketi kurulu diye bütün skill dosyaları her görevde yüklenmez; yalnızca `ask-matt` haritası ve göreve uygun olanlar okunur.
+- GitHub issue, uygulanacak işin hedefini, kapsamını, kararlarını ve ilerlemesini taşır. Mevcut repo ve çalışır durum aynı HEAD’e bağlı kanıt artefaktıyla doğrulanır. Kök dizinde `implementation_plan.md` tutulmaz.
+- Rules, ilgili issue ve göreve uygun skill okunmadan kod, veritabanı, Git veya deploy işlemi başlatılmaz.
+- Skill paketi kurulu diye bütün skill dosyaları her görevde yüklenmez; yalnız `vixrex-router`, seçtiği skill’ler ve gerektiğinde `ask-matt` okunur.
+- `vixrex-router` ve diğer skill’ler yetki üretmez. Issue açma/düzenleme, commit, push, PR, handoff, canlı sistem veya başka yan etkiler yalnız kullanıcının verdiği yetki sınırında yapılır.
 - Kullanıcıyla iletişim `VIXREX_RULES.md` içindeki Türkçe ve sade anlatım kurallarına uyar.
+
+İnsan tarafından okunacak tek akış tablosu `docs/Ajan Calisma Akislari.md`, teknik depo haritası ise `docs/agents/repository-guide.md` dosyasıdır. Bu bilgiler model adaptörlerinde kopyalanmaz.
 
 ## Mimari büyüme yasağı
 
@@ -26,7 +29,7 @@ Bu depoda çalışmaya başlayan her ajan, herhangi bir işlemden önce aşağı
 
 ## Zorunlu skill çağrıları
 
-Depoda 41 skill kurulu (`.agents/skills/`, ayrıca global olarak `~/.claude/skills/`). Codex, OpenCode, Gemini ve Claude Code hepsini görebilir. **Sorun erişim değil, çağrılmaması olmuştur** — 2026-08-05'e kadar hiçbir ajan bunları kullanmadı ve önlenebilir hatalar canlıya kadar gitti.
+Depodaki sürümlenen skill’ler `.agents/skills/` altındadır. Codex, OpenCode, Gemini ve Claude Code bu kaynağı kullanır. **Sorun erişim değil, çağrılmaması olmuştur** — 2026-08-05'e kadar hiçbir ajan bunları kullanmadı ve önlenebilir hatalar canlıya kadar gitti.
 
 Aşağıdaki durumlarda ilgili skill **çağrılır**, atlanmaz:
 
@@ -36,7 +39,7 @@ Aşağıdaki durumlarda ilgili skill **çağrılır**, atlanmaz:
 | Bir şey bozuk, sebebi belirsiz | `diagnosing-bugs` — tahmin etmeden önce hatayı üreten tek komut ister |
 | Yeni davranış yazılacak | `tdd` — önce kırmızı test, sonra kod |
 | Bir modülün arayüzü tasarlanacak | `codebase-design` |
-| Hangi skill'in uyduğu belirsiz | `ask-matt` — skill haritası |
+| Hangi skill'in uyduğu belirsiz | `vixrex-router`, gerekirse `ask-matt` — skill haritası |
 
 Skill çağrılmadan commit önerilmez. Çağrılamıyorsa sebebi raporda yazılır ("skill çağrılamadı: …"), sessizce atlanmaz.
 

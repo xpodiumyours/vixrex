@@ -1,7 +1,7 @@
 # Vitrin Alan Şeması
 
 > Sahibin düzenleyebileceği her vitrin alanının tek kaynağı.
-> `implementation_plan.md` Commit 8'in önkoşuludur.
+> Tarihsel [[vixrex-asistan-13-faz-plani-2026-08-06]] içindeki Commit 8'in önkoşuluydu; aktif değişiklikler GitHub issue’sunda planlanır.
 
 ## 1. Neden bu dosya var
 

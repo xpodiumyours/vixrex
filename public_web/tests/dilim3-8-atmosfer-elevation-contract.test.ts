@@ -37,7 +37,7 @@ describe("Dilim 3–8 Atmosfer yükseltme", () => {
     expect(pageSource).toContain("showStorefrontRating");
     expect(viewSource).toContain("showRating");
     expect(viewSource).toContain("showContact &&");
-    expect(viewSource).toContain("productCount > 0 &&");
+    expect(viewSource).toContain("showProducts &&");
   });
 
   it("sahte demo içerik göstermez", () => {

@@ -1,6 +1,6 @@
 ---
 name: obsidian-vault
-description: VixRex proje belgelerinde arama yapar, not oluşturur ve notları birbirine bağlar. Kullanıcı bir kararı, planı, kuralı bulmak veya yeni bir not eklemek istediğinde kullanılır.
+description: VixRex'in insan tarafından okunacak proje belgelerinde arama yapar, kalıcı not oluşturur ve benzersiz wikilinklerle notları bağlar. Aktif görev planı için GitHub Issue kullanılır; Obsidian karar ve rota görünümüdür.
 ---
 
 # VixRex belge kasası (Obsidian)
@@ -9,60 +9,59 @@ description: VixRex proje belgelerinde arama yapar, not oluşturur ve notları b
 
 `C:\Projects\vixrex` — kasa projenin kendisidir, ayrı bir klasör değildir.
 
-Kod klasörleri Obsidian ayarlarında gizlidir (`.obsidian/app.json` içindeki
-`userIgnoreFilters`). Kasada yalnız okunacak belgeler görünür:
+Kod ve ham ajan çalışma klasörleri Obsidian ayarlarında gizlidir
+(`.obsidian/app.json` içindeki `userIgnoreFilters`). Kasada insanın okuyacağı
+kalıcı kaynaklar görünür:
 
-```
-VIXREX_RULES.md          değişmez kurallar
-implementation_plan.md   13 fazlık plan
-AGENTS.md                ajan kuralları
-CLAUDE.md                teknik özet
+```text
+VIXREX_RULES.md                    değişmez ürün ve güvenlik kuralları
+AGENTS.md                          tek ajan başlangıcı
+docs/Ajan Calisma Akislari.md      insan için skill rota tablosu
+docs/agents/repository-guide.md    teknik depo haritası
 README.md
-docs/                    şema, kontrol listeleri, araştırma, raporlar
+docs/                              şema, kalıcı karar, araştırma ve arşiv
 ```
 
-Başlangıç sayfası: `docs/Vixrex Baslangic.md` — her şey oradan bağlanır.
+Başlangıç sayfası: `docs/Vixrex Baslangic.md` — insan görünümündeki her ana kaynak oradan bağlanır.
 
 ## Kurallar
 
-- **Yeni notlar `docs/` içine yazılır.** Kök dizin kalabalıklaşmasın.
-- Yeni not eklendiğinde `docs/Vixrex Baslangic.md` içine bir `[[bağlantı]]`
-  eklenir. Bağlanmayan not kaybolur.
-- Dosya adlarında **Türkçe karakter kullanma**
-  (`Vixrex Baslangic.md` olur, `Vixrex Başlangıç.md` olmaz). Bazı araçlar
-  Windows'ta bozuk okuyor.
-- Bağlantı biçimi `[[wikilink]]`, uzantısız ve yolsuz: `[[VIXREX_RULES]]`.
+- **Yeni kalıcı notlar `docs/` içine yazılır.** Kök dizin kalabalıklaşmaz.
+- Aktif görev kapsamı, planı ve ilerlemesi GitHub Issue’da tutulur. Obsidian’a ikinci bir görev planı kopyalanmaz.
+- Yeni ana not eklendiğinde `docs/Vixrex Baslangic.md` içine benzersiz bir `[[bağlantı]]` eklenir.
+- Dosya adlarında Türkçe karakter kullanma (`Vixrex Baslangic.md` olur, `Vixrex Başlangıç.md` olmaz).
+- Bağlantı biçimi uzantısız wikilink’tir: `[[VIXREX_RULES]]`. Aynı ada sahip iki görünür not oluşturma.
+- Geçmiş planlar `docs/arsiv/` altında içerik ve tarih belirten benzersiz adla saklanır.
 
 ## Yapılmayacaklar
 
-- `VIXREX_RULES.md` ve `implementation_plan.md` bu skill üzerinden
-  **serbestçe düzenlenmez.** Onlar karar belgeleridir; değişikliği
-  kullanıcı onaylar.
+- `VIXREX_RULES.md`, `AGENTS.md` ve GitHub issue kapsamı bu skill üzerinden serbestçe değiştirilmez; kendi yetki sözleşmeleri geçerlidir.
 - Kod dosyalarına not olarak dokunulmaz.
-- `.obsidian/` klasörü elle düzenlenmez; Obsidian kendi yönetir.
+- `.obsidian/` kişisel görünüm ayarları normal not işi sırasında düzenlenmez. Proje çapında kasa yönlendirmesi açıkça istenmişse değişiklik kanıtla yapılır.
+- Kök `implementation_plan.md` veya aktif `docs/prompt*.md` oluşturulmaz.
 
 ## Sık işlemler
 
 Dosya adına göre arama:
+
 ```bash
-find /c/Projects/vixrex/docs -name "*.md" | grep -i "anahtar"
+rg --files docs -g "*.md" | rg -i "anahtar"
 ```
 
-İçeriğe göre arama (Grep aracı tercih edilir):
+İçeriğe göre arama:
+
 ```bash
-grep -rl "anahtar" /c/Projects/vixrex/docs --include="*.md"
+rg -l "anahtar" docs -g "*.md"
 ```
 
 Bir nota kimlerin bağlandığını bulma:
+
 ```bash
-grep -rl "\[\[Not Adi\]\]" /c/Projects/vixrex --include="*.md"
+rg -l "\[\[Not Adi\]\]" -g "*.md"
 ```
 
-Başlangıç sayfasındaki bağlantıların hepsi çalışıyor mu:
+Başlangıç bağlantıları ve ajan sistemi için proje doktoru:
+
 ```bash
-grep -oE "\[\[[^]]+\]\]" "/c/Projects/vixrex/docs/Vixrex Baslangic.md" |
-  tr -d '[]' | while read n; do
-    find /c/Projects/vixrex -name "$n.md" -not -path "*/node_modules/*" |
-      grep -q . && echo "OK    $n" || echo "KIRIK $n"
-  done
+python .github/scripts/verify_agent_system.py
 ```

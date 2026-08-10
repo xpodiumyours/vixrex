@@ -48,6 +48,10 @@ class StoreEditorController extends ChangeNotifier
   PublishedVitrinInfo? _publishedInfo;
   bool _isDisposed = false;
 
+  /// Kullanıcı "İşletme Türü" alanını elle değiştirdi mi? Değiştiyse
+  /// kategori seçimi artık bu alanın üzerine kör yazmaz.
+  bool _businessTypeManuallySet = false;
+
   StoreEditorController({
     StoreLocalStorageService? storage,
     LocationService? locationService,
@@ -328,10 +332,22 @@ class StoreEditorController extends ChangeNotifier
   /// Kategori seçimi: özellik paketini sessiz uygular (randevu vb.).
   void selectCategory(String kategori) {
     _data.kategori = kategori;
-    // Public chip / profil ile senkron: business_type default 'Butik' kalmasın
-    final config = BusinessCategoryConfig.fromCategoryLabel(kategori);
-    _data.businessType = config.label;
+    // Public chip / profil ile senkron: business_type default 'Butik' kalmasın.
+    // Kullanıcı İşletme Türü'nü elle değiştirdiyse artık üzerine yazma —
+    // yalnız hâlâ otomatik öneriye bağlıysa kategoriye göre güncelle.
+    if (!_businessTypeManuallySet) {
+      final config = BusinessCategoryConfig.fromCategoryLabel(kategori);
+      _data.businessType = config.label;
+    }
     _applyCategoryFeaturePackage(kategori);
+    notifyListeners();
+  }
+
+  /// İşletme Türü alanının elle düzenlenmesi. Bundan sonra kategori
+  /// değişse bile bu alanın üzerine otomatik yazılmaz.
+  void updateBusinessType(String value) {
+    _data.businessType = value;
+    _businessTypeManuallySet = true;
     notifyListeners();
   }
 
@@ -548,6 +564,11 @@ class StoreEditorController extends ChangeNotifier
 
   void updateGoogleBusinessLink(String v) {
     _data.googleBusinessLink = v;
+    notifyListeners();
+  }
+
+  void updateReferencesLink(String v) {
+    _data.referencesLink = v;
     notifyListeners();
   }
 

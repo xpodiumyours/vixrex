@@ -1,26 +1,27 @@
 ## Amaç
 
-Bu PR hangi kullanıcı sonucunu hedefliyor?
+<!-- Kullanıcı sonucunu bir-iki cümleyle yazın. -->
 
-## İzinli Dosyalar
+## Bağlı Issue
 
-Değişen dosyaların listesi (görev sözleşmesiyle uyumlu mu?):
+<!-- `Fixes #123` biçiminde kapatılacak issue'yu yazın. -->
 
-## Korunan Davranışlar
+## Kullanılan Skill Akışı
 
-Bu PR'in bozmaması gereken akışlar:
+<!-- Örnek: `vixrex-router` → `diagnosing-bugs` → `tdd` → `code-review` -->
 
-- [ ] Kapak seçmek publish yapmaz
-- [ ] GPS manuel adresi silmez
-- [ ] Editörü açmak Supabase'e yazmaz
+## Kırmızı Kanıt
 
-## Kanıt
+<!-- Değişiklikten önce hatayı/eksik davranışı üreten tek komut ve gözlenen sonucu yazın. -->
 
-- [ ] Hata öncesi kırmızı test / doğrulama:
-- [ ] Düzeltme sonrası yeşil test:
-- [ ] Kapsam dışı dosya değişmedi:
-- [ ] Çalıştırılan komutlar:
+## Yeşil Kanıt
+
+<!-- Aynı doğrulamanın ve ilgili ek kapıların başarılı komut/sonuçlarını yazın. -->
+
+## Kapsam Dışı
+
+<!-- Bilinçli olarak değiştirilmeyen davranış/dosyaları ve bu PR'ın yetki sınırını yazın. -->
 
 ## Geri Dönüş
 
-Sorun çıkarsa hangi commit'e dönülecek veya hangi feature flag kapatılacak?
+<!-- Sorunda hangi commitlerin nasıl revert edileceğini; migration varsa geri dönüş SQL/yedek planını yazın. -->
