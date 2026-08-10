@@ -106,7 +106,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
             giris={giris}
             girisRef={girisRef}
             kaydediliyor={actions.kaydediliyor}
-            hazirGorseller={hazirGorseller}
+            hazirGorseller={actions.hazirGorseller}
             hazirYukleniyor={actions.hazirYukleniyor}
             setGiris={setGiris}
             gorselYukle={actions.gorselYukle}
