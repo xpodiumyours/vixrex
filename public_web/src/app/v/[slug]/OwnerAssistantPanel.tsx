@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FIELD_BY_KEY,
@@ -9,9 +9,8 @@ import {
   VITRIN_FIELDS,
   type VitrinField,
 } from "@/lib/vitrinFieldSchema";
-import { hazirlikRaporu } from "@/lib/vitrinReadiness";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
-import { useCanliVitrinSenkron, type TaslakGuncellemesi } from "@/lib/canliVitrinSenkron";
+import { useOwnerDraft } from "./hooks/useOwnerDraft";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9).
 //
@@ -55,27 +54,7 @@ const VURGU_SINIFI = "vixrex-secili-alan";
 export default function OwnerAssistantPanel({ slug, draftData }: Props) {
   const router = useRouter();
 
-  // Yerel taslak kopyası: sunucudan gelen draftData ile başlar, her başarılı
-  // kayıt ve dışarıdan gelen broadcast sinyali ile alanları tek tek güncellenir.
-  // Yalnız yayınla/bırak/stores değişikliği tam sayfa yenilemesi yapar.
-  const [yerelTaslak, setYerelTaslak] = useState<Record<string, unknown>>(draftData);
-
-  // Tam sayfa yenilenince (yayınla, bırak, Flutter'dan stores değişikliği)
-  // draftData prop yeni bir referans alır; yerelTaslak'ı tazele.
-  useEffect(() => {
-    setYerelTaslak(draftData);
-  }, [draftData]);
-
-  // Broadcast'ten gelen taslak alan değişikliklerini yerelTaslak'a yansıt.
-  const handleTaslakGuncellendi = useCallback((g: TaslakGuncellemesi) => {
-    setYerelTaslak((prev) => ({ ...prev, [g.kolon]: g.deger }));
-  }, []);
-
-  const rapor = useMemo(() => hazirlikRaporu(yerelTaslak), [yerelTaslak]);
-
-  // Uygulamadan yayınlanan değişiklik stores → sayfa yenilemesi.
-  // Taslak alan değişikliği broadcast → handleTaslakGuncellendi → yerelTaslak.
-  useCanliVitrinSenkron(slug, true, handleTaslakGuncellendi);
+  const { yerelTaslak, setAlan, rapor } = useOwnerDraft(slug, draftData);
 
   const [acik, setAcik] = useState(false);
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
@@ -225,7 +204,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       mesajEkle("asistan", `${alan.etiket} güncellendi.`);
       setSeciliAlan(null);
       vurguyuTemizle();
-      setYerelTaslak((prev) => ({ ...prev, [alan.kolon]: yuklemeGovde.url as unknown }));
+      setAlan(alan.kolon, yuklemeGovde.url as unknown);
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
@@ -298,7 +277,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       setHazirGorseller([]);
       setSeciliAlan(null);
       vurguyuTemizle();
-      setYerelTaslak((prev) => ({ ...prev, [alan.kolon]: url }));
+      setAlan(alan.kolon, url);
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
@@ -349,7 +328,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       setGiris("");
       setSeciliAlan(null);
       vurguyuTemizle();
-      setYerelTaslak((prev) => ({ ...prev, [alan.kolon]: gonderilecek }));
+      setAlan(alan.kolon, gonderilecek);
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
