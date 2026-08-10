@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { validateField } from "@/lib/vitrinFieldValidation";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Sahip çalışma taslağında tek alan günceller (implementation_plan.md Commit 8).
 //
@@ -15,8 +16,40 @@ import { validateField } from "@/lib/vitrinFieldValidation";
 //
 // Alan başına dallanma YOKTUR. Yeni alan eklemek için bu dosya değişmez;
 // yalnız vitrinFieldSchema.ts'e satır eklenir.
+//
+// Başarılı kayıt sonrası Supabase Realtime Broadcast ile `draft:${slug}`
+// kanalına "alan_guncellendi" sinyali gönderilir. Bu sinyal:
+//   - Tarayıcıdaki OwnerAssistantPanel → local draft state günceller (router.refresh() yok)
+//   - Flutter'daki StoreEditorController → kullanıcıya bildirim gösterir
+// Broadcast fire-and-forget: başarısız olursa kayıt yine de geçerlidir.
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Supabase Realtime Broadcast ile taslak değişikliği sinyali gönderir.
+ * Fire-and-forget — yanıtı beklemez, başarısız olursa sessizce geçer.
+ */
+function broadcastTaslakGuncellendi(
+  slug: string,
+  kolon: string,
+  anahtar: string,
+  etiket: string,
+  deger: unknown
+): void {
+  void (async () => {
+    try {
+      await getSupabaseAdmin()
+        .channel(`draft:${slug}`)
+        .send({
+          type: "broadcast",
+          event: "alan_guncellendi",
+          payload: { kolon, anahtar, etiket, deger },
+        });
+    } catch {
+      // Broadcast başarısız olursa kayıt yine de tamam — sessizce geçer.
+    }
+  })();
+}
 
 const HATA_METNI: Record<string, string> = {
   INVALID_SESSION_TOKEN: "Oturumun geçersiz veya süresi dolmuş. Önizlemeyi tekrar aç.",
@@ -82,6 +115,8 @@ export async function POST(request: NextRequest) {
     const durum = error.message === "INVALID_SESSION_TOKEN" ? 401 : 400;
     return NextResponse.json({ hata: metin }, { status: durum });
   }
+
+  broadcastTaslakGuncellendi(slug, sonuc.alan.kolon, sonuc.alan.anahtar, sonuc.alan.etiket, sonuc.deger);
 
   return NextResponse.json({
     tamam: true,

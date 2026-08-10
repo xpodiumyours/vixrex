@@ -250,12 +250,78 @@ class StoreEditorController extends ChangeNotifier
       // açılıştaki senkronla yetinir. Çevrimdışı çalışabilmek esastır.
       if (kDebugMode) debugPrint('Canlı dinleme kurulamadı: $e');
     }
+
+    _taslakDinlemeyiBaslat(slug, client);
   }
 
   void _canliDinlemeyiDurdur() {
     final kanal = _canliKanal;
     if (kanal == null) return;
     _canliKanal = null;
+    try {
+      _resolveClient()?.removeChannel(kanal);
+    } catch (_) {}
+    _taslakDinlemeyiDurdur();
+  }
+
+  // ── Taslak Broadcast Kanalı ──────────────────────────────────────────────
+
+  /// Vixrex Asistanın taslak üzerinde alan güncellediğinde Flutter'a sinyal
+  /// verir (Supabase Realtime Broadcast, `draft:<slug>` kanalı).
+  ///
+  /// Flutter'ın kendi yerel verisini (StoreData) değiştirmez.
+  /// Yalnız [hasPendingExternalDraft] işaretini kaldırır, UI bildirim gösterir.
+  RealtimeChannel? _taslakKanal;
+  bool _hasPendingExternalDraft = false;
+  String? _lastExternalDraftEtiket;
+
+  /// Vixrex Asistan tarafından taslakta düzenleme yapıldı mı?
+  bool get hasPendingExternalDraft => _hasPendingExternalDraft;
+
+  /// Son güncellenen alanın Türkçe etiketi (bildirim metni için).
+  String? get lastExternalDraftEtiket => _lastExternalDraftEtiket;
+
+  /// Taslak bildirimini okundu olarak işaretle.
+  void clearPendingExternalDraft() {
+    if (!_hasPendingExternalDraft) return;
+    _hasPendingExternalDraft = false;
+    _lastExternalDraftEtiket = null;
+    if (!_isDisposed) notifyListeners();
+  }
+
+  void _taslakDinlemeyiBaslat(String slug, SupabaseClient client) {
+    _taslakDinlemeyiDurdur();
+    try {
+      _taslakKanal =
+          client
+              .channel('draft:$slug')
+              .onBroadcast(
+                event: 'alan_guncellendi',
+                callback: (payload) {
+                  // Payload: {kolon, anahtar, etiket, deger} — yalnız etiket
+                  // kullanılır (Türkçe alan adı, örn. "İşletme Adı").
+                  // Veri Flutter'ın yerel kaydına yazılmaz; yalnız bildirim.
+                  final etiket =
+                      (payload['etiket'] as String?) ??
+                      (payload['anahtar'] as String?) ??
+                      '';
+                  _hasPendingExternalDraft = true;
+                  if (etiket.isNotEmpty) _lastExternalDraftEtiket = etiket;
+                  if (!_isDisposed) notifyListeners();
+                },
+              )
+              .subscribe();
+    } catch (e) {
+      // Taslak broadcast başarısız olursa yalnız bildirim gösterilmez;
+      // editör ve senkron çalışmaya devam eder.
+      if (kDebugMode) debugPrint('Taslak broadcast kurulamadı: $e');
+    }
+  }
+
+  void _taslakDinlemeyiDurdur() {
+    final kanal = _taslakKanal;
+    if (kanal == null) return;
+    _taslakKanal = null;
     try {
       _resolveClient()?.removeChannel(kanal);
     } catch (_) {}

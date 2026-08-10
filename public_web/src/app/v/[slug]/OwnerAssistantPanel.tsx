@@ -11,7 +11,7 @@ import {
 } from "@/lib/vitrinFieldSchema";
 import { hazirlikRaporu } from "@/lib/vitrinReadiness";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
-import { useCanliVitrinSenkron } from "@/lib/canliVitrinSenkron";
+import { useCanliVitrinSenkron, type TaslakGuncellemesi } from "@/lib/canliVitrinSenkron";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9).
 //
@@ -54,10 +54,28 @@ const VURGU_SINIFI = "vixrex-secili-alan";
 
 export default function OwnerAssistantPanel({ slug, draftData }: Props) {
   const router = useRouter();
-  const rapor = useMemo(() => hazirlikRaporu(draftData), [draftData]);
 
-  // Uygulamadan yayınlanan değişiklik bu sekmeye anında düşsün.
-  useCanliVitrinSenkron(slug, true);
+  // Yerel taslak kopyası: sunucudan gelen draftData ile başlar, her başarılı
+  // kayıt ve dışarıdan gelen broadcast sinyali ile alanları tek tek güncellenir.
+  // Yalnız yayınla/bırak/stores değişikliği tam sayfa yenilemesi yapar.
+  const [yerelTaslak, setYerelTaslak] = useState<Record<string, unknown>>(draftData);
+
+  // Tam sayfa yenilenince (yayınla, bırak, Flutter'dan stores değişikliği)
+  // draftData prop yeni bir referans alır; yerelTaslak'ı tazele.
+  useEffect(() => {
+    setYerelTaslak(draftData);
+  }, [draftData]);
+
+  // Broadcast'ten gelen taslak alan değişikliklerini yerelTaslak'a yansıt.
+  const handleTaslakGuncellendi = useCallback((g: TaslakGuncellemesi) => {
+    setYerelTaslak((prev) => ({ ...prev, [g.kolon]: g.deger }));
+  }, []);
+
+  const rapor = useMemo(() => hazirlikRaporu(yerelTaslak), [yerelTaslak]);
+
+  // Uygulamadan yayınlanan değişiklik stores → sayfa yenilemesi.
+  // Taslak alan değişikliği broadcast → handleTaslakGuncellendi → yerelTaslak.
+  useCanliVitrinSenkron(slug, true, handleTaslakGuncellendi);
 
   const [acik, setAcik] = useState(false);
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
@@ -122,7 +140,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       }
 
       setSeciliAlan(alan);
-      const mevcut = draftData[alan.kolon];
+      const mevcut = yerelTaslak[alan.kolon];
       setGiris(
         alan.tip === "acikKapali"
           ? ""
@@ -139,7 +157,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       );
       window.setTimeout(() => girisRef.current?.focus(), 60);
     },
-    [draftData, mesajEkle, vurguyuTemizle]
+    [yerelTaslak, mesajEkle, vurguyuTemizle]
   );
 
   // Vitrindeki işaretli öğeler için tek dinleyici.
@@ -207,7 +225,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       mesajEkle("asistan", `${alan.etiket} güncellendi.`);
       setSeciliAlan(null);
       vurguyuTemizle();
-      router.refresh();
+      setYerelTaslak((prev) => ({ ...prev, [alan.kolon]: yuklemeGovde.url as unknown }));
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
@@ -229,8 +247,8 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
     setHazirYukleniyor(true);
     try {
       const profil = resolveVitrinProfile(
-        (draftData.kategori as string) ?? null,
-        (draftData.business_type as string) ?? null
+        (yerelTaslak.kategori as string) ?? null,
+        (yerelTaslak.business_type as string) ?? null
       );
       const yanit = await fetch(
         `/api/category-images?category=${encodeURIComponent(profil.id)}`
@@ -280,7 +298,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       setHazirGorseller([]);
       setSeciliAlan(null);
       vurguyuTemizle();
-      router.refresh();
+      setYerelTaslak((prev) => ({ ...prev, [alan.kolon]: url }));
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
@@ -331,7 +349,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
       setGiris("");
       setSeciliAlan(null);
       vurguyuTemizle();
-      router.refresh();
+      setYerelTaslak((prev) => ({ ...prev, [alan.kolon]: gonderilecek }));
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
@@ -505,7 +523,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {alanlar.map((alan) => {
-                            const deger = draftData[alan.kolon];
+                            const deger = yerelTaslak[alan.kolon];
                             const dolu =
                               deger !== null &&
                               deger !== undefined &&

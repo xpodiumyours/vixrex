@@ -100,6 +100,29 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
 
   void _onEditorChanged() {
     _loadVixRexSnapshot();
+    _kontrolEtPendingDraft();
+  }
+
+  /// Vixrex Asistan tarayıcıda taslak güncellediğinde Flutter'da bildirir.
+  void _kontrolEtPendingDraft() {
+    if (!_editorController.hasPendingExternalDraft) return;
+    final etiket = _editorController.lastExternalDraftEtiket;
+    _editorController.clearPendingExternalDraft();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          etiket != null
+              ? 'Asistan "$etiket" alanını güncelledi.'
+              : 'Asistan vitrinde bir güncelleme yaptı.',
+        ),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Tamam',
+          onPressed: () {},
+        ),
+      ),
+    );
   }
 
   @override
