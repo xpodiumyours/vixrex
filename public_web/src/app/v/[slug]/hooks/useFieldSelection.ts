@@ -19,9 +19,20 @@ export interface FieldSelectionHook {
 interface Deps {
   yerelTaslak: Record<string, unknown>;
   mesajEkle: (kimden: Mesaj["kimden"], metin: string) => void;
+  /**
+   * Vitrinde bir alana tıklanınca çağrılır. Panel kapalıyken vitrinden
+   * seçim yapmak paneli de açmalı — aksi halde esnaf tıklar, hiçbir şey
+   * açılmamış gibi görünür (regresyon, code-review 2026-08-10: refactor
+   * sırasında orijinal `setAcik(true)` çağrısı kaybolmuştu).
+   */
+  onAlanSecildi?: () => void;
 }
 
-export function useFieldSelection({ yerelTaslak, mesajEkle }: Deps): FieldSelectionHook {
+export function useFieldSelection({
+  yerelTaslak,
+  mesajEkle,
+  onAlanSecildi,
+}: Deps): FieldSelectionHook {
   const [seciliAlan, setSeciliAlan] = useState<VitrinField | null>(null);
   const [giris, setGiris] = useState("");
   const girisRef = useRef<HTMLTextAreaElement>(null);
@@ -46,6 +57,7 @@ export function useFieldSelection({ yerelTaslak, mesajEkle }: Deps): FieldSelect
         hedef.scrollIntoView({ behavior: "smooth", block: "center" });
       }
 
+      onAlanSecildi?.();
       setSeciliAlan(alan);
       const mevcut = yerelTaslak[alan.kolon];
       setGiris(
@@ -63,7 +75,7 @@ export function useFieldSelection({ yerelTaslak, mesajEkle }: Deps): FieldSelect
       );
       window.setTimeout(() => girisRef.current?.focus(), 60);
     },
-    [yerelTaslak, mesajEkle, vurguyuTemizle]
+    [yerelTaslak, mesajEkle, vurguyuTemizle, onAlanSecildi]
   );
 
   // Vitrindeki işaretli öğeler için tek dinleyici.

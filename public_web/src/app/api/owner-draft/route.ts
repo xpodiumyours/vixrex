@@ -18,33 +18,33 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 // yalnız vitrinFieldSchema.ts'e satır eklenir.
 //
 // Başarılı kayıt sonrası Supabase Realtime Broadcast ile `draft:${slug}`
-// kanalına "alan_guncellendi" sinyali gönderilir. Bu sinyal:
-//   - Tarayıcıdaki OwnerAssistantPanel → local draft state günceller (router.refresh() yok)
-//   - Flutter'daki StoreEditorController → kullanıcıya bildirim gösterir
+// kanalına "alan_guncellendi" sinyali gönderilir — diğer açık sekme/uygulama
+// bunu görüp kendi sayfasını tazeler (router.refresh()).
 // Broadcast fire-and-forget: başarısız olursa kayıt yine de geçerlidir.
+//
+// GÜVENLİK: bu kanala sahip oturumu OLMADAN da bağlanılabilir (public
+// anon key yeterli — Supabase Broadcast varsayılan açık kanal). Bu yüzden
+// payload'da alan adı/değeri TAŞINMAZ, yalnız boş bir sinyal gönderilir.
+// Gerçek değer yalnız sahip çerezi sunucuda tekrar doğrulanarak okunur
+// (code-review, 2026-08-10 — ilk sürüm değeri payload'da taşıyordu, taslak
+// verisi yetkisiz herkese sızıyordu).
 
 export const dynamic = "force-dynamic";
 
 /**
  * Supabase Realtime Broadcast ile taslak değişikliği sinyali gönderir.
  * Fire-and-forget — yanıtı beklemez, başarısız olursa sessizce geçer.
+ *
+ * Payload kasıtlı olarak BOŞ: bu kanal yetkisiz de dinlenebildiği için
+ * alan adı veya değeri asla gönderilmez (bkz. dosya başı güvenlik notu).
  */
-function broadcastTaslakGuncellendi(
-  slug: string,
-  kolon: string,
-  anahtar: string,
-  etiket: string,
-  deger: unknown
-): void {
+function broadcastTaslakGuncellendi(slug: string): void {
   void (async () => {
     try {
-      await getSupabaseAdmin()
-        .channel(`draft:${slug}`)
-        .send({
-          type: "broadcast",
-          event: "alan_guncellendi",
-          payload: { kolon, anahtar, etiket, deger },
-        });
+      await getSupabaseAdmin().channel(`draft:${slug}`).send({
+        type: "broadcast",
+        event: "alan_guncellendi",
+      });
     } catch {
       // Broadcast başarısız olursa kayıt yine de tamam — sessizce geçer.
     }
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: metin }, { status: durum });
   }
 
-  broadcastTaslakGuncellendi(slug, sonuc.alan.kolon, sonuc.alan.anahtar, sonuc.alan.etiket, sonuc.deger);
+  broadcastTaslakGuncellendi(slug);
 
   return NextResponse.json({
     tamam: true,

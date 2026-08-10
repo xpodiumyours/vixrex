@@ -33,7 +33,11 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
   const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor);
 
   const { seciliAlan, giris, girisRef, setGiris, setSeciliAlan, alanSec, vurguyuTemizle } =
-    useFieldSelection({ yerelTaslak, mesajEkle });
+    useFieldSelection({
+      yerelTaslak,
+      mesajEkle,
+      onAlanSecildi: () => setAcik(true),
+    });
 
   const actions = useOwnerActions({
     slug,

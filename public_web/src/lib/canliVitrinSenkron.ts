@@ -21,34 +21,35 @@ import { useRouter } from "next/navigation";
 // websocket açmak, kimsenin istemediği bir yük demek.
 //
 // İKİNCİ KANAL — taslak değişiklik sinyali (2026-08-10):
-// `draft:${slug}` kanalından gelen "alan_guncellendi" Broadcast olayları
-// dinlenir. Değişiklik owner-draft API'sinden broadcast edilir.
-// onTaslakGuncellendi callback ile OwnerAssistantPanel local state'ini
-// günceller — tam sayfa yenilemesi olmadan anlık yansır.
+// `draft:${slug}` kanalından gelen "alan_guncellendi" Broadcast olayı
+// dinlenir. GÜVENLİK: bu kanala public anon key ile, sahip oturumu
+// olmadan da bağlanılabiliyor (Supabase Broadcast kanalları varsayılan
+// açık) — bu yüzden olayın payload'ında ASLA alan değeri taşınmaz,
+// yalnız "bir şey değişti" sinyali gelir. Gerçek değer yalnız
+// router.refresh() ile, sahip çerezi sunucuda yeniden doğrulanarak okunur
+// (code-review, 2026-08-10 — ilk sürüm değeri payload'da taşıyordu).
+//
+// taslakDinle=true iken bu sinyal geldiğinde de (kanal 1 gibi)
+// router.refresh() çağrılır — güvenlik notundaki sebepten payload boş
+// olduğu için başka bir yol yok; bilinen bedel: aynı sekmede yapılan
+// kaydın kendi broadcast'i de geri gelip gereksiz bir refresh tetikler.
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-
-/** Broadcast'ten gelen taslak alan güncelleme verisi. */
-export interface TaslakGuncellemesi {
-  /** stores tablosundaki kolon adı (draftData key'i). */
-  kolon: string;
-  /** vitrinFieldSchema'daki alan anahtarı. */
-  anahtar: string;
-  deger: unknown;
-}
 
 /**
  * Verilen slug'ın yayınlanmış kaydını dinler; değişince sayfayı tazeler.
  * `etkin` false ise hiç bağlanmaz.
  *
- * `onTaslakGuncellendi` verilirse sahip taslak değişikliklerini de dinler;
- * değişince callback çağrılır (sayfa yenilenmez, yalnız local state güncellenir).
+ * `taslakDinle` true ise sahip taslak değişikliklerini de dinler; herhangi
+ * bir alan değiştiğinde sayfa tazelenir (aynı stores dinleyicisi gibi) —
+ * broadcast payload'ı hiçbir zaman alan değeri taşımadığı için tazeleme
+ * dışında bir yol yok, bu bilinçli bir tercih (bkz. yukarıki not).
  */
 export function useCanliVitrinSenkron(
   slug: string,
   etkin: boolean,
-  onTaslakGuncellendi?: (guncelleme: TaslakGuncellemesi) => void
+  taslakDinle = false
 ): void {
   const router = useRouter();
 
@@ -77,20 +78,14 @@ export function useCanliVitrinSenkron(
       )
       .subscribe();
 
-    // Kanal 2 — taslak değişiklik sinyali (Broadcast)
-    // Yalnız onTaslakGuncellendi callback verilmişse bağlanır.
-    const taslakKanal = onTaslakGuncellendi
+    // Kanal 2 — taslak değişiklik sinyali (Broadcast). Yalnız taslakDinle
+    // isteniyorsa bağlanır. Payload kasıtlı olarak boş — bkz. dosya başı not.
+    const taslakKanal = taslakDinle
       ? client
           .channel(`draft:${slug}`)
-          .on<TaslakGuncellemesi>(
-            "broadcast",
-            { event: "alan_guncellendi" },
-            (payload) => {
-              if (payload.payload.kolon) {
-                onTaslakGuncellendi(payload.payload);
-              }
-            }
-          )
+          .on("broadcast", { event: "alan_guncellendi" }, () => {
+            router.refresh();
+          })
           .subscribe()
       : null;
 
@@ -98,5 +93,5 @@ export function useCanliVitrinSenkron(
       void client.removeChannel(canliKanal);
       if (taslakKanal) void client.removeChannel(taslakKanal);
     };
-  }, [slug, etkin, router, onTaslakGuncellendi]);
+  }, [slug, etkin, router, taslakDinle]);
 }

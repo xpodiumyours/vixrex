@@ -2,16 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { hazirlikRaporu, type HazirlikRaporu } from "@/lib/vitrinReadiness";
-import { useCanliVitrinSenkron, type TaslakGuncellemesi } from "@/lib/canliVitrinSenkron";
+import { useCanliVitrinSenkron } from "@/lib/canliVitrinSenkron";
 
 /**
  * Taslak verisini tutar ve Supabase Broadcast üzerinden canlı güncel tutar.
  *
  * Sorumluluk:
  *   - sunucudan gelen draftData prop'u yerel kopyaya alır
- *   - sayfa yenilenince (yayınla / bırak) draftData değişir → yerelTaslak güncellenir
- *   - başka oturumdan gelen broadcast → yerelTaslak'a alan alan yansır
+ *   - sayfa yenilenince (yayınla / bırak / başka oturumdan alan değişikliği
+ *     sinyali) draftData değişir → yerelTaslak güncellenir
  *   - hazırlık raporunu hesaplar (doluluk %, eksik alanlar)
+ *
+ * Başka oturumdan gelen taslak değişikliği router.refresh() ile sunucudan
+ * yeniden okunur — broadcast payload'ı hiçbir zaman alan değeri taşımaz
+ * (bkz. canliVitrinSenkron.ts güvenlik notu), o yüzden local patch yoktur.
  *
  * Bu hook dışındaki hiçbir şey taslak state'ini doğrudan tutmaz.
  */
@@ -33,14 +37,10 @@ export function useOwnerDraft(
     setYerelTaslak(draftData);
   }, [draftData]);
 
-  // Broadcast'ten gelen taslak alan değişikliklerini yerelTaslak'a yansıt.
-  const handleTaslakGuncellendi = useCallback((g: TaslakGuncellemesi) => {
-    setYerelTaslak((prev: Record<string, unknown>) => ({ ...prev, [g.kolon]: g.deger }));
-  }, []);
-
-  // Uygulamadan yayınlanan değişiklik stores → sayfa yenilemesi.
-  // Taslak alan değişikliği broadcast → handleTaslakGuncellendi → yerelTaslak.
-  useCanliVitrinSenkron(slug, true, handleTaslakGuncellendi);
+  // Uygulamadan yayınlanan değişiklik VEYA başka oturumdan taslak alan
+  // değişikliği → sayfa yenilenir → draftData prop'u tazelenir (yukarıdaki
+  // effect ile yerelTaslak'a yansır).
+  useCanliVitrinSenkron(slug, true, true);
 
   const rapor = useMemo(() => hazirlikRaporu(yerelTaslak), [yerelTaslak]);
 
