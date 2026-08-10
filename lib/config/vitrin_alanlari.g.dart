@@ -123,14 +123,6 @@ const List<VitrinAlani> vitrinAlanlari = [
     bolum: 'hero',
   ),
   VitrinAlani(
-    anahtar: 'tema',
-    tip: 'secim',
-    etiket: 'Tema Ön Ayarı',
-    kolon: 'theme_preset',
-    bolum: 'hero',
-    maxUzunluk: 40,
-  ),
-  VitrinAlani(
     anahtar: 'whatsapp',
     tip: 'telefon',
     etiket: 'WhatsApp Numarası',
@@ -405,8 +397,9 @@ const List<VitrinAlani> vitrinAlanlari = [
 
 /// Yayın için doldurulması ZORUNLU alanlar — şemadan gelir.
 /// Elle liste tutulmaz; şemada zorunlu işaretlemek yeter.
-final List<VitrinAlani> zorunluAlanlar =
-    vitrinAlanlari.where((a) => a.zorunlu).toList();
+final List<VitrinAlani> zorunluAlanlar = vitrinAlanlari
+    .where((a) => a.zorunlu)
+    .toList();
 
 /// Anahtardan alana hızlı erişim.
 final Map<String, VitrinAlani> alanAnahtarla = {

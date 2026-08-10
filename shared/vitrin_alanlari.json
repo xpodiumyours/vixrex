@@ -135,20 +135,6 @@
       "ipucu": null
     },
     {
-      "anahtar": "tema",
-      "tip": "secim",
-      "etiket": "Tema Ön Ayarı",
-      "kolon": "theme_preset",
-      "bolum": "hero",
-      "zorunlu": false,
-      "minUzunluk": null,
-      "maxUzunluk": 40,
-      "min": null,
-      "max": null,
-      "secenekler": null,
-      "ipucu": null
-    },
-    {
       "anahtar": "whatsapp",
       "tip": "telefon",
       "etiket": "WhatsApp Numarası",
