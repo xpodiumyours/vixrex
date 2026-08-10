@@ -14,6 +14,7 @@ class VitrinAlani {
   final String kolon;
   final String bolum;
   final bool zorunlu;
+  final bool kalite;
   final int? minUzunluk;
   final int? maxUzunluk;
   final List<String>? secenekler;
@@ -26,6 +27,7 @@ class VitrinAlani {
     required this.kolon,
     required this.bolum,
     this.zorunlu = false,
+    this.kalite = false,
     this.minUzunluk,
     this.maxUzunluk,
     this.secenekler,
@@ -50,6 +52,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Hero Rozet Metni',
     kolon: 'hero_badge',
     bolum: 'hero',
+    kalite: true,
     maxUzunluk: 60,
     ipucu: 'Örn: Profesyonel Teknik Servis / Kadıköy',
   ),
@@ -114,6 +117,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Logo',
     kolon: 'logo_url',
     bolum: 'hero',
+    kalite: true,
   ),
   VitrinAlani(
     anahtar: 'kapakGorseli',
@@ -121,14 +125,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Kapak / Hero Görseli',
     kolon: 'shelf_image_url',
     bolum: 'hero',
-  ),
-  VitrinAlani(
-    anahtar: 'tema',
-    tip: 'secim',
-    etiket: 'Tema Ön Ayarı',
-    kolon: 'theme_preset',
-    bolum: 'hero',
-    maxUzunluk: 40,
+    kalite: true,
   ),
   VitrinAlani(
     anahtar: 'whatsapp',
@@ -176,6 +173,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Çalışma Saatleri',
     kolon: 'working_hours',
     bolum: 'contact',
+    kalite: true,
     maxUzunluk: 400,
   ),
   VitrinAlani(
@@ -200,6 +198,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Google İşletme / Harita Bağlantısı',
     kolon: 'google_business_link',
     bolum: 'contact',
+    kalite: true,
   ),
   VitrinAlani(
     anahtar: 'enlem',
@@ -284,6 +283,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Hakkımızda Başlığı',
     kolon: 'about_title',
     bolum: 'about',
+    kalite: true,
     maxUzunluk: 90,
   ),
   VitrinAlani(
@@ -292,6 +292,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Hakkımızda Yazısı',
     kolon: 'corporate_bio',
     bolum: 'about',
+    kalite: true,
     maxUzunluk: 1200,
   ),
   VitrinAlani(
@@ -405,8 +406,15 @@ const List<VitrinAlani> vitrinAlanlari = [
 
 /// Yayın için doldurulması ZORUNLU alanlar — şemadan gelir.
 /// Elle liste tutulmaz; şemada zorunlu işaretlemek yeter.
-final List<VitrinAlani> zorunluAlanlar =
-    vitrinAlanlari.where((a) => a.zorunlu).toList();
+final List<VitrinAlani> zorunluAlanlar = vitrinAlanlari
+    .where((a) => a.zorunlu)
+    .toList();
+
+/// Zorunlu değil ama vitrini kaliteye çıkaran alanlar — şemadan
+/// gelir. Elle liste tutulmaz; şemada kalite işaretlemek yeter.
+final List<VitrinAlani> kaliteAlanlari = vitrinAlanlari
+    .where((a) => a.kalite)
+    .toList();
 
 /// Anahtardan alana hızlı erişim.
 final Map<String, VitrinAlani> alanAnahtarla = {
