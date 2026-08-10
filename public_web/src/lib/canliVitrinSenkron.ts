@@ -30,9 +30,24 @@ import { useRouter } from "next/navigation";
 // (code-review, 2026-08-10 — ilk sürüm değeri payload'da taşıyordu).
 //
 // taslakDinle=true iken bu sinyal geldiğinde de (kanal 1 gibi)
-// router.refresh() çağrılır — güvenlik notundaki sebepten payload boş
-// olduğu için başka bir yol yok; bilinen bedel: aynı sekmede yapılan
-// kaydın kendi broadcast'i de geri gelip gereksiz bir refresh tetikler.
+// router.refresh() çağrılır — güvenlik notundaki sebepten payload alan
+// verisi taşımadığı için tazeleme dışında bir yol yok.
+//
+// KENDİ YANKISINI ATLAMA: kaydı yapan sekme de kendi broadcast'ini geri
+// alır — o zaten setAlan() ile yerel state'i güncellemişti, tekrar tazelemek
+// gereksiz bir ağ isteği ve titreme demek. Payload'a alan verisi koymadan
+// bunu ayırt etmenin tek yolu, gönderenin kimliğini (değerini değil)
+// taşıyan opak bir `clientId` — her sekme kendi ürettiği id'yi görürse
+// yenilemeyi atlar (code-review, 2026-08-10 ikinci tur).
+const senkronClientId =
+  typeof globalThis.crypto?.randomUUID === "function"
+    ? globalThis.crypto.randomUUID()
+    : `${Date.now()}-${Math.random()}`;
+
+/** Bu sekmenin taslak broadcast'lerini imzalamak için kullandığı opak kimlik. */
+export function taslakClientId(): string {
+  return senkronClientId;
+}
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -41,10 +56,10 @@ const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
  * Verilen slug'ın yayınlanmış kaydını dinler; değişince sayfayı tazeler.
  * `etkin` false ise hiç bağlanmaz.
  *
- * `taslakDinle` true ise sahip taslak değişikliklerini de dinler; herhangi
- * bir alan değiştiğinde sayfa tazelenir (aynı stores dinleyicisi gibi) —
- * broadcast payload'ı hiçbir zaman alan değeri taşımadığı için tazeleme
- * dışında bir yol yok, bu bilinçli bir tercih (bkz. yukarıki not).
+ * `taslakDinle` true ise sahip taslak değişikliklerini de dinler; başka bir
+ * sekmeden/oturumdan gelen alan değişikliğinde sayfa tazelenir. Aynı
+ * sekmenin kendi kaydettiği değişikliğin yankısı `clientId` eşleşmesiyle
+ * atlanır (bkz. yukarıki not).
  */
 export function useCanliVitrinSenkron(
   slug: string,
@@ -79,13 +94,19 @@ export function useCanliVitrinSenkron(
       .subscribe();
 
     // Kanal 2 — taslak değişiklik sinyali (Broadcast). Yalnız taslakDinle
-    // isteniyorsa bağlanır. Payload kasıtlı olarak boş — bkz. dosya başı not.
+    // isteniyorsa bağlanır. Payload alan verisi taşımaz — yalnız gönderenin
+    // opak clientId'si (bkz. dosya başı not).
     const taslakKanal = taslakDinle
       ? client
           .channel(`draft:${slug}`)
-          .on("broadcast", { event: "alan_guncellendi" }, () => {
-            router.refresh();
-          })
+          .on<{ clientId?: string }>(
+            "broadcast",
+            { event: "alan_guncellendi" },
+            (payload) => {
+              if (payload.payload?.clientId === senkronClientId) return;
+              router.refresh();
+            }
+          )
           .subscribe()
       : null;
 

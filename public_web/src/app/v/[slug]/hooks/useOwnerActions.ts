@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
+import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import type { Mesaj } from "./useOwnerChat";
 
@@ -108,6 +109,7 @@ export function useOwnerActions({
             slug,
             anahtar: alan.anahtar,
             deger: yuklemeGovde.url,
+            clientId: taslakClientId(),
           }),
         });
         const kayitGovde = await kayit.json();
@@ -183,7 +185,12 @@ export function useOwnerActions({
         const yanit = await fetch("/api/owner-draft", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, anahtar: alan.anahtar, deger: url }),
+          body: JSON.stringify({
+            slug,
+            anahtar: alan.anahtar,
+            deger: url,
+            clientId: taslakClientId(),
+          }),
         });
         const govde = await yanit.json();
 
@@ -233,7 +240,12 @@ export function useOwnerActions({
       const yanit = await fetch("/api/owner-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, anahtar: alan.anahtar, deger: gonderilecek }),
+        body: JSON.stringify({
+          slug,
+          anahtar: alan.anahtar,
+          deger: gonderilecek,
+          clientId: taslakClientId(),
+        }),
       });
       const govde = await yanit.json();
 

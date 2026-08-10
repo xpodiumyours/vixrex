@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { validateField } from "@/lib/vitrinFieldValidation";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Sahip çalışma taslağında tek alan günceller (implementation_plan.md Commit 8).
 //
@@ -35,16 +34,26 @@ export const dynamic = "force-dynamic";
  * Supabase Realtime Broadcast ile taslak değişikliği sinyali gönderir.
  * Fire-and-forget — yanıtı beklemez, başarısız olursa sessizce geçer.
  *
- * Payload kasıtlı olarak BOŞ: bu kanal yetkisiz de dinlenebildiği için
- * alan adı veya değeri asla gönderilmez (bkz. dosya başı güvenlik notu).
+ * Payload alan adı/değeri TAŞIMAZ (bkz. dosya başı güvenlik notu) — yalnız
+ * gönderen sekmenin opak `clientId`'sini taşır, böylece kaydı yapan sekme
+ * kendi yankısını görüp gereksiz yenileme yapmaz.
+ *
+ * Anon istemciyle gönderilir — service-role gerekmez. Bu route'un tek
+ * ayrıcalıklı işlemi RPC üzerinden yapılır, RPC de kendi yetki kontrolünü
+ * kendisi yapar (bkz. dosya başı not); broadcast göndermek satır erişimi
+ * gerektirmediği için anon key yeterli (code-review 2026-08-10 — ilk
+ * sürüm gereksiz yere admin/service-role istemci kullanıyordu).
  */
-function broadcastTaslakGuncellendi(slug: string): void {
+function broadcastTaslakGuncellendi(slug: string, clientId: string | null): void {
   void (async () => {
     try {
-      await getSupabaseAdmin().channel(`draft:${slug}`).send({
-        type: "broadcast",
-        event: "alan_guncellendi",
-      });
+      await supabaseAnon()
+        .channel(`draft:${slug}`)
+        .send({
+          type: "broadcast",
+          event: "alan_guncellendi",
+          payload: { clientId },
+        });
     } catch {
       // Broadcast başarısız olursa kayıt yine de tamam — sessizce geçer.
     }
@@ -70,7 +79,7 @@ function supabaseAnon() {
 }
 
 export async function POST(request: NextRequest) {
-  let govde: { slug?: unknown; anahtar?: unknown; deger?: unknown };
+  let govde: { slug?: unknown; anahtar?: unknown; deger?: unknown; clientId?: unknown };
   try {
     govde = await request.json();
   } catch {
@@ -79,6 +88,9 @@ export async function POST(request: NextRequest) {
 
   const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
   const anahtar = typeof govde.anahtar === "string" ? govde.anahtar.trim() : "";
+  // Yalnız kendi yankısını atlamak için kullanılan opak bir etiket — yetki
+  // veya kimlik anlamı taşımaz, doğrulanmasına gerek yok.
+  const clientId = typeof govde.clientId === "string" ? govde.clientId : null;
 
   if (!slug || !anahtar) {
     return NextResponse.json({ hata: "Vitrin veya alan belirtilmedi." }, { status: 400 });
@@ -116,7 +128,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: metin }, { status: durum });
   }
 
-  broadcastTaslakGuncellendi(slug);
+  broadcastTaslakGuncellendi(slug, clientId);
 
   return NextResponse.json({
     tamam: true,
