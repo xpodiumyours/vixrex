@@ -82,11 +82,11 @@ export function useCanliVitrinSenkron(
     const taslakKanal = onTaslakGuncellendi
       ? client
           .channel(`draft:${slug}`)
-          .on(
+          .on<TaslakGuncellemesi>(
             "broadcast",
             { event: "alan_guncellendi" },
-            (payload: { payload?: TaslakGuncellemesi }) => {
-              if (payload.payload?.kolon) {
+            (payload) => {
+              if (payload.payload.kolon) {
                 onTaslakGuncellendi(payload.payload);
               }
             }
