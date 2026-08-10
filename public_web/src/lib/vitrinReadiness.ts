@@ -23,16 +23,12 @@ const TEMEL_ALANLAR = new Set(
   VITRIN_FIELDS.filter((alan) => alan.zorunlu).map((alan) => alan.anahtar)
 );
 
-/** Vitrini web sitesi kalitesine çıkaran, ama şart olmayan alanlar. */
-const KALITE_ALANLARI = new Set([
-  "heroRozet",
-  "kapakGorseli",
-  "logo",
-  "hakkindaBaslik",
-  "hakkindaMetin",
-  "calismaSaatleri",
-  "haritaLinki",
-]);
+// Vitrini web sitesi kalitesine çıkaran, ama şart olmayan alanlar — artık
+// yalnız burada elle tutulmuyor, şemadaki `kalite` işaretinden gelir
+// (TEMEL_ALANLAR'ın `zorunlu`'dan gelmesiyle aynı desen).
+const KALITE_ALANLARI = new Set(
+  VITRIN_FIELDS.filter((alan) => alan.kalite).map((alan) => alan.anahtar)
+);
 
 export type EksikOnem = "temel" | "kalite" | "istege-bagli";
 

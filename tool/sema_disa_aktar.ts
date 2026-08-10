@@ -17,6 +17,7 @@ const cikti = {
     kolon: a.kolon,
     bolum: a.bolum,
     zorunlu: a.zorunlu ?? false,
+    kalite: a.kalite ?? false,
     minUzunluk: a.minUzunluk ?? null,
     maxUzunluk: a.maxUzunluk ?? null,
     min: a.min ?? null,
@@ -29,3 +30,4 @@ const cikti = {
 writeFileSync(hedef, JSON.stringify(cikti, null, 2) + "\n", "utf8");
 console.log("alan sayisi:", cikti.alanlar.length);
 console.log("zorunlu:", cikti.alanlar.filter((a) => a.zorunlu).map((a) => a.anahtar).join(", "));
+console.log("kalite:", cikti.alanlar.filter((a) => a.kalite).map((a) => a.anahtar).join(", "));

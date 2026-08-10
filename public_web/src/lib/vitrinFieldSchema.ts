@@ -57,6 +57,12 @@ export interface VitrinField {
   /** Vitrindeki hangi bölüm — tıkla-düzenle odaklaması için. */
   bolum: VitrinSection;
   zorunlu?: boolean;
+  /**
+   * Şart değil ama vitrini web sitesi kalitesine çıkarır — hazırlık
+   * raporunun "kalite" önem sınıfı buradan gelir (bkz. vitrinReadiness.ts).
+   * Bir alan aynı anda hem zorunlu hem kalite olamaz.
+   */
+  kalite?: boolean;
   minUzunluk?: number;
   maxUzunluk?: number;
   /** sayi tipi için sınırlar. */
@@ -86,6 +92,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     etiket: "Hero Rozet Metni",
     kolon: "hero_badge",
     bolum: "hero",
+    kalite: true,
     maxUzunluk: 60,
     ipucu: "Örn: Profesyonel Teknik Servis / Kadıköy",
   },
@@ -131,6 +138,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     etiket: "Logo",
     kolon: "logo_url",
     bolum: "hero",
+    kalite: true,
   },
   {
     anahtar: "kapakGorseli",
@@ -138,6 +146,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     etiket: "Kapak / Hero Görseli",
     kolon: "shelf_image_url",
     bolum: "hero",
+    kalite: true,
   },
 
   // ── İletişim ──────────────────────────────────────────────────────────
@@ -188,6 +197,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "working_hours",
     bolum: "contact",
     maxUzunluk: 400,
+    kalite: true,
   },
   {
     anahtar: "instagram",
@@ -211,6 +221,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     etiket: "Google İşletme / Harita Bağlantısı",
     kolon: "google_business_link",
     bolum: "contact",
+    kalite: true,
   },
   {
     anahtar: "enlem",
@@ -306,6 +317,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "about_title",
     bolum: "about",
     maxUzunluk: 90,
+    kalite: true,
   },
   {
     anahtar: "hakkindaMetin",
@@ -314,6 +326,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "corporate_bio",
     bolum: "about",
     maxUzunluk: 1200,
+    kalite: true,
   },
   {
     anahtar: "hakkindaGorsel",
