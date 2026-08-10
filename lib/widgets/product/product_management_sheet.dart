@@ -171,9 +171,13 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         _selectedCategoryId = '';
       }
     });
-    await _persist();
+    final saved = await _persist();
     if (!mounted) return;
-    widget.showMessage('Ürün kategorileri güncellendi.');
+    widget.showMessage(
+      saved
+          ? 'Ürün kategorileri güncellendi.'
+          : 'Kategoriler kaydedildi (uzak kayıt başarısız, tekrar deneyin).',
+    );
   }
 
   Future<void> _duplicate(Product product) async {
