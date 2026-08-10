@@ -1322,6 +1322,7 @@ class VitrinFormSection extends StatelessWidget {
                       'Ürünler kaydedilemedi, lütfen tekrar deneyin.',
                 );
               }
+              return sync.isSuccess;
             },
             onProductDelete: (product) async {
               final result = await controller.removeProductById(product.id);

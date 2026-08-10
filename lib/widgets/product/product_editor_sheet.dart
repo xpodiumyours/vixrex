@@ -252,15 +252,17 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 16,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
-        ),
-        child: SingleChildScrollView(
+    return PopScope(
+      canPop: !_isSaving,
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 16,
+            bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
+          ),
+          child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -353,6 +355,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

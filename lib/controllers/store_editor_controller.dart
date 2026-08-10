@@ -1007,7 +1007,7 @@ class StoreEditorController extends ChangeNotifier
     final storeId = _data.id?.trim() ?? '';
 
     if (editToken.isNotEmpty && storeId.isNotEmpty && _isUuid(p.id)) {
-      await productService.updateProduct(
+      final updated = await productService.updateProduct(
         productId: p.id,
         editToken: editToken,
         name: p.name,
@@ -1031,6 +1031,11 @@ class StoreEditorController extends ChangeNotifier
         isVisible: true,
         stockStatus: p.stockStatus,
       );
+      if (updated.isFailure) {
+        return Result.failure(
+          Failure(updated.failure?.message ?? 'Ürün güncellenemedi.'),
+        );
+      }
     }
 
     _data.products[i] = p;

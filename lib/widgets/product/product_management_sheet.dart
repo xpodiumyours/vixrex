@@ -8,7 +8,7 @@ import 'package:vixrex/widgets/product/vixrex_catalog_assistant_section.dart';
 import 'package:vixrex/widgets/xml_upload_dialog.dart';
 
 typedef ProductCatalogChanged =
-    Future<void> Function(
+    Future<bool> Function(
       List<Product> products,
       List<ProductCategory> categories,
     );
@@ -112,11 +112,11 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     }).toList();
   }
 
-  Future<void> _persist() async {
+  Future<bool> _persist() async {
     for (var index = 0; index < _categories.length; index++) {
       _categories[index].sortOrder = index;
     }
-    await widget.onCatalogChanged(List.of(_products), List.of(_categories));
+    return widget.onCatalogChanged(List.of(_products), List.of(_categories));
   }
 
   Future<void> _openEditor([Product? product]) async {
@@ -141,9 +141,14 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         _products[index] = result;
       }
     });
-    await _persist();
+    final saved = await _persist();
+    if (!mounted) return;
     widget.showMessage(
-      product == null ? 'Ürün taslağa eklendi.' : 'Ürün güncellendi.',
+      saved
+          ? (product == null ? 'Ürün kaydedildi.' : 'Ürün güncellendi.')
+          : (product == null
+              ? 'Ürün taslağa eklendi, vitrin yayınlandığında senkronlanacak.'
+              : 'Ürün güncellendi (uzak kayıt başarısız, tekrar deneyin).'),
     );
   }
 
@@ -167,6 +172,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       }
     });
     await _persist();
+    if (!mounted) return;
     widget.showMessage('Ürün kategorileri güncellendi.');
   }
 
