@@ -1,5 +1,4 @@
 import Image from "next/image";
-import vixrexMascot from "../../../../../../assets/images/vixrex_v_crystal_mascot.png";
 
 interface VixrexAvatarProps {
   size?: number;
@@ -10,8 +9,8 @@ interface VixrexAvatarProps {
 /**
  * Next.js sahip yüzeyindeki canonical Vixrex avatarı.
  *
- * Görsel kopyalanmaz; Flutter ile aynı repo asset'i statik import edilir.
- * Böylece iki platformun maskotu zamanla birbirinden ayrılamaz.
+ * Public dosyanın Flutter asset'iyle bayt eşitliği sözleşme testinde
+ * doğrulanır; iki platformun maskotu sessizce ayrışamaz.
  */
 export function VixrexAvatar({
   size = 28,
@@ -31,7 +30,7 @@ export function VixrexAvatar({
       aria-hidden={decorative || undefined}
     >
       <Image
-        src={vixrexMascot}
+        src="/vixrex_v_crystal_mascot.png"
         alt={decorative ? "" : "Vixrex"}
         width={imageSize}
         height={imageSize}
