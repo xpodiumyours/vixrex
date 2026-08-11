@@ -1,0 +1,135 @@
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "fs";
+import { resolve } from "path";
+
+/**
+ * Vixrex Asistan sürekliliği — PR 1 başlangıç sözleşmesi.
+ *
+ * Bu test üretim davranışını değiştirmez. Landing → Flutter kurulum →
+ * tek kullanımlık sahip oturumu → Next.js sahip çalışma alanı hattında
+ * korunacak mevcut sınırları kilitler. Bilinen devamlılık eksikleri
+ * `it.todo` olarak görünür tutulur; yanlış davranış doğru kabul edilmez.
+ */
+
+const flutter = (path: string) =>
+  readFileSync(resolve(__dirname, "../..", path), "utf-8");
+const next = (path: string) =>
+  readFileSync(resolve(__dirname, "..", path), "utf-8");
+
+const landingSource = flutter("lib/screens/landing_screen.dart");
+const homeShellSource = flutter("lib/screens/home_shell_screen.dart");
+const vixrexScreenSource = flutter("lib/screens/vixrex_screen.dart");
+const onboardingSource = flutter(
+  "lib/screens/vixrex_onboarding_chat_screen.dart"
+);
+const ownerPreviewSource = flutter("lib/services/owner_preview_service.dart");
+
+const ownerEntryRouteSource = next("src/app/api/owner-session/route.ts");
+const ownerPageSource = next("src/app/v/[slug]/page.tsx");
+const ownerShellSource = next("src/app/v/[slug]/OwnerWorkspaceShell.tsx");
+const ownerPanelSource = next("src/app/v/[slug]/OwnerAssistantPanel.tsx");
+
+describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
+  it("Landing işletme adını aynı Flutter editör state'ine taşır", () => {
+    expect(landingSource).toContain("_storeNameController.text.trim()");
+    expect(landingSource).toContain("initialIndex: 2");
+    expect(landingSource).toContain(
+      "initialVitrinName: initialVitrinName"
+    );
+    expect(homeShellSource).toContain(
+      "_editorController.initialize(\n      widget.initialVitrinName"
+    );
+    expect(vixrexScreenSource).toContain(
+      "VixRexOnboardingChatScreen("
+    );
+    expect(vixrexScreenSource).toContain(
+      "editorController: widget.editorController"
+    );
+    expect(vixrexScreenSource).toContain(
+      "editorInitialization: widget.editorInitialization"
+    );
+  });
+
+  it("altı zorunlu kurulum adımı ve yayın durumu korunur", () => {
+    for (const step of [
+      "name",
+      "category",
+      "whatsapp",
+      "location",
+      "legal",
+      "publishing",
+    ]) {
+      expect(onboardingSource, `${step} adımı kaybolmuş`).toContain(step);
+    }
+    expect(onboardingSource).toContain("_controller.publish()");
+  });
+
+  it("kurulumun birincil kapısı güvenli sahip çalışma alanıdır", () => {
+    expect(onboardingSource).toContain("'Vitrinini aç'");
+    expect(onboardingSource).toContain("_openOwnerWorkspace()");
+    expect(onboardingSource).toContain(
+      "_controller.openOwnerPreview()"
+    );
+    expect(ownerPreviewSource).toContain(
+      "buildOwnerSessionEntryLink(slug, code)"
+    );
+  });
+
+  it("kalıcı edit_token URL'ye çıkmadan tek kullanımlık kod temiz URL'ye çevrilir", () => {
+    expect(ownerEntryRouteSource).toContain(
+      'url.searchParams.get("ocode")'
+    );
+    expect(ownerEntryRouteSource).toContain(
+      'supabase.rpc("consume_owner_session"'
+    );
+    expect(ownerEntryRouteSource).toContain(
+      "response.cookies.set(OWNER_SESSION_COOKIE"
+    );
+    expect(ownerEntryRouteSource).toContain(
+      "const destination = new URL(`/v/${slug}`, url)"
+    );
+    expect(ownerEntryRouteSource).toContain(
+      "NextResponse.redirect(destination, 303)"
+    );
+  });
+
+  it("Next.js sahip paneli yalnız doğrulanmış sahip modunda açılır", () => {
+    expect(ownerPageSource).toContain(
+      "verifyOwnerSession(ownerSessionCookie, params.slug)"
+    );
+    expect(ownerPageSource).toContain(
+      "getWorkingDraft(ownerSession.sessionToken)"
+    );
+    expect(ownerPageSource).toContain("if (!draft) {");
+    expect(ownerPageSource).toContain("isOwnerMode = false");
+    expect(ownerPageSource).toContain("{isOwnerMode ? (");
+    expect(ownerPageSource).toContain("<OwnerWorkspaceShell");
+  });
+
+  it("mevcut tıkla-düzenle, taslak ve yayın araçları tek OwnerAssistantPanel'de kalır", () => {
+    expect(ownerShellSource).toContain("<OwnerAssistantPanel");
+    expect(ownerShellSource).not.toContain("PreviewEditorPanel");
+    for (const hook of [
+      "useOwnerDraft",
+      "useOwnerChat",
+      "useFieldSelection",
+      "useOwnerActions",
+    ]) {
+      expect(ownerPanelSource).toContain(hook);
+    }
+  });
+
+  it("manuel Flutter paneli kurtarma yolu olarak korunur", () => {
+    expect(onboardingSource).toContain("'Detaylı formu aç'");
+    expect(onboardingSource).toContain("_navigateAfterHandoff");
+  });
+});
+
+describe("Vixrex Asistan sürekliliği — sonraki PR kabul hedefleri", () => {
+  it.todo(
+    "birincil Flutter CTA transcript'i owner workspace açılmadan önce devreder"
+  );
+  it.todo("Next.js sahip asistanı sürümlü ve güvenli handoff state alır");
+  it.todo("Next.js tekrar selam vermeden handoff'taki sıradaki adımdan devam eder");
+  it.todo("Flutter ve Next.js aynı canonical Vixrex maskotunu kullanır");
+});
