@@ -42,8 +42,7 @@ class _CoreOwnedSlugRepository implements ProductRepository {
   Future<List<Product>> getProductsByStoreId(String storeId) async => [];
 
   @override
-  Future<List<Product>> getVisibleProductsByStoreId(String storeId) async =>
-      [];
+  Future<List<Product>> getVisibleProductsByStoreId(String storeId) async => [];
 
   @override
   Future<void> reorderProducts(
