@@ -76,7 +76,7 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
           {/* Başlık */}
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
             <div className="flex min-w-0 items-center gap-3">
-              <VixrexAvatar size={36} halo />
+              <VixrexAvatar size={36} halo decorative />
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold text-white">Vixrex Asistan</p>
                 <p className="truncate text-[11px] text-slate-400">
