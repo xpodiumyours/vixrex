@@ -22,12 +22,16 @@ const vixrexScreenSource = flutter("lib/screens/vixrex_screen.dart");
 const onboardingSource = flutter(
   "lib/screens/vixrex_onboarding_chat_screen.dart"
 );
+const flutterAvatarSource = flutter("lib/widgets/vixrex_avatar.dart");
 const ownerPreviewSource = flutter("lib/services/owner_preview_service.dart");
 
 const ownerEntryRouteSource = next("src/app/api/owner-session/route.ts");
 const ownerPageSource = next("src/app/v/[slug]/page.tsx");
 const ownerShellSource = next("src/app/v/[slug]/OwnerWorkspaceShell.tsx");
 const ownerPanelSource = next("src/app/v/[slug]/OwnerAssistantPanel.tsx");
+const nextAvatarSource = next(
+  "src/app/v/[slug]/components/VixrexAvatar.tsx"
+);
 
 describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
   it("Landing işletme adını aynı Flutter editör state'ine taşır", () => {
@@ -123,6 +127,29 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
     expect(onboardingSource).toContain("'Detaylı formu aç'");
     expect(onboardingSource).toContain("_navigateAfterHandoff");
   });
+
+  it("Flutter ve Next.js aynı canonical Vixrex maskotunu kullanır", () => {
+    const canonicalAsset = "assets/images/vixrex_v_crystal_mascot.png";
+    const flutterMascot = readFileSync(
+      resolve(__dirname, "../..", canonicalAsset)
+    );
+    const nextMascot = readFileSync(
+      resolve(__dirname, "../public/vixrex_v_crystal_mascot.png")
+    );
+
+    expect(flutterAvatarSource).toContain(canonicalAsset);
+    expect(nextMascot.equals(flutterMascot)).toBe(true);
+    expect(nextAvatarSource).toContain(
+      'src="/vixrex_v_crystal_mascot.png"'
+    );
+    expect(ownerPanelSource).toContain("<VixrexAvatar size={28} decorative />");
+    expect(ownerPanelSource).toContain(
+      "<VixrexAvatar size={36} halo decorative />"
+    );
+    expect(ownerPanelSource).toContain("aria-expanded={acik}");
+    expect(ownerPanelSource).not.toContain("🦊");
+    expect(nextAvatarSource).toContain('alt={decorative ? "" : "Vixrex"}');
+  });
 });
 
 describe("Vixrex Asistan sürekliliği — sonraki PR kabul hedefleri", () => {
@@ -131,5 +158,4 @@ describe("Vixrex Asistan sürekliliği — sonraki PR kabul hedefleri", () => {
   );
   it.todo("Next.js sahip asistanı sürümlü ve güvenli handoff state alır");
   it.todo("Next.js tekrar selam vermeden handoff'taki sıradaki adımdan devam eder");
-  it.todo("Flutter ve Next.js aynı canonical Vixrex maskotunu kullanır");
 });
