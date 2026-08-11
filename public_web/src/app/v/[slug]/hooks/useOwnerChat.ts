@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ownerChatInitialMessages,
+  type AssistantHandoffV1,
+  type OwnerChatMessage,
+} from "@/lib/assistantHandoff";
 import type { HazirlikRaporu } from "@/lib/vitrinReadiness";
 
-export interface Mesaj {
-  id: number;
-  kimden: "asistan" | "kullanici";
-  metin: string;
-}
+export type Mesaj = OwnerChatMessage;
 
 export interface OwnerChatHook {
   mesajlar: Mesaj[];
@@ -15,10 +16,15 @@ export interface OwnerChatHook {
   akisRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function useOwnerChat(rapor: HazirlikRaporu): OwnerChatHook {
-  const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
+export function useOwnerChat(
+  rapor: HazirlikRaporu,
+  handoff: AssistantHandoffV1 | null
+): OwnerChatHook {
+  const [mesajlar, setMesajlar] = useState<Mesaj[]>(() =>
+    ownerChatInitialMessages(rapor, handoff)
+  );
   const akisRef = useRef<HTMLDivElement>(null);
-  const sayacRef = useRef(0);
+  const sayacRef = useRef(mesajlar.length);
 
   const mesajEkle = useCallback((kimden: Mesaj["kimden"], metin: string) => {
     // Numara BURADA sabitlenir. Güncelleyicinin içinde okunursa, aynı anda
@@ -28,20 +34,6 @@ export function useOwnerChat(rapor: HazirlikRaporu): OwnerChatHook {
     const id = sayacRef.current;
     setMesajlar((m) => [...m, { id, kimden, metin }]);
   }, []);
-
-  // Açılış selamı — bir kez.
-  useEffect(() => {
-    if (mesajlar.length > 0) return;
-    const selam = rapor.temelTamam
-      ? `Vitrinin yayına hazır görünüyor. Doluluk: %${rapor.yuzde}.`
-      : `Vitrininin doluluk oranı %${rapor.yuzde}. Birkaç alan eksik.`;
-    mesajEkle("asistan", selam);
-    if (rapor.sonrakiAdim) mesajEkle("asistan", rapor.sonrakiAdim);
-    mesajEkle(
-      "asistan",
-      "Değiştirmek istediğin yazıya vitrinde tıkla — buradan düzenleriz."
-    );
-  }, [mesajlar.length, rapor, mesajEkle]);
 
   useEffect(() => {
     akisRef.current?.scrollTo({ top: akisRef.current.scrollHeight });
