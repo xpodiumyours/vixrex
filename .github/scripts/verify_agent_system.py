@@ -41,17 +41,9 @@ REQUIRED_GITHUB_LABELS = (
     "wayfinder:task",
 )
 
-ROUTE_SECTION = "## Değişiklik riskine göre rota"
+ROUTE_SECTION = "## Duruma göre rota"
 WIKILINK_PATTERN = re.compile(r"\[\[([^\]|#]+)")
 SKILL_PATTERN = re.compile(r"`([a-z0-9][a-z0-9-]*)`")
-
-LOW_CREDIT_RISK_LABELS = ("hafif", "normal", "zor bug", "yüksek risk")
-LOW_CREDIT_SHARED_TOKENS = (
-    "yüksek risk kazanır",
-    "aynı skill ikinci kez çalışmaz",
-    "bir oturum yalnız bir issue/pr üzerinde çalışır",
-)
-
 
 
 def parse_args() -> argparse.Namespace:
@@ -146,7 +138,10 @@ def route_skill_names(route_doc: str) -> set[str]:
     for line in section.splitlines():
         if not line.lstrip().startswith("|"):
             continue
-        names.update(SKILL_PATTERN.findall(line))
+        columns = line.split("|")
+        if len(columns) < 4:
+            continue
+        names.update(SKILL_PATTERN.findall(columns[2]))
     return names
 
 
@@ -165,80 +160,6 @@ def verify_route_skills(root: Path, errors: list[str]) -> None:
         skill_path = root / ".agents" / "skills" / name / "SKILL.md"
         if not skill_path.is_file():
             errors.append(f"Rota tablosundaki skill bulunamadı: {name}")
-
-
-def require_contract_tokens(
-    content: str,
-    tokens: tuple[str, ...],
-    errors: list[str],
-    label: str,
-) -> None:
-    folded = content.casefold()
-    for token in tokens:
-        if token.casefold() not in folded:
-            errors.append(f"{label} düşük kredi sözleşmesinde eksik ifade: {token}")
-
-
-def verify_low_credit_contract(root: Path, errors: list[str]) -> None:
-    agents = read_text(root / "AGENTS.md", errors, "AGENTS.md")
-    router = read_text(
-        root / ".agents" / "skills" / "vixrex-router" / "SKILL.md",
-        errors,
-        "vixrex-router/SKILL.md",
-    )
-    routes = read_text(
-        root / "docs" / "Ajan Calisma Akislari.md",
-        errors,
-        "docs/Ajan Calisma Akislari.md",
-    )
-    implement = read_text(
-        root / ".agents" / "skills" / "implement" / "SKILL.md",
-        errors,
-        "implement/SKILL.md",
-    )
-
-    for label, source in (
-        ("AGENTS.md", agents),
-        ("vixrex-router/SKILL.md", router),
-        ("docs/Ajan Calisma Akislari.md", routes),
-    ):
-        if source:
-            require_contract_tokens(source, LOW_CREDIT_RISK_LABELS, errors, label)
-
-    for label, source in (
-        ("vixrex-router/SKILL.md", router),
-        ("docs/Ajan Calisma Akislari.md", routes),
-    ):
-        if source:
-            require_contract_tokens(source, LOW_CREDIT_SHARED_TOKENS, errors, label)
-
-    if agents:
-        require_contract_tokens(
-            agents,
-            (
-                "yüksek risk kazanır",
-                "aynı skill ikinci kez çalışmaz",
-                "bir oturum yalnız bir issue/pr üzerinde çalışır",
-                "etkilenen yüzeyin full suite’i en fazla bir kez",
-            ),
-            errors,
-            "AGENTS.md",
-        )
-        if "commit önerilmeden önce | `code-review`" in agents.casefold():
-            errors.append("AGENTS.md her commit için koşulsuz code-review zorluyor")
-
-    if implement:
-        require_contract_tokens(
-            implement,
-            (
-                "one issue/pr only",
-                "do not call the same skill twice",
-                "full suite at most once",
-                "existing branch",
-            ),
-            errors,
-            "implement/SKILL.md",
-        )
 
 
 def verify_explicit_only_skills(root: Path, errors: list[str]) -> None:
@@ -320,7 +241,6 @@ def verify_static(root: Path) -> list[str]:
     verify_bootstrap_and_adapters(root, errors)
     verify_router(root, errors)
     verify_route_skills(root, errors)
-    verify_low_credit_contract(root, errors)
     verify_explicit_only_skills(root, errors)
     verify_task_sources(root, errors)
     verify_start_links(root, errors)

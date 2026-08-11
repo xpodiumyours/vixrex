@@ -27,41 +27,23 @@ Bu depoda çalışmaya başlayan her ajan, herhangi bir işlemden önce aşağı
 - Yeni özellik başlamadan plan, özelliğin sahibi modülü ve arayüzünü adlandırır. Uygun sahip yoksa kodlama durur ve önce mimari ayrıştırma yapılır.
 - Zorunlu hata düzeltmesi büyük modülde yapılabilir; fakat modülün dış arayüzü veya sorumluluk sayısı büyütülemez.
 
-## Risk tabanlı skill çağrıları — Düşük Kredi Modu v1
+## Zorunlu skill çağrıları
 
-Depodaki sürümlenen skill’ler `.agents/skills/` altındadır. Her görev `vixrex-router` ile başlar; yalnız görevin riskine gereken en küçük zincir yüklenir.
+Depodaki sürümlenen skill’ler `.agents/skills/` altındadır. Codex, OpenCode, Gemini ve Claude Code bu kaynağı kullanır. **Sorun erişim değil, çağrılmaması olmuştur** — 2026-08-05'e kadar hiçbir ajan bunları kullanmadı ve önlenebilir hatalar canlıya kadar gitti.
 
-| Risk | Somut sinyal | Zorunlu akış |
-|---|---|---|
-| Hafif | Yalnız doküman/ADR, davranışsız metin veya rename, referanssızlığı kanıtlanmış ölü kod, yalnız değişen dosyada format, güvenli kullanılmayan sabit/SELECT temizliği | Değişiklik → `git diff` → hedefli doğrulama. TDD ve `code-review` zorunlu değildir. |
-| Normal | Yeni kullanıcı davranışı veya mevcut davranış değişikliği | `tdd` → uygulama → `code-review` |
-| Zor bug | Bir şey bozuk ve sebebi gerçekten bilinmiyor | `diagnosing-bugs` → `tdd` → uygulama → `code-review` |
-| Yüksek risk | Migration/RLS/auth/security/sır/`service_role`, ödeme, toplu veri değişikliği veya silme, public veri görünürlüğü, CORE/publish, Flutter + Next.js ortak değişiklik, CI/kod üretim hattı, dependency/lockfile veya ajan güvenlik sözleşmesi | İlgili teşhis/tasarım + `tdd` + `code-review` ve etkilenen bütün güvenlik kapıları. Tasarruf uygulanmaz. |
+Aşağıdaki durumlarda ilgili skill **çağrılır**, atlanmaz:
 
-### Sınıflandırma kuralları
+| Durum | Zorunlu skill |
+|---|---|
+| Commit önerilmeden önce | `code-review` — değişikliği standart ve istek eksenlerinde inceler |
+| Bir şey bozuk, sebebi belirsiz | `diagnosing-bugs` — tahmin etmeden önce hatayı üreten tek komut ister |
+| Yeni davranış yazılacak | `tdd` — önce kırmızı test, sonra kod |
+| Bir modülün arayüzü tasarlanacak | `codebase-design` |
+| Hangi skill'in uyduğu belirsiz | `vixrex-router`, gerekirse `ask-matt` — skill haritası |
 
-- Etiket veya diff büyüklüğü değil, gerçek etki belirleyicidir. Herhangi bir yüksek risk sinyali varsa **yüksek risk kazanır**.
-- “Ölü kod”, “format”, “rename” veya “SELECT temizliği” adı tek başına hafif kanıtı değildir. Runtime davranışı, veri sözleşmesi, generated çıktı, yetki veya iki yüzey etkileniyorsa risk yükseltilir.
-- Bir zorunlu skill üst skill tarafından aynı diff için tamamlandıysa yeniden çağrılmaz. Aynı diff üzerinde aynı skill ikinci kez çalışmaz.
-- Review sonrasında diff maddi olarak değişirse ikinci review yalnız yüksek riskte veya ciddi review bulgusunda yapılır; diğer işlerde hedefli doğrulama ve CI kullanılır.
-- Skill çağrılamıyorsa sebep raporda `skill çağrılamadı: …` biçiminde açıkça yazılır.
+Skill çağrılmadan commit önerilmez. Çağrılamıyorsa sebebi raporda yazılır ("skill çağrılamadı: …"), sessizce atlanmaz.
 
-### Oturum ve PR sınırı
-
-- Bir oturum yalnız bir issue/PR üzerinde çalışır. Yeni issue veya PR temiz oturumla başlar.
-- Aynı PR’ın düzeltmeleri aynı branch üzerinde sürer. Context dolarsa aynı PR için temiz oturum açılabilir; yeni doğrulama PR’ı açılmaz.
-- CI kırılırsa mevcut PR branch’i düzeltilir ve CI yeniden çalışır.
-
-### Test bütçesi
-
-1. Çalışırken yalnız ilgili küçük test çalıştırılır.
-2. İş bitince etkilenen yüzeyin typecheck/lint/analyze kapısı çalıştırılır.
-3. PR hazırlanırken yalnız etkilenen yüzeyin full suite’i en fazla bir kez çalıştırılır.
-4. Full suite sonrasında kod değişirse yalnız etkilenen testler tekrar çalıştırılır; yüksek risk veya ortak altyapı değişikliği full suite tekrarını gerekçelendirebilir.
-5. CI bağımsız son kontroldür. Yeşil komut yalnız “emin olmak” için tekrarlanmaz.
-6. Format komutu bütün repoya değil yalnız görevde değişen dosyalara uygulanır.
-
-**Neden bu kural var:** 2026-08-05’te çalıştırılmayan kontroller beş gerçek hatanın canlıya kadar gitmesine izin verdi. Koruma bu nedenle riskli işlerde aynen kalır; düşük riskli işlerde ise aynı pahalı zincirin koşulsuz tekrarı kaldırılır.
+**Neden bu kural var:** 2026-08-05'te tek bir oturumda beş gerçek hata çıktı — sahip paneli hiç açılmıyordu, `edit_token` tarayıcıya sızıyordu, migration hiç uygulanamıyordu, iki test hatayı doğruymuş gibi kilitliyordu, React anahtarları çakışıyordu. Hiçbiri kod okunarak bulunamadı; hepsi çalıştırılınca çıktı. `code-review` ve `diagnosing-bugs` bunların çoğunu daha erken yakalardı.
 
 ## Dal ve PR kuralları
 
