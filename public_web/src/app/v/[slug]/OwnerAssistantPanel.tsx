@@ -9,7 +9,6 @@ import { ChatBubble } from "./components/ChatBubble";
 import { FieldChipList } from "./components/FieldChipList";
 import { FieldInputArea } from "./components/FieldInputArea";
 import { PublishBar } from "./components/PublishBar";
-import { VixrexAvatar } from "./components/VixrexAvatar";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9).
 //
@@ -54,15 +53,14 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
 
   return (
     <>
-      {/* Canonical Vixrex düğmesi */}
+      {/* Maskot düğmesi */}
       <button
         type="button"
         onClick={() => setAcik((v) => !v)}
         className="fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition"
         aria-label="Vixrex Asistan"
-        aria-expanded={acik}
       >
-        <VixrexAvatar size={28} decorative />
+        <span className="text-xl leading-none">🦊</span>
         <span className="text-sm font-semibold hidden sm:inline">Vixrex Asistan</span>
         {!rapor.temelTamam && (
           <span className="ml-1 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-slate-900">
@@ -75,19 +73,16 @@ export default function OwnerAssistantPanel({ slug, draftData }: Props) {
         <div className="fixed bottom-24 right-5 z-[75] flex w-[min(24rem,calc(100vw-2.5rem))] flex-col rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl">
           {/* Başlık */}
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <VixrexAvatar size={36} halo decorative />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-white">Vixrex Asistan</p>
-                <p className="truncate text-[11px] text-slate-400">
-                  Doluluk %{rapor.yuzde} · {rapor.doluSayisi}/{rapor.toplamSayisi} alan
-                </p>
-              </div>
+            <div>
+              <p className="text-sm font-bold text-white">🦊 Vixrex Asistan</p>
+              <p className="text-[11px] text-slate-400">
+                Doluluk %{rapor.yuzde} · {rapor.doluSayisi}/{rapor.toplamSayisi} alan
+              </p>
             </div>
             <button
               type="button"
               onClick={() => setAcik(false)}
-              className="ml-3 shrink-0 text-lg leading-none text-slate-400 hover:text-white"
+              className="text-lg leading-none text-slate-400 hover:text-white"
               aria-label="Kapat"
             >
               ×
