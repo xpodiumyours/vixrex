@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "python ../.github/scripts/changed_surfaces.py --vercel-surface public_web",
+  "ignoreCommand": "exit 1",
   "framework": "nextjs",
   "buildCommand": "npm run build"
 }

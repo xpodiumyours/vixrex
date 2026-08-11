@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "python .github/scripts/changed_surfaces.py --vercel-surface flutter",
+  "ignoreCommand": "exit 1",
   "buildCommand": "bash vercel-build.sh",
   "outputDirectory": "build/web",
   "redirects": [

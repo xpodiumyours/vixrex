@@ -1,8 +1,11 @@
 name: CI
 
-# Her PR ve main push'ında ucuz yüzey sınıflandırması çalışır.
-# Flutter, şema ve Next.js işleri yalnız ilgili production yüzeyi değiştiğinde koşar.
-# Bilinmeyen veya sınıflandırılamayan path güvenli varsayımla bütün işleri açar.
+# Her pull request'te ve main'e her push'ta otomatik çalışır.
+# Amaç: bir değişiklik başka bir yeri bozduğunda CANLIYA ÇIKMADAN ÖNCE haber vermek.
+#
+# Not: android-apk.yml testleri tek tek adıyla sayıyor ve yalnız elle tetikleniyor.
+# Bu dosya ondan farklı olarak TÜM test paketini otomatik koşar; yeni eklenen
+# testin listeye eklenmesi gerekmez.
 
 on:
   pull_request:
@@ -21,32 +24,8 @@ env:
   FLUTTER_VERSION: "3.44.4"
 
 jobs:
-  changes:
-    name: Değişiklik yüzeyi
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      flutter: ${{ steps.classify.outputs.flutter }}
-      schema: ${{ steps.classify.outputs.schema }}
-      public_web: ${{ steps.classify.outputs.public_web }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Yüzeyleri sınıflandır
-        id: classify
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python .github/scripts/changed_surfaces.py --base "$BASE_SHA" --head "$HEAD_SHA" >> "$GITHUB_OUTPUT"
-
   flutter:
     name: Flutter — analiz ve testler
-    needs: changes
-    if: needs.changes.outputs.flutter == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
@@ -75,11 +54,15 @@ jobs:
 
   schema-drift:
     name: Şema üretim hattı — sapma kontrolü
-    needs: changes
-    if: needs.changes.outputs.schema == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    # public_web/src/lib/vitrinFieldSchema.ts tek kaynak; shared/vitrin_alanlari.json
+    # ve lib/config/vitrin_alanlari.g.dart bundan üretilip commit ediliyor
+    # (tool/sema_disa_aktar.ts, tool/alan_semasi_uret.dart). Elle çalıştırmaya
+    # güvenmek sapmaya yol açtı (2026-08-10'da fark edildi: kaldırılmış bir
+    # "tema" alanı iki üretilen dosyada da hâlâ duruyordu). Bu iş üretimi
+    # yeniden çalıştırıp committed dosyalarla karşılaştırır.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -118,14 +101,12 @@ jobs:
       - name: Sapma var mı kontrol et
         run: |
           if ! git diff --exit-code -- shared/vitrin_alanlari.json lib/config/vitrin_alanlari.g.dart; then
-            echo "::error::Üretilen şema dosyaları commit edilmiş hâlleriyle uyuşmuyor. Şemayı yeniden üret ve değişiklikleri commit et."
+            echo "::error::Üretilen şema dosyaları commit edilmiş hâlleriyle uyuşmuyor. Şemayı değiştirdiysen şu sırayla yeniden üret: cd public_web && npx tsx ../tool/sema_disa_aktar.ts && cd .. && dart run tool/alan_semasi_uret.dart && dart format lib/config/vitrin_alanlari.g.dart — sonra değişiklikleri commit et."
             exit 1
           fi
 
   public_web:
     name: Next.js — lint, tip, test, build
-    needs: changes
-    if: needs.changes.outputs.public_web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:

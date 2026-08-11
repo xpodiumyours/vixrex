@@ -13,6 +13,4 @@
 Aynı diff üzerinde aynı skill ikinci kez çalışmaz.
 Bir oturum yalnız bir issue/PR üzerinde çalışır.
 
-Etkilenen yüzeyin full suite’i en fazla bir kez çalışır.
-
 ## Son
