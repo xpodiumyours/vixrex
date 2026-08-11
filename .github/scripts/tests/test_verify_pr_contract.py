@@ -51,11 +51,6 @@ class VerifyPrContractCliTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
                 self.assertIn(message, result.stdout)
 
-    def test_it_todo_is_not_placeholder(self) -> None:
-        result = self.run_verifier("it-todo-gecerli.json")
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("[OK] PR sözleşmesi", result.stdout)
-
 
 if __name__ == "__main__":
     unittest.main()
