@@ -130,10 +130,17 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
 
   it("Flutter ve Next.js aynı canonical Vixrex maskotunu kullanır", () => {
     const canonicalAsset = "assets/images/vixrex_v_crystal_mascot.png";
+    const flutterMascot = readFileSync(
+      resolve(__dirname, "../..", canonicalAsset)
+    );
+    const nextMascot = readFileSync(
+      resolve(__dirname, "../public/vixrex_v_crystal_mascot.png")
+    );
 
     expect(flutterAvatarSource).toContain(canonicalAsset);
+    expect(nextMascot.equals(flutterMascot)).toBe(true);
     expect(nextAvatarSource).toContain(
-      `../../../../../../${canonicalAsset}`
+      'src="/vixrex_v_crystal_mascot.png"'
     );
     expect(ownerPanelSource).toContain("<VixrexAvatar size={28} decorative />");
     expect(ownerPanelSource).toContain("<VixrexAvatar size={36} halo />");
