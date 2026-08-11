@@ -66,6 +66,46 @@ describe("alan şeması — bütünlük", () => {
   });
 });
 
+// Faz 5/6, Issue #91 — "kalite" sınıflandırması (zorunlu değil ama vitrini
+// web sitesi kalitesine çıkaran alanlar) eskiden yalnız vitrinReadiness.ts
+// içinde elle tutulan ayrı bir listeydi — TEMEL_ALANLAR'ın (zorunlu) aksine
+// şemadan gelmiyordu. "Zorunlu" için yaşanan aynı sorunun küçük bir tekrarı:
+// tek doğru kaynak yerine ikinci bir elle yazılmış liste. Artık şemada.
+describe("alan şeması — kalite sınıflandırması", () => {
+  const BEKLENEN_KALITE_ALANLARI = [
+    "heroRozet",
+    "kapakGorseli",
+    "logo",
+    "hakkindaBaslik",
+    "hakkindaMetin",
+    "calismaSaatleri",
+    "haritaLinki",
+  ];
+
+  it("bilinen 7 kalite alanı şemada kalite:true taşır", () => {
+    for (const anahtar of BEKLENEN_KALITE_ALANLARI) {
+      const alan = FIELD_BY_KEY.get(anahtar);
+      expect(alan, anahtar).toBeDefined();
+      expect(alan?.kalite, anahtar).toBe(true);
+    }
+  });
+
+  it("zorunlu bir alan aynı zamanda kalite olarak işaretlenmez (iki sınıf ayrık)", () => {
+    for (const f of VITRIN_FIELDS) {
+      if (f.zorunlu) {
+        expect(f.kalite, f.anahtar).not.toBe(true);
+      }
+    }
+  });
+
+  it("kalite:true alan sayısı tam olarak bilinen listeyle eşleşir (fazla/eksik yok)", () => {
+    const kaliteAlanlari = VITRIN_FIELDS.filter((f) => f.kalite).map(
+      (f) => f.anahtar
+    );
+    expect(new Set(kaliteAlanlari)).toEqual(new Set(BEKLENEN_KALITE_ALANLARI));
+  });
+});
+
 describe("alan doğrulama — tek fonksiyon, alan başına dallanma yok", () => {
   it("bilinmeyen alanı reddeder", () => {
     const r = validateField("boyleBirAlanYok", "x");

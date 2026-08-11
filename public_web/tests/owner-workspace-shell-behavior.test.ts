@@ -107,6 +107,72 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
     expect(shellSource).not.toContain("<VitrinProfileView");
   });
 
+  // Faz 4/6, Issue #91 — kod izini sürünce planın varsaydığı asimetri
+  // ("Next.js, Flutter'ın yayınladığını yalnız kendi yayınlama denemesinde
+  // DRAFT_STALE ile öğrenir") GERÇEK OLMADIĞI görüldü: stores tablosu zaten
+  // realtime yayınına ekli, OwnerAssistantPanel zaten `vitrin_${slug}`
+  // kanalını her zaman dinliyor (kaynağa göre ayrım yok — Flutter'ın
+  // yayınladığı UPDATE de, Next.js'in kendi publish_working_draft'ı da aynı
+  // şekilde yakalanıyor), getWorkingDraft önbelleklenmiyor, ve sürüm
+  // çakışması banda zaten çıkıyor. Yeni bir broadcast kurmak yerine bu
+  // zaten çalışan zinciri kilitleyen bir koruma testi ekliyoruz — yoksa
+  // biri "taslakDinle"siz bir refactor'de bunu sessizce kırabilir.
+  describe("Flutter'ın yayını Next.js paneline anlık yansır (zaten çalışıyor, kilitleniyor)", () => {
+    const REALTIME_MIGRATION_PATH = resolve(
+      __dirname,
+      "../../supabase/migrations/20260806220000_enable_realtime_on_stores.sql"
+    );
+    const realtimeMigrationSource = readFileSync(REALTIME_MIGRATION_PATH, "utf-8");
+
+    const SENKRON_PATH = resolve(__dirname, "../src/lib/canliVitrinSenkron.ts");
+    const senkronSource = readFileSync(SENKRON_PATH, "utf-8");
+
+    const PANEL_PATH = resolve(__dirname, "../src/app/v/[slug]/OwnerAssistantPanel.tsx");
+    const panelSource = readFileSync(PANEL_PATH, "utf-8");
+
+    it("stores tablosu realtime yayınına eklidir — Flutter'ın UPDATE'i dışarıdan görülebilir", () => {
+      expect(realtimeMigrationSource).toContain(
+        "alter publication supabase_realtime add table public.stores"
+      );
+    });
+
+    it("useCanliVitrinSenkron, stores UPDATE'ini KAYNAĞA BAKMADAN dinler (yalnız slug'a göre filtreler)", () => {
+      expect(senkronSource).toContain('event: "UPDATE"');
+      expect(senkronSource).toContain('table: "stores"');
+      expect(senkronSource).toContain("filter: `slug=eq.${slug}`");
+      expect(senkronSource).toContain("router.refresh()");
+    });
+
+    it("OwnerAssistantPanel bu senkronu sahip modunda HER ZAMAN etkin bırakır (etkin=true, koşulsuz)", () => {
+      expect(panelSource).toContain("useCanliVitrinSenkron(slug, true)");
+    });
+
+    it("getWorkingDraft önbelleklenmez — her router.refresh() gerçek çakışma durumunu yeniden hesaplar", () => {
+      // Fonksiyonun kendi tanımı unstable_cache sarmalamıyor (getStoreData'nın
+      // aksine — o 60sn revalidate ile önbellekli, taslak asla öyle olmamalı).
+      const fnStart = pageSource.indexOf(
+        "async function getWorkingDraft(sessionToken: string)"
+      );
+      const fnBody = pageSource.slice(fnStart, pageSource.indexOf("\n}\n", fnStart));
+      expect(fnBody).not.toContain("unstable_cache");
+
+      // Çağrı yeri de sarmalanmamış — doğrudan await ile çağrılıyor.
+      const callSiteStart = pageSource.indexOf("draft = await getWorkingDraft(");
+      expect(callSiteStart).toBeGreaterThan(-1);
+      const callSiteContext = pageSource.slice(
+        Math.max(0, callSiteStart - 200),
+        callSiteStart
+      );
+      expect(callSiteContext).not.toContain("unstable_cache");
+    });
+
+    it("sürüm çakışması banda çıkar, çare zaten var olan tazeleme uç noktasına bağlıdır", () => {
+      expect(shellSource).toContain("draft?.version_conflict");
+      expect(shellSource).toContain("Canlı sürümü al");
+      expect(shellSource).toContain('fetch("/api/owner-refresh"');
+    });
+  });
+
   it("getWorkingDraft ÇEREZLE değil, paketten çıkarılan gerçek token ile çağrılır", () => {
     const ownerModeBlock = pageSource.slice(
       pageSource.indexOf("if (isOwnerMode && ownerSession && ownerSessionCookie)"),

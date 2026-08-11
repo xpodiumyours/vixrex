@@ -52,6 +52,59 @@ jobs:
       - name: Testler
         run: flutter test --reporter expanded
 
+  schema-drift:
+    name: Şema üretim hattı — sapma kontrolü
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # public_web/src/lib/vitrinFieldSchema.ts tek kaynak; shared/vitrin_alanlari.json
+    # ve lib/config/vitrin_alanlari.g.dart bundan üretilip commit ediliyor
+    # (tool/sema_disa_aktar.ts, tool/alan_semasi_uret.dart). Elle çalıştırmaya
+    # güvenmek sapmaya yol açtı (2026-08-10'da fark edildi: kaldırılmış bir
+    # "tema" alanı iki üretilen dosyada da hâlâ duruyordu). Bu iş üretimi
+    # yeniden çalıştırıp committed dosyalarla karşılaştırır.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Next.js bağımlılıkları
+        working-directory: public_web
+        run: npm ci
+
+      - name: Şemayı JSON'a çıkar
+        working-directory: public_web
+        run: npx tsx ../tool/sema_disa_aktar.ts
+
+      - name: Flutter bağımlılıkları
+        run: flutter pub get
+
+      - name: JSON'dan Dart üret
+        run: dart run tool/alan_semasi_uret.dart
+
+      - name: Üretilen Dart dosyasını biçimlendir
+        run: dart format lib/config/vitrin_alanlari.g.dart
+
+      - name: Sapma var mı kontrol et
+        run: |
+          if ! git diff --exit-code -- shared/vitrin_alanlari.json lib/config/vitrin_alanlari.g.dart; then
+            echo "::error::Üretilen şema dosyaları commit edilmiş hâlleriyle uyuşmuyor. Şemayı değiştirdiysen şu sırayla yeniden üret: cd public_web && npx tsx ../tool/sema_disa_aktar.ts && cd .. && dart run tool/alan_semasi_uret.dart && dart format lib/config/vitrin_alanlari.g.dart — sonra değişiklikleri commit et."
+            exit 1
+          fi
+
   public_web:
     name: Next.js — lint, tip, test, build
     runs-on: ubuntu-latest

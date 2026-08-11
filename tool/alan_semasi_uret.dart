@@ -48,6 +48,7 @@ void main() {
     ..writeln('  final String kolon;')
     ..writeln('  final String bolum;')
     ..writeln('  final bool zorunlu;')
+    ..writeln('  final bool kalite;')
     ..writeln('  final int? minUzunluk;')
     ..writeln('  final int? maxUzunluk;')
     ..writeln('  final List<String>? secenekler;')
@@ -60,6 +61,7 @@ void main() {
     ..writeln('    required this.kolon,')
     ..writeln('    required this.bolum,')
     ..writeln('    this.zorunlu = false,')
+    ..writeln('    this.kalite = false,')
     ..writeln('    this.minUzunluk,')
     ..writeln('    this.maxUzunluk,')
     ..writeln('    this.secenekler,')
@@ -80,6 +82,7 @@ void main() {
     tampon.writeln("    kolon: ${metin(a['kolon'])},");
     tampon.writeln("    bolum: ${metin(a['bolum'])},");
     if (a['zorunlu'] == true) tampon.writeln('    zorunlu: true,');
+    if (a['kalite'] == true) tampon.writeln('    kalite: true,');
     if (a['minUzunluk'] != null) {
       tampon.writeln("    minUzunluk: ${a['minUzunluk']},");
     }
@@ -102,6 +105,11 @@ void main() {
     ..writeln('final List<VitrinAlani> zorunluAlanlar =')
     ..writeln('    vitrinAlanlari.where((a) => a.zorunlu).toList();')
     ..writeln('')
+    ..writeln('/// Zorunlu değil ama vitrini kaliteye çıkaran alanlar — şemadan')
+    ..writeln('/// gelir. Elle liste tutulmaz; şemada kalite işaretlemek yeter.')
+    ..writeln('final List<VitrinAlani> kaliteAlanlari =')
+    ..writeln('    vitrinAlanlari.where((a) => a.kalite).toList();')
+    ..writeln('')
     ..writeln('/// Anahtardan alana hızlı erişim.')
     ..writeln('final Map<String, VitrinAlani> alanAnahtarla = {')
     ..writeln('  for (final a in vitrinAlanlari) a.anahtar: a,')
@@ -111,7 +119,9 @@ void main() {
   hedef.writeAsStringSync(tampon.toString());
 
   final zorunlu = alanlar.where((a) => a['zorunlu'] == true).length;
+  final kalite = alanlar.where((a) => a['kalite'] == true).length;
   stdout.writeln('Üretildi: lib/config/vitrin_alanlari.g.dart');
   stdout.writeln('  alan sayısı : ${alanlar.length}');
   stdout.writeln('  zorunlu     : $zorunlu');
+  stdout.writeln('  kalite      : $kalite');
 }
