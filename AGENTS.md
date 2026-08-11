@@ -4,7 +4,7 @@ Bu depoda her ajan, işlemden önce şu sırayı uygular:
 
 1. `VIXREX_RULES.md` dosyasını baştan sona oku.
 2. Salt-okunur yönlendirici `.agents/skills/vixrex-router/SKILL.md` dosyasını oku.
-3. Router'ın seçtiği skill dosyalarını ve zorunlu bağlantılarını oku; rota belirsizse `ask-matt` kullan.
+3. Router'ın seçtiği skill dosyalarını ve zorunlu bağlantılarını oku; rota belirsizse `.agents/skills/ask-matt/SKILL.md` kullan.
 4. Değişiklik işinde ilgili GitHub issue'sunu gövde, yorum ve etiketleriyle oku; plan öncesi `python .github/scripts/vixrex_evidence.py --issue <n> --base origin/main` çalıştır.
 5. `contradicted` ve `unverified` bulguları açık tutarak ilgili kodu, `git status` ve mevcut diff'i incele.
 
