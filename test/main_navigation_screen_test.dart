@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/chatbot_config.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/models/created_product.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/product_repository.dart';
 import 'package:vixrex/screens/landing_screen.dart';
@@ -256,11 +257,10 @@ void main() {
 
 class _NoopProductRepository implements ProductRepository {
   @override
-  Future<String> createProduct({
+  Future<CreatedProduct> createProduct({
     required String storeId,
     required String editToken,
     required String name,
-    required String slug,
     String description = '',
     String priceText = '',
     double? priceAmount,
@@ -273,7 +273,7 @@ class _NoopProductRepository implements ProductRepository {
     String? externalProductId,
     bool isVisible = true,
     int sortOrder = 0,
-  }) async => 'unused';
+  }) async => const CreatedProduct(id: 'unused', slug: 'unused');
 
   @override
   Future<void> deleteProduct(String productId, {String? editToken}) async {}
@@ -299,7 +299,6 @@ class _NoopProductRepository implements ProductRepository {
     required String productId,
     String? editToken,
     String? name,
-    String? slug,
     String? description,
     String? priceText,
     double? priceAmount,

@@ -894,15 +894,11 @@ class StoreEditorController extends ChangeNotifier
         final categoryUuid =
             rawCatId.isNotEmpty && _isUuid(rawCatId) ? rawCatId : null;
 
-        final slug = (product.slug ?? _generateSlug(name)).trim();
-        final safeSlug = slug.isEmpty ? 'urun-$i' : slug;
-
         if (_isUuid(product.id) && remoteIds.contains(product.id)) {
           final updated = await productService.updateProduct(
             productId: product.id,
             editToken: editToken,
             name: name,
-            slug: safeSlug,
             description: product.description,
             priceText: product.price,
             priceAmount: _parsePriceAmount(product.price),
@@ -934,7 +930,6 @@ class StoreEditorController extends ChangeNotifier
             storeId: storeId,
             editToken: editToken,
             name: name,
-            slug: safeSlug,
             description: product.description,
             priceText: product.price,
             priceAmount: _parsePriceAmount(product.price),
@@ -952,8 +947,8 @@ class StoreEditorController extends ChangeNotifier
               Failure(created.failure?.message ?? 'Ürün eklenemedi.'),
             );
           }
-          product.id = created.data!;
-          product.slug = safeSlug;
+          product.id = created.data!.id;
+          product.slug = created.data!.slug;
           product.categoryId = categoryUuid ?? '';
           nextProducts.add(product);
         }
@@ -993,7 +988,6 @@ class StoreEditorController extends ChangeNotifier
         storeId: storeId,
         editToken: editToken,
         name: p.name,
-        slug: p.slug ?? _generateSlug(p.name),
         description: p.description,
         priceText: p.price,
         priceAmount: _parsePriceAmount(p.price),
@@ -1012,14 +1006,16 @@ class StoreEditorController extends ChangeNotifier
 
       if (result.isFailure ||
           result.data == null ||
-          result.data!.trim().isEmpty) {
+          result.data!.id.trim().isEmpty ||
+          result.data!.slug.trim().isEmpty) {
         return Result.failure(
           Failure(
             result.failure?.message ?? 'Ürün müşteri vitrine yazılamadı.',
           ),
         );
       }
-      p.id = result.data!;
+      p.id = result.data!.id;
+      p.slug = result.data!.slug;
     }
 
     _data.products.add(p);
@@ -1077,7 +1073,6 @@ class StoreEditorController extends ChangeNotifier
         productId: p.id,
         editToken: editToken,
         name: p.name,
-        slug: p.slug ?? _generateSlug(p.name),
         description: p.description,
         priceText: p.price,
         priceAmount: _parsePriceAmount(p.price),
@@ -1135,16 +1130,6 @@ class StoreEditorController extends ChangeNotifier
       cleaned = cleaned.replaceAll(',', '.');
     }
     return double.tryParse(cleaned);
-  }
-
-  String _generateSlug(String name) {
-    return name
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9\s-]'), '')
-        .replaceAll(RegExp(r'\s+'), '-')
-        .replaceAll(RegExp(r'-+'), '-')
-        .replaceAll(RegExp(r'^-|-$'), '');
   }
 
   /// Public vitrin sayfasının ISR cache'ini yeniler.

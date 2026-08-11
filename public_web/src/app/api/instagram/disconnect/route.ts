@@ -7,6 +7,7 @@ import {
   instagramOptions,
 } from "@/lib/instagramApi";
 import { revalidateTag } from "next/cache";
+import { deleteCoreProductsBySource } from "@/lib/productCoreServer";
 
 export const runtime = "nodejs";
 
@@ -72,6 +73,14 @@ export async function POST(req: NextRequest) {
             .eq("slug", store.slug);
           if (storeUpdateError) throw storeUpdateError;
         }
+
+        // Relational Product CORE is authoritative. The JSON cleanup above is
+        // retained only as a compatibility bridge for pre-CORE stores.
+        await deleteCoreProductsBySource({
+          admin,
+          storeId: store.id,
+          sourceType: "instagram",
+        });
 
         // 3. Delete imports
         await admin.from("store_instagram_imports").delete().eq("connection_id", connection.id);

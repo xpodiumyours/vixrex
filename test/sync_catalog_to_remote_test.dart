@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/models/created_product.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/product_repository.dart';
 import 'package:vixrex/services/product_service.dart';
@@ -23,11 +24,10 @@ class _FakeProductRepository implements ProductRepository {
       remote.where((p) => p.isVisible).toList();
 
   @override
-  Future<String> createProduct({
+  Future<CreatedProduct> createProduct({
     required String storeId,
     required String editToken,
     required String name,
-    required String slug,
     String description = '',
     String priceText = '',
     double? priceAmount,
@@ -48,6 +48,7 @@ class _FakeProductRepository implements ProductRepository {
     lastFulfillmentRegion = fulfillmentRegion;
     final suffix = createdNames.length.toString().padLeft(12, '0');
     final id = '11111111-1111-1111-1111-$suffix';
+    final slug = 'core-slug-${createdNames.length}';
     remote.add(
       Product(
         id: id,
@@ -64,7 +65,7 @@ class _FakeProductRepository implements ProductRepository {
         fulfillmentLocation: fulfillmentRegion,
       ),
     );
-    return id;
+    return CreatedProduct(id: id, slug: slug);
   }
 
   @override
@@ -72,7 +73,6 @@ class _FakeProductRepository implements ProductRepository {
     required String productId,
     String? editToken,
     String? name,
-    String? slug,
     String? description,
     String? priceText,
     double? priceAmount,
@@ -203,6 +203,7 @@ void main() {
     expect(repo.createdNames, ['Kazak']);
     expect(controller.data.products.single.name, 'Kazak');
     expect(controller.data.products.single.id, startsWith('11111111-'));
+    expect(controller.data.products.single.slug, 'core-slug-1');
   });
 
   test('yerelde olmayan remote ürünü otomatik silmez', () async {

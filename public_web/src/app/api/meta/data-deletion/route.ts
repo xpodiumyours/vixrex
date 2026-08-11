@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { deleteCoreProductsBySource } from "@/lib/productCoreServer";
 import { revalidateTag } from "next/cache";
 
 export const runtime = "nodejs";
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
       // Fetch current store products
       const { data: store } = await admin
         .from("stores")
-        .select("products")
+        .select("id,products")
         .eq("slug", connection.store_slug)
         .maybeSingle();
 
@@ -137,6 +138,14 @@ export async function POST(req: NextRequest) {
             updated_at: new Date().toISOString(),
           })
           .eq("slug", connection.store_slug);
+      }
+
+      if (store?.id) {
+        await deleteCoreProductsBySource({
+          admin,
+          storeId: store.id,
+          sourceType: "instagram",
+        });
       }
 
       // 2. Delete imports

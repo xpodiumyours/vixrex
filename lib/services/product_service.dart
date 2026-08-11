@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/core/result.dart';
+import 'package:vixrex/models/created_product.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/repositories/product_repository.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
@@ -35,11 +36,10 @@ class ProductService {
   }
 
   /// Yeni ürün ekler.
-  Future<Result<String>> addProduct({
+  Future<Result<CreatedProduct>> addProduct({
     required String storeId,
     required String editToken,
     required String name,
-    required String slug,
     String description = '',
     String priceText = '',
     double? priceAmount,
@@ -54,11 +54,10 @@ class ProductService {
     int sortOrder = 0,
   }) async {
     try {
-      final id = await _repo.createProduct(
+      final created = await _repo.createProduct(
         storeId: storeId,
         editToken: editToken,
         name: name,
-        slug: slug,
         description: description,
         priceText: priceText,
         priceAmount: priceAmount,
@@ -72,7 +71,7 @@ class ProductService {
         isVisible: isVisible,
         sortOrder: sortOrder,
       );
-      return Result.success(id);
+      return Result.success(created);
     } catch (e) {
       final msg = _mapError(e);
       if (kDebugMode) debugPrint('addProduct hatası: $msg');
@@ -85,7 +84,6 @@ class ProductService {
     required String productId,
     String? editToken,
     String? name,
-    String? slug,
     String? description,
     String? priceText,
     double? priceAmount,
@@ -111,7 +109,6 @@ class ProductService {
         productId: productId,
         editToken: editToken,
         name: name,
-        slug: slug,
         description: description,
         priceText: priceText,
         priceAmount: priceAmount,

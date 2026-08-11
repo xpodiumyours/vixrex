@@ -32,7 +32,14 @@ vi.mock("@/lib/supabaseAdmin", () => {
 });
 
 vi.mock("@/lib/instagramServer", () => ({
-  verifyStoreEditToken: vi.fn((slug) => Promise.resolve({ slug, name: "My Store", products: [] })),
+  verifyStoreEditToken: vi.fn((slug) =>
+    Promise.resolve({
+      id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      slug,
+      name: "My Store",
+      products: [],
+    }),
+  ),
 }));
 
 vi.mock("next/cache", () => ({
@@ -48,7 +55,12 @@ describe("POST /api/instagram/disconnect", () => {
   });
 
   it("handles Mod A (Default): disconnects connection, marks imports as retained, deletes token", async () => {
-    const mockStore = { slug: "test-store", name: "Test Store", products: [{ slug: "p1", source: "instagram" }] };
+    const mockStore = {
+      id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      slug: "test-store",
+      name: "Test Store",
+      products: [{ slug: "p1", source: "instagram" }],
+    };
     vi.mocked(verifyStoreEditToken).mockResolvedValue(mockStore);
 
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({
@@ -87,6 +99,7 @@ describe("POST /api/instagram/disconnect", () => {
 
   it("handles Mod B: disconnects connection, cleans up tokens, imports, products, and storage", async () => {
     const mockStore = {
+      id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
       slug: "test-store",
       name: "Test Store",
       products: [
@@ -124,6 +137,12 @@ describe("POST /api/instagram/disconnect", () => {
     );
 
     expect(mockBuilder.from).toHaveBeenCalledWith("store_instagram_imports");
+    expect(mockBuilder.from).toHaveBeenCalledWith("products");
+    expect(mockBuilder.eq).toHaveBeenCalledWith(
+      "store_id",
+      "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    );
+    expect(mockBuilder.eq).toHaveBeenCalledWith("source_type", "instagram");
 
     expect(mockBuilder.storage.from).toHaveBeenCalledWith("shelf-images");
     expect(mockBuilder.storage.remove).toHaveBeenCalledWith([

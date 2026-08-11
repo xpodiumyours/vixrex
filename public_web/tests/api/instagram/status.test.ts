@@ -48,7 +48,11 @@ describe("POST /api/instagram/status", () => {
   });
 
   it("returns connected: false if not connected", async () => {
-    const mockStore = { slug: "test-store", name: "Test Store" };
+    const mockStore = {
+      id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      slug: "test-store",
+      name: "Test Store",
+    };
     vi.mocked(verifyStoreEditToken).mockResolvedValue(mockStore);
 
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({
@@ -69,7 +73,11 @@ describe("POST /api/instagram/status", () => {
   });
 
   it("returns connected: true and details if connected", async () => {
-    const mockStore = { slug: "test-store", name: "Test Store" };
+    const mockStore = {
+      id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      slug: "test-store",
+      name: "Test Store",
+    };
     vi.mocked(verifyStoreEditToken).mockResolvedValue(mockStore);
 
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({

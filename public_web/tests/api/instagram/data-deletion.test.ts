@@ -86,6 +86,7 @@ describe("POST /api/meta/data-deletion", () => {
     // Mock finding store products
     vi.spyOn(mockBuilder, "maybeSingle").mockResolvedValueOnce({
       data: {
+        id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
         products: [
           { slug: "p1", source: "instagram" },
           { slug: "p2", source: "manual" },
@@ -123,6 +124,12 @@ describe("POST /api/meta/data-deletion", () => {
     );
 
     expect(mockBuilder.from).toHaveBeenCalledWith("store_instagram_imports");
+    expect(mockBuilder.from).toHaveBeenCalledWith("products");
+    expect(mockBuilder.eq).toHaveBeenCalledWith(
+      "store_id",
+      "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    );
+    expect(mockBuilder.eq).toHaveBeenCalledWith("source_type", "instagram");
 
     expect(mockBuilder.storage.from).toHaveBeenCalledWith("shelf-images");
     expect(mockBuilder.storage.remove).toHaveBeenCalledWith(["user-store/instagram/img.jpg"]);
