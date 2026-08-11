@@ -28,6 +28,7 @@ ISSUE_LINK_PATTERN = re.compile(
 )
 PLACEHOLDER_PATTERN = re.compile(
     r"\b(?:TODO|TBD|DOLDUR|PLACEHOLDER|SONRA\s+EKLENECEK)\b|<[^>]+>",
+    re.IGNORECASE,
 )
 
 
