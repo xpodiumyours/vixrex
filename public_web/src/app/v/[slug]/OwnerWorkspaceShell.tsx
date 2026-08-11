@@ -13,6 +13,7 @@ import type {
   VitrinGalleryItem,
 } from "./VitrinProfileView";
 import type { VitrinCategoryProfile } from "@/lib/vitrinProfile";
+import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 
 export interface WorkingDraftData {
   store_id: string;
@@ -23,6 +24,7 @@ export interface WorkingDraftData {
   live_version: number;
   version_conflict: boolean;
   created: boolean;
+  assistant_handoff?: unknown;
 }
 
 export interface OwnerWorkspaceShellProps {
@@ -69,11 +71,13 @@ export interface OwnerWorkspaceShellProps {
   isPreviewMode?: boolean;
   draft?: WorkingDraftData | null;
   sessionExpiresAt?: number | null;
+  assistantHandoff?: AssistantHandoffV1 | null;
 }
 
 export default function OwnerWorkspaceShell({
   draft,
   sessionExpiresAt,
+  assistantHandoff,
   ...vitrinProps
 }: OwnerWorkspaceShellProps) {
   const [open, setOpen] = useState(false);
@@ -226,6 +230,7 @@ export default function OwnerWorkspaceShell({
       <OwnerAssistantPanel
         slug={vitrinProps.storeSlug}
         draftData={(draft?.draft_data ?? {}) as Record<string, unknown>}
+        assistantHandoff={assistantHandoff}
       />
     </>
   );
