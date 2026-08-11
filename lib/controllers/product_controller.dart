@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/core/result.dart';
+import 'package:vixrex/models/created_product.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
 import 'package:vixrex/services/product_service.dart';
@@ -42,11 +43,10 @@ class ProductController extends ChangeNotifier {
   }
 
   /// Yeni ürün ekler.
-  Future<Result<String>> addProduct({
+  Future<Result<CreatedProduct>> addProduct({
     required String storeId,
     required String editToken,
     required String name,
-    required String slug,
     String description = '',
     String priceText = '',
     double? priceAmount,
@@ -67,7 +67,6 @@ class ProductController extends ChangeNotifier {
         storeId: storeId,
         editToken: editToken,
         name: name,
-        slug: slug,
         description: description,
         priceText: priceText,
         priceAmount: priceAmount,
@@ -85,9 +84,9 @@ class ProductController extends ChangeNotifier {
       if (result.isSuccess) {
         _products.add(
           Product(
-            id: result.data!,
+            id: result.data!.id,
             name: name,
-            slug: slug,
+            slug: result.data!.slug,
             description: description,
             price: priceText,
             imageUrls: imageUrls,
@@ -118,7 +117,6 @@ class ProductController extends ChangeNotifier {
     required String productId,
     String? editToken,
     String? name,
-    String? slug,
     String? description,
     String? priceText,
     double? priceAmount,
@@ -147,7 +145,6 @@ class ProductController extends ChangeNotifier {
         productId: productId,
         editToken: editToken,
         name: name,
-        slug: slug,
         description: description,
         priceText: priceText,
         priceAmount: priceAmount,
@@ -175,7 +172,6 @@ class ProductController extends ChangeNotifier {
           final old = _products[index];
           _products[index] = old.copyWith(
             name: name,
-            slug: slug,
             description: description,
             price: priceText,
             imageUrls: imageUrls,

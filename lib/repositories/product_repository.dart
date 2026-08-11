@@ -1,3 +1,4 @@
+import 'package:vixrex/models/created_product.dart';
 import 'package:vixrex/models/store_product.dart';
 
 /// Ürün veri erişim operasyonları için repository arayüzü.
@@ -9,11 +10,10 @@ abstract class ProductRepository {
   Future<List<Product>> getVisibleProductsByStoreId(String storeId);
 
   /// Yeni ürün ekler.
-  Future<String> createProduct({
+  Future<CreatedProduct> createProduct({
     required String storeId,
     required String editToken,
     required String name,
-    required String slug,
     String description = '',
     String priceText = '',
     double? priceAmount,
@@ -34,7 +34,6 @@ abstract class ProductRepository {
     required String productId,
     String? editToken,
     String? name,
-    String? slug,
     String? description,
     String? priceText,
     double? priceAmount,

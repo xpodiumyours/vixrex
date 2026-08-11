@@ -3,9 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   buildInstagramProductDescription,
   buildInstagramProductName,
-  getProductUrlSlug,
-  safeParseJson,
-  slugifyTR,
   type ProductItem,
 } from "@/lib/products";
 import { sanitizeInstagramMedia } from "@/lib/instagram";
@@ -15,6 +12,12 @@ import {
   instagramJson,
   instagramOptions,
 } from "@/lib/instagramApi";
+import {
+  createCoreProduct,
+  findCoreProductByExternalId,
+  updateCoreProduct,
+  upsertCoreCategory,
+} from "@/lib/productCoreServer";
 
 export const runtime = "nodejs";
 
@@ -72,24 +75,6 @@ async function readImageWithLimit(response: Response) {
   return Buffer.concat(chunks, totalBytes);
 }
 
-function makeUniqueSlug(baseSlug: string, products: ProductItem[], mediaId: string) {
-  const base = baseSlug || `instagram-${slugifyTR(mediaId) || "urun"}`;
-  const usedSlugs = new Set(
-    products
-      .filter((product) => product.sourceMediaId !== mediaId)
-      .map((product, index) => getProductUrlSlug(product, index))
-  );
-
-  if (!usedSlugs.has(base)) return base;
-
-  for (let i = 2; i < 100; i += 1) {
-    const candidate = `${base}-${i}`;
-    if (!usedSlugs.has(candidate)) return candidate;
-  }
-
-  return `${base}-${Date.now()}`;
-}
-
 async function uploadInstagramMedia(args: {
   mediaUrl: string;
   storeSlug: string;
@@ -108,14 +93,16 @@ async function uploadInstagramMedia(args: {
   const extension = instagramImageExtensions.get(contentType);
   if (!extension) throw new Error("INSTAGRAM_MEDIA_TYPE_UNSUPPORTED");
 
-  const objectPath = `${args.storeSlug}/instagram/${args.mediaId}-${Date.now()}.${extension}`;
+  // The media id is stable. A deterministic object key makes retries and
+  // concurrent imports overwrite the same object instead of leaking files.
+  const objectPath = `${args.storeSlug}/instagram/${args.mediaId}.${extension}`;
   const buffer = await readImageWithLimit(response);
 
   const { error } = await args.admin.storage
     .from("shelf-images")
     .upload(objectPath, buffer, {
       contentType,
-      upsert: false,
+      upsert: true,
     });
 
   if (error) throw error;
@@ -155,19 +142,20 @@ export async function POST(req: NextRequest) {
     if (media.media_type !== "IMAGE" || !media.media_url) {
       throw new Error("INSTAGRAM_MEDIA_TYPE_UNSUPPORTED");
     }
+    const storeId = store.id?.trim() || "";
+    if (!storeId) throw new Error("PRODUCT_CORE_STORE_ID_MISSING");
 
-    const products = safeParseJson<ProductItem>(store.products);
-    const existingIndex = products.findIndex(
-      (product) => product.source === "instagram" && product.sourceMediaId === media.id
-    );
-    const existingProduct = existingIndex >= 0 ? products[existingIndex] : null;
+    const existingProduct = await findCoreProductByExternalId({
+      admin,
+      storeId,
+      sourceType: "instagram",
+      externalProductId: media.id,
+    });
     const productName =
       existingProduct?.name ||
       buildInstagramProductName(media.caption || "", "Instagram ürünü");
-    const baseSlug = existingProduct?.slug || slugifyTR(productName);
-    const productSlug = makeUniqueSlug(baseSlug, products, media.id);
     const imagePath =
-      existingProduct?.imagePath ||
+      existingProduct?.image_urls?.[0] ||
       (await uploadInstagramMedia({
         mediaUrl: media.media_url || "",
         storeSlug: store.slug,
@@ -175,44 +163,76 @@ export async function POST(req: NextRequest) {
         admin,
       }));
 
+    const requestedCategory = body.category?.trim() || "";
+    const existingCategoryName =
+      existingProduct?.product_categories?.name?.trim() || "";
+    const categoryName =
+      requestedCategory || existingCategoryName || "Instagram Koleksiyonu";
+    const categoryId =
+      !requestedCategory && existingProduct?.category_id
+        ? existingProduct.category_id
+        : await upsertCoreCategory({
+            admin,
+            storeId,
+            editToken,
+            name: categoryName,
+          });
+
+    const description =
+      existingProduct?.description ||
+      buildInstagramProductDescription({
+        caption: media.caption || "",
+        storeName: store.name,
+        productName,
+      });
+    const priceText = body.price?.trim() || existingProduct?.price_text || "";
+    const stockStatus =
+      body.stockStatus?.trim() || existingProduct?.stock_status || "Mevcut";
+
+    const created = await createCoreProduct({
+      admin,
+      storeId,
+      editToken,
+      name: productName,
+      description,
+      priceText,
+      imageUrls: imagePath ? [imagePath] : [],
+      categoryId,
+      sourceType: "instagram",
+      externalProductId: media.id,
+    });
+
+    await updateCoreProduct({
+      admin,
+      productId: created.id,
+      editToken,
+      name: productName,
+      description,
+      priceText,
+      imageUrls: imagePath ? [imagePath] : [],
+      categoryId,
+      stockStatus,
+    });
+
+    const productSlug = created.slug;
+    const isNewProduct = created.created;
+
     const product: ProductItem = {
-      id: existingProduct?.id || `ig-${media.id}`,
+      id: created.id,
       slug: productSlug,
       name: productName,
-      price: body.price?.trim() || existingProduct?.price || "",
-      description:
-        existingProduct?.description ||
-        buildInstagramProductDescription({
-          caption: media.caption || "",
-          storeName: store.name,
-          productName,
-        }),
+      price: priceText,
+      description,
       imagePath,
-      category: body.category?.trim() || existingProduct?.category || "Instagram Koleksiyonu",
-      stockStatus: body.stockStatus?.trim() || existingProduct?.stockStatus || "Mevcut",
+      imageUrls: imagePath ? [imagePath] : [],
+      categoryId,
+      category: categoryName,
+      stockStatus,
       source: "instagram",
       sourceMediaId: media.id,
-      sourcePermalink: media.permalink || existingProduct?.sourcePermalink || "",
-      importedAt: existingProduct?.importedAt || new Date().toISOString(),
+      sourcePermalink: media.permalink || "",
+      importedAt: existingProduct?.created_at || new Date().toISOString(),
     };
-
-    const nextProducts = [...products];
-    const isNewProduct = existingIndex < 0;
-    if (isNewProduct) {
-      nextProducts.unshift(product);
-    } else {
-      nextProducts[existingIndex] = product;
-    }
-
-    const { error: updateError } = await admin
-      .from("stores")
-      .update({
-        products: nextProducts,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("slug", store.slug);
-
-    if (updateError) throw updateError;
 
     const { error: importLogError } = await admin
       .from("store_instagram_imports")

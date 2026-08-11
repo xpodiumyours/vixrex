@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { decryptSecret, encryptSecret, sha256 } from "@/lib/instagram";
 
 export interface EditableStoreRow {
+  id: string;
   slug: string;
   name: string;
   user_id?: string | null;
@@ -94,7 +95,7 @@ export async function verifyStoreEditToken(storeSlug: string, editToken: string)
 
   const { data, error } = await admin
     .from("stores")
-    .select("slug,name,user_id,edit_token,products,whatsapp,instagram,is_published")
+    .select("id,slug,name,user_id,edit_token,products,whatsapp,instagram,is_published")
     .eq("slug", storeSlug)
     .eq("edit_token", editToken)
     .single();

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/models/created_product.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/repositories/product_repository.dart';
 
@@ -67,11 +68,10 @@ class SupabaseProductRepository implements ProductRepository {
   }
 
   @override
-  Future<String> createProduct({
+  Future<CreatedProduct> createProduct({
     required String storeId,
     required String editToken,
     required String name,
-    required String slug,
     String description = '',
     String priceText = '',
     double? priceAmount,
@@ -86,12 +86,11 @@ class SupabaseProductRepository implements ProductRepository {
     int sortOrder = 0,
   }) async {
     final result = await _client.rpc(
-      'create_store_product',
+      'create_store_product_v2',
       params: {
         'p_store_id': storeId,
         'p_edit_token': editToken,
         'p_name': name,
-        'p_slug': slug,
         'p_description': description,
         'p_price_text': priceText,
         'p_price_amount': priceAmount,
@@ -108,7 +107,11 @@ class SupabaseProductRepository implements ProductRepository {
     );
 
     if (result is Map<String, dynamic> && result['success'] == true) {
-      return result['id'] as String;
+      final id = result['id']?.toString().trim() ?? '';
+      final slug = result['slug']?.toString().trim() ?? '';
+      if (id.isNotEmpty && slug.isNotEmpty) {
+        return CreatedProduct(id: id, slug: slug);
+      }
     }
     throw Exception('Ürün eklenemedi: $result');
   }
@@ -118,7 +121,6 @@ class SupabaseProductRepository implements ProductRepository {
     required String productId,
     String? editToken,
     String? name,
-    String? slug,
     String? description,
     String? priceText,
     double? priceAmount,
@@ -143,7 +145,6 @@ class SupabaseProductRepository implements ProductRepository {
       'p_product_id': productId,
       if (editToken != null) 'p_edit_token': editToken,
       if (name != null) 'p_name': name,
-      if (slug != null) 'p_slug': slug,
       if (description != null) 'p_description': description,
       if (priceText != null) 'p_price_text': priceText,
       if (priceAmount != null) 'p_price_amount': priceAmount,

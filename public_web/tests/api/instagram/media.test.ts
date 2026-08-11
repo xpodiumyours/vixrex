@@ -10,7 +10,11 @@ type ConnectedAccess = Awaited<
 function createConnectedAccess(): ConnectedAccess {
   return {
     admin: {} as ConnectedAccess["admin"],
-    store: { slug: "test-store", name: "Test Store" },
+    store: {
+      id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      slug: "test-store",
+      name: "Test Store",
+    },
     connection: {
       id: "conn-1",
       store_slug: "test-store",
