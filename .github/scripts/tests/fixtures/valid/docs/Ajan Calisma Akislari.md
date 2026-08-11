@@ -1,6 +1,6 @@
 # Akışlar
 
-## Duruma göre rota
+## Değişiklik riskine göre rota
 
 | Risk | Durum | Skill akışı | Çıkış |
 |---|---|---|---|
