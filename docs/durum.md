@@ -33,6 +33,12 @@ satılık/B2B (bkz. hedef notu).
 - **`.env.local`'de görsel yükleme anahtarı hâlâ eski yerel test değeri**,
   canlı adresle uyuşmuyor — görsel yükleme bozuk çıkabilir.
 
+## Bekleyen temizlik (2026-08-10)
+
+- Faz 1–5 (#92–96) birleşti; migration canlıya uygulandı. Canlıda vitrinin **gözle doğrulaması yapılmadı**.
+- Origin'de silinebilir dallar: `tmp-fix-93/94/95/96` (doğrulama amaçlıydı). Birleşen `duzeltme/*` dalları kural gereği duruyor.
+- Yerel geçici worktree'ler: `%TEMP%\opencode\wt-sema-*`.
+
 ---
 
-*Son güncelleme: 2026-08-08.*
+*Son güncelleme: 2026-08-10.*
