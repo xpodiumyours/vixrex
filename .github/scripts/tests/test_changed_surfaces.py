@@ -13,7 +13,12 @@ SPEC.loader.exec_module(changed_surfaces)
 class ChangedSurfacesTest(unittest.TestCase):
     def test_agent_and_documentation_changes_are_neutral(self) -> None:
         affected = changed_surfaces.classify_paths(
-            ["AGENTS.md", ".agents/skills/vixrex-router/SKILL.md", "docs/adr/001.md"]
+            [
+                "AGENTS.md",
+                "SECURITY.md",
+                ".agents/skills/vixrex-router/SKILL.md",
+                "docs/adr/001.md",
+            ]
         )
         self.assertEqual(
             affected,

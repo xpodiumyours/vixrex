@@ -118,7 +118,11 @@ def classify_paths(paths: list[str]) -> dict[str, bool]:
         if matched:
             continue
 
-        if path in NEUTRAL_FILES or path.startswith(NEUTRAL_PREFIXES):
+        if (
+            path in NEUTRAL_FILES
+            or path.endswith(".md")
+            or path.startswith(NEUTRAL_PREFIXES)
+        ):
             continue
 
         return {surface: True for surface in SURFACES}
