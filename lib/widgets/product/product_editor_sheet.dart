@@ -252,105 +252,114 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 16,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                widget.product == null ? 'Yeni Ürün' : 'Ürünü Düzenle',
-                style: const TextStyle(
-                  color: AppColors.darkText,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
+    return PopScope(
+      canPop: !_isSaving,
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 16,
+            bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  widget.product == null ? 'Yeni Ürün' : 'Ürünü Düzenle',
+                  style: const TextStyle(
+                    color: AppColors.darkText,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 18),
-              _buildImages(),
-              const SizedBox(height: 18),
-              _field(_nameController, 'Ürün adı *', 80),
-              const SizedBox(height: 12),
-              _field(_priceController, 'Fiyat', 30),
-              const SizedBox(height: 12),
-              _field(_oldPriceController, 'Eski fiyat (üstü çizili)', 30),
-              const SizedBox(height: 12),
-              _field(_badgeTagController, 'Rozet (örn. Yeni, -31%)', 20),
-              const SizedBox(height: 12),
-              _field(
-                _fulfillmentController,
-                'Teslim bölgesi (isteğe bağlı)',
-                80,
-              ),
-              const SizedBox(height: 12),
-              _field(_descriptionController, 'Kısa açıklama', 500, maxLines: 4),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _categoryId.isEmpty ? null : _categoryId,
-                dropdownColor: AppColors.surfaceSoft,
-                decoration: const InputDecoration(labelText: 'Kategori *'),
-                items:
-                    widget.categories
-                        .map(
-                          (category) => DropdownMenuItem(
-                            value: category.id,
-                            child: Text(category.name),
-                          ),
-                        )
-                        .toList(),
-                onChanged:
-                    _isSaving
-                        ? null
-                        : (value) => setState(() => _categoryId = value ?? ''),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _stockStatus,
-                dropdownColor: AppColors.surfaceSoft,
-                decoration: const InputDecoration(labelText: 'Stok durumu'),
-                items:
-                    _stockOptions
-                        .map(
-                          (status) => DropdownMenuItem(
-                            value: status,
-                            child: Text(status),
-                          ),
-                        )
-                        .toList(),
-                onChanged:
-                    _isSaving
-                        ? null
-                        : (value) => setState(
-                          () =>
-                              _stockStatus =
-                                  value ?? StockStatus.available.label,
-                        ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _isSaving ? null : _save,
-                icon:
-                    _isSaving
-                        ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Icon(Icons.save_rounded),
-                label: Text(_isSaving ? 'Kaydediliyor...' : 'Ürünü Kaydet'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
-                  minimumSize: const Size.fromHeight(52),
+                const SizedBox(height: 18),
+                _buildImages(),
+                const SizedBox(height: 18),
+                _field(_nameController, 'Ürün adı *', 80),
+                const SizedBox(height: 12),
+                _field(_priceController, 'Fiyat', 30),
+                const SizedBox(height: 12),
+                _field(_oldPriceController, 'Eski fiyat (üstü çizili)', 30),
+                const SizedBox(height: 12),
+                _field(_badgeTagController, 'Rozet (örn. Yeni, -31%)', 20),
+                const SizedBox(height: 12),
+                _field(
+                  _fulfillmentController,
+                  'Teslim bölgesi (isteğe bağlı)',
+                  80,
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                _field(
+                  _descriptionController,
+                  'Kısa açıklama',
+                  500,
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _categoryId.isEmpty ? null : _categoryId,
+                  dropdownColor: AppColors.surfaceSoft,
+                  decoration: const InputDecoration(labelText: 'Kategori *'),
+                  items:
+                      widget.categories
+                          .map(
+                            (category) => DropdownMenuItem(
+                              value: category.id,
+                              child: Text(category.name),
+                            ),
+                          )
+                          .toList(),
+                  onChanged:
+                      _isSaving
+                          ? null
+                          : (value) =>
+                              setState(() => _categoryId = value ?? ''),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _stockStatus,
+                  dropdownColor: AppColors.surfaceSoft,
+                  decoration: const InputDecoration(labelText: 'Stok durumu'),
+                  items:
+                      _stockOptions
+                          .map(
+                            (status) => DropdownMenuItem(
+                              value: status,
+                              child: Text(status),
+                            ),
+                          )
+                          .toList(),
+                  onChanged:
+                      _isSaving
+                          ? null
+                          : (value) => setState(
+                            () =>
+                                _stockStatus =
+                                    value ?? StockStatus.available.label,
+                          ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _isSaving ? null : _save,
+                  icon:
+                      _isSaving
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Icon(Icons.save_rounded),
+                  label: Text(_isSaving ? 'Kaydediliyor...' : 'Ürünü Kaydet'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

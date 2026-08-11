@@ -13,10 +13,22 @@ const discardSource = readFileSync(
   resolve(__dirname, "../src/app/api/owner-discard/route.ts"),
   "utf-8"
 );
-const panelSource = readFileSync(
-  resolve(__dirname, "../src/app/v/[slug]/OwnerAssistantPanel.tsx"),
-  "utf-8"
-);
+// OwnerAssistantPanel 730→128 satıra bölündü (2026-08-10); yayınla/vazgeç
+// düğmeleri PublishBar bileşeninde, fetch çağrıları ve sonuç mesajları
+// useOwnerActions hook'unda. Sözleşme aynı, kaynak üç dosyanın birleşimi.
+const panelSource =
+  readFileSync(
+    resolve(__dirname, "../src/app/v/[slug]/OwnerAssistantPanel.tsx"),
+    "utf-8"
+  ) +
+  readFileSync(
+    resolve(__dirname, "../src/app/v/[slug]/components/PublishBar.tsx"),
+    "utf-8"
+  ) +
+  readFileSync(
+    resolve(__dirname, "../src/app/v/[slug]/hooks/useOwnerActions.ts"),
+    "utf-8"
+  );
 
 describe("owner-publish ucu — güvenlik sözleşmesi", () => {
   it("oturum yalnız çerezden okunur, istek gövdesinden token kabul edilmez", () => {
