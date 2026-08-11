@@ -88,3 +88,7 @@ supabase/.temp/
 public_web/test-results/
 public_web/playwright-report/
 public_web/blob-report/
+
+# Codex ve diger ajan araci gecici ekleri
+.codex-remote-attachments/
+.obsidian/appearance.json
