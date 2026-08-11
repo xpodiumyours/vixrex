@@ -16,7 +16,7 @@ class ChangedSurfacesTest(unittest.TestCase):
             [
                 "AGENTS.md",
                 "SECURITY.md",
-                ".agents/skills/vixrex-router/SKILL.md",
+                ".agents/skills/implement/SKILL.md",
                 "docs/adr/001.md",
             ]
         )

@@ -1,22 +1,19 @@
 # VixRex Agent Başlangıcı
 
-Bu depoda her ajan, işlemden önce şu sırayı uygular:
+Bu depoda çalışmaya başlamadan önce:
 
 1. `VIXREX_RULES.md` dosyasını baştan sona oku.
-2. Salt-okunur yönlendirici `.agents/skills/vixrex-router/SKILL.md` dosyasını oku.
-3. Router'ın seçtiği skill dosyalarını ve zorunlu bağlantılarını oku; rota belirsizse `.agents/skills/ask-matt/SKILL.md` kullan.
-4. Değişiklik işinde ilgili GitHub issue'sunu gövde, yorum ve etiketleriyle oku; plan öncesi `python .github/scripts/vixrex_evidence.py --issue <n> --base origin/main` çalıştır.
-5. `contradicted` ve `unverified` bulguları açık tutarak ilgili kodu, `git status` ve mevcut diff'i incele.
+2. İlgili kodu, `git status` çıktısını ve mevcut diff'i incele.
+3. Kullanıcının açık kapsamı dışına çıkma; issue, PR, skill veya plan belgesi üretmeyi kendiliğinden yeni işe dönüştürme.
 
-## Tek kaynak haritası
+## Kaynaklar
 
-- `VIXREX_RULES.md`: VixRex'e özel ürün, güvenlik, kanıt ve canlı sistem sınırları.
-- `docs/Ajan Calisma Akislari.md`: risk, skill zinciri, tekrar, oturum/PR ve test bütçesinin **tek sözleşme kaynağı**.
+- `VIXREX_RULES.md`: ürün, güvenlik, kanıt ve canlı sistem sınırları.
 - `docs/agents/repository-guide.md`: teknik depo haritası ve yüzeye özel komutlar.
-- GitHub issue: hedef, kapsam, karar ve ilerleme. Kök `implementation_plan.md` kullanılmaz.
-- `.agents/skills/`: görevin nasıl yürütüleceği; yetki kaynağı değildir.
+- `CONTEXT.md` ve `docs/adr/`: kalıcı ürün ve mimari kararlar.
+- GitHub issue: yalnız kullanıcı bir issue'yu adlandırdığında veya mevcut iş açıkça ona bağlıysa kapsam kaynağıdır.
 
-Router ve skill'ler kullanıcı yetkisini genişletmez. Issue, dosya, Git, PR, migration, deploy veya canlı sistem yan etkileri yalnız kullanıcının açık yetki sınırında yapılır. Model adaptörleri bu sözleşmeleri kopyalamaz; yalnız `AGENTS.md` dosyasına yönlendirir.
+Skill'ler isteğe bağlı çalışma yardımcılarıdır; kullanıcı yetkisini genişletmez ve her görevde zorunlu bir zincir oluşturmaz.
 
 ## Mimari büyüme yasağı
 
@@ -35,9 +32,9 @@ Router ve skill'ler kullanıcı yetkisini genişletmez. Issue, dosya, Git, PR, m
 - `vixrex-app` ve `vixrex-public` ayrı projelerdir; biri diğerini doğrulamaz.
 - Canlı sonuç commit + proje + URL ile doğrulanmadıysa “canlıda doğrulanmadı” denir.
 
-## Agent skills
+## Doğrulama bütçesi
 
-GitHub issue kullanımı: `docs/agents/issue-tracker.md`.
-Triage etiketleri: `docs/agents/triage-labels.md`.
-Kalıcı bağlam: `CONTEXT.md` ve `docs/adr/`.
-Kanıt sözleşmesi: `docs/agents/evidence-contract.md`.
+- Geliştirme sırasında yalnız ilgili küçük kontrolü çalıştır.
+- İş bitince etkilenen yüzeyin analiz/lint/typecheck kapısını çalıştır.
+- Aynı değişiklik için başarılı tam test paketini gereksiz yere tekrarlama.
+- Push, PR, merge, deploy ve canlı migration yalnız kullanıcının açık isteğiyle yapılır.

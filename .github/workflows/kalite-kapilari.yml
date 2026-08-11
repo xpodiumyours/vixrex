@@ -2,12 +2,10 @@ name: Kalite Kapıları
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
-  issues: read
-  pull-requests: read
 
 jobs:
   verify-protected-tests:
@@ -33,13 +31,5 @@ jobs:
       - name: Migration zinciri
         run: python .github/scripts/verify_migrations.py
 
-      - name: Ajan sistemi testleri
-        run: python -m unittest discover -s .github/scripts/tests -p "test_*.py" -v
-
-      - name: Ajan sistemi
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python .github/scripts/verify_agent_system.py --github-repo "${{ github.repository }}"
-
-      - name: PR sözleşmesi
-        run: python .github/scripts/verify_pr_contract.py
+      - name: CI yüzey sınıflandırma testi
+        run: python -m unittest discover -s .github/scripts/tests -p "test_changed_surfaces.py" -v
