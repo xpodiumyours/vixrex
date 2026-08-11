@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/models/assistant_handoff.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
@@ -38,6 +39,7 @@ class OwnerPreviewService {
   Future<OwnerPreviewResult> open({
     required StoreData storeData,
     required PublishedVitrinInfo? publishedInfo,
+    AssistantHandoffV1? assistantHandoff,
   }) async {
     final publishedSlug = publishedInfo?.slug.trim() ?? '';
     final isPublished =
@@ -60,7 +62,11 @@ class OwnerPreviewService {
       editToken = draft.editToken;
     }
 
-    final code = await _createOwnerSession(slug, editToken);
+    final code = await _createOwnerSession(
+      slug,
+      editToken,
+      assistantHandoff: assistantHandoff,
+    );
     return OwnerPreviewResult(
       url: PublicSiteConfig.buildOwnerSessionEntryLink(slug, code),
       slug: slug,
@@ -104,12 +110,23 @@ class OwnerPreviewService {
     }
   }
 
-  Future<String> _createOwnerSession(String slug, String editToken) async {
+  Future<String> _createOwnerSession(
+    String slug,
+    String editToken, {
+    AssistantHandoffV1? assistantHandoff,
+  }) async {
     final client = _requireClient('Sahip oturumu oluşturulamadı.');
     try {
+      final hasHandoff = assistantHandoff != null;
       final response = await client.rpc(
-        'create_owner_session',
-        params: {'p_slug': slug, 'p_edit_token': editToken},
+        hasHandoff
+            ? 'create_owner_session_with_handoff'
+            : 'create_owner_session',
+        params: {
+          'p_slug': slug,
+          'p_edit_token': editToken,
+          if (hasHandoff) 'p_assistant_handoff': assistantHandoff.toJson(),
+        },
       );
       final code =
           (response is Map ? response['code'] : null)?.toString().trim() ?? '';

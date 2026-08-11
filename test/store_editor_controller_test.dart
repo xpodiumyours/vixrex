@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/core/result.dart';
+import 'package:vixrex/models/assistant_handoff.dart';
 import 'package:vixrex/models/editor_gallery_item.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/product_repository.dart';
@@ -150,11 +151,15 @@ class OwnerSessionMockHttpClient extends Fake implements http.Client {
   final String code;
   OwnerSessionMockHttpClient({this.code = 'test-owner-code-1234'});
 
+  final requests = <({String path, String body})>[];
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final isOwnerSession = request.url.path.endsWith(
-      '/rpc/create_owner_session',
-    );
+    final bodyText = request is http.Request ? request.body : '';
+    requests.add((path: request.url.path, body: bodyText));
+    final isOwnerSession =
+        request.url.path.endsWith('/rpc/create_owner_session') ||
+        request.url.path.endsWith('/rpc/create_owner_session_with_handoff');
     final body =
         isOwnerSession
             ? jsonEncode({'code': code, 'expires_at': '2026-08-04T10:00:00Z'})
@@ -423,6 +428,52 @@ void main() {
       expect(owner.url, isNot(contains('preview_token')));
       expect(owner.url, isNot(contains('edit-token')));
     });
+
+    test(
+      'openOwnerPreview onboarding handoff verildiğinde güvenli CORE RPC\'sini kullanır',
+      () async {
+        final httpClient = OwnerSessionMockHttpClient();
+        final ownerSupabase = SupabaseClient(
+          'https://dummyproject.supabase.co',
+          'dummyAnonKey',
+          httpClient: httpClient,
+        );
+        final controller = StoreEditorController(
+          storage: storageService,
+          publishService: FakeStorePublishService(),
+          supabaseClient: ownerSupabase,
+        );
+        final handoff = AssistantHandoffV1(
+          completedSteps: const [
+            AssistantHandoffStep.name,
+            AssistantHandoffStep.category,
+            AssistantHandoffStep.whatsapp,
+            AssistantHandoffStep.location,
+            AssistantHandoffStep.legal,
+            AssistantHandoffStep.publishing,
+          ],
+          nextStep: AssistantHandoffStep.done,
+          messages: const [
+            AssistantHandoffMessage.user('Yayınla'),
+            AssistantHandoffMessage.assistant(
+              'Vitrinini açıyorum — birlikte devam edelim.',
+            ),
+          ],
+        );
+
+        await controller.initialize('Taslak Mağaza');
+        await controller.openOwnerPreview(assistantHandoff: handoff);
+
+        final request = httpClient.requests.singleWhere(
+          (item) =>
+              item.path.endsWith('/rpc/create_owner_session_with_handoff'),
+        );
+        final requestBody = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(requestBody['p_slug'], 'draft-store');
+        expect(requestBody['p_edit_token'], isNotEmpty);
+        expect(requestBody['p_assistant_handoff'], handoff.toJson());
+      },
+    );
 
     test(
       'openOwnerPreview yayınlanmış vitrin için müşteri linki yerine sahip giriş adresi döndürür',

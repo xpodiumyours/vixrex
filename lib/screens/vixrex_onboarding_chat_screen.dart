@@ -9,6 +9,7 @@ import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/models/assistant_handoff.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/chatbot_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
@@ -542,7 +543,16 @@ class _VixRexOnboardingChatScreenState
   Future<void> _openOwnerWorkspace() async {
     setState(() => _busy = true);
     try {
-      final owner = await _controller.openOwnerPreview();
+      final owner = await _controller.openOwnerPreview(
+        assistantHandoff: AssistantHandoffV1.completedOnboarding(
+          visibleMessages: _lines.map(
+            (line) =>
+                line.isBot
+                    ? AssistantHandoffMessage.assistant(line.text)
+                    : AssistantHandoffMessage.user(line.text),
+          ),
+        ),
+      );
       if (!mounted) return;
       final uri = Uri.tryParse(owner.url);
       if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {

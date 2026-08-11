@@ -5,6 +5,7 @@ import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/core/result.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/models/editor_gallery_item.dart';
+import 'package:vixrex/models/assistant_handoff.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/seo_service.dart';
@@ -1295,11 +1296,14 @@ class StoreEditorController extends ChangeNotifier
   ///   canlı kayıt güncellendiyse çakışmayı algılar.
   /// - Her iki durumda Next.js sahip giriş adresini (`/api/owner-session`)
   ///   döndürür; kalıcı `edit_token` asla URL'ye yazılmaz (koruma #7).
-  Future<OwnerPreviewLink> openOwnerPreview() async {
+  Future<OwnerPreviewLink> openOwnerPreview({
+    AssistantHandoffV1? assistantHandoff,
+  }) async {
     await saveLocally();
     final result = await _ownerPreviewService.open(
       storeData: _data,
       publishedInfo: _publishedInfo,
+      assistantHandoff: assistantHandoff,
     );
     _data.slug = result.slug;
     await saveLocally();
