@@ -80,22 +80,19 @@ class _CoreOwnedSlugRepository implements ProductRepository {
 }
 
 void main() {
-  test(
-    'ürün ekleme canonical slugı yalnız CORE sonucundan alır',
-    () async {
-      final repository = _CoreOwnedSlugRepository();
-      final service = ProductService(repository: repository);
+  test('ürün ekleme canonical slugı yalnız CORE sonucundan alır', () async {
+    final repository = _CoreOwnedSlugRepository();
+    final service = ProductService(repository: repository);
 
-      final result = await service.addProduct(
-        storeId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-        editToken: 'edit-token-12345678901234567890',
-        name: 'Çanta & Aksesuar',
-      );
+    final result = await service.addProduct(
+      storeId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      editToken: 'edit-token-12345678901234567890',
+      name: 'Çanta & Aksesuar',
+    );
 
-      expect(result.isSuccess, isTrue);
-      expect(repository.receivedName, 'Çanta & Aksesuar');
-      expect(result.data?.id, '11111111-1111-1111-1111-111111111111');
-      expect(result.data?.slug, 'canta-aksesuar-2');
-    },
-  );
+    expect(result.isSuccess, isTrue);
+    expect(repository.receivedName, 'Çanta & Aksesuar');
+    expect(result.data?.id, '11111111-1111-1111-1111-111111111111');
+    expect(result.data?.slug, 'canta-aksesuar-2');
+  });
 }
