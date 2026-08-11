@@ -4,19 +4,15 @@
 
 ## Bağlı Issue
 
-<!-- `Fixes #123` biçiminde kapatılacak issue'yu yazın. -->
+<!-- Varsa `Fixes #123` biçiminde yazın; yoksa boş bırakın. -->
 
-## Kullanılan Skill Akışı
+## Değişiklikler
 
-<!-- Örnek: `vixrex-router` → `diagnosing-bugs` → `tdd` → `code-review` -->
+<!-- Kullanıcı davranışında veya üretim sözleşmesinde ne değişti? -->
 
-## Kırmızı Kanıt
+## Doğrulama
 
-<!-- Değişiklikten önce hatayı/eksik davranışı üreten tek komut ve gözlenen sonucu yazın. -->
-
-## Yeşil Kanıt
-
-<!-- Aynı doğrulamanın ve ilgili ek kapıların başarılı komut/sonuçlarını yazın. -->
+<!-- Çalıştırılan ilgili test, analiz, lint veya build sonuçları. -->
 
 ## Kapsam Dışı
 

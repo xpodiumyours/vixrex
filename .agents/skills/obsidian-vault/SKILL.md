@@ -16,7 +16,6 @@ kalıcı kaynaklar görünür:
 ```text
 VIXREX_RULES.md                    değişmez ürün ve güvenlik kuralları
 AGENTS.md                          tek ajan başlangıcı
-docs/Ajan Calisma Akislari.md      insan için skill rota tablosu
 docs/agents/repository-guide.md    teknik depo haritası
 README.md
 docs/                              şema, kalıcı karar, araştırma ve arşiv
@@ -58,10 +57,4 @@ Bir nota kimlerin bağlandığını bulma:
 
 ```bash
 rg -l "\[\[Not Adi\]\]" -g "*.md"
-```
-
-Başlangıç bağlantıları ve ajan sistemi için proje doktoru:
-
-```bash
-python .github/scripts/verify_agent_system.py
 ```

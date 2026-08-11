@@ -12,11 +12,6 @@
     },
     {
       "type": "file",
-      "title": "Ajan Akışları",
-      "path": "docs/Ajan Calisma Akislari.md"
-    },
-    {
-      "type": "file",
       "title": "Yayın kontrol listesi",
       "path": "docs/yayina-cikis-kontrol-listesi.md"
     }

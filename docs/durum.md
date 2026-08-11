@@ -12,10 +12,9 @@ VixRex, esnafın Flutter panelinden düzenlediği veriyi Supabase’e yazar ve m
 
 - GitHub: [açık issue’lar](https://github.com/xpodiumyours/vixrex/issues)
 - Komut: `gh issue list --state open`
-- İş akışı: [[Ajan Calisma Akislari]]
 - Issue kullanımı: [[issue-tracker]]
 
-Bir issue uygulanırken kapsam, karar, kırmızı/yeşil kanıt, kapsam dışı ve geri dönüş bilgisi issue/PR sözleşmesinde tutulur. Kök dizinde `implementation_plan.md`, `docs/` kökünde aktif `prompt*.md` tutulmaz.
+Bir issue uygulanırken kapsam ve kararlar issue içinde tutulur. Kök dizinde `implementation_plan.md`, `docs/` kökünde aktif `prompt*.md` tutulmaz.
 
 ## Kalıcı kaynaklar
 

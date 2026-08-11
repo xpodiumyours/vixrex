@@ -43,7 +43,7 @@ npx vitest run tests/api/instagram/status.test.ts
 
 ### CI
 
-- `.github/workflows/kalite-kapilari.yml`: her PR'da korunan testler, migration zinciri, ajan sistemi ve PR sözleşmesi.
+- `.github/workflows/kalite-kapilari.yml`: her PR'da korunan testleri, migration zincirini ve CI yüzey sınıflandırma testini çalıştırır.
 - `.github/workflows/ci.yml`: değişen dosyaları sınıflandırır; Flutter, şema ve Next.js full suite'lerini yalnız etkilenen yüzeyde çalıştırır. Bilinmeyen path bütün yüzeyleri açar.
 - `.github/workflows/android-apk.yml`: elle başlatılan analyze/sözleşme testi ve imzalı APK/AAB üretimi. Yeni zorunlu sözleşme testi eklendiğinde bu workflow’un açık test listesi de incelenir.
 - Yerel kanıt görevin kapsamına göre alınır; CI bağımsız son kontroldür.
