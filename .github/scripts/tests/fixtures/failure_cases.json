@@ -39,5 +39,61 @@
       "content": "# İkinci AGENTS\n"
     },
     "expect": "AGENTS"
+  },
+  "missing_risk_class": {
+    "replace": {
+      "path": "docs/Ajan Calisma Akislari.md",
+      "old": "| Zor bug |",
+      "new": "| Kök nedenli hata |"
+    },
+    "expect": "zor bug"
+  },
+  "missing_duplicate_guard": {
+    "replace": {
+      "path": "docs/Ajan Calisma Akislari.md",
+      "old": "Aynı diff üzerinde aynı skill ikinci kez çalışmaz.",
+      "new": "Skill çağrıları kaydedilir."
+    },
+    "expect": "aynı skill ikinci kez çalışmaz"
+  },
+  "missing_session_guard": {
+    "replace": {
+      "path": "docs/Ajan Calisma Akislari.md",
+      "old": "Bir oturum yalnız bir issue/PR üzerinde çalışır.",
+      "new": "Oturum çalışma boyunca açık kalabilir."
+    },
+    "expect": "bir oturum yalnız bir issue/pr üzerinde çalışır"
+  },
+  "missing_test_budget": {
+    "replace": {
+      "path": "docs/Ajan Calisma Akislari.md",
+      "old": "Etkilenen yüzeyin full suite’i en fazla bir kez",
+      "new": "Etkilenen yüzeyin kontrolleri"
+    },
+    "expect": "full suite"
+  },
+  "missing_agents_source": {
+    "replace": {
+      "path": "AGENTS.md",
+      "old": "tek sözleşme kaynağı",
+      "new": "başvuru kaynağı"
+    },
+    "expect": "tek sözleşme kaynağı"
+  },
+  "missing_router_source": {
+    "replace": {
+      "path": ".agents/skills/vixrex-router/SKILL.md",
+      "old": "docs/Ajan Calisma Akislari.md",
+      "new": "docs/baska.md"
+    },
+    "expect": "docs/Ajan Calisma Akislari.md"
+  },
+  "implement_duplicate_guard": {
+    "replace": {
+      "path": ".agents/skills/implement/SKILL.md",
+      "old": "For the same diff, do not call the same skill twice.",
+      "new": "Track completed skills."
+    },
+    "expect": "do not call the same skill twice"
   }
 }
