@@ -15,10 +15,19 @@ import { VITRIN_FIELDS, SECTION_LABELS, SECTION_ORDER } from "@/lib/vitrinFieldS
 // Casper 2026-08-06: "41 alana çıkarmıştık ama asistan hiçbir şeyi
 // düzenleyemiyor gibi görünüyor."
 
-const panel = readFileSync(
-  resolve(__dirname, "../src/app/v/[slug]/OwnerAssistantPanel.tsx"),
-  "utf-8"
-);
+// OwnerAssistantPanel 730→128 satıra bölündü (2026-08-10); "tüm alanlar"
+// listesi artık FieldChipList bileşeninde. Sözleşme aynı kalıyor, yalnız
+// kaynağı iki dosyanın birleşimi — bkz. owner-publish-discard-contract.test.ts
+// ve asistan-ton-contract.test.ts'teki aynı desen.
+const panel =
+  readFileSync(
+    resolve(__dirname, "../src/app/v/[slug]/OwnerAssistantPanel.tsx"),
+    "utf-8"
+  ) +
+  readFileSync(
+    resolve(__dirname, "../src/app/v/[slug]/components/FieldChipList.tsx"),
+    "utf-8"
+  );
 
 describe("Sahip paneli şemadaki her alana ulaştırıyor", () => {
   it("tüm alanlar görünümü var", () => {

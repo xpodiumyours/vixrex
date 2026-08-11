@@ -15,8 +15,50 @@ import { validateField } from "@/lib/vitrinFieldValidation";
 //
 // Alan başına dallanma YOKTUR. Yeni alan eklemek için bu dosya değişmez;
 // yalnız vitrinFieldSchema.ts'e satır eklenir.
+//
+// Başarılı kayıt sonrası Supabase Realtime Broadcast ile `draft:${slug}`
+// kanalına "alan_guncellendi" sinyali gönderilir — diğer açık sekme/uygulama
+// bunu görüp kendi sayfasını tazeler (router.refresh()).
+// Broadcast fire-and-forget: başarısız olursa kayıt yine de geçerlidir.
+//
+// GÜVENLİK: bu kanala sahip oturumu OLMADAN da bağlanılabilir (public
+// anon key yeterli — Supabase Broadcast varsayılan açık kanal). Bu yüzden
+// payload'da alan adı/değeri TAŞINMAZ, yalnız boş bir sinyal gönderilir.
+// Gerçek değer yalnız sahip çerezi sunucuda tekrar doğrulanarak okunur
+// (code-review, 2026-08-10 — ilk sürüm değeri payload'da taşıyordu, taslak
+// verisi yetkisiz herkese sızıyordu).
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Supabase Realtime Broadcast ile taslak değişikliği sinyali gönderir.
+ * Fire-and-forget — yanıtı beklemez, başarısız olursa sessizce geçer.
+ *
+ * Payload alan adı/değeri TAŞIMAZ (bkz. dosya başı güvenlik notu) — yalnız
+ * gönderen sekmenin opak `clientId`'sini taşır, böylece kaydı yapan sekme
+ * kendi yankısını görüp gereksiz yenileme yapmaz.
+ *
+ * Anon istemciyle gönderilir — service-role gerekmez. Bu route'un tek
+ * ayrıcalıklı işlemi RPC üzerinden yapılır, RPC de kendi yetki kontrolünü
+ * kendisi yapar (bkz. dosya başı not); broadcast göndermek satır erişimi
+ * gerektirmediği için anon key yeterli (code-review 2026-08-10 — ilk
+ * sürüm gereksiz yere admin/service-role istemci kullanıyordu).
+ */
+function broadcastTaslakGuncellendi(slug: string, clientId: string | null): void {
+  void (async () => {
+    try {
+      await supabaseAnon()
+        .channel(`draft:${slug}`)
+        .send({
+          type: "broadcast",
+          event: "alan_guncellendi",
+          payload: { clientId },
+        });
+    } catch {
+      // Broadcast başarısız olursa kayıt yine de tamam — sessizce geçer.
+    }
+  })();
+}
 
 const HATA_METNI: Record<string, string> = {
   INVALID_SESSION_TOKEN: "Oturumun geçersiz veya süresi dolmuş. Önizlemeyi tekrar aç.",
@@ -37,7 +79,7 @@ function supabaseAnon() {
 }
 
 export async function POST(request: NextRequest) {
-  let govde: { slug?: unknown; anahtar?: unknown; deger?: unknown };
+  let govde: { slug?: unknown; anahtar?: unknown; deger?: unknown; clientId?: unknown };
   try {
     govde = await request.json();
   } catch {
@@ -46,6 +88,9 @@ export async function POST(request: NextRequest) {
 
   const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
   const anahtar = typeof govde.anahtar === "string" ? govde.anahtar.trim() : "";
+  // Yalnız kendi yankısını atlamak için kullanılan opak bir etiket — yetki
+  // veya kimlik anlamı taşımaz, doğrulanmasına gerek yok.
+  const clientId = typeof govde.clientId === "string" ? govde.clientId : null;
 
   if (!slug || !anahtar) {
     return NextResponse.json({ hata: "Vitrin veya alan belirtilmedi." }, { status: 400 });
@@ -82,6 +127,8 @@ export async function POST(request: NextRequest) {
     const durum = error.message === "INVALID_SESSION_TOKEN" ? 401 : 400;
     return NextResponse.json({ hata: metin }, { status: durum });
   }
+
+  broadcastTaslakGuncellendi(slug, clientId);
 
   return NextResponse.json({
     tamam: true,

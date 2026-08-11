@@ -130,6 +130,12 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
     const PANEL_PATH = resolve(__dirname, "../src/app/v/[slug]/OwnerAssistantPanel.tsx");
     const panelSource = readFileSync(PANEL_PATH, "utf-8");
 
+    const OWNER_DRAFT_HOOK_PATH = resolve(
+      __dirname,
+      "../src/app/v/[slug]/hooks/useOwnerDraft.ts"
+    );
+    const ownerDraftHookSource = readFileSync(OWNER_DRAFT_HOOK_PATH, "utf-8");
+
     it("stores tablosu realtime yayınına eklidir — Flutter'ın UPDATE'i dışarıdan görülebilir", () => {
       expect(realtimeMigrationSource).toContain(
         "alter publication supabase_realtime add table public.stores"
@@ -144,7 +150,10 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
     });
 
     it("OwnerAssistantPanel bu senkronu sahip modunda HER ZAMAN etkin bırakır (etkin=true, koşulsuz)", () => {
-      expect(panelSource).toContain("useCanliVitrinSenkron(slug, true)");
+      expect(panelSource).toContain("useOwnerDraft(slug, draftData)");
+      expect(ownerDraftHookSource).toContain(
+        "useCanliVitrinSenkron(slug, true, true)"
+      );
     });
 
     it("getWorkingDraft önbelleklenmez — her router.refresh() gerçek çakışma durumunu yeniden hesaplar", () => {

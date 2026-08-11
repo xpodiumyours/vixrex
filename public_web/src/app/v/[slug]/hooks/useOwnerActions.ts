@@ -1,0 +1,356 @@
+"use client";
+
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import { resolveVitrinProfile } from "@/lib/vitrinProfile";
+import { taslakClientId } from "@/lib/canliVitrinSenkron";
+import type { VitrinField } from "@/lib/vitrinFieldSchema";
+import type { Mesaj } from "./useOwnerChat";
+
+/** Hangi alan hangi tür hazır görsele karşılık geliyor. */
+const GORSEL_TURU: Record<string, "cover" | "logo_placeholder" | "gallery" | "product"> = {
+  kapakGorseli: "cover",
+  logo: "logo_placeholder",
+  hakkindaGorsel: "gallery",
+  bantGorsel: "product",
+};
+
+export interface HazirGorsel {
+  image_url: string;
+  title?: string | null;
+}
+
+export interface OwnerActionsHook {
+  kaydediliyor: boolean;
+  yayinlaniyor: boolean;
+  silmeOnayi: boolean;
+  hazirGorseller: HazirGorsel[];
+  hazirYukleniyor: boolean;
+  gorselYukle: (dosya: File) => Promise<void>;
+  hazirGorselleriAc: () => Promise<void>;
+  hazirGorselSec: (url: string) => Promise<void>;
+  gonder: () => Promise<void>;
+  yayinla: () => Promise<void>;
+  silmeOnayla: () => void;
+  sil: () => Promise<void>;
+  setSilmeOnayi: (v: boolean) => void;
+}
+
+interface Deps {
+  slug: string;
+  seciliAlan: VitrinField | null;
+  giris: string;
+  yerelTaslak: Record<string, unknown>;
+  mesajEkle: (kimden: Mesaj["kimden"], metin: string) => void;
+  setAlan: (kolon: string, deger: unknown) => void;
+  setSeciliAlan: (alan: VitrinField | null) => void;
+  setGiris: (v: string) => void;
+  vurguyuTemizle: () => void;
+}
+
+export function useOwnerActions({
+  slug,
+  seciliAlan,
+  giris,
+  yerelTaslak,
+  mesajEkle,
+  setAlan,
+  setSeciliAlan,
+  setGiris,
+  vurguyuTemizle,
+}: Deps): OwnerActionsHook {
+  const router = useRouter();
+  const [kaydediliyor, setKaydediliyor] = useState(false);
+  const [yayinlaniyor, setYayinlaniyor] = useState(false);
+  const [silmeOnayi, setSilmeOnayi] = useState(false);
+  const [hazirGorseller, setHazirGorseller] = useState<HazirGorsel[]>([]);
+  const [hazirYukleniyor, setHazirYukleniyor] = useState(false);
+
+  const _setHazirGorseller = useCallback(
+    (g: HazirGorsel[]) => {
+      setHazirGorseller(g);
+    },
+    []
+  );
+
+  // Görsel alanları: URL yazdırmak yerine dosya yükletiyoruz. Esnafın
+  // elinde adres yok, telefonunda fotoğraf var.
+  const gorselYukle = useCallback(
+    async (dosya: File) => {
+      if (!seciliAlan || seciliAlan.tip !== "gorsel") return;
+      const alan = seciliAlan;
+
+      mesajEkle("kullanici", `📷 ${dosya.name}`);
+      setKaydediliyor(true);
+
+      try {
+        const form = new FormData();
+        form.append("slug", slug);
+        form.append("anahtar", alan.anahtar);
+        form.append("dosya", dosya);
+
+        const yukleme = await fetch("/api/owner-upload", {
+          method: "POST",
+          body: form,
+        });
+        const yuklemeGovde = await yukleme.json();
+
+        if (!yukleme.ok) {
+          mesajEkle("asistan", yuklemeGovde?.hata ?? "Görsel yüklenemedi.");
+          return;
+        }
+
+        // Yükleme başarılı — adres NORMAL alan kayıt yolundan geçer. Böylece
+        // doğrulama ve yetki kontrolü tek yerde kalır, ikinci kayıt yolu açılmaz.
+        const kayit = await fetch("/api/owner-draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            anahtar: alan.anahtar,
+            deger: yuklemeGovde.url,
+            clientId: taslakClientId(),
+          }),
+        });
+        const kayitGovde = await kayit.json();
+
+        if (!kayit.ok) {
+          mesajEkle("asistan", kayitGovde?.hata ?? "Görsel kaydedilemedi.");
+          return;
+        }
+
+        mesajEkle("asistan", `${alan.etiket} güncellendi.`);
+        setSeciliAlan(null);
+        vurguyuTemizle();
+        setAlan(alan.kolon, yuklemeGovde.url as unknown);
+      } catch {
+        mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+      } finally {
+        setKaydediliyor(false);
+      }
+    },
+    [seciliAlan, slug, mesajEkle, setAlan, setSeciliAlan, vurguyuTemizle]
+  );
+
+  // Kategorinin hazır görsellerini getirir. Kategori anahtarı
+  // vitrinProfile'dan çözülür — veritabanındaki category_key ile birebir
+  // aynı (butik, kuafor, kafe_lokanta ...). 19 kategori × 10 görsel.
+  const hazirGorselleriAc = useCallback(async () => {
+    if (!seciliAlan || seciliAlan.tip !== "gorsel") return;
+
+    if (hazirGorseller.length > 0) {
+      _setHazirGorseller([]); // ikinci tıklamada kapanır
+      return;
+    }
+
+    setHazirYukleniyor(true);
+    try {
+      const profil = resolveVitrinProfile(
+        (yerelTaslak.kategori as string) ?? null,
+        (yerelTaslak.business_type as string) ?? null
+      );
+      const yanit = await fetch(
+        `/api/category-images?category=${encodeURIComponent(profil.id)}`
+      );
+      const govde = await yanit.json();
+
+      const tur = GORSEL_TURU[seciliAlan.anahtar] ?? "gallery";
+      const liste: HazirGorsel[] = govde?.images?.[tur] ?? [];
+
+      if (liste.length === 0) {
+        mesajEkle(
+          "asistan",
+          `${profil.label} kategorisi için hazır görsel bulunamadı. Kendi fotoğrafını yükleyebilirsin.`
+        );
+        return;
+      }
+      _setHazirGorseller(liste);
+    } catch {
+      mesajEkle("asistan", "Hazır görseller getirilemedi. Tekrar dene.");
+    } finally {
+      setHazirYukleniyor(false);
+    }
+  }, [seciliAlan, hazirGorseller.length, yerelTaslak, mesajEkle, _setHazirGorseller]);
+
+  // Seçilen hazır görsel NORMAL alan kayıt yolundan geçer — yükleme
+  // yolundan değil. Doğrulama ve yetki tek yerde kalır.
+  const hazirGorselSec = useCallback(
+    async (url: string) => {
+      if (!seciliAlan) return;
+      const alan = seciliAlan;
+
+      mesajEkle("kullanici", "🖼️ hazır görsel seçildi");
+      setKaydediliyor(true);
+      try {
+        const yanit = await fetch("/api/owner-draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            anahtar: alan.anahtar,
+            deger: url,
+            clientId: taslakClientId(),
+          }),
+        });
+        const govde = await yanit.json();
+
+        if (!yanit.ok) {
+          mesajEkle("asistan", govde?.hata ?? "Görsel kaydedilemedi.");
+          return;
+        }
+
+        mesajEkle("asistan", `${alan.etiket} güncellendi.`);
+        _setHazirGorseller([]);
+        setSeciliAlan(null);
+        vurguyuTemizle();
+        setAlan(alan.kolon, url);
+      } catch {
+        mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+      } finally {
+        setKaydediliyor(false);
+      }
+    },
+    [seciliAlan, slug, mesajEkle, setAlan, setSeciliAlan, vurguyuTemizle, _setHazirGorseller]
+  );
+
+  const gonder = useCallback(async () => {
+    const metin = giris.trim();
+
+    if (!seciliAlan) {
+      // Anlamadığımızı dürüstçe söyleriz.
+      if (metin) mesajEkle("kullanici", metin);
+      mesajEkle(
+        "asistan",
+        "Hangi alanı değiştireceğini bilmiyorum. Vitrinde düzenlemek istediğin yazıya tıkla, sonra yeni değeri yaz."
+      );
+      setGiris("");
+      return;
+    }
+
+    const alan = seciliAlan;
+    const gonderilecek: string | boolean =
+      alan.tip === "acikKapali"
+        ? ["evet", "aç", "açık", "göster", "true"].includes(metin.toLowerCase())
+        : metin;
+
+    mesajEkle("kullanici", metin || "(boş bırak)");
+    setKaydediliyor(true);
+
+    try {
+      const yanit = await fetch("/api/owner-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          anahtar: alan.anahtar,
+          deger: gonderilecek,
+          clientId: taslakClientId(),
+        }),
+      });
+      const govde = await yanit.json();
+
+      if (!yanit.ok) {
+        mesajEkle("asistan", govde?.hata ?? "Kaydedilemedi.");
+        return;
+      }
+
+      mesajEkle(
+        "asistan",
+        `${alan.etiket} güncellendi. Müşteriler yayınlayana kadar göremez.`
+      );
+      setGiris("");
+      setSeciliAlan(null);
+      vurguyuTemizle();
+      setAlan(alan.kolon, gonderilecek);
+    } catch {
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+    } finally {
+      setKaydediliyor(false);
+    }
+  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setSeciliAlan, setGiris, vurguyuTemizle]);
+
+  const yayinla = useCallback(async () => {
+    mesajEkle("kullanici", "Yayınla");
+    setYayinlaniyor(true);
+
+    try {
+      const yanit = await fetch("/api/owner-publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const govde = await yanit.json();
+
+      if (!yanit.ok) {
+        // Sunucunun mesajı OLDUĞU GİBİ gösterilir; kendi metnimiz uydurulmaz.
+        mesajEkle("asistan", govde?.hata ?? "Yayınlanamadı. Lütfen tekrar dene.");
+        return;
+      }
+
+      mesajEkle(
+        "asistan",
+        "Vitrinin yayınlandı. Müşterilerin artık yeni hâlini görüyor."
+      );
+      router.refresh();
+    } catch {
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+    } finally {
+      setYayinlaniyor(false);
+    }
+  }, [slug, mesajEkle, router]);
+
+  // "Değişiklikleri bırak" TEK TIKLA silmez: önce onay istenir.
+  // Bu düğme kullanıcının saatlerce yaptığı işi silebilir.
+  const silmeOnayla = useCallback(() => {
+    mesajEkle(
+      "asistan",
+      "Yaptığın tüm değişiklikler silinecek ve vitrin son yayınlanan hâline dönecek. Emin misin?"
+    );
+    setSilmeOnayi(true);
+  }, [mesajEkle]);
+
+  const sil = useCallback(async () => {
+    setYayinlaniyor(true);
+
+    try {
+      const yanit = await fetch("/api/owner-discard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const govde = await yanit.json();
+
+      if (!yanit.ok) {
+        mesajEkle("asistan", govde?.hata ?? "Değişiklikler geri alınamadı.");
+        return;
+      }
+
+      setSilmeOnayi(false);
+      mesajEkle(
+        "asistan",
+        "Değişiklikler silindi. Vitrin son yayınlanan hâlinde."
+      );
+      router.refresh();
+    } catch {
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+    } finally {
+      setYayinlaniyor(false);
+    }
+  }, [slug, mesajEkle, router]);
+
+  return {
+    kaydediliyor,
+    yayinlaniyor,
+    silmeOnayi,
+    hazirGorseller,
+    hazirYukleniyor,
+    gorselYukle,
+    hazirGorselleriAc,
+    hazirGorselSec,
+    gonder,
+    yayinla,
+    silmeOnayla,
+    sil,
+    setSilmeOnayi,
+  };
+}

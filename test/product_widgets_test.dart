@@ -85,7 +85,7 @@ void main() {
             storeId: 'test-store',
             editToken: 'test-edit-token',
             showMessage: (_) {},
-            onCatalogChanged: (_, __) async {},
+            onCatalogChanged: (_, __) async => true,
             onProductDelete: (_) async => true,
             onOcrTap: () {},
           ),
