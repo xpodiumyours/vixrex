@@ -1,0 +1,5 @@
+{
+  "pull_request": {
+    "body": "## Bağlı Issue\n\nFixes #118\n\n## Kullanılan Skill Akışı\n\n`vixrex-router` → `supabase-güvenlik` → `uygulama-önce`\n\n## Kırmızı Kanıt\n\n`public_web/tests/assistant-continuity-baseline.test.ts` mevcut eksikliği açık `it.todo` olarak kilitliyor: sürümlü handoff state henüz yoktu.\n\n## Yeşil Kanıt\n\n`public_web/tests/assistant-handoff-core-contract.test.ts` geçti.\n\n## Kapsam Dışı\n\nFlutter entegrasyonu kapsam dışı.\n\n## Geri Dönüş\n\nCommit revert edilir."
+  }
+}
