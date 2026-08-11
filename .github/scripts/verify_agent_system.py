@@ -46,13 +46,16 @@ WIKILINK_PATTERN = re.compile(r"\[\[([^\]|#]+)")
 SKILL_PATTERN = re.compile(r"`([a-z0-9][a-z0-9-]*)`")
 
 LOW_CREDIT_RISK_LABELS = ("hafif", "normal", "zor bug", "yüksek risk")
-LOW_CREDIT_SHARED_TOKENS = (
+LOW_CREDIT_ROUTE_TOKENS = (
     "yüksek risk kazanır",
     "aynı skill ikinci kez çalışmaz",
     "bir oturum yalnız bir issue/pr üzerinde çalışır",
+    "etkilenen yüzeyin full suite’i en fazla bir kez",
 )
-
-
+LOW_CREDIT_SOURCE_TOKENS = (
+    "docs/Ajan Calisma Akislari.md",
+    "tek sözleşme kaynağı",
+)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -197,35 +200,26 @@ def verify_low_credit_contract(root: Path, errors: list[str]) -> None:
         "implement/SKILL.md",
     )
 
+    if routes:
+        require_contract_tokens(
+            routes,
+            LOW_CREDIT_RISK_LABELS + LOW_CREDIT_ROUTE_TOKENS,
+            errors,
+            "docs/Ajan Calisma Akislari.md",
+        )
+
     for label, source in (
         ("AGENTS.md", agents),
         ("vixrex-router/SKILL.md", router),
-        ("docs/Ajan Calisma Akislari.md", routes),
     ):
-        if source:
-            require_contract_tokens(source, LOW_CREDIT_RISK_LABELS, errors, label)
+        if not source:
+            continue
+        require_contract_tokens(source, LOW_CREDIT_SOURCE_TOKENS, errors, label)
+        if ROUTE_SECTION.casefold() in source.casefold():
+            errors.append(f"{label} rota tablosunu kopyalıyor; tek kaynak docs/Ajan Calisma Akislari.md")
 
-    for label, source in (
-        ("vixrex-router/SKILL.md", router),
-        ("docs/Ajan Calisma Akislari.md", routes),
-    ):
-        if source:
-            require_contract_tokens(source, LOW_CREDIT_SHARED_TOKENS, errors, label)
-
-    if agents:
-        require_contract_tokens(
-            agents,
-            (
-                "yüksek risk kazanır",
-                "aynı skill ikinci kez çalışmaz",
-                "bir oturum yalnız bir issue/pr üzerinde çalışır",
-                "etkilenen yüzeyin full suite’i en fazla bir kez",
-            ),
-            errors,
-            "AGENTS.md",
-        )
-        if "commit önerilmeden önce | `code-review`" in agents.casefold():
-            errors.append("AGENTS.md her commit için koşulsuz code-review zorluyor")
+    if agents and "commit önerilmeden önce | `code-review`" in agents.casefold():
+        errors.append("AGENTS.md her commit için koşulsuz code-review zorluyor")
 
     if implement:
         require_contract_tokens(
@@ -239,7 +233,6 @@ def verify_low_credit_contract(root: Path, errors: list[str]) -> None:
             errors,
             "implement/SKILL.md",
         )
-
 
 def verify_explicit_only_skills(root: Path, errors: list[str]) -> None:
     for name in EXPLICIT_ONLY_SKILLS:
