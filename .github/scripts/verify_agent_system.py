@@ -41,7 +41,7 @@ REQUIRED_GITHUB_LABELS = (
     "wayfinder:task",
 )
 
-ROUTE_SECTION = "## Duruma göre rota"
+ROUTE_SECTION = "## Değişiklik riskine göre rota"
 WIKILINK_PATTERN = re.compile(r"\[\[([^\]|#]+)")
 SKILL_PATTERN = re.compile(r"`([a-z0-9][a-z0-9-]*)`")
 
@@ -146,10 +146,7 @@ def route_skill_names(route_doc: str) -> set[str]:
     for line in section.splitlines():
         if not line.lstrip().startswith("|"):
             continue
-        columns = line.split("|")
-        if len(columns) < 4:
-            continue
-        names.update(SKILL_PATTERN.findall(columns[2]))
+        names.update(SKILL_PATTERN.findall(line))
     return names
 
 
