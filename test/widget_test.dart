@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/main.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/models/assistant_handoff.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/home_shell_screen.dart';
 import 'package:vixrex/screens/landing_screen.dart';
@@ -16,6 +18,32 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/widgets/landing/landing_template_catalog.dart';
+
+class HandoffCapturingController extends StoreEditorController {
+  HandoffCapturingController({required StoreData data})
+    : super(initialData: data);
+
+  AssistantHandoffV1? capturedHandoff;
+
+  @override
+  PublishedVitrinInfo? get publishedInfo => const PublishedVitrinInfo(
+    slug: 'kayitli-vitrin',
+    publicLink: 'https://vixrex-public.vercel.app/v/kayitli-vitrin',
+    name: 'Kayıtlı Vitrin',
+    editToken: 'test-edit-token',
+  );
+
+  @override
+  Future<OwnerPreviewLink> openOwnerPreview({
+    AssistantHandoffV1? assistantHandoff,
+  }) async {
+    capturedHandoff = assistantHandoff;
+    return const OwnerPreviewLink(
+      'https://vixrex-public.vercel.app/api/owner-session'
+      '?slug=kayitli-vitrin&ocode=test-code',
+    );
+  }
+}
 
 void main() {
   setUp(() async {
@@ -154,6 +182,64 @@ void main() {
     // içindeki sohbet taşıyor. Gerçek cihazda yok — 2026-08-07'de
     // telefonda ekran görüntüsüyle doğrulandı.
     tester.takeException();
+  });
+
+  testWidgets('Vitrinini aç tamamlanan onboarding özetini CORE\'a devreder', (
+    WidgetTester tester,
+  ) async {
+    final data = StoreData(
+      name: 'Kayıtlı Vitrin',
+      kategori: 'Kuaför',
+      whatsapp: '905551234567',
+      address: 'Moda Caddesi 1',
+      provinceName: 'İstanbul',
+      districtName: 'Kadıköy',
+      privacyNoticeAcknowledged: true,
+      privacyNoticeVersion: 'privacy-v1',
+      termsAccepted: true,
+      termsVersion: 'terms-v1',
+      publicationConsentAccepted: true,
+      publicationConsentVersion: 'consent-v1',
+    );
+    SharedPreferences.setMockInitialValues({
+      LocalStorageKeys.vitrinData: jsonEncode(data.toJson()),
+    });
+    StoreLocalStorageService.resetCache();
+    final controller = HandoffCapturingController(data: data);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: VixRexOnboardingChatScreen(
+          editorController: controller,
+          editorInitialization: Future<void>.value(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('Vitrinini aç'));
+    await tester.pump();
+
+    final handoff = controller.capturedHandoff;
+    expect(handoff, isNotNull);
+    expect(handoff!.completedSteps, [
+      AssistantHandoffStep.name,
+      AssistantHandoffStep.category,
+      AssistantHandoffStep.whatsapp,
+      AssistantHandoffStep.location,
+      AssistantHandoffStep.legal,
+      AssistantHandoffStep.publishing,
+    ]);
+    expect(handoff.nextStep, AssistantHandoffStep.done);
+    expect(handoff.messages, isNotEmpty);
+    expect(handoff.messages, hasLength(lessThanOrEqualTo(6)));
+    expect(
+      handoff.messages.any(
+        (message) => message.text.contains('kaldığın yerden'),
+      ),
+      isTrue,
+    );
   });
 
   testWidgets('Geçersiz route karşılama ekranına düşer', (
