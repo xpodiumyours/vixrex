@@ -81,7 +81,6 @@ interface PublicStoreRow {
   status: string | null;
   marketplace_links: unknown;
   gallery_items: unknown;
-  products: unknown;
   faq_items: unknown;
   about_kicker: string | null;
   about_title: string | null;
@@ -153,7 +152,7 @@ interface CategoryRow {
 const PUBLIC_STORE_SELECT =
   "id,slug,name,business_type,description,corporate_bio,whatsapp,phone,email," +
   "hero_badge,instagram,website,address,status,marketplace_links,gallery_items," +
-  "products,faq_items,about_kicker,about_title,about_image_url,about_image_caption," +
+  "faq_items,about_kicker,about_title,about_image_url,about_image_caption," +
   "about_values,gallery_section_kicker,gallery_section_title," +
   "show_storefront_rating,show_directions_link,references_link,shelf_image_url," +
   "logo_url,working_hours,is_published,is_demo,kategori,latitude,longitude," +
