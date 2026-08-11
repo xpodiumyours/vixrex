@@ -141,8 +141,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final chatbotService = ChatbotService();
     final history = await chatbotService.loadHistory();
     final hasShared = await chatbotService.hasSharedVitrin();
-    final dismissedRecommendationId = await chatbotService
-        .loadDismissedRecommendationId();
+    final dismissedRecommendationId =
+        await chatbotService.loadDismissedRecommendationId();
 
     if (mounted) {
       setState(() {
@@ -203,9 +203,10 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final link = PublicSiteConfig.repairPublicLink(raw);
 
     final snapshot = _vixrexSnapshot;
-    final message = snapshot == null
-        ? 'Merhaba! Dijital vitrinimi incelemek için bağlantıyı kullanabilirsiniz: $link'
-        : VixRexPromotionService.draftsFor(snapshot)[1].text;
+    final message =
+        snapshot == null
+            ? 'Merhaba! Dijital vitrinimi incelemek için bağlantıyı kullanabilirsiniz: $link'
+            : VixRexPromotionService.draftsFor(snapshot)[1].text;
     await _vixrexSharePromotionText(message);
   }
 
@@ -302,8 +303,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors
-                        .white, // Keep QR white background for scan reliability
+                    color:
+                        Colors
+                            .white, // Keep QR white background for scan reliability
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -905,9 +907,8 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Material(
-        color: isSelected
-            ? AppColors.primary.withAlpha(15)
-            : Colors.transparent,
+        color:
+            isSelected ? AppColors.primary.withAlpha(15) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: onTap,
@@ -926,13 +927,11 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                   child: Text(
                     item.label,
                     style: TextStyle(
-                      color: isSelected
-                          ? AppColors.darkText
-                          : AppColors.mutedText,
+                      color:
+                          isSelected ? AppColors.darkText : AppColors.mutedText,
                       fontSize: 13,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ),
