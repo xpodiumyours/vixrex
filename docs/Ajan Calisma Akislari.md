@@ -1,6 +1,6 @@
 # VixRex ajan çalışma akışları
 
-Bu sayfa, insanın göreceği tek skill rota tablosudur. Ajanların zorunlu başlangıcı `AGENTS.md`, makine tarafından kullanılan salt-okunur yönlendirici `.agents/skills/vixrex-router/SKILL.md` dosyasıdır.
+Bu sayfa risk sınıfları, skill zincirleri, tekrar, oturum/PR kuralları ve test bütçesinin tek sözleşme kaynağıdır. Ajanların zorunlu başlangıcı `AGENTS.md`, salt-okunur yönlendirici `.agents/skills/vixrex-router/SKILL.md` dosyasıdır.
 
 ## Her görevde ortak başlangıç
 
