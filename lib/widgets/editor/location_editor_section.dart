@@ -44,6 +44,20 @@ class LocationEditorSection extends StatefulWidget {
   onLocationUpdated;
   final void Function(bool locating) onLocatingStateChanged;
 
+  /// Hero konum metni ve harita kartı etiketi — vitrin GÖRÜNÜMÜNÜ
+  /// inceltmek için manuel panelde eklenen ileri seviye alanlardır
+  /// (PR #70, 2026-08-09). Zorunlu değildir, boş kalırsa vitrin normal
+  /// adresi kullanır.
+  ///
+  /// NEDEN BURADA: Vixrex Asistan'ın kurulum sohbeti de bu bileşeni
+  /// (`FormLocationInfo` üzerinden) paylaşıyor. PR #70 bu iki alanı
+  /// eklediğinde asistan tarafı ayrıştırılmamıştı — esnaf konuşmayla
+  /// kurulum yaparken de bu ileri seviye alanları görmeye başladı; asıl
+  /// "adres" sorusunun yanına konuşmanın kapsamı dışında iki soru daha
+  /// eklenmiş oldu (2026-08-12 bulgusu). Asistan bu alanı `false`
+  /// vererek gizler; manuel panel varsayılan `true` ile aynı kalır.
+  final bool showAdvancedFields;
+
   const LocationEditorSection({
     super.key,
     required this.selectedProvinceCode,
@@ -68,6 +82,7 @@ class LocationEditorSection extends StatefulWidget {
     required this.onMapLabelChanged,
     required this.onLocationUpdated,
     required this.onLocatingStateChanged,
+    this.showAdvancedFields = true,
   });
 
   @override
@@ -594,24 +609,26 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
             ],
           ),
         ],
-        const SizedBox(height: 16),
-        EditorTextField(
-          label: 'Hero Konum Metni',
-          controller: widget.heroLocationTextController,
-          hint: 'Örn: Kadıköy, İstanbul',
-          icon: Icons.place_outlined,
-          maxLength: 60,
-          onChanged: widget.onHeroLocationTextChanged,
-        ),
-        const SizedBox(height: 12),
-        EditorTextField(
-          label: 'Harita Kartı Etiketi',
-          controller: widget.mapLabelController,
-          hint: 'Örn: Atatürk Cad. No:24',
-          icon: Icons.map_outlined,
-          maxLength: 120,
-          onChanged: widget.onMapLabelChanged,
-        ),
+        if (widget.showAdvancedFields) ...[
+          const SizedBox(height: 16),
+          EditorTextField(
+            label: 'Hero Konum Metni',
+            controller: widget.heroLocationTextController,
+            hint: 'Örn: Kadıköy, İstanbul',
+            icon: Icons.place_outlined,
+            maxLength: 60,
+            onChanged: widget.onHeroLocationTextChanged,
+          ),
+          const SizedBox(height: 12),
+          EditorTextField(
+            label: 'Harita Kartı Etiketi',
+            controller: widget.mapLabelController,
+            hint: 'Örn: Atatürk Cad. No:24',
+            icon: Icons.map_outlined,
+            maxLength: 120,
+            onChanged: widget.onMapLabelChanged,
+          ),
+        ],
       ],
     );
   }

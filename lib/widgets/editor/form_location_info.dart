@@ -10,6 +10,11 @@ class FormLocationInfo extends StatelessWidget {
   final TextEditingController heroLocationTextController;
   final TextEditingController mapLabelController;
 
+  /// bkz. [LocationEditorSection.showAdvancedFields] — asistan sohbeti
+  /// bunu `false` vererek Hero Konum Metni / Harita Kartı Etiketi
+  /// alanlarını gizler, manuel panel varsayılanı korur.
+  final bool showAdvancedFields;
+
   const FormLocationInfo({
     super.key,
     required this.controller,
@@ -17,6 +22,7 @@ class FormLocationInfo extends StatelessWidget {
     required this.addressController,
     required this.heroLocationTextController,
     required this.mapLabelController,
+    this.showAdvancedFields = true,
   });
 
   @override
@@ -34,6 +40,7 @@ class FormLocationInfo extends StatelessWidget {
         addressController: addressController,
         heroLocationTextController: heroLocationTextController,
         mapLabelController: mapLabelController,
+        showAdvancedFields: showAdvancedFields,
         latitude: controller.latitude,
         longitude: controller.longitude,
         locationAccuracyMeters: controller.locationAccuracyMeters,
