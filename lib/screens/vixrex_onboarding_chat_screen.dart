@@ -464,6 +464,22 @@ class _VixRexOnboardingChatScreenState
         return;
       }
       _publicLink = link.trim();
+
+      // Konuşma geçmişini HEMEN kalıcı depoya yaz — bekletilmez.
+      //
+      // NEDEN BURADA (2026-08-12 bulgusu): _controller.publish() az önce
+      // notifyListeners() çağırdı (store_editor_controller.dart). Aynı
+      // controller'ı dinleyen HomeShellScreen bunu duyup snapshot'ı
+      // yeniden yüklüyor; "yayınlandı" görünce bu ekranı (embeddedInShell)
+      // farklı bir widget'a (VixRexCompanionChat) devrediyor — kullanıcı
+      // "Vitrinini aç" düğmesine hiç basmadan. Geçmiş yazma işi eskiden
+      // yalnız o düğmeye (_navigateAfterHandoff) bağlıydı; ekran devri
+      // ondan önce gerçekleşince konuşma hiç kaydedilmeden kayboluyordu.
+      // Artık hangi düğmeye basılırsa basılsın (veya hiç basılmasa da)
+      // geçmiş güvenceye alınmış oluyor.
+      await _handoffTranscriptToRehber();
+      if (!mounted) return;
+
       setState(() {
         _busy = false;
         _step = _OnboardingStep.done;
