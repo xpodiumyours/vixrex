@@ -240,6 +240,7 @@ void main() {
       ),
       isTrue,
     );
+
   });
 
   testWidgets('Geçersiz route karşılama ekranına düşer', (

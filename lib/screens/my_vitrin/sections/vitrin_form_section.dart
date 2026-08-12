@@ -23,6 +23,7 @@ import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/utils/gallery_image_file_validator.dart';
 import 'package:vixrex/widgets/auto_fill/category_gallery_sheet.dart';
+import 'package:vixrex/widgets/editor/advanced_location_fields.dart';
 import 'package:vixrex/widgets/editor/common_form_fields.dart';
 import 'package:vixrex/widgets/editor/gallery_editor_section.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
@@ -1074,12 +1075,21 @@ class VitrinFormSection extends StatelessWidget {
   }
 
   Widget _buildLocationSection() {
-    return FormLocationInfo(
-      controller: controller,
-      state: state,
-      addressController: _address,
-      heroLocationTextController: _heroLocationText,
-      mapLabelController: _mapLabel,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FormLocationInfo(
+          controller: controller,
+          state: state,
+          addressController: _address,
+        ),
+        const SizedBox(height: 16),
+        AdvancedLocationFields(
+          controller: controller,
+          heroLocationTextController: _heroLocationText,
+          mapLabelController: _mapLabel,
+        ),
+      ],
     );
   }
 
