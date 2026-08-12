@@ -45,12 +45,14 @@ class FormLocationInfo extends StatelessWidget {
       locationAccuracyMeters: controller.locationAccuracyMeters,
       locationStatusMessage: controller.locationStatusMessage,
       isLocating: controller.isLocating,
-      onProvinceChanged: (code, name) =>
-          controller.selectProvince(controller.data, code, name),
-      onDistrictChanged: (code, name) =>
-          controller.selectDistrict(controller.data, code, name),
-      onAddressChanged: (value) =>
-          controller.updateAddress(controller.data, value),
+      onProvinceChanged:
+          (code, name) =>
+              controller.selectProvince(controller.data, code, name),
+      onDistrictChanged:
+          (code, name) =>
+              controller.selectDistrict(controller.data, code, name),
+      onAddressChanged:
+          (value) => controller.updateAddress(controller.data, value),
       onLocatingStateChanged: (_) {},
       onLocationUpdated: ({
         latitude,
@@ -90,10 +92,11 @@ class FormLocationInfo extends StatelessWidget {
             AdvancedLocationFields(
               heroLocationTextController: heroLocationTextController,
               mapLabelController: mapLabelController,
-              onHeroLocationTextChanged: (value) =>
-                  controller.updateHeroLocationText(controller.data, value),
-              onMapLabelChanged: (value) =>
-                  controller.updateMapLabel(controller.data, value),
+              onHeroLocationTextChanged:
+                  (value) =>
+                      controller.updateHeroLocationText(controller.data, value),
+              onMapLabelChanged:
+                  (value) => controller.updateMapLabel(controller.data, value),
             ),
           ],
         ],
