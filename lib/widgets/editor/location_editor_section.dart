@@ -3,7 +3,6 @@ import 'package:vixrex/config/turkey_cities_config.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/utils/text_utils.dart';
-import 'package:vixrex/widgets/editor/common_form_fields.dart';
 
 class LocationEditorSection extends StatefulWidget {
   final String? selectedProvinceCode;
@@ -14,8 +13,6 @@ class LocationEditorSection extends StatefulWidget {
   final String? districtError;
   final String? addressError;
   final TextEditingController addressController;
-  final TextEditingController heroLocationTextController;
-  final TextEditingController mapLabelController;
 
   final double? latitude;
   final double? longitude;
@@ -28,8 +25,6 @@ class LocationEditorSection extends StatefulWidget {
   final void Function(String? districtCode, String? districtName)
   onDistrictChanged;
   final void Function(String address) onAddressChanged;
-  final ValueChanged<String> onHeroLocationTextChanged;
-  final ValueChanged<String> onMapLabelChanged;
   final void Function({
     double? latitude,
     double? longitude,
@@ -44,6 +39,9 @@ class LocationEditorSection extends StatefulWidget {
   onLocationUpdated;
   final void Function(bool locating) onLocatingStateChanged;
 
+  /// Yalnız il/ilçe/adres/GPS bilir — hero konum metni ve harita kartı
+  /// etiketi ayrı sahip modülde (`AdvancedLocationFields`, 2026-08-12
+  /// mimari ayrıştırması). Bu bileşen o alanların varlığından habersiz.
   const LocationEditorSection({
     super.key,
     required this.selectedProvinceCode,
@@ -54,8 +52,6 @@ class LocationEditorSection extends StatefulWidget {
     required this.districtError,
     required this.addressError,
     required this.addressController,
-    required this.heroLocationTextController,
-    required this.mapLabelController,
     required this.latitude,
     required this.longitude,
     required this.locationAccuracyMeters,
@@ -64,8 +60,6 @@ class LocationEditorSection extends StatefulWidget {
     required this.onProvinceChanged,
     required this.onDistrictChanged,
     required this.onAddressChanged,
-    required this.onHeroLocationTextChanged,
-    required this.onMapLabelChanged,
     required this.onLocationUpdated,
     required this.onLocatingStateChanged,
   });
@@ -594,24 +588,6 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
             ],
           ),
         ],
-        const SizedBox(height: 16),
-        EditorTextField(
-          label: 'Hero Konum Metni',
-          controller: widget.heroLocationTextController,
-          hint: 'Örn: Kadıköy, İstanbul',
-          icon: Icons.place_outlined,
-          maxLength: 60,
-          onChanged: widget.onHeroLocationTextChanged,
-        ),
-        const SizedBox(height: 12),
-        EditorTextField(
-          label: 'Harita Kartı Etiketi',
-          controller: widget.mapLabelController,
-          hint: 'Örn: Atatürk Cad. No:24',
-          icon: Icons.map_outlined,
-          maxLength: 120,
-          onChanged: widget.onMapLabelChanged,
-        ),
       ],
     );
   }

@@ -80,7 +80,6 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
     const Color bgColor = AppColors.bgEditor;
     const Color cardBorder = AppColors.cardBorderDark;
     const Color inputBg = AppColors.inputBg;
-    const Color darkText = AppColors.darkText;
 
     final isEdit = widget.initialArticle != null;
 
@@ -91,14 +90,10 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
           backgroundColor: bgColor,
           appBar: AppBar(
             backgroundColor: Colors.white,
-            title: Text(
-              isEdit ? 'Yazıyı Düzenle' : 'Yeni Blog Yazısı',
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                color: darkText,
-                fontSize: 18,
-              ),
-            ),
+            // Stil artık appBarTheme.titleTextStyle'dan geliyor (main.dart)
+            // — burada birebir aynısı tekrar yazılmıyordu (2026-08-08 UI
+            // tutarlılık bulgusu).
+            title: Text(isEdit ? 'Yazıyı Düzenle' : 'Yeni Blog Yazısı'),
             centerTitle: false,
             actions: [
               if (_controller.isSaving)

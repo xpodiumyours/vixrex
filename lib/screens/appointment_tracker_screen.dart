@@ -120,14 +120,10 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
     return Scaffold(
       backgroundColor: AppColors.bgEditor,
       appBar: AppBar(
-        title: const Text(
-          'Randevu Takip',
-          style: TextStyle(
-            color: AppColors.darkText,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
-          ),
-        ),
+        // Stil artık appBarTheme.titleTextStyle'dan geliyor (main.dart) —
+        // burada birebir aynısı tekrar yazılmıyordu (2026-08-08 UI
+        // tutarlılık bulgusu).
+        title: const Text('Randevu Takip'),
         backgroundColor: Colors.white,
         elevation: 0.5,
         centerTitle: true,
