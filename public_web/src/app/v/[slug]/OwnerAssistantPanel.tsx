@@ -10,6 +10,7 @@ import { FieldChipList } from "./components/FieldChipList";
 import { FieldInputArea } from "./components/FieldInputArea";
 import { PublishBar } from "./components/PublishBar";
 import { VixrexAvatar } from "./components/VixrexAvatar";
+import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9).
 //
@@ -25,13 +26,18 @@ import { VixrexAvatar } from "./components/VixrexAvatar";
 interface Props {
   slug: string;
   draftData: Record<string, unknown>;
+  assistantHandoff?: AssistantHandoffV1 | null;
 }
 
-export default function OwnerAssistantPanel({ slug, draftData }: Props) {
+export default function OwnerAssistantPanel({
+  slug,
+  draftData,
+  assistantHandoff,
+}: Props) {
   const [acik, setAcik] = useState(false);
 
   const { yerelTaslak, setAlan, rapor } = useOwnerDraft(slug, draftData);
-  const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor);
+  const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff);
 
   const { seciliAlan, giris, girisRef, setGiris, setSeciliAlan, alanSec, vurguyuTemizle } =
     useFieldSelection({
