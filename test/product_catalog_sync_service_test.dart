@@ -173,20 +173,23 @@ void main() {
       expect(repo.remote.any((p) => p.id == remoteId), isTrue);
     });
 
-    test('boş isimli satırı atlar ama sortOrder ilerlemeye devam eder', () async {
-      final result = await service.syncCatalog(
-        storeId: storeId,
-        editToken: editToken,
-        products: [
-          Product(id: 'local-1', name: '   '),
-          Product(id: 'local-2', name: 'Gerçek Ürün'),
-        ],
-      );
+    test(
+      'boş isimli satırı atlar ama sortOrder ilerlemeye devam eder',
+      () async {
+        final result = await service.syncCatalog(
+          storeId: storeId,
+          editToken: editToken,
+          products: [
+            Product(id: 'local-1', name: '   '),
+            Product(id: 'local-2', name: 'Gerçek Ürün'),
+          ],
+        );
 
-      expect(result.isSuccess, isTrue);
-      expect(result.data!.length, 1);
-      expect(result.data!.single.name, 'Gerçek Ürün');
-    });
+        expect(result.isSuccess, isTrue);
+        expect(result.data!.length, 1);
+        expect(result.data!.single.name, 'Gerçek Ürün');
+      },
+    );
 
     test('Atmosfer alanlarını (fiyat/eski fiyat/rozet/bölge) iletir', () async {
       final result = await service.syncCatalog(

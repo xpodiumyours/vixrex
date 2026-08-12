@@ -158,9 +158,7 @@ class ProductCatalogSyncService {
         result.data!.id.trim().isEmpty ||
         result.data!.slug.trim().isEmpty) {
       return Result.failure(
-        Failure(
-          result.failure?.message ?? 'Ürün müşteri vitrine yazılamadı.',
-        ),
+        Failure(result.failure?.message ?? 'Ürün müşteri vitrine yazılamadı.'),
       );
     }
     product.id = result.data!.id;
