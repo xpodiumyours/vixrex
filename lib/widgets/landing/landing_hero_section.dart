@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/models/landing_demo_profile.dart';
 import 'package:vixrex/services/auth_service.dart';
@@ -21,6 +22,8 @@ class LandingHeroSection extends StatelessWidget {
   final VoidCallback onStateChanged;
   final bool isMockupChatOpen;
   final VoidCallback onCloseMockupChat;
+  final StoreEditorController editorController;
+  final Future<void> editorInitialization;
 
   const LandingHeroSection({
     super.key,
@@ -37,6 +40,8 @@ class LandingHeroSection extends StatelessWidget {
     required this.onStateChanged,
     required this.isMockupChatOpen,
     required this.onCloseMockupChat,
+    required this.editorController,
+    required this.editorInitialization,
   });
 
   static const Color brandBlue = AppColors.primary;
@@ -138,6 +143,9 @@ class LandingHeroSection extends StatelessWidget {
                                               onNavigateToPreview,
                                           isMockupChatOpen: isMockupChatOpen,
                                           onCloseMockupChat: onCloseMockupChat,
+                                          editorController: editorController,
+                                          editorInitialization:
+                                              editorInitialization,
                                         ),
                                       ),
                                     ],
@@ -159,6 +167,9 @@ class LandingHeroSection extends StatelessWidget {
                                             onNavigateToPreview,
                                         isMockupChatOpen: isMockupChatOpen,
                                         onCloseMockupChat: onCloseMockupChat,
+                                        editorController: editorController,
+                                        editorInitialization:
+                                            editorInitialization,
                                       ),
                                     ],
                                   ),

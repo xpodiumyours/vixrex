@@ -19,6 +19,7 @@ import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
+import 'package:vixrex/services/vixrex_session_controller.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/vixrex_promotion_service.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
@@ -81,9 +82,13 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     super.initState();
     // Doğrudan sekme indeksi: 0=Vitrinim, 1=Keşfet, 2=Vixrex, 3=Profil, 4=Moderasyon
     _selectedIndex = widget.initialIndex < 0 ? 0 : widget.initialIndex;
-    _editorController = StoreEditorController();
+    // Vixrex Asistan'ın TEK oturumu — landing'de açılmış bir sohbet varsa
+    // (bkz. VixRexSessionController) aynı controller burada da kullanılır,
+    // kaldığı yerden devam eder. Bu ekran controller'ı SAHİPLENMEZ, o yüzden
+    // dispose() burada çağrılmaz — uygulama boyunca yaşar.
+    _editorController = VixRexSessionController.controller;
     _editorController.addListener(_onEditorChanged);
-    _editorInitialization = _editorController.initialize(
+    _editorInitialization = VixRexSessionController.ensureInitialized(
       widget.initialVitrinName,
     );
     _loadVixRexSnapshot();
@@ -126,7 +131,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   void dispose() {
     _globalSearchController.dispose();
     _editorController.removeListener(_onEditorChanged);
-    _editorController.dispose();
+    // _editorController.dispose() ÇAĞRILMAZ: bu, VixRexSessionController'ın
+    // paylaşılan tek örneği — bu ekran onu sahiplenmiyor, uygulama boyunca
+    // yaşamaya devam eder (landing ve diğer HomeShell açılışları da kullanır).
     super.dispose();
   }
 
