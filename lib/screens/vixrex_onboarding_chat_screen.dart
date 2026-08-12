@@ -465,25 +465,10 @@ class _VixRexOnboardingChatScreenState
       }
       _publicLink = link.trim();
 
-      // Konuşma geçmişini HEMEN kalıcı depoya yaz — bekletilmez.
-      //
-      // NEDEN BURADA (2026-08-12 bulgusu): _controller.publish() az önce
-      // notifyListeners() çağırdı (store_editor_controller.dart). Aynı
-      // controller'ı dinleyen HomeShellScreen bunu duyup snapshot'ı
-      // yeniden yüklüyor; "yayınlandı" görünce bu ekranı (embeddedInShell)
-      // farklı bir widget'a (VixRexCompanionChat) devrediyor — kullanıcı
-      // "Vitrinini aç" düğmesine hiç basmadan. Geçmiş yazma işi eskiden
-      // yalnız o düğmeye (_navigateAfterHandoff) bağlıydı; ekran devri
-      // ondan önce gerçekleşince konuşma hiç kaydedilmeden kayboluyordu.
-      // Artık hangi düğmeye basılırsa basılsın (veya hiç basılmasa da)
-      // geçmiş güvenceye alınmış oluyor.
-      await _handoffTranscriptToRehber();
-      if (!mounted) return;
-
-      setState(() {
-        _busy = false;
-        _step = _OnboardingStep.done;
-      });
+      // Tamamlanma mesajları HANDOFF'A YAZILMADAN ÖNCE _lines'a eklenir —
+      // aksi halde kaydedilen konuşma bu son iki mesajı hiç görmez
+      // (CodeRabbit bulgusu, 2026-08-12). _pushBot yalnız listeye ekler,
+      // setState çağırmaz; ekranı henüz güncellemeden geçmişi tamamlar.
       _pushBot(
         'İşte bu kadar.\nArtık dijitalde varsın.\n\n'
         'İşletme adına özel vitrinin hazır. Web siten var — domain masrafın yok.',
@@ -501,6 +486,34 @@ class _VixRexOnboardingChatScreenState
         'oradan hallederim. Kapak görselini de kategorine özel hazır '
         'görsellerden seçebilirsin.',
       );
+
+      // Konuşma geçmişini HEMEN kalıcı depoya yaz — bekletilmez.
+      //
+      // NEDEN BURADA (2026-08-12 bulgusu): _controller.publish() az önce
+      // notifyListeners() çağırdı (store_editor_controller.dart). Aynı
+      // controller'ı dinleyen HomeShellScreen bunu duyup snapshot'ı
+      // yeniden yüklüyor; "yayınlandı" görünce bu ekranı (embeddedInShell)
+      // farklı bir widget'a (VixRexCompanionChat) devrediyor — kullanıcı
+      // "Vitrinini aç" düğmesine hiç basmadan. Geçmiş yazma işi eskiden
+      // yalnız o düğmeye (_navigateAfterHandoff) bağlıydı; ekran devri
+      // ondan önce gerçekleşince konuşma hiç kaydedilmeden kayboluyordu.
+      // Artık hangi düğmeye basılırsa basılsın (veya hiç basılmasa da)
+      // geçmiş güvenceye alınmış oluyor.
+      //
+      // Yayın KESİN başarılı oldu — bu adımın hatası kendi try/catch'inde
+      // kalır, dış catch'e düşüp "yayın tamamlanamadı" yanılgısı yaratmaz
+      // (CodeRabbit bulgusu, 2026-08-12).
+      try {
+        await _handoffTranscriptToRehber();
+      } catch (e) {
+        if (kDebugMode) debugPrint('_handoffTranscriptToRehber hata: $e');
+      }
+      if (!mounted) return;
+
+      setState(() {
+        _busy = false;
+        _step = _OnboardingStep.done;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {

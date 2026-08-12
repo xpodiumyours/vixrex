@@ -29,6 +29,7 @@ const ownerEntryRouteSource = next("src/app/api/owner-session/route.ts");
 const ownerPageSource = next("src/app/v/[slug]/page.tsx");
 const ownerShellSource = next("src/app/v/[slug]/OwnerWorkspaceShell.tsx");
 const ownerPanelSource = next("src/app/v/[slug]/OwnerAssistantPanel.tsx");
+const ownerChatSource = next("src/app/v/[slug]/hooks/useOwnerChat.ts");
 const nextAvatarSource = next(
   "src/app/v/[slug]/components/VixrexAvatar.tsx"
 );
@@ -72,7 +73,7 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
     expect(onboardingSource).toContain("'Vitrinini aç'");
     expect(onboardingSource).toContain("_openOwnerWorkspace()");
     expect(onboardingSource).toContain(
-      "_controller.openOwnerPreview()"
+      "_controller.openOwnerPreview("
     );
     expect(ownerPreviewSource).toContain(
       "buildOwnerSessionEntryLink(slug, code)"
@@ -156,6 +157,14 @@ describe("Vixrex Asistan sürekliliği — sonraki PR kabul hedefleri", () => {
   it.todo(
     "birincil Flutter CTA transcript'i owner workspace açılmadan önce devreder"
   );
-  it.todo("Next.js sahip asistanı sürümlü ve güvenli handoff state alır");
-  it.todo("Next.js tekrar selam vermeden handoff'taki sıradaki adımdan devam eder");
+  it("Next.js sahip asistanı sürümlü ve güvenli handoff state alır", () => {
+    expect(ownerPageSource).toContain("parseAssistantHandoff(draft.assistant_handoff)");
+    expect(ownerPageSource).toContain("assistantHandoff={assistantHandoff}");
+    expect(ownerShellSource).toContain("assistantHandoff={assistantHandoff}");
+    expect(ownerPanelSource).toContain("useOwnerChat(rapor, assistantHandoff)");
+  });
+
+  it("Next.js tekrar selam vermeden handoff'taki sıradaki adımdan devam eder", () => {
+    expect(ownerChatSource).toContain("ownerChatInitialMessages(rapor, handoff)");
+  });
 });

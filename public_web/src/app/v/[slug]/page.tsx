@@ -25,6 +25,7 @@ import {
 import ProductCatalog from "./ProductCatalog";
 import VitrinProfileView from "./VitrinProfileView";
 import OwnerWorkspaceShell, { WorkingDraftData } from "./OwnerWorkspaceShell";
+import { parseAssistantHandoff } from "@/lib/assistantHandoff";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 
 export const revalidate = 60;
@@ -390,6 +391,10 @@ export default async function StorePage(props: PageProps) {
     data = await getStoreData(params.slug);
   }
 
+  const assistantHandoff = draft
+    ? parseAssistantHandoff(draft.assistant_handoff)
+    : null;
+
   if (!data) {
     notFound();
   }
@@ -739,6 +744,7 @@ export default async function StorePage(props: PageProps) {
           isPreviewMode={true}
           draft={draft}
           sessionExpiresAt={sessionExpiresAt}
+          assistantHandoff={assistantHandoff}
         />
       ) : null}
     </>

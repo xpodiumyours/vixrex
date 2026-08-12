@@ -32,7 +32,7 @@ interface Props {
 export default function OwnerAssistantPanel({
   slug,
   draftData,
-  assistantHandoff,
+  assistantHandoff = null,
 }: Props) {
   const [acik, setAcik] = useState(false);
 

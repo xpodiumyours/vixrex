@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ownerChatInitialMessages,
+  type AssistantHandoffV1,
+  type OwnerChatMessage,
+} from "@/lib/assistantHandoff";
 import type { HazirlikRaporu } from "@/lib/vitrinReadiness";
-import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 
-export interface Mesaj {
-  id: number;
-  kimden: "asistan" | "kullanici";
-  metin: string;
-}
+export type Mesaj = OwnerChatMessage;
 
 export interface OwnerChatHook {
   mesajlar: Mesaj[];
@@ -18,11 +18,13 @@ export interface OwnerChatHook {
 
 export function useOwnerChat(
   rapor: HazirlikRaporu,
-  handoff?: AssistantHandoffV1 | null
+  handoff: AssistantHandoffV1 | null
 ): OwnerChatHook {
-  const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
+  const [mesajlar, setMesajlar] = useState<Mesaj[]>(() =>
+    ownerChatInitialMessages(rapor, handoff)
+  );
   const akisRef = useRef<HTMLDivElement>(null);
-  const sayacRef = useRef(0);
+  const sayacRef = useRef(mesajlar.length);
 
   const mesajEkle = useCallback((kimden: Mesaj["kimden"], metin: string) => {
     // Numara BURADA sabitlenir. Güncelleyicinin içinde okunursa, aynı anda
@@ -32,32 +34,6 @@ export function useOwnerChat(
     const id = sayacRef.current;
     setMesajlar((m) => [...m, { id, kimden, metin }]);
   }, []);
-
-  // Açılış — bir kez. Flutter'dan gerçek bir konuşma geçmişi geldiyse
-  // (assistant_handoff) o kaldığı yerden devam eder, yeniden selamlanmaz
-  // (issue #111). Geçmiş yoksa (manuel panelden yayınlanmış, eski/handoff'suz
-  // mağaza vb.) eskisi gibi doluluk özetiyle karşılar.
-  useEffect(() => {
-    if (mesajlar.length > 0) return;
-
-    if (handoff && handoff.messages.length > 0) {
-      for (const m of handoff.messages) {
-        mesajEkle(m.role === "assistant" ? "asistan" : "kullanici", m.text);
-      }
-      if (rapor.sonrakiAdim) mesajEkle("asistan", rapor.sonrakiAdim);
-      return;
-    }
-
-    const selam = rapor.temelTamam
-      ? `Vitrinin yayına hazır görünüyor. Doluluk: %${rapor.yuzde}.`
-      : `Vitrininin doluluk oranı %${rapor.yuzde}. Birkaç alan eksik.`;
-    mesajEkle("asistan", selam);
-    if (rapor.sonrakiAdim) mesajEkle("asistan", rapor.sonrakiAdim);
-    mesajEkle(
-      "asistan",
-      "Değiştirmek istediğin yazıya vitrinde tıkla — buradan düzenleriz."
-    );
-  }, [mesajlar.length, rapor, handoff, mesajEkle]);
 
   useEffect(() => {
     akisRef.current?.scrollTo({ top: akisRef.current.scrollHeight });

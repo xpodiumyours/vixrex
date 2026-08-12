@@ -125,7 +125,7 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
                   color:
                       _result!.isSuccess
                           ? Colors.green.withOpacity(0.1)
-                          : Colors.red.withOpacity(0.1),
+                          : AppColors.error.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -133,7 +133,7 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
                       ? '${_result!.inserted} ürün eklendi. ${_result!.errors > 0 ? '${_result!.errors} hata.' : ''}'
                       : _result!.errorMessage!,
                   style: TextStyle(
-                    color: _result!.isSuccess ? Colors.green : Colors.red,
+                    color: _result!.isSuccess ? Colors.green : AppColors.error,
                     fontSize: 13,
                   ),
                 ),

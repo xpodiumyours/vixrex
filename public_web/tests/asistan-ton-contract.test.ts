@@ -27,6 +27,7 @@ const DOSYALAR = [
   "../src/app/v/[slug]/hooks/useFieldSelection.ts",
   "../src/app/v/[slug]/hooks/useOwnerActions.ts",
   "../src/app/v/[slug]/hooks/useOwnerChat.ts",
+  "../src/lib/assistantHandoff.ts",
   "../src/app/api/owner-draft/route.ts",
   "../src/app/api/owner-publish/route.ts",
   "../src/app/api/owner-discard/route.ts",
@@ -79,7 +80,7 @@ describe("Vixrex Asistan tek ağızdan konuşur — hitap: sen", () => {
 
   it("panelin bilinen cümleleri 'sen' kipinde", () => {
     // "Vitrinin yayınlandı" artık useOwnerActions'ta, "Değiştirmek
-    // istediğin yazıya" useOwnerChat'te (bkz. dosya başı not).
+    // istediğin yazıya" güvenli handoff sahibinde (bkz. dosya başı not).
     const panel =
       readFileSync(
         resolve(__dirname, "../src/app/v/[slug]/OwnerAssistantPanel.tsx"),
@@ -91,6 +92,10 @@ describe("Vixrex Asistan tek ağızdan konuşur — hitap: sen", () => {
       ) +
       readFileSync(
         resolve(__dirname, "../src/app/v/[slug]/hooks/useOwnerChat.ts"),
+        "utf-8"
+      ) +
+      readFileSync(
+        resolve(__dirname, "../src/lib/assistantHandoff.ts"),
         "utf-8"
       );
     expect(panel).toContain("Vitrinin yayınlandı");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import OwnerAssistantPanel from "./OwnerAssistantPanel";
 import type {
   VitrinFeaturedBanner,
@@ -13,7 +13,7 @@ import type {
   VitrinGalleryItem,
 } from "./VitrinProfileView";
 import type { VitrinCategoryProfile } from "@/lib/vitrinProfile";
-import { parseAssistantHandoff } from "@/lib/assistantHandoff";
+import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 
 export interface WorkingDraftData {
   store_id: string;
@@ -24,8 +24,6 @@ export interface WorkingDraftData {
   live_version: number;
   version_conflict: boolean;
   created: boolean;
-  /// Vixrex Asistan geçiş özeti — get_working_draft_for_session RPC'si
-  /// döndürür. Ham JSON; şekli assistantHandoff.ts'te ayrıştırılır.
   assistant_handoff?: unknown;
 }
 
@@ -73,25 +71,18 @@ export interface OwnerWorkspaceShellProps {
   isPreviewMode?: boolean;
   draft?: WorkingDraftData | null;
   sessionExpiresAt?: number | null;
+  assistantHandoff?: AssistantHandoffV1 | null;
 }
 
 export default function OwnerWorkspaceShell({
   draft,
   sessionExpiresAt,
+  assistantHandoff,
   ...vitrinProps
 }: OwnerWorkspaceShellProps) {
   const [open, setOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [sessionSecondsLeft, setSessionSecondsLeft] = useState<number | null>(null);
-
-  // Referans sabit kalsın diye memoize edilir — draft prop'u (sunucudan)
-  // saniyelik oturum sayacı yüzünden değişmiyor, ama parseAssistantHandoff
-  // her render'da yeniden çağrılırsa yeni bir nesne üretip useOwnerChat'teki
-  // effect'i gereksiz yere (zararsız ama israflı) tekrar tetikler.
-  const assistantHandoff = useMemo(
-    () => parseAssistantHandoff(draft?.assistant_handoff),
-    [draft?.assistant_handoff]
-  );
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
