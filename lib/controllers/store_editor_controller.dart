@@ -14,6 +14,7 @@ import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/services/store_safe_select.dart';
 import 'package:vixrex/services/legal_document_service.dart';
 import 'package:vixrex/services/product_service.dart';
+import 'package:vixrex/services/product_catalog_sync_service.dart';
 import 'package:vixrex/services/owner_preview_service.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
 import 'package:vixrex/utils/secure_token_generator.dart';
@@ -44,6 +45,7 @@ class StoreEditorController extends ChangeNotifier
   final ProductService productService;
   final SupabaseClient? supabaseClient;
   late final OwnerPreviewService _ownerPreviewService;
+  late final ProductCatalogSyncService _catalogSyncService;
 
   StoreData _data;
   PublishedVitrinInfo? _publishedInfo;
@@ -61,6 +63,7 @@ class StoreEditorController extends ChangeNotifier
     LegalDocumentService? legalDocumentService,
     ProductService? productService,
     OwnerPreviewService? ownerPreviewService,
+    ProductCatalogSyncService? catalogSyncService,
     this.supabaseClient,
     StoreData? initialData,
   }) : storage = storage ?? const StoreLocalStorageService(),
@@ -82,6 +85,9 @@ class StoreEditorController extends ChangeNotifier
           draftEditTokenProvider: ensureDraftEditToken,
           publishService: this.publishService,
         );
+    _catalogSyncService =
+        catalogSyncService ??
+        ProductCatalogSyncService(productService: this.productService);
     _syncInitialData();
   }
 
@@ -859,7 +865,22 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
+  // Store-identity/hydration kodu (yukarıda) hâlâ bunu kullanıyor; katalog
+  // CRUD'unun kendi kopyası ProductCatalogSyncService içinde — iki ayrı
+  // sorumluluk için küçük, stateless bir regex kontrolünü paylaşmak yerine
+  // birebir kopyalamak, gereksiz bir modüller-arası bağımlılık kurmaktan
+  // daha ucuz.
+  bool _isUuid(String value) {
+    return RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    ).hasMatch(value.trim());
+  }
+
   /// Panel/OCR/bulk: yerel katalogu `products` tablosuna yazar (JSON sync değil).
+  ///
+  /// Diff/CRUD mantığı [ProductCatalogSyncService.syncCatalog]'da; burada
+  /// yalnız yayın hazırlığı (edit token, mağaza id) ve yerel `_data`
+  /// senkronu kalır.
   Future<Result<void>> syncCatalogToRemote({
     required List<Product> products,
     required List<ProductCategory> categories,
@@ -879,144 +900,49 @@ class StoreEditorController extends ChangeNotifier
       );
     }
 
-    try {
-      _data.productCategories = List.of(categories);
+    // Diff'ten önce atanır, hata durumunda geri alınmaz — bilinen tuhaflık,
+    // orijinal davranış korunuyor.
+    _data.productCategories = List.of(categories);
 
-      final remote = await productService.fetchProducts(storeId);
-      final remoteIds = remote.map((p) => p.id).toSet();
-      final nextProducts = <Product>[];
-
-      for (var i = 0; i < products.length; i++) {
-        final product = products[i];
-        final name = product.name.trim();
-        if (name.isEmpty) continue;
-
-        final rawCatId = product.categoryId.trim();
-        final categoryUuid =
-            rawCatId.isNotEmpty && _isUuid(rawCatId) ? rawCatId : null;
-
-        if (_isUuid(product.id) && remoteIds.contains(product.id)) {
-          final updated = await productService.updateProduct(
-            productId: product.id,
-            editToken: editToken,
-            name: name,
-            description: product.description,
-            priceText: product.price,
-            priceAmount: _parsePriceAmount(product.price),
-            oldPriceAmount: product.oldPriceAmount,
-            badgeTag: product.badgeTag,
-            fulfillmentRegion: product.fulfillmentLocation,
-            clearOldPriceAmount: product.oldPriceAmount == null,
-            clearBadgeTag:
-                product.badgeTag == null || product.badgeTag!.trim().isEmpty,
-            clearFulfillmentRegion:
-                product.fulfillmentLocation == null ||
-                product.fulfillmentLocation!.trim().isEmpty,
-            imageUrls: product.displayImageUrls,
-            categoryId: categoryUuid,
-            clearCategory: categoryUuid == null || categoryUuid.isEmpty,
-            isVisible: true,
-            stockStatus: product.stockStatus,
-            sortOrder: i,
-          );
-          if (updated.isFailure) {
-            return Result.failure(
-              Failure(updated.failure?.message ?? 'Ürün güncellenemedi.'),
-            );
-          }
-          product.categoryId = categoryUuid ?? '';
-          nextProducts.add(product);
-        } else {
-          final created = await productService.addProduct(
-            storeId: storeId,
-            editToken: editToken,
-            name: name,
-            description: product.description,
-            priceText: product.price,
-            priceAmount: _parsePriceAmount(product.price),
-            oldPriceAmount: product.oldPriceAmount,
-            badgeTag: product.badgeTag,
-            fulfillmentRegion: product.fulfillmentLocation,
-            imageUrls: product.displayImageUrls,
-            categoryId: categoryUuid,
-            sourceType: product.source ?? 'manual',
-            isVisible: true,
-            sortOrder: i,
-          );
-          if (created.isFailure || created.data == null) {
-            return Result.failure(
-              Failure(created.failure?.message ?? 'Ürün eklenemedi.'),
-            );
-          }
-          product.id = created.data!.id;
-          product.slug = created.data!.slug;
-          product.categoryId = categoryUuid ?? '';
-          nextProducts.add(product);
-        }
-      }
-
-      // Eksik uzak ürünleri burada silme. Kalıcı silme yalnız açık
-      // removeProduct / kullanıcı onayı ile yapılır (canlı veri koruması).
-
-      _data.products = nextProducts;
-      await saveLocally();
-      notifyListeners();
-      _revalidateStoreCache();
-      return const Result.success(null);
-    } catch (e) {
-      if (kDebugMode) debugPrint('syncCatalogToRemote: $e');
-      return Result.failure(
-        Failure('Ürünler kaydedilemedi, lütfen tekrar deneyin.'),
-      );
+    final result = await _catalogSyncService.syncCatalog(
+      storeId: storeId,
+      editToken: editToken,
+      products: products,
+    );
+    if (result.isFailure) {
+      return Result.failure(result.failure!);
     }
+
+    _data.products = result.data!;
+    await saveLocally();
+    notifyListeners();
+    _revalidateStoreCache();
+    return const Result.success(null);
   }
 
   /// Yeni ürün ekler (ilişkisel `products` tablosuna senkronize eder).
   /// Yayınlı vitrinde uzak yazma başarısızsa yerel listeye eklemez.
   Future<Result<void>> addProduct(Product p) async {
     final editToken = _publishedInfo?.editToken.trim() ?? '';
-    final ready = editToken.isNotEmpty ? await ensureRemoteStoreId() : false;
-    final storeId = _data.id?.trim() ?? '';
 
     if (editToken.isNotEmpty) {
+      final ready = await ensureRemoteStoreId();
+      final storeId = _data.id?.trim() ?? '';
       if (!ready || storeId.isEmpty) {
         return Result.failure(
           Failure('Mağaza hazır değil. Ürün müşteri vitrine yazılamadı.'),
         );
       }
 
-      final result = await productService.addProduct(
+      final result = await _catalogSyncService.addProduct(
         storeId: storeId,
         editToken: editToken,
-        name: p.name,
-        description: p.description,
-        priceText: p.price,
-        priceAmount: _parsePriceAmount(p.price),
-        oldPriceAmount: p.oldPriceAmount,
-        badgeTag: p.badgeTag,
-        fulfillmentRegion: p.fulfillmentLocation,
-        imageUrls: p.displayImageUrls,
-        categoryId:
-            p.categoryId.isNotEmpty && _isUuid(p.categoryId)
-                ? p.categoryId
-                : null,
-        sourceType: p.source ?? 'manual',
-        isVisible: true,
+        product: p,
         sortOrder: _data.products.length,
       );
-
-      if (result.isFailure ||
-          result.data == null ||
-          result.data!.id.trim().isEmpty ||
-          result.data!.slug.trim().isEmpty) {
-        return Result.failure(
-          Failure(
-            result.failure?.message ?? 'Ürün müşteri vitrine yazılamadı.',
-          ),
-        );
+      if (result.isFailure) {
+        return Result.failure(result.failure!);
       }
-      p.id = result.data!.id;
-      p.slug = result.data!.slug;
     }
 
     _data.products.add(p);
@@ -1034,16 +960,12 @@ class StoreEditorController extends ChangeNotifier
     final product = _data.products[i];
     final editToken = _publishedInfo?.editToken.trim() ?? '';
 
-    if (_isUuid(product.id) && editToken.isNotEmpty) {
-      final deleted = await productService.deleteProduct(
-        product.id,
-        editToken: editToken,
-      );
-      if (deleted.isFailure) {
-        return Result.failure(
-          Failure(deleted.failure?.message ?? 'Ürün silinemedi.'),
-        );
-      }
+    final deleted = await _catalogSyncService.deleteProduct(
+      productId: product.id,
+      editToken: editToken,
+    );
+    if (deleted.isFailure) {
+      return Result.failure(deleted.failure!);
     }
     _data.products.removeAt(i);
     await saveLocally();
@@ -1069,34 +991,13 @@ class StoreEditorController extends ChangeNotifier
     final editToken = _publishedInfo?.editToken.trim() ?? '';
     final storeId = _data.id?.trim() ?? '';
 
-    if (editToken.isNotEmpty && storeId.isNotEmpty && _isUuid(p.id)) {
-      final updated = await productService.updateProduct(
-        productId: p.id,
+    if (editToken.isNotEmpty && storeId.isNotEmpty) {
+      final updated = await _catalogSyncService.updateProduct(
         editToken: editToken,
-        name: p.name,
-        description: p.description,
-        priceText: p.price,
-        priceAmount: _parsePriceAmount(p.price),
-        oldPriceAmount: p.oldPriceAmount,
-        badgeTag: p.badgeTag,
-        fulfillmentRegion: p.fulfillmentLocation,
-        clearOldPriceAmount: p.oldPriceAmount == null,
-        clearBadgeTag: p.badgeTag == null || p.badgeTag!.trim().isEmpty,
-        clearFulfillmentRegion:
-            p.fulfillmentLocation == null ||
-            p.fulfillmentLocation!.trim().isEmpty,
-        imageUrls: p.displayImageUrls,
-        categoryId:
-            p.categoryId.isNotEmpty && _isUuid(p.categoryId)
-                ? p.categoryId
-                : null,
-        isVisible: true,
-        stockStatus: p.stockStatus,
+        product: p,
       );
       if (updated.isFailure) {
-        return Result.failure(
-          Failure(updated.failure?.message ?? 'Ürün güncellenemedi.'),
-        );
+        return Result.failure(updated.failure!);
       }
     }
 
@@ -1114,23 +1015,6 @@ class StoreEditorController extends ChangeNotifier
       return updateProduct(index, product);
     }
     return addProduct(product);
-  }
-
-  bool _isUuid(String value) {
-    return RegExp(
-      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
-    ).hasMatch(value.trim());
-  }
-
-  double? _parsePriceAmount(String raw) {
-    var cleaned = raw.trim().replaceAll(RegExp(r'[^\d,.]'), '');
-    if (cleaned.isEmpty) return null;
-    if (cleaned.contains(',') && cleaned.contains('.')) {
-      cleaned = cleaned.replaceAll('.', '').replaceAll(',', '.');
-    } else if (cleaned.contains(',')) {
-      cleaned = cleaned.replaceAll(',', '.');
-    }
-    return double.tryParse(cleaned);
   }
 
   /// Public vitrin sayfasının ISR cache'ini yeniler.
