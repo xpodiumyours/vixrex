@@ -15,6 +15,17 @@ Bu depoda çalışmaya başlamadan önce:
 
 Skill'ler isteğe bağlı çalışma yardımcılarıdır; kullanıcı yetkisini genişletmez ve her görevde zorunlu bir zincir oluşturmaz.
 
+## Skill seçimi
+
+İş net biçimde bir kalıba uyuyorsa doğaçlama yapılmaz, uyan skill çalıştırılır:
+
+- "Bir şey bozuldu / çalışmıyor / hata veriyor" → `diagnosing-bugs`. Kırmızıya düşen sıkı bir kontrol kurulmadan koda bakıp teori üretilmez — bu skill'in önlediği tam olarak budur.
+- Çok adımlı yeni özellik/fikir → `grill-with-docs` → (gerekirse `to-spec`/`to-tickets`) → `implement` (içeride `tdd` + `code-review` çalıştırır).
+- Mimari inceleme veya modül tasarımı → `codebase-design` / `improve-codebase-architecture`.
+- Hangi skill uyduğundan emin değilsen `ask-matt`'ın haritasına bak.
+
+Bu bir zincir DEĞİLDİR: issue bağlama, kanıt scripti veya ek onay gerektirmez (2026-08-11 tarihli #123'te kaldırılan bürokrasi geri gelmez) — yalnızca doğru yönteme girmeyi sağlar. Basit, tek adımlı okuma/araştırma/durum sorularında skill gerekmez.
+
 ## Mimari büyüme yasağı
 
 - 400 satırı veya 20 dışa açık üyeyi geçen controller/modüle yeni sorumluluk eklenmez; önce ayrı sahip modül ve küçük arayüz oluşturulur.
