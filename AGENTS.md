@@ -10,6 +10,7 @@ Bu depoda çalışmaya başlamadan önce:
 
 - `VIXREX_RULES.md`: ürün, güvenlik, kanıt ve canlı sistem sınırları.
 - `docs/agents/repository-guide.md`: teknik depo haritası ve yüzeye özel komutlar.
+- `docs/agents/store-editor-controller-parcalama.md`: devam eden controller parçalama işinin durumu — bu işe dokunmadan önce oku.
 - `CONTEXT.md` ve `docs/adr/`: kalıcı ürün ve mimari kararlar.
 - GitHub issue: yalnız kullanıcı bir issue'yu adlandırdığında veya mevcut iş açıkça ona bağlıysa kapsam kaynağıdır.
 
