@@ -599,9 +599,18 @@ class _VixRexOnboardingChatScreenState
       }
     } catch (e) {
       if (!mounted) return;
+      // Mesaj "aşağıdaki linkten görüntüleyebilirsin" diyordu ama link hiç
+      // eklenmiyordu (publicLink parametresi eksikti) — kullanıcının
+      // tıklayacağı hiçbir şey olmadığı için "yönlendirmiyor" gibi
+      // görünüyordu (2026-08-12 bulgusu, canlıda ekran görüntüsüyle
+      // doğrulandı). Ayrıca gerçek hata artık mesaja ekleniyor —
+      // kDebugMode arkasına gizlenmiş debugPrint production'da hiç
+      // görünmüyordu, teşhis imkansızdı.
       _pushBot(
-        'Vitrini düzenleme modunda açamadım. Aşağıdaki linkten görüntüleyebilir, '
-        'sonra Vitrinim sekmesinden Önizle ile tekrar deneyebilirsin.',
+        'Vitrini düzenleme modunda açamadım ($e). Aşağıdaki linkten '
+        'görüntüleyebilir, sonra Vitrinim sekmesinden Önizle ile tekrar '
+        'deneyebilirsin.',
+        publicLink: _repairedPublicLink,
       );
       if (kDebugMode) debugPrint('openOwnerPreview failed: $e');
     } finally {
