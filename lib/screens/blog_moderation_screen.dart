@@ -109,14 +109,10 @@ class _BlogModerationScreenState extends State<BlogModerationScreen> {
       backgroundColor: _bgColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text(
-          'Blog Moderasyonu',
-          style: TextStyle(
-            color: _darkText,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
-          ),
-        ),
+        // Stil artık appBarTheme.titleTextStyle'dan geliyor (main.dart) —
+        // burada birebir aynısı tekrar yazılmıyordu (2026-08-08 UI
+        // tutarlılık bulgusu).
+        title: const Text('Blog Moderasyonu'),
         centerTitle: false,
         actions: [
           IconButton(

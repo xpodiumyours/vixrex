@@ -114,7 +114,7 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
+                style: const TextStyle(color: AppColors.error, fontSize: 12),
               ),
             ],
             if (_result != null) ...[
