@@ -97,8 +97,6 @@ class _VixRexOnboardingChatScreenState
   }
 
   Future<void> _bootstrap() async {
-    final savedData = await _controller.storage.loadVitrinData();
-    final hasSavedVitrin = savedData?.name.trim().isNotEmpty == true;
     final sharedInitialization = widget.editorInitialization;
     if (sharedInitialization != null) {
       await sharedInitialization;
@@ -106,6 +104,13 @@ class _VixRexOnboardingChatScreenState
       await _controller.initialize(widget.initialName);
     }
     if (!mounted) return;
+    // Kayıtlı ilerleme var mı? Diskten AYRI bir okuma yapmaz — controller'ın
+    // o anki hafızasına bakar. Böylece hem eski bir oturumdan (diskten
+    // yüklenmiş) hem de AYNI uygulama açıkken başka bir ekranda (örn.
+    // landing) az önce doldurulmuş, henüz yayınlanmamış bir sohbetten
+    // gelen ilerleme de doğru yakalanır — sohbet nereden açılırsa açılsın
+    // kaldığı yerden devam eder (2026-08-12 bulgusu, tek oturum).
+    final hasSavedVitrin = _controller.data.name.trim().isNotEmpty;
     if (hasSavedVitrin) {
       _resumeSavedVitrin();
       return;

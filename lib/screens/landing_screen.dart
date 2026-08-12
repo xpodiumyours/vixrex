@@ -18,6 +18,7 @@ import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
+import 'package:vixrex/services/vixrex_session_controller.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -36,6 +37,13 @@ class _LandingScreenState extends State<LandingScreen>
   bool _isCheckingSavedVitrin = true;
   VixRexProfileSnapshot? _vixrexSnapshot;
   final TextEditingController _storeNameController = TextEditingController();
+
+  // Vixrex Asistan'ın TEK oturumu — landing'deki kompakt sohbet de
+  // HomeShell'deki sohbetle AYNI controller'ı kullanır (bkz.
+  // VixRexSessionController). Sohbet nereden açılırsa açılsın kaldığı
+  // yerden devam eder, ekran değişince sıfırlanmaz.
+  final Future<void> _editorInitialization =
+      VixRexSessionController.ensureInitialized();
 
   /// Kategori sablonlarindan yuklenen galeri gorselleri cache'i
   final Map<String, List<String>> _categoryGalleryCache = {};
@@ -431,6 +439,8 @@ class _LandingScreenState extends State<LandingScreen>
                 onNavigateToEditor: _navigateToEditor,
                 isMockupChatOpen: _isMockupChatOpen,
                 onCloseMockupChat: _closeMockupChat,
+                editorController: VixRexSessionController.controller,
+                editorInitialization: _editorInitialization,
                 onStateChanged: () {
                   if (mounted) {
                     setState(() {});

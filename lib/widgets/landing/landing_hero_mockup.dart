@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/models/landing_demo_profile.dart';
 import 'package:vixrex/screens/vixrex_onboarding_chat_screen.dart';
@@ -13,6 +14,8 @@ class LandingHeroMockup extends StatelessWidget {
   final VoidCallback onNavigateToPreview;
   final bool isMockupChatOpen;
   final VoidCallback onCloseMockupChat;
+  final StoreEditorController editorController;
+  final Future<void> editorInitialization;
 
   const LandingHeroMockup({
     super.key,
@@ -22,6 +25,8 @@ class LandingHeroMockup extends StatelessWidget {
     required this.onNavigateToPreview,
     required this.isMockupChatOpen,
     required this.onCloseMockupChat,
+    required this.editorController,
+    required this.editorInitialization,
   });
 
   static const Color brandBlue = AppColors.primary;
@@ -80,6 +85,8 @@ class LandingHeroMockup extends StatelessWidget {
                                   child: VixRexOnboardingChatScreen(
                                     compact: true,
                                     onClose: onCloseMockupChat,
+                                    editorController: editorController,
+                                    editorInitialization: editorInitialization,
                                   ),
                                 ),
                               ),
