@@ -915,12 +915,17 @@ class _VixRexOnboardingChatScreenState
             ),
           ],
           if (_step == _OnboardingStep.location) ...[
+            // showAdvancedFields: false — Hero Konum Metni ve Harita Kartı
+            // Etiketi manuel panele özel alanlardır (PR #70); asistan
+            // sohbeti yalnız il/ilçe/adres sorar, kapsam dışına çıkmaz
+            // (2026-08-12 bulgusu).
             FormLocationInfo(
               controller: _controller,
               state: _vitrinState,
               addressController: _addressController,
               heroLocationTextController: _heroLocationTextController,
               mapLabelController: _mapLabelController,
+              showAdvancedFields: false,
             ),
             const SizedBox(height: 10),
             _primaryButton(
