@@ -31,5 +31,12 @@ jobs:
       - name: Migration zinciri
         run: python .github/scripts/verify_migrations.py
 
+      - name: Kapsam kontrolü
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: python .github/scripts/verify_pr_scope.py
+
       - name: CI yüzey sınıflandırma testi
         run: python -m unittest discover -s .github/scripts/tests -p "test_changed_surfaces.py" -v
