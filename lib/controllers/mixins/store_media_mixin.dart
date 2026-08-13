@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/config/app_constants.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/models/editor_gallery_item.dart';
+import 'package:vixrex/services/store_media_upload_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 
@@ -89,10 +90,17 @@ mixin StoreMediaMixin on ChangeNotifier {
   }
 
   /// Görselleri (Kapak ve Galeri) Supabase Storage'a yükler.
+  ///
+  /// Gerçek yükleme işi `StoreMediaUploadService`'te (Faz 4, controller
+  /// parçalama, birebir taşındı); burada yalnız "bekleyen bir şey var mı"
+  /// kısayolu, hazır şablon/uzak URL kapak durumu ve sonucun mixin/
+  /// `storeData` state'ine uygulanması kalıyor.
   Future<void> uploadMedia({
     required StoreData storeData,
     required StoreShelfUploadService uploadService,
     required StorePublishService publishService,
+    StoreMediaUploadService mediaUploadService =
+        const StoreMediaUploadService(),
   }) async {
     final hasPendingCover = _coverBytes != null && _coverFileName != null;
     final hasPendingGallery = _editorGalleryItems.any(
@@ -124,56 +132,23 @@ mixin StoreMediaMixin on ChangeNotifier {
             ? storeData.slug
             : publishService.payloadBuilder.generateSlug(storeData.name);
 
-    // 1. Kapak Yükleme
-    if (hasPendingCover) {
-      final ext =
-          (_coverFileName!.split('.').lastOrNull ?? 'jpg').toLowerCase();
-      final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
-      final url = await uploadService.uploadShelfImage(
-        _coverBytes!,
-        storeSlug,
-        fileExtension: ext,
-        contentType: mime,
-      );
-      storeData.shelfImageUrl = url;
-      storeData.coverImageUrl = url;
-      _coverUrl = url;
+    final sonuc = await mediaUploadService.yukle(
+      storeSlug: storeSlug,
+      coverBytes: hasPendingCover ? _coverBytes : null,
+      coverFileName: hasPendingCover ? _coverFileName : null,
+      editorGalleryItems: _editorGalleryItems,
+      uploadService: uploadService,
+    );
+
+    if (sonuc.shelfImageUrl != null) {
+      storeData.shelfImageUrl = sonuc.shelfImageUrl!;
+      storeData.coverImageUrl = sonuc.shelfImageUrl!;
+      _coverUrl = sonuc.shelfImageUrl;
       _coverBytes = null;
     }
 
-    // 2. Galeri Yükleme
-    final updatedGallery = <StoreGalleryItem>[];
-    for (var i = 0; i < _editorGalleryItems.length; i++) {
-      final item = _editorGalleryItems[i];
-      if (item.isRemoved) continue;
-
-      if (item.isFromBytes && item.bytes != null) {
-        final ext = (item.extension ?? 'jpg').toLowerCase();
-        final url = await uploadService.uploadGalleryImage(
-          item.bytes!,
-          storeSlug,
-          fileExtension: ext,
-        );
-        updatedGallery.add(
-          StoreGalleryItem(
-            id: item.id,
-            imageUrl: url,
-            title: item.title ?? 'Galeri ${i + 1}',
-          ),
-        );
-      } else if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
-        updatedGallery.add(
-          StoreGalleryItem(
-            id: item.id,
-            imageUrl: item.imageUrl!,
-            title: item.title ?? 'Galeri ${i + 1}',
-          ),
-        );
-      }
-    }
-    storeData.galleryItems = updatedGallery;
-    _editorGalleryItems =
-        updatedGallery.map((i) => EditorGalleryItem.fromStoreItem(i)).toList();
+    storeData.galleryItems = sonuc.galleryItems;
+    _editorGalleryItems = sonuc.editorGalleryItems;
     notifyListeners();
   }
 
