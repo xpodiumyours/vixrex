@@ -305,6 +305,30 @@ export function useOwnerActions({
   }, [seciliAlan, slug, mesajEkle, alanAtlandi, alanaGecVeyaBitir]);
 
   const yayinla = useCallback(async () => {
+    // Kutuda yazılıp "Gönder"e hiç basılmamış bir değer varken "Yayınla"
+    // sessizce eski (kayıtlı) hâli yayınlıyordu — esnaf yazdığını sanıyor,
+    // yayınlanan hiç değişmiyordu (canlıda bulundu, 2026-08-13: WhatsApp
+    // numarası kutuya yazıldı, Gönder'e basılmadan Yayınla'ya basıldı,
+    // eski/boş numara yayınlandı). metin/sayı/telefon/url gibi yazılabilir
+    // tiplerde kutu, kayıtlı değerden farklıysa durdurup uyarır.
+    if (
+      seciliAlan &&
+      seciliAlan.tip !== "acikKapali" &&
+      seciliAlan.tip !== "gorsel" &&
+      seciliAlan.tip !== "secim"
+    ) {
+      const kayitli = yerelTaslak[seciliAlan.kolon];
+      const kayitliMetin =
+        kayitli === null || kayitli === undefined ? "" : String(kayitli);
+      if (giris !== kayitliMetin) {
+        mesajEkle(
+          "asistan",
+          `"${seciliAlan.etiket}" için yazdığın değer henüz gönderilmedi. Önce "Gönder"e bas, sonra yayınla — yoksa eski hâli yayınlanır.`
+        );
+        return;
+      }
+    }
+
     mesajEkle("kullanici", "Yayınla");
     setYayinlaniyor(true);
 
@@ -332,7 +356,7 @@ export function useOwnerActions({
     } finally {
       setYayinlaniyor(false);
     }
-  }, [slug, mesajEkle, router]);
+  }, [slug, mesajEkle, router, seciliAlan, giris, yerelTaslak]);
 
   // "Değişiklikleri bırak" TEK TIKLA silmez: önce onay istenir.
   // Bu düğme kullanıcının saatlerce yaptığı işi silebilir.
