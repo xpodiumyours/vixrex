@@ -158,6 +158,82 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
+  /// Şemadaki (`lib/config/vitrin_alanlari.g.dart` → `vitrinAlanlari`,
+  /// Next.js `vitrinFieldSchema.ts` ile aynı kaynaktan üretilir) basit,
+  /// tek-alanlı yazılabilir alanları TEK giriş noktasından yazar —
+  /// Next.js'teki `update_working_draft_field` ile aynı ilke (ADR 0001:
+  /// iki istemci aynı çekirdek yazma mantığını iki kere yazmaz).
+  ///
+  /// Kapsam dışı BİLEREK: kategori/işletme türü (yan etkili senkron),
+  /// booking (ensure mantığı), yasal onay (koşullu damgalama), durum
+  /// (`selectStatus`, şemada yok — operasyonel), SSS listesi
+  /// (`updateFaqItems`, yapısal liste, şemada yok) ve çoklu-alan grup
+  /// formları (Hakkımızda/Galeri-üst-bilgi/Kampanya — bunlar bilerek TEK
+  /// düzenleme hareketinde birden çok alan yazıyor, `updateField`'ın
+  /// tek-alan sözleşmesine uymuyor). Bunlar kendi adlı metotlarını korur.
+  ///
+  /// [deger], alanın `tip`ine göre `String` ya da `bool` olmalı.
+  ///
+  /// NOT: trim() davranışı alan alan FARKLIDIR (ör. işletme adı
+  /// trim'lenmez, telefon trim'lenir) — bu, taşımadan ÖNCE de böyleydi;
+  /// burada düzeltilmedi, birebir korundu.
+  void updateField(String anahtar, Object? deger) {
+    switch (anahtar) {
+      case 'isletmeAdi':
+        _guncelle((d) => d.name = deger as String);
+      case 'kisaTanitim':
+        _guncelle((d) => d.description = deger as String);
+      case 'whatsapp':
+        _guncelle((d) => d.whatsapp = deger as String);
+      case 'telefon':
+        _guncelle((d) => d.phone = (deger as String).trim());
+      case 'eposta':
+        _guncelle((d) => d.email = (deger as String).trim());
+      case 'heroRozet':
+        _guncelle((d) => d.heroBadge = (deger as String).trim());
+      case 'hakkindaMetin':
+        _guncelle((d) => d.corporateBio = deger as String);
+      case 'kategoriBolumBaslik':
+        _guncelle((d) => d.categorySectionTitle = (deger as String).trim());
+      case 'urunBolumBaslik':
+        _guncelle((d) => d.productSectionTitle = (deger as String).trim());
+      case 'galeriAksiyonMetni':
+        _guncelle((d) => d.galleryActionLabel = (deger as String).trim());
+      case 'galeriAksiyonLinki':
+        _guncelle((d) => d.galleryActionHref = (deger as String).trim());
+      case 'blogUstBaslik':
+        _guncelle((d) => d.blogSectionKicker = (deger as String).trim());
+      case 'blogBaslik':
+        _guncelle((d) => d.blogSectionTitle = (deger as String).trim());
+      case 'sssUstBaslik':
+        _guncelle((d) => d.faqSectionKicker = (deger as String).trim());
+      case 'sssBaslik':
+        _guncelle((d) => d.faqSectionTitle = (deger as String).trim());
+      case 'sssAciklama':
+        _guncelle((d) => d.faqSectionDescription = (deger as String).trim());
+      case 'puanGoster':
+        _guncelle((d) => d.showStorefrontRating = deger as bool);
+      case 'yolTarifiGoster':
+        _guncelle((d) => d.showDirectionsLink = deger as bool);
+      case 'calismaSaatleri':
+        _guncelle((d) => d.workingHours = (deger as String).trim());
+      case 'instagram':
+        _guncelle((d) => d.instagram = (deger as String).trim());
+      case 'website':
+        _guncelle((d) => d.website = (deger as String).trim());
+      case 'haritaLinki':
+        _guncelle((d) => d.googleBusinessLink = deger as String);
+      case 'referansLinki':
+        _guncelle((d) => d.referencesLink = deger as String);
+      case 'adres':
+        _guncelle((d) => d.address = deger as String);
+      default:
+        throw ArgumentError(
+          'updateField: bilinmeyen veya bu yoldan desteklenmeyen anahtar: $anahtar',
+        );
+    }
+  }
+
   // --- Core Lifecycle ---
   void _syncInitialData() {
     if (_data.shelfImageUrl.isEmpty) {
@@ -324,7 +400,7 @@ class StoreEditorController extends ChangeNotifier
     super.setCoverUrl(trimmed);
   }
 
-  void setName(String name) => _guncelle((d) => d.name = name);
+  void setName(String name) => updateField('isletmeAdi', name);
 
   void updateName(String name) => setName(name);
 
@@ -359,19 +435,17 @@ class StoreEditorController extends ChangeNotifier
   }
 
   void setDescription(String description) =>
-      _guncelle((d) => d.description = description);
+      updateField('kisaTanitim', description);
 
-  void updateWhatsapp(String w) => _guncelle((d) => d.whatsapp = w);
+  void updateWhatsapp(String w) => updateField('whatsapp', w);
 
-  void updatePhone(String value) => _guncelle((d) => d.phone = value.trim());
+  void updatePhone(String value) => updateField('telefon', value);
 
-  void updateEmail(String value) => _guncelle((d) => d.email = value.trim());
+  void updateEmail(String value) => updateField('eposta', value);
 
-  void updateHeroBadge(String value) =>
-      _guncelle((d) => d.heroBadge = value.trim());
+  void updateHeroBadge(String value) => updateField('heroRozet', value);
 
-  void updateCorporateBio(String value) =>
-      _guncelle((d) => d.corporateBio = value);
+  void updateCorporateBio(String value) => updateField('hakkindaMetin', value);
 
   void updateAboutSection({
     required String kicker,
@@ -406,31 +480,29 @@ class StoreEditorController extends ChangeNotifier
   });
 
   void updateCategorySectionTitle(String value) =>
-      _guncelle((d) => d.categorySectionTitle = value.trim());
+      updateField('kategoriBolumBaslik', value);
 
   void updateProductSectionTitle(String value) =>
-      _guncelle((d) => d.productSectionTitle = value.trim());
+      updateField('urunBolumBaslik', value);
 
   void updateGalleryActionLabel(String value) =>
-      _guncelle((d) => d.galleryActionLabel = value.trim());
+      updateField('galeriAksiyonMetni', value);
 
   void updateGalleryActionHref(String value) =>
-      _guncelle((d) => d.galleryActionHref = value.trim());
+      updateField('galeriAksiyonLinki', value);
 
   void updateBlogSectionKicker(String value) =>
-      _guncelle((d) => d.blogSectionKicker = value.trim());
+      updateField('blogUstBaslik', value);
 
-  void updateBlogSectionTitle(String value) =>
-      _guncelle((d) => d.blogSectionTitle = value.trim());
+  void updateBlogSectionTitle(String value) => updateField('blogBaslik', value);
 
   void updateFaqSectionKicker(String value) =>
-      _guncelle((d) => d.faqSectionKicker = value.trim());
+      updateField('sssUstBaslik', value);
 
-  void updateFaqSectionTitle(String value) =>
-      _guncelle((d) => d.faqSectionTitle = value.trim());
+  void updateFaqSectionTitle(String value) => updateField('sssBaslik', value);
 
   void updateFaqSectionDescription(String value) =>
-      _guncelle((d) => d.faqSectionDescription = value.trim());
+      updateField('sssAciklama', value);
 
   /// Anahtar yoksa/true ise bölüm görünür (veri doluluğuna göre otomatik);
   /// yalnız kapatılan bölümler haritaya `false` olarak yazılır.
@@ -444,10 +516,10 @@ class StoreEditorController extends ChangeNotifier
   }
 
   void updateShowStorefrontRating(bool value) =>
-      _guncelle((d) => d.showStorefrontRating = value);
+      updateField('puanGoster', value);
 
   void updateShowDirectionsLink(bool value) =>
-      _guncelle((d) => d.showDirectionsLink = value);
+      updateField('yolTarifiGoster', value);
 
   void updateFeaturedCampaign({
     required String label,
@@ -475,10 +547,9 @@ class StoreEditorController extends ChangeNotifier
       _guncelle((d) => d.faqItems = List.of(items));
 
   void updateWorkingHoursText(String value) =>
-      _guncelle((d) => d.workingHours = value.trim());
+      updateField('calismaSaatleri', value);
 
-  void updateInstagram(String value) =>
-      _guncelle((d) => d.instagram = value.trim());
+  void updateInstagram(String value) => updateField('instagram', value);
 
   /// Instagram OAuth sonrası kullanıcı adını forma ve (yayındaysa) Supabase'e yazar.
   Future<Result<void>> applyConnectedInstagramUsername(String username) async {
@@ -505,15 +576,15 @@ class StoreEditorController extends ChangeNotifier
     return result;
   }
 
-  void updateWebsite(String value) =>
-      _guncelle((d) => d.website = value.trim());
+  void updateWebsite(String value) => updateField('website', value);
 
+  /// Şemada karşılığı yok (operasyonel alan, vitrin içeriği değil) —
+  /// `updateField`'a taşınmadı, `_guncelle` doğrudan kullanılıyor.
   void selectStatus(String status) => _guncelle((d) => d.status = status);
 
-  void updateGoogleBusinessLink(String v) =>
-      _guncelle((d) => d.googleBusinessLink = v);
+  void updateGoogleBusinessLink(String v) => updateField('haritaLinki', v);
 
-  void updateReferencesLink(String v) => _guncelle((d) => d.referencesLink = v);
+  void updateReferencesLink(String v) => updateField('referansLinki', v);
 
   void addMarketplaceLink(MarketplaceLink link) {
     _data.marketplaceLinks.add(link);
@@ -556,8 +627,7 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  void updateAddressText(String address) =>
-      _guncelle((d) => d.address = address);
+  void updateAddressText(String address) => updateField('adres', address);
 
   @override
   void selectProvince(StoreData data, String? code, String? name) {
