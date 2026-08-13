@@ -21,3 +21,24 @@ describe("mobil vitrin paylaşım alanı", () => {
     );
   });
 });
+
+describe("vitrin paylaşım alanı — sahip modunda gizlenir", () => {
+  // Casper, 2026-08-14 canlı ekran görüntüsü: taslak önizlemedeyken
+  // WhatsApp/Instagram/SMS paylaşım düğmeleri düzenleme kancası DEĞİL,
+  // gerçek dış linkler — tıklayınca sahip kendi WhatsApp'ına/Instagram'ına
+  // atılıyor, düzenleme durmuyor. Taslak zaten yayında değil, paylaşılacak
+  // bir şey yok — bölüm sahip modunda hiç gösterilmemeli.
+  const shareSectionBlock = viewSource.slice(
+    viewSource.indexOf("SHARE & QR SECTION"),
+    viewSource.indexOf("KİRALA — yalnız hazır demo vitrinlerde")
+  );
+
+  it("paylaşım bölümü {!ownerMode && (...)} ile sarılı", () => {
+    expect(shareSectionBlock).toMatch(/\{!ownerMode\s*&&\s*\(/);
+  });
+
+  it("paylaşım bölümünün WhatsApp/Instagram/SMS linkleri hâlâ gerçek dış linkler (editableProps değil)", () => {
+    expect(shareSectionBlock).toContain("api.whatsapp.com/send");
+    expect(shareSectionBlock).not.toContain("editableProps");
+  });
+});
