@@ -420,6 +420,15 @@ export default function VitrinProfileView({
               </div>
             )}
 
+            {kategori && kategori.trim() && (
+              <div
+                {...editableProps("kategori", ownerMode)}
+                className="mb-1.5 text-[11px] font-bold uppercase tracking-widest text-blue-400/90"
+              >
+                {kategori.trim()}
+              </div>
+            )}
+
             <div className="flex items-center gap-3 sm:gap-4 mb-2">
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-blue-500/20 bg-blue-500/10 flex items-center justify-center shrink-0">
                 {logoUrl ? (
