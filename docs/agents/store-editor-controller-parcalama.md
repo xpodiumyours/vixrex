@@ -45,17 +45,43 @@ silersek karmaşıklık controller'a geri döner, yani gerçek iş yapıyorlar).
 | Faz | Yeni modül | Taşınan iş | Tahmini satır |
 |---|---|---|---|
 | 6 | `StoreContentEditingService` | `updateField` switch'i + `updateAboutSection`/`updateGallerySectionMeta`/`updateFeaturedCampaign` (çoklu-alan yazımı) | ✅ Tamamlandı (2026-08-13). Controller 1159 → 1111 satır. `_contentEditingService` state/notify bilmiyor, yalnız `StoreData` mutasyonu — controller `_guncelle`/`notifyListeners` kararını kendinde tutuyor. `flutter analyze` temiz, tam paket 443/443 yeşil (7 yeni test: `test/store_content_editing_service_test.dart`). |
-| 7 | `StorePublishFlowService` | `publish`, `saveLocally`, `openOwnerPreview`, `deleteVitrin`, `withdrawPublicationConsent`, `ensureDraftEditToken` — **en kritik yol, en dikkatli test edilecek faz** | ~170 |
-| 8 | `StoreProductCatalogController` | `syncCatalogToRemote`, `addProduct(ById)`, `removeProduct(ById)`, `updateProduct(Imported)`, `ensureRemoteStoreId`, `_loadRemoteProductsIfReady`, `_isUuid`, `_revalidateStoreCache` | ~150 |
-| 9 | `StoreHydrationController` | `initialize`, `_syncInitialData`, canlı dinleme başlat/durdur orkestrasyonu, `_pullFromCloudIfNewer`, `_fetchPublishedInfoFromSupabase` | ~150 |
+| 7 | `StorePublishFlowService` (plan) → gerçekte `StoreDraftPersistenceService` | Plandaki tahmin (`publish`, `saveLocally`, `openOwnerPreview`, `deleteVitrin`, `withdrawPublicationConsent`, `ensureDraftEditToken` hepsi tek serviste) **koda bakınca yanlış çıktı** — aşağıda gerekçe. Gerçekte taşınan: yalnız `saveLocally`'nin depolama I/O'su + `ensureDraftEditToken`. | ✅ Tamamlandı (2026-08-13), 6 satır (170 değil). |
+| 8 | `StoreProductCatalogController` | `syncCatalogToRemote`, `addProduct(ById)`, `removeProduct(ById)`, `updateProduct(Imported)`, `ensureRemoteStoreId`, `_loadRemoteProductsIfReady`, `_isUuid`, `_revalidateStoreCache` | Planlandı, henüz kod incelenmedi — Faz 7'deki gibi tahmin gerçek kapsamdan farklı çıkabilir. |
+| 9 | `StoreHydrationController` | `initialize`, `_syncInitialData`, canlı dinleme başlat/durdur orkestrasyonu, `_pullFromCloudIfNewer`, `_fetchPublishedInfoFromSupabase` | Planlandı, henüz kod incelenmedi. |
 
-**Dürüst projeksiyon:** 4 fazın hepsi bitince controller ~1159 satırdan
-~550-650 satıra iner (getter'lar + constructor/wiring + kalan booking/yasal
-onay/kategori setter'ları geride kalıyor — bunlar gerçekten controller'a
-ait, kendi state'lerini `_data` üzerinden yan etkilerle değiştiriyorlar).
-**Tam 400'e inmeyebilir** — ama her yeni modül kendi başına 400'ün çok
-altında, dar ve derin bir arayüze sahip olacak, ki AGENTS.md kuralının asıl
-amacı bu (tek dosyanın her şeyi yapması değil).
+### Faz 7'de neden plan değişti (dürüst not, 2026-08-13)
+
+Kodu incelerken görüldü: `publish`, `openOwnerPreview`, `deleteVitrin`,
+`withdrawPublicationConsent` — `saveLocally` ve `ensureDraftEditToken`'ın
+aksine — controller'ın DİĞER sorumluluklarına (`uploadMedia` medya
+mixin'i, `_stampAcceptedLegalDocuments`, `syncCatalogToRemote`,
+`notifyListeners`, `_data`/`_publishedInfo` doğrudan mutasyonu) `this`
+üzerinden sıkı bağlı. Bunları ayrı bir sınıfa taşımak, o sınıfa 5-6 geri
+çağırma (callback) parametresi eklemek anlamına gelirdi — "silme testi"
+uygulanınca: bu metotları taşısak bile controller'da AYNI miktarda
+koordinasyon kalırdı, sadece bir dolaylılık katmanı eklenirdi. Bu gerçek
+bir derinlik kazancı değil, kozmetik bir taşıma olurdu — AGENTS.md'nin
+amacı (karmaşıklığı gerçekten azaltmak) için yapılmadı.
+
+Bunun yerine yalnız GERÇEKTEN ayrılabilen parça taşındı: `saveLocally`'nin
+ham depolama yazımı (`storage.saveVitrinData`/`savePublishedVitrinInfo`) ve
+`ensureDraftEditToken` (yalnız `storage`'a bağlı, `this`'e değil) →
+`StoreDraftPersistenceService`. `saveLocally` kendisi controller'da kaldı,
+çünkü galeri senkronu (`_syncEditorGalleryIntoStoreData`) editör medya
+mixin'ine bağlı.
+
+**Sonuç:** Faz 7 planlanandan çok daha küçük çıktı (170 değil, 6 satır).
+Bu, işten kaçmak değil — 5-6 fazın planı yazılırken satır sayısına bakılarak
+tahmin edilmişti, gerçek kod okunmadan. Faz 8 ve 9 için de aynı disiplinle
+ilerlenecek: önce kod okunacak, gerçekten ayrılabilen (başka `this`
+metoduna bağlı olmayan) kısım taşınacak, geri kalan yerinde kalacak.
+
+**Dürüst projeksiyon (güncellenmiş):** Faz 8-9 benzer şekilde kısmi çıkarsa
+controller muhtemelen ~900-1000 satırda kalacak, 400'e inmeyecek. Tam
+400'e inmek isteniyorsa gerekli olan, mevcut mimarinin (`ChangeNotifier` +
+mixin'ler) kendisini değiştirmek (ör. `publish` akışını ayrı bir
+state-machine'e taşımak) — bu, bu planın kapsamının dışında, ayrı ve çok
+daha büyük bir karar.
 
 Her faz kendi PR'ı, kendi testi, `flutter analyze` + tam paket (436 test)
 yeşil şartı ile ilerler — önceki 5 fazla aynı disiplin. Faz 7 (yayın akışı)

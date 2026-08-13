@@ -17,9 +17,9 @@ import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/product_catalog_sync_service.dart';
 import 'package:vixrex/services/store_legal_stamping_service.dart';
 import 'package:vixrex/services/store_content_editing_service.dart';
+import 'package:vixrex/services/store_draft_persistence_service.dart';
 import 'package:vixrex/services/owner_preview_service.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
-import 'package:vixrex/utils/secure_token_generator.dart';
 import 'package:vixrex/utils/failure.dart';
 
 import 'mixins/store_media_mixin.dart';
@@ -51,6 +51,7 @@ class StoreEditorController extends ChangeNotifier
   late final StoreLegalStampingService _legalStampingService;
   late final StoreRealtimeSyncService _realtimeSync;
   final StoreContentEditingService _contentEditingService;
+  late final StoreDraftPersistenceService _draftPersistence;
 
   StoreData _data;
   PublishedVitrinInfo? _publishedInfo;
@@ -72,6 +73,7 @@ class StoreEditorController extends ChangeNotifier
     StoreLegalStampingService? legalStampingService,
     StoreRealtimeSyncService? realtimeSync,
     StoreContentEditingService? contentEditingService,
+    StoreDraftPersistenceService? draftPersistence,
     this.supabaseClient,
     StoreData? initialData,
   }) : storage = storage ?? const StoreLocalStorageService(),
@@ -104,6 +106,8 @@ class StoreEditorController extends ChangeNotifier
           legalDocumentService: this.legalDocumentService,
         );
     _realtimeSync = realtimeSync ?? StoreRealtimeSyncService();
+    _draftPersistence =
+        draftPersistence ?? StoreDraftPersistenceService(storage: this.storage);
     _syncInitialData();
   }
 
@@ -985,29 +989,19 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
+  /// Gerçek depolama I/O'su `StoreDraftPersistenceService`'te (Faz 7,
+  /// controller parçalama, birebir taşındı); galeri senkronu editör medya
+  /// state'ine (mixin) bağlı olduğu için burada kalıyor.
   Future<void> saveLocally() async {
     _syncEditorGalleryIntoStoreData();
-    await storage.saveVitrinData(_data);
-    if (_publishedInfo != null) {
-      await storage.savePublishedVitrinInfo(
-        slug: _publishedInfo!.slug,
-        publicLink: _publishedInfo!.publicLink,
-        name: _publishedInfo!.name,
-        editToken: _publishedInfo!.editToken,
-      );
-    }
+    await _draftPersistence.persist(_data, _publishedInfo);
   }
 
   /// Yayın öncesi taslak için cihaza özel edit token. Aynı token daha sonra
   /// yayınlanırken de kullanılır — böylece taslak satırı yeni bir satıra
   /// değil, doğrudan yayınlanan satıra dönüşür.
-  Future<String> ensureDraftEditToken() async {
-    final existing = (await storage.loadVitrinEditToken())?.trim() ?? '';
-    if (existing.isNotEmpty) return existing;
-    final token = SecureTokenGenerator.generateUuid();
-    await storage.saveVitrinEditToken(token);
-    return token;
-  }
+  Future<String> ensureDraftEditToken() =>
+      _draftPersistence.ensureDraftEditToken();
 
   /// Tek sahip önizleme girişi (implementation_plan.md §5.1/5.2, Commit 5/6):
   /// taslak/yayın ayrımını çağırandan saklar.
