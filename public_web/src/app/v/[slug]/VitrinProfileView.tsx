@@ -1015,7 +1015,14 @@ export default function VitrinProfileView({
       </div>
       )}
 
-      {/* ===== SHARE & QR SECTION ===== */}
+      {/* ===== SHARE & QR SECTION =====
+          Sahip modunda (ownerMode) gösterilmez: taslak henüz yayında
+          değil, paylaşılacak bir şey yok — WhatsApp/Instagram/SMS
+          butonları düzenleme kancası da değil, gerçek dış linkler. Sahip
+          bunlara tıklarsa kendi WhatsApp'ına/Instagram'ına atılır, kafa
+          karıştırır (Casper, 2026-08-14 canlı ekran görüntüsü). Yayından
+          sonra normal ziyaretçi modunda tekrar görünür. */}
+      {!ownerMode && (
       <div className="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
         <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 sm:p-10">
           <div className="flex items-center gap-3 mb-8">
@@ -1087,6 +1094,7 @@ export default function VitrinProfileView({
           </div>
         </div>
       </div>
+      )}
 
       {/* ===== KİRALA — yalnız hazır demo vitrinlerde =====
           Hedef HTML'de bu bölüm vardı, gerçek vitrinde yoktu. İş modelinin
