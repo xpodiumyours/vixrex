@@ -49,7 +49,7 @@ export default function OwnerAssistantPanel({
   const { yerelTaslak, setAlan, rapor } = useOwnerDraft(slug, draftData);
   const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff);
 
-  const { seciliAlan, giris, girisRef, setGiris, setSeciliAlan, alanSec, vurguyuTemizle } =
+  const { seciliAlan, giris, girisRef, setGiris, alanSec, alanaGecVeyaBitir, alanAtla } =
     useFieldSelection({
       yerelTaslak,
       mesajEkle,
@@ -63,9 +63,8 @@ export default function OwnerAssistantPanel({
     yerelTaslak,
     mesajEkle,
     setAlan,
-    setSeciliAlan,
     setGiris,
-    vurguyuTemizle,
+    alanaGecVeyaBitir,
   });
 
   return (
@@ -138,6 +137,7 @@ export default function OwnerAssistantPanel({
             hazirGorselleriAc={actions.hazirGorselleriAc}
             hazirGorselSec={actions.hazirGorselSec}
             gonder={actions.gonder}
+            alanAtla={alanAtla}
           />
 
           {/* Yayınla / Değişiklikleri bırak */}

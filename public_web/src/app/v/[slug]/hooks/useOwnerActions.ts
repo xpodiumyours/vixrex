@@ -43,9 +43,9 @@ interface Deps {
   yerelTaslak: Record<string, unknown>;
   mesajEkle: (kimden: Mesaj["kimden"], metin: string) => void;
   setAlan: (kolon: string, deger: unknown) => void;
-  setSeciliAlan: (alan: VitrinField | null) => void;
   setGiris: (v: string) => void;
-  vurguyuTemizle: () => void;
+  /** Kayıt başarılı olunca çağrılır: sırada başka alan varsa oraya geçer. */
+  alanaGecVeyaBitir: (kaydedilenAnahtar: string) => void;
 }
 
 export function useOwnerActions({
@@ -55,9 +55,8 @@ export function useOwnerActions({
   yerelTaslak,
   mesajEkle,
   setAlan,
-  setSeciliAlan,
   setGiris,
-  vurguyuTemizle,
+  alanaGecVeyaBitir,
 }: Deps): OwnerActionsHook {
   const router = useRouter();
   const [kaydediliyor, setKaydediliyor] = useState(false);
@@ -120,16 +119,15 @@ export function useOwnerActions({
         }
 
         mesajEkle("asistan", `${alan.etiket} güncellendi.`);
-        setSeciliAlan(null);
-        vurguyuTemizle();
         setAlan(alan.kolon, yuklemeGovde.url as unknown);
+        alanaGecVeyaBitir(alan.anahtar);
       } catch {
         mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
       } finally {
         setKaydediliyor(false);
       }
     },
-    [seciliAlan, slug, mesajEkle, setAlan, setSeciliAlan, vurguyuTemizle]
+    [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir]
   );
 
   // Kategorinin hazır görsellerini getirir. Kategori anahtarı
@@ -201,16 +199,15 @@ export function useOwnerActions({
 
         mesajEkle("asistan", `${alan.etiket} güncellendi.`);
         _setHazirGorseller([]);
-        setSeciliAlan(null);
-        vurguyuTemizle();
         setAlan(alan.kolon, url);
+        alanaGecVeyaBitir(alan.anahtar);
       } catch {
         mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
       } finally {
         setKaydediliyor(false);
       }
     },
-    [seciliAlan, slug, mesajEkle, setAlan, setSeciliAlan, vurguyuTemizle, _setHazirGorseller]
+    [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir, _setHazirGorseller]
   );
 
   const gonder = useCallback(async () => {
@@ -259,15 +256,14 @@ export function useOwnerActions({
         `${alan.etiket} güncellendi. Müşteriler yayınlayana kadar göremez.`
       );
       setGiris("");
-      setSeciliAlan(null);
-      vurguyuTemizle();
       setAlan(alan.kolon, gonderilecek);
+      alanaGecVeyaBitir(alan.anahtar);
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setKaydediliyor(false);
     }
-  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setSeciliAlan, setGiris, vurguyuTemizle]);
+  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir]);
 
   const yayinla = useCallback(async () => {
     mesajEkle("kullanici", "Yayınla");

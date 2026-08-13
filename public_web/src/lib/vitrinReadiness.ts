@@ -51,7 +51,7 @@ export interface HazirlikRaporu {
   sonrakiAdim: string | null;
 }
 
-function onemi(alan: VitrinField): EksikOnem {
+export function alanOnemi(alan: VitrinField): EksikOnem {
   if (TEMEL_ALANLAR.has(alan.anahtar)) return "temel";
   if (KALITE_ALANLARI.has(alan.anahtar)) return "kalite";
   return "istege-bagli";
@@ -75,7 +75,7 @@ export function hazirlikRaporu(draftData: Record<string, unknown>): HazirlikRapo
   let toplam = 0;
 
   for (const alan of VITRIN_FIELDS) {
-    const onem = onemi(alan);
+    const onem = alanOnemi(alan);
     // İsteğe bağlı alanlar yüzdeye girmez; boşsa da vitrin eksik sayılmaz.
     if (onem === "istege-bagli") continue;
 
@@ -110,4 +110,43 @@ export function hazirlikRaporu(draftData: Record<string, unknown>): HazirlikRapo
         : `${ilk.etiket} eklerseniz vitriniz daha güçlü görünür.`
       : null,
   };
+}
+
+/** Tüm 44 alan, temel → kalite → isteğe bağlı sırasıyla (her grup kendi şema sırasında). */
+export function tumAlanlarSirali(): VitrinField[] {
+  const gruplar: Record<EksikOnem, VitrinField[]> = {
+    temel: [],
+    kalite: [],
+    "istege-bagli": [],
+  };
+  for (const alan of VITRIN_FIELDS) {
+    gruplar[alanOnemi(alan)].push(alan);
+  }
+  return [...gruplar.temel, ...gruplar.kalite, ...gruplar["istege-bagli"]];
+}
+
+/**
+ * Rehberli akışta bir sonraki alanı bulur — Vixrex Asistan rehberli
+ * tamamlama (ADR 0002): sıra öner, kullanıcı istediği alana atlarsa da
+ * kaldığı yerden devam eder (`suankiAnahtar`'ın sıradaki konumundan arar).
+ * İsteğe bağlı bir alan `atlanmislar`'daysa (kullanıcı "boş geç" dediyse)
+ * bir daha ÖNERİLMEZ; tıklanarak yine de düzenlenebilir (yasak değil,
+ * yalnız otomatik akışta atlanır).
+ */
+export function sonrakiRehberAlan(
+  draftData: Record<string, unknown>,
+  suankiAnahtar: string | null,
+  atlanmislar: ReadonlySet<string>
+): VitrinField | null {
+  const sirali = tumAlanlarSirali();
+  const suankiIndeks = suankiAnahtar
+    ? sirali.findIndex((a) => a.anahtar === suankiAnahtar)
+    : -1;
+
+  for (let i = suankiIndeks + 1; i < sirali.length; i++) {
+    const alan = sirali[i];
+    if (atlanmislar.has(alan.anahtar)) continue;
+    if (!doluMu(draftData[alan.kolon])) return alan;
+  }
+  return null;
 }
