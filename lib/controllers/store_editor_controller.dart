@@ -18,6 +18,7 @@ import 'package:vixrex/services/product_catalog_sync_service.dart';
 import 'package:vixrex/services/store_legal_stamping_service.dart';
 import 'package:vixrex/services/store_content_editing_service.dart';
 import 'package:vixrex/services/store_draft_persistence_service.dart';
+import 'package:vixrex/services/store_published_info_lookup_service.dart';
 import 'package:vixrex/services/owner_preview_service.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
 import 'package:vixrex/utils/failure.dart';
@@ -52,6 +53,7 @@ class StoreEditorController extends ChangeNotifier
   late final StoreRealtimeSyncService _realtimeSync;
   final StoreContentEditingService _contentEditingService;
   late final StoreDraftPersistenceService _draftPersistence;
+  late final StorePublishedInfoLookupService _publishedInfoLookup;
 
   StoreData _data;
   PublishedVitrinInfo? _publishedInfo;
@@ -74,6 +76,7 @@ class StoreEditorController extends ChangeNotifier
     StoreRealtimeSyncService? realtimeSync,
     StoreContentEditingService? contentEditingService,
     StoreDraftPersistenceService? draftPersistence,
+    StorePublishedInfoLookupService? publishedInfoLookup,
     this.supabaseClient,
     StoreData? initialData,
   }) : storage = storage ?? const StoreLocalStorageService(),
@@ -108,6 +111,9 @@ class StoreEditorController extends ChangeNotifier
     _realtimeSync = realtimeSync ?? StoreRealtimeSyncService();
     _draftPersistence =
         draftPersistence ?? StoreDraftPersistenceService(storage: this.storage);
+    _publishedInfoLookup =
+        publishedInfoLookup ??
+        StorePublishedInfoLookupService(storage: this.storage);
     _syncInitialData();
   }
 
@@ -1049,57 +1055,18 @@ class StoreEditorController extends ChangeNotifier
     clearLocationErrors();
   }
 
+  /// Sorgu mantığı `StorePublishedInfoLookupService`'te (Faz 9, controller
+  /// parçalama, birebir taşındı); burada yalnız `_publishedInfo`/
+  /// `saveLocally` kararı kalıyor.
   Future<void> _fetchPublishedInfoFromSupabase() async {
     final client = _resolveClient();
     if (client == null) return;
-    try {
-      Map<String, dynamic>? response;
-      final userId = client.auth.currentUser?.id;
-      if (userId != null) {
-        response =
-            await client
-                .from('stores')
-                .select('slug, name')
-                .eq('user_id', userId)
-                .eq('is_published', true)
-                .maybeSingle();
-      }
-
-      if (response == null) {
-        final localSlug =
-            _data.slug.trim().isNotEmpty
-                ? _data.slug.trim()
-                : (await storage.loadLastPublishedSlug() ?? '').trim();
-        if (localSlug.isNotEmpty) {
-          response =
-              await client
-                  .from('stores')
-                  .select('slug, name')
-                  .eq('slug', localSlug)
-                  .eq('is_published', true)
-                  .maybeSingle();
-        }
-      }
-
-      if (response == null) return;
-
-      final slug = (response['slug'] ?? '').toString().trim();
-      if (slug.isEmpty) return;
-
-      final editToken =
-          (await storage.loadVitrinEditToken())?.trim() ??
-          (await storage.loadStoreEditToken())?.trim() ??
-          '';
-
-      _publishedInfo = PublishedVitrinInfo(
-        publicLink: PublicSiteConfig.buildVitrinLink(slug),
-        slug: slug,
-        name: (response['name'] ?? '').toString(),
-        editToken: editToken,
-      );
-      await saveLocally();
-    } catch (e) {
-      if (kDebugMode) debugPrint('_fetchPublishedInfoFromSupabase: $e');
-    }
+    final result = await _publishedInfoLookup.lookup(
+      client: client,
+      localSlugFallback: _data.slug,
+    );
+    if (result == null) return;
+    _publishedInfo = result;
+    await saveLocally();
   }
 }

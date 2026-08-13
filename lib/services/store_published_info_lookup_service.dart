@@ -1,0 +1,78 @@
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/services/store_local_storage_service.dart';
+
+/// Kullanıcının Supabase'te yayınlanmış mağazasını arar.
+///
+/// Controller cephe parçalama, Faz 9 (2026-08-13): `initialize()`'ın
+/// çağırdığı `_fetchPublishedInfoFromSupabase`'in sorgu mantığı birebir
+/// buraya taşındı. Bu, `initialize()`'ın kendisinden farklı — saf bir
+/// arama: girdi (client, yerel slug) → çıktı (`PublishedVitrinInfo?`),
+/// `this`'e (controller state, `saveLocally`, `notifyListeners`) bağlı
+/// değil. `initialize()`'ın geri kalanı controller'da kalıyor (Faz 7'deki
+/// `publish()` gibi, birçok controller/mixin metodunu koordine ediyor).
+class StorePublishedInfoLookupService {
+  const StorePublishedInfoLookupService({required this.storage});
+  final StoreLocalStorageService storage;
+
+  /// Önce oturum açmış kullanıcının `user_id`'sine göre arar; bulamazsa
+  /// [localSlugFallback] (boşsa cihazda son bilinen yayınlanmış slug) ile
+  /// dener. Bulursa `PublishedVitrinInfo` döner. `saveLocally` ÇAĞIRMAZ —
+  /// bu, çağıran tarafın sorumluluğu (galeri senkronu editör medya
+  /// state'ine bağlı, bu servise ait değil).
+  Future<PublishedVitrinInfo?> lookup({
+    required SupabaseClient client,
+    required String localSlugFallback,
+  }) async {
+    try {
+      Map<String, dynamic>? response;
+      final userId = client.auth.currentUser?.id;
+      if (userId != null) {
+        response =
+            await client
+                .from('stores')
+                .select('slug, name')
+                .eq('user_id', userId)
+                .eq('is_published', true)
+                .maybeSingle();
+      }
+
+      if (response == null) {
+        final localSlug =
+            localSlugFallback.trim().isNotEmpty
+                ? localSlugFallback.trim()
+                : (await storage.loadLastPublishedSlug() ?? '').trim();
+        if (localSlug.isNotEmpty) {
+          response =
+              await client
+                  .from('stores')
+                  .select('slug, name')
+                  .eq('slug', localSlug)
+                  .eq('is_published', true)
+                  .maybeSingle();
+        }
+      }
+
+      if (response == null) return null;
+
+      final slug = (response['slug'] ?? '').toString().trim();
+      if (slug.isEmpty) return null;
+
+      final editToken =
+          (await storage.loadVitrinEditToken())?.trim() ??
+          (await storage.loadStoreEditToken())?.trim() ??
+          '';
+
+      return PublishedVitrinInfo(
+        publicLink: PublicSiteConfig.buildVitrinLink(slug),
+        slug: slug,
+        name: (response['name'] ?? '').toString(),
+        editToken: editToken,
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('StorePublishedInfoLookupService.lookup: $e');
+      return null;
+    }
+  }
+}
