@@ -1,0 +1,6 @@
+{
+  "lib/controllers/store_editor_controller.dart": {
+    "tavan": 1072,
+    "not": "Faz 1-9 controller parçalama (2026-08-13) sonrası taşınan satır sayısı. Büyütmeden önce docs/agents/store-editor-controller-parcalama.md'yi oku — çoğu yeni özellik ayrı bir servise ait olmalı, doğrudan bu dosyaya değil."
+  }
+}
