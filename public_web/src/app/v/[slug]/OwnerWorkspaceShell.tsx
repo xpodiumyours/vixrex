@@ -83,6 +83,11 @@ export default function OwnerWorkspaceShell({
   const [open, setOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [sessionSecondsLeft, setSessionSecondsLeft] = useState<number | null>(null);
+  // sayfa yüklendiğindeki sabit değerden başlar, her başarılı uzatmada
+  // güncellenir — bkz. aşağıdaki "aktifken oturumu uzat" efekti.
+  const [effectiveExpiresAt, setEffectiveExpiresAt] = useState<number | null>(
+    sessionExpiresAt ?? null
+  );
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
@@ -93,15 +98,56 @@ export default function OwnerWorkspaceShell({
   }, []);
 
   useEffect(() => {
-    if (!sessionExpiresAt) return;
+    if (!effectiveExpiresAt) return;
     const tick = () => {
-      const left = Math.max(0, Math.ceil((sessionExpiresAt - Date.now()) / 1000));
+      const left = Math.max(0, Math.ceil((effectiveExpiresAt - Date.now()) / 1000));
       setSessionSecondsLeft(left);
     };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [sessionExpiresAt]);
+  }, [effectiveExpiresAt]);
+
+  /// Sahip çalışma alanı açıkken (sekme görünürken) oturumu birkaç dakikada
+  /// bir sessizce uzatır — "bankacılık usulü" kayan oturum (Casper
+  /// 2026-08-13). Sekme arka plana alınırsa/kapatılırsa uzatma durur; oturum
+  /// gerçekten terk edilirse kendi başına düşer, bu KASITLI (güvenlik).
+  useEffect(() => {
+    if (!sessionExpiresAt) return;
+    let cancelled = false;
+
+    const uzat = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const yanit = await fetch("/api/owner-session-extend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug: vitrinProps.storeSlug }),
+        });
+        if (cancelled || !yanit.ok) return;
+        const govde = await yanit.json();
+        if (typeof govde?.expiresAt === "number") {
+          setEffectiveExpiresAt(govde.expiresAt);
+        }
+      } catch {
+        // Geçici ağ hatası sessizce yutulur — oturum hemen düşmez, bir
+        // sonraki denemede (5 dk sonra veya sekme tekrar aktifleşince)
+        // toparlanır.
+      }
+    };
+
+    const id = setInterval(uzat, 5 * 60 * 1000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") uzat();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [sessionExpiresAt, vitrinProps.storeSlug]);
 
   const hiddenOnMobile = !open && !isDesktop;
 
