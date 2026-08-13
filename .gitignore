@@ -85,3 +85,4 @@ supabase/.temp/
 public_web/test-results/
 public_web/playwright-report/
 public_web/blob-report/
+.codex-remote-attachments/

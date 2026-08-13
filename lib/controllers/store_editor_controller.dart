@@ -16,6 +16,7 @@ import 'package:vixrex/services/legal_document_service.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/product_catalog_sync_service.dart';
 import 'package:vixrex/services/store_legal_stamping_service.dart';
+import 'package:vixrex/services/store_content_editing_service.dart';
 import 'package:vixrex/services/owner_preview_service.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
 import 'package:vixrex/utils/secure_token_generator.dart';
@@ -49,6 +50,7 @@ class StoreEditorController extends ChangeNotifier
   late final ProductCatalogSyncService _catalogSyncService;
   late final StoreLegalStampingService _legalStampingService;
   late final StoreRealtimeSyncService _realtimeSync;
+  final StoreContentEditingService _contentEditingService;
 
   StoreData _data;
   PublishedVitrinInfo? _publishedInfo;
@@ -69,6 +71,7 @@ class StoreEditorController extends ChangeNotifier
     ProductCatalogSyncService? catalogSyncService,
     StoreLegalStampingService? legalStampingService,
     StoreRealtimeSyncService? realtimeSync,
+    StoreContentEditingService? contentEditingService,
     this.supabaseClient,
     StoreData? initialData,
   }) : storage = storage ?? const StoreLocalStorageService(),
@@ -82,6 +85,8 @@ class StoreEditorController extends ChangeNotifier
            ProductService(
              repository: SupabaseProductRepository(client: supabaseClient),
            ),
+       _contentEditingService =
+           contentEditingService ?? const StoreContentEditingService(),
        _data = initialData ?? StoreData(kategori: 'Diğer', status: 'Açık') {
     _ownerPreviewService =
         ownerPreviewService ??
@@ -164,74 +169,12 @@ class StoreEditorController extends ChangeNotifier
   /// Next.js'teki `update_working_draft_field` ile aynı ilke (ADR 0001:
   /// iki istemci aynı çekirdek yazma mantığını iki kere yazmaz).
   ///
-  /// Kapsam dışı BİLEREK: kategori/işletme türü (yan etkili senkron),
-  /// booking (ensure mantığı), yasal onay (koşullu damgalama), durum
-  /// (`selectStatus`, şemada yok — operasyonel), SSS listesi
-  /// (`updateFaqItems`, yapısal liste, şemada yok) ve çoklu-alan grup
-  /// formları (Hakkımızda/Galeri-üst-bilgi/Kampanya — bunlar bilerek TEK
-  /// düzenleme hareketinde birden çok alan yazıyor, `updateField`'ın
-  /// tek-alan sözleşmesine uymuyor). Bunlar kendi adlı metotlarını korur.
-  ///
-  /// [deger], alanın `tip`ine göre `String` ya da `bool` olmalı.
-  ///
-  /// NOT: trim() davranışı alan alan FARKLIDIR (ör. işletme adı
-  /// trim'lenmez, telefon trim'lenir) — bu, taşımadan ÖNCE de böyleydi;
-  /// burada düzeltilmedi, birebir korundu.
+  /// Gerçek yazma mantığı `StoreContentEditingService`'te (Faz 6, controller
+  /// parçalama, birebir taşındı); burada yalnız `_data`/`notifyListeners`
+  /// kalıyor. Kapsam dışı bırakılanlar o servisin belgesinde.
   void updateField(String anahtar, Object? deger) {
-    switch (anahtar) {
-      case 'isletmeAdi':
-        _guncelle((d) => d.name = deger as String);
-      case 'kisaTanitim':
-        _guncelle((d) => d.description = deger as String);
-      case 'whatsapp':
-        _guncelle((d) => d.whatsapp = deger as String);
-      case 'telefon':
-        _guncelle((d) => d.phone = (deger as String).trim());
-      case 'eposta':
-        _guncelle((d) => d.email = (deger as String).trim());
-      case 'heroRozet':
-        _guncelle((d) => d.heroBadge = (deger as String).trim());
-      case 'hakkindaMetin':
-        _guncelle((d) => d.corporateBio = deger as String);
-      case 'kategoriBolumBaslik':
-        _guncelle((d) => d.categorySectionTitle = (deger as String).trim());
-      case 'urunBolumBaslik':
-        _guncelle((d) => d.productSectionTitle = (deger as String).trim());
-      case 'galeriAksiyonMetni':
-        _guncelle((d) => d.galleryActionLabel = (deger as String).trim());
-      case 'galeriAksiyonLinki':
-        _guncelle((d) => d.galleryActionHref = (deger as String).trim());
-      case 'blogUstBaslik':
-        _guncelle((d) => d.blogSectionKicker = (deger as String).trim());
-      case 'blogBaslik':
-        _guncelle((d) => d.blogSectionTitle = (deger as String).trim());
-      case 'sssUstBaslik':
-        _guncelle((d) => d.faqSectionKicker = (deger as String).trim());
-      case 'sssBaslik':
-        _guncelle((d) => d.faqSectionTitle = (deger as String).trim());
-      case 'sssAciklama':
-        _guncelle((d) => d.faqSectionDescription = (deger as String).trim());
-      case 'puanGoster':
-        _guncelle((d) => d.showStorefrontRating = deger as bool);
-      case 'yolTarifiGoster':
-        _guncelle((d) => d.showDirectionsLink = deger as bool);
-      case 'calismaSaatleri':
-        _guncelle((d) => d.workingHours = (deger as String).trim());
-      case 'instagram':
-        _guncelle((d) => d.instagram = (deger as String).trim());
-      case 'website':
-        _guncelle((d) => d.website = (deger as String).trim());
-      case 'haritaLinki':
-        _guncelle((d) => d.googleBusinessLink = deger as String);
-      case 'referansLinki':
-        _guncelle((d) => d.referencesLink = deger as String);
-      case 'adres':
-        _guncelle((d) => d.address = deger as String);
-      default:
-        throw ArgumentError(
-          'updateField: bilinmeyen veya bu yoldan desteklenmeyen anahtar: $anahtar',
-        );
-    }
+    _contentEditingService.writeField(_data, anahtar, deger);
+    notifyListeners();
   }
 
   // --- Core Lifecycle ---
@@ -454,14 +397,17 @@ class StoreEditorController extends ChangeNotifier
     required String imageUrl,
     required String imageCaption,
     required List<StoreAboutValue> values,
-  }) => _guncelle((d) {
-    d.aboutKicker = kicker.trim();
-    d.aboutTitle = title.trim();
-    d.corporateBio = body;
-    d.aboutImageUrl = imageUrl.trim();
-    d.aboutImageCaption = imageCaption.trim();
-    d.aboutValues = List.of(values.take(3));
-  });
+  }) => _guncelle(
+    (d) => _contentEditingService.writeAboutSection(
+      d,
+      kicker: kicker,
+      title: title,
+      body: body,
+      imageUrl: imageUrl,
+      imageCaption: imageCaption,
+      values: values,
+    ),
+  );
 
   bool get hasAboutSection {
     return _data.aboutKicker.trim().isNotEmpty ||
@@ -474,10 +420,13 @@ class StoreEditorController extends ChangeNotifier
   void updateGallerySectionMeta({
     required String kicker,
     required String title,
-  }) => _guncelle((d) {
-    d.gallerySectionKicker = kicker.trim();
-    d.gallerySectionTitle = title.trim();
-  });
+  }) => _guncelle(
+    (d) => _contentEditingService.writeGallerySectionMeta(
+      d,
+      kicker: kicker,
+      title: title,
+    ),
+  );
 
   void updateCategorySectionTitle(String value) =>
       updateField('kategoriBolumBaslik', value);
@@ -527,13 +476,16 @@ class StoreEditorController extends ChangeNotifier
     required String description,
     required String priceText,
     required String imageUrl,
-  }) => _guncelle((d) {
-    d.featuredBannerLabel = label.trim();
-    d.featuredBannerTitle = title.trim();
-    d.featuredBannerDescription = description.trim();
-    d.featuredBannerPriceText = priceText.trim();
-    d.featuredBannerImageUrl = imageUrl.trim();
-  });
+  }) => _guncelle(
+    (d) => _contentEditingService.writeFeaturedCampaign(
+      d,
+      label: label,
+      title: title,
+      description: description,
+      priceText: priceText,
+      imageUrl: imageUrl,
+    ),
+  );
 
   bool get hasFeaturedCampaign {
     return _data.featuredBannerTitle.trim().isNotEmpty ||
