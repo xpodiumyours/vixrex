@@ -150,7 +150,10 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
     });
 
     it("OwnerAssistantPanel bu senkronu sahip modunda HER ZAMAN etkin bırakır (etkin=true, koşulsuz)", () => {
-      expect(panelSource).toContain("useOwnerDraft(slug, draftData)");
+      // Tam tek satır eşleşmesi yerine esnek desen — ADR 0002 3. alt-fazında
+      // useOwnerDraft'a üçüncü argüman (atlananAlanlar) eklenince çağrı
+      // birden çok satıra yayıldı, tam metin eşleşmesi kırılgan olurdu.
+      expect(panelSource).toMatch(/useOwnerDraft\(\s*slug,\s*draftData,/);
       expect(ownerDraftHookSource).toContain(
         "useCanliVitrinSenkron(slug, true, true)"
       );

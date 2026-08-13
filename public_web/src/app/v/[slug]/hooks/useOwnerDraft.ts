@@ -28,13 +28,21 @@ export interface OwnerDraftHook {
   yerelTaslak: Record<string, unknown>;
   setAlan: (kolon: string, deger: unknown) => void;
   rapor: HazirlikRaporu;
+  /** "Boş geç" denen isteğe bağlı alanlar (ADR 0002, 3. alt-faz) — sunucudan
+   * gelen kalıcı listeyle başlar, yerelde `alanAtlandi` ile büyür. */
+  atlanmisAlanlar: ReadonlySet<string>;
+  alanAtlandi: (anahtar: string) => void;
 }
 
 export function useOwnerDraft(
   slug: string,
-  draftData: Record<string, unknown>
+  draftData: Record<string, unknown>,
+  atlananAlanlarBaslangic: readonly string[] = []
 ): OwnerDraftHook {
   const [yerelTaslak, setYerelTaslak] = useState<Record<string, unknown>>(draftData);
+  const [atlanmisAlanlar, setAtlanmisAlanlar] = useState<Set<string>>(
+    () => new Set(atlananAlanlarBaslangic)
+  );
   // draftData'nın son işlenen referansı — render sırasında karşılaştırmak
   // için. Bu bir "eski değeri hatırla" state'i, ekranda gösterilmez.
   const [islenenDraftData, setIslenenDraftData] = useState(draftData);
@@ -52,11 +60,18 @@ export function useOwnerDraft(
   // effect ile yerelTaslak'a yansır).
   useCanliVitrinSenkron(slug, true, true);
 
-  const rapor = useMemo(() => hazirlikRaporu(yerelTaslak), [yerelTaslak]);
+  const rapor = useMemo(
+    () => hazirlikRaporu(yerelTaslak, atlanmisAlanlar),
+    [yerelTaslak, atlanmisAlanlar]
+  );
 
   const setAlan = useCallback((kolon: string, deger: unknown) => {
     setYerelTaslak((prev: Record<string, unknown>) => ({ ...prev, [kolon]: deger }));
   }, []);
 
-  return { yerelTaslak, setAlan, rapor };
+  const alanAtlandi = useCallback((anahtar: string) => {
+    setAtlanmisAlanlar((onceki) => new Set(onceki).add(anahtar));
+  }, []);
+
+  return { yerelTaslak, setAlan, rapor, atlanmisAlanlar, alanAtlandi };
 }

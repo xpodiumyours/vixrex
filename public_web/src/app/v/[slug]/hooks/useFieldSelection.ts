@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
+import { sonrakiRehberAlan } from "@/lib/vitrinReadiness";
 import type { Mesaj } from "./useOwnerChat";
 
 const VURGU_SINIFI = "vixrex-secili-alan";
@@ -14,10 +15,17 @@ export interface FieldSelectionHook {
   setSeciliAlan: (alan: VitrinField | null) => void;
   alanSec: (anahtar: string, oge?: Element | null) => void;
   vurguyuTemizle: () => void;
+  /** Bir alan kaydedildikten SONRA çağrılır: sırada başka alan varsa oraya
+   * geçer, yoksa akışı bitirir. `useOwnerActions`'ın kaydetme yolları da
+   * eski `setSeciliAlan(null)` yerine bunu çağırır. */
+  alanaGecVeyaBitir: (kaydedilenAnahtar: string) => void;
 }
 
 interface Deps {
   yerelTaslak: Record<string, unknown>;
+  /** "Boş geç" denen isteğe bağlı alanlar — sunucudan kalıcı gelir
+   * (`useOwnerDraft`), burada yalnız sıradaki alanı bulmak için okunur. */
+  atlanmisAlanlar: ReadonlySet<string>;
   mesajEkle: (kimden: Mesaj["kimden"], metin: string) => void;
   /**
    * Vitrinde bir alana tıklanınca çağrılır. Panel kapalıyken vitrinden
@@ -30,6 +38,7 @@ interface Deps {
 
 export function useFieldSelection({
   yerelTaslak,
+  atlanmisAlanlar,
   mesajEkle,
   onAlanSecildi,
 }: Deps): FieldSelectionHook {
@@ -78,6 +87,24 @@ export function useFieldSelection({
     [yerelTaslak, mesajEkle, vurguyuTemizle, onAlanSecildi]
   );
 
+  const alanaGecVeyaBitir = useCallback(
+    (kaydedilenAnahtar: string) => {
+      const sonraki = sonrakiRehberAlan(
+        yerelTaslak,
+        kaydedilenAnahtar,
+        atlanmisAlanlar
+      );
+      if (sonraki) {
+        alanSec(sonraki.anahtar);
+        return;
+      }
+      vurguyuTemizle();
+      setSeciliAlan(null);
+      mesajEkle("asistan", "Harika, şu an eklenecek başka bir şey yok! 🎉");
+    },
+    [yerelTaslak, atlanmisAlanlar, alanSec, vurguyuTemizle, mesajEkle]
+  );
+
   // Vitrindeki işaretli öğeler için tek dinleyici.
   useEffect(() => {
     const tiklama = (e: MouseEvent) => {
@@ -96,5 +123,14 @@ export function useFieldSelection({
 
   useEffect(() => vurguyuTemizle, [vurguyuTemizle]);
 
-  return { seciliAlan, giris, girisRef, setGiris, setSeciliAlan, alanSec, vurguyuTemizle };
+  return {
+    seciliAlan,
+    giris,
+    girisRef,
+    setGiris,
+    setSeciliAlan,
+    alanSec,
+    vurguyuTemizle,
+    alanaGecVeyaBitir,
+  };
 }

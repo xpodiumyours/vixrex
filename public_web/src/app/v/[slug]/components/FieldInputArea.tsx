@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
+import { alanOnemi } from "@/lib/vitrinReadiness";
 import { ImagePickerPanel } from "./ImagePickerPanel";
 import type { HazirGorsel } from "../hooks/useOwnerActions";
 
@@ -15,6 +16,7 @@ interface Props {
   hazirGorselleriAc: () => Promise<void>;
   hazirGorselSec: (url: string) => Promise<void>;
   gonder: () => Promise<void>;
+  alanAtla: () => Promise<void>;
 }
 
 export function FieldInputArea({
@@ -29,15 +31,32 @@ export function FieldInputArea({
   hazirGorselleriAc,
   hazirGorselSec,
   gonder,
+  alanAtla,
 }: Props) {
+  // "Boş geç" yalnız isteğe bağlı alanlarda çıkar — temel/kalite alanlar
+  // rehberli akışta atlanamaz (ADR 0002).
+  const istegeBagliMi = seciliAlan ? alanOnemi(seciliAlan) === "istege-bagli" : false;
+
   return (
     <div className="border-t border-white/10 px-4 py-3">
       {seciliAlan && (
-        <p className="mb-2 text-[11px] text-blue-300">
-          Düzenleniyor: <strong>{seciliAlan.etiket}</strong>
-          {seciliAlan.maxUzunluk
-            ? ` · ${giris.length}/${seciliAlan.maxUzunluk}`
-            : ""}
+        <p className="mb-2 flex items-center justify-between text-[11px] text-blue-300">
+          <span>
+            Düzenleniyor: <strong>{seciliAlan.etiket}</strong>
+            {seciliAlan.maxUzunluk
+              ? ` · ${giris.length}/${seciliAlan.maxUzunluk}`
+              : ""}
+          </span>
+          {istegeBagliMi && (
+            <button
+              type="button"
+              onClick={() => void alanAtla()}
+              disabled={kaydediliyor}
+              className="shrink-0 text-slate-400 underline decoration-dotted hover:text-slate-200 disabled:opacity-50"
+            >
+              Boş geç
+            </button>
+          )}
         </p>
       )}
       {seciliAlan?.tip === "gorsel" ? (

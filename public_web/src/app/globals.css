@@ -321,6 +321,14 @@ h1, h2, h3, h4, h5, h6 {
   outline-color: rgba(59, 130, 246, 0.55);
   background-color: rgba(59, 130, 246, 0.07);
 }
+/* Vixrex Asistan paneli açıkken (Vixrex Asistan rehberli tamamlama, ADR 0002,
+   2026-08-13 — sürekli vurgu) doldurulabilir HER yer hafifçe ışıklı durur;
+   esnaf hangi 44 yerin düzenlenebilir olduğunu ilk bakışta görür, hover'ı
+   beklemek zorunda kalmaz. Panel kapanınca eski (yalnız hover'da görünen)
+   hâline döner — body sınıfı `OwnerAssistantPanel` tarafından yönetilir. */
+body.vixrex-asistan-acik [data-vixrex-editable] {
+  outline-color: rgba(59, 130, 246, 0.28);
+}
 .vixrex-secili-alan {
   outline: 2px solid rgb(59, 130, 246) !important;
   background-color: rgba(59, 130, 246, 0.12) !important;

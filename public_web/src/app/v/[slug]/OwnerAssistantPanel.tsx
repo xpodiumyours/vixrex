@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
@@ -27,21 +27,40 @@ interface Props {
   slug: string;
   draftData: Record<string, unknown>;
   assistantHandoff?: AssistantHandoffV1 | null;
+  /** "Boş geç" denen isteğe bağlı alanlar — sunucudan kalıcı gelir (ADR 0002,
+   * 3. alt-faz). */
+  atlananAlanlar?: readonly string[] | null;
 }
 
 export default function OwnerAssistantPanel({
   slug,
   draftData,
   assistantHandoff = null,
+  atlananAlanlar = null,
 }: Props) {
   const [acik, setAcik] = useState(false);
 
-  const { yerelTaslak, setAlan, rapor } = useOwnerDraft(slug, draftData);
+  // Panel açıkken vitrindeki TÜM doldurulabilir yerler sürekli hafif ışıklı
+  // dursun (Vixrex Asistan rehberli tamamlama, ADR 0002) — yalnız o an
+  // seçili olan değil. Sınıf `body`'ye eklenir, gerçek stil globals.css'te
+  // `[data-vixrex-editable]` üzerinden çalışır — bu öznitelik yalnız sahip
+  // modunda DOM'a girdiği için müşteri görünümü hiç etkilenmez.
+  useEffect(() => {
+    document.body.classList.toggle("vixrex-asistan-acik", acik);
+    return () => document.body.classList.remove("vixrex-asistan-acik");
+  }, [acik]);
+
+  const { yerelTaslak, setAlan, rapor, atlanmisAlanlar, alanAtlandi } = useOwnerDraft(
+    slug,
+    draftData,
+    atlananAlanlar ?? []
+  );
   const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff);
 
-  const { seciliAlan, giris, girisRef, setGiris, setSeciliAlan, alanSec, vurguyuTemizle } =
+  const { seciliAlan, giris, girisRef, setGiris, alanSec, alanaGecVeyaBitir } =
     useFieldSelection({
       yerelTaslak,
+      atlanmisAlanlar,
       mesajEkle,
       onAlanSecildi: () => setAcik(true),
     });
@@ -53,9 +72,9 @@ export default function OwnerAssistantPanel({
     yerelTaslak,
     mesajEkle,
     setAlan,
-    setSeciliAlan,
     setGiris,
-    vurguyuTemizle,
+    alanaGecVeyaBitir,
+    alanAtlandi,
   });
 
   return (
@@ -128,6 +147,7 @@ export default function OwnerAssistantPanel({
             hazirGorselleriAc={actions.hazirGorselleriAc}
             hazirGorselSec={actions.hazirGorselSec}
             gonder={actions.gonder}
+            alanAtla={actions.alanAtla}
           />
 
           {/* Yayınla / Değişiklikleri bırak */}
