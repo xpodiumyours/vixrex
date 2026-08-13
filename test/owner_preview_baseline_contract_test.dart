@@ -46,9 +46,16 @@ void main() {
     final openOwnerPreview = controllerSource.substring(
       controllerSource.indexOf('Future<OwnerPreviewLink> openOwnerPreview'),
     );
+    // Metot gövdesinin bittiği yeri bulmak için ilk '\n  }' aranırdı — ama
+    // Assistant handoff CORE işiyle imzaya `{AssistantHandoffV1? ...}` gibi
+    // adlandırılmış parametre bloğu eklendi ve o blok da kendi '\n  }'ini
+    // taşıyor; arama gövdeden ÖNCE oradan eşleşip metni imzada keserdi.
+    // Aramayı gövdenin gerçek başlangıcından (`async {`) sonra başlatarak
+    // yalnız gerçek kapanışı buluyoruz.
+    final bodyStart = openOwnerPreview.indexOf('async {');
     final ownerPreviewMethod = openOwnerPreview.substring(
       0,
-      openOwnerPreview.indexOf('\n  }') + 4,
+      openOwnerPreview.indexOf('\n  }', bodyStart) + 4,
     );
 
     test('her iki durumda da sahip oturumu akışından giriş adresi üretir', () {
