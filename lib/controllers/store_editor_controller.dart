@@ -148,6 +148,16 @@ class StoreEditorController extends ChangeNotifier
 
   bool get isWithdrawingConsent => isLoading;
 
+  /// Basit "bir/birkaç alanı değiştir, bildir" deseni tekrar eden
+  /// setter'ların ortak yazma cephesi (Faz 5, controller parçalama).
+  /// Genişletilmiş mantık taşıyan setter'lar (kategori, booking, yasal
+  /// onay, bölüm görünürlüğü vb.) bunu KULLANMAZ — onlarda `_data`
+  /// yazımından fazlası var, davranışları burada tekrar edilmez.
+  void _guncelle(void Function(StoreData data) yaz) {
+    yaz(_data);
+    notifyListeners();
+  }
+
   // --- Core Lifecycle ---
   void _syncInitialData() {
     if (_data.shelfImageUrl.isEmpty) {
@@ -314,10 +324,7 @@ class StoreEditorController extends ChangeNotifier
     super.setCoverUrl(trimmed);
   }
 
-  void setName(String name) {
-    _data.name = name;
-    notifyListeners();
-  }
+  void setName(String name) => _guncelle((d) => d.name = name);
 
   void updateName(String name) => setName(name);
 
@@ -351,35 +358,20 @@ class StoreEditorController extends ChangeNotifier
     _data.bookingSettings!.isEnabled = supportsBooking;
   }
 
-  void setDescription(String description) {
-    _data.description = description;
-    notifyListeners();
-  }
+  void setDescription(String description) =>
+      _guncelle((d) => d.description = description);
 
-  void updateWhatsapp(String w) {
-    _data.whatsapp = w;
-    notifyListeners();
-  }
+  void updateWhatsapp(String w) => _guncelle((d) => d.whatsapp = w);
 
-  void updatePhone(String value) {
-    _data.phone = value.trim();
-    notifyListeners();
-  }
+  void updatePhone(String value) => _guncelle((d) => d.phone = value.trim());
 
-  void updateEmail(String value) {
-    _data.email = value.trim();
-    notifyListeners();
-  }
+  void updateEmail(String value) => _guncelle((d) => d.email = value.trim());
 
-  void updateHeroBadge(String value) {
-    _data.heroBadge = value.trim();
-    notifyListeners();
-  }
+  void updateHeroBadge(String value) =>
+      _guncelle((d) => d.heroBadge = value.trim());
 
-  void updateCorporateBio(String value) {
-    _data.corporateBio = value;
-    notifyListeners();
-  }
+  void updateCorporateBio(String value) =>
+      _guncelle((d) => d.corporateBio = value);
 
   void updateAboutSection({
     required String kicker,
@@ -388,15 +380,14 @@ class StoreEditorController extends ChangeNotifier
     required String imageUrl,
     required String imageCaption,
     required List<StoreAboutValue> values,
-  }) {
-    _data.aboutKicker = kicker.trim();
-    _data.aboutTitle = title.trim();
-    _data.corporateBio = body;
-    _data.aboutImageUrl = imageUrl.trim();
-    _data.aboutImageCaption = imageCaption.trim();
-    _data.aboutValues = List.of(values.take(3));
-    notifyListeners();
-  }
+  }) => _guncelle((d) {
+    d.aboutKicker = kicker.trim();
+    d.aboutTitle = title.trim();
+    d.corporateBio = body;
+    d.aboutImageUrl = imageUrl.trim();
+    d.aboutImageCaption = imageCaption.trim();
+    d.aboutValues = List.of(values.take(3));
+  });
 
   bool get hasAboutSection {
     return _data.aboutKicker.trim().isNotEmpty ||
@@ -409,56 +400,37 @@ class StoreEditorController extends ChangeNotifier
   void updateGallerySectionMeta({
     required String kicker,
     required String title,
-  }) {
-    _data.gallerySectionKicker = kicker.trim();
-    _data.gallerySectionTitle = title.trim();
-    notifyListeners();
-  }
+  }) => _guncelle((d) {
+    d.gallerySectionKicker = kicker.trim();
+    d.gallerySectionTitle = title.trim();
+  });
 
-  void updateCategorySectionTitle(String value) {
-    _data.categorySectionTitle = value.trim();
-    notifyListeners();
-  }
+  void updateCategorySectionTitle(String value) =>
+      _guncelle((d) => d.categorySectionTitle = value.trim());
 
-  void updateProductSectionTitle(String value) {
-    _data.productSectionTitle = value.trim();
-    notifyListeners();
-  }
+  void updateProductSectionTitle(String value) =>
+      _guncelle((d) => d.productSectionTitle = value.trim());
 
-  void updateGalleryActionLabel(String value) {
-    _data.galleryActionLabel = value.trim();
-    notifyListeners();
-  }
+  void updateGalleryActionLabel(String value) =>
+      _guncelle((d) => d.galleryActionLabel = value.trim());
 
-  void updateGalleryActionHref(String value) {
-    _data.galleryActionHref = value.trim();
-    notifyListeners();
-  }
+  void updateGalleryActionHref(String value) =>
+      _guncelle((d) => d.galleryActionHref = value.trim());
 
-  void updateBlogSectionKicker(String value) {
-    _data.blogSectionKicker = value.trim();
-    notifyListeners();
-  }
+  void updateBlogSectionKicker(String value) =>
+      _guncelle((d) => d.blogSectionKicker = value.trim());
 
-  void updateBlogSectionTitle(String value) {
-    _data.blogSectionTitle = value.trim();
-    notifyListeners();
-  }
+  void updateBlogSectionTitle(String value) =>
+      _guncelle((d) => d.blogSectionTitle = value.trim());
 
-  void updateFaqSectionKicker(String value) {
-    _data.faqSectionKicker = value.trim();
-    notifyListeners();
-  }
+  void updateFaqSectionKicker(String value) =>
+      _guncelle((d) => d.faqSectionKicker = value.trim());
 
-  void updateFaqSectionTitle(String value) {
-    _data.faqSectionTitle = value.trim();
-    notifyListeners();
-  }
+  void updateFaqSectionTitle(String value) =>
+      _guncelle((d) => d.faqSectionTitle = value.trim());
 
-  void updateFaqSectionDescription(String value) {
-    _data.faqSectionDescription = value.trim();
-    notifyListeners();
-  }
+  void updateFaqSectionDescription(String value) =>
+      _guncelle((d) => d.faqSectionDescription = value.trim());
 
   /// Anahtar yoksa/true ise bölüm görünür (veri doluluğuna göre otomatik);
   /// yalnız kapatılan bölümler haritaya `false` olarak yazılır.
@@ -471,15 +443,11 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  void updateShowStorefrontRating(bool value) {
-    _data.showStorefrontRating = value;
-    notifyListeners();
-  }
+  void updateShowStorefrontRating(bool value) =>
+      _guncelle((d) => d.showStorefrontRating = value);
 
-  void updateShowDirectionsLink(bool value) {
-    _data.showDirectionsLink = value;
-    notifyListeners();
-  }
+  void updateShowDirectionsLink(bool value) =>
+      _guncelle((d) => d.showDirectionsLink = value);
 
   void updateFeaturedCampaign({
     required String label,
@@ -487,14 +455,13 @@ class StoreEditorController extends ChangeNotifier
     required String description,
     required String priceText,
     required String imageUrl,
-  }) {
-    _data.featuredBannerLabel = label.trim();
-    _data.featuredBannerTitle = title.trim();
-    _data.featuredBannerDescription = description.trim();
-    _data.featuredBannerPriceText = priceText.trim();
-    _data.featuredBannerImageUrl = imageUrl.trim();
-    notifyListeners();
-  }
+  }) => _guncelle((d) {
+    d.featuredBannerLabel = label.trim();
+    d.featuredBannerTitle = title.trim();
+    d.featuredBannerDescription = description.trim();
+    d.featuredBannerPriceText = priceText.trim();
+    d.featuredBannerImageUrl = imageUrl.trim();
+  });
 
   bool get hasFeaturedCampaign {
     return _data.featuredBannerTitle.trim().isNotEmpty ||
@@ -504,20 +471,14 @@ class StoreEditorController extends ChangeNotifier
         _data.featuredBannerLabel.trim().isNotEmpty;
   }
 
-  void updateFaqItems(List<StoreFaqItem> items) {
-    _data.faqItems = List.of(items);
-    notifyListeners();
-  }
+  void updateFaqItems(List<StoreFaqItem> items) =>
+      _guncelle((d) => d.faqItems = List.of(items));
 
-  void updateWorkingHoursText(String value) {
-    _data.workingHours = value.trim();
-    notifyListeners();
-  }
+  void updateWorkingHoursText(String value) =>
+      _guncelle((d) => d.workingHours = value.trim());
 
-  void updateInstagram(String value) {
-    _data.instagram = value.trim();
-    notifyListeners();
-  }
+  void updateInstagram(String value) =>
+      _guncelle((d) => d.instagram = value.trim());
 
   /// Instagram OAuth sonrası kullanıcı adını forma ve (yayındaysa) Supabase'e yazar.
   Future<Result<void>> applyConnectedInstagramUsername(String username) async {
@@ -544,25 +505,15 @@ class StoreEditorController extends ChangeNotifier
     return result;
   }
 
-  void updateWebsite(String value) {
-    _data.website = value.trim();
-    notifyListeners();
-  }
+  void updateWebsite(String value) =>
+      _guncelle((d) => d.website = value.trim());
 
-  void selectStatus(String status) {
-    _data.status = status;
-    notifyListeners();
-  }
+  void selectStatus(String status) => _guncelle((d) => d.status = status);
 
-  void updateGoogleBusinessLink(String v) {
-    _data.googleBusinessLink = v;
-    notifyListeners();
-  }
+  void updateGoogleBusinessLink(String v) =>
+      _guncelle((d) => d.googleBusinessLink = v);
 
-  void updateReferencesLink(String v) {
-    _data.referencesLink = v;
-    notifyListeners();
-  }
+  void updateReferencesLink(String v) => _guncelle((d) => d.referencesLink = v);
 
   void addMarketplaceLink(MarketplaceLink link) {
     _data.marketplaceLinks.add(link);
@@ -605,10 +556,8 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  void updateAddressText(String address) {
-    _data.address = address;
-    notifyListeners();
-  }
+  void updateAddressText(String address) =>
+      _guncelle((d) => d.address = address);
 
   @override
   void selectProvince(StoreData data, String? code, String? name) {
