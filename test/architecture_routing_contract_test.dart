@@ -73,8 +73,12 @@ void main() {
       final agentRules = File('AGENTS.md').readAsStringSync();
       final projectRules = File('VIXREX_RULES.md').readAsStringSync();
 
+      // Eskiden burada AGENTS.md'nin `.agents/skills/ask-matt/SKILL.md`
+      // haritasına da atıf yaptığı doğrulanıyordu. PR #123 (2026-08-11)
+      // zorunlu skill zincirini/haritayı bilerek kaldırdı; bu artık geçerli
+      // bir davranış, test onu bekleyemez. AGENTS.md'nin VIXREX_RULES.md'ye
+      // hâlâ işaret ettiği kontrolü (asıl "sahiplik açık mı" amacı) kalıyor.
       expect(agentRules, contains('VIXREX_RULES.md'));
-      expect(agentRules, contains('.agents/skills/ask-matt/SKILL.md'));
       expect(
         projectRules,
         contains('`lib/`: Flutter Web/Mobil işletme paneli.'),
