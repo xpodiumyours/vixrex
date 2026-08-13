@@ -15,6 +15,7 @@ import 'package:vixrex/services/store_safe_select.dart';
 import 'package:vixrex/services/legal_document_service.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/product_catalog_sync_service.dart';
+import 'package:vixrex/services/store_legal_stamping_service.dart';
 import 'package:vixrex/services/owner_preview_service.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
 import 'package:vixrex/utils/secure_token_generator.dart';
@@ -46,6 +47,7 @@ class StoreEditorController extends ChangeNotifier
   final SupabaseClient? supabaseClient;
   late final OwnerPreviewService _ownerPreviewService;
   late final ProductCatalogSyncService _catalogSyncService;
+  late final StoreLegalStampingService _legalStampingService;
 
   StoreData _data;
   PublishedVitrinInfo? _publishedInfo;
@@ -64,6 +66,7 @@ class StoreEditorController extends ChangeNotifier
     ProductService? productService,
     OwnerPreviewService? ownerPreviewService,
     ProductCatalogSyncService? catalogSyncService,
+    StoreLegalStampingService? legalStampingService,
     this.supabaseClient,
     StoreData? initialData,
   }) : storage = storage ?? const StoreLocalStorageService(),
@@ -88,6 +91,11 @@ class StoreEditorController extends ChangeNotifier
     _catalogSyncService =
         catalogSyncService ??
         ProductCatalogSyncService(productService: this.productService);
+    _legalStampingService =
+        legalStampingService ??
+        StoreLegalStampingService(
+          legalDocumentService: this.legalDocumentService,
+        );
     _syncInitialData();
   }
 
@@ -757,68 +765,17 @@ class StoreEditorController extends ChangeNotifier
 
   /// Aktif yasal belgelerden version/hash damgala (hash DB'de boş olabilir).
   /// API başarısız olsa bile bilinen aktif sürümlerle boşluk doldurulur.
+  /// Gerçek iş `StoreLegalStampingService`'te (Faz 2, controller parçalama,
+  /// birebir taşındı); burada yalnız hata gösterme kararı (`reportError`)
+  /// ve `notifyListeners` kalıyor.
   Future<void> _stampAcceptedLegalDocuments({bool reportError = false}) async {
-    try {
-      final result = await legalDocumentService.loadPublishingDocuments();
-      result.when(
-        success: (docs) {
-          setLegalDocumentsError(null);
-          if (_data.privacyNoticeAcknowledged) {
-            _data.privacyNoticeVersion = docs.privacy.version;
-            _data.privacyNoticeHash = docs.privacy.contentHash;
-            _data.privacyNoticeAcknowledgedAt ??= DateTime.now();
-          }
-          if (_data.termsAccepted) {
-            _data.termsVersion = docs.terms.version;
-            _data.termsHash = docs.terms.contentHash;
-            _data.termsAcceptedAt ??= DateTime.now();
-          }
-          if (_data.publicationConsentAccepted) {
-            _data.publicationConsentVersion = docs.consent.version;
-            _data.publicationConsentHash = docs.consent.contentHash;
-            _data.publicationConsentAcceptedAt ??= DateTime.now();
-          }
-        },
-        failure: (f) {
-          if (kDebugMode) {
-            debugPrint('_stampAcceptedLegalDocuments: ${f.message}');
-          }
-          if (reportError) {
-            setLegalDocumentsError(
-              'Belgeler yüklenemedi. İnternet bağlantınızı kontrol edin',
-            );
-          }
-        },
-      );
-    } catch (e) {
-      if (kDebugMode) debugPrint('_stampAcceptedLegalDocuments failed: $e');
-      if (reportError) {
-        setLegalDocumentsError('Belgeler yüklenemedi. Lütfen tekrar deneyin');
-      }
+    final result = await _legalStampingService.stamp(_data);
+    if (result.isSuccess) {
+      setLegalDocumentsError(null);
+    } else if (reportError) {
+      setLegalDocumentsError(result.errorMessage);
     }
-    _ensureFallbackLegalStamps();
     notifyListeners();
-  }
-
-  /// Supabase'teki aktif legal_documents sürümleri (2026-07-05).
-  void _ensureFallbackLegalStamps() {
-    if (_data.privacyNoticeAcknowledged &&
-        _data.privacyNoticeVersion.trim().isEmpty) {
-      _data.privacyNoticeVersion = 'privacy-2026-07-05';
-      _data.privacyNoticeHash = '';
-      _data.privacyNoticeAcknowledgedAt ??= DateTime.now();
-    }
-    if (_data.termsAccepted && _data.termsVersion.trim().isEmpty) {
-      _data.termsVersion = 'terms-2026-07-05';
-      _data.termsHash = '';
-      _data.termsAcceptedAt ??= DateTime.now();
-    }
-    if (_data.publicationConsentAccepted &&
-        _data.publicationConsentVersion.trim().isEmpty) {
-      _data.publicationConsentVersion = 'consent-2026-07-05';
-      _data.publicationConsentHash = '';
-      _data.publicationConsentAcceptedAt ??= DateTime.now();
-    }
   }
 
   Future<bool> ensureRemoteStoreId() async {

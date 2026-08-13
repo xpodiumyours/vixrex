@@ -13,7 +13,7 @@ tekrar edilmiyor.**
 | Faz | Konu | Durum |
 |---|---|---|
 | 1 | Ürün kataloğu CRUD/senkron → `ProductCatalogSyncService` | ✅ Tamamlandı (PR #137, 2026-08-12). Controller 1388 → 1272 satır. |
-| 2 | Yasal onay damgalama (~65 satır, sabit tarihli fallback riski var) | Yapılmadı |
+| 2 | Yasal onay damgalama (~65 satır, sabit tarihli fallback riski var) | ✅ Tamamlandı (2026-08-13). Controller 1272 → 1229 satır. DeepSeek'in bıraktığı ilk taslak sabit-tarihli fallback riskini düzeltmek yerine tekrar üretmişti (gerçek sunucu sürüm/hash'ini hiç okumuyordu, ağ hatasında da fallback yazmıyordu) — yeniden yazıldı, orijinal davranış (`docs.privacy.version`/`.contentHash` başarıda, `_ensureFallbackStamps` her koşulda) birebir korundu. `flutter analyze` temiz, `test/publish_legal_stamp_fix_test.dart` (3) ve `test/store_editor_controller_test.dart` (18) yeşil. |
 | 3 | Canlı/taslak realtime dinleyicileri (~180 satır, ham Supabase sorguları) | Yapılmadı |
 | 4 | `StoreLocationMixin`/`StoreMediaMixin` içindeki gerçek iş mantığı (GPS eşleştirme, upload orkestrasyon) → enjekte edilebilir servisler | Yapılmadı |
 | 5 | ~37 basit alan setter'ı → tek yazma cephesi | Yapılmadı |
