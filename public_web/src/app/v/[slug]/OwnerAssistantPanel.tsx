@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
@@ -35,6 +35,16 @@ export default function OwnerAssistantPanel({
   assistantHandoff = null,
 }: Props) {
   const [acik, setAcik] = useState(false);
+
+  // Panel açıkken vitrindeki TÜM doldurulabilir yerler sürekli hafif ışıklı
+  // dursun (Vixrex Asistan rehberli tamamlama, ADR 0002) — yalnız o an
+  // seçili olan değil. Sınıf `body`'ye eklenir, gerçek stil globals.css'te
+  // `[data-vixrex-editable]` üzerinden çalışır — bu öznitelik yalnız sahip
+  // modunda DOM'a girdiği için müşteri görünümü hiç etkilenmez.
+  useEffect(() => {
+    document.body.classList.toggle("vixrex-asistan-acik", acik);
+    return () => document.body.classList.remove("vixrex-asistan-acik");
+  }, [acik]);
 
   const { yerelTaslak, setAlan, rapor } = useOwnerDraft(slug, draftData);
   const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff);
