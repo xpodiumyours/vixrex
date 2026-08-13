@@ -381,6 +381,24 @@ class AppRouter {
     );
   }
 
+  /// "Bu vitrini kirala" — demo vitrini taslak olarak kopyalayıp Vixrex
+  /// Asistan'ı (sahip paneli) tarayıcıda açar. `/api/rent-demo` sunucu
+  /// tarafında kopyalama + oturum açma işini yapar; burada yalnız link
+  /// açılır (İncele ile aynı desen, `openPublicUrl`).
+  static Future<void> navigateToRentDemo(
+    BuildContext context,
+    String demoSlug,
+  ) async {
+    final normalizedSlug = demoSlug.trim();
+    if (normalizedSlug.isEmpty) return;
+
+    await openPublicUrl(
+      context,
+      PublicSiteConfig.buildRentDemoLink(normalizedSlug),
+      failureMessage: 'Vitrin kiralama sayfası açılamadı.',
+    );
+  }
+
   static Future<void> navigateToPublicProduct(
     BuildContext context, {
     required String storeSlug,

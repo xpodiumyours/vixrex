@@ -25,6 +25,7 @@ void main() {
     VoidCallback? onTap,
     required VoidCallback onFavoritePressed,
     required VoidCallback onWhatsAppPressed,
+    VoidCallback? onRentPressed,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -39,6 +40,7 @@ void main() {
               onTap: onTap,
               onFavoritePressed: onFavoritePressed,
               onWhatsAppPressed: onWhatsAppPressed,
+              onRentPressed: onRentPressed,
             ),
           ],
         ),
@@ -152,4 +154,71 @@ void main() {
 
     expect(cardTapped, isTrue);
   });
+
+  testWidgets(
+    '7. Kiralık kartta onRentPressed varsa İncele/Kirala ayrı butonlar',
+    (WidgetTester tester) async {
+      final demoStore = StoreData(
+        name: 'Demo Vitrin',
+        kategori: 'Kafe / Lokanta',
+        slug: 'kiralik-kafe',
+        isDemo: true,
+      );
+      var incelendi = false;
+      var kiralandi = false;
+
+      await tester.pumpWidget(
+        buildCard(
+          store: demoStore,
+          onTap: () => incelendi = true,
+          onFavoritePressed: () {},
+          onWhatsAppPressed: () {},
+          onRentPressed: () => kiralandi = true,
+        ),
+      );
+
+      expect(find.text('İncele'), findsOneWidget);
+      expect(find.text('Kirala'), findsOneWidget);
+      // Eski tek-buton metni artık görünmemeli.
+      expect(find.text('Vitrini İncele'), findsNothing);
+
+      await tester.tap(find.text('Kirala'));
+      await tester.pump();
+      expect(kiralandi, isTrue);
+      expect(incelendi, isFalse);
+
+      await tester.tap(find.text('İncele'));
+      await tester.pump();
+      expect(incelendi, isTrue);
+    },
+  );
+
+  testWidgets(
+    '8. Kiralık kartta onRentPressed YOKSA eski tek-buton davranışı korunur',
+    (WidgetTester tester) async {
+      final demoStore = StoreData(
+        name: 'Demo Vitrin',
+        kategori: 'Kafe / Lokanta',
+        slug: 'kiralik-kafe',
+        isDemo: true,
+      );
+      var incelendi = false;
+
+      await tester.pumpWidget(
+        buildCard(
+          store: demoStore,
+          onTap: () => incelendi = true,
+          onFavoritePressed: () {},
+          onWhatsAppPressed: () {},
+        ),
+      );
+
+      expect(find.text('Vitrini İncele'), findsOneWidget);
+      expect(find.text('Kirala'), findsNothing);
+
+      await tester.tap(find.text('Vitrini İncele'));
+      await tester.pump();
+      expect(incelendi, isTrue);
+    },
+  );
 }
