@@ -30,6 +30,7 @@ Bu bir zincir DEĞİLDİR: issue bağlama, kanıt scripti veya ek onay gerektirm
 ## Mimari büyüme yasağı
 
 - 400 satırı veya 20 dışa açık üyeyi geçen controller/modüle yeni sorumluluk eklenmez; önce ayrı sahip modül ve küçük arayüz oluşturulur.
+- Bu kural 2026-08 içinde `store_editor_controller.dart`'ın 1388 satıra çıkmasını engelleyemedi çünkü yalnız metindi, hiçbir yerde otomatik kontrol edilmiyordu (9 fazlık parçalamayla 1072'ye indirildi, bkz. `docs/agents/store-editor-controller-parcalama.md`). Artık `.github/dosya_boyutu_ratchet.json`'da izlenen dosyalar için CI (`Dosya büyüklüğü rateti`, `.github/scripts/verify_dosya_boyutu_ratchet.py`) mevcut satır sayısını bir tavan olarak kilitler — dosya bu PR sonrası tavanı aşarsa kırmızıya düşer. Yeni özellik bu dosyaya değil, yeni bir servise yazılır; gerçekten büyütmek gerekiyorsa tavan aynı PR'da bilinçli olarak yükseltilir (nedeni JSON'daki `not` alanına yazılır).
 - Mixin/extension'a taşımak tek başına ayrıştırma değildir; state, bağımlılık ve test seam'i gerçekten ayrılmalıdır.
 - Yeni özellik planı sahip modülü ve arayüzünü adlandırır. Uygun sahip yoksa önce mimari ayrıştırma yapılır.
 - Zorunlu hata düzeltmesi büyük modülde yapılabilir; dış arayüzü veya sorumluluk sayısı büyütülemez.
