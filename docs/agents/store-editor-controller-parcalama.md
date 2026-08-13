@@ -46,8 +46,20 @@ silersek karmaşıklık controller'a geri döner, yani gerçek iş yapıyorlar).
 |---|---|---|---|
 | 6 | `StoreContentEditingService` | `updateField` switch'i + `updateAboutSection`/`updateGallerySectionMeta`/`updateFeaturedCampaign` (çoklu-alan yazımı) | ✅ Tamamlandı (2026-08-13). Controller 1159 → 1111 satır. `_contentEditingService` state/notify bilmiyor, yalnız `StoreData` mutasyonu — controller `_guncelle`/`notifyListeners` kararını kendinde tutuyor. `flutter analyze` temiz, tam paket 443/443 yeşil (7 yeni test: `test/store_content_editing_service_test.dart`). |
 | 7 | `StorePublishFlowService` (plan) → gerçekte `StoreDraftPersistenceService` | Plandaki tahmin (`publish`, `saveLocally`, `openOwnerPreview`, `deleteVitrin`, `withdrawPublicationConsent`, `ensureDraftEditToken` hepsi tek serviste) **koda bakınca yanlış çıktı** — aşağıda gerekçe. Gerçekte taşınan: yalnız `saveLocally`'nin depolama I/O'su + `ensureDraftEditToken`. | ✅ Tamamlandı (2026-08-13), 6 satır (170 değil). |
-| 8 | `StoreProductCatalogController` | `syncCatalogToRemote`, `addProduct(ById)`, `removeProduct(ById)`, `updateProduct(Imported)`, `ensureRemoteStoreId`, `_loadRemoteProductsIfReady`, `_isUuid`, `_revalidateStoreCache` | Planlandı, henüz kod incelenmedi — Faz 7'deki gibi tahmin gerçek kapsamdan farklı çıkabilir. |
-| 9 | `StoreHydrationController` | `initialize`, `_syncInitialData`, canlı dinleme başlat/durdur orkestrasyonu, `_pullFromCloudIfNewer`, `_fetchPublishedInfoFromSupabase` | Planlandı, henüz kod incelenmedi. |
+| 8 | `StoreProductCatalogController` (plan) → **yapılmadı** | İncelendi (2026-08-13): `syncCatalogToRemote`/`addProduct`/`removeProduct`/`updateProduct` zaten Faz 1'de asıl işi `ProductCatalogSyncService`'e devretmiş durumda (diff/CRUD orada). Controller'da kalan ~140 satırın hepsi `saveLocally()`/`notifyListeners()`/`ensureRemoteStoreId()`'ye bağlı — Faz 7'deki `publish()` gibi, taşınırsa yalnız geri çağırma yığını üretir. **Bilerek atlandı**, gerekçe aşağıda. |
+| 9 | `StorePublishedInfoLookupService` (kapsam daraltıldı) | ✅ Tamamlandı (2026-08-13). `initialize()`'ın kendisi (Faz 7/8'deki gibi, çok metodu koordine ediyor) yerinde kaldı; yalnız `_fetchPublishedInfoFromSupabase`'in saf Supabase sorgu mantığı (girdi: client+slug, çıktı: `PublishedVitrinInfo?`, `this`'e bağlı değil) taşındı. Controller 1105 → 1072 satır. |
+
+### Faz 8 neden atlandı (dürüst not, 2026-08-13)
+
+Aynı "silme testi" disiplini: kod okundu, `syncCatalogToRemote`/`addProduct`/
+`removeProduct`/`updateProduct`'ın gerçek karmaşıklığı (diff, HTTP çağrıları)
+zaten Faz 1'de (`ProductCatalogSyncService`, PR #137) taşınmıştı. Controller'da
+kalan kısım ince bir orkestrasyon katmanı — token/mağaza-id kontrolü,
+`saveLocally`, `notifyListeners`, cache yenileme. Bunu ayrı bir sınıfa
+taşımak, o sınıfa `saveLocally`/`notifyListeners`/`_resolveClient` için 3
+geri çağırma eklemek demekti — controller'daki toplam koordinasyon miktarı
+AYNI kalırdı, yalnız bir dolaylılık katmanı eklenirdi. Gerçek bir derinlik
+kazancı olmadığı için yapılmadı.
 
 ### Faz 7'de neden plan değişti (dürüst not, 2026-08-13)
 
@@ -71,21 +83,32 @@ ham depolama yazımı (`storage.saveVitrinData`/`savePublishedVitrinInfo`) ve
 mixin'ine bağlı.
 
 **Sonuç:** Faz 7 planlanandan çok daha küçük çıktı (170 değil, 6 satır).
-Bu, işten kaçmak değil — 5-6 fazın planı yazılırken satır sayısına bakılarak
-tahmin edilmişti, gerçek kod okunmadan. Faz 8 ve 9 için de aynı disiplinle
-ilerlenecek: önce kod okunacak, gerçekten ayrılabilen (başka `this`
-metoduna bağlı olmayan) kısım taşınacak, geri kalan yerinde kalacak.
+Bu, işten kaçmak değil — 6-9 fazlarının planı yazılırken satır sayısına
+bakılarak tahmin edilmişti, gerçek kod okunmadan.
 
-**Dürüst projeksiyon (güncellenmiş):** Faz 8-9 benzer şekilde kısmi çıkarsa
-controller muhtemelen ~900-1000 satırda kalacak, 400'e inmeyecek. Tam
-400'e inmek isteniyorsa gerekli olan, mevcut mimarinin (`ChangeNotifier` +
-mixin'ler) kendisini değiştirmek (ör. `publish` akışını ayrı bir
-state-machine'e taşımak) — bu, bu planın kapsamının dışında, ayrı ve çok
-daha büyük bir karar.
+## Faz 6-9 kapandı — 2026-08-13, gerçek sonuç
 
-Her faz kendi PR'ı, kendi testi, `flutter analyze` + tam paket (436 test)
-yeşil şartı ile ilerler — önceki 5 fazla aynı disiplin. Faz 7 (yayın akışı)
-paraya/canlı vitrine en yakın kod olduğu için ekstra dikkatle yapılacak.
+Dört fazın hepsi kod okunarak değerlendirildi (tahminle değil): 6 ve 9 tam,
+7 kısmi taşındı; 8 gerçek kod incelemesinde "taşımak karmaşıklığı azaltmaz"
+çıktığı için bilerek atlandı.
+
+**Controller: 1159 → 1072 satır** (Faz 6-9 toplamı, bu turda). Tüm plan
+(Faz 1'den beri): 1388 → 1072.
+
+**Tam 400'e inmedi ve inmeyecek — bu artık kesin, tahmin değil.** Kalan
+~1072 satırın büyük kısmı (getter'lar, constructor/servis bağlama, ve
+`publish`/`openOwnerPreview`/`deleteVitrin`/`initialize`/katalog CRUD gibi
+metotlar) gerçek koordinasyon: bunlar birden çok mixin/servisi `this`
+üzerinden bir araya getiriyor. "Silme testi" ile üç kez (Faz 7, 8, ve 9'un
+`initialize()` kısmı) doğrulandı — bunları ayrı sınıflara taşımak karmaşıklığı
+azaltmaz, yalnız geri çağırma (callback) dolaylılığı ekler. Tam 400'e inmek
+isteniyorsa gereken, mevcut mimarinin (`ChangeNotifier` + mixin'ler)
+kendisini değiştirmek (ör. `publish` akışını ayrı bir state-machine'e
+taşımak) — bu, ayrı ve çok daha büyük, ayrı onay gerektiren bir karar;
+burada başlatılmadı.
+
+Her faz kendi PR'ı, kendi testi, `flutter analyze` + tam paket yeşil şartı
+ile ilerledi — önceki 5 fazla aynı disiplin.
 
 ## Sıradaki fazı almadan önce
 
