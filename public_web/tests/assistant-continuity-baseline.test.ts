@@ -41,8 +41,12 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
     expect(landingSource).toContain(
       "initialVitrinName: initialVitrinName"
     );
+    // "Vixrex Asistan tek oturum" işiyle (#129) editör artık paylaşılan bir
+    // singleton (VixRexSessionController) — initialVitrinName hâlâ aynı
+    // yere akıyor, yalnız çağrı `_editorController.initialize(...)`'dan
+    // `VixRexSessionController.ensureInitialized(...)`'a taşındı.
     expect(homeShellSource).toContain(
-      "_editorController.initialize(\n      widget.initialVitrinName"
+      "VixRexSessionController.ensureInitialized(\n      widget.initialVitrinName"
     );
     expect(vixrexScreenSource).toContain(
       "VixRexOnboardingChatScreen("
