@@ -11,7 +11,14 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const OWNER_SESSION_COOKIE = "vixrex_owner_session";
-export const OWNER_SESSION_TTL_MS = 15 * 60 * 1000;
+// Kayan (sliding) oturum penceresi — sabit ömür değil. Panel açıkken
+// /api/owner-session-extend her birkaç dakikada bir bu süreyi yeniler;
+// gerçekten terk edilirse (sekme arka planda/kapalı kalırsa) düşer.
+// Supabase tarafındaki extend_owner_session ile AYNI değer olmalı
+// (supabase/migrations/20260813130000_add_extend_owner_session.sql).
+// Casper 2026-08-13: sabit, yenilenemeyen 15 dakika "demo ürün parçası
+// gibi" bulunduğu için değiştirildi.
+export const OWNER_SESSION_TTL_MS = 30 * 60 * 1000;
 export const OWNER_SESSION_MAX_AGE_SECONDS = OWNER_SESSION_TTL_MS / 1000;
 const OWNER_SESSION_SECRET_MIN_LENGTH = 32;
 
