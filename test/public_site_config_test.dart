@@ -86,6 +86,18 @@ void main() {
       );
     });
 
+    test('kirala linki demo slug ile /api/rent-demo?slug= üretir', () {
+      expect(
+        PublicSiteConfig.buildRentDemoLink('kiralik-butik'),
+        'https://vixrex-public.vercel.app/api/rent-demo?slug=kiralik-butik',
+      );
+      // Boş slug'da bile çökmez, yalnız query'siz temel adrese düşer.
+      expect(
+        PublicSiteConfig.buildRentDemoLink(''),
+        'https://vixrex-public.vercel.app/api/rent-demo',
+      );
+    });
+
     test('path resolve: /v/slug ve bare slug', () {
       expect(
         PublicSiteConfig.resolveVitrinSlugFromPath('/v/nova-kuafor'),

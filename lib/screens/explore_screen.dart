@@ -520,6 +520,16 @@ class ExploreScreenState extends State<ExploreScreen> {
                                         ),
                                     onWhatsAppPressed:
                                         () => _showWhatsAppBottomSheet(store),
+                                    onRentPressed:
+                                        store.isRentalTemplate
+                                            ? () => AppRouter.navigateToRentDemo(
+                                              context,
+                                              store.slug.isNotEmpty
+                                                  ? store.slug
+                                                  : const StorePublishPayloadBuilder()
+                                                      .generateSlug(store.name),
+                                            )
+                                            : null,
                                   );
                                 },
                               );

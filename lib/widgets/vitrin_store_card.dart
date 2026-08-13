@@ -11,6 +11,11 @@ class VitrinStoreCard extends StatelessWidget {
   final VoidCallback onFavoritePressed;
   final VoidCallback onWhatsAppPressed;
 
+  /// Yalnız kiralık kartlarda kullanılır — doluysa "İncele"/"Kirala" ayrı
+  /// butonlar olarak gösterilir. null ise (WhatsApp'lı kartlarda hep
+  /// null) eski tek-buton davranışı korunur.
+  final VoidCallback? onRentPressed;
+
   // Theme Colors from AppColors
   static const Color primaryColor = AppColors.primary;
   static const Color cardBorder = AppColors.border;
@@ -26,6 +31,7 @@ class VitrinStoreCard extends StatelessWidget {
     this.onTap,
     required this.onFavoritePressed,
     required this.onWhatsAppPressed,
+    this.onRentPressed,
   });
 
   bool get _isRentalTemplate => store.isRentalTemplate;
@@ -299,44 +305,119 @@ class VitrinStoreCard extends StatelessWidget {
 
                     // Kiralık kart hem gövdesinden hem butonundan kategoriye
                     // özel hazırlanmış vitrini açar. Deneme/ödeme detaydadır.
-                    SizedBox(
-                      width: double.infinity,
-                      height: 38,
-                      child: ElevatedButton.icon(
-                        onPressed:
-                            _isRentalTemplate ? onTap : onWhatsAppPressed,
-                        icon: Icon(
-                          _isRentalTemplate
-                              ? Icons.storefront_rounded
-                              : Icons.chat_bubble_rounded,
-                          size: 15,
-                          color: Colors.white,
+                    //
+                    // onRentPressed varsa (kiralık kartlarda) "İncele" ve
+                    // "Kirala" yan yana ayrı butonlar — önce gör, sonra
+                    // dene. onRentPressed yoksa (WhatsApp'lı normal
+                    // vitrinler, ya da eski çağrı yerleri) tek buton,
+                    // eski davranış birebir korunuyor.
+                    if (_isRentalTemplate && onRentPressed != null)
+                      SizedBox(
+                        height: 38,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: onTap,
+                                icon: const Icon(
+                                  Icons.storefront_rounded,
+                                  size: 14,
+                                ),
+                                label: const Text(
+                                  'İncele',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.primary,
+                                  side: const BorderSide(
+                                    color: AppColors.primary,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: onRentPressed,
+                                icon: const Icon(
+                                  Icons.key_rounded,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                                label: const Text(
+                                  'Kirala',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        label: Text(
-                          _isRentalTemplate
-                              ? 'Vitrini İncele'
-                              : _whatsappButtonLabel,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
+                      )
+                    else
+                      SizedBox(
+                        width: double.infinity,
+                        height: 38,
+                        child: ElevatedButton.icon(
+                          onPressed:
+                              _isRentalTemplate ? onTap : onWhatsAppPressed,
+                          icon: Icon(
+                            _isRentalTemplate
+                                ? Icons.storefront_rounded
+                                : Icons.chat_bubble_rounded,
+                            size: 15,
                             color: Colors.white,
-                            letterSpacing: 0.2,
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              _isRentalTemplate
-                                  ? AppColors.primary
-                                  : const Color(0xFF00A884),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                          label: Text(
+                            _isRentalTemplate
+                                ? 'Vitrini İncele'
+                                : _whatsappButtonLabel,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                _isRentalTemplate
+                                    ? AppColors.primary
+                                    : const Color(0xFF00A884),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
