@@ -74,7 +74,10 @@ void main() {
   test('adres çözümleme her iki GPS yolunda da çağrılıyor', () {
     for (final yol in [
       'lib/widgets/editor/location_editor_section.dart',
-      'lib/controllers/mixins/store_location_mixin.dart',
+      // 2026-08-13, Faz 4 (controller parçalama): store_location_mixin.dart
+      // artık kendisi çağırmıyor, StoreLocationFetchService'e delege
+      // ediyor — gerçek adres çözme kodu şimdi orada.
+      'lib/services/store_location_fetch_service.dart',
     ]) {
       final kaynak = File('$kok/$yol').readAsStringSync();
       expect(

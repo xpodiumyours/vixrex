@@ -8,10 +8,10 @@ import 'package:vixrex/models/editor_gallery_item.dart';
 import 'package:vixrex/models/assistant_handoff.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/store_realtime_sync_service.dart';
 import 'package:vixrex/services/seo_service.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
-import 'package:vixrex/services/store_safe_select.dart';
 import 'package:vixrex/services/legal_document_service.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/product_catalog_sync_service.dart';
@@ -48,6 +48,7 @@ class StoreEditorController extends ChangeNotifier
   late final OwnerPreviewService _ownerPreviewService;
   late final ProductCatalogSyncService _catalogSyncService;
   late final StoreLegalStampingService _legalStampingService;
+  late final StoreRealtimeSyncService _realtimeSync;
 
   StoreData _data;
   PublishedVitrinInfo? _publishedInfo;
@@ -67,6 +68,7 @@ class StoreEditorController extends ChangeNotifier
     OwnerPreviewService? ownerPreviewService,
     ProductCatalogSyncService? catalogSyncService,
     StoreLegalStampingService? legalStampingService,
+    StoreRealtimeSyncService? realtimeSync,
     this.supabaseClient,
     StoreData? initialData,
   }) : storage = storage ?? const StoreLocalStorageService(),
@@ -96,6 +98,7 @@ class StoreEditorController extends ChangeNotifier
         StoreLegalStampingService(
           legalDocumentService: this.legalDocumentService,
         );
+    _realtimeSync = realtimeSync ?? StoreRealtimeSyncService();
     _syncInitialData();
   }
 
@@ -144,6 +147,92 @@ class StoreEditorController extends ChangeNotifier
       _data.publicationConsentAccepted;
 
   bool get isWithdrawingConsent => isLoading;
+
+  /// Basit "bir/birkaç alanı değiştir, bildir" deseni tekrar eden
+  /// setter'ların ortak yazma cephesi (Faz 5, controller parçalama).
+  /// Genişletilmiş mantık taşıyan setter'lar (kategori, booking, yasal
+  /// onay, bölüm görünürlüğü vb.) bunu KULLANMAZ — onlarda `_data`
+  /// yazımından fazlası var, davranışları burada tekrar edilmez.
+  void _guncelle(void Function(StoreData data) yaz) {
+    yaz(_data);
+    notifyListeners();
+  }
+
+  /// Şemadaki (`lib/config/vitrin_alanlari.g.dart` → `vitrinAlanlari`,
+  /// Next.js `vitrinFieldSchema.ts` ile aynı kaynaktan üretilir) basit,
+  /// tek-alanlı yazılabilir alanları TEK giriş noktasından yazar —
+  /// Next.js'teki `update_working_draft_field` ile aynı ilke (ADR 0001:
+  /// iki istemci aynı çekirdek yazma mantığını iki kere yazmaz).
+  ///
+  /// Kapsam dışı BİLEREK: kategori/işletme türü (yan etkili senkron),
+  /// booking (ensure mantığı), yasal onay (koşullu damgalama), durum
+  /// (`selectStatus`, şemada yok — operasyonel), SSS listesi
+  /// (`updateFaqItems`, yapısal liste, şemada yok) ve çoklu-alan grup
+  /// formları (Hakkımızda/Galeri-üst-bilgi/Kampanya — bunlar bilerek TEK
+  /// düzenleme hareketinde birden çok alan yazıyor, `updateField`'ın
+  /// tek-alan sözleşmesine uymuyor). Bunlar kendi adlı metotlarını korur.
+  ///
+  /// [deger], alanın `tip`ine göre `String` ya da `bool` olmalı.
+  ///
+  /// NOT: trim() davranışı alan alan FARKLIDIR (ör. işletme adı
+  /// trim'lenmez, telefon trim'lenir) — bu, taşımadan ÖNCE de böyleydi;
+  /// burada düzeltilmedi, birebir korundu.
+  void updateField(String anahtar, Object? deger) {
+    switch (anahtar) {
+      case 'isletmeAdi':
+        _guncelle((d) => d.name = deger as String);
+      case 'kisaTanitim':
+        _guncelle((d) => d.description = deger as String);
+      case 'whatsapp':
+        _guncelle((d) => d.whatsapp = deger as String);
+      case 'telefon':
+        _guncelle((d) => d.phone = (deger as String).trim());
+      case 'eposta':
+        _guncelle((d) => d.email = (deger as String).trim());
+      case 'heroRozet':
+        _guncelle((d) => d.heroBadge = (deger as String).trim());
+      case 'hakkindaMetin':
+        _guncelle((d) => d.corporateBio = deger as String);
+      case 'kategoriBolumBaslik':
+        _guncelle((d) => d.categorySectionTitle = (deger as String).trim());
+      case 'urunBolumBaslik':
+        _guncelle((d) => d.productSectionTitle = (deger as String).trim());
+      case 'galeriAksiyonMetni':
+        _guncelle((d) => d.galleryActionLabel = (deger as String).trim());
+      case 'galeriAksiyonLinki':
+        _guncelle((d) => d.galleryActionHref = (deger as String).trim());
+      case 'blogUstBaslik':
+        _guncelle((d) => d.blogSectionKicker = (deger as String).trim());
+      case 'blogBaslik':
+        _guncelle((d) => d.blogSectionTitle = (deger as String).trim());
+      case 'sssUstBaslik':
+        _guncelle((d) => d.faqSectionKicker = (deger as String).trim());
+      case 'sssBaslik':
+        _guncelle((d) => d.faqSectionTitle = (deger as String).trim());
+      case 'sssAciklama':
+        _guncelle((d) => d.faqSectionDescription = (deger as String).trim());
+      case 'puanGoster':
+        _guncelle((d) => d.showStorefrontRating = deger as bool);
+      case 'yolTarifiGoster':
+        _guncelle((d) => d.showDirectionsLink = deger as bool);
+      case 'calismaSaatleri':
+        _guncelle((d) => d.workingHours = (deger as String).trim());
+      case 'instagram':
+        _guncelle((d) => d.instagram = (deger as String).trim());
+      case 'website':
+        _guncelle((d) => d.website = (deger as String).trim());
+      case 'haritaLinki':
+        _guncelle((d) => d.googleBusinessLink = deger as String);
+      case 'referansLinki':
+        _guncelle((d) => d.referencesLink = deger as String);
+      case 'adres':
+        _guncelle((d) => d.address = deger as String);
+      default:
+        throw ArgumentError(
+          'updateField: bilinmeyen veya bu yoldan desteklenmeyen anahtar: $anahtar',
+        );
+    }
+  }
 
   // --- Core Lifecycle ---
   void _syncInitialData() {
@@ -218,9 +307,6 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
-  /// Canlı dinleme kanalı — vitrin satırı buluttan değişince haber verir.
-  RealtimeChannel? _canliKanal;
-
   /// Yayındaki vitrini CANLI dinlemeye başlar.
   ///
   /// Esnaf vitrinini tarayıcıdaki Vixrex Asistan ile de düzenleyebiliyor.
@@ -229,6 +315,10 @@ class StoreEditorController extends ChangeNotifier
   ///
   /// Yalnız YAYINLANMIŞ veri dinlenir. Yayınlanmamış taslaklar kasten
   /// ayrıdır — iki taraf birbirinin yarım işini görmez.
+  ///
+  /// Gerçek kanal yönetimi `StoreRealtimeSyncService`'te (Faz 3, controller
+  /// parçalama, birebir taşındı); burada yalnız `_data`/`notifyListeners`
+  /// ve dış bildirim state'i (`hasPendingExternalDraft`) kalıyor.
   void _canliDinlemeyiBaslat() {
     final slug = _publishedInfo?.slug.trim() ?? '';
     if (slug.isEmpty) return;
@@ -236,57 +326,24 @@ class StoreEditorController extends ChangeNotifier
     final client = _resolveClient();
     if (client == null) return;
 
-    _canliDinlemeyiDurdur();
-
-    try {
-      _canliKanal =
-          client
-              .channel('vitrin_$slug')
-              .onPostgresChanges(
-                event: PostgresChangeEvent.update,
-                schema: 'public',
-                table: 'stores',
-                filter: PostgresChangeFilter(
-                  type: PostgresChangeFilterType.eq,
-                  column: 'slug',
-                  value: slug,
-                ),
-                callback: (_) async {
-                  // Satır değişti; hangi alan olduğuna bakmadan taze hâlini al.
-                  // Zaman damgası karşılaştırması _pullFromCloudIfNewer içinde:
-                  // uygulamada yapılıp henüz yayınlanmamış düzenleme ezilmez.
-                  await _pullFromCloudIfNewer();
-                  if (!_isDisposed) notifyListeners();
-                },
-              )
-              .subscribe();
-    } catch (e) {
-      // Canlı dinleme kurulmazsa uygulama çalışmaya devam eder; yalnız
-      // açılıştaki senkronla yetinir. Çevrimdışı çalışabilmek esastır.
-      if (kDebugMode) debugPrint('Canlı dinleme kurulamadı: $e');
-    }
-
-    _taslakDinlemeyiBaslat(slug, client);
+    _realtimeSync.baslat(
+      client: client,
+      slug: slug,
+      storage: storage,
+      onCanliDegisti: (guncel) {
+        if (guncel != null) _data = guncel;
+        if (!_isDisposed) notifyListeners();
+      },
+      onTaslakDegisti: (etiket) {
+        _hasPendingExternalDraft = true;
+        _lastExternalDraftEtiket = etiket;
+        if (!_isDisposed) notifyListeners();
+      },
+    );
   }
 
-  void _canliDinlemeyiDurdur() {
-    final kanal = _canliKanal;
-    if (kanal == null) return;
-    _canliKanal = null;
-    try {
-      _resolveClient()?.removeChannel(kanal);
-    } catch (_) {}
-    _taslakDinlemeyiDurdur();
-  }
+  void _canliDinlemeyiDurdur() => _realtimeSync.durdur(_resolveClient());
 
-  // ── Taslak Broadcast Kanalı ──────────────────────────────────────────────
-
-  /// Vixrex Asistanın taslak üzerinde alan güncellediğinde Flutter'a sinyal
-  /// verir (Supabase Realtime Broadcast, `draft:<slug>` kanalı).
-  ///
-  /// Flutter'ın kendi yerel verisini (StoreData) değiştirmez.
-  /// Yalnız [hasPendingExternalDraft] işaretini kaldırır, UI bildirim gösterir.
-  RealtimeChannel? _taslakKanal;
   bool _hasPendingExternalDraft = false;
   String? _lastExternalDraftEtiket;
 
@@ -304,49 +361,7 @@ class StoreEditorController extends ChangeNotifier
     if (!_isDisposed) notifyListeners();
   }
 
-  void _taslakDinlemeyiBaslat(String slug, SupabaseClient client) {
-    _taslakDinlemeyiDurdur();
-    try {
-      _taslakKanal =
-          client
-              .channel('draft:$slug')
-              .onBroadcast(
-                event: 'alan_guncellendi',
-                callback: (payload) {
-                  // Payload: {kolon, anahtar, etiket, deger} — yalnız etiket
-                  // kullanılır (Türkçe alan adı, örn. "İşletme Adı").
-                  // Veri Flutter'ın yerel kaydına yazılmaz; yalnız bildirim.
-                  final etiket =
-                      (payload['etiket'] as String?) ??
-                      (payload['anahtar'] as String?) ??
-                      '';
-                  _hasPendingExternalDraft = true;
-                  if (etiket.isNotEmpty) _lastExternalDraftEtiket = etiket;
-                  if (!_isDisposed) notifyListeners();
-                },
-              )
-              .subscribe();
-    } catch (e) {
-      // Taslak broadcast başarısız olursa yalnız bildirim gösterilmez;
-      // editör ve senkron çalışmaya devam eder.
-      if (kDebugMode) debugPrint('Taslak broadcast kurulamadı: $e');
-    }
-  }
-
-  void _taslakDinlemeyiDurdur() {
-    final kanal = _taslakKanal;
-    if (kanal == null) return;
-    _taslakKanal = null;
-    try {
-      _resolveClient()?.removeChannel(kanal);
-    } catch (_) {}
-  }
-
   /// Yayındaki vitrini buluttan çeker; bulut daha yeniyse yerele yazar.
-  ///
-  /// Sessizce başarısız olur: internet yoksa ya da sorgu düşerse uygulama
-  /// yerel kopyayla çalışmaya devam eder. Çevrimdışı çalışabilmek manuel
-  /// panelin varlık sebebi (VIXREX_RULES §1) — bu senkron onu bozamaz.
   Future<void> _pullFromCloudIfNewer() async {
     final slug = _publishedInfo?.slug.trim() ?? '';
     if (slug.isEmpty) return;
@@ -354,30 +369,12 @@ class StoreEditorController extends ChangeNotifier
     final client = _resolveClient();
     if (client == null) return;
 
-    try {
-      final row =
-          await client
-              .from('stores')
-              .select('${StoreSafeSelect.columns},updated_at')
-              .eq('slug', slug)
-              .maybeSingle();
-      if (row == null) return;
-
-      final bulutZamani =
-          DateTime.tryParse((row['updated_at'] as String?) ?? '')?.toUtc();
-      if (bulutZamani == null) return;
-
-      final yerelZamani = await storage.loadVitrinDataSavedAt();
-
-      // Yerel damga yoksa bulut kazanır: yerel veri eski bir sürümden
-      // kalmış olabilir ve ne zaman yazıldığı bilinmiyor.
-      if (yerelZamani != null && yerelZamani.isAfter(bulutZamani)) return;
-
-      _data = StoreData.fromJson(Map<String, dynamic>.from(row));
-      await storage.saveVitrinData(_data);
-    } catch (e) {
-      if (kDebugMode) debugPrint('Bulut senkronu atlandı: $e');
-    }
+    final guncel = await _realtimeSync.pullFromCloudIfNewer(
+      client: client,
+      slug: slug,
+      storage: storage,
+    );
+    if (guncel != null) _data = guncel;
   }
 
   SupabaseClient? _resolveClient() {
@@ -403,10 +400,7 @@ class StoreEditorController extends ChangeNotifier
     super.setCoverUrl(trimmed);
   }
 
-  void setName(String name) {
-    _data.name = name;
-    notifyListeners();
-  }
+  void setName(String name) => updateField('isletmeAdi', name);
 
   void updateName(String name) => setName(name);
 
@@ -440,35 +434,18 @@ class StoreEditorController extends ChangeNotifier
     _data.bookingSettings!.isEnabled = supportsBooking;
   }
 
-  void setDescription(String description) {
-    _data.description = description;
-    notifyListeners();
-  }
+  void setDescription(String description) =>
+      updateField('kisaTanitim', description);
 
-  void updateWhatsapp(String w) {
-    _data.whatsapp = w;
-    notifyListeners();
-  }
+  void updateWhatsapp(String w) => updateField('whatsapp', w);
 
-  void updatePhone(String value) {
-    _data.phone = value.trim();
-    notifyListeners();
-  }
+  void updatePhone(String value) => updateField('telefon', value);
 
-  void updateEmail(String value) {
-    _data.email = value.trim();
-    notifyListeners();
-  }
+  void updateEmail(String value) => updateField('eposta', value);
 
-  void updateHeroBadge(String value) {
-    _data.heroBadge = value.trim();
-    notifyListeners();
-  }
+  void updateHeroBadge(String value) => updateField('heroRozet', value);
 
-  void updateCorporateBio(String value) {
-    _data.corporateBio = value;
-    notifyListeners();
-  }
+  void updateCorporateBio(String value) => updateField('hakkindaMetin', value);
 
   void updateAboutSection({
     required String kicker,
@@ -477,15 +454,14 @@ class StoreEditorController extends ChangeNotifier
     required String imageUrl,
     required String imageCaption,
     required List<StoreAboutValue> values,
-  }) {
-    _data.aboutKicker = kicker.trim();
-    _data.aboutTitle = title.trim();
-    _data.corporateBio = body;
-    _data.aboutImageUrl = imageUrl.trim();
-    _data.aboutImageCaption = imageCaption.trim();
-    _data.aboutValues = List.of(values.take(3));
-    notifyListeners();
-  }
+  }) => _guncelle((d) {
+    d.aboutKicker = kicker.trim();
+    d.aboutTitle = title.trim();
+    d.corporateBio = body;
+    d.aboutImageUrl = imageUrl.trim();
+    d.aboutImageCaption = imageCaption.trim();
+    d.aboutValues = List.of(values.take(3));
+  });
 
   bool get hasAboutSection {
     return _data.aboutKicker.trim().isNotEmpty ||
@@ -498,56 +474,35 @@ class StoreEditorController extends ChangeNotifier
   void updateGallerySectionMeta({
     required String kicker,
     required String title,
-  }) {
-    _data.gallerySectionKicker = kicker.trim();
-    _data.gallerySectionTitle = title.trim();
-    notifyListeners();
-  }
+  }) => _guncelle((d) {
+    d.gallerySectionKicker = kicker.trim();
+    d.gallerySectionTitle = title.trim();
+  });
 
-  void updateCategorySectionTitle(String value) {
-    _data.categorySectionTitle = value.trim();
-    notifyListeners();
-  }
+  void updateCategorySectionTitle(String value) =>
+      updateField('kategoriBolumBaslik', value);
 
-  void updateProductSectionTitle(String value) {
-    _data.productSectionTitle = value.trim();
-    notifyListeners();
-  }
+  void updateProductSectionTitle(String value) =>
+      updateField('urunBolumBaslik', value);
 
-  void updateGalleryActionLabel(String value) {
-    _data.galleryActionLabel = value.trim();
-    notifyListeners();
-  }
+  void updateGalleryActionLabel(String value) =>
+      updateField('galeriAksiyonMetni', value);
 
-  void updateGalleryActionHref(String value) {
-    _data.galleryActionHref = value.trim();
-    notifyListeners();
-  }
+  void updateGalleryActionHref(String value) =>
+      updateField('galeriAksiyonLinki', value);
 
-  void updateBlogSectionKicker(String value) {
-    _data.blogSectionKicker = value.trim();
-    notifyListeners();
-  }
+  void updateBlogSectionKicker(String value) =>
+      updateField('blogUstBaslik', value);
 
-  void updateBlogSectionTitle(String value) {
-    _data.blogSectionTitle = value.trim();
-    notifyListeners();
-  }
+  void updateBlogSectionTitle(String value) => updateField('blogBaslik', value);
 
-  void updateFaqSectionKicker(String value) {
-    _data.faqSectionKicker = value.trim();
-    notifyListeners();
-  }
+  void updateFaqSectionKicker(String value) =>
+      updateField('sssUstBaslik', value);
 
-  void updateFaqSectionTitle(String value) {
-    _data.faqSectionTitle = value.trim();
-    notifyListeners();
-  }
+  void updateFaqSectionTitle(String value) => updateField('sssBaslik', value);
 
-  void updateFaqSectionDescription(String value) {
-    _data.faqSectionDescription = value.trim();
-    notifyListeners();
-  }
+  void updateFaqSectionDescription(String value) =>
+      updateField('sssAciklama', value);
 
   /// Anahtar yoksa/true ise bölüm görünür (veri doluluğuna göre otomatik);
   /// yalnız kapatılan bölümler haritaya `false` olarak yazılır.
@@ -560,15 +515,11 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  void updateShowStorefrontRating(bool value) {
-    _data.showStorefrontRating = value;
-    notifyListeners();
-  }
+  void updateShowStorefrontRating(bool value) =>
+      updateField('puanGoster', value);
 
-  void updateShowDirectionsLink(bool value) {
-    _data.showDirectionsLink = value;
-    notifyListeners();
-  }
+  void updateShowDirectionsLink(bool value) =>
+      updateField('yolTarifiGoster', value);
 
   void updateFeaturedCampaign({
     required String label,
@@ -576,14 +527,13 @@ class StoreEditorController extends ChangeNotifier
     required String description,
     required String priceText,
     required String imageUrl,
-  }) {
-    _data.featuredBannerLabel = label.trim();
-    _data.featuredBannerTitle = title.trim();
-    _data.featuredBannerDescription = description.trim();
-    _data.featuredBannerPriceText = priceText.trim();
-    _data.featuredBannerImageUrl = imageUrl.trim();
-    notifyListeners();
-  }
+  }) => _guncelle((d) {
+    d.featuredBannerLabel = label.trim();
+    d.featuredBannerTitle = title.trim();
+    d.featuredBannerDescription = description.trim();
+    d.featuredBannerPriceText = priceText.trim();
+    d.featuredBannerImageUrl = imageUrl.trim();
+  });
 
   bool get hasFeaturedCampaign {
     return _data.featuredBannerTitle.trim().isNotEmpty ||
@@ -593,20 +543,13 @@ class StoreEditorController extends ChangeNotifier
         _data.featuredBannerLabel.trim().isNotEmpty;
   }
 
-  void updateFaqItems(List<StoreFaqItem> items) {
-    _data.faqItems = List.of(items);
-    notifyListeners();
-  }
+  void updateFaqItems(List<StoreFaqItem> items) =>
+      _guncelle((d) => d.faqItems = List.of(items));
 
-  void updateWorkingHoursText(String value) {
-    _data.workingHours = value.trim();
-    notifyListeners();
-  }
+  void updateWorkingHoursText(String value) =>
+      updateField('calismaSaatleri', value);
 
-  void updateInstagram(String value) {
-    _data.instagram = value.trim();
-    notifyListeners();
-  }
+  void updateInstagram(String value) => updateField('instagram', value);
 
   /// Instagram OAuth sonrası kullanıcı adını forma ve (yayındaysa) Supabase'e yazar.
   Future<Result<void>> applyConnectedInstagramUsername(String username) async {
@@ -633,25 +576,15 @@ class StoreEditorController extends ChangeNotifier
     return result;
   }
 
-  void updateWebsite(String value) {
-    _data.website = value.trim();
-    notifyListeners();
-  }
+  void updateWebsite(String value) => updateField('website', value);
 
-  void selectStatus(String status) {
-    _data.status = status;
-    notifyListeners();
-  }
+  /// Şemada karşılığı yok (operasyonel alan, vitrin içeriği değil) —
+  /// `updateField`'a taşınmadı, `_guncelle` doğrudan kullanılıyor.
+  void selectStatus(String status) => _guncelle((d) => d.status = status);
 
-  void updateGoogleBusinessLink(String v) {
-    _data.googleBusinessLink = v;
-    notifyListeners();
-  }
+  void updateGoogleBusinessLink(String v) => updateField('haritaLinki', v);
 
-  void updateReferencesLink(String v) {
-    _data.referencesLink = v;
-    notifyListeners();
-  }
+  void updateReferencesLink(String v) => updateField('referansLinki', v);
 
   void addMarketplaceLink(MarketplaceLink link) {
     _data.marketplaceLinks.add(link);
@@ -694,10 +627,7 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  void updateAddressText(String address) {
-    _data.address = address;
-    notifyListeners();
-  }
+  void updateAddressText(String address) => updateField('adres', address);
 
   @override
   void selectProvince(StoreData data, String? code, String? name) {

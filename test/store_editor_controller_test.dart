@@ -256,6 +256,79 @@ void main() {
       expect(controller.data.referencesLink, 'https://maps.google.com/?q=Test');
     });
 
+    group('updateField — şema tabanlı tek yazma cephesi (Faz 5+)', () {
+      test(
+        'trim edilen ve edilmeyen alanlar birebir eski davranışı korur',
+        () async {
+          final controller = StoreEditorController(
+            storage: storageService,
+            supabaseClient: fakeSupabase,
+          );
+          await controller.initialize(null);
+
+          // 'whatsapp' trim'lenmez (orijinal davranış).
+          controller.updateField('whatsapp', '  0555 111 22 33  ');
+          expect(controller.data.whatsapp, '  0555 111 22 33  ');
+
+          // 'telefon' trim'lenir (orijinal davranış).
+          controller.updateField('telefon', '  0555 999 88 77  ');
+          expect(controller.data.phone, '0555 999 88 77');
+        },
+      );
+
+      test('bool alan (puanGoster) doğru yazılır', () async {
+        final controller = StoreEditorController(
+          storage: storageService,
+          supabaseClient: fakeSupabase,
+        );
+        await controller.initialize(null);
+
+        controller.updateField('puanGoster', true);
+        expect(controller.data.showStorefrontRating, isTrue);
+      });
+
+      test('isletmeAdi anahtarı setName ile aynı yere yazar', () async {
+        final controller = StoreEditorController(
+          storage: storageService,
+          supabaseClient: fakeSupabase,
+        );
+        await controller.initialize(null);
+
+        controller.updateField('isletmeAdi', 'Şema ile yazılan isim');
+        expect(controller.data.name, 'Şema ile yazılan isim');
+      });
+
+      test('bilinmeyen anahtar hata fırlatır — sessizce yutulmaz', () async {
+        final controller = StoreEditorController(
+          storage: storageService,
+          supabaseClient: fakeSupabase,
+        );
+        await controller.initialize(null);
+
+        expect(
+          () => controller.updateField('uydurma-alan', 'x'),
+          throwsArgumentError,
+        );
+      });
+
+      test(
+        'eski adlı metotlar (updateWhatsapp vb.) updateField ile aynı sonucu üretir',
+        () async {
+          final controller = StoreEditorController(
+            storage: storageService,
+            supabaseClient: fakeSupabase,
+          );
+          await controller.initialize(null);
+
+          controller.updateHeroBadge('  Yetkili Servis  ');
+          expect(controller.data.heroBadge, 'Yetkili Servis');
+
+          controller.updateGoogleBusinessLink('https://maps.example/x');
+          expect(controller.data.googleBusinessLink, 'https://maps.example/x');
+        },
+      );
+    });
+
     test('İşletme Türü: kategori seçimi otomatik doldurur, ama elle '
         'değiştirildikten sonra bir daha kör üzerine yazmaz', () async {
       final controller = StoreEditorController(

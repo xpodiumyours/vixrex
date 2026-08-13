@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:vixrex/config/turkey_cities_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/location_service.dart';
-import 'package:vixrex/utils/text_utils.dart';
+import 'package:vixrex/services/store_location_fetch_service.dart';
 
-enum StoreLocationStatus {
-  idle,
-  loading,
-  success,
-  approximate,
-  permissionDenied,
-  serviceDisabled,
-  error,
-}
+export 'package:vixrex/services/store_location_fetch_service.dart'
+    show StoreLocationStatus;
 
 /// Konum (GPS) ve Adres (İl/İlçe) işlemlerini yöneten Mixin.
 mixin StoreLocationMixin on ChangeNotifier {
@@ -78,9 +70,20 @@ mixin StoreLocationMixin on ChangeNotifier {
   /// - il+ilçe eşleşirse adres güncellenir.
   /// - Eşleşemezse mevcut manuel adres **korunur**, kullanıcıya mesaj gösterilir.
   /// - Editör dispose edilmişse setState yapılmaz.
+  ///
+  /// Gerçek iş (GPS çağrısı, doğruluk denetimi, adres çözme, il/ilçe
+  /// eşleştirme) `StoreLocationFetchService`'te (Faz 4, controller
+  /// parçalama, birebir taşındı); burada yalnız dispose/loading state'i ve
+  /// sonucun `data`'ya uygulanması kalıyor. Tek gözlemlenebilir fark:
+  /// eskiden `isDisposed` her `await` sonrası ayrıca kontrol edilip erken
+  /// dönülüyordu (ör. dispose sonrası adres çözme hiç başlamazdı); artık
+  /// servis zinciri tek seferde tamamlanıyor, `isDisposed` yalnız sonunda
+  /// kontrol ediliyor — dispose sonrası bir ağ isteği daha gidebilir ama
+  /// hiçbir state/`notifyListeners` dispose sonrası tetiklenmez.
   Future<void> fetchLocation({
     required StoreData data,
     required LocationService locationService,
+    StoreLocationFetchService fetchService = const StoreLocationFetchService(),
   }) async {
     if (isDisposed) return;
     _isLocating = true;
@@ -88,126 +91,31 @@ mixin StoreLocationMixin on ChangeNotifier {
     _locationStatusMessage = 'Konum aranıyor...';
     _notifyLocationListeners();
 
-    try {
-      final result = await locationService.getCurrentLocation();
-      if (isDisposed) return;
+    final sonuc = await fetchService.getir(locationService);
+    if (isDisposed) return;
 
-      final pos = result.bestPosition;
-      if (pos == null) {
-        _locationStatus = _failureStatusFromMessage(result.errorMessage);
-        _locationStatusMessage =
-            result.errorMessage ?? 'Konum alınamadı. Lütfen tekrar deneyin.';
-        return;
-      }
+    _locationStatus = sonuc.durum;
+    _locationStatusMessage = sonuc.mesaj;
 
-      // TEK KURAL: 10 metreden kötü konum KAYDEDİLMEZ.
-      //
-      // Bu kontrol eskiden yalnız location_editor_section.dart'ta vardı;
-      // GPS düğmesi ise BU yoldan geçiyordu ve sapma ne olursa olsun
-      // koordinatı yazıyordu (yalnız 2 km üstünde adres çözmeyi bırakıyordu).
-      // Yani 900 metrelik sapma sessizce kabul ediliyordu.
-      //
-      // İki ayrı yerde iki ayrı kural olması hatanın kendisiydi. Karar
-      // tek yerde: LocationService.maxAcceptedAccuracyMeters.
-      //
-      // Neden bu kadar katı: vitrinin işi "yakınındaki dükkânı" bulmak.
-      // Yanlış pin müşteriyi yanlış sokağa gönderir — yokluğundan beterdir.
-      if (pos.accuracy > LocationService.maxAcceptedAccuracyMeters) {
-        _locationStatus = StoreLocationStatus.error;
-        _locationStatusMessage = LocationService.buildAccuracyMessage(
-          pos.accuracy,
-        );
-        return;
-      }
-
-      _locationStatus = StoreLocationStatus.success;
-      data.latitude = pos.latitude;
-      data.longitude = pos.longitude;
-      data.locationAccuracyMeters = pos.accuracy;
+    // Doğruluk eşiği geçildiyse koordinat kaydedilir — adres/il/ilçe
+    // çözülemese BİLE (orijinal davranış, bkz. servisin kendi notu).
+    if (sonuc.konumGecerli) {
+      data.latitude = sonuc.latitude;
+      data.longitude = sonuc.longitude;
+      data.locationAccuracyMeters = sonuc.accuracy;
       data.locationSource = 'device';
-      data.locationConsentAt = DateTime.now();
-
-      _locationStatusMessage =
-          result.errorMessage ??
-          LocationService.buildAccuracyMessage(pos.accuracy);
-
-      final address = await locationService.getAddressFromCoordinates(
-        pos.latitude,
-        pos.longitude,
-      );
-      if (isDisposed) return;
-
-      if (address == null || address.trim().isEmpty) {
-        _locationStatus = StoreLocationStatus.error;
-        _locationStatusMessage =
-            'Koordinat alındı ancak adres çözümlenemedi. '
-            'Mevcut adresiniz korundu.';
-        return;
-      }
-
-      final normalizedAddress = TextUtils.normalizeTurkish(address);
-      String? matchedProvinceCode;
-      String? matchedProvinceName;
-      String? matchedDistrict;
-
-      for (final province in turkeyProvinces) {
-        final normalizedProvince = TextUtils.normalizeTurkish(province.name);
-        if (!normalizedAddress.contains(normalizedProvince)) continue;
-
-        matchedProvinceCode = province.code;
-        matchedProvinceName = province.name;
-        final districts = turkeyDistricts[province.code];
-        if (districts != null) {
-          // Uzun ilçe adını önce dene (ör. "Şişli" vs kısa eşleşmeler).
-          final ordered = [...districts]
-            ..sort((a, b) => b.length.compareTo(a.length));
-          for (final district in ordered) {
-            final normalizedDistrict = TextUtils.normalizeTurkish(district);
-            if (normalizedAddress.contains(normalizedDistrict)) {
-              matchedDistrict = district;
-              break;
-            }
-          }
-        }
-        break;
-      }
-
-      if (matchedProvinceCode != null &&
-          matchedProvinceName != null &&
-          matchedDistrict != null) {
-        // il+ilçe eşleşti — adres güvenle güncellenir.
-        data.address = address;
-        data.provinceCode = matchedProvinceCode;
-        data.provinceName = matchedProvinceName;
-        data.districtCode = matchedDistrict;
-        data.districtName = matchedDistrict;
-      } else {
-        // Eşleşme başarısız — mevcut adres korunur.
-        _locationStatus = StoreLocationStatus.error;
-        _locationStatusMessage =
-            'Adres il ve ilçe olarak doğrulanamadı. Mevcut adresiniz korundu.';
-      }
-    } catch (_) {
-      if (!isDisposed) {
-        _locationStatus = StoreLocationStatus.error;
-        _locationStatusMessage =
-            'Konum alınırken hata oluştu. Mevcut adresiniz korundu.';
-      }
-    } finally {
-      _isLocating = false;
-      _notifyLocationListeners();
+      data.locationConsentAt = sonuc.consentAt;
     }
-  }
 
-  StoreLocationStatus _failureStatusFromMessage(String? message) {
-    if (message == null) return StoreLocationStatus.error;
-    final lower = message.toLowerCase();
-    if (lower.contains('reddedildi')) {
-      return StoreLocationStatus.permissionDenied;
+    if (sonuc.basarili) {
+      data.address = sonuc.address!;
+      data.provinceCode = sonuc.provinceCode!;
+      data.provinceName = sonuc.provinceName!;
+      data.districtCode = sonuc.districtCode!;
+      data.districtName = sonuc.districtName!;
     }
-    if (lower.contains('devre disi') || lower.contains('devre dışı')) {
-      return StoreLocationStatus.serviceDisabled;
-    }
-    return StoreLocationStatus.error;
+
+    _isLocating = false;
+    _notifyLocationListeners();
   }
 }
