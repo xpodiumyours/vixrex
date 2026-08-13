@@ -8,10 +8,10 @@ import 'package:vixrex/models/editor_gallery_item.dart';
 import 'package:vixrex/models/assistant_handoff.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/store_realtime_sync_service.dart';
 import 'package:vixrex/services/seo_service.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
-import 'package:vixrex/services/store_safe_select.dart';
 import 'package:vixrex/services/legal_document_service.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/product_catalog_sync_service.dart';
@@ -48,6 +48,7 @@ class StoreEditorController extends ChangeNotifier
   late final OwnerPreviewService _ownerPreviewService;
   late final ProductCatalogSyncService _catalogSyncService;
   late final StoreLegalStampingService _legalStampingService;
+  late final StoreRealtimeSyncService _realtimeSync;
 
   StoreData _data;
   PublishedVitrinInfo? _publishedInfo;
@@ -67,6 +68,7 @@ class StoreEditorController extends ChangeNotifier
     OwnerPreviewService? ownerPreviewService,
     ProductCatalogSyncService? catalogSyncService,
     StoreLegalStampingService? legalStampingService,
+    StoreRealtimeSyncService? realtimeSync,
     this.supabaseClient,
     StoreData? initialData,
   }) : storage = storage ?? const StoreLocalStorageService(),
@@ -96,6 +98,7 @@ class StoreEditorController extends ChangeNotifier
         StoreLegalStampingService(
           legalDocumentService: this.legalDocumentService,
         );
+    _realtimeSync = realtimeSync ?? StoreRealtimeSyncService();
     _syncInitialData();
   }
 
@@ -218,9 +221,6 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
-  /// Canlı dinleme kanalı — vitrin satırı buluttan değişince haber verir.
-  RealtimeChannel? _canliKanal;
-
   /// Yayındaki vitrini CANLI dinlemeye başlar.
   ///
   /// Esnaf vitrinini tarayıcıdaki Vixrex Asistan ile de düzenleyebiliyor.
@@ -229,6 +229,10 @@ class StoreEditorController extends ChangeNotifier
   ///
   /// Yalnız YAYINLANMIŞ veri dinlenir. Yayınlanmamış taslaklar kasten
   /// ayrıdır — iki taraf birbirinin yarım işini görmez.
+  ///
+  /// Gerçek kanal yönetimi `StoreRealtimeSyncService`'te (Faz 3, controller
+  /// parçalama, birebir taşındı); burada yalnız `_data`/`notifyListeners`
+  /// ve dış bildirim state'i (`hasPendingExternalDraft`) kalıyor.
   void _canliDinlemeyiBaslat() {
     final slug = _publishedInfo?.slug.trim() ?? '';
     if (slug.isEmpty) return;
@@ -236,57 +240,24 @@ class StoreEditorController extends ChangeNotifier
     final client = _resolveClient();
     if (client == null) return;
 
-    _canliDinlemeyiDurdur();
-
-    try {
-      _canliKanal =
-          client
-              .channel('vitrin_$slug')
-              .onPostgresChanges(
-                event: PostgresChangeEvent.update,
-                schema: 'public',
-                table: 'stores',
-                filter: PostgresChangeFilter(
-                  type: PostgresChangeFilterType.eq,
-                  column: 'slug',
-                  value: slug,
-                ),
-                callback: (_) async {
-                  // Satır değişti; hangi alan olduğuna bakmadan taze hâlini al.
-                  // Zaman damgası karşılaştırması _pullFromCloudIfNewer içinde:
-                  // uygulamada yapılıp henüz yayınlanmamış düzenleme ezilmez.
-                  await _pullFromCloudIfNewer();
-                  if (!_isDisposed) notifyListeners();
-                },
-              )
-              .subscribe();
-    } catch (e) {
-      // Canlı dinleme kurulmazsa uygulama çalışmaya devam eder; yalnız
-      // açılıştaki senkronla yetinir. Çevrimdışı çalışabilmek esastır.
-      if (kDebugMode) debugPrint('Canlı dinleme kurulamadı: $e');
-    }
-
-    _taslakDinlemeyiBaslat(slug, client);
+    _realtimeSync.baslat(
+      client: client,
+      slug: slug,
+      storage: storage,
+      onCanliDegisti: (guncel) {
+        if (guncel != null) _data = guncel;
+        if (!_isDisposed) notifyListeners();
+      },
+      onTaslakDegisti: (etiket) {
+        _hasPendingExternalDraft = true;
+        _lastExternalDraftEtiket = etiket;
+        if (!_isDisposed) notifyListeners();
+      },
+    );
   }
 
-  void _canliDinlemeyiDurdur() {
-    final kanal = _canliKanal;
-    if (kanal == null) return;
-    _canliKanal = null;
-    try {
-      _resolveClient()?.removeChannel(kanal);
-    } catch (_) {}
-    _taslakDinlemeyiDurdur();
-  }
+  void _canliDinlemeyiDurdur() => _realtimeSync.durdur(_resolveClient());
 
-  // ── Taslak Broadcast Kanalı ──────────────────────────────────────────────
-
-  /// Vixrex Asistanın taslak üzerinde alan güncellediğinde Flutter'a sinyal
-  /// verir (Supabase Realtime Broadcast, `draft:<slug>` kanalı).
-  ///
-  /// Flutter'ın kendi yerel verisini (StoreData) değiştirmez.
-  /// Yalnız [hasPendingExternalDraft] işaretini kaldırır, UI bildirim gösterir.
-  RealtimeChannel? _taslakKanal;
   bool _hasPendingExternalDraft = false;
   String? _lastExternalDraftEtiket;
 
@@ -304,49 +275,7 @@ class StoreEditorController extends ChangeNotifier
     if (!_isDisposed) notifyListeners();
   }
 
-  void _taslakDinlemeyiBaslat(String slug, SupabaseClient client) {
-    _taslakDinlemeyiDurdur();
-    try {
-      _taslakKanal =
-          client
-              .channel('draft:$slug')
-              .onBroadcast(
-                event: 'alan_guncellendi',
-                callback: (payload) {
-                  // Payload: {kolon, anahtar, etiket, deger} — yalnız etiket
-                  // kullanılır (Türkçe alan adı, örn. "İşletme Adı").
-                  // Veri Flutter'ın yerel kaydına yazılmaz; yalnız bildirim.
-                  final etiket =
-                      (payload['etiket'] as String?) ??
-                      (payload['anahtar'] as String?) ??
-                      '';
-                  _hasPendingExternalDraft = true;
-                  if (etiket.isNotEmpty) _lastExternalDraftEtiket = etiket;
-                  if (!_isDisposed) notifyListeners();
-                },
-              )
-              .subscribe();
-    } catch (e) {
-      // Taslak broadcast başarısız olursa yalnız bildirim gösterilmez;
-      // editör ve senkron çalışmaya devam eder.
-      if (kDebugMode) debugPrint('Taslak broadcast kurulamadı: $e');
-    }
-  }
-
-  void _taslakDinlemeyiDurdur() {
-    final kanal = _taslakKanal;
-    if (kanal == null) return;
-    _taslakKanal = null;
-    try {
-      _resolveClient()?.removeChannel(kanal);
-    } catch (_) {}
-  }
-
   /// Yayındaki vitrini buluttan çeker; bulut daha yeniyse yerele yazar.
-  ///
-  /// Sessizce başarısız olur: internet yoksa ya da sorgu düşerse uygulama
-  /// yerel kopyayla çalışmaya devam eder. Çevrimdışı çalışabilmek manuel
-  /// panelin varlık sebebi (VIXREX_RULES §1) — bu senkron onu bozamaz.
   Future<void> _pullFromCloudIfNewer() async {
     final slug = _publishedInfo?.slug.trim() ?? '';
     if (slug.isEmpty) return;
@@ -354,30 +283,12 @@ class StoreEditorController extends ChangeNotifier
     final client = _resolveClient();
     if (client == null) return;
 
-    try {
-      final row =
-          await client
-              .from('stores')
-              .select('${StoreSafeSelect.columns},updated_at')
-              .eq('slug', slug)
-              .maybeSingle();
-      if (row == null) return;
-
-      final bulutZamani =
-          DateTime.tryParse((row['updated_at'] as String?) ?? '')?.toUtc();
-      if (bulutZamani == null) return;
-
-      final yerelZamani = await storage.loadVitrinDataSavedAt();
-
-      // Yerel damga yoksa bulut kazanır: yerel veri eski bir sürümden
-      // kalmış olabilir ve ne zaman yazıldığı bilinmiyor.
-      if (yerelZamani != null && yerelZamani.isAfter(bulutZamani)) return;
-
-      _data = StoreData.fromJson(Map<String, dynamic>.from(row));
-      await storage.saveVitrinData(_data);
-    } catch (e) {
-      if (kDebugMode) debugPrint('Bulut senkronu atlandı: $e');
-    }
+    final guncel = await _realtimeSync.pullFromCloudIfNewer(
+      client: client,
+      slug: slug,
+      storage: storage,
+    );
+    if (guncel != null) _data = guncel;
   }
 
   SupabaseClient? _resolveClient() {
