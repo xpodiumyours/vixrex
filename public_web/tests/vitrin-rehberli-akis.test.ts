@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   alanOnemi,
+  hazirlikRaporu,
   sonrakiRehberAlan,
   tumAlanlarSirali,
 } from "../src/lib/vitrinReadiness";
@@ -80,5 +81,48 @@ describe("sonrakiRehberAlan", () => {
     const sonAnahtar = sirali[sirali.length - 1].anahtar;
     const sonraki = sonrakiRehberAlan({}, sonAnahtar, new Set());
     expect(sonraki).toBeNull();
+  });
+});
+
+describe("hazirlikRaporu — yüzde artık 44 alan üstünden (ADR 0002, 3. alt-faz)", () => {
+  it("boş taslakta toplam sayı şemadaki TÜM alan sayısıdır, yalnız temel+kalite değil", () => {
+    const rapor = hazirlikRaporu({});
+    expect(rapor.toplamSayisi).toBe(VITRIN_FIELDS.length);
+  });
+
+  it("bilerek atlanan isteğe bağlı alan 'işlem görmüş' sayılır — doluSayisi ve yüzde artar", () => {
+    const istegeBagli = VITRIN_FIELDS.find((a) => alanOnemi(a) === "istege-bagli");
+    expect(istegeBagli).toBeDefined();
+    if (!istegeBagli) return;
+
+    const atlanmadan = hazirlikRaporu({}, new Set());
+    const atlandiktan = hazirlikRaporu({}, new Set([istegeBagli.anahtar]));
+
+    expect(atlandiktan.doluSayisi).toBe(atlanmadan.doluSayisi + 1);
+    expect(atlandiktan.yuzde).toBeGreaterThan(atlanmadan.yuzde);
+  });
+
+  it("atlanmış isteğe bağlı alan 'eksikler' listesine hiç girmez", () => {
+    const istegeBagli = VITRIN_FIELDS.find((a) => alanOnemi(a) === "istege-bagli");
+    expect(istegeBagli).toBeDefined();
+    if (!istegeBagli) return;
+
+    const rapor = hazirlikRaporu({}, new Set([istegeBagli.anahtar]));
+    expect(rapor.eksikler.some((e) => e.anahtar === istegeBagli.anahtar)).toBe(false);
+  });
+
+  it("her şey dolu + atlanmışsa yüzde 100'dür", () => {
+    const draft: Record<string, unknown> = {};
+    const atlanmislar = new Set<string>();
+    for (const alan of VITRIN_FIELDS) {
+      if (alanOnemi(alan) === "istege-bagli") {
+        atlanmislar.add(alan.anahtar);
+      } else {
+        draft[alan.kolon] = "dolu";
+      }
+    }
+    const rapor = hazirlikRaporu(draft, atlanmislar);
+    expect(rapor.yuzde).toBe(100);
+    expect(rapor.doluSayisi).toBe(VITRIN_FIELDS.length);
   });
 });

@@ -30,6 +30,7 @@ export interface OwnerActionsHook {
   hazirGorselleriAc: () => Promise<void>;
   hazirGorselSec: (url: string) => Promise<void>;
   gonder: () => Promise<void>;
+  alanAtla: () => Promise<void>;
   yayinla: () => Promise<void>;
   silmeOnayla: () => void;
   sil: () => Promise<void>;
@@ -44,8 +45,12 @@ interface Deps {
   mesajEkle: (kimden: Mesaj["kimden"], metin: string) => void;
   setAlan: (kolon: string, deger: unknown) => void;
   setGiris: (v: string) => void;
-  /** Kayıt başarılı olunca çağrılır: sırada başka alan varsa oraya geçer. */
+  /** Kayıt (veya boş geçme) başarılı olunca çağrılır: sırada başka alan
+   * varsa oraya geçer. */
   alanaGecVeyaBitir: (kaydedilenAnahtar: string) => void;
+  /** "Boş geç" kalıcı işaretlendiğinde yerel state'e yansıtır
+   * (`useOwnerDraft.alanAtlandi`). */
+  alanAtlandi: (anahtar: string) => void;
 }
 
 export function useOwnerActions({
@@ -57,6 +62,7 @@ export function useOwnerActions({
   setAlan,
   setGiris,
   alanaGecVeyaBitir,
+  alanAtlandi,
 }: Deps): OwnerActionsHook {
   const router = useRouter();
   const [kaydediliyor, setKaydediliyor] = useState(false);
@@ -265,6 +271,39 @@ export function useOwnerActions({
     }
   }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir]);
 
+  // Yalnız isteğe bağlı alanlarda gösterilen "Boş geç" (ADR 0002, 3. alt-faz).
+  // Vitrin İÇERİĞİ yazmaz — /api/owner-draft'tan bağımsız, kendi dar
+  // rotasından (/api/owner-draft-skip) geçer; kalıcı olsun diye.
+  const alanAtla = useCallback(async () => {
+    if (!seciliAlan) return;
+    const alan = seciliAlan;
+
+    mesajEkle("kullanici", "(boş geç)");
+    setKaydediliyor(true);
+
+    try {
+      const yanit = await fetch("/api/owner-draft-skip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, anahtar: alan.anahtar }),
+      });
+      const govde = await yanit.json();
+
+      if (!yanit.ok) {
+        mesajEkle("asistan", govde?.hata ?? "Kaydedilemedi.");
+        return;
+      }
+
+      mesajEkle("asistan", `${alan.etiket} şimdilik boş geçildi.`);
+      alanAtlandi(alan.anahtar);
+      alanaGecVeyaBitir(alan.anahtar);
+    } catch {
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+    } finally {
+      setKaydediliyor(false);
+    }
+  }, [seciliAlan, slug, mesajEkle, alanAtlandi, alanaGecVeyaBitir]);
+
   const yayinla = useCallback(async () => {
     mesajEkle("kullanici", "Yayınla");
     setYayinlaniyor(true);
@@ -344,6 +383,7 @@ export function useOwnerActions({
     hazirGorselleriAc,
     hazirGorselSec,
     gonder,
+    alanAtla,
     yayinla,
     silmeOnayla,
     sil,

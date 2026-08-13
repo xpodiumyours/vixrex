@@ -16,7 +16,7 @@ interface Props {
   hazirGorselleriAc: () => Promise<void>;
   hazirGorselSec: (url: string) => Promise<void>;
   gonder: () => Promise<void>;
-  alanAtla: () => void;
+  alanAtla: () => Promise<void>;
 }
 
 export function FieldInputArea({
@@ -50,7 +50,7 @@ export function FieldInputArea({
           {istegeBagliMi && (
             <button
               type="button"
-              onClick={alanAtla}
+              onClick={() => void alanAtla()}
               disabled={kaydediliyor}
               className="shrink-0 text-slate-400 underline decoration-dotted hover:text-slate-200 disabled:opacity-50"
             >

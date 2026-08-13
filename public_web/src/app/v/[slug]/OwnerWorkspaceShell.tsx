@@ -25,6 +25,8 @@ export interface WorkingDraftData {
   version_conflict: boolean;
   created: boolean;
   assistant_handoff?: unknown;
+  /** "Boş geç" denen isteğe bağlı alanlar (ADR 0002, 3. alt-faz). */
+  atlanan_alanlar?: string[];
 }
 
 export interface OwnerWorkspaceShellProps {
@@ -231,6 +233,9 @@ export default function OwnerWorkspaceShell({
         slug={vitrinProps.storeSlug}
         draftData={(draft?.draft_data ?? {}) as Record<string, unknown>}
         assistantHandoff={assistantHandoff}
+        atlananAlanlar={
+          Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []
+        }
       />
     </>
   );

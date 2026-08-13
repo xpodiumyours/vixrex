@@ -27,12 +27,16 @@ interface Props {
   slug: string;
   draftData: Record<string, unknown>;
   assistantHandoff?: AssistantHandoffV1 | null;
+  /** "Boş geç" denen isteğe bağlı alanlar — sunucudan kalıcı gelir (ADR 0002,
+   * 3. alt-faz). */
+  atlananAlanlar?: readonly string[] | null;
 }
 
 export default function OwnerAssistantPanel({
   slug,
   draftData,
   assistantHandoff = null,
+  atlananAlanlar = null,
 }: Props) {
   const [acik, setAcik] = useState(false);
 
@@ -46,12 +50,17 @@ export default function OwnerAssistantPanel({
     return () => document.body.classList.remove("vixrex-asistan-acik");
   }, [acik]);
 
-  const { yerelTaslak, setAlan, rapor } = useOwnerDraft(slug, draftData);
+  const { yerelTaslak, setAlan, rapor, atlanmisAlanlar, alanAtlandi } = useOwnerDraft(
+    slug,
+    draftData,
+    atlananAlanlar ?? []
+  );
   const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff);
 
-  const { seciliAlan, giris, girisRef, setGiris, alanSec, alanaGecVeyaBitir, alanAtla } =
+  const { seciliAlan, giris, girisRef, setGiris, alanSec, alanaGecVeyaBitir } =
     useFieldSelection({
       yerelTaslak,
+      atlanmisAlanlar,
       mesajEkle,
       onAlanSecildi: () => setAcik(true),
     });
@@ -65,6 +74,7 @@ export default function OwnerAssistantPanel({
     setAlan,
     setGiris,
     alanaGecVeyaBitir,
+    alanAtlandi,
   });
 
   return (
@@ -137,7 +147,7 @@ export default function OwnerAssistantPanel({
             hazirGorselleriAc={actions.hazirGorselleriAc}
             hazirGorselSec={actions.hazirGorselSec}
             gonder={actions.gonder}
-            alanAtla={alanAtla}
+            alanAtla={actions.alanAtla}
           />
 
           {/* Yayınla / Değişiklikleri bırak */}

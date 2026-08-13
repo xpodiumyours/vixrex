@@ -68,28 +68,36 @@ function doluMu(deger: unknown): boolean {
 /**
  * Taslak verisine bakarak hazırlık raporu üretir.
  * @param draftData store_working_drafts.draft_data — kolon adına göre değerler
+ * @param atlanmislar "boş geç" denen isteğe bağlı alanlar (ADR 0002, 3. alt-faz).
+ *   Dolu SAYILMAZ ama doluluk yüzdesinde "işlem görmüş" sayılır — hiç
+ *   sorulmamış olandan bu şekilde ayrılır.
  */
-export function hazirlikRaporu(draftData: Record<string, unknown>): HazirlikRaporu {
+export function hazirlikRaporu(
+  draftData: Record<string, unknown>,
+  atlanmislar: ReadonlySet<string> = new Set()
+): HazirlikRaporu {
   const eksikler: EksikAlan[] = [];
-  let dolu = 0;
-  let toplam = 0;
+  // "İşlem görmüş" = dolu VEYA (isteğe bağlıysa) bilerek atlanmış. Yüzde
+  // artık toplam 44 alan üstünden — önceden yalnız temel+kalite (~11)
+  // üstündendi, isteğe bağlının 32'si hiç sayılmıyordu.
+  let islemGormus = 0;
 
   for (const alan of VITRIN_FIELDS) {
     const onem = alanOnemi(alan);
-    // İsteğe bağlı alanlar yüzdeye girmez; boşsa da vitrin eksik sayılmaz.
+    const dolu = doluMu(draftData[alan.kolon]);
+    const atlanmisMi = onem === "istege-bagli" && atlanmislar.has(alan.anahtar);
+
+    if (dolu || atlanmisMi) {
+      islemGormus += 1;
+      continue;
+    }
+
+    // İsteğe bağlı ama henüz atlanmamış/doldurulmamış alanlar "eksik"
+    // sayılmaz (vitrin bunlarsız da yayına hazır) — yalnız temel/kalite
+    // eksikler listede.
     if (onem === "istege-bagli") continue;
 
-    toplam += 1;
-    if (doluMu(draftData[alan.kolon])) {
-      dolu += 1;
-    } else {
-      eksikler.push({
-        anahtar: alan.anahtar,
-        etiket: alan.etiket,
-        bolum: alan.bolum,
-        onem,
-      });
-    }
+    eksikler.push({ anahtar: alan.anahtar, etiket: alan.etiket, bolum: alan.bolum, onem });
   }
 
   // Önce temel eksikler, sonra kalite eksikleri.
@@ -100,9 +108,9 @@ export function hazirlikRaporu(draftData: Record<string, unknown>): HazirlikRapo
 
   return {
     temelTamam,
-    yuzde: toplam === 0 ? 100 : Math.round((dolu / toplam) * 100),
-    doluSayisi: dolu,
-    toplamSayisi: toplam,
+    yuzde: Math.round((islemGormus / VITRIN_FIELDS.length) * 100),
+    doluSayisi: islemGormus,
+    toplamSayisi: VITRIN_FIELDS.length,
     eksikler,
     sonrakiAdim: ilk
       ? ilk.onem === "temel"
