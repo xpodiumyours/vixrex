@@ -10,6 +10,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/l10n/app_localizations.dart';
 import 'package:vixrex/services/push_notification_service.dart';
+import 'package:vixrex/services/sohbet_gecmisi_gocu.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/theme/app_theme.dart';
 
@@ -23,6 +24,9 @@ Future<void> main() async {
   _setupGlobalErrorHandler();
   await _initializeSupabase();
   _initializeOneSignal();
+  // Tek Asistan planı, Faz C: eski sohbet geçmişi anahtarlarını tek v3
+  // desenine bir kez taşır. Sessiz başarısızlık — bir kapı değil, temizlik.
+  await SohbetGecmisiGocu.calistir();
 
   await SentryFlutter.init((options) {
     options.dsn = const String.fromEnvironment('SENTRY_DSN');
