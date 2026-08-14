@@ -51,6 +51,8 @@ const doluVitrin: VitrinProfileViewProps = {
   sectionVisibility: null,
   heroLocationText: null,
   mapLabel: null,
+  provinceName: null,
+  districtName: null,
   categorySectionTitle: null,
   productSectionTitle: null,
   galleryActionLabel: null,

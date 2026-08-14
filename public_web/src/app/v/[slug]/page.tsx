@@ -113,6 +113,8 @@ interface PublicStoreRow {
   featured_banner_price_text: string | null;
   hero_location_text: string | null;
   map_label: string | null;
+  province_name: string | null;
+  district_name: string | null;
   category_section_title: string | null;
   product_section_title: string | null;
   gallery_action_label: string | null;
@@ -162,7 +164,7 @@ const PUBLIC_STORE_SELECT =
   "featured_banner_price_text,rating_score,review_count,hero_location_text,map_label," +
   "category_section_title,product_section_title,gallery_action_label,gallery_action_href," +
   "blog_section_kicker,blog_section_title,faq_section_kicker,faq_section_title," +
-  "faq_section_description,section_visibility";
+  "faq_section_description,section_visibility,province_name,district_name";
 
 async function _buildStoreDataBundle(store: PublicStoreRow) {
   const slug = store.slug;
@@ -666,6 +668,8 @@ export default async function StorePage(props: PageProps) {
         sectionVisibility={store.section_visibility}
         heroLocationText={store.hero_location_text}
         mapLabel={store.map_label}
+        provinceName={store.province_name}
+        districtName={store.district_name}
         categorySectionTitle={store.category_section_title}
         productSectionTitle={store.product_section_title}
         galleryActionLabel={store.gallery_action_label}
