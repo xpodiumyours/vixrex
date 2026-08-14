@@ -41,8 +41,6 @@ extension VixRexNextStepLabel on VixRexNextStep {
 /// Vitrin durumunun kullanıcı dostu özeti.
 /// Güvenlik: editToken, userId, session bilgisi içermez.
 class VixRexProfileSnapshot {
-  static const int requiredStepCount = 4;
-
   final bool nameCompleted;
   final bool whatsappCompleted;
   final bool addressCompleted;
@@ -55,6 +53,7 @@ class VixRexProfileSnapshot {
   final bool isPublished;
   final String storeName;
   final String category;
+  final String province;
   final String district;
   final String publicLink;
 
@@ -71,6 +70,7 @@ class VixRexProfileSnapshot {
     required this.isPublished,
     required this.storeName,
     required this.category,
+    this.province = '',
     required this.district,
     required this.publicLink,
   });
@@ -122,6 +122,7 @@ class VixRexProfileSnapshot {
       isPublished: isPublished,
       storeName: data.name.trim(),
       category: data.kategori.trim(),
+      province: data.provinceName.trim(),
       district: data.districtName.trim(),
       publicLink: publishedInfo?.publicLink.trim() ?? '',
     );
@@ -157,6 +158,15 @@ class VixRexProfileSnapshot {
         return addressCompleted;
       case 'kategori':
         return categoryCompleted;
+      // Faz F (Tek Asistan planı): il/ilçe artık şemada ayrı zorunlu alan
+      // (Next.js tarafı bunları hiç bilmiyordu — bkz. docs/alan-eslemesi.md).
+      // addressCompleted bilinçli olarak AYNI (üçünü birlikte sayan)
+      // davranışını koruyor; bu iki case yalnız sonrakiEksikZorunluAlan'ın
+      // şemadaki 3 ayrı girdiyi doğru okuyabilmesi için var.
+      case 'il':
+        return province.trim().isNotEmpty;
+      case 'ilce':
+        return district.trim().isNotEmpty;
       default:
         // Şemaya yeni zorunlu alan eklenmiş ama buraya bağlanmamış.
         // Akışı tıkamamak için dolu sayılır; sözleşme testi bu boşluğu
@@ -175,7 +185,12 @@ class VixRexProfileSnapshot {
           return VixRexNextStep.category;
         case 'whatsapp':
           return VixRexNextStep.whatsapp;
+        // Adres, il ve ilçe kullanıcıya tek "konum" adımı olarak sorulur
+        // (FormLocationInfo ikisini de tek ekranda toplar) — şemada üç ayrı
+        // zorunlu girdi olması akış aşaması sayısını artırmaz.
         case 'adres':
+        case 'il':
+        case 'ilce':
           return VixRexNextStep.address;
       }
     }

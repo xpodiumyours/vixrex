@@ -53,6 +53,8 @@ void main() {
     ..writeln('  final int? maxUzunluk;')
     ..writeln('  final List<String>? secenekler;')
     ..writeln('  final String? ipucu;')
+    ..writeln('  final String? dogrulama;')
+    ..writeln('  final List<String>? bosDegerler;')
     ..writeln('')
     ..writeln('  const VitrinAlani({')
     ..writeln('    required this.anahtar,')
@@ -66,6 +68,8 @@ void main() {
     ..writeln('    this.maxUzunluk,')
     ..writeln('    this.secenekler,')
     ..writeln('    this.ipucu,')
+    ..writeln('    this.dogrulama,')
+    ..writeln('    this.bosDegerler,')
     ..writeln('  });')
     ..writeln('}')
     ..writeln('')
@@ -94,6 +98,13 @@ void main() {
       tampon.writeln('    secenekler: [$ler],');
     }
     if (a['ipucu'] != null) tampon.writeln("    ipucu: ${metin(a['ipucu'])},");
+    if (a['dogrulama'] != null) {
+      tampon.writeln("    dogrulama: ${metin(a['dogrulama'])},");
+    }
+    if (a['bosDegerler'] != null) {
+      final ler = (a['bosDegerler'] as List).map(metin).join(', ');
+      tampon.writeln('    bosDegerler: [$ler],');
+    }
     tampon.writeln('  ),');
   }
 
