@@ -35,10 +35,15 @@ void main() {
     final chat = oku('lib/screens/vixrex_onboarding_chat_screen.dart');
     // Kurulumun başında değil, done adımında. Yayına kadar korunacak
     // bir şey yok; kimseyi formla karşılamayız.
+    //
+    // Faz D (Tek Asistan planı): adım enum'u `_OnboardingStep` → dosya
+    // dışından da kullanılabilen `VixRexOnboardingStep` oldu (adım
+    // makinesi `vixrex_onboarding_controller.dart`'a taşındı); yerel
+    // `_step` alanı da `_onboarding.step` oldu.
     final doneBlok = chat.substring(
-      chat.indexOf('if (_step == _OnboardingStep.done)'),
+      chat.indexOf('if (step == VixRexOnboardingStep.done)'),
     );
-    expect(doneBlok, contains('_hesapKorumasiz'));
+    expect(doneBlok, contains('hesapKorumasiz'));
     expect(doneBlok, contains('Google ile bağla'));
   });
 }

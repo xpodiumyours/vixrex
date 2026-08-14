@@ -1,43 +1,33 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:vixrex/services/auth_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
-import 'package:vixrex/config/business_category_config.dart';
-import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/controllers/vixrex_onboarding_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/models/assistant_handoff.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/services/chatbot_service.dart';
-import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
-import 'package:vixrex/utils/address_validator.dart';
-import 'package:vixrex/utils/whatsapp_link_helper.dart';
 import 'package:vixrex/widgets/chat/chat_bubble.dart';
 import 'package:vixrex/widgets/chat/chat_composer.dart';
 import 'package:vixrex/widgets/chat/chat_pill.dart';
 import 'package:vixrex/widgets/chat/chat_top_bar.dart';
 import 'package:vixrex/widgets/editor/form_location_info.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
+import 'package:vixrex/widgets/onboarding/kategori_secici.dart';
 
 /// Rehber sohbet geçmişine onboarding transcript yazıldığını işaretler (çift yazmayı engeller).
 const String _kOnboardingHandoffMarker = 'onboarding_handoff_v1';
 
-enum _OnboardingStep {
-  welcome,
-  name,
-  category,
-  whatsapp,
-  location,
-  legal,
-  publishing,
-  done,
-}
-
 /// Faz 2: HTML örneğindeki varlık sohbeti (ad / WA / konum → yayın → link).
 /// Landing’deki işletme adı alanı [initialName] ile gelir (home shell ile aynı fikir).
+///
+/// Faz D (Tek Asistan planı): adım makinesi, doğrulama ve kaydetme çağrıları
+/// [VixRexOnboardingController]'a taşındı — bu ekran artık o controller'ı
+/// dinleyen ince bir `build`: Faz A bileşenlerini (`ChatTopBar`,
+/// `ChatComposer`, `ChatBubble`, `ChatPill`) dizer, sohbet satırlarının
+/// kendisini (`_lines`, kaydırma, geçmişe yazma) ve widget'a bağlı işleri
+/// (navigasyon, `ScaffoldMessenger`) tutar.
 class VixRexOnboardingChatScreen extends StatefulWidget {
   const VixRexOnboardingChatScreen({
     super.key,
@@ -70,6 +60,7 @@ class VixRexOnboardingChatScreen extends StatefulWidget {
 class _VixRexOnboardingChatScreenState
     extends State<VixRexOnboardingChatScreen> {
   late final StoreEditorController _controller;
+  late final VixRexOnboardingController _onboarding;
   late final MyVitrinState _vitrinState;
   late final bool _ownsController;
   final _scrollController = ScrollController();
@@ -80,10 +71,6 @@ class _VixRexOnboardingChatScreenState
   final _inputFocus = FocusNode();
 
   final List<_ChatLine> _lines = [];
-  _OnboardingStep _step = _OnboardingStep.welcome;
-  bool _busy = false;
-  String? _error;
-  String? _publicLink;
 
   @override
   void initState() {
@@ -92,6 +79,14 @@ class _VixRexOnboardingChatScreenState
     _controller = widget.editorController ?? StoreEditorController();
     _vitrinState = MyVitrinState(controller: _controller);
     _controller.addListener(_onControllerTick);
+    _onboarding = VixRexOnboardingController(
+      editorController: _controller,
+      onBotMessage: _pushBot,
+      onUserMessage: _pushUser,
+      onPersistTranscript: _handoffTranscriptToRehber,
+      onRequestFocus: _focusInput,
+    );
+    _onboarding.addListener(_onOnboardingTick);
     _bootstrap();
   }
 
@@ -99,88 +94,23 @@ class _VixRexOnboardingChatScreenState
     if (mounted) setState(() {});
   }
 
-  Future<void> _bootstrap() async {
-    final sharedInitialization = widget.editorInitialization;
-    if (sharedInitialization != null) {
-      await sharedInitialization;
-    } else if (_ownsController) {
-      await _controller.initialize(widget.initialName);
-    }
-    if (!mounted) return;
-    // Kayıtlı ilerleme var mı? Diskten AYRI bir okuma yapmaz — controller'ın
-    // o anki hafızasına bakar. Böylece hem eski bir oturumdan (diskten
-    // yüklenmiş) hem de AYNI uygulama açıkken başka bir ekranda (örn.
-    // landing) az önce doldurulmuş, henüz yayınlanmamış bir sohbetten
-    // gelen ilerleme de doğru yakalanır — sohbet nereden açılırsa açılsın
-    // kaldığı yerden devam eder (2026-08-12 bulgusu, tek oturum).
-    final hasSavedVitrin = _controller.data.name.trim().isNotEmpty;
-    if (hasSavedVitrin) {
-      _resumeSavedVitrin();
-      return;
-    }
-    _pushBot(
-      'Merhaba, ben Vixrex Asistan.\n\n'
-      'İşletmene ne kazandırıyorum?\n'
-      '• 📱 Tek Link & QR Kod: Dijital vitrin sayfan.\n'
-      '• 💬 WhatsApp Sipariş: Müşterilerin tek tıkla sana ulaşır.\n'
-      '• 🛍️ Ürün & Galeri: Reyon ve ürünlerini sergilersin.\n'
-      '• 📍 Konum & Adres: Dükkanına kolayca ulaşılır.\n\n'
-      'Senin işletmen için de 2 dakikada beraber hazırlayalım mı?',
-    );
-    setState(() {});
+  void _onOnboardingTick() {
+    if (mounted) setState(() {});
   }
 
-  void _resumeSavedVitrin() {
-    final snapshot = VixRexProfileSnapshot.from(
-      _controller.data,
-      _controller.publishedInfo,
+  Future<void> _bootstrap() async {
+    await _onboarding.bootstrap(
+      sharedInitialization: widget.editorInitialization,
+      ownsController: _ownsController,
+      initialName: widget.initialName,
     );
-    final storeName = snapshot.storeName;
-
-    _pushBot(
-      'Tekrar hoş geldin, $storeName.\n\n'
-      'Kayıtlı vitrinin bulundu. Yeni bir vitrin oluşturmuyoruz; '
-      'kaldığın yerden devam ediyoruz.',
-    );
-
-    switch (snapshot.nextMissingField) {
-      case VixRexNextStep.name:
-        setState(() => _step = _OnboardingStep.name);
-        _pushBot('İşletme adını tamamlayalım.');
-        _focusInput();
-      case VixRexNextStep.category:
-        setState(() => _step = _OnboardingStep.category);
-        _pushBot(
-          'Sıradaki adım: ne iş yaptığını seçelim — vitrinin ona göre '
-          'hazırlanıyor.',
-        );
-      case VixRexNextStep.whatsapp:
-        setState(() => _step = _OnboardingStep.whatsapp);
-        _pushBot('Sıradaki adım: WhatsApp numaranı ekleyelim.');
-        _focusInput();
-      case VixRexNextStep.address:
-        setState(() => _step = _OnboardingStep.location);
-        _pushBot('Sıradaki adım: adres ve konum bilgini tamamlayalım.');
-      case VixRexNextStep.legal:
-        setState(() => _step = _OnboardingStep.legal);
-        _pushBot('Sıradaki adım: yasal yayınlama onaylarını tamamlayalım.');
-      case VixRexNextStep.publish:
-        setState(() => _step = _OnboardingStep.legal);
-        _pushBot('Bilgilerin hazır. Sıradaki adım vitrini yayınlamak.');
-      case VixRexNextStep.share:
-        _publicLink = snapshot.publicLink;
-        setState(() => _step = _OnboardingStep.done);
-        _pushBot(
-          'Vitrinin yayında. Şimdi görünümünü ve ürünlerini geliştirmeye '
-          'devam edebiliriz.',
-          publicLink: _repairedPublicLink,
-        );
-    }
   }
 
   @override
   void dispose() {
     _controller.removeListener(_onControllerTick);
+    _onboarding.removeListener(_onOnboardingTick);
+    _onboarding.dispose();
     _vitrinState.dispose();
     if (_ownsController) _controller.dispose();
     _scrollController.dispose();
@@ -250,7 +180,7 @@ class _VixRexOnboardingChatScreenState
   /// "local"a.
   Future<void> _handoffTranscriptToRehber() async {
     final service = ChatbotService();
-    final rawScope = _repairedPublicLink?.trim();
+    final rawScope = _onboarding.repairedPublicLink?.trim();
     final scope = (rawScope == null || rawScope.isEmpty) ? null : rawScope;
     if (scope != null) {
       await service.migrateLocalToPublishedScope(scope);
@@ -291,349 +221,19 @@ class _VixRexOnboardingChatScreenState
     });
   }
 
-  Future<void> _acceptWelcome() async {
-    _pushUser('Evet, oluşturalım');
-    setState(() => _error = null);
-
-    final existingName = _controller.data.name.trim();
-    if (existingName.length >= 2) {
-      _pushUser(existingName);
-      setState(() => _step = _OnboardingStep.whatsapp);
-      _pushBot('Müşteriler seni nasıl bulsun?\nWhatsApp numaranı yaz.');
-      _focusInput();
-      return;
-    }
-
-    setState(() => _step = _OnboardingStep.name);
-    _pushBot('Harika. İşletmenin adı ne?');
-    _focusInput();
-  }
-
-  void _declineWelcome() {
-    _pushUser('Şimdilik bakınıyorum');
-    _pushBot('Tamam. Hazır olunca buradayım.');
-    setState(() => _step = _OnboardingStep.welcome);
-  }
-
-  Future<void> _submitName(String raw) async {
-    final name = raw.trim();
-    if (name.length < 2) {
-      setState(() => _error = 'İşletme adını en az 2 karakter yaz.');
-      return;
-    }
-    _pushUser(name);
-    _controller.updateName(name);
-    await _controller.saveLocally();
-    setState(() {
-      _step = _OnboardingStep.category;
-      _error = null;
-      _inputController.clear();
-    });
-    // Kategori şemada ZORUNLU (lib/config/vitrin_alanlari.g.dart).
-    // Eskiden hiç sorulmuyordu; sohbetle açılan her vitrin "Diğer" kalıyor,
-    // kategoriye bağlı hiçbir şey (butonlar, bölüm başlıkları, kategoriye
-    // özel hazır görseller) çalışmıyordu.
-    _pushBot(
-      'Ne iş yapıyorsun?\n'
-      'Seçtiğin işe göre vitrinini hazır kuruyorum.',
-    );
-  }
-
-  /// Kategori seçimi — 19 kategori, tek dokunuş. Yazdırmıyoruz: esnaf
-  /// "kuaför" yerine "Kuafor" yazınca eşleşme kaybolur.
-  Future<void> _selectCategory(String label) async {
-    _pushUser(label);
-    _controller.selectCategory(label);
-    await _controller.saveLocally();
-    if (!mounted) return;
-    setState(() {
-      _step = _OnboardingStep.whatsapp;
-      _error = null;
-    });
-    _pushBot('Müşteriler seni nasıl bulsun?\nWhatsApp numaranı yaz.');
-    _focusInput();
-  }
-
-  Future<void> _submitWhatsapp(String raw) async {
-    final normalized = WhatsAppLinkHelper.normalizeTurkeyMobile(raw);
-    if (normalized == null) {
-      setState(() => _error = WhatsAppLinkHelper.invalidNumberMessage);
-      return;
-    }
-    _pushUser(raw.trim());
-    _controller.updateWhatsapp(normalized);
-    await _controller.saveLocally();
-    setState(() {
-      _step = _OnboardingStep.location;
-      _error = null;
-      _inputController.clear();
-    });
-    _pushBot(
-      'İşletmen nerede?\n'
-      'Aşağıda profil editöründeki konum alanını kullan — '
-      'GPS veya il/ilçe/adres.',
-    );
-  }
-
-  /// Konum adımında hangi zorunlu alan eksik — sırayla ilki.
-  ///
-  /// Doğrulama zaten `_confirmLocationFromEditor` içinde vardı ve boş
-  /// alanla geçmiyordu. Sorun görsel: düğme hazır görünüyor, basınca
-  /// reddediyordu. Casper (2026-08-07): "zorunluluk işareti var,
-  /// karşılığı yok". Aynı kural artık düğmenin görünümünü de belirliyor —
-  /// iki ayrı doğruluk olmasın diye tek yerde.
-  String? get _konumEksigi {
-    final data = _controller.data;
-    if (data.provinceCode.trim().isEmpty) return 'İl seç';
-    if (data.districtName.trim().isEmpty) return 'İlçe seç';
-    return AddressValidator.hataMesaji(data.address) == null
-        ? null
-        : 'Açık adresi yaz';
-  }
-
-  Future<void> _confirmLocationFromEditor() async {
-    final data = _controller.data;
-    if (data.provinceCode.trim().isEmpty || data.districtName.trim().isEmpty) {
-      setState(
-        () => _error = 'İl ve ilçe gerekli. GPS ile bul ya da listeden seç.',
-      );
-      return;
-    }
-    // Adres ayrı kontrol edilir: eskiden yalnız "boş değil" bakılıyordu ve
-    // "asd" yazan esnaf vitrinini öyle yayınlayabiliyordu. Yarım adres,
-    // adres olmamasından beterdir — müşteri yola çıkar, bulamaz.
-    final adresHatasi = AddressValidator.hataMesaji(data.address);
-    if (adresHatasi != null) {
-      setState(() => _error = adresHatasi);
-      return;
-    }
-    final label =
-        '${data.districtName}, ${data.provinceName} — ${data.address}';
-    _pushUser(label);
-    await _controller.saveLocally();
-    if (!mounted) return;
-    setState(() {
-      _step = _OnboardingStep.legal;
-      _error = null;
-    });
-    _pushBot(
-      'Son adım: editördeki yasal onayları işaretle, sonra yayınla.\n'
-      'Kısa tutuyoruz.',
-    );
-  }
-
-  /// Vitrin anonim bir hesaba bağlıysa true — yani cihaz kaybolursa
-  /// erişim de kaybolur.
-  bool get _hesapKorumasiz {
-    final kullanici = Supabase.instance.client.auth.currentUser;
-    return kullanici != null && kullanici.isAnonymous;
-  }
-
-  /// Vitrini kalıcı bir hesaba bağlar.
-  ///
-  /// Anonim hesap CİHAZA bağlıdır. Esnaf telefonunu değiştirse ya da
-  /// tarayıcı verisini silse vitrinine bir daha erişemez. Bu adım
-  /// yayından SONRA çıkar — o ana kadar korunacak bir şey yok, kimseyi
-  /// formla karşılamayız.
-  Future<void> _hesabiBagla() async {
-    if (_busy) return;
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    final sonuc = await const AuthService().hesabiGoogleaBagla();
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (sonuc.isFailure) {
-      setState(() => _error = sonuc.failure!.message);
-      return;
-    }
-    setState(() {});
-    _pushBot(
-      'Tamam, vitrinin artık hesabına bağlı.\n'
-      'Telefonunu değiştirsen de buradan devam edersin.',
-    );
-  }
-
-  Future<void> _acceptLegalAndPublish() async {
-    if (_busy) return;
-    if (!_controller.isLegalPublishReady) {
-      setState(() => _error = 'Yayın için aşağıdaki yasal onayları işaretle.');
-      return;
-    }
-    _pushUser('Yayınla');
-    setState(() {
-      _busy = true;
-      _error = null;
-      _step = _OnboardingStep.publishing;
-    });
-    _pushBot('Vitrinin hazırlanıyor…');
-
-    try {
-      await _controller.saveLocally();
-      final link = await _controller.publish();
-      if (!mounted) return;
-      if (link == null || link.trim().isEmpty) {
-        setState(() {
-          _busy = false;
-          _step = _OnboardingStep.legal;
-          _error = 'Yayın tamamlanamadı. Tekrar dene.';
-        });
-        _pushBot('Bir sorun oluştu. Tekrar deneyebilirsin.');
-        return;
-      }
-      _publicLink = link.trim();
-
-      // Tamamlanma mesajları HANDOFF'A YAZILMADAN ÖNCE _lines'a eklenir —
-      // aksi halde kaydedilen konuşma bu son iki mesajı hiç görmez
-      // (CodeRabbit bulgusu, 2026-08-12). _pushBot yalnız listeye ekler,
-      // setState çağırmaz; ekranı henüz güncellemeden geçmişi tamamlar.
-      _pushBot(
-        'İşte bu kadar.\nArtık dijitalde varsın.\n\n'
-        'İşletme adına özel vitrinin hazır. Web siten var — domain masrafın yok.',
-        publicLink: _repairedPublicLink,
-      );
-      // TEK ASİSTAN — SERT DEVİR YOK (C2).
-      //
-      // Burası eskiden link verip "VixRex rehberinde devam et" diyordu:
-      // kullanıcı başka bir ekrana düşüyor, aynı Vixrex'le konuşmaya devam
-      // ettiğini hissetmiyordu. Artık aynı asistan vitrini kendisi açıyor
-      // ve birlikte devam ediyor.
-      _pushBot(
-        'Şimdi birlikte güzelleştirelim.\n'
-        'Vitrinini açıyorum — değiştirmek istediğin yazıya tıkla, ben '
-        'oradan hallederim. Kapak görselini de kategorine özel hazır '
-        'görsellerden seçebilirsin.',
-      );
-
-      // Konuşma geçmişini HEMEN kalıcı depoya yaz — bekletilmez.
-      //
-      // NEDEN BURADA (2026-08-12 bulgusu): _controller.publish() az önce
-      // notifyListeners() çağırdı (store_editor_controller.dart). Aynı
-      // controller'ı dinleyen HomeShellScreen bunu duyup snapshot'ı
-      // yeniden yüklüyor; "yayınlandı" görünce bu ekranı (embeddedInShell)
-      // farklı bir widget'a (VixRexCompanionChat) devrediyor — kullanıcı
-      // "Vitrinini aç" düğmesine hiç basmadan. Geçmiş yazma işi eskiden
-      // yalnız o düğmeye (_navigateAfterHandoff) bağlıydı; ekran devri
-      // ondan önce gerçekleşince konuşma hiç kaydedilmeden kayboluyordu.
-      // Artık hangi düğmeye basılırsa basılsın (veya hiç basılmasa da)
-      // geçmiş güvenceye alınmış oluyor.
-      //
-      // Yayın KESİN başarılı oldu — bu adımın hatası kendi try/catch'inde
-      // kalır, dış catch'e düşüp "yayın tamamlanamadı" yanılgısı yaratmaz
-      // (CodeRabbit bulgusu, 2026-08-12).
-      try {
-        await _handoffTranscriptToRehber();
-      } catch (e) {
-        if (kDebugMode) debugPrint('_handoffTranscriptToRehber hata: $e');
-      }
-      if (!mounted) return;
-
-      setState(() {
-        _busy = false;
-        _step = _OnboardingStep.done;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _step = _OnboardingStep.legal;
-        _error = e.toString().replaceFirst('StorePublishException: ', '');
-      });
-      _pushBot(
-        'Yayın şu an tamamlanamadı.\n'
-        'Tekrar dene. Devam etmezse ekrandaki kırmızı hata metnini bana gönder.',
-      );
-    }
-  }
-
   void _focusInput() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _inputFocus.requestFocus();
     });
   }
 
-  Future<void> _submitLocationText(String raw) async {
-    final text = raw.trim();
-    if (text.length < 3) return;
-    _pushUser(text);
-    _controller.updateAddressText(text);
-    await _controller.saveLocally();
-    _inputController.clear();
-    if (mounted) setState(() {});
-  }
-
   Future<void> _onSend() async {
-    final text = _inputController.text;
-    switch (_step) {
-      case _OnboardingStep.name:
-        await _submitName(text);
-      case _OnboardingStep.whatsapp:
-        await _submitWhatsapp(text);
-      case _OnboardingStep.location:
-        await _submitLocationText(text);
-      default:
-        break;
-    }
-  }
-
-  String? get _repairedPublicLink {
-    final raw = _publicLink?.trim() ?? '';
-    if (raw.isEmpty) return null;
-    return PublicSiteConfig.repairPublicLink(raw);
-  }
-
-  /// Vitrini SAHİP olarak açar — yani Vixrex Asistan'lı hâliyle.
-  ///
-  /// Düz yayın linki müşteri görünümüdür; orada asistan yoktur ve esnaf
-  /// "hani birlikte düzenleyecektik" diye kalır. Sahip oturumu kısa
-  /// ömürlü tek kullanımlık kodla açılır (openOwnerPreview).
-  Future<void> _openOwnerWorkspace() async {
-    setState(() => _busy = true);
-    try {
-      final owner = await _controller.openOwnerPreview(
-        assistantHandoff: AssistantHandoffV1.completedOnboarding(
-          visibleMessages: _lines.map(
-            (line) =>
-                line.isBot
-                    ? AssistantHandoffMessage.assistant(line.text)
-                    : AssistantHandoffMessage.user(line.text),
-          ),
-        ),
-      );
-      if (!mounted) return;
-      final uri = Uri.tryParse(owner.url);
-      if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
-        _pushBot('Vitrin açılamadı. Aşağıdaki linkten kendin açabilirsin.');
-        return;
-      }
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok && mounted) {
-        _pushBot('Tarayıcı açılamadı. Aşağıdaki linkten kendin açabilirsin.');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      // Mesaj "aşağıdaki linkten görüntüleyebilirsin" diyordu ama link hiç
-      // eklenmiyordu (publicLink parametresi eksikti) — kullanıcının
-      // tıklayacağı hiçbir şey olmadığı için "yönlendirmiyor" gibi
-      // görünüyordu (2026-08-12 bulgusu, canlıda ekran görüntüsüyle
-      // doğrulandı). Ayrıca gerçek hata artık mesaja ekleniyor —
-      // kDebugMode arkasına gizlenmiş debugPrint production'da hiç
-      // görünmüyordu, teşhis imkansızdı.
-      _pushBot(
-        'Vitrini düzenleme modunda açamadım ($e). Aşağıdaki linkten '
-        'görüntüleyebilir, sonra Vitrinim sekmesinden Önizle ile tekrar '
-        'deneyebilirsin.',
-        publicLink: _repairedPublicLink,
-      );
-      if (kDebugMode) debugPrint('openOwnerPreview failed: $e');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+    final accepted = await _onboarding.onSend(_inputController.text);
+    if (accepted) _inputController.clear();
   }
 
   Future<void> _openPublicLink() async {
-    final link = _repairedPublicLink;
+    final link = _onboarding.repairedPublicLink;
     if (link == null) return;
     final uri = Uri.tryParse(link);
     if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
@@ -660,8 +260,10 @@ class _VixRexOnboardingChatScreenState
 
   @override
   Widget build(BuildContext context) {
+    final step = _onboarding.step;
     final showInput =
-        _step == _OnboardingStep.name || _step == _OnboardingStep.whatsapp;
+        step == VixRexOnboardingStep.name ||
+        step == VixRexOnboardingStep.whatsapp;
 
     final column = Column(
       children: [
@@ -674,11 +276,11 @@ class _VixRexOnboardingChatScreenState
             itemBuilder: (context, index) => _ChatBubble(line: _lines[index]),
           ),
         ),
-        if (_error != null)
+        if (_onboarding.error != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              _error!,
+              _onboarding.error!,
               style: const TextStyle(color: AppColors.error, fontSize: 12.5),
               textAlign: TextAlign.center,
             ),
@@ -721,6 +323,9 @@ class _VixRexOnboardingChatScreenState
   }
 
   Widget _buildComposer(bool showInput) {
+    final step = _onboarding.step;
+    final busy = _onboarding.busy;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
@@ -731,7 +336,7 @@ class _VixRexOnboardingChatScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_step == _OnboardingStep.welcome) ...[
+          if (step == VixRexOnboardingStep.welcome) ...[
             const Padding(
               padding: EdgeInsets.only(bottom: 6),
               child: Text(
@@ -752,7 +357,7 @@ class _VixRexOnboardingChatScreenState
                     label: 'Evet, Oluşturalım',
                     icon: Icons.auto_awesome,
                     primary: true,
-                    onTap: _busy ? null : _acceptWelcome,
+                    onTap: busy ? null : _onboarding.acceptWelcome,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -760,13 +365,13 @@ class _VixRexOnboardingChatScreenState
                   label: 'Bakınıyorum',
                   icon: Icons.visibility_outlined,
                   primary: false,
-                  onTap: _busy ? null : _declineWelcome,
+                  onTap: busy ? null : _onboarding.declineWelcome,
                 ),
               ],
             ),
           ],
           // Kategori seçimi — sohbetin içinde, ayrı ekrana götürmeden.
-          if (_step == _OnboardingStep.category) ...[
+          if (step == VixRexOnboardingStep.category) ...[
             const Padding(
               padding: EdgeInsets.only(bottom: 8),
               child: Text(
@@ -780,86 +385,9 @@ class _VixRexOnboardingChatScreenState
                 ),
               ),
             ),
-            // İkonlu ikili ızgara.
-            //
-            // ÖNCEKİ HÂLİ: `Wrap` kutuları ortalayıp sığdığı kadar yan yana
-            // diziyordu; satırlar 5/3/3/2/2 diye kırılıyor, kutular farklı
-            // genişlikte çıkıyordu. Casper'ın ifadesi (2026-08-07): "bu
-            // kategori çekmesi hiç UI UX mu deniyor artık".
-            //
-            // ŞİMDİ: her hücre aynı genişlik ve yükseklikte, ikonuyla.
-            //
-            // YÜKSEKLİK NEDEN SINIRLI: bu ızgara sohbetin ALTINDAKİ sabit
-            // panelde duruyor, panel kaydırmıyor. Sınır kaldırılırsa 19
-            // kategori 700 pikseli aşıp taşar. Sınır kalır, ama eskiden
-            // devamı olduğuna dair hiçbir işaret yoktu — 5 kategori
-            // görünmez kalıyordu. Alttaki solma o yüzden var: içeriğin
-            // sürdüğünü söyler.
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 272),
-              child: ShaderMask(
-                shaderCallback:
-                    (rect) => const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.white, Colors.white, Colors.transparent],
-                      stops: [0.0, 0.88, 1.0],
-                    ).createShader(rect),
-                blendMode: BlendMode.dstIn,
-                child: GridView.builder(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  itemCount: BusinessCategoryConfig.categories.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    // Geniş ve alçak hücre: ikon üstte, ad altta.
-                    childAspectRatio: 2.35,
-                  ),
-                  itemBuilder: (context, index) {
-                    final kategori = BusinessCategoryConfig.categories[index];
-                    return InkWell(
-                      onTap:
-                          _busy ? null : () => _selectCategory(kategori.label),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              kategori.icon,
-                              size: 20,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              kategori.label,
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.darkText,
-                                height: 1.15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
+            KategoriSecici(busy: busy, onSelected: _onboarding.selectCategory),
           ],
-          if (_step == _OnboardingStep.legal) ...[
+          if (step == VixRexOnboardingStep.legal) ...[
             LegalConsentSection(
               canAccept: !_controller.isLoadingLegalDocuments,
               isLoading: _controller.isLoadingLegalDocuments,
@@ -877,17 +405,17 @@ class _VixRexOnboardingChatScreenState
             ),
             const SizedBox(height: 10),
             _primaryButton(
-              _busy
+              busy
                   ? 'Yayınlanıyor…'
                   : (_controller.isLegalPublishReady
                       ? 'Yayınla'
                       : 'Onayları işaretle'),
-              _busy || !_controller.isLegalPublishReady
+              busy || !_controller.isLegalPublishReady
                   ? null
-                  : _acceptLegalAndPublish,
+                  : _onboarding.acceptLegalAndPublish,
             ),
           ],
-          if (_step == _OnboardingStep.location) ...[
+          if (step == VixRexOnboardingStep.location) ...[
             // showAdvancedFields: false — Hero Konum Metni ve Harita Kartı
             // Etiketi manuel panele özel alanlardır (PR #70); asistan
             // sohbeti yalnız il/ilçe/adres sorar, kapsam dışına çıkmaz
@@ -903,15 +431,15 @@ class _VixRexOnboardingChatScreenState
             const SizedBox(height: 10),
             _primaryButton(
               'Konumu onayla, devam',
-              (_busy || _konumEksigi != null)
+              (busy || _onboarding.konumEksigi != null)
                   ? null
-                  : _confirmLocationFromEditor,
+                  : _onboarding.confirmLocationFromEditor,
             ),
-            if (_konumEksigi != null)
+            if (_onboarding.konumEksigi != null)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  'Devam etmek için: ${_konumEksigi!}',
+                  'Devam etmek için: ${_onboarding.konumEksigi!}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 11.5,
@@ -926,7 +454,7 @@ class _VixRexOnboardingChatScreenState
             ChatComposer(
               controller: _inputController,
               focusNode: _inputFocus,
-              enabled: !_busy,
+              enabled: !busy,
               // Ad/WhatsApp/konum girişi — genel sohbet sorusu değil,
               // ChatComposer'ın varsayılan "Vixrex'e sor…" ipucu burada
               // yanıltıcı olur.
@@ -936,8 +464,8 @@ class _VixRexOnboardingChatScreenState
           // TEK ASİSTAN (C2): birincil yol vitrini AÇIP birlikte devam
           // etmek. Manuel panel ikincil kalıyor — silinmedi, yerinde
           // duruyor (VIXREX_RULES §1) ama artık varsayılan değil.
-          if (_step == _OnboardingStep.done) ...[
-            if (_hesapKorumasiz) ...[
+          if (step == VixRexOnboardingStep.done) ...[
+            if (_onboarding.hesapKorumasiz) ...[
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -969,7 +497,7 @@ class _VixRexOnboardingChatScreenState
                     ),
                     const SizedBox(height: 10),
                     OutlinedButton.icon(
-                      onPressed: _busy ? null : _hesabiBagla,
+                      onPressed: busy ? null : _onboarding.hesabiBagla,
                       icon: const Icon(Icons.link_rounded, size: 18),
                       label: const Text('Google ile bağla'),
                       style: OutlinedButton.styleFrom(
@@ -984,8 +512,17 @@ class _VixRexOnboardingChatScreenState
               const SizedBox(height: 10),
             ],
             _primaryButton(
-              _busy ? 'Vitrinin açılıyor…' : 'Vitrinini aç',
-              _busy ? null : () => _openOwnerWorkspace(),
+              busy ? 'Vitrinin açılıyor…' : 'Vitrinini aç',
+              busy
+                  ? null
+                  : () => _onboarding.openOwnerWorkspace(
+                    visibleMessages: _lines.map(
+                      (line) =>
+                          line.isBot
+                              ? AssistantHandoffMessage.assistant(line.text)
+                              : AssistantHandoffMessage.user(line.text),
+                    ),
+                  ),
             ),
             const SizedBox(height: 8),
             TextButton(
@@ -1000,7 +537,7 @@ class _VixRexOnboardingChatScreenState
               ),
             ),
           ],
-          if (_step == _OnboardingStep.publishing)
+          if (step == VixRexOnboardingStep.publishing)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Center(

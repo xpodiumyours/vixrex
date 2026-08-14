@@ -45,6 +45,16 @@ void main() {
     late final String chat = read(
       'lib/screens/vixrex_onboarding_chat_screen.dart',
     );
+    // Faz D (Tek Asistan planı): adım makinesi, doğrulama ve kaydetme
+    // çağrıları `vixrex_onboarding_controller.dart`'a, kategori ızgarası
+    // `widgets/onboarding/kategori_secici.dart`'a taşındı. Bu testler artık
+    // davranışın GERÇEKTEN yaşadığı dosyaya bakar — ekrana değil.
+    late final String controller = read(
+      'lib/controllers/vixrex_onboarding_controller.dart',
+    );
+    late final String kategoriIzgarasi = read(
+      'lib/widgets/onboarding/kategori_secici.dart',
+    );
 
     test('yedi adımın hepsi tanımlı', () {
       // Yeni adım EKLENMESİ bu testi kırmaz; yalnız mevcutların
@@ -59,22 +69,23 @@ void main() {
         'publishing',
         'done',
       ]) {
-        expect(chat, contains(adim), reason: '$adim adımı kaybolmuş');
+        expect(controller, contains(adim), reason: '$adim adımı kaybolmuş');
       }
     });
 
     test('ad, WhatsApp ve konum girişleri duruyor', () {
-      expect(chat, contains('_submitName'));
-      expect(chat, contains('_submitWhatsapp'));
-      expect(chat, contains('_submitLocationText'));
+      expect(controller, contains('submitName'));
+      expect(controller, contains('submitWhatsapp'));
+      expect(controller, contains('submitLocationText'));
     });
 
     test('kategori adımı sohbetin içinde, ayrı ekrana götürmüyor', () {
       // Kategori şemada zorunlu; sorulmazsa vitrin 'Diğer' kalıyor ve
       // kategoriye bağlı hiçbir şey çalışmıyor. Seçim sohbetin içinde
       // yapılır — kullanıcı başka ekrana atılmaz.
-      expect(chat, contains('_selectCategory'));
-      expect(chat, contains('BusinessCategoryConfig.categories'));
+      expect(controller, contains('selectCategory'));
+      expect(kategoriIzgarasi, contains('BusinessCategoryConfig.categories'));
+      expect(chat, contains('KategoriSecici('));
     });
 
     test('kategori seçimi ikili ızgara, gizli kaydırma kutusu yok', () {
@@ -84,13 +95,16 @@ void main() {
       // görünmüyor, kaydırılabildiğine dair işaret de yoktu.
       //
       // Casper'ın ifadesi: "bu kategori çekmesi hiç UI UX mu deniyor artık".
-      expect(chat, contains('SliverGridDelegateWithFixedCrossAxisCount'));
-      expect(chat, contains('crossAxisCount: 2'));
+      expect(
+        kategoriIzgarasi,
+        contains('SliverGridDelegateWithFixedCrossAxisCount'),
+      );
+      expect(kategoriIzgarasi, contains('crossAxisCount: 2'));
       // Izgara sohbetin altındaki sabit panelde; yükseklik sınırı kalmalı
       // (yoksa taşar). Ama devamı olduğu GÖRÜNMELİ — alttaki solma bunu
       // söyler. Solma kaldırılırsa 5 kategori yine görünmez olur.
       expect(
-        chat,
+        kategoriIzgarasi,
         contains('ShaderMask'),
         reason:
             'Alttaki solma kaldırılmış; kategorilerin devamı olduğu '
@@ -102,7 +116,7 @@ void main() {
       // 2026-08-07: doğrulama vardı ve boş alanla geçmiyordu, ama düğme
       // hazır görünüyordu. Casper: "zorunluluk işareti var, karşılığı yok".
       // Aynı kural hem düğmenin görünümünü hem geçişi belirlemeli.
-      expect(chat, contains('_konumEksigi'));
+      expect(controller, contains('konumEksigi'));
       expect(chat, contains('Devam etmek için:'));
     });
 
@@ -129,7 +143,8 @@ void main() {
     test('kurulum sonrası asistan devri duruyor', () {
       // 2026-08-06 tek asistan kararı: kurulum bitince aynı Vixrex
       // vitrini sahip modunda açar. Bu kaldırılırsa sert devir geri gelir.
-      expect(chat, contains('_openOwnerWorkspace'));
+      expect(controller, contains('openOwnerWorkspace'));
+      expect(chat, contains('_onboarding.openOwnerWorkspace'));
     });
 
     test('manuel form paneline giden ikincil yol duruyor', () {
@@ -149,7 +164,7 @@ void main() {
       // tetikleyicisi zaten reddediyor (PUBLICATION_CONSENT_REQUIRED).
       // Buradan kaldırılırsa kullanıcı sebebini anlamayan bir hataya düşer.
       expect(chat, contains('LegalConsentSection'));
-      expect(chat, contains('_OnboardingStep.legal'));
+      expect(chat, contains('VixRexOnboardingStep.legal'));
     });
   });
 
