@@ -99,10 +99,13 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
 
   Future<void> _bootstrap() async {
     final scope = _historyScope;
-    final history = await _service.loadHistory(
-      scope: scope,
-      legacyIdentity: widget.snapshot?.publicLink.trim(),
-    );
+    // Faz C, madde 1: yayına yeni geçilmişse yerel (henüz yayınlanmamış)
+    // geçmiş bu scope'a bir kez taşınır. Hedefte zaten geçmiş varsa
+    // dokunmaz — idempotent, her bootstrap'ta çağrılması güvenli.
+    if (scope.isNotEmpty) {
+      await _service.migrateLocalToPublishedScope(scope);
+    }
+    final history = await _service.loadHistory(scope: scope);
     if (!mounted || scope != _historyScope) return;
 
     final reconciled = _service.reconcileGuidanceHistory(

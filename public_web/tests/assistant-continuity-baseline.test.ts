@@ -22,6 +22,12 @@ const vixrexScreenSource = flutter("lib/screens/vixrex_screen.dart");
 const onboardingSource = flutter(
   "lib/screens/vixrex_onboarding_chat_screen.dart"
 );
+// Faz D (Tek Asistan planı, Flutter): kurulum sohbetinin adım makinesi ve
+// yayınlama/sahip-çalışma-alanı çağrıları buraya taşındı — ekran artık
+// bunları doğrudan içermez, VixRexOnboardingController üzerinden çağırır.
+const onboardingControllerSource = flutter(
+  "lib/controllers/vixrex_onboarding_controller.dart"
+);
 const flutterAvatarSource = flutter("lib/widgets/vixrex_avatar.dart");
 const ownerPreviewSource = flutter("lib/services/owner_preview_service.dart");
 
@@ -70,14 +76,17 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
     ]) {
       expect(onboardingSource, `${step} adımı kaybolmuş`).toContain(step);
     }
-    expect(onboardingSource).toContain("_controller.publish()");
+    expect(onboardingControllerSource).toContain("_editor.publish()");
   });
 
   it("kurulumun birincil kapısı güvenli sahip çalışma alanıdır", () => {
     expect(onboardingSource).toContain("'Vitrinini aç'");
-    expect(onboardingSource).toContain("_openOwnerWorkspace()");
-    expect(onboardingSource).toContain(
-      "_controller.openOwnerPreview("
+    expect(onboardingSource).toContain("_onboarding.openOwnerWorkspace(");
+    expect(onboardingControllerSource).toContain(
+      "Future<void> openOwnerWorkspace("
+    );
+    expect(onboardingControllerSource).toContain(
+      "_editor.openOwnerPreview("
     );
     expect(ownerPreviewSource).toContain(
       "buildOwnerSessionEntryLink(slug, code)"
