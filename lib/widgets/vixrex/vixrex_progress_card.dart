@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/chat/chat_progress.dart';
 
 class VixRexProgressCard extends StatelessWidget {
   final VixRexProfileSnapshot? snapshot;
@@ -41,48 +42,36 @@ class VixRexProgressCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.route_outlined,
-                color: AppColors.primary,
-                size: 15,
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  'Aşama: $phaseLabel',
-                  style: const TextStyle(
-                    color: AppColors.darkText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Text(
-                '$completedSteps/$totalSteps',
-                style: const TextStyle(
-                  color: AppColors.mutedText,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 5,
-              backgroundColor: AppColors.surfaceSoft,
-              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+      child: ChatProgress(
+        leading: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.route_outlined,
+              color: AppColors.primary,
+              size: 15,
             ),
+            const SizedBox(width: 7),
+            Text(
+              'Aşama: $phaseLabel',
+              style: const TextStyle(
+                color: AppColors.darkText,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        trailing: Text(
+          '$completedSteps/$totalSteps',
+          style: const TextStyle(
+            color: AppColors.mutedText,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
           ),
-        ],
+        ),
+        progress: progress,
+        minHeight: 5,
       ),
     );
   }

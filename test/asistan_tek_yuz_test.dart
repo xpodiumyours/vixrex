@@ -22,13 +22,29 @@ void main() {
   });
 
   test('iki yüzey de aynı bileşeni kullanıyor', () {
+    // Faz A (Tek Asistan planı, sohbet görünüm sözlüğü): avatar artık
+    // doğrudan değil, paylaşılan ChatBubble/ChatTopBar üzerinden geliyor.
+    // Bu iki bileşenin VixrexAvatar kullandığı ayrıca doğrulanır (aşağıda);
+    // çağıran dosyaların ya doğrudan VixrexAvatar'ı ya da bu ortak
+    // bileşenlerden birini kullanması yeterli — önemli olan üçüncü,
+    // bağımsız bir çizimin doğmaması.
+    for (final dosya in ['chat_bubble.dart', 'chat_top_bar.dart']) {
+      expect(
+        oku('lib/widgets/chat/$dosya'),
+        contains('VixrexAvatar'),
+        reason: '$dosya artık maskotu VixrexAvatar üzerinden çizmiyor.',
+      );
+    }
     for (final yol in [
       'lib/widgets/vixrex_message_bubble.dart',
       'lib/screens/vixrex_onboarding_chat_screen.dart',
     ]) {
+      final icerik = oku(yol);
       expect(
-        oku(yol),
-        contains('VixrexAvatar'),
+        icerik.contains('VixrexAvatar') ||
+            icerik.contains("widgets/chat/chat_bubble.dart") ||
+            icerik.contains("widgets/chat/chat_top_bar.dart"),
+        isTrue,
         reason: '$yol maskotu kendi çiziyor olabilir.',
       );
     }

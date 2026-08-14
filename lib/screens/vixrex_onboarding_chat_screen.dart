@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:vixrex/widgets/vixrex_avatar.dart';
 import 'package:vixrex/services/auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,6 +15,10 @@ import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/utils/address_validator.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/widgets/chat/chat_bubble.dart';
+import 'package:vixrex/widgets/chat/chat_composer.dart';
+import 'package:vixrex/widgets/chat/chat_pill.dart';
+import 'package:vixrex/widgets/chat/chat_top_bar.dart';
 import 'package:vixrex/widgets/editor/form_location_info.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 
@@ -690,38 +693,18 @@ class _VixRexOnboardingChatScreenState
         color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
-      child: Row(
-        children: [
-          VixrexAvatar(boyut: 40, hale: true),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Vixrex',
-                  style: TextStyle(
-                    color: AppColors.darkText,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-                Text(
-                  'Dijital vitrin asistanı',
-                  style: TextStyle(color: AppColors.mutedText, fontSize: 12),
-                ),
-              ],
-            ),
+      child: ChatTopBar(
+        avatarSize: 40,
+        title: 'Vixrex',
+        subtitle: 'Dijital vitrin asistanı',
+        trailing: TextButton(
+          onPressed:
+              widget.onClose ?? () => AppRouter.navigateToLanding(context),
+          child: const Text(
+            'Kapat',
+            style: TextStyle(color: AppColors.mutedText),
           ),
-          TextButton(
-            onPressed:
-                widget.onClose ?? () => AppRouter.navigateToLanding(context),
-            child: const Text(
-              'Kapat',
-              style: TextStyle(color: AppColors.mutedText),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -754,83 +737,19 @@ class _VixRexOnboardingChatScreenState
             Row(
               children: [
                 Expanded(
-                  child: InkWell(
+                  child: ChatPill(
+                    label: 'Evet, Oluşturalım',
+                    icon: Icons.auto_awesome,
+                    primary: true,
                     onTap: _busy ? null : _acceptWelcome,
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      height: 42,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0EA5E9), Color(0xFF2563EB)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0EA5E9).withAlpha(90),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.auto_awesome,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Evet, Oluşturalım',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                InkWell(
+                ChatPill(
+                  label: 'Bakınıyorum',
+                  icon: Icons.visibility_outlined,
+                  primary: false,
                   onTap: _busy ? null : _declineWelcome,
-                  borderRadius: BorderRadius.circular(24),
-                  child: Container(
-                    height: 42,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      color: const Color(0xFF0E1B2E),
-                      border: Border.all(
-                        color: const Color(0xFF38A0E4).withAlpha(120),
-                        width: 1.2,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.visibility_outlined,
-                          size: 14,
-                          color: AppColors.mutedText,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Bakınıyorum',
-                          style: TextStyle(
-                            color: AppColors.mutedText,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -993,50 +912,11 @@ class _VixRexOnboardingChatScreenState
             const SizedBox(height: 8),
           ],
           if (showInput)
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _inputController,
-                    focusNode: _inputFocus,
-                    style: const TextStyle(
-                      color: AppColors.darkText,
-                      fontSize: 15,
-                    ),
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _onSend(),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.inputBg,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: _busy ? null : _onSend,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.onPrimary,
-                    minimumSize: const Size(88, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Gönder'),
-                ),
-              ],
+            ChatComposer(
+              controller: _inputController,
+              focusNode: _inputFocus,
+              enabled: !_busy,
+              onSend: _onSend,
             ),
           // TEK ASİSTAN (C2): birincil yol vitrini AÇIP birlikte devam
           // etmek. Manuel panel ikincil kalıyor — silinmedi, yerinde
@@ -1153,114 +1033,65 @@ class _ChatBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final align = line.isBot ? Alignment.centerLeft : Alignment.centerRight;
 
-    // TEK YÜZ (2026-08-07, bulgu 16).
-    //
-    // Uygulama içi asistanda her bot mesajının başında maskot vardı,
-    // burada hiç yoktu. Aynı Vixrex iki farklı yüzle konuşuyordu.
-    // 6 Ağustos'ta dil birleştirilmişti ("sen" kipi), görünüm değil.
-    //
-    // Maskot yalnız BOT mesajlarında çıkar; kullanıcının kendi
-    // cümlesinin başında Vixrex'in yüzü olmaz.
-    final balon = Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.sizeOf(context).width * 0.86,
-      ),
-      decoration: BoxDecoration(
-        color:
-            line.isBot
-                ? AppColors.surfaceSoft
-                : AppColors.primary.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(16),
-          topRight: const Radius.circular(16),
-          bottomLeft: Radius.circular(line.isBot ? 4 : 16),
-          bottomRight: Radius.circular(line.isBot ? 16 : 4),
-        ),
-        border: Border.all(
-          color:
-              line.isBot
-                  ? AppColors.border
-                  : AppColors.primary.withValues(alpha: 0.25),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            line.text,
-            style: const TextStyle(
-              color: AppColors.darkTextAlt,
-              fontSize: 14.5,
-              height: 1.45,
-            ),
-          ),
-          if (line.publicLink != null && line.onOpenPublicLink != null) ...[
-            const SizedBox(height: 12),
-            // TEK KAPI (bulgu 8).
-            //
-            // Burada eskiden birincil bir "Canlı vitrini aç" düğmesi
-            // vardı; aşağıda da "Vitrinimi birlikte düzenleyelim". İkisi
-            // de aynı sayfayı açıyordu. Esnaf önce bakıyor, geri dönüyor,
-            // sonra ikinci düğmeye basıyordu — tek iş için iki yolculuk.
-            //
-            // Artık asıl kapı aşağıdaki "Vitrinini aç" (sahip modunda).
-            // Burası ikincil kaldı ve işi değişti: müşterinin gördüğü
-            // hâli göstermek (bulgu 7 — sahip kendi vitrinini müşteri
-            // gözüyle göremiyordu).
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: line.onOpenPublicLink,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.mutedText,
-                  side: const BorderSide(color: AppColors.border),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                icon: const Icon(Icons.visibility_outlined, size: 16),
-                label: const Text(
-                  'Müşterinin gördüğü hâli',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SelectableText(
-              line.publicLink!,
-              style: const TextStyle(
-                color: AppColors.primary,
-                fontSize: 11.5,
-                height: 1.35,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-
-    // Bot mesajının solunda Vixrex'in yüzü. Kullanıcının kendi
-    // cümlesinde yoktur — o konuşan Vixrex değil.
-    if (!line.isBot) {
-      return Align(alignment: align, child: balon);
-    }
-
     return Align(
       alignment: align,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 2, right: 8),
-            child: VixrexAvatar(boyut: 28),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: ChatBubble(
+          isBot: line.isBot,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(line.text, style: const TextStyle(height: 1.45)),
+              if (line.publicLink != null && line.onOpenPublicLink != null) ...[
+                const SizedBox(height: 12),
+                // TEK KAPI (bulgu 8).
+                //
+                // Burada eskiden birincil bir "Canlı vitrini aç" düğmesi
+                // vardı; aşağıda da "Vitrinimi birlikte düzenleyelim". İkisi
+                // de aynı sayfayı açıyordu. Esnaf önce bakıyor, geri dönüyor,
+                // sonra ikinci düğmeye basıyordu — tek iş için iki yolculuk.
+                //
+                // Artık asıl kapı aşağıdaki "Vitrinini aç" (sahip modunda).
+                // Burası ikincil kaldı ve işi değişti: müşterinin gördüğü
+                // hâli göstermek (bulgu 7 — sahip kendi vitrinini müşteri
+                // gözüyle göremiyordu).
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: line.onOpenPublicLink,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.mutedText,
+                      side: const BorderSide(color: AppColors.border),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    icon: const Icon(Icons.visibility_outlined, size: 16),
+                    label: const Text(
+                      'Müşterinin gördüğü hâli',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SelectableText(
+                  line.publicLink!,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 11.5,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ],
           ),
-          Flexible(child: balon),
-        ],
+        ),
       ),
     );
   }

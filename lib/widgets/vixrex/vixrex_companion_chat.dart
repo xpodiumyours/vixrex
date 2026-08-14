@@ -6,7 +6,7 @@ import 'package:vixrex/services/vixrex_assistant_nlu_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
-import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/chat/chat_composer.dart';
 import 'package:vixrex/widgets/vixrex_message_bubble.dart';
 import 'package:vixrex/widgets/vixrex_quick_replies.dart';
 
@@ -292,10 +292,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
               if (_typing && index == _messages.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    'Vixrex yazıyor…',
-                    style: TextStyle(color: AppColors.mutedText, fontSize: 12),
-                  ),
+                  child: VixRexTypingIndicator(),
                 );
               }
               final msg = _messages[index];
@@ -319,49 +316,12 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
         if (replies.isNotEmpty)
           VixRexQuickReplies(replies: replies, onTap: _onQuickReply),
         const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _inputCtrl,
-                focusNode: widget.inputFocusNode,
-                style: const TextStyle(color: AppColors.darkText, fontSize: 14),
-                textInputAction: TextInputAction.send,
-                onSubmitted: _send,
-                decoration: InputDecoration(
-                  hintText: 'Vixrex’e sor…',
-                  hintStyle: const TextStyle(color: AppColors.mutedText),
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            FilledButton(
-              onPressed: _typing ? null : () => _send(_inputCtrl.text),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: const Color(0xFF041016),
-                minimumSize: const Size(72, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Gönder'),
-            ),
-          ],
+        ChatComposer(
+          controller: _inputCtrl,
+          focusNode: widget.inputFocusNode,
+          hintText: 'Vixrex’e sor…',
+          enabled: !_typing,
+          onSend: () => _send(_inputCtrl.text),
         ),
       ],
     );

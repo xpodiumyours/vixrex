@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/chat/chat_progress.dart';
 
 class VixRexScoreBar extends StatefulWidget {
   final int score; // 0–100
@@ -43,13 +44,11 @@ class _VixRexScoreBarState extends State<VixRexScoreBar>
   @override
   Widget build(BuildContext context) {
     final color = _barColor(widget.score);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
+    return AnimatedBuilder(
+      animation: _fillAnim,
+      builder:
+          (_, __) => ChatProgress(
+            leading: const Text(
               'Vitrin skoru',
               style: TextStyle(
                 color: AppColors.mutedText,
@@ -57,35 +56,18 @@ class _VixRexScoreBarState extends State<VixRexScoreBar>
                 fontWeight: FontWeight.w600,
               ),
             ),
-            AnimatedBuilder(
-              animation: _fillAnim,
-              builder:
-                  (_, __) => Text(
-                    '%${(widget.score * _fillAnim.value).round()}',
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+            trailing: Text(
+              '%${(widget.score * _fillAnim.value).round()}',
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: AnimatedBuilder(
-            animation: _fillAnim,
-            builder:
-                (_, __) => LinearProgressIndicator(
-                  value: _fillAnim.value,
-                  minHeight: 6,
-                  backgroundColor: AppColors.border,
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                ),
+            progress: _fillAnim.value,
+            color: color,
+            trackColor: AppColors.border,
           ),
-        ),
-      ],
     );
   }
 }

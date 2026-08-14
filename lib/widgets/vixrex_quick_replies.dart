@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/chat/chat_pill.dart';
 
 /// İlk sohbet paneli gibi: ortada küçük hap(lar), tam genişlik şerit yok.
 class VixRexQuickReplies extends StatelessWidget {
@@ -37,77 +38,14 @@ class VixRexQuickReplies extends StatelessWidget {
             runSpacing: 8,
             children: [
               for (var i = 0; i < replies.length; i++)
-                _Pill(
-                  reply: replies[i],
+                ChatPill(
+                  label: replies[i].label,
                   primary: i == 0,
                   onTap: () => onTap(replies[i]),
                 ),
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  final QuickReply reply;
-  final bool primary;
-  final VoidCallback onTap;
-
-  const _Pill({
-    required this.reply,
-    required this.primary,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: reply.label,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Ink(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: primary ? AppColors.ctaGradient : null,
-              color: primary ? null : const Color(0xFF0E1B2E),
-              border:
-                  primary
-                      ? null
-                      : Border.all(
-                        color: const Color(0xFF38A0E4).withAlpha(120),
-                        width: 1.2,
-                      ),
-              boxShadow:
-                  primary
-                      ? [
-                        BoxShadow(
-                          color: AppColors.primary.withAlpha(70),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                      : null,
-            ),
-            child: Center(
-              child: Text(
-                reply.label,
-                style: TextStyle(
-                  color: primary ? Colors.white : AppColors.mutedText,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

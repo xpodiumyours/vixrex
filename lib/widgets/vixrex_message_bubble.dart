@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/chat/chat_bubble.dart';
 import 'package:vixrex/widgets/vixrex_score_bar.dart';
 
 final _urlPattern = RegExp(r'https?://[^\s]+', caseSensitive: false);
@@ -23,121 +24,102 @@ class VixRexBotMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lines = msg.text.split('\n');
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Vixrex'in yüzü tek yerden gelir — bkz. VixrexAvatar.
-        const VixrexAvatar(boyut: 28),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceSoft,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-                bottomLeft: Radius.circular(4),
-                bottomRight: Radius.circular(16),
-              ),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ...lines.map((line) {
-                  if (line.isEmpty) return const SizedBox(height: 4);
-                  final trimmed = line.trim();
-                  final onlyUrl = _urlPattern.stringMatch(trimmed);
-                  if (onlyUrl != null &&
-                      onlyUrl.replaceAll(RegExp(r'[.,)>]+$'), '') ==
-                          trimmed.replaceAll(RegExp(r'[.,)>]+$'), '')) {
-                    final url = onlyUrl.replaceAll(RegExp(r'[.,)>]+$'), '');
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 4, bottom: 2),
-                      child: _LinkChip(url: url),
-                    );
-                  }
-                  final isCursor = showCursor && lines.last == line;
-                  final inlineUrl = _urlPattern.firstMatch(line);
-                  if (inlineUrl != null) {
-                    final url = inlineUrl
-                        .group(0)!
-                        .replaceAll(RegExp(r'[.,)>]+$'), '');
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      child: Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          if (inlineUrl.start > 0)
-                            Text(
-                              line.substring(0, inlineUrl.start),
-                              style: const TextStyle(
-                                color: AppColors.darkTextAlt,
-                                fontSize: 14.5,
-                                height: 1.45,
-                              ),
-                            ),
-                          GestureDetector(
-                            onTap: () => _openUrl(url),
-                            child: Text(
-                              url,
-                              style: const TextStyle(
-                                color: Color(0xFF7DD3FC),
-                                fontSize: 14,
-                                height: 1.45,
-                                fontWeight: FontWeight.w700,
-                                decoration: TextDecoration.underline,
-                                decorationColor: Color(0xFF7DD3FC),
-                              ),
-                            ),
-                          ),
-                          if (inlineUrl.end < line.length)
-                            Text(
-                              line.substring(inlineUrl.end),
-                              style: const TextStyle(
-                                color: AppColors.darkTextAlt,
-                                fontSize: 14.5,
-                                height: 1.45,
-                              ),
-                            ),
-                          if (isCursor && cursorVisible)
-                            const Text(
-                              ' ▌',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 14,
-                              ),
-                            ),
-                        ],
+    return ChatBubble(
+      isBot: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ...lines.map((line) {
+            if (line.isEmpty) return const SizedBox(height: 4);
+            final trimmed = line.trim();
+            final onlyUrl = _urlPattern.stringMatch(trimmed);
+            if (onlyUrl != null &&
+                onlyUrl.replaceAll(RegExp(r'[.,)>]+$'), '') ==
+                    trimmed.replaceAll(RegExp(r'[.,)>]+$'), '')) {
+              final url = onlyUrl.replaceAll(RegExp(r'[.,)>]+$'), '');
+              return Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 2),
+                child: _LinkChip(url: url),
+              );
+            }
+            final isCursor = showCursor && lines.last == line;
+            final inlineUrl = _urlPattern.firstMatch(line);
+            if (inlineUrl != null) {
+              final url = inlineUrl
+                  .group(0)!
+                  .replaceAll(RegExp(r'[.,)>]+$'), '');
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (inlineUrl.start > 0)
+                      Text(
+                        line.substring(0, inlineUrl.start),
+                        style: const TextStyle(
+                          color: AppColors.darkTextAlt,
+                          fontSize: 14,
+                          height: 1.45,
+                        ),
                       ),
-                    );
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: Text(
-                      isCursor && cursorVisible ? '$line ▌' : line,
-                      style: TextStyle(
-                        color: AppColors.darkTextAlt,
-                        fontSize: 14.5,
-                        height: 1.45,
-                        fontWeight:
-                            isCursor && cursorVisible
-                                ? FontWeight.w600
-                                : FontWeight.w400,
+                    GestureDetector(
+                      onTap: () => _openUrl(url),
+                      child: Text(
+                        url,
+                        style: const TextStyle(
+                          color: Color(0xFF7DD3FC),
+                          fontSize: 14,
+                          height: 1.45,
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Color(0xFF7DD3FC),
+                        ),
                       ),
                     ),
-                  );
-                }),
-                if (msg.snapshotScore != null) ...[
-                  const SizedBox(height: 10),
-                  VixRexScoreBar(score: msg.snapshotScore!),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ],
+                    if (inlineUrl.end < line.length)
+                      Text(
+                        line.substring(inlineUrl.end),
+                        style: const TextStyle(
+                          color: AppColors.darkTextAlt,
+                          fontSize: 14,
+                          height: 1.45,
+                        ),
+                      ),
+                    if (isCursor && cursorVisible)
+                      const Text(
+                        ' ▌',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 14,
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            }
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                isCursor && cursorVisible ? '$line ▌' : line,
+                style: TextStyle(
+                  color: AppColors.darkTextAlt,
+                  fontSize: 14,
+                  height: 1.45,
+                  fontWeight:
+                      isCursor && cursorVisible
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                ),
+              ),
+            );
+          }),
+          if (msg.snapshotScore != null) ...[
+            const SizedBox(height: 10),
+            VixRexScoreBar(score: msg.snapshotScore!),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -222,35 +204,18 @@ class VixRexUserMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Flexible(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: AppColors.ctaGradient,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-            ),
-            child: Text(
-              msg.text,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+    // ctaGradient artık yalnız yayınlama aksiyonuna ait — kullanıcı
+    // balonu diğer iki sohbet yüzeyiyle aynı kabuğu (ChatBubble) paylaşır.
+    return ChatBubble(isBot: false, child: Text(msg.text));
   }
 }
 
+/// Sohbet yüzeylerinin paylaştığı "yazıyor" göstergesi.
+///
+/// Faz A (Tek Asistan planı): companion sohbeti kendi düz metin
+/// göstergesini ("Vixrex yazıyor…", avatarsız) çiziyordu; bu bileşen hiç
+/// çağrılmıyordu ve kendi el çizimi X çemberini taşıyordu. Artık ikisinden
+/// biri kalıyor — gerçek [VixrexAvatar] ile.
 class VixRexTypingIndicator extends StatelessWidget {
   const VixRexTypingIndicator({super.key});
 
@@ -260,25 +225,10 @@ class VixRexTypingIndicator extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
-          Container(
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withAlpha(20),
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Text(
-                'X',
-                style: TextStyle(
-                  color: AppColors.primaryDark,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
+          const Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: VixrexAvatar(boyut: 28),
           ),
-          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
