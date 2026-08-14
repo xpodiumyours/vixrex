@@ -16,7 +16,7 @@ import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
 import 'package:vixrex/widgets/vixrex/vixrex_companion_chat.dart';
-import 'package:vixrex/widgets/vixrex/vixrex_hero.dart';
+import 'package:vixrex/widgets/chat/chat_top_bar.dart';
 
 void main() {
   testWidgets('landing kayıtlı vitrin durumunu Vixrex rozetine aktarır', (
@@ -202,7 +202,7 @@ void main() {
     expect(find.byType(VixRexOnboardingChatScreen), findsNothing);
     expect(find.text('Vitrin araçları'), findsNothing);
 
-    await tester.tap(find.byType(VixRexHero));
+    await tester.tap(find.byType(ChatTopBar));
     await tester.pump();
     final input = tester.widget<TextField>(find.byType(TextField));
     expect(input.focusNode?.hasFocus, isTrue);
