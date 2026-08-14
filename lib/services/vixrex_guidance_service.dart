@@ -56,8 +56,22 @@ class VixRexQualityReport {
 // ─── Rehberlik Servisi ──────────────────────────────────────────────────────
 
 class VixRexGuidanceService {
-  // ── Kalite Kontrol Listesi ───────────────────────────────────────────────
+  // ── Kalite Kontrol Listesi (KULLANILMIYOR — bkz. not) ────────────────────
 
+  /// UYARI — ÖLÜ KOD: bu listenin ürettiği skor (`qualityReportFor().score`)
+  /// `ChatMessage.snapshotScore` alanına yazılıp `ChatScoreBar` ile
+  /// çizilecek şekilde tasarlanmış, ama `snapshotScore:` hiçbir çağrı
+  /// noktasında gerçek bir değerle set edilmiyor — hep `null` kalıyor, o
+  /// yüzden `ChatScoreBar` hiçbir zaman ekrana çıkmıyor (doğrulandı,
+  /// 2026-08-15). Kullanıcıya gerçekten gösterilen "vitrinini güzelleştir"
+  /// önerileri `improvementRecommendations()`'tan gelir — şemanın 6 kalite
+  /// alanı (kapak dışındakiler) oraya eklendi, BURAYA değil.
+  ///
+  /// Bu liste silinmedi çünkü `AssistantState`/testler ona referans veriyor
+  /// ve yeniden bağlanabilir — ama şu an ekranda görünmüyor. Buraya
+  /// "kalite alanı eksik" diye yeni kalem eklemek gerçek kullanıcıya hiçbir
+  /// şey göstermez; asıl kapsam `improvementRecommendations()`'ta.
+  ///
   /// Flutter'a özgü 5 kalite kalemi — şemadaki `kaliteAlanlari` (7 alan)
   /// İLE BİRLEŞTİRİLMEMİŞTİR. Bu BİLİNÇLİ bir karar (ADR 0001 madde 4,
   /// 2026-08-10) — "listeyi değiştir" gibi görünen ama öyle olmayan bir iş:
@@ -69,16 +83,6 @@ class VixRexGuidanceService {
   /// | `gallery` | — | Şemada hiç yok — galeri öğesi var mı, Flutter'a özgü operasyonel durum |
   /// | `catalog` | — | Şemada hiç yok — ürün/hizmet sayısı, vitrin İÇERİK alanı değil |
   /// | `auto_fill` | — | Şemada hiç yok — kategori-şablon görseli uygulandı mı, Flutter'a özgü |
-  ///
-  /// Şemanın diğer 6 `kalite` alanı (`heroRozet`, `logo`, `calismaSaatleri`,
-  /// `haritaLinki`, `hakkindaBaslik`, `hakkindaMetin`) bu listede HİÇ yok —
-  /// bunlar Next.js'in `vitrinReadiness.ts`'i üzerinden ayrıca rehberlik
-  /// ediliyor. İki taraf "vitrinini güzelleştir" sorusuna aynı 7 kalemle
-  /// değil, kendi uzmanlık alanına göre farklı kalemlerle cevap veriyor —
-  /// ADR 0001'in "aynı girdiyi farklı yorumlamak meşrudur" ölçütüne uyar.
-  /// Birleştirmek isteyen biri önce ADR 0001'i okumalı; "cover" dışındaki
-  /// 4 kalem için şemada karşılığı OLMADIĞI için birleşim bir liste
-  /// değişimi değil, yeni tasarım kararı gerektirir.
   static List<VixRexQualityItem> qualityItems(VixRexProfileSnapshot? snapshot) {
     return [
       VixRexQualityItem(
@@ -366,6 +370,100 @@ class VixRexGuidanceService {
               'karar verelim — tarayıcı veya elle ekleme.',
           buttonLabel: 'Ürün yükleme yolunu seç',
           action: VixRexAction.scrollToProducts,
+        ),
+      );
+    }
+
+    // ── Faz F takibi: şemadaki 7 kalite alanının, kapak dışında kalan 6'sı.
+    // Önceden bu 6'sı Flutter'ın öneri motorunda hiç yoktu — yalnız
+    // Next.js'in hazırlık raporu biliyordu (bkz. docs/alan-eslemesi.md).
+    // Ayrı ayrı eklendi, birleştirilmedi — her biri şemada nasılsa öyle.
+    if (!snapshot.heroBadgeCompleted) {
+      items.add(
+        const VixRexRecommendation(
+          id: 'improve_hero_badge',
+          phase: VixRexJourneyPhase.improve,
+          title: 'Kapak rozeti ekle',
+          description:
+              'Kapak fotoğrafının üstüne kısa bir rozet metni ekle — '
+              'işletmeni bir bakışta anlatır. Örn: "Profesyonel Teknik '
+              'Servis / Kadıköy".',
+          buttonLabel: 'Rozet ekle',
+          action: VixRexAction.openVitrim,
+        ),
+      );
+    }
+
+    if (!snapshot.logoCompleted) {
+      items.add(
+        const VixRexRecommendation(
+          id: 'improve_logo',
+          phase: VixRexJourneyPhase.improve,
+          title: 'Logonu ekle',
+          description:
+              'İşletme logon vitrinin üst köşesinde görünür — kurumsal bir '
+              'ilk izlenim bırakır.',
+          buttonLabel: 'Logo ekle',
+          action: VixRexAction.openVitrim,
+        ),
+      );
+    }
+
+    if (!snapshot.workingHoursCompleted) {
+      items.add(
+        const VixRexRecommendation(
+          id: 'improve_working_hours',
+          phase: VixRexJourneyPhase.improve,
+          title: 'Çalışma saatlerini ekle',
+          description:
+              'Müşterin ne zaman açık olduğunu görsün, boşuna gelip seni '
+              'kapalı bulmasın.',
+          buttonLabel: 'Saatleri ekle',
+          action: VixRexAction.openVitrim,
+        ),
+      );
+    }
+
+    if (!snapshot.googleLinkCompleted) {
+      items.add(
+        const VixRexRecommendation(
+          id: 'improve_google_link',
+          phase: VixRexJourneyPhase.improve,
+          title: 'Google İşletme / harita bağlantını ekle',
+          description:
+              'Müşterin tek tıkla yol tarifi alsın veya Google\'daki '
+              'işletme sayfana ulaşsın.',
+          buttonLabel: 'Bağlantı ekle',
+          action: VixRexAction.openVitrim,
+        ),
+      );
+    }
+
+    if (!snapshot.aboutTitleCompleted) {
+      items.add(
+        const VixRexRecommendation(
+          id: 'improve_about_title',
+          phase: VixRexJourneyPhase.improve,
+          title: 'Hakkımızda başlığı ekle',
+          description:
+              'Hakkımızda bölümüne kısa, dikkat çekici bir başlık yaz.',
+          buttonLabel: 'Başlık ekle',
+          action: VixRexAction.openVitrim,
+        ),
+      );
+    }
+
+    if (!snapshot.aboutBioCompleted) {
+      items.add(
+        const VixRexRecommendation(
+          id: 'improve_about_bio',
+          phase: VixRexJourneyPhase.improve,
+          title: 'İşletmenin hikayesini anlat',
+          description:
+              'Hakkımızda metnine işletmenin hikayesini, neyi farklı '
+              'yaptığını yaz — müşteri seni tanısın.',
+          buttonLabel: 'Hikayeni yaz',
+          action: VixRexAction.openVitrim,
         ),
       );
     }

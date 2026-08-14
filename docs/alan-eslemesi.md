@@ -116,11 +116,20 @@ Aşağıdaki tablo yalnız A parçasını kapsar.
   `validateVitrin`/`validateStore` yolu, `VixRexProfileSnapshot`'la genel
   birleşimi) **bilinçli olarak dokunulmadı** — bu Faz F'nin kapsamının
   dışında, ayrı ve daha büyük bir refactor.
-- **B parçası (kalite kalemi birleşimi) hâlâ kodlanmadı** — ADR 0001'in
-  kararı geçerliliğini koruyor. Bunun yerine `VixRexGuidanceService.qualityItems()`'a
-  şemayla eşleme tablosunu içeren bir kod-içi belge eklendi
-  (`test/kalite_kalemi_semasi_test.dart` bu sınırı kilitler) — "belirsiz,
-  belki unutulmuş" durumundan "bilinçli, belgelenmiş, test edilmiş karar"
-  durumuna geçti. Gerçek birleşim hâlâ ayrı bir tasarım kararı gerektirir.
+- **B parçası (kalite kalemi birleşimi) — `qualityItems()` ile
+  birleştirilmedi, ADR 0001 doğru.** `VixRexGuidanceService.qualityItems()`'a
+  şemayla eşleme tablosunu içeren kod-içi belge eklendi
+  (`test/kalite_kalemi_semasi_test.dart` bu sınırı kilitler).
+- **Ama ayrı, gerçek bir bulgu çıktı:** `qualityItems()`/`qualityReportFor()`
+  **ölü kod** — ürettiği skor hiçbir çağrı noktasında `ChatMessage.snapshotScore`'a
+  yazılmıyor, `ChatScoreBar` hiçbir zaman ekrana çıkmıyor (doğrulandı).
+  Esnafa GERÇEKTEN gösterilen liste `improvementRecommendations()`.
+  O listede de şemanın 6 kalite alanı (kapak dışındakiler: heroRozet,
+  logo, calismaSaatleri, haritaLinki, hakkindaBaslik, hakkindaMetin) hiç
+  yoktu — esnaf yalnız telefonu kullanıyorsa bu 6 alan hiç dürtülmüyordu.
+  **Bu 6'sı ayrı ayrı (birleştirmeden) `improvementRecommendations()`'a
+  eklendi** — `VixRexProfileSnapshot`'a 6 yeni `*Completed` alanı,
+  `test/vixrex_guidance_improvement_test.dart`'a bu motorun hiç olmayan
+  ilk testleri (8 test) eklendi.
 
 Bu belge onaylanmadan kod yazılmadı.
