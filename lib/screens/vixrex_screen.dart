@@ -6,10 +6,8 @@ import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/chat/chat_top_bar.dart';
 import 'package:vixrex/widgets/vixrex/vixrex_companion_chat.dart';
-import 'package:vixrex/widgets/vixrex/vixrex_hero.dart';
-
-const double _vixrexHeroAvatarSize = 34;
 
 /// Vixrex sekmesinin tek yüzeyi.
 ///
@@ -67,8 +65,7 @@ class _VixRexScreenState extends State<VixRexScreen> {
       appBar: AppBar(
         toolbarHeight: 58,
         automaticallyImplyLeading: false,
-        title: VixRexHero(
-          mascotSize: _vixrexHeroAvatarSize,
+        title: ChatTopBar(
           onTap: _needsSetup ? null : _chatInputFocusNode.requestFocus,
         ),
         backgroundColor: AppColors.bgEditor,
