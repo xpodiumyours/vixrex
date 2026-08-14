@@ -42,10 +42,7 @@ class QrCodeBottomSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            title,
-            style: AppTextStyles.displayTitle,
-          ),
+          Text(title, style: AppTextStyles.displayTitle),
           if (warningText != null) ...[
             const SizedBox(height: 12),
             Container(

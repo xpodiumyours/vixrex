@@ -685,9 +685,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.border, width: 0.8),
-          ),
+          border: Border(top: BorderSide(color: AppColors.border, width: 0.8)),
         ),
         child: NavigationBar(
           selectedIndex: _selectedIndex,
