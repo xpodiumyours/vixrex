@@ -110,4 +110,34 @@ abstract final class AppColors {
   static const Color shadowColor = Color(0x66000000);
 
   static const Color disabled = Color(0xFF52525B);
+
+  // ── Uyarı rengi ────────────────────────────────────────────────────────
+  /// Uyarı / dikkat. success (#10B981) ve error (#EF4444) ile aynı aileden
+  /// seçildi; palete yeni bir dil katmaz.
+  static const Color warning = Color(0xFFF59E0B);
+
+  // ── Durum yüzeyleri ────────────────────────────────────────────────────
+  // Çip, bant ve rozet zeminleri. Kural: zemin %14 (hata %12), kenarlık %40.
+  // const olamazlar (withValues çalışma zamanında hesaplar), static final.
+
+  static final Color successSoft = success.withValues(alpha: 0.14);
+  static final Color successBorder = success.withValues(alpha: 0.40);
+
+  static final Color errorSoft = error.withValues(alpha: 0.12);
+  static final Color errorBorder = error.withValues(alpha: 0.40);
+
+  static final Color warningSoft = warning.withValues(alpha: 0.14);
+  static final Color warningBorder = warning.withValues(alpha: 0.40);
+
+  /// Bilgi — açık mavi (secondary).
+  static final Color infoSoft = secondary.withValues(alpha: 0.14);
+  static final Color infoBorder = secondary.withValues(alpha: 0.40);
+
+  /// Marka vurgusu — seçili sidebar öğesi, aktif gösterge.
+  static final Color brandSoft = primary.withValues(alpha: 0.16);
+  static const Color brandBorder = primary;
+
+  /// Nötr — kapalı, pasif, "bilgi yok" durumları.
+  static const Color neutralSoft = surfaceSoft;
+  static const Color neutralBorder = border;
 }
