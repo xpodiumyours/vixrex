@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
 
 /// Ortak QR kodu bottom sheet widget'ı.
 /// hem vitrin linki hem Google yorum linki için kullanılır.
@@ -25,10 +26,6 @@ class QrCodeBottomSheet extends StatelessWidget {
     return showModalBottomSheet(
       context: context,
       showDragHandle: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder:
           (_) => QrCodeBottomSheet(
             title: title,
@@ -47,11 +44,7 @@ class QrCodeBottomSheet extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: AppColors.darkText,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-            ),
+            style: AppTextStyles.displayTitle,
           ),
           if (warningText != null) ...[
             const SizedBox(height: 12),
@@ -74,11 +67,9 @@ class QrCodeBottomSheet extends StatelessWidget {
                   Expanded(
                     child: Text(
                       warningText!,
-                      style: const TextStyle(
+                      style: AppTextStyles.caption.copyWith(
                         color: AppColors.darkTextAlt,
-                        fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        height: 1.4,
                       ),
                     ),
                   ),
@@ -107,11 +98,7 @@ class QrCodeBottomSheet extends StatelessWidget {
             link,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.mutedText,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppTextStyles.labelSmall,
           ),
         ],
       ),
