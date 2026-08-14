@@ -122,7 +122,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Keşfet'), findsOneWidget);
-    expect(find.text('Vitrinim'), findsOneWidget);
+    // Adım 5 (form bölümlenmesi): VitrinCompletionMeter formun üstünde de
+    // "Vitrinim" başlığı gösteriyor — alt gezinme etiketiyle birlikte artık
+    // iki kez yazıyor, findsOneWidget değil.
+    expect(find.text('Vitrinim'), findsAtLeastNWidgets(1));
     expect(find.text('Vixrex Oluştur'), findsAtLeastNWidgets(1));
     expect(find.text('Vitrinimi Yayına Al'), findsOneWidget);
   });
