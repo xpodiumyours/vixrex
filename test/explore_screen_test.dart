@@ -65,7 +65,9 @@ void main() {
       find.text('Yayındaki tüm Vixrex vitrinlerini inceleyin'),
       findsOneWidget,
     );
-    expect(find.text('Vitrin, ürün veya il/ilçe ara...'), findsOneWidget);
+    // Adım 3 (tasarım tutarlılığı): ipucu metnindeki üç nokta kaldırıldı,
+    // diğer ekranlardaki ipuçlarıyla aynı biçime getirildi.
+    expect(find.text('Vitrin, ürün veya il/ilçe ara'), findsOneWidget);
     expect(find.text('Tümü'), findsAtLeastNWidgets(1));
     expect(find.text('Giyim'), findsAtLeastNWidgets(1));
   });
@@ -181,7 +183,13 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('Aramanızla eşleşen vitrin bulunamadı.'), findsOneWidget);
+    // Adım 3 (tasarım tutarlılığı): boş durum artık AppEmptyState kullanıyor,
+    // başlık ve gerekçe iki ayrı metin oldu.
+    expect(find.text('Aramanızla eşleşen vitrin yok'), findsOneWidget);
+    expect(
+      find.text('Farklı bir kelime deneyin veya filtreleri temizleyin.'),
+      findsOneWidget,
+    );
     expect(find.byType(VitrinStoreCard), findsNothing);
     expect(find.text('Örnek'), findsNothing);
   });

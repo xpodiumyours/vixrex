@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vixrex/config/business_category_config.dart';
-import 'package:vixrex/models/store_data.dart';
-import 'package:vixrex/services/store_publish_service.dart';
-import 'package:vixrex/utils/whatsapp_link_helper.dart';
-import 'package:vixrex/theme/app_colors.dart';
-import 'package:vixrex/repositories/explore_repository.dart';
-import 'package:vixrex/controllers/explore_controller.dart';
-import 'package:vixrex/widgets/vitrin_store_card.dart';
 import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/config/business_category_config.dart';
+import 'package:vixrex/controllers/explore_controller.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/repositories/explore_repository.dart';
+import 'package:vixrex/services/store_publish_service.dart';
+import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/widgets/common/app_banner.dart';
+import 'package:vixrex/widgets/common/app_empty_state.dart';
+import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
+import 'package:vixrex/widgets/common/app_skeleton.dart';
+import 'package:vixrex/widgets/common/app_tone.dart';
+import 'package:vixrex/widgets/vitrin_store_card.dart';
 
 class ExploreScreen extends StatefulWidget {
   final ExploreRepository? repository;
@@ -25,14 +31,9 @@ class ExploreScreenState extends State<ExploreScreen> {
   late final ExploreController _controller;
   bool _isControllerInitialized = false;
 
-  // Theme Colors from AppColors
-  static const Color primaryColor = AppColors.primary;
-  static const Color bgColor = AppColors.bgEditor;
-  static const Color cardBorder = AppColors.border;
-  static const Color inputBg = AppColors.inputBg;
-  static const Color darkText = AppColors.darkText;
-  static const Color mutedText = AppColors.mutedText;
-  static const Color softText = AppColors.softText;
+  // KALDIRILDI: ekrana özel renk sabitleri (primaryColor, bgColor, cardBorder,
+  // inputBg, darkText, mutedText, softText). Bu ekran paletin ikinci bir
+  // kopyasını tutuyordu; artık doğrudan AppColors kullanılıyor.
 
   final List<String> _categories = [
     'Tümü',
@@ -98,7 +99,6 @@ class ExploreScreenState extends State<ExploreScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Geçerli bir WhatsApp numarası bulunamadı.'),
-          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -110,21 +110,15 @@ class ExploreScreenState extends State<ExploreScreen> {
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('WhatsApp uygulaması açılamadı!'),
-          behavior: SnackBarBehavior.floating,
-        ),
+        const SnackBar(content: Text('WhatsApp uygulaması açılamadı!')),
       );
     }
   }
 
   void _showWhatsAppBottomSheet(StoreData store) {
+    // backgroundColor / shape verilmiyor — bottomSheetTheme'den geliyor.
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (context) {
         final storeName =
             store.name.trim().isEmpty
@@ -147,96 +141,90 @@ class ExploreScreenState extends State<ExploreScreen> {
           ),
         ];
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF25D366).withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppColors.spacing24,
+              AppColors.spacing8,
+              AppColors.spacing24,
+              AppColors.spacing24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        // WhatsApp marka rengi — üçüncü taraf, palet dışı
+                        // kalması bilinçli.
+                        color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.chat_bubble_rounded,
+                        color: Color(0xFF25D366),
+                        size: 20,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.chat_bubble_rounded,
-                      color: Color(0xFF25D366),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          store.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            color: darkText,
+                    const SizedBox(width: AppColors.spacing12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(store.name, style: AppTextStyles.subTitle),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Hazır mesaj seçin:',
+                            style: AppTextStyles.caption,
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'Hazır mesaj seçin:',
-                          style: TextStyle(fontSize: 12, color: mutedText),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              ...options.map((option) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _openWhatsApp(store.whatsapp, option.message);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
+                        ],
                       ),
-                      side: const BorderSide(color: cardBorder, width: 1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      alignment: Alignment.centerLeft,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            option.label,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: softText,
+                  ],
+                ),
+                const SizedBox(height: AppColors.spacing20),
+                ...options.map((option) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _openWhatsApp(store.whatsapp, option.message);
+                      },
+                      // side / shape / textStyle verilmiyor —
+                      // outlinedButtonTheme'den geliyor.
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppColors.spacing16,
+                          vertical: AppColors.spacing16,
+                        ),
+                        alignment: Alignment.centerLeft,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              option.label,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 14,
-                          color: mutedText,
-                        ),
-                      ],
+                          const SizedBox(width: AppColors.spacing12),
+                          const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 12,
+                            color: AppColors.mutedText,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              }),
-            ],
+                  );
+                }),
+              ],
+            ),
           ),
         );
       },
@@ -246,9 +234,10 @@ class ExploreScreenState extends State<ExploreScreen> {
   @override
   Widget build(BuildContext context) {
     if (!_isControllerInitialized) {
-      return const Scaffold(
-        backgroundColor: bgColor,
-        body: Center(child: CircularProgressIndicator(color: primaryColor)),
+      return AppScreenScaffold(
+        title: "Vixrex'leri Keşfet",
+        padding: EdgeInsets.zero,
+        body: _buildSkeletonGrid(),
       );
     }
 
@@ -257,379 +246,251 @@ class ExploreScreenState extends State<ExploreScreen> {
       builder: (context, _) {
         final stores = _controller.filteredStores;
 
-        return Scaffold(
-          backgroundColor: bgColor,
-          appBar: AppBar(
-            title: const Text(
-              "Vixrex'leri Keşfet",
-              style: TextStyle(
-                color: darkText,
-                fontWeight: FontWeight.w900,
-                fontSize: 20,
+        // AppBar başlığı ve zemin AppScreenScaffold'dan; ekran kendi
+        // TextStyle'ını yazmıyor.
+        return AppScreenScaffold(
+          title: "Vixrex'leri Keşfet",
+          padding: EdgeInsets.zero,
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppColors.spacing24,
+                  0,
+                  AppColors.spacing24,
+                  AppColors.spacing12,
+                ),
+                child: Text(
+                  'Yayındaki tüm Vixrex vitrinlerini inceleyin',
+                  style: AppTextStyles.caption,
+                ),
               ),
-            ),
-            backgroundColor: bgColor,
-            elevation: 0,
-            iconTheme: const IconThemeData(color: darkText),
-          ),
-          body: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header / Subtitle
-                Container(
-                  color: bgColor,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 4,
-                  ),
-                  child: const Text(
-                    'Yayındaki tüm Vixrex vitrinlerini inceleyin',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: mutedText,
-                    ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppColors.spacing24,
+                  0,
+                  AppColors.spacing24,
+                  AppColors.spacing12,
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  // fillColor / border / hintStyle verilmiyor —
+                  // inputDecorationTheme'den geliyor.
+                  decoration: InputDecoration(
+                    hintText: 'Vitrin, ürün veya il/ilçe ara',
+                    prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                    suffixIcon:
+                        _searchController.text.isNotEmpty
+                            ? IconButton(
+                              icon: const Icon(Icons.close_rounded, size: 16),
+                              onPressed: () {
+                                _searchController.clear();
+                                _controller.setSearchQuery('');
+                              },
+                            )
+                            : null,
                   ),
                 ),
-                // Search Input
-                Container(
-                  color: bgColor,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
+              ),
+              _buildFilterBar(),
+              if (_controller.loadErrorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppColors.spacing24,
+                    AppColors.spacing12,
+                    AppColors.spacing24,
+                    0,
                   ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Vitrin, ürün veya il/ilçe ara...',
-                      hintStyle: TextStyle(
-                        color: mutedText.withValues(alpha: 0.6),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        color: mutedText,
-                        size: 18,
-                      ),
-                      suffixIcon:
-                          _searchController.text.isNotEmpty
-                              ? IconButton(
-                                icon: const Icon(Icons.close_rounded, size: 16),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _controller.setSearchQuery('');
-                                },
-                              )
-                              : null,
-                      filled: true,
-                      fillColor: inputBg,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.border,
-                          width: 1,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.border,
-                          width: 1,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: AppColors.primary,
-                          width: 1.5,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: darkText,
-                    ),
+                  child: AppBanner(
+                    tone: AppTone.danger,
+                    title: 'Vitrinler yüklenemedi',
+                    message: _controller.loadErrorMessage,
+                    actionLabel: 'Tekrar dene',
+                    onAction: () => _controller.reloadStores(),
                   ),
                 ),
-                // Filter Categories Bar
-                SizedBox(
-                  height: 48,
-                  child: ListView(
-                    physics: const BouncingScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    children: [
-                      // Favorites Filter Chip
-                      Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: FilterChip(
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          selected: _controller.onlyFavorites,
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _controller.onlyFavorites
-                                    ? Icons.favorite_rounded
-                                    : Icons.favorite_border_rounded,
-                                size: 14,
-                                color:
-                                    _controller.onlyFavorites
-                                        ? Colors.white
-                                        : Colors.redAccent,
-                              ),
-                              const SizedBox(width: 4),
-                              const Text('Favorilerim'),
-                            ],
-                          ),
-                          labelStyle: TextStyle(
-                            color:
-                                _controller.onlyFavorites
-                                    ? Colors.white
-                                    : darkText,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                          selectedColor: primaryColor,
-                          checkmarkColor: Colors.white,
-                          backgroundColor: inputBg,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(
-                              color:
-                                  _controller.onlyFavorites
-                                      ? primaryColor
-                                      : AppColors.border,
-                            ),
-                          ),
-                          onSelected: (val) {
-                            _controller.setOnlyFavorites(val);
-                          },
-                        ),
-                      ),
-                      ..._categories.map((category) {
-                        final isSelected =
-                            _controller.selectedCategory == category;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: ChoiceChip(
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            selected: isSelected,
-                            label: Text(category),
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : darkText,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                            selectedColor: primaryColor,
-                            backgroundColor: inputBg,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              side: BorderSide(
-                                color:
-                                    isSelected
-                                        ? primaryColor
-                                        : AppColors.border,
-                              ),
-                            ),
-                            onSelected: (val) {
-                              if (val) {
-                                _controller.setCategory(category);
-                              }
-                            },
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-                // Divider
-                Container(height: 1, color: cardBorder),
-                if (_controller.loadErrorMessage != null)
-                  _buildLoadWarning(_controller.loadErrorMessage!),
-                // Grid List
-                Expanded(
-                  child:
-                      _controller.isLoading
-                          ? const Center(
-                            child: CircularProgressIndicator(
-                              color: primaryColor,
-                            ),
-                          )
-                          : stores.isEmpty
-                          ? _buildEmptyState()
-                          : LayoutBuilder(
-                            builder: (context, constraints) {
-                              final width = constraints.maxWidth;
-                              // Masaüstü için daha kompakt grid
-                              final columnCount =
-                                  width >= 1000
-                                      ? 4
-                                      : width >= 700
-                                      ? 3
-                                      : 2;
-                              final cardHeight =
-                                  columnCount == 2
-                                      ? 280.0
-                                      : columnCount == 3
-                                      ? 305.0
-                                      : 320.0;
-
-                              return GridView.builder(
-                                padding: const EdgeInsets.all(12),
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: columnCount,
-                                      crossAxisSpacing: 10,
-                                      mainAxisSpacing: 10,
-                                      mainAxisExtent: cardHeight,
-                                    ),
-                                itemCount: stores.length,
-                                itemBuilder: (context, index) {
-                                  final store = stores[index];
-                                  return VitrinStoreCard(
-                                    store: store,
-                                    isExample: _controller.showingExampleStores,
-                                    isFavorited: _controller.isFavorite(store),
-                                    isOwnStore: _controller.isOwnStore(store),
-                                    onTap: () {
-                                      final slug =
-                                          store.slug.isNotEmpty
-                                              ? store.slug
-                                              : const StorePublishPayloadBuilder()
-                                                  .generateSlug(store.name);
-                                      AppRouter.navigateToPublicVitrin(
-                                        context,
-                                        slug,
-                                      );
-                                    },
-                                    onFavoritePressed:
-                                        () => _controller.toggleFavorite(
-                                          store.name,
-                                        ),
-                                    onWhatsAppPressed:
-                                        () => _showWhatsAppBottomSheet(store),
-                                    onRentPressed:
-                                        store.isRentalTemplate
-                                            ? () => AppRouter.navigateToRentDemo(
-                                              context,
-                                              store.slug.isNotEmpty
-                                                  ? store.slug
-                                                  : const StorePublishPayloadBuilder()
-                                                      .generateSlug(store.name),
-                                            )
-                                            : null,
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                ),
-              ],
-            ),
+              Expanded(
+                child:
+                    _controller.isLoading
+                        ? _buildSkeletonGrid()
+                        : stores.isEmpty
+                        ? _buildEmptyState()
+                        : _buildStoreGrid(stores),
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  Widget _buildLoadWarning(String message) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFE8D9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryColor, width: 1.4),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  /// Filtre çubuğu — çip stili chipTheme'den geliyor; shape, labelStyle,
+  /// selectedColor ve backgroundColor tekrarları kaldırıldı.
+  Widget _buildFilterBar() {
+    return SizedBox(
+      height: 52,
+      child: ListView(
+        physics: const BouncingScrollPhysics(),
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppColors.spacing20,
+          vertical: AppColors.spacing4,
+        ),
         children: [
-          const Icon(
-            Icons.warning_amber_rounded,
-            size: 22,
-            color: primaryColor,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(
-                color: Color(0xFF9A3412),
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                height: 1.35,
+          Padding(
+            padding: const EdgeInsets.only(right: AppColors.spacing8),
+            child: FilterChip(
+              selected: _controller.onlyFavorites,
+              onSelected: _controller.setOnlyFavorites,
+              avatar: Icon(
+                _controller.onlyFavorites
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                size: 14,
+                color:
+                    _controller.onlyFavorites
+                        ? AppColors.onPrimary
+                        : AppColors.error,
               ),
+              label: const Text('Favorilerim'),
             ),
           ),
-          TextButton(
-            onPressed: () => _controller.reloadStores(),
-            child: const Text(
-              'Tekrar dene',
-              style: TextStyle(
-                color: Color(0xFF9A3412),
-                fontWeight: FontWeight.w800,
-                fontSize: 12,
+          ..._categories.map((category) {
+            final isSelected = _controller.selectedCategory == category;
+            return Padding(
+              padding: const EdgeInsets.only(right: AppColors.spacing8),
+              child: ChoiceChip(
+                selected: isSelected,
+                label: Text(category),
+                onSelected: (val) {
+                  if (val) _controller.setCategory(category);
+                },
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
   }
 
+  /// Grid sütun ve kart yüksekliği kuralı değişmedi.
+  ({int columns, double cardHeight}) _gridMetrics(double width) {
+    final columns =
+        width >= 1000
+            ? 4
+            : width >= 700
+            ? 3
+            : 2;
+    final cardHeight =
+        columns == 2
+            ? 280.0
+            : columns == 3
+            ? 305.0
+            : 320.0;
+    return (columns: columns, cardHeight: cardHeight);
+  }
+
+  Widget _buildStoreGrid(List<StoreData> stores) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final metrics = _gridMetrics(constraints.maxWidth);
+        return GridView.builder(
+          padding: const EdgeInsets.all(AppColors.spacing12),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: metrics.columns,
+            crossAxisSpacing: AppColors.spacing12,
+            mainAxisSpacing: AppColors.spacing12,
+            mainAxisExtent: metrics.cardHeight,
+          ),
+          itemCount: stores.length,
+          itemBuilder: (context, index) {
+            final store = stores[index];
+            return VitrinStoreCard(
+              store: store,
+              isExample: _controller.showingExampleStores,
+              isFavorited: _controller.isFavorite(store),
+              isOwnStore: _controller.isOwnStore(store),
+              onTap: () {
+                final slug =
+                    store.slug.isNotEmpty
+                        ? store.slug
+                        : const StorePublishPayloadBuilder().generateSlug(
+                          store.name,
+                        );
+                AppRouter.navigateToPublicVitrin(context, slug);
+              },
+              onFavoritePressed: () => _controller.toggleFavorite(store.name),
+              onWhatsAppPressed: () => _showWhatsAppBottomSheet(store),
+              onRentPressed:
+                  store.isRentalTemplate
+                      ? () => AppRouter.navigateToRentDemo(
+                        context,
+                        store.slug.isNotEmpty
+                            ? store.slug
+                            : const StorePublishPayloadBuilder().generateSlug(
+                              store.name,
+                            ),
+                      )
+                      : null,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Yükleme — ortada dönen halka yerine gelecek düzenin iskeleti.
+  Widget _buildSkeletonGrid() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final metrics = _gridMetrics(constraints.maxWidth);
+        return GridView.builder(
+          padding: const EdgeInsets.all(AppColors.spacing12),
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: metrics.columns,
+            crossAxisSpacing: AppColors.spacing12,
+            mainAxisSpacing: AppColors.spacing12,
+            mainAxisExtent: metrics.cardHeight,
+          ),
+          itemCount: metrics.columns * 2,
+          itemBuilder: (context, index) => AppSkeleton.card(),
+        );
+      },
+    );
+  }
+
   Widget _buildEmptyState() {
     final hasError = _controller.loadErrorMessage != null;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              hasError ? Icons.wifi_off_rounded : Icons.storefront_rounded,
-              size: 48,
-              color: mutedText,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              hasError
-                  ? 'Vitrinler şu an yüklenemedi.'
-                  : _controller.onlyFavorites
-                  ? 'Favorilere ekli vitrin bulunamadı.'
-                  : 'Aramanızla eşleşen vitrin bulunamadı.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: mutedText,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (hasError) ...[
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => _controller.reloadStores(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: AppColors.onPrimary,
-                ),
-                child: const Text('Tekrar dene'),
-              ),
-            ],
-          ],
-        ),
-      ),
+    if (hasError) {
+      return AppEmptyState(
+        icon: Icons.wifi_off_rounded,
+        title: 'Vitrinler şu an yüklenemedi',
+        message: 'Bağlantınızı kontrol edip tekrar deneyin.',
+        actionLabel: 'Tekrar dene',
+        onAction: () => _controller.reloadStores(),
+      );
+    }
+    if (_controller.onlyFavorites) {
+      return AppEmptyState(
+        icon: Icons.favorite_border_rounded,
+        title: 'Favorilere ekli vitrin yok',
+        message: 'Beğendiğiniz vitrinleri kalp simgesiyle kaydedin.',
+        actionLabel: 'Tüm vitrinleri gör',
+        onAction: () => _controller.setOnlyFavorites(false),
+      );
+    }
+    return AppEmptyState(
+      icon: Icons.storefront_rounded,
+      title: 'Aramanızla eşleşen vitrin yok',
+      message: 'Farklı bir kelime deneyin veya filtreleri temizleyin.',
+      actionLabel: 'Filtreleri temizle',
+      onAction: () {
+        _searchController.clear();
+        _controller.setSearchQuery('');
+        _controller.setCategory('Tümü');
+      },
     );
   }
 }
