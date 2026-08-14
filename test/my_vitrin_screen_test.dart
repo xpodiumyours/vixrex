@@ -88,6 +88,17 @@ void main() {
   }
 
   Future<void> enableBooking(WidgetTester tester) async {
+    // Adım 5 (form bölümlenmesi): Randevu Ayarları artık "Konum ve saatler"
+    // akordeon bölümünün içinde, bölüm varsayılan olarak kapalı. Önce
+    // başlığa dokunup açmak gerekiyor — yoksa alttaki hiçbir widget ağaca
+    // hiç girmiyor ve arayan finder'lar sessizce boş döner/asılı kalır.
+    final locationSectionHeader = find.text('Konum ve saatler');
+    if (locationSectionHeader.evaluate().isNotEmpty) {
+      await tester.ensureVisible(locationSectionHeader);
+      await tester.tap(locationSectionHeader);
+      await tester.pumpAndSettle();
+    }
+
     final bookingTitle = find.textContaining('Randevu Ayarları');
     await tester.ensureVisible(bookingTitle);
     await tester.tap(bookingTitle);
