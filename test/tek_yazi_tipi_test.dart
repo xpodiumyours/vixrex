@@ -17,14 +17,16 @@ void main() {
 
   test('yazı tipi tek yerde tanımlı ve uygulamayla geliyor', () {
     final main = oku('lib/main.dart');
-    expect(main, contains("fontFamily: 'Outfit'"));
+    final tema = oku('lib/theme/app_theme.dart');
+    expect(main, contains('theme: AppTheme.dark('));
+    expect(tema, contains("fontFamily: 'Outfit'"));
 
     // Yalnız temada tanımlı olmalı; ekranlar kendi yazı tipini seçmemeli.
     final ekranlar = Directory('$kok/lib')
         .listSync(recursive: true)
         .whereType<File>()
         .where((f) => f.path.endsWith('.dart'))
-        .where((f) => !f.path.endsWith('main.dart'));
+        .where((f) => !f.path.endsWith('app_theme.dart'));
 
     final sapanlar = <String>[];
     for (final dosya in ekranlar) {
