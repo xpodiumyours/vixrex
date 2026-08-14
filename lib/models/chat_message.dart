@@ -15,6 +15,16 @@ class ChatMessage {
   /// Geriye uyumluluk için eski puan.
   final int? snapshotScore;
 
+  /// Bu mesaj çalışma zamanında otomatik üretildi mi (rehberlik/durum
+  /// mesajı) — bkz. Tek Asistan planı, Faz C.
+  ///
+  /// `reconcileGuidanceHistory` her açılışta güncel rehberlik mesajını
+  /// eklerken, önceki turun ürettiği rehberlik mesajlarını bu bayrağa
+  /// bakarak ayıklar; kullanıcının kendi yazdığı veya sabit içerik
+  /// mesajları (`ChatbotConfig.responseFor`'un çoğu dalı) etkilenmez.
+  /// Eski kayıtlarda bu alan yok → `false` → korunur, veri kaybı olmaz.
+  final bool uretilmis;
+
   const ChatMessage({
     required this.id,
     required this.text,
@@ -24,6 +34,7 @@ class ChatMessage {
     this.type = ChatMessageType.text,
     this.snapshotStateKey,
     this.snapshotScore,
+    this.uretilmis = false,
   });
 
   factory ChatMessage.bot(
@@ -32,6 +43,7 @@ class ChatMessage {
     ChatMessageType type = ChatMessageType.text,
     String? snapshotStateKey,
     int? snapshotScore,
+    bool uretilmis = false,
   }) {
     return ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -42,6 +54,7 @@ class ChatMessage {
       type: type,
       snapshotStateKey: snapshotStateKey,
       snapshotScore: snapshotScore,
+      uretilmis: uretilmis,
     );
   }
 
@@ -62,6 +75,7 @@ class ChatMessage {
     'type': type.name,
     'snapshotStateKey': snapshotStateKey,
     'snapshotScore': snapshotScore,
+    'uretilmis': uretilmis,
     'quickReplies': quickReplies.map((r) => r.toJson()).toList(),
   };
 
@@ -78,6 +92,8 @@ class ChatMessage {
       ),
       snapshotStateKey: json['snapshotStateKey'] as String?,
       snapshotScore: json['snapshotScore'] as int?,
+      // Eski kayıtlarda alan yok → false → korunur (veri kaybı yok).
+      uretilmis: json['uretilmis'] as bool? ?? false,
       quickReplies:
           repliesJson
               .map((r) => QuickReply.fromJson(r as Map<String, dynamic>))

@@ -122,6 +122,19 @@ jobs:
             exit 1
           fi
 
+      - name: JSON'dan Dart üret (mesaj kataloğu)
+        run: dart run tool/mesaj_semasi_uret.dart
+
+      - name: Üretilen Dart dosyasını biçimlendir (mesaj kataloğu)
+        run: dart format lib/config/vixrex_mesajlar.g.dart
+
+      - name: Sapma var mı kontrol et (mesaj kataloğu)
+        run: |
+          if ! git diff --exit-code -- shared/vixrex_mesajlar.json lib/config/vixrex_mesajlar.g.dart; then
+            echo "::error::Mesaj kataloğu commit edilmiş hâliyle uyuşmuyor. tool/mesaj_semasi_uret.dart'ı tekrar çalıştır ve değişiklikleri commit et."
+            exit 1
+          fi
+
   public_web:
     name: Next.js — lint, tip, test, build
     needs: changes

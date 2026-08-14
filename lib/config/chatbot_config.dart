@@ -1,3 +1,4 @@
+import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
@@ -20,10 +21,10 @@ abstract final class ChatbotConfig {
 
   /// Onboarding ile aynı üslup — rehberde field CTA (“İşletme Adı Ekle”) yok.
   static ChatMessage get setupInviteMessage => ChatMessage.bot(
-    'Merhaba, ben Vixrex.\n\n'
-    'Sana dijital bir vitrin oluşturmamı ister misin?',
+    vixRexMesajlari['setup_invite']!,
     quickReplies: const [setupInviteReply],
     snapshotStateKey: setupInviteStateKey,
+    uretilmis: true,
   );
 
   // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
@@ -53,6 +54,7 @@ abstract final class ChatbotConfig {
       warmIntro,
       quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
       snapshotStateKey: recommendation.id,
+      uretilmis: true,
     );
   }
 
@@ -71,6 +73,7 @@ abstract final class ChatbotConfig {
       recommendation.description,
       quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
       snapshotStateKey: recommendation.id,
+      uretilmis: true,
     );
   }
 
@@ -120,118 +123,13 @@ abstract final class ChatbotConfig {
   static List<QuickReply> get helpReplies => mainMenuReplies(null);
 
   // ─── Intent Tanımları ────────────────────────────────────────────────────
-  static const List<ChatbotIntent> intents = [
-    ChatbotIntent(
-      keywords: [
-        'merhaba',
-        'selam',
-        'nasil',
-        'baslat',
-        'baslayalim',
-        'yardim',
-        'ne yapabilirsin',
-      ],
-      payload: 'merhaba',
-    ),
-    ChatbotIntent(
-      keywords: [
-        'vixrex',
-        'nedir',
-        'ne işe yarar',
-        'nasil calisir',
-        'kurulum',
-        'vitrin',
-      ],
-      payload: 'vixrex_info',
-    ),
-    ChatbotIntent(
-      keywords: [
-        'ucret',
-        'fiyat',
-        'para',
-        'komisyon',
-        'ucretsiz',
-        'odeme',
-        'bedava',
-        'uyelik',
-        'kullanim',
-      ],
-      payload: 'membership_info',
-    ),
-    ChatbotIntent(
-      keywords: ['kapak', 'sablon', 'kapak foto', 'cover'],
-      payload: 'kapak',
-    ),
-    ChatbotIntent(
-      keywords: ['fotograf', 'resim', 'foto', 'galeri', 'gorsel', 'yukle'],
-      payload: 'fotograf',
-    ),
-    ChatbotIntent(
-      keywords: ['aciklama', 'hakkinda', 'bio', 'tanitim yazisi'],
-      payload: 'aciklama',
-    ),
-    ChatbotIntent(
-      keywords: ['urun', 'hizmet', 'menu', 'katalog', 'fiyat listesi'],
-      payload: 'urun',
-    ),
-    ChatbotIntent(
-      keywords: ['qr', 'kod', 'link', 'paylas', 'baglanti', 'url'],
-      payload: 'qr',
-    ),
-    ChatbotIntent(
-      keywords: ['randevu', 'rezervasyon', 'saat', 'takvim', 'musteri kabul'],
-      payload: 'randevu',
-    ),
-    ChatbotIntent(
-      keywords: ['whatsapp', 'telefon', 'numara', 'iletisim', 'mesaj'],
-      payload: 'whatsapp',
-    ),
-    ChatbotIntent(
-      keywords: [
-        'adres',
-        'konum',
-        'harita',
-        'nerede',
-        'yol tarifi',
-        'lokasyon',
-      ],
-      payload: 'adres',
-    ),
-    ChatbotIntent(
-      keywords: ['yayinla', 'canli', 'aktif', 'yayinda', 'goster', 'acik'],
-      payload: 'yayinla',
-    ),
-    ChatbotIntent(
-      keywords: ['fatura', 'fis', 'tara', 'etiket', 'otomatik', 'ocr'],
-      payload: 'ocr_scan',
-    ),
-    ChatbotIntent(
-      keywords: ['premium', 'sinirsiz', 'ucretli'],
-      payload: 'ocr_premium',
-    ),
-    ChatbotIntent(
-      keywords: [
-        'xml',
-        'feed',
-        'toplu urun',
-        'toplu urun yukle',
-        'tedarikci',
-        'tedarik',
-      ],
-      payload: 'xml_upload',
-    ),
-    ChatbotIntent(
-      keywords: [
-        'hesap',
-        'giris',
-        'uye ol',
-        'kayit',
-        'guvence',
-        'hesabimi',
-        'login',
-      ],
-      payload: 'hesap',
-    ),
+  /// Anahtar kelime → payload eşlemesi artık şemadan (Faz B, Tek Asistan
+  /// planı) geliyor; elle liste tutulmaz. Yeni bir anahtar kelime
+  /// shared/vixrex_mesajlar.json'a yazılır, sonra `dart run
+  /// tool/mesaj_semasi_uret.dart` çalıştırılır.
+  static final List<ChatbotIntent> intents = [
+    for (final i in vixRexIntentSemasi)
+      ChatbotIntent(keywords: i.anahtarKelimeler, payload: i.payload),
   ];
 
   // ─── Intent → Yanıt Tablosu ─────────────────────────────────────────────
@@ -248,25 +146,25 @@ abstract final class ChatbotConfig {
 
       case 'vixrex_info':
         return ChatMessage.bot(
-          'Vixrex ile işletme bilgilerini tek yerde toplar, vitrinini yayınlar ve link, QR veya WhatsApp ile müşterilerine duyurursun.',
+          vixRexMesajlari['vixrex_info']!,
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
       case 'membership_info':
         return ChatMessage.bot(
-          'Temel vitrin oluşturma şu an ücretsizdir. Gelişmiş özellikler uygulama içinde ayrıca gösterilecektir.',
+          vixRexMesajlari['membership_info']!,
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
       case 'vitrin_kurulum':
         return ChatMessage.bot(
-          'Vitrin kurulumu için yalnızca İşletme Adı, WhatsApp, Adres ve Yasal Onay adımlarını tamamlamanız yeterlidir.',
+          vixRexMesajlari['vitrin_kurulum']!,
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
       case 'kapak':
         return ChatMessage.bot(
-          'Hazır kapak görselleri artık vitrinin kendi sayfasında: Önizle ile aç, kapak alanına tıkla, Vixrex Asistan sana kategorine özel görselleri gösterir. İstersen buradan da seçebilirsin.',
+          vixRexMesajlari['kapak']!,
           quickReplies: const [
             QuickReply(
               label: 'Kapak şablonu seç',
@@ -279,7 +177,7 @@ abstract final class ChatbotConfig {
 
       case 'fotograf':
         return ChatMessage.bot(
-          'Galeriye görsel ekle veya kapak şablonu seç. İkisi de mevcut Vitrinim editöründen açılır.',
+          vixRexMesajlari['fotograf']!,
           quickReplies: const [
             QuickReply(
               label: 'Galeriye git',
@@ -297,7 +195,7 @@ abstract final class ChatbotConfig {
 
       case 'aciklama':
         return ChatMessage.bot(
-          'Kısa bir işletme açıklaması ekle — müşteri seni daha çabuk anlar.',
+          vixRexMesajlari['aciklama']!,
           quickReplies: const [
             QuickReply(
               label: 'Açıklamaya git',
@@ -310,7 +208,7 @@ abstract final class ChatbotConfig {
 
       case 'urun':
         return ChatMessage.bot(
-          'Ürün/hizmet ekle: elle yaz veya fiş/etiket tarayıcıyı kullan. İkisi de mevcut uygulama yolları.',
+          vixRexMesajlari['urun']!,
           quickReplies: const [
             QuickReply(
               label: 'Ürün alanına git',
@@ -328,8 +226,7 @@ abstract final class ChatbotConfig {
 
       case 'xml_upload':
         return ChatMessage.bot(
-          'XML ile toplu ürün yüklemek için tedarikçinin XML linkini paylaş. '
-          'Sistem otomatik olarak ürünleri vitrine ekleyecek.',
+          vixRexMesajlari['xml_upload']!,
           quickReplies: const [
             QuickReply(
               label: 'XML linkini paylaş',
@@ -343,8 +240,8 @@ abstract final class ChatbotConfig {
       case 'qr':
         return ChatMessage.bot(
           snapshot?.isPublished == true
-              ? 'Linkini kopyala, QR göster veya WhatsApp ile paylaş — hepsi mevcut paylaşım yolları.'
-              : 'Önce vitrinini yayınla; sonra QR ve link hazır olur.',
+              ? vixRexMesajlari['qr_yayinda']!
+              : vixRexMesajlari['qr_yayinda_degil']!,
           quickReplies: [
             if (snapshot?.isPublished == true) ...const [
               QuickReply(
@@ -374,7 +271,7 @@ abstract final class ChatbotConfig {
 
       case 'randevu':
         return ChatMessage.bot(
-          'Randevu, uygun kategoride mevcut editör paketinden açılır. Kategori alanına gidip kontrol edebilirsin.',
+          vixRexMesajlari['randevu']!,
           quickReplies: const [
             QuickReply(
               label: 'Kategoriye git',
@@ -387,7 +284,7 @@ abstract final class ChatbotConfig {
 
       case 'whatsapp':
         return ChatMessage.bot(
-          'WhatsApp numaran Vitrinim iletişim alanında. Oradan güncelle.',
+          vixRexMesajlari['whatsapp']!,
           quickReplies: const [
             QuickReply(
               label: 'WhatsApp alanına git',
@@ -400,7 +297,7 @@ abstract final class ChatbotConfig {
 
       case 'adres':
         return ChatMessage.bot(
-          'Konumunu Vitrinim adres alanından güncelle — GPS veya elle.',
+          vixRexMesajlari['adres']!,
           quickReplies: const [
             QuickReply(
               label: 'Adrese git',
@@ -413,7 +310,7 @@ abstract final class ChatbotConfig {
 
       case 'yayinla':
         return ChatMessage.bot(
-          'Yayın için yasal onaylar ve Yayınla butonu Vitrinim’de. Oradan devam et.',
+          vixRexMesajlari['yayinla']!,
           quickReplies: const [
             QuickReply(
               label: 'Yasal onaylara git',
@@ -431,7 +328,7 @@ abstract final class ChatbotConfig {
 
       case 'ocr_scan':
         return ChatMessage.bot(
-          'Fiş/fatura veya raf etiketi ile ürün aktar — mevcut tarayıcıyı aç.',
+          vixRexMesajlari['ocr_scan']!,
           quickReplies: const [
             QuickReply(
               label: 'Fiş/Fatura tara',
@@ -449,12 +346,7 @@ abstract final class ChatbotConfig {
 
       case 'ocr_info':
         return ChatMessage.bot(
-          'Nasıl Çalışır:\n'
-          '1. Fotoğrafınızı çekin veya galeriden seçin\n'
-          '2. Ürünler otomatik olarak tanınır\n'
-          '3. Ürünleri onaylayın veya düzenleyin\n'
-          '4. Onaylanan ürünler vitrininize eklenir\n\n'
-          'Not: Bu özellik premium gerektirir.',
+          vixRexMesajlari['ocr_info']!,
           quickReplies: [
             const QuickReply(label: 'Premium Bilgisi', payload: 'ocr_premium'),
             const QuickReply(label: 'Geri Dön', payload: 'merhaba'),
@@ -463,20 +355,13 @@ abstract final class ChatbotConfig {
 
       case 'ocr_premium':
         return ChatMessage.bot(
-          'Premium üyelik ile:\n'
-          '• Fotoğraftan sınırsız ürün çıkarma\n'
-          '• Faturadan otomatik ürün kaydı\n'
-          '• Toplu Excel yükleme\n'
-          '• Barkod tarama\n\n'
-          'Ücretsiz deneme: Günde 3 ücretsiz OCR hakkı.\n'
-          'Premium için uygulama içinden satın alma yapabilirsiniz.',
+          vixRexMesajlari['ocr_premium']!,
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
 
       case 'hesap':
         return ChatMessage.bot(
-          'Vitrinini güvenceye almak için giriş yap / üye ol. '
-          'Mevcut Auth ekranı açılır; vitrin token ile hesaba bağlanır.',
+          vixRexMesajlari['hesap']!,
           quickReplies: const [
             QuickReply(
               label: 'Hesabımı güvenceye al',
@@ -489,7 +374,7 @@ abstract final class ChatbotConfig {
 
       default:
         return ChatMessage.bot(
-          'Üzgünüm, bunu tam anlayamadım. Aşağıdaki seçeneklerden birini deneyebilirsiniz:',
+          vixRexMesajlari['anlasilamadi']!,
           quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
         );
     }
