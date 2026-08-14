@@ -126,7 +126,9 @@ abstract final class AppTheme {
           disabledBackgroundColor: AppColors.surfaceSoft,
           disabledForegroundColor: AppColors.mutedText,
           elevation: 0,
-          minimumSize: const Size.fromHeight(48),
+          // Yalnız yüksekliği sabitle. Size.fromHeight genişliği sonsuz yapar
+          // ve Row içindeki butonlarda geçersiz BoxConstraints üretir.
+          minimumSize: const Size(0, 48),
           textStyle: AppTextStyles.ctaButton,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusControl),
@@ -141,7 +143,7 @@ abstract final class AppTheme {
           disabledBackgroundColor: AppColors.surfaceSoft,
           disabledForegroundColor: AppColors.mutedText,
           elevation: 0,
-          minimumSize: const Size.fromHeight(48),
+          minimumSize: const Size(0, 48),
           textStyle: AppTextStyles.ctaButton,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusControl),
@@ -157,7 +159,7 @@ abstract final class AppTheme {
           foregroundColor: AppColors.darkTextAlt,
           disabledForegroundColor: AppColors.disabled,
           side: const BorderSide(color: AppColors.border),
-          minimumSize: const Size.fromHeight(46),
+          minimumSize: const Size(0, 46),
           textStyle: AppTextStyles.labelBold,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusControl),
