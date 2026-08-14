@@ -7,6 +7,12 @@ import 'package:vixrex/services/store_publish_service.dart';
 /// VixRex AI asistanın scroll-to-section aksiyonları.
 /// [home_shell_screen.dart] tarafından GlobalKey üzerinden çağrılır.
 class MyVitrinState extends ChangeNotifier {
+  static const int identitySectionIndex = 0;
+  static const int contactSectionIndex = 1;
+  static const int locationSectionIndex = 2;
+  static const int visualsSectionIndex = 3;
+  static const int contentSectionIndex = 4;
+
   final StoreEditorController controller;
 
   MyVitrinState({required this.controller}) {
@@ -28,6 +34,14 @@ class MyVitrinState extends ChangeNotifier {
   final GlobalKey productsKey = GlobalKey();
   final GlobalKey categoryKey = GlobalKey();
 
+  int _openSectionIndex = identitySectionIndex;
+  int get openSectionIndex => _openSectionIndex;
+
+  void toggleSection(int index) {
+    _openSectionIndex = _openSectionIndex == index ? -1 : index;
+    notifyListeners();
+  }
+
   // ─── FocusNodes ──────────────────────────────────────────────────────────
   final FocusNode nameFocusNode = FocusNode();
   final FocusNode whatsappFocusNode = FocusNode();
@@ -46,24 +60,30 @@ class MyVitrinState extends ChangeNotifier {
   void scrollToVixRexAction(VixRexAction action) {
     GlobalKey? key;
     FocusNode? focus;
+    int? sectionIndex;
 
     switch (action) {
       case VixRexAction.scrollToCover:
         key = coverPhotoKey;
+        sectionIndex = visualsSectionIndex;
         break;
       case VixRexAction.scrollToGallery:
         key = galleryKey;
+        sectionIndex = visualsSectionIndex;
         break;
       case VixRexAction.scrollToName:
         key = nameKey;
         focus = nameFocusNode;
+        sectionIndex = identitySectionIndex;
         break;
       case VixRexAction.scrollToWhatsapp:
         key = whatsappKey;
         focus = whatsappFocusNode;
+        sectionIndex = contactSectionIndex;
         break;
       case VixRexAction.scrollToAddress:
         key = addressKey;
+        sectionIndex = locationSectionIndex;
         break;
       case VixRexAction.scrollToLegal:
         key = legalKey;
@@ -71,13 +91,15 @@ class MyVitrinState extends ChangeNotifier {
       case VixRexAction.scrollToDesc:
         key = descriptionKey;
         focus = descriptionFocusNode;
+        sectionIndex = identitySectionIndex;
         break;
       case VixRexAction.scrollToProducts:
         key = productsKey;
+        sectionIndex = contentSectionIndex;
         break;
       case VixRexAction.scrollToCategory:
-        // Tümü kategori alanına scroll yapar (AutoFillBanner orada)
         key = categoryKey;
+        sectionIndex = visualsSectionIndex;
         break;
       case VixRexAction.openVitrim:
       case VixRexAction.copyLink:
@@ -93,6 +115,19 @@ class MyVitrinState extends ChangeNotifier {
         break;
     }
 
+    if (sectionIndex != null && _openSectionIndex != sectionIndex) {
+      _openSectionIndex = sectionIndex;
+      notifyListeners();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _revealVixRexTarget(key, focus);
+      });
+      return;
+    }
+
+    _revealVixRexTarget(key, focus);
+  }
+
+  void _revealVixRexTarget(GlobalKey? key, FocusNode? focus) {
     final currentContext = key?.currentContext;
     if (currentContext != null) {
       Scrollable.ensureVisible(
