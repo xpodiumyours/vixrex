@@ -58,6 +58,27 @@ class VixRexQualityReport {
 class VixRexGuidanceService {
   // ── Kalite Kontrol Listesi ───────────────────────────────────────────────
 
+  /// Flutter'a özgü 5 kalite kalemi — şemadaki `kaliteAlanlari` (7 alan)
+  /// İLE BİRLEŞTİRİLMEMİŞTİR. Bu BİLİNÇLİ bir karar (ADR 0001 madde 4,
+  /// 2026-08-10) — "listeyi değiştir" gibi görünen ama öyle olmayan bir iş:
+  ///
+  /// | Bu kalem | Şemadaki `kalite` alanı | Not |
+  /// |---|---|---|
+  /// | `cover` | `kapakGorseli` (shelf_image_url) | TEK gerçek örtüşme — ikisi de aynı sütuna bakıyor |
+  /// | `description` | — | `descriptionCompleted` KISA `description` (hero) alanına bakar; şemanın `hakkindaMetin` (kalite, `corporate_bio`) alanı AYRI bir alandır, bakılmaz |
+  /// | `gallery` | — | Şemada hiç yok — galeri öğesi var mı, Flutter'a özgü operasyonel durum |
+  /// | `catalog` | — | Şemada hiç yok — ürün/hizmet sayısı, vitrin İÇERİK alanı değil |
+  /// | `auto_fill` | — | Şemada hiç yok — kategori-şablon görseli uygulandı mı, Flutter'a özgü |
+  ///
+  /// Şemanın diğer 6 `kalite` alanı (`heroRozet`, `logo`, `calismaSaatleri`,
+  /// `haritaLinki`, `hakkindaBaslik`, `hakkindaMetin`) bu listede HİÇ yok —
+  /// bunlar Next.js'in `vitrinReadiness.ts`'i üzerinden ayrıca rehberlik
+  /// ediliyor. İki taraf "vitrinini güzelleştir" sorusuna aynı 7 kalemle
+  /// değil, kendi uzmanlık alanına göre farklı kalemlerle cevap veriyor —
+  /// ADR 0001'in "aynı girdiyi farklı yorumlamak meşrudur" ölçütüne uyar.
+  /// Birleştirmek isteyen biri önce ADR 0001'i okumalı; "cover" dışındaki
+  /// 4 kalem için şemada karşılığı OLMADIĞI için birleşim bir liste
+  /// değişimi değil, yeni tasarım kararı gerektirir.
   static List<VixRexQualityItem> qualityItems(VixRexProfileSnapshot? snapshot) {
     return [
       VixRexQualityItem(

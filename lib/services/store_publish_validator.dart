@@ -1,3 +1,4 @@
+import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
 import 'package:vixrex/services/store_publish_legal_validator.dart';
@@ -74,7 +75,18 @@ class StorePublishValidator {
     if (data.address.trim().isEmpty) {
       missingItems.add('adres bilgisi');
     }
-    if (data.kategori.trim().isEmpty) {
+    // Faz F (Tek Asistan planı) düzeltmesi: "Diğer" teknik olarak dolu ama
+    // VixRexProfileSnapshot.categoryCompleted'in de dediği gibi işlevsel
+    // olarak eksik (kategoriye bağlı hiçbir şey çalışmaz). Bu kontrol
+    // eskiden yalnız boş-string bakıyordu; "Diğer" seçilmiş bir mağaza
+    // buradan geçip VixRexProfileSnapshot'ta hâlâ "eksik" görünebiliyordu —
+    // iki ayrı yayın-hazır tanımı birbirinden sapmıştı. Şemadaki
+    // bosDegerler tek kaynak; elle "diğer"/"diger" listesi üçüncü kez
+    // yazılmıyor.
+    final kategoriBos = alanAnahtarla['kategori']?.bosDegerler
+        ?.map((v) => v.toLowerCase())
+        .contains(data.kategori.trim().toLowerCase());
+    if (data.kategori.trim().isEmpty || kategoriBos == true) {
       missingItems.add('işletme kategorisi');
     }
 

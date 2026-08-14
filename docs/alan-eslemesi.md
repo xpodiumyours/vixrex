@@ -78,8 +78,9 @@ Aşağıdaki tablo yalnız A parçasını kapsar.
 |---|---|---|---|
 | Adres bölünmesi kurulum akışını üç adıma çıkarır, kullanıcı deneyimini uzatır | Orta | Düşük-orta (UX, veri kaybı yok) | `kurulum_akisi_contract_test.dart` güncellemesi + tek elle uçtan uca deneme |
 | Next.js `hazirlikRaporu` yüzdesi geriye düşer (yeni 2 zorunlu alan eklenince mevcut yayınlı vitrinler "eksik" görünebilir) | Yüksek (43 alan → 45, mevcut hiçbir vitrin il/ilçeyi "zorunlu" olarak doldurmamıştı) | Orta — sahiplerin paneli "eksik" gösterir ama **yayından düşürmez** (legal trigger'a dokunulmuyor, yalnız görüntü) | Rapor metnini kontrol et: "temelTamam" false olan mevcut yayınlı vitrin sayısı canlıda kaç — mümkünse ölçülür |
-Next.js yayın akışı il/ilçeyi hiç bilmiyor — **doğrulandı**: `public_web/src/lib` ve `src/app/api/` içinde `province`/`district` sıfır eşleşme. Yalnız Flutter'ın `store_publish_validator.dart` (asıl yayın kapısı — `VixRexProfileSnapshot`'tan AYRI, üçüncü bir kontrol noktası) bunu zorunlu tutuyor | — (doğrulandı, artık varsayım değil) | Orta — Next.js sahip panelinden bir gün doğrudan yayın/güncelleme eklenirse il/ilçesiz vitrin yayınlanabilir; bugün risk düşük çünkü tek yayın yolu Flutter | Şemaya `il`/`ilce` eklenmesi bunu da kapatır — Next.js artık bu iki alanı `zorunlu` görür |
+| Next.js yayın akışı il/ilçeyi hiç bilmiyor — **doğrulandı**: `public_web/src/lib` ve `src/app/api/` içinde `province`/`district` sıfır eşleşme. Yalnız Flutter'ın `store_publish_validator.dart` (asıl yayın kapısı — `VixRexProfileSnapshot`'tan AYRI, üçüncü bir kontrol noktası) bunu zorunlu tutuyor | — (doğrulandı, artık varsayım değil) | Orta — Next.js sahip panelinden bir gün doğrudan yayın/güncelleme eklenirse il/ilçesiz vitrin yayınlanabilir; bugün risk düşük çünkü tek yayın yolu Flutter | Şemaya `il`/`ilce` eklenmesi bunu da kapatır — Next.js artık bu iki alanı `zorunlu` görür |
 | Kalite kalemi birleşimi (B parçası) yanlışlıkla bu PR'a sızar | Düşük (bu belge net ayırdı) | Yüksek (ADR 0001 ihlali, ayrı tasarım kararı gerektiren işi habersiz yapmak) | Bu belge + PR açıklamasında açık sınır |
+| İki bağımsız zorunlu-alan kontrolcüsü (`VixRexProfileSnapshot`, `store_publish_validator.dart`) birbirinden sapar | **Gerçekleşti** — `validateStore`'un kategori kontrolü "Diğer"i dolu sayıyordu, `categoryCompleted` saymıyordu | Orta — "Diğer" kategoriyle bir mağaza yayınlanabiliyordu ama asistan onu hep "eksik" gösteriyordu | Düzeltildi (bkz. aşağı, 2026-08-15 güncellemesi) — şemanın `bosDegerler`'ı tek kaynak yapıldı |
 
 ## Önerilen sıra (bu belgenin ürettiği karar, henüz uygulanmadı)
 
@@ -95,5 +96,31 @@ Next.js yayın akışı il/ilçeyi hiç bilmiyor — **doğrulandı**: `public_w
    öngördüğü, beklenen değişiklik).
 5. Kalite kalemi/rehberlik motoru birleşimi (B parçası) **bu işe dahil
    edilmez** — ayrı, ADR-takip gerektiren bir karar olarak bırakılır.
+
+## Güncelleme — 2026-08-15, A parçası + kalan işler tamamlandı
+
+- **A parçası kodlandı, doğrulandı, main'e getirildi** (PR #168 → yanlış
+  ara dala merge oldu → PR #169 ile main'e senkronize edildi).
+- **PLAN.md'nin istediği cross-language "sapma testi" eklendi**
+  (`test/zorunlu_alan_baglanti_test.dart` +
+  `public_web/tests/zorunlu-alan-baglanti.test.ts`). Dart testi ilk
+  çalıştırmada GERÇEK bir sapma yakaladı: `_alanDolu('adres')`
+  `addressCompleted`'i (adres+il+ilçe birlikte) kullandığı için il/ilçe
+  eksikken bile ilk sırada "adres" raporlanıyordu, `il`/`ilce` case'lerine
+  hiç sıra gelmiyordu. `VixRexProfileSnapshot`'a ham `address` alanı
+  eklenerek düzeltildi.
+- **İki-validator sapması (yukarıdaki risk tablosu) düzeltildi**:
+  `store_publish_validator.dart`'ın kategori kontrolü artık şemanın
+  `bosDegerler`'ını okuyor, "Diğer"i `categoryCompleted` ile tutarlı
+  şekilde eksik sayıyor. Validator'ın geri kalanı (iki ayrı
+  `validateVitrin`/`validateStore` yolu, `VixRexProfileSnapshot`'la genel
+  birleşimi) **bilinçli olarak dokunulmadı** — bu Faz F'nin kapsamının
+  dışında, ayrı ve daha büyük bir refactor.
+- **B parçası (kalite kalemi birleşimi) hâlâ kodlanmadı** — ADR 0001'in
+  kararı geçerliliğini koruyor. Bunun yerine `VixRexGuidanceService.qualityItems()`'a
+  şemayla eşleme tablosunu içeren bir kod-içi belge eklendi
+  (`test/kalite_kalemi_semasi_test.dart` bu sınırı kilitler) — "belirsiz,
+  belki unutulmuş" durumundan "bilinçli, belgelenmiş, test edilmiş karar"
+  durumuna geçti. Gerçek birleşim hâlâ ayrı bir tasarım kararı gerektirir.
 
 Bu belge onaylanmadan kod yazılmadı.
