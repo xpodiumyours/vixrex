@@ -139,7 +139,7 @@ class MyVitrinState extends ChangeNotifier {
 
     if (focus != null) {
       Future.delayed(const Duration(milliseconds: 550), () {
-        focus!.requestFocus();
+        focus.requestFocus();
       });
     }
   }

@@ -206,6 +206,12 @@ class VitrinFormSection extends StatelessWidget {
         const SizedBox(height: 8),
         _buildSubHeader(hasPublished),
         const SizedBox(height: 16),
+        // Yayın aksiyonu — bölümlerin dışında, her zaman görünür kalır
+        // (bkz. Adım 5 planı: "yayın aksiyonları formun altında sabit
+        // kalır"). Kapalı bir akordeon bölümünün içine gömülürse kullanıcı
+        // linke/QR'a/önizlemeye ulaşamaz.
+        _buildPublicLinkCard(context, hasPublished),
+        const SizedBox(height: 16),
         Container(
           decoration: _cardDecoration(),
           clipBehavior: Clip.antiAlias,
@@ -277,9 +283,7 @@ class VitrinFormSection extends StatelessWidget {
     ];
   }
 
-  List<_FormSectionProgress> _sectionProgress(
-    VixRexProfileSnapshot snapshot,
-  ) {
+  List<_FormSectionProgress> _sectionProgress(VixRexProfileSnapshot snapshot) {
     final data = controller.data;
     return [
       _FormSectionProgress.from([
@@ -368,12 +372,8 @@ class VitrinFormSection extends StatelessWidget {
     ]);
   }
 
-  Widget _buildContentAndSeoSection(
-    BuildContext context,
-    bool hasPublished,
-  ) {
+  Widget _buildContentAndSeoSection(BuildContext context, bool hasPublished) {
     return _spacedColumn([
-      _buildPublicLinkCard(context, hasPublished),
       if (hasPublished && InstagramSyncConfig.enabled)
         InstagramSyncSection(
           storeSlug: controller.publishedInfo!.slug,
