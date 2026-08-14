@@ -53,6 +53,7 @@ class VixRexProfileSnapshot {
   final bool isPublished;
   final String storeName;
   final String category;
+  final String address;
   final String province;
   final String district;
   final String publicLink;
@@ -70,6 +71,7 @@ class VixRexProfileSnapshot {
     required this.isPublished,
     required this.storeName,
     required this.category,
+    this.address = '',
     this.province = '',
     required this.district,
     required this.publicLink,
@@ -122,6 +124,7 @@ class VixRexProfileSnapshot {
       isPublished: isPublished,
       storeName: data.name.trim(),
       category: data.kategori.trim(),
+      address: data.address.trim(),
       province: data.provinceName.trim(),
       district: data.districtName.trim(),
       publicLink: publishedInfo?.publicLink.trim() ?? '',
@@ -154,15 +157,19 @@ class VixRexProfileSnapshot {
         return nameCompleted;
       case 'whatsapp':
         return whatsappCompleted;
+      // Faz F (Tek Asistan planı): il/ilçe artık şemada AYRI zorunlu alan
+      // (Next.js tarafı bunları hiç bilmiyordu — bkz. docs/alan-eslemesi.md).
+      // 'adres' burada BİLEREK yalnız ham adres metnine bakar —
+      // addressCompleted (public getter, geriye dönük uyum için hâlâ
+      // üçünü birlikte sayıyor) DEĞİL. Aksi hâlde zorunluAlanlar sırasında
+      // 'adres' 'il'/'ilce'den önce geldiği için, il veya ilçe boşken
+      // addressCompleted da false olur, sonrakiEksikZorunluAlan hep
+      // 'adres' der ve 'il'/'ilce' case'lerine hiç sıra gelmez — tam da
+      // zorunlu_alan_baglanti_test.dart'ın yakaladığı sapma buydu.
       case 'adres':
-        return addressCompleted;
+        return address.trim().isNotEmpty;
       case 'kategori':
         return categoryCompleted;
-      // Faz F (Tek Asistan planı): il/ilçe artık şemada ayrı zorunlu alan
-      // (Next.js tarafı bunları hiç bilmiyordu — bkz. docs/alan-eslemesi.md).
-      // addressCompleted bilinçli olarak AYNI (üçünü birlikte sayan)
-      // davranışını koruyor; bu iki case yalnız sonrakiEksikZorunluAlan'ın
-      // şemadaki 3 ayrı girdiyi doğru okuyabilmesi için var.
       case 'il':
         return province.trim().isNotEmpty;
       case 'ilce':
