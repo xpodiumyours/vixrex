@@ -24,6 +24,7 @@ abstract final class ChatbotConfig {
     vixRexMesajlari['setup_invite']!,
     quickReplies: const [setupInviteReply],
     snapshotStateKey: setupInviteStateKey,
+    uretilmis: true,
   );
 
   // ─── Genel Karşılama (snapshot yokken) ──────────────────────────────────
@@ -53,6 +54,7 @@ abstract final class ChatbotConfig {
       warmIntro,
       quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
       snapshotStateKey: recommendation.id,
+      uretilmis: true,
     );
   }
 
@@ -71,6 +73,7 @@ abstract final class ChatbotConfig {
       recommendation.description,
       quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
       snapshotStateKey: recommendation.id,
+      uretilmis: true,
     );
   }
 

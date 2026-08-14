@@ -113,12 +113,19 @@ class ChatbotService {
         .replaceAll('Ç', 'c');
   }
 
-  static const String _legacyHistoryKey = 'vixrex_chat_history';
-  static const String _scopedHistoryPrefix = 'vixrex_chat_history_v2_';
+  // ── Tek anahtar deseni (Tek Asistan planı, Faz C) ───────────────────────
+  //
+  // Eskiden üç anahtar vardı (scope'suz, v2 scope'lu, ayrıca loadHistory
+  // her çağrıda eskiden yeniye kopyalıyordu — göç değil, sürekli kontrol).
+  // Artık tek desen: vixrex_sohbet_v3_<scope>. Yayın yoksa scope "local".
+  // Eski anahtarlardan bu desene taşıma SohbetGecmisiGocu'nun işi; bu
+  // servis eski anahtar adlarını bilmez.
+  static const String _v3Prefix = 'vixrex_sohbet_v3_';
+  static const String localScope = 'local';
 
   String _historyKeyFor(String? scope) {
     final rawScope = scope?.trim() ?? '';
-    if (rawScope.isEmpty) return _legacyHistoryKey;
+    if (rawScope.isEmpty) return '$_v3Prefix$localScope';
 
     final uri = Uri.tryParse(rawScope);
     final normalizedScope =
@@ -128,7 +135,7 @@ class ChatbotService {
     final encodedScope = base64Url
         .encode(utf8.encode(normalizedScope))
         .replaceAll('=', '');
-    return '$_scopedHistoryPrefix$encodedScope';
+    return '$_v3Prefix$encodedScope';
   }
 
   List<ChatMessage> _decodeHistory(String? jsonStr) {
@@ -157,14 +164,12 @@ class ChatbotService {
         continue;
       }
 
-      final isGeneratedGuidance =
-          message.isBot &&
-          (stateKey.isNotEmpty ||
-              ChatbotConfig.isStaleUnpublishedSetupTip(message) ||
-              message.quickReplies.any(
-                (reply) => reply.payload == 'action_step',
-              ));
-      if (isGeneratedGuidance) continue;
+      // Faz C: tahmine (state key doluluğu, payload ismi, eski CTA
+      // etiketleri) değil, veriye bakılır. ChatbotConfig'in gerçekten
+      // "şu an sıradaki adım" mesajı ürettiği üç yer (setupInviteMessage,
+      // snapshotWelcome, nextStepTip) `uretilmis: true` yazıyor; geri kalan
+      // her şey (sabit içerik yanıtları, kullanıcı mesajları) korunur.
+      if (message.isBot && message.uretilmis) continue;
 
       reconciled.add(message);
     }
@@ -184,26 +189,11 @@ class ChatbotService {
     }
   }
 
-  /// Sohbet geçmişini yükler.
-  Future<List<ChatMessage>> loadHistory({
-    String? scope,
-    String? legacyIdentity,
-  }) async {
+  /// Sohbet geçmişini yükler. Göç bilmez — bkz. [SohbetGecmisiGocu].
+  Future<List<ChatMessage>> loadHistory({String? scope}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final historyKey = _historyKeyFor(scope);
-      final scopedHistory = _decodeHistory(prefs.getString(historyKey));
-      if (scopedHistory.isNotEmpty || historyKey == _legacyHistoryKey) {
-        return scopedHistory;
-      }
-
-      final legacyHistory = _decodeHistory(prefs.getString(_legacyHistoryKey));
-      if (legacyHistory.isNotEmpty) {
-        await saveHistory(legacyHistory, scope: scope);
-        return legacyHistory;
-      }
-
-      return [];
+      return _decodeHistory(prefs.getString(_historyKeyFor(scope)));
     } catch (_) {
       return [];
     }
@@ -216,6 +206,33 @@ class ChatbotService {
       await prefs.remove(_historyKeyFor(scope));
     } catch (e) {
       if (kDebugMode) debugPrint('clearHistory error: $e');
+    }
+  }
+
+  /// Vitrin yayınlanınca yerel (henüz yayınlanmamış) geçmişi yeni scope'a
+  /// bir kez taşır — Tek Asistan planı, Faz C, madde 1.
+  ///
+  /// Hedefte zaten geçmiş varsa dokunmaz (iki kez taşınmaz, üzerine yazmaz).
+  /// Yerelde geçmiş yoksa sessizce çıkar.
+  Future<void> migrateLocalToPublishedScope(String scope) async {
+    final trimmedScope = scope.trim();
+    if (trimmedScope.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final localKey = _historyKeyFor(null);
+      final targetKey = _historyKeyFor(trimmedScope);
+      if (targetKey == localKey) return;
+
+      final localRaw = prefs.getString(localKey);
+      if (localRaw == null || localRaw.isEmpty) return;
+
+      final targetRaw = prefs.getString(targetKey);
+      if (targetRaw != null && targetRaw.isNotEmpty) return;
+
+      await prefs.setString(targetKey, localRaw);
+      await prefs.remove(localKey);
+    } catch (e) {
+      if (kDebugMode) debugPrint('migrateLocalToPublishedScope error: $e');
     }
   }
 }

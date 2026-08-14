@@ -208,6 +208,9 @@ class _VixRexOnboardingChatScreenState
     _scrollToEnd();
   }
 
+  // Faz C: bu mesajlar gerçek transkript, "üretilmiş rehberlik" değil —
+  // uretilmis varsayılan false'ta kalır, reconcileGuidanceHistory bunları
+  // asla ayıklamaz (onboarding_handoff_v1 işaretçili son mesaj dahil).
   List<ChatMessage> _transcriptAsChatMessages() {
     final now = DateTime.now();
     final out = <ChatMessage>[];
@@ -239,17 +242,25 @@ class _VixRexOnboardingChatScreenState
   }
 
   /// Onboarding balonlarını mevcut rehber history’sine yazar (tek sefer).
+  ///
+  /// Faz C (Tek Asistan planı): eskiden transkript hem yayın scope'una hem
+  /// scope'suz (şimdiki "local") anahtara ayrı ayrı yazılıyordu — tam olarak
+  /// planın bitirdiği "iki geçmiş" sorunu. Artık tek scope'a yazılır: yayın
+  /// varsa yayın scope'una (önce yereldeki geçmiş oraya taşınır), yoksa
+  /// "local"a.
   Future<void> _handoffTranscriptToRehber() async {
     final service = ChatbotService();
-    final scope = _repairedPublicLink;
+    final rawScope = _repairedPublicLink?.trim();
+    final scope = (rawScope == null || rawScope.isEmpty) ? null : rawScope;
+    if (scope != null) {
+      await service.migrateLocalToPublishedScope(scope);
+    }
     final transcript = _transcriptAsChatMessages();
-    if (scope != null && scope.isNotEmpty) {
-      await service.saveHistory(transcript, scope: scope);
+    final existing = await service.loadHistory(scope: scope);
+    if (existing.any((m) => m.snapshotStateKey == _kOnboardingHandoffMarker)) {
+      return;
     }
-    final existing = await service.loadHistory();
-    if (!existing.any((m) => m.snapshotStateKey == _kOnboardingHandoffMarker)) {
-      await service.saveHistory([...transcript, ...existing]);
-    }
+    await service.saveHistory([...transcript, ...existing], scope: scope);
   }
 
   Future<void> _navigateAfterHandoff({

@@ -191,11 +191,22 @@ void main() {
         snapshotStateKey: 'improve_cover',
       );
 
+      // Faz C: ayıklama artık state key doluluğuna değil, uretilmis
+      // bayrağına bakıyor — bu iki mesaj önceki turun ürettiği rehberlik
+      // mesajları olduğu için bayrak açık.
       final reconciled = service.reconcileGuidanceHistory(
         history: [
-          ChatMessage.bot('Eski adim', snapshotStateKey: 'setup_name'),
+          ChatMessage.bot(
+            'Eski adim',
+            snapshotStateKey: 'setup_name',
+            uretilmis: true,
+          ),
           userMessage,
-          ChatMessage.bot('Eski adim', snapshotStateKey: 'setup_name'),
+          ChatMessage.bot(
+            'Eski adim',
+            snapshotStateKey: 'setup_name',
+            uretilmis: true,
+          ),
           normalBotReply,
           handoff,
         ],
