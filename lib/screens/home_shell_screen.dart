@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
@@ -23,6 +22,9 @@ import 'package:vixrex/services/vixrex_session_controller.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/vixrex_promotion_service.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
+import 'package:vixrex/widgets/editor/qr_code_bottom_sheet.dart';
+import 'package:vixrex/widgets/shell/shell_sidebar.dart';
+import 'package:vixrex/widgets/shell/shell_status_bar.dart';
 import 'package:vixrex/widgets/xml_upload_dialog.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
@@ -261,106 +263,15 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
           content: Text(
             'QR kodunu göstermek için önce vitrininizi yayınlamalısınız!',
           ),
-          duration: Duration(seconds: 3),
         ),
       );
       return;
     }
-    final link = PublicSiteConfig.repairPublicLink(raw);
-
     _markVixRexShared();
-
-    showModalBottomSheet(
+    QrCodeBottomSheet.show(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const Text(
-                  'Vitrin QR Kodunuz',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.darkText,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Müşterileriniz bu QR kodu okutarak vitrininize hızlıca ulaşabilir.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.mutedText),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color:
-                        Colors
-                            .white, // Keep QR white background for scan reliability
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: SizedBox(
-                    width: 200,
-                    height: 200,
-                    child: QrImageView(
-                      data: link,
-                      version: QrVersions.auto,
-                      size: 200,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: link));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Vitrin linki kopyalandı!')),
-                    );
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.copy_rounded),
-                  label: const Text('Linki Kopyala'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.border),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
-      },
+      title: 'Vitrin QR Kodunuz',
+      link: PublicSiteConfig.repairPublicLink(raw),
     );
   }
 
@@ -616,28 +527,28 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
 
     // Masaüstü için sidebar menü öğeleri
     final sidebarItems = [
-      _SidebarItem(
+      ShellSidebarItem(
         icon: Icons.storefront_outlined,
         selectedIcon: Icons.storefront_rounded,
         label: 'Vitrinim',
       ),
-      _SidebarItem(
+      ShellSidebarItem(
         icon: Icons.travel_explore_outlined,
         selectedIcon: Icons.travel_explore_rounded,
         label: 'Keşfet',
       ),
-      _SidebarItem(
+      ShellSidebarItem(
         icon: Icons.assistant_outlined,
         selectedIcon: Icons.assistant_rounded,
         label: 'Vixrex',
       ),
-      _SidebarItem(
+      ShellSidebarItem(
         icon: Icons.person_outline_rounded,
         selectedIcon: Icons.person_rounded,
         label: 'Profil',
       ),
       if (isAdmin)
-        _SidebarItem(
+        ShellSidebarItem(
           icon: Icons.admin_panel_settings_outlined,
           selectedIcon: Icons.admin_panel_settings_rounded,
           label: 'Moderasyon',
@@ -680,158 +591,67 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         backgroundColor: AppColors.bgEditor,
         body: Row(
           children: [
-            // Sidebar
-            Container(
-              width: 220,
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                border: Border(
-                  right: BorderSide(color: AppColors.border, width: 0.8),
-                ),
-              ),
-              child: Column(
-                children: [
-                  // Logo alanı
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 24,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withAlpha(20),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.storefront_rounded,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Vixrex',
-                          style: TextStyle(
-                            color: AppColors.darkText,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1, color: AppColors.border),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                    child: TextField(
-                      controller: _globalSearchController,
-                      style: const TextStyle(
-                        color: AppColors.darkText,
-                        fontSize: 13,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Vitrin veya ürün ara...',
-                        hintStyle: const TextStyle(
-                          color: AppColors.mutedText,
-                          fontSize: 12,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search_rounded,
-                          size: 18,
-                          color: AppColors.mutedText,
-                        ),
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        filled: true,
-                        fillColor: AppColors.inputBg,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: _applyGlobalSearch,
-                      onChanged: (value) {
-                        if (_selectedIndex == 1) {
-                          _exploreKey.currentState?.applyExternalSearch(value);
-                        }
-                      },
-                    ),
-                  ),
-                  // Menü öğeleri
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 12,
-                      ),
-                      itemCount: sidebarItems.length,
-                      itemBuilder: (context, index) {
-                        final item = sidebarItems[index];
-                        final isSelected = _selectedIndex == index;
-                        return _buildSidebarItem(
-                          item: item,
-                          isSelected: isSelected,
-                          onTap: () {
-                            setState(() => _selectedIndex = index);
-                            if (index == 2) _loadVixRexSnapshot();
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  // Alt bilgi
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    child: const Text(
-                      'v1.0.0',
-                      style: TextStyle(
-                        color: AppColors.mutedText,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            ShellSidebar(
+              items: sidebarItems,
+              selectedIndex: _selectedIndex,
+              onSelected: (index) {
+                setState(() => _selectedIndex = index);
+                if (index == 1) _exploreKey.currentState?.reloadStores();
+                if (index == 2) _loadVixRexSnapshot();
+              },
+              searchController: _globalSearchController,
+              onSearchSubmitted: _applyGlobalSearch,
+              onSearchChanged: (value) {
+                if (_selectedIndex == 1) {
+                  _exploreKey.currentState?.applyExternalSearch(value);
+                }
+              },
             ),
             // Ana içerik
             Expanded(
-              child: Stack(
-                clipBehavior: Clip.none,
+              child: Column(
                 children: [
-                  IndexedStack(index: safeIndex, children: pages),
-                  // Vitrinim ekraninda alt butonlari kapatmasin.
-                  if (_selectedIndex != 0 && _selectedIndex != 2)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: SafeArea(
-                        minimum: const EdgeInsets.only(right: 16, bottom: 16),
-                        child: ChatbotBadge(
-                          snapshot: _vixrexSnapshot,
-                          hasShared: _vixrexHasShared,
-                          // Tek kapı: overlay FAQ yok → mevcut VixRex sekmesi.
-                          onOpen: () => setState(() => _selectedIndex = 2),
-                        ),
-                      ),
+                  ShellStatusBar(
+                    isPublished: _vixrexSnapshot?.isPublished ?? false,
+                    publicLink:
+                        _publishedInfo?.publicLink == null
+                            ? null
+                            : PublicSiteConfig.repairPublicLink(
+                              _publishedInfo!.publicLink,
+                            ).replaceFirst(RegExp(r'^https?://'), ''),
+                    onCopyLink: _vixrexCopyLink,
+                    onShowQr: _vixrexShowQr,
+                    onOpenVitrin:
+                        () => _handleVixRexAction(VixRexAction.openVitrim),
+                    onPublish: _openSetupOnboarding,
+                  ),
+                  Expanded(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IndexedStack(index: safeIndex, children: pages),
+                        // Vitrinim ekraninda alt butonlari kapatmasin.
+                        if (_selectedIndex != 0 && _selectedIndex != 2)
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: SafeArea(
+                              minimum: const EdgeInsets.only(
+                                right: 16,
+                                bottom: 16,
+                              ),
+                              child: ChatbotBadge(
+                                snapshot: _vixrexSnapshot,
+                                hasShared: _vixrexHasShared,
+                                // Tek kapı: overlay FAQ yok → mevcut VixRex sekmesi.
+                                onOpen:
+                                    () => setState(() => _selectedIndex = 2),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             ),
@@ -863,111 +683,20 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
             ),
         ],
       ),
-      bottomNavigationBar: NavigationBarTheme(
-        data: NavigationBarThemeData(
-          backgroundColor: AppColors.bgEditor,
-          indicatorColor: AppColors.primary.withAlpha(40),
-          labelTextStyle: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const TextStyle(
-                color: AppColors.primary,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              );
-            }
-            return const TextStyle(color: AppColors.mutedText, fontSize: 11);
-          }),
-          iconTheme: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const IconThemeData(color: AppColors.primary);
-            }
-            return const IconThemeData(color: AppColors.mutedText);
-          }),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: AppColors.border, width: 0.8)),
         ),
-        child: Container(
-          decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(color: AppColors.border, width: 0.8),
-            ),
-          ),
-          child: NavigationBar(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() => _selectedIndex = index);
-              if (index == 1) _exploreKey.currentState?.reloadStores();
-              if (index == 2) _loadVixRexSnapshot();
-            },
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: destinations,
-            height: 65,
-          ),
+        child: NavigationBar(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (index) {
+            setState(() => _selectedIndex = index);
+            if (index == 1) _exploreKey.currentState?.reloadStores();
+            if (index == 2) _loadVixRexSnapshot();
+          },
+          destinations: destinations,
         ),
       ),
     );
   }
-
-  Widget _buildSidebarItem({
-    required _SidebarItem item,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Material(
-        color:
-            isSelected ? AppColors.primary.withAlpha(15) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Icon(
-                  isSelected ? item.selectedIcon : item.icon,
-                  color: isSelected ? AppColors.primary : AppColors.mutedText,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    item.label,
-                    style: TextStyle(
-                      color:
-                          isSelected ? AppColors.darkText : AppColors.mutedText,
-                      fontSize: 13,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-                if (isSelected)
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SidebarItem {
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-
-  const _SidebarItem({
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-  });
 }
