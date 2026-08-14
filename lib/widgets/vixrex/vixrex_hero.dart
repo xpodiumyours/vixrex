@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/chat/chat_top_bar.dart';
 
 /// Kompakt başlık şeridi: küçük mascot + isim + rol rozeti.
@@ -15,12 +14,6 @@ class VixRexHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChatTopBar(
-      avatarSize: mascotSize,
-      title: 'Vixrex',
-      subtitle: 'Yanındayım',
-      subtitleColor: AppColors.primary,
-      onTap: onTap,
-    );
+    return ChatTopBar(avatarSize: mascotSize, onTap: onTap);
   }
 }

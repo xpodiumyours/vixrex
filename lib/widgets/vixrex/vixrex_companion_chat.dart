@@ -6,8 +6,9 @@ import 'package:vixrex/services/vixrex_assistant_nlu_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
+import 'package:vixrex/widgets/chat/chat_bubble.dart';
 import 'package:vixrex/widgets/chat/chat_composer.dart';
-import 'package:vixrex/widgets/vixrex_message_bubble.dart';
+import 'package:vixrex/widgets/chat/chat_progress.dart';
 import 'package:vixrex/widgets/vixrex_quick_replies.dart';
 
 const String _nluConfirmPrefix = 'nlu_confirm:';
@@ -292,23 +293,25 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
               if (_typing && index == _messages.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
-                  child: VixRexTypingIndicator(),
+                  child: ChatTypingIndicator(),
                 );
               }
               final msg = _messages[index];
               if (msg.isBot) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: VixRexBotMessage(
-                    msg: msg,
-                    showCursor: false,
-                    cursorVisible: false,
+                  child: ChatBubble.bot(
+                    text: msg.text,
+                    footer:
+                        msg.snapshotScore != null
+                            ? ChatScoreBar(score: msg.snapshotScore!)
+                            : null,
                   ),
                 );
               }
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: VixRexUserMessage(msg: msg),
+                child: ChatBubble.user(text: msg.text),
               );
             },
           ),
@@ -321,7 +324,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           focusNode: widget.inputFocusNode,
           hintText: 'Vixrex’e sor…',
           enabled: !_typing,
-          onSend: () => _send(_inputCtrl.text),
+          onSubmit: _send,
         ),
       ],
     );
