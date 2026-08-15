@@ -168,15 +168,31 @@ export function sonrakiRehberAlan(
   suankiAnahtar: string | null,
   atlanmislar: ReadonlySet<string>,
 ): VitrinField | null {
+  return sonrakiRehberAlanlar(draftData, suankiAnahtar, atlanmislar, 1)[0] ?? null;
+}
+
+/**
+ * `sonrakiRehberAlan`'ın çoğulu — Faz G3 (Tek Asistan planı) "Sırada"
+ * listesi için: sonraki [adet] eksik alanı, aynı sıralama ve atlama
+ * kurallarıyla döner. Tek alan bulan tarama mantığını tekrar yazmaz,
+ * yalnız [adet]'e ulaşana kadar biriktirir.
+ */
+export function sonrakiRehberAlanlar(
+  draftData: Record<string, unknown>,
+  suankiAnahtar: string | null,
+  atlanmislar: ReadonlySet<string>,
+  adet: number = 3,
+): VitrinField[] {
   const sirali = tumAlanlarSirali();
   const suankiIndeks = suankiAnahtar
     ? sirali.findIndex((a) => a.anahtar === suankiAnahtar)
     : -1;
 
-  for (let i = suankiIndeks + 1; i < sirali.length; i++) {
+  const sonuc: VitrinField[] = [];
+  for (let i = suankiIndeks + 1; i < sirali.length && sonuc.length < adet; i++) {
     const alan = sirali[i];
     if (atlanmislar.has(alan.anahtar)) continue;
-    if (!doluMu(draftData[alan.kolon], alan.bosDegerler)) return alan;
+    if (!doluMu(draftData[alan.kolon], alan.bosDegerler)) sonuc.push(alan);
   }
-  return null;
+  return sonuc;
 }

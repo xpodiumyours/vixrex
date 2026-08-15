@@ -3,6 +3,7 @@ import {
   alanOnemi,
   hazirlikRaporu,
   sonrakiRehberAlan,
+  sonrakiRehberAlanlar,
   tumAlanlarSirali,
 } from "../src/lib/vitrinReadiness";
 import { VITRIN_FIELDS } from "../src/lib/vitrinFieldSchema";
@@ -81,6 +82,44 @@ describe("sonrakiRehberAlan", () => {
     const sonAnahtar = sirali[sirali.length - 1].anahtar;
     const sonraki = sonrakiRehberAlan({}, sonAnahtar, new Set());
     expect(sonraki).toBeNull();
+  });
+});
+
+// Faz G3 (Tek Asistan planı) — "Sırada" listesi için çoğul biçim.
+describe("sonrakiRehberAlanlar", () => {
+  it("boş taslakta ilk 3 temel alanı sırayla döner", () => {
+    const ilkUc = tumAlanlarSirali().slice(0, 3).map((a) => a.anahtar);
+    const sonraki = sonrakiRehberAlanlar({}, null, new Set(), 3);
+    expect(sonraki.map((a) => a.anahtar)).toEqual(ilkUc);
+  });
+
+  it("sonrakiRehberAlan (tekil) ile aynı ilk sonucu verir", () => {
+    const tekil = sonrakiRehberAlan({}, null, new Set());
+    const cogul = sonrakiRehberAlanlar({}, null, new Set(), 1);
+    expect(cogul).toHaveLength(1);
+    expect(cogul[0]?.anahtar).toBe(tekil?.anahtar);
+  });
+
+  it("adet parametresi kadar döner, fazlasını döndürmez", () => {
+    const beş = sonrakiRehberAlanlar({}, null, new Set(), 5);
+    expect(beş).toHaveLength(5);
+  });
+
+  it("dolu alanları atlar, atlanmış isteğe bağlıları önermez", () => {
+    const sirali = tumAlanlarSirali();
+    const ilkIki = sirali.slice(0, 2).map((a) => a.anahtar);
+    const draft: Record<string, unknown> = {
+      [sirali[0].kolon]: "dolu",
+    };
+    const sonraki = sonrakiRehberAlanlar(draft, null, new Set(), 2);
+    expect(sonraki.map((a) => a.anahtar)).not.toContain(ilkIki[0]);
+  });
+
+  it("her şey dolu/atlanmışsa boş dizi döner", () => {
+    const sirali = tumAlanlarSirali();
+    const sonAnahtar = sirali[sirali.length - 1].anahtar;
+    const sonraki = sonrakiRehberAlanlar({}, sonAnahtar, new Set(), 3);
+    expect(sonraki).toEqual([]);
   });
 });
 
