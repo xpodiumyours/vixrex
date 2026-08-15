@@ -35,6 +35,12 @@ const ownerEntryRouteSource = next("src/app/api/owner-session/route.ts");
 const ownerPageSource = next("src/app/v/[slug]/page.tsx");
 const ownerShellSource = next("src/app/v/[slug]/OwnerWorkspaceShell.tsx");
 const ownerPanelSource = next("src/app/v/[slug]/OwnerAssistantPanel.tsx");
+// Faz G3 (Tek Asistan planı, G3.1): panel içi başlık (avatar 36 + halo)
+// ChatTopBar bileşenine çıkarıldı — sürekliliği kanıtlayan iki avatar
+// çağrısından biri artık orada.
+const ownerTopBarSource = next(
+  "src/app/v/[slug]/components/ChatTopBar.tsx"
+);
 const ownerChatSource = next("src/app/v/[slug]/hooks/useOwnerChat.ts");
 const nextAvatarSource = next(
   "src/app/v/[slug]/components/VixrexAvatar.tsx"
@@ -157,7 +163,7 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
       'src="/vixrex_v_crystal_mascot.png"'
     );
     expect(ownerPanelSource).toContain("<VixrexAvatar size={28} decorative />");
-    expect(ownerPanelSource).toContain(
+    expect(ownerTopBarSource).toContain(
       "<VixrexAvatar size={36} halo decorative />"
     );
     expect(ownerPanelSource).toContain("aria-expanded={acik}");
