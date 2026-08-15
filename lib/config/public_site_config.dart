@@ -70,15 +70,18 @@ class PublicSiteConfig {
     return '${buildPublicLink('/api/owner-session')}?$query';
   }
 
-  /// "Bu vitrini kirala" girişi: Keşfet'teki demo vitrin kartından
-  /// `/api/rent-demo`'ya taşır — orası demoyu taslak olarak kopyalayıp
-  /// sahip oturumunu (Vixrex Asistan) açar. Kalıcı token burada yok, tek
-  /// parametre demo vitrinin slug'ı.
+  /// "Bu vitrini kirala" girişi: Keşfet'teki demo vitrin kartından güvenli
+  /// köprü sayfasına (`/rent-demo`) taşır — orası reCAPTCHA doğrulamasını
+  /// yapıp demoyu taslak olarak kopyalayan asıl işlemi başlatır (2026-08-15,
+  /// güvenlik açığı kapatılırken `/api/rent-demo`'dan buraya taşındı — eski
+  /// GET rotası artık yalnız veritabanına dokunmadan buraya yönlendiriyor,
+  /// eski APK'lar kırılmaz). Kalıcı token burada yok, tek parametre demo
+  /// vitrinin slug'ı.
   static String buildRentDemoLink(String demoSlug) {
     final trimmed = demoSlug.trim();
-    if (trimmed.isEmpty) return buildPublicLink('/api/rent-demo');
+    if (trimmed.isEmpty) return buildPublicLink('/rent-demo');
     final query = Uri(queryParameters: {'slug': trimmed}).query;
-    return '${buildPublicLink('/api/rent-demo')}?$query';
+    return '${buildPublicLink('/rent-demo')}?$query';
   }
 
   /// Path-only product page (`/v/{slug}/urun/{productSlug}`) — Next.js ile aynı.

@@ -1173,7 +1173,7 @@ export default function VitrinProfileView({
                 Şimdilik ücretsiz
               </span>
               <a
-                href={`/api/rent-demo?slug=${encodeURIComponent(storeSlug)}`}
+                href={`/rent-demo?slug=${encodeURIComponent(storeSlug)}`}
                 className="mt-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-blue-500/40"
               >
                 Bu vitrini kirala

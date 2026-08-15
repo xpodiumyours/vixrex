@@ -1,0 +1,110 @@
+"use client";
+
+// "Bu vitrini kirala" güvenli köprü sayfası (2026-08-15, güvenlik açığı
+// kapatılırken eklendi).
+//
+// Buraya iki yerden gelinir:
+//   - Web CTA'sı (VitrinProfileView.tsx): düz <a href="/rent-demo?slug=x">.
+//   - Flutter (AppRouter.navigateToRentDemo, harici tarayıcı): aynı URL.
+//   - Eski (güncellenmemiş) Flutter APK'ları: /api/rent-demo GET → buraya
+//     303 ile yönlendirilir (bkz. api/rent-demo/route.ts).
+//
+// Görevi TEK şey: reCAPTCHA v3 token'ı al, gerçek <form method="POST">
+// gönder. Fetch/JS ile yönlendirme takip ETMİYORUZ — tarayıcının kendisi
+// POST → 303 → GET /api/owner-session → 303 + Set-Cookie → /v/:slug
+// zincirini native olarak izlesin, çerez/yönlendirme davranışı sunucu
+// tarafındaki mevcut akışla birebir aynı kalsın.
+
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useRecaptcha } from "@/components/recaptcha/RecaptchaProvider";
+
+type Durum = "kontrolEdiliyor" | "gonderiliyor" | "hata";
+
+function HataSayfasi({ mesaj }: { mesaj: string }) {
+  return (
+    <main
+      style={{
+        display: "grid",
+        placeItems: "center",
+        minHeight: "100vh",
+        background: "#0B1120",
+        color: "#fff",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      }}
+    >
+      <div style={{ maxWidth: 420, padding: 24, textAlign: "center" }}>
+        <h1 style={{ fontSize: 20 }}>Vitrin Açılamadı</h1>
+        <p style={{ color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>{mesaj}</p>
+      </div>
+    </main>
+  );
+}
+
+export default function RentDemoPage() {
+  const searchParams = useSearchParams();
+  const demoSlug = (searchParams.get("slug") ?? "").trim();
+  const { executeRecaptcha, isReady } = useRecaptcha();
+  const [durum, setDurum] = useState<Durum>("kontrolEdiliyor");
+  const [token, setToken] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const denendiRef = useRef(false);
+
+  useEffect(() => {
+    // Slug yoksa aşağıdaki render zaten HataSayfasi'na düşer — burada
+    // ayrıca state değiştirmeye gerek yok.
+    if (!demoSlug || !isReady || denendiRef.current) return;
+    denendiRef.current = true;
+
+    executeRecaptcha("rent_demo").then((t) => {
+      if (!t) {
+        setDurum("hata");
+        return;
+      }
+      setToken(t);
+      setDurum("gonderiliyor");
+    });
+  }, [demoSlug, isReady, executeRecaptcha]);
+
+  // Token gelince gerçek formu gönder — tarayıcı native POST + redirect
+  // zincirini izler, çerez sunucudan geldiği gibi kurulur.
+  useEffect(() => {
+    if (durum === "gonderiliyor" && token && formRef.current) {
+      formRef.current.submit();
+    }
+  }, [durum, token]);
+
+  if (!demoSlug) {
+    return <HataSayfasi mesaj="Kiralama bağlantısında vitrin bilgisi eksik." />;
+  }
+
+  if (durum === "hata") {
+    return (
+      <HataSayfasi mesaj="Güvenlik doğrulaması başarısız. Lütfen sayfayı yenileyip tekrar dene." />
+    );
+  }
+
+  return (
+    <main
+      style={{
+        display: "grid",
+        placeItems: "center",
+        minHeight: "100vh",
+        background: "#0B1120",
+        color: "#fff",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      }}
+    >
+      <div style={{ textAlign: "center" }}>
+        <p style={{ color: "rgba(255,255,255,0.7)" }}>Vitrin hazırlanıyor…</p>
+      </div>
+      {/* JS'siz/gövde-parse edilemeyen ortamlarda bile POST'un native form
+          davranışıyla gitmesi için gerçek bir <form>; action route.ts'in
+          POST handler'ına gider, JSON değil form-encoded veri okunur. */}
+      <form ref={formRef} method="POST" action="/api/rent-demo" hidden>
+        <input type="hidden" name="slug" value={demoSlug} />
+        <input type="hidden" name="recaptchaToken" value={token ?? ""} />
+      </form>
+    </main>
+  );
+}
