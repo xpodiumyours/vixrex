@@ -136,6 +136,8 @@ export interface VitrinProfileViewProps {
   sectionVisibility: Record<string, boolean> | null;
   heroLocationText: string | null;
   mapLabel: string | null;
+  provinceName: string | null;
+  districtName: string | null;
   categorySectionTitle: string | null;
   productSectionTitle: string | null;
   galleryActionLabel: string | null;
@@ -200,6 +202,8 @@ export default function VitrinProfileView({
   sectionVisibility,
   heroLocationText,
   mapLabel,
+  provinceName,
+  districtName,
   categorySectionTitle,
   productSectionTitle,
   galleryActionLabel,
@@ -219,6 +223,15 @@ export default function VitrinProfileView({
 }: VitrinProfileViewProps) {
   const [copied, setCopied] = useState(false);
   const displayAddress = normalizeAddressDisplay(address);
+  // Faz F (Tek Asistan planı): il/ilçe artık şemada zorunlu alan
+  // (docs/alan-eslemesi.md) ama sahibin serbest yazdığı heroLocationText
+  // (ör. "Kadıköy, İstanbul") zaten aynı bilgiyi taşıyabiliyor — o doluysa
+  // tekrar göstermeyiz. Boşsa yapılandırılmış il/ilçe buraya düşer, konum
+  // etiketi hiç eksik kalmaz.
+  const districtProvinceLabel =
+    !heroLocationText && (districtName || provinceName)
+      ? [districtName, provinceName].filter(Boolean).join(", ")
+      : null;
   const displayBadge = String(heroBadge || kategori || businessType || "").trim();
   const showOpenBadge =
     typeof isClosed === "boolean" && (Boolean(workingHoursToday) || isClosed);
@@ -463,9 +476,12 @@ export default function VitrinProfileView({
               </p>
             )}
 
-            {(heroLocationText || displayAddress || displayEmail || workingHoursToday || showRating) && (
+            {(heroLocationText || districtProvinceLabel || displayAddress || displayEmail || workingHoursToday || showRating) && (
               <div className="flex flex-wrap gap-4 text-sm text-slate-400">
                 {heroLocationText && <span className="flex items-center gap-1.5">📍 {heroLocationText}</span>}
+                {districtProvinceLabel && (
+                  <span className="flex items-center gap-1.5">📍 {districtProvinceLabel}</span>
+                )}
                 {displayAddress && <span className="flex items-center gap-1.5">📍 {displayAddress}</span>}
                 {showRating && (
                   <span className="flex items-center gap-1.5">

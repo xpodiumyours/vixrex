@@ -57,6 +57,23 @@ void main() {
       },
     );
 
+    // Faz G3 hazırlığı düzeltmesi (2026-08-15): _setupRecommendationFor'un
+    // switch'inde VixRexNextStep.category hiç case olarak yoktu — kategori
+    // eksikken default'a (setup_publish: "hazırsın, yayınla") düşüyordu.
+    // Bu test o boşluğu kapatır.
+    test('yayınlanmamış, ad dolu kategori eksik — setup_category önerilir, '
+        '"hazırsın" denmez', () {
+      final store = StoreData().copyWith(name: 'Test Store');
+      final snapshot = VixRexProfileSnapshot.from(store, null);
+      final rec = VixRexGuidanceService.recommendationFor(
+        snapshot: snapshot,
+        hasShared: false,
+      );
+      expect(rec.id, 'setup_category');
+      expect(rec.action, VixRexAction.openVitrim);
+      expect(rec.title, isNot(contains('yayınla')));
+    });
+
     test('yayınlı ama kategorisi eksikse şablon picker önerisi', () {
       final store = StoreData().copyWith(
         name: 'Test',

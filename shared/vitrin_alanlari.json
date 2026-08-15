@@ -15,7 +15,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "heroRozet",
@@ -30,7 +32,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": "Örn: Profesyonel Teknik Servis / Kadıköy"
+      "ipucu": "Örn: Profesyonel Teknik Servis / Kadıköy",
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "kisaTanitim",
@@ -45,7 +49,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "konumMetni",
@@ -60,7 +66,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": "Örn: Kadıköy, İstanbul"
+      "ipucu": "Örn: Kadıköy, İstanbul",
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "kategori",
@@ -95,7 +103,12 @@
         "Oto / Araç",
         "Diğer"
       ],
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": [
+        "diger",
+        "diğer"
+      ]
     },
     {
       "anahtar": "isletmeTuru",
@@ -110,7 +123,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "logo",
@@ -125,7 +140,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "kapakGorseli",
@@ -140,7 +157,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "whatsapp",
@@ -155,7 +174,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": "tr_mobil",
+      "bosDegerler": null
     },
     {
       "anahtar": "telefon",
@@ -170,7 +191,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "eposta",
@@ -185,7 +208,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "adres",
@@ -200,7 +225,43 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
+    },
+    {
+      "anahtar": "il",
+      "tip": "metin",
+      "etiket": "İl",
+      "kolon": "province_name",
+      "bolum": "contact",
+      "zorunlu": true,
+      "kalite": false,
+      "minUzunluk": null,
+      "maxUzunluk": 60,
+      "min": null,
+      "max": null,
+      "secenekler": null,
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
+    },
+    {
+      "anahtar": "ilce",
+      "tip": "metin",
+      "etiket": "İlçe",
+      "kolon": "district_name",
+      "bolum": "contact",
+      "zorunlu": true,
+      "kalite": false,
+      "minUzunluk": null,
+      "maxUzunluk": 60,
+      "min": null,
+      "max": null,
+      "secenekler": null,
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "haritaEtiketi",
@@ -215,7 +276,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "calismaSaatleri",
@@ -230,7 +293,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "instagram",
@@ -245,7 +310,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": "@ işareti olmadan yazın"
+      "ipucu": "@ işareti olmadan yazın",
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "website",
@@ -260,7 +327,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "haritaLinki",
@@ -275,7 +344,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "enlem",
@@ -290,7 +361,9 @@
       "min": -90,
       "max": 90,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "boylam",
@@ -305,7 +378,9 @@
       "min": -180,
       "max": 180,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "kategoriBolumBaslik",
@@ -320,7 +395,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "urunBolumBaslik",
@@ -335,7 +412,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "bantEtiket",
@@ -350,7 +429,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "bantBaslik",
@@ -365,7 +446,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "bantAciklama",
@@ -380,7 +463,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "bantGorsel",
@@ -395,7 +480,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "bantFiyat",
@@ -410,7 +497,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "hakkindaUstBaslik",
@@ -425,7 +514,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "hakkindaBaslik",
@@ -440,7 +531,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "hakkindaMetin",
@@ -455,7 +548,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "hakkindaGorsel",
@@ -470,7 +565,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "hakkindaGorselAlt",
@@ -485,7 +582,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "galeriUstBaslik",
@@ -500,7 +599,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "galeriBaslik",
@@ -515,7 +616,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "galeriAksiyonMetni",
@@ -530,7 +633,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "galeriAksiyonLinki",
@@ -545,7 +650,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "blogUstBaslik",
@@ -560,7 +667,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "blogBaslik",
@@ -575,7 +684,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "sssUstBaslik",
@@ -590,7 +701,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "sssBaslik",
@@ -605,7 +718,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "sssAciklama",
@@ -620,7 +735,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "puanGoster",
@@ -635,7 +752,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "yolTarifiGoster",
@@ -650,7 +769,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     },
     {
       "anahtar": "referansLinki",
@@ -665,7 +786,9 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null
+      "ipucu": null,
+      "dogrulama": null,
+      "bosDegerler": null
     }
   ]
 }

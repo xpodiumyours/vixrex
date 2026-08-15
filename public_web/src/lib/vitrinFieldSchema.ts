@@ -72,6 +72,21 @@ export interface VitrinField {
   secenekler?: readonly string[];
   /** Kısa yardım metni; asistan ve form birlikte kullanır. */
   ipucu?: string;
+  /**
+   * Doğrulama kuralının adı (ör. "tr_mobil"). Faz F (Tek Asistan planı):
+   * Flutter bazı alanlarda şemanın "dolu mu" kontrolünün ötesinde ayrıca
+   * biçim doğruluyor (örn. WhatsApp için TR mobil formatı,
+   * `WhatsAppLinkHelper.isValidTurkeyMobile`). Bu alan o farkı GÖRÜNÜR
+   * kılar — bu turda Next.js tarafında gerçek doğrulama mantığını
+   * ÇALIŞTIRMAZ, yalnız belgeler (bkz. docs/alan-eslemesi.md).
+   */
+  dogrulama?: string;
+  /**
+   * Bu değerlere sahip bir alan "boş" sayılır — örn. kategori için
+   * "Diğer" seçilmesi teknik olarak dolu ama işlevsel olarak eksik
+   * (kategoriye bağlı hiçbir şey çalışmaz). `doluMu()` bunu okur.
+   */
+  bosDegerler?: readonly string[];
 }
 
 export const VITRIN_FIELDS: readonly VitrinField[] = [
@@ -123,6 +138,10 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     zorunlu: true,
     // Tek kaynak vitrinProfile.ts — ayrı liste tutulmaz.
     secenekler: PROFILES.map((p) => p.label),
+    // Flutter'ın categoryCompleted getter'ıyla aynı kural (Faz F): "Diğer"
+    // teknik olarak dolu ama kategoriye bağlı hiçbir şey (butonlar, hazır
+    // görseller) çalışmadığı için işlevsel olarak eksik sayılır.
+    bosDegerler: ["diger", "diğer"],
   },
   {
     anahtar: "isletmeTuru",
@@ -157,6 +176,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "whatsapp",
     bolum: "contact",
     zorunlu: true,
+    dogrulama: "tr_mobil",
   },
   {
     anahtar: "telefon",
@@ -181,6 +201,29 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     bolum: "contact",
     zorunlu: true,
     maxUzunluk: 200,
+  },
+  // Faz F (Tek Asistan planı) eklendi: Flutter'ın addressCompleted'ı ve
+  // asıl yayın kapısı store_publish_validator.dart adresle BİRLİKTE il/ilçe
+  // de zorunlu tutuyordu, ama şemada hiç alan olarak yoktu — Next.js
+  // tarafı bunu hiç bilmiyordu (bkz. docs/alan-eslemesi.md). Kolonlar
+  // (province_name/district_name) DB'de zaten var, migration gerekmedi.
+  {
+    anahtar: "il",
+    tip: "metin",
+    etiket: "İl",
+    kolon: "province_name",
+    bolum: "contact",
+    zorunlu: true,
+    maxUzunluk: 60,
+  },
+  {
+    anahtar: "ilce",
+    tip: "metin",
+    etiket: "İlçe",
+    kolon: "district_name",
+    bolum: "contact",
+    zorunlu: true,
+    maxUzunluk: 60,
   },
   {
     anahtar: "haritaEtiketi",
@@ -447,12 +490,12 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
 
 /** anahtar → alan. Komut işleyicisi bunu kullanır. */
 export const FIELD_BY_KEY: ReadonlyMap<string, VitrinField> = new Map(
-  VITRIN_FIELDS.map((f) => [f.anahtar, f])
+  VITRIN_FIELDS.map((f) => [f.anahtar, f]),
 );
 
 /** Yazılabilir kolon adları. Sunucu tarafı izin listesi. */
 export const EDITABLE_COLUMNS: readonly string[] = VITRIN_FIELDS.map(
-  (f) => f.kolon
+  (f) => f.kolon,
 );
 
 /** Belirli bir bölümün alanları — tıkla-düzenle ve panel gruplaması için. */

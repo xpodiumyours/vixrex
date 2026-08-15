@@ -1,5 +1,26 @@
+import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
+
+/// `<id>_baslik`/`_aciklama`/`_buton` anahtarlı üçlüyü kataloğdan okur.
+/// Faz G3 hazırlığı (2026-08-15): önceki turda her `VixRexRecommendation`
+/// metni burada satır içi yazılıydı — Next.js'in aynı öneriyi göstermesi
+/// için kaynak yoktu. Artık tek kaynak `shared/vixrex_mesajlar.json`;
+/// `assistantState.ts` aynı `<id>_*` anahtarlarını okuyor.
+VixRexRecommendation _katalogdanOneri({
+  required String id,
+  required VixRexJourneyPhase phase,
+  required VixRexAction action,
+}) {
+  return VixRexRecommendation(
+    id: id,
+    phase: phase,
+    title: vixRexMesajlari['${id}_baslik']!,
+    description: vixRexMesajlari['${id}_aciklama']!,
+    buttonLabel: vixRexMesajlari['${id}_buton']!,
+    action: action,
+  );
+}
 
 /// Vixrex ekranı ve sohbeti tarafından ortak kullanılan tek öneri modeli.
 class VixRexRecommendation {
@@ -56,8 +77,33 @@ class VixRexQualityReport {
 // ─── Rehberlik Servisi ──────────────────────────────────────────────────────
 
 class VixRexGuidanceService {
-  // ── Kalite Kontrol Listesi ───────────────────────────────────────────────
+  // ── Kalite Kontrol Listesi (KULLANILMIYOR — bkz. not) ────────────────────
 
+  /// UYARI — ÖLÜ KOD: bu listenin ürettiği skor (`qualityReportFor().score`)
+  /// `ChatMessage.snapshotScore` alanına yazılıp `ChatScoreBar` ile
+  /// çizilecek şekilde tasarlanmış, ama `snapshotScore:` hiçbir çağrı
+  /// noktasında gerçek bir değerle set edilmiyor — hep `null` kalıyor, o
+  /// yüzden `ChatScoreBar` hiçbir zaman ekrana çıkmıyor (doğrulandı,
+  /// 2026-08-15). Kullanıcıya gerçekten gösterilen "vitrinini güzelleştir"
+  /// önerileri `improvementRecommendations()`'tan gelir — şemanın 6 kalite
+  /// alanı (kapak dışındakiler) oraya eklendi, BURAYA değil.
+  ///
+  /// Bu liste silinmedi çünkü `AssistantState`/testler ona referans veriyor
+  /// ve yeniden bağlanabilir — ama şu an ekranda görünmüyor. Buraya
+  /// "kalite alanı eksik" diye yeni kalem eklemek gerçek kullanıcıya hiçbir
+  /// şey göstermez; asıl kapsam `improvementRecommendations()`'ta.
+  ///
+  /// Flutter'a özgü 5 kalite kalemi — şemadaki `kaliteAlanlari` (7 alan)
+  /// İLE BİRLEŞTİRİLMEMİŞTİR. Bu BİLİNÇLİ bir karar (ADR 0001 madde 4,
+  /// 2026-08-10) — "listeyi değiştir" gibi görünen ama öyle olmayan bir iş:
+  ///
+  /// | Bu kalem | Şemadaki `kalite` alanı | Not |
+  /// |---|---|---|
+  /// | `cover` | `kapakGorseli` (shelf_image_url) | TEK gerçek örtüşme — ikisi de aynı sütuna bakıyor |
+  /// | `description` | — | `descriptionCompleted` KISA `description` (hero) alanına bakar; şemanın `hakkindaMetin` (kalite, `corporate_bio`) alanı AYRI bir alandır, bakılmaz |
+  /// | `gallery` | — | Şemada hiç yok — galeri öğesi var mı, Flutter'a özgü operasyonel durum |
+  /// | `catalog` | — | Şemada hiç yok — ürün/hizmet sayısı, vitrin İÇERİK alanı değil |
+  /// | `auto_fill` | — | Şemada hiç yok — kategori-şablon görseli uygulandı mı, Flutter'a özgü |
   static List<VixRexQualityItem> qualityItems(VixRexProfileSnapshot? snapshot) {
     return [
       VixRexQualityItem(
@@ -137,13 +183,9 @@ class VixRexGuidanceService {
     required bool hasShared,
   }) {
     if (snapshot == null) {
-      return const VixRexRecommendation(
+      return _katalogdanOneri(
         id: 'welcome',
         phase: VixRexJourneyPhase.setup,
-        title: 'Vitrininizi Oluşturun',
-        description:
-            'Vixrex ile dijital vitrininizi oluşturmak için ilk adımı atın.',
-        buttonLabel: 'Başla',
         action: VixRexAction.openVitrim,
       );
     }
@@ -154,13 +196,9 @@ class VixRexGuidanceService {
 
     // Yayınlanmamışsa
     if (!snapshot.isPublished) {
-      return const VixRexRecommendation(
+      return _katalogdanOneri(
         id: 'publish',
         phase: VixRexJourneyPhase.publish,
-        title: 'Vitrininizi Yayınlayın',
-        description:
-            'Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz.',
-        buttonLabel: 'Yayınla',
         action: VixRexAction.openVitrim,
       );
     }
@@ -176,26 +214,18 @@ class VixRexGuidanceService {
     }
 
     if (!hasShared) {
-      return const VixRexRecommendation(
+      return _katalogdanOneri(
         id: 'share',
         phase: VixRexJourneyPhase.share,
-        title: 'Vitrininizi Paylaşın',
-        description:
-            'Vitrinin hazır. Müşterilerine ulaştırmak için paylaşalım.',
-        buttonLabel: 'Paylaş',
         action: VixRexAction.shareWhatsapp,
       );
     }
 
     if (improvements.isNotEmpty) return improvements.first;
 
-    return const VixRexRecommendation(
+    return _katalogdanOneri(
       id: 'all_done',
       phase: VixRexJourneyPhase.improve,
-      title: 'Tebrikler!',
-      description:
-          'Vitrininiz harika görünüyor. Daha fazla özellik için bize ulaşabilirsiniz.',
-      buttonLabel: 'Vitrinime Git',
       action: VixRexAction.openVitrim,
     );
   }
@@ -222,49 +252,40 @@ class VixRexGuidanceService {
   static VixRexRecommendation _setupRecommendationFor(VixRexNextStep next) {
     return switch (next) {
       // Kurulum CTA'ları form dump etmez → Vixrex sekmesi (gömülü onboarding).
-      VixRexNextStep.name => const VixRexRecommendation(
+      VixRexNextStep.name => _katalogdanOneri(
         id: 'setup_name',
         phase: VixRexJourneyPhase.setup,
-        title: 'İşletme adınızı girin',
-        description:
-            'Vitrininizde görünecek işletme adınızı ekleyerek başlayın.',
-        buttonLabel: 'İşletme Adı Ekle',
         action: VixRexAction.openVitrim,
       ),
-      VixRexNextStep.whatsapp => const VixRexRecommendation(
+      // Faz G3 hazırlığı düzeltmesi (2026-08-15): bu case hiç yoktu —
+      // kategori eksikken switch default'a (setup_publish: "tüm bilgileri
+      // doldurdunuz, yayınlayın") düşüyordu. Gerçek bulgu: kategori
+      // zorunlu alan olduğu hâlde eksikken asistan yanlışlıkla "hazırsın"
+      // diyordu. nextMissingField zaten `.category`'yi doğru üretiyordu
+      // (bkz. vixrex_profile_snapshot.dart) — burada hiç ele alınmamıştı.
+      VixRexNextStep.category => _katalogdanOneri(
+        id: 'setup_category',
+        phase: VixRexJourneyPhase.setup,
+        action: VixRexAction.openVitrim,
+      ),
+      VixRexNextStep.whatsapp => _katalogdanOneri(
         id: 'setup_whatsapp',
         phase: VixRexJourneyPhase.setup,
-        title: 'WhatsApp numaranızı ekleyin',
-        description:
-            'Müşterilerinizin sizi hızlıca ulaşabilmesi için WhatsApp numaranızı girin.',
-        buttonLabel: 'WhatsApp Ekle',
         action: VixRexAction.openVitrim,
       ),
-      VixRexNextStep.address => const VixRexRecommendation(
+      VixRexNextStep.address => _katalogdanOneri(
         id: 'setup_address',
         phase: VixRexJourneyPhase.setup,
-        title: 'Adres ve konum bilgisi ekleyin',
-        description:
-            'Müşterilerin sizi bulabilmesi için adres ve konum bilgisi ekleyin.',
-        buttonLabel: 'Adres Ekle',
         action: VixRexAction.openVitrim,
       ),
-      VixRexNextStep.legal => const VixRexRecommendation(
+      VixRexNextStep.legal => _katalogdanOneri(
         id: 'setup_legal',
         phase: VixRexJourneyPhase.setup,
-        title: 'Yasal onayları tamamlayın',
-        description:
-            'Vitrininizi yayınlayabilmeniz için gerekli yasal onayları vermeniz gerekiyor.',
-        buttonLabel: 'Onayları İncele',
         action: VixRexAction.openVitrim,
       ),
-      _ => const VixRexRecommendation(
+      _ => _katalogdanOneri(
         id: 'setup_publish',
         phase: VixRexJourneyPhase.setup,
-        title: 'Vitrininizi yayınlayın',
-        description:
-            'Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz.',
-        buttonLabel: 'Vitrinimi Aç',
         action: VixRexAction.openVitrim,
       ),
     };
@@ -280,14 +301,9 @@ class VixRexGuidanceService {
 
     if (!snapshot.categoryCompleted) {
       items.add(
-        const VixRexRecommendation(
+        _katalogdanOneri(
           id: 'improve_category',
           phase: VixRexJourneyPhase.improve,
-          title: 'Şablonla güzelleştir',
-          description:
-              'Vitrinin yayında! Şimdi hazır şablonlardan birini seçelim ki '
-              'işletmene özel tasarım ve görselleri ekleyelim.',
-          buttonLabel: 'Hazır şablonları aç',
           action: VixRexAction.openCoverTemplatePicker,
         ),
       );
@@ -295,14 +311,9 @@ class VixRexGuidanceService {
 
     if (!snapshot.coverCompleted) {
       items.add(
-        const VixRexRecommendation(
+        _katalogdanOneri(
           id: 'improve_cover',
           phase: VixRexJourneyPhase.improve,
-          title: 'Şablonla güzelleştir',
-          description:
-              'Güzel. Şimdi kategorine göre hazır şablonlardan birini seçelim — '
-              'dijital vitrini hızlıca daha güzel yapalım.',
-          buttonLabel: 'Hazır şablonları aç',
           action: VixRexAction.openCoverTemplatePicker,
         ),
       );
@@ -310,12 +321,9 @@ class VixRexGuidanceService {
 
     if (!snapshot.galleryCompleted) {
       items.add(
-        const VixRexRecommendation(
+        _katalogdanOneri(
           id: 'improve_gallery',
           phase: VixRexJourneyPhase.improve,
-          title: 'Galeri görselleri ekleyin',
-          description: 'Ürün veya hizmet fotoğraflarınızı galeriye ekleyin.',
-          buttonLabel: 'Galeriye Git',
           action: VixRexAction.scrollToGallery,
         ),
       );
@@ -323,12 +331,9 @@ class VixRexGuidanceService {
 
     if (!snapshot.descriptionCompleted) {
       items.add(
-        const VixRexRecommendation(
+        _katalogdanOneri(
           id: 'improve_desc',
           phase: VixRexJourneyPhase.improve,
-          title: 'İşletme açıklaması ekleyin',
-          description: 'İşletmenizi tanıtan kısa bir açıklama ekleyin.',
-          buttonLabel: 'Açıklamaya Git',
           action: VixRexAction.scrollToDesc,
         ),
       );
@@ -336,66 +341,110 @@ class VixRexGuidanceService {
 
     if (!snapshot.catalogCompleted) {
       items.add(
-        const VixRexRecommendation(
+        _katalogdanOneri(
           id: 'improve_catalog',
           phase: VixRexJourneyPhase.improve,
-          title: 'Ürünleri yükle',
-          description:
-              'Müşterilerine gösterebilmen için ürünleri nasıl yükleyeceğimize '
-              'karar verelim — tarayıcı veya elle ekleme.',
-          buttonLabel: 'Ürün yükleme yolunu seç',
           action: VixRexAction.scrollToProducts,
+        ),
+      );
+    }
+
+    // ── Faz F takibi: şemadaki 7 kalite alanının, kapak dışında kalan 6'sı.
+    // Önceden bu 6'sı Flutter'ın öneri motorunda hiç yoktu — yalnız
+    // Next.js'in hazırlık raporu biliyordu (bkz. docs/alan-eslemesi.md).
+    // Ayrı ayrı eklendi, birleştirilmedi — her biri şemada nasılsa öyle.
+    if (!snapshot.heroBadgeCompleted) {
+      items.add(
+        _katalogdanOneri(
+          id: 'improve_hero_badge',
+          phase: VixRexJourneyPhase.improve,
+          action: VixRexAction.openVitrim,
+        ),
+      );
+    }
+
+    if (!snapshot.logoCompleted) {
+      items.add(
+        _katalogdanOneri(
+          id: 'improve_logo',
+          phase: VixRexJourneyPhase.improve,
+          action: VixRexAction.openVitrim,
+        ),
+      );
+    }
+
+    if (!snapshot.workingHoursCompleted) {
+      items.add(
+        _katalogdanOneri(
+          id: 'improve_working_hours',
+          phase: VixRexJourneyPhase.improve,
+          action: VixRexAction.openVitrim,
+        ),
+      );
+    }
+
+    if (!snapshot.googleLinkCompleted) {
+      items.add(
+        _katalogdanOneri(
+          id: 'improve_google_link',
+          phase: VixRexJourneyPhase.improve,
+          action: VixRexAction.openVitrim,
+        ),
+      );
+    }
+
+    if (!snapshot.aboutTitleCompleted) {
+      items.add(
+        _katalogdanOneri(
+          id: 'improve_about_title',
+          phase: VixRexJourneyPhase.improve,
+          action: VixRexAction.openVitrim,
+        ),
+      );
+    }
+
+    if (!snapshot.aboutBioCompleted) {
+      items.add(
+        _katalogdanOneri(
+          id: 'improve_about_bio',
+          phase: VixRexJourneyPhase.improve,
+          action: VixRexAction.openVitrim,
         ),
       );
     }
 
     // ── Randevu sistemi ──
     items.add(
-      const VixRexRecommendation(
+      _katalogdanOneri(
         id: 'improve_booking',
         phase: VixRexJourneyPhase.improve,
-        title: 'Randevu sistemi kurun',
-        description: 'Müşterileriniz online randevu alsın — 7/24 açık kalın.',
-        buttonLabel: 'Randevu ayarları',
         action: VixRexAction.scrollToCategory,
       ),
     );
 
     // ── Blog / duyuru ──
     items.add(
-      const VixRexRecommendation(
+      _katalogdanOneri(
         id: 'improve_blog',
         phase: VixRexJourneyPhase.improve,
-        title: 'Duyuru veya yazı paylaşın',
-        description:
-            'Kampanya, indirim veya haberlerinizi yazarak Google\'da üst sıralara çıkın.',
-        buttonLabel: 'Vitrinime git',
         action: VixRexAction.openVitrim,
       ),
     );
 
     // ── SEO ayarları ──
     items.add(
-      const VixRexRecommendation(
+      _katalogdanOneri(
         id: 'improve_seo',
         phase: VixRexJourneyPhase.improve,
-        title: 'Google görünürlüğünü güçlendirin',
-        description:
-            'Meta başlık, açıklama ve anahtar kelimelerinizi girerek arama sonuçlarında öne çıkın.',
-        buttonLabel: 'Vitrinime git',
         action: VixRexAction.openVitrim,
       ),
     );
 
     // ── Hesap güvence ──
     items.add(
-      const VixRexRecommendation(
+      _katalogdanOneri(
         id: 'improve_account',
         phase: VixRexJourneyPhase.improve,
-        title: 'Hesabınızı güvenceye alın',
-        description:
-            'Giriş yaparak vitrininizi hesabınıza bağlayın — verileriniz güvende kalsın.',
-        buttonLabel: 'Hesap',
         action: VixRexAction.openAuth,
       ),
     );

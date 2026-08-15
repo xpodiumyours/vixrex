@@ -18,9 +18,16 @@ import { resolve } from "path";
 const DOSYALAR = [
   "../src/app/v/[slug]/OwnerAssistantPanel.tsx",
   // OwnerAssistantPanel 730→128 satıra bölündü (2026-08-10); kullanıcıya
-  // gösterilen metinlerin çoğu artık bu bileşen/hook dosyalarında.
+  // gösterilen metinlerin çoğu artık bu bileşen/hook dosyalarında. Faz G3
+  // (Tek Asistan planı, G3.1) yeniden diziliminde FieldChipList silindi,
+  // yerine/yanına StageMeter/StepCard/UpNextList/SectionProgressList/
+  // ChatTopBar geldi.
   "../src/app/v/[slug]/components/ChatBubble.tsx",
-  "../src/app/v/[slug]/components/FieldChipList.tsx",
+  "../src/app/v/[slug]/components/ChatTopBar.tsx",
+  "../src/app/v/[slug]/components/StageMeter.tsx",
+  "../src/app/v/[slug]/components/StepCard.tsx",
+  "../src/app/v/[slug]/components/UpNextList.tsx",
+  "../src/app/v/[slug]/components/SectionProgressList.tsx",
   "../src/app/v/[slug]/components/FieldInputArea.tsx",
   "../src/app/v/[slug]/components/ImagePickerPanel.tsx",
   "../src/app/v/[slug]/components/PublishBar.tsx",

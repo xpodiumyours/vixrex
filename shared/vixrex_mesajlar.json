@@ -1,7 +1,7 @@
 {
   "_uretim": "tool/mesaj_semasi_uret.dart — ELLE DÜZENLEME",
-  "_kaynak": "lib/config/chatbot_config.dart",
-  "_not": "Yalnız sabit metin içeriği burada — dinamik olarak birleştirilen mesajlar (ör. snapshotWelcome, nextStepTip) ve hızlı yanıtların aksiyon/payload bağlantıları burada değil, kod tarafında kalır. Faz B (Tek Asistan planı) kapsamı: tek dil/tek ton için karşılaştırılabilir metin gövdesi.",
+  "_kaynak": "lib/config/chatbot_config.dart + lib/services/vixrex_guidance_service.dart",
+  "_not": "Yalnız sabit metin içeriği burada — dinamik olarak birleştirilen mesajlar (ör. snapshotWelcome, nextStepTip) ve hızlı yanıtların aksiyon/payload bağlantıları burada değil, kod tarafında kalır. Faz B (Tek Asistan planı) kapsamı: tek dil/tek ton için karşılaştırılabilir metin gövdesi. Faz G3 hazırlığı (2026-08-15): '_baslik'/'_aciklama'/'_buton' son ekli anahtarlar VixRexGuidanceService'in rehberlik önerileri (VixRexRecommendation) — Next.js'in vitrinReadiness.ts'i de field-anahtar eşlemesiyle aynı anahtarları okur (bkz. public_web/src/lib/assistantState.ts).",
   "intentler": [
     { "payload": "merhaba", "anahtarKelimeler": ["merhaba", "selam", "nasil", "baslat", "baslayalim", "yardim", "ne yapabilirsin"] },
     { "payload": "vixrex_info", "anahtarKelimeler": ["vixrex", "nedir", "ne işe yarar", "nasil calisir", "kurulum", "vitrin"] },
@@ -40,6 +40,107 @@
     { "anahtar": "ocr_info", "metin": "Nasıl Çalışır:\n1. Fotoğrafınızı çekin veya galeriden seçin\n2. Ürünler otomatik olarak tanınır\n3. Ürünleri onaylayın veya düzenleyin\n4. Onaylanan ürünler vitrininize eklenir\n\nNot: Bu özellik premium gerektirir." },
     { "anahtar": "ocr_premium", "metin": "Premium üyelik ile:\n• Fotoğraftan sınırsız ürün çıkarma\n• Faturadan otomatik ürün kaydı\n• Toplu Excel yükleme\n• Barkod tarama\n\nÜcretsiz deneme: Günde 3 ücretsiz OCR hakkı.\nPremium için uygulama içinden satın alma yapabilirsiniz." },
     { "anahtar": "hesap", "metin": "Vitrinini güvenceye almak için giriş yap / üye ol. Mevcut Auth ekranı açılır; vitrin token ile hesaba bağlanır." },
-    { "anahtar": "anlasilamadi", "metin": "Üzgünüm, bunu tam anlayamadım. Aşağıdaki seçeneklerden birini deneyebilirsiniz:" }
+    { "anahtar": "anlasilamadi", "metin": "Üzgünüm, bunu tam anlayamadım. Aşağıdaki seçeneklerden birini deneyebilirsiniz:" },
+    { "anahtar": "taslak_cakismasi", "metin": "Canlı vitrin değişmiş — burada gördüğün eski hâli." },
+
+    { "anahtar": "welcome_baslik", "metin": "Vitrininizi Oluşturun" },
+    { "anahtar": "welcome_aciklama", "metin": "Vixrex ile dijital vitrininizi oluşturmak için ilk adımı atın." },
+    { "anahtar": "welcome_buton", "metin": "Başla" },
+
+    { "anahtar": "setup_name_baslik", "metin": "İşletme adınızı girin" },
+    { "anahtar": "setup_name_aciklama", "metin": "Vitrininizde görünecek işletme adınızı ekleyerek başlayın." },
+    { "anahtar": "setup_name_buton", "metin": "İşletme Adı Ekle" },
+
+    { "anahtar": "setup_whatsapp_baslik", "metin": "WhatsApp numaranızı ekleyin" },
+    { "anahtar": "setup_whatsapp_aciklama", "metin": "Müşterilerinizin sizi hızlıca ulaşabilmesi için WhatsApp numaranızı girin." },
+    { "anahtar": "setup_whatsapp_buton", "metin": "WhatsApp Ekle" },
+
+    { "anahtar": "setup_address_baslik", "metin": "Adres ve konum bilgisi ekleyin" },
+    { "anahtar": "setup_address_aciklama", "metin": "Müşterilerin sizi bulabilmesi için adres ve konum bilgisi ekleyin." },
+    { "anahtar": "setup_address_buton", "metin": "Adres Ekle" },
+
+    { "anahtar": "setup_category_baslik", "metin": "İşletme kategorinizi seçin" },
+    { "anahtar": "setup_category_aciklama", "metin": "Vitrininizin doğru şablon ve önerilerle kurulması için kategorinizi seçin." },
+    { "anahtar": "setup_category_buton", "metin": "Kategori Seç" },
+
+    { "anahtar": "setup_legal_baslik", "metin": "Yasal onayları tamamlayın" },
+    { "anahtar": "setup_legal_aciklama", "metin": "Vitrininizi yayınlayabilmeniz için gerekli yasal onayları vermeniz gerekiyor." },
+    { "anahtar": "setup_legal_buton", "metin": "Onayları İncele" },
+
+    { "anahtar": "setup_publish_baslik", "metin": "Vitrininizi yayınlayın" },
+    { "anahtar": "setup_publish_aciklama", "metin": "Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz." },
+    { "anahtar": "setup_publish_buton", "metin": "Vitrinimi Aç" },
+
+    { "anahtar": "publish_baslik", "metin": "Vitrininizi Yayınlayın" },
+    { "anahtar": "publish_aciklama", "metin": "Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz." },
+    { "anahtar": "publish_buton", "metin": "Yayınla" },
+
+    { "anahtar": "share_baslik", "metin": "Vitrininizi Paylaşın" },
+    { "anahtar": "share_aciklama", "metin": "Vitrinin hazır. Müşterilerine ulaştırmak için paylaşalım." },
+    { "anahtar": "share_buton", "metin": "Paylaş" },
+
+    { "anahtar": "all_done_baslik", "metin": "Tebrikler!" },
+    { "anahtar": "all_done_aciklama", "metin": "Vitrininiz harika görünüyor. Daha fazla özellik için bize ulaşabilirsiniz." },
+    { "anahtar": "all_done_buton", "metin": "Vitrinime Git" },
+
+    { "anahtar": "improve_category_baslik", "metin": "Şablonla güzelleştir" },
+    { "anahtar": "improve_category_aciklama", "metin": "Vitrinin yayında! Şimdi hazır şablonlardan birini seçelim ki işletmene özel tasarım ve görselleri ekleyelim." },
+    { "anahtar": "improve_category_buton", "metin": "Hazır şablonları aç" },
+
+    { "anahtar": "improve_cover_baslik", "metin": "Şablonla güzelleştir" },
+    { "anahtar": "improve_cover_aciklama", "metin": "Güzel. Şimdi kategorine göre hazır şablonlardan birini seçelim — dijital vitrini hızlıca daha güzel yapalım." },
+    { "anahtar": "improve_cover_buton", "metin": "Hazır şablonları aç" },
+
+    { "anahtar": "improve_gallery_baslik", "metin": "Galeri görselleri ekleyin" },
+    { "anahtar": "improve_gallery_aciklama", "metin": "Ürün veya hizmet fotoğraflarınızı galeriye ekleyin." },
+    { "anahtar": "improve_gallery_buton", "metin": "Galeriye Git" },
+
+    { "anahtar": "improve_desc_baslik", "metin": "İşletme açıklaması ekleyin" },
+    { "anahtar": "improve_desc_aciklama", "metin": "İşletmenizi tanıtan kısa bir açıklama ekleyin." },
+    { "anahtar": "improve_desc_buton", "metin": "Açıklamaya Git" },
+
+    { "anahtar": "improve_catalog_baslik", "metin": "Ürünleri yükle" },
+    { "anahtar": "improve_catalog_aciklama", "metin": "Müşterilerine gösterebilmen için ürünleri nasıl yükleyeceğimize karar verelim — tarayıcı veya elle ekleme." },
+    { "anahtar": "improve_catalog_buton", "metin": "Ürün yükleme yolunu seç" },
+
+    { "anahtar": "improve_hero_badge_baslik", "metin": "Kapak rozeti ekle" },
+    { "anahtar": "improve_hero_badge_aciklama", "metin": "Kapak fotoğrafının üstüne kısa bir rozet metni ekle — işletmeni bir bakışta anlatır. Örn: \"Profesyonel Teknik Servis / Kadıköy\"." },
+    { "anahtar": "improve_hero_badge_buton", "metin": "Rozet ekle" },
+
+    { "anahtar": "improve_logo_baslik", "metin": "Logonu ekle" },
+    { "anahtar": "improve_logo_aciklama", "metin": "İşletme logon vitrinin üst köşesinde görünür — kurumsal bir ilk izlenim bırakır." },
+    { "anahtar": "improve_logo_buton", "metin": "Logo ekle" },
+
+    { "anahtar": "improve_working_hours_baslik", "metin": "Çalışma saatlerini ekle" },
+    { "anahtar": "improve_working_hours_aciklama", "metin": "Müşterin ne zaman açık olduğunu görsün, boşuna gelip seni kapalı bulmasın." },
+    { "anahtar": "improve_working_hours_buton", "metin": "Saatleri ekle" },
+
+    { "anahtar": "improve_google_link_baslik", "metin": "Google İşletme / harita bağlantını ekle" },
+    { "anahtar": "improve_google_link_aciklama", "metin": "Müşterin tek tıkla yol tarifi alsın veya Google'daki işletme sayfana ulaşsın." },
+    { "anahtar": "improve_google_link_buton", "metin": "Bağlantı ekle" },
+
+    { "anahtar": "improve_about_title_baslik", "metin": "Hakkımızda başlığı ekle" },
+    { "anahtar": "improve_about_title_aciklama", "metin": "Hakkımızda bölümüne kısa, dikkat çekici bir başlık yaz." },
+    { "anahtar": "improve_about_title_buton", "metin": "Başlık ekle" },
+
+    { "anahtar": "improve_about_bio_baslik", "metin": "İşletmenin hikayesini anlat" },
+    { "anahtar": "improve_about_bio_aciklama", "metin": "Hakkımızda metnine işletmenin hikayesini, neyi farklı yaptığını yaz — müşteri seni tanısın." },
+    { "anahtar": "improve_about_bio_buton", "metin": "Hikayeni yaz" },
+
+    { "anahtar": "improve_booking_baslik", "metin": "Randevu sistemi kurun" },
+    { "anahtar": "improve_booking_aciklama", "metin": "Müşterileriniz online randevu alsın — 7/24 açık kalın." },
+    { "anahtar": "improve_booking_buton", "metin": "Randevu ayarları" },
+
+    { "anahtar": "improve_blog_baslik", "metin": "Duyuru veya yazı paylaşın" },
+    { "anahtar": "improve_blog_aciklama", "metin": "Kampanya, indirim veya haberlerinizi yazarak Google'da üst sıralara çıkın." },
+    { "anahtar": "improve_blog_buton", "metin": "Vitrinime git" },
+
+    { "anahtar": "improve_seo_baslik", "metin": "Google görünürlüğünü güçlendirin" },
+    { "anahtar": "improve_seo_aciklama", "metin": "Meta başlık, açıklama ve anahtar kelimelerinizi girerek arama sonuçlarında öne çıkın." },
+    { "anahtar": "improve_seo_buton", "metin": "Vitrinime git" },
+
+    { "anahtar": "improve_account_baslik", "metin": "Hesabınızı güvenceye alın" },
+    { "anahtar": "improve_account_aciklama", "metin": "Giriş yaparak vitrininizi hesabınıza bağlayın — verileriniz güvende kalsın." },
+    { "anahtar": "improve_account_buton", "metin": "Hesap" }
   ]
 }

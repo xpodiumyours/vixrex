@@ -113,6 +113,15 @@ void main() {
       expect(validator.validateStore(data), contains('kategori'));
     });
 
+    // Faz F (Tek Asistan planı) düzeltmesi: "Diğer" teknik olarak dolu ama
+    // VixRexProfileSnapshot.categoryCompleted onu eksik sayıyor —
+    // bosDegerler şeması iki tarafı burada da tutarlı tutar.
+    test('"Diğer" kategorisi de eksik sayılır (bosDegerler ile tutarlı)', () {
+      final data = validStore();
+      data.kategori = 'Diğer';
+      expect(validator.validateStore(data), contains('kategori'));
+    });
+
     test('product with empty name returns error', () {
       final data = validStore(products: [Product(id: 'p1', name: '')]);
       expect(validator.validateStore(data), contains('ürün'));
