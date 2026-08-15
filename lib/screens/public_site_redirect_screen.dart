@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 
 /// Flutter panel içinde `/v/*` açılınca müşteri UI'sı (Next.js) dışarıda açılır.
 /// Dosya silmeden çift vitrin yüzünü keser.
@@ -48,22 +49,18 @@ class _PublicSiteRedirectScreenState extends State<PublicSiteRedirectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgEditor,
-      appBar: AppBar(
-        backgroundColor: AppColors.bgEditor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.darkText),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/app');
-            }
-          },
-        ),
+    return AppScreenScaffold(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded, color: AppColors.darkText),
+        onPressed: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          } else {
+            context.go('/app');
+          }
+        },
       ),
+      padding: EdgeInsets.zero,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
