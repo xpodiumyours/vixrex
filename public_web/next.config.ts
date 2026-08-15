@@ -15,6 +15,40 @@ function getAppUrl() {
   }
 }
 
+// CSP (2026-08-15 güvenlik taraması — eksikti). Sıkı/nonce'lı bir politika
+// DEĞİL — Next.js'in kendi inline hydration script'i 'unsafe-inline'
+// gerektiriyor (nonce tabanlı sıkı CSP ayrı, daha büyük bir iş, kapsam
+// dışı bırakıldı). Amaç: rastgele üçüncü parti script/iframe enjeksiyonuna
+// karşı savunma katmanı, mükemmel izolasyon değil. Kullanılan gerçek
+// kaynaklar taranarak yazıldı:
+//   - reCAPTCHA v3: www.google.com, www.gstatic.com (script)
+//   - GA4 (rıza varsa): www.googletagmanager.com (script),
+//     www.google-analytics.com/*.analytics.google.com (connect)
+//   - Görseller: next.config'teki remotePatterns zaten "**" (herhangi bir
+//     host) — img-src da aynı genişlikte olmak zorunda.
+//   - Google Maps embed iframe (VitrinProfileView.tsx)
+//   - Supabase: connect-src'e *.supabase.co
+// 2026-08-15: Kilo CLI (paralel oturum) Cloudflare Turnstile domainlerini
+// ekledi (report-abuse/route.ts TURNSTILE_SECRET_KEY'i sunucu tarafında
+// doğruluyor — istemci widget'ı henüz yazılmamış olsa da entegrasyon
+// gerçek/kasıtlı, CSP'de yer ayrılması doğru). Google Fonts (fonts.
+// googleapis/gstatic) hiçbir yerde kullanılmadığı için (grep ile
+// doğrulandı) dahil edilmedi — CSP'ye gerçekten kullanılmayan kaynak
+// eklenmez.
+const CSP =
+  "default-src 'self'; " +
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com; " +
+  "style-src 'self' 'unsafe-inline'; " +
+  "img-src * data: blob:; " +
+  "font-src 'self' data:; " +
+  "connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com https://www.google.com https://www.googleapis.com https://www.google-analytics.com https://*.analytics.google.com; " +
+  "frame-src 'self' https://challenges.cloudflare.com https://www.google.com; " +
+  "worker-src 'self'; " +
+  "manifest-src 'self'; " +
+  "frame-ancestors 'none'; " +
+  "base-uri 'self'; " +
+  "form-action 'self';";
+
 const securityHeaders = [
   {
     key: "X-Frame-Options",
@@ -34,17 +68,7 @@ const securityHeaders = [
   },
   {
     key: "Content-Security-Policy",
-    value: [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: https:",
-      "connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com https://api.vercel.com",
-      "frame-src 'self' https://challenges.cloudflare.com https://www.google.com",
-      "worker-src 'self'",
-      "manifest-src 'self'",
-    ].join("; "),
+    value: CSP,
   },
 ];
 

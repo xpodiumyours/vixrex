@@ -75,15 +75,50 @@ async function readImageWithLimit(response: Response) {
   return Buffer.concat(chunks, totalBytes);
 }
 
+const ALLOWED_INSTAGRAM_MEDIA_HOSTS = new Set([
+  "graph.instagram.com",
+  "cdn.instagram.com",
+]);
+
+function assertInstagramMediaUrl(rawUrl: string): string {
+  const trimmed = rawUrl.trim();
+
+  if (!trimmed) {
+    throw new Error("INSTAGRAM_MEDIA_URL_EMPTY");
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new Error("INSTAGRAM_MEDIA_URL_INVALID");
+  }
+
+  if (parsed.protocol !== "https:") {
+    throw new Error("INSTAGRAM_MEDIA_URL_INVALID");
+  }
+
+  const host = parsed.host.toLowerCase();
+  const isAllowedHost =
+    ALLOWED_INSTAGRAM_MEDIA_HOSTS.has(host) ||
+    /\.cdninstagram\.com$/i.test(host);
+
+  if (!isAllowedHost) {
+    throw new Error("INSTAGRAM_MEDIA_URL_INVALID");
+  }
+
+  return trimmed;
+}
+
 async function uploadInstagramMedia(args: {
   mediaUrl: string;
   storeSlug: string;
   mediaId: string;
   admin: SupabaseClient;
 }) {
-  if (!args.mediaUrl) return "";
+  const mediaUrl = assertInstagramMediaUrl(args.mediaUrl);
 
-  const response = await fetch(args.mediaUrl);
+  const response = await fetch(mediaUrl);
   if (!response.ok) throw new Error("INSTAGRAM_MEDIA_DOWNLOAD_FAILED");
 
   const contentType = (response.headers.get("content-type") || "")

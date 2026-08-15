@@ -22,8 +22,8 @@ env:
   FLUTTER_VERSION: "3.44.4"
 
 jobs:
-  secret-scan:
-    name: Secret scanning
+  secret-tarama:
+    name: Secret sızıntı taraması
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -76,6 +76,7 @@ jobs:
             echo "::error::Minimum password length $min_len < 8. Supabase Dashboard → Authentication üzerinden en az 8 yapın."
             exit 1
           fi
+
   changes:
     name: Değişiklik yüzeyi
     runs-on: ubuntu-latest
