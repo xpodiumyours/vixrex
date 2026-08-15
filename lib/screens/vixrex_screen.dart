@@ -7,6 +7,7 @@ import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/chat/chat_top_bar.dart';
+import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 import 'package:vixrex/widgets/vixrex/vixrex_companion_chat.dart';
 
 /// Vixrex sekmesinin tek yüzeyi.
@@ -60,21 +61,17 @@ class _VixRexScreenState extends State<VixRexScreen> {
       hasShared: widget.hasShared,
     );
 
-    return Scaffold(
-      backgroundColor: AppColors.bgEditor,
-      appBar: AppBar(
-        toolbarHeight: 58,
-        automaticallyImplyLeading: false,
-        title: ChatTopBar(
-          onTap: _needsSetup ? null : _chatInputFocusNode.requestFocus,
-        ),
-        backgroundColor: AppColors.bgEditor,
-        elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.border),
-        ),
+    return AppScreenScaffold(
+      toolbarHeight: 58,
+      automaticallyImplyLeading: false,
+      titleWidget: ChatTopBar(
+        onTap: _needsSetup ? null : _chatInputFocusNode.requestFocus,
       ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: AppColors.border),
+      ),
+      padding: EdgeInsets.zero,
       body: SafeArea(
         top: false,
         child:
