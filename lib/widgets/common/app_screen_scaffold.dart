@@ -11,6 +11,10 @@ class AppScreenScaffold extends StatelessWidget {
   const AppScreenScaffold({
     super.key,
     this.title,
+    this.titleWidget,
+    this.leading,
+    this.automaticallyImplyLeading = true,
+    this.toolbarHeight,
     this.actions,
     this.bottom,
     this.body,
@@ -19,7 +23,22 @@ class AppScreenScaffold extends StatelessWidget {
   });
 
   /// AppBar başlığı. Null ise AppBar yine çizilir, başlıksız kalır.
+  /// [titleWidget] verilmişse bu yok sayılır.
   final String? title;
+
+  /// Metin dışı bir başlık gereken ekranlar için (ör. sohbet üst çubuğu).
+  /// Verilmişse [title] yok sayılır.
+  final Widget? titleWidget;
+
+  /// AppBar'ın sol tarafı — özel geri/kapat davranışı gereken ekranlar için.
+  /// Null ise standart Flutter geri ok davranışı kullanılır.
+  final Widget? leading;
+
+  /// [leading] verilmediğinde otomatik geri ok çizilsin mi.
+  final bool automaticallyImplyLeading;
+
+  /// AppBar yüksekliği. Null ise Flutter varsayılanı kullanılır.
+  final double? toolbarHeight;
 
   /// AppBar sağ taraf aksiyonları.
   final List<Widget>? actions;
@@ -41,7 +60,10 @@ class AppScreenScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: title == null ? null : Text(title!),
+        title: titleWidget ?? (title == null ? null : Text(title!)),
+        leading: leading,
+        automaticallyImplyLeading: automaticallyImplyLeading,
+        toolbarHeight: toolbarHeight,
         backgroundColor: backgroundColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.darkText),
