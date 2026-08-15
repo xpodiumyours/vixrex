@@ -142,6 +142,36 @@ export function hazirlikRaporu(
   };
 }
 
+export interface OnemDolulugu {
+  dolu: number;
+  toplam: number;
+}
+
+/** Üç önem sınıfının doluluğu — Faz G3 (Tek Asistan planı) `StageMeter` için.
+ * Sayılar ŞEMADAN hesaplanır, elle yazılmaz (`hazirlikRaporu` ile aynı
+ * `alanOnemi`/`doluMu` kuralını kullanır — iki fonksiyon aynı taramayı iki
+ * biçimde yapıyor, kural tek yerde: `alanOnemi`). */
+export function asamaDolulugu(
+  draftData: Record<string, unknown>,
+  atlanmislar: ReadonlySet<string> = new Set(),
+): Record<EksikOnem, OnemDolulugu> {
+  const sayaclar: Record<EksikOnem, OnemDolulugu> = {
+    temel: { dolu: 0, toplam: 0 },
+    kalite: { dolu: 0, toplam: 0 },
+    "istege-bagli": { dolu: 0, toplam: 0 },
+  };
+
+  for (const alan of VITRIN_FIELDS) {
+    const onem = alanOnemi(alan);
+    sayaclar[onem].toplam += 1;
+    const dolu = doluMu(draftData[alan.kolon], alan.bosDegerler);
+    const atlanmisMi = onem === "istege-bagli" && atlanmislar.has(alan.anahtar);
+    if (dolu || atlanmisMi) sayaclar[onem].dolu += 1;
+  }
+
+  return sayaclar;
+}
+
 /** Tüm alanlar (VITRIN_FIELDS.length adet), temel → kalite → isteğe bağlı sırasıyla (her grup kendi şema sırasında). */
 export function tumAlanlarSirali(): VitrinField[] {
   const gruplar: Record<EksikOnem, VitrinField[]> = {
