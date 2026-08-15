@@ -29,6 +29,14 @@ export const dynamic = "force-dynamic";
 
 const MAX_BAYT = 5 * 1024 * 1024; // 5 MB
 
+// Tek dosya boyutu sınırlıydı ama TOPLAM kota yoktu — geçerli bir sahip
+// oturumu (ör. rent-demo ile açılan bir deneme) döngüyle sınırsız 5 MB'lık
+// dosya yükleyip depolama maliyeti üretebilirdi (2026-08-15 güvenlik
+// taraması). Var olan assistant_rate_limits/consume_assistant_request
+// deseni yeniden kullanılıyor — ikinci bir tablo açılmadı.
+const UPLOAD_LIMIT_PER_STORE = 30;
+const UPLOAD_LIMIT_WINDOW_SECONDS = 3600;
+
 const IZINLI_TURLER = new Map([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
@@ -110,6 +118,34 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const admin = getSupabaseAdmin();
+  const { data: limitRows, error: limitError } = await admin.rpc(
+    "consume_assistant_request",
+    {
+      p_client_key: `owner_upload:${ownerSession.slug}`,
+      p_max_requests: UPLOAD_LIMIT_PER_STORE,
+      p_window_seconds: UPLOAD_LIMIT_WINDOW_SECONDS,
+    }
+  );
+  const limit = Array.isArray(limitRows) ? limitRows[0] : limitRows;
+  if (limitError) {
+    console.error("[owner-upload] rate limit check failed:", limitError.message);
+    // Sınır kontrolü kendisi bozulduysa fail-open değil fail-closed —
+    // yükleme reddedilir, esnaf tekrar dener.
+    return NextResponse.json(
+      { hata: "Görsel yüklenemedi. Tekrar dene." },
+      { status: 500 }
+    );
+  }
+  if (limit && !limit.allowed) {
+    return NextResponse.json(
+      {
+        hata: `Bu vitrin için çok fazla görsel yüklendi. ${limit.retry_after_seconds} saniye sonra tekrar dene.`,
+      },
+      { status: 429 }
+    );
+  }
+
   if (dosya.size > MAX_BAYT) {
     return NextResponse.json(
       { hata: "Dosya çok büyük. En fazla 5 MB olabilir." },
@@ -142,7 +178,6 @@ export async function POST(request: NextRequest) {
   const yol = `${guvenliSlug}/owner/${alan.anahtar}/${dosyaAdi}`;
 
   try {
-    const admin = getSupabaseAdmin();
     const { error } = await admin.storage
       .from("shelf-images")
       .upload(yol, bayt, { contentType: tur, upsert: false });
