@@ -24,10 +24,24 @@ const cikti = {
     max: a.max ?? null,
     secenekler: a.secenekler ?? null,
     ipucu: a.ipucu ?? null,
+    dogrulama: a.dogrulama ?? null,
+    bosDegerler: a.bosDegerler ?? null,
   })),
 };
 
 writeFileSync(hedef, JSON.stringify(cikti, null, 2) + "\n", "utf8");
 console.log("alan sayisi:", cikti.alanlar.length);
-console.log("zorunlu:", cikti.alanlar.filter((a) => a.zorunlu).map((a) => a.anahtar).join(", "));
-console.log("kalite:", cikti.alanlar.filter((a) => a.kalite).map((a) => a.anahtar).join(", "));
+console.log(
+  "zorunlu:",
+  cikti.alanlar
+    .filter((a) => a.zorunlu)
+    .map((a) => a.anahtar)
+    .join(", "),
+);
+console.log(
+  "kalite:",
+  cikti.alanlar
+    .filter((a) => a.kalite)
+    .map((a) => a.anahtar)
+    .join(", "),
+);

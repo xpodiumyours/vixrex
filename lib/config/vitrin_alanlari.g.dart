@@ -19,6 +19,8 @@ class VitrinAlani {
   final int? maxUzunluk;
   final List<String>? secenekler;
   final String? ipucu;
+  final String? dogrulama;
+  final List<String>? bosDegerler;
 
   const VitrinAlani({
     required this.anahtar,
@@ -32,6 +34,8 @@ class VitrinAlani {
     this.maxUzunluk,
     this.secenekler,
     this.ipucu,
+    this.dogrulama,
+    this.bosDegerler,
   });
 }
 
@@ -102,6 +106,7 @@ const List<VitrinAlani> vitrinAlanlari = [
       'Oto / Araç',
       'Diğer',
     ],
+    bosDegerler: ['diger', 'diğer'],
   ),
   VitrinAlani(
     anahtar: 'isletmeTuru',
@@ -134,6 +139,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     kolon: 'whatsapp',
     bolum: 'contact',
     zorunlu: true,
+    dogrulama: 'tr_mobil',
   ),
   VitrinAlani(
     anahtar: 'telefon',
@@ -158,6 +164,24 @@ const List<VitrinAlani> vitrinAlanlari = [
     bolum: 'contact',
     zorunlu: true,
     maxUzunluk: 200,
+  ),
+  VitrinAlani(
+    anahtar: 'il',
+    tip: 'metin',
+    etiket: 'İl',
+    kolon: 'province_name',
+    bolum: 'contact',
+    zorunlu: true,
+    maxUzunluk: 60,
+  ),
+  VitrinAlani(
+    anahtar: 'ilce',
+    tip: 'metin',
+    etiket: 'İlçe',
+    kolon: 'district_name',
+    bolum: 'contact',
+    zorunlu: true,
+    maxUzunluk: 60,
   ),
   VitrinAlani(
     anahtar: 'haritaEtiketi',

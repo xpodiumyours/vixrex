@@ -6,7 +6,11 @@
 //
 // Yeni alan eklendiğinde bu dosya değişmez.
 
-import { VITRIN_FIELDS, type VitrinField, type VitrinSection } from "./vitrinFieldSchema";
+import {
+  VITRIN_FIELDS,
+  type VitrinField,
+  type VitrinSection,
+} from "./vitrinFieldSchema";
 
 /** Vitrinin ayakta durması için doldurulması beklenen alanlar. */
 // TEK DOĞRU KAYNAK: şemadaki `zorunlu` işareti.
@@ -20,14 +24,14 @@ import { VITRIN_FIELDS, type VitrinField, type VitrinSection } from "./vitrinFie
 // Artık zorunluluk yalnız şemada tanımlanır; buraya ve Flutter'a oradan
 // gelir. Yeni bir alanı zorunlu yapmak = şemaya tek satır.
 const TEMEL_ALANLAR = new Set(
-  VITRIN_FIELDS.filter((alan) => alan.zorunlu).map((alan) => alan.anahtar)
+  VITRIN_FIELDS.filter((alan) => alan.zorunlu).map((alan) => alan.anahtar),
 );
 
 // Vitrini web sitesi kalitesine çıkaran, ama şart olmayan alanlar — artık
 // yalnız burada elle tutulmuyor, şemadaki `kalite` işaretinden gelir
 // (TEMEL_ALANLAR'ın `zorunlu`'dan gelmesiyle aynı desen).
 const KALITE_ALANLARI = new Set(
-  VITRIN_FIELDS.filter((alan) => alan.kalite).map((alan) => alan.anahtar)
+  VITRIN_FIELDS.filter((alan) => alan.kalite).map((alan) => alan.anahtar),
 );
 
 export type EksikOnem = "temel" | "kalite" | "istege-bagli";
@@ -57,9 +61,20 @@ export function alanOnemi(alan: VitrinField): EksikOnem {
   return "istege-bagli";
 }
 
-function doluMu(deger: unknown): boolean {
+function doluMu(deger: unknown, bosDegerler?: readonly string[]): boolean {
   if (deger === null || deger === undefined) return false;
-  if (typeof deger === "string") return deger.trim().length > 0;
+  if (typeof deger === "string") {
+    const kirpilmis = deger.trim();
+    if (kirpilmis.length === 0) return false;
+    // Faz F (Tek Asistan planı): bazı değerler teknik olarak dolu ama
+    // işlevsel olarak eksik — ör. kategori "Diğer" seçilirse kategoriye
+    // bağlı hiçbir şey (butonlar, hazır görseller) çalışmaz. Flutter'ın
+    // categoryCompleted getter'ıyla aynı kural, artık şemadan okunuyor.
+    if (bosDegerler?.some((v) => v.toLowerCase() === kirpilmis.toLowerCase())) {
+      return false;
+    }
+    return true;
+  }
   if (typeof deger === "boolean") return true; // açık/kapalı her hâlde karar verilmiştir
   if (typeof deger === "number") return Number.isFinite(deger);
   return true;
@@ -74,17 +89,17 @@ function doluMu(deger: unknown): boolean {
  */
 export function hazirlikRaporu(
   draftData: Record<string, unknown>,
-  atlanmislar: ReadonlySet<string> = new Set()
+  atlanmislar: ReadonlySet<string> = new Set(),
 ): HazirlikRaporu {
   const eksikler: EksikAlan[] = [];
   // "İşlem görmüş" = dolu VEYA (isteğe bağlıysa) bilerek atlanmış. Yüzde
-  // artık toplam 44 alan üstünden — önceden yalnız temel+kalite (~11)
+  // artık toplam VITRIN_FIELDS.length alan üstünden — önceden yalnız temel+kalite (~11)
   // üstündendi, isteğe bağlının 32'si hiç sayılmıyordu.
   let islemGormus = 0;
 
   for (const alan of VITRIN_FIELDS) {
     const onem = alanOnemi(alan);
-    const dolu = doluMu(draftData[alan.kolon]);
+    const dolu = doluMu(draftData[alan.kolon], alan.bosDegerler);
     const atlanmisMi = onem === "istege-bagli" && atlanmislar.has(alan.anahtar);
 
     if (dolu || atlanmisMi) {
@@ -97,11 +112,18 @@ export function hazirlikRaporu(
     // eksikler listede.
     if (onem === "istege-bagli") continue;
 
-    eksikler.push({ anahtar: alan.anahtar, etiket: alan.etiket, bolum: alan.bolum, onem });
+    eksikler.push({
+      anahtar: alan.anahtar,
+      etiket: alan.etiket,
+      bolum: alan.bolum,
+      onem,
+    });
   }
 
   // Önce temel eksikler, sonra kalite eksikleri.
-  eksikler.sort((a, b) => (a.onem === b.onem ? 0 : a.onem === "temel" ? -1 : 1));
+  eksikler.sort((a, b) =>
+    a.onem === b.onem ? 0 : a.onem === "temel" ? -1 : 1,
+  );
 
   const temelTamam = !eksikler.some((e) => e.onem === "temel");
   const ilk = eksikler[0];
@@ -120,7 +142,7 @@ export function hazirlikRaporu(
   };
 }
 
-/** Tüm 44 alan, temel → kalite → isteğe bağlı sırasıyla (her grup kendi şema sırasında). */
+/** Tüm alanlar (VITRIN_FIELDS.length adet), temel → kalite → isteğe bağlı sırasıyla (her grup kendi şema sırasında). */
 export function tumAlanlarSirali(): VitrinField[] {
   const gruplar: Record<EksikOnem, VitrinField[]> = {
     temel: [],
@@ -144,7 +166,7 @@ export function tumAlanlarSirali(): VitrinField[] {
 export function sonrakiRehberAlan(
   draftData: Record<string, unknown>,
   suankiAnahtar: string | null,
-  atlanmislar: ReadonlySet<string>
+  atlanmislar: ReadonlySet<string>,
 ): VitrinField | null {
   const sirali = tumAlanlarSirali();
   const suankiIndeks = suankiAnahtar
@@ -154,7 +176,7 @@ export function sonrakiRehberAlan(
   for (let i = suankiIndeks + 1; i < sirali.length; i++) {
     const alan = sirali[i];
     if (atlanmislar.has(alan.anahtar)) continue;
-    if (!doluMu(draftData[alan.kolon])) return alan;
+    if (!doluMu(draftData[alan.kolon], alan.bosDegerler)) return alan;
   }
   return null;
 }

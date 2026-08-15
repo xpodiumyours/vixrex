@@ -41,8 +41,6 @@ extension VixRexNextStepLabel on VixRexNextStep {
 /// Vitrin durumunun kullanıcı dostu özeti.
 /// Güvenlik: editToken, userId, session bilgisi içermez.
 class VixRexProfileSnapshot {
-  static const int requiredStepCount = 4;
-
   final bool nameCompleted;
   final bool whatsappCompleted;
   final bool addressCompleted;
@@ -52,9 +50,25 @@ class VixRexProfileSnapshot {
   final bool descriptionCompleted;
   final bool catalogCompleted;
   final bool autoFillCompleted;
+  // Faz F takibi (Tek Asistan planı): şemadaki 7 `kalite` alanının geri
+  // kalanı — heroRozet/logo/çalışma saatleri/harita linki/hakkımızda
+  // başlığı/hakkımızda metni. Önceden Flutter'ın aktif öneri motoru
+  // (improvementRecommendations) bunları hiç sormuyordu; yalnız Next.js'in
+  // genel hazırlık raporu biliyordu. Esnaf yalnız telefonu kullanıyorsa bu
+  // 6 alan hiç dürtülmüyordu — iki yüzey farklı "vitrinini güzelleştir"
+  // listesi gösteriyordu. Altısı da şemadaki 6 AYRI alana karşılık gelir —
+  // hakkındaBaşlık ve hakkındaMetin birleştirilmedi, şemada nasılsa öyle.
+  final bool heroBadgeCompleted;
+  final bool logoCompleted;
+  final bool workingHoursCompleted;
+  final bool googleLinkCompleted;
+  final bool aboutTitleCompleted;
+  final bool aboutBioCompleted;
   final bool isPublished;
   final String storeName;
   final String category;
+  final String address;
+  final String province;
   final String district;
   final String publicLink;
 
@@ -68,9 +82,17 @@ class VixRexProfileSnapshot {
     required this.descriptionCompleted,
     required this.catalogCompleted,
     this.autoFillCompleted = false,
+    this.heroBadgeCompleted = false,
+    this.logoCompleted = false,
+    this.workingHoursCompleted = false,
+    this.googleLinkCompleted = false,
+    this.aboutTitleCompleted = false,
+    this.aboutBioCompleted = false,
     required this.isPublished,
     required this.storeName,
     required this.category,
+    this.address = '',
+    this.province = '',
     required this.district,
     required this.publicLink,
   });
@@ -108,6 +130,14 @@ class VixRexProfileSnapshot {
     final catalogCompleted =
         data.products.isNotEmpty || data.offerings.isNotEmpty;
     // autoFillCompleted veri kaynagindan gelmez - ayri kontrol edilir
+    final heroBadgeCompleted = data.heroBadge.trim().isNotEmpty;
+    final logoCompleted = (data.logoUrl ?? '').trim().isNotEmpty;
+    final workingHoursCompleted = data.workingHours.trim().isNotEmpty;
+    final googleLinkCompleted = data.googleBusinessLink.trim().isNotEmpty;
+    // Şemada iki AYRI kalite alanı (hakkindaBaslik, hakkindaMetin) —
+    // birleştirilmedi, ikisi de kendi başına kontrol edilir.
+    final aboutTitleCompleted = data.aboutTitle.trim().isNotEmpty;
+    final aboutBioCompleted = data.corporateBio.trim().isNotEmpty;
 
     return VixRexProfileSnapshot(
       nameCompleted: nameOk,
@@ -119,9 +149,17 @@ class VixRexProfileSnapshot {
       descriptionCompleted: descriptionCompleted,
       catalogCompleted: catalogCompleted,
       autoFillCompleted: autoFillCompleted, // SnapshotLoader'dan ayarlanacak
+      heroBadgeCompleted: heroBadgeCompleted,
+      logoCompleted: logoCompleted,
+      workingHoursCompleted: workingHoursCompleted,
+      googleLinkCompleted: googleLinkCompleted,
+      aboutTitleCompleted: aboutTitleCompleted,
+      aboutBioCompleted: aboutBioCompleted,
       isPublished: isPublished,
       storeName: data.name.trim(),
       category: data.kategori.trim(),
+      address: data.address.trim(),
+      province: data.provinceName.trim(),
       district: data.districtName.trim(),
       publicLink: publishedInfo?.publicLink.trim() ?? '',
     );
@@ -153,10 +191,23 @@ class VixRexProfileSnapshot {
         return nameCompleted;
       case 'whatsapp':
         return whatsappCompleted;
+      // Faz F (Tek Asistan planı): il/ilçe artık şemada AYRI zorunlu alan
+      // (Next.js tarafı bunları hiç bilmiyordu — bkz. docs/alan-eslemesi.md).
+      // 'adres' burada BİLEREK yalnız ham adres metnine bakar —
+      // addressCompleted (public getter, geriye dönük uyum için hâlâ
+      // üçünü birlikte sayıyor) DEĞİL. Aksi hâlde zorunluAlanlar sırasında
+      // 'adres' 'il'/'ilce'den önce geldiği için, il veya ilçe boşken
+      // addressCompleted da false olur, sonrakiEksikZorunluAlan hep
+      // 'adres' der ve 'il'/'ilce' case'lerine hiç sıra gelmez — tam da
+      // zorunlu_alan_baglanti_test.dart'ın yakaladığı sapma buydu.
       case 'adres':
-        return addressCompleted;
+        return address.trim().isNotEmpty;
       case 'kategori':
         return categoryCompleted;
+      case 'il':
+        return province.trim().isNotEmpty;
+      case 'ilce':
+        return district.trim().isNotEmpty;
       default:
         // Şemaya yeni zorunlu alan eklenmiş ama buraya bağlanmamış.
         // Akışı tıkamamak için dolu sayılır; sözleşme testi bu boşluğu
@@ -175,7 +226,12 @@ class VixRexProfileSnapshot {
           return VixRexNextStep.category;
         case 'whatsapp':
           return VixRexNextStep.whatsapp;
+        // Adres, il ve ilçe kullanıcıya tek "konum" adımı olarak sorulur
+        // (FormLocationInfo ikisini de tek ekranda toplar) — şemada üç ayrı
+        // zorunlu girdi olması akış aşaması sayısını artırmaz.
         case 'adres':
+        case 'il':
+        case 'ilce':
           return VixRexNextStep.address;
       }
     }
