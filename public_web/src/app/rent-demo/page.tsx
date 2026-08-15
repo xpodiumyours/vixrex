@@ -1,5 +1,27 @@
 "use client";
 
+// "Bu vitrini kirala" güvenli köprü sayfası (2026-08-15, güvenlik açığı
+// kapatılırken eklendi).
+//
+// Buraya iki yerden gelinir:
+//   - Web CTA'sı (VitrinProfileView.tsx): düz <a href="/rent-demo?slug=x">.
+//   - Flutter (AppRouter.navigateToRentDemo, harici tarayıcı): aynı URL.
+//   - Eski (güncellenmemiş) Flutter APK'ları: /api/rent-demo GET → buraya
+//     303 ile yönlendirilir (bkz. api/rent-demo/route.ts).
+//
+// Görevi TEK şey: reCAPTCHA v3 token'ı al, gerçek <form method="POST">
+// gönder. Fetch/JS ile yönlendirme takip ETMİYORUZ — tarayıcının kendisi
+// POST → 303 → GET /api/owner-session → 303 + Set-Cookie → /v/:slug
+// zincirini native olarak izlesin, çerez/yönlendirme davranışı sunucu
+// tarafındaki mevcut akışla birebir aynı kalsın.
+//
+// HOTFIX (2026-08-15): useSearchParams() App Router'da bir <Suspense>
+// sınırı içinde olmak ZORUNDA — yoksa `next build` prerender aşamasında
+// çöküyor ("should be wrapped in a suspense boundary"). Bu PR2'de (main'e
+// zaten inmişti) atlanmıştı, main'in build'i kırıktı. Mantık taşınmadı,
+// yalnız useSearchParams kullanan kısım ayrı bir bileşene çıkarılıp
+// Suspense ile sarıldı.
+
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/components/recaptcha/RecaptchaProvider";
@@ -26,7 +48,24 @@ function HataSayfasi({ mesaj }: { mesaj: string }) {
   );
 }
 
-function RentDemoPageInner() {
+function BekleniyorSayfasi() {
+  return (
+    <main
+      style={{
+        display: "grid",
+        placeItems: "center",
+        minHeight: "100vh",
+        background: "#0B1120",
+        color: "#fff",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      }}
+    >
+      <p style={{ color: "rgba(255,255,255,0.7)" }}>Vitrin hazırlanıyor…</p>
+    </main>
+  );
+}
+
+function RentDemoIcerik() {
   const searchParams = useSearchParams();
   const demoSlug = (searchParams.get("slug") ?? "").trim();
   const { executeRecaptcha, isReady } = useRecaptcha();
@@ -79,6 +118,9 @@ function RentDemoPageInner() {
       <div style={{ textAlign: "center" }}>
         <p style={{ color: "rgba(255,255,255,0.7)" }}>Vitrin hazırlanıyor…</p>
       </div>
+      {/* JS'siz/gövde-parse edilemeyen ortamlarda bile POST'un native form
+          davranışıyla gitmesi için gerçek bir <form>; action route.ts'in
+          POST handler'ına gider, JSON değil form-encoded veri okunur. */}
       <form ref={formRef} method="POST" action="/api/rent-demo" hidden>
         <input type="hidden" name="slug" value={demoSlug} />
         <input type="hidden" name="recaptchaToken" value={token ?? ""} />
@@ -89,8 +131,8 @@ function RentDemoPageInner() {
 
 export default function RentDemoPage() {
   return (
-    <Suspense fallback={<div style={{ display: "grid", placeItems: "center", minHeight: "100vh", background: "#0B1120", color: "#fff", fontFamily: "system-ui, -apple-system, sans-serif" }}>Vitrin hazırlanıyor…</div>}>
-      <RentDemoPageInner />
+    <Suspense fallback={<BekleniyorSayfasi />}>
+      <RentDemoIcerik />
     </Suspense>
   );
 }

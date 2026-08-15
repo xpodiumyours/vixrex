@@ -149,12 +149,12 @@ describe("POST /api/instagram/import", () => {
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",
       media_type: "IMAGE",
-      media_url: "url1",
+      media_url: "https://cdn.instagram.com/big.jpg",
     });
 
     const mockMediaDetails = {
       ok: true,
-      json: async () => ({ id: "media-1", media_type: "IMAGE", media_url: "http://example.com/big.jpg" }),
+      json: async () => ({ id: "media-1", media_type: "IMAGE", media_url: "https://cdn.instagram.com/big.jpg" }),
     } as Response;
 
     const mockImageResponse = {
@@ -190,13 +190,13 @@ describe("POST /api/instagram/import", () => {
     vi.mocked(sanitizeInstagramMedia).mockReturnValue({
       id: "media-1",
       media_type: "IMAGE",
-      media_url: "http://example.com/img.jpg",
+      media_url: "https://cdn.instagram.com/img.jpg",
       caption: "Cool Product Description #tag",
     });
 
     const mockMediaDetails = {
       ok: true,
-      json: async () => ({ id: "media-1", media_type: "IMAGE", media_url: "http://example.com/img.jpg" }),
+      json: async () => ({ id: "media-1", media_type: "IMAGE", media_url: "https://cdn.instagram.com/img.jpg" }),
     } as Response;
 
     const mockImageResponse = {
