@@ -10,6 +10,6 @@ import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 void main() {
   test('intent ve mesaj sayısı kilitli', () {
     expect(vixRexIntentSemasi.length, 16);
-    expect(vixRexMesajlari.length, 20);
+    expect(vixRexMesajlari.length, 21);
   });
 }

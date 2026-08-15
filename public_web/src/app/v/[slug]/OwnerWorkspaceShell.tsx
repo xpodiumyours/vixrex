@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import OwnerAssistantPanel from "./OwnerAssistantPanel";
+import { hazirlikRaporu } from "@/lib/vitrinReadiness";
+import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
 import type {
   VitrinFeaturedBanner,
   VitrinAboutSection,
@@ -153,6 +155,18 @@ export default function OwnerWorkspaceShell({
 
   const hiddenOnMobile = !open && !isDesktop;
 
+  // Faz G2 (Tek Asistan planı): panel oturum/sürüm paneli olarak kalır,
+  // asistan işi almaz — yalnız AssistantState'in Next.js tarafındaki
+  // karşılığı olan hazirlikRaporu'dan tek cümlelik özet gösterir. Bu,
+  // asistanın söylediğiyle AYNI kaynaktan geliyor (useOwnerDraft'ın da
+  // kullandığı fonksiyon) — panel kendi kararını üretmez.
+  const rapor = hazirlikRaporu(
+    (draft?.draft_data ?? {}) as Record<string, unknown>,
+    new Set(
+      Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []
+    )
+  );
+
   const [tazeleniyor, setTazeleniyor] = useState(false);
   const [tazelemeHatasi, setTazelemeHatasi] = useState<string | null>(null);
 
@@ -195,8 +209,7 @@ export default function OwnerWorkspaceShell({
       {draft?.version_conflict && (
         <div className="fixed top-0 left-0 right-0 z-[70] bg-amber-600 text-white text-xs font-bold px-4 py-2 flex items-center justify-between gap-3">
           <span>
-            {tazelemeHatasi ??
-              "Canlı vitrin değişmiş — burada gördüğün eski hâli."}
+            {tazelemeHatasi ?? vixRexMesajlari["taslak_cakismasi"]}
           </span>
           <button
             onClick={taslagiTazele}
@@ -257,13 +270,25 @@ export default function OwnerWorkspaceShell({
             )}
           </div>
 
-          <div className="rounded-lg border border-dashed border-white/15 bg-white/[0.02] p-4 text-center">
-            <p className="text-sm font-medium text-slate-300">
-              Düzenleme Vixrex Asistan&apos;da
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">
-              Sağ alttaki 🦊 düğmesine basın veya vitrinde değiştirmek
-              istediğiniz yazıya tıklayın.
+          <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-white">
+                {rapor.temelTamam
+                  ? "Vitrin yayına hazır"
+                  : "Kurulum sürüyor"}
+              </p>
+              <span className="shrink-0 font-mono text-xs text-slate-400">
+                %{rapor.yuzde} · {rapor.doluSayisi}/{rapor.toplamSayisi}
+              </span>
+            </div>
+            {rapor.sonrakiAdim && (
+              <p className="text-xs leading-relaxed text-slate-400">
+                {rapor.sonrakiAdim}
+              </p>
+            )}
+            <p className="mt-3 text-xs leading-relaxed text-slate-500">
+              Düzenleme Vixrex Asistan&apos;da — sağ alttaki düğmeye basın
+              veya vitrinde değiştirmek istediğiniz yazıya tıklayın.
             </p>
           </div>
 

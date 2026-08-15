@@ -191,4 +191,5 @@ const Map<String, String> vixRexMesajlari = {
       'Vitrinini güvenceye almak için giriş yap / üye ol. Mevcut Auth ekranı açılır; vitrin token ile hesaba bağlanır.',
   'anlasilamadi':
       'Üzgünüm, bunu tam anlayamadım. Aşağıdaki seçeneklerden birini deneyebilirsiniz:',
+  'taslak_cakismasi': 'Canlı vitrin değişmiş — burada gördüğün eski hâli.',
 };
