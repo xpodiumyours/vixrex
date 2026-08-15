@@ -142,6 +142,36 @@ export function hazirlikRaporu(
   };
 }
 
+export interface OnemDolulugu {
+  dolu: number;
+  toplam: number;
+}
+
+/** Üç önem sınıfının doluluğu — Faz G3 (Tek Asistan planı) `StageMeter` için.
+ * Sayılar ŞEMADAN hesaplanır, elle yazılmaz (`hazirlikRaporu` ile aynı
+ * `alanOnemi`/`doluMu` kuralını kullanır — iki fonksiyon aynı taramayı iki
+ * biçimde yapıyor, kural tek yerde: `alanOnemi`). */
+export function asamaDolulugu(
+  draftData: Record<string, unknown>,
+  atlanmislar: ReadonlySet<string> = new Set(),
+): Record<EksikOnem, OnemDolulugu> {
+  const sayaclar: Record<EksikOnem, OnemDolulugu> = {
+    temel: { dolu: 0, toplam: 0 },
+    kalite: { dolu: 0, toplam: 0 },
+    "istege-bagli": { dolu: 0, toplam: 0 },
+  };
+
+  for (const alan of VITRIN_FIELDS) {
+    const onem = alanOnemi(alan);
+    sayaclar[onem].toplam += 1;
+    const dolu = doluMu(draftData[alan.kolon], alan.bosDegerler);
+    const atlanmisMi = onem === "istege-bagli" && atlanmislar.has(alan.anahtar);
+    if (dolu || atlanmisMi) sayaclar[onem].dolu += 1;
+  }
+
+  return sayaclar;
+}
+
 /** Tüm alanlar (VITRIN_FIELDS.length adet), temel → kalite → isteğe bağlı sırasıyla (her grup kendi şema sırasında). */
 export function tumAlanlarSirali(): VitrinField[] {
   const gruplar: Record<EksikOnem, VitrinField[]> = {
@@ -168,15 +198,31 @@ export function sonrakiRehberAlan(
   suankiAnahtar: string | null,
   atlanmislar: ReadonlySet<string>,
 ): VitrinField | null {
+  return sonrakiRehberAlanlar(draftData, suankiAnahtar, atlanmislar, 1)[0] ?? null;
+}
+
+/**
+ * `sonrakiRehberAlan`'ın çoğulu — Faz G3 (Tek Asistan planı) "Sırada"
+ * listesi için: sonraki [adet] eksik alanı, aynı sıralama ve atlama
+ * kurallarıyla döner. Tek alan bulan tarama mantığını tekrar yazmaz,
+ * yalnız [adet]'e ulaşana kadar biriktirir.
+ */
+export function sonrakiRehberAlanlar(
+  draftData: Record<string, unknown>,
+  suankiAnahtar: string | null,
+  atlanmislar: ReadonlySet<string>,
+  adet: number = 3,
+): VitrinField[] {
   const sirali = tumAlanlarSirali();
   const suankiIndeks = suankiAnahtar
     ? sirali.findIndex((a) => a.anahtar === suankiAnahtar)
     : -1;
 
-  for (let i = suankiIndeks + 1; i < sirali.length; i++) {
+  const sonuc: VitrinField[] = [];
+  for (let i = suankiIndeks + 1; i < sirali.length && sonuc.length < adet; i++) {
     const alan = sirali[i];
     if (atlanmislar.has(alan.anahtar)) continue;
-    if (!doluMu(draftData[alan.kolon], alan.bosDegerler)) return alan;
+    if (!doluMu(draftData[alan.kolon], alan.bosDegerler)) sonuc.push(alan);
   }
-  return null;
+  return sonuc;
 }

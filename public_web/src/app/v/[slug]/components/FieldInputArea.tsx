@@ -17,6 +17,9 @@ interface Props {
   hazirGorselSec: (url: string) => Promise<void>;
   gonder: () => Promise<void>;
   alanAtla: () => Promise<void>;
+  /** Kalite alanında "Sonra" — sırayı ilerletir, `atlanmislar`'a YAZMAZ
+   * (ADR 0002: "boş geç" yalnız isteğe bağlıda). Yoksa düğme çizilmez. */
+  sonrayaBirak?: () => void;
 }
 
 export function FieldInputArea({
@@ -32,21 +35,23 @@ export function FieldInputArea({
   hazirGorselSec,
   gonder,
   alanAtla,
+  sonrayaBirak,
 }: Props) {
   // "Boş geç" yalnız isteğe bağlı alanlarda çıkar — temel/kalite alanlar
   // rehberli akışta atlanamaz (ADR 0002).
   const istegeBagliMi = seciliAlan ? alanOnemi(seciliAlan) === "istege-bagli" : false;
 
+  const kaliteMi = seciliAlan ? alanOnemi(seciliAlan) === "kalite" : false;
+
   return (
-    <div className="border-t border-white/10 px-4 py-3">
-      {seciliAlan && (
-        <p className="mb-2 flex items-center justify-between text-[11px] text-blue-300">
-          <span>
-            Düzenleniyor: <strong>{seciliAlan.etiket}</strong>
-            {seciliAlan.maxUzunluk
-              ? ` · ${giris.length}/${seciliAlan.maxUzunluk}`
-              : ""}
-          </span>
+    <div>
+      {seciliAlan && (seciliAlan.maxUzunluk || istegeBagliMi || kaliteMi) && (
+        <p className="mb-2 flex items-center justify-end gap-2 text-[11px] text-slate-400">
+          {seciliAlan.maxUzunluk && (
+            <span>
+              {giris.length}/{seciliAlan.maxUzunluk}
+            </span>
+          )}
           {istegeBagliMi && (
             <button
               type="button"
@@ -55,6 +60,19 @@ export function FieldInputArea({
               className="shrink-0 text-slate-400 underline decoration-dotted hover:text-slate-200 disabled:opacity-50"
             >
               Boş geç
+            </button>
+          )}
+          {/* Kalite alanında "boş geç" YOK (ADR 0002) — "Sonra" sırayı
+           * ilerletir ama atlanmislar'a YAZMAZ, bir sonraki turda yine
+           * önerilir. */}
+          {kaliteMi && sonrayaBirak && (
+            <button
+              type="button"
+              onClick={sonrayaBirak}
+              disabled={kaydediliyor}
+              className="shrink-0 text-slate-400 underline decoration-dotted hover:text-slate-200 disabled:opacity-50"
+            >
+              Sonra
             </button>
           )}
         </p>
@@ -97,7 +115,7 @@ export function FieldInputArea({
             value={giris}
             onChange={(e) => setGiris(e.target.value)}
             disabled={kaydediliyor}
-            className="flex-1 rounded-lg border border-white/10 bg-slate-900/70 px-3 py-2 text-xs text-white outline-none focus:border-blue-500/60"
+            className="h-12 flex-1 rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60"
           >
             <option value="" disabled>Kategori seçin…</option>
             {seciliAlan.secenekler.map((secenek) => (
@@ -110,7 +128,7 @@ export function FieldInputArea({
             type="button"
             onClick={() => void gonder()}
             disabled={kaydediliyor || !giris}
-            className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {kaydediliyor ? "…" : "Gönder"}
           </button>
@@ -135,13 +153,15 @@ export function FieldInputArea({
                 ? "Yeni değeri yazın…"
                 : "Vitrinde bir yazıya tıkla…"
             }
-            className="flex-1 resize-none rounded-lg border border-white/10 bg-slate-900/70 px-3 py-2 text-xs text-white outline-none focus:border-blue-500/60"
+            className={`flex-1 resize-none rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60 ${
+              seciliAlan?.tip === "uzunMetin" ? "py-3" : "h-12 py-3"
+            }`}
           />
           <button
             type="button"
             onClick={() => void gonder()}
             disabled={kaydediliyor}
-            className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {kaydediliyor ? "…" : "Gönder"}
           </button>

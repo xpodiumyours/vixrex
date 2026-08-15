@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const fallbackAppUrl = "https://vixrex-app.vercel.app";
 
@@ -33,6 +34,15 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Faz G2 (Tek Asistan planı): vixrexMesajlari.ts repo kökündeki
+  // shared/vixrex_mesajlar.json'ı import ediyor — public_web'in dışında.
+  // Turbopack varsayılan olarak proje kökü dışına izin vermiyor
+  // ("Module not found"); kök burada bir üst dizine (repo köküne)
+  // genişletiliyor. Yalnız build-time dosya çözümlemesi, çalışma zamanı
+  // bir şey açmıyor.
+  turbopack: {
+    root: path.join(__dirname, ".."),
+  },
   images: {
     unoptimized: true,
     remotePatterns: [
