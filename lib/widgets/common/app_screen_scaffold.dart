@@ -16,6 +16,7 @@ class AppScreenScaffold extends StatelessWidget {
     this.actions,
     this.bottom,
     this.body,
+    this.floatingActionButton,
     this.padding = const EdgeInsets.fromLTRB(24, 8, 24, 32),
     this.backgroundColor = AppColors.bgEditor,
   });
@@ -40,6 +41,9 @@ class AppScreenScaffold extends StatelessWidget {
   /// İçerik. Genellikle ListView veya SingleChildScrollView.
   final Widget? body;
 
+  /// Sağ altta sabit aksiyon butonu (ör. "Ekle").
+  final Widget? floatingActionButton;
+
   /// İçerik boşluğu — tüm ekranların aynı düzeni paylaşması için.
   final EdgeInsetsGeometry padding;
 
@@ -60,6 +64,7 @@ class AppScreenScaffold extends StatelessWidget {
         actions: actions,
         bottom: bottom,
       ),
+      floatingActionButton: floatingActionButton,
       body: SafeArea(
         child: Padding(
           padding: padding,
