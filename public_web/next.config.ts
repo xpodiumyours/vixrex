@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
 import path from "path";
 
 const fallbackAppUrl = "https://vixrex-app.vercel.app";
@@ -108,9 +107,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  sourcemaps: {
-    disable: true,
-  },
-  widenClientFileUpload: true,
-});
+export default nextConfig;
