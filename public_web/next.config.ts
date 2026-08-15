@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 import path from "path";
 
 const fallbackAppUrl = "https://vixrex-app.vercel.app";
@@ -27,14 +28,23 @@ function getAppUrl() {
 //     host) — img-src da aynı genişlikte olmak zorunda.
 //   - Google Maps embed iframe (VitrinProfileView.tsx)
 //   - Supabase: connect-src'e *.supabase.co
+// 2026-08-15: Kilo CLI (paralel oturum) Cloudflare Turnstile domainlerini
+// ekledi (report-abuse/route.ts TURNSTILE_SECRET_KEY'i sunucu tarafında
+// doğruluyor — istemci widget'ı henüz yazılmamış olsa da entegrasyon
+// gerçek/kasıtlı, CSP'de yer ayrılması doğru). Google Fonts (fonts.
+// googleapis/gstatic) hiçbir yerde kullanılmadığı için (grep ile
+// doğrulandı) dahil edilmedi — CSP'ye gerçekten kullanılmayan kaynak
+// eklenmez.
 const CSP =
   "default-src 'self'; " +
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com https://www.googletagmanager.com; " +
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com; " +
   "style-src 'self' 'unsafe-inline'; " +
   "img-src * data: blob:; " +
   "font-src 'self' data:; " +
-  "connect-src 'self' https://*.supabase.co https://www.google.com https://www.googleapis.com https://www.google-analytics.com https://*.analytics.google.com; " +
-  "frame-src https://www.google.com; " +
+  "connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com https://www.google.com https://www.googleapis.com https://www.google-analytics.com https://*.analytics.google.com; " +
+  "frame-src 'self' https://challenges.cloudflare.com https://www.google.com; " +
+  "worker-src 'self'; " +
+  "manifest-src 'self'; " +
   "frame-ancestors 'none'; " +
   "base-uri 'self'; " +
   "form-action 'self';";
@@ -63,12 +73,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Faz G2 (Tek Asistan planı): vixrexMesajlari.ts repo kökündeki
-  // shared/vixrex_mesajlar.json'ı import ediyor — public_web'in dışında.
-  // Turbopack varsayılan olarak proje kökü dışına izin vermiyor
-  // ("Module not found"); kök burada bir üst dizine (repo köküne)
-  // genişletiliyor. Yalnız build-time dosya çözümlemesi, çalışma zamanı
-  // bir şey açmıyor.
   turbopack: {
     root: path.join(__dirname, ".."),
   },
@@ -104,4 +108,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  sourcemaps: {
+    disable: true,
+  },
+  widenClientFileUpload: true,
+});

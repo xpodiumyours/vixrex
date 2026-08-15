@@ -16,6 +16,7 @@ concurrency:
 
 permissions:
   contents: read
+  security-events: write
 
 env:
   FLUTTER_VERSION: "3.44.4"
@@ -25,6 +26,7 @@ jobs:
     name: Secret sızıntı taraması
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,6 +37,45 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  auth-config-check:
+    name: Supabase auth security config check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check leaked password protection
+        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' && secrets.SUPABASE_PROJECT_REF != '' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          config=$(curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/auth")
+
+          hibp=$(echo "$config" | jq -r '.password_hibp_enabled // false')
+          min_len=$(echo "$config" | jq -r '.password_min_length // 0')
+
+          echo "password_hibp_enabled=$hibp"
+          echo "password_min_length=$min_len"
+
+          if [ "$hibp" != "true" ]; then
+            echo "::error::Leaked Password Protection kapalı (password_hibp_enabled=false). Supabase Dashboard → Authentication → Password Protection üzerinden açın."
+            exit 1
+          fi
+
+          if [ "$min_len" -lt 8 ] 2>/dev/null; then
+            echo "::error::Minimum password length $min_len < 8. Supabase Dashboard → Authentication üzerinden en az 8 yapın."
+            exit 1
+          fi
 
   changes:
     name: Değişiklik yüzeyi

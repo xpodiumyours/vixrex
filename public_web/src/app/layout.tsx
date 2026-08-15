@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import * as Sentry from "@sentry/nextjs";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { CookieConsentRoot } from "@/components/cookie-consent/CookieConsentRoot";
 import { RecaptchaProvider } from "@/components/recaptcha/RecaptchaProvider";
@@ -31,9 +32,11 @@ export default function RootLayout({
   return (
     <html lang="tr" className="h-full antialiased font-outfit">
       <body className="min-h-full flex flex-col bg-[#F4F5F8] dark:bg-[#0B0F13] text-[#182028] dark:text-[#F1F5F9]">
-        <RecaptchaProvider>
-          {children}
-        </RecaptchaProvider>
+        <Sentry.ErrorBoundary fallback={<p>Bir hata oluştu.</p>}>
+          <RecaptchaProvider>
+            {children}
+          </RecaptchaProvider>
+        </Sentry.ErrorBoundary>
         <CookieConsentRoot />
       </body>
     </html>
