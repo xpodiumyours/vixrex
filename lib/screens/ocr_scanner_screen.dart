@@ -2,6 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/common/app_card.dart';
+import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 import 'package:vixrex/widgets/ocr/ocr_scanner_widget.dart';
 import 'package:vixrex/widgets/ocr/ocr_result_list.dart';
 
@@ -35,20 +37,19 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fotoğraftan Ürün Çıkar'),
-        actions: [
-          if (widget.ocrController.hasResult)
-            TextButton(
-              onPressed: _saveProducts,
-              child: const Text(
-                'Kaydet',
-                style: TextStyle(color: AppColors.primary),
-              ),
+    return AppScreenScaffold(
+      title: 'Fotoğraftan Ürün Çıkar',
+      actions: [
+        if (widget.ocrController.hasResult)
+          TextButton(
+            onPressed: _saveProducts,
+            child: const Text(
+              'Kaydet',
+              style: TextStyle(color: AppColors.primary),
             ),
-        ],
-      ),
+          ),
+      ],
+      padding: EdgeInsets.zero,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -158,13 +159,8 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Durum özeti
-        Container(
+        AppCard(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
-          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
