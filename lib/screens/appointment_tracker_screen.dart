@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/common/app_card.dart';
+import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 
 import 'package:vixrex/controllers/appointment_tracker_controller.dart';
 
@@ -49,7 +51,6 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            backgroundColor: Colors.white,
             title: const Text(
               'Randevuyu İptal Et',
               style: TextStyle(fontWeight: FontWeight.bold),
@@ -64,7 +65,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                style: TextButton.styleFrom(foregroundColor: AppColors.error),
                 child: const Text('İptal Et'),
               ),
             ],
@@ -117,26 +118,18 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgEditor,
-      appBar: AppBar(
-        // Stil artık appBarTheme.titleTextStyle'dan geliyor (main.dart) —
-        // burada birebir aynısı tekrar yazılmıyordu (2026-08-08 UI
-        // tutarlılık bulgusu).
-        title: const Text('Randevu Takip'),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.storefront_rounded,
-            color: AppColors.primaryDark,
-          ),
-          onPressed: () {
-            AppRouter.navigateToPublicVitrin(context, widget.storeSlug);
-          },
+    return AppScreenScaffold(
+      title: 'Randevu Takip',
+      leading: IconButton(
+        icon: const Icon(
+          Icons.storefront_rounded,
+          color: AppColors.primaryDark,
         ),
+        onPressed: () {
+          AppRouter.navigateToPublicVitrin(context, widget.storeSlug);
+        },
       ),
+      padding: EdgeInsets.zero,
       body:
           _controller.isLoading
               ? const Center(
@@ -152,7 +145,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                       const Icon(
                         Icons.error_outline_rounded,
                         size: 48,
-                        color: Colors.red,
+                        color: AppColors.error,
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -189,19 +182,19 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
       statusColor = AppColors.success;
       statusText = 'Onaylandı';
     } else if (status == 'rejected') {
-      statusColor = Colors.red;
+      statusColor = AppColors.error;
       statusText = 'Onaylanmadı';
     } else if (status == 'cancelled_by_customer') {
-      statusColor = Colors.grey;
+      statusColor = AppColors.mutedText;
       statusText = 'İptal Ettiniz';
     } else if (status == 'cancelled_by_store') {
-      statusColor = Colors.grey;
+      statusColor = AppColors.mutedText;
       statusText = 'İşletme İptal Etti';
     } else if (status == 'expired') {
-      statusColor = Colors.grey;
+      statusColor = AppColors.mutedText;
       statusText = 'Zaman Aşımı';
     } else {
-      statusColor = Colors.orange;
+      statusColor = AppColors.warning;
       statusText = 'Onay Bekliyor';
     }
 
@@ -213,13 +206,8 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Info Box
-          Container(
+          AppCard(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.border),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -306,15 +294,15 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.1),
-                border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                color: AppColors.warningSoft,
+                border: Border.all(color: AppColors.warningBorder),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 children: [
                   const Icon(
                     Icons.warning_amber_rounded,
-                    color: Colors.orange,
+                    color: AppColors.warning,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -322,7 +310,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                     child: Text(
                       'Tarih Değişikliği Talebiniz İletildi (${_formatDateTime(reschedule['requested_time'])}). İşletme onaylayana kadar eski randevunuz geçerlidir.',
                       style: const TextStyle(
-                        color: Colors.orange,
+                        color: AppColors.warning,
                         fontSize: 12,
                         height: 1.4,
                         fontWeight: FontWeight.bold,
@@ -343,8 +331,8 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                     icon: const Icon(Icons.cancel_outlined, size: 16),
                     label: const Text('Randevuyu İptal Et'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
                     ),
                   ),
                 ),
@@ -418,13 +406,8 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
   Widget _buildReschedulingSection() {
     final dates = _availableDates;
 
-    return Container(
+    return AppCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
