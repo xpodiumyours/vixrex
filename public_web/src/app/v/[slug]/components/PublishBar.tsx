@@ -5,6 +5,10 @@ interface Props {
   silmeOnayla: () => void;
   sil: () => Promise<void>;
   setSilmeOnayi: (v: boolean) => void;
+  /** Temel alanlar tamamsa yayınla düğmesi aktif; değilse pasif ve nedenini
+   * yazar. Faz G3 (Tek Asistan planı): "Yayınla düğmesi yalan söylemez." */
+  temelTamam: boolean;
+  eksikTemelSayisi: number;
 }
 
 export function PublishBar({
@@ -14,16 +18,27 @@ export function PublishBar({
   silmeOnayla,
   sil,
   setSilmeOnayi,
+  temelTamam,
+  eksikTemelSayisi,
 }: Props) {
   return (
     <div className="border-t border-white/10 px-4 py-3">
       <button
         type="button"
         onClick={() => void yayinla()}
-        disabled={yayinlaniyor}
+        disabled={yayinlaniyor || !temelTamam}
+        title={
+          temelTamam
+            ? undefined
+            : `Yayınlamadan önce ${eksikTemelSayisi} zorunlu alanı doldur.`
+        }
         className="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
       >
-        {yayinlaniyor ? "Yayınlanıyor…" : "Yayınla"}
+        {yayinlaniyor
+          ? "Yayınlanıyor…"
+          : temelTamam
+          ? "Yayınla"
+          : `Yayınla — ${eksikTemelSayisi} zorunlu alan eksik`}
       </button>
       {/* "Değişiklikleri bırak" TEK TIKLA silmez: önce onay istenir.
           Bu düğme kullanıcının saatlerce yaptığı işi silebilir. */}

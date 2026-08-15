@@ -6,22 +6,29 @@ import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
 import { useOwnerActions } from "./hooks/useOwnerActions";
 import { ChatBubble } from "./components/ChatBubble";
-import { FieldChipList } from "./components/FieldChipList";
-import { FieldInputArea } from "./components/FieldInputArea";
+import { ChatTopBar } from "./components/ChatTopBar";
+import { StageMeter } from "./components/StageMeter";
+import { StepCard } from "./components/StepCard";
+import { UpNextList } from "./components/UpNextList";
+import { SectionProgressList } from "./components/SectionProgressList";
 import { PublishBar } from "./components/PublishBar";
 import { VixrexAvatar } from "./components/VixrexAvatar";
+import { alanOnemi, asamaDolulugu } from "@/lib/vitrinReadiness";
 import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 
-// Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9).
+// Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
+// yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
 //
 // TEK PANEL, İKİ YOL:
 //   1. Vitrindeki alana tıkla → asistan o alanı seçer, kutuya yazarsın
-//   2. Eksik alan listesinden seç → aynı yere gelir
+//   2. Rehberden seç (Sırada / bölümler) → aynı yere gelir
 //
 // Alan başına bileşen veya dallanma YOKTUR: hangi kutunun çizileceğine
 // şemadaki `tip` karar verir. Yeni alan eklemek bu dosyayı değiştirmez.
 //
 // DÜRÜSTLÜK KURALI: asistan anlamadığı bir şeyi "işledim" diye geçiştirmez.
+// Yayınla düğmesi de yalan söylemez — temel alan eksikken pasif ve nedenini
+// yazar (bkz. PublishBar).
 
 interface Props {
   slug: string;
@@ -77,6 +84,22 @@ export default function OwnerAssistantPanel({
     alanAtlandi,
   });
 
+  // Faz G3 (Tek Asistan planı, G3.1): üç aşamalı ilerleme şeridi için
+  // önem başına dolu/toplam — şemadan hesaplanır, elle sayılmaz.
+  const dolulugu = asamaDolulugu(yerelTaslak, atlanmisAlanlar);
+  const eksikTemelSayisi = rapor.eksikler.filter((e) => e.onem === "temel").length;
+
+  // Kalite alanında "Sonra": sırayı ilerletir, atlanmislar'a YAZMAZ (ADR
+  // 0002 — "boş geç" yalnız isteğe bağlıda). Yalnız seçili alan gerçekten
+  // kalite ise anlamlı; StepCard/FieldInputArea zaten yalnız o durumda çizer.
+  const sonrayaBirak =
+    seciliAlan && alanOnemi(seciliAlan) === "kalite"
+      ? () => {
+          mesajEkle("kullanici", "(sonra)");
+          alanaGecVeyaBitir(seciliAlan.anahtar);
+        }
+      : undefined;
+
   return (
     <>
       {/* Canonical Vixrex düğmesi */}
@@ -98,44 +121,15 @@ export default function OwnerAssistantPanel({
 
       {acik && (
         <div className="fixed bottom-24 right-5 z-[75] flex w-[min(24rem,calc(100vw-2.5rem))] flex-col rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl">
-          {/* Başlık */}
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <VixrexAvatar size={36} halo decorative />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-white">Vixrex Asistan</p>
-                <p className="truncate text-[11px] text-slate-400">
-                  Doluluk %{rapor.yuzde} · {rapor.doluSayisi}/{rapor.toplamSayisi} alan
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setAcik(false)}
-              className="ml-3 shrink-0 text-lg leading-none text-slate-400 hover:text-white"
-              aria-label="Kapat"
-            >
-              ×
-            </button>
-          </div>
+          <ChatTopBar rapor={rapor} onKapat={() => setAcik(false)} />
 
-          {/* Mesaj akışı */}
-          <div ref={akisRef} className="max-h-72 space-y-2 overflow-y-auto px-4 py-3">
-            {mesajlar.map((m) => (
-              <ChatBubble key={m.id} mesaj={m} />
-            ))}
-          </div>
-
-          {/* Chip listeleri (tüm alanlar + eksikler) */}
-          <FieldChipList
-            yerelTaslak={yerelTaslak}
-            rapor={rapor}
-            seciliAlan={seciliAlan}
-            alanSec={alanSec}
+          <StageMeter
+            dolulugu={dolulugu}
+            temelTamam={rapor.temelTamam}
+            eksikTemelSayisi={eksikTemelSayisi}
           />
 
-          {/* Giriş alanı */}
-          <FieldInputArea
+          <StepCard
             seciliAlan={seciliAlan}
             giris={giris}
             girisRef={girisRef}
@@ -148,9 +142,18 @@ export default function OwnerAssistantPanel({
             hazirGorselSec={actions.hazirGorselSec}
             gonder={actions.gonder}
             alanAtla={actions.alanAtla}
+            sonrayaBirak={sonrayaBirak}
           />
 
-          {/* Yayınla / Değişiklikleri bırak */}
+          <UpNextList
+            yerelTaslak={yerelTaslak}
+            suankiAnahtar={seciliAlan?.anahtar ?? null}
+            atlanmisAlanlar={atlanmisAlanlar}
+            alanSec={alanSec}
+          />
+
+          <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
+
           <PublishBar
             yayinlaniyor={actions.yayinlaniyor}
             silmeOnayi={actions.silmeOnayi}
@@ -158,7 +161,17 @@ export default function OwnerAssistantPanel({
             silmeOnayla={actions.silmeOnayla}
             sil={actions.sil}
             setSilmeOnayi={actions.setSilmeOnayi}
+            temelTamam={rapor.temelTamam}
+            eksikTemelSayisi={eksikTemelSayisi}
           />
+
+          {/* Sohbet akışı — kayıt olarak durur, panelin ortasını kaplamaz
+           * (Faz G3, G3.1: "ÇIKAR: sohbet akışının paneli kaplaması"). */}
+          <div ref={akisRef} className="max-h-40 space-y-2 overflow-y-auto px-4 py-3">
+            {mesajlar.map((m) => (
+              <ChatBubble key={m.id} mesaj={m} />
+            ))}
+          </div>
         </div>
       )}
     </>

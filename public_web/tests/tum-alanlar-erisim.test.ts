@@ -16,16 +16,18 @@ import { VITRIN_FIELDS, SECTION_LABELS, SECTION_ORDER } from "@/lib/vitrinFieldS
 // düzenleyemiyor gibi görünüyor."
 
 // OwnerAssistantPanel 730→128 satıra bölündü (2026-08-10); "tüm alanlar"
-// listesi artık FieldChipList bileşeninde. Sözleşme aynı kalıyor, yalnız
-// kaynağı iki dosyanın birleşimi — bkz. owner-publish-discard-contract.test.ts
-// ve asistan-ton-contract.test.ts'teki aynı desen.
+// listesi FieldChipList'teydi. Faz G3 (Tek Asistan planı, G3.1) yeniden
+// dizilimiyle bölüm-bölüm doluluk gösteren SectionProgressList'e taşındı —
+// FieldChipList silindi. Sözleşme aynı kalıyor, yalnız kaynağı iki dosyanın
+// birleşimi — bkz. owner-publish-discard-contract.test.ts ve
+// asistan-ton-contract.test.ts'teki aynı desen.
 const panel =
   readFileSync(
     resolve(__dirname, "../src/app/v/[slug]/OwnerAssistantPanel.tsx"),
     "utf-8"
   ) +
   readFileSync(
-    resolve(__dirname, "../src/app/v/[slug]/components/FieldChipList.tsx"),
+    resolve(__dirname, "../src/app/v/[slug]/components/SectionProgressList.tsx"),
     "utf-8"
   );
 
