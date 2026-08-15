@@ -75,8 +75,6 @@ function RentDemoIcerik() {
   const denendiRef = useRef(false);
 
   useEffect(() => {
-    // Slug yoksa aşağıdaki render zaten HataSayfasi'na düşer — burada
-    // ayrıca state değiştirmeye gerek yok.
     if (!demoSlug || !isReady || denendiRef.current) return;
     denendiRef.current = true;
 
@@ -90,8 +88,6 @@ function RentDemoIcerik() {
     });
   }, [demoSlug, isReady, executeRecaptcha]);
 
-  // Token gelince gerçek formu gönder — tarayıcı native POST + redirect
-  // zincirini izler, çerez sunucudan geldiği gibi kurulur.
   useEffect(() => {
     if (durum === "gonderiliyor" && token && formRef.current) {
       formRef.current.submit();
