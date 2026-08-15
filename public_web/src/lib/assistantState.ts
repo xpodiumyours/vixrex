@@ -14,12 +14,22 @@
 // birebir aynı DEĞİL; anlamca karşılık gelen kısım (doluluk, sıradaki eksik
 // alan, birincil eylem) aktarıldı, Flutter'a özgü akış kavramları
 // (VixRexNextStep, publish/share fazları) zorla taşınmadı.
+//
+// KATALOG BAĞLANTISI (2026-08-15): şemadaki her zorunlu/kalite alanın
+// Flutter'ın VixRexGuidanceService'inde bir karşılığı var — o kalemin
+// başlık/açıklama/buton metni artık shared/vixrex_mesajlar.json'da
+// (`<id>_baslik` vb.). ALAN_ONERI_ID eşlemesi bu dosyanın anahtarını o
+// öneri id'sine bağlar; TS ve Dart AYNI cümleyi okur. İsteğe bağlı 31
+// alanın (kisaTanitim hariç) Flutter'da özel bir önerisi hiç olmadı — bu
+// alanlar için `hazirlikRaporu().sonrakiAdim`'in genel şablonuna düşülür,
+// uydurma bir eşleme YAZILMADI.
 import {
   hazirlikRaporu,
   sonrakiRehberAlanlar,
   type EksikAlan,
   type HazirlikRaporu,
 } from "./vitrinReadiness";
+import { vixRexMesajlari } from "./vixrexMesajlari";
 
 /** Dart'ın `VixRexJourneyPhase`sinin Next.js'teki karşılığı — yalnız iki
  * hâl var çünkü sahip paneline yalnız var olan bir taslak için gelinir. */
@@ -39,13 +49,14 @@ export interface AssistantState {
   asama: AssistantJourneyPhase;
   /** Sıradaki eksik alan — şemadan, sırası da şemadan. `null` ise eksik yok. */
   sonrakiEksikAlan: EksikAlan | null;
-  /** Öneri metninin anahtarı. Faz B kataloğu (shared/vixrex_mesajlar.json)
-   * şu an yalnız sohbet-niyet yanıtlarını taşıyor, rehberlik önerisi
-   * metnini değil (Dart tarafındaki aynı not — bkz.
-   * lib/services/vixrex_guidance_service.dart). Bu alan bugün
-   * `alan_<anahtar>` biçiminde kararlı bir kimlik taşır; gerçek metin
-   * `hazirlikRaporu().sonrakiAdim`'den (zaten üretilmiş cümle) gelir. */
-  mesajAnahtari: string;
+  /** Öneri metninin kataloğa gerçekten karşılık gelen anahtarı (ör.
+   * "setup_category", "improve_cover") — eşleme yoksa null; o durumda
+   * [sonrakiAdimCumlesi] genel şablondan gelir. */
+  mesajAnahtari: string | null;
+  /** Kullanıcıya gösterilecek tek cümle. Eşleme varsa katalogdan
+   * (Flutter'la AYNI metin), yoksa `hazirlikRaporu().sonrakiAdim`'in genel
+   * şablonundan. */
+  sonrakiAdimCumlesi: string | null;
   /** Sıralı eylem listesi, ilki birincil. */
   eylemler: AssistantAction[];
   doluluk: number;
@@ -53,16 +64,47 @@ export interface AssistantState {
   toplamAlan: number;
 }
 
+/** Şema anahtarı → `shared/vixrex_mesajlar.json`'daki öneri id'si.
+ * `lib/services/vixrex_guidance_service.dart`'ın hangi alan için hangi
+ * öneriyi gösterdiğinin bire bir aynısı — elle senkron tutulur (ikisi de
+ * aynı JSON'u okuduğu için METİN sapmaz, yalnız bu EŞLEME tablosu iki
+ * dilde ayrı yazılı; biri değişirse öbürü unutulabilir, bu Faz F'nin ADR
+ * 0001 kategori-2 riskiyle aynı — bilinçli, düşük etkili). */
+const ALAN_ONERI_ID: Readonly<Record<string, string>> = {
+  isletmeAdi: "setup_name",
+  kategori: "setup_category",
+  whatsapp: "setup_whatsapp",
+  adres: "setup_address",
+  il: "setup_address",
+  ilce: "setup_address",
+  kapakGorseli: "improve_cover",
+  heroRozet: "improve_hero_badge",
+  logo: "improve_logo",
+  calismaSaatleri: "improve_working_hours",
+  haritaLinki: "improve_google_link",
+  hakkindaBaslik: "improve_about_title",
+  hakkindaMetin: "improve_about_bio",
+  kisaTanitim: "improve_desc",
+};
+
+function katalogCumlesi(oneriId: string): string {
+  const baslik = vixRexMesajlari[`${oneriId}_baslik`];
+  const aciklama = vixRexMesajlari[`${oneriId}_aciklama`];
+  return baslik && aciklama ? `${baslik} — ${aciklama}` : (aciklama ?? baslik ?? "");
+}
+
 /** Zaten hesaplanmış bir `HazirlikRaporu`dan `AssistantState` üretir —
  * kendi kararını üretmez, yalnız biçimini tekilleştirir (Faz E'nin Dart
  * tarafındaki kuralıyla aynı). */
 export function assistantStateFromRapor(rapor: HazirlikRaporu): AssistantState {
   const ilk = rapor.eksikler[0] ?? null;
+  const oneriId = ilk ? (ALAN_ONERI_ID[ilk.anahtar] ?? null) : null;
 
   return {
     asama: rapor.temelTamam ? "gelistirme" : "kurulum",
     sonrakiEksikAlan: ilk,
-    mesajAnahtari: ilk ? `alan_${ilk.anahtar}` : "tum_alanlar_tamam",
+    mesajAnahtari: oneriId,
+    sonrakiAdimCumlesi: oneriId ? katalogCumlesi(oneriId) : rapor.sonrakiAdim,
     eylemler: ilk
       ? [{ hedefAlan: ilk.anahtar, label: `${ilk.etiket} ekle`, primary: true }]
       : [],

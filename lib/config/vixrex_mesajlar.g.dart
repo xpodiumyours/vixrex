@@ -192,4 +192,102 @@ const Map<String, String> vixRexMesajlari = {
   'anlasilamadi':
       'Üzgünüm, bunu tam anlayamadım. Aşağıdaki seçeneklerden birini deneyebilirsiniz:',
   'taslak_cakismasi': 'Canlı vitrin değişmiş — burada gördüğün eski hâli.',
+  'welcome_baslik': 'Vitrininizi Oluşturun',
+  'welcome_aciklama':
+      'Vixrex ile dijital vitrininizi oluşturmak için ilk adımı atın.',
+  'welcome_buton': 'Başla',
+  'setup_name_baslik': 'İşletme adınızı girin',
+  'setup_name_aciklama':
+      'Vitrininizde görünecek işletme adınızı ekleyerek başlayın.',
+  'setup_name_buton': 'İşletme Adı Ekle',
+  'setup_whatsapp_baslik': 'WhatsApp numaranızı ekleyin',
+  'setup_whatsapp_aciklama':
+      'Müşterilerinizin sizi hızlıca ulaşabilmesi için WhatsApp numaranızı girin.',
+  'setup_whatsapp_buton': 'WhatsApp Ekle',
+  'setup_address_baslik': 'Adres ve konum bilgisi ekleyin',
+  'setup_address_aciklama':
+      'Müşterilerin sizi bulabilmesi için adres ve konum bilgisi ekleyin.',
+  'setup_address_buton': 'Adres Ekle',
+  'setup_category_baslik': 'İşletme kategorinizi seçin',
+  'setup_category_aciklama':
+      'Vitrininizin doğru şablon ve önerilerle kurulması için kategorinizi seçin.',
+  'setup_category_buton': 'Kategori Seç',
+  'setup_legal_baslik': 'Yasal onayları tamamlayın',
+  'setup_legal_aciklama':
+      'Vitrininizi yayınlayabilmeniz için gerekli yasal onayları vermeniz gerekiyor.',
+  'setup_legal_buton': 'Onayları İncele',
+  'setup_publish_baslik': 'Vitrininizi yayınlayın',
+  'setup_publish_aciklama':
+      'Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz.',
+  'setup_publish_buton': 'Vitrinimi Aç',
+  'publish_baslik': 'Vitrininizi Yayınlayın',
+  'publish_aciklama':
+      'Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz.',
+  'publish_buton': 'Yayınla',
+  'share_baslik': 'Vitrininizi Paylaşın',
+  'share_aciklama': 'Vitrinin hazır. Müşterilerine ulaştırmak için paylaşalım.',
+  'share_buton': 'Paylaş',
+  'all_done_baslik': 'Tebrikler!',
+  'all_done_aciklama':
+      'Vitrininiz harika görünüyor. Daha fazla özellik için bize ulaşabilirsiniz.',
+  'all_done_buton': 'Vitrinime Git',
+  'improve_category_baslik': 'Şablonla güzelleştir',
+  'improve_category_aciklama':
+      'Vitrinin yayında! Şimdi hazır şablonlardan birini seçelim ki işletmene özel tasarım ve görselleri ekleyelim.',
+  'improve_category_buton': 'Hazır şablonları aç',
+  'improve_cover_baslik': 'Şablonla güzelleştir',
+  'improve_cover_aciklama':
+      'Güzel. Şimdi kategorine göre hazır şablonlardan birini seçelim — dijital vitrini hızlıca daha güzel yapalım.',
+  'improve_cover_buton': 'Hazır şablonları aç',
+  'improve_gallery_baslik': 'Galeri görselleri ekleyin',
+  'improve_gallery_aciklama':
+      'Ürün veya hizmet fotoğraflarınızı galeriye ekleyin.',
+  'improve_gallery_buton': 'Galeriye Git',
+  'improve_desc_baslik': 'İşletme açıklaması ekleyin',
+  'improve_desc_aciklama': 'İşletmenizi tanıtan kısa bir açıklama ekleyin.',
+  'improve_desc_buton': 'Açıklamaya Git',
+  'improve_catalog_baslik': 'Ürünleri yükle',
+  'improve_catalog_aciklama':
+      'Müşterilerine gösterebilmen için ürünleri nasıl yükleyeceğimize karar verelim — tarayıcı veya elle ekleme.',
+  'improve_catalog_buton': 'Ürün yükleme yolunu seç',
+  'improve_hero_badge_baslik': 'Kapak rozeti ekle',
+  'improve_hero_badge_aciklama':
+      'Kapak fotoğrafının üstüne kısa bir rozet metni ekle — işletmeni bir bakışta anlatır. Örn: "Profesyonel Teknik Servis / Kadıköy".',
+  'improve_hero_badge_buton': 'Rozet ekle',
+  'improve_logo_baslik': 'Logonu ekle',
+  'improve_logo_aciklama':
+      'İşletme logon vitrinin üst köşesinde görünür — kurumsal bir ilk izlenim bırakır.',
+  'improve_logo_buton': 'Logo ekle',
+  'improve_working_hours_baslik': 'Çalışma saatlerini ekle',
+  'improve_working_hours_aciklama':
+      'Müşterin ne zaman açık olduğunu görsün, boşuna gelip seni kapalı bulmasın.',
+  'improve_working_hours_buton': 'Saatleri ekle',
+  'improve_google_link_baslik': 'Google İşletme / harita bağlantını ekle',
+  'improve_google_link_aciklama':
+      'Müşterin tek tıkla yol tarifi alsın veya Google\'daki işletme sayfana ulaşsın.',
+  'improve_google_link_buton': 'Bağlantı ekle',
+  'improve_about_title_baslik': 'Hakkımızda başlığı ekle',
+  'improve_about_title_aciklama':
+      'Hakkımızda bölümüne kısa, dikkat çekici bir başlık yaz.',
+  'improve_about_title_buton': 'Başlık ekle',
+  'improve_about_bio_baslik': 'İşletmenin hikayesini anlat',
+  'improve_about_bio_aciklama':
+      'Hakkımızda metnine işletmenin hikayesini, neyi farklı yaptığını yaz — müşteri seni tanısın.',
+  'improve_about_bio_buton': 'Hikayeni yaz',
+  'improve_booking_baslik': 'Randevu sistemi kurun',
+  'improve_booking_aciklama':
+      'Müşterileriniz online randevu alsın — 7/24 açık kalın.',
+  'improve_booking_buton': 'Randevu ayarları',
+  'improve_blog_baslik': 'Duyuru veya yazı paylaşın',
+  'improve_blog_aciklama':
+      'Kampanya, indirim veya haberlerinizi yazarak Google\'da üst sıralara çıkın.',
+  'improve_blog_buton': 'Vitrinime git',
+  'improve_seo_baslik': 'Google görünürlüğünü güçlendirin',
+  'improve_seo_aciklama':
+      'Meta başlık, açıklama ve anahtar kelimelerinizi girerek arama sonuçlarında öne çıkın.',
+  'improve_seo_buton': 'Vitrinime git',
+  'improve_account_baslik': 'Hesabınızı güvenceye alın',
+  'improve_account_aciklama':
+      'Giriş yaparak vitrininizi hesabınıza bağlayın — verileriniz güvende kalsın.',
+  'improve_account_buton': 'Hesap',
 };
