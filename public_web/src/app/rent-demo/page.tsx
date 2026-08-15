@@ -1,21 +1,6 @@
 "use client";
 
-// "Bu vitrini kirala" güvenli köprü sayfası (2026-08-15, güvenlik açığı
-// kapatılırken eklendi).
-//
-// Buraya iki yerden gelinir:
-//   - Web CTA'sı (VitrinProfileView.tsx): düz <a href="/rent-demo?slug=x">.
-//   - Flutter (AppRouter.navigateToRentDemo, harici tarayıcı): aynı URL.
-//   - Eski (güncellenmemiş) Flutter APK'ları: /api/rent-demo GET → buraya
-//     303 ile yönlendirilir (bkz. api/rent-demo/route.ts).
-//
-// Görevi TEK şey: reCAPTCHA v3 token'ı al, gerçek <form method="POST">
-// gönder. Fetch/JS ile yönlendirme takip ETMİYORUZ — tarayıcının kendisi
-// POST → 303 → GET /api/owner-session → 303 + Set-Cookie → /v/:slug
-// zincirini native olarak izlesin, çerez/yönlendirme davranışı sunucu
-// tarafındaki mevcut akışla birebir aynı kalsın.
-
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/components/recaptcha/RecaptchaProvider";
 
@@ -41,7 +26,7 @@ function HataSayfasi({ mesaj }: { mesaj: string }) {
   );
 }
 
-export default function RentDemoPage() {
+function RentDemoPageInner() {
   const searchParams = useSearchParams();
   const demoSlug = (searchParams.get("slug") ?? "").trim();
   const { executeRecaptcha, isReady } = useRecaptcha();
@@ -51,8 +36,6 @@ export default function RentDemoPage() {
   const denendiRef = useRef(false);
 
   useEffect(() => {
-    // Slug yoksa aşağıdaki render zaten HataSayfasi'na düşer — burada
-    // ayrıca state değiştirmeye gerek yok.
     if (!demoSlug || !isReady || denendiRef.current) return;
     denendiRef.current = true;
 
@@ -66,8 +49,6 @@ export default function RentDemoPage() {
     });
   }, [demoSlug, isReady, executeRecaptcha]);
 
-  // Token gelince gerçek formu gönder — tarayıcı native POST + redirect
-  // zincirini izler, çerez sunucudan geldiği gibi kurulur.
   useEffect(() => {
     if (durum === "gonderiliyor" && token && formRef.current) {
       formRef.current.submit();
@@ -98,13 +79,18 @@ export default function RentDemoPage() {
       <div style={{ textAlign: "center" }}>
         <p style={{ color: "rgba(255,255,255,0.7)" }}>Vitrin hazırlanıyor…</p>
       </div>
-      {/* JS'siz/gövde-parse edilemeyen ortamlarda bile POST'un native form
-          davranışıyla gitmesi için gerçek bir <form>; action route.ts'in
-          POST handler'ına gider, JSON değil form-encoded veri okunur. */}
       <form ref={formRef} method="POST" action="/api/rent-demo" hidden>
         <input type="hidden" name="slug" value={demoSlug} />
         <input type="hidden" name="recaptchaToken" value={token ?? ""} />
       </form>
     </main>
+  );
+}
+
+export default function RentDemoPage() {
+  return (
+    <Suspense fallback={<div style={{ display: "grid", placeItems: "center", minHeight: "100vh", background: "#0B1120", color: "#fff", fontFamily: "system-ui, -apple-system, sans-serif" }}>Vitrin hazırlanıyor…</div>}>
+      <RentDemoPageInner />
+    </Suspense>
   );
 }

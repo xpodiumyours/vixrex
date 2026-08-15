@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 import path from "path";
 
 const fallbackAppUrl = "https://vixrex-app.vercel.app";
@@ -31,15 +32,23 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https:",
+      "connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com https://api.vercel.com",
+      "frame-src 'self' https://challenges.cloudflare.com https://www.google.com",
+      "worker-src 'self'",
+      "manifest-src 'self'",
+    ].join("; "),
+  },
 ];
 
 const nextConfig: NextConfig = {
-  // Faz G2 (Tek Asistan planı): vixrexMesajlari.ts repo kökündeki
-  // shared/vixrex_mesajlar.json'ı import ediyor — public_web'in dışında.
-  // Turbopack varsayılan olarak proje kökü dışına izin vermiyor
-  // ("Module not found"); kök burada bir üst dizine (repo köküne)
-  // genişletiliyor. Yalnız build-time dosya çözümlemesi, çalışma zamanı
-  // bir şey açmıyor.
   turbopack: {
     root: path.join(__dirname, ".."),
   },
@@ -75,4 +84,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  sourcemaps: {
+    disable: true,
+  },
+  widenClientFileUpload: true,
+});
