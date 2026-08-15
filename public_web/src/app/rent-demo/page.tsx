@@ -14,8 +14,15 @@
 // POST → 303 → GET /api/owner-session → 303 + Set-Cookie → /v/:slug
 // zincirini native olarak izlesin, çerez/yönlendirme davranışı sunucu
 // tarafındaki mevcut akışla birebir aynı kalsın.
+//
+// HOTFIX (2026-08-15): useSearchParams() App Router'da bir <Suspense>
+// sınırı içinde olmak ZORUNDA — yoksa `next build` prerender aşamasında
+// çöküyor ("should be wrapped in a suspense boundary"). Bu PR2'de (main'e
+// zaten inmişti) atlanmıştı, main'in build'i kırıktı. Mantık taşınmadı,
+// yalnız useSearchParams kullanan kısım ayrı bir bileşene çıkarılıp
+// Suspense ile sarıldı.
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/components/recaptcha/RecaptchaProvider";
 
@@ -41,7 +48,24 @@ function HataSayfasi({ mesaj }: { mesaj: string }) {
   );
 }
 
-export default function RentDemoPage() {
+function BekleniyorSayfasi() {
+  return (
+    <main
+      style={{
+        display: "grid",
+        placeItems: "center",
+        minHeight: "100vh",
+        background: "#0B1120",
+        color: "#fff",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      }}
+    >
+      <p style={{ color: "rgba(255,255,255,0.7)" }}>Vitrin hazırlanıyor…</p>
+    </main>
+  );
+}
+
+function RentDemoIcerik() {
   const searchParams = useSearchParams();
   const demoSlug = (searchParams.get("slug") ?? "").trim();
   const { executeRecaptcha, isReady } = useRecaptcha();
@@ -106,5 +130,13 @@ export default function RentDemoPage() {
         <input type="hidden" name="recaptchaToken" value={token ?? ""} />
       </form>
     </main>
+  );
+}
+
+export default function RentDemoPage() {
+  return (
+    <Suspense fallback={<BekleniyorSayfasi />}>
+      <RentDemoIcerik />
+    </Suspense>
   );
 }
