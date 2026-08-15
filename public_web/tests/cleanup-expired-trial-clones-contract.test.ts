@@ -17,6 +17,10 @@ const migrationSource = readFileSync(
   resolve(migrationsDir, "20260814230000_cleanup_expired_trial_clones.sql"),
   "utf-8"
 );
+const secureFlowSource = readFileSync(
+  resolve(migrationsDir, "20260815180000_secure_rent_demo_flow.sql"),
+  "utf-8"
+);
 
 const cleanupFnBlock = migrationSource.slice(
   migrationSource.indexOf(
@@ -39,9 +43,20 @@ describe("cleanup_expired_trial_clones — yalnız işaretli deneme satırların
     expect(cleanupFnBlock).not.toMatch(/interval '30 days'/);
   });
 
-  it("anon/authenticated'e çalıştırma yetkisi verilmez — dışarıdan tetiklenemez", () => {
+  it("anon/authenticated'e çalıştırma yetkisi hiçbir yerde verilmez", () => {
     expect(migrationSource).not.toMatch(
       /grant execute on function public\.cleanup_expired_trial_clones[\s\S]*?to anon/
+    );
+  });
+
+  // GÜVENLİK (2026-08-15): bu dosyanın kendisi hiç `revoke` içermiyordu —
+  // yorum "yetki verilmez" diyordu ama PostgreSQL yeni fonksiyonlara
+  // varsayılan olarak PUBLIC execute yetkisi verir. "Grant satırı yok"
+  // "kapalı" anlamına GELMEZ — açık revoke şart. Yukarıdaki test bunu
+  // yakalamıyordu, aşağıdaki yakalıyor.
+  it("GÜVENLİK: secure_rent_demo_flow migration'ı PUBLIC/anon/authenticated'ten AÇIKÇA revoke eder", () => {
+    expect(secureFlowSource).toContain(
+      "revoke execute on function public.cleanup_expired_trial_clones()\n  from public, anon, authenticated;"
     );
   });
 });
