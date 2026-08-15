@@ -97,7 +97,7 @@ Prototip yalnızca cevapladığı tasarım sorusu için kanıttır; production �
 ## 8. Next.js Kontrol Kapısı
 
 - Production değişikliği `public_web` içindeyse TypeScript/build kontrolü yapılır.
-- Production yayını öncesi `npm run build` başarılı olmalıdır.
+- Production yayını öncesi `npm run build` başarılı olmalıdır — **doğru daldan**: PR'lar GitHub üzerinden (UI/API) merge edildiğinde yerel `main` otomatik güncellenmez. Build'i çalıştırmadan önce `git fetch` + yerel dalın gerçekten `origin/main`'i içerdiği doğrulanır (2026-08-15 dersi: `useSearchParams()` bir `<Suspense>` sınırı olmadan main'e girdi, "build temiz" denildi ama build yanlış/eski bir dalda çalıştırılmıştı — asıl hata `/rent-demo` sayfasının o dalda hiç var olmamasıydı, build onu hiç denemedi. Sonraki PR açılırken de kırık main üstüne inşa edilmiş oldu).
 - `/v/:slug`, ürün, yazı, randevu, sitemap ve metadata etkileri görev kapsamına göre kontrol edilir.
 - Flutter paneli ve Next.js public site birbirinin yerine test edilmiş sayılmaz.
 - Geçici prototip gerçek route veya bileşene dönüştürülürse production kontrolleri uygulanır.
@@ -113,6 +113,8 @@ Prototip yalnızca cevapladığı tasarım sorusu için kanıttır; production �
 - `service_role`, gizli anahtar ve production parolası Flutter/Next istemcisine konmaz.
 - Migration production öncesi yerelde uygulanır ve mümkünse sıfırdan migration zinciriyle test edilir.
 - XML/CSV/Excel gibi dış girdiler güvenilmez kabul edilir; bozuk dosya, eksik alan, tekrar kayıt, büyük dosya ve güvenli URL sınırları test edilir.
+- **Yeni bir `SECURITY DEFINER` fonksiyon eklenirken varsayılan KAPALI kabul edilir** — `anon`/`authenticated`'e gerçekten client'tan çağrılması gerekiyorsa AÇIKÇA `grant execute` yazılır, "grant satırı yok" tek başına "kapalı" anlamına gelmez (2026-08-15 dersi: temel şema `ALTER DEFAULT PRIVILEGES ... GRANT ALL ON FUNCTIONS TO anon` içeriyordu — yeni fonksiyonlar açıkça revoke edilmedikçe otomatik açık doğuyordu; bu artık ters çevrildi ama yeni migration'lar yazılırken hâlâ elle `revoke`/`grant` disiplinine uyulmalı). `SECURITY DEFINER` fonksiyona `search_path` sabitlenir (`set search_path = pg_catalog, public`), client'tan gelen bir parametre (`p_user_id` gibi) asla doğrulanmadan yetki/kimlik kararı için kullanılmaz.
+- Kimliksiz (anon) çağrılabilen her yeni RPC/route için: oran sınırı var mı (var olan `assistant_rate_limits`/`consume_assistant_request` deseni yeniden kullanılır, ikinci bir rate-limit tablosu açılmaz) ve dış bir doğrulama (reCAPTCHA/Turnstile) secret'ı eksikse **fail-closed** mi (secret yoksa isteği reddet, sessizce atlama) diye açıkça kontrol edilir ve yazılır (2026-08-15: rent-demo, owner-upload, report-abuse'ta bu üçü de eksikti/fail-open'dı, hepsi aynı taramada bulundu).
 
 ## 10. Git ve Deploy
 
