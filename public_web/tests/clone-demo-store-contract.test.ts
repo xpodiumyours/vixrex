@@ -15,6 +15,14 @@ const migrationSource = readFileSync(
   resolve(migrationsDir, "20260814090000_clone_demo_store_as_draft.sql"),
   "utf-8"
 );
+// 2026-08-15: clone_demo_store_as_draft artık start_demo_trial dışından
+// çağrılamıyor (rent-demo güvenlik açığı kapatıldı, bkz. secure_rent_demo_flow
+// migration'ı). Bu dosya hâlâ orijinal grant satırını taşıyor — migration'lar
+// geriye dönük değiştirilmez, yetki SONRAKİ migration'da geri çekiliyor.
+const secureFlowSource = readFileSync(
+  resolve(migrationsDir, "20260815180000_secure_rent_demo_flow.sql"),
+  "utf-8"
+);
 
 const insertBlock = migrationSource.slice(
   migrationSource.indexOf("insert into public.stores"),
@@ -68,9 +76,23 @@ describe("clone_demo_store_as_draft — kimlik alanları yeni değerler alır", 
     expect(insertBlock).toMatch(/,\s*null,\s*\n\s*name,/);
   });
 
-  it("anon ve authenticated'e yetki verilir (Keşfet'ten girişte oturum şart değil)", () => {
+  it("2026-08-14'te anon/authenticated'e açılmıştı (tarihsel — artık geçerli değil)", () => {
     expect(migrationSource).toContain(
       "grant execute on function public.clone_demo_store_as_draft(text, text, text)\n  to anon, authenticated;"
+    );
+  });
+});
+
+describe("clone_demo_store_as_draft — GÜVENLİK: doğrudan anon/authenticated erişimi kapalı (2026-08-15)", () => {
+  it("secure_rent_demo_flow migration'ı anon/authenticated/PUBLIC'ten yetkiyi çeker", () => {
+    expect(secureFlowSource).toContain(
+      "revoke execute on function public.clone_demo_store_as_draft(text, text, text)\n  from public, anon, authenticated;"
+    );
+  });
+
+  it("hiçbir yerde clone_demo_store_as_draft'a anon/authenticated'e yeniden grant verilmez", () => {
+    expect(secureFlowSource).not.toMatch(
+      /grant execute on function public\.clone_demo_store_as_draft[\s\S]*?to (anon|authenticated|public)/i
     );
   });
 });
