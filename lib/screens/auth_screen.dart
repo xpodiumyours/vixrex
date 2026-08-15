@@ -8,6 +8,8 @@ import 'package:vixrex/services/local_storage_keys.dart';
 import 'package:vixrex/services/recaptcha_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/widgets/common/app_card.dart';
+import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -26,8 +28,11 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _obscurePassword = true;
 
   static const Color brandOrange = AppColors.brandOrange;
-  static const Color darkAccent = AppColors.darkTextAlt;
-  static const Color lightBg = AppColors.bgLight;
+  // Panelin geri kalanıyla aynı görünüm için (2026-08-15 kullanıcı kararı):
+  // önceden darkTextAlt/bgLight kullanıyordu, artık panelin standart
+  // darkText/bgEditor'üne çekildi — bu ekran artık özel bir marka sayfası
+  // değil, panelin bir parçası.
+  static const Color darkAccent = AppColors.darkText;
 
   @override
   void dispose() {
@@ -253,318 +258,293 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: lightBg,
-      appBar: AppBar(
-        title: Text(
-          _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
-          style: const TextStyle(
-            color: darkAccent,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: darkAccent),
-          onPressed: () => Navigator.pop(context),
-        ),
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-      ),
+    return AppScreenScaffold(
+      title: _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
+      padding: EdgeInsets.zero,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: Card(
-              elevation: 4,
-              shadowColor: Colors.black12,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // App logo or title
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: brandOrange.withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.storefront_rounded,
-                              color: brandOrange,
-                              size: 28,
-                            ),
+            child: AppCard(
+              padding: const EdgeInsets.all(32.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // App logo or title
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: brandOrange.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Vixrex',
-                            style: TextStyle(
-                              color: darkAccent,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
-                            ),
+                          child: const Icon(
+                            Icons.storefront_rounded,
+                            color: brandOrange,
+                            size: 28,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
+                        ),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Vixrex',
+                          style: TextStyle(
+                            color: darkAccent,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
 
-                      // Title Text
-                      Text(
-                        _isLogin
-                            ? 'Hesabınıza Giriş Yapın'
-                            : 'Yeni Hesap Oluşturun',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: darkAccent,
+                    // Title Text
+                    Text(
+                      _isLogin
+                          ? 'Hesabınıza Giriş Yapın'
+                          : 'Yeni Hesap Oluşturun',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: darkAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _isLogin
+                          ? 'Vitrinlerinizi yönetmek için bilgilerinizi girin.'
+                          : 'Mağazanıza her cihazdan erişmek için kayıt olun.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.mutedText,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Email input
+                    TextFormField(
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        labelText: 'E-posta Adresi',
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: brandOrange,
+                            width: 2,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _isLogin
-                            ? 'Vitrinlerinizi yönetmek için bilgilerinizi girin.'
-                            : 'Mağazanıza her cihazdan erişmek için kayıt olun.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.mutedText,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'E-posta adresi boş bırakılamaz';
+                        }
+                        if (!RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        ).hasMatch(value.trim())) {
+                          return 'Geçersiz e-posta adresi';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Password input
+                    TextFormField(
+                      controller: _passwordCtrl,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Şifre',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: brandOrange,
+                            width: 2,
+                          ),
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Şifre boş bırakılamaz';
+                        }
+                        if (value.length < 6) {
+                          return 'Şifre en az 6 karakter olmalıdır';
+                        }
+                        return null;
+                      },
+                    ),
+                    if (_isLogin) ...[
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _isLoading ? null : _resetPassword,
+                          child: const Text(
+                            'Şifremi unuttum',
+                            style: TextStyle(
+                              color: brandOrange,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ] else
                       const SizedBox(height: 24),
 
-                      // Email input
-                      TextFormField(
-                        controller: _emailCtrl,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          labelText: 'E-posta Adresi',
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: brandOrange,
-                              width: 2,
-                            ),
-                          ),
+                    // Submit button
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: brandOrange,
+                        foregroundColor: AppColors.onPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'E-posta adresi boş bırakılamaz';
-                          }
-                          if (!RegExp(
-                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                          ).hasMatch(value.trim())) {
-                            return 'Geçersiz e-posta adresi';
-                          }
-                          return null;
-                        },
+                        elevation: 0,
                       ),
-                      const SizedBox(height: 16),
-
-                      // Password input
-                      TextFormField(
-                        controller: _passwordCtrl,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Şifre',
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: brandOrange,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Şifre boş bırakılamaz';
-                          }
-                          if (value.length < 6) {
-                            return 'Şifre en az 6 karakter olmalıdır';
-                          }
-                          return null;
-                        },
-                      ),
-                      if (_isLogin) ...[
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _isLoading ? null : _resetPassword,
-                            child: const Text(
-                              'Şifremi unuttum',
-                              style: TextStyle(
-                                color: brandOrange,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ] else
-                        const SizedBox(height: 24),
-
-                      // Submit button
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: brandOrange,
-                          foregroundColor: AppColors.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child:
-                            _isLoading
-                                ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.onPrimary,
-                                    ),
-                                  ),
-                                )
-                                : Text(
-                                  _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                      child:
+                          _isLoading
+                              ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.onPrimary,
                                   ),
                                 ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // ── VEYA divider ──
-                      Row(
-                        children: [
-                          const Expanded(
-                            child: Divider(color: AppColors.border),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Text(
-                              'veya',
-                              style: TextStyle(
-                                color: AppColors.mutedText,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                              )
+                              : Text(
+                                _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── VEYA divider ──
+                    Row(
+                      children: [
+                        const Expanded(child: Divider(color: AppColors.border)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'veya',
+                            style: TextStyle(
+                              color: AppColors.mutedText,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const Expanded(
-                            child: Divider(color: AppColors.border),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // ── Google ile Giriş Yap ──
-                      OutlinedButton.icon(
-                        onPressed: _isLoading ? null : _signInWithGoogle,
-                        icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
-                        label: const Text(
-                          'Google ile Giriş Yap',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
                         ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.darkText,
-                          backgroundColor: AppColors.surface,
-                          side: const BorderSide(color: AppColors.border),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                        const Expanded(child: Divider(color: AppColors.border)),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Google ile Giriş Yap ──
+                    OutlinedButton.icon(
+                      onPressed: _isLoading ? null : _signInWithGoogle,
+                      icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
+                      label: const Text(
+                        'Google ile Giriş Yap',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
                         ),
                       ),
-                      const SizedBox(height: 16),
-
-                      // Toggle between signin/signup
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _isLogin = !_isLogin;
-                            _formKey.currentState?.reset();
-                          });
-                        },
-                        child: Text(
-                          _isLogin
-                              ? 'Hesabınız yok mu? Hemen kayıt olun'
-                              : 'Zaten hesabınız var mı? Giriş yapın',
-                          style: const TextStyle(
-                            color: brandOrange,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.darkText,
+                        backgroundColor: AppColors.surface,
+                        side: const BorderSide(color: AppColors.border),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Text(
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Toggle between signin/signup
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _isLogin = !_isLogin;
+                          _formKey.currentState?.reset();
+                        });
+                      },
+                      child: Text(
                         _isLogin
-                            ? 'Giriş yapmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.'
-                            : 'Kayıt olmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.',
-                        textAlign: TextAlign.center,
+                            ? 'Hesabınız yok mu? Hemen kayıt olun'
+                            : 'Zaten hesabınız var mı? Giriş yapın',
                         style: const TextStyle(
-                          color: AppColors.mutedText,
-                          fontSize: 12,
-                          height: 1.35,
-                          fontWeight: FontWeight.w600,
+                          color: brandOrange,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 4,
-                        runSpacing: 0,
-                        children: [
-                          _buildLegalLink(
-                            'KVKK/Gizlilik',
-                            LegalConfig.privacyPath,
-                          ),
-                          _buildLegalLink('Şartlar', LegalConfig.termsPath),
-                          _buildLegalLink(
-                            'Veri Silme',
-                            LegalConfig.dataDeletionPath,
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _isLogin
+                          ? 'Giriş yapmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.'
+                          : 'Kayıt olmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.mutedText,
+                        fontSize: 12,
+                        height: 1.35,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 4,
+                      runSpacing: 0,
+                      children: [
+                        _buildLegalLink(
+                          'KVKK/Gizlilik',
+                          LegalConfig.privacyPath,
+                        ),
+                        _buildLegalLink('Şartlar', LegalConfig.termsPath),
+                        _buildLegalLink(
+                          'Veri Silme',
+                          LegalConfig.dataDeletionPath,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
