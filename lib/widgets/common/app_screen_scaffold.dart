@@ -11,6 +11,8 @@ class AppScreenScaffold extends StatelessWidget {
   const AppScreenScaffold({
     super.key,
     this.title,
+    this.leading,
+    this.automaticallyImplyLeading = true,
     this.actions,
     this.bottom,
     this.body,
@@ -20,6 +22,14 @@ class AppScreenScaffold extends StatelessWidget {
 
   /// AppBar başlığı. Null ise AppBar yine çizilir, başlıksız kalır.
   final String? title;
+
+  /// AppBar'ın sol tarafı — özel geri/kapat davranışı gereken ekranlar için
+  /// (ör. `Navigator.canPop` yoksa başka rotaya yönlendirme). Null ise
+  /// standart Flutter geri ok davranışı kullanılır.
+  final Widget? leading;
+
+  /// [leading] verilmediğinde otomatik geri ok çizilsin mi.
+  final bool automaticallyImplyLeading;
 
   /// AppBar sağ taraf aksiyonları.
   final List<Widget>? actions;
@@ -42,6 +52,8 @@ class AppScreenScaffold extends StatelessWidget {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         title: title == null ? null : Text(title!),
+        leading: leading,
+        automaticallyImplyLeading: automaticallyImplyLeading,
         backgroundColor: backgroundColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.darkText),
