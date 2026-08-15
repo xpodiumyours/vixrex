@@ -86,15 +86,17 @@ void main() {
       );
     });
 
-    test('kirala linki demo slug ile /api/rent-demo?slug= üretir', () {
+    test('kirala linki demo slug ile /rent-demo?slug= üretir', () {
+      // 2026-08-15 (güvenlik açığı kapatılırken): /api/rent-demo yerine
+      // güvenli köprü sayfası /rent-demo'ya taşındı.
       expect(
         PublicSiteConfig.buildRentDemoLink('kiralik-butik'),
-        'https://vixrex-public.vercel.app/api/rent-demo?slug=kiralik-butik',
+        'https://vixrex-public.vercel.app/rent-demo?slug=kiralik-butik',
       );
       // Boş slug'da bile çökmez, yalnız query'siz temel adrese düşer.
       expect(
         PublicSiteConfig.buildRentDemoLink(''),
-        'https://vixrex-public.vercel.app/api/rent-demo',
+        'https://vixrex-public.vercel.app/rent-demo',
       );
     });
 

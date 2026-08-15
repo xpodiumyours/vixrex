@@ -18,10 +18,16 @@ const ctaBlock = viewSource.slice(
  * önce hiç çalışan bir akışa bağlı değildi (getAppUrl(), genel uygulama
  * sayfası) ama "499 TL/ay" yazan bir fiyat gösteriyordu. Bu, gerçekte
  * çalışmayan bir vaaddi.
+ *
+ * 2026-08-15 (güvenlik açığı kapatılırken): CTA artık doğrudan
+ * /api/rent-demo'ya değil, güvenli köprü sayfası /rent-demo'ya gidiyor —
+ * orası reCAPTCHA doğrulamasını yapıp asıl POST'u gönderiyor (bkz.
+ * app/rent-demo/page.tsx, app/api/rent-demo/route.ts).
  */
-describe("demo vitrin 'Bu vitrini kirala' CTA — ücretsiz, gerçek akışa bağlı", () => {
-  it("gerçek kiralama akışına (/api/rent-demo) bağlanır, getAppUrl()'e değil", () => {
-    expect(ctaBlock).toContain("/api/rent-demo?slug=");
+describe("demo vitrin 'Bu vitrini kirala' CTA — ücretsiz, güvenli köprü sayfasına bağlı", () => {
+  it("güvenli köprü sayfasına (/rent-demo) bağlanır, doğrudan API'ye veya getAppUrl()'e değil", () => {
+    expect(ctaBlock).toContain("/rent-demo?slug=");
+    expect(ctaBlock).not.toContain("/api/rent-demo?slug=");
     expect(ctaBlock).not.toContain("getAppUrl()");
   });
 
