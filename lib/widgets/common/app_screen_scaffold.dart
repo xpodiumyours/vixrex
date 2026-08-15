@@ -18,6 +18,7 @@ class AppScreenScaffold extends StatelessWidget {
     this.actions,
     this.bottom,
     this.body,
+    this.floatingActionButton,
     this.padding = const EdgeInsets.fromLTRB(24, 8, 24, 32),
     this.backgroundColor = AppColors.bgEditor,
   });
@@ -30,8 +31,9 @@ class AppScreenScaffold extends StatelessWidget {
   /// Verilmişse [title] yok sayılır.
   final Widget? titleWidget;
 
-  /// AppBar'ın sol tarafı — özel geri/kapat davranışı gereken ekranlar için.
-  /// Null ise standart Flutter geri ok davranışı kullanılır.
+  /// AppBar'ın sol tarafı — özel geri/kapat davranışı gereken ekranlar için
+  /// (ör. `Navigator.canPop` yoksa başka rotaya yönlendirme). Null ise
+  /// standart Flutter geri ok davranışı kullanılır.
   final Widget? leading;
 
   /// [leading] verilmediğinde otomatik geri ok çizilsin mi.
@@ -48,6 +50,9 @@ class AppScreenScaffold extends StatelessWidget {
 
   /// İçerik. Genellikle ListView veya SingleChildScrollView.
   final Widget? body;
+
+  /// Sağ altta sabit aksiyon butonu (ör. "Ekle").
+  final Widget? floatingActionButton;
 
   /// İçerik boşluğu — tüm ekranların aynı düzeni paylaşması için.
   final EdgeInsetsGeometry padding;
@@ -70,6 +75,7 @@ class AppScreenScaffold extends StatelessWidget {
         actions: actions,
         bottom: bottom,
       ),
+      floatingActionButton: floatingActionButton,
       body: SafeArea(
         child: Padding(
           padding: padding,

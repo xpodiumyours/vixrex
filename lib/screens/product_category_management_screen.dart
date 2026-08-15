@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/common/app_card.dart';
+import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 
 class ProductCategoryManagementResult {
   const ProductCategoryManagementResult({
@@ -242,14 +244,13 @@ class _ProductCategoryManagementScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ürün Kategorileri'),
-        actions: [
-          TextButton(onPressed: _finish, child: const Text('Kaydet')),
-          const SizedBox(width: 8),
-        ],
-      ),
+    return AppScreenScaffold(
+      title: 'Ürün Kategorileri',
+      actions: [
+        TextButton(onPressed: _finish, child: const Text('Kaydet')),
+        const SizedBox(width: 8),
+      ],
+      padding: EdgeInsets.zero,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addCategory,
         icon: const Icon(Icons.add_rounded),
@@ -275,36 +276,60 @@ class _ProductCategoryManagementScreenState
                       _products
                           .where((product) => product.categoryId == category.id)
                           .length;
-                  return Card(
+                  return Padding(
                     key: ValueKey(category.id),
-                    margin: const EdgeInsets.only(bottom: 10),
-                    color: AppColors.surface,
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.drag_handle_rounded,
-                        color: AppColors.mutedText,
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: AppCard(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
-                      title: Text(
-                        category.name,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      subtitle: Text('$count ürün'),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'rename') _renameCategory(category);
-                          if (value == 'delete') _deleteCategory(category);
-                        },
-                        itemBuilder:
-                            (_) => const [
-                              PopupMenuItem(
-                                value: 'rename',
-                                child: Text('Yeniden adlandır'),
-                              ),
-                              PopupMenuItem(
-                                value: 'delete',
-                                child: Text('Sil'),
-                              ),
-                            ],
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.drag_handle_rounded,
+                            color: AppColors.mutedText,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  category.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '$count ürün',
+                                  style: const TextStyle(
+                                    color: AppColors.mutedText,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'rename') _renameCategory(category);
+                              if (value == 'delete') _deleteCategory(category);
+                            },
+                            itemBuilder:
+                                (_) => const [
+                                  PopupMenuItem(
+                                    value: 'rename',
+                                    child: Text('Yeniden adlandır'),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text('Sil'),
+                                  ),
+                                ],
+                          ),
+                        ],
                       ),
                     ),
                   );
