@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import dns from "node:dns";
 import {
   buildInstagramProductDescription,
   buildInstagramProductName,
@@ -80,6 +81,21 @@ const ALLOWED_INSTAGRAM_MEDIA_HOSTS = new Set([
   "cdn.instagram.com",
 ]);
 
+const TRUSTED_EXACT_HOSTS = new Set([
+  "graph.instagram.com",
+  "cdn.instagram.com",
+]);
+
+const MAX_INSTAGRAM_MEDIA_REDIRECTS = 5;
+
+function hostInAllowlist(host: string): boolean {
+  const lower = host.toLowerCase();
+  return (
+    ALLOWED_INSTAGRAM_MEDIA_HOSTS.has(lower) ||
+    /\.cdninstagram\.com$/i.test(lower)
+  );
+}
+
 function assertInstagramMediaUrl(rawUrl: string): string {
   const trimmed = rawUrl.trim();
 
@@ -98,16 +114,94 @@ function assertInstagramMediaUrl(rawUrl: string): string {
     throw new Error("INSTAGRAM_MEDIA_URL_INVALID");
   }
 
-  const host = parsed.host.toLowerCase();
-  const isAllowedHost =
-    ALLOWED_INSTAGRAM_MEDIA_HOSTS.has(host) ||
-    /\.cdninstagram\.com$/i.test(host);
-
-  if (!isAllowedHost) {
+  if (!hostInAllowlist(parsed.host)) {
     throw new Error("INSTAGRAM_MEDIA_URL_INVALID");
   }
 
   return trimmed;
+}
+
+// Rejects RFC1918 / loopback / link-local / reserved / IPv6 internal ranges.
+// Invalid IPv4 octets are treated as unsafe and rejected.
+function isInternalIp(address: string): boolean {
+  const ipv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(address);
+  if (ipv4) {
+    const [a, b, c, d] = ipv4.slice(1).map((n) => Number(n));
+    if (a > 255 || b > 255 || c > 255 || d > 255) return true;
+    if (a === 0) return true; // "this" network
+    if (a === 10) return true; // private
+    if (a === 127) return true; // loopback
+    if (a === 169 && b === 254) return true; // link-local (incl. 169.254.169.254)
+    if (a === 172 && b >= 16 && b <= 31) return true; // private
+    if (a === 192 && b === 168) return true; // private
+    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+    if (a >= 224) return true; // multicast / reserved
+    return false;
+  }
+
+  const v6 = address.toLowerCase();
+  if (v6 === "::1") return true; // loopback
+  if (v6 === "::") return true; // unspecified
+  if (v6.startsWith("fe80")) return true; // link-local
+  if (v6.startsWith("fc") || v6.startsWith("fd")) return true; // unique local
+  if (v6.startsWith("::ffff:")) {
+    return isInternalIp(v6.slice("::ffff:".length));
+  }
+  return false;
+}
+
+// Defense-in-depth: resolve the hostname and reject internal addresses so a
+// DNS-rebinding style redirect to an internal IP is blocked even when the
+// hostname itself passes the allowlist. Known-good exact hosts are trusted to
+// avoid network lookups during normal operation.
+async function assertHostResolvesPublic(hostname: string): Promise<void> {
+  const lower = hostname.toLowerCase();
+  if (TRUSTED_EXACT_HOSTS.has(lower)) return;
+
+  let addresses: { address: string; family: number }[];
+  try {
+    addresses = await dns.promises.lookup(lower, { all: true });
+  } catch {
+    throw new Error("INSTAGRAM_MEDIA_URL_INTERNAL_INVALID");
+  }
+
+  for (const { address } of addresses) {
+    if (isInternalIp(address)) {
+      throw new Error("INSTAGRAM_MEDIA_URL_INTERNAL_INVALID");
+    }
+  }
+}
+
+// SSRF-safe media fetch: never follows redirects implicitly. Each 3xx hop is
+// re-validated against the same allowlist + internal-IP guard before the next
+// request is issued.
+async function fetchAllowedMedia(mediaUrl: string): Promise<Response> {
+  let currentUrl = assertInstagramMediaUrl(mediaUrl);
+  const seen = new Set<string>([currentUrl]);
+
+  for (let step = 0; step <= MAX_INSTAGRAM_MEDIA_REDIRECTS; step++) {
+    const parsed = new URL(currentUrl);
+    await assertHostResolvesPublic(parsed.host);
+
+    const response = await fetch(currentUrl, { redirect: "manual" });
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      if (!location) throw new Error("INSTAGRAM_MEDIA_REDIRECT_INVALID");
+
+      const nextUrl = new URL(location, currentUrl).toString();
+      if (seen.has(nextUrl)) throw new Error("INSTAGRAM_MEDIA_REDIRECT_LOOP");
+      seen.add(nextUrl);
+
+      currentUrl = assertInstagramMediaUrl(nextUrl);
+      continue;
+    }
+
+    if (!response.ok) throw new Error("INSTAGRAM_MEDIA_DOWNLOAD_FAILED");
+    return response;
+  }
+
+  throw new Error("INSTAGRAM_MEDIA_REDIRECT_TOO_MANY");
 }
 
 async function uploadInstagramMedia(args: {
@@ -116,10 +210,7 @@ async function uploadInstagramMedia(args: {
   mediaId: string;
   admin: SupabaseClient;
 }) {
-  const mediaUrl = assertInstagramMediaUrl(args.mediaUrl);
-
-  const response = await fetch(mediaUrl);
-  if (!response.ok) throw new Error("INSTAGRAM_MEDIA_DOWNLOAD_FAILED");
+  const response = await fetchAllowedMedia(args.mediaUrl);
 
   const contentType = (response.headers.get("content-type") || "")
     .split(";", 1)[0]
