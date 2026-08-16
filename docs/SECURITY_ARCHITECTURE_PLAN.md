@@ -305,14 +305,164 @@ lib/
 
 ## 9. Başarı Kriterleri
 
-| Kriter | Hedef | Ölçüm |
-|--------|-------|-------|
-| Güvenlik açıkları | 0 kritik, 0 yüksek | Denetim raporu |
-| Test coverage | %80+ | Codecov |
-| Build time | <5 dakika | CI pipeline |
-| MTTR | <1 saat | Incident log |
-| Monthly cost | <$200 | Vercel/Supabase billing |
-| Migration sayısı | <10 | Migration count |
+### 9.1 Güvenlik (Sert Kriterler)
+
+| Kriter | Hedef | Ölçüm | Doğrulama |
+|--------|-------|-------|-----------|
+| Kritik güvenlik açıkları | **0** | Denetim raporu | Her sprint başı otomatik tarama |
+| Yüksek güvenlik açıkları | **0** | Denetim raporu | Her sprint başı otomatik tarama |
+| Orta güvenlik açıkları | **0** | Denetim raporu | Aylık denetim |
+| Güvenlik tarafından onaylanmamış PR | **0** | GitHub PR review | CI’da engelle |
+| Production’da plaintext secret | **0** | Gitleaks + manual | Her commit’te tarama |
+| CAPTCHA/reCAPTCHA olan endpoint’lerde fail-open | **0** | Code review | Her PR’da kontrol |
+| RPC’lerden anon/authenticated yetkisi olan internal | **0** | SQL audit | Her migration sonrası |
+
+### 9.2 Test ve Kalite (Sert Kriterler)
+
+| Kriter | Hedef | Ölçüm | Doğrulama |
+|--------|-------|-------|-----------|
+| Unit test coverage | **≥ %90** | Codecov | Her PR’da coverage raporu |
+| Integration test coverage | **≥ %80** | Codecov | Her PR’da coverage raporu |
+| Tüm critical path’lerin testi | **%100** | Test suite | Her sprint sonu |
+| CI pipeline başarı oranı | **%100** | GitHub Actions | Her commit’te |
+| Build süresi | **< 5 dakika** | CI pipeline | Her commit’te |
+| Lint hata sayısı | **0** | ESLint + Flutter analyze | Her commit’te |
+| TypeScript/Dart type hatası | **0** | tsc + dart analyze | Her commit’te |
+
+### 9.3 Güvenlik Odaklı Code Review (Sert Kriterler)
+
+| Kriter | Hedef | Ölçüm | Doğrulama |
+|--------|-------|-------|-----------|
+| Tüm PR’ların en az 1 onayı | **%100** | GitHub branch protection | CI’da engelle |
+| Güvenlik ile ilgili değişikliklerin security review’u | **%100** | GitHub review | PR template + CI |
+| Critical path değişiklikleri için 2 onay | **%100** | GitHub branch protection | CI’da engelle |
+| Review süresi | **< 24 saat** | GitHub metrics | Aylık rapor |
+
+### 9.4 Maliyet ve Performans (Sert Kriterler)
+
+| Kriter | Hedef | Ölçüm | Doğrulama |
+|--------|-------|-------|-----------|
+| Monthly Vercel spend | **< $150** | Vercel dashboard | Haftalık kontrol |
+| Monthly Supabase spend | **< $100** | Supabase billing | Haftalık kontrol |
+| API latency (p95) | **< 500ms** | Vercel Analytics | Günlük |
+| Storage kullanımı | **< 20GB** | Supabase dashboard | Günlük |
+| Storage bandwidth | **< 100GB/ay** | Supabase dashboard | Haftalık |
+| Function execution | **< 1M/ay** | Vercel dashboard | Haftalık |
+| Maliyet alarmı tetiklenme süresi | **< 5 dakika** | Platform alarm log | Aylık test |
+| Gecikmeli ödeme / borç | **0 kez** | Billing history | Aylık kontrol |
+
+### 9.5 Monitoring ve Gözlemlenebilirlik (Sert Kriterler)
+
+| Kriter | Hedef | Ölçüm | Doğrulama |
+|--------|-------|-------|-----------|
+| Production error visibility | **%100** | Sentry dashboard | Her incident’ta |
+| Uptime | **≥ 99.9%** | UptimeRobot/Pingdom | Aylık |
+| MTTR (Mean Time To Recovery) | **< 30 dakika** | Incident log | Aylık |
+| Alert yanlış alarm oranı | **< 5%** | Alert log | Aylık |
+| Log retention | **≥ 30 gün** | Platform settings | Aylık kontrol |
+
+### 9.6 Backup ve Felaket Kurtarma (Sert Kriterler)
+
+| Kriter | Hedef | Ölçüm | Doğrulama |
+|--------|-------|-------|-----------|
+| Backup sıklığı | **Günlük** | Supabase dashboard | Otomatik |
+| Backup retention | **≥ 7 gün** | Supabase dashboard | Aylık kontrol |
+| Restore test sıklığı | **Haftalık** | Runbook | Haftalık test |
+| RTO (Recovery Time Objective) | **< 4 saat** | Restore test | Haftalık |
+| RPO (Recovery Point Objective) | **< 24 saat** | Backup frequency | Günlük |
+
+### 9.7 Dependency ve Supply Chain (Sert Kriterler)
+
+| Kriter | Hedef | Ölçüm | Doğrulama |
+|--------|-------|-------|-----------|
+| Gecikmeli güvenlik patch’leri | **0** | Dependabot/Renovate | Günlük |
+| Dependency yaşı | **< 6 ay** | `npm audit` + `flutter pub outdated` | Haftalık |
+| Lock file conflicts | **0** | CI pipeline | Her commit’te |
+| Unused dependencies | **0** | `npm prune` + `flutter pub deps` | Haftalık |
+
+### 9.8 Migration ve Schema (Sert Kriterler)
+
+| Kriter | Hedef | Ölçüm | Doğrulama |
+|--------|-------|-------|-----------|
+| Migration başına satır | **< 200** | Migration files | Her migration’da |
+| Migration başına sorumluluk | **1** | Migration naming | Her migration’da |
+| Migration test coverage | **%100** | Test suite | Her migration sonrası |
+| Schema drift | **0** | CI validation | Her commit’te |
+| Production migration hatası | **0** | Incident log | Aylık |
+
+---
+
+## 10. Kilitli Sıralama — Kesin Öncelikler
+
+Aşağıdaki sıralama **kesin ve değişmez**.  
+Önce tamamlanmalı, sonra bir sonraki adıma geçilmeli.
+
+### Öncelik 1 — Güvenlik Kapanışı (Sprint 1, Hafta 1-2)
+**Kritik kural:** Bu sprint bitmeden Sprint 2’ye geçilmez.
+
+1. **Internal SECURITY DEFINER** — auth trigger’ları public’ten çıkar
+2. **RLS + IDOR** — tüm sensitive tablolarda policy ekle/test et
+3. **Service-role audit** — gereksiz `getSupabaseAdmin()` kullanımlarını kaldır
+4. **Doğrulama:** Otomatik penetration test + manual review
+
+### Öncelik 2 — Operasyonel Güvenlik (Sprint 2, Hafta 3-4)
+**Kritik kural:** Sprint 1’in tüm testleri geçmeli.
+
+1. **Platform alarmları** — Vercel + Supabase + Cloudflare
+2. **Dependency otomasyonu** — Dependabot veya Renovate
+3. **Pre-commit hooks** — Husky + lint-staged
+4. **Doğrulama:** Test ortamında alarm tetikleme testi
+
+### Öncelik 3 — Gözlemlenebilirlik (Sprint 3, Hafta 5-6)
+**Kritik kural:** Sprint 2’nin tüm otomasyonu çalışır olmalı.
+
+1. **Sentry** — Next.js 16 uyumlu, production DSN ile
+2. **Vercel Analytics** — Web Vitals + error tracking
+3. **Uptime monitoring** — critical endpoint’ler
+4. **Doğrulama:** Test hatasını Sentry’de gör, uptime testi geç
+
+### Öncelik 4 — Mimari Modernizasyon (Sprint 4, Hafta 7-12)
+**Kritik kural:** Sprint 3’ün tüm monitoring’i aktif olmalı.
+
+1. **Feature-first Dart architecture** — lib/features/ yapısı
+2. **Migration framework** — tek sorumluluk, <200 satır
+3. **Schema tracking** — migration metadata table
+4. **Doğrulama:** Her feature bağımsız test edilebiliyor
+
+---
+
+## 11. Red Lines (Asla Aşılmayacak Kurallar)
+
+1. **Production’da plaintext secret yok** — CI’da Gitleaks engeller
+2. **Fail-open security control yok** — CAPTCHA, auth, rate-limit her zaman fail-closed
+3. **Internal RPC’ler public’te değil** — her migration sonrası SQL audit
+4. **Migration tekrar uygulanamaz** — idempotent, versioned
+5. **Test coverage %90’ın altına düşmez** — CI’da engelle
+6. **Merge edilmiş PR’ların testleri geçmeli** — branch protection
+7. **Backup testi geçmemişse production’da değişiklik yok** — manual gate
+
+---
+
+## 12. Incident Response Checklist
+
+Production’da güvenlik olayı olduğunda:
+
+- [ ] **0-5 dakika:** Alert al, severity belirle (P0/P1/P2)
+- [ ] **5-15 dakika:** İlk müdahale — rollback veya hotfix
+- [ ] **15-30 dakika:** Kök neden analizi
+- [ ] **1 saat:** Postmortem başlat
+- [ ] **24 saat:** Rapor tamamla, düzeltmeleri planla
+
+---
+
+## 13. Review ve Onay
+
+| Rol | İsim | Onay Tarihi | İmza |
+|-----|------|-------------|------|
+| Yazılım Mühendisi | [Boş] | _____ | _____ |
+| Güvenlik Mühendisi | [Boş] | _____ | _____ |
+| Teknik Lider | [Boş] | _____ | _____ |
+
 
 ---
 
