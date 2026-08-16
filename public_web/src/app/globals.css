@@ -323,13 +323,42 @@ h1, h2, h3, h4, h5, h6 {
 }
 /* Vixrex Asistan paneli açıkken (Vixrex Asistan rehberli tamamlama, ADR 0002,
    2026-08-13 — sürekli vurgu) doldurulabilir HER yer hafifçe ışıklı durur;
-   esnaf hangi 44 yerin düzenlenebilir olduğunu ilk bakışta görür, hover'ı
+   esnaf hangi alanların düzenlenebilir olduğunu ilk bakışta görür, hover'ı
    beklemek zorunda kalmaz. Panel kapanınca eski (yalnız hover'da görünen)
-   hâline döner — body sınıfı `OwnerAssistantPanel` tarafından yönetilir. */
+   hâline döner — body sınıfı `OwnerAssistantPanel` tarafından yönetilir.
+   Renkler alana önemine göre (zorunlu=kırmızı, kalite=mavi,
+   blog/SSS/hakkımızda=yeşil) — bu bilgi `data-vixrex-onem` / `data-vixrex-bolum`
+   işaretlerinden gelir (vitrinEditableProps.ts). */
 body.vixrex-asistan-acik [data-vixrex-editable] {
-  outline-color: rgba(59, 130, 246, 0.28);
+  --vrx-outline: rgba(59, 130, 246, 0.28);
+  --vrx-glow: transparent;
+  outline-color: var(--vrx-outline);
+}
+body.vixrex-asistan-acik [data-vixrex-editable][data-vixrex-onem="kalite"] {
+  --vrx-outline: rgba(56, 189, 248, 0.55);
+  --vrx-glow: rgba(56, 189, 248, 0.4);
+}
+body.vixrex-asistan-acik [data-vixrex-editable][data-vixrex-onem="temel"] {
+  --vrx-outline: rgba(239, 68, 68, 0.6);
+  --vrx-glow: rgba(239, 68, 68, 0.5);
+}
+body.vixrex-asistan-acik [data-vixrex-editable][data-vixrex-bolum="blog"],
+body.vixrex-asistan-acik [data-vixrex-editable][data-vixrex-bolum="faq"],
+body.vixrex-asistan-acik [data-vixrex-editable][data-vixrex-bolum="about"] {
+  --vrx-outline: rgba(34, 197, 94, 0.55);
+  --vrx-glow: rgba(34, 197, 94, 0.45);
+}
+body.vixrex-asistan-acik [data-vixrex-editable] {
+  box-shadow: 0 0 8px var(--vrx-glow);
+  transition: outline-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+body.vixrex-asistan-acik [data-vixrex-editable]:hover {
+  outline-color: var(--vrx-outline);
+  box-shadow: 0 0 14px var(--vrx-glow);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 .vixrex-secili-alan {
   outline: 2px solid rgb(59, 130, 246) !important;
   background-color: rgba(59, 130, 246, 0.12) !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.6) !important;
 }
