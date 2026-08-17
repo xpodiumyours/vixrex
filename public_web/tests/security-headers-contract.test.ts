@@ -47,6 +47,21 @@ describe("Content-Security-Policy — mevcut", () => {
     expect(configSource).toContain("https://*.cdninstagram.com");
   });
 
+  it("vitrin görsel hostları img-src'te izinli — Unsplash + QR (2026-08-17 kırılması: #193 allowlist'e eklenmemişti, görseller yüklenmiyordu)", () => {
+    // VitrinProfileView demo vitrin görsellerini images.unsplash.com'dan,
+    // QR kodunu api.qrserver.com'dan çeker (canlı HTML'de doğrulandı).
+    // CSP'ye eklenmeyince tarayıcı hepsini engelliyordu. Bu iki satır
+    // kaldırılırsa kırmızıya düşer.
+    expect(configSource).toContain("https://images.unsplash.com");
+    expect(configSource).toContain("https://api.qrserver.com");
+  });
+
+  it("Google Maps embed iframe hostu frame-src'te izinli — maps.google.com", () => {
+    // VitrinProfileView haritayı maps.google.com/maps?... embed'iyle gösterir;
+    // frame-src'te yalnız www.google.com vardı, embed engelleniyordu.
+    expect(configSource).toContain("https://maps.google.com");
+  });
+
   it("form-action 'self' — /rent-demo köprü sayfasının POST'u dahil kendi origin'ine kısıtlı", () => {
     expect(configSource).toContain("form-action 'self'");
   });

@@ -113,7 +113,11 @@ class _BulkUploadFormatInfo extends StatelessWidget {
           const _FormatRow('Ürün Adı', 'Zorunlu', true),
           const _FormatRow('Fiyat', 'İsteğe bağlı', false),
           const _FormatRow('Açıklama', 'İsteğe bağlı', false),
-          const _FormatRow('Kategori', 'İsteğe bağlı, varsayılan: Genel', false),
+          const _FormatRow(
+            'Kategori',
+            'İsteğe bağlı, varsayılan: Genel',
+            false,
+          ),
           const _FormatRow(
             'Stok Durumu',
             'Mevcut / Tükendi / Son birkaç adet',
