@@ -490,7 +490,11 @@ export default function VitrinProfileView({
                 {districtProvinceLabel && (
                   <span className="flex items-center gap-1.5">📍 {districtProvinceLabel}</span>
                 )}
-                {displayAddress && <span className="flex items-center gap-1.5">📍 {displayAddress}</span>}
+                {displayAddress && (
+                  <span {...editableProps("adres", ownerMode)} className="flex items-center gap-1.5">
+                    📍 {displayAddress}
+                  </span>
+                )}
                 {showRating && (
                   <span className="flex items-center gap-1.5">
                     ⭐ {ratingScore!.toFixed(1)}
@@ -849,8 +853,12 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🏠</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Adres</h4>
+                    {/* İki alan tek satırda: mapLabel varsa o görünür (tıklama
+                        haritaEtiketi'ni açar), yoksa adres görünür. Kullanıcı
+                        kararı 2026-08-17: bu satır haritaEtiketi'ni düzenler;
+                        adres kısayolu hero'daki adres satırına taşındı. */}
                     <p
-                      {...editableProps("adres", ownerMode)}
+                      {...editableProps("haritaEtiketi", ownerMode)}
                       className="text-xs text-slate-300 leading-relaxed mt-0.5"
                     >
                       {mapLabel || displayAddress}
@@ -1034,7 +1042,13 @@ export default function VitrinProfileView({
 
             <div className="flex gap-3">
               {mapsUrl && (
-                <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-blue-500/30 transition">
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...editableProps("haritaLinki", ownerMode)}
+                  className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-blue-500/30 transition"
+                >
                   🗺️ Yol Tarifi Al
                 </a>
               )}
@@ -1106,7 +1120,16 @@ export default function VitrinProfileView({
                   <WhatsAppIcon size={24} className="text-[#22C55E] group-hover:scale-110 transition duration-300" />
                   <span className="text-xs font-bold text-slate-300 group-hover:text-white">WhatsApp</span>
                 </a>
-                <a href={instagramUrl || "#"} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-pink-500/30 hover:border-pink-500/60 hover:shadow-[0_8px_24px_rgba(236,72,153,0.15)] transition group">
+                {/* NOT: bu bölüm yalnız ziyaretçi modunda (!ownerMode) çizilir —
+                    etiket şu an sahip modunda etkinleşmez; paylaşım bölümü
+                    sahip görünümüne açılırsa kısayol hazır olur (issue #215). */}
+                <a
+                  href={instagramUrl || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...editableProps("instagram", ownerMode)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-pink-500/30 hover:border-pink-500/60 hover:shadow-[0_8px_24px_rgba(236,72,153,0.15)] transition group"
+                >
                   <InstagramIcon size={24} className="text-[#EC4899] group-hover:scale-110 transition duration-300" />
                   <span className="text-xs font-bold text-slate-300 group-hover:text-white">Instagram</span>
                 </a>
