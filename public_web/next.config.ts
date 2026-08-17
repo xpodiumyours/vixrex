@@ -38,8 +38,13 @@ function getAppUrl() {
 //   - Google Maps embed iframe (VitrinProfileView.tsx): www.google.com
 //   - Supabase: *.supabase.co (connect + img/storage)
 //   - Instagram medya: *.cdninstagram.com (img)
-// Google Fonts (fonts.googleapis/gstatic) hiçbir yerde kullanılmadığı için
-// (grep ile doğrulandı) dahil edilmedi.
+// 2026-08-16: Google Fonts (fonts.googleapis.com CSS + fonts.gstatic.com
+// font dosyaları) gerçekten KULLANILIYOR — globals.css'teki
+// `@import url('https://fonts.googleapis.com/css2?...')` sayesinde
+// (Instrument Serif + Outfit, iki yüzeyde ortak yazı tipi). Önceki grep
+// gözden kaçırmıştı; tarayıcı konsolu bu yüzden "Loading the stylesheet ...
+// violates CSP" hatası veriyordu ve fontlar yüklenmiyordu. style-src'e
+// fonts.googleapis.com, font-src'e fonts.gstatic.com eklendi.
 const isDev = process.env.NODE_ENV === "development";
 
 const CSP =
@@ -47,9 +52,9 @@ const CSP =
   "script-src 'self' 'unsafe-inline'" +
   (isDev ? " 'unsafe-eval'" : "") +
   " https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com; " +
-  "style-src 'self' 'unsafe-inline'; " +
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
   "img-src 'self' data: blob: https://*.supabase.co https://*.cdninstagram.com https://*.gstatic.com https://www.google.com https://www.google-analytics.com https://*.analytics.google.com https://challenges.cloudflare.com; " +
-  "font-src 'self' data:; " +
+  "font-src 'self' data: https://fonts.gstatic.com; " +
   "connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com https://www.google.com https://www.googleapis.com https://www.google-analytics.com https://*.analytics.google.com; " +
   "frame-src 'self' https://challenges.cloudflare.com https://www.google.com; " +
   "worker-src 'self'; " +
