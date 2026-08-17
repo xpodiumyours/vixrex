@@ -31,16 +31,20 @@ function getAppUrl() {
 // 2026-08-15: Kilo CLI (paralel oturum) Cloudflare Turnstile domainlerini
 // ekledi (report-abuse/route.ts TURNSTILE_SECRET_KEY'i sunucu tarafında
 // doğruluyor — istemci widget'ı henüz yazılmamış olsa da entegrasyon
-// gerçek/kasıtlı, CSP'de yer ayrılması doğru). Google Fonts (fonts.
-// googleapis/gstatic) hiçbir yerde kullanılmadığı için (grep ile
-// doğrulandı) dahil edilmedi — CSP'ye gerçekten kullanılmayan kaynak
-// eklenmez.
+// gerçek/kasıtlı, CSP'de yer ayrılması doğru).
+// 2026-08-16: Google Fonts (fonts.googleapis.com CSS + fonts.gstatic.com
+// font dosyaları) gerçekten KULLANILIYOR — globals.css'teki
+// `@import url('https://fonts.googleapis.com/css2?...')` sayesinde
+// (Instrument Serif + Outfit, iki yüzeyde ortak yazı tipi). Önceki grep
+// gözden kaçırmıştı; tarayıcı konsolu bu yüzden "Loading the stylesheet ...
+// violates CSP" hatası veriyordu ve fontlar yüklenmiyordu. style-src'e
+// fonts.googleapis.com, font-src'e fonts.gstatic.com eklendi.
 const CSP =
   "default-src 'self'; " +
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com; " +
-  "style-src 'self' 'unsafe-inline'; " +
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
   "img-src * data: blob:; " +
-  "font-src 'self' data:; " +
+  "font-src 'self' data: https://fonts.gstatic.com; " +
   "connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com https://www.google.com https://www.googleapis.com https://www.google-analytics.com https://*.analytics.google.com; " +
   "frame-src 'self' https://challenges.cloudflare.com https://www.google.com; " +
   "worker-src 'self'; " +

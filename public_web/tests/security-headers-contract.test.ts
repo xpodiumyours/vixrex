@@ -32,6 +32,11 @@ describe("Content-Security-Policy — mevcut", () => {
     expect(configSource).toContain("https://*.supabase.co");
   });
 
+  it("Google Fonts'a izin var — globals.css'teki @import gerçekten kullanılıyor (Outfit + Instrument Serif)", () => {
+    expect(configSource).toContain("https://fonts.googleapis.com");
+    expect(configSource).toContain("https://fonts.gstatic.com");
+  });
+
   it("img-src remotePatterns ile aynı genişlikte (** host) — çelişmez", () => {
     expect(configSource).toContain("img-src * data: blob:");
   });
