@@ -64,6 +64,12 @@ android/*.keystore
 # OAuth client secrets — never commit
 android/app/client_secret_*.json
 
+# V-26 (attack-vectors.md, 2026-08-18): google-services.json commit'liydi.
+# Şu an içindeki api_key sahte/placeholder ama ileride gerçek bir
+# projeyle değiştirilirse yanlışlıkla commit edilmesin diye izlenmiyor.
+# Şekli android/app/google-services.json.example'da duruyor.
+android/app/google-services.json
+
 # Local dev scripts / defines with embedded credentials
 run_local.ps1
 dart_defines.local.json
