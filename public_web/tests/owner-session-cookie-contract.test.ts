@@ -115,6 +115,24 @@ describe("sahip oturumu çerezi — imzalı değer davranışı", () => {
       "sessionToken must be 64 hex characters"
     );
   });
+
+  // V-07 (attack-vectors.md, 2026-08-18): .env.local'deki bilinen zayıf
+  // test değeri (43 karakter — uzunluk kontrolünü GEÇİYOR) üretimde
+  // kullanılırsa sessizce çalışmamalı, fail-closed olmalı.
+  it("bilinen zayıf test değeri üretimde reddedilir", () => {
+    vi.stubEnv("OWNER_SESSION_SECRET", "yerel-test-gizli-anahtari-en-az-32-karakter");
+    vi.stubEnv("NODE_ENV", "production");
+    expect(() => signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN)).toThrow(
+      "known local/test value in production"
+    );
+    expect(verifyOwnerSession("gecerli.gorunen", SLUG)).toBeNull();
+  });
+
+  it("bilinen zayıf test değeri yerelde (production dışı) çalışmaya devam eder", () => {
+    vi.stubEnv("OWNER_SESSION_SECRET", "yerel-test-gizli-anahtari-en-az-32-karakter");
+    vi.stubEnv("NODE_ENV", "test");
+    expect(() => signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN)).not.toThrow();
+  });
 });
 
 describe("sahip oturumu giriş rotası — tek kullanımlık kod değişimi", () => {
