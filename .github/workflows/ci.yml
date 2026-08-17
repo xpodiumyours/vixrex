@@ -247,7 +247,11 @@ jobs:
     # koşmuyordu). Bu job, canlı public vitrine karşı gerçek tarayıcıda
     # koşar; görsel yükleme bozulursa kırmızıya düşer.
     needs: changes
-    if: needs.changes.outputs.public_web == 'true'
+    # Canlı production'a karşı koşar — yalnız main'e push'ta (merge sonrası
+    # canlıda doğrular). PR'da koşmak yanıltıcı olur: PR'ın kodu canlıda
+    # olmadığı için her zaman kırmızı gösterir. PR'da kaynak-kontrat testi
+    # (security-headers-contract.test.ts) CSP hostlarını zaten doğruluyor.
+    if: needs.changes.outputs.public_web == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
