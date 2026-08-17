@@ -185,7 +185,11 @@ jobs:
         run: |
           AAB_SRC="build/app/outputs/bundle/release/app-release.aab"
           test -f "$AAB_SRC"
-          CERT_SHA256=$(keytool -printcert -jarfile "$AAB_SRC" | grep "SHA256:" | head -n 1 | tr -d ' ' | cut -d':' -f2 | tr '[:upper:]' '[:lower:]')
+          # keytool -printcert çıktısındaki SHA256 satırı iki nokta ayraçlı gelir
+          # ("SHA256: 29:3a:f3:..."). Eski sürüm `cut -d':' -f2` ile yalnız ilk
+          # baytı ("29") alıyordu — hiçbir zaman eşleşmiyordu (2026-08-17 bulgusu).
+          # Doğru: parmak izindeki tüm iki noktaları sil, küçük harfe çevir.
+          CERT_SHA256=$(keytool -printcert -jarfile "$AAB_SRC" | grep "SHA256:" | head -n 1 | sed 's/^[[:space:]]*SHA256:[[:space:]]*//' | tr -d ':' | tr '[:upper:]' '[:lower:]')
           EXPECTED_SHA256="295af3e289e13bc9fea273f224fa7c1fcb1879472790d48ed3eea8239c0ffc24"
           echo "AAB Cert SHA-256: $CERT_SHA256"
           if [ "$CERT_SHA256" != "$EXPECTED_SHA256" ]; then
