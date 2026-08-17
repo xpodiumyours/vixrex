@@ -4,6 +4,19 @@
 > kopmadan devam etmek için. Her oturumda önce buraya + CONTEXT.md'ye bak.
 > Tarihli tutulur; değişen davranışlar görüldükçe güncellenir.
 
+## Güncelleme kuralı (kullanıcı kararı, 2026-08-17)
+
+**Her oturum sonunda** bu not güncellenir — ama dosya şişirilmez:
+
+1. **Tespit et:** Bu oturumda ne değişti? (kararlar, durum, açık işler,
+   öğrenilen dersler, bekleyenler)
+2. **Yalnız değişen yerleri güncelle:** "Açık bekleyenler" bölümünü tazele,
+   yeni ders varsa ekle, eski/yürürlükten kalkan satırları sil.
+3. **Şişirme:** Günlük ayrıntı buraya YAZILMAZ — tarihsel akış CONTEXT.md
+   ve `docs/arsiv/` içindir. Bu not kısa, öz ve yaşayan kalır.
+4. Güncelleme "her oturum sonu" rutinidir; unutulursa bir sonraki oturum
+   başında tamamlanır.
+
 ## Casper kim
 
 - **VixRex'in %49 kar-zarar ortağı.** Ben (ajan) yazılımdan, güvenlikten
@@ -73,4 +86,4 @@
 - PayTR panel numarası/anahtarları → Vercel env + callback + ilk ödeme teyidi
 - Yeni APK dağıtıldı (vixrex-android-1.0.0-10017) — telefon testi devam
 - Akış testi (kiralama → yayın kapısı → ödeme) sırada
-- PR #216 (tıkla-düzenle) + #217 (vizyon) merge onayı bekliyor
+- PR #216 (tıkla-düzenle) + #217 (vizyon) + #218 (bu not) merge onayı bekliyor

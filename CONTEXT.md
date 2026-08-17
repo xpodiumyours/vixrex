@@ -6,7 +6,8 @@
 > mesajlık geçmişi yeniden anlatmaya gerek kalmaz.
 >
 > **ÖNCE OKU — Casper ile çalışma notu:** [[casper-calisma-notu-2026-08-17]]
-> (kullanıcıyı tanıma + sohbetten kopmadan devam etme — her oturum başında).
+> (kullanıcıyı tanıma + sohbetten kopmadan devam etme — her oturum başında okunur,
+> her oturum sonunda güncellenir; dosya şişirilmez, yalnız değişen yerler tazelenir).
 
 ## Vault kuralı (2026-08-15, kullanıcı kararı)
 
