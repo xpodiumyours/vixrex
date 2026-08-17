@@ -29,6 +29,9 @@ export interface WorkingDraftData {
   assistant_handoff?: unknown;
   /** "Boş geç" denen isteğe bağlı alanlar (ADR 0002, 3. alt-faz). */
   atlanan_alanlar?: string[];
+  /** Kiralık şablon vitrinin premium süresi AKTİF mi — sunucuda hesaplanır
+   * (React purity: istemci render'ında Date.now() çağrılmaz). */
+  is_premium_active?: boolean;
 }
 
 export interface OwnerWorkspaceShellProps {
@@ -307,6 +310,7 @@ export default function OwnerWorkspaceShell({
         atlananAlanlar={
           Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []
         }
+        premiumAktifMi={Boolean(draft?.is_premium_active)}
       />
     </>
   );

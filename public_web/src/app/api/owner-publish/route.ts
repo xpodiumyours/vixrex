@@ -40,10 +40,13 @@ const HATA_METNI: Record<string, string> = {
     "Sözleşme metinleri güncellenmiş. Üyelik panelinden yeni metinleri onayla.",
   PUBLICATION_CONSENT_VERSION_INVALID:
     "Sözleşme metinleri güncellenmiş. Üyelik panelinden yeni metinleri onayla.",
+  PREMIUM_REQUIRED:
+    "Bu hazır vitrin yalnız premium üyelikle yayınlanır. Aylık 299 TL ile devam et.",
 };
 
 const DURUM_MAP: Record<string, number> = {
   INVALID_SESSION_TOKEN: 401,
+  PREMIUM_REQUIRED: 402,
   DRAFT_STALE: 409,
   PRIVACY_NOTICE_REQUIRED: 422,
   TERMS_ACCEPTANCE_REQUIRED: 422,

@@ -290,7 +290,20 @@ async function getWorkingDraft(sessionToken: string): Promise<WorkingDraftData |
   }
   if (!data) return null;
 
-  return data as unknown as WorkingDraftData;
+  const draft = data as unknown as WorkingDraftData;
+
+  // Kiralık şablon vitrinin premium süresi aktif mi — SUNUCUDA hesaplanır.
+  // İstemci render'ında Date.now() çağırmak React purity kuralını bozar
+  // (react-hooks/purity); premium kapısı zaten RPC'de (PREMIUM_REQUIRED),
+  // bu değer yalnız PublishBar düğmesinin dürüst etiketidir.
+  const premiumBitis = draft.draft_data?.premium_expires_at;
+  draft.is_premium_active = Boolean(
+    typeof premiumBitis === "string" &&
+      premiumBitis.trim().length > 0 &&
+      new Date(premiumBitis).getTime() > Date.now()
+  );
+
+  return draft;
 }
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
