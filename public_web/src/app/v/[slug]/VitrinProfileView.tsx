@@ -788,11 +788,13 @@ export default function VitrinProfileView({
           <div className="flex items-baseline justify-between mb-8">
             <div>
               {blogSectionKicker && (
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-2">
+                <p {...editableProps("blogUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-2">
                   {blogSectionKicker}
                 </p>
               )}
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{blogSectionTitle || "Yazılar"}</h2>
+              <h2 {...editableProps("blogBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                {blogSectionTitle || "Yazılar"}
+              </h2>
             </div>
             <Link href={`/v/${storeSlug}/yazilar`} className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">
               {visibleArticles.length} yazı →
