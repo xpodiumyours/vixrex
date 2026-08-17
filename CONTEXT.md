@@ -51,11 +51,25 @@ eskiyen kısım, kod ile çelişirse KOD kazanır)
   testleri, gitleaks ve auth check yeniden CI'da koşuyor. Ders: PR check
   listesinde ci.yml job'ları görünmüyorsa workflow geçersizdir, sessizce
   "yeşil" gibi görünür.
+- **APK build onarımı (2026-08-17, PR #199):** 22 Temmuz'dan beri 6/6 koşu
+  fail'di — build script'i `cut -d':' -f2` ile keytool'un iki nokta ayraçlı
+  sertifika parmak izinden yalnızca ilk baytı alıyordu, EXPECTED_SHA256 ile
+  hiç eşleşmiyordu. Ayrıştırma düzeltildi; dispatch koşusu SUCCESS (10m25s).
+- **Database backup onarımı (2026-08-17, PR #200):** 3 haftadır fail'di —
+  (a) `DATABASE_URL` secret'ındaki parola geçersizdi: Supabase Management API
+  (`PATCH /v1/projects/{ref}/database/password`) ile güvenli yeni parola atandı
+  ve secret güncellendi; (b) sunucu PostgreSQL 17.6 ama Ubuntu pg_dump'ı 16.14'tü
+  → PGDG reposundan `postgresql-client-17` kurulup PATH'e eklendi. Dispatch
+  koşusu SUCCESS (1m52s, artifact üretiyor).
+- **E2E + visual-regression (2026-08-17, PR #198):** E2E ilk kez CI'a bağlanınca
+  ortaya çıkan Linux snapshot borcu kapatıldı — 9 `*-chromium-linux.png` eklendi;
+  main'deki son CI run tamamen yeşil (görsel yükleme testi + visual-regression
+  canlı production'da geçiyor).
 - **Güvenlik:** rent-demo klon RPC'si, audit-log yetkileri, varsayılan
   fonksiyon izinleri, upload/report oran sınırları güvenlik taramasıyla
-  kapatıldı (PR #183-188, main'de). CSP/Sentry/CI güvenlik kontrolü ayrı
-  bir oturumda (Kilo CLI) paralel işleniyor — bu dosya o işin bittiğini
-  VARSAYMAZ, kodda doğrula.
+  kapatıldı (PR #183-188, main'de). CSP allowlist eksikleri (#197) ve
+  secret sızıntı taraması (#187) de kapandı; Sentry `public_web/src/app/layout.tsx`
+  üzerinden bağlı — bu dosya o işin bittiğini VARSAYMAZ, kodda doğrula.
 - **Instagram ürün içe aktarma:** kod tam (Meta OAuth ile bağlanma, medya
   seçme, ürüne aktarma) ama **`INSTAGRAM_SYNC_ENABLED=false`** —
   `lib/config/instagram_sync_config.dart`. Meta App Review'a henüz
