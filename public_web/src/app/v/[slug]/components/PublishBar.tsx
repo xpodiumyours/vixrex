@@ -9,6 +9,10 @@ interface Props {
    * yazar. Faz G3 (Tek Asistan planı): "Yayınla düğmesi yalan söylemez." */
   temelTamam: boolean;
   eksikTemelSayisi: number;
+  /** Kiralık şablon vitrin mi (cloned_from_slug dolu). Yayın premium ister. */
+  kiralikVitrinMi: boolean;
+  /** Premium süresi aktif mi (premium_expires_at gelecekte). */
+  premiumAktifMi: boolean;
 }
 
 export function PublishBar({
@@ -20,25 +24,36 @@ export function PublishBar({
   setSilmeOnayi,
   temelTamam,
   eksikTemelSayisi,
+  kiralikVitrinMi,
+  premiumAktifMi,
 }: Props) {
+  // Kiralık şablon vitrin + aktif premium yoksa yayın premium ister.
+  // Düğme yalan söylemez: ne gerekiyorsa onu yazar (Faz G3 ilkesi).
+  const premiumGerekli = kiralikVitrinMi && !premiumAktifMi;
+  const yayinEtiketi = yayinlaniyor
+    ? "Yayınlanıyor…"
+    : premiumGerekli
+    ? "Premium ile yayınla — aylık 299 TL"
+    : temelTamam
+    ? "Yayınla"
+    : `Yayınla — ${eksikTemelSayisi} zorunlu alan eksik`;
+
   return (
     <div className="border-t border-white/10 px-4 py-3">
       <button
         type="button"
         onClick={() => void yayinla()}
-        disabled={yayinlaniyor || !temelTamam}
+        disabled={yayinlaniyor || (!premiumGerekli && !temelTamam)}
         title={
-          temelTamam
-            ? undefined
+          temelTamam || premiumGerekli
+            ? premiumGerekli
+              ? "Bu hazır vitrin premium üyelikle yayınlanır."
+              : undefined
             : `Yayınlamadan önce ${eksikTemelSayisi} zorunlu alanı doldur.`
         }
         className="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
       >
-        {yayinlaniyor
-          ? "Yayınlanıyor…"
-          : temelTamam
-          ? "Yayınla"
-          : `Yayınla — ${eksikTemelSayisi} zorunlu alan eksik`}
+        {yayinEtiketi}
       </button>
       {/* "Değişiklikleri bırak" TEK TIKLA silmez: önce onay istenir.
           Bu düğme kullanıcının saatlerce yaptığı işi silebilir. */}

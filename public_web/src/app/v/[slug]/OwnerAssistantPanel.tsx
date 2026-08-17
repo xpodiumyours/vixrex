@@ -37,6 +37,10 @@ interface Props {
   /** "Boş geç" denen isteğe bağlı alanlar — sunucudan kalıcı gelir (ADR 0002,
    * 3. alt-faz). */
   atlananAlanlar?: readonly string[] | null;
+  /** Kiralık şablon vitrinin premium süresi aktif mi — sunucuda hesaplanır
+   * (page.tsx getWorkingDraft). Yalnız PublishBar düğmesinin dürüst
+   * etiketidir; güvenlik katmanı RPC'dedir (PREMIUM_REQUIRED). */
+  premiumAktifMi?: boolean;
 }
 
 export default function OwnerAssistantPanel({
@@ -44,6 +48,7 @@ export default function OwnerAssistantPanel({
   draftData,
   assistantHandoff = null,
   atlananAlanlar = null,
+  premiumAktifMi = false,
 }: Props) {
   const [acik, setAcik] = useState(false);
 
@@ -88,6 +93,16 @@ export default function OwnerAssistantPanel({
   // önem başına dolu/toplam — şemadan hesaplanır, elle sayılmaz.
   const dolulugu = asamaDolulugu(yerelTaslak, atlanmisAlanlar);
   const eksikTemelSayisi = rapor.eksikler.filter((e) => e.onem === "temel").length;
+
+  // Kiralık şablon vitrin mi (cloned_from_slug dolu) + premium aktif mi.
+  // draftData stores satırının tam kopyasıdır — cloned_from_slug ve
+  // premium_expires_at orada durur (owner_forbidden_draft_keys bunların
+  // DRAFT'A YAZILMASINI engeller, okunmasını değil). Premium kapısı
+  // güvenlik katmanı RPC'de (publish_working_draft → PREMIUM_REQUIRED);
+  // buradaki bilgi yalnız düğmenin dürüst etiketidir.
+  const kiralikVitrinMi = Boolean(
+    (yerelTaslak.cloned_from_slug as string | null | undefined)?.trim()
+  );
 
   // Kalite alanında "Sonra": sırayı ilerletir, atlanmislar'a YAZMAZ (ADR
   // 0002 — "boş geç" yalnız isteğe bağlıda). Yalnız seçili alan gerçekten
@@ -163,6 +178,8 @@ export default function OwnerAssistantPanel({
             setSilmeOnayi={actions.setSilmeOnayi}
             temelTamam={rapor.temelTamam}
             eksikTemelSayisi={eksikTemelSayisi}
+            kiralikVitrinMi={kiralikVitrinMi}
+            premiumAktifMi={premiumAktifMi}
           />
 
           {/* Sohbet akışı — kayıt olarak durur, panelin ortasını kaplamaz
