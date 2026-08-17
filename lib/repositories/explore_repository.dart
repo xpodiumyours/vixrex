@@ -147,4 +147,20 @@ class ExploreRepository {
       },
     );
   }
+
+  /// Yerelde saklı son yayınlanan vitrinin edit_token'ı. Gizli anahtar
+  /// (possession proof) — premium durumu okumak için gereklidir (PR #6,
+  /// get_store_premium_status RPC'si). Test koduna/UI'a SIRDIRILMAZ,
+  /// yalnız sahip oturumu kanıtlı okuma akışında kullanılır.
+  Future<String?> loadLastPublishedEditToken() async {
+    return AppErrorGuard.run<String?>(
+      label: 'ExploreRepository.loadLastPublishedEditToken',
+      fallback: null,
+      action: () async {
+        return _sharedPreferences.getString(
+          LocalStorageKeys.lastPublishedEditToken,
+        );
+      },
+    );
+  }
 }

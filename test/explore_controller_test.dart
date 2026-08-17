@@ -37,6 +37,11 @@ class FakeExploreRepository extends Fake implements ExploreRepository {
   Future<String?> loadLastPublishedSlug() async {
     return mockOwnSlug;
   }
+
+  // Premium okuma akışı bu test düzeninde devre dışı: edit_token yoksa
+  // controller premium durumunu hiç çekmez (PR #6).
+  @override
+  Future<String?> loadLastPublishedEditToken() async => null;
 }
 
 void main() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/premium_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 class VitrinStoreCard extends StatelessWidget {
@@ -15,6 +16,12 @@ class VitrinStoreCard extends StatelessWidget {
   /// butonlar olarak gösterilir. null ise (WhatsApp'lı kartlarda hep
   /// null) eski tek-buton davranışı korunur.
   final VoidCallback? onRentPressed;
+
+  /// YALNIZ kendi vitrininde dolu gelir (PR #6): vitrinin premium durumu.
+  /// Başkasının vitrininde asla dolu gelmez — premium bilgisi yalnız
+  /// sahibine görünür (get_store_premium_status edit_token ister).
+  /// null ise premium satırı gösterilmez (eski davranış birebir korunur).
+  final StorePremiumStatus? premiumStatus;
 
   // Theme Colors from AppColors
   static const Color primaryColor = AppColors.primary;
@@ -32,9 +39,23 @@ class VitrinStoreCard extends StatelessWidget {
     required this.onFavoritePressed,
     required this.onWhatsAppPressed,
     this.onRentPressed,
+    this.premiumStatus,
   });
 
   bool get _isRentalTemplate => store.isRentalTemplate;
+
+  /// Kendi vitrininin premium satırı metni. premiumStatus null ise (kendi
+  /// vitrini değil ya da durum okunamadı) satır hiç gösterilmez.
+  String? get _ownPremiumLabel {
+    final status = premiumStatus;
+    if (status == null) return null;
+    if (!status.isPremium) return 'Premium değil · Aylık 299 TL ile yayınla';
+    final expiry = status.premiumExpiresAt;
+    if (expiry == null) return 'Premium aktif';
+    final days = expiry.difference(DateTime.now()).inDays;
+    if (days <= 0) return 'Premium aktif · bugün bitiyor';
+    return 'Premium aktif · $days gün kaldı';
+  }
 
   String get _whatsappButtonLabel {
     final cat =
@@ -302,6 +323,75 @@ class VitrinStoreCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 10),
+
+                    // Kiralık vitrin fiyat bilgisi — iş modeli (spec
+                    // 2026-08-17): 14 gün ücretsiz deneme, sonra aylık
+                    // 299 TL. Karttaki premium ayrımı: kiralık şablonun
+                    // ücretli olduğu en baştan dürüstçe söylenir. Fiyat
+                    // şimdilik tek seçenek; ödeme PR'ında sunucu tarafı
+                    // tek doğruluk kaynağı olacak.
+                    if (_isRentalTemplate)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Row(
+                          children: [
+                            const Text(
+                              'Aylık 299 TL',
+                              style: TextStyle(
+                                color: Color(0xFFF59E0B),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                '· 14 gün ücretsiz dene',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.mutedText.withValues(
+                                    alpha: 0.9,
+                                  ),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // Kendi vitrininin premium durumu (yalnız kendi
+                    // vitrininde). "Premium değil" bilgisi esnafı web
+                    // panelindeki yayın kapısına yönlendirir — ödeme
+                    // orada yapılır (PR #4).
+                    if (isOwnStore && _ownPremiumLabel != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.workspace_premium_rounded,
+                              size: 14,
+                              color: Color(0xFFF59E0B),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                _ownPremiumLabel!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFB45309),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
                     // Kiralık kart hem gövdesinden hem butonundan kategoriye
                     // özel hazırlanmış vitrini açar. Deneme/ödeme detaydadır.

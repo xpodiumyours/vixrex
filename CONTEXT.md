@@ -39,6 +39,36 @@ karar: [[0001-vixrex-core-omurga-ve-uzman-beyinler]].
 ## Şu anki teknik/ürün durumu (2026-08-17 itibariyle — bu bölüm en hızlı
 eskiyen kısım, kod ile çelişirse KOD kazanır)
 
+> **GÜVENLİ GERİ DÖNÜŞ NOKTASI (2026-08-17):** Premium/Kiralık Vitrin
+> planına başlamadan önceki canlı durum. Git: `main` @ `e160f71`;
+> `docs/context-baglama` dalı main'den 2 commit ileride (skill tek kaynak +
+> PR kapsam CI), çalışma ağacı temiz. Canlıda çalışanlar: "Bu vitrini
+> kirala" akışı ÜCRETSİZ (ödeme altyapısı YOK), deneme temizliği 30 saat
+> (yayınlanmayan taslağı siler), premium DB şeması YOK (profiles yalnız
+> id/email), Flutter `PremiumService` iskeleti hiçbir ekrana bağlı değil.
+> Bu plandan sonra bu not eskirse güncellenir; kod çelişirse kod kazanır.
+>
+> **GÜNCELLEME (2026-08-17, akşam):** 2 dal commit'i (skill tek kaynak +
+> PR kapsam CI) PR #207 olarak açıldı (merge bekliyor). Yerel ana dal artık
+> `bring/premium-base` (origin/main @ `2ac4c0b` + PR #207'in 2 commit'i);
+> 6 premium PR'ın tamamı bu dalın üzerinde uncommitted duruyor. Not: yerel
+> main, origin/main'den ayrılmış ~9 eski commit taşıyordu — bunlar bilerek
+> main'e taşınmadı (origin'deki yeni sürümleriyle aşılmıştı). Derin geri
+> dönüş noktası değişmedi: premium öncesi canlı durum main @ `e160f71`.
+> Kod çelişirse kod kazanır.
+>
+> **GÜNCELLEME (2026-08-17, gece):** 5 premium migration CANLIYA UYGULANDI
+> (Management API üzerinden, `chfulefxczbgurtgavtp`): `20260817000000`
+> (premium şema + koruma tetikleyicisi), `20260817010000` (14 gün deneme +
+> taslağa dön + cron), `20260817020000` (yayın kapısı), `20260817030000`
+> (PayTR RPC'leri), `20260817040000` (durum okuma). Canlı doğrulandı: kolon,
+> tetikleyici, premium_orders+RLS, 5 fonksiyon, 2 cron işi, fail-closed
+> spot testler (STORE_NOT_FOUND/UNKNOWN_ORDER). DİKKAT: yayın kapısı
+> (#3) artık AKTİF — premium'suz kiralık vitrin yayınlanamaz; web PR'ları
+> (ödemeli akış) henüz deploy değil, pencere açık. Kayıtlar canlı
+> `schema_migrations`'da (CLI formatı). Web kodları hâlâ uncommitted,
+> `bring/premium-base` üzerinde; PR #207 merge bekliyor.
+
 - **CSP/görseller (2026-08-17):** #193'ün `img-src *` → allowlist dönüşümü
   vitrinlerin gerçekte kullandığı hostları (images.unsplash.com, api.qrserver.com)
   ve maps.google.com'u (frame-src) listeye eklememişti — görseller sessizce

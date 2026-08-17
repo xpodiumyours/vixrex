@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/premium_service.dart';
 import 'package:vixrex/widgets/vitrin_store_card.dart';
 
 void main() {
@@ -26,6 +27,7 @@ void main() {
     required VoidCallback onFavoritePressed,
     required VoidCallback onWhatsAppPressed,
     VoidCallback? onRentPressed,
+    StorePremiumStatus? premiumStatus,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -41,6 +43,7 @@ void main() {
               onFavoritePressed: onFavoritePressed,
               onWhatsAppPressed: onWhatsAppPressed,
               onRentPressed: onRentPressed,
+              premiumStatus: premiumStatus,
             ),
           ],
         ),
@@ -95,6 +98,70 @@ void main() {
       expect(find.text('Senin vitrinin'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    '3b. Kendi vitrininde premium aktifse süre bilgisi gösteriliyor',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildCard(
+          store: testStore,
+          isOwnStore: true,
+          premiumStatus: StorePremiumStatus(
+            storeId: 'x',
+            isPremium: true,
+            premiumExpiresAt: _day(25),
+          ),
+          onFavoritePressed: () {},
+          onWhatsAppPressed: () {},
+        ),
+      );
+
+      expect(find.text('Premium aktif · 25 gün kaldı'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    '3c. Kendi vitrininde premium değilse yayın yönlendirmesi gösteriliyor',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildCard(
+          store: testStore,
+          isOwnStore: true,
+          premiumStatus: const StorePremiumStatus(
+            storeId: 'x',
+            isPremium: false,
+          ),
+          onFavoritePressed: () {},
+          onWhatsAppPressed: () {},
+        ),
+      );
+
+      expect(
+        find.text('Premium değil · Aylık 299 TL ile yayınla'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('3d. premium bilgisi yalnız KENDİ vitrininde gösterilir', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      buildCard(
+        store: testStore,
+        isOwnStore: false,
+        premiumStatus: StorePremiumStatus(
+          storeId: 'x',
+          isPremium: true,
+          premiumExpiresAt: _day(25),
+        ),
+        onFavoritePressed: () {},
+        onWhatsAppPressed: () {},
+      ),
+    );
+
+    expect(find.textContaining('Premium aktif'), findsNothing);
+  });
 
   testWidgets('4. Favori butonu callback’i çalışıyor', (
     WidgetTester tester,
@@ -222,3 +289,8 @@ void main() {
     },
   );
 }
+
+/// Testte kullanılmak üzere bugünden N gün + 6 saat sonrasını döndürür
+/// (saf). Fazladan 6 saat: `difference().inDays` kesmesi (truncation)
+/// nedeniyle tam 25 gün sonrası 24 gün olarak görünebilir.
+DateTime _day(int days) => DateTime.now().add(Duration(days: days, hours: 6));
