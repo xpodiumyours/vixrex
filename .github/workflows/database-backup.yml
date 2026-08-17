@@ -41,6 +41,10 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
+          # postgresql-client-17 /usr/lib/postgresql/17/bin altına kurulur;
+          # /usr/bin/pg_dump symlink'i hâlâ 16'yı gösterir. PATH'e 17 eklenir.
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          pg_dump --version
           chmod +x supabase/backup/backup_database.sh
           BACKUP_TYPE="${{ github.event.inputs.backup_type || 'weekly' }}"
           ./supabase/backup/backup_database.sh "$BACKUP_TYPE"
