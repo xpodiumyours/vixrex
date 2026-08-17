@@ -5,7 +5,7 @@ import { FieldInputArea } from "./FieldInputArea";
 import type { HazirGorsel } from "../hooks/useOwnerActions";
 
 const ONEM_ETIKETI: Record<EksikOnem, { yazi: string; sinif: string }> = {
-  temel: { yazi: "Zorunlu", sinif: "bg-amber-500/15 text-amber-300" },
+  temel: { yazi: "Zorunlu", sinif: "bg-red-500/15 text-red-300" },
   kalite: { yazi: "Kalite", sinif: "bg-sky-500/15 text-sky-300" },
   "istege-bagli": { yazi: "İsteğe bağlı", sinif: "bg-white/10 text-slate-400" },
 };

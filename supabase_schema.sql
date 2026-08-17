@@ -1372,14 +1372,16 @@ CREATE OR REPLACE FUNCTION apply_category_template(
   p_fill_cover BOOLEAN DEFAULT true,
   p_fill_logo BOOLEAN DEFAULT true,
   p_fill_gallery BOOLEAN DEFAULT true,
-  p_fill_products BOOLEAN DEFAULT true
+  p_fill_products BOOLEAN DEFAULT true,
+  p_edit_token TEXT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
-  v_result JSONB := '{}';
+  v_result JSONB := '{}'::JSONB;
   v_image_row RECORD;
   v_current_cover TEXT;
   v_current_logo TEXT;
@@ -1388,19 +1390,53 @@ DECLARE
   v_gallery_items JSONB := '[]'::JSONB;
   v_template_products JSONB := '[]'::JSONB;
   v_applied_count INT := 0;
+  v_authorized BOOLEAN := false;
+  v_storage_version SMALLINT := 1;
+  v_table_product_count INT := 0;
+  v_tpl RECORD;
+  v_sort INT := 0;
+  v_slug TEXT;
 BEGIN
-  SELECT shelf_image_url, logo_url, gallery_items, products
-  INTO v_current_cover, v_current_logo, v_current_gallery, v_current_products
-  FROM stores WHERE id = p_store_id;
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.stores s
+    WHERE s.id = p_store_id
+      AND (
+        (auth.uid() IS NOT NULL AND s.user_id = auth.uid())
+        OR (
+          pg_catalog.length(pg_catalog.btrim(coalesce(p_edit_token, ''))) >= 24
+          AND s.edit_token = pg_catalog.btrim(p_edit_token)
+        )
+      )
+  ) INTO v_authorized;
+
+  IF NOT v_authorized THEN
+    RAISE EXCEPTION 'STORE_UPDATE_NOT_ALLOWED' USING errcode = 'P0001';
+  END IF;
+
+  SELECT
+    shelf_image_url,
+    logo_url,
+    gallery_items,
+    products,
+    coalesce(product_storage_version, 1)
+  INTO
+    v_current_cover,
+    v_current_logo,
+    v_current_gallery,
+    v_current_products,
+    v_storage_version
+  FROM public.stores
+  WHERE id = p_store_id;
 
   IF p_fill_cover THEN
     SELECT image_url INTO v_image_row
-    FROM category_image_templates
+    FROM public.category_image_templates
     WHERE category_key = p_category_key AND image_type = 'cover' AND is_active = true
     ORDER BY display_order LIMIT 1;
 
     IF FOUND AND (v_current_cover IS NULL OR v_current_cover = '') THEN
-      UPDATE stores SET shelf_image_url = v_image_row.image_url WHERE id = p_store_id;
+      UPDATE public.stores SET shelf_image_url = v_image_row.image_url WHERE id = p_store_id;
       v_result := v_result || '{"cover": true}'::JSONB;
       v_applied_count := v_applied_count + 1;
     END IF;
@@ -1408,12 +1444,12 @@ BEGIN
 
   IF p_fill_logo THEN
     SELECT image_url INTO v_image_row
-    FROM category_image_templates
+    FROM public.category_image_templates
     WHERE category_key = p_category_key AND image_type = 'logo_placeholder' AND is_active = true
     ORDER BY display_order LIMIT 1;
 
     IF FOUND AND (v_current_logo IS NULL OR v_current_logo = '') THEN
-      UPDATE stores SET logo_url = v_image_row.image_url WHERE id = p_store_id;
+      UPDATE public.stores SET logo_url = v_image_row.image_url WHERE id = p_store_id;
       v_result := v_result || '{"logo": true}'::JSONB;
       v_applied_count := v_applied_count + 1;
     END IF;
@@ -1424,15 +1460,15 @@ BEGIN
       SELECT jsonb_agg(
         jsonb_build_object(
           'imageUrl', image_url,
-          'title', COALESCE(title, 'Gorsel')
+          'title', coalesce(title, 'Gorsel')
         ) ORDER BY display_order
       )
       INTO v_gallery_items
-      FROM category_image_templates
+      FROM public.category_image_templates
       WHERE category_key = p_category_key AND image_type = 'gallery' AND is_active = true;
 
       IF v_gallery_items IS NOT NULL AND jsonb_array_length(v_gallery_items) > 0 THEN
-        UPDATE stores SET gallery_items = v_gallery_items WHERE id = p_store_id;
+        UPDATE public.stores SET gallery_items = v_gallery_items WHERE id = p_store_id;
         v_result := v_result || '{"gallery": true}'::JSONB;
         v_applied_count := v_applied_count + 1;
       END IF;
@@ -1440,50 +1476,110 @@ BEGIN
   END IF;
 
   IF p_fill_products THEN
-    IF v_current_products IS NULL OR jsonb_array_length(v_current_products) = 0 THEN
-      SELECT jsonb_agg(
-        jsonb_build_object(
-          'id', gen_random_uuid(),
-          'name', COALESCE(title, 'Urun'),
-          'description', '',
-          'price', '',
-          'imageUrls', jsonb_build_array(image_url),
-          'isVisible', true,
-          'source', 'category_template'
-        ) ORDER BY display_order
-      )
-      INTO v_template_products
-      FROM category_image_templates
-      WHERE category_key = p_category_key AND image_type = 'product' AND is_active = true;
+    IF v_storage_version = 2 THEN
+      SELECT count(*)::int INTO v_table_product_count
+      FROM public.products
+      WHERE store_id = p_store_id AND is_active = true;
 
-      IF v_template_products IS NOT NULL AND jsonb_array_length(v_template_products) > 0 THEN
-        UPDATE stores SET products = v_template_products WHERE id = p_store_id;
-        v_result := v_result || '{"products": true}'::JSONB;
-        v_applied_count := v_applied_count + 1;
+      IF v_table_product_count = 0 THEN
+        FOR v_tpl IN
+          SELECT image_url, title, display_order
+          FROM public.category_image_templates
+          WHERE category_key = p_category_key
+            AND image_type = 'product'
+            AND is_active = true
+          ORDER BY display_order
+        LOOP
+          v_slug := lower(replace(replace(coalesce(v_tpl.title, 'urun'), ' ', '-'), '.', ''));
+          IF v_slug IS NULL OR v_slug = '' THEN
+            v_slug := 'urun-' || v_sort::text;
+          END IF;
+          v_slug := v_slug || '-' || v_sort::text;
+
+          INSERT INTO public.products (
+            store_id,
+            name,
+            slug,
+            description,
+            price_text,
+            image_urls,
+            source_type,
+            is_visible,
+            is_active,
+            sort_order
+          ) VALUES (
+            p_store_id,
+            coalesce(v_tpl.title, 'Urun'),
+            v_slug,
+            '',
+            '',
+            jsonb_build_array(v_tpl.image_url),
+            'category_template',
+            true,
+            true,
+            v_sort
+          );
+          v_sort := v_sort + 1;
+        END LOOP;
+
+        IF v_sort > 0 THEN
+          v_result := v_result || '{"products": true}'::JSONB;
+          v_applied_count := v_applied_count + 1;
+        END IF;
+      END IF;
+    ELSE
+      IF v_current_products IS NULL OR jsonb_array_length(v_current_products) = 0 THEN
+        SELECT jsonb_agg(
+          jsonb_build_object(
+            'id', gen_random_uuid(),
+            'name', coalesce(title, 'Urun'),
+            'description', '',
+            'price', '',
+            'imageUrls', jsonb_build_array(image_url),
+            'isVisible', true,
+            'source', 'category_template'
+          ) ORDER BY display_order
+        )
+        INTO v_template_products
+        FROM public.category_image_templates
+        WHERE category_key = p_category_key AND image_type = 'product' AND is_active = true;
+
+        IF v_template_products IS NOT NULL AND jsonb_array_length(v_template_products) > 0 THEN
+          UPDATE public.stores SET products = v_template_products WHERE id = p_store_id;
+          v_result := v_result || '{"products": true}'::JSONB;
+          v_applied_count := v_applied_count + 1;
+        END IF;
       END IF;
     END IF;
   END IF;
 
   IF v_applied_count > 0 THEN
-    INSERT INTO store_category_image_usage (store_id, category_key, images_used)
+    INSERT INTO public.store_category_image_usage (store_id, category_key, images_used)
     VALUES (
-      p_store_id,      p_category_key,
-      COALESCE(
-        (SELECT jsonb_agg(image_url)
-         FROM category_image_templates
-         WHERE category_key = p_category_key AND is_active = true),
+      p_store_id,
+      p_category_key,
+      coalesce(
+        (
+          SELECT jsonb_agg(image_url)
+          FROM public.category_image_templates
+          WHERE category_key = p_category_key AND is_active = true
+        ),
         '[]'::JSONB
       )
     )
     ON CONFLICT (store_id) DO UPDATE SET
       category_key = EXCLUDED.category_key,
       images_used = EXCLUDED.images_used,
-      applied_at = now();
+      applied_at = pg_catalog.now();
   END IF;
 
   RETURN v_result || jsonb_build_object(
     'success', v_applied_count > 0,
-    'image_count', (SELECT COUNT(*) FROM category_image_templates WHERE category_key = p_category_key AND is_active = true)
+    'image_count', (
+      SELECT count(*)::int
+      FROM public.category_image_templates
+      WHERE category_key = p_category_key AND is_active = true
+    )
   );
 END;
 $$;

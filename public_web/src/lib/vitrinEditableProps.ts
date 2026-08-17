@@ -1,8 +1,10 @@
 // Tıkla-düzenle işaretleri (implementation_plan.md Commit 9).
 //
-// Vitrindeki bir öğeye şu iki etiketi koyar:
-//   data-vixrex-editable="<anahtar>"   → hangi alan
-//   data-vixrex-label="<Türkçe ad>"    → kullanıcıya ne denecek
+// Vitrindeki bir öğeye şu etiketleri koyar:
+//   data-vixrex-editable="<anahtar>"            → hangi alan
+//   data-vixrex-label="<Türkçe ad>"             → kullanıcıya ne denecek
+//   data-vixrex-onem="<temel|kalite|istege-bagli>" → alan önemi (CSS renk kaynağı)
+//   data-vixrex-bolum="<hero|contact|...|blog|faq|about>" → bölüm (CSS renk kaynağı)
 //
 // Değerler vitrinFieldSchema.ts'ten gelir; elle yazılmaz. Yeni alan
 // eklendiğinde bu dosya değişmez.
@@ -31,5 +33,7 @@ export function editableProps(
   return {
     "data-vixrex-editable": alan.anahtar,
     "data-vixrex-label": alan.etiket,
+    "data-vixrex-onem": alan.zorunlu ? "temel" : alan.kalite ? "kalite" : "istege-bagli",
+    "data-vixrex-bolum": alan.bolum,
   };
 }

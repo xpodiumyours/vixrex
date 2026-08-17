@@ -13,7 +13,7 @@ const ASAMALAR: ReadonlyArray<{
    * okunmaz olurdu, son sütun bilinçli sıkıştırıldı. */
   flex: number;
 }> = [
-  { onem: "temel", renk: "bg-amber-300", flex: 4 },
+  { onem: "temel", renk: "bg-red-300", flex: 4 },
   { onem: "kalite", renk: "bg-sky-400", flex: 7 },
   { onem: "istege-bagli", renk: "bg-slate-400", flex: 5 },
 ];
