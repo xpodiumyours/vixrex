@@ -6,6 +6,55 @@ import { expect, test } from "@playwright/test";
  */
 const DEMO_SLUG = "kiralik-butik";
 
+// 2026-08-17: CSP img-src allowlist'e Unsplash/QR eklenmediği için tüm vitrin
+// görselleri sessizce engelleniyordu (kök neden #193). Bu test, görsellerin
+// gerçekten yüklendiğini doğrular — CSP bozulursa naturalWidth 0 kalır ve
+// kırmızıya düşer. (Vitrin sayfasında görsel yükleme kontratı.)
+test.describe("vitrin görsel yükleme (CSP kontratı)", () => {
+  test("Unsplash görselleri yüklenir — CSP img-src allowlist bozuk değil", async ({
+    page,
+  }) => {
+    const cspViolations: string[] = [];
+    page.on("console", (msg) => {
+      const text = msg.text();
+      if (
+        msg.type() === "error" &&
+        /violates the following Content Security Policy/.test(text)
+      ) {
+        cspViolations.push(text);
+      }
+    });
+
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "networkidle" });
+
+    // Sayfada en az bir Unsplash görseli olmalı (demo vitrin dolu).
+    const unsplashImgs = page.locator('img[src*="unsplash"]');
+    const count = await unsplashImgs.count();
+    expect(count).toBeGreaterThan(0);
+
+    // Görseller gerçekten yüklenmiş olmalı (naturalWidth > 0).
+    // Lazy-load yüzünden görünür alana scroll edip bekliyoruz.
+    for (let i = 0; i < count; i++) {
+      const img = unsplashImgs.nth(i);
+      await img.scrollIntoViewIfNeeded().catch(() => {});
+    }
+    await page.waitForTimeout(2000);
+
+    const broken = await unsplashImgs.evaluateAll((imgs) =>
+      imgs
+        .filter((img) => !(img as HTMLImageElement).complete || (img as HTMLImageElement).naturalWidth === 0)
+        .map((img) => (img as HTMLImageElement).src)
+    );
+
+    // CSP ihlali kaydı da sıfır olmalı (görsel engellenmesi konsola düşer).
+    const cspImageViolations = cspViolations.filter((v) =>
+      v.includes("img-src")
+    );
+    expect(cspImageViolations).toEqual([]);
+    expect(broken).toEqual([]);
+  });
+});
+
 test.describe("public vitrin görüntüleme", () => {
   test("vitrin ana sayfası açılır ve mağaza adı görünür", async ({
     page,

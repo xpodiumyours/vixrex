@@ -229,3 +229,42 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+
+  public_web_e2e:
+    name: Next.js — E2E (canlı vitrin, gerçek tarayıcı)
+    # 2026-08-17 dersi: CSP img-src allowlist'e Unsplash/QR eklenmeyince vitrin
+    # görselleri sessizce engellendi; hiçbir test katmanı bunu yakalamadı
+    # (vitest node env + kontrat testleri kaynak metni okuyor, e2e CI'da hiç
+    # koşmuyordu). Bu job, canlı public vitrine karşı gerçek tarayıcıda
+    # koşar; görsel yükleme bozulursa kırmızıya düşer.
+    needs: changes
+    if: needs.changes.outputs.public_web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Chromium kurulumu
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E (canlı vitrin — görsel yükleme kontratı dahil)
+        run: npm run e2e
+        env:
+          # Varsayılan: https://vixrex-public.vercel.app (production).
+          # Preview'a karşı koşmak için E2E_PUBLIC_BASE_URL ayarlanabilir.
+          E2E_PUBLIC_BASE_URL: ${{ vars.E2E_PUBLIC_BASE_URL || 'https://vixrex-public.vercel.app' }}
