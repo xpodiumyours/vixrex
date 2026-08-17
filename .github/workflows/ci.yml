@@ -251,7 +251,7 @@ jobs:
     # canlıda doğrular). PR'da koşmak yanıltıcı olur: PR'ın kodu canlıda
     # olmadığı için her zaman kırmızı gösterir. PR'da kaynak-kontrat testi
     # (security-headers-contract.test.ts) CSP hostlarını zaten doğruluyor.
-    if: needs.changes.outputs.public_web == 'true' && github.ref == 'refs/heads/main'
+    if: needs.changes.outputs.public_web == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/chore/e2e-visual-snapshots')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
