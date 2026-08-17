@@ -1141,16 +1141,7 @@ export default function VitrinProfileView({
                   <WhatsAppIcon size={24} className="text-[#22C55E] group-hover:scale-110 transition duration-300" />
                   <span className="text-xs font-bold text-slate-300 group-hover:text-white">WhatsApp</span>
                 </a>
-                {/* NOT: bu bölüm yalnız ziyaretçi modunda (!ownerMode) çizilir —
-                    etiket şu an sahip modunda etkinleşmez; paylaşım bölümü
-                    sahip görünümüne açılırsa kısayol hazır olur (issue #215). */}
-                <a
-                  href={instagramUrl || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  {...editableProps("instagram", ownerMode)}
-                  className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-pink-500/30 hover:border-pink-500/60 hover:shadow-[0_8px_24px_rgba(236,72,153,0.15)] transition group"
-                >
+                <a href={instagramUrl || "#"} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-pink-500/30 hover:border-pink-500/60 hover:shadow-[0_8px_24px_rgba(236,72,153,0.15)] transition group">
                   <InstagramIcon size={24} className="text-[#EC4899] group-hover:scale-110 transition duration-300" />
                   <span className="text-xs font-bold text-slate-300 group-hover:text-white">Instagram</span>
                 </a>

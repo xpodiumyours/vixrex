@@ -32,6 +32,8 @@ const TIKLAMA_ISTISNALARI: Record<string, string> = {
     "Ayrı bulgu adayı (buton mapsUrl doluluğuna bakıyor); issue #215 kapsamı dışında.",
   galeriAksiyonLinki:
     "galeriAksiyonMetni ile aynı tek elemanda gösteriliyor; bir elemana yalnız BİR alan etiketlenir (issue #215 Commit 4 — bilinçli sınır, href panelden düzenlenir).",
+  instagram:
+    "Instagram linki yalnız ziyaretçilere özel paylaşım bölümünde (!ownerMode) — sahip modunda görünmez. Paylaşım butonları bilinçli olarak düzenleme kancası DEĞİL, gerçek dış linkler (Casper 2026-08-14 kararı; tests/share-mobile-layout.test.ts koruyor).",
 };
 
 describe("Tıkla-düzenle kapsamı — şemadaki her alan ya etiketli ya gerekçeli istisna", () => {
