@@ -1161,25 +1161,27 @@ export default function VitrinProfileView({
               ))}
             </ul>
 
-            {/* Fiyat henüz yok — ödeme altyapısı bağlanmadı (Casper,
-                2026-08-14: "şimdilik ücretsiz kalsın"). Buton daha önce
-                genel uygulama sayfasına gidiyordu ama çalışmayan bir
-                fiyat vaadi gösteriyordu — silindi, yerine gerçekten
-                çalışan ve doğru söyleyen bir CTA konuldu. Ödeme
-                altyapısı bağlanınca bu bölüm ayrı bir karar/PR'da fiyat
-                gösterecek şekilde güncellenir. */}
+            {/* Fiyat modeli (spec 2026-08-17): 14 gün ücretsiz deneme,
+                sonra aylık 299 TL. Ödeme tahsilatı (PayTR) ayrı bir
+                PR'dadır — bu bant fiyatı dürüstçe gösterir, kirala
+                akışının kendisi değişmez. Vitrindeki ürün fiyatları
+                örnek içeriktir, kira bedeli değildir. */}
             <div className="mt-8 inline-flex flex-col items-center rounded-2xl border border-blue-500/25 bg-[#0B1120] px-8 py-6">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                Şimdilik ücretsiz
+              <span className="text-3xl font-extrabold tracking-tight text-white">
+                Aylık 299 TL
+              </span>
+              <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                İlk 14 gün ücretsiz deneme
               </span>
               <a
                 href={`/rent-demo?slug=${encodeURIComponent(storeSlug)}`}
-                className="mt-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-blue-500/40"
+                className="mt-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-blue-500/40"
               >
                 Bu vitrini kirala
               </a>
               <span className="mt-3 text-[11px] text-slate-400">
-                Hemen dene, kod bilmene gerek yok
+                Hemen dene, kod bilmene gerek yok · Vitrindeki fiyatlar
+                örnek ürün fiyatlarıdır
               </span>
             </div>
           </div>
