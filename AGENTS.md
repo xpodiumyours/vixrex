@@ -23,7 +23,14 @@ Skill'ler isteğe bağlı çalışma yardımcılarıdır; kullanıcı yetkisini 
 - "Bir şey bozuldu / çalışmıyor / hata veriyor" → `diagnosing-bugs`. Kırmızıya düşen sıkı bir kontrol kurulmadan koda bakıp teori üretilmez — bu skill'in önlediği tam olarak budur.
 - Çok adımlı yeni özellik/fikir → `grill-with-docs` → (gerekirse `to-spec`/`to-tickets`) → `implement` (içeride `tdd` + `code-review` çalıştırır).
 - Mimari inceleme veya modül tasarımı → `codebase-design` / `improve-codebase-architecture`.
+- Görsel/tasarım işi (logo, banner, UI şekillendirme, sunum) → `ui-ux-pro-max` / `design` / `brand` / `slides` — harita `ask-matt`'ta "Design & UI (gerektiğinde)" grubunda.
 - Hangi skill uyduğundan emin değilsen `ask-matt`'ın haritasına bak.
+
+## Skill yönetimi
+
+- KANONİK kaynak: `.agents/skills/` — yeni skill ekleme/düzenleme YALNIZCA burada yapılır (Codex, Cursor, Freebuff buradan okur).
+- Claude Code yalnızca `.claude/skills/` okur → `bash tool/sync_skills` ile ayna güncellenir; ayna değişiklikleri de commit edilir.
+- `skills-lock.json` her skill'in kaydını tutar (hash dahil) — yeni skill eklendikten sonra güncellenir.
 
 Bu bir zincir DEĞİLDİR: issue bağlama, kanıt scripti veya ek onay gerektirmez (2026-08-11 tarihli #123'te kaldırılan bürokrasi geri gelmez) — yalnızca doğru yönteme girmeyi sağlar. Basit, tek adımlı okuma/araştırma/durum sorularında skill gerekmez.
 

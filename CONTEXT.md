@@ -78,3 +78,12 @@ eskiyen kısım, kod ile çelişirse KOD kazanır)
 - `AGENTS.md` — ajan başlangıç sırası, yetki sınırları, skill akışı.
 - `VIXREX_RULES.md` — ürün/güvenlik/kanıt/canlı sistem sınırları (operasyonel kurallar).
 - `docs/agents/repository-guide.md` — teknik depo haritası.
+- `docs/agents/store-editor-controller-parcalama.md` — devam eden controller parçalama işinin durumu.
+- `docs/vitrin-alan-semasi.md` — vitrin alanlarının tek kaynağı (canonical: `public_web/src/lib/vitrinFieldSchema.ts`).
+- `docs/durum.md` — güncel durum notları.
+- `docs/kok-neden-arastirmasi.md` — kök neden araştırmaları.
+- `docs/e2e-otomasyon-plani.md` — E2E otomasyon planı.
+- `docs/dal-durum-haritasi.md` — dal durum haritası.
+- `docs/arsiv/` — tamamlanmış işlerin arşivi (ör. `vixrex-asistan-13-faz-plani-2026-08-06`).
+- `docs/research/` — araştırma notları (ör. google ürün/yere SEO).
+- `docs/adr/` — kalıcı mimari kararlar (0001 omurga, 0002 asistan, 0003 vault kuralı).
