@@ -823,11 +823,13 @@ export default function VitrinProfileView({
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="sss">
           <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">{faqSectionKicker || "SSS"}</p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
+              <p {...editableProps("sssUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
+                {faqSectionKicker || "SSS"}
+              </p>
+              <h2 {...editableProps("sssBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
                 {faqSectionTitle || "Sıkça sorulan sorular"}
               </h2>
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p {...editableProps("sssAciklama", ownerMode)} className="text-sm text-slate-400 leading-relaxed">
                 {faqSectionDescription || "Sipariş, stok ve mağaza ziyareti hakkında merak edilenler."}
               </p>
             </div>
