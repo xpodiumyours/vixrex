@@ -38,6 +38,14 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: python .github/scripts/verify_pr_scope.py
 
+      - name: PR base kontrolü
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: python .github/scripts/verify_pr_base.py
+
+
       - name: Dosya büyüklüğü rateti
         run: python .github/scripts/verify_dosya_boyutu_ratchet.py
 
