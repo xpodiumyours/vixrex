@@ -37,10 +37,11 @@ Bu bir zincir DEĞİLDİR: issue bağlama, kanıt scripti veya ek onay gerektirm
 
 ## Git, PR ve yayın değişmezleri
 
+- Açık bir issue'nun planında (checklist) tamamlanan her görev, tamamlayan ajanın adı ve tarihiyle işaretlenir: `- [x] <görev> — <ajan-adı>, <YYYY-MM-DD>`. Tamamlanan görev işaretsiz veya ad/tarihsiz bırakılamaz — "bitti" demek, kimin ne zaman bitirdiğini yazmak demektir (2026-08-17 kullanıcı kuralı).
 - Kullanıcı değişiklikleri korunur; force push ve `git reset --hard` kullanılmaz.
 - Squash ile birleşmiş dalda devam edilmez. Aynı iş için ikinci PR veya yalnız CI doğrulama PR'ı açılmaz.
 - PR'sız dal bırakılmaz; CI düzeltmesi mevcut PR branch'inde yapılır.
-- Yeni bir PR açılırken base'in `main` olduğu açıkça doğrulanır (`gh pr create --base main`). Bir PR'ı bilerek başka bir PR'ın üzerine zincirlemek gerekiyorsa bu açıkça belirtilir ve zincirin en ucu main'e ulaşana kadar iş bitmiş sayılmaz — ara PR'ların "merged" görünmesi yeterli değildir; PR listesi "merged mi" gösterir, "nereye" göstermez (2026-08-15 dersi: #170→#171→#172→#173 birbirinin üzerine zincirlendi, hiçbiri main'e ulaşmadı).
+- Yeni bir PR açılırken base'in `main` olduğu açıkça doğrulanır (`gh pr create --base main`). Artık CI'da da denetlenir (`PR base kontrolü`, `.github/scripts/verify_pr_base.py`): base main değilse ve açıklamada `Zincir: <dal>` satırı yoksa PR kırmızıya düşer (2026-08-17 eklendi). Bir PR'ı bilerek başka bir PR'ın üzerine zincirlemek gerekiyorsa bu açıkça belirtilir ve zincirin en ucu main'e ulaşana kadar iş bitmiş sayılmaz — ara PR'ların "merged" görünmesi yeterli değildir; PR listesi "merged mi" gösterir, "nereye" göstermez (2026-08-15 dersi: #170→#171→#172→#173 birbirinin üzerine zincirlendi, hiçbiri main'e ulaşmadı).
 - `main` production dalıdır; merge etmek iki Vercel projesinin ilgili olanında yayını tetikleyebilir.
 - Force push, `git reset --hard`, `git clean -f(d)`, `git branch -D`, `git checkout .`/`restore .` bu depoda bir Claude Code hook'u tarafından teknik olarak engellenir (`.claude/hooks/block-dangerous-git.sh`) — kural metne değil, koda bağlı (2026-08-12 eklendi).
 - Bir PR 12 dosya veya 600 satırdan büyükse CI (`Kapsam kontrolü`, `.github/scripts/verify_pr_scope.py`) kırmızıya düşer. Kullanıcıdan gerçek onay alındıysa PR açıklamasına `Kapsam-Onay: <kısa özet>` satırı eklenir; yoksa iş küçük PR'lara bölünür. Bu, kullanıcının kod okumadan bir ajanın kapsam dışına çıktığını fark edebilmesi için var (2026-08-12 PR #134 dersi).
