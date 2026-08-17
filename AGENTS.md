@@ -37,7 +37,7 @@ Bu bir zincir DEĞİLDİR: issue bağlama, kanıt scripti veya ek onay gerektirm
 
 ## Git, PR ve yayın değişmezleri
 
-- Açık bir issue'nun planında (checklist) tamamlanan her görev, tamamlayan ajanın adı ve tarihiyle işaretlenir: `- [x] <görev> — <ajan-adı>, <YYYY-MM-DD>`. Tamamlanan görev işaretsiz veya ad/tarihsiz bırakılamaz — "bitti" demek, kimin ne zaman bitirdiğini yazmak demektir (2026-08-17 kullanıcı kuralı).
+- Issue planında tamamlanan her görev: `- [x] <görev> — <ajan>, <YYYY-MM-DD>` (2026-08-17).
 - Kullanıcı değişiklikleri korunur; force push ve `git reset --hard` kullanılmaz.
 - Squash ile birleşmiş dalda devam edilmez. Aynı iş için ikinci PR veya yalnız CI doğrulama PR'ı açılmaz.
 - PR'sız dal bırakılmaz; CI düzeltmesi mevcut PR branch'inde yapılır.
