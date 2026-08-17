@@ -37,8 +37,12 @@ class BulkUploadReviewView extends StatelessWidget {
             itemCount: products.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder:
-                (context, index) =>
-                    _ProductReviewItem(index: index, product: products[index], onEdit: onEditProduct, onRemove: onRemoveProduct),
+                (context, index) => _ProductReviewItem(
+                  index: index,
+                  product: products[index],
+                  onEdit: onEditProduct,
+                  onRemove: onRemoveProduct,
+                ),
           ),
         ),
       ],
@@ -171,16 +175,17 @@ class _ProductReviewItem extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: p.primaryImageUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      p.primaryImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _productIcon(),
-                    ),
-                  )
-                : _productIcon(),
+            child:
+                p.primaryImageUrl != null
+                    ? ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        p.primaryImageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _productIcon(),
+                      ),
+                    )
+                    : _productIcon(),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -205,7 +210,10 @@ class _ProductReviewItem extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: p.price.isEmpty ? AppColors.mutedText : AppColors.primary,
+                        color:
+                            p.price.isEmpty
+                                ? AppColors.mutedText
+                                : AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 8),

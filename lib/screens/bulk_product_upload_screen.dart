@@ -274,7 +274,11 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: AppColors.surface,
-      builder: (_) => BulkProductEditSheet(product: product, categories: widget.categories),
+      builder:
+          (_) => BulkProductEditSheet(
+            product: product,
+            categories: widget.categories,
+          ),
     );
     if (result != null) {
       _controller.updateProduct(index, result);
