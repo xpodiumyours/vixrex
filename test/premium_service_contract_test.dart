@@ -28,12 +28,18 @@ void main() {
     expect(service, contains('StorePremiumStatus'));
   });
 
-  test('edit_token asla SELECT/from zincirine girmez, yalnız RPC parametresi', () {
-    final service = read('lib/services/premium_service.dart');
-    expect(service, isNot(contains(".eq('edit_token'")));
-    expect(service, isNot(contains("select('edit_token'")));
-    expect(service, contains("params: {'p_slug': slug, 'p_edit_token': editToken}"));
-  });
+  test(
+    'edit_token asla SELECT/from zincirine girmez, yalnız RPC parametresi',
+    () {
+      final service = read('lib/services/premium_service.dart');
+      expect(service, isNot(contains(".eq('edit_token'")));
+      expect(service, isNot(contains("select('edit_token'")));
+      expect(
+        service,
+        contains("params: {'p_slug': slug, 'p_edit_token': editToken}"),
+      );
+    },
+  );
 
   test('OCR yardımcıları korunur (ayrı özellik, kapsam dışı)', () {
     final service = read('lib/services/premium_service.dart');

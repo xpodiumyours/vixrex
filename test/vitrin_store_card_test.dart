@@ -143,26 +143,25 @@ void main() {
     },
   );
 
-  testWidgets(
-    '3d. premium bilgisi yalnız KENDİ vitrininde gösterilir',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        buildCard(
-          store: testStore,
-          isOwnStore: false,
-          premiumStatus: StorePremiumStatus(
-            storeId: 'x',
-            isPremium: true,
-            premiumExpiresAt: _day(25),
-          ),
-          onFavoritePressed: () {},
-          onWhatsAppPressed: () {},
+  testWidgets('3d. premium bilgisi yalnız KENDİ vitrininde gösterilir', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      buildCard(
+        store: testStore,
+        isOwnStore: false,
+        premiumStatus: StorePremiumStatus(
+          storeId: 'x',
+          isPremium: true,
+          premiumExpiresAt: _day(25),
         ),
-      );
+        onFavoritePressed: () {},
+        onWhatsAppPressed: () {},
+      ),
+    );
 
-      expect(find.textContaining('Premium aktif'), findsNothing);
-    },
-  );
+    expect(find.textContaining('Premium aktif'), findsNothing);
+  });
 
   testWidgets('4. Favori butonu callback’i çalışıyor', (
     WidgetTester tester,
@@ -294,5 +293,4 @@ void main() {
 /// Testte kullanılmak üzere bugünden N gün + 6 saat sonrasını döndürür
 /// (saf). Fazladan 6 saat: `difference().inDays` kesmesi (truncation)
 /// nedeniyle tam 25 gün sonrası 24 gün olarak görünebilir.
-DateTime _day(int days) =>
-    DateTime.now().add(Duration(days: days, hours: 6));
+DateTime _day(int days) => DateTime.now().add(Duration(days: days, hours: 6));
