@@ -496,7 +496,7 @@ export default function VitrinProfileView({
                   </span>
                 )}
                 {showRating && (
-                  <span className="flex items-center gap-1.5">
+                  <span {...editableProps("puanGoster", ownerMode)} className="flex items-center gap-1.5">
                     ⭐ {ratingScore!.toFixed(1)}
                     {typeof reviewCount === "number" && reviewCount > 0
                       ? ` (${reviewCount} değerlendirme)`
