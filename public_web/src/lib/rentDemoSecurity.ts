@@ -30,12 +30,28 @@ export function getClientIp(request: Request): string {
   return "unknown";
 }
 
+// V-16 (attack-vectors.md, 2026-08-18): RATE_LIMIT_SECRET tanımsızken bu
+// fonksiyon ham IP'yi OLDUĞU GİBİ döndürüyordu — dosya başındaki "ham IP
+// veritabanına YAZILMAZ" sözünü bozuyordu, çünkü dönen değer doğrudan
+// start_demo_trial/consume_assistant_request'e p_client_key olarak
+// gidiyor. Yerel geliştirmede sabit bir tuzla hash'lenir (davranış aynı —
+// aynı IP aynı torbaya düşer — ama artık geri döndürülemez); üretimde
+// secret yoksa report-abuse'daki TURNSTILE_SECRET_KEY ile AYNI desen:
+// sessizce devam ETMEYİZ, fail-closed (çağıran taraf yakalayıp temiz bir
+// hata sayfası döner).
+const DEV_FALLBACK_SALT = "vixrex-yerel-gelistirme-ip-hash-tuzu-sir-degil";
+
 /** Ham IP'yi kalıcı olarak saklanabilir, geri döndürülemez bir anahtara
- * çevirir. RATE_LIMIT_SECRET tanımlı değilse (yerel/test ortamı) IP'nin
- * kendisini döner — üretimde bu değişken .env.example'da işaretli, zorunlu
- * kabul edilmeli. */
+ * çevirir. Üretimde RATE_LIMIT_SECRET yoksa fırlatır (fail-closed). */
 export function fingerprintClient(ip: string): string {
   const secret = process.env.RATE_LIMIT_SECRET?.trim();
-  if (!secret) return ip;
-  return createHmac("sha256", secret).update(ip).digest("hex");
+  if (secret) {
+    return createHmac("sha256", secret).update(ip).digest("hex");
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("RATE_LIMIT_SECRET is not configured in production");
+  }
+
+  return createHmac("sha256", DEV_FALLBACK_SALT).update(ip).digest("hex");
 }
