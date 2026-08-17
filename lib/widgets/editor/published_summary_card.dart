@@ -40,7 +40,7 @@ class PublishedSummaryCard extends StatelessWidget {
                 height: 60,
                 decoration: BoxDecoration(
                   color: AppColors.inputBg,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppColors.radius14),
                   image:
                       coverUrl.isNotEmpty
                           ? DecorationImage(

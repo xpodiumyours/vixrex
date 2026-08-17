@@ -90,12 +90,12 @@ class BookingSlotStep extends StatelessWidget {
 
         return InkWell(
           onTap: isFull || hasPending ? null : () => onSlotSelected(timeStr),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppColors.radius12),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             decoration: BoxDecoration(
               color: cardBg,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
               border: Border.all(color: borderCol, width: isSelected ? 1.6 : 1),
             ),
             child: Column(

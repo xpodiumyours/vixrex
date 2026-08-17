@@ -431,7 +431,7 @@ class VitrinFormSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppColors.radius16),
                     child: Container(
                       color: Colors.white,
                       padding: const EdgeInsets.all(12),

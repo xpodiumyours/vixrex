@@ -49,7 +49,7 @@ class QrCodeBottomSheet extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.error.withAlpha(30),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppColors.radius12),
                 border: Border.all(color: AppColors.error.withAlpha(90)),
               ),
               child: Row(

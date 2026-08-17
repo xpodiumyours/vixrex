@@ -155,13 +155,13 @@ class GalleryEditorSection extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 6),
                 child: InkWell(
                   onTap: onPickPhotos,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppColors.radius10),
                   child: Container(
                     width: thumbSize,
                     height: thumbSize,
                     decoration: BoxDecoration(
                       color: inputBg,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppColors.radius10),
                       border: Border.all(color: cardBorder),
                     ),
                     child: Column(
@@ -253,7 +253,9 @@ class GalleryEditorSection extends StatelessWidget {
                                     height: thumbSize,
                                     decoration: BoxDecoration(
                                       color: inputBg,
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(
+                                        AppColors.radius10,
+                                      ),
                                       border: Border.all(
                                         color:
                                             hasTitle

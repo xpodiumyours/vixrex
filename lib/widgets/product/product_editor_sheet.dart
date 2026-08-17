@@ -429,12 +429,12 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   Widget _buildAddImageTile() {
     return InkWell(
       onTap: _isSaving ? null : _pickImages,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppColors.radius14),
       child: Container(
         width: 96,
         decoration: BoxDecoration(
           color: AppColors.surfaceSoft,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppColors.radius14),
           border: Border.all(color: AppColors.border),
         ),
         child: const Column(
@@ -457,7 +457,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         children: [
           Positioned.fill(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               child:
                   image.bytes != null
                       ? Image.memory(image.bytes!, fit: BoxFit.cover)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
 
 typedef OnPickFile = Future<void> Function();
 typedef OnDownloadTemplate = Future<void> Function();
@@ -36,14 +37,7 @@ class BulkUploadInitialView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        const Text(
-          'Dosya seçin',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: AppColors.darkText,
-          ),
-        ),
+        const Text('Dosya seçin', style: AppTextStyles.subTitle),
         const SizedBox(height: 8),
         const Text(
           'Excel (.xlsx) veya CSV dosyası seçerek\nürünlerinizi toplu olarak ekleyebilirsiniz.',
@@ -62,7 +56,7 @@ class BulkUploadInitialView extends StatelessWidget {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.black,
+              foregroundColor: AppColors.onPrimary,
               minimumSize: const Size.fromHeight(52),
             ),
           ),
@@ -95,7 +89,7 @@ class _BulkUploadFormatInfo extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppColors.radius14),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(

@@ -169,7 +169,13 @@ class OwnerPreviewService {
     if (searchable.contains('invalid_slug')) {
       return 'Vitrin adresi geçersiz.';
     }
-    return 'Önizleme hazırlanamadı. Lütfen tekrar deneyin.';
+    // Tanınmayan hata: eskiden burada sabit, teknik detaysız bir cümle
+    // dönüyordu — Postgres'in gerçekte söylediği kod (örn.
+    // INVALID_ASSISTANT_HANDOFF_STEP) tamamen kayboluyordu, teşhis
+    // imkansızdı (2026-08-12 bulgusu). Sır içermez: sanitize_assistant_handoff
+    // sırları handoff'a girmeden reddediyor, bu yalnız bizim kendi hata
+    // kodlarımız.
+    return 'Önizleme hazırlanamadı: ${error.message}';
   }
 }
 

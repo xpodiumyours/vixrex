@@ -243,7 +243,7 @@ class _ArticleReviewCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppColors.radius16),
         border: Border.all(color: _cardBorder),
       ),
       padding: const EdgeInsets.all(16),
@@ -321,7 +321,7 @@ class _ArticleReviewCard extends StatelessWidget {
                       foregroundColor: const Color(0xFFDC2626),
                       side: const BorderSide(color: Color(0xFFFCA5A5)),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppColors.radius10),
                       ),
                     ),
                   ),
@@ -337,7 +337,7 @@ class _ArticleReviewCard extends StatelessWidget {
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppColors.radius10),
                       ),
                     ),
                   ),

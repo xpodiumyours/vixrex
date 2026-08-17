@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vixrex/theme/app_colors.dart';
 
 class GoogleBusinessGuideCard extends StatelessWidget {
   final String publishedLink;
@@ -182,7 +183,7 @@ class GoogleBusinessGuideCard extends StatelessWidget {
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppColors.radius12),
                 ),
                 textStyle: const TextStyle(
                   fontSize: 12,

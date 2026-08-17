@@ -340,7 +340,9 @@ class VitrinStoreCard extends StatelessWidget {
                                     horizontal: 6,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(
+                                      AppColors.radius10,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -371,7 +373,9 @@ class VitrinStoreCard extends StatelessWidget {
                                     horizontal: 6,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(
+                                      AppColors.radius10,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -413,7 +417,9 @@ class VitrinStoreCard extends StatelessWidget {
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(
+                                AppColors.radius10,
+                              ),
                             ),
                           ),
                         ),

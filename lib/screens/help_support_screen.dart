@@ -76,11 +76,11 @@ class HelpSupportScreen extends StatelessWidget {
                 backgroundColor: AppColors.surface,
                 collapsedBackgroundColor: AppColors.surface,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppColors.radius16),
                   side: const BorderSide(color: AppColors.border),
                 ),
                 collapsedShape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppColors.radius16),
                   side: const BorderSide(color: AppColors.border),
                 ),
                 title: Text(

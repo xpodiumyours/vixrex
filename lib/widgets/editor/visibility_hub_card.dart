@@ -138,7 +138,7 @@ class VisibilityHubCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: AppColors.inputBg,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               border: Border.all(color: AppColors.cardBorderDark),
             ),
             child: Row(
@@ -148,7 +148,7 @@ class VisibilityHubCard extends StatelessWidget {
                   height: 34,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppColors.radius10),
                   ),
                   child: const Icon(
                     Icons.auto_awesome_rounded,
@@ -247,7 +247,7 @@ class VisibilityHubCard extends StatelessWidget {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppColors.radius12),
                     ),
                   ),
                 )
@@ -342,7 +342,7 @@ class _VisibilityCheckTile extends StatelessWidget {
               isComplete
                   ? AppColors.success.withAlpha(30)
                   : AppColors.surfaceSoft,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppColors.radius12),
           border: Border.all(
             color:
                 isComplete
@@ -392,7 +392,7 @@ class _VisibilityHintChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.primary.withAlpha(25),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppColors.radius12),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(

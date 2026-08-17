@@ -79,7 +79,7 @@ class PublicLinkCard extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppColors.radius10),
                 ),
                 child: Icon(
                   isLive ? Icons.link_rounded : Icons.visibility_rounded,
@@ -91,15 +91,15 @@ class PublicLinkCard extends StatelessWidget {
             filled: true,
             fillColor: AppColors.inputBg,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: AppColors.cardBorderDark),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: AppColors.cardBorderDark),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(
                 color: AppColors.primary,
                 width: 1.4,
@@ -210,10 +210,10 @@ class _ActionChip extends StatelessWidget {
 
     return Material(
       color: bg,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppColors.radius12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppColors.radius12),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(

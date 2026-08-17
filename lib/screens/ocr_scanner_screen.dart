@@ -112,7 +112,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.error.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppColors.radius12),
         border: Border.all(color: AppColors.error),
       ),
       child: Row(
@@ -219,7 +219,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
             ),
           ),
           child: Text(

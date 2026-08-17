@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
 
 typedef OnPickFile = VoidCallback;
 typedef OnEditProduct = Future<void> Function(int index, Product product);
@@ -62,7 +63,7 @@ class _ReviewStats extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppColors.radius12),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
@@ -91,14 +92,7 @@ class _StatItem extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: AppColors.darkText,
-            ),
-          ),
+          Text(value, style: AppTextStyles.sectionTitle),
           Text(
             label,
             style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
@@ -120,7 +114,7 @@ class _ErrorsBanner extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.error.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppColors.radius10),
         border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -163,7 +157,7 @@ class _ProductReviewItem extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppColors.radius14),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
@@ -173,12 +167,12 @@ class _ProductReviewItem extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppColors.radius10),
             ),
             child:
                 p.primaryImageUrl != null
                     ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppColors.radius10),
                       child: Image.network(
                         p.primaryImageUrl!,
                         fit: BoxFit.cover,

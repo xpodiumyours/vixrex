@@ -82,11 +82,11 @@ class BookingDateStep extends StatelessWidget {
 
         return InkWell(
           onTap: () => onDateSelected(date),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppColors.radius16),
           child: Container(
             decoration: BoxDecoration(
               color: isSelected ? AppColors.surfaceSoft : Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppColors.radius16),
               border: Border.all(
                 color: isSelected ? AppColors.primary : AppColors.border,
                 width: isSelected ? 1.6 : 1,

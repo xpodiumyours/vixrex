@@ -76,7 +76,7 @@ class _BookingDetailsStepState extends State<BookingDetailsStep> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.surfaceSoft,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppColors.radius16),
             border: Border.all(color: AppColors.border),
           ),
           child: Column(
@@ -116,11 +116,11 @@ class _BookingDetailsStepState extends State<BookingDetailsStep> {
             filled: true,
             fillColor: AppColors.inputBg,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
               borderSide: const BorderSide(color: AppColors.border),
             ),
           ),
@@ -140,11 +140,11 @@ class _BookingDetailsStepState extends State<BookingDetailsStep> {
             filled: true,
             fillColor: AppColors.inputBg,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
               borderSide: const BorderSide(color: AppColors.border),
             ),
           ),
@@ -164,11 +164,11 @@ class _BookingDetailsStepState extends State<BookingDetailsStep> {
             filled: true,
             fillColor: AppColors.inputBg,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
               borderSide: const BorderSide(color: AppColors.border),
             ),
           ),
@@ -223,7 +223,7 @@ class _BookingDetailsStepState extends State<BookingDetailsStep> {
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppColors.radius14),
               ),
             ),
             child:

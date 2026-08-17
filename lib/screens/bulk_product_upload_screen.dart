@@ -13,6 +13,7 @@ import 'package:vixrex/screens/bulk_product_upload/widgets/bulk_upload_review_vi
 import 'package:vixrex/screens/bulk_product_upload/widgets/bulk_product_edit_sheet.dart';
 import 'package:vixrex/services/bulk_product_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/theme/app_text_styles.dart';
 import 'package:vixrex/widgets/xml_upload_dialog.dart';
 
 typedef OnBulkProductsSaved = Future<void> Function(List<Product> products);
@@ -157,7 +158,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppColors.radius10),
           ),
           child: const Icon(
             Icons.upload_file_rounded,
@@ -170,18 +171,11 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Toplu Ürün Yükleme',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.darkText,
-                ),
-              ),
+              Text('Toplu Ürün Yükleme', style: AppTextStyles.sectionTitle),
               SizedBox(height: 2),
               Text(
                 'Excel veya CSV dosyasından ürünleri içe aktar.',
-                style: TextStyle(fontSize: 12, color: AppColors.mutedText),
+                style: AppTextStyles.caption,
               ),
             ],
           ),
@@ -314,7 +308,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.black,
+              foregroundColor: AppColors.onPrimary,
               minimumSize: const Size.fromHeight(48),
             ),
           ),

@@ -13,7 +13,7 @@ class BlogEntryCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppColors.radius16),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -25,7 +25,7 @@ class BlogEntryCard extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppColors.radius10),
                 ),
                 child: const Icon(
                   Icons.article_outlined,
@@ -83,7 +83,7 @@ class BlogEntryCard extends StatelessWidget {
                     vertical: 10,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppColors.radius10),
                   ),
                 ),
                 child: const Text('Aç'),

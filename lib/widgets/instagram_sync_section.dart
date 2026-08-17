@@ -199,7 +199,7 @@ class _InstagramSyncSectionState extends State<InstagramSyncSection>
               height: 36,
               decoration: BoxDecoration(
                 color: AppColors.surfaceSoft,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppColors.radius10),
               ),
               child: const Icon(
                 Icons.camera_alt_rounded,
@@ -296,7 +296,7 @@ class _InstagramSyncSectionState extends State<InstagramSyncSection>
                   vertical: 11,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppColors.radius12),
                 ),
               ),
             ),
@@ -591,7 +591,9 @@ class _InstagramMediaSheetState extends State<_InstagramMediaSheet> {
                           backgroundColor: AppColors.primaryDark,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(
+                              AppColors.radius12,
+                            ),
                           ),
                         ),
                       ),

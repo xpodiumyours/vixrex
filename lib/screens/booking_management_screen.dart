@@ -330,7 +330,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: AppColors.inputBg,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppColors.radius10),
                 ),
                 child: Text(
                   'Not: ${appt['customer_notes']}',
@@ -351,7 +351,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
                   border: Border.all(
                     color: Colors.amber.withValues(alpha: 0.3),
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppColors.radius12),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,7 +483,7 @@ class _BookingManagementScreenState extends State<BookingManagementScreen>
                   foregroundColor: AppColors.primaryDark,
                   side: const BorderSide(color: AppColors.border),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppColors.radius10),
                   ),
                 ),
               ),

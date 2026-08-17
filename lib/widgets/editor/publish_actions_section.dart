@@ -285,7 +285,7 @@ class _ActionButton extends StatelessWidget {
           side: const BorderSide(color: AppColors.cardBorderDark),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppColors.radius14),
           ),
         ),
       ),

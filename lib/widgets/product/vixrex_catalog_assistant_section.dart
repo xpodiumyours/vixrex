@@ -109,13 +109,13 @@ class VixRexCatalogAssistantSection extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppColors.radius12),
         child: Container(
           width: 146,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppColors.radius12),
             border: Border.all(color: AppColors.border),
           ),
           child: Column(

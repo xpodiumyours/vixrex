@@ -21,7 +21,7 @@ class OcrScannerWidget extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppColors.radius16),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -87,7 +87,9 @@ class OcrScannerWidget extends StatelessWidget {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppColors.radius12),
+        ),
       ),
     );
   }

@@ -562,13 +562,13 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppColors.radius16),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppColors.radius10),
             child: SizedBox(
               width: 58,
               height: 58,
