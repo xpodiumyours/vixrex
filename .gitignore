@@ -51,6 +51,11 @@ vitrin_dump.txt
 
 .env*
 
+# Güvenlik tarama notları — sır değerleri geçici olarak burada birikebilir
+# (2026-08-18, attack-vectors.md sızıntısı sonrası).
+attack-vectors.md
+research-continuation.md
+
 # Android signing
 android/key.properties
 android/*.jks
