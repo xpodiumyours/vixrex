@@ -389,6 +389,7 @@ export default function VitrinProfileView({
             Yerine kendi renk dilimizde sade bir zemin: boş görünmüyor,
             ama sahip olmadığı bir şeyi de sahiplenmiyor. */}
         <div
+          {...editableProps("kapakGorseli", ownerMode)}
           className={
             heroImage
               ? "absolute inset-0 bg-cover bg-center"
@@ -443,7 +444,10 @@ export default function VitrinProfileView({
             )}
 
             <div className="flex items-center gap-3 sm:gap-4 mb-2">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-blue-500/20 bg-blue-500/10 flex items-center justify-center shrink-0">
+              <div
+                {...editableProps("logo", ownerMode)}
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-blue-500/20 bg-blue-500/10 flex items-center justify-center shrink-0"
+              >
                 {logoUrl ? (
                   <Image
                     src={logoUrl}
@@ -478,7 +482,11 @@ export default function VitrinProfileView({
 
             {(heroLocationText || districtProvinceLabel || displayAddress || displayEmail || workingHoursToday || showRating) && (
               <div className="flex flex-wrap gap-4 text-sm text-slate-400">
-                {heroLocationText && <span className="flex items-center gap-1.5">📍 {heroLocationText}</span>}
+                {heroLocationText && (
+                  <span {...editableProps("konumMetni", ownerMode)} className="flex items-center gap-1.5">
+                    📍 {heroLocationText}
+                  </span>
+                )}
                 {districtProvinceLabel && (
                   <span className="flex items-center gap-1.5">📍 {districtProvinceLabel}</span>
                 )}
