@@ -545,7 +545,9 @@ export default function VitrinProfileView({
       {showCategories && (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="kategoriler">
           <div className="flex items-baseline justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{categorySectionTitle || "Kategoriler"}</h2>
+            <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              {categorySectionTitle || "Kategoriler"}
+            </h2>
             <a href="#urunler" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">Tümünü gör →</a>
           </div>
 
@@ -640,7 +642,9 @@ export default function VitrinProfileView({
       {showProducts && (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler">
           <div className="flex items-baseline justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{productSectionTitle || "Tüm Ürünler"}</h2>
+            <h2 {...editableProps("urunBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              {productSectionTitle || "Tüm Ürünler"}
+            </h2>
             <span className="text-sm font-semibold text-slate-400">{productCount} Ürün Listeleniyor</span>
           </div>
 
