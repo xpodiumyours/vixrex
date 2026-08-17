@@ -92,10 +92,7 @@ class _StatItem extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(
-            value,
-            style: AppTextStyles.sectionTitle,
-          ),
+          Text(value, style: AppTextStyles.sectionTitle),
           Text(
             label,
             style: const TextStyle(fontSize: 10, color: AppColors.mutedText),

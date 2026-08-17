@@ -37,10 +37,7 @@ class BulkUploadInitialView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        const Text(
-          'Dosya seçin',
-          style: AppTextStyles.subTitle,
-        ),
+        const Text('Dosya seçin', style: AppTextStyles.subTitle),
         const SizedBox(height: 8),
         const Text(
           'Excel (.xlsx) veya CSV dosyası seçerek\nürünlerinizi toplu olarak ekleyebilirsiniz.',

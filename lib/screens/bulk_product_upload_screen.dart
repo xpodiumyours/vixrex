@@ -171,10 +171,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Toplu Ürün Yükleme',
-                style: AppTextStyles.sectionTitle,
-              ),
+              Text('Toplu Ürün Yükleme', style: AppTextStyles.sectionTitle),
               SizedBox(height: 2),
               Text(
                 'Excel veya CSV dosyasından ürünleri içe aktar.',

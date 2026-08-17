@@ -253,7 +253,9 @@ class GalleryEditorSection extends StatelessWidget {
                                     height: thumbSize,
                                     decoration: BoxDecoration(
                                       color: inputBg,
-                                      borderRadius: BorderRadius.circular(AppColors.radius10),
+                                      borderRadius: BorderRadius.circular(
+                                        AppColors.radius10,
+                                      ),
                                       border: Border.all(
                                         color:
                                             hasTitle

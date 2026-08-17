@@ -591,7 +591,9 @@ class _InstagramMediaSheetState extends State<_InstagramMediaSheet> {
                           backgroundColor: AppColors.primaryDark,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppColors.radius12),
+                            borderRadius: BorderRadius.circular(
+                              AppColors.radius12,
+                            ),
                           ),
                         ),
                       ),

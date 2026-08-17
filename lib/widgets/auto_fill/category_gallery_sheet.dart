@@ -449,7 +449,9 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                         disabledForegroundColor: AppColors.mutedText,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppColors.radius14),
+                          borderRadius: BorderRadius.circular(
+                            AppColors.radius14,
+                          ),
                         ),
                       ),
                     ),
@@ -473,7 +475,9 @@ class _CategoryGallerySheetState extends State<CategoryGallerySheet> {
                         disabledForegroundColor: AppColors.mutedText,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppColors.radius14),
+                          borderRadius: BorderRadius.circular(
+                            AppColors.radius14,
+                          ),
                         ),
                       ),
                     ),

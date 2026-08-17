@@ -556,7 +556,9 @@ class _VixRexOnboardingChatScreenState
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.onPrimary,
         minimumSize: const Size.fromHeight(48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppColors.radius12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppColors.radius12),
+        ),
       ),
       child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
     );

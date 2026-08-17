@@ -167,7 +167,9 @@ class CoverPickerSection extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.darkText,
         padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppColors.radius12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppColors.radius12),
+        ),
         side: const BorderSide(color: AppColors.border),
       ),
       child: Row(

@@ -251,7 +251,9 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppColors.radius12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppColors.radius12),
+        ),
       ),
     );
   }
@@ -337,10 +339,14 @@ class _AuthScreenState extends State<AuthScreen> {
                         labelText: 'E-posta Adresi',
                         prefixIcon: const Icon(Icons.email_outlined),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppColors.radius12),
+                          borderRadius: BorderRadius.circular(
+                            AppColors.radius12,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppColors.radius12),
+                          borderRadius: BorderRadius.circular(
+                            AppColors.radius12,
+                          ),
                           borderSide: const BorderSide(
                             color: brandOrange,
                             width: 2,
@@ -381,10 +387,14 @@ class _AuthScreenState extends State<AuthScreen> {
                           },
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppColors.radius12),
+                          borderRadius: BorderRadius.circular(
+                            AppColors.radius12,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppColors.radius12),
+                          borderRadius: BorderRadius.circular(
+                            AppColors.radius12,
+                          ),
                           borderSide: const BorderSide(
                             color: brandOrange,
                             width: 2,
@@ -426,7 +436,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         foregroundColor: AppColors.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppColors.radius12),
+                          borderRadius: BorderRadius.circular(
+                            AppColors.radius12,
+                          ),
                         ),
                         elevation: 0,
                       ),
@@ -490,7 +502,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         side: const BorderSide(color: AppColors.border),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppColors.radius12),
+                          borderRadius: BorderRadius.circular(
+                            AppColors.radius12,
+                          ),
                         ),
                       ),
                     ),

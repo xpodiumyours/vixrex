@@ -126,7 +126,9 @@ class _BookingWizardSheetState extends State<BookingWizardSheet> {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.red.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(AppColors.radius12),
+                          borderRadius: BorderRadius.circular(
+                            AppColors.radius12,
+                          ),
                         ),
                         child: Text(
                           _controller.errorMsg!,
