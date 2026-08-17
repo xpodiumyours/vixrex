@@ -32,12 +32,50 @@ describe("Content-Security-Policy — mevcut", () => {
     expect(configSource).toContain("https://*.supabase.co");
   });
 
-  it("img-src remotePatterns ile aynı genişlikte (** host) — çelişmez", () => {
-    expect(configSource).toContain("img-src * data: blob:");
+  it("Google Fonts'a izin var — globals.css'teki @import gerçekten kullanılıyor (Outfit + Instrument Serif)", () => {
+    expect(configSource).toContain("https://fonts.googleapis.com");
+    expect(configSource).toContain("https://fonts.gstatic.com");
+  });
+
+  it("img-src AÇIK allowlist — wildcard '*' YOK (2026-08-16 sıkılaştırma)", () => {
+    // img-src artık her host'a izin vermiyor; yalnız gerçekten kullanılan
+    // kaynaklar (supabase storage, instagram CDN, recaptcha/turnstile/GA).
+    expect(configSource).not.toMatch(/img-src\s+\*/);
+    expect(configSource).toContain(
+      "img-src 'self' data: blob: https://*.supabase.co"
+    );
+    expect(configSource).toContain("https://*.cdninstagram.com");
   });
 
   it("form-action 'self' — /rent-demo köprü sayfasının POST'u dahil kendi origin'ine kısıtlı", () => {
     expect(configSource).toContain("form-action 'self'");
+  });
+});
+
+describe("Content-Security-Policy — 2026-08-16 sıkılaştırma (kanıta dayalı)", () => {
+  const cspSource = configSource;
+
+  it("'unsafe-eval' prod CSP'sinde YOK — yalnız dev koşuluna bırakıldı", () => {
+    // Üretim CSP'si (NODE_ENV!=='development') 'unsafe-eval' içermez.
+    // Statik kaynakta: yorumları ve isDev koşulunu (dev'e bırakılan tek
+    // gerçekleşme) çıkardığımızda geriye 'unsafe-eval' kalmamalı.
+    const withoutComments = configSource
+      .split("\n")
+      .filter((line) => !line.trim().startsWith("//"))
+      .join("\n");
+    const withoutDevGuard = withoutComments.replace(
+      /\(isDev \? "[^"]*'unsafe-eval'[^"]*" : ""\)/,
+      ""
+    );
+    expect(withoutDevGuard).not.toContain("'unsafe-eval'");
+  });
+
+  it("Cloudflare Turnstile script/frame hostu (challenges.cloudflare.com) izinli", () => {
+    expect(cspSource).toContain("https://challenges.cloudflare.com");
+  });
+
+  it("Instagram medya hostu (cdninstagram.com) img-src'te izinli", () => {
+    expect(cspSource).toContain("https://*.cdninstagram.com");
   });
 });
 

@@ -1,7 +1,7 @@
 import { alanOnemi, sonrakiRehberAlanlar, type EksikOnem } from "@/lib/vitrinReadiness";
 
 const ONEM_RENGI: Record<EksikOnem, string> = {
-  temel: "border-amber-300/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20",
+  temel: "border-red-300/40 bg-red-500/10 text-red-200 hover:bg-red-500/20",
   kalite: "border-sky-400/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20",
   "istege-bagli": "border-white/10 bg-white/[0.04] text-slate-400 hover:bg-white/10",
 };

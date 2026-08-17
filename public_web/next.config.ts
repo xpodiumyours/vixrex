@@ -15,32 +15,46 @@ function getAppUrl() {
   }
 }
 
-// CSP (2026-08-15 güvenlik taraması — eksikti). Sıkı/nonce'lı bir politika
-// DEĞİL — Next.js'in kendi inline hydration script'i 'unsafe-inline'
-// gerektiriyor (nonce tabanlı sıkı CSP ayrı, daha büyük bir iş, kapsam
-// dışı bırakıldı). Amaç: rastgele üçüncü parti script/iframe enjeksiyonuna
-// karşı savunma katmanı, mükemmel izolasyon değil. Kullanılan gerçek
-// kaynaklar taranarak yazıldı:
+// CSP (2026-08-15 taraması: CSP eksikti). 2026-08-16 sıkılaştırma:
+//   - 'unsafe-eval' KALDIRILDI (yalnız dev React'inin eval'i için gerekiyor,
+//     prod build'te gerekmez — bu yüzden yalnız NODE_ENV==='development'
+//     iken eklenir, prod CSP'sinde YOK).
+//   - img-src jokeri ('*') KALDIRILDI: yerine projein gerçekten kullandığı
+//     host allowlist'i kondu (supabase storage, instagram CDN, recaptcha/
+//     turnstile/GA domainleri). Gereksiz '*' yok.
+//   - script-src hâlâ 'unsafe-inline' taşıyor: Next.js App Router'ın kendi
+//     inline hydration script'leri nonce olmadan çalışmaz. Nonce tabanlı
+//     sıkı CSP, tüm sayfaların dinamik render edilmesini zorunlu kılar
+//     (Next.js 16 belgeli kısıt) — bu, üretim vitrinini invaziv değiştirir
+//     ve bu ortamda runtime doğrulanamaz; bu yüzden kapsam dışı bırakıldı.
+//     KALAN RİSK: 'unsafe-inline' script-src'te — izole XSS'yi tam
+//     engellemez (bkz. rapor). İleride proxy.ts + per-request nonce ile
+//     kaldırılacak takip işi olarak not edildi.
+// Kullanılan gerçek kaynaklar (grep ile tarandı):
 //   - reCAPTCHA v3: www.google.com, www.gstatic.com (script)
+//   - Cloudflare Turnstile: challenges.cloudflare.com (script + frame + img)
 //   - GA4 (rıza varsa): www.googletagmanager.com (script),
-//     www.google-analytics.com/*.analytics.google.com (connect)
-//   - Görseller: next.config'teki remotePatterns zaten "**" (herhangi bir
-//     host) — img-src da aynı genişlikte olmak zorunda.
-//   - Google Maps embed iframe (VitrinProfileView.tsx)
-//   - Supabase: connect-src'e *.supabase.co
-// 2026-08-15: Kilo CLI (paralel oturum) Cloudflare Turnstile domainlerini
-// ekledi (report-abuse/route.ts TURNSTILE_SECRET_KEY'i sunucu tarafında
-// doğruluyor — istemci widget'ı henüz yazılmamış olsa da entegrasyon
-// gerçek/kasıtlı, CSP'de yer ayrılması doğru). Google Fonts (fonts.
-// googleapis/gstatic) hiçbir yerde kullanılmadığı için (grep ile
-// doğrulandı) dahil edilmedi — CSP'ye gerçekten kullanılmayan kaynak
-// eklenmez.
+//     www.google-analytics.com / *.analytics.google.com (connect + img)
+//   - Google Maps embed iframe (VitrinProfileView.tsx): www.google.com
+//   - Supabase: *.supabase.co (connect + img/storage)
+//   - Instagram medya: *.cdninstagram.com (img)
+// 2026-08-16: Google Fonts (fonts.googleapis.com CSS + fonts.gstatic.com
+// font dosyaları) gerçekten KULLANILIYOR — globals.css'teki
+// `@import url('https://fonts.googleapis.com/css2?...')` sayesinde
+// (Instrument Serif + Outfit, iki yüzeyde ortak yazı tipi). Önceki grep
+// gözden kaçırmıştı; tarayıcı konsolu bu yüzden "Loading the stylesheet ...
+// violates CSP" hatası veriyordu ve fontlar yüklenmiyordu. style-src'e
+// fonts.googleapis.com, font-src'e fonts.gstatic.com eklendi.
+const isDev = process.env.NODE_ENV === "development";
+
 const CSP =
   "default-src 'self'; " +
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com; " +
-  "style-src 'self' 'unsafe-inline'; " +
-  "img-src * data: blob:; " +
-  "font-src 'self' data:; " +
+  "script-src 'self' 'unsafe-inline'" +
+  (isDev ? " 'unsafe-eval'" : "") +
+  " https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com; " +
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+  "img-src 'self' data: blob: https://*.supabase.co https://*.cdninstagram.com https://*.gstatic.com https://www.google.com https://www.google-analytics.com https://*.analytics.google.com https://challenges.cloudflare.com; " +
+  "font-src 'self' data: https://fonts.gstatic.com; " +
   "connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com https://www.google.com https://www.googleapis.com https://www.google-analytics.com https://*.analytics.google.com; " +
   "frame-src 'self' https://challenges.cloudflare.com https://www.google.com; " +
   "worker-src 'self'; " +
