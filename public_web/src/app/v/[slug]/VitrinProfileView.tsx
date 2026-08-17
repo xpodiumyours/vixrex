@@ -1020,7 +1020,13 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">📇</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Referanslar</h4>
-                    <a href={referencesUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                    <a
+                      href={referencesUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      {...editableProps("referansLinki", ownerMode)}
+                      className="text-xs font-semibold text-blue-400 hover:text-blue-300"
+                    >
                       {referencesUrl.replace(/^https?:\/\//i, "")}
                     </a>
                   </div>
