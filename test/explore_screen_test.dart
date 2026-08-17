@@ -25,6 +25,11 @@ class _FakeExploreRepository extends Fake implements ExploreRepository {
 
   @override
   Future<String?> loadLastPublishedSlug() async => publishedSlug;
+
+  // Premium okuma akışında edit_token yerelde yoksa atlanır — bu test
+  // düzeninde premium bilgisi hiç çekilmez (PR #6).
+  @override
+  Future<String?> loadLastPublishedEditToken() async => null;
 }
 
 void main() {

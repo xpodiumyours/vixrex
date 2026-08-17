@@ -1,12 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/explore_repository.dart';
+import 'package:vixrex/services/premium_service.dart';
 
 class ExploreController extends ChangeNotifier {
   final ExploreRepository _repository;
+  final PremiumService _premiumService;
 
-  ExploreController({required ExploreRepository repository})
-    : _repository = repository;
+  ExploreController({
+    required ExploreRepository repository,
+    PremiumService premiumService = const PremiumService(),
+  }) : _repository = repository,
+       _premiumService = premiumService;
 
   List<StoreData> _allStores = [];
   bool _isLoading = true;
@@ -16,6 +21,7 @@ class ExploreController extends ChangeNotifier {
   bool _showingExampleStores = false;
   List<String> _favoritedStoreNames = [];
   String? _localPublishedSlug;
+  StorePremiumStatus? _ownStorePremium;
 
   // Getters
   List<StoreData> get allStores => _allStores;
@@ -26,6 +32,11 @@ class ExploreController extends ChangeNotifier {
   bool get showingExampleStores => _showingExampleStores;
   List<String> get favoritedStoreNames => _favoritedStoreNames;
   String? get localPublishedSlug => _localPublishedSlug;
+
+  /// Kendi vitrininin premium durumu (yalnız kendi vitrini; başkasının
+  /// vitrininde asla dolu gelmez). edit_token yoksa veya okuma başarısızsa
+  /// null kalır — UI o zaman premium bilgisini göstermez.
+  StorePremiumStatus? get ownStorePremium => _ownStorePremium;
 
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
@@ -67,6 +78,7 @@ class ExploreController extends ChangeNotifier {
       _allStores = loadedStores;
       _showingExampleStores = false;
       _isLoading = false;
+      await _refreshOwnStorePremium();
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
@@ -116,6 +128,27 @@ class ExploreController extends ChangeNotifier {
     return _localPublishedSlug != null &&
         _localPublishedSlug!.isNotEmpty &&
         store.slug == _localPublishedSlug;
+  }
+
+  /// Kendi vitrininin premium durumunu best-effort okur. edit_token
+  /// yerelde yoksa veya RPC başarısız olursa sessizce null bırakır —
+  /// Keşfet akışını ASLA bozmaz (servis hataları Result.failure döner,
+  /// fırlatmaz).
+  Future<void> _refreshOwnStorePremium() async {
+    _ownStorePremium = null;
+    final slug = _localPublishedSlug;
+    if (slug == null || slug.isEmpty) return;
+    final editToken =
+        (await _repository.loadLastPublishedEditToken() ?? '').trim();
+    if (editToken.isEmpty) return;
+
+    final result = await _premiumService.getPremiumStatus(
+      slug: slug,
+      editToken: editToken,
+    );
+    if (result.isSuccess) {
+      _ownStorePremium = result.data;
+    }
   }
 
   List<StoreData> get filteredStores {

@@ -411,6 +411,11 @@ class ExploreScreenState extends State<ExploreScreen> {
               isExample: _controller.showingExampleStores,
               isFavorited: _controller.isFavorite(store),
               isOwnStore: _controller.isOwnStore(store),
+              // Premium bilgisi yalnız KENDİ vitrininde taşınır — başkasının
+              // vitrinine asla sızmaz (PR #6).
+              premiumStatus: _controller.isOwnStore(store)
+                  ? _controller.ownStorePremium
+                  : null,
               onTap: () {
                 final slug =
                     store.slug.isNotEmpty
