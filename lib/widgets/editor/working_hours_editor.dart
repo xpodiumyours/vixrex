@@ -123,7 +123,7 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
                     backgroundColor: AppColors.surfaceSoft,
                     side: const BorderSide(color: cardBorder),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppColors.radius10),
                     ),
                     avatar: const Icon(
                       Icons.add_circle_outline_rounded,
@@ -209,7 +209,7 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppColors.radius16),
         border: Border.all(color: cardBorder),
       ),
       child: ExpansionTile(

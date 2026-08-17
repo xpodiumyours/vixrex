@@ -40,7 +40,7 @@ class BookingServiceStep extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.surfaceSoft : Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppColors.radius16),
                 border: Border.all(
                   color: isSelected ? AppColors.primary : AppColors.border,
                   width: isSelected ? 1.6 : 1,
@@ -48,7 +48,7 @@ class BookingServiceStep extends StatelessWidget {
               ),
               child: Material(
                 color: Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppColors.radius16),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,

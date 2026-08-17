@@ -145,13 +145,13 @@ class _MarketplaceLinkRow extends StatelessWidget {
                     vertical: 10,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppColors.radius12),
                     borderSide: const BorderSide(
                       color: AppColors.cardBorderDark,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppColors.radius12),
                     borderSide: const BorderSide(
                       color: AppColors.cardBorderDark,
                     ),
@@ -198,13 +198,13 @@ class _MarketplaceLinkRow extends StatelessWidget {
                     vertical: 10,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppColors.radius12),
                     borderSide: const BorderSide(
                       color: AppColors.cardBorderDark,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppColors.radius12),
                     borderSide: const BorderSide(
                       color: AppColors.cardBorderDark,
                     ),
@@ -258,11 +258,11 @@ class _MarketplaceLinkRow extends StatelessWidget {
                 vertical: 10,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppColors.radius12),
                 borderSide: const BorderSide(color: AppColors.cardBorderDark),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppColors.radius12),
                 borderSide: BorderSide(
                   color: AppColors.primary.withValues(alpha: 0.4),
                 ),
@@ -294,11 +294,11 @@ class _MarketplaceLinkRow extends StatelessWidget {
               vertical: 8,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
               borderSide: const BorderSide(color: AppColors.cardBorderDark),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
               borderSide: const BorderSide(color: AppColors.cardBorderDark),
             ),
           ),

@@ -42,11 +42,11 @@ class EditorDropdownField extends StatelessWidget {
               vertical: 10,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: AppColors.cardBorderDark),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: AppColors.cardBorderDark),
             ),
           ),
@@ -151,15 +151,15 @@ class EditorTextField extends StatelessWidget {
             fillColor: AppColors.inputBg,
             errorText: errorText,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: AppColors.cardBorderDark),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: AppColors.cardBorderDark),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(
                 color: AppColors.primary,
                 width: 1.4,

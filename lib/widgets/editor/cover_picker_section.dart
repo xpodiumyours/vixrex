@@ -43,7 +43,7 @@ class CoverPickerSection extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.inputBg,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppColors.radius16),
               border: Border.all(color: AppColors.cardBorderDark),
             ),
             clipBehavior: Clip.antiAlias,
@@ -144,7 +144,7 @@ class CoverPickerSection extends StatelessWidget {
           foregroundColor: Colors.black,
           padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppColors.radius12),
           ),
           elevation: 0,
         ),
@@ -167,7 +167,7 @@ class CoverPickerSection extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.darkText,
         padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppColors.radius12)),
         side: const BorderSide(color: AppColors.border),
       ),
       child: Row(

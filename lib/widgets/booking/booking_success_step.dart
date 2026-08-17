@@ -50,7 +50,7 @@ class BookingSuccessStep extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: AppColors.inputBg,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppColors.radius12),
             border: Border.all(color: AppColors.border),
           ),
           child: Column(
@@ -94,7 +94,7 @@ class BookingSuccessStep extends StatelessWidget {
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppColors.radius14),
               ),
             ),
             child: const Text(

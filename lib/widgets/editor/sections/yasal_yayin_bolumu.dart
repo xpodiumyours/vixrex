@@ -85,7 +85,7 @@ class YasalYayinBolumu extends StatelessWidget {
               foregroundColor: AppColors.onPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppColors.radius16),
               ),
             ),
           ),

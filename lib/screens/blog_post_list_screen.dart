@@ -135,7 +135,7 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
           margin: const EdgeInsets.only(bottom: 10),
           color: AppColors.surfaceSoft,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppColors.radius16),
             side: const BorderSide(color: AppColors.border),
           ),
           child: ListTile(

@@ -43,7 +43,7 @@ class OcrResultList extends StatelessWidget {
             padding: const EdgeInsets.only(right: 20),
             decoration: BoxDecoration(
               color: AppColors.error.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
             ),
             child: const Icon(Icons.delete, color: AppColors.error),
           ),
@@ -59,7 +59,7 @@ class OcrResultList extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppColors.radius12),
         border: Border.all(
           color: product.isApproved ? AppColors.success : AppColors.border,
           width: product.isApproved ? 2 : 1,

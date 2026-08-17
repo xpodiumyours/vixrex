@@ -18,13 +18,13 @@ class ArticleSummaryRow extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppColors.radius12),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColors.surfaceSoft,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppColors.radius12),
           border: Border.all(color: AppColors.cardBorderDark),
         ),
         child: Row(
@@ -34,7 +34,7 @@ class ArticleSummaryRow extends StatelessWidget {
               height: 32,
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppColors.radius10),
               ),
               child: const Icon(
                 Icons.article_rounded,

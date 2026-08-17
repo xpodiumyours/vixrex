@@ -296,7 +296,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
               decoration: BoxDecoration(
                 color: AppColors.warningSoft,
                 border: Border.all(color: AppColors.warningBorder),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppColors.radius16),
               ),
               child: Row(
                 children: [
@@ -454,7 +454,7 @@ class _AppointmentTrackerScreenState extends State<AppointmentTrackerScreen> {
                     selectedColor: AppColors.turquoiseSurface,
                     backgroundColor: AppColors.inputBg,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppColors.radius10),
                     ),
                     onSelected: (selected) {
                       if (selected) {

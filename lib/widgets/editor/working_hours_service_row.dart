@@ -33,7 +33,7 @@ class _WorkingHoursServiceRowState extends State<WorkingHoursServiceRow> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: inputBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppColors.radius12),
         border: Border.all(color: cardBorder),
       ),
       child: Column(

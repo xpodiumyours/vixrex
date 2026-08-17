@@ -470,7 +470,7 @@ class _VixRexOnboardingChatScreenState
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppColors.radius14),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
@@ -556,7 +556,7 @@ class _VixRexOnboardingChatScreenState
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.onPrimary,
         minimumSize: const Size.fromHeight(48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppColors.radius12)),
       ),
       child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
     );
@@ -627,7 +627,7 @@ class _ChatBubble extends StatelessWidget {
               side: const BorderSide(color: AppColors.border),
               padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppColors.radius10),
               ),
             ),
             icon: const Icon(Icons.visibility_outlined, size: 16),

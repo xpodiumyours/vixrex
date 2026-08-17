@@ -58,12 +58,12 @@ class KategoriSecici extends StatelessWidget {
             final kategori = BusinessCategoryConfig.categories[index];
             return InkWell(
               onTap: busy ? null : () => onSelected(kategori.label),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppColors.radius14),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Column(

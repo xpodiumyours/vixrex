@@ -273,15 +273,15 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
             filled: true,
             fillColor: inputBg,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: cardBorder),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: cardBorder),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: primaryColor, width: 1.4),
             ),
             contentPadding: const EdgeInsets.symmetric(
@@ -350,15 +350,15 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
             filled: true,
             fillColor: inputBg,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: cardBorder),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: cardBorder),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: primaryColor, width: 1.4),
             ),
             contentPadding: const EdgeInsets.symmetric(
@@ -421,15 +421,15 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
             filled: true,
             fillColor: inputBg,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: cardBorder),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: cardBorder),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppColors.radius14),
               borderSide: const BorderSide(color: primaryColor, width: 1.4),
             ),
             contentPadding: const EdgeInsets.symmetric(
@@ -450,7 +450,7 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
                 width: isLocatingActive ? 1.8 : 1.0,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppColors.radius12),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 14),
             ),
@@ -485,7 +485,7 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppColors.radius12),
               border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
             ),
             child: Column(

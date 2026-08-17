@@ -95,7 +95,7 @@ class VitrinDangerSection extends StatelessWidget {
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppColors.radius10),
                   ),
                 ),
                 child: const Text(

@@ -8,7 +8,7 @@ import 'package:vixrex/theme/app_colors.dart';
 /// Container(
 ///   decoration: BoxDecoration(
 ///     color: AppColors.surface,
-///     borderRadius: BorderRadius.circular(16),
+///     borderRadius: BorderRadius.circular(AppColors.radius16),
 ///     border: Border.all(color: AppColors.border),
 ///   ),
 /// )
@@ -37,14 +37,14 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: color,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppColors.radius16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppColors.radius16),
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppColors.radius16),
             border: Border.all(color: AppColors.border),
           ),
           child: child,

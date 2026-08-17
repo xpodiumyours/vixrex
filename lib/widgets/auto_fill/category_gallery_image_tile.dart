@@ -21,14 +21,14 @@ class CategoryGalleryImageTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppColors.radius12),
           border: Border.all(
             color: isSelected ? AppColors.primary : Colors.transparent,
             width: 3,
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppColors.radius10),
           child: Stack(
             fit: StackFit.expand,
             children: [
