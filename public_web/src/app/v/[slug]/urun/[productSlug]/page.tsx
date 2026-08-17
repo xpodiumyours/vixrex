@@ -15,6 +15,7 @@ import {
   type ProductItem,
 } from "@/lib/products";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
+import { safeJsonLdHtml } from "@/lib/jsonLd";
 
 export const revalidate = 300;
 
@@ -277,11 +278,11 @@ export default async function ProductDetailPage(props: PageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(productJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(breadcrumbJsonLd) }}
       />
 
       <main className="min-h-screen bg-[#0c0d10] px-4 py-6 text-[#f4f1ea] sm:px-6 sm:py-10">

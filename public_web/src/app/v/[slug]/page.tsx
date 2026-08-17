@@ -14,6 +14,7 @@ import {
   type ProductItem,
 } from "@/lib/products";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
+import { safeJsonLdHtml } from "@/lib/jsonLd";
 import { getVitrinCopy, normalizeAddressDisplay } from "@/lib/vitrinCopy";
 import {
   formatTodayLine,
@@ -639,7 +640,7 @@ export default async function StorePage(props: PageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(jsonLd) }}
       />
       <VitrinProfileView
         storeName={store.name}
