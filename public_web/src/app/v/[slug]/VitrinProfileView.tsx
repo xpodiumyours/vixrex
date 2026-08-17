@@ -741,7 +741,14 @@ export default function VitrinProfileView({
               </h2>
             </div>
             {galleryActionLabel && galleryActionHref ? (
-              <a href={galleryActionHref} className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition shrink-0">
+              // Tek elemanda iki alan birden işaretlenemez (issue #215):
+              // görünen asıl metin galeriAksiyonMetni — href (galeriAksiyonLinki)
+              // panelin "Tüm alanlar" listesinden düzenlenmeye devam eder.
+              <a
+                href={galleryActionHref}
+                {...editableProps("galeriAksiyonMetni", ownerMode)}
+                className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition shrink-0"
+              >
                 {galleryActionLabel}
               </a>
             ) : showContact ? (
