@@ -149,24 +149,30 @@ export default function BookingWizardClient({ store }: BookingWizardClientProps)
     setErrorMessage("");
 
     try {
-      // reCAPTCHA token
+      // reCAPTCHA token — V-21: artık gerçekten gönderiliyor (sunucu
+      // tarafında /api/create-booking doğruluyor), yalnız log'lanmıyor.
       const recaptchaToken = await executeRecaptcha("booking_create");
-      console.log("[reCAPTCHA] token alındı:", Boolean(recaptchaToken));
 
       // Build ISO appointment time: e.g. "2026-06-22T13:00:00Z"
       // Combine date string and slot time
       const dateTimeStr = `${selectedDate}T${selectedSlot.time}:00`;
-      
-      const { data, error } = await supabase.rpc("create_appointment_request", {
-        p_store_slug: store.slug,
-        p_customer_name: name.trim(),
-        p_customer_phone: cleanPhone,
-        p_customer_notes: notes.trim(),
-        p_service_title: selectedService.title,
-        p_service_price: selectedService.price || "",
-        p_service_duration: selectedService.durationMinutes || 30,
-        p_appointment_time: new Date(dateTimeStr).toISOString(),
+
+      const response = await fetch("/api/create-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storeSlug: store.slug,
+          customerName: name.trim(),
+          customerPhone: cleanPhone,
+          customerNotes: notes.trim(),
+          serviceTitle: selectedService.title,
+          servicePrice: selectedService.price || "",
+          serviceDuration: selectedService.durationMinutes || 30,
+          appointmentTime: new Date(dateTimeStr).toISOString(),
+          recaptchaToken,
+        }),
       });
+      const { data, error } = await response.json();
 
       if (error) {
         if (error.message.includes("DAILY_LIMIT_EXCEEDED")) {
@@ -176,7 +182,7 @@ export default function BookingWizardClient({ store }: BookingWizardClientProps)
         } else if (error.message.includes("DATE_TIME_BLOCKED")) {
           throw new Error("Seçtiğiniz saat aralığı işletme tarafından kapatılmıştır.");
         } else {
-          throw error;
+          throw new Error(error.message);
         }
       }
 
