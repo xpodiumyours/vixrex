@@ -25,7 +25,7 @@ describe("POST /api/verify-recaptcha", () => {
       new Response(
         JSON.stringify({
           success: true,
-          score: 0.3,
+          score: 0.5,
           action: "booking_create",
         }),
         { status: 200 },
@@ -40,7 +40,7 @@ describe("POST /api/verify-recaptcha", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       success: true,
-      score: 0.3,
+      score: 0.5,
       action: "booking_create",
     });
     expect(googleVerify).toHaveBeenCalledWith(
@@ -50,6 +50,32 @@ describe("POST /api/verify-recaptcha", () => {
         body: expect.any(URLSearchParams),
       }),
     );
+  });
+
+  it("V-13: eski eşiği (0.3) artık reddeder — eşik 0.5'e çıkarıldı", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: true,
+            score: 0.3,
+            action: "booking_create",
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    const response = await POST(
+      createRequest("test-token", "booking_create"),
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      success: false,
+      error: "Score too low",
+    });
   });
 
   it("rejects a token generated for another action", async () => {
