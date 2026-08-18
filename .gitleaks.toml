@@ -1,0 +1,19 @@
+title = "vixrex gitleaks yapılandırması"
+
+# Varsayılan gitleaks kural setini KORUR, üstüne yalnız bilinen
+# yanlış-pozitifleri ekler — kural setini değiştirmez/zayıflatmaz.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Gerçek sır olmayan, bilinen yerel/test placeholder değerleri"
+regexes = [
+  # V-07 (attack-vectors.md, 2026-08-18): OWNER_SESSION_SECRET testinde
+  # KASITLI kullanılan bilinen zayıf değer — ownerSession.ts'in bunu
+  # üretimde reddettiğini doğrular (bkz.
+  # public_web/tests/owner-session-cookie-contract.test.ts,
+  # KNOWN_WEAK_TEST_SECRET). Satır içi `// gitleaks:allow` işareti de var
+  # ama bu değer geçmişteki bir commit'in diff'inde işaretsiz haliyle
+  # kaldığı için (tarama commit commit yapılıyor) global allowlist gerekti.
+  '''yerel-test-gizli-anahtari-en-az-32-karakter''',
+]
