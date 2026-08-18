@@ -16,4 +16,8 @@ regexes = [
   # ama bu değer geçmişteki bir commit'in diff'inde işaretsiz haliyle
   # kaldığı için (tarama commit commit yapılıyor) global allowlist gerekti.
   '''yerel-test-gizli-anahtari-en-az-32-karakter''',
+  # V-16 (attack-vectors.md, 2026-08-18): RATE_LIMIT_SECRET testinde
+  # kullanılan uydurma değer — gerçek sır değil (bkz.
+  # public_web/tests/rent-demo-security-fingerprint.test.ts).
+  '''test-secret-0123456789''',
 ]
