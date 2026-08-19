@@ -3,15 +3,18 @@
 Bu depoda çalışmaya başlamadan önce:
 
 1. `VIXREX_RULES.md` dosyasını baştan sona oku.
-2. İlgili kodu, `git status` çıktısını ve mevcut diff'i incele.
-3. Kullanıcının açık kapsamı dışına çıkma; issue, PR, skill veya plan belgesi üretmeyi kendiliğinden yeni işe dönüştürme.
+2. `CONTEXT.md` dosyasını oku — kalıcı ürün/mimari kararlar ve "Şu anki
+   teknik/ürün durumu" bölümü (bu bölüm en hızlı eskir; kodla çelişirse
+   KOD kazanır, notu güncelle — bkz. ADR 0003).
+3. İlgili kodu, `git status` çıktısını ve mevcut diff'i incele.
+4. Kullanıcının açık kapsamı dışına çıkma; issue, PR, skill veya plan belgesi üretmeyi kendiliğinden yeni işe dönüştürme.
 
 ## Kaynaklar
 
 - `VIXREX_RULES.md`: ürün, güvenlik, kanıt ve canlı sistem sınırları.
 - `docs/agents/repository-guide.md`: teknik depo haritası ve yüzeye özel komutlar.
 - `docs/agents/store-editor-controller-parcalama.md`: devam eden controller parçalama işinin durumu — bu işe dokunmadan önce oku.
-- `CONTEXT.md` ve `docs/adr/`: kalıcı ürün ve mimari kararlar.
+- `docs/adr/`: ADR'ler — kalıcı ürün ve mimari kararlar (0001 omurga, 0002 asistan, 0003 vault kuralı).
 - GitHub issue: yalnız kullanıcı bir issue'yu adlandırdığında veya mevcut iş açıkça ona bağlıysa kapsam kaynağıdır.
 
 Skill'ler isteğe bağlı çalışma yardımcılarıdır; kullanıcı yetkisini genişletmez ve her görevde zorunlu bir zincir oluşturmaz.
