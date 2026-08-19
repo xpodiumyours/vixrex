@@ -80,9 +80,13 @@ class ProductCatalogSyncService {
               Failure(updated.failure?.message ?? 'Ürün güncellenemedi.'),
             );
           }
-          // Henüz senkronlanmamış (uzakta karşılığı olmayan) bir kategori
-          // burada sessizce ''a döner — bilinen risk, orijinal davranış.
-          product.categoryId = categoryUuid ?? '';
+          // Kategori mapping'i UUID formatındaysa uygula,
+          // aksi takdirde ürünün mevcut kategorisini koru.
+          // Sadece categoryUuid (remote'daki UUID) varsa üzerine yazılır,
+          // aksi takdirde product.categoryId'ye (key formatındaysa) dokunulmaz.
+          if (categoryUuid != null) {
+            product.categoryId = categoryUuid;
+          }
           nextProducts.add(product);
         } else {
           final created = await _productService.addProduct(

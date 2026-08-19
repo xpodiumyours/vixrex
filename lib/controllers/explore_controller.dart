@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/explore_repository.dart';
 import 'package:vixrex/services/premium_service.dart';
@@ -17,6 +18,7 @@ class ExploreController extends ChangeNotifier {
   bool _isLoading = true;
   String? _loadErrorMessage;
   String _selectedCategory = 'Tümü';
+  String _selectedTemplateGroup = 'Tümü';
   bool _onlyFavorites = false;
   bool _showingExampleStores = false;
   List<String> _favoritedStoreNames = [];
@@ -28,6 +30,7 @@ class ExploreController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get loadErrorMessage => _loadErrorMessage;
   String get selectedCategory => _selectedCategory;
+  String get selectedTemplateGroup => _selectedTemplateGroup;
   bool get onlyFavorites => _onlyFavorites;
   bool get showingExampleStores => _showingExampleStores;
   List<String> get favoritedStoreNames => _favoritedStoreNames;
@@ -103,6 +106,22 @@ class ExploreController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setTemplateGroup(String value) {
+    _selectedTemplateGroup = value;
+    // When changing template group, reset category to 'Tümü'
+    // (only show categories belonging to the selected group)
+    _selectedCategory = 'Tümü';
+    notifyListeners();
+  }
+
+  /// Returns categories filtered by the selected template group.
+  List<BusinessCategoryConfig> get filteredCategories {
+    if (_selectedTemplateGroup == 'Tümü') {
+      return BusinessCategoryConfig.categories;
+    }
+    return BusinessCategoryConfig.categoriesByGroup(_selectedTemplateGroup);
+  }
+
   void setOnlyFavorites(bool value) {
     _onlyFavorites = value;
     notifyListeners();
@@ -154,6 +173,15 @@ class ExploreController extends ChangeNotifier {
   List<StoreData> get filteredStores {
     final query = _searchQuery.toLowerCase().trim();
     return _allStores.where((store) {
+      // 0. Template group filter
+      if (_selectedTemplateGroup != 'Tümü') {
+        final storeCat = BusinessCategoryConfig.fromCategoryLabel(
+          store.kategori,
+        );
+        if (storeCat.templateGroup != _selectedTemplateGroup) {
+          return false;
+        }
+      }
       // 1. Category filter
       if (_selectedCategory != 'Tümü' && store.kategori != _selectedCategory) {
         return false;

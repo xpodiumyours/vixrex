@@ -11,6 +11,10 @@ class BusinessCategoryConfig {
   final IconData icon;
   final List<SuggestedOffering> suggestedOfferings;
 
+  /// 4 ana sablon grubu: perakende, hizmet, gida, diger
+  /// Her kiralik vitrin bu gruba gore master sablondan turetilir.
+  final String templateGroup;
+
   const BusinessCategoryConfig({
     required this.id,
     required this.label,
@@ -20,7 +24,16 @@ class BusinessCategoryConfig {
     required this.emoji,
     required this.icon,
     required this.suggestedOfferings,
+    this.templateGroup = 'diger',
   });
+
+  /// Tum benzersiz sablon gruplarini dondurur.
+  static List<String> get templateGroups =>
+      categories.map((c) => c.templateGroup).toSet().toList();
+
+  /// Belirli bir gruba ait tum kategorileri dondurur.
+  static List<BusinessCategoryConfig> categoriesByGroup(String group) =>
+      categories.where((c) => c.templateGroup == group).toList();
 
   static const List<BusinessCategoryConfig> categories = [
     BusinessCategoryConfig(
@@ -50,6 +63,7 @@ class BusinessCategoryConfig {
           description: 'Eşofman takımları, spor tayt ve büstiyerler',
         ),
       ],
+      templateGroup: 'perakende',
     ),
     BusinessCategoryConfig(
       id: 'butik',
@@ -78,6 +92,7 @@ class BusinessCategoryConfig {
           description: 'Müşterinin stiline uygun kombin öneri hizmeti',
         ),
       ],
+      templateGroup: 'perakende',
     ),
     BusinessCategoryConfig(
       id: 'gida',
@@ -106,6 +121,7 @@ class BusinessCategoryConfig {
           description: 'Diyet ve ketojenik beslenmeye uygun kuruyemiş setleri',
         ),
       ],
+      templateGroup: 'gida',
     ),
     BusinessCategoryConfig(
       id: 'firin',
@@ -135,6 +151,7 @@ class BusinessCategoryConfig {
           description: 'Çay ve kahve yanına tatlı/tuzlu kurabiye tepsileri',
         ),
       ],
+      templateGroup: 'gida',
     ),
     BusinessCategoryConfig(
       id: 'kozmetik',
@@ -164,6 +181,7 @@ class BusinessCategoryConfig {
           description: 'Teninize en uygun kokuların seçimi ve satışı',
         ),
       ],
+      templateGroup: 'perakende',
     ),
     BusinessCategoryConfig(
       id: 'dekorasyon',
@@ -192,6 +210,7 @@ class BusinessCategoryConfig {
           description: 'Bakım gerektirmeyen şık cam fanus tasarımları',
         ),
       ],
+      templateGroup: 'perakende',
     ),
     BusinessCategoryConfig(
       id: 'elektronik',
@@ -220,6 +239,7 @@ class BusinessCategoryConfig {
           description: 'Taşınabilir şarj bataryaları ve dayanıklı kablolar',
         ),
       ],
+      templateGroup: 'perakende',
     ),
     BusinessCategoryConfig(
       id: 'kirtasiye',
@@ -250,6 +270,7 @@ class BusinessCategoryConfig {
           description: 'Klasör, zımba, dosya ve fotokopi kağıtları paketi',
         ),
       ],
+      templateGroup: 'perakende',
     ),
     BusinessCategoryConfig(
       id: 'kafe_lokanta',
@@ -283,6 +304,7 @@ class BusinessCategoryConfig {
               'Pilav, patates kızartması ve salata eşliğinde ızgara köfte',
         ),
       ],
+      templateGroup: 'gida',
     ),
     BusinessCategoryConfig(
       id: 'kuafor',
@@ -337,6 +359,7 @@ class BusinessCategoryConfig {
           isBookable: true,
         ),
       ],
+      templateGroup: 'hizmet',
     ),
     BusinessCategoryConfig(
       id: 'teknik_servis',
@@ -380,6 +403,7 @@ class BusinessCategoryConfig {
           isBookable: true,
         ),
       ],
+      templateGroup: 'hizmet',
     ),
     BusinessCategoryConfig(
       id: 'hizmet_danismanlik',
@@ -410,6 +434,7 @@ class BusinessCategoryConfig {
           description: 'CV hazırlama, mülakat simülasyonu ve kariyer hedefleri',
         ),
       ],
+      templateGroup: 'hizmet',
     ),
     BusinessCategoryConfig(
       id: 'egitim_ders',
@@ -441,6 +466,7 @@ class BusinessCategoryConfig {
               'Sıfırdan programlama dilleri ve web geliştirme dersleri',
         ),
       ],
+      templateGroup: 'hizmet',
     ),
     BusinessCategoryConfig(
       id: 'ev_temizlik',
@@ -470,6 +496,7 @@ class BusinessCategoryConfig {
           description: 'Ev veya iş yerleri için özel ilaçlama ve dezenfeksiyon',
         ),
       ],
+      templateGroup: 'hizmet',
     ),
     BusinessCategoryConfig(
       id: 'spor_fitness',
@@ -501,6 +528,7 @@ class BusinessCategoryConfig {
               'Güç, denge ve dayanıklılık odaklı yüksek yoğunluklu grup dersi',
         ),
       ],
+      templateGroup: 'hizmet',
     ),
     BusinessCategoryConfig(
       id: 'pet_shop_veteriner',
@@ -532,6 +560,7 @@ class BusinessCategoryConfig {
           description: 'Aşı takibi, sağlık muayenesi ve tahlil işlemleri',
         ),
       ],
+      templateGroup: 'perakende',
     ),
     BusinessCategoryConfig(
       id: 'saglik_yasam',
@@ -562,6 +591,7 @@ class BusinessCategoryConfig {
               'Bütünsel sağlık, uyku düzeni ve alışkanlık yönetimi koçluğu',
         ),
       ],
+      templateGroup: 'hizmet',
     ),
     BusinessCategoryConfig(
       id: 'oto_arac',
@@ -591,6 +621,7 @@ class BusinessCategoryConfig {
               'İkinci el araç alım satımı öncesi detaylı ekspertiz incelemesi',
         ),
       ],
+      templateGroup: 'hizmet',
     ),
     BusinessCategoryConfig(
       id: 'diger',
@@ -616,6 +647,7 @@ class BusinessCategoryConfig {
           isBookable: true,
         ),
       ],
+      templateGroup: 'diger',
     ),
   ];
 
