@@ -17,6 +17,13 @@ concurrency:
 permissions:
   contents: read
   security-events: write
+  # gitleaks-action, pull_request olayında PR'ın commit listesini
+  # (GET /repos/{o}/{r}/pulls/{n}/commits) okur. Bu izin olmadan 403
+  # "Resource not accessible by integration" alıp ÇÖKER — sır bulduğu
+  # için değil, listeyi okuyamadığı için kırmızı olur (2026-08-19: beş
+  # PR'ın beşi de bu yüzden kırmızıydı; GitHub yanıtı zaten eksik izni
+  # söylüyordu: x-accepted-github-permissions: pull_requests=read).
+  pull-requests: read
 
 env:
   FLUTTER_VERSION: "3.44.4"
@@ -26,6 +33,13 @@ jobs:
     name: Kapsam kontrolü
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # Bu bekçi PR'ın büyüklüğünü base dalla karşılaştırır — push olayında
+    # `github.base_ref` BOŞTUR, BASE_REF "origin/" olur ve git geçersiz
+    # revizyon hatasıyla exit 1 verir. Yani main'e her push'ta bu job
+    # anlamsızca kırmızıya düşüyordu (2026-08-19: main'in son 4 koşusunun
+    # tek kırık job'ı buydu; "CI hep kırık" hissinin main tarafındaki
+    # sebebi). Kapsam kontrolünün karşılığı yalnız PR'da vardır.
+    if: github.event_name == 'pull_request'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
