@@ -18,7 +18,9 @@ function requiredEnv(name: string, fallback?: string) {
 }
 
 function safeReturnTo(value: string | null, storeSlug: string) {
-  if (value && value.startsWith("/")) return value;
+  // "//evil.com" (protocol-relative URL) bypass'ını engelle:
+  // startsWith("/") tek başına yeterli değil — //evil.com da / ile başlar.
+  if (value && value.startsWith("/") && !value.startsWith("//")) return value;
   return `/v/${storeSlug}`;
 }
 

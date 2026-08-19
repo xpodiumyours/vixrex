@@ -22,8 +22,18 @@ interface InstagramProfileResponse {
   account_type?: string;
 }
 
+/**
+ * returnTo'yu güvenli bir path'e dönüştür.
+ * //evil.com (protocol-relative), javascript:veya data: URI'leri reddedilir.
+ */
+function sanitizeReturnTo(value: string): string {
+  if (value && value.startsWith("/") && !value.startsWith("//")) return value;
+  return "/";
+}
+
 function callbackRedirect(req: NextRequest, returnTo: string, status: string) {
-  const url = new URL(returnTo || "/", process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin);
+  const safePath = sanitizeReturnTo(returnTo);
+  const url = new URL(safePath, process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin);
   url.searchParams.set("instagram", status);
   return NextResponse.redirect(url);
 }
