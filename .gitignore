@@ -91,6 +91,10 @@ supabase/backup/dumps/
 .obsidian/cache
 
 supabase/.temp/
+supabase/.branches/
+
+# Node / npm (kökte npx komutları çalıştırılınca oluşuyor)
+node_modules/
 
 # Playwright
 public_web/test-results/
