@@ -5,8 +5,12 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
+// V-59: '*' yerine yalnızca gerçek production vitrin domain'ine izin ver.
+// Değer siteUrl.ts DEFAULT_SITE_URL ile aynı (NEXT_PUBLIC_SITE_URL ile değiştirilebilir).
+const ALLOWED_ORIGIN = 'https://vixrex-public.vercel.app';
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
 };
