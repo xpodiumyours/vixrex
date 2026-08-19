@@ -389,6 +389,7 @@ export default function VitrinProfileView({
             Yerine kendi renk dilimizde sade bir zemin: boş görünmüyor,
             ama sahip olmadığı bir şeyi de sahiplenmiyor. */}
         <div
+          {...editableProps("kapakGorseli", ownerMode)}
           className={
             heroImage
               ? "absolute inset-0 bg-cover bg-center"
@@ -443,7 +444,10 @@ export default function VitrinProfileView({
             )}
 
             <div className="flex items-center gap-3 sm:gap-4 mb-2">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-blue-500/20 bg-blue-500/10 flex items-center justify-center shrink-0">
+              <div
+                {...editableProps("logo", ownerMode)}
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-blue-500/20 bg-blue-500/10 flex items-center justify-center shrink-0"
+              >
                 {logoUrl ? (
                   <Image
                     src={logoUrl}
@@ -478,13 +482,21 @@ export default function VitrinProfileView({
 
             {(heroLocationText || districtProvinceLabel || displayAddress || displayEmail || workingHoursToday || showRating) && (
               <div className="flex flex-wrap gap-4 text-sm text-slate-400">
-                {heroLocationText && <span className="flex items-center gap-1.5">📍 {heroLocationText}</span>}
+                {heroLocationText && (
+                  <span {...editableProps("konumMetni", ownerMode)} className="flex items-center gap-1.5">
+                    📍 {heroLocationText}
+                  </span>
+                )}
                 {districtProvinceLabel && (
                   <span className="flex items-center gap-1.5">📍 {districtProvinceLabel}</span>
                 )}
-                {displayAddress && <span className="flex items-center gap-1.5">📍 {displayAddress}</span>}
+                {displayAddress && (
+                  <span {...editableProps("adres", ownerMode)} className="flex items-center gap-1.5">
+                    📍 {displayAddress}
+                  </span>
+                )}
                 {showRating && (
-                  <span className="flex items-center gap-1.5">
+                  <span {...editableProps("puanGoster", ownerMode)} className="flex items-center gap-1.5">
                     ⭐ {ratingScore!.toFixed(1)}
                     {typeof reviewCount === "number" && reviewCount > 0
                       ? ` (${reviewCount} değerlendirme)`
@@ -533,7 +545,9 @@ export default function VitrinProfileView({
       {showCategories && (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="kategoriler">
           <div className="flex items-baseline justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{categorySectionTitle || "Kategoriler"}</h2>
+            <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              {categorySectionTitle || "Kategoriler"}
+            </h2>
             <a href="#urunler" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">Tümünü gör →</a>
           </div>
 
@@ -628,7 +642,9 @@ export default function VitrinProfileView({
       {showProducts && (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler">
           <div className="flex items-baseline justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{productSectionTitle || "Tüm Ürünler"}</h2>
+            <h2 {...editableProps("urunBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              {productSectionTitle || "Tüm Ürünler"}
+            </h2>
             <span className="text-sm font-semibold text-slate-400">{productCount} Ürün Listeleniyor</span>
           </div>
 
@@ -725,7 +741,14 @@ export default function VitrinProfileView({
               </h2>
             </div>
             {galleryActionLabel && galleryActionHref ? (
-              <a href={galleryActionHref} className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition shrink-0">
+              // Tek elemanda iki alan birden işaretlenemez (issue #215):
+              // görünen asıl metin galeriAksiyonMetni — href (galeriAksiyonLinki)
+              // panelin "Tüm alanlar" listesinden düzenlenmeye devam eder.
+              <a
+                href={galleryActionHref}
+                {...editableProps("galeriAksiyonMetni", ownerMode)}
+                className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition shrink-0"
+              >
                 {galleryActionLabel}
               </a>
             ) : showContact ? (
@@ -765,11 +788,13 @@ export default function VitrinProfileView({
           <div className="flex items-baseline justify-between mb-8">
             <div>
               {blogSectionKicker && (
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-2">
+                <p {...editableProps("blogUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-2">
                   {blogSectionKicker}
                 </p>
               )}
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{blogSectionTitle || "Yazılar"}</h2>
+              <h2 {...editableProps("blogBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                {blogSectionTitle || "Yazılar"}
+              </h2>
             </div>
             <Link href={`/v/${storeSlug}/yazilar`} className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">
               {visibleArticles.length} yazı →
@@ -798,11 +823,13 @@ export default function VitrinProfileView({
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="sss">
           <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">{faqSectionKicker || "SSS"}</p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
+              <p {...editableProps("sssUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
+                {faqSectionKicker || "SSS"}
+              </p>
+              <h2 {...editableProps("sssBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
                 {faqSectionTitle || "Sıkça sorulan sorular"}
               </h2>
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p {...editableProps("sssAciklama", ownerMode)} className="text-sm text-slate-400 leading-relaxed">
                 {faqSectionDescription || "Sipariş, stok ve mağaza ziyareti hakkında merak edilenler."}
               </p>
             </div>
@@ -841,8 +868,12 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🏠</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Adres</h4>
+                    {/* İki alan tek satırda: mapLabel varsa o görünür (tıklama
+                        haritaEtiketi'ni açar), yoksa adres görünür. Kullanıcı
+                        kararı 2026-08-17: bu satır haritaEtiketi'ni düzenler;
+                        adres kısayolu hero'daki adres satırına taşındı. */}
                     <p
-                      {...editableProps("adres", ownerMode)}
+                      {...editableProps("haritaEtiketi", ownerMode)}
                       className="text-xs text-slate-300 leading-relaxed mt-0.5"
                     >
                       {mapLabel || displayAddress}
@@ -989,7 +1020,13 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">📇</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Referanslar</h4>
-                    <a href={referencesUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                    <a
+                      href={referencesUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      {...editableProps("referansLinki", ownerMode)}
+                      className="text-xs font-semibold text-blue-400 hover:text-blue-300"
+                    >
                       {referencesUrl.replace(/^https?:\/\//i, "")}
                     </a>
                   </div>
@@ -1026,7 +1063,13 @@ export default function VitrinProfileView({
 
             <div className="flex gap-3">
               {mapsUrl && (
-                <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-blue-500/30 transition">
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...editableProps("haritaLinki", ownerMode)}
+                  className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-blue-500/30 transition"
+                >
                   🗺️ Yol Tarifi Al
                 </a>
               )}
