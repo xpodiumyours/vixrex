@@ -78,18 +78,19 @@ serve(async (req) => {
 
     const onesignalJson = await onesignalRes.json().catch(() => ({}));
     if (!onesignalRes.ok) {
-      return json(
-        {
-          error: 'OneSignal gönderimi başarısız',
-          detail: onesignalJson,
-        },
-        502,
-      );
+      // V-23 (attack-vectors.md, 2026-08-18): OneSignal'ın ham yanıtı
+      // client'a dönüyordu — sağlayıcı iç yapısını/hata detaylarını
+      // sızdırabilir. Detay yalnız sunucu logunda kalır.
+      console.error('[send-booking-push] OneSignal gönderimi başarısız:', onesignalJson);
+      return json({ error: 'Bildirim gönderilemedi. Lütfen tekrar dene.' }, 502);
     }
 
     return json({ ok: true, id: onesignalJson.id ?? null });
   } catch (e) {
-    return json({ error: String(e) }, 500);
+    // V-22: ham exception client'a dönüyordu (stack/dahili detaylar
+    // sızabilir). Detay yalnız sunucu logunda kalır.
+    console.error('[send-booking-push] beklenmeyen hata:', e);
+    return json({ error: 'Bildirim gönderilemedi. Lütfen tekrar dene.' }, 500);
   }
 });
 

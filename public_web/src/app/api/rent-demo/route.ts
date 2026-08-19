@@ -31,6 +31,7 @@ const ERROR_COPY: Record<string, string> = {
   RATE_LIMITED: "Çok fazla deneme yapıldı. Lütfen biraz sonra tekrar dene.",
   SLUG_GENERATION_FAILED: "Vitrin şu anda kiralanamıyor. Lütfen tekrar dene.",
   RECAPTCHA_FAILED: "Güvenlik doğrulaması başarısız. Lütfen sayfayı yenileyip tekrar dene.",
+  SERVICE_UNAVAILABLE: "Vitrin şu anda kiralanamıyor. Lütfen biraz sonra tekrar dene.",
 };
 
 function rentErrorPage(title: string, message: string): Response {
@@ -117,7 +118,15 @@ export async function POST(request: Request) {
     return rentErrorPage("Vitrin açılamadı", ERROR_COPY.RECAPTCHA_FAILED);
   }
 
-  const clientKey = fingerprintClient(getClientIp(request));
+  let clientKey: string;
+  try {
+    clientKey = fingerprintClient(getClientIp(request));
+  } catch (err) {
+    // V-16: RATE_LIMIT_SECRET üretimde yoksa fail-closed — ham IP asla
+    // kullanılmaz, kiralama devam etmez.
+    console.error("[rent-demo] client fingerprint unavailable:", err);
+    return rentErrorPage("Vitrin açılamadı", ERROR_COPY.SERVICE_UNAVAILABLE);
+  }
 
   const { data, error } = await getSupabaseAdmin().rpc("start_demo_trial", {
     p_source_slug: demoSlug,
