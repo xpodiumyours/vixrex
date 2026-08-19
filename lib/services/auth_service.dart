@@ -239,9 +239,13 @@ class AuthService {
     }
 
     try {
+      // V-14 (attack-vectors.md, 2026-08-18): eskiden köke (publicSiteUrl)
+      // yönlendiriyordu — orada işleyen bir sayfa yoktu, link ölü uçtu.
+      // Artık şifre belirleme formunu gösteren gerçek sayfaya gidiyor
+      // (public_web/src/app/sifre-sifirla/page.tsx).
       await Supabase.instance.client.auth.resetPasswordForEmail(
         trimmed,
-        redirectTo: LegalConfig.publicSiteUrl,
+        redirectTo: '${LegalConfig.publicSiteUrl}/sifre-sifirla',
       );
       return const Result.success(null);
     } catch (e, s) {

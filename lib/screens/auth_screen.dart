@@ -45,12 +45,27 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    // V-12 (attack-vectors.md, 2026-08-18): fiş alınıyordu ama hiç
+    // doğrulanmıyordu. Yalnız web'de (kIsWeb) — mobilde fiş alınamıyor,
+    // orası dokunulmadı. Fiş alınamazsa (ağ/köprü sorunu) davranış
+    // DEĞİŞMEZ — yalnız Google'ın "bu muhtemelen bot" dediği durumda
+    // (verifyOnBackend false) giriş/kayıt durdurulur.
     if (kIsWeb) {
       final token = await RecaptchaService.instance.getToken(
         action: 'auth_login',
       );
-      if (kDebugMode) {
-        debugPrint('[reCAPTCHA] Giriş tokenı alındı: ${token != null}');
+      if (token != null) {
+        final verified = await RecaptchaService.verifyOnBackend(
+          token,
+          action: 'auth_login',
+        );
+        if (!verified) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            _showError('Güvenlik doğrulaması başarısız. Lütfen tekrar dene.');
+          }
+          return;
+        }
       }
     }
     final authService = const AuthService();
@@ -123,12 +138,23 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
+    // V-12: aynı desen — yalnız web, yalnız fiş varken doğrula.
     if (kIsWeb) {
       final token = await RecaptchaService.instance.getToken(
         action: 'auth_google',
       );
-      if (kDebugMode) {
-        debugPrint('[reCAPTCHA] Google giriş tokenı alındı: ${token != null}');
+      if (token != null) {
+        final verified = await RecaptchaService.verifyOnBackend(
+          token,
+          action: 'auth_google',
+        );
+        if (!verified) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            _showError('Güvenlik doğrulaması başarısız. Lütfen tekrar dene.');
+          }
+          return;
+        }
       }
     }
     final result = await const AuthService().signInWithGoogle();

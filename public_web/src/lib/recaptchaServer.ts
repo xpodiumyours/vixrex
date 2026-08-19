@@ -10,10 +10,13 @@
 
 const VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
 
-/** Proje genelinde varsayılan eşik — /api/verify-recaptcha'nın önceki
- * sabit değeriyle aynı. Daha maliyetli bir eylem (ör. veri üretimi) için
- * çağıran taraf `minScore` ile daha sıkı bir değer geçebilir. */
-export const DEFAULT_MIN_SCORE = 0.3;
+// V-13 (attack-vectors.md, 2026-08-18): eşik 0.3'tü — Google'ın kendi
+// rehberliğinde 0.5 "muhtemelen insan/bot belirsiz" sınırı olarak
+// önerilir, 0.3 çoğu botu da geçirir. rent-demo zaten bilerek daha sıkı
+// bir değer (0.5) kullanıyordu; proje geneli varsayılanı da ona eşitlendi.
+/** Proje genelinde varsayılan eşik. Daha maliyetli bir eylem (ör. veri
+ * üretimi) için çağıran taraf `minScore` ile daha sıkı bir değer geçebilir. */
+export const DEFAULT_MIN_SCORE = 0.5;
 
 export interface RecaptchaVerifyResult {
   success: boolean;

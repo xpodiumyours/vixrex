@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
+import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 
 // Sahip görsel yükleme (implementation_plan.md Commit 10).
 //
@@ -36,6 +37,14 @@ const MAX_BAYT = 5 * 1024 * 1024; // 5 MB
 // deseni yeniden kullanılıyor — ikinci bir tablo açılmadı.
 const UPLOAD_LIMIT_PER_STORE = 30;
 const UPLOAD_LIMIT_WINDOW_SECONDS = 3600;
+
+// Yeni eklenen maliyet sınırları — mevcut akışı değiştirmeyecek,
+// yalnız fail-closed ek kontroller olarak eklenecek.
+// Kaynak: Supabase Storage security / Next.js rate limiting guide.
+const UPLOAD_DAILY_LIMIT_PER_STORE = 100;
+const UPLOAD_DAILY_WINDOW_SECONDS = 86400; // 24 saat
+const UPLOAD_DAILY_LIMIT_PER_IP = 50;
+const UPLOAD_DAILY_WINDOW_PER_IP_SECONDS = 86400;
 
 const IZINLI_TURLER = new Map([
   ["image/jpeg", "jpg"],
@@ -141,6 +150,44 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         hata: `Bu vitrin için çok fazla görsel yüklendi. ${limit.retry_after_seconds} saniye sonra tekrar dene.`,
+      },
+      { status: 429 }
+    );
+  }
+
+  // Ek maliyet koruması: günlük store başına limit.
+  // Mevcut rate-limit ile AYIRI bir pencere; burada 24 saatlik tavan
+  // kontrol edilir. Amaç: tek oturum ile çok sayıda dosya yükleyip
+  // depolama maliyeti üretmek.
+  const dailyLimitRows = await admin.rpc("consume_assistant_request", {
+    p_client_key: `owner_upload_daily:${ownerSession.slug}`,
+    p_max_requests: UPLOAD_DAILY_LIMIT_PER_STORE,
+    p_window_seconds: UPLOAD_DAILY_WINDOW_SECONDS,
+  });
+  const dailyLimit = Array.isArray(dailyLimitRows) ? dailyLimitRows[0] : dailyLimitRows;
+  if (dailyLimit && !dailyLimit.allowed) {
+    return NextResponse.json(
+      {
+        hata: `Günlük yükleme limitine ulaştın. ${dailyLimit.retry_after_seconds} saniye sonra tekrar dene.`,
+      },
+      { status: 429 }
+    );
+  }
+
+  // Ek maliyet koruması: günlük IP başına limit.
+  // Aynı IP ile farklı store'lardan saldırıya karşı ek katman.
+  const clientIp = getClientIp(request);
+  const clientKey = fingerprintClient(clientIp);
+  const ipLimitRows = await admin.rpc("consume_assistant_request", {
+    p_client_key: `owner_upload_ip:${clientKey}`,
+    p_max_requests: UPLOAD_DAILY_LIMIT_PER_IP,
+    p_window_seconds: UPLOAD_DAILY_WINDOW_PER_IP_SECONDS,
+  });
+  const ipLimit = Array.isArray(ipLimitRows) ? ipLimitRows[0] : ipLimitRows;
+  if (ipLimit && !ipLimit.allowed) {
+    return NextResponse.json(
+      {
+        hata: `Çok fazla yükleme denemesi. ${ipLimit.retry_after_seconds} saniye sonra tekrar dene.`,
       },
       { status: 429 }
     );

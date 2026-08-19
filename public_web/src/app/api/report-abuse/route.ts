@@ -44,7 +44,17 @@ export async function POST(req: NextRequest) {
     }
 
     const ip = getClientIp(req);
-    const clientKey = fingerprintClient(ip);
+    let clientKey: string;
+    try {
+      clientKey = fingerprintClient(ip);
+    } catch (err) {
+      // V-16: RATE_LIMIT_SECRET üretimde yoksa fail-closed.
+      console.error("[report-abuse] client fingerprint unavailable:", err);
+      return NextResponse.json(
+        { message: "Bu işlem şu anda kullanılamıyor. Lütfen daha sonra tekrar dene." },
+        { status: 503 }
+      );
+    }
 
     const { data: limitRows, error: limitError } = await getSupabaseAdmin().rpc(
       "consume_assistant_request",
