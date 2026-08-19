@@ -33,6 +33,7 @@ import {
 } from "@/lib/vitrinBrandIcons";
 import { editableProps } from "@/lib/vitrinEditableProps";
 import { heroActions } from "@/lib/vitrinHeroActions";
+import { normalizeExternalUrl } from "@/lib/products";
 
 export interface VitrinGalleryItem {
   id?: string;
@@ -987,17 +988,23 @@ export default function VitrinProfileView({
                   <div>
                     <h4 className="text-sm font-bold text-white">Pazaryeri Bağlantıları</h4>
                     <div className="mt-0.5 space-y-0.5">
-                      {marketplaceLinks.map((link) => (
-                        <a
-                          key={link.id || link.url || link.platform}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block text-xs font-semibold text-blue-400 hover:text-blue-300"
-                        >
-                          {link.platform}
-                        </a>
-                      ))}
+                      {marketplaceLinks.map((link) => {
+                        const href = normalizeExternalUrl(link.url);
+                        const rawLower = String(link.url ?? "").trim().toLowerCase();
+                        const hasDangerousScheme = /^(javascript|data|vbscript):/i.test(rawLower);
+                        if (!href || hasDangerousScheme) return null;
+                        return (
+                          <a
+                            key={link.id || link.url || link.platform}
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block text-xs font-semibold text-blue-400 hover:text-blue-300"
+                          >
+                            {link.platform}
+                          </a>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
