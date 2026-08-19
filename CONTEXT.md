@@ -100,6 +100,12 @@ eskiyen kısım, kod ile çelişirse KOD kazanır)
 - **Vixrex Asistan rehberli tamamlama:** [[0002-vixrex-asistan-rehberli-tamamlama]]
   kararına göre kural-tabanlı (gerçek LLM çağrısı yok) — bilinçli, maliyet/
   tutarlılık gerekçesiyle.
+- **Tek Asistan Planı tamamlandı (2026-08-17, kod doğrulaması 2026-08-19):**
+  üç aşama da koda girdi — tek mesaj katalogu (`shared/vixrex_mesajlar.json`),
+  tek şema (`shared/vitrin_alanlari.json`), tek "sırada ne var" motoru (iki
+  istemci de şemadaki `zorunlu` işaretinden karar verir). CI'da
+  `schema-drift` sapma kontrolü var (`.github/workflows/ci.yml`). Detay:
+  `docs/tek-asistan-plani.md`.
 
 ## Kalıcı kararlar (ADR'ler)
 

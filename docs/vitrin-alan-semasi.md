@@ -2,18 +2,19 @@
 
 > Sahibin düzenleyebileceği her vitrin alanının tek kaynağı.
 > Tarihsel [[vixrex-asistan-13-faz-plani-2026-08-06]] içindeki Commit 8'in önkoşuluydu; aktif değişiklikler GitHub issue’sunda planlanır.
+> **Son güncelleme: 2026-08-16** — Canonical kaynak `public_web/src/lib/vitrinFieldSchema.ts` (45 skaler alan). Bu döküman yalnız insan-tarafı açıklamadır; alan ekleme/çıkarma yalnız o dosya üzerinden yapılır, buraya yansıtılır.
 
 ## 1. Neden bu dosya var
 
 Commit 8 "beş alanı tipli ve izin listeli hale getir" diyor. O beş alan tek tek elle yazılırsa, Commit 10'daki kırk alan için aynı iş sekiz kez tekrarlanır ve orada tıkanılır.
 
-Şema yazıldığında **alan eklemek kod yazmak değil, satır eklemek** olur:
+Şema yazıldığında **alan eklemek kod yazmak değil, satır eklemek** olur (güncel hâli 45 alandır):
 
 - Komut işleyicisi şemadan okur → her alan için ayrı dallanma yok
 - Sunucu doğrulaması şemadan okur → her alan için ayrı doğrulayıcı yok
 - Tıkla-düzenle listesi şemadan üretilir → her alan için ayrı işaretleme yok
 
-Beş alan bu şemanın beş satırıdır. Kırk alan kırk satır.
+Beş alan bu şemanın beş satırıdır. 45 alan 45 satır.
 
 ## 2. Kaynak: HTML'in çizdiği, asistanının yapabildiği değil
 
@@ -86,6 +87,8 @@ Tek değer taşırlar. Komut tipi: **"şu alanı şu değere ayarla"**.
 | `telefon` | telefon | Telefon | `phone` | yalnız rakam, 10–13 hane |
 | `eposta` | eposta | E-posta | `email` | geçerli e-posta |
 | `adres` | uzunMetin | Açık Adres | `address` | 0–200 |
+| `il` | metin | İl | `province_name` | zorunlu, 0–60 |
+| `ilce` | metin | İlçe | `district_name` | zorunlu, 0–60 |
 | `haritaEtiketi` | metin | Harita Kartı Etiketi | `map_label` | 0–120 |
 | `calismaSaatleri` | metin | Çalışma Saatleri | `working_hours` | serbest metin veya haftalık yapı |
 | `instagram` | metin | Instagram Kullanıcı Adı | `instagram` | `@` olmadan, 0–30 |
@@ -152,7 +155,8 @@ Tek değer taşırlar. Komut tipi: **"şu alanı şu değere ayarla"**.
 | `puanGoster` | açıkKapalı | Değerlendirme Puanını Göster | `show_storefront_rating` | — |
 | `yolTarifiGoster` | açıkKapalı | Yol Tarifi Butonunu Göster | `show_directions_link` | — |
 | `referansLinki` | url | Referanslar Bağlantısı | `references_link` | `http`/`https` |
-| `bolumGorunurluk` | *(yapı)* | Bölüm Açık/Kapalı | `section_visibility` | sekiz bölüm için açık/kapalı |
+
+> **Not:** `bolumGorunurluk` / `section_visibility` VITRIN_FIELDS şemasında **yoktur** — asistan yazma yolunun dışındadır, kodda yalnız görüntülenir (bölüm aç/kapa). Şemaya eklenmez; ayrı işlenir.
 
 ---
 
@@ -244,7 +248,7 @@ Bu belge insan tarafıdır. Koddaki tek kaynak:
 
 | Dosya | İşi |
 |---|---|
-| `public_web/src/lib/vitrinFieldSchema.ts` | 40 alanın tamamı — anahtar, tip, etiket, kolon, sınırlar, bölüm |
+| `public_web/src/lib/vitrinFieldSchema.ts` | 45 alanın tamamı — anahtar, tip, etiket, kolon, sınırlar, bölüm |
 | `public_web/src/lib/vitrinFieldValidation.ts` | Tek genel doğrulayıcı. **Alan başına dallanma yoktur** |
 | `public_web/src/app/api/owner-draft/route.ts` | Çerezden oturum → şema doğrulaması → RPC |
 | `supabase/migrations/20260805100000_...sql` | Veritabanının **bağımsız** yetki kontrolü |
