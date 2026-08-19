@@ -9,6 +9,9 @@ sohbet ederek düzenliyor, kod bilmesi gerekmiyor.
 
 Yol: 100 hazır vitrin → kiralama → satış / B2B.
 
+Vizyonun tamamı (katman mimarisi, kurye/teslimat ve tüketici uygulaması
+fikirleri, konum kuralı): [[vizyon-katman-mimarisi-2026-08-17]].
+
 ## Karar ve kurallar
 
 - [[VIXREX_RULES]] — **değişmez kurallar.** Bir tartışma çıktığında buraya bakılır
