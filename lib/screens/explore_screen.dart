@@ -340,19 +340,20 @@ class ExploreScreenState extends State<ExploreScreen> {
           horizontal: AppColors.spacing20,
           vertical: AppColors.spacing4,
         ),
-        children: _templateGroupLabels.map((group) {
-          final isSelected = _controller.selectedTemplateGroup == group;
-          return Padding(
-            padding: const EdgeInsets.only(right: AppColors.spacing8),
-            child: ChoiceChip(
-              selected: isSelected,
-              label: Text(group),
-              onSelected: (val) {
-                if (val) _controller.setTemplateGroup(group);
-              },
-            ),
-          );
-        }).toList(),
+        children:
+            _templateGroupLabels.map((group) {
+              final isSelected = _controller.selectedTemplateGroup == group;
+              return Padding(
+                padding: const EdgeInsets.only(right: AppColors.spacing8),
+                child: ChoiceChip(
+                  selected: isSelected,
+                  label: Text(group),
+                  onSelected: (val) {
+                    if (val) _controller.setTemplateGroup(group);
+                  },
+                ),
+              );
+            }).toList(),
       ),
     );
   }

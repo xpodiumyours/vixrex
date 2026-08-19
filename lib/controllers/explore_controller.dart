@@ -175,7 +175,9 @@ class ExploreController extends ChangeNotifier {
     return _allStores.where((store) {
       // 0. Template group filter
       if (_selectedTemplateGroup != 'Tümü') {
-        final storeCat = BusinessCategoryConfig.fromCategoryLabel(store.kategori);
+        final storeCat = BusinessCategoryConfig.fromCategoryLabel(
+          store.kategori,
+        );
         if (storeCat.templateGroup != _selectedTemplateGroup) {
           return false;
         }

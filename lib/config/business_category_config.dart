@@ -10,7 +10,7 @@ class BusinessCategoryConfig {
   final String emoji;
   final IconData icon;
   final List<SuggestedOffering> suggestedOfferings;
-  
+
   /// 4 ana sablon grubu: perakende, hizmet, gida, diger
   /// Her kiralik vitrin bu gruba gore master sablondan turetilir.
   final String templateGroup;
