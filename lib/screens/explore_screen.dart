@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
-import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/controllers/explore_controller.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/explore_repository.dart';
@@ -35,9 +34,13 @@ class ExploreScreenState extends State<ExploreScreen> {
   // inputBg, darkText, mutedText, softText). Bu ekran paletin ikinci bir
   // kopyasını tutuyordu; artık doğrudan AppColors kullanılıyor.
 
-  final List<String> _categories = [
+  // Template group labels for the top-level filter
+  static const List<String> _templateGroupLabels = [
     'Tümü',
-    ...BusinessCategoryConfig.categories.map((c) => c.label),
+    'Perakende',
+    'Hizmet',
+    'Gıda',
+    'Diğer',
   ];
 
   @override
@@ -293,6 +296,7 @@ class ExploreScreenState extends State<ExploreScreen> {
                   ),
                 ),
               ),
+              _buildTemplateGroupFilterBar(),
               _buildFilterBar(),
               if (_controller.loadErrorMessage != null)
                 Padding(
@@ -325,8 +329,35 @@ class ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  /// Filtre çubuğu — çip stili chipTheme'den geliyor; shape, labelStyle,
-  /// selectedColor ve backgroundColor tekrarları kaldırıldı.
+  /// Şablon grubu filtre çubuğu — 4 ana grup
+  Widget _buildTemplateGroupFilterBar() {
+    return SizedBox(
+      height: 52,
+      child: ListView(
+        physics: const BouncingScrollPhysics(),
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppColors.spacing20,
+          vertical: AppColors.spacing4,
+        ),
+        children: _templateGroupLabels.map((group) {
+          final isSelected = _controller.selectedTemplateGroup == group;
+          return Padding(
+            padding: const EdgeInsets.only(right: AppColors.spacing8),
+            child: ChoiceChip(
+              selected: isSelected,
+              label: Text(group),
+              onSelected: (val) {
+                if (val) _controller.setTemplateGroup(group);
+              },
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  /// Kategori filtre çubuğu — templateGroup'a göre filtrelenmiş kategoriler
   Widget _buildFilterBar() {
     return SizedBox(
       height: 52,
@@ -356,15 +387,16 @@ class ExploreScreenState extends State<ExploreScreen> {
               label: const Text('Favorilerim'),
             ),
           ),
-          ..._categories.map((category) {
-            final isSelected = _controller.selectedCategory == category;
+          ..._controller.filteredCategories.map((category) {
+            final categoryLabel = category.label;
+            final isSelected = _controller.selectedCategory == categoryLabel;
             return Padding(
               padding: const EdgeInsets.only(right: AppColors.spacing8),
               child: ChoiceChip(
                 selected: isSelected,
-                label: Text(category),
+                label: Text(categoryLabel),
                 onSelected: (val) {
-                  if (val) _controller.setCategory(category);
+                  if (val) _controller.setCategory(categoryLabel);
                 },
               ),
             );
