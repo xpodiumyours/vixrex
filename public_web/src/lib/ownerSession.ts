@@ -22,6 +22,20 @@ export const OWNER_SESSION_TTL_MS = 30 * 60 * 1000;
 export const OWNER_SESSION_MAX_AGE_SECONDS = OWNER_SESSION_TTL_MS / 1000;
 const OWNER_SESSION_SECRET_MIN_LENGTH = 32;
 
+// V-07 (attack-vectors.md, 2026-08-18): .env.local'deki yerel test değeri
+// (43 karakter — uzunluk kontrolünü GEÇİYOR, bu yüzden ayrı bir kontrol
+// gerekiyor) attack-vectors.md'de düz metin olarak sızmıştı. Bu tam
+// değerle üretime çıkılırsa saldırgan herhangi bir slug için geçerli
+// sahip çerezi üretebilir. Üretimde bu değer görülürse fail-closed olunur
+// (bkz. assertOwnerSessionConfigured / verifyOwnerSession).
+const KNOWN_WEAK_SECRETS = new Set<string>([
+  "yerel-test-gizli-anahtari-en-az-32-karakter",
+]);
+
+function isKnownWeakSecretInProduction(secret: string): boolean {
+  return process.env.NODE_ENV === "production" && KNOWN_WEAK_SECRETS.has(secret);
+}
+
 // Payload: storeId, slug, sessionToken, exp
 export interface OwnerSession {
   storeId: string;
@@ -38,9 +52,15 @@ function getSecret(): string {
 }
 
 export function assertOwnerSessionConfigured(): void {
-  if (getSecret().length < OWNER_SESSION_SECRET_MIN_LENGTH) {
+  const secret = getSecret();
+  if (secret.length < OWNER_SESSION_SECRET_MIN_LENGTH) {
     throw new Error(
       "OWNER_SESSION_SECRET must be at least 32 characters"
+    );
+  }
+  if (isKnownWeakSecretInProduction(secret)) {
+    throw new Error(
+      "OWNER_SESSION_SECRET is set to a known local/test value in production — rotate it in Vercel dashboard (V-07)."
     );
   }
 }
@@ -85,6 +105,7 @@ export function verifyOwnerSession(
 
   const secret = getSecret();
   if (secret.length < OWNER_SESSION_SECRET_MIN_LENGTH) return null;
+  if (isKnownWeakSecretInProduction(secret)) return null;
 
   const separatorIndex = token.indexOf(".");
   if (separatorIndex <= 0 || separatorIndex === token.length - 1) return null;

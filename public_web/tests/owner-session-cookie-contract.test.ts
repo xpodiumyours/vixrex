@@ -27,6 +27,11 @@ const SLUG = "deneme-vitrin";
 // Geçerli 64 hex char (32 byte) session token for tests
 const TEST_SESSION_TOKEN = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
+// V-07 (attack-vectors.md, 2026-08-18): gerçek bir sır DEĞİL — .env.local'de
+// duran yerel/test placeholder'ı, ownerSession.ts'in bunu üretimde
+// reddettiğini test etmek için kasıtlı olarak kullanılıyor.
+const KNOWN_WEAK_TEST_SECRET = "yerel-test-gizli-anahtari-en-az-32-karakter"; // gitleaks:allow
+
 function b64url(value: string): string {
   return Buffer.from(value, "utf8").toString("base64url");
 }
@@ -114,6 +119,24 @@ describe("sahip oturumu çerezi — imzalı değer davranışı", () => {
     expect(() => signOwnerSession(STORE_ID, SLUG)).toThrow(
       "sessionToken must be 64 hex characters"
     );
+  });
+
+  // V-07 (attack-vectors.md, 2026-08-18): .env.local'deki bilinen zayıf
+  // test değeri (43 karakter — uzunluk kontrolünü GEÇİYOR) üretimde
+  // kullanılırsa sessizce çalışmamalı, fail-closed olmalı.
+  it("bilinen zayıf test değeri üretimde reddedilir", () => {
+    vi.stubEnv("OWNER_SESSION_SECRET", KNOWN_WEAK_TEST_SECRET);
+    vi.stubEnv("NODE_ENV", "production");
+    expect(() => signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN)).toThrow(
+      "known local/test value in production"
+    );
+    expect(verifyOwnerSession("gecerli.gorunen", SLUG)).toBeNull();
+  });
+
+  it("bilinen zayıf test değeri yerelde (production dışı) çalışmaya devam eder", () => {
+    vi.stubEnv("OWNER_SESSION_SECRET", KNOWN_WEAK_TEST_SECRET);
+    vi.stubEnv("NODE_ENV", "test");
+    expect(() => signOwnerSession(STORE_ID, SLUG, TEST_SESSION_TOKEN)).not.toThrow();
   });
 });
 

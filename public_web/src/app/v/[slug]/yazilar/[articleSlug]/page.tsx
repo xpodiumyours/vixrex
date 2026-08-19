@@ -6,6 +6,7 @@ import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { buildSiteUrl, getSiteUrl, isExternalHttpUrl } from "@/lib/siteUrl";
+import { safeJsonLdHtml } from "@/lib/jsonLd";
 
 export const revalidate = 300; // Enable 5-minute ISR
 
@@ -180,11 +181,11 @@ export default async function ArticleDetailPage(props: PageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(jsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbList) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(breadcrumbList) }}
       />
 
       <div className="min-h-screen bg-[#0c0d10] px-4 py-8 text-[#f4f1ea]">

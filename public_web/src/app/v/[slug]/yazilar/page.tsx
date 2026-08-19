@@ -5,6 +5,7 @@ import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
+import { safeJsonLdHtml } from "@/lib/jsonLd";
 
 export const revalidate = 300;
 
@@ -106,7 +107,7 @@ export default async function BlogIndexPage(props: PageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(jsonLd) }}
       />
       <div className="min-h-screen bg-[#0c0d10] px-4 py-8 text-[#f4f1ea] sm:px-6">
         <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6 animate-fade-in">
