@@ -264,6 +264,23 @@
       "bosDegerler": null
     },
     {
+      "anahtar": "mahalle",
+      "tip": "metin",
+      "etiket": "Mahalle",
+      "kolon": "neighborhood_name",
+      "bolum": "contact",
+      "zorunlu": false,
+      "kalite": true,
+      "minUzunluk": null,
+      "maxUzunluk": 60,
+      "min": null,
+      "max": null,
+      "secenekler": null,
+      "ipucu": "Örn: Caddebostan",
+      "dogrulama": null,
+      "bosDegerler": null
+    },
+    {
       "anahtar": "haritaEtiketi",
       "tip": "metin",
       "etiket": "Harita Kartı Etiketi",

@@ -139,6 +139,7 @@ export interface VitrinProfileViewProps {
   mapLabel: string | null;
   provinceName: string | null;
   districtName: string | null;
+  neighborhoodName: string | null;
   categorySectionTitle: string | null;
   productSectionTitle: string | null;
   galleryActionLabel: string | null;
@@ -205,6 +206,7 @@ export default function VitrinProfileView({
   mapLabel,
   provinceName,
   districtName,
+  neighborhoodName,
   categorySectionTitle,
   productSectionTitle,
   galleryActionLabel,
@@ -227,11 +229,11 @@ export default function VitrinProfileView({
   // Faz F (Tek Asistan planı): il/ilçe artık şemada zorunlu alan
   // (docs/alan-eslemesi.md) ama sahibin serbest yazdığı heroLocationText
   // (ör. "Kadıköy, İstanbul") zaten aynı bilgiyi taşıyabiliyor — o doluysa
-  // tekrar göstermeyiz. Boşsa yapılandırılmış il/ilçe buraya düşer, konum
-  // etiketi hiç eksik kalmaz.
+  // tekrar göstermeyiz. Boşsa yapılandırılmış il/ilçe (+ isteğe bağlı
+  // mahalle, #264) buraya düşer, konum etiketi hiç eksik kalmaz.
   const districtProvinceLabel =
-    !heroLocationText && (districtName || provinceName)
-      ? [districtName, provinceName].filter(Boolean).join(", ")
+    !heroLocationText && (neighborhoodName || districtName || provinceName)
+      ? [neighborhoodName, districtName, provinceName].filter(Boolean).join(", ")
       : null;
   const displayBadge = String(heroBadge || kategori || businessType || "").trim();
   const showOpenBadge =

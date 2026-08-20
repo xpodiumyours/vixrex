@@ -26,6 +26,8 @@ const TIKLAMA_ISTISNALARI: Record<string, string> = {
     "Kendi DOM elemanı yok — heroRozet/kategori ile aynı fallback zincirini (displayBadge) paylaşıyor.",
   il: "Tek bir birleşik span'da (districtProvinceLabel) gösteriliyor; ayrı ayrı tıklanabilir değil.",
   ilce: "Aynı birleşik span (districtProvinceLabel); ayırmak yeni UI kararı gerektirir.",
+  mahalle:
+    "Aynı birleşik span (districtProvinceLabel); il/ilçe ile aynı istisna gerekçesi, #264 ile eklendi.",
   enlem: "Sayfada metin olarak görünmüyor — yalnız harita gömme linkini (mapsEmbedUrl) üretiyor.",
   boylam: "Aynı — sayfada görünmüyor, yalnız harita linkini üretiyor.",
   yolTarifiGoster:

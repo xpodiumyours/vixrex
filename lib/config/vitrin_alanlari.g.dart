@@ -184,6 +184,16 @@ const List<VitrinAlani> vitrinAlanlari = [
     maxUzunluk: 60,
   ),
   VitrinAlani(
+    anahtar: 'mahalle',
+    tip: 'metin',
+    etiket: 'Mahalle',
+    kolon: 'neighborhood_name',
+    bolum: 'contact',
+    kalite: true,
+    maxUzunluk: 60,
+    ipucu: 'Örn: Caddebostan',
+  ),
+  VitrinAlani(
     anahtar: 'haritaEtiketi',
     tip: 'metin',
     etiket: 'Harita Kartı Etiketi',
