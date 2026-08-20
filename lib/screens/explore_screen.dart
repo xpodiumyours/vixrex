@@ -19,7 +19,22 @@ import 'package:vixrex/widgets/vitrin_store_card.dart';
 class ExploreScreen extends StatefulWidget {
   final ExploreRepository? repository;
 
-  const ExploreScreen({super.key, this.repository});
+  /// Onboarding'in "Hazır Vitrin Seç" akışından açıldı mı — yalnız kiralık
+  /// şablonlar gösterilir, başlık/altyazı değişir, altta "Uygun olan yok"
+  /// çıkışı eklenir. `false` ise bu ekran her zamanki Keşfet sekmesidir.
+  final bool onlyRentalTemplates;
+
+  /// [onlyRentalTemplates] iken: kullanıcı hiçbir hazır şablonu beğenmedi,
+  /// sıfırdan oluşturma yoluna dönmek istiyor. `onlyRentalTemplates` false
+  /// iken kullanılmaz.
+  final VoidCallback? onNoneMatch;
+
+  const ExploreScreen({
+    super.key,
+    this.repository,
+    this.onlyRentalTemplates = false,
+    this.onNoneMatch,
+  });
 
   @override
   State<ExploreScreen> createState() => ExploreScreenState();
@@ -60,7 +75,10 @@ class ExploreScreenState extends State<ExploreScreen> {
         ExploreRepository(
           sharedPreferences: await SharedPreferences.getInstance(),
         );
-    _controller = ExploreController(repository: repository);
+    _controller = ExploreController(
+      repository: repository,
+      onlyRentalTemplates: widget.onlyRentalTemplates,
+    );
     await _controller.initialize();
     if (mounted) {
       setState(() {
@@ -236,9 +254,12 @@ class ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final title =
+        widget.onlyRentalTemplates ? 'Hazır Vitrin Seç' : "Vixrex'leri Keşfet";
+
     if (!_isControllerInitialized) {
       return AppScreenScaffold(
-        title: "Vixrex'leri Keşfet",
+        title: title,
         padding: EdgeInsets.zero,
         body: _buildSkeletonGrid(),
       );
@@ -252,20 +273,22 @@ class ExploreScreenState extends State<ExploreScreen> {
         // AppBar başlığı ve zemin AppScreenScaffold'dan; ekran kendi
         // TextStyle'ını yazmıyor.
         return AppScreenScaffold(
-          title: "Vixrex'leri Keşfet",
+          title: title,
           padding: EdgeInsets.zero,
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
                   AppColors.spacing24,
                   0,
                   AppColors.spacing24,
                   AppColors.spacing12,
                 ),
                 child: Text(
-                  'Yayındaki tüm Vixrex vitrinlerini inceleyin',
+                  widget.onlyRentalTemplates
+                      ? 'Beğendiğini kirala, kendi vitrinin olsun'
+                      : 'Yayındaki tüm Vixrex vitrinlerini inceleyin',
                   style: AppTextStyles.caption,
                 ),
               ),
@@ -322,10 +345,33 @@ class ExploreScreenState extends State<ExploreScreen> {
                         ? _buildEmptyState()
                         : _buildStoreGrid(stores),
               ),
+              if (widget.onlyRentalTemplates && widget.onNoneMatch != null)
+                _buildNoneMatchBar(),
             ],
           ),
         );
       },
+    );
+  }
+
+  /// "Hazır Vitrin Seç" modunda çıkış yolu — hiçbir şablon uymadıysa sıfırdan
+  /// oluşturma sohbetine geri döner (bkz. vixrex_onboarding_controller.dart
+  /// chooseScratch).
+  Widget _buildNoneMatchBar() {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppColors.spacing24,
+          AppColors.spacing8,
+          AppColors.spacing24,
+          AppColors.spacing12,
+        ),
+        child: OutlinedButton(
+          onPressed: widget.onNoneMatch,
+          child: const Text('Uygun olan yok, sıfırdan oluştur'),
+        ),
+      ),
     );
   }
 

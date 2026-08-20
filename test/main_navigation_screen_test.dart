@@ -131,7 +131,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.textContaining('Oluşturalım'));
+      // Karşılama üçe bölündü (Hazır Vitrin Seç / Sıfırdan Oluştur /
+      // Bakınıyorum) — bu test sıfırdan yolu (isim sorusuna gider) sınıyor.
+      await tester.tap(find.textContaining('Sıfırdan Oluştur'));
       await tester.pump();
       await tester.enterText(find.byType(TextField), 'Asistan Vitrini');
       await tester.testTextInput.receiveAction(TextInputAction.send);
