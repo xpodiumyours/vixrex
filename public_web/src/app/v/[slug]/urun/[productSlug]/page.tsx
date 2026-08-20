@@ -16,6 +16,7 @@ import {
 } from "@/lib/products";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
+import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 
 export const revalidate = 300;
 
@@ -357,12 +358,15 @@ export default async function ProductDetailPage(props: PageProps) {
 
             <div className="grid gap-2.5">
               {whatsappUrl && (
-                <Link
+                <TrackedWhatsAppLink
                   href={whatsappUrl}
+                  storeSlug={store.slug}
+                  productSlug={productSlug}
+                  clickLocation="product_detail"
                   className="rounded-full bg-[#25D366] px-5 py-3.5 text-center text-sm font-extrabold text-[#04140a]"
                 >
                   WhatsApp’tan ürün sor
-                </Link>
+                </TrackedWhatsAppLink>
               )}
               {instagramUrl && (
                 <Link

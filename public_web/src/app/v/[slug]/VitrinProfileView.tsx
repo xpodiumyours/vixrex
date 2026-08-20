@@ -34,6 +34,10 @@ import {
 import { editableProps } from "@/lib/vitrinEditableProps";
 import { heroActions } from "@/lib/vitrinHeroActions";
 import { normalizeExternalUrl } from "@/lib/products";
+import {
+  TrackedWhatsAppLink,
+  trackWhatsAppClick,
+} from "@/components/TrackedWhatsAppLink";
 
 export interface VitrinGalleryItem {
   id?: string;
@@ -522,6 +526,17 @@ export default function VitrinProfileView({
                 <a
                   key={buton.anahtar}
                   href={buton.href}
+                  onClick={
+                    buton.anahtar === "whatsapp" &&
+                    !ownerMode &&
+                    !isPreviewMode
+                      ? () =>
+                          trackWhatsAppClick(window.gtag, {
+                            storeSlug,
+                            clickLocation: "storefront_hero",
+                          })
+                      : undefined
+                  }
                   {...(buton.disKapi
                     ? { target: "_blank", rel: "noopener noreferrer" }
                     : {})}
@@ -904,9 +919,18 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">💬</div>
                   <div>
                     <h4 className="text-sm font-bold text-white">WhatsApp</h4>
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" {...editableProps("whatsapp", ownerMode)} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                    <TrackedWhatsAppLink
+                      href={whatsappUrl}
+                      storeSlug={storeSlug}
+                      clickLocation="storefront_contact"
+                      trackingEnabled={!ownerMode && !isPreviewMode}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      {...editableProps("whatsapp", ownerMode)}
+                      className="text-xs font-semibold text-blue-400 hover:text-blue-300"
+                    >
                       WhatsApp&apos;tan İletişime Geç
-                    </a>
+                    </TrackedWhatsAppLink>
                   </div>
                 </div>
               )}
