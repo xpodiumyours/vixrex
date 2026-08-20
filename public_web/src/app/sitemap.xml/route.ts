@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
-import { getProductUrlSlug, safeParseJson, type ProductItem } from "@/lib/products";
 import { getSiteUrl } from "@/lib/siteUrl";
 
 export const revalidate = 300;
@@ -9,8 +8,14 @@ export const revalidate = 300;
 async function _getSitemapData() {
   const { data: stores } = await supabase
     .from("stores")
-    .select("slug, updated_at, products")
+    .select("id, slug, updated_at")
     .eq("is_published", true);
+
+  const { data: products } = await supabase
+    .from("products")
+    .select("store_id, slug, updated_at")
+    .eq("is_active", true)
+    .eq("is_visible", true);
 
   const { data: articles } = await supabase
     .from("store_articles")
@@ -19,6 +24,7 @@ async function _getSitemapData() {
 
   return {
     stores: stores || [],
+    products: products || [],
     articles: articles || [],
   };
 }
@@ -40,9 +46,26 @@ function escapeXml(value: string) {
 
 export async function GET() {
   try {
-    const { stores, articles } = await getSitemapData();
+    const { stores, products, articles } = await getSitemapData();
     const baseUrl = getSiteUrl();
     const articleLastModByStore = new Map<string, string>();
+    const productsByStoreId = new Map<
+      string,
+      Array<{ slug: string; updated_at: string | null }>
+    >();
+
+    for (const product of products) {
+      const storeId = String(product.store_id || "").trim();
+      const productSlug = String(product.slug || "").trim();
+      if (!storeId || !productSlug) continue;
+
+      const storeProducts = productsByStoreId.get(storeId) || [];
+      storeProducts.push({
+        slug: productSlug,
+        updated_at: product.updated_at || null,
+      });
+      productsByStoreId.set(storeId, storeProducts);
+    }
 
     if (articles) {
       for (const article of articles) {
@@ -73,21 +96,20 @@ export async function GET() {
     <priority>0.8</priority>
   </url>`;
 
-        const products = safeParseJson<ProductItem>(store.products);
-        products.forEach((product, index) => {
-          if (!product.name?.trim() || !product.description?.trim()) return;
-
-          const productSlug = getProductUrlSlug(product, index);
-          if (!productSlug) return;
+        const storeProducts = productsByStoreId.get(store.id) || [];
+        for (const product of storeProducts) {
+          const productLastMod = product.updated_at
+            ? new Date(product.updated_at).toISOString()
+            : lastMod;
 
           xml += `
   <url>
-    <loc>${escapeXml(`${baseUrl}/v/${store.slug}/urun/${productSlug}`)}</loc>
-    <lastmod>${lastMod}</lastmod>
+    <loc>${escapeXml(`${baseUrl}/v/${store.slug}/urun/${product.slug}`)}</loc>
+    <lastmod>${productLastMod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.65</priority>
   </url>`;
-        });
+        }
 
         if (blogLastMod) {
           xml += `
