@@ -41,5 +41,8 @@ jobs:
       - name: Dosya büyüklüğü rateti
         run: python .github/scripts/verify_dosya_boyutu_ratchet.py
 
+      - name: Supabase erişim rateti
+        run: python .github/scripts/verify_supabase_erisim_ratchet.py
+
       - name: CI yüzey sınıflandırma testi
         run: python -m unittest discover -s .github/scripts/tests -p "test_changed_surfaces.py" -v

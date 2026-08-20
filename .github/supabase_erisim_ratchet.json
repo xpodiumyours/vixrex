@@ -1,0 +1,27 @@
+{
+  "mevcut_sayi": 22,
+  "dosyalar": [
+    "lib/controllers/store_editor_controller.dart",
+    "lib/controllers/vixrex_onboarding_controller.dart",
+    "lib/main.dart",
+    "lib/services/article_service.dart",
+    "lib/services/auth_service.dart",
+    "lib/services/auto_fill_service.dart",
+    "lib/services/booking_service.dart",
+    "lib/services/category_image_service.dart",
+    "lib/services/excel/product_database.dart",
+    "lib/services/feature_flag_service.dart",
+    "lib/services/legal_document_service.dart",
+    "lib/services/ocr/ocr_excel_verifier.dart",
+    "lib/services/ocr/ocr_feedback_service.dart",
+    "lib/services/premium_service.dart",
+    "lib/services/public_store_service.dart",
+    "lib/services/push_notification_service.dart",
+    "lib/services/store_publish_service.dart",
+    "lib/services/store_shelf_upload_service.dart",
+    "lib/services/vitrin_view_service.dart",
+    "lib/services/vixrex_assistant_nlu_service.dart",
+    "lib/services/xml_product_upload_service.dart",
+    "lib/widgets/landing/landing_hero_section.dart"
+  ]
+}

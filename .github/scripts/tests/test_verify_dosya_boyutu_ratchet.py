@@ -48,6 +48,19 @@ class DosyaBoyutuRatchetTest(unittest.TestCase):
             hatalar = ratchet.kontrol_et({"yok.dart": {"tavan": 5}}, kok)
             self.assertEqual(hatalar, [])
 
+    def test_jsonda_olmayan_yeni_buyuk_dosya_hata_verir(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            kok = Path(tmp)
+            yol = "lib/services/yeni_servis.dart"
+            dosya = kok / yol
+            dosya.parent.mkdir(parents=True)
+            dosya.write_text("\n".join(f"satir {i}" for i in range(401)))
+
+            hatalar = ratchet.kontrol_et({}, kok, [yol])
+            self.assertEqual(len(hatalar), 1)
+            self.assertIn(yol, hatalar[0])
+            self.assertIn("varsayılan tavan: 400", hatalar[0])
+
     def test_gercek_ratchet_dosyasi_gecerli_json(self) -> None:
         """Repodaki gerçek .github/dosya_boyutu_ratchet.json'ı da doğrular —
         bu, kayıtlı dosyaların şu an gerçekten tavanın altında olduğunu
