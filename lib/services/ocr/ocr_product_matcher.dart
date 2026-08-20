@@ -119,21 +119,55 @@ class OcrProductMatcher {
     return bestLine;
   }
 
-  /// Ürün adını temizle.
+  /// Ürün adını temizle - Fatura/Receipt formatları için iyileştirildi.
   String _cleanProductName(String text, String priceText) {
     var cleaned = text;
+
+    // Fiyat metnini çıkar
     cleaned = cleaned.replaceAll(priceText, '');
+
+    // Para birimlerini çıkar (TL, ₺, TRY, tl, try, KR, KURUŞ)
     cleaned = cleaned.replaceAll(
-      RegExp(r'(?:₺|TL|TRY|tl|try|KR|KURUŞ)', caseSensitive: false),
+      RegExp(r'(?:₺|TL|TRY|KR|KURUŞ|tl|try|kr|kuruş)', caseSensitive: false),
       '',
     );
-    cleaned = cleaned.replaceAll(RegExp(r'\b\d{13}\b'), '');
+
+    // KDV oranlarını çıkar (%8, %10, %18 vb.)
+    cleaned = cleaned.replaceAll(RegExp(r'%\\d+'), '');
     cleaned = cleaned.replaceAll(
-      RegExp(r'\b\d+\s*(ad|adet|dz|pcs|ADET)\b', caseSensitive: false),
+      RegExp(r'kdv %?\\d*', caseSensitive: false),
       '',
     );
-    cleaned = cleaned.replaceAll(RegExp(r'\b[A-Z]{2,4}\d{4,6}\b'), '');
+
+    // Barkod/GTIN çıkar (10-13 haneli)
+    cleaned = cleaned.replaceAll(RegExp(r'\b\d{10,13}\b'), '');
+
+    // Adet/miktar ifadelerini çıkar (ad, adet, pc, kg, g, lt, lt, dz, pcs)
+    cleaned = cleaned.replaceAll(
+      RegExp(
+        r'\b\d+\s*(ad|adet|pcs|kg|g|lt|dz|AD|ADET|PCS|KG|G|LT|DZ)\b',
+        caseSensitive: false,
+      ),
+      '',
+    );
+    cleaned = cleaned.replaceAll(
+      RegExp(r'\b(ad|adet|pcs|kg|g|lt|dz)\s*\d+', caseSensitive: false),
+      '',
+    );
+
+    // Fatura numarası / referans numarası çıkar (rakamlı referanslar)
+    cleaned = cleaned.replaceAll(
+      RegExp(r'[\d]{4,}-[\d]{3,}-[\d]{3,}|[\d]{8,}|[\d]{4,}.[\d]{2}.[\d]{2}'),
+      '',
+    );
+
+    // Özellik ifadeleri (renk, boyut vb. - sadece büyük/küçük harf ifadeleri)
+    cleaned = cleaned.replaceAll(RegExp(r'\b[A-Z]{2,8}\b'), '');
+
+    // Boşlukları temizle ve kes
     cleaned = cleaned.trim();
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ');
+
     return cleaned;
   }
 
@@ -241,6 +275,7 @@ class OcrProductMatcher {
   }
 
   /// Bilinen ürün sözlüğü (fuzzy matching için).
+  /// **Güncellendi: Fatura/Receipt çeşitliliği için genişletildi.**
   static const List<String> _productDictionary = [
     // Tekstil
     'V YAKA KISA KOL BADI', 'YAKASI KISA KOL REÇME ARA BIYELI',
@@ -256,11 +291,23 @@ class OcrProductMatcher {
     'SÜTAŞ TAM YAĞLI SÜT 1L', 'RULOKAT FINDIKLI RULO GOFRET',
     'DANKEK LOKMALIK HİNDİSTAN CEVİZLİ', 'BİSCOLATA MOOD ÇİKOLATALI',
     'KEKSTRA ÇİLEKLİ JOLEBOL', 'ÜLKER ÇOKOPRENS',
-    'LUPPO SANDVİÇ KEK', 'BİSKÜVİ',
+    'LUPPO SANDVİCE KEK', 'BİSKÜVİ',
     // Elektronik
     'SAMSUNG GALAXY A54', 'JBL TUNE 520BT KULAKLIK',
     'ANKER POWERBANK 10000',
-    // Genel
+    // Ofis
+    'A4 KAGIT 500 SK', 'PEN SET 12 ADET', 'MUSTERİ FAKTÜRU',
+    // Genel/Market
     'PAKET', 'KUTU', 'ŞİŞE', 'TENEKE', 'TORBA',
+    // **Yeni: Fatura ortak ürünleri**
+    'FİŞ', 'TOPLAM', 'KDV %8', 'KDV %10', 'KDV %18',
+    'NET TUTAR', 'GENEL TOPLAM', 'İADE', 'İADE NÖTASI',
+    'ÖDENMESİ GEREKEN', 'KALDIRIM', 'İNDİRİM',
+    // **Yeni: Market/Market products**
+    'MERCİ ÇIKOLATALI BISCUIT', 'ŞÖFER TEREYAĞI 1L',
+    'EV AİNSİ TEREYAĞI 900G', 'MERCİ KAŞAR PEYNİRİ 400G',
+    'Taze MY WORK', 'SEKERLER karışımı', 'Kurutulmuş BİLEM',
+    // **Yeni: Ofis products**
+    'XEROX KAGIT A4', 'TAMELİK KARDI', 'POST-IT 75X75',
   ];
 }
