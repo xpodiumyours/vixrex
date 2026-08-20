@@ -14,6 +14,7 @@ import 'package:vixrex/widgets/common/app_empty_state.dart';
 import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 import 'package:vixrex/widgets/common/app_skeleton.dart';
 import 'package:vixrex/widgets/common/app_tone.dart';
+import 'package:vixrex/widgets/explore_store_card_motion.dart';
 import 'package:vixrex/widgets/vitrin_store_card.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -485,39 +486,42 @@ class ExploreScreenState extends State<ExploreScreen> {
           itemCount: stores.length,
           itemBuilder: (context, index) {
             final store = stores[index];
-            return VitrinStoreCard(
-              store: store,
-              isExample: _controller.showingExampleStores,
-              isFavorited: _controller.isFavorite(store),
-              isOwnStore: _controller.isOwnStore(store),
-              // Premium bilgisi yalnız KENDİ vitrininde taşınır — başkasının
-              // vitrinine asla sızmaz (PR #6).
-              premiumStatus:
-                  _controller.isOwnStore(store)
-                      ? _controller.ownStorePremium
-                      : null,
-              onTap: () {
-                final slug =
-                    store.slug.isNotEmpty
-                        ? store.slug
-                        : const StorePublishPayloadBuilder().generateSlug(
-                          store.name,
-                        );
-                AppRouter.navigateToPublicVitrin(context, slug);
-              },
-              onFavoritePressed: () => _controller.toggleFavorite(store.name),
-              onWhatsAppPressed: () => _showWhatsAppBottomSheet(store),
-              onRentPressed:
-                  store.isRentalTemplate
-                      ? () => AppRouter.navigateToRentDemo(
-                        context,
-                        store.slug.isNotEmpty
-                            ? store.slug
-                            : const StorePublishPayloadBuilder().generateSlug(
-                              store.name,
-                            ),
-                      )
-                      : null,
+            return ExploreStoreCardMotion(
+              index: index,
+              child: VitrinStoreCard(
+                store: store,
+                isExample: _controller.showingExampleStores,
+                isFavorited: _controller.isFavorite(store),
+                isOwnStore: _controller.isOwnStore(store),
+                // Premium bilgisi yalnız KENDİ vitrininde taşınır — başkasının
+                // vitrinine asla sızmaz (PR #6).
+                premiumStatus:
+                    _controller.isOwnStore(store)
+                        ? _controller.ownStorePremium
+                        : null,
+                onTap: () {
+                  final slug =
+                      store.slug.isNotEmpty
+                          ? store.slug
+                          : const StorePublishPayloadBuilder().generateSlug(
+                            store.name,
+                          );
+                  AppRouter.navigateToPublicVitrin(context, slug);
+                },
+                onFavoritePressed: () => _controller.toggleFavorite(store.name),
+                onWhatsAppPressed: () => _showWhatsAppBottomSheet(store),
+                onRentPressed:
+                    store.isRentalTemplate
+                        ? () => AppRouter.navigateToRentDemo(
+                          context,
+                          store.slug.isNotEmpty
+                              ? store.slug
+                              : const StorePublishPayloadBuilder().generateSlug(
+                                store.name,
+                              ),
+                        )
+                        : null,
+              ),
             );
           },
         );
