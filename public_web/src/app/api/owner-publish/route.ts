@@ -15,7 +15,12 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 //     çağrısı yapılmaz, o uç secret ister ve başka amaç içindir)
 //
 // Yasal onay hataları (PRIVACY_NOTICE_*, TERMS_*, PUBLICATION_CONSENT_*)
-// Vixrex Asistan'dan verilemez; mesajlar kullanıcıyı üyelik paneline yönlendirir.
+// artık Vixrex Asistan'dan da giderilebilir — bkz. /api/owner-accept-legal
+// (accept_store_legal_consent RPC'si). Bu hatalar normalde PublishBar'daki
+// onay kutusu işaretlenmeden Yayınla'ya basılırsa görülür; istemci zaten
+// onay durumunu draftData'dan okuyup düğmeyi ona göre gösterir, buradaki
+// mesaj yalnız RPC'nin kendi bağımsız kontrolü tetiklenirse (savunma
+// katmanı) görünür.
 //
 // Loglama yalnız error.message; oturum tokenı ve taslak içeriği ASLA loglanmaz.
 
@@ -29,17 +34,17 @@ const HATA_METNI: Record<string, string> = {
   DRAFT_STALE:
     "Vitrinin başka bir yerden değiştirilmiş. Sayfayı yenileyip değişikliklerini tekrar yap.",
   PRIVACY_NOTICE_REQUIRED:
-    "Yayınlamak için gizlilik bildirimini onaylaman gerekiyor. Bu onay üyelik panelinden verilir.",
+    "Yayınlamak için önce yasal onay kutusunu işaretlemen gerekiyor.",
   TERMS_ACCEPTANCE_REQUIRED:
-    "Yayınlamak için kullanım şartlarını kabul etmen gerekiyor. Bu onay üyelik panelinden verilir.",
+    "Yayınlamak için önce yasal onay kutusunu işaretlemen gerekiyor.",
   PUBLICATION_CONSENT_REQUIRED:
-    "Vitrininin yayınlanmasına izin vermen gerekiyor. Bu izin üyelik panelinden verilir.",
+    "Yayınlamak için önce yasal onay kutusunu işaretlemen gerekiyor.",
   PRIVACY_NOTICE_VERSION_INVALID:
-    "Sözleşme metinleri güncellenmiş. Üyelik panelinden yeni metinleri onayla.",
+    "Sözleşme metinleri güncellenmiş. Onay kutusunu tekrar işaretleyip yeniden dene.",
   TERMS_VERSION_INVALID:
-    "Sözleşme metinleri güncellenmiş. Üyelik panelinden yeni metinleri onayla.",
+    "Sözleşme metinleri güncellenmiş. Onay kutusunu tekrar işaretleyip yeniden dene.",
   PUBLICATION_CONSENT_VERSION_INVALID:
-    "Sözleşme metinleri güncellenmiş. Üyelik panelinden yeni metinleri onayla.",
+    "Sözleşme metinleri güncellenmiş. Onay kutusunu tekrar işaretleyip yeniden dene.",
   PREMIUM_REQUIRED:
     "Bu hazır vitrin yalnız premium üyelikle yayınlanır. Aylık 299 TL ile devam et.",
 };

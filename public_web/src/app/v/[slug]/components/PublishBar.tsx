@@ -13,6 +13,12 @@ interface Props {
   kiralikVitrinMi: boolean;
   /** Premium süresi aktif mi (premium_expires_at gelecekte). */
   premiumAktifMi: boolean;
+  /** Gizlilik/şartlar/yayın izni üçü de verildi mi (yerelTaslak'tan —
+   * owner_forbidden_draft_keys bu alanların YAZILMASINI engeller, OKUNMASINI
+   * değil). true olduktan sonra bu ekrandan geri alınamaz (kapsam dışı). */
+  yasalOnayli: boolean;
+  onayVeriliyor: boolean;
+  onayVer: () => Promise<void>;
 }
 
 export function PublishBar({
@@ -26,12 +32,17 @@ export function PublishBar({
   eksikTemelSayisi,
   kiralikVitrinMi,
   premiumAktifMi,
+  yasalOnayli,
+  onayVeriliyor,
+  onayVer,
 }: Props) {
   // Kiralık şablon vitrin + aktif premium yoksa yayın premium ister.
   // Düğme yalan söylemez: ne gerekiyorsa onu yazar (Faz G3 ilkesi).
   const premiumGerekli = kiralikVitrinMi && !premiumAktifMi;
   const yayinEtiketi = yayinlaniyor
     ? "Yayınlanıyor…"
+    : !yasalOnayli
+    ? "Yayınla — önce yasal onay gerekiyor"
     : premiumGerekli
     ? "Premium ile yayınla — aylık 299 TL"
     : temelTamam
@@ -40,12 +51,83 @@ export function PublishBar({
 
   return (
     <div className="border-t border-white/10 px-4 py-3">
+      {/* Master onay kutusu — Flutter'daki LegalConsentSection ile aynı
+          desen (lib/widgets/editor/legal_consent_section.dart): tek kutu,
+          üç belgeyi birlikte kabul eder, ayrı ayrı sorulmaz. */}
+      {yasalOnayli ? (
+        <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium text-emerald-400">
+          <span aria-hidden>✓</span> Yasal onay verildi.
+          {/* Belgeler güncellenip owner-publish PRIVACY/TERMS/CONSENT_
+              VERSION_INVALID döndüğünde kullanıcının önü kesilmesin diye
+              — checkbox kalıcı olarak gizlendiği için tek geri dönüş
+              yolu bu link (nadiren kullanılır, ama tıkanmayı önler). */}
+          <button
+            type="button"
+            onClick={() => void onayVer()}
+            disabled={onayVeriliyor}
+            className="text-slate-400 underline decoration-dotted hover:text-slate-300"
+          >
+            {onayVeriliyor ? "Kaydediliyor…" : "yeniden onayla"}
+          </button>
+        </p>
+      ) : (
+        <label className="mb-2 flex items-start gap-2 text-[11px] leading-relaxed text-slate-300">
+          <input
+            type="checkbox"
+            checked={false}
+            disabled={onayVeriliyor}
+            onChange={(e) => {
+              if (e.target.checked) void onayVer();
+            }}
+            className="mt-0.5 h-3.5 w-3.5 shrink-0"
+          />
+          <span>
+            {onayVeriliyor ? (
+              "Kaydediliyor…"
+            ) : (
+              <>
+                <a
+                  href="/legal/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-blue-400 underline"
+                >
+                  Aydınlatma Metni
+                </a>
+                {", "}
+                <a
+                  href="/legal/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-blue-400 underline"
+                >
+                  Kullanım Şartları
+                </a>
+                {" ve "}
+                <a
+                  href="/legal/consent"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-blue-400 underline"
+                >
+                  Açık Rıza Beyanı
+                </a>
+                {"'nı okudum, anladım ve kabul ediyorum."}
+              </>
+            )}
+          </span>
+        </label>
+      )}
       <button
         type="button"
         onClick={() => void yayinla()}
-        disabled={yayinlaniyor || (!premiumGerekli && !temelTamam)}
+        disabled={
+          yayinlaniyor || !yasalOnayli || (!premiumGerekli && !temelTamam)
+        }
         title={
-          temelTamam || premiumGerekli
+          !yasalOnayli
+            ? "Yayınlamadan önce yukarıdaki onay kutusunu işaretle."
+            : temelTamam || premiumGerekli
             ? premiumGerekli
               ? "Bu hazır vitrin premium üyelikle yayınlanır."
               : undefined

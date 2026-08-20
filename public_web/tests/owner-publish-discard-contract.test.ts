@@ -13,6 +13,12 @@ const discardSource = readFileSync(
   resolve(__dirname, "../src/app/api/owner-discard/route.ts"),
   "utf-8"
 );
+// 2026-08-20: yasal onay artık Vixrex Asistan'dan da verilebilir — aynı
+// oturum deseni, ayrı ve dar bir RPC (accept_store_legal_consent).
+const acceptLegalSource = readFileSync(
+  resolve(__dirname, "../src/app/api/owner-accept-legal/route.ts"),
+  "utf-8"
+);
 // OwnerAssistantPanel 730→128 satıra bölündü (2026-08-10); yayınla/vazgeç
 // düğmeleri PublishBar bileşeninde, fetch çağrıları ve sonuç mesajları
 // useOwnerActions hook'unda. Sözleşme aynı, kaynak üç dosyanın birleşimi.
@@ -86,6 +92,34 @@ describe("owner-discard ucu — güvenlik sözleşmesi", () => {
   });
 });
 
+describe("owner-accept-legal ucu — güvenlik sözleşmesi", () => {
+  it("oturum yalnız çerezden okunur, istek gövdesinden token kabul edilmez", () => {
+    expect(acceptLegalSource).toContain("cookieStore.get(OWNER_SESSION_COOKIE)");
+    expect(acceptLegalSource).toContain("verifyOwnerSession(ownerSessionCookie, slug)");
+    expect(acceptLegalSource).not.toContain("govde.sessionToken");
+    expect(acceptLegalSource).not.toContain("govde.token");
+  });
+
+  it("service-role anahtarı kullanılmaz", () => {
+    expect(acceptLegalSource).not.toContain("SERVICE_ROLE");
+    expect(acceptLegalSource).not.toContain("supabaseAdmin");
+  });
+
+  it("anon istemcisiyle accept_store_legal_consent RPC'si çağrılır", () => {
+    expect(acceptLegalSource).toContain(
+      "supabaseAnon().rpc(\"accept_store_legal_consent\""
+    );
+    expect(acceptLegalSource).toContain("p_session_token: ownerSession.sessionToken");
+  });
+
+  it("oturum tokenı loglanmaz", () => {
+    expect(acceptLegalSource).not.toContain("console.log");
+    expect(acceptLegalSource).toContain(
+      "console.error(\"[owner-accept-legal] accept failed:\", error.message)"
+    );
+  });
+});
+
 describe("panel — yayınla / vazgeç sözleşmesi", () => {
   it("iki düğme de panelin altında: Yayınla ve Değişiklikleri bırak", () => {
     expect(panelSource).toContain("/api/owner-publish");
@@ -115,5 +149,11 @@ describe("panel — yayınla / vazgeç sözleşmesi", () => {
     expect(panelSource).toContain(
       "Değişiklikler silindi. Vitrin son yayınlanan hâlinde."
     );
+  });
+
+  it("yasal onay verilmeden Yayınla düğmesi kilitli kalır", () => {
+    expect(panelSource).toContain("/api/owner-accept-legal");
+    expect(panelSource).toContain("yasalOnayli");
+    expect(panelSource).toContain("disabled={\n          yayinlaniyor || !yasalOnayli");
   });
 });
