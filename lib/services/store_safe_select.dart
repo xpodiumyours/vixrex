@@ -6,6 +6,14 @@ class StoreSafeSelect {
   /// `edit_token` hariç StoreData / public vitrin alanları.
   /// Not: Yeni sütunlar migration uygulanmadan buraya eklenmez;
   /// aksi halde Keşfet/select tüm vitrin listesini düşürür.
+  ///
+  /// `user_id` BİLEREK yok (2026-08-20 dersi): StoreData modelinde hiç
+  /// karşılığı olmadığı hâlde burada duruyordu — hem anon'a sızıyordu
+  /// (V-09'un önlemeye çalıştığı tam olarak buydu) hem de authenticated
+  /// (anonim oturum dahil HERKES) için `stores.user_id` kolonunun SELECT'i
+  /// kapatıldığından (V-09) TÜM Keşfet sorgusunu 42501 ile düşürüyordu.
+  /// Sahiplik kontrolü zaten yerel slug eşleşmesiyle yapılıyor
+  /// (bkz. `ExploreController.isOwnStore`) — bu sütuna hiç gerek yok.
   static const columns =
       'id,slug,name,business_type,description,corporate_bio,whatsapp,phone,email,'
       'hero_badge,instagram,website,address,theme,status,marketplace_links,'
@@ -18,7 +26,7 @@ class StoreSafeSelect {
       'privacy_notice_version,privacy_notice_hash,terms_accepted,terms_accepted_at,'
       'terms_version,terms_hash,publication_consent_accepted,'
       'publication_consent_accepted_at,publication_consent_withdrawn_at,'
-      'publication_consent_version,publication_consent_hash,user_id,updated_at,'
+      'publication_consent_version,publication_consent_hash,updated_at,'
       'created_at,product_storage_version,featured_banner_label,'
       'featured_banner_title,featured_banner_description,featured_banner_image_url,'
       'featured_banner_price_text,faq_items,about_kicker,about_title,'
