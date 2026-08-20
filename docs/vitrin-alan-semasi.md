@@ -2,7 +2,7 @@
 
 > Sahibin düzenleyebileceği her vitrin alanının tek kaynağı.
 > Tarihsel [[vixrex-asistan-13-faz-plani-2026-08-06]] içindeki Commit 8'in önkoşuluydu; aktif değişiklikler GitHub issue’sunda planlanır.
-> **Son güncelleme: 2026-08-16** — Canonical kaynak `public_web/src/lib/vitrinFieldSchema.ts` (45 skaler alan). Bu döküman yalnız insan-tarafı açıklamadır; alan ekleme/çıkarma yalnız o dosya üzerinden yapılır, buraya yansıtılır.
+> **Son güncelleme: 2026-08-20** — Canonical kaynak `public_web/src/lib/vitrinFieldSchema.ts` (46 skaler alan, #264 ile `mahalle` eklendi). Bu döküman yalnız insan-tarafı açıklamadır; alan ekleme/çıkarma yalnız o dosya üzerinden yapılır, buraya yansıtılır.
 
 ## 1. Neden bu dosya var
 
@@ -89,6 +89,7 @@ Tek değer taşırlar. Komut tipi: **"şu alanı şu değere ayarla"**.
 | `adres` | uzunMetin | Açık Adres | `address` | 0–200 |
 | `il` | metin | İl | `province_name` | zorunlu, 0–60 |
 | `ilce` | metin | İlçe | `district_name` | zorunlu, 0–60 |
+| `mahalle` | metin | Mahalle | `neighborhood_name` | kalite, 0–60 |
 | `haritaEtiketi` | metin | Harita Kartı Etiketi | `map_label` | 0–120 |
 | `calismaSaatleri` | metin | Çalışma Saatleri | `working_hours` | serbest metin veya haftalık yapı |
 | `instagram` | metin | Instagram Kullanıcı Adı | `instagram` | `@` olmadan, 0–30 |

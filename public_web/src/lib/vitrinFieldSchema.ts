@@ -225,6 +225,18 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     zorunlu: true,
     maxUzunluk: 60,
   },
+  // #264: il/ilçeden daha yerel bir SEO sinyali yoktu. Zorunlu değil —
+  // il/ilçe zaten yayın kapısını karşılıyor, bu yalnız kaliteyi artırır.
+  {
+    anahtar: "mahalle",
+    tip: "metin",
+    etiket: "Mahalle",
+    kolon: "neighborhood_name",
+    bolum: "contact",
+    kalite: true,
+    maxUzunluk: 60,
+    ipucu: "Örn: Caddebostan",
+  },
   {
     anahtar: "haritaEtiketi",
     tip: "metin",

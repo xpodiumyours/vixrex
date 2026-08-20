@@ -80,9 +80,10 @@ describe("alan şeması — kalite sınıflandırması", () => {
     "hakkindaMetin",
     "calismaSaatleri",
     "haritaLinki",
+    "mahalle",
   ];
 
-  it("bilinen 7 kalite alanı şemada kalite:true taşır", () => {
+  it("bilinen 8 kalite alanı şemada kalite:true taşır", () => {
     for (const anahtar of BEKLENEN_KALITE_ALANLARI) {
       const alan = FIELD_BY_KEY.get(anahtar);
       expect(alan, anahtar).toBeDefined();
