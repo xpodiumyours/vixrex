@@ -14,8 +14,7 @@ class ExploreStoreCardMotion extends StatefulWidget {
   final Widget child;
 
   @override
-  State<ExploreStoreCardMotion> createState() =>
-      _ExploreStoreCardMotionState();
+  State<ExploreStoreCardMotion> createState() => _ExploreStoreCardMotionState();
 }
 
 class _ExploreStoreCardMotionState extends State<ExploreStoreCardMotion>

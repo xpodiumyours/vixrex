@@ -508,8 +508,7 @@ class ExploreScreenState extends State<ExploreScreen> {
                           );
                   AppRouter.navigateToPublicVitrin(context, slug);
                 },
-                onFavoritePressed:
-                    () => _controller.toggleFavorite(store.name),
+                onFavoritePressed: () => _controller.toggleFavorite(store.name),
                 onWhatsAppPressed: () => _showWhatsAppBottomSheet(store),
                 onRentPressed:
                     store.isRentalTemplate
