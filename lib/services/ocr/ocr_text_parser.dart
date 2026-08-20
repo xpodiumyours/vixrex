@@ -72,6 +72,88 @@ class OcrTextParser {
     }
   }
 
+  /// Invoice layout analysis: HEADER → ITEMS → TAX → TOTAL
+  InvoiceLayout analyzeInvoiceLayout(List<OcrLine> lines) {
+    final sections = <String, List<OcrLine>>{
+      'header': [],
+      'items': [],
+      'tax': [],
+      'total': [],
+    };
+
+    bool inItems = false;
+    bool inTax = false;
+
+    for (final line in lines) {
+      final lower = line.text.toLowerCase();
+      final isSeparator = _isSeparatorLine(line.text);
+
+      if (isSeparator) {
+        inItems = !inItems;
+        inTax = false;
+        continue;
+      }
+
+      // Tax section detection
+      if (lower.contains('kdv') ||
+          lower.contains('vergi') ||
+          lower.contains('vergi dairesi') ||
+          lower.contains('tax') ||
+          lower.contains('kdv %)') ||
+          lower.contains('kdv %')) {
+        inTax = true;
+        inItems = false;
+        sections['tax']!.add(line);
+        continue;
+      }
+
+      if (inTax) {
+        sections['tax']!.add(line);
+        continue;
+      }
+
+      // Separator handling for items/total toggle
+      if (lower.contains('toplam') ||
+          lower.contains('genel toplam') ||
+          lower.contains('ara toplam') ||
+          lower.contains('mal bedeli') ||
+          lower.contains('net tutar') ||
+          lower.contains('kdv') ||
+          lower.contains('kdv %')) {
+        inItems = false;
+        inTax = false;
+        sections['total']!.add(line);
+        continue;
+      }
+
+      if (inItems) {
+        sections['items']!.add(line);
+      } else if (sections['items']!.isEmpty) {
+        sections['header']!.add(line);
+      } else {
+        sections['footer']!.add(line);
+      }
+    }
+
+    final columnBounds = _detectInvoiceColumnBounds(sections['items']!);
+
+    return InvoiceLayout(sections: sections, columnBounds: columnBounds);
+  }
+
+  Map<String, double> _detectInvoiceColumnBounds(List<OcrLine> items) {
+    if (items.isEmpty) return {};
+    final bounds = <String, double>{};
+    final leftEdges = items.map((l) => l.centerX).toList()..sort();
+    final rightEdges = items.map((l) => l.boundingBox.right).toList()..sort();
+    bounds['left'] = leftEdges.isNotEmpty ? leftEdges.first : 0;
+    bounds['right'] = rightEdges.isNotEmpty ? rightEdges.last : 300;
+    bounds['width'] = bounds['right']! - bounds['left']!;
+    bounds['priceColumnStart'] = bounds['left']! + bounds['width']! * 0.7;
+    return bounds;
+  }
+
+  // ─── YARDIMCI METOTLAR ──────────────────────────────────────────
+
   // ─── LAYOUT TANIMA ─────────────────────────────────────────────
 
   ReceiptLayout analyzeLayout(List<OcrLine> lines) {
@@ -196,6 +278,8 @@ class OcrTextParser {
     final rawText =
         scanMode == 'shelf_label'
             ? generator.generateShelfLabelText()
+            : scanMode == 'invoice'
+            ? generator.generateInvoiceText()
             : generator.generateReceiptText();
 
     final rawLines = rawText.split('\n');
@@ -207,7 +291,12 @@ class OcrTextParser {
         OcrLine(
           text: text,
           boundingBox: Rect.fromLTWH(10, i * 30.0, 300, 20),
-          blockIndex: scanMode == 'shelf_label' ? i ~/ 4 : 0,
+          blockIndex:
+              scanMode == 'shelf_label'
+                  ? i ~/ 4
+                  : scanMode == 'invoice'
+                  ? 0
+                  : 0,
           lineIndex: i,
         ),
       );
@@ -226,5 +315,18 @@ class ReceiptLayout {
   List<OcrLine> get header => sections['header'] ?? [];
   List<OcrLine> get items => sections['items'] ?? [];
   List<OcrLine> get footer => sections['footer'] ?? [];
+  List<OcrLine> get total => sections['total'] ?? [];
+}
+
+/// Invoice layout analysis result.
+class InvoiceLayout {
+  final Map<String, List<OcrLine>> sections;
+  final Map<String, double> columnBounds;
+
+  const InvoiceLayout({required this.sections, required this.columnBounds});
+
+  List<OcrLine> get header => sections['header'] ?? [];
+  List<OcrLine> get items => sections['items'] ?? [];
+  List<OcrLine> get tax => sections['tax'] ?? [];
   List<OcrLine> get total => sections['total'] ?? [];
 }

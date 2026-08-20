@@ -31,10 +31,10 @@ void main() {
         expect(result.isEmpty, true);
       });
 
-      test('Fiş/Fatura Modu: Fiyatı en yakın üst satırla eşleştirir', () async {
+      test('Fis Modu: Fiyatı en yakın ust satırla eslestirir', () async {
         final lines = [
           OcrLine(
-            text: 'Dankek Lokmalık Hindistan Cevizli',
+            text: 'Dankek Lokmalik Hindistan Cevizi',
             boundingBox: const Rect.fromLTRB(10, 10, 200, 30),
             blockIndex: 0,
             lineIndex: 0,
@@ -67,7 +67,7 @@ void main() {
         expect(result.first.source, 'ocr_fuzzy_matched');
       });
 
-      test('Raf/Etiket Modu: Aynı bloktaki satırları eşleştirir', () async {
+      test('Raf Modu: Ayni bloktaki satirlari eslestirir', () async {
         final lines = [
           OcrLine(
             text: 'Biscolata Mood 110g',
@@ -76,7 +76,7 @@ void main() {
             lineIndex: 0,
           ),
           OcrLine(
-            text: '54.99 ₺',
+            text: '54.99 TL',
             boundingBox: const Rect.fromLTRB(10, 40, 100, 60),
             blockIndex: 1,
             lineIndex: 1,
@@ -85,7 +85,7 @@ void main() {
 
         final prices = [
           OcrPrice(
-            rawText: '54.99 ₺',
+            rawText: '54.99 TL',
             amount: 54.99,
             lineNumber: 1,
             blockIndex: 1,
@@ -122,6 +122,118 @@ void main() {
           lines,
           [],
           scanMode: 'receipt',
+        );
+        expect(result.isEmpty, true);
+      });
+
+      // **Yeni: Fatura modu testleri**
+      test('Fatura modu: KDV oranlari ile urun eslestirme', () async {
+        final lines = [
+          OcrLine(
+            text: 'MERCİ ÇIKOLATALI BISCUIT',
+            boundingBox: const Rect.fromLTRB(10, 10, 200, 30),
+            blockIndex: 0,
+            lineIndex: 0,
+          ),
+          OcrLine(
+            text: 'KDV %8',
+            boundingBox: const Rect.fromLTRB(10, 50, 150, 70),
+            blockIndex: 0,
+            lineIndex: 1,
+          ),
+          OcrLine(
+            text: '8.50 TL',
+            boundingBox: const Rect.fromLTRB(10, 80, 100, 100),
+            blockIndex: 0,
+            lineIndex: 2,
+          ),
+        ];
+
+        final prices = [
+          OcrPrice(
+            rawText: '8.50 TL',
+            amount: 8.5,
+            lineNumber: 2,
+            blockIndex: 0,
+          ),
+        ];
+
+        final result = await matcher.matchProducts(
+          lines,
+          prices,
+          scanMode: 'invoice',
+        );
+        expect(result.length, 1);
+        expect(result.first.name.toUpperCase(), contains('MERCİ'));
+        expect(result.first.price, 8.5);
+      });
+
+      test('Fatura modu: KDV %10 ile urun eslestirme', () async {
+        final lines = [
+          OcrLine(
+            text: 'SÜTAŞ TAM YAĞLI SÜT 1L',
+            boundingBox: const Rect.fromLTRB(10, 10, 200, 30),
+            blockIndex: 0,
+            lineIndex: 0,
+          ),
+          OcrLine(
+            text: 'KDV %10',
+            boundingBox: const Rect.fromLTRB(10, 50, 150, 70),
+            blockIndex: 0,
+            lineIndex: 1,
+          ),
+          OcrLine(
+            text: '15.00 TL',
+            boundingBox: const Rect.fromLTRB(10, 80, 100, 100),
+            blockIndex: 0,
+            lineIndex: 2,
+          ),
+        ];
+
+        final prices = [
+          OcrPrice(
+            rawText: '15.00 TL',
+            amount: 15.0,
+            lineNumber: 2,
+            blockIndex: 0,
+          ),
+        ];
+
+        final result = await matcher.matchProducts(
+          lines,
+          prices,
+          scanMode: 'invoice',
+        );
+        expect(result.length, 1);
+        expect(result.first.name.toUpperCase(), contains('SÜTAŞ'));
+        expect(result.first.price, 15.0);
+      });
+
+      test('Fatura modu: Net tutar ve toplami atla', () async {
+        final lines = [
+          OcrLine(
+            text: 'NET TUTAR',
+            boundingBox: const Rect.fromLTRB(0, 0, 200, 30),
+            blockIndex: 0,
+            lineIndex: 0,
+          ),
+          OcrLine(
+            text: 'GENEL TOPLAM: 120.00 TL',
+            boundingBox: const Rect.fromLTRB(0, 40, 200, 70),
+            blockIndex: 0,
+            lineIndex: 1,
+          ),
+          OcrLine(
+            text: '120.00 TL',
+            boundingBox: const Rect.fromLTRB(0, 80, 200, 100),
+            blockIndex: 0,
+            lineIndex: 2,
+          ),
+        ];
+        final result = await matcher.matchProducts(
+          lines,
+          [],
+          scanMode: 'invoice',
         );
         expect(result.isEmpty, true);
       });

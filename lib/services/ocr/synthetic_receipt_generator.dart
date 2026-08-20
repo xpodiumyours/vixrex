@@ -97,6 +97,68 @@ class SyntheticReceiptGenerator {
     return lines.join('\n');
   }
 
+  /// Fatura formatında ham metin üretir.
+  String generateInvoiceText({
+    String paperType = 'normal',
+    String lighting = 'daylight',
+    double angle = 0.0,
+    String noise = 'none',
+  }) {
+    final storeName = 'VİXREX İndirme Merkezi';
+    final date = '15.08.2026';
+    final invoiceNo =
+        '${_random.nextInt(8999) + 1000}-${_random.nextInt(9000) + 1000}';
+    final lines = <String>[];
+
+    // Fatura başlıkları
+    lines.add('--- FATURA BAŞLIĞI ---');
+    lines.add('Fatura No: $invoiceNo');
+    lines.add('Tarih: $date');
+    lines.add('Satıcı: $storeName');
+    lines.add('Alıcı: Esnaf Kullanıcı');
+    lines.add('');
+
+    // Tablo başlığı: Ürün Adı         Miktar    Birim    Fiyat    Tutar
+    lines.add('--------------------------------------------------------');
+    lines.add('ÜRÜN ADI              ADET   BİRİM    FİYAT    TUTAR');
+    lines.add('--------------------------------------------------------');
+
+    double total = 0;
+    final numItems = _random.nextInt(5) + 2;
+
+    for (int i = 0; i < numItems; i++) {
+      String product = _products[_random.nextInt(_products.length)];
+      final adet = _random.nextInt(3) + 1;
+
+      // Mükrekep solması augmentasyonu
+      if (noise == 'ink_fade' && _random.nextBool()) {
+        product = product.replaceAll('A', '^').replaceAll('E', '_');
+      }
+
+      final birimFiyat = (_random.nextDouble() * 200 + 10).toStringAsFixed(2);
+      final tutar = (adet * double.parse(birimFiyat)).toStringAsFixed(2);
+      total += double.parse(tutar);
+
+      // Fatura satırı formatı: ürün adı, adet, birim, birim fiyat, toplam
+      lines.add(
+        '${product.padRight(25)} $adet AD   $birimFiyat TL   $tutar TL',
+      );
+    }
+
+    // KDV bilgileri
+    final double kdvOrani = 8.0; // KDV oranı (faturalarda değişir)
+    final kdvTutari = (total * kdvOrani / 100).toStringAsFixed(2);
+    lines.add('--------------------------------------------------------');
+    lines.add('KDV %$kdvOrani:          $kdvTutari TL');
+    lines.add('');
+
+    // Toplamlar
+    lines.add('TOPLAM:                          $total TL');
+    lines.add('--------------------------------------------------------');
+
+    return lines.join('\n');
+  }
+
   /// Raf etiketlerinden taranmış gibi ham metin üretir.
   String generateShelfLabelText() {
     final lines = <String>[];
