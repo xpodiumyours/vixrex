@@ -16,11 +16,18 @@ class StorePublishedInfoLookupService {
   const StorePublishedInfoLookupService({required this.storage});
   final StoreLocalStorageService storage;
 
-  /// Önce oturum açmış kullanıcının `user_id`'sine göre arar; bulamazsa
-  /// [localSlugFallback] (boşsa cihazda son bilinen yayınlanmış slug) ile
-  /// dener. Bulursa `PublishedVitrinInfo` döner. `saveLocally` ÇAĞIRMAZ —
-  /// bu, çağıran tarafın sorumluluğu (galeri senkronu editör medya
-  /// state'ine bağlı, bu servise ait değil).
+  /// Önce oturum açmış kullanıcının kendi yayınlanmış vitrinini arar;
+  /// bulamazsa [localSlugFallback] (boşsa cihazda son bilinen yayınlanmış
+  /// slug) ile dener. Bulursa `PublishedVitrinInfo` döner. `saveLocally`
+  /// ÇAĞIRMAZ — bu, çağıran tarafın sorumluluğu (galeri senkronu editör
+  /// medya state'ine bağlı, bu servise ait değil).
+  ///
+  /// Not (2026-08-20): ilk arama artık `stores.user_id`'yi doğrudan
+  /// filtrelemiyor — o sütunun SELECT'i authenticated'ten kapalı (V-09),
+  /// doğrudan filtre tüm sorguyu 42501 ile düşürüyordu. Bunun yerine
+  /// `get_own_published_store` RPC'si kullanılır (SECURITY DEFINER,
+  /// `is_store_owner_by_id/_by_slug` ile aynı desen) — user_id'yi asla
+  /// client'a döndürmez.
   Future<PublishedVitrinInfo?> lookup({
     required SupabaseClient client,
     required String localSlugFallback,
@@ -29,13 +36,10 @@ class StorePublishedInfoLookupService {
       Map<String, dynamic>? response;
       final userId = client.auth.currentUser?.id;
       if (userId != null) {
-        response =
-            await client
-                .from('stores')
-                .select('slug, name')
-                .eq('user_id', userId)
-                .eq('is_published', true)
-                .maybeSingle();
+        final rpcResult = await client.rpc('get_own_published_store');
+        if (rpcResult is Map) {
+          response = Map<String, dynamic>.from(rpcResult);
+        }
       }
 
       if (response == null) {
