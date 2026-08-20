@@ -11,8 +11,16 @@ class ExploreController extends ChangeNotifier {
   ExploreController({
     required ExploreRepository repository,
     PremiumService premiumService = const PremiumService(),
+    bool onlyRentalTemplates = false,
   }) : _repository = repository,
-       _premiumService = premiumService;
+       _premiumService = premiumService,
+       _onlyRentalTemplates = onlyRentalTemplates;
+
+  /// Onboarding'in "Hazır Vitrin Seç" akışı için: yalnız kiralık şablonları
+  /// gösterir (gerçek yayındaki işletmeler karışmaz). Sabit bir başlangıç
+  /// modu — ekran içinde açılıp kapanan bir filtre değil, bu ekranın NEDEN
+  /// açıldığını belirler.
+  final bool _onlyRentalTemplates;
 
   List<StoreData> _allStores = [];
   bool _isLoading = true;
@@ -173,6 +181,10 @@ class ExploreController extends ChangeNotifier {
   List<StoreData> get filteredStores {
     final query = _searchQuery.toLowerCase().trim();
     return _allStores.where((store) {
+      // -1. "Hazır Vitrin Seç" modu — yalnız kiralık şablonlar.
+      if (_onlyRentalTemplates && !store.isRentalTemplate) {
+        return false;
+      }
       // 0. Template group filter
       if (_selectedTemplateGroup != 'Tümü') {
         final storeCat = BusinessCategoryConfig.fromCategoryLabel(

@@ -8,6 +8,7 @@ import 'package:vixrex/screens/auth_screen.dart';
 import 'package:vixrex/screens/blog_editor_screen.dart';
 import 'package:vixrex/screens/blog_post_list_screen.dart';
 import 'package:vixrex/screens/booking_management_screen.dart';
+import 'package:vixrex/screens/explore_screen.dart';
 import 'package:vixrex/screens/home_shell_screen.dart';
 import 'package:vixrex/screens/landing_screen.dart';
 import 'package:vixrex/screens/legal_screen.dart';
@@ -396,6 +397,27 @@ class AppRouter {
       context,
       PublicSiteConfig.buildRentDemoLink(normalizedSlug),
       failureMessage: 'Vitrin kiralama sayfası açılamadı.',
+    );
+  }
+
+  /// Onboarding karşılaması → "Hazır Vitrin Seç". Keşfet'i yalnız kiralık
+  /// şablonlarla, sohbetin üstüne pushlanmış ayrı bir ekran olarak açar
+  /// (HomeShellScreen'in sekmesi DEĞİL — kullanıcı henüz vitrin
+  /// oluşturmadı, ana uygulama kabuğuna erken girmenin anlamı yok).
+  /// [onNoneMatch] "Uygun olan yok" düğmesine basılınca çağrılır; genelde
+  /// bu ekranı kapatıp sohbeti sıfırdan-oluştur yoluna devam ettirir.
+  static Future<void> pushReadyTemplatePicker(
+    BuildContext context, {
+    required VoidCallback onNoneMatch,
+  }) {
+    return Navigator.of(context).push(
+      MaterialPageRoute(
+        builder:
+            (_) => ExploreScreen(
+              onlyRentalTemplates: true,
+              onNoneMatch: onNoneMatch,
+            ),
+      ),
     );
   }
 

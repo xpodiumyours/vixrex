@@ -41,17 +41,24 @@ class VixRexOnboardingController extends ChangeNotifier {
     required void Function(String text) onUserMessage,
     required Future<void> Function() onPersistTranscript,
     void Function()? onRequestFocus,
+    void Function()? onChooseReadyTemplate,
   }) : _editor = editorController,
        _onBotMessage = onBotMessage,
        _onUserMessage = onUserMessage,
        _onPersistTranscript = onPersistTranscript,
-       _onRequestFocus = onRequestFocus;
+       _onRequestFocus = onRequestFocus,
+       _onChooseReadyTemplate = onChooseReadyTemplate;
 
   final StoreEditorController _editor;
   final void Function(String text, {String? publicLink}) _onBotMessage;
   final void Function(String text) _onUserMessage;
   final Future<void> Function() _onPersistTranscript;
   final void Function()? _onRequestFocus;
+  // Bu sınıf widget bilmez (yukarıdaki sınıf yorumu) — "Hazır Vitrin Seç"
+  // ekranına gitmek bir Navigator çağrısı gerektirir, o yüzden burada
+  // NAVİGE ETMEYİZ, yalnız ekrana haber veririz. Ekran (screen) bunu
+  // AppRouter.pushReadyTemplatePicker ile karşılar.
+  final void Function()? _onChooseReadyTemplate;
 
   bool _disposed = false;
 
@@ -171,8 +178,9 @@ class VixRexOnboardingController extends ChangeNotifier {
 
   // ── Karşılama ─────────────────────────────────────────────────────────
 
-  Future<void> acceptWelcome() async {
-    _onUserMessage('Evet, oluşturalım');
+  /// "Sıfırdan Oluştur" — eski tek yol, adı değişti ama davranışı aynı.
+  Future<void> chooseScratch() async {
+    _onUserMessage('Sıfırdan oluşturalım');
     _error = null;
     _notify();
 
@@ -190,6 +198,17 @@ class VixRexOnboardingController extends ChangeNotifier {
     _notify();
     _onBotMessage('Harika. İşletmenin adı ne?');
     _onRequestFocus?.call();
+  }
+
+  /// "Hazır Vitrin Seç" — adım DEĞİŞMEZ (welcome'da kalır). Ekrana geçişi
+  /// haber verir; kiralama tamamlanınca kullanıcı zaten tarayıcıya geçip
+  /// Vixrex Asistan'da devam ediyor (bkz. AppRouter.navigateToRentDemo) —
+  /// bu sohbetin işi burada biter. "Uygun olan yok" derse ekran
+  /// [chooseScratch]'ı çağırıp eski yola döner.
+  void chooseReadyTemplate() {
+    _onUserMessage('Hazır bir vitrin görmek istiyorum');
+    _notify();
+    _onChooseReadyTemplate?.call();
   }
 
   void declineWelcome() {

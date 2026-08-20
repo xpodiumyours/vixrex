@@ -85,6 +85,7 @@ class _VixRexOnboardingChatScreenState
       onUserMessage: _pushUser,
       onPersistTranscript: _handoffTranscriptToRehber,
       onRequestFocus: _focusInput,
+      onChooseReadyTemplate: _openReadyTemplatePicker,
     );
     _onboarding.addListener(_onOnboardingTick);
     _bootstrap();
@@ -92,6 +93,19 @@ class _VixRexOnboardingChatScreenState
 
   void _onControllerTick() {
     if (mounted) setState(() {});
+  }
+
+  /// Keşfet'i "sadece kiralık" modunda sohbetin üstüne açar. "Uygun olan
+  /// yok" derse ekranı kapatıp sıfırdan-oluştur yoluna döner — sohbet
+  /// aynı yerde bekliyor olur, kaybolmaz.
+  void _openReadyTemplatePicker() {
+    AppRouter.pushReadyTemplatePicker(
+      context,
+      onNoneMatch: () {
+        Navigator.of(context).pop();
+        _onboarding.chooseScratch();
+      },
+    );
   }
 
   void _onOnboardingTick() {
@@ -350,22 +364,31 @@ class _VixRexOnboardingChatScreenState
                 ),
               ),
             ),
+            ChatPill(
+              label: 'Hazır Vitrin Seç',
+              icon: Icons.storefront_rounded,
+              primary: true,
+              onTap: busy ? null : _onboarding.chooseReadyTemplate,
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: ChatPill(
-                    label: 'Evet, Oluşturalım',
+                    label: 'Sıfırdan Oluştur',
                     icon: Icons.auto_awesome,
-                    primary: true,
-                    onTap: busy ? null : _onboarding.acceptWelcome,
+                    primary: false,
+                    onTap: busy ? null : _onboarding.chooseScratch,
                   ),
                 ),
                 const SizedBox(width: 8),
-                ChatPill(
-                  label: 'Bakınıyorum',
-                  icon: Icons.visibility_outlined,
-                  primary: false,
-                  onTap: busy ? null : _onboarding.declineWelcome,
+                Expanded(
+                  child: ChatPill(
+                    label: 'Bakınıyorum',
+                    icon: Icons.visibility_outlined,
+                    primary: false,
+                    onTap: busy ? null : _onboarding.declineWelcome,
+                  ),
                 ),
               ],
             ),
