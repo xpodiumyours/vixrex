@@ -104,6 +104,15 @@ export default function OwnerAssistantPanel({
     (yerelTaslak.cloned_from_slug as string | null | undefined)?.trim()
   );
 
+  // Yasal onay üçü birden — aynı desen, aynı yorum: draftData stores
+  // satırının tam kopyası, owner_forbidden_draft_keys yalnız YAZMAYI
+  // engeller (bkz. accept_store_legal_consent RPC'si, /api/owner-accept-legal).
+  const yasalOnayli = Boolean(
+    yerelTaslak.privacy_notice_acknowledged &&
+      yerelTaslak.terms_accepted &&
+      yerelTaslak.publication_consent_accepted
+  );
+
   // Kalite alanında "Sonra": sırayı ilerletir, atlanmislar'a YAZMAZ (ADR
   // 0002 — "boş geç" yalnız isteğe bağlıda). Yalnız seçili alan gerçekten
   // kalite ise anlamlı; StepCard/FieldInputArea zaten yalnız o durumda çizer.
@@ -180,6 +189,9 @@ export default function OwnerAssistantPanel({
             eksikTemelSayisi={eksikTemelSayisi}
             kiralikVitrinMi={kiralikVitrinMi}
             premiumAktifMi={premiumAktifMi}
+            yasalOnayli={yasalOnayli}
+            onayVeriliyor={actions.onayVeriliyor}
+            onayVer={actions.onayVer}
           />
 
           {/* Sohbet akışı — kayıt olarak durur, panelin ortasını kaplamaz

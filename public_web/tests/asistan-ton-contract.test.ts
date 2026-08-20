@@ -38,6 +38,7 @@ const DOSYALAR = [
   "../src/app/api/owner-draft/route.ts",
   "../src/app/api/owner-publish/route.ts",
   "../src/app/api/owner-discard/route.ts",
+  "../src/app/api/owner-accept-legal/route.ts",
   "../src/app/api/owner-upload/route.ts",
   "../src/app/api/owner-session/route.ts",
 ];

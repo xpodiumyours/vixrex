@@ -106,6 +106,32 @@ eskiyen kısım, kod ile çelişirse KOD kazanır)
   istemci de şemadaki `zorunlu` işaretinden karar verir). CI'da
   `schema-drift` sapma kontrolü var (`.github/workflows/ci.yml`). Detay:
   `docs/tek-asistan-plani.md`.
+- **Vixrex Asistan'dan yasal onay verilebiliyor (2026-08-20, PR #267):**
+  kirala akışı Next.js'te tıkanıyordu — yayınlamak için gizlilik/şartlar/
+  yayın izni onayı zorunluydu ama onu vermenin tek yolu Flutter üyelik
+  paneliydi. Yeni `accept_store_legal_consent` RPC'si + `/api/owner-accept-legal`
+  + `/legal/[type]` sayfası + PublishBar'da onay kutusu ile kapatıldı.
+  Migration canlıya uygulandı (`chfulefxczbgurtgavtp`, `supabase db push`
+  ile doğrulandı). Gerçek tarayıcıda uçtan uca test edilirken 2 entegrasyon
+  hatası bulunup düzeltildi (sahip panelinin donmuş taslak kopyasından
+  okuması, `stores`taki koşulsuz versiyon artırma tetikleyicisinin
+  yayınlamayı yanlışça reddetmesi).
+- **Karşılama üçe bölündü — "Hazır Vitrin Seç" (2026-08-20, PR #268):**
+  onboarding sohbetindeki tek "Evet, Oluşturalım" yolu üçe ayrıldı: Hazır
+  Vitrin Seç (Keşfet'i yalnız kiralık şablonlarla sohbetin üstüne açar),
+  Sıfırdan Oluştur (eski yol, adı değişti), Bakınıyorum. Kategori artık
+  kiralanan şablondan geliyor, ayrıca sorulmuyor bu yolda.
+- **Kategori etiketi uyuşmazlığı (2026-08-20, henüz açılmadı):** Flutter
+  (`business_category_config.dart`) ve Next.js (`vitrinProfile.ts`) 19
+  kategoriden 7'sini farklı yazıyor (ör. "Danışmanlık" / "Hizmet &
+  Danışmanlık") — DB'de kategori tablosu + foreign key ile kilitleme
+  planı bu yüzden durduruldu, önce etiketler hizalanmalı. Next.js'in kısa
+  hali kazanacak diye karar verildi ama kod henüz yazılmadı.
+- **Dış denetim bulguları (2026-08-20, GitHub #229-266):** ChatGPT'nin
+  çıkardığı, Kilo Code'un kod üzerinden doğruladığı 38 bulgu issue olarak
+  kayıt altına alındı — sitemap ürün URL'si üretmiyor (#229), şube
+  desteklenmiyor (#256), `vitrin_views` tablosu dolmuyor gibi görünüyor
+  (#255) dahil. Hiçbiri henüz önceliklendirilmedi/ele alınmadı.
 
 ## Kalıcı kararlar (ADR'ler)
 

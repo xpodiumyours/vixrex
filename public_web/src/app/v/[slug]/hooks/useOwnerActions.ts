@@ -35,6 +35,8 @@ export interface OwnerActionsHook {
   silmeOnayla: () => void;
   sil: () => Promise<void>;
   setSilmeOnayi: (v: boolean) => void;
+  onayVeriliyor: boolean;
+  onayVer: () => Promise<void>;
 }
 
 interface Deps {
@@ -68,6 +70,7 @@ export function useOwnerActions({
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [yayinlaniyor, setYayinlaniyor] = useState(false);
   const [silmeOnayi, setSilmeOnayi] = useState(false);
+  const [onayVeriliyor, setOnayVeriliyor] = useState(false);
   const [hazirGorseller, setHazirGorseller] = useState<HazirGorsel[]>([]);
   const [hazirYukleniyor, setHazirYukleniyor] = useState(false);
 
@@ -358,6 +361,37 @@ export function useOwnerActions({
     }
   }, [slug, mesajEkle, router, seciliAlan, giris, yerelTaslak]);
 
+  // Yasal onay — accept_store_legal_consent RPC'sini çağırır (bkz.
+  // supabase/migrations/20260820000000_accept_store_legal_consent.sql).
+  // Başarıdan sonra router.refresh() gerekir: draftData sunucuda yeniden
+  // okunmadan yerelTaslak'taki onay bayrakları güncellenmez, PublishBar
+  // hâlâ "onaylanmadı" görür.
+  const onayVer = useCallback(async () => {
+    mesajEkle("kullanici", "Onaylıyorum");
+    setOnayVeriliyor(true);
+
+    try {
+      const yanit = await fetch("/api/owner-accept-legal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const govde = await yanit.json();
+
+      if (!yanit.ok) {
+        mesajEkle("asistan", govde?.hata ?? "Onay verilemedi. Lütfen tekrar dene.");
+        return;
+      }
+
+      mesajEkle("asistan", "Onay kaydedildi. Artık yayınlayabilirsin.");
+      router.refresh();
+    } catch {
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+    } finally {
+      setOnayVeriliyor(false);
+    }
+  }, [slug, mesajEkle, router]);
+
   // "Değişiklikleri bırak" TEK TIKLA silmez: önce onay istenir.
   // Bu düğme kullanıcının saatlerce yaptığı işi silebilir.
   const silmeOnayla = useCallback(() => {
@@ -412,5 +446,7 @@ export function useOwnerActions({
     silmeOnayla,
     sil,
     setSilmeOnayi,
+    onayVeriliyor,
+    onayVer,
   };
 }
