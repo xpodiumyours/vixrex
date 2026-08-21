@@ -799,7 +799,7 @@ export default function VitrinProfileView({
               >
                 <Image
                   src={item.imageUrl}
-                  alt={item.title || "Galeri"}
+                  alt={item.title || `${storeName} galeri görseli ${index + 1}`}
                   fill
                   className="object-cover transition duration-500 hover:scale-105"
                 />
