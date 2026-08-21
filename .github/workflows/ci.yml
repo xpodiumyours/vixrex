@@ -149,6 +149,19 @@ jobs:
         with:
           version: latest
 
+      - name: Seed adımını yalnız bu iş için kapat
+        # NEDEN: seed.sql, pg_dump'in ürettiği COPY ... FROM STDIN biçimini
+        # kullanıyor (yasal metinlerdeki noktalı virgül/kaçış karakterleri
+        # yüzünden — bkz. seed.sql'in kendi yorumu). CI'daki `supabase start`
+        # bu COPY akışını "No source stream defined" (57014) hatasıyla
+        # besleyemiyor — GRANT bekçisiyle ilgisi yok, yalnız CI'nın seed'i
+        # işleme biçimiyle ilgili. Bu iş satır verisine değil GRANT'lara
+        # bakıyor, seed'e ihtiyacı yok. Yalnız bu iş içindeki geçici kopyayı
+        # değiştiriyoruz — commit edilen config.toml (gerçek yerel geliştirme
+        # için seed açık kalmalı) değişmiyor.
+        run: |
+          sed -i '/^# If enabled, seeds the database after migrations during a db reset\.$/{n;s/^enabled = true$/enabled = false/}' supabase/config.toml
+
       - name: Yerel Supabase'i başlat (migration zinciri sıfırdan uygulanır)
         run: supabase start
 
