@@ -112,8 +112,7 @@ def classify_paths(paths: list[str]) -> dict[str, bool]:
             matched = True
 
         if path.startswith(("shared/", "tool/")):
-            result["schema"] = True
-            matched = True
+            return {surface: True for surface in SURFACES}
 
         if matched:
             continue

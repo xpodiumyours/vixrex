@@ -57,6 +57,17 @@ class ChangedSurfacesTest(unittest.TestCase):
             {"flutter": True, "schema": True, "public_web": True},
         )
 
+    def test_shared_and_tool_changes_select_both_clients_and_schema(self) -> None:
+        for path in (
+            "shared/business_categories.json",
+            "tool/business_categories_uret.dart",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(
+                    changed_surfaces.classify_paths([path]),
+                    {"flutter": True, "schema": True, "public_web": True},
+                )
+
     def test_ci_router_supabase_and_unknown_paths_fail_open(self) -> None:
         for path in (
             ".github/workflows/ci.yml",
