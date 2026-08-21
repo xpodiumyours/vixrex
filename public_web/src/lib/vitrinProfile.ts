@@ -1,10 +1,14 @@
 /**
- * Public vitrin kategori profili — Flutter BusinessCategoryConfig ile hizalı.
- * Tek shell + aile varyantı (ayrı sayfa yok).
+ * Public vitrin kategori profili. Kimlik ve etiket ortak core'dan, sunum
+ * kararları bu Next.js adapter'ından gelir.
  */
 
-export type VitrinFamily = "product" | "service" | "venue";
+import {
+  BUSINESS_CATEGORIES,
+  resolveBusinessCategory,
+} from "./businessCategories";
 
+export type VitrinFamily = "product" | "service" | "venue";
 export type PrimaryActionId = "whatsapp" | "maps" | "booking" | "website";
 
 export interface VitrinCategoryProfile {
@@ -13,105 +17,54 @@ export interface VitrinCategoryProfile {
   family: VitrinFamily;
   sectionTitle: string;
   ctaLabel: string;
-  /** Birincil CTA sırası (max 3 gösterilir; URL yoksa atlanır) */
   primaryActions: PrimaryActionId[];
-  /** WhatsApp hazır mesajı — yoksa mesajsız düz wa.me linki gider */
   waMesaji?: string;
 }
 
-export const PROFILES: VitrinCategoryProfile[] = [
-  { id: "giyim", label: "Giyim", family: "product", sectionTitle: "Yeni Sezon", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "butik", label: "Butik", family: "product", sectionTitle: "Özel Tasarımlar", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "gida", label: "Gıda", family: "product", sectionTitle: "Taze Ürünler", ctaLabel: "Sipariş Talebi", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "firin", label: "Fırın", family: "product", sectionTitle: "Bugün Neler Var?", ctaLabel: "Sipariş Talebi", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "kozmetik", label: "Kozmetik", family: "product", sectionTitle: "Ürünler ve bakım", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, ürünleriniz hakkında bilgi almak istiyorum." },
-  { id: "dekorasyon", label: "Dekorasyon", family: "product", sectionTitle: "Koleksiyon", ctaLabel: "Teklif İste", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "elektronik", label: "Elektronik", family: "product", sectionTitle: "Ürünler", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "kirtasiye", label: "Kırtasiye", family: "product", sectionTitle: "Ürünler", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "pet_shop_veteriner", label: "Pet / Veteriner", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, randevu ve fiyat bilgisi almak istiyorum." },
-  { id: "kafe_lokanta", label: "Kafe / Lokanta", family: "venue", sectionTitle: "Menü", ctaLabel: "Sipariş / Rezervasyon", primaryActions: ["whatsapp", "maps", "website"] },
-  { id: "kuafor", label: "Kuaför", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Randevu Sor", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, randevu almak istiyorum." },
-  { id: "teknik_servis", label: "Teknik Servis", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Servis Talebi", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, cihazım için servis talebinde bulunmak istiyorum." },
-  { id: "hizmet_danismanlik", label: "Danışmanlık", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, hizmetleriniz hakkında bilgi almak istiyorum." },
-  { id: "egitim_ders", label: "Eğitim", family: "service", sectionTitle: "Programlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, dersleriniz hakkında bilgi almak istiyorum." },
-  { id: "ev_temizlik", label: "Ev Temizlik", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Teklif İste", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, temizlik hizmeti için teklif almak istiyorum." },
-  { id: "spor_fitness", label: "Spor / Fitness", family: "service", sectionTitle: "Programlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, üyelik ve fiyat bilgisi almak istiyorum." },
-  { id: "saglik_yasam", label: "Sağlık / Yaşam", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, randevu ve bilgi almak istiyorum." },
-  { id: "oto_arac", label: "Oto / Araç", family: "service", sectionTitle: "Hizmetler", ctaLabel: "Randevu Sor", primaryActions: ["whatsapp", "booking", "maps"], waMesaji: "Merhaba, aracım için randevu almak istiyorum." },
-  { id: "diger", label: "Diğer", family: "product", sectionTitle: "Öne çıkanlar", ctaLabel: "Bilgi Al", primaryActions: ["whatsapp", "maps", "website"] },
-];
+type CategoryPresentation = Omit<VitrinCategoryProfile, "id" | "label">;
 
-const BY_ID = new Map(PROFILES.map((p) => [p.id, p]));
+const productActions: PrimaryActionId[] = ["whatsapp", "maps", "website"];
+const serviceActions: PrimaryActionId[] = ["whatsapp", "booking", "maps"];
 
-function normalizeTr(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/ı/g, "i")
-    .replace(/İ/g, "i")
-    .replace(/ğ/g, "g")
-    .replace(/ü/g, "u")
-    .replace(/ş/g, "s")
-    .replace(/ö/g, "o")
-    .replace(/ç/g, "c");
-}
+const PRESENTATION: Record<string, CategoryPresentation> = {
+  giyim: { family: "product", sectionTitle: "Yeni Sezon", ctaLabel: "Ürün Sor", primaryActions: productActions },
+  butik: { family: "product", sectionTitle: "Özel Tasarımlar", ctaLabel: "Ürün Sor", primaryActions: productActions },
+  gida: { family: "product", sectionTitle: "Taze Ürünler", ctaLabel: "Sipariş Talebi", primaryActions: productActions },
+  firin: { family: "product", sectionTitle: "Bugün Neler Var?", ctaLabel: "Sipariş Talebi", primaryActions: productActions },
+  kozmetik: { family: "product", sectionTitle: "Ürünler ve bakım", ctaLabel: "Bilgi Al", primaryActions: serviceActions, waMesaji: "Merhaba, ürünleriniz hakkında bilgi almak istiyorum." },
+  dekorasyon: { family: "product", sectionTitle: "Koleksiyon", ctaLabel: "Teklif İste", primaryActions: productActions },
+  elektronik: { family: "product", sectionTitle: "Ürünler", ctaLabel: "Ürün Sor", primaryActions: productActions },
+  kirtasiye: { family: "product", sectionTitle: "Ürünler", ctaLabel: "Ürün Sor", primaryActions: productActions },
+  kafe_lokanta: { family: "venue", sectionTitle: "Menü", ctaLabel: "Sipariş / Rezervasyon", primaryActions: productActions },
+  kuafor: { family: "service", sectionTitle: "Hizmetler", ctaLabel: "Randevu Sor", primaryActions: serviceActions, waMesaji: "Merhaba, randevu almak istiyorum." },
+  teknik_servis: { family: "service", sectionTitle: "Hizmetler", ctaLabel: "Servis Talebi", primaryActions: serviceActions, waMesaji: "Merhaba, cihazım için servis talebinde bulunmak istiyorum." },
+  hizmet_danismanlik: { family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: serviceActions, waMesaji: "Merhaba, hizmetleriniz hakkında bilgi almak istiyorum." },
+  egitim_ders: { family: "service", sectionTitle: "Programlar", ctaLabel: "Bilgi Al", primaryActions: serviceActions, waMesaji: "Merhaba, dersleriniz hakkında bilgi almak istiyorum." },
+  ev_temizlik: { family: "service", sectionTitle: "Hizmetler", ctaLabel: "Teklif İste", primaryActions: serviceActions, waMesaji: "Merhaba, temizlik hizmeti için teklif almak istiyorum." },
+  spor_fitness: { family: "service", sectionTitle: "Programlar", ctaLabel: "Bilgi Al", primaryActions: serviceActions, waMesaji: "Merhaba, üyelik ve fiyat bilgisi almak istiyorum." },
+  pet_shop_veteriner: { family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: serviceActions, waMesaji: "Merhaba, randevu ve fiyat bilgisi almak istiyorum." },
+  saglik_yasam: { family: "service", sectionTitle: "Hizmetler", ctaLabel: "Bilgi Al", primaryActions: serviceActions, waMesaji: "Merhaba, randevu ve bilgi almak istiyorum." },
+  oto_arac: { family: "service", sectionTitle: "Hizmetler", ctaLabel: "Randevu Sor", primaryActions: serviceActions, waMesaji: "Merhaba, aracım için randevu almak istiyorum." },
+  diger: { family: "product", sectionTitle: "Öne çıkanlar", ctaLabel: "Bilgi Al", primaryActions: productActions },
+};
 
-const KEYWORDS: Array<[string, string]> = [
-  ["kafe", "kafe_lokanta"],
-  ["restoran", "kafe_lokanta"],
-  ["lokanta", "kafe_lokanta"],
-  ["kuafor", "kuafor"],
-  ["guzellik", "kuafor"],
-  ["giyim", "giyim"],
-  ["butik", "butik"],
-  ["gida", "gida"],
-  ["firin", "firin"],
-  ["veteriner", "pet_shop_veteriner"],
-  ["pet", "pet_shop_veteriner"],
-  ["egitim", "egitim_ders"],
-  ["ders", "egitim_ders"],
-  ["temizlik", "ev_temizlik"],
-  ["spor", "spor_fitness"],
-  ["fitness", "spor_fitness"],
-  ["saglik", "saglik_yasam"],
-  ["oto", "oto_arac"],
-  ["arac", "oto_arac"],
-  ["teknik", "teknik_servis"],
-  ["danismanlik", "hizmet_danismanlik"],
-  ["kozmetik", "kozmetik"],
-  ["dekorasyon", "dekorasyon"],
-  ["elektronik", "elektronik"],
-  ["kirtasiye", "kirtasiye"],
-];
+export const PROFILES: VitrinCategoryProfile[] = BUSINESS_CATEGORIES.map(
+  (category) => ({
+    id: category.id,
+    label: category.label,
+    ...PRESENTATION[category.id],
+  }),
+);
+
+const BY_ID = new Map(PROFILES.map((profile) => [profile.id, profile]));
 
 function resolveFromLabel(raw: string): VitrinCategoryProfile | null {
-  const value = raw.trim();
-  if (!value) return null;
-
-  const lower = value.toLowerCase();
-  for (const p of PROFILES) {
-    if (p.label.toLowerCase() === lower || p.id === lower) return p;
-  }
-
-  const normalized = normalizeTr(value);
-  for (const p of PROFILES) {
-    if (normalizeTr(p.label) === normalized || normalizeTr(p.id) === normalized) {
-      return p;
-    }
-  }
-
-  for (const [key, id] of KEYWORDS) {
-    if (normalized.includes(key)) {
-      return BY_ID.get(id) ?? null;
-    }
-  }
-
-  return null;
+  const category = resolveBusinessCategory(raw);
+  return category ? (BY_ID.get(category.id) ?? null) : null;
 }
 
 /**
- * Kategori öncelikli. `Diğer` / boş ise business_type ile yeniden dene
- * (ör. kategori=Diğer, business_type=Butik → butik profili).
+ * Kategori öncelikli. `Diğer` / boş ise business_type ile yeniden dene.
  */
 export function resolveVitrinProfile(
   kategori: string | null | undefined,
