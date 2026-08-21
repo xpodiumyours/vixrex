@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/bulk_product_upload_screen.dart';
 import 'package:vixrex/screens/product_category_management_screen.dart';
+import 'package:vixrex/services/bulk_product_field_update_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
+import 'package:vixrex/widgets/product/bulk_product_field_update_sheet.dart';
 import 'package:vixrex/widgets/product/product_editor_sheet.dart';
 import 'package:vixrex/widgets/product/vixrex_catalog_assistant_section.dart';
 import 'package:vixrex/widgets/xml_upload_dialog.dart';
@@ -48,6 +50,12 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
   late List<ProductCategory> _categories;
   final _searchController = TextEditingController();
   String _selectedCategoryId = '';
+
+  // #262: toplu düzenleme seçim durumu — yalnız bu ekranın kendi UI
+  // state'i, controller'a veya uzak yazmaya kadar hiçbir şey yapmaz.
+  bool _selectionMode = false;
+  final Set<String> _selectedIds = {};
+  static const _bulkFieldUpdater = BulkProductFieldUpdateService();
 
   @override
   void initState() {
@@ -280,6 +288,104 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         .join(' ');
   }
 
+  void _toggleSelectionMode() {
+    setState(() {
+      _selectionMode = !_selectionMode;
+      if (!_selectionMode) _selectedIds.clear();
+    });
+  }
+
+  void _toggleSelected(String productId) {
+    setState(() {
+      if (!_selectedIds.add(productId)) _selectedIds.remove(productId);
+    });
+  }
+
+  Future<void> _openBulkFieldUpdate() async {
+    if (_selectedIds.isEmpty) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder:
+          (_) => BulkProductFieldUpdateSheet(
+            selectedCount: _selectedIds.length,
+            categories: _categories,
+            onApplyPrice: _applyBulkPrice,
+            onApplyStockStatus: _applyBulkStockStatus,
+            onApplyCategory: _applyBulkCategory,
+            onApplyVisibility: _applyBulkVisibility,
+          ),
+    );
+  }
+
+  List<Product> get _selectedProducts =>
+      _products.where((p) => _selectedIds.contains(p.id)).toList();
+
+  Future<void> _finishBulkApply(
+    Map<String, Product> byId, {
+    int skippedCount = 0,
+  }) async {
+    setState(() {
+      for (var i = 0; i < _products.length; i++) {
+        final replacement = byId[_products[i].id];
+        if (replacement != null) _products[i] = replacement;
+      }
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+    final saved = await _persist();
+    if (!mounted) return;
+    final base =
+        saved
+            ? 'Seçili ürünler güncellendi.'
+            : 'Ürünler güncellendi (uzak kayıt başarısız, tekrar deneyin).';
+    widget.showMessage(
+      skippedCount > 0
+          ? '$base $skippedCount ürünün fiyatı sayı olarak okunamadığı için atlandı.'
+          : base,
+    );
+  }
+
+  Future<void> _applyBulkPrice(PriceAdjustMode mode, double value) async {
+    final result = _bulkFieldUpdater.applyPriceAdjustment(
+      products: _selectedProducts,
+      mode: mode,
+      value: value,
+    );
+    await _finishBulkApply({
+      for (final p in result.updated) p.id: p,
+    }, skippedCount: result.skipped.length);
+  }
+
+  Future<void> _applyBulkStockStatus(String stockStatus) async {
+    final updated = _bulkFieldUpdater.applyStockStatus(
+      _selectedProducts,
+      stockStatus,
+    );
+    await _finishBulkApply({for (final p in updated) p.id: p});
+  }
+
+  Future<void> _applyBulkCategory(ProductCategory category) async {
+    final updated = _bulkFieldUpdater.applyCategory(
+      _selectedProducts,
+      category,
+    );
+    await _finishBulkApply({for (final p in updated) p.id: p});
+  }
+
+  Future<void> _applyBulkVisibility(bool isVisible) async {
+    final updated = _bulkFieldUpdater.applyVisibility(
+      _selectedProducts,
+      isVisible,
+    );
+    await _finishBulkApply({for (final p in updated) p.id: p});
+  }
+
   Future<void> _reorderProducts(int oldIndex, int newIndex) async {
     setState(() {
       if (newIndex > oldIndex) newIndex--;
@@ -293,7 +399,9 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
   Widget build(BuildContext context) {
     final filtered = _filteredProducts;
     final canReorder =
-        _searchController.text.trim().isEmpty && _selectedCategoryId.isEmpty;
+        !_selectionMode &&
+        _searchController.text.trim().isEmpty &&
+        _selectedCategoryId.isEmpty;
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.88,
       child: LayoutBuilder(
@@ -325,11 +433,15 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
                 SizedBox(height: spacing10),
                 Expanded(child: _buildProductList(filtered, canReorder)),
                 SizedBox(height: spacing12),
-                _buildAddProductButton(),
-                SizedBox(height: spacing8),
-                _buildBulkUploadButton(),
-                SizedBox(height: spacing8),
-                _buildXmlUploadButton(),
+                if (_selectionMode)
+                  _buildSelectionBar()
+                else ...[
+                  _buildAddProductButton(),
+                  SizedBox(height: spacing8),
+                  _buildBulkUploadButton(),
+                  SizedBox(height: spacing8),
+                  _buildXmlUploadButton(),
+                ],
               ],
             ),
           );
@@ -373,6 +485,14 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
               ),
             ],
           ),
+        ),
+        TextButton.icon(
+          onPressed: _toggleSelectionMode,
+          icon: Icon(
+            _selectionMode ? Icons.close_rounded : Icons.checklist_rounded,
+            size: 18,
+          ),
+          label: Text(_selectionMode ? 'Vazgeç' : 'Seç'),
         ),
         TextButton.icon(
           onPressed: _openCategories,
@@ -447,6 +567,32 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       itemCount: filtered.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, index) => _buildProductItem(filtered[index]),
+    );
+  }
+
+  Widget _buildSelectionBar() {
+    final count = _selectedIds.length;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            count == 0 ? 'Düzenlemek için ürün seç' : '$count ürün seçili',
+            style: const TextStyle(
+              color: AppColors.darkText,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: count == 0 ? null : _openBulkFieldUpdate,
+          icon: const Icon(Icons.edit_rounded, size: 18),
+          label: const Text('Toplu Düzenle'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.black,
+          ),
+        ),
+      ],
     );
   }
 
@@ -558,15 +704,26 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
 
   Widget _buildProductItem(Product product) {
     final image = product.primaryImageUrl;
-    return Container(
+    final selected = _selectedIds.contains(product.id);
+    final card = Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,
         borderRadius: BorderRadius.circular(AppColors.radius16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: selected ? AppColors.primary : AppColors.border,
+          width: selected ? 2 : 1,
+        ),
       ),
       child: Row(
         children: [
+          if (_selectionMode) ...[
+            Checkbox(
+              value: selected,
+              onChanged: (_) => _toggleSelected(product.id),
+            ),
+            const SizedBox(width: 4),
+          ],
           ClipRRect(
             borderRadius: BorderRadius.circular(AppColors.radius10),
             child: SizedBox(
@@ -606,21 +763,29 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
               ],
             ),
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'edit') _openEditor(product);
-              if (value == 'duplicate') _duplicate(product);
-              if (value == 'delete') _delete(product);
-            },
-            itemBuilder:
-                (_) => const [
-                  PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                  PopupMenuItem(value: 'duplicate', child: Text('Çoğalt')),
-                  PopupMenuItem(value: 'delete', child: Text('Sil')),
-                ],
-          ),
+          if (!_selectionMode)
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'edit') _openEditor(product);
+                if (value == 'duplicate') _duplicate(product);
+                if (value == 'delete') _delete(product);
+              },
+              itemBuilder:
+                  (_) => const [
+                    PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+                    PopupMenuItem(value: 'duplicate', child: Text('Çoğalt')),
+                    PopupMenuItem(value: 'delete', child: Text('Sil')),
+                  ],
+            ),
         ],
       ),
+    );
+
+    if (!_selectionMode) return card;
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppColors.radius16),
+      onTap: () => _toggleSelected(product.id),
+      child: card,
     );
   }
 
