@@ -14,7 +14,8 @@ import { UpNextList } from "./components/UpNextList";
 import { SectionProgressList } from "./components/SectionProgressList";
 import { PublishBar } from "./components/PublishBar";
 import { VixrexAvatar } from "./components/VixrexAvatar";
-import { alanOnemi, asamaDolulugu } from "@/lib/vitrinReadiness";
+import { SpotlightGuide } from "./components/SpotlightGuide";
+import { alanOnemi, asamaDolulugu, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
 import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
@@ -70,13 +71,33 @@ export default function OwnerAssistantPanel({
   );
   const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff);
 
-  const { seciliAlan, giris, girisRef, setGiris, alanSec, alanaGecVeyaBitir } =
-    useFieldSelection({
+  const {
+    seciliAlan,
+    giris,
+    girisRef,
+    setGiris,
+    setSeciliAlan,
+    alanSec,
+    alanaGecVeyaBitir,
+    vurguyuTemizle,
+  } = useFieldSelection({
       yerelTaslak,
       atlanmisAlanlar,
       mesajEkle,
       onAlanSecildi: () => setAcik(true),
     });
+
+  // 2026-08-22: "sayfada dolaşan rehber" — panel ilk açıldığında henüz
+  // hiçbir alan seçili değilse, sırayı elle aramaya gerek kalmadan ilk
+  // eksik alanı (önce zorunlu, sonra kalite — sonrakiRehberAlan zaten bu
+  // sırayı uyguluyor) otomatik seçer. Kullanıcı istediği alana da hâlâ
+  // doğrudan tıklayabilir (useFieldSelection'daki global dinleyici).
+  useEffect(() => {
+    if (!acik || seciliAlan) return;
+    const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
+    if (ilkEksik) alanSec(ilkEksik.anahtar);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [acik]);
 
   const actions = useOwnerActions({
     slug,
@@ -133,8 +154,27 @@ export default function OwnerAssistantPanel({
         }
       : undefined;
 
+  // Rehber balonundaki ✕: yalnız o alanın vurgusunu/balonunu kapatır,
+  // panelin kendisine ya da "sonraki alana geç" akışına dokunmaz — esnaf
+  // rehberi susturup istediği zaman elle devam edebilsin.
+  const rehberiKapat = () => {
+    vurguyuTemizle();
+    setSeciliAlan(null);
+  };
+
   return (
     <>
+      {/* Sayfada dolaşan rehber — panel açık ve bir alan seçiliyken,
+       * hedef alanın üzerinde/yanında görünür (bkz. SpotlightGuide). */}
+      {acik && (
+        <SpotlightGuide
+          seciliAlan={seciliAlan}
+          girisRef={girisRef}
+          onSonrayaBirak={sonrayaBirak}
+          onKapat={rehberiKapat}
+        />
+      )}
+
       {/* Canonical Vixrex düğmesi */}
       <button
         type="button"
