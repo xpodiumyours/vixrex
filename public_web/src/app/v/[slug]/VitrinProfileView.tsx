@@ -38,6 +38,7 @@ import {
   TrackedWhatsAppLink,
   trackWhatsAppClick,
 } from "@/components/TrackedWhatsAppLink";
+import VitrinViewTracker from "@/components/VitrinViewTracker";
 
 export interface VitrinGalleryItem {
   id?: string;
@@ -338,6 +339,7 @@ export default function VitrinProfileView({
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-[#F8FAFC] font-sans selection:bg-blue-500 selection:text-white">
+      {!ownerMode && !isPreviewMode && <VitrinViewTracker storeSlug={storeSlug} />}
       {isPreviewMode && (
         <div className="fixed top-0 left-0 right-0 z-[60] h-9 bg-amber-500 text-[#0B1120] text-xs sm:text-sm font-bold flex items-center justify-center gap-2">
           Taslak önizleme — bu vitrin henüz yayında değil, müşteriler göremez.
