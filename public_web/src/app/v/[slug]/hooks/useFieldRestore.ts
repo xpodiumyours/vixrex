@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
@@ -28,6 +28,8 @@ export function useFieldRestore({
 }: Deps): FieldRestoreHook {
   const router = useRouter();
   const [geriAliniyor, setGeriAliniyor] = useState(false);
+  const seciliAnahtarRef = useRef(seciliAlan?.anahtar ?? null);
+  seciliAnahtarRef.current = seciliAlan?.anahtar ?? null;
 
   const canliyaDondur = useCallback(async () => {
     if (!seciliAlan) return;
@@ -55,20 +57,25 @@ export function useFieldRestore({
         return;
       }
 
-      if (!govde.degisti) {
-        mesajEkle("asistan", `${alan.etiket} zaten canlıdakiyle aynı.`);
-        return;
-      }
-
+      // Sunucu "değişmedi" dese bile kanonik değeri uygula: başka sekmenin
+      // broadcast'i kaçırıldıysa bu sekmenin yerel kopyası eski kalmış olabilir.
       setAlan(alan.kolon, govde.deger);
-      setGiris(
-        alan.tip === "acikKapali" || govde.deger === null || govde.deger === undefined
-          ? ""
-          : String(govde.deger)
-      );
+      // İstek sürerken kullanıcı vitrinden başka bir alan seçmiş olabilir.
+      // Eski yanıt yeni alanın giriş kutusunu ezmemeli.
+      if (seciliAnahtarRef.current === alan.anahtar) {
+        setGiris(
+          alan.tip === "acikKapali" ||
+            govde.deger === null ||
+            govde.deger === undefined
+            ? ""
+            : String(govde.deger)
+        );
+      }
       mesajEkle(
         "asistan",
-        `${alan.etiket} canlı hâline döndürüldü. Diğer değişikliklerin korundu.`
+        govde.degisti
+          ? `${alan.etiket} canlı hâline döndürüldü. Diğer değişikliklerin korundu.`
+          : `${alan.etiket} zaten canlıdakiyle aynı.`
       );
       router.refresh();
     } catch {

@@ -35,11 +35,14 @@ describe("#261 — tek alanı canlı hâline döndürme RPC'si", () => {
     expect(functionSource).toContain("to_jsonb(st) -> v_key");
     expect(functionSource).toContain("update public.store_working_drafts");
     expect(functionSource).not.toContain("update public.stores");
-    expect(functionSource).toMatch(/jsonb_set\(\s*draft_data,\s*array\[v_key\]/);
+    expect(functionSource).toContain("draft_data - v_key");
+    expect(functionSource).toContain("draft_data || jsonb_build_object(v_key, v_live_value)");
   });
 
   it("aynı değerde idempotenttir ve sürümü yalnız değişiklikte artırır", () => {
-    expect(functionSource).toContain("is distinct from");
+    expect(functionSource).toMatch(
+      /coalesce\(v_draft_value, 'null'::jsonb\)[\s\S]*?is distinct from coalesce\(v_live_value, 'null'::jsonb\)/
+    );
     expect(functionSource).toMatch(/if v_changed then[\s\S]*?draft_version = draft_version \+ 1/);
     expect(functionSource).toContain("'changed', v_changed");
   });
@@ -77,8 +80,10 @@ describe("#261 — sunucu ve istemci sözleşmesi", () => {
     expect(hook).toContain('/api/owner-draft-restore');
     expect(hook).toContain("taslakClientId()");
     expect(hook).toContain("setAlan(alan.kolon, govde.deger)");
+    expect(hook).toContain("seciliAnahtarRef.current === alan.anahtar");
     expect(hook).toContain("setGiris(");
     expect(hook).toContain("router.refresh()");
+    expect(hook).not.toMatch(/if \(!govde\.degisti\)[\s\S]*?return;/);
     expect(hook).toContain("canlı hâline döndürüldü. Diğer değişikliklerin korundu.");
     expect(hook).toContain("zaten canlıdakiyle aynı.");
   });
@@ -89,5 +94,7 @@ describe("#261 — sunucu ve istemci sözleşmesi", () => {
     expect(input).not.toContain("confirm(");
     expect(panel).toContain("useFieldRestore");
     expect(panel).toContain("geriAliniyor={fieldRestore.geriAliniyor}");
+    expect(panel).toContain("kaydediliyor={actions.kaydediliyor}");
+    expect(input).toContain("disabled={kaydediliyor || geriAliniyor}");
   });
 });

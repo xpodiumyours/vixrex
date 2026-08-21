@@ -73,16 +73,19 @@ begin
     raise exception 'WORKING_DRAFT_NOT_FOUND';
   end if;
 
-  v_changed := v_draft_value is distinct from v_live_value;
+  -- Alanın taslakta hiç bulunmaması ile JSON null aynı etkili değerdir.
+  -- update_working_draft_field de null yazımında anahtarı kaldırır; aynı
+  -- sözleşmeyi koruyarak gereksiz sürüm artışı/broadcast üretme.
+  v_changed := coalesce(v_draft_value, 'null'::jsonb)
+    is distinct from coalesce(v_live_value, 'null'::jsonb);
 
   if v_changed then
     update public.store_working_drafts
-    set draft_data = jsonb_set(
-          draft_data,
-          array[v_key],
-          coalesce(v_live_value, 'null'::jsonb),
-          true
-        ),
+    set draft_data = case
+          when v_live_value is null or jsonb_typeof(v_live_value) = 'null'
+            then draft_data - v_key
+          else draft_data || jsonb_build_object(v_key, v_live_value)
+        end,
         draft_version = draft_version + 1,
         updated_at = now()
     where store_id = v_store_id

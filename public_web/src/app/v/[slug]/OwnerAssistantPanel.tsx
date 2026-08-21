@@ -166,7 +166,7 @@ export default function OwnerAssistantPanel({
             seciliAlan={seciliAlan}
             giris={giris}
             girisRef={girisRef}
-            kaydediliyor={actions.kaydediliyor || fieldRestore.geriAliniyor}
+            kaydediliyor={actions.kaydediliyor}
             geriAliniyor={fieldRestore.geriAliniyor}
             hazirGorseller={actions.hazirGorseller}
             hazirYukleniyor={actions.hazirYukleniyor}

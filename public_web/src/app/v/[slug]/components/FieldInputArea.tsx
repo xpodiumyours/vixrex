@@ -54,7 +54,7 @@ export function FieldInputArea({
           <button
             type="button"
             onClick={() => void canliyaDondur()}
-            disabled={kaydediliyor}
+            disabled={kaydediliyor || geriAliniyor}
             className="mr-auto shrink-0 text-blue-300 underline decoration-dotted hover:text-blue-200 disabled:opacity-50"
           >
             {geriAliniyor ? "Döndürülüyor…" : "Canlı hâline döndür"}
