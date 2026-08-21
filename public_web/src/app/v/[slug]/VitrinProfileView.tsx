@@ -39,6 +39,7 @@ import {
   trackWhatsAppClick,
 } from "@/components/TrackedWhatsAppLink";
 import VitrinViewTracker from "@/components/VitrinViewTracker";
+import FloatingWhatsAppButton from "@/components/FloatingWhatsAppButton";
 
 export interface VitrinGalleryItem {
   id?: string;
@@ -1277,6 +1278,13 @@ export default function VitrinProfileView({
           </div>
         </section>
       )}
+
+      {/* ===== FLOATING WHATSAPP (mobil) ===== */}
+      <FloatingWhatsAppButton
+        whatsappUrl={whatsappUrl}
+        storeSlug={storeSlug}
+        ownerMode={ownerMode}
+      />
 
       {/* ===== FOOTER ===== */}
       <footer className="border-t border-blue-500/15 py-10 text-center">
