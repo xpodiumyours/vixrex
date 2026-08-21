@@ -47,6 +47,14 @@ const HATA_METNI: Record<string, string> = {
     "Sözleşme metinleri güncellenmiş. Onay kutusunu tekrar işaretleyip yeniden dene.",
   PREMIUM_REQUIRED:
     "Bu hazır vitrin yalnız premium üyelikle yayınlanır. Aylık 299 TL ile devam et.",
+  STORE_NAME_REQUIRED: "Yayınlamak için işletme adını doldur.",
+  STORE_CATEGORY_REQUIRED: "Yayınlamak için işletme kategorisini seç.",
+  STORE_WHATSAPP_REQUIRED: "Yayınlamak için WhatsApp numaranı doldur.",
+  STORE_WHATSAPP_INVALID:
+    "Geçerli bir Türkiye cep telefonu numarası gir. Örn: 0555 123 45 67",
+  STORE_ADDRESS_REQUIRED: "Yayınlamak için açık adresini doldur.",
+  STORE_PROVINCE_REQUIRED: "Yayınlamak için il bilgisini doldur.",
+  STORE_DISTRICT_REQUIRED: "Yayınlamak için ilçe bilgisini doldur.",
 };
 
 const DURUM_MAP: Record<string, number> = {
@@ -59,6 +67,13 @@ const DURUM_MAP: Record<string, number> = {
   PRIVACY_NOTICE_VERSION_INVALID: 422,
   TERMS_VERSION_INVALID: 422,
   PUBLICATION_CONSENT_VERSION_INVALID: 422,
+  STORE_NAME_REQUIRED: 422,
+  STORE_CATEGORY_REQUIRED: 422,
+  STORE_WHATSAPP_REQUIRED: 422,
+  STORE_WHATSAPP_INVALID: 422,
+  STORE_ADDRESS_REQUIRED: 422,
+  STORE_PROVINCE_REQUIRED: 422,
+  STORE_DISTRICT_REQUIRED: 422,
 };
 
 function supabaseAnon() {
