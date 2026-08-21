@@ -391,15 +391,24 @@ class LandingHeroSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        Text(
-          'İşletmenizin dijital\nvitrini Vixrex Asistan ile\nbirkaç dakikada hazır',
+        RichText(
           textAlign: isDesktop ? TextAlign.left : TextAlign.center,
-          style: TextStyle(
-            fontSize: isDesktop ? 48 : 36,
-            fontWeight: FontWeight.w900,
-            color: AppColors.darkText,
-            height: 1.15,
-            letterSpacing: -0.8,
+          text: TextSpan(
+            style: TextStyle(
+              fontSize: isDesktop ? 48 : 36,
+              fontWeight: FontWeight.w900,
+              color: AppColors.darkText,
+              height: 1.15,
+              letterSpacing: -0.8,
+            ),
+            children: [
+              const TextSpan(text: 'Vitrininiz\n'),
+              TextSpan(
+                text: 'Vixrex Asistan',
+                style: TextStyle(color: AppColors.secondary),
+              ),
+              const TextSpan(text: ' ile\nbirkaç dakikada hazır'),
+            ],
           ),
         ),
         const SizedBox(height: 20),
@@ -414,57 +423,10 @@ class LandingHeroSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 32),
-        // Promo Card
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.qr_code_scanner_rounded,
-                  color: AppColors.secondary,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Tek linkte hazır dijital vitrin',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.darkText,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'QR kod ve WhatsApp iletişimi paylaşmaya hazır olsun.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
         // Setup Form or Saved Vitrin actions
+        // Promo kartı (2026-08-22) kaldırıldı — içeriği zaten alttaki güven
+        // rozetlerinde tekrarlıyordu (QR/link, WhatsApp), tek net eylemin
+        // (giriş kutusu + buton) önüne gereksiz bir katman ekliyordu.
         if (hasSavedVitrin && !isCheckingSavedVitrin) ...[
           Container(
             width: double.infinity,
@@ -645,10 +607,13 @@ class LandingHeroSection extends StatelessWidget {
           runSpacing: 10,
           alignment: isDesktop ? WrapAlignment.start : WrapAlignment.center,
           children: [
-            _buildCheckBadge('🔒 SSL Güvenli Koruma'),
-            _buildCheckBadge('💳 Kredi kartı gerekmez'),
-            _buildCheckBadge('❌ Komisyon yok'),
-            _buildCheckBadge('📱 Link ve QR hazır'),
+            // 2026-08-22: metin içindeki emoji önekleri kaldırıldı —
+            // 'Komisyon yok' önünde ❌ vardı, hemen yanındaki yeşil
+            // check_circle ikonuyla çelişip "olumsuz/hata" gibi okunuyordu.
+            _buildCheckBadge('SSL Güvenli Koruma'),
+            _buildCheckBadge('Kredi kartı gerekmez'),
+            _buildCheckBadge('Komisyon yok'),
+            _buildCheckBadge('Link ve QR hazır'),
           ],
         ),
       ],
