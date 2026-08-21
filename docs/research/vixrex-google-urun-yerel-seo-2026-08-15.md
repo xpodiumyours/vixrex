@@ -6,6 +6,8 @@
 
 > Bu belge bağlayıcı bir SEO garantisi değildir. Google, yapılandırılmış veri sağlansa bile zengin sonuç gösterimini garanti etmez (bkz. §1). Sayılar/tarihler/API durumları yayın tarihinde doğrulanmıştır; Google bu yüzeyleri sık değiştirir.
 
+> **Not (2026-08-21):** Bu belge, aynı günkü daha yüzeysel bir ilk taramanın yerine geçer — repo taraması (§Repo bulguları) somut dosya/satır referanslarıyla ayrıca doğrulandı (2 ana iddia kod üzerinden tekrar kontrol edildi, ikisi de doğrulandı — `price` regex bulgusu doğrulamada beklenenden de ciddi çıktı, bkz. Sıradaki adımlar §1).
+
 ---
 
 ## Yönetici özeti
@@ -81,7 +83,7 @@ Google Business Profile Yardım'a göre üç yol var:
 
 ### 2.3 İşletme doğrulaması (verification) gereksinimleri
 
-Business Profile doğrulaması; telefon, e-posta, video, posta kartı (postcard) ve (Search Console'da site zaten doğrulanmışsa) anlık doğrulama gibi birden çok yöntemle yapılabiliyor; hangi yöntemin sunulacağı işletme kategorisine ve geçmişe göre değişiyor, posta kartı 5-14 gün sürebiliyor. Bu, VixRex'in kontrolü dışında, tamamen esnafın kendi Google hesabı üzerinden yürüttüğü bir süreç. (İkincil kaynaklardan derlenen özet; Google'ın kendi "Verify your Business Profile" yardım sayfası birincil kaynaktır ama bu oturumda doğrudan alıntı çekilemedi — aşağıdaki "kaynak sınırlamaları" bölümüne bakın.)
+Business Profile doğrulaması; telefon, e-posta, video, posta kartı (postcard) ve (Search Console'da site zaten doğrulanmışsa) anlık doğrulama gibi birden çok yöntemle yapılabiliyor; hangi yöntemin sunulacağı işletme kategorisine ve geçmişe göre değişiyor, posta kartı 5-14 gün sürebiliyor. Bu, VixRex'in kontrolü dışında, tamamen esnafın kendi Google hesabı üzerinden yürüttüğü bir süreç. (İkincil kaynaklardan derlenen özet; Google'ın kendi "Verify your Business Profile" yardım sayfası birincil kaynaktır ama bu oturumda doğrudan alıntı çekilemedi — kaynak sınırlaması olarak işaretlendi.)
 
 ---
 
@@ -109,7 +111,7 @@ Ayrıca Instagram'ın kendi platform API'si (Instagram Graph API / Instagram Pla
 
 Google'ın resmi `LocalBusiness` dokümanı, zorunlu alanları (`name`, `address`) karşılamanın "içeriğinizi zengin sonuç için uygun hale getirdiğini" söylüyor, ama görünürlüğü **garanti etmiyor**; "near me" / bölgesel sıralama ayrı bir sıralama sinyalleri kümesine (mesafe, ilgi, öne çıkma — prominence) dayanıyor ve bu sinyaller Google Business Profile'dan besleniyor, `LocalBusiness` structured data'sı GBP'nin **yerine geçmiyor**, onu **tamamlıyor** — ikisinin ilişkisi Google'ın `LocalBusiness` dokümanında açıkça tartışılmıyor (dokümanın kendisi bu konuda sessiz). ([Local Business structured data](https://developers.google.com/search/docs/appearance/structured-data/local-business))
 
-**VixRex'e uygulanışı:** Kod tabanında `businessType` zaten kategoriye göre (`HairSalon`/`BeautySalon`/`LocalBusiness`) seçiliyor, `address`+`geo` (lat/long) + `openingHoursSpecification` dolduruluyor — bunlar `LocalBusiness`'ın hem zorunlu hem önerilen alanlarının çoğunu karşılıyor. Ama **`Product` şemasındaki `offers.seller`**, sadece `{"@type": "LocalBusiness", "name": store.name}` — adres/geo/`@id` referansı içermiyor (bkz. §Repo bulguları). Google'ın ürün + yerel işletme birlikteliği için ideali, `seller`'ın işletme sayfasındaki `LocalBusiness` düğümüne `@id` ile referans vermesi (VixRex zaten `v/[slug]/page.tsx`'te `${publicUrl}#business` `@id`'sini üretiyor — ürün sayfasında bu `@id` kullanılmıyor, bağımsız bir `seller` nesnesi kuruluyor).
+**VixRex'e uygulanışı:** Kod tabanında `businessType` zaten kategoriye göre (`HairSalon`/`BeautySalon`/`LocalBusiness`) seçiliyor, `address`+`geo` (lat/long) + `openingHoursSpecification` dolduruluyor — bunlar `LocalBusiness`'ın hem zorunlu hem önerilen alanlarının çoğunu karşılıyor. Ama **`Product` şemasındaki `offers.seller`**, sadece `{"@type": "LocalBusiness", "name": store.name}` — adres/geo/`@id` referansı içermiyor (bkz. §Repo bulguları, doğrulandı). Google'ın ürün + yerel işletme birlikteliği için ideali, `seller`'ın işletme sayfasındaki `LocalBusiness` düğümüne `@id` ile referans vermesi (VixRex zaten `v/[slug]/page.tsx`'te `${publicUrl}#business` `@id`'sini üretiyor — ürün sayfasında bu `@id` kullanılmıyor, bağımsız bir `seller` nesnesi kuruluyor).
 
 ---
 
@@ -146,20 +148,20 @@ Google'ın resmi `LocalBusiness` dokümanı, zorunlu alanları (`name`, `address
 ### `public_web/src/app/v/[slug]/urun/[productSlug]/page.tsx` (ürün sayfası)
 
 - `generateMetadata`: dolu, ürün görseli OG/Twitter'a veriliyor (satır 143-184).
-- `productJsonLd` (satır 223-249): `@type: Product`, `name`, `description`, `image`, `brand` (mağaza adı), `category`, `offers` (`availability`, `priceCurrency: "TRY"`, `price`, `url`, `seller`).
-- `breadcrumbJsonLd` (satır 251-274): ayrı `BreadcrumbList`.
+- `productJsonLd` (satır 225-251): `@type: Product`, `name`, `description`, `image`, `brand` (mağaza adı), `category`, `offers` (`availability`, `priceCurrency: "TRY"`, `price`, `url`, `seller`).
+- `breadcrumbJsonLd` (satır 253-276): ayrı `BreadcrumbList`.
 
-**Somut eksik/risk noktaları:**
+**Somut eksik/risk noktaları — 2026-08-21'de kod üzerinden yeniden doğrulandı:**
 
-1. **`price` alanı kırılgan** (satır 242): `product.price?.match(/\d/) ? ... : undefined`. `product.price`, `products.ts`'te fiyat metni yoksa `"Fiyat sorun"` gibi bir yer tutucu **değil** — aslında `price` alanı DB'den `price_text || price_amount+currency` olarak geliyor (page.tsx satır 220-224); eğer ikisi de boşsa `price` `undefined` olur ve JSX'te `"Fiyat sorun"` yalnız **görüntüde** fallback. Ama `price_text` esnaf tarafından serbest metin girilebiliyorsa (ör. "Sorunuz", "150 TL'den başlar") `match(/\d/)` regex'i garip sonuçlar üretebilir (aralık fiyatlarda ilk rakamı alır, para birimi sembolünü karıştırabilir). Google'ın merchant listing'i `price`'ı **zorunlu** sayıyor (§1.3) — fiyatsız/belirsiz fiyatlı ürünlerde bu alan eksik kalıp zengin sonuç uygunluğunu düşürebilir.
-2. **`offers.seller`** yalnız `{"@type": "LocalBusiness", "name": store.name}` — mağaza sayfasındaki zengin `LocalBusiness` düğümüne (`${publicUrl}#business`, adres/geo/telefon dolu) **`@id` ile referans vermiyor**. Google'ın `@graph`+`@id` ile düğümleri birbirine bağlama pratiğiyle bu iki düğüm bugün kopuk.
-3. **`VideoObject` hiçbir yerde yok.** Instagram reels/shorts içe aktarıldığında (`INSTAGRAM_SYNC_ENABLED=true` olduğunda) bu içerikler muhtemelen `imageUrls` gibi statik görsellere indirgenecek; video için ayrı bir şema/alan planlanmamış görünüyor (`ProductItem` tipinde `videoUrl` gibi bir alan yok — `public_web/src/lib/products.ts` satır 1-20).
+1. **`price` alanı kırılgan — DOĞRULANDI, tahmin edilenden ciddi** (satır 244): `product.price?.match(/\d/) ? product.price.replace(/[^0-9.,]/g, "").replace(",", ".") : undefined`. `price`, `price_text || price_amount+currency` olarak geliyor (satır 107-110). Regex yalnız rakam/nokta/virgül BIRAKIYOR — aralık fiyatlarda ("150-200 TL") `-` işareti de silindiği için sonuç **"150200"** gibi anlamsız bir sayı oluyor. Türkçe biçimli fiyatlarda ("1.250,50 TL") da bozuluyor: nokta zaten binlik ayracıyken virgül de noktaya çevrilince **"1.250.50"** gibi geçersiz (iki nokta üst üste) bir `price` değeri üretiyor. Google'ın merchant listing'i `price`'ı **zorunlu** sayıyor (§1.3) — bu alan bozuk/eksik kaldığında zengin sonuç uygunluğu düşebilir.
+2. **`offers.seller` kopuk — DOĞRULANDI** (satır 246-249): yalnız `{"@type": "LocalBusiness", "name": store.name}` — mağaza sayfasındaki zengin `LocalBusiness` düğümüne (`${publicUrl}#business`, satır 607'de üretiliyor, adres/geo/telefon dolu) **`@id` ile referans vermiyor**. Bugün iki düğüm birbirinden kopuk.
+3. **`VideoObject` hiçbir yerde yok.** Instagram reels/shorts içe aktarıldığında (`INSTAGRAM_SYNC_ENABLED=true` olduğunda) bu içerikler muhtemelen `imageUrls` gibi statik görsellere indirgenecek; video için ayrı bir şema/alan planlanmamış görünüyor (`ProductItem` tipinde `videoUrl` gibi bir alan yok — `public_web/src/lib/products.ts`).
 4. **`aggregateRating`/`review` ürün JSON-LD'sinde yok** — §1.5'teki riskten kaçınılmış (muhtemelen bilinçli), korunmalı.
 5. **`sku`/`gtin`/`mpn` yok** — el yapımı/yerel esnaf ürünlerinde genelde zaten mevcut olmayacağından bu düşük öncelikli bir eksik (Google bunları yalnız "önerilen", zorunlu değil).
 
 ### `public_web/src/lib/vitrinProfile.ts`
 
-- Kategori bazlı `family` (`product`/`service`/`venue`) ve `PrimaryActionId` (`whatsapp`/`maps`/`booking`/`website`) modeli var — Google `businessType`'ı belirlemekte kullanılan `store.kategori` ile bu profil dosyası **ayrı** eşleştirme mantıkları kullanıyor (`page.tsx` satır 521-531 basit `includes()` kontrolü yapıyor, `vitrinProfile.ts`'teki zengin kategori haritasını kullanmıyor). Bu, gelecekte daha fazla schema.org `@type` (ör. `Bakery`, `ClothingStore`, `Restaurant`) eklenmek istendiğinde `vitrinProfile.ts`'teki kategori haritasına bağlanarak genişletilebilir — bugün bağlı değil.
+- Kategori bazlı `family` (`product`/`service`/`venue`) ve `PrimaryActionId` (`whatsapp`/`maps`/`booking`/`website`) modeli var — Google `businessType`'ı belirlemekte kullanılan `store.kategori` ile bu profil dosyası **ayrı** eşleştirme mantıkları kullanıyor (`page.tsx` basit `includes()` kontrolü yapıyor, `vitrinProfile.ts`'teki zengin kategori haritasını kullanmıyor). Bu, gelecekte daha fazla schema.org `@type` (ör. `Bakery`, `ClothingStore`, `Restaurant`) eklenmek istendiğinde `vitrinProfile.ts`'teki kategori haritasına bağlanarak genişletilebilir — bugün bağlı değil.
 
 ### `lib/config/instagram_sync_config.dart`
 
@@ -171,7 +173,7 @@ Google'ın resmi `LocalBusiness` dokümanı, zorunlu alanları (`name`, `address
 
 **1. En düşük çaba / en yüksek etki — kod-tarafı, hesapsız, ücretsiz (esnaf hiçbir şey yapmaz):**
 
-- **Ürün `price` alanını sağlamlaştır** (`urun/[productSlug]/page.tsx` satır 242 civarı): fiyat serbest metinse ve net bir sayı çıkarılamıyorsa `offers.price`'ı tamamen `undefined` bırakmak yerine, ya `price_amount` alanını (varsa) doğrudan kullan ya da `priceValidUntil`/aralık fiyat için Google'ın desteklediği `priceSpecification` yaklaşımına bak — bugünkü regex kırılgan.
+- **Ürün `price` alanını sağlamlaştır** (`urun/[productSlug]/page.tsx` satır ~244): fiyat serbest metinse ve net bir sayı çıkarılamıyorsa `offers.price`'ı tamamen `undefined` bırakmak yerine, ya `price_amount` alanını (varsa) doğrudan kullan ya da `priceValidUntil`/aralık fiyat için Google'ın desteklediği `priceSpecification` yaklaşımına bak — bugünkü regex kırılgan (2026-08-21'de kod üzerinden doğrulandı, düzeltme henüz yapılmadı).
 - **`offers.seller`'ı mağaza sayfasındaki `LocalBusiness` düğümüne `@id` ile bağla** (`${publicUrl.replace(/\/urun\/.*/, '')}#business` gibi) — iki dosyada zaten üretilen veriyi birbirine referanslamak, ek veri toplamadan yerel-SEO tutarlılığını artırır.
 - **`VideoObject` desteğini `ProductItem` tipine ekle** (`public_web/src/lib/products.ts`): Instagram reels içe aktarma açıldığında (`INSTAGRAM_SYNC_ENABLED=true`) videoyu VixRex'in kendi sayfasında barındırmak/embed etmek ve `name`+`thumbnailUrl`+`uploadDate` (zorunlu üçlü) + `contentUrl`/`embedUrl` ile JSON-LD üretmek — bu, Instagram'ın kendi indekslenmesine güvenmekten daha güvenilir (§3.2). Bu iş, Instagram onayından **bağımsız olarak** şimdiden veri modeli tarafında hazırlanabilir (ör. `videoUrl`/`videoThumbnailUrl`/`videoUploadedAt` alanları migration'la eklenip UI hazır olduğunda kullanılabilir hale getirilebilir).
 
