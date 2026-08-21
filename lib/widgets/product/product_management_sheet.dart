@@ -357,10 +357,9 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       mode: mode,
       value: value,
     );
-    await _finishBulkApply(
-      {for (final p in result.updated) p.id: p},
-      skippedCount: result.skipped.length,
-    );
+    await _finishBulkApply({
+      for (final p in result.updated) p.id: p,
+    }, skippedCount: result.skipped.length);
   }
 
   Future<void> _applyBulkStockStatus(String stockStatus) async {

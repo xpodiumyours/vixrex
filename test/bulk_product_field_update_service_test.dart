@@ -90,16 +90,19 @@ void main() {
       expect(decreased.updated.single.price, '70,00 TL');
     });
 
-    test('hepsini aynı tutara eşitle — mevcut fiyat okunamasa da uygulanır', () {
-      final result = service.applyPriceAdjustment(
-        products: [product(price: 'mesaj atın')],
-        mode: PriceAdjustMode.setExact,
-        value: 199,
-      );
+    test(
+      'hepsini aynı tutara eşitle — mevcut fiyat okunamasa da uygulanır',
+      () {
+        final result = service.applyPriceAdjustment(
+          products: [product(price: 'mesaj atın')],
+          mode: PriceAdjustMode.setExact,
+          value: 199,
+        );
 
-      expect(result.skipped, isEmpty);
-      expect(result.updated.single.price, '199,00 TL');
-    });
+        expect(result.skipped, isEmpty);
+        expect(result.updated.single.price, '199,00 TL');
+      },
+    );
 
     test('fiyatı ayrıştırılamayan ürün artış/azaltmada atlanır, bozulmaz', () {
       final unparseable = product(id: 'p2', price: 'mesaj atın');
@@ -139,19 +142,16 @@ void main() {
   });
 
   test('applyCategory kategori id ve adını birlikte günceller', () {
-    final updated = service.applyCategory(
-      [product(categoryId: 'cat-1', category: 'Giyim')],
-      ProductCategory(id: 'cat-2', name: 'Ayakkabı'),
-    );
+    final updated = service.applyCategory([
+      product(categoryId: 'cat-1', category: 'Giyim'),
+    ], ProductCategory(id: 'cat-2', name: 'Ayakkabı'));
 
     expect(updated.single.categoryId, 'cat-2');
     expect(updated.single.category, 'Ayakkabı');
   });
 
   test('applyVisibility görünürlüğü topluca değiştirir', () {
-    final updated = service.applyVisibility([
-      product(isVisible: true),
-    ], false);
+    final updated = service.applyVisibility([product(isVisible: true)], false);
 
     expect(updated.single.isVisible, isFalse);
   });

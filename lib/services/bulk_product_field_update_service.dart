@@ -53,13 +53,10 @@ class BulkProductFieldUpdateService {
     final rounded = double.parse(amount.toStringAsFixed(2));
     final wholePart = rounded.truncate();
     final fractionPart = ((rounded - wholePart) * 100).round().abs();
-    final wholeStr = wholePart
-        .abs()
-        .toString()
-        .replaceAllMapped(
-          RegExp(r'\B(?=(\d{3})+(?!\d))'),
-          (match) => '.',
-        );
+    final wholeStr = wholePart.abs().toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (match) => '.',
+    );
     final sign = rounded < 0 ? '-' : '';
     return '$sign$wholeStr,${fractionPart.toString().padLeft(2, '0')} TL';
   }
@@ -105,10 +102,7 @@ class BulkProductFieldUpdateService {
     return BulkPriceAdjustResult(updated: updated, skipped: skipped);
   }
 
-  List<Product> applyStockStatus(
-    List<Product> products,
-    String stockStatus,
-  ) {
+  List<Product> applyStockStatus(List<Product> products, String stockStatus) {
     return products.map((p) => p.copyWith(stockStatus: stockStatus)).toList();
   }
 
