@@ -129,10 +129,10 @@ void main() {
             'kozmetik': 'Kozmetik',
             'elektronik': 'Elektronik',
             'kirtasiye': 'Kırtasiye',
-            'pet_shop_veteriner': 'Pet Shop & Veteriner',
-            'hizmet_danismanlik': 'Hizmet & Danışmanlık',
-            'egitim_ders': 'Eğitim & Ders',
-            'ev_temizlik': 'Ev & Temizlik',
+            'pet_shop_veteriner': 'Pet / Veteriner',
+            'hizmet_danismanlik': 'Danışmanlık',
+            'egitim_ders': 'Eğitim',
+            'ev_temizlik': 'Ev Temizlik',
           }.entries) {
         expect(
           BusinessCategoryConfig.labelForKey(entry.key),

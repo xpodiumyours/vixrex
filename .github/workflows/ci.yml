@@ -211,13 +211,23 @@ jobs:
       - name: JSON'dan Dart üret
         run: dart run tool/alan_semasi_uret.dart
 
+      - name: JSON'dan Dart üret (kategori core)
+        run: dart run tool/business_categories_uret.dart
+
       - name: Üretilen Dart dosyasını biçimlendir
-        run: dart format lib/config/vitrin_alanlari.g.dart
+        run: dart format lib/config/vitrin_alanlari.g.dart lib/config/business_categories.g.dart
 
       - name: Sapma var mı kontrol et
         run: |
           if ! git diff --exit-code -- shared/vitrin_alanlari.json lib/config/vitrin_alanlari.g.dart; then
             echo "::error::Üretilen şema dosyaları commit edilmiş hâlleriyle uyuşmuyor. Şemayı yeniden üret ve değişiklikleri commit et."
+            exit 1
+          fi
+
+      - name: Sapma var mı kontrol et (kategori core)
+        run: |
+          if ! git diff --exit-code -- shared/business_categories.json lib/config/business_categories.g.dart; then
+            echo "::error::Kategori core çıktısı ortak JSON ile uyuşmuyor. tool/business_categories_uret.dart'ı tekrar çalıştır."
             exit 1
           fi
 

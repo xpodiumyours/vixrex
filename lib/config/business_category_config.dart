@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vixrex/utils/text_utils.dart';
+import 'package:vixrex/config/business_categories.g.dart';
 
 class BusinessCategoryConfig {
   final String id;
@@ -35,7 +35,7 @@ class BusinessCategoryConfig {
   static List<BusinessCategoryConfig> categoriesByGroup(String group) =>
       categories.where((c) => c.templateGroup == group).toList();
 
-  static const List<BusinessCategoryConfig> categories = [
+  static const List<BusinessCategoryConfig> _presentationCategories = [
     BusinessCategoryConfig(
       id: 'giyim',
       label: 'Giyim',
@@ -651,94 +651,46 @@ class BusinessCategoryConfig {
     ),
   ];
 
+  static final List<BusinessCategoryConfig> categories = _presentationCategories
+      .map((presentation) {
+        final core = businessCategoryById[presentation.id]!;
+        return BusinessCategoryConfig(
+          id: core.id,
+          label: core.label,
+          sectionTitle: presentation.sectionTitle,
+          ctaLabel: presentation.ctaLabel,
+          whatsappTemplate: presentation.whatsappTemplate,
+          emoji: presentation.emoji,
+          icon: presentation.icon,
+          suggestedOfferings: presentation.suggestedOfferings,
+          templateGroup: presentation.templateGroup,
+        );
+      })
+      .toList(growable: false);
+
   /// Eski key formatlarından (ör: 'butik_giyim') güncel label'a eşleme.
   /// [StoreLocalStorageService.loadPendingCategoryKey] tarafından kullanılır.
   static String? labelForKey(String key) {
     const legacyMappings = {
-      'butik_giyim': 'Giyim',
-      'kuafor_guzellik': 'Kuaför',
-      'kafe_restoran': 'Kafe / Lokanta',
-      'berber': 'Kuaför',
-      'oto_kuafor': 'Oto & Araç Hizmetleri',
-      'market_bakkal': 'Gıda',
-      'pastane_tatlici': 'Fırın',
-      'mobilya_dekorasyon': 'Dekorasyon',
-      'spor_salonu': 'Spor & Fitness',
-      'dis_klinigi': 'Sağlık & Yaşam',
-      'eczane': 'Sağlık & Yaşam',
-      'teknik_servis': 'Teknik Servis',
+      'butik_giyim': 'giyim',
+      'kuafor_guzellik': 'kuafor',
+      'kafe_restoran': 'kafe_lokanta',
+      'berber': 'kuafor',
+      'oto_kuafor': 'oto_arac',
+      'market_bakkal': 'gida',
+      'pastane_tatlici': 'firin',
+      'mobilya_dekorasyon': 'dekorasyon',
+      'spor_salonu': 'spor_fitness',
+      'dis_klinigi': 'saglik_yasam',
+      'eczane': 'saglik_yasam',
     };
-    if (legacyMappings.containsKey(key)) return legacyMappings[key];
-
-    // Güncel ID ile de dene
-    for (final category in categories) {
-      if (category.id == key) return category.label;
-    }
-    return null;
+    final id = legacyMappings[key] ?? key;
+    return businessCategoryById[id]?.label;
   }
 
   static BusinessCategoryConfig fromCategoryLabel(String label) {
-    final cleanLabel = label.trim().toLowerCase();
-
-    // 1. Try exact match (case-insensitive) against category labels or IDs first
-    for (final category in categories) {
-      if (category.label.toLowerCase() == cleanLabel ||
-          category.id == cleanLabel) {
-        return category;
-      }
-    }
-
-    // Also try exact match with normalized values to catch "kuafor" matching exactly the ID "kuafor" or matching a normalized label
-    final normalizedLabel = TextUtils.normalizeTurkish(cleanLabel);
-    for (final category in categories) {
-      if (TextUtils.normalizeTurkish(category.label.toLowerCase()) ==
-              normalizedLabel ||
-          TextUtils.normalizeTurkish(category.id) == normalizedLabel) {
-        return category;
-      }
-    }
-
-    // 2. Fallback to keyword mappings for partial/heuristic matching:
-    // (Specific/distinctive terms are placed first; generic terms like 'hizmet' or 'servis' are last)
-    const keywordMappings = {
-      'kafe': 'kafe_lokanta',
-      'restoran': 'kafe_lokanta',
-      'lokanta': 'kafe_lokanta',
-      'kuaför': 'kuafor',
-      'güzellik': 'kuafor',
-      'giyim & butik': 'giyim',
-      'giyim': 'giyim',
-      'butik': 'butik',
-      'gıda & fırın': 'gida',
-      'gıda': 'gida',
-      'fırın': 'firin',
-      'evcil hayvan': 'pet_shop_veteriner',
-      'veteriner': 'pet_shop_veteriner',
-      'pet': 'pet_shop_veteriner',
-      'eğitim': 'egitim_ders',
-      'ders': 'egitim_ders',
-      'temizlik': 'ev_temizlik',
-      'spor': 'spor_fitness',
-      'fitness': 'spor_fitness',
-      'sağlık': 'saglik_yasam',
-      'yaşam': 'saglik_yasam',
-      'oto': 'oto_arac',
-      'araç': 'oto_arac',
-      'araba': 'oto_arac',
-      'teknik': 'teknik_servis',
-      'danışmanlık': 'hizmet_danismanlik',
-      'servis': 'teknik_servis',
-      'hizmet': 'hizmet_danismanlik',
-    };
-
-    for (final entry in keywordMappings.entries) {
-      final normalizedKey = TextUtils.normalizeTurkish(entry.key);
-      if (normalizedLabel.contains(normalizedKey)) {
-        return categories.firstWhere((c) => c.id == entry.value);
-      }
-    }
-
-    return categories.firstWhere((c) => c.id == 'diger');
+    final id = resolveBusinessCategoryId(label) ?? 'diger';
+    return categories.firstWhere((category) => category.id == id);
   }
 
   /// Randevu paketi (bildirim ayarı, ileride CTA): kategoriye göre otomatik.
