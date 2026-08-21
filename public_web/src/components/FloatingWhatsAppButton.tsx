@@ -32,8 +32,7 @@ export default function FloatingWhatsAppButton({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    /* İlk 800px kaydırmadan sonra belirsin — hero'daki buton hâlâ görünürken
-      但on göz konfetisi yapmasın. */
+    /* İlk 1.2sn'de belirsin — hero'daki buton hâlâ görünürken göz konfetisi yapmasın. */
     const timer = setTimeout(() => setVisible(true), 1200);
     return () => clearTimeout(timer);
   }, []);
