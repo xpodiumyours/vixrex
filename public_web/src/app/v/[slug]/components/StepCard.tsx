@@ -15,6 +15,7 @@ interface Props {
   giris: string;
   girisRef: React.RefObject<HTMLTextAreaElement | null>;
   kaydediliyor: boolean;
+  geriAliniyor: boolean;
   hazirGorseller: HazirGorsel[];
   hazirYukleniyor: boolean;
   setGiris: (v: string) => void;
@@ -23,6 +24,7 @@ interface Props {
   hazirGorselSec: (url: string) => Promise<void>;
   gonder: () => Promise<void>;
   alanAtla: () => Promise<void>;
+  canliyaDondur: () => Promise<void>;
   sonrayaBirak?: () => void;
 }
 

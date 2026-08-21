@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { validateField } from "@/lib/vitrinFieldValidation";
+import { broadcastTaslakGuncellendi } from "@/lib/workingDraftBroadcast";
 
 // Sahip çalışma taslağında tek alan günceller (implementation_plan.md Commit 8).
 //
@@ -29,36 +30,6 @@ import { validateField } from "@/lib/vitrinFieldValidation";
 // verisi yetkisiz herkese sızıyordu).
 
 export const dynamic = "force-dynamic";
-
-/**
- * Supabase Realtime Broadcast ile taslak değişikliği sinyali gönderir.
- * Fire-and-forget — yanıtı beklemez, başarısız olursa sessizce geçer.
- *
- * Payload alan adı/değeri TAŞIMAZ (bkz. dosya başı güvenlik notu) — yalnız
- * gönderen sekmenin opak `clientId`'sini taşır, böylece kaydı yapan sekme
- * kendi yankısını görüp gereksiz yenileme yapmaz.
- *
- * Anon istemciyle gönderilir — service-role gerekmez. Bu route'un tek
- * ayrıcalıklı işlemi RPC üzerinden yapılır, RPC de kendi yetki kontrolünü
- * kendisi yapar (bkz. dosya başı not); broadcast göndermek satır erişimi
- * gerektirmediği için anon key yeterli (code-review 2026-08-10 — ilk
- * sürüm gereksiz yere admin/service-role istemci kullanıyordu).
- */
-function broadcastTaslakGuncellendi(slug: string, clientId: string | null): void {
-  void (async () => {
-    try {
-      await supabaseAnon()
-        .channel(`draft:${slug}`)
-        .send({
-          type: "broadcast",
-          event: "alan_guncellendi",
-          payload: { clientId },
-        });
-    } catch {
-      // Broadcast başarısız olursa kayıt yine de tamam — sessizce geçer.
-    }
-  })();
-}
 
 const HATA_METNI: Record<string, string> = {
   INVALID_SESSION_TOKEN: "Oturumun geçersiz veya süresi dolmuş. Önizlemeyi tekrar aç.",
