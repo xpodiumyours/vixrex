@@ -175,14 +175,14 @@ export default function VitrinProfileView({
   storeSlug,
   kategori,
   businessType,
-  status,
+
   isClosed,
   logoUrl,
   heroImage,
   heroBadge,
   isBusinessVerified = false,
   description,
-  corporateBio,
+
   address,
   phone,
   phoneUrl,
@@ -204,7 +204,7 @@ export default function VitrinProfileView({
   mapsUrl,
   mapsEmbedUrl,
   referencesUrl,
-  isBookingEnabled,
+
   profile,
   collections,
   productCount,
@@ -584,7 +584,7 @@ export default function VitrinProfileView({
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {collections.map((cat, idx) => (
+            {collections.map((cat) => (
               <div
                 key={cat.name}
                 className="group relative h-44 rounded-2xl overflow-hidden cursor-pointer border border-blue-500/15 hover:border-blue-500/30 transition shadow-lg"

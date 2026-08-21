@@ -23,7 +23,6 @@ interface ProductCatalogProps {
   storeSlug: string;
   products: CatalogProduct[];
   categoryMap: CategoryItem[];
-  fallbackImage?: string | null;
   storeInitial?: string;
 }
 
@@ -32,12 +31,11 @@ const PAGE_SIZE = 24;
 function CatalogProductImage({
   src,
   alt,
-  fallbackImage,
+  
   storeInitial,
 }: {
   src: string | null;
   alt: string;
-  fallbackImage?: string | null;
   storeInitial: string;
 }) {
   const [prevSrc, setPrevSrc] = useState(src);

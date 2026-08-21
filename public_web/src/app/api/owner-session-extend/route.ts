@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       ownerSession.slug,
       ownerSession.sessionToken
     );
-  } catch (err) {
+  } catch {
     console.error("[owner-session-extend] signOwnerSession failed");
     return NextResponse.json({ hata: "Oturum uzatılamadı." }, { status: 500 });
   }
