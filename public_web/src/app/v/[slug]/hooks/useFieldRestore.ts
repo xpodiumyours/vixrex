@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
@@ -29,7 +29,10 @@ export function useFieldRestore({
   const router = useRouter();
   const [geriAliniyor, setGeriAliniyor] = useState(false);
   const seciliAnahtarRef = useRef(seciliAlan?.anahtar ?? null);
-  seciliAnahtarRef.current = seciliAlan?.anahtar ?? null;
+
+  useEffect(() => {
+    seciliAnahtarRef.current = seciliAlan?.anahtar ?? null;
+  }, [seciliAlan?.anahtar]);
 
   const canliyaDondur = useCallback(async () => {
     if (!seciliAlan) return;

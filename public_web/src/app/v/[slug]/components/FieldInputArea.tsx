@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { alanOnemi } from "@/lib/vitrinReadiness";
 import { ImagePickerPanel } from "./ImagePickerPanel";
