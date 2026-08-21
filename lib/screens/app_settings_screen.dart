@@ -15,6 +15,7 @@ import 'package:vixrex/theme/app_text_styles.dart';
 import 'package:vixrex/widgets/common/app_card.dart';
 import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 import 'package:vixrex/widgets/common/app_section_header.dart';
+import 'package:vixrex/widgets/settings/business_ownership_card.dart';
 
 /// Uygulama ayarları — bildirim tercihi + hesap. Tema ayrı state uydurulmaz (app dark-first).
 class AppSettingsScreen extends StatefulWidget {
@@ -287,6 +288,10 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                   const SizedBox(height: 20),
                   const AppSectionHeader(title: 'Hesap'),
                   const SizedBox(height: 8),
+                  if (_auth.currentUser != null) ...[
+                    const BusinessOwnershipCard(),
+                    const SizedBox(height: 8),
+                  ],
                   AppCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,

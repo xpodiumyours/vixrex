@@ -112,6 +112,7 @@ export interface VitrinProfileViewProps {
   logoUrl: string | null;
   heroImage: string;
   heroBadge?: string | null;
+  isBusinessVerified?: boolean;
   description: string;
   corporateBio: string | null;
   address: string | null;
@@ -179,6 +180,7 @@ export default function VitrinProfileView({
   logoUrl,
   heroImage,
   heroBadge,
+  isBusinessVerified = false,
   description,
   corporateBio,
   address,
@@ -411,7 +413,7 @@ export default function VitrinProfileView({
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
           <div className="max-w-2xl">
-            {(displayBadge || showOpenBadge) && (
+            {(displayBadge || showOpenBadge || isBusinessVerified) && (
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {displayBadge && (
                   <div
@@ -438,6 +440,16 @@ export default function VitrinProfileView({
                       }`}
                     />
                     {isClosed ? "Şu an kapalı" : "Şu an açık"}
+                  </div>
+                )}
+                {isBusinessVerified && (
+                  <div
+                    className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/12 px-3.5 py-1 text-xs font-bold text-green-300 backdrop-blur-md"
+                    title="Google İşletme Profili ile sahiplik doğrulandı"
+                    aria-label="Google İşletme Profili ile sahiplik doğrulandı"
+                  >
+                    <span aria-hidden="true">✓</span>
+                    Doğrulanmış işletme
                   </div>
                 )}
               </div>

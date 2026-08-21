@@ -103,6 +103,7 @@ interface PublicStoreRow {
   latitude: number | null;
   longitude: number | null;
   google_business_link: string | null;
+  business_verified_at?: string | null;
   product_storage_version: number | null;
   theme_preset?: string | null;
   rating_score?: number | null;
@@ -168,6 +169,8 @@ const PUBLIC_STORE_SELECT =
   "blog_section_kicker,blog_section_title,faq_section_kicker,faq_section_title," +
   "faq_section_description,section_visibility,province_name,district_name," +
   "neighborhood_name";
+const PUBLIC_STORE_SELECT_WITH_VERIFICATION =
+  `${PUBLIC_STORE_SELECT},business_verified_at`;
 
 async function _buildStoreDataBundle(store: PublicStoreRow) {
   const slug = store.slug;
@@ -253,13 +256,29 @@ async function _buildStoreDataBundle(store: PublicStoreRow) {
 }
 
 async function _getStoreData(slug: string) {
-  const { data, error: storeError } = await supabase
+  let result = await supabase
     .from("stores")
-    .select(PUBLIC_STORE_SELECT)
+    .select(PUBLIC_STORE_SELECT_WITH_VERIFICATION)
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
 
+  // Migration ile Vercel deploy'u kısa süreli farklı sırada çalışırsa vitrin
+  // kapanmasın; yalnız rozet geçici olarak gösterilmez.
+  if (
+    result.error &&
+    (result.error.code === "42703" ||
+      result.error.message.includes("business_verified_at"))
+  ) {
+    result = await supabase
+      .from("stores")
+      .select(PUBLIC_STORE_SELECT)
+      .eq("slug", slug)
+      .eq("is_published", true)
+      .maybeSingle();
+  }
+
+  const { data, error: storeError } = result;
   if (storeError) {
     console.error(`Public store query failed for slug=${slug}:`, storeError);
     throw storeError;
@@ -654,6 +673,7 @@ export default async function StorePage(props: PageProps) {
         logoUrl={store.logo_url}
         heroImage={heroImage}
         heroBadge={displayHeroBadge || null}
+        isBusinessVerified={Boolean(store.business_verified_at)}
         description={displayDescription}
         corporateBio={store.corporate_bio}
         address={displayAddress}

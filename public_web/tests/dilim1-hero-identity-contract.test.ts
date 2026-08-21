@@ -29,4 +29,15 @@ describe("Dilim 1 hero kimlik alanları", () => {
     expect(viewSource).not.toContain("merhaba@${storeSlug}.com");
     expect(viewSource).not.toContain("4.9 (128 değerlendirme)");
   });
+
+  it("yalnız doğrulanmış işletmede güven rozeti gösterir", () => {
+    expect(pageSource).toContain("business_verified_at");
+    expect(pageSource).toContain("PUBLIC_STORE_SELECT_WITH_VERIFICATION");
+    expect(pageSource).toContain(
+      "isBusinessVerified={Boolean(store.business_verified_at)}"
+    );
+    expect(viewSource).toContain("isBusinessVerified &&");
+    expect(viewSource).toContain("Doğrulanmış işletme");
+    expect(viewSource).not.toContain("Doğrulanmamış işletme");
+  });
 });
