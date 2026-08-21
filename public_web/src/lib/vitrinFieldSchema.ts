@@ -73,12 +73,8 @@ export interface VitrinField {
   /** Kısa yardım metni; asistan ve form birlikte kullanır. */
   ipucu?: string;
   /**
-   * Doğrulama kuralının adı (ör. "tr_mobil"). Faz F (Tek Asistan planı):
-   * Flutter bazı alanlarda şemanın "dolu mu" kontrolünün ötesinde ayrıca
-   * biçim doğruluyor (örn. WhatsApp için TR mobil formatı,
-   * `WhatsAppLinkHelper.isValidTurkeyMobile`). Bu alan o farkı GÖRÜNÜR
-   * kılar — bu turda Next.js tarafında gerçek doğrulama mantığını
-   * ÇALIŞTIRMAZ, yalnız belgeler (bkz. docs/alan-eslemesi.md).
+   * Doğrulama kuralının adı (ör. "tr_mobil"). Flutter ve Next.js bu kuralı
+   * kendi doğrulama adapter'larında uygular; şema kuralın ortak adını taşır.
    */
   dogrulama?: string;
   /**

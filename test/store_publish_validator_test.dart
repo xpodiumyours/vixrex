@@ -39,6 +39,7 @@ StoreData validVitrin() {
     provinceCode: '34',
     districtName: 'Kadıköy',
     districtCode: '3447',
+    kategori: 'Danışmanlık',
     isStore: false,
     marketplaceLinks: [],
     privacyNoticeAcknowledged: true,
@@ -77,13 +78,13 @@ void main() {
       final data = validStore();
       data.name = '';
       expect(validator.validateStore(data), isNotNull);
-      expect(validator.validateStore(data), contains('mağaza adı'));
+      expect(validator.validateStore(data), contains('işletme adı'));
     });
 
     test('missing whatsapp returns error', () {
       final data = validStore();
       data.whatsapp = '';
-      expect(validator.validateStore(data), contains('telefon'));
+      expect(validator.validateStore(data), contains('WhatsApp'));
     });
 
     test('invalid whatsapp format returns error', () {
@@ -95,10 +96,10 @@ void main() {
       );
     });
 
-    test('missing description returns error', () {
+    test('missing description still passes', () {
       final data = validStore();
       data.description = '';
-      expect(validator.validateStore(data), contains('kısa açıklama'));
+      expect(validator.validateStore(data), isNull);
     });
 
     test('missing address returns error', () {
@@ -120,6 +121,14 @@ void main() {
       final data = validStore();
       data.kategori = 'Diğer';
       expect(validator.validateStore(data), contains('kategori'));
+    });
+
+    test('il ve ilçe kodları yayın şartı değildir', () {
+      final data =
+          validStore()
+            ..provinceCode = ''
+            ..districtCode = '';
+      expect(validator.validateStore(data), isNull);
     });
 
     test('product with empty name returns error', () {
@@ -176,7 +185,7 @@ void main() {
       final data = validVitrin();
       data.address = '';
       expect(validator.validateVitrin(data), isNotNull);
-      expect(validator.validateVitrin(data), contains('konum'));
+      expect(validator.validateVitrin(data), contains('adres'));
     });
 
     test('no marketplace links still passes', () {

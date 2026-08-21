@@ -25,6 +25,15 @@ function guvenliUrlMu(deger: string): boolean {
   }
 }
 
+function normalizeTurkeyMobile(deger: string): string | null {
+  if (/[a-zA-ZçğıöşüÇĞİÖŞÜ]/.test(deger)) return null;
+  const digits = deger.replace(/\D/g, "");
+  if (/^05\d{9}$/.test(digits)) return `90${digits.slice(1)}`;
+  if (/^5\d{9}$/.test(digits)) return `90${digits}`;
+  if (/^905\d{9}$/.test(digits)) return digits;
+  return null;
+}
+
 function metinSinirlari(alan: VitrinField, deger: string): string | null {
   const uzunluk = deger.length;
   if (alan.zorunlu && uzunluk === 0) {
@@ -94,6 +103,16 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
   switch (alan.tip) {
     case "telefon": {
       const rakamlar = deger.replace(/\D/g, "");
+      if (alan.dogrulama === "tr_mobil") {
+        const normalized = normalizeTurkeyMobile(deger);
+        if (!normalized) {
+          return {
+            ok: false,
+            hata: `${alan.etiket} geçerli bir Türkiye cep telefonu olmalı.`,
+          };
+        }
+        return { ok: true, alan, deger: normalized };
+      }
       if (rakamlar.length < 10 || rakamlar.length > 13) {
         return { ok: false, hata: `${alan.etiket} 10–13 rakam olmalı.` };
       }
