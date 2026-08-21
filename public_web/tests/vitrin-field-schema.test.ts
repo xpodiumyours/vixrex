@@ -141,12 +141,19 @@ describe("alan doğrulama — tek fonksiyon, alan başına dallanma yok", () => 
     if (r.ok) expect(r.deger).toBeNull();
   });
 
-  it("telefon yalnız rakama indirgenir, kısa numara reddedilir", () => {
+  it("tr_mobil WhatsApp numarasını 905 biçimine normalize eder", () => {
     const gecerli = validateField("whatsapp", "0555 123 45 67");
     expect(gecerli.ok).toBe(true);
-    if (gecerli.ok) expect(gecerli.deger).toBe("05551234567");
+    if (gecerli.ok) expect(gecerli.deger).toBe("905551234567");
 
-    expect(validateField("whatsapp", "12345").ok).toBe(false);
+    for (const value of ["5551234567", "+90 555 123 45 67", "905551234567"]) {
+      const result = validateField("whatsapp", value);
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.deger).toBe("905551234567");
+    }
+    for (const value of ["12345", "02121234567", "abc05551234567"]) {
+      expect(validateField("whatsapp", value).ok).toBe(false);
+    }
   });
 
   it("e-posta biçimi denetlenir", () => {

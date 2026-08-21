@@ -1,110 +1,70 @@
 import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/models/store_data.dart';
-import 'package:vixrex/utils/whatsapp_link_helper.dart';
 import 'package:vixrex/services/store_publish_legal_validator.dart';
 import 'package:vixrex/services/store_publish_links_validator.dart';
+import 'package:vixrex/services/store_publish_payload_builder.dart';
+import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 class StorePublishValidator {
   final StorePublishLegalValidator legalValidator;
   final StorePublishLinksValidator linksValidator;
+  final StorePublishPayloadBuilder payloadBuilder;
 
   const StorePublishValidator({
     this.legalValidator = const StorePublishLegalValidator(),
     this.linksValidator = const StorePublishLinksValidator(),
+    this.payloadBuilder = const StorePublishPayloadBuilder(),
   });
 
-  String? validate(StoreData data) {
-    if (data.isStore) {
-      return validateStore(data);
-    } else {
-      return validateVitrin(data);
-    }
-  }
+  String? validate(StoreData data) =>
+      _validate(data, validateProducts: data.isStore);
 
-  String? validateVitrin(StoreData data) {
-    final missing = <String>[];
+  String? validateVitrin(StoreData data) =>
+      _validate(data, validateProducts: false);
 
-    if (data.name.trim().isEmpty) {
-      missing.add('işletme adı');
-    }
-    if (data.whatsapp.trim().isEmpty) {
-      missing.add('WhatsApp numarası');
-    }
-    if (data.address.trim().isEmpty) {
-      missing.add('konum / adres');
-    }
+  String? validateStore(StoreData data) =>
+      _validate(data, validateProducts: true);
 
-    if (data.provinceName.trim().isEmpty || data.provinceCode.trim().isEmpty) {
-      missing.add('il');
-    }
-    if (data.districtName.trim().isEmpty || data.districtCode.trim().isEmpty) {
-      missing.add('ilçe');
-    }
-    if (missing.isNotEmpty) {
-      return 'Lütfen şu zorunlu alanları doldurun: ${missing.join(', ')}.';
-    }
+  String? _validate(StoreData data, {required bool validateProducts}) {
+    final readinessError = _validateCommonReadiness(data);
+    if (readinessError != null) return readinessError;
+
     if (!WhatsAppLinkHelper.isValidTurkeyMobile(data.whatsapp)) {
       return WhatsAppLinkHelper.invalidNumberMessage;
+    }
+
+    if (validateProducts) {
+      final productError = _validateProducts(data.products);
+      if (productError != null) return productError;
     }
 
     final extraValidation = linksValidator.validateLinksAndOfferings(data);
-    if (extraValidation != null) {
-      return extraValidation;
-    }
+    if (extraValidation != null) return extraValidation;
 
-    final legalValidation = legalValidator.validateLegalAcceptance(data);
-    if (legalValidation != null) {
-      return legalValidation;
-    }
-
-    return null;
+    return legalValidator.validateLegalAcceptance(data);
   }
 
-  String? validateStore(StoreData data) {
-    final missingItems = <String>[];
+  String? _validateCommonReadiness(StoreData data) {
+    final missing = <String>[];
+    final payload = payloadBuilder.toStoreUpdateMap(data);
+    for (final field in zorunluAlanlar) {
+      final value = (payload[field.kolon] ?? '').toString().trim();
+      final emptyValues =
+          field.bosDegerler?.map((item) => item.trim().toLowerCase()).toSet();
+      if (value.isEmpty || emptyValues?.contains(value.toLowerCase()) == true) {
+        missing.add(_missingFieldLabel(field.etiket));
+      }
+    }
+    if (missing.isEmpty) return null;
+    return 'Lütfen şu zorunlu alanları doldurun: ${missing.join(', ')}.';
+  }
 
-    if (data.name.trim().isEmpty) {
-      missingItems.add('mağaza adı');
-    }
-    if (data.whatsapp.trim().isEmpty) {
-      missingItems.add('telefon / WhatsApp numarası');
-    }
-    if (data.description.trim().isEmpty) {
-      missingItems.add('kısa açıklama');
-    }
-    if (data.address.trim().isEmpty) {
-      missingItems.add('adres bilgisi');
-    }
-    // Faz F (Tek Asistan planı) düzeltmesi: "Diğer" teknik olarak dolu ama
-    // VixRexProfileSnapshot.categoryCompleted'in de dediği gibi işlevsel
-    // olarak eksik (kategoriye bağlı hiçbir şey çalışmaz). Bu kontrol
-    // eskiden yalnız boş-string bakıyordu; "Diğer" seçilmiş bir mağaza
-    // buradan geçip VixRexProfileSnapshot'ta hâlâ "eksik" görünebiliyordu —
-    // iki ayrı yayın-hazır tanımı birbirinden sapmıştı. Şemadaki
-    // bosDegerler tek kaynak; elle "diğer"/"diger" listesi üçüncü kez
-    // yazılmıyor.
-    final kategoriBos = alanAnahtarla['kategori']?.bosDegerler
-        ?.map((v) => v.toLowerCase())
-        .contains(data.kategori.trim().toLowerCase());
-    if (data.kategori.trim().isEmpty || kategoriBos == true) {
-      missingItems.add('işletme kategorisi');
-    }
+  String _missingFieldLabel(String label) {
+    return label.toLowerCase().replaceFirst('whatsapp', 'WhatsApp');
+  }
 
-    if (data.provinceName.trim().isEmpty || data.provinceCode.trim().isEmpty) {
-      missingItems.add('il');
-    }
-    if (data.districtName.trim().isEmpty || data.districtCode.trim().isEmpty) {
-      missingItems.add('ilçe');
-    }
-    if (missingItems.isNotEmpty) {
-      return 'Mağaza yayınlanmadan önce şu alanları tamamlayın: ${missingItems.join(', ')}.';
-    }
-    if (!WhatsAppLinkHelper.isValidTurkeyMobile(data.whatsapp)) {
-      return WhatsAppLinkHelper.invalidNumberMessage;
-    }
-
-    // Validate products if present
-    for (final product in data.products) {
+  String? _validateProducts(List<Product> products) {
+    for (final product in products) {
       if (product.name.trim().isEmpty) {
         return 'Eklenen tüm ürünlerin adı zorunludur.';
       }
@@ -115,17 +75,6 @@ class StorePublishValidator {
         return 'Bir ürüne en fazla 4 görsel eklenebilir.';
       }
     }
-
-    final extraValidation = linksValidator.validateLinksAndOfferings(data);
-    if (extraValidation != null) {
-      return extraValidation;
-    }
-
-    final legalValidation = legalValidator.validateLegalAcceptance(data);
-    if (legalValidation != null) {
-      return legalValidation;
-    }
-
     return null;
   }
 }
