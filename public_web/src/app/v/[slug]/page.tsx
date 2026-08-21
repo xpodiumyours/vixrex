@@ -28,6 +28,10 @@ import VitrinProfileView from "./VitrinProfileView";
 import OwnerWorkspaceShell, { WorkingDraftData } from "./OwnerWorkspaceShell";
 import { parseAssistantHandoff } from "@/lib/assistantHandoff";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
+import {
+  PUBLIC_STORE_SELECT,
+  PUBLIC_STORE_SELECT_WITH_VERIFICATION,
+} from "@/lib/publicStoreSelect";
 
 export const revalidate = 60;
 // generateStaticParams yalnızca yayınlı slug'ları önceden üretiyor. Sahip
@@ -154,23 +158,6 @@ interface CategoryRow {
   id: string;
   name: string;
 }
-
-const PUBLIC_STORE_SELECT =
-  "id,slug,name,business_type,description,corporate_bio,whatsapp,phone,email," +
-  "hero_badge,instagram,website,address,status,marketplace_links,gallery_items," +
-  "faq_items,about_kicker,about_title,about_image_url,about_image_caption," +
-  "about_values,gallery_section_kicker,gallery_section_title," +
-  "show_storefront_rating,show_directions_link,references_link,shelf_image_url," +
-  "logo_url,working_hours,is_published,is_demo,kategori,latitude,longitude," +
-  "google_business_link,product_storage_version,featured_banner_label," +
-  "featured_banner_title,featured_banner_description,featured_banner_image_url," +
-  "featured_banner_price_text,rating_score,review_count,hero_location_text,map_label," +
-  "category_section_title,product_section_title,gallery_action_label,gallery_action_href," +
-  "blog_section_kicker,blog_section_title,faq_section_kicker,faq_section_title," +
-  "faq_section_description,section_visibility,province_name,district_name," +
-  "neighborhood_name";
-const PUBLIC_STORE_SELECT_WITH_VERIFICATION =
-  `${PUBLIC_STORE_SELECT},business_verified_at`;
 
 async function _buildStoreDataBundle(store: PublicStoreRow) {
   const slug = store.slug;

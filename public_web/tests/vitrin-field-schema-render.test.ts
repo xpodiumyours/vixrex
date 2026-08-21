@@ -3,18 +3,11 @@ import { resolve } from "path";
 import { describe, expect, it } from "vitest";
 
 import { VITRIN_FIELDS } from "../src/lib/vitrinFieldSchema";
+import { PUBLIC_STORE_SELECT } from "../src/lib/publicStoreSelect";
 
-const pageSource = readFileSync(
-  resolve(__dirname, "../src/app/v/[slug]/page.tsx"),
-  "utf-8",
-);
 const viewSource = readFileSync(
   resolve(__dirname, "../src/app/v/[slug]/VitrinProfileView.tsx"),
   "utf-8",
-);
-const publicStoreSelect = pageSource.slice(
-  pageSource.indexOf("const PUBLIC_STORE_SELECT"),
-  pageSource.indexOf("async function _buildStoreDataBundle"),
 );
 
 function camelCase(kolon: string) {
@@ -39,7 +32,7 @@ const mevcutRenderEslemeleri: Readonly<Record<string, string>> = {
 describe("vitrin alan şeması render bütünlüğü", () => {
   it("şemadaki her kolonu public mağaza sorgusunda taşır", () => {
     const eksikKolonlar = VITRIN_FIELDS.map((alan) => alan.kolon).filter(
-      (kolon) => !publicStoreSelect.includes(kolon),
+      (kolon) => !PUBLIC_STORE_SELECT.split(",").includes(kolon),
     );
 
     expect(eksikKolonlar, `PUBLIC_STORE_SELECT eksikleri: ${eksikKolonlar.join(", ")}`).toEqual([]);

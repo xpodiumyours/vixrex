@@ -94,6 +94,7 @@ class StoreData {
   String provinceName;
   String districtCode;
   String districtName;
+  String neighborhoodName;
   String googleBusinessLink;
 
   // Konum ve KVKK Alanları
@@ -182,6 +183,7 @@ class StoreData {
     this.provinceName = '',
     this.districtCode = '',
     this.districtName = '',
+    this.neighborhoodName = '',
     this.googleBusinessLink = '',
     this.latitude,
     this.longitude,
@@ -278,6 +280,7 @@ class StoreData {
     String? provinceName,
     String? districtCode,
     String? districtName,
+    String? neighborhoodName,
     String? googleBusinessLink,
     double? latitude,
     double? longitude,
@@ -366,6 +369,7 @@ class StoreData {
       provinceName: provinceName ?? this.provinceName,
       districtCode: districtCode ?? this.districtCode,
       districtName: districtName ?? this.districtName,
+      neighborhoodName: neighborhoodName ?? this.neighborhoodName,
       googleBusinessLink: googleBusinessLink ?? this.googleBusinessLink,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,

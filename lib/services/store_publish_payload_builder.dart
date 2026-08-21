@@ -86,6 +86,10 @@ class StorePublishPayloadBuilder {
       'province_name': data.provinceName.trim(),
       'district_code': data.districtCode.trim(),
       'district_name': data.districtName.trim(),
+      // #237 PR3 kontrat testinin yakaladığı gerçek boşluk: bu alan
+      // buluttan yükleniyordu (store_data_dto.dart) ama hiç geri
+      // yazılmıyordu — bir sonraki kayıtta sessizce boşalıyordu.
+      'neighborhood_name': data.neighborhoodName.trim(),
       'google_business_link': data.googleBusinessLink.trim(),
       'logo_url': data.logoUrl,
       'latitude': data.latitude,

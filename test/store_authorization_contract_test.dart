@@ -24,9 +24,14 @@ void main() {
     expect(explore, contains('StoreSafeSelect.columns'));
     expect(authService, contains('StoreSafeSelect.columns'));
     expect(safeSelect, contains('StoreSafeSelect'));
-    expect(safeSelect, contains("'id,slug,name"));
+    // #237 PR3: kolonlar artık tek tek elle yazılmıyor, ortak vitrin alan
+    // şemasından (`vitrinAlanlari`) türetiliyor — bkz. store_safe_select.dart.
+    expect(safeSelect, contains("'id'"));
+    expect(safeSelect, contains("'slug'"));
+    expect(safeSelect, contains('vitrinAlanlari'));
     expect(safeSelect, isNot(contains("'edit_token")));
     expect(safeSelect, isNot(contains(',edit_token')));
+    expect(safeSelect, isNot(contains("'user_id'")));
     expect(safeSelect, isNot(contains('published_at')));
   });
 
