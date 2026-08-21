@@ -120,6 +120,28 @@ jobs:
             exit 1
           fi
 
+  changes:
+    name: Değişiklik yüzeyi
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      flutter: ${{ steps.classify.outputs.flutter }}
+      schema: ${{ steps.classify.outputs.schema }}
+      public_web: ${{ steps.classify.outputs.public_web }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Yüzeyleri sınıflandır
+        id: classify
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python .github/scripts/changed_surfaces.py --base "$BASE_SHA" --head "$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
   grant-guard:
     name: Supabase yerel doğrulama — GRANT güvenlik bekçisi
     needs: changes
@@ -194,28 +216,6 @@ jobs:
       - name: Yerel Supabase'i durdur
         if: always()
         run: supabase stop
-
-  changes:
-    name: Değişiklik yüzeyi
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      flutter: ${{ steps.classify.outputs.flutter }}
-      schema: ${{ steps.classify.outputs.schema }}
-      public_web: ${{ steps.classify.outputs.public_web }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Yüzeyleri sınıflandır
-        id: classify
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python .github/scripts/changed_surfaces.py --base "$BASE_SHA" --head "$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
   flutter:
     name: Flutter — analiz ve testler
