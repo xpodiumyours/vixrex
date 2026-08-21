@@ -73,6 +73,7 @@ class StoreDataDto {
       'province_name': data.provinceName,
       'district_code': data.districtCode,
       'district_name': data.districtName,
+      'neighborhoodName': data.neighborhoodName,
       'google_business_link': data.googleBusinessLink,
       'latitude': data.latitude,
       'longitude': data.longitude,
@@ -247,6 +248,8 @@ class StoreDataDto {
       provinceName: _getString(json, 'provinceName', 'province_name') ?? '',
       districtCode: _getString(json, 'districtCode', 'district_code') ?? '',
       districtName: _getString(json, 'districtName', 'district_name') ?? '',
+      neighborhoodName:
+          _getString(json, 'neighborhoodName', 'neighborhood_name') ?? '',
       googleBusinessLink:
           _getString(json, 'googleBusinessLink', 'google_business_link') ?? '',
       latitude: (json['latitude'] as num?)?.toDouble(),
