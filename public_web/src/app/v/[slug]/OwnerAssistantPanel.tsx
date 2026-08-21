@@ -5,6 +5,7 @@ import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
 import { useOwnerActions } from "./hooks/useOwnerActions";
+import { useFieldRestore } from "./hooks/useFieldRestore";
 import { ChatBubble } from "./components/ChatBubble";
 import { ChatTopBar } from "./components/ChatTopBar";
 import { StageMeter } from "./components/StageMeter";
@@ -89,6 +90,14 @@ export default function OwnerAssistantPanel({
     alanAtlandi,
   });
 
+  const fieldRestore = useFieldRestore({
+    slug,
+    seciliAlan,
+    mesajEkle,
+    setAlan,
+    setGiris,
+  });
+
   // Faz G3 (Tek Asistan planı, G3.1): üç aşamalı ilerleme şeridi için
   // önem başına dolu/toplam — şemadan hesaplanır, elle sayılmaz.
   const dolulugu = asamaDolulugu(yerelTaslak, atlanmisAlanlar);
@@ -158,6 +167,7 @@ export default function OwnerAssistantPanel({
             giris={giris}
             girisRef={girisRef}
             kaydediliyor={actions.kaydediliyor}
+            geriAliniyor={fieldRestore.geriAliniyor}
             hazirGorseller={actions.hazirGorseller}
             hazirYukleniyor={actions.hazirYukleniyor}
             setGiris={setGiris}
@@ -166,6 +176,7 @@ export default function OwnerAssistantPanel({
             hazirGorselSec={actions.hazirGorselSec}
             gonder={actions.gonder}
             alanAtla={actions.alanAtla}
+            canliyaDondur={fieldRestore.canliyaDondur}
             sonrayaBirak={sonrayaBirak}
           />
 

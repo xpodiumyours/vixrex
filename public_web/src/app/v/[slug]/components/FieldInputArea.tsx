@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { alanOnemi } from "@/lib/vitrinReadiness";
 import { ImagePickerPanel } from "./ImagePickerPanel";
@@ -9,6 +8,7 @@ interface Props {
   giris: string;
   girisRef: React.RefObject<HTMLTextAreaElement | null>;
   kaydediliyor: boolean;
+  geriAliniyor: boolean;
   hazirGorseller: HazirGorsel[];
   hazirYukleniyor: boolean;
   setGiris: (v: string) => void;
@@ -17,6 +17,7 @@ interface Props {
   hazirGorselSec: (url: string) => Promise<void>;
   gonder: () => Promise<void>;
   alanAtla: () => Promise<void>;
+  canliyaDondur: () => Promise<void>;
   /** Kalite alanında "Sonra" — sırayı ilerletir, `atlanmislar`'a YAZMAZ
    * (ADR 0002: "boş geç" yalnız isteğe bağlıda). Yoksa düğme çizilmez. */
   sonrayaBirak?: () => void;
@@ -27,6 +28,7 @@ export function FieldInputArea({
   giris,
   girisRef,
   kaydediliyor,
+  geriAliniyor,
   hazirGorseller,
   hazirYukleniyor,
   setGiris,
@@ -35,6 +37,7 @@ export function FieldInputArea({
   hazirGorselSec,
   gonder,
   alanAtla,
+  canliyaDondur,
   sonrayaBirak,
 }: Props) {
   // "Boş geç" yalnız isteğe bağlı alanlarda çıkar — temel/kalite alanlar
@@ -45,8 +48,16 @@ export function FieldInputArea({
 
   return (
     <div>
-      {seciliAlan && (seciliAlan.maxUzunluk || istegeBagliMi || kaliteMi) && (
+      {seciliAlan && (
         <p className="mb-2 flex items-center justify-end gap-2 text-[11px] text-slate-400">
+          <button
+            type="button"
+            onClick={() => void canliyaDondur()}
+            disabled={kaydediliyor || geriAliniyor}
+            className="mr-auto shrink-0 text-blue-300 underline decoration-dotted hover:text-blue-200 disabled:opacity-50"
+          >
+            {geriAliniyor ? "Döndürülüyor…" : "Canlı hâline döndür"}
+          </button>
           {seciliAlan.maxUzunluk && (
             <span>
               {giris.length}/{seciliAlan.maxUzunluk}
