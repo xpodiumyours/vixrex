@@ -296,6 +296,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                   'Kısa açıklama',
                   500,
                   maxLines: 4,
+                  helperBuilder: _descriptionHelper,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -371,14 +372,50 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     String label,
     int maxLength, {
     int maxLines = 1,
+    String? Function(String)? helperBuilder,
   }) {
-    return TextField(
-      controller: controller,
-      maxLength: maxLength,
-      maxLines: maxLines,
-      enabled: !_isSaving,
-      decoration: InputDecoration(labelText: label, counterText: ''),
+    if (helperBuilder == null) {
+      return TextField(
+        controller: controller,
+        maxLength: maxLength,
+        maxLines: maxLines,
+        enabled: !_isSaving,
+        decoration: InputDecoration(labelText: label, counterText: ''),
+      );
+    }
+
+    // #247: eksik/çok kısa açıklama, ürün sayısı arttıkça SEO ve müşteri
+    // güveni açısından bir kalite riski — bu yumuşak (bloklamayan) uyarı,
+    // kaydetmeyi engellemeden esnafı bilgilendirir. ValueListenableBuilder
+    // kullanılıyor çünkü TextEditingController zaten bir ValueNotifier —
+    // ayrı bir state/setState açmaya gerek yok.
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        return TextField(
+          controller: controller,
+          maxLength: maxLength,
+          maxLines: maxLines,
+          enabled: !_isSaving,
+          decoration: InputDecoration(
+            labelText: label,
+            counterText: '',
+            helperText: helperBuilder(value.text),
+            helperMaxLines: 2,
+            helperStyle: const TextStyle(color: AppColors.warning),
+          ),
+        );
+      },
     );
+  }
+
+  /// Boşsa uyarı yok (zorunlu alan değil) — yalnız doldurulmuş ama çok kısa
+  /// bırakılmışsa uyarır. Eşik (40 karakter) kesin bir kural değil, kaba bir
+  /// "bir cümleden az" sezgisi.
+  String? _descriptionHelper(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty || trimmed.length >= 40) return null;
+    return 'Açıklama kısa görünüyor — birkaç cümle eklemek müşteri güvenini ve aramada bulunmayı artırır.';
   }
 
   Widget _buildImages() {
