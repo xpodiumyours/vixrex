@@ -58,12 +58,16 @@ class ChatPill extends StatelessWidget {
                   Icon(icon, size: 16, color: fg),
                   const SizedBox(width: 6),
                 ],
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: fg,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                Flexible(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
               ],
