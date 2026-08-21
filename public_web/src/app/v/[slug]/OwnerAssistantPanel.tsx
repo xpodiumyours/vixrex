@@ -9,7 +9,6 @@ import { useFieldRestore } from "./hooks/useFieldRestore";
 import { ChatBubble } from "./components/ChatBubble";
 import { ChatTopBar } from "./components/ChatTopBar";
 import { StageMeter } from "./components/StageMeter";
-import { StepCard } from "./components/StepCard";
 import { UpNextList } from "./components/UpNextList";
 import { SectionProgressList } from "./components/SectionProgressList";
 import { PublishBar } from "./components/PublishBar";
@@ -169,8 +168,20 @@ export default function OwnerAssistantPanel({
       {acik && (
         <SpotlightGuide
           seciliAlan={seciliAlan}
+          giris={giris}
           girisRef={girisRef}
-          onSonrayaBirak={sonrayaBirak}
+          kaydediliyor={actions.kaydediliyor}
+          geriAliniyor={fieldRestore.geriAliniyor}
+          hazirGorseller={actions.hazirGorseller}
+          hazirYukleniyor={actions.hazirYukleniyor}
+          setGiris={setGiris}
+          gorselYukle={actions.gorselYukle}
+          hazirGorselleriAc={actions.hazirGorselleriAc}
+          hazirGorselSec={actions.hazirGorselSec}
+          gonder={actions.gonder}
+          alanAtla={actions.alanAtla}
+          canliyaDondur={fieldRestore.canliyaDondur}
+          sonrayaBirak={sonrayaBirak}
           onKapat={rehberiKapat}
         />
       )}
@@ -202,23 +213,12 @@ export default function OwnerAssistantPanel({
             eksikTemelSayisi={eksikTemelSayisi}
           />
 
-          <StepCard
-            seciliAlan={seciliAlan}
-            giris={giris}
-            girisRef={girisRef}
-            kaydediliyor={actions.kaydediliyor}
-            geriAliniyor={fieldRestore.geriAliniyor}
-            hazirGorseller={actions.hazirGorseller}
-            hazirYukleniyor={actions.hazirYukleniyor}
-            setGiris={setGiris}
-            gorselYukle={actions.gorselYukle}
-            hazirGorselleriAc={actions.hazirGorselleriAc}
-            hazirGorselSec={actions.hazirGorselSec}
-            gonder={actions.gonder}
-            alanAtla={actions.alanAtla}
-            canliyaDondur={fieldRestore.canliyaDondur}
-            sonrayaBirak={sonrayaBirak}
-          />
+          {/* StepCard/FieldInputArea artık burada YOK — 2026-08-22:
+           * kullanıcı test etti, panelin tepesindeki sabit kutu spot
+           * ışığının gösterdiği alandan görsel olarak kopuk kalıyordu
+           * ("kutucuklar açılıyor ama içine yazılmıyor" geri bildirimi).
+           * Gerçek giriş alanı artık yalnız SpotlightGuide'ın balonunda —
+           * ikinci bir kopyası yok. */}
 
           <UpNextList
             yerelTaslak={yerelTaslak}

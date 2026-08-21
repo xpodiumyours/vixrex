@@ -5,6 +5,8 @@ import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { SECTION_LABELS } from "@/lib/vitrinFieldSchema";
 import { alanOnemi, type EksikOnem } from "@/lib/vitrinReadiness";
 import { VixrexAvatar } from "./VixrexAvatar";
+import { FieldInputArea } from "./FieldInputArea";
+import type { HazirGorsel } from "../hooks/useOwnerActions";
 
 // 2026-08-22: "esnaf tıkladığında yan panelde form açılmasın, oyunlardaki
 // gibi ok/spot ışığıyla sayfada dolaşsın" isteği — sıralama mantığı
@@ -12,8 +14,14 @@ import { VixrexAvatar } from "./VixrexAvatar";
 // (tumAlanlarSirali/sonrakiRehberAlanlar), alan seçme/vurgulama/kaydırma
 // zaten useFieldSelection'da vardı. Burada yalnız eksik olan görsel katman
 // eklendi: seçili alanın sayfadaki gerçek konumunu bulup etrafına spot
-// ışığı + yanına ok/balon çizer. Hiçbir seçim/sıralama mantığı burada
-// tekrar yazılmadı.
+// ışığı çizer. Hiçbir seçim/sıralama mantığı burada tekrar yazılmadı.
+//
+// 2026-08-22 DÜZELTME: ilk sürüm balonda yalnız bilgi gösterip "Buraya
+// yaz" ile panelin tepesindeki sabit kutuyu odaklıyordu — kullanıcı test
+// edip "kutucuklar açılıyor ama içine yazılmıyor, hep aynı yere yazılıyor"
+// dedi (gözün balon → panel tepesi arası zıplaması kafa karıştırıyordu).
+// Artık gerçek giriş alanı (FieldInputArea — metin/görsel/seçim, TEK
+// KAYNAK) doğrudan balonun içinde: okuduğun yer ile yazdığın yer aynı.
 
 interface Rect {
   top: number;
@@ -42,19 +50,28 @@ const ONEM_METNI: Record<EksikOnem, { yazi: string; sinif: string; neden: string
 
 interface Props {
   seciliAlan: VitrinField | null;
+  giris: string;
   girisRef: React.RefObject<HTMLTextAreaElement | null>;
-  onSonrayaBirak?: () => void;
+  kaydediliyor: boolean;
+  geriAliniyor: boolean;
+  hazirGorseller: HazirGorsel[];
+  hazirYukleniyor: boolean;
+  setGiris: (v: string) => void;
+  gorselYukle: (dosya: File) => Promise<void>;
+  hazirGorselleriAc: () => Promise<void>;
+  hazirGorselSec: (url: string) => Promise<void>;
+  gonder: () => Promise<void>;
+  alanAtla: () => Promise<void>;
+  canliyaDondur: () => Promise<void>;
+  sonrayaBirak?: () => void;
   onKapat: () => void;
 }
 
-/** Sayfada gezen spot ışığı + ok/balon rehberi — panel açıkken, bir alan
- * seçiliyken görünür. Panelin kendisinin yerine değil, üstüne çalışır. */
-export function SpotlightGuide({
-  seciliAlan,
-  girisRef,
-  onSonrayaBirak,
-  onKapat,
-}: Props) {
+/** Sayfada gezen spot ışığı — panel açıkken, bir alan seçiliyken görünür.
+ * Gerçek giriş alanını (FieldInputArea) balonun içinde barındırır; ayrı,
+ * bağlantısız bir kutu YOKTUR. */
+export function SpotlightGuide(props: Props) {
+  const { seciliAlan, onKapat } = props;
   const [rect, setRect] = useState<Rect | null>(null);
   const [viewport, setViewport] = useState<{ w: number; h: number } | null>(null);
 
@@ -106,7 +123,7 @@ export function SpotlightGuide({
 
   const onem = alanOnemi(seciliAlan);
   const bilgi = ONEM_METNI[onem];
-  const balonGenislik = Math.min(320, viewport.w - 32);
+  const balonGenislik = Math.min(340, viewport.w - 32);
   const asagidaYerVar = rect.top < viewport.h * 0.55;
   const balonSol = Math.min(
     Math.max(rect.left, 16),
@@ -126,7 +143,7 @@ export function SpotlightGuide({
           boxShadow: "0 0 0 9999px rgba(3, 7, 18, 0.74)",
         }}
       />
-      {/* Ok + balon */}
+      {/* Ok + balon — gerçek giriş alanı da içinde */}
       <div
         className="pointer-events-auto absolute flex flex-col gap-3 rounded-2xl border border-blue-400/30 bg-[#0B1120] p-4 shadow-2xl transition-all duration-300 ease-out"
         style={{
@@ -175,24 +192,9 @@ export function SpotlightGuide({
           </button>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => girisRef.current?.focus()}
-            className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-3 py-2 text-[13px] font-bold text-white shadow shadow-blue-500/30"
-          >
-            Buraya yaz
-          </button>
-          {onem !== "temel" && onSonrayaBirak && (
-            <button
-              type="button"
-              onClick={onSonrayaBirak}
-              className="rounded-xl border border-white/10 px-3 py-2 text-[13px] font-semibold text-slate-400 hover:text-slate-200"
-            >
-              Sonra
-            </button>
-          )}
-        </div>
+        {/* Gerçek giriş alanı — StepCard/panelin kullandığı AYNI bileşen,
+         * ikinci bir kopyası değil. */}
+        <FieldInputArea {...props} />
       </div>
     </div>
   );
