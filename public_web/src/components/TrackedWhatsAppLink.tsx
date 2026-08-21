@@ -7,7 +7,8 @@ export const WHATSAPP_CLICK_EVENT = "whatsapp_click";
 export type WhatsAppClickLocation =
   | "storefront_hero"
   | "storefront_contact"
-  | "product_detail";
+  | "product_detail"
+  | "storefront_floating";
 
 export type GtagCommand = (
   command: "event",
