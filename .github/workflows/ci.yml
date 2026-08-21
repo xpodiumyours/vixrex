@@ -120,6 +120,68 @@ jobs:
             exit 1
           fi
 
+  grant-guard:
+    name: Supabase yerel doğrulama — GRANT güvenlik bekçisi
+    needs: changes
+    # supabase/ altındaki her değişiklik changed_surfaces.py'de zaten
+    # schema=true üretiyor (bkz. o dosyadaki supabase/ kuralı) — ayrı bir
+    # yüzey eklemeye gerek yok, aynı sinyali kullanıyoruz.
+    if: needs.changes.outputs.schema == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # NEDEN VAR (2026-08-21): aynı gün içinde 3 ayrı olayda (V-09,
+    # "Keşfet 403", bu tarama) sütun/tablo bazlı GRANT'ların unutulması
+    # tekrar eden bir hata sınıfı oldu — en ciddisinde anon rolünün
+    # stores tablosunda tablo-seviyesi SELECT/TRUNCATE yetkisi vardı,
+    # edit_token/user_id sızıyordu. TRUNCATE RLS'ten muaftır, insan
+    # hafızasına güvenilemez. Bu iş, migration zincirini SIFIRDAN yerel
+    # bir Supabase'te uygulayıp anon/authenticated'in hiçbir tabloda
+    # TRUNCATE/MAINTAIN/REFERENCES/TRIGGER yetkisi kalmadığını doğrular —
+    # biri yeni bir tabloda/migration'da bunu yeniden açarsa (kasıtlı
+    # veya yanlışlıkla) PR kırmızıya düşer.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Yerel Supabase'i başlat (migration zinciri sıfırdan uygulanır)
+        run: supabase start
+
+      - name: GRANT güvenlik bekçisi — TRUNCATE/MAINTAIN/REFERENCES/TRIGGER
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          do $$
+          declare
+            v_count integer;
+            v_detay text;
+          begin
+            select count(*), string_agg(format('%s: %s -> %s', grantee.rolname, c.relname, a.privilege_type), ', ')
+            into v_count, v_detay
+            from pg_class c
+            cross join lateral aclexplode(c.relacl) a
+            join pg_roles grantee on grantee.oid = a.grantee
+            where c.relnamespace = 'public'::regnamespace
+              and c.relkind in ('r', 'p')
+              and grantee.rolname in ('anon', 'authenticated')
+              and a.privilege_type in ('TRUNCATE', 'MAINTAIN', 'REFERENCES', 'TRIGGER');
+
+            if v_count > 0 then
+              raise exception 'GRANT güvenlik bekçisi: % kayıt bulundu — anon/authenticated bir veya daha fazla tabloda TRUNCATE/MAINTAIN/REFERENCES/TRIGGER yetkisine sahip (bu yetkiler PostgREST tarafından hiç kullanılmaz, TRUNCATE RLS''ten muaftır). Detay: %', v_count, v_detay;
+            end if;
+
+            raise notice 'GRANT güvenlik bekçisi: temiz, % tablo tarandı.', (select count(*) from pg_class where relnamespace='public'::regnamespace and relkind in ('r','p'));
+          end $$;
+          SQL
+
+      - name: Yerel Supabase'i durdur
+        if: always()
+        run: supabase stop
+
   changes:
     name: Değişiklik yüzeyi
     runs-on: ubuntu-latest
