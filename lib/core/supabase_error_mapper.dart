@@ -21,6 +21,24 @@ class SupabaseErrorMapper {
       final details = error.details?.toString().toLowerCase() ?? '';
       final searchableText = '$message $code $details';
 
+      const publishReadinessMessages = {
+        'store_name_required': 'Yayınlamak için işletme adını doldurun.',
+        'store_category_required':
+            'Yayınlamak için işletme kategorisini seçin.',
+        'store_whatsapp_required':
+            'Yayınlamak için WhatsApp numaranızı doldurun.',
+        'store_whatsapp_invalid':
+            'Geçerli bir Türkiye cep telefonu numarası girin.',
+        'store_address_required': 'Yayınlamak için açık adresini doldurun.',
+        'store_province_required': 'Yayınlamak için il bilgisini doldurun.',
+        'store_district_required': 'Yayınlamak için ilçe bilgisini doldurun.',
+      };
+      for (final entry in publishReadinessMessages.entries) {
+        if (searchableText.contains(entry.key)) {
+          return Failure(entry.value, stackTrace: stackTrace);
+        }
+      }
+
       // Specific business / authorization constraints from store publisher
       if (searchableText.contains('edit_token_mismatch') ||
           searchableText.contains('edit token mismatch') ||
