@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px', color: '#EDEDED', fontFamily: 'system-ui' }}>
       <h1>Gizlilik Politikası</h1>
-      <p>Son güncelleme: 10 Temmuz 2026</p>
+      <p>Son güncelleme: 21 Ağustos 2026</p>
 
       <h2>1. Veri Sorumlusu</h2>
       <p>
@@ -36,7 +36,27 @@ export default function PrivacyPage() {
 
       <h2>4. Verilerin Paylaşılması</h2>
       <p>
-        Verileriniz üçüncü taraflarla paylaşılmaz. Tek istisna, yasal zorunluluklardır.
+        Verileriniz, hizmeti çalıştırmak için kullandığımız aşağıdaki hizmet
+        sağlayıcılarla ve yasal zorunluluk hâlinde yetkili mercilerle
+        paylaşılır. Bunların dışında, verileriniz satılmaz veya pazarlama
+        amacıyla üçüncü taraflara aktarılmaz.
+      </p>
+      <ul>
+        <li><strong>Supabase:</strong> veritabanı, kimlik doğrulama ve dosya depolama altyapımız — tüm verileriniz burada barındırılır.</li>
+        <li><strong>Vercel:</strong> web sitemizi barındıran sunucu sağlayıcısı.</li>
+        <li><strong>Google Analytics:</strong> yalnızca çerez onayı verdiyseniz, kullanım istatistikleri için (IP adresi anonimleştirilir).</li>
+        <li><strong>Google reCAPTCHA:</strong> otomatik/kötüye kullanım (bot) girişlerini engellemek için.</li>
+        <li><strong>Cloudflare Turnstile:</strong> bazı formlarda (ör. içerik bildirimi) bot koruması için.</li>
+        <li><strong>Sentry:</strong> uygulama hatalarını tespit edip düzeltebilmemiz için hata/performans kaydı.</li>
+        <li><strong>Meta / Instagram:</strong> yalnızca Instagram hesabınızı VixRex&apos;e bağlarsanız, ürün fotoğraflarınızı içe aktarmak için.</li>
+        <li><strong>PayTR:</strong> premium abonelik ödemesi alıyorsanız, ödeme işlemini gerçekleştiren ödeme kuruluşu.</li>
+        <li><strong>OneSignal:</strong> abonelik/randevu hatırlatma bildirimleri gönderebilmemiz için.</li>
+      </ul>
+      <p>
+        Bu sağlayıcıların bir kısmı (ör. Google, Sentry, Cloudflare) yurt
+        dışında veri işleyebilir. Bu sayfa hangi verinin hangi amaçla
+        paylaşıldığını gösterir; her sağlayıcıyla ayrı bir veri işleme
+        sözleşmesi (DPA) süreci ayrıca yürütülmektedir.
       </p>
 
       <h2>5. Veri Saklama</h2>
