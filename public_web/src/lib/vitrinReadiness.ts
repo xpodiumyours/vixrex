@@ -7,6 +7,7 @@
 // Yeni alan eklendiğinde bu dosya değişmez.
 
 import {
+  SECTION_ORDER,
   VITRIN_FIELDS,
   type VitrinField,
   type VitrinSection,
@@ -179,17 +180,63 @@ export function asamaDolulugu(
   return sayaclar;
 }
 
-/** Tüm alanlar (VITRIN_FIELDS.length adet), temel → kalite → isteğe bağlı sırasıyla (her grup kendi şema sırasında). */
-export function tumAlanlarSirali(): VitrinField[] {
-  const gruplar: Record<EksikOnem, VitrinField[]> = {
-    temel: [],
-    kalite: [],
-    "istege-bagli": [],
-  };
-  for (const alan of VITRIN_FIELDS) {
-    gruplar[alanOnemi(alan)].push(alan);
+/**
+ * Tüm alanlar, vitrinde YUKARIDAN AŞAĞIYA: bölümler `SECTION_ORDER`
+ * sırasıyla, her bölümün içinde şema sırasıyla.
+ *
+ * 2026-08-22'de önem sırasının (temel → kalite → isteğe bağlı) yerini
+ * aldı. Eski sıra ekranda zıplıyordu: esnaf üst bölümdeki işletme adını
+ * kaydediyor, sıradaki kalite alanı sayfanın en altındaki iletişim
+ * bölümünde olduğu için ekran oraya fırlıyordu (canlı test). Zorunluluk
+ * kaybolmadı — `rehberSirasi` önce yalnız zorunluları gezdirir.
+ */
+export function tumAlanlarSayfaSirasi(): VitrinField[] {
+  const sirali: VitrinField[] = [];
+  for (const bolum of SECTION_ORDER) {
+    for (const alan of VITRIN_FIELDS) {
+      if (alan.bolum === bolum) sirali.push(alan);
+    }
   }
-  return [...gruplar.temel, ...gruplar.kalite, ...gruplar["istege-bagli"]];
+  // Şemaya SECTION_ORDER'da olmayan bir bölüm eklenirse alan kaybolmasın.
+  for (const alan of VITRIN_FIELDS) {
+    if (!sirali.includes(alan)) sirali.push(alan);
+  }
+  return sirali;
+}
+
+/**
+ * Rehberin o an gezeceği sıra — iki tur (Casper kararı, 2026-08-22).
+ *
+ * 1. tur: yayın için zorunlu ama hâlâ boş alanlar. Esnaf önce hızlıca
+ *    yayına çıkabilsin diye; başka hiçbir alan araya girmez.
+ * 2. tur: zorunlular bittiğinde tüm alanlar, sayfa sırasıyla —
+ *    "şimdi vitrini zenginleştirelim" turu.
+ *
+ * İki turda da sıra sayfa sırasıdır; tek fark hangi alanların dahil
+ * olduğudur.
+ */
+export function rehberSirasi(
+  draftData: Record<string, unknown>,
+): VitrinField[] {
+  const sayfaSirasi = tumAlanlarSayfaSirasi();
+  const eksikZorunlular = sayfaSirasi.filter(
+    (alan) => alan.zorunlu && !doluMu(draftData[alan.kolon], alan.bosDegerler),
+  );
+  return eksikZorunlular.length > 0 ? eksikZorunlular : sayfaSirasi;
+}
+
+/** Bir bölümde hâlâ doldurulmamış (ve atlanmamış) alan sayısı. */
+export function bolumdeKalanSayisi(
+  draftData: Record<string, unknown>,
+  bolum: VitrinSection,
+  atlanmislar: ReadonlySet<string> = new Set(),
+): number {
+  return VITRIN_FIELDS.filter(
+    (alan) =>
+      alan.bolum === bolum &&
+      !atlanmislar.has(alan.anahtar) &&
+      !doluMu(draftData[alan.kolon], alan.bosDegerler),
+  ).length;
 }
 
 /**
@@ -220,14 +267,24 @@ export function sonrakiRehberAlanlar(
   atlanmislar: ReadonlySet<string>,
   adet: number = 3,
 ): VitrinField[] {
-  const sirali = tumAlanlarSirali();
+  const sirali = rehberSirasi(draftData);
   const suankiIndeks = suankiAnahtar
     ? sirali.findIndex((a) => a.anahtar === suankiAnahtar)
     : -1;
 
+  // Listenin SONUNA gelince başa dönülür.
+  //
+  // 2026-08-22: eskiden yalnız ileriye bakılıyordu. Esnaf sayfanın
+  // altındaki bir alana tıklayıp kaydedince, ondan önceki boş alanların
+  // hepsi sessizce atlanıyor ve akış "eklenecek başka bir şey yok" diye
+  // erkenden bitiyordu. Tam tur atılır; her alan bir kez denenir.
   const sonuc: VitrinField[] = [];
-  for (let i = suankiIndeks + 1; i < sirali.length && sonuc.length < adet; i++) {
-    const alan = sirali[i];
+  for (let adim = 1; adim <= sirali.length && sonuc.length < adet; adim++) {
+    const alan = sirali[(suankiIndeks + adim) % sirali.length];
+    // Tur başa döndüğünde şu anki alanın kendisine geri gelinmez. Kayıt
+    // henüz `draftData`'ya yansımamış olabilir (aynı tepki turunda
+    // çağrılıyor) — o yüzden "boş" görünüp tekrar önerilirdi.
+    if (alan.anahtar === suankiAnahtar) continue;
     if (atlanmislar.has(alan.anahtar)) continue;
     if (!doluMu(draftData[alan.kolon], alan.bosDegerler)) sonuc.push(alan);
   }

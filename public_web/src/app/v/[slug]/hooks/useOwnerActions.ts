@@ -52,7 +52,10 @@ interface Deps {
   setGiris: (v: string) => void;
   /** Kayıt (veya boş geçme) başarılı olunca çağrılır: sırada başka alan
    * varsa oraya geçer. */
-  alanaGecVeyaBitir: (kaydedilenAnahtar: string) => void;
+  alanaGecVeyaBitir: (
+    kaydedilenAnahtar: string,
+    guncelTaslak?: Record<string, unknown>,
+  ) => void;
   /** "Boş geç" kalıcı işaretlendiğinde yerel state'e yansıtır
    * (`useOwnerDraft.alanAtlandi`). */
   alanAtlandi: (anahtar: string) => void;
@@ -150,19 +153,22 @@ export function useOwnerActions({
 
         mesajEkle("asistan", `${alan.etiket} güncellendi.`);
         setAlan(alan.kolon, yuklemeGovde.url as unknown);
+        // Sirali gecise TAZE taslak verilir: setAlan bu tepki turunda
+        // henuz yansimadigi icin kaydedilen alan "bos" gorunurdu.
+        const tazeTaslak = { ...yerelTaslak, [alan.kolon]: yuklemeGovde.url };
         // Sayfa sunucuda çizildiği için yeni değer ancak yeniden
         // okununca vitrine yansır — yoksa esnaf kaydeder, sayfada
         // eski yazı durmaya devam ederdi (Faz 2).
         router.refresh();
         alaniParlat(alan.anahtar);
-        alanaGecVeyaBitir(alan.anahtar);
+        alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
       } catch {
         mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
       } finally {
         setKaydediliyor(false);
       }
     },
-    [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir, router]
+    [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir, router, yerelTaslak]
   );
 
   // Kategorinin hazır görsellerini getirir. Kategori anahtarı
@@ -235,19 +241,20 @@ export function useOwnerActions({
         mesajEkle("asistan", `${alan.etiket} güncellendi.`);
         _setHazirGorseller([]);
         setAlan(alan.kolon, url);
+        const tazeTaslak = { ...yerelTaslak, [alan.kolon]: url };
         // Sayfa sunucuda çizildiği için yeni değer ancak yeniden
         // okununca vitrine yansır — yoksa esnaf kaydeder, sayfada
         // eski yazı durmaya devam ederdi (Faz 2).
         router.refresh();
         alaniParlat(alan.anahtar);
-        alanaGecVeyaBitir(alan.anahtar);
+        alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
       } catch {
         mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
       } finally {
         setKaydediliyor(false);
       }
     },
-    [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir, _setHazirGorseller, router]
+    [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir, _setHazirGorseller, router, yerelTaslak]
   );
 
   const gonder = useCallback(async () => {
@@ -297,18 +304,19 @@ export function useOwnerActions({
       );
       setGiris("");
       setAlan(alan.kolon, gonderilecek);
+      const tazeTaslak = { ...yerelTaslak, [alan.kolon]: gonderilecek };
       // Sayfa sunucuda çizildiği için yeni değer ancak yeniden
       // okununca vitrine yansır — yoksa esnaf kaydeder, sayfada
       // eski yazı durmaya devam ederdi (Faz 2).
       router.refresh();
       alaniParlat(alan.anahtar);
-      alanaGecVeyaBitir(alan.anahtar);
+      alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setKaydediliyor(false);
     }
-  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router]);
+  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router, yerelTaslak]);
 
   // Yalnız isteğe bağlı alanlarda gösterilen "Boş geç" (ADR 0002, 3. alt-faz).
   // Vitrin İÇERİĞİ yazmaz — /api/owner-draft'tan bağımsız, kendi dar
