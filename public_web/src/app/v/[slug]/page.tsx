@@ -717,6 +717,14 @@ export default async function StorePage(props: PageProps) {
         }
         isPreviewMode={isOwnerMode}
         ownerMode={isOwnerMode}
+        // Yalnız sahip modunda: hangi alanın boş olduğunu bilmek için.
+        // Ziyaretçi isteğinde undefined kalır, "bu bölüme eklenebilir"
+        // şeridi hiç çizilmez (bkz. BolumEksikleri).
+        ownerDraft={
+          isOwnerMode
+            ? ((draft?.draft_data ?? {}) as Record<string, unknown>)
+            : undefined
+        }
         isDemo={Boolean(store.is_demo)}
       />
       {isOwnerMode ? (

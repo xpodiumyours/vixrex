@@ -30,21 +30,25 @@ interface Rect {
   height: number;
 }
 
-const ONEM_METNI: Record<EksikOnem, { yazi: string; sinif: string; neden: string }> = {
+// `kural` = alanın YAYIN karşısındaki durumu (zorunlu mu, değil mi).
+// Alanın kendi "bu ne işe yarar" cümlesi bu tablodan DEĞİL, şemadaki
+// `neden` alanından gelir (vitrinFieldSchema.ts) — ikisi ayrı şeydir ve
+// balonda ayrı satırlarda durur.
+const ONEM_METNI: Record<EksikOnem, { yazi: string; sinif: string; kural: string }> = {
   temel: {
     yazi: "Zorunlu",
     sinif: "bg-red-500/15 text-red-300 border-red-400/30",
-    neden: "Bu alan dolmadan vitrinin yayınlanamaz.",
+    kural: "Bu alan dolmadan vitrinin yayınlanamaz.",
   },
   kalite: {
     yazi: "Kalite",
     sinif: "bg-sky-500/15 text-sky-300 border-sky-400/30",
-    neden: "Zorunlu değil ama vitrinini daha güçlü gösterir.",
+    kural: "Zorunlu değil ama vitrinini daha güçlü gösterir.",
   },
   "istege-bagli": {
     yazi: "İsteğe bağlı",
     sinif: "bg-white/10 text-slate-400 border-white/15",
-    neden: "İstersen boş bırakabilirsin.",
+    kural: "İstersen boş bırakabilirsin.",
   },
 };
 
@@ -177,8 +181,16 @@ export function SpotlightGuide(props: Props) {
             <p className="text-[15px] font-extrabold text-white">
               {seciliAlan.etiket}
             </p>
-            <p className="mt-1 text-[13px] leading-relaxed text-slate-400">
-              {bilgi.neden}
+            {/* Önce "bu ne işe yarar" (şemadaki `neden`) — esnaf alanı
+             * doldurmadan önce niye doldurduğunu bilsin. Altında, daha
+             * soluk: yayın kuralı ve nasıl yazılacağı (`ipucu`). */}
+            {seciliAlan.neden && (
+              <p className="mt-1 text-[13px] leading-relaxed text-slate-300">
+                {seciliAlan.neden}
+              </p>
+            )}
+            <p className="mt-1 text-[12px] leading-relaxed text-slate-500">
+              {bilgi.kural}
               {seciliAlan.ipucu ? ` ${seciliAlan.ipucu}` : ""}
             </p>
           </div>
