@@ -1,8 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
-import { sonrakiRehberAlan } from "@/lib/vitrinReadiness";
+import {
+  FIELD_BY_KEY,
+  SECTION_LABELS,
+  type VitrinField,
+} from "@/lib/vitrinFieldSchema";
+import { bolumdeKalanSayisi, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
 import type { Mesaj } from "./useOwnerChat";
 
 const VURGU_SINIFI = "vixrex-secili-alan";
@@ -18,7 +22,10 @@ export interface FieldSelectionHook {
   /** Bir alan kaydedildikten SONRA çağrılır: sırada başka alan varsa oraya
    * geçer, yoksa akışı bitirir. `useOwnerActions`'ın kaydetme yolları da
    * eski `setSeciliAlan(null)` yerine bunu çağırır. */
-  alanaGecVeyaBitir: (kaydedilenAnahtar: string) => void;
+  alanaGecVeyaBitir: (
+    kaydedilenAnahtar: string,
+    guncelTaslak?: Record<string, unknown>,
+  ) => void;
 }
 
 interface Deps {
@@ -88,16 +95,49 @@ export function useFieldSelection({
   );
 
   const alanaGecVeyaBitir = useCallback(
-    (kaydedilenAnahtar: string) => {
+    (kaydedilenAnahtar: string, guncelTaslak?: Record<string, unknown>) => {
+      // `yerelTaslak` bu tepki turunda henüz tazelenmemiş olabilir —
+      // `setAlan` ile `alanaGecVeyaBitir` aynı anda çağrılıyor. Kaydeden
+      // taraf yeni hâli verirse onu kullanırız; yoksa (ör. "boş geç")
+      // eldeki taslak zaten doğrudur.
+      const taslak = guncelTaslak ?? yerelTaslak;
+
       const sonraki = sonrakiRehberAlan(
-        yerelTaslak,
+        taslak,
         kaydedilenAnahtar,
         atlanmisAlanlar
       );
+
       if (sonraki) {
+        // Bölüm değişiyorsa esnaf nereye gittiğini bilsin — sayfa sırası
+        // düzeldi ama geçişin kendisi de anlatılmalı (Casper, 2026-08-22:
+        // "yumuşak bir şekilde gezerek, sert inmesin").
+        const kaydedilen = FIELD_BY_KEY.get(kaydedilenAnahtar);
+        if (kaydedilen && kaydedilen.bolum !== sonraki.bolum) {
+          const oncekiKalan = bolumdeKalanSayisi(
+            taslak,
+            kaydedilen.bolum,
+            atlanmisAlanlar
+          );
+          const sonrakiKalan = bolumdeKalanSayisi(
+            taslak,
+            sonraki.bolum,
+            atlanmisAlanlar
+          );
+          const bas =
+            oncekiKalan === 0
+              ? `${SECTION_LABELS[kaydedilen.bolum]} tamam ✓ — şimdi`
+              : "Şimdi";
+          const kuyruk = sonrakiKalan > 1 ? ` (${sonrakiKalan} alan)` : "";
+          mesajEkle(
+            "asistan",
+            `${bas} ${SECTION_LABELS[sonraki.bolum]} bölümüne bakıyoruz${kuyruk}.`
+          );
+        }
         alanSec(sonraki.anahtar);
         return;
       }
+
       vurguyuTemizle();
       setSeciliAlan(null);
       mesajEkle("asistan", "Harika, şu an eklenecek başka bir şey yok! 🎉");

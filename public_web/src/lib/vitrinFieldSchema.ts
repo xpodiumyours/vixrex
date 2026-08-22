@@ -576,17 +576,26 @@ export const SECTION_LABELS: Record<VitrinSection, string> = {
   faq: "Sık sorulanlar",
 };
 
-/** Bölümlerin panelde görünme sırası — vitrindeki sırayla aynı. */
+/**
+ * Bölümlerin vitrinde YUKARIDAN AŞAĞIYA gerçek sırası.
+ *
+ * 2026-08-22 düzeltmesi: buradaki yorum "vitrindeki sırayla aynı" diyordu
+ * ama değildi — `contact` ikinci sıradaydı, oysa sayfanın en altında.
+ * Rehber bu listeyi izlediği için esnaf işletme adını kaydeder kaydetmez
+ * sayfanın dibine fırlatılıyordu (Casper, canlı test). Sıra artık
+ * `VitrinProfileView`'daki gerçek bölüm sırasıyla birebir; değiştirmeden
+ * önce oradaki "===== BÖLÜM ADI =====" yorum işaretlerine bak.
+ */
 export const SECTION_ORDER: readonly VitrinSection[] = [
   "hero",
-  "contact",
+  "categories",
   "featured",
+  "products",
   "about",
   "gallery",
-  "products",
-  "categories",
   "blog",
   "faq",
+  "contact",
 ];
 
 export function fieldsOfSection(bolum: VitrinSection): VitrinField[] {
