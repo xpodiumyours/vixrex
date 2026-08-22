@@ -204,50 +204,66 @@ export default function OwnerAssistantPanel({
       </button>
 
       {acik && (
-        <div className="fixed bottom-24 right-5 z-[75] flex w-[min(24rem,calc(100vw-2.5rem))] flex-col rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl">
+        // 2026-08-22 mobil/masaüstü uyum düzeltmesi: eski className yalnız
+        // `bottom-24 right-5` idi (üst sınır YOKTU) — 9 bölümlük
+        // SectionProgressList tamamen açıldığında panel içeriği ekranın
+        // üstünden taşıp kayboluyordu, hiçbir yerde tek bir kaydırma alanı
+        // içermediği için o kısma ulaşmanın yolu yoktu (canlıda görüldü).
+        // Artık mobilde (sm altı) üst+alt sınır birlikte sabit — yükseklik
+        // otomatik hesaplanır; masaüstünde eski konum korunur ama
+        // max-h ile aynı taşma bir daha olamaz. Ortadaki gövde tek kaydırma
+        // alanı, başlık sabit kalır.
+        <div className="fixed inset-x-3 top-16 bottom-24 z-[75] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:top-auto sm:right-5 sm:w-[min(24rem,calc(100vw-2.5rem))] sm:max-h-[calc(100vh-8rem)]">
           <ChatTopBar rapor={rapor} onKapat={() => setAcik(false)} />
 
-          <StageMeter
-            dolulugu={dolulugu}
-            temelTamam={rapor.temelTamam}
-            eksikTemelSayisi={eksikTemelSayisi}
-          />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <StageMeter
+              dolulugu={dolulugu}
+              temelTamam={rapor.temelTamam}
+              eksikTemelSayisi={eksikTemelSayisi}
+            />
 
-          {/* StepCard/FieldInputArea artık burada YOK — 2026-08-22:
-           * kullanıcı test etti, panelin tepesindeki sabit kutu spot
-           * ışığının gösterdiği alandan görsel olarak kopuk kalıyordu
-           * ("kutucuklar açılıyor ama içine yazılmıyor" geri bildirimi).
-           * Gerçek giriş alanı artık yalnız SpotlightGuide'ın balonunda —
-           * ikinci bir kopyası yok. */}
+            {/* StepCard/FieldInputArea artık burada YOK — 2026-08-22:
+             * kullanıcı test etti, panelin tepesindeki sabit kutu spot
+             * ışığının gösterdiği alandan görsel olarak kopuk kalıyordu
+             * ("kutucuklar açılıyor ama içine yazılmıyor" geri bildirimi).
+             * Gerçek giriş alanı artık yalnız SpotlightGuide'ın balonunda —
+             * ikinci bir kopyası yok. */}
 
-          <UpNextList
-            yerelTaslak={yerelTaslak}
-            suankiAnahtar={seciliAlan?.anahtar ?? null}
-            atlanmisAlanlar={atlanmisAlanlar}
-            alanSec={alanSec}
-          />
+            <UpNextList
+              yerelTaslak={yerelTaslak}
+              suankiAnahtar={seciliAlan?.anahtar ?? null}
+              atlanmisAlanlar={atlanmisAlanlar}
+              alanSec={alanSec}
+            />
 
-          <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
+            <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
 
-          <PublishBar
-            yayinlaniyor={actions.yayinlaniyor}
-            silmeOnayi={actions.silmeOnayi}
-            yayinla={actions.yayinla}
-            silmeOnayla={actions.silmeOnayla}
-            sil={actions.sil}
-            setSilmeOnayi={actions.setSilmeOnayi}
-            temelTamam={rapor.temelTamam}
-            eksikTemelSayisi={eksikTemelSayisi}
-            kiralikVitrinMi={kiralikVitrinMi}
-            premiumAktifMi={premiumAktifMi}
-            yasalOnayli={yasalOnayli}
-            onayVeriliyor={actions.onayVeriliyor}
-            onayVer={actions.onayVer}
-          />
+            <PublishBar
+              yayinlaniyor={actions.yayinlaniyor}
+              silmeOnayi={actions.silmeOnayi}
+              yayinla={actions.yayinla}
+              silmeOnayla={actions.silmeOnayla}
+              sil={actions.sil}
+              setSilmeOnayi={actions.setSilmeOnayi}
+              temelTamam={rapor.temelTamam}
+              eksikTemelSayisi={eksikTemelSayisi}
+              kiralikVitrinMi={kiralikVitrinMi}
+              premiumAktifMi={premiumAktifMi}
+              yasalOnayli={yasalOnayli}
+              onayVeriliyor={actions.onayVeriliyor}
+              onayVer={actions.onayVer}
+            />
+          </div>
 
-          {/* Sohbet akışı — kayıt olarak durur, panelin ortasını kaplamaz
-           * (Faz G3, G3.1: "ÇIKAR: sohbet akışının paneli kaplaması"). */}
-          <div ref={akisRef} className="max-h-40 space-y-2 overflow-y-auto px-4 py-3">
+          {/* Sohbet akışı — kendi kaydırma alanında sabit yükseklik kalır
+           * (Faz G3, G3.1: "ÇIKAR: sohbet akışının paneli kaplaması") —
+           * yukarıdaki gövdeden bağımsız, kendi otomatik-aşağı-kaydırma
+           * mantığı (useOwnerChat.akisRef) değişmedi. */}
+          <div
+            ref={akisRef}
+            className="max-h-40 shrink-0 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3"
+          >
             {mesajlar.map((m) => (
               <ChatBubble key={m.id} mesaj={m} />
             ))}

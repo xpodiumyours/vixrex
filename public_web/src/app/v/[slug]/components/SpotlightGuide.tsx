@@ -143,14 +143,21 @@ export function SpotlightGuide(props: Props) {
           boxShadow: "0 0 0 9999px rgba(3, 7, 18, 0.74)",
         }}
       />
-      {/* Ok + balon — gerçek giriş alanı da içinde */}
+      {/* Ok + balon — gerçek giriş alanı da içinde.
+       * 2026-08-22 mobil/masaüstü uyum düzeltmesi: balonun kendisi
+       * yükseklik sınırı taşımıyordu — FieldInputArea içeriği (uzun metin,
+       * hazır görsel ızgarası) kısa/mobil ekranlarda balonu viewport
+       * dışına taşırabiliyordu. Ok işareti kutunun kenarından taşarak
+       * çizildiği için (negatif top/bottom) kaydırma yalnız İÇ gövdeye
+       * uygulanır — dış kutuya overflow verilirse ok kırpılır. */}
       <div
-        className="pointer-events-auto absolute flex flex-col gap-3 rounded-2xl border border-blue-400/30 bg-[#0B1120] p-4 shadow-2xl transition-all duration-300 ease-out"
+        className="pointer-events-auto absolute flex flex-col rounded-2xl border border-blue-400/30 bg-[#0B1120] shadow-2xl transition-all duration-300 ease-out"
         style={{
           width: balonGenislik,
           left: balonSol,
           top: asagidaYerVar ? rect.top + rect.height + 18 : undefined,
           bottom: asagidaYerVar ? undefined : viewport.h - rect.top + 18,
+          maxHeight: `min(26rem, calc(${viewport.h}px - 6rem))`,
         }}
       >
         {/* Hedefi gösteren ok */}
@@ -161,40 +168,42 @@ export function SpotlightGuide(props: Props) {
           style={{ left: Math.min(Math.max(rect.left - balonSol + rect.width / 2 - 6, 12), balonGenislik - 24) }}
         />
 
-        <div className="flex items-start gap-2.5">
-          <VixrexAvatar size={26} decorative />
-          <div className="flex-1">
-            <div className="mb-1 flex items-center gap-2">
-              <span
-                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${bilgi.sinif}`}
-              >
-                {bilgi.yazi}
-              </span>
-              <span className="text-[11px] text-slate-500">
-                {SECTION_LABELS[seciliAlan.bolum]}
-              </span>
+        <div className="flex flex-col gap-3 overflow-y-auto p-4">
+          <div className="flex items-start gap-2.5">
+            <VixrexAvatar size={26} decorative />
+            <div className="flex-1">
+              <div className="mb-1 flex items-center gap-2">
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${bilgi.sinif}`}
+                >
+                  {bilgi.yazi}
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  {SECTION_LABELS[seciliAlan.bolum]}
+                </span>
+              </div>
+              <p className="text-[15px] font-extrabold text-white">
+                {seciliAlan.etiket}
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-slate-400">
+                {bilgi.neden}
+                {seciliAlan.ipucu ? ` ${seciliAlan.ipucu}` : ""}
+              </p>
             </div>
-            <p className="text-[15px] font-extrabold text-white">
-              {seciliAlan.etiket}
-            </p>
-            <p className="mt-1 text-[13px] leading-relaxed text-slate-400">
-              {bilgi.neden}
-              {seciliAlan.ipucu ? ` ${seciliAlan.ipucu}` : ""}
-            </p>
+            <button
+              type="button"
+              onClick={onKapat}
+              aria-label="Rehberi kapat"
+              className="shrink-0 rounded-full p-1 text-slate-500 hover:bg-white/5 hover:text-slate-300"
+            >
+              ✕
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onKapat}
-            aria-label="Rehberi kapat"
-            className="shrink-0 rounded-full p-1 text-slate-500 hover:bg-white/5 hover:text-slate-300"
-          >
-            ✕
-          </button>
-        </div>
 
-        {/* Gerçek giriş alanı — StepCard/panelin kullandığı AYNI bileşen,
-         * ikinci bir kopyası değil. */}
-        <FieldInputArea {...props} />
+          {/* Gerçek giriş alanı — StepCard/panelin kullandığı AYNI bileşen,
+           * ikinci bir kopyası değil. */}
+          <FieldInputArea {...props} />
+        </div>
       </div>
     </div>
   );
