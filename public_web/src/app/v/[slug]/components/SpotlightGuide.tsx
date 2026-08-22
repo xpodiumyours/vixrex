@@ -79,13 +79,18 @@ interface Props {
    * demektir.
    */
   olcumTetikleyici?: unknown;
+  /**
+   * Rehber hedefe yürüyor mu (Faz 3b). Yolda balon kapalı durur; ekranda
+   * uçuşan bir kutu yerine yalnız Vixrex sembolü hedefe kayar.
+   */
+  gecisSuruyor?: boolean;
 }
 
 /** Sayfada gezen spot ışığı — panel açıkken, bir alan seçiliyken görünür.
  * Gerçek giriş alanını (FieldInputArea) balonun içinde barındırır; ayrı,
  * bağlantısız bir kutu YOKTUR. */
 export function SpotlightGuide(props: Props) {
-  const { seciliAlan, onKapat, olcumTetikleyici } = props;
+  const { seciliAlan, onKapat, olcumTetikleyici, gecisSuruyor = false } = props;
   const [rect, setRect] = useState<Rect | null>(null);
   const [viewport, setViewport] = useState<{ w: number; h: number } | null>(null);
 
@@ -195,6 +200,20 @@ export function SpotlightGuide(props: Props) {
           boxShadow: "0 0 0 9999px rgba(3, 7, 18, 0.74)",
         }}
       />
+
+      {/* Yürüyen Vixrex sembolü (Faz 3b).
+       *
+       * Casper: "dolaşan ve kutucukların boyutları ve vixrex asistanın
+       * dolaşması önemli". Balon yolda kapalı durduğu için hedefe ne
+       * gittiğini gösteren tek şey bu: sembol hedefin köşesine kayar,
+       * CSS geçişiyle yürür gibi görünür. Varınca balon açılır. */}
+      <div
+        className="pointer-events-none absolute flex h-8 w-8 items-center justify-center rounded-full border border-blue-400/40 bg-[#0B1120] shadow-lg transition-all duration-500 ease-out"
+        style={{ top: rect.top - 22, left: Math.max(8, rect.left - 14) }}
+      >
+        <VixrexAvatar size={22} decorative />
+      </div>
+
       {/* Ok + balon — gerçek giriş alanı da içinde.
        * 2026-08-22 mobil/masaüstü uyum düzeltmesi: balonun kendisi
        * yükseklik sınırı taşımıyordu — FieldInputArea içeriği (uzun metin,
@@ -203,7 +222,14 @@ export function SpotlightGuide(props: Props) {
        * çizildiği için (negatif top/bottom) kaydırma yalnız İÇ gövdeye
        * uygulanır — dış kutuya overflow verilirse ok kırpılır. */}
       <div
-        className="pointer-events-auto absolute flex flex-col rounded-2xl border border-blue-400/30 bg-[#0B1120] shadow-2xl transition-all duration-300 ease-out"
+        // Yolda balon kapalı: ekranda uçan bir kutu yerine, yürüyen bir
+        // sembol görünür (Faz 3b). Varınca açılır.
+        aria-hidden={gecisSuruyor}
+        className={`absolute flex flex-col rounded-2xl border border-blue-400/30 bg-[#0B1120] shadow-2xl transition-all duration-300 ease-out ${
+          gecisSuruyor
+            ? "pointer-events-none scale-95 opacity-0"
+            : "pointer-events-auto scale-100 opacity-100"
+        }`}
         style={{
           width: balonGenislik,
           left: balonSol,
