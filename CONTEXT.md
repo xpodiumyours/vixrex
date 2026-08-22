@@ -138,6 +138,7 @@ eskiyen kısım, kod ile çelişirse KOD kazanır)
 - [[0001-vixrex-core-omurga-ve-uzman-beyinler]] — hangi mantık tek omurgada, hangisi istemciye özel.
 - [[0002-vixrex-asistan-rehberli-tamamlama]] — rehberlik motoru neden kural-tabanlı, LLM değil.
 - [[0003-vault-baglam-kurali]] — bu dosyanın kendisinin var oluş gerekçesi.
+- [[0004-vitrinler-arasi-capraz-kesif]] — vitrinler arası çapraz keşif widget'ı: kategori-dışı + esnaf onaylı (parametreler henüz açık, bkz. [[vitrinler-arasi-kesif]]).
 
 ## Diğer kaynaklar (bu dosyanın YERİNE geçmez, tamamlar)
 
