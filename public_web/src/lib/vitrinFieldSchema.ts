@@ -598,6 +598,26 @@ export const SECTION_ORDER: readonly VitrinSection[] = [
   "contact",
 ];
 
+/**
+ * Bölümün vitrindeki HTML kimliği (`<section id="...">`).
+ *
+ * Rehber uzak bir alana giderken önce bölümün başına iner, kısa durur,
+ * sonra alana yaklaşır (Faz 3b) — o duraklama noktası buradan bulunur.
+ * Bölüm gizliyse aynı kimliği `BolumIskeleti` taşır, yani hedef her
+ * zaman vardır.
+ */
+export const SECTION_DOM_ID: Record<VitrinSection, string> = {
+  hero: "ust-bolum",
+  categories: "kategoriler",
+  featured: "one-cikan",
+  products: "urunler",
+  about: "hakkimizda",
+  gallery: "galeri",
+  blog: "blog",
+  faq: "sss",
+  contact: "iletisim",
+};
+
 export function fieldsOfSection(bolum: VitrinSection): VitrinField[] {
   return VITRIN_FIELDS.filter((f) => f.bolum === bolum);
 }

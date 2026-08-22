@@ -1,4 +1,5 @@
 import {
+  SECTION_DOM_ID,
   SECTION_LABELS,
   fieldsOfSection,
   type VitrinField,
@@ -144,7 +145,13 @@ export function BolumIskeleti({ bolum, taslak, ownerMode }: Props) {
   if (seritAlanlari(bolum, taslak).length === 0) return null;
 
   return (
-    <section className="max-w-7xl mx-auto px-6 sm:px-8 py-4">
+    // Kimlik gerçek bölümle aynı: bölüm gizliyken de rehber "önce bölüme
+    // in, sonra alana yaklaş" adımını uygulayabilsin (Faz 3b). Gerçek
+    // bölümle iskelet asla birlikte çizilmez, kimlik çakışmaz.
+    <section
+      id={SECTION_DOM_ID[bolum]}
+      className="max-w-7xl mx-auto px-6 sm:px-8 py-4"
+    >
       <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-5 py-4">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
           {SECTION_LABELS[bolum]}
