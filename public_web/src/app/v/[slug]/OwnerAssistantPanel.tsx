@@ -116,7 +116,13 @@ export default function OwnerAssistantPanel({
   useEffect(() => {
     if (!acik || seciliAlan) return;
     const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
-    if (ilkEksik) alanSec(ilkEksik.anahtar);
+    if (ilkEksik) {
+      alanSec(ilkEksik.anahtar);
+      return;
+    }
+    // Doldurulacak alan kalmamışsa mobilde ekranda hiçbir şey olmazdı —
+    // asistan açıldı ama görünmüyor gibi. Bu durumda harita açılır.
+    if (!masaustu) setHaritaAcik(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [acik]);
 
@@ -227,7 +233,12 @@ export default function OwnerAssistantPanel({
         onClick={() => {
           const yeni = !acik;
           setAcik(yeni);
-          setHaritaAcik(yeni);
+          // MOBİLDE harita açılmaz (Casper, 2026-08-22: "asistan maskotuna
+          // tıklayınca yine sayfa kapanıyor"). Maskot rehberi başlatır:
+          // yukarıdaki etki ilk eksik alanı seçer, sayfada sembol ve balon
+          // görünür, vitrin görünür kalır. Harita yalnız balondaki ☰ ile
+          // açılır. Masaüstünde harita yan panel, sayfayı kapatmıyor.
+          setHaritaAcik(yeni && masaustu);
         }}
         className="fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition"
         aria-label="Vixrex Asistan"
