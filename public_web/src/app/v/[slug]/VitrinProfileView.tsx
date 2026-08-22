@@ -32,6 +32,7 @@ import {
   WhatsAppIcon,
 } from "@/lib/vitrinBrandIcons";
 import { editableProps } from "@/lib/vitrinEditableProps";
+import { BolumEksikleri, BolumIskeleti } from "./components/BolumEksikleri";
 import { heroActions } from "@/lib/vitrinHeroActions";
 import { normalizeExternalUrl } from "@/lib/products";
 import {
@@ -167,6 +168,15 @@ export interface VitrinProfileViewProps {
    * yazılmaz — koruma sınırı 3 (sahip araçları müşteri yanıtına sızmaz).
    */
   ownerMode?: boolean;
+  /**
+   * Sahip modundaki çalışma taslağı (`store_working_drafts.draft_data`).
+   * Yalnız hangi alanın BOŞ olduğunu bilmek için okunur — "bu bölüme
+   * eklenebilir" şeridi (BolumEksikleri) bunu kullanır. Ziyaretçi
+   * isteğinde hiç geçirilmez, şerit de hiç çizilmez. İçeriği ekrana
+   * basmaz; gösterilen değerler eskisi gibi tek tek prop'lardan gelir,
+   * ikinci bir veri yolu açılmaz.
+   */
+  ownerDraft?: Record<string, unknown>;
   /** Kiralık demo vitrin mi — kiralama bandı yalnız burada çıkar. */
   isDemo?: boolean;
 }
@@ -230,6 +240,7 @@ export default function VitrinProfileView({
   catalog,
   isPreviewMode = false,
   ownerMode = false,
+  ownerDraft,
   isDemo = false,
 }: VitrinProfileViewProps) {
   const [copied, setCopied] = useState(false);
@@ -572,10 +583,11 @@ export default function VitrinProfileView({
             </div>
           )}
         </div>
+        <BolumEksikleri bolum="hero" taslak={ownerDraft} ownerMode={ownerMode} />
       </section>
 
       {/* ===== CATEGORIES ===== */}
-      {showCategories && (
+      {showCategories ? (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="kategoriler">
           <div className="flex items-baseline justify-between mb-8">
             <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
@@ -611,11 +623,14 @@ export default function VitrinProfileView({
               </div>
             ))}
           </div>
+          <BolumEksikleri bolum="categories" taslak={ownerDraft} ownerMode={ownerMode} />
         </section>
+      ) : (
+        <BolumIskeleti bolum="categories" taslak={ownerDraft} ownerMode={ownerMode} />
       )}
 
       {/* ===== FEATURED BANNER ===== */}
-      {showFeaturedBanner && (
+      {showFeaturedBanner ? (
         <div className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
           <div
             className={`relative overflow-hidden rounded-3xl border border-blue-500/15 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent p-8 sm:p-11 ${
@@ -668,11 +683,14 @@ export default function VitrinProfileView({
               </div>
             )}
           </div>
+          <BolumEksikleri bolum="featured" taslak={ownerDraft} ownerMode={ownerMode} />
         </div>
+      ) : (
+        <BolumIskeleti bolum="featured" taslak={ownerDraft} ownerMode={ownerMode} />
       )}
 
       {/* ===== PRODUCTS ===== */}
-      {showProducts && (
+      {showProducts ? (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler">
           <div className="flex items-baseline justify-between mb-8">
             <h2 {...editableProps("urunBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
@@ -684,11 +702,14 @@ export default function VitrinProfileView({
           <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Ürünler yükleniyor...</div>}>
             {catalog}
           </Suspense>
+          <BolumEksikleri bolum="products" taslak={ownerDraft} ownerMode={ownerMode} />
         </section>
+      ) : (
+        <BolumIskeleti bolum="products" taslak={ownerDraft} ownerMode={ownerMode} />
       )}
 
       {/* ===== ABOUT ===== */}
-      {showAbout && (
+      {showAbout ? (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="hakkimizda">
           <div className={`grid gap-10 items-start ${aboutImageUrl ? "md:grid-cols-2" : ""}`}>
             {aboutImageUrl && (
@@ -750,11 +771,14 @@ export default function VitrinProfileView({
               )}
             </div>
           </div>
+          <BolumEksikleri bolum="about" taslak={ownerDraft} ownerMode={ownerMode} />
         </section>
+      ) : (
+        <BolumIskeleti bolum="about" taslak={ownerDraft} ownerMode={ownerMode} />
       )}
 
       {/* ===== GALLERY ===== */}
-      {showGallery && (
+      {showGallery ? (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="galeri">
           <div className="flex items-baseline justify-between mb-8 gap-4">
             <div>
@@ -812,11 +836,14 @@ export default function VitrinProfileView({
               </figure>
             ))}
           </div>
+          <BolumEksikleri bolum="gallery" taslak={ownerDraft} ownerMode={ownerMode} />
         </section>
+      ) : (
+        <BolumIskeleti bolum="gallery" taslak={ownerDraft} ownerMode={ownerMode} />
       )}
 
       {/* ===== ARTICLES ===== */}
-      {showArticles && (
+      {showArticles ? (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="blog">
           <div className="flex items-baseline justify-between mb-8">
             <div>
@@ -848,11 +875,14 @@ export default function VitrinProfileView({
               </Link>
             ))}
           </div>
+          <BolumEksikleri bolum="blog" taslak={ownerDraft} ownerMode={ownerMode} />
         </section>
+      ) : (
+        <BolumIskeleti bolum="blog" taslak={ownerDraft} ownerMode={ownerMode} />
       )}
 
       {/* ===== FAQ ===== */}
-      {showFaq && (
+      {showFaq ? (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="sss">
           <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
             <div>
@@ -881,11 +911,14 @@ export default function VitrinProfileView({
               ))}
             </div>
           </div>
+          <BolumEksikleri bolum="faq" taslak={ownerDraft} ownerMode={ownerMode} />
         </section>
+      ) : (
+        <BolumIskeleti bolum="faq" taslak={ownerDraft} ownerMode={ownerMode} />
       )}
 
       {/* ===== CONTACT & LOCATION ===== */}
-      {showContact && (
+      {showContact ? (
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="iletisim">
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Contact Panel */}
@@ -1128,7 +1161,10 @@ export default function VitrinProfileView({
           </div>
           )}
         </div>
+        <BolumEksikleri bolum="contact" taslak={ownerDraft} ownerMode={ownerMode} />
       </div>
+      ) : (
+        <BolumIskeleti bolum="contact" taslak={ownerDraft} ownerMode={ownerMode} />
       )}
 
       {/* ===== SHARE & QR SECTION =====

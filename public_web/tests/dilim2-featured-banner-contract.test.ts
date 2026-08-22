@@ -19,7 +19,12 @@ describe("Dilim 2 öne çıkan kampanya bandı", () => {
   });
 
   it("view sahte kampanya metni göstermez; boşsa gizler", () => {
-    expect(viewSource).toContain("showFeaturedBanner &&");
+    // 2026-08-22: bu satır eskiden kaynakta `showFeaturedBanner &&` arıyordu.
+    // Koşul artık `? :` — sahip modunda boş bandın yerine iskelet çiziliyor
+    // (bkz. BolumIskeleti). Ziyaretçi davranışı DEĞİŞMEDİ; kaynak metni
+    // aramak yerine gerçek davranış ölçülüyor: boş bant ziyaretçiye
+    // hiçbir şey göstermez (aşağıdaki render testi).
+    expect(viewSource).toMatch(/\{showFeaturedBanner \?/);
     expect(viewSource).toContain("featuredBanner");
     expect(viewSource).not.toContain("Sonbahar / Kış Koleksiyonu");
     expect(viewSource).not.toContain("349 TL");
