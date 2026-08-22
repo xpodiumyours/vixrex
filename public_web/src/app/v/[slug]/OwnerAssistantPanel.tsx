@@ -118,6 +118,14 @@ export default function OwnerAssistantPanel({
     setGiris,
   });
 
+  // Faz 2: kayıt sürerken seçili alan sayfada hafifçe nefes alsın —
+  // esnaf "gitti mi, gitmedi mi" diye beklemesin. Gerçek stil
+  // globals.css'te (`body.vixrex-kaydediliyor .vixrex-secili-alan`).
+  useEffect(() => {
+    document.body.classList.toggle("vixrex-kaydediliyor", actions.kaydediliyor);
+    return () => document.body.classList.remove("vixrex-kaydediliyor");
+  }, [actions.kaydediliyor]);
+
   // Faz G3 (Tek Asistan planı, G3.1): üç aşamalı ilerleme şeridi için
   // önem başına dolu/toplam — şemadan hesaplanır, elle sayılmaz.
   const dolulugu = asamaDolulugu(yerelTaslak, atlanmisAlanlar);
@@ -183,6 +191,9 @@ export default function OwnerAssistantPanel({
           canliyaDondur={fieldRestore.canliyaDondur}
           sonrayaBirak={sonrayaBirak}
           onKapat={rehberiKapat}
+          // Taslak değişti = sayfa da değişmiş olabilir (kaydetme artık
+          // sunucudan tazeliyor, Faz 2) → balon konumunu yeniden ölç.
+          olcumTetikleyici={yerelTaslak}
         />
       )}
 

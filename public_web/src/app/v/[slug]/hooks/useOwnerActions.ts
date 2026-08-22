@@ -15,6 +15,9 @@ const GORSEL_TURU: Record<string, "cover" | "logo_placeholder" | "gallery" | "pr
   bantGorsel: "product",
 };
 
+/** globals.css'teki kısa "değişti" parıltısı. */
+const PARLAMA_SINIFI = "vixrex-degisti";
+
 export interface HazirGorsel {
   image_url: string;
   title?: string | null;
@@ -53,6 +56,24 @@ interface Deps {
   /** "Boş geç" kalıcı işaretlendiğinde yerel state'e yansıtır
    * (`useOwnerDraft.alanAtlandi`). */
   alanAtlandi: (anahtar: string) => void;
+}
+
+/**
+ * Kaydedilen alanı sayfada kısa süre parlatır (Faz 2).
+ *
+ * Neden gerekli: değişiklik artık sayfaya anında yansıyor, ama esnaf
+ * gözünü kutuya dikmişken vitrindeki yazının değiştiğini kaçırabiliyor.
+ * Bu, "kaydettim" demenin sayfa üstündeki karşılığı.
+ *
+ * `router.refresh()` sunucudan gelen içerikle DOM'u yamalar, className'i
+ * değiştirmez — bu yüzden sınıf tazeleme sırasında da yerinde kalır.
+ */
+function alaniParlat(anahtar: string) {
+  if (typeof document === "undefined") return;
+  const oge = document.querySelector(`[data-vixrex-editable="${anahtar}"]`);
+  if (!oge) return;
+  oge.classList.add(PARLAMA_SINIFI);
+  window.setTimeout(() => oge.classList.remove(PARLAMA_SINIFI), 1400);
 }
 
 export function useOwnerActions({
@@ -129,6 +150,11 @@ export function useOwnerActions({
 
         mesajEkle("asistan", `${alan.etiket} güncellendi.`);
         setAlan(alan.kolon, yuklemeGovde.url as unknown);
+        // Sayfa sunucuda çizildiği için yeni değer ancak yeniden
+        // okununca vitrine yansır — yoksa esnaf kaydeder, sayfada
+        // eski yazı durmaya devam ederdi (Faz 2).
+        router.refresh();
+        alaniParlat(alan.anahtar);
         alanaGecVeyaBitir(alan.anahtar);
       } catch {
         mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
@@ -136,7 +162,7 @@ export function useOwnerActions({
         setKaydediliyor(false);
       }
     },
-    [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir]
+    [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir, router]
   );
 
   // Kategorinin hazır görsellerini getirir. Kategori anahtarı
@@ -209,6 +235,11 @@ export function useOwnerActions({
         mesajEkle("asistan", `${alan.etiket} güncellendi.`);
         _setHazirGorseller([]);
         setAlan(alan.kolon, url);
+        // Sayfa sunucuda çizildiği için yeni değer ancak yeniden
+        // okununca vitrine yansır — yoksa esnaf kaydeder, sayfada
+        // eski yazı durmaya devam ederdi (Faz 2).
+        router.refresh();
+        alaniParlat(alan.anahtar);
         alanaGecVeyaBitir(alan.anahtar);
       } catch {
         mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
@@ -216,7 +247,7 @@ export function useOwnerActions({
         setKaydediliyor(false);
       }
     },
-    [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir, _setHazirGorseller]
+    [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir, _setHazirGorseller, router]
   );
 
   const gonder = useCallback(async () => {
@@ -266,13 +297,18 @@ export function useOwnerActions({
       );
       setGiris("");
       setAlan(alan.kolon, gonderilecek);
+      // Sayfa sunucuda çizildiği için yeni değer ancak yeniden
+      // okununca vitrine yansır — yoksa esnaf kaydeder, sayfada
+      // eski yazı durmaya devam ederdi (Faz 2).
+      router.refresh();
+      alaniParlat(alan.anahtar);
       alanaGecVeyaBitir(alan.anahtar);
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
       setKaydediliyor(false);
     }
-  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir]);
+  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router]);
 
   // Yalnız isteğe bağlı alanlarda gösterilen "Boş geç" (ADR 0002, 3. alt-faz).
   // Vitrin İÇERİĞİ yazmaz — /api/owner-draft'tan bağımsız, kendi dar
