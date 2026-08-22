@@ -22,6 +22,7 @@ const DOSYALAR = [
   // (Tek Asistan planı, G3.1) yeniden diziliminde FieldChipList silindi,
   // yerine/yanına StageMeter/StepCard/UpNextList/SectionProgressList/
   // ChatTopBar geldi.
+  "../src/app/v/[slug]/components/BolumEksikleri.tsx",
   "../src/app/v/[slug]/components/ChatBubble.tsx",
   "../src/app/v/[slug]/components/ChatTopBar.tsx",
   "../src/app/v/[slug]/components/StageMeter.tsx",

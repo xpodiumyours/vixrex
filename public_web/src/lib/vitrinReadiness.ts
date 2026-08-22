@@ -61,7 +61,14 @@ export function alanOnemi(alan: VitrinField): EksikOnem {
   return "istege-bagli";
 }
 
-function doluMu(deger: unknown, bosDegerler?: readonly string[]): boolean {
+/**
+ * Bir alan gerçekten dolu mu? `bosDegerler` teknik olarak dolu ama işlevsel
+ * olarak eksik değerleri (ör. kategori = "Diğer") boş sayar.
+ *
+ * Dışa açık: sayfadaki "bu bölüme eklenebilir" şeridi (BolumEksikleri) de
+ * aynı kuralı kullanır — ikinci bir "boş mu" mantığı yazılmaz.
+ */
+export function doluMu(deger: unknown, bosDegerler?: readonly string[]): boolean {
   if (deger === null || deger === undefined) return false;
   if (typeof deger === "string") {
     const kirpilmis = deger.trim();
