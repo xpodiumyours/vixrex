@@ -362,3 +362,51 @@ body.vixrex-asistan-acik [data-vixrex-editable]:hover {
   background-color: rgba(59, 130, 246, 0.12) !important;
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.6) !important;
 }
+
+/* Faz 2 (2026-08-22) — kaydetme sayfaya yansıdığında görülsün.
+   Kaydetme artık `router.refresh()` ile sayfayı sunucudan tazeliyor;
+   esnaf gözünü kutuya dikmişken vitrindeki yazının değiştiğini
+   kaçırabiliyor. Bu iki sınıf o anı görünür kılar.
+
+   Sınıflar JS'ten geçici olarak eklenir (useOwnerActions.alaniParlat ve
+   OwnerAssistantPanel'in kaydetme efekti); yalnız sahip modunda DOM'a
+   giren öğelerde bulunur, müşteri görünümünü etkilemez. */
+@keyframes vixrex-degisti-parla {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55);
+    background-color: rgba(52, 211, 153, 0.16);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(52, 211, 153, 0);
+    background-color: transparent;
+  }
+}
+.vixrex-degisti {
+  border-radius: 6px;
+  animation: vixrex-degisti-parla 1.4s ease-out;
+}
+
+/* Kayıt sürerken seçili alan hafifçe nefes alır — "işlem sürüyor". */
+@keyframes vixrex-kaydediliyor-nefes {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.62;
+  }
+}
+body.vixrex-kaydediliyor .vixrex-secili-alan {
+  animation: vixrex-kaydediliyor-nefes 1s ease-in-out infinite;
+}
+
+/* Hareketi azaltılmış cihazlarda animasyon yok — yalnız renk kalır. */
+@media (prefers-reduced-motion: reduce) {
+  .vixrex-degisti,
+  body.vixrex-kaydediliyor .vixrex-secili-alan {
+    animation: none;
+  }
+  .vixrex-degisti {
+    background-color: rgba(52, 211, 153, 0.16);
+  }
+}

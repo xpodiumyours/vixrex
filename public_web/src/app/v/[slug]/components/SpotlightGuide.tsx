@@ -69,13 +69,23 @@ interface Props {
   canliyaDondur: () => Promise<void>;
   sonrayaBirak?: () => void;
   onKapat: () => void;
+  /**
+   * Değeri değiştiğinde balonun konumu yeniden ölçülür (Faz 2).
+   *
+   * Kaydetme artık sayfayı sunucudan tazeliyor; hedefin yazısı uzayıp
+   * kısaldıkça yeri ve boyu değişiyor. Ölçüm yalnız `seciliAlan`
+   * değişince tetiklenseydi balon eski yerinde kalırdı. Panel buraya
+   * yerel taslağı geçirir — o değişti demek "sayfa da değişmiş olabilir"
+   * demektir.
+   */
+  olcumTetikleyici?: unknown;
 }
 
 /** Sayfada gezen spot ışığı — panel açıkken, bir alan seçiliyken görünür.
  * Gerçek giriş alanını (FieldInputArea) balonun içinde barındırır; ayrı,
  * bağlantısız bir kutu YOKTUR. */
 export function SpotlightGuide(props: Props) {
-  const { seciliAlan, onKapat } = props;
+  const { seciliAlan, onKapat, olcumTetikleyici } = props;
   const [rect, setRect] = useState<Rect | null>(null);
   const [viewport, setViewport] = useState<{ w: number; h: number } | null>(null);
 
@@ -92,8 +102,23 @@ export function SpotlightGuide(props: Props) {
       return;
     }
     const r = hedef.getBoundingClientRect();
-    setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
-    setViewport({ w: window.innerWidth, h: window.innerHeight });
+    // Ölçüm artık her karede yapılıyor (aşağıdaki rAF döngüsü). Değer
+    // gerçekten değişmediyse state'e yazmıyoruz — yoksa saniyede ~60
+    // boş yeniden çizim olurdu.
+    setRect((onceki) =>
+      onceki &&
+      onceki.top === r.top &&
+      onceki.left === r.left &&
+      onceki.width === r.width &&
+      onceki.height === r.height
+        ? onceki
+        : { top: r.top, left: r.left, width: r.width, height: r.height },
+    );
+    setViewport((onceki) =>
+      onceki && onceki.w === window.innerWidth && onceki.h === window.innerHeight
+        ? onceki
+        : { w: window.innerWidth, h: window.innerHeight },
+    );
   }, [seciliAlan]);
 
   // useLayoutEffect: hedefin gerçek DOM konumunu ölçüp boyayamadan önce
@@ -108,20 +133,43 @@ export function SpotlightGuide(props: Props) {
     konumuGuncelle();
     window.addEventListener("scroll", konumuGuncelle, true);
     window.addEventListener("resize", konumuGuncelle);
-    // scrollIntoView({behavior:"smooth"}) anlık bitmiyor — kayma sürerken
-    // de balonun hedefi takip etmesi için kısa bir süre tekrar hesaplanır.
-    const zamanlayici = window.setInterval(konumuGuncelle, 120);
-    const durdur = window.setTimeout(
-      () => window.clearInterval(zamanlayici),
-      700,
-    );
+
+    // Hedef yerine oturana kadar her karede yeniden ölç.
+    //
+    // Eskiden bu 120 ms'lik sabit bir `setInterval`'dı: kayma sürerken
+    // balon adım adım sıçrıyordu ("sert iniş"). Artık ekranın kendi
+    // çizim ritminde (requestAnimationFrame) ölçülüyor — hem daha
+    // yumuşak hem de kayma erken biterse boşuna dönmüyor.
+    //
+    // Süre 700 ms'den 1200 ms'ye çıkarıldı: kaydetme sonrası sayfa
+    // sunucudan tazeleniyor (Faz 2), içerik yerine oturması yumuşak
+    // kaymadan uzun sürebiliyor.
+    let cerceve = 0;
+    const basla = performance.now();
+    const dur = () => {
+      konumuGuncelle();
+      if (performance.now() - basla < 1200) {
+        cerceve = requestAnimationFrame(dur);
+      }
+    };
+    cerceve = requestAnimationFrame(dur);
+
+    // Sayfa içeriği büyüyüp küçüldüğünde (tazeleme sonrası yeni metin,
+    // yüklenen görsel) hedefin yeri kayar. Kaydırma olayı çıkmadığı için
+    // yukarıdaki dinleyiciler bunu yakalamaz.
+    const govdeIzleyici =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => konumuGuncelle());
+    govdeIzleyici?.observe(document.body);
+
     return () => {
       window.removeEventListener("scroll", konumuGuncelle, true);
       window.removeEventListener("resize", konumuGuncelle);
-      window.clearInterval(zamanlayici);
-      window.clearTimeout(durdur);
+      cancelAnimationFrame(cerceve);
+      govdeIzleyici?.disconnect();
     };
-  }, [konumuGuncelle]);
+  }, [konumuGuncelle, olcumTetikleyici]);
 
   if (!seciliAlan || !rect || !viewport) return null;
 
