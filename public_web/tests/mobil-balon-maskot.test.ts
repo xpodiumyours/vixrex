@@ -82,11 +82,12 @@ describe("maskot rehberi başlatır, haritayı değil", () => {
   it("mobilde Vixrex düğmesi haritayı AÇMAZ", () => {
     // Casper, 2026-08-22: "mobilde asistan maskota tıklayınca yine sayfa
     // kapanıyor". Düğme haritayı da açıyordu, harita mobilde tam ekran.
-    expect(panel).toContain("setHaritaAcik(yeni && masaustu)");
+    expect(panel).toContain("setHaritaAcik(yeni && (masaustu || !yapilacakVar))");
+    expect(panel).not.toContain("setHaritaAcik(yeni);");
   });
 
   it("doldurulacak alan kalmadıysa mobilde harita açılır", () => {
     // Yoksa asistan açılıyor ama ekranda hiçbir şey görünmüyor gibi olur.
-    expect(panel).toContain("if (!masaustu) setHaritaAcik(true);");
+    expect(panel).toContain("setHaritaAcik(yeni && (masaustu || !yapilacakVar))");
   });
 });
