@@ -55,6 +55,12 @@ const SAYFADA_KENDI_YERI_OLMAYANLAR: ReadonlySet<string> = new Set([
   "boylam",
   "galeriAksiyonLinki",
   "yolTarifiGoster",
+  // Aç/kapa alanları `doluMu` için HER HÂLDE doludur ("karar verilmiş"
+  // sayılır), ama kapalıyken sayfada gösterecek bir şeyleri de yoktur —
+  // yani kapatan esnaf bir daha açamazdı. `puanGoster` bunu gerçek bir
+  // vitrinde yaptı (2026-08-22, yerel test): puan kapalı + puan değeri
+  // yok → ne rozet çizildi ne şeritte çıktı, alan tamamen kayboldu.
+  "puanGoster",
 ]);
 
 interface Props {

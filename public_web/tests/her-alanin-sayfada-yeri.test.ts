@@ -189,12 +189,32 @@ const DOLU_TASLAK: Record<string, unknown> = Object.fromEntries(
   ]),
 );
 
+/** Aç/kapa alanları KAPALI olan taslak.
+ *
+ * `doluMu` bir boolean'ı her hâlde "dolu" sayar ("karar verilmiş"), ama
+ * kapalı bir aç/kapa alanının sayfada gösterecek bir şeyi de yoktur. Bu
+ * ikisi birleşince alan tamamen kaybolur — kapatan esnaf bir daha
+ * açamaz. Gerçek bir vitrinde yaşandı (2026-08-22 yerel test:
+ * `puanGoster` kapalıydı, hiçbir yerde çıkmıyordu). */
+const KAPALI_TASLAK: Record<string, unknown> = Object.fromEntries(
+  Object.entries(DOLU_TASLAK).map(([k, v]) => [k, v === true ? false : v]),
+);
+
 describe("dolu vitrin — alanlar dolduktan sonra da düzeltilebilir", () => {
-  it("46 alanın hepsi hâlâ tıklanabilir", () => {
+  it.each([
+    ["aç/kapa alanları AÇIK", DOLU_TASLAK, {}],
+    // Kapalı aç/kapa + puan değeri yok: gerçek vitrinlerin normal hâli.
+    [
+      "aç/kapa alanları KAPALI",
+      KAPALI_TASLAK,
+      { showStorefrontRating: false, ratingScore: null, reviewCount: null },
+    ],
+  ])("%s iken 46 alanın hepsi hâlâ tıklanabilir", (_ad, taslak, ekstra) => {
     const html = ciz({
       ...DOLU_EKSTRA,
+      ...(ekstra as Partial<VitrinProfileViewProps>),
       ownerMode: true,
-      ownerDraft: DOLU_TASLAK,
+      ownerDraft: taslak as Record<string, unknown>,
     });
 
     const ulasilamayan = VITRIN_FIELDS.filter(
