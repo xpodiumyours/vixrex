@@ -205,7 +205,11 @@ export default function OwnerAssistantPanel({
         aria-label="Vixrex Asistan"
         aria-expanded={acik}
       >
-        <VixrexAvatar size={28} decorative />
+        {/* size=36: panel kapalıyken görünen bu maskot, panel açıldığında
+            görünen ChatTopBar'daki maskotla (size=36) eşitlendi — eskiden
+            28'di, açılış anında maskot büyüyormuş gibi göze çarpıyordu
+            (2026-08-22). */}
+        <VixrexAvatar size={36} decorative />
         <span className="text-sm font-semibold hidden sm:inline">Vixrex Asistan</span>
         {!rapor.temelTamam && (
           <span className="ml-1 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-slate-900">

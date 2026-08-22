@@ -372,7 +372,13 @@ export default function VitrinProfileView({
             <rect x="14" y="14" width="7" height="7" rx="1.5" />
             <rect x="3" y="14" width="7" height="7" rx="1.5" />
           </svg>
-          VIX<span className="text-blue-400">REX</span>
+          {/* İkon ve kelime öbeği `gap-3` flex kutusunda İKİ ayrı öğe
+              sayılmasın diye tek span'de birleştirildi — eskiden "VIX"
+              düz metin, "REX" ayrı span'di; flex gap ikisinin arasına da
+              (12px) giriyordu, "VIXREX" tek kelime yerine "VIX REX" iki
+              kelime gibi görünüyordu (canlı ekran görüntüsüyle bulundu,
+              2026-08-22). */}
+          <span>VIX<span className="text-blue-400">REX</span></span>
         </a>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
