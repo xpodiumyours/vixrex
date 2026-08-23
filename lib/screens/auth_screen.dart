@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/legal_config.dart';
 import 'package:vixrex/services/auth_service.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
+import 'package:vixrex/services/secure_token_storage.dart';
 import 'package:vixrex/services/recaptcha_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/config/app_router.dart';
@@ -181,9 +182,9 @@ class _AuthScreenState extends State<AuthScreen> {
     // 1. Check for local edit tokens and link them if present.
     // Publish writes last_published_edit_token (+ mirrored vitrin/store keys).
     final localTokenCandidates = <String>[
-      prefs.getString(LocalStorageKeys.lastPublishedEditToken) ?? '',
-      prefs.getString(LocalStorageKeys.vitrinEditToken) ?? '',
-      prefs.getString(LocalStorageKeys.storeEditToken) ?? '',
+      await SecureTokenStorage.loadLastPublishedEditToken() ?? '',
+      await SecureTokenStorage.loadVitrinEditToken() ?? '',
+      await SecureTokenStorage.loadStoreEditToken() ?? '',
     ];
     final localEditToken = localTokenCandidates
         .map((t) => t.trim())
