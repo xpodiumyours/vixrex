@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error("Category images fetch error:", error);
       return NextResponse.json(
-        { error: error.message },
+        { error: "Internal server error" },
         { status: 500 }
       );
     }
@@ -46,8 +46,7 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json(grouped);
-  } catch (err) {
-    console.error("Category images API error:", err);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -58,7 +57,11 @@ export async function GET(request: NextRequest) {
 /**
  * Store'u kategori sablonuyla otomatik doldur
  * POST /api/category-images/apply
- * Body: { store_id, category_key, fill_cover?, fill_logo?, fill_gallery?, fill_products? }
+ * Body: { store_id, category_key, edit_token, fill_cover?, fill_logo?, fill_gallery?, fill_products? }
+ *
+ * V-56 Fix: edit_token zorunlu — RPC sahiplik kontrolü için gerektirir.
+ * Flutter (auto_fill_service.dart:102) zaten edit_token gönderiyor.
+ * Web caller'ları da edit_token sağlamalı.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -66,6 +69,7 @@ export async function POST(request: NextRequest) {
     const {
       store_id,
       category_key,
+      edit_token,
       fill_cover = true,
       fill_logo = true,
       fill_gallery = true,
@@ -79,10 +83,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // V-56: edit_token zorunlu — sahiplik kontrolü RPC içinde yapılır
+    // (auth.uid() NULL olduğunda edit_token ile yetki doğrulanır)
+    if (!edit_token || typeof edit_token !== "string" || edit_token.length < 24) {
+      return NextResponse.json(
+        { error: "edit_token required (min 24 chars)" },
+        { status: 400 }
+      );
+    }
+
     // RPC fonksiyonunu cagir
     const result = await supabase.rpc("apply_category_template", {
       p_store_id: store_id,
       p_category_key: category_key,
+      p_edit_token: edit_token,
       p_fill_cover: fill_cover,
       p_fill_logo: fill_logo,
       p_fill_gallery: fill_gallery,
@@ -98,8 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(result.data);
-  } catch (err) {
-    console.error("Apply template API error:", err);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
