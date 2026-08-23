@@ -406,6 +406,7 @@ export default function VitrinProfileView({
 
       {/* ===== HERO ===== */}
       <section
+        id="ust-bolum"
         className={`relative w-full min-h-[360px] sm:min-h-[420px] flex items-end overflow-hidden ${isPreviewMode ? "pt-[104px]" : "pt-[68px]"}`}
       >
         {/* Kapak yoksa SAHTE FOTOĞRAF BASILMAZ.
@@ -635,7 +636,7 @@ export default function VitrinProfileView({
 
       {/* ===== FEATURED BANNER ===== */}
       {showFeaturedBanner ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
+        <div id="one-cikan" className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
           <div
             className={`relative overflow-hidden rounded-3xl border border-blue-500/15 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent p-8 sm:p-11 ${
               featuredImageUrl ? "grid md:grid-cols-2 gap-8 items-center" : ""

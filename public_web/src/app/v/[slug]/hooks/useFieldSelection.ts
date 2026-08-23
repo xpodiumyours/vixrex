@@ -3,10 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FIELD_BY_KEY,
+  SECTION_DOM_ID,
   SECTION_LABELS,
   type VitrinField,
+  type VitrinSection,
 } from "@/lib/vitrinFieldSchema";
 import { bolumdeKalanSayisi, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
+import {
+  bekle,
+  ogeIcinHedefY,
+  rahatGorunuyorMu,
+  yumusakKaydir,
+} from "@/lib/sayfaKaydirma";
 import type { Mesaj } from "./useOwnerChat";
 
 const VURGU_SINIFI = "vixrex-secili-alan";
@@ -19,6 +27,8 @@ export interface FieldSelectionHook {
   setSeciliAlan: (alan: VitrinField | null) => void;
   alanSec: (anahtar: string, oge?: Element | null) => void;
   vurguyuTemizle: () => void;
+  /** Rehber şu an bir hedefe yürüyor mu — balon yolda kapalı durur. */
+  gecisSuruyor: boolean;
   /** Bir alan kaydedildikten SONRA çağrılır: sırada başka alan varsa oraya
    * geçer, yoksa akışı bitirir. `useOwnerActions`'ın kaydetme yolları da
    * eski `setSeciliAlan(null)` yerine bunu çağırır. */
@@ -53,10 +63,65 @@ export function useFieldSelection({
   const [giris, setGiris] = useState("");
   const girisRef = useRef<HTMLTextAreaElement>(null);
   const vurguluRef = useRef<Element | null>(null);
+  // Her geçişe artan numara: yolda yeni bir alan seçilirse eskisi susar.
+  const gecisRef = useRef(0);
+  const oncekiBolumRef = useRef<VitrinSection | null>(null);
+  const [gecisSuruyor, setGecisSuruyor] = useState(false);
 
   const vurguyuTemizle = useCallback(() => {
     vurguluRef.current?.classList.remove(VURGU_SINIFI);
     vurguluRef.current = null;
+  }, []);
+
+  /**
+   * Rehberin hedefe YÜRÜMESİ (Faz 3b).
+   *
+   * Eskiden tarayıcının kendi yumuşak kaydırması kullanılıyordu. Uzak
+   * hedefte tarayıcı aynı kısa sürede gidiyor, ekran "çakılıyor" gibi
+   * hissettiriyordu (Casper, canlı test). Artık:
+   *   - hedef zaten rahat görünüyorsa sayfa HİÇ oynamaz,
+   *   - bölüm değişiyorsa önce bölümün başına inilir, kısa durulur,
+   *     sonra alana yaklaşılır — esnaf nereye gittiğini görür,
+   *   - mesafeye göre süre seçilir (bkz. sayfaKaydirma.ts).
+   *
+   * Yazma alanı ancak VARINCA odaklanır: mobilde klavye yol ortasında
+   * açılırsa kaydırma hesabı bozuluyor.
+   */
+  const hedefeGit = useCallback(async (hedef: Element, bolum: VitrinSection) => {
+    const numara = ++gecisRef.current;
+    const gecerli = () => numara === gecisRef.current;
+
+    const bitir = () => {
+      if (!gecerli()) return;
+      setGecisSuruyor(false);
+      oncekiBolumRef.current = bolum;
+      window.setTimeout(() => {
+        if (gecerli()) girisRef.current?.focus();
+      }, 40);
+    };
+
+    if (rahatGorunuyorMu(hedef, 88, window.innerHeight * 0.62)) {
+      bitir();
+      return;
+    }
+
+    setGecisSuruyor(true);
+
+    const oncekiBolum = oncekiBolumRef.current;
+    if (oncekiBolum && oncekiBolum !== bolum) {
+      const bolumOgesi = document.getElementById(SECTION_DOM_ID[bolum]);
+      if (bolumOgesi) {
+        await yumusakKaydir(ogeIcinHedefY(bolumOgesi, 90));
+        if (!gecerli()) return;
+        await bekle(300);
+        if (!gecerli()) return;
+      }
+    }
+
+    await yumusakKaydir(
+      ogeIcinHedefY(hedef, Math.round(window.innerHeight * 0.28))
+    );
+    bitir();
   }, []);
 
   const alanSec = useCallback(
@@ -70,7 +135,7 @@ export function useFieldSelection({
       if (hedef) {
         hedef.classList.add(VURGU_SINIFI);
         vurguluRef.current = hedef;
-        hedef.scrollIntoView({ behavior: "smooth", block: "center" });
+        void hedefeGit(hedef, alan.bolum);
       }
 
       onAlanSecildi?.();
@@ -89,9 +154,8 @@ export function useFieldSelection({
           alan.ipucu ? ` (${alan.ipucu})` : ""
         }`
       );
-      window.setTimeout(() => girisRef.current?.focus(), 60);
     },
-    [yerelTaslak, mesajEkle, vurguyuTemizle, onAlanSecildi]
+    [yerelTaslak, mesajEkle, vurguyuTemizle, onAlanSecildi, hedefeGit]
   );
 
   const alanaGecVeyaBitir = useCallback(
@@ -172,5 +236,6 @@ export function useFieldSelection({
     alanSec,
     vurguyuTemizle,
     alanaGecVeyaBitir,
+    gecisSuruyor,
   };
 }

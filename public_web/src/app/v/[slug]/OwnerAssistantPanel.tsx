@@ -79,6 +79,7 @@ export default function OwnerAssistantPanel({
     alanSec,
     alanaGecVeyaBitir,
     vurguyuTemizle,
+    gecisSuruyor,
   } = useFieldSelection({
       yerelTaslak,
       atlanmisAlanlar,
@@ -194,6 +195,7 @@ export default function OwnerAssistantPanel({
           // Taslak değişti = sayfa da değişmiş olabilir (kaydetme artık
           // sunucudan tazeliyor, Faz 2) → balon konumunu yeniden ölç.
           olcumTetikleyici={yerelTaslak}
+          gecisSuruyor={gecisSuruyor}
         />
       )}
 
