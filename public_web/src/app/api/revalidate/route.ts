@@ -77,7 +77,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ revalidated, now: Date.now() });
   } catch (err: unknown) {
     console.error("Revalidation error:", err);
-    const errMsg = err instanceof Error ? err.message : "Revalidation failed";
-    return NextResponse.json({ message: errMsg }, { status: 500 });
+    return NextResponse.json({ message: "Revalidation failed" }, { status: 500 });
   }
 }

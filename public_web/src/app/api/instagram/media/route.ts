@@ -45,11 +45,13 @@ export async function POST(req: NextRequest) {
         .filter((item) => item.id && item.media_type === "IMAGE"),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "INSTAGRAM_MEDIA_FAILED";
+    const originalMessage = error instanceof Error ? error.message : "INSTAGRAM_MEDIA_FAILED";
+    const status = instagramErrorStatus(originalMessage);
+    console.error("[instagram/media] error:", originalMessage);
     return instagramJson(
       req,
-      { message },
-      { status: instagramErrorStatus(message) },
+      { message: "INSTAGRAM_MEDIA_FAILED" },
+      { status },
     );
   }
 }

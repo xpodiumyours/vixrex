@@ -147,7 +147,7 @@ describe("POST /api/instagram/import", () => {
     const res = await POST(req);
     expect(res.status).toBe(422);
     const json = await res.json();
-    expect(json.message).toBe("INSTAGRAM_MEDIA_TYPE_UNSUPPORTED");
+    expect(json.message).toBe("INSTAGRAM_IMPORT_FAILED");
   });
 
   it("rejects images larger than 6MB (422)", async () => {
@@ -188,7 +188,7 @@ describe("POST /api/instagram/import", () => {
     const res = await POST(req);
     expect(res.status).toBe(422);
     const json = await res.json();
-    expect(json.message).toBe("INSTAGRAM_MEDIA_TOO_LARGE");
+    expect(json.message).toBe("INSTAGRAM_IMPORT_FAILED");
   });
 
   it("imports an image product through relational Product CORE", async () => {
@@ -405,7 +405,7 @@ describe("POST /api/instagram/import", () => {
     const res = await POST(req);
     expect(res.status).toBe(422);
     const json = await res.json();
-    expect(json.message).toBe("INSTAGRAM_MEDIA_URL_INVALID");
+    expect(json.message).toBe("INSTAGRAM_IMPORT_FAILED");
     expect(mockBuilder.storage.upload).not.toHaveBeenCalled();
   });
 
@@ -530,7 +530,7 @@ describe("POST /api/instagram/import", () => {
     const res = await POST(req);
     expect(res.status).toBe(422);
     const json = await res.json();
-    expect(json.message).toBe("INSTAGRAM_MEDIA_URL_INTERNAL_INVALID");
+    expect(json.message).toBe("INSTAGRAM_IMPORT_FAILED");
     expect(mockBuilder.storage.upload).not.toHaveBeenCalled();
   });
 });

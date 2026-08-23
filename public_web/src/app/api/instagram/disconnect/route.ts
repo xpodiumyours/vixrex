@@ -142,11 +142,13 @@ export async function POST(req: NextRequest) {
 
     return instagramJson(req, { disconnected: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "INSTAGRAM_DISCONNECT_FAILED";
+    const originalMessage = error instanceof Error ? error.message : "INSTAGRAM_DISCONNECT_FAILED";
+    const status = instagramErrorStatus(originalMessage);
+    console.error("[instagram/disconnect] error:", originalMessage);
     return instagramJson(
       req,
-      { message },
-      { status: instagramErrorStatus(message) },
+      { message: "INSTAGRAM_DISCONNECT_FAILED" },
+      { status },
     );
   }
 }

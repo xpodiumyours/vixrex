@@ -45,11 +45,13 @@ export async function POST(req: NextRequest) {
       expiresAt: access.expiresAt || data.expires_at || null,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "INSTAGRAM_STATUS_FAILED";
+    const originalMessage = error instanceof Error ? error.message : "INSTAGRAM_STATUS_FAILED";
+    const status = instagramErrorStatus(originalMessage);
+    console.error("[instagram/status] error:", originalMessage);
     return instagramJson(
       req,
-      { message },
-      { status: instagramErrorStatus(message) },
+      { message: "INSTAGRAM_STATUS_FAILED" },
+      { status },
     );
   }
 }

@@ -91,11 +91,13 @@ export async function POST(req: NextRequest) {
 
     return instagramJson(req, { authorizationUrl: authUrl.toString() });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "INSTAGRAM_CONNECT_FAILED";
+    const originalMessage = error instanceof Error ? error.message : "INSTAGRAM_CONNECT_FAILED";
+    const status = instagramErrorStatus(originalMessage);
+    console.error("[instagram/connect] error:", originalMessage);
     return instagramJson(
       req,
-      { message },
-      { status: instagramErrorStatus(message) },
+      { message: "INSTAGRAM_CONNECT_FAILED" },
+      { status },
     );
   }
 }
