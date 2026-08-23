@@ -2,6 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import {
+  resolveVitrinViewSource,
+  type VitrinViewSource,
+} from "@/lib/vitrinViewSource";
 
 const SESSION_KEY_STORAGE_KEY = "vixrex_visit_session";
 
@@ -29,20 +33,29 @@ function readOrCreateSessionKey(): string {
   return generated;
 }
 
-function detectSource(): "direct" | "qr" | "share" | "unknown" {
+function detectSource(): VitrinViewSource {
+  let srcParam: string | null = null;
   try {
-    const params = new URLSearchParams(window.location.search);
-    const src = params.get("src")?.toLowerCase();
-    if (src === "qr" || src === "share") return src;
+    srcParam = new URLSearchParams(window.location.search).get("src");
   } catch {
-    // yoksay, unknown'a düşer
+    // yoksay — parametre okunamazsa referrer mantığına düşer
   }
+
+  let referrer = "";
   try {
-    if (!document.referrer) return "direct";
+    referrer = document.referrer || "";
   } catch {
-    // yoksay, unknown'a düşer
+    // yoksay, direct/unknown ayrımı resolveVitrinViewSource'ta yapılır
   }
-  return "unknown";
+
+  let currentHostname = "";
+  try {
+    currentHostname = window.location.hostname || "";
+  } catch {
+    // yoksay — kendi domain kontrolü atlanır
+  }
+
+  return resolveVitrinViewSource({ srcParam, referrer, currentHostname });
 }
 
 interface VitrinViewTrackerProps {
@@ -54,6 +67,13 @@ interface VitrinViewTrackerProps {
  * kaydeder (#255). Bu bileşen SAHİP/ÖNİZLEME modunda MOUNT EDİLMEMELİDİR —
  * çağıran taraf (`VitrinProfileView`) `!ownerMode && !isPreviewMode` şartını
  * `TrackedWhatsAppLink`ile aynı desende sağlar.
+ *
+ * Kaynak çözümlemesi `resolveVitrinViewSource` (src/lib/vitrinViewSource.ts)
+ * içindedir: ?src=qr|share önceliklidir; referrer Google/Instagram/Facebook/
+ * WhatsApp/Twitter/TikTok olarak sınıflanır, kendi domaini "direct"tir,
+ * dış siteler "diger_site"tır. Yeni değerler DB'de
+ * `20260823120000_vitrin_views_kaynak_genisletme` migration'ı canlıya
+ * alınana kadar fonksiyon tarafından 'unknown'a düşürülür.
  *
  * RPC zaten yayınlanmamış vitrinleri ve 16 karakterden kısa session_key'i
  * sessizce reddediyor (SECURITY DEFINER, search_path sabit, anon'a açık) —
