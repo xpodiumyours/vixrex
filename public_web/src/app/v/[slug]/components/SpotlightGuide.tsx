@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { SECTION_LABELS } from "@/lib/vitrinFieldSchema";
 import { alanOnemi, type EksikOnem } from "@/lib/vitrinReadiness";
@@ -84,15 +84,34 @@ interface Props {
    * uçuşan bir kutu yerine yalnız Vixrex sembolü hedefe kayar.
    */
   gecisSuruyor?: boolean;
+  /**
+   * "Tüm alanlar" haritasını açar (Faz 4). Mobilde alan seçilince harita
+   * kapanıyor — geri dönmenin yolu balondaki bu düğme.
+   */
+  onHaritaAc?: () => void;
 }
 
 /** Sayfada gezen spot ışığı — panel açıkken, bir alan seçiliyken görünür.
  * Gerçek giriş alanını (FieldInputArea) balonun içinde barındırır; ayrı,
  * bağlantısız bir kutu YOKTUR. */
 export function SpotlightGuide(props: Props) {
-  const { seciliAlan, onKapat, olcumTetikleyici, gecisSuruyor = false } = props;
+  const {
+    seciliAlan,
+    onKapat,
+    olcumTetikleyici,
+    gecisSuruyor = false,
+    onHaritaAc,
+  } = props;
   const [rect, setRect] = useState<Rect | null>(null);
-  const [viewport, setViewport] = useState<{ w: number; h: number } | null>(null);
+  const [viewport, setViewport] = useState<{
+    w: number;
+    h: number;
+    /** Görünen bandın sayfa içindeki kayması (klavye açıkken artar). */
+    ust: number;
+  } | null>(null);
+  // Balonun gerçek yüksekliği — konumu buna göre seçilir, tahmine göre değil.
+  const balonRef = useRef<HTMLDivElement>(null);
+  const [balonYukseklik, setBalonYukseklik] = useState(0);
 
   const konumuGuncelle = useCallback(() => {
     if (!seciliAlan) {
@@ -119,10 +138,20 @@ export function SpotlightGuide(props: Props) {
         ? onceki
         : { top: r.top, left: r.left, width: r.width, height: r.height },
     );
+    // GÖRÜNEN alan ölçülür, pencere değil (Faz 4).
+    //
+    // Mobilde klavye açılınca pencere küçülmez — üstüne biner. Sadece
+    // `innerHeight` bakılırsa balon klavyenin altında kalır ve esnaf ne
+    // yazdığını göremez. `visualViewport` gerçekten görünen bandı verir;
+    // `offsetTop` o bandın sayfa içindeki kayması.
+    const gv = window.visualViewport;
+    const w = gv?.width ?? window.innerWidth;
+    const h = gv?.height ?? window.innerHeight;
+    const ust = gv?.offsetTop ?? 0;
     setViewport((onceki) =>
-      onceki && onceki.w === window.innerWidth && onceki.h === window.innerHeight
+      onceki && onceki.w === w && onceki.h === h && onceki.ust === ust
         ? onceki
-        : { w: window.innerWidth, h: window.innerHeight },
+        : { w, h, ust },
     );
   }, [seciliAlan]);
 
@@ -138,6 +167,10 @@ export function SpotlightGuide(props: Props) {
     konumuGuncelle();
     window.addEventListener("scroll", konumuGuncelle, true);
     window.addEventListener("resize", konumuGuncelle);
+    // Klavye açılıp kapanınca pencere boyutu değişmez, yalnız görünen
+    // alan değişir — bu olaylar olmadan balon klavyenin altında kalır.
+    window.visualViewport?.addEventListener("resize", konumuGuncelle);
+    window.visualViewport?.addEventListener("scroll", konumuGuncelle);
 
     // Hedef yerine oturana kadar her karede yeniden ölç.
     //
@@ -168,11 +201,25 @@ export function SpotlightGuide(props: Props) {
         : new ResizeObserver(() => konumuGuncelle());
     govdeIzleyici?.observe(document.body);
 
+    // Balonun kendi boyu da izlenir: içeriği (hazır görsel ızgarası, uzun
+    // metin) büyüyünce konum yeniden seçilmeli.
+    const balonIzleyici =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => {
+            const y = balonRef.current?.offsetHeight ?? 0;
+            setBalonYukseklik((onceki) => (onceki === y ? onceki : y));
+          });
+    if (balonRef.current) balonIzleyici?.observe(balonRef.current);
+
     return () => {
       window.removeEventListener("scroll", konumuGuncelle, true);
       window.removeEventListener("resize", konumuGuncelle);
+      window.visualViewport?.removeEventListener("resize", konumuGuncelle);
+      window.visualViewport?.removeEventListener("scroll", konumuGuncelle);
       cancelAnimationFrame(cerceve);
       govdeIzleyici?.disconnect();
+      balonIzleyici?.disconnect();
     };
   }, [konumuGuncelle, olcumTetikleyici]);
 
@@ -181,11 +228,39 @@ export function SpotlightGuide(props: Props) {
   const onem = alanOnemi(seciliAlan);
   const bilgi = ONEM_METNI[onem];
   const balonGenislik = Math.min(340, viewport.w - 32);
-  const asagidaYerVar = rect.top < viewport.h * 0.55;
   const balonSol = Math.min(
     Math.max(rect.left, 16),
     viewport.w - balonGenislik - 16,
   );
+
+  // Balonun yeri GÖRÜNEN banda göre seçilir (Faz 4).
+  //
+  // Bant = klavyenin üstünde kalan gerçek alan. Sırayla denenir:
+  //   1. hedefin altına sığıyor mu,
+  //   2. üstüne sığıyor mu,
+  //   3. hiçbiri olmuyorsa bandın dibine sabitlenir — klavye açıkken
+  //      küçük ekranlarda tek çıkar yol budur, balon yine de tam görünür.
+  const BOSLUK = 18;
+  const bandUst = viewport.ust;
+  const bandAlt = viewport.ust + viewport.h;
+  const enFazlaYukseklik = Math.max(160, Math.min(416, viewport.h - 32));
+  const yukseklik = balonYukseklik
+    ? Math.min(balonYukseklik, enFazlaYukseklik)
+    : enFazlaYukseklik;
+
+  const altaSigar = rect.top + rect.height + BOSLUK + yukseklik <= bandAlt - 8;
+  const usteSigar = rect.top - BOSLUK - yukseklik >= bandUst + 8;
+
+  let balonUst: number;
+  if (altaSigar) balonUst = rect.top + rect.height + BOSLUK;
+  else if (usteSigar) balonUst = rect.top - BOSLUK - yukseklik;
+  else balonUst = bandAlt - 8 - yukseklik;
+  balonUst = Math.max(bandUst + 8, balonUst);
+
+  // Ok yalnız balon gerçekten hedefe komşuysa çizilir; dibe sabitlenmiş
+  // balonda ok yanlış yeri gösterir, hiç çizmemek daha dürüst.
+  const okYukari = altaSigar;
+  const okGorunur = altaSigar || usteSigar;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[80]" aria-hidden={false}>
@@ -230,21 +305,30 @@ export function SpotlightGuide(props: Props) {
             ? "pointer-events-none scale-95 opacity-0"
             : "pointer-events-auto scale-100 opacity-100"
         }`}
+        ref={balonRef}
         style={{
           width: balonGenislik,
           left: balonSol,
-          top: asagidaYerVar ? rect.top + rect.height + 18 : undefined,
-          bottom: asagidaYerVar ? undefined : viewport.h - rect.top + 18,
-          maxHeight: `min(26rem, calc(${viewport.h}px - 6rem))`,
+          top: balonUst,
+          maxHeight: enFazlaYukseklik,
         }}
       >
-        {/* Hedefi gösteren ok */}
-        <div
-          className={`absolute h-3 w-3 rotate-45 border border-blue-400/30 bg-[#0B1120] ${
-            asagidaYerVar ? "-top-1.5 border-b-0 border-r-0" : "-bottom-1.5 border-t-0 border-l-0"
-          }`}
-          style={{ left: Math.min(Math.max(rect.left - balonSol + rect.width / 2 - 6, 12), balonGenislik - 24) }}
-        />
+        {/* Hedefi gösteren ok — balon hedefe komşu değilse çizilmez. */}
+        {okGorunur && (
+          <div
+            className={`absolute h-3 w-3 rotate-45 border border-blue-400/30 bg-[#0B1120] ${
+              okYukari
+                ? "-top-1.5 border-b-0 border-r-0"
+                : "-bottom-1.5 border-t-0 border-l-0"
+            }`}
+            style={{
+              left: Math.min(
+                Math.max(rect.left - balonSol + rect.width / 2 - 6, 12),
+                balonGenislik - 24,
+              ),
+            }}
+          />
+        )}
 
         <div className="flex flex-col gap-3 overflow-y-auto p-4">
           <div className="flex items-start gap-2.5">
@@ -276,14 +360,27 @@ export function SpotlightGuide(props: Props) {
                 {seciliAlan.ipucu ? ` ${seciliAlan.ipucu}` : ""}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={onKapat}
-              aria-label="Rehberi kapat"
-              className="shrink-0 rounded-full p-1 text-slate-500 hover:bg-white/5 hover:text-slate-300"
-            >
-              ✕
-            </button>
+            <div className="flex shrink-0 items-center gap-0.5">
+              {onHaritaAc && (
+                <button
+                  type="button"
+                  onClick={onHaritaAc}
+                  aria-label="Tüm alanlar"
+                  title="Tüm alanlar"
+                  className="rounded-full p-1 text-slate-500 hover:bg-white/5 hover:text-slate-300"
+                >
+                  ☰
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onKapat}
+                aria-label="Rehberi kapat"
+                className="rounded-full p-1 text-slate-500 hover:bg-white/5 hover:text-slate-300"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           {/* Gerçek giriş alanı — StepCard/panelin kullandığı AYNI bileşen,

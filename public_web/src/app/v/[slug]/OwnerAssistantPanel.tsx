@@ -52,6 +52,21 @@ export default function OwnerAssistantPanel({
   premiumAktifMi = false,
 }: Props) {
   const [acik, setAcik] = useState(false);
+  // Harita = "Tüm alanlar" paneli. Faz 4 (Casper, 2026-08-22): mobilde
+  // panel bütün sayfayı kapatıyordu — "sadece Vixrex maskotu olsun,
+  // kutucuklarda zaten ne yapılacağı yazıyor". Artık alan seçilince
+  // mobilde harita kapanır; sayfada yalnız sembol ve balon kalır.
+  // Masaüstünde yer bol, harita açık durmaya devam eder.
+  const [haritaAcik, setHaritaAcik] = useState(false);
+  const [masaustu, setMasaustu] = useState(false);
+
+  useEffect(() => {
+    const sorgu = window.matchMedia("(min-width: 640px)");
+    const guncelle = () => setMasaustu(sorgu.matches);
+    guncelle();
+    sorgu.addEventListener("change", guncelle);
+    return () => sorgu.removeEventListener("change", guncelle);
+  }, []);
 
   // Panel açıkken vitrindeki TÜM doldurulabilir yerler sürekli hafif ışıklı
   // dursun (Vixrex Asistan rehberli tamamlama, ADR 0002) — yalnız o an
@@ -84,7 +99,13 @@ export default function OwnerAssistantPanel({
       yerelTaslak,
       atlanmisAlanlar,
       mesajEkle,
-      onAlanSecildi: () => setAcik(true),
+      onAlanSecildi: () => {
+        setAcik(true);
+        // Mobilde harita çekilir: esnaf düzenlediği yeri görsün.
+        if (!window.matchMedia("(min-width: 640px)").matches) {
+          setHaritaAcik(false);
+        }
+      },
     });
 
   // 2026-08-22: "sayfada dolaşan rehber" — panel ilk açıldığında henüz
@@ -174,7 +195,7 @@ export default function OwnerAssistantPanel({
     <>
       {/* Sayfada dolaşan rehber — panel açık ve bir alan seçiliyken,
        * hedef alanın üzerinde/yanında görünür (bkz. SpotlightGuide). */}
-      {acik && (
+      {acik && !(!masaustu && haritaAcik) && (
         <SpotlightGuide
           seciliAlan={seciliAlan}
           giris={giris}
@@ -196,13 +217,30 @@ export default function OwnerAssistantPanel({
           // sunucudan tazeliyor, Faz 2) → balon konumunu yeniden ölç.
           olcumTetikleyici={yerelTaslak}
           gecisSuruyor={gecisSuruyor}
+          onHaritaAc={() => setHaritaAcik(true)}
         />
       )}
 
       {/* Canonical Vixrex düğmesi */}
       <button
         type="button"
-        onClick={() => setAcik((v) => !v)}
+        onClick={() => {
+          const yeni = !acik;
+          setAcik(yeni);
+          // MOBİLDE harita açılmaz (Casper, 2026-08-22: "asistan maskotuna
+          // tıklayınca yine sayfa kapanıyor"). Maskot rehberi başlatır:
+          // aşağıdaki etki ilk eksik alanı seçer, sayfada sembol ve balon
+          // görünür, vitrin görünür kalır. Harita yalnız balondaki ☰ ile
+          // açılır. Masaüstünde harita yan panel, sayfayı kapatmıyor.
+          //
+          // Tek istisna: doldurulacak alan kalmadıysa seçilecek bir şey de
+          // yok — o zaman mobilde de harita açılır, yoksa asistan açılmış
+          // ama ekranda hiçbir şey yokmuş gibi görünürdü.
+          const yapilacakVar = Boolean(
+            sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar),
+          );
+          setHaritaAcik(yeni && (masaustu || !yapilacakVar));
+        }}
         className="fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition"
         aria-label="Vixrex Asistan"
         aria-expanded={acik}
@@ -216,7 +254,7 @@ export default function OwnerAssistantPanel({
         )}
       </button>
 
-      {acik && (
+      {acik && haritaAcik && (
         // 2026-08-22 mobil/masaüstü uyum düzeltmesi: eski className yalnız
         // `bottom-24 right-5` idi (üst sınır YOKTU) — 9 bölümlük
         // SectionProgressList tamamen açıldığında panel içeriği ekranın
@@ -227,7 +265,10 @@ export default function OwnerAssistantPanel({
         // max-h ile aynı taşma bir daha olamaz. Ortadaki gövde tek kaydırma
         // alanı, başlık sabit kalır.
         <div className="fixed inset-x-3 top-16 bottom-24 z-[75] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:top-auto sm:right-5 sm:w-[min(24rem,calc(100vw-2.5rem))] sm:max-h-[calc(100vh-8rem)]">
-          <ChatTopBar rapor={rapor} onKapat={() => setAcik(false)} />
+          <ChatTopBar
+            rapor={rapor}
+            onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
+          />
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             <StageMeter
