@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { createClient } from "@supabase/supabase-js";
 import { verifyRecaptchaToken } from "@/lib/recaptchaServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 
@@ -11,12 +11,14 @@ import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 // clone_demo_store_as_draft RPC'sini doğrudan çağırıp sınırsız kopya
 // üretebiliyordu (bkz. supabase/migrations/20260815180000_secure_rent_demo_flow.sql).
 //
-// Yeni zincir:
+// V-57 FIX (2026-08-24): service role bypass kapatıldı.
+// Yeni zincir (Option A — Least Privilege):
 //   GET  → veritabanına DOKUNMAZ, yalnız /rent-demo?slug=x'e 303 (eski
 //          yüklü Flutter APK'ları hâlâ GET atıyor — kırmadan yönlendirir).
-//   POST → gerçek akış: reCAPTCHA v3 doğrula → IP'yi HMAC'le → SERVİS
-//          ROLÜYLE start_demo_trial RPC'sini çağır (oran sınırı + klonlama
-//          + owner-session TEK transaction'da, bkz. migration) →
+//   POST → reCAPTCHA v3 doğrula → IP'yi HMAC'le → NORMAL CLIENT (user JWT)
+//          ile start_demo_trial RPC'sini çağır (oran sınırı + klonlama,
+//          TEK transaction'da) → slug + edit_token al → yine NORMAL CLIENT
+//          ile create_owner_session çağır (edit_token ile) → code al →
 //          /api/owner-session'a 303.
 //
 // /rent-demo/page.tsx (yeni köprü sayfası) reCAPTCHA token'ını alıp bu
@@ -32,6 +34,7 @@ const ERROR_COPY: Record<string, string> = {
   SLUG_GENERATION_FAILED: "Vitrin şu anda kiralanamıyor. Lütfen tekrar dene.",
   RECAPTCHA_FAILED: "Güvenlik doğrulaması başarısız. Lütfen sayfayı yenileyip tekrar dene.",
   SERVICE_UNAVAILABLE: "Vitrin şu anda kiralanamıyor. Lütfen biraz sonra tekrar dene.",
+  OWNER_SESSION_FAILED: "Düzenleme oturumu açılamadı. Lütfen tekrar dene.",
 };
 
 function rentErrorPage(title: string, message: string): Response {
@@ -128,30 +131,64 @@ export async function POST(request: Request) {
     return rentErrorPage("Vitrin açılamadı", ERROR_COPY.SERVICE_UNAVAILABLE);
   }
 
-  const { data, error } = await getSupabaseAdmin().rpc("start_demo_trial", {
-    p_source_slug: demoSlug,
-    p_client_key: clientKey,
-  });
+  // V-57 FIX: Normal client (user JWT) ile çağır — service role KULLANMA.
+  // Authorization header'ı form POST'unda gelmez (browser native form submit),
+  // bu yüzden anon client kullanırız. Rate limit IP tabanlı (clientKey) zaten
+  // start_demo_trial içinde uygulanıyor.
+  const authHeader = request.headers.get("Authorization");
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: authHeader ? { headers: { Authorization: authHeader } } : undefined,
+    }
+  );
 
-  if (error) {
-    const message = ERROR_COPY[error.message] ?? "Vitrin şu anda kiralanamıyor. Lütfen tekrar dene.";
-    console.error("[rent-demo] start_demo_trial failed", error.message);
+  // 1) start_demo_trial: rate limit + klonlama → slug + edit_token döner
+  const { data: trialData, error: trialError } = await supabase.rpc(
+    "start_demo_trial",
+    {
+      p_source_slug: demoSlug,
+      p_client_key: clientKey,
+    }
+  );
+
+  if (trialError) {
+    const message = ERROR_COPY[trialError.message] ?? "Vitrin şu anda kiralanamıyor. Lütfen tekrar dene.";
+    console.error("[rent-demo] start_demo_trial failed", trialError.message);
     return rentErrorPage("Vitrin açılamadı", message);
   }
 
-  const result = data as { slug?: string; code?: string } | null;
-  if (!result?.slug || !result?.code) {
-    console.error("[rent-demo] start_demo_trial returned no slug/code");
-    return rentErrorPage(
-      "Vitrin açılamadı",
-      "Kopya oluşturuldu ama düzenleme oturumu açılamadı. Lütfen tekrar dene."
-    );
+  const trialResult = trialData as { slug?: string; edit_token?: string; expires_at?: string } | null;
+  if (!trialResult?.slug || !trialResult?.edit_token) {
+    console.error("[rent-demo] start_demo_trial returned no slug/edit_token");
+    return rentErrorPage("Vitrin açılamadı", "Kopya oluşturuldu ama düzenleme oturumu açılamadı. Lütfen tekrar dene.");
+  }
+
+  // 2) create_owner_session: edit_token ile owner session aç → code döner
+  const { data: sessionData, error: sessionError } = await supabase.rpc(
+    "create_owner_session",
+    {
+      p_slug: trialResult.slug,
+      p_edit_token: trialResult.edit_token,
+    }
+  );
+
+  if (sessionError) {
+    console.error("[rent-demo] create_owner_session failed", sessionError.message);
+    return rentErrorPage("Vitrin açılamadı", ERROR_COPY.OWNER_SESSION_FAILED);
+  }
+
+  const sessionResult = sessionData as { code?: string; expires_at?: string } | null;
+  if (!sessionResult?.code) {
+    console.error("[rent-demo] create_owner_session returned no code");
+    return rentErrorPage("Vitrin açılamadı", ERROR_COPY.OWNER_SESSION_FAILED);
   }
 
   const url = new URL(request.url);
   const destination = new URL("/api/owner-session", url);
-  destination.searchParams.set("slug", result.slug);
-  destination.searchParams.set("ocode", result.code);
+  destination.searchParams.set("slug", trialResult.slug);
+  destination.searchParams.set("ocode", sessionResult.code);
 
   const response = NextResponse.redirect(destination, 303);
   response.headers.set("cache-control", "no-store");
