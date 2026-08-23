@@ -11,6 +11,7 @@ import { broadcastTaslakGuncellendi } from "@/lib/workingDraftBroadcast";
 //   istek {slug, anahtar, deger}
 //   → HttpOnly sahip çerezi doğrulanır (gövdeden token ALINMAZ)
 //   → değer şemaya göre doğrulanır (vitrinFieldValidation)
+//   → Oran sınırı: consume_assistant_request (store-slug bazlı)
 //   → update_working_draft_field RPC'si çağrılır
 //   → veritabanı kendi bağımsız yetki kontrolünü yapar
 //
@@ -39,6 +40,11 @@ const HATA_METNI: Record<string, string> = {
   INVALID_FIELD_KEY: "Alan adı eksik.",
   WORKING_DRAFT_NOT_FOUND: "Çalışma taslağı bulunamadı. Önizlemeyi tekrar açın.",
 };
+
+// Oran sınırı: store başına dakikada 60 istek, saatte 500 istek
+// (aşırı yazma / taslak bozulması / maliyet koruması)
+const DRAFT_LIMIT_PER_MINUTE = 60;
+const DRAFT_LIMIT_PER_HOUR = 500;
 
 function supabaseAnon() {
   return createClient(
@@ -83,6 +89,43 @@ export async function POST(request: NextRequest) {
   const sonuc = validateField(anahtar, govde.deger);
   if (!sonuc.ok) {
     return NextResponse.json({ hata: sonuc.hata }, { status: 422 });
+  }
+
+  // Oran sınırı: store slug bazlı (ownerSession.slug doğrulanmış)
+  // V-55: SECURITY DEFINER RPC'ye oran sınırı ekle
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_PUBLISHABLE_KEY ||
+      ""
+  );
+
+  // Dakikalık pencere
+  const minuteLimit = await admin.rpc("consume_assistant_request", {
+    p_client_key: `owner_draft:${ownerSession.slug}:min`,
+    p_max_requests: DRAFT_LIMIT_PER_MINUTE,
+    p_window_seconds: 60,
+  });
+  const minuteResult = Array.isArray(minuteLimit) ? minuteLimit[0] : minuteLimit;
+  if (minuteResult && !minuteResult.allowed) {
+    return NextResponse.json(
+      { hata: `Çok sık güncelleme. ${minuteResult.retry_after_seconds} saniye sonra tekrar dene.` },
+      { status: 429 }
+    );
+  }
+
+  // Saatlik pencere
+  const hourLimit = await admin.rpc("consume_assistant_request", {
+    p_client_key: `owner_draft:${ownerSession.slug}:hour`,
+    p_max_requests: DRAFT_LIMIT_PER_HOUR,
+    p_window_seconds: 3600,
+  });
+  const hourResult = Array.isArray(hourLimit) ? hourLimit[0] : hourLimit;
+  if (hourResult && !hourResult.allowed) {
+    return NextResponse.json(
+      { hata: `Saatlik güncelleme limitine ulaştın. ${hourResult.retry_after_seconds} saniye sonra tekrar dene.` },
+      { status: 429 }
+    );
   }
 
   const { error, data } = await supabaseAnon().rpc("update_working_draft_field", {
