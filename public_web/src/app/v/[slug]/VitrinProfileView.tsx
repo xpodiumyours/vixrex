@@ -39,6 +39,10 @@ import {
   TrackedWhatsAppLink,
   trackWhatsAppClick,
 } from "@/components/TrackedWhatsAppLink";
+import {
+  TrackedDirectionsLink,
+  TrackedPhoneLink,
+} from "@/components/TrackedContactLink";
 import VitrinViewTracker from "@/components/VitrinViewTracker";
 import FloatingWhatsAppButton from "@/components/FloatingWhatsAppButton";
 
@@ -955,9 +959,15 @@ export default function VitrinProfileView({
                     {...editableProps("telefon", ownerMode)}
                   >
                     <h4 className="text-sm font-bold text-white">Telefon</h4>
-                    <a href={phoneUrl!} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                    <TrackedPhoneLink
+                      href={phoneUrl!}
+                      storeSlug={storeSlug}
+                      clickLocation="storefront_contact"
+                      trackingEnabled={!ownerMode && !isPreviewMode}
+                      className="text-xs font-semibold text-blue-400 hover:text-blue-300"
+                    >
                       {displayPhone}
-                    </a>
+                    </TrackedPhoneLink>
                   </div>
                 </div>
               )}
@@ -1144,15 +1154,18 @@ export default function VitrinProfileView({
 
             <div className="flex gap-3">
               {mapsUrl && (
-                <a
+                <TrackedDirectionsLink
                   href={mapsUrl}
+                  storeSlug={storeSlug}
+                  clickLocation="storefront_contact"
+                  trackingEnabled={!ownerMode && !isPreviewMode}
                   target="_blank"
                   rel="noopener noreferrer"
                   {...editableProps("haritaLinki", ownerMode)}
                   className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-blue-500/30 transition"
                 >
                   🗺️ Yol Tarifi Al
-                </a>
+                </TrackedDirectionsLink>
               )}
               <a href={vcardHref} download={`${storeSlug}.vcf`} className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-white/5 border border-blue-500/20 text-white hover:bg-white/10 transition">
                 📱 Rehbere Ekle
