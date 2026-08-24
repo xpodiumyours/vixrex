@@ -353,7 +353,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.cleanup_expired_edit_tokens() IS
-  'Expired edit_token\'ları temizler (edit_token = \'\', edit_token_expires_at = NULL). 
+  'Expired edit_token''ları temizler (edit_token = '''', edit_token_expires_at = NULL). 
    pg_cron yoksa manuel veya external scheduler ile çağrılabilir.';
 
 -- ── 7) Eski token'lar için geriye dönük uyumluluk: NULL expiration = süresiz --
