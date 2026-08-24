@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
+import 'package:vixrex/services/secure_kv_storage.dart';
 
 class PublishedVitrinInfo {
   final String slug;
@@ -169,6 +170,8 @@ class StoreLocalStorageService {
     await prefs.setString(LocalStorageKeys.lastPublishedLink, canonicalLink);
     await prefs.setString(LocalStorageKeys.lastPublishedName, name);
     await prefs.setString(LocalStorageKeys.lastPublishedEditToken, editToken);
+    // Also save to secure storage for sensitive token (V-50)
+    await SecureKVStorage.setString('last_published_edit_token', editToken);
     // Auth post-login reads vitrin/store keys; keep them aligned with publish token.
     final trimmedToken = editToken.trim();
     if (trimmedToken.isNotEmpty) {
