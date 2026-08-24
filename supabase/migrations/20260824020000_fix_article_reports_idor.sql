@@ -7,7 +7,7 @@
 --
 -- ÇÖZÜM: Politika, article_id'nin store_articles'ta var olduğunu VE
 -- published (status='published') olduğunu doğrulamalı.
--- Ayrıca reporter_ip'yi anon'dan alıp authenticated kullanıcıya zorunlu yapıyoruz.
+-- Ayrıca reporter_ip'yi tüm rapor eklemelerinde zorunlu yapıyoruz.
 -- ============================================================================
 
 BEGIN;
@@ -27,16 +27,15 @@ CREATE POLICY "Anyone can report articles" ON "public"."article_reports"
     )
   );
 
--- ── 2) reporter_ip: anon INSERT'te zorunlu olsun (IP başına rate limit için)
--- authenticated kullanıcılar IP'yi manuel göndermez (report-abuse route.ts
--- zaten getClientIp ile alıp gönderiyor). Anon için zorunlu.
+-- ── 2) reporter_ip: tüm INSERT'lerde zorunlu olsun (IP rate limit için)
+-- Kısıtı eklemeden önce eski NULL satırları doldur; aksi sıra dolu
+-- ortamlarda migration'ı yarıda bırakır.
+UPDATE "public"."article_reports"
+SET "reporter_ip" = 'legacy-unknown'
+WHERE "reporter_ip" IS NULL;
+
 ALTER TABLE "public"."article_reports"
   ALTER COLUMN "reporter_ip" SET NOT NULL;
-
--- Eski satırlarda NULL olanları temizle (idempotent)
-UPDATE "public"."article_reports"
-SET "reporter_ip" = '0.0.0.0'
-WHERE "reporter_ip" IS NULL;
 
 -- ── 3) İndeks: rapor sorgularında article_id filtresi için ────────────────
 CREATE INDEX IF NOT EXISTS "idx_article_reports_article_id"
