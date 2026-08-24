@@ -23,7 +23,8 @@ class SecureTokenStorage {
   /// Load store edit token securely
   static Future<String?> loadStoreEditToken() async {
     final value = await _storage.read(key: _storeEditTokenKey);
-    if (kDebugMode && value != null) debugPrint('[SecureTokenStorage] storeEditToken loaded');
+    if (kDebugMode && value != null)
+      debugPrint('[SecureTokenStorage] storeEditToken loaded');
     return value;
   }
 
@@ -36,20 +37,23 @@ class SecureTokenStorage {
   /// Load vitrin edit token securely
   static Future<String?> loadVitrinEditToken() async {
     final value = await _storage.read(key: _vitrinEditTokenKey);
-    if (kDebugMode && value != null) debugPrint('[SecureTokenStorage] vitrinEditToken loaded');
+    if (kDebugMode && value != null)
+      debugPrint('[SecureTokenStorage] vitrinEditToken loaded');
     return value;
   }
 
   /// Save last published edit token securely
   static Future<void> saveLastPublishedEditToken(String token) async {
     await _storage.write(key: _lastPublishedEditTokenKey, value: token);
-    if (kDebugMode) debugPrint('[SecureTokenStorage] lastPublishedEditToken saved');
+    if (kDebugMode)
+      debugPrint('[SecureTokenStorage] lastPublishedEditToken saved');
   }
 
   /// Load last published edit token securely
   static Future<String?> loadLastPublishedEditToken() async {
     final value = await _storage.read(key: _lastPublishedEditTokenKey);
-    if (kDebugMode && value != null) debugPrint('[SecureTokenStorage] lastPublishedEditToken loaded');
+    if (kDebugMode && value != null)
+      debugPrint('[SecureTokenStorage] lastPublishedEditToken loaded');
     return value;
   }
 

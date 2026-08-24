@@ -36,14 +36,16 @@ class SecureKVStorage {
   /// Load a bool value securely
   static Future<bool?> getBool(String key) async {
     final value = await _storage.read(key: '$_prefix$key');
-    if (kDebugMode && value != null) debugPrint('[SecureKVStorage] getBool: $key');
+    if (kDebugMode && value != null)
+      debugPrint('[SecureKVStorage] getBool: $key');
     return value == 'true';
   }
 
   /// Save a string list securely
   static Future<void> setStringList(String key, List<String> values) async {
     await _storage.write(key: '$_prefix$key', value: values.join('\u{001F}'));
-    if (kDebugMode) debugPrint('[SecureKVStorage] setStringList: $key (${values.length})');
+    if (kDebugMode)
+      debugPrint('[SecureKVStorage] setStringList: $key (${values.length})');
   }
 
   /// Load a string list securely
