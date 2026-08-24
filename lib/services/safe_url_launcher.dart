@@ -49,22 +49,25 @@ Future<bool> safeLaunchUrl(
 
   // Scheme validation — javascript:, data:, file:, vb. engelle
   if (!LaunchScheme.isAllowed(uri.scheme)) {
-    if (kDebugMode) debugPrint('[safeLaunchUrl] Blocked scheme: ${uri.scheme} for $url');
+    if (kDebugMode)
+      debugPrint('[safeLaunchUrl] Blocked scheme: ${uri.scheme} for $url');
     return false;
   }
 
   // URL validation — localhost/private IP engelle (SSRF koruması)
   if (uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https')) {
     if (!_isSafeHost(uri.host)) {
-      if (kDebugMode) debugPrint('[safeLaunchUrl] Blocked unsafe host: ${uri.host}');
+      if (kDebugMode)
+        debugPrint('[safeLaunchUrl] Blocked unsafe host: ${uri.host}');
       return false;
     }
   }
 
   try {
-    final mode = kIsWeb
-        ? (webMode ?? LaunchMode.externalApplication)
-        : (nativeMode ?? LaunchMode.platformDefault);
+    final mode =
+        kIsWeb
+            ? (webMode ?? LaunchMode.externalApplication)
+            : (nativeMode ?? LaunchMode.platformDefault);
 
     return await launchUrl(uri, mode: mode);
   } catch (e) {
