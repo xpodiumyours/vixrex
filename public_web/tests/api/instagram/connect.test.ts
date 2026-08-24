@@ -43,7 +43,7 @@ describe("POST /api/instagram/connect", () => {
     const res = await POST(req);
     expect(res.status).toBe(401);
     const json = await res.json();
-    expect(json.message).toBe("STORE_AUTH_REQUIRED");
+    expect(json.message).toBe("INSTAGRAM_CONNECT_FAILED");
   });
 
   it("returns authorization URL and saves state_nonce on valid credentials", async () => {

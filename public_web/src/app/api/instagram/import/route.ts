@@ -397,11 +397,13 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "INSTAGRAM_IMPORT_FAILED";
+    const originalMessage = error instanceof Error ? error.message : "INSTAGRAM_IMPORT_FAILED";
+    const status = instagramErrorStatus(originalMessage);
+    console.error("[instagram/import] error:", originalMessage);
     return instagramJson(
       req,
-      { message },
-      { status: instagramErrorStatus(message) },
+      { message: "INSTAGRAM_IMPORT_FAILED" },
+      { status },
     );
   }
 }
