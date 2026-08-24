@@ -23,7 +23,7 @@ ALTER TABLE "public"."stores"
   ADD COLUMN IF NOT EXISTS "edit_token_expires_at" TIMESTAMPTZ;
 
 COMMENT ON COLUMN "public"."stores"."edit_token_expires_at" IS
-  'edit_token geçerlilik bitiş zamanı. NULL = süresiz (eski token\'lar için geriye dönük uyumluluk). Dolu = o zamana kadar geçerli. V-15 fix.';
+  'edit_token geçerlilik bitiş zamanı. NULL = süresiz (eski token''lar için geriye dönük uyumluluk). Dolu = o zamana kadar geçerli. V-15 fix.';
 
 -- ── 2) _check_store_authorization: expiration kontrolü ekle ────────────────
 -- Mevcut fonksiyon zaten p_edit_token ile doğruluyor, expiration ekle.
