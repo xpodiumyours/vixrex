@@ -309,8 +309,10 @@ DO $do$
 BEGIN
   -- pg_cron extension kontrolü
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
-    -- Mevcut job varsa sil
-    PERFORM cron.unschedule('cleanup-expired-edit-tokens');
+    -- Mevcut job varsa sil (yoksa unschedule hata fırlatır)
+    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'cleanup-expired-edit-tokens') THEN
+      PERFORM cron.unschedule('cleanup-expired-edit-tokens');
+    END IF;
     -- Yeni job oluştur (her gün 03:00 UTC)
     PERFORM cron.schedule(
       'cleanup-expired-edit-tokens',
