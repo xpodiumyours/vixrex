@@ -1,15 +1,15 @@
--- ============================================================================
+﻿-- ============================================================================
 -- V-15 Fix: edit_token perpetual bearer — add TTL/expiration
 -- ============================================================================
 -- SORUN: stores.edit_token text DEFAULT '' NOT NULL — SÜRESİZ, TTL YOK.
 --   - Çalınan bir edit_token SÜRELİ devrede kalır (yıl/yıllar).
 --   - Kullanıcı "çıkış yap" dese bile token geçerli kalır.
---   - Demo/kiralık vitrinler için 15 dk sonrası token yine de çalışır.
+--   - Demo/kiralık vitrinler için 24 saat sonra token çalışmaz olur.
 --
 -- ÇÖZÜM:
 --   1. stores tablosuna edit_token_expires_at TIMESTAMPTZ kolonu ekle
 --   2. Yeni token üretilirken expiration set et:
---      - Demo trial (rent-demo): 15 dakika
+--      - Demo trial (rent-demo): 24 saat
 --      - Normal store oluşturma: 1 yıl (365 gün) — yenilenebilir
 --      - Sahip oturumu (create_owner_session): 15 dakika (zaten var)
 --   3. _check_store_authorization ve create_owner_session'a expiration kontrolü ekle
@@ -139,8 +139,8 @@ $$;
 ALTER FUNCTION "public"."create_owner_session"("p_slug" "text", "p_edit_token" "text")
 OWNER TO "postgres";
 
--- ── 4) clone_demo_store_as_draft: edit_token_expires_at = 15 dk ────────────
--- Rent-demo akışı için üretilen token 15 dakika sonra expire olmalı.
+-- ── 4) clone_demo_store_as_draft: edit_token_expires_at = 24 saat ────────────
+-- Rent-demo akışı için üretilen token 24 saat sonra expire olur (kullanıcı düzenleme ortasında düşmesin).
 CREATE OR REPLACE FUNCTION public.clone_demo_store_as_draft(
   p_source_slug text,
   p_new_slug text,
@@ -175,7 +175,7 @@ BEGIN
     faq_items, about_kicker, about_title, about_image_url, about_image_caption,
     about_values, gallery_section_kicker, gallery_section_title,
     show_storefront_rating, show_directions_link,
-    edit_token_expires_at  -- V-15: 15 dakika sonra expire
+    edit_token_expires_at  -- V-15: 24 saat sonra expire
   )
   SELECT
     pg_catalog.btrim(p_new_slug), pg_catalog.btrim(p_edit_token), null,
@@ -193,7 +193,7 @@ BEGIN
     faq_items, about_kicker, about_title, about_image_url, about_image_caption,
     about_values, gallery_section_kicker, gallery_section_title,
     show_storefront_rating, show_directions_link,
-    now() + interval '15 minutes'
+    now() + interval '24 hours'
   FROM public.stores
   WHERE slug = pg_catalog.btrim(p_source_slug)
     AND is_demo = true;
