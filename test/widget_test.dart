@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/main.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
@@ -49,6 +50,7 @@ void main() {
   setUp(() async {
     StoreLocalStorageService.resetCache();
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     final mockClient = MockClient((request) async {
       final urlStr = request.url.toString();
       if (urlStr.contains('legal_documents')) {
@@ -101,6 +103,7 @@ void main() {
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
 
     await tester.pumpWidget(const VixRexApp());
     await tester.pump();
@@ -114,6 +117,7 @@ void main() {
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
 
     await tester.pumpWidget(
       const MaterialApp(home: HomeShellScreen(initialIndex: 0)),
@@ -249,6 +253,7 @@ void main() {
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
 
     await tester.pumpWidget(const VixRexApp());
     await tester.pump();
@@ -281,6 +286,7 @@ void main() {
     'Landing Keşfet mevcut Keşfet sekmesini açar, Auth ekranını değil',
     (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({});
 
       await tester.pumpWidget(const VixRexApp());
       await tester.pump();

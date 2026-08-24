@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
-import 'package:vixrex/services/secure_kv_storage.dart';
+import 'package:vixrex/services/secure_token_storage.dart';
 
 class PublishedVitrinInfo {
   final String slug;
@@ -65,21 +65,19 @@ class StoreLocalStorageService {
 
   /// Mağaza edit token'ını kaydeder.
   Future<void> saveStoreEditToken(String token) async {
-    final prefs = await _getPrefs();
-    await prefs.setString(LocalStorageKeys.storeEditToken, token);
+    await SecureTokenStorage.saveStoreEditToken(token);
   }
 
   /// Kayıtlı mağaza edit token'ını okur. Yoksa `null` döner.
   Future<String?> loadStoreEditToken() async {
-    final prefs = await _getPrefs();
-    return prefs.getString(LocalStorageKeys.storeEditToken);
+    return SecureTokenStorage.loadStoreEditToken();
   }
 
   /// Kayıtlı mağaza verisini ve token'ını siler.
   Future<void> clearStoreData() async {
     final prefs = await _getPrefs();
     await prefs.remove(LocalStorageKeys.storeData);
-    await prefs.remove(LocalStorageKeys.storeEditToken);
+    await SecureTokenStorage.saveStoreEditToken(''); // Clear by writing empty
   }
 
   // ── Vitrin ────────────────────────────────────────────────────────────
@@ -113,22 +111,20 @@ class StoreLocalStorageService {
 
   /// Vitrin edit token'ını kaydeder.
   Future<void> saveVitrinEditToken(String token) async {
-    final prefs = await _getPrefs();
-    await prefs.setString(LocalStorageKeys.vitrinEditToken, token);
+    await SecureTokenStorage.saveVitrinEditToken(token);
   }
 
   /// Kayıtlı vitrin edit token'ını okur. Yoksa `null` döner.
   Future<String?> loadVitrinEditToken() async {
-    final prefs = await _getPrefs();
-    return prefs.getString(LocalStorageKeys.vitrinEditToken);
+    return SecureTokenStorage.loadVitrinEditToken();
   }
 
   /// Kayıtlı vitrin verisini ve token'ını siler.
   Future<void> clearVitrinData() async {
     final prefs = await _getPrefs();
     await prefs.remove(LocalStorageKeys.vitrinData);
-    await prefs.remove(LocalStorageKeys.vitrinEditToken);
-    await prefs.remove(LocalStorageKeys.storeEditToken);
+    await SecureTokenStorage.saveVitrinEditToken(''); // Clear by writing empty
+    await SecureTokenStorage.saveStoreEditToken(''); // Clear store token too
     await clearPublishedVitrinInfo();
   }
 
@@ -169,14 +165,12 @@ class StoreLocalStorageService {
     await prefs.setString(LocalStorageKeys.lastPublishedSlug, slug);
     await prefs.setString(LocalStorageKeys.lastPublishedLink, canonicalLink);
     await prefs.setString(LocalStorageKeys.lastPublishedName, name);
-    await prefs.setString(LocalStorageKeys.lastPublishedEditToken, editToken);
-    // Also save to secure storage for sensitive token (V-50)
-    await SecureKVStorage.setString('last_published_edit_token', editToken);
+    await SecureTokenStorage.saveLastPublishedEditToken(editToken);
     // Auth post-login reads vitrin/store keys; keep them aligned with publish token.
     final trimmedToken = editToken.trim();
     if (trimmedToken.isNotEmpty) {
-      await prefs.setString(LocalStorageKeys.vitrinEditToken, trimmedToken);
-      await prefs.setString(LocalStorageKeys.storeEditToken, trimmedToken);
+      await SecureTokenStorage.saveVitrinEditToken(trimmedToken);
+      await SecureTokenStorage.saveStoreEditToken(trimmedToken);
     }
   }
 
@@ -189,12 +183,11 @@ class StoreLocalStorageService {
   /// Kayitli yayinlanmis vitrin bilgisini okur. Eksikse `null` doner.
   Future<PublishedVitrinInfo?> loadPublishedVitrinInfo() async {
     final prefs = await _getPrefs();
-    var editToken =
-        prefs.getString(LocalStorageKeys.lastPublishedEditToken) ?? '';
+    var editToken = await SecureTokenStorage.loadLastPublishedEditToken() ?? '';
     if (editToken.trim().isEmpty) {
       editToken =
-          prefs.getString(LocalStorageKeys.vitrinEditToken) ??
-          prefs.getString(LocalStorageKeys.storeEditToken) ??
+          await SecureTokenStorage.loadVitrinEditToken() ??
+          await SecureTokenStorage.loadStoreEditToken() ??
           '';
     }
     final slug = prefs.getString(LocalStorageKeys.lastPublishedSlug) ?? '';
@@ -245,18 +238,15 @@ class StoreLocalStorageService {
   /// Sadece auth ile ilgili verileri temizler (çıkış yapınca).
   /// Vitrin verilerini ve yayın kartı bilgisini korur.
   Future<void> clearAuthData() async {
-    final prefs = await _getPrefs();
-    await prefs.remove(LocalStorageKeys.storeEditToken);
-    await prefs.remove(LocalStorageKeys.vitrinEditToken);
+    await SecureTokenStorage.clearAuthTokens();
   }
 
   /// Tüm yerel depolama verilerini temizler.
   Future<void> clearAll() async {
     final prefs = await _getPrefs();
     await prefs.remove(LocalStorageKeys.storeData);
-    await prefs.remove(LocalStorageKeys.storeEditToken);
     await prefs.remove(LocalStorageKeys.vitrinData);
-    await prefs.remove(LocalStorageKeys.vitrinEditToken);
+    await SecureTokenStorage.clearAll();
     await clearPublishedVitrinInfo();
     await clearPendingCategoryKey();
   }

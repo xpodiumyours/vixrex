@@ -261,9 +261,14 @@ describe("owner-draft ucu — güvenlik sözleşmesi", () => {
     expect(routeSource).not.toContain("govde.token");
   });
 
-  it("service-role anahtarı kullanılmaz", () => {
+  it("service-role yalnız sunucu oran sınırı için kullanılır", () => {
     expect(routeSource).not.toContain("SERVICE_ROLE");
-    expect(routeSource).not.toContain("supabaseAdmin");
+    expect(routeSource).toContain('getSupabaseAdmin()');
+    expect(routeSource).toContain(
+      'supabaseAnon().rpc("update_working_draft_field"'
+    );
+    expect(routeSource).toContain("minuteError");
+    expect(routeSource).toContain("hourError");
   });
 
   it("RPC'ye şemadan gelen kolon adı gider, kullanıcının yazdığı anahtar değil", () => {

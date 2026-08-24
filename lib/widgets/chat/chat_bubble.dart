@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:vixrex/services/safe_url_launcher.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/theme/app_text_styles.dart';
 import 'package:vixrex/widgets/vixrex_avatar.dart';
@@ -253,11 +253,7 @@ class ChatLinkChip extends StatelessWidget {
 }
 
 Future<void> openChatUrl(String url) async {
-  final uri = Uri.tryParse(url);
-  if (uri == null) return;
-  try {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } catch (_) {}
+  await safeLaunchUrl(url);
 }
 
 /// "Yazıyor" göstergesi — TEK YERDE.

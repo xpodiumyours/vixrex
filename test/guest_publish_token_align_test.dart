@@ -1,7 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vixrex/services/local_storage_keys.dart';
+import 'package:vixrex/services/secure_token_storage.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 
 void main() {
@@ -26,10 +26,9 @@ void main() {
           editToken: token,
         );
 
-        final prefs = await SharedPreferences.getInstance();
-        expect(prefs.getString(LocalStorageKeys.lastPublishedEditToken), token);
-        expect(prefs.getString(LocalStorageKeys.vitrinEditToken), token);
-        expect(prefs.getString(LocalStorageKeys.storeEditToken), token);
+        expect(await SecureTokenStorage.loadLastPublishedEditToken(), token);
+        expect(await SecureTokenStorage.loadVitrinEditToken(), token);
+        expect(await SecureTokenStorage.loadStoreEditToken(), token);
 
         final loaded = await storage.loadPublishedVitrinInfo();
         expect(loaded, isNotNull);
