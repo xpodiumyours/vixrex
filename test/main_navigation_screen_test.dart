@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/chatbot_config.dart';
@@ -23,6 +24,7 @@ void main() {
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     StoreLocalStorageService.resetCache();
     const storage = StoreLocalStorageService();
     await storage.saveVitrinData(StoreData(name: 'Kayıtlı Vitrin'));
@@ -58,6 +60,7 @@ void main() {
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     StoreLocalStorageService.resetCache();
     const storage = StoreLocalStorageService();
     final savedData = StoreData(name: 'Kayıtlı Vitrin');
@@ -96,6 +99,7 @@ void main() {
     'gömülü asistan manuel panelle aynı controllerı ve ürünleri korur',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({});
       // Önceki testler statik cache'e kayıtlı vitrin yazıyor; temizlenmezse
       // asistan "kaldığın yerden devam" moduna düşer ve kurulum adımı çıkmaz.
       StoreLocalStorageService.resetCache();
@@ -161,6 +165,7 @@ void main() {
 
   testWidgets('Vixrex ekranı Türkçe başlıkları gösterir', (tester) async {
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     StoreLocalStorageService.resetCache();
     tester.view.physicalSize = const Size(1200, 1920);
     tester.view.devicePixelRatio = 1.0;
@@ -222,6 +227,7 @@ void main() {
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
