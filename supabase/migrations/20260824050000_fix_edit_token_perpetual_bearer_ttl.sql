@@ -70,7 +70,7 @@ OWNER TO "postgres";
 -- Mevcut fonksiyon zaten session_token_hash kontrol ediyor, store.edit_token_expires_at da kontrol et.
 CREATE OR REPLACE FUNCTION "public"."create_owner_session"(
   "p_slug" "text",
-  "p_edit_token" "text"
+  "p_edit_token" "text" DEFAULT NULL::"text"
 )
 RETURNS jsonb
 LANGUAGE "plpgsql" SECURITY DEFINER
