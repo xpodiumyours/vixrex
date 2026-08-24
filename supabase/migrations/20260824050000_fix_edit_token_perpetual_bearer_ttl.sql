@@ -305,7 +305,7 @@ OWNER TO "postgres";
 
 -- ── 6) Cron job: günlük expired token temizliği ───────────────────────────
 -- pg_cron extension varsa kullan, yoksa manual cleanup fonksiyonu sağla.
-DO $$
+DO $do$
 BEGIN
   -- pg_cron extension kontrolü
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
@@ -329,7 +329,7 @@ EXCEPTION
     -- pg_cron yoksa sessizce geç
     NULL;
 END;
-$$;
+$do$;
 
 -- Manual cleanup fonksiyonu (pg_cron yoksa kullanılabilir)
 CREATE OR REPLACE FUNCTION public.cleanup_expired_edit_tokens()
