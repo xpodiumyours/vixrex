@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/core/result.dart';
 import 'package:vixrex/core/supabase_error_mapper.dart';
+import 'package:vixrex/services/secure_kv_storage.dart';
 
 /// Randevu ile ilgili tüm Supabase RPC işlemlerini merkezileştirir.
 class BookingService {
@@ -144,16 +144,15 @@ class BookingService {
     }
   }
 
-  /// Randevu tokenını yerel hafızaya kaydeder.
+  /// Randevu tokenını güvenli yerel hafızaya kaydeder.
   Future<void> saveAppointmentTokenLocally({
     required String appointmentId,
     required String token,
   }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedTokens = prefs.getStringList('booking_tokens') ?? [];
+      final savedTokens = await SecureKVStorage.getStringList('booking_tokens');
       savedTokens.add('$appointmentId:$token');
-      await prefs.setStringList('booking_tokens', savedTokens);
+      await SecureKVStorage.setStringList('booking_tokens', savedTokens);
     } catch (_) {
       // Local token failure is non-blocking for user booking flow.
     }

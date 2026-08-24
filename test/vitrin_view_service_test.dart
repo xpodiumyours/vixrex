@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -58,6 +59,7 @@ void main() {
     fakeClient = FakeSupabaseClient();
     service = VitrinViewService(supabaseClient: fakeClient);
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
   });
 
   group('VitrinViewService.recordView', () {
@@ -86,12 +88,11 @@ void main() {
       expect(fakeClient.rpcCalls.first['params']?['p_ua'], 'unknown');
     });
 
-    test('SharedPreferences üzerindeki session_key değerini korur', () async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        'vitrin_view_session_key',
-        'my-custom-persistent-session-key',
-      );
+    test('Secure storage üzerindeki session_key değerini korur', () async {
+      FlutterSecureStorage.setMockInitialValues({
+        'vixrex_secure_vitrin_view_session_key':
+            'my-custom-persistent-session-key',
+      });
 
       await service.recordView(slug: 'butik-esra', source: 'share');
 

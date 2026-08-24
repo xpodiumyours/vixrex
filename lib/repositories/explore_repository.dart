@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/local_storage_keys.dart';
+import 'package:vixrex/services/secure_kv_storage.dart';
 import 'package:vixrex/services/store_safe_select.dart';
 import 'package:vixrex/utils/app_error_guard.dart';
 
@@ -157,9 +158,7 @@ class ExploreRepository {
       label: 'ExploreRepository.loadLastPublishedEditToken',
       fallback: null,
       action: () async {
-        return _sharedPreferences.getString(
-          LocalStorageKeys.lastPublishedEditToken,
-        );
+        return SecureKVStorage.getString('last_published_edit_token');
       },
     );
   }

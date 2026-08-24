@@ -2,15 +2,13 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/services/secure_kv_storage.dart';
 
 class VitrinViewService {
   final SupabaseClient? supabaseClient;
 
   const VitrinViewService({this.supabaseClient});
-
-  static const String _sessionKeyPrefsKey = 'vitrin_view_session_key';
 
   Future<void> recordView({
     required String slug,
@@ -54,15 +52,14 @@ class VitrinViewService {
   }
 
   Future<String> _loadOrCreateSessionKey() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedKey = prefs.getString(_sessionKeyPrefsKey);
+    final savedKey = await SecureKVStorage.getString('vitrin_view_session_key');
 
     if (savedKey != null && savedKey.trim().length >= 16) {
       return savedKey.trim();
     }
 
     final key = _generateSessionKey();
-    await prefs.setString(_sessionKeyPrefsKey, key);
+    await SecureKVStorage.setString('vitrin_view_session_key', key);
     return key;
   }
 
