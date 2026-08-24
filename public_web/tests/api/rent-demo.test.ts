@@ -2,10 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 const mockRpc = vi.fn();
-const mockCreateClient = vi.fn(() => ({ rpc: mockRpc }));
-
-vi.mock("@supabase/supabase-js", () => ({
-  createClient: vi.fn(() => ({ rpc: mockRpc })),
+vi.mock("@/lib/supabaseAdmin", () => ({
+  getSupabaseAdmin: () => ({ rpc: mockRpc }),
 }));
 
 const mockVerifyRecaptchaToken = vi.fn();
@@ -95,42 +93,26 @@ describe("POST /api/rent-demo — reCAPTCHA olmadan RPC çağrılmaz", () => {
   });
 });
 
-describe("POST /api/rent-demo — başarılı akış: start_demo_trial + create_owner_session", () => {
+describe("POST /api/rent-demo — başarılı akış TEK RPC çağırır", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockVerifyRecaptchaToken.mockResolvedValue({ success: true, score: 0.9 });
   });
 
-  it("start_demo_trial + create_owner_session çağırır, owner-session'a 303 döner", async () => {
-    // İlk çağrı: start_demo_trial
-    // İkinci çağrı: create_owner_session
-    mockRpc
-      .mockResolvedValueOnce({
-        data: { slug: "kiralik-butik-ab12cd34", edit_token: "edit_token_123", expires_at: "2026-08-24T00:00:00Z" },
-        error: null,
-      })
-      .mockResolvedValueOnce({
-        data: { code: "ocode123", expires_at: "2026-08-24T00:15:00Z" },
-        error: null,
-      });
+  it("start_demo_trial'ı HMAC'lenmiş client key ile çağırır, owner-session'a 303 döner", async () => {
+    mockRpc.mockResolvedValue({
+      data: { slug: "kiralik-butik-ab12cd34", code: "ocode123" },
+      error: null,
+    });
 
     const response = await POST(
       postRequest({ slug: "kiralik-butik", recaptchaToken: "tok" })
     );
 
-    // İki RPC çağrısı olmalı
-    expect(mockRpc).toHaveBeenCalledTimes(2);
-
-    // 1. start_demo_trial
-    expect(mockRpc).toHaveBeenNthCalledWith(1, "start_demo_trial", {
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+    expect(mockRpc).toHaveBeenCalledWith("start_demo_trial", {
       p_source_slug: "kiralik-butik",
       p_client_key: expect.any(String),
-    });
-
-    // 2. create_owner_session
-    expect(mockRpc).toHaveBeenNthCalledWith(2, "create_owner_session", {
-      p_slug: "kiralik-butik-ab12cd34",
-      p_edit_token: "edit_token_123",
     });
 
     expect(response.status).toBe(303);

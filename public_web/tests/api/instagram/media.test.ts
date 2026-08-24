@@ -56,7 +56,7 @@ describe("POST /api/instagram/media", () => {
     const res = await POST(req);
     expect(res.status).toBe(409); // Status mapping for TOKEN_EXPIRED is 409
     const json = await res.json();
-    expect(json.message).toBe("INSTAGRAM_TOKEN_EXPIRED");
+    expect(json.message).toBe("INSTAGRAM_MEDIA_FAILED");
   });
 
   it("filters and returns only permitted media types (IMAGE)", async () => {

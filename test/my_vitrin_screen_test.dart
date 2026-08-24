@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -15,6 +16,7 @@ void main() {
   setUp(() async {
     StoreLocalStorageService.resetCache();
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     final mockClient = MockClient((request) async {
       final urlStr = request.url.toString();
       if (urlStr.contains('legal_documents')) {

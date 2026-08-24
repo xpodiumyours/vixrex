@@ -46,7 +46,8 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json(grouped);
-  } catch {
+  } catch (error) {
+    console.error("Category images API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -85,7 +86,10 @@ export async function POST(request: NextRequest) {
 
     // V-56: edit_token zorunlu — sahiplik kontrolü RPC içinde yapılır
     // (auth.uid() NULL olduğunda edit_token ile yetki doğrulanır)
-    if (!edit_token || typeof edit_token !== "string" || edit_token.length < 24) {
+    if (
+      typeof edit_token !== "string" ||
+      edit_token.trim().length < 24
+    ) {
       return NextResponse.json(
         { error: "edit_token required (min 24 chars)" },
         { status: 400 }
@@ -96,7 +100,7 @@ export async function POST(request: NextRequest) {
     const result = await supabase.rpc("apply_category_template", {
       p_store_id: store_id,
       p_category_key: category_key,
-      p_edit_token: edit_token,
+      p_edit_token: edit_token.trim(),
       p_fill_cover: fill_cover,
       p_fill_logo: fill_logo,
       p_fill_gallery: fill_gallery,
@@ -106,13 +110,14 @@ export async function POST(request: NextRequest) {
     if (result.error) {
       console.error("Apply template error:", result.error);
       return NextResponse.json(
-        { error: result.error.message },
+        { error: "Internal server error" },
         { status: 500 }
       );
     }
 
     return NextResponse.json(result.data);
-  } catch {
+  } catch (error) {
+    console.error("Apply template API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
