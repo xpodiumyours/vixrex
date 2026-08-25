@@ -131,7 +131,16 @@ eskiyen kısım, kod ile çelişirse KOD kazanır)
   çıkardığı, Kilo Code'un kod üzerinden doğruladığı 38 bulgu issue olarak
   kayıt altına alındı — sitemap ürün URL'si üretmiyor (#229), şube
   desteklenmiyor (#256), `vitrin_views` tablosu dolmuyor gibi görünüyor
-  (#255) dahil. Hiçbiri henüz önceliklendirilmedi/ele alınmadı.
+  (#255) dahil. Triage tamamlandı (2026-08-25): 24 kapanmıştı, kalanlar
+  etiketlendi; kod işi olan tek aday #235'ti.
+- **Şablon görselleri kendi depomuza taşındı (2026-08-25, #235,
+  commit `638e863` yerelde — push bekliyor):** hazır vitrin görselleri
+  artık Unsplash değil, kendi `category-templates` bucket'ımızdan
+  servis ediliyor. Canlıdaki 349 satırdan 23'ünün Unsplash adresi ZATEN
+  ölmüştü (404) → pasifleştirildi (hiçbir vitrin/ürün etkilenmedi).
+  Eski adresler yeni `source_url` kolonunda. Havuzu BÜYÜTME kapsam
+  dışında bırakıldı — ayrı iş. Migration canlıya Management API ile
+  uygulandı ve `schema_migrations`'a kaydedildi.
 
 ## Kalıcı kararlar (ADR'ler)
 
