@@ -29,6 +29,29 @@ export function PhoneMockup({
 
   return (
     <div className="relative mx-auto w-[325px] shrink-0">
+      {/*
+        Uçuşan etiketler — Flutter landing_hero_mockup.dart:98-123.
+        İki rozet: sağ üst (üst rozet) ve sol alt (alt rozet).
+        Hareket YOK — sabit konumda duruyorlar (Görev 1 gerekçesi).
+      */}
+      {!isChatOpen && (
+        <>
+          {/* Sağ üst rozet */}
+          <div className="absolute -right-10 top-24 z-20 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.92] px-3 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: ilk.uStRozet.renk }}>
+              <span className="text-[11px]">{ilk.uStRozet.simge}</span>
+            </div>
+            <span className="text-[12px] font-extrabold text-gray-800">{ilk.uStRozet.renk === "#FF5A1F" ? "Galeri" : ilk.uStRozet.renk === "#EA580C" ? "Menü" : ilk.uStRozet.renk === "#DB2777" ? "Randevu" : "WhatsApp"}</span>
+          </div>
+          {/* Sol alt rozet */}
+          <div className="absolute -left-10 bottom-36 z-20 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.92] px-3 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: ilk.altRozet.renk }}>
+              <span className="text-[11px]">{ilk.altRozet.simge}</span>
+            </div>
+            <span className="text-[12px] font-extrabold text-gray-800">{ilk.altRozet.renk === "#FF5A1F" ? "QR kod" : ilk.altRozet.renk === "#EA580C" ? "Yol tarifi" : ilk.altRozet.renk === "#DB2777" ? "Instagram" : "Konum"}</span>
+          </div>
+        </>
+      )}
       {/* Flutter: width: 325, height: 640, borderRadius: 40 */}
       <div
         className="relative overflow-hidden rounded-[40px] border-[2.5px] border-white/[0.18] bg-[#0A101C] p-[8px]"
