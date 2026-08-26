@@ -67,3 +67,24 @@ export function resolveBusinessCategory(raw: string): BusinessCategoryCore | nul
   }
   return null;
 }
+
+/**
+ * Kategori kimliği → URL parçası. Kanonik kimlikler alt çizgi taşıyor
+ * (`kafe_lokanta`, `pet_shop_veteriner`); Google alt çizgiyi kelime
+ * BİRLEŞTİRİCİ sayar, tireyi ayırıcı. `/kesfet/kafe-lokanta` bu yüzden
+ * `/kesfet/kafe_lokanta`'dan daha iyi okunur.
+ *
+ * Kimliğin kendisi hiç değişmez — dönüşüm yalnız adres katmanındadır.
+ * (Sonradan değiştirmek 19 kalıcı yönlendirme demek olurdu.)
+ */
+export function kategoriUrlParcasi(id: string): string {
+  return id.replace(/_/g, "-");
+}
+
+/** URL parçasından kanonik kategoriye. Bilinmeyen parça için `null`. */
+export function kategoriUrlParcasindanCoz(
+  parca: string,
+): BusinessCategoryCore | null {
+  const id = parca.trim().toLowerCase().replace(/-/g, "_");
+  return BUSINESS_CATEGORIES.find((kategori) => kategori.id === id) ?? null;
+}

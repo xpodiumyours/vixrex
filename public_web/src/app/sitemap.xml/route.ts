@@ -2,14 +2,24 @@ import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { getSiteUrl } from "@/lib/siteUrl";
+import {
+  BUSINESS_CATEGORIES,
+  kategoriUrlParcasi,
+} from "@/lib/businessCategories";
 
 export const revalidate = 300;
 
 async function _getSitemapData() {
+  // is_demo eklendi (#345): demo/örnek vitrinler site haritasından çıkar.
+  // Bunlar gerçek işletme değil, kiralanmayı bekleyen şablonlar; arama
+  // sonuçlarında gerçek müşteri vitrinleriyle yarışmamalılar.
+  // Kapsam kararı: YALNIZ is_demo. Kiralanmış kopyalar (cloned_from_slug
+  // dolu ama is_demo false) gerçek müşterilerin vitrinidir, indekslenir.
   const { data: stores } = await supabase
     .from("stores")
-    .select("id, slug, updated_at")
-    .eq("is_published", true);
+    .select("id, slug, updated_at, is_demo")
+    .eq("is_published", true)
+    .eq("is_demo", false);
 
   const { data: products } = await supabase
     .from("products")
@@ -79,9 +89,35 @@ export async function GET() {
       }
     }
     
-    // Public web kökü Flutter landing'e yönlenir; sitemap yalnız içerik URL'lerini taşır.
+    // 2026-08-26 (#344): kök artık Flutter'a yönlenmiyor, gerçek bir sayfa.
+    // Platform yüzeyleri de site haritasına girer — daha önce yalnız
+    // /v/ içerik URL'leri vardı, platformun kendisi hiç yoktu.
+    const simdi = new Date().toISOString();
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+
+    const platformUrlleri: Array<{ yol: string; oncelik: string; siklik: string }> = [
+      { yol: "/", oncelik: "1.0", siklik: "weekly" },
+      { yol: "/kesfet", oncelik: "0.9", siklik: "daily" },
+      ...BUSINESS_CATEGORIES.map((kategori) => ({
+        yol: `/kesfet/${kategoriUrlParcasi(kategori.id)}`,
+        oncelik: "0.7",
+        siklik: "weekly",
+      })),
+      { yol: "/privacy", oncelik: "0.3", siklik: "yearly" },
+      { yol: "/legal/privacy", oncelik: "0.3", siklik: "yearly" },
+      { yol: "/legal/terms", oncelik: "0.3", siklik: "yearly" },
+    ];
+
+    for (const platform of platformUrlleri) {
+      xml += `
+  <url>
+    <loc>${escapeXml(`${baseUrl}${platform.yol}`)}</loc>
+    <lastmod>${simdi}</lastmod>
+    <changefreq>${platform.siklik}</changefreq>
+    <priority>${platform.oncelik}</priority>
+  </url>`;
+    }
 
     // Add stores + blog list pages only when they have published articles
     if (stores) {
@@ -123,9 +159,17 @@ export async function GET() {
       }
     }
 
-    // Add articles
+    // Demo vitrinlerin yazıları da çıkar (#345): makale sorgusu store_slug
+    // üzerinden geliyor, yukarıdaki demo süzgecinden habersiz.
+    const yayindakiSluglar = new Set(
+      (stores || []).map((store) => String(store.slug || "").trim())
+    );
+
     if (articles) {
       for (const article of articles) {
+        if (!yayindakiSluglar.has(String(article.store_slug || "").trim())) {
+          continue;
+        }
         const lastMod = article.updated_at ? new Date(article.updated_at).toISOString() : new Date().toISOString();
         xml += `
   <url>

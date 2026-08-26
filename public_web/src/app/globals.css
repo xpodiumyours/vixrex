@@ -1,11 +1,52 @@
 /* VixRex Premium Style System */
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   @theme — Tailwind v4 token kaydi (2026-08-26, #344)
+   ---------------------------------------------------------------------------
+   Bu dosyada bugune kadar @theme blogu HIC yoktu: asagidaki :root
+   degiskenleri duz CSS ozel degiskeniydi, Tailwind'in utility ureticisine
+   gorunmuyordu. layout.tsx yillardir <html className="font-outfit"> yaziyor
+   ama `.font-outfit` diye bir sinif hic uretilmemisti (Outfit yine de
+   body'deki --font-sans zinciriyle uygulaniyordu, sinif olu duruyordu).
+
+   Blok EKLEYICIDIR: Tailwind v4'te @theme varsayilanlarla birlesir. Hicbir
+   Tailwind varsayilan anahtari yeniden tanimlanmaz.
+
+   PALET AYRIMI (bilincli): Flutter landing #147DFF ailesini, canli vitrin
+   sayfalari #38A0E4 ailesini kullaniyor. Ikisi birlestirilmedi — vitrin
+   token'lari (--primary vb.) asagidaki :root blogunda oldugu gibi durur,
+   landing renkleri `lp-` (landing page) onekiyle AYRI yasar. Boylece 29
+   canli vitrinin gorunumu bu isten hic etkilenmez.
+   Kaynak: docs/research/landing-port-envanteri-2026-08-25.md §6.1
+--------------------------------------------------------------------------- */
+@theme {
+  --font-outfit: var(--font-outfit-src), 'Outfit', sans-serif;
+  --font-vitrin-display: var(--font-vitrin-display-src), 'Instrument Serif', Georgia, serif;
+
+  --color-lp-primary: #147DFF;
+  --color-lp-secondary: #57B7FF;
+  --color-lp-on-primary: #06152F;
+  --color-lp-bg-editor: #050B1A;
+  --color-lp-bg-light: #08132D;
+  --color-lp-surface: #0B1730;
+  --color-lp-surface-soft: #112448;
+  --color-lp-turquoise-surface: #102B59;
+  --color-lp-text: #F7FBFF;
+  --color-lp-text-alt: #D9E7FF;
+  --color-lp-muted: #A9BBDA;
+  --color-lp-border: #294D88;
+  --color-lp-mint: #10B981;
+  --color-lp-pink: #8B5CF6;
+
+  --shadow-lp-card: 0 18px 40px -24px rgba(5, 11, 26, 0.75);
+  --shadow-lp-panel: 0 30px 60px -30px rgba(20, 125, 255, 0.45);
+}
 
 :root {
   --font-sans: var(--font-outfit), var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-outfit: 'Outfit', sans-serif;
-  --font-vitrin-display: 'Instrument Serif', Georgia, serif;
+  --font-outfit: var(--font-outfit-src), 'Outfit', sans-serif;
+  --font-vitrin-display: var(--font-vitrin-display-src), 'Instrument Serif', Georgia, serif;
   
   /* Brand Palette (Light Mode Default) */
   --primary: #38A0E4;
