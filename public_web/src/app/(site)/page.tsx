@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { BottomCta } from "@/components/landing/BottomCta";
 import { ComparisonSection } from "@/components/landing/ComparisonSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
-import { HeroSection } from "@/components/landing/HeroSection";
-import { MascotFab } from "@/components/landing/MascotFab";
+import { LandingChatWrapper } from "@/components/landing/LandingChatWrapper";
 import { StepsSection } from "@/components/landing/StepsSection";
 import { TemplateCatalog } from "@/components/landing/TemplateCatalog";
 import { TrustBand } from "@/components/landing/TrustBand";
@@ -45,7 +44,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroSection profiller={profiller} />
+      <LandingChatWrapper profiller={profiller} />
       <ValueBand />
       <FeaturesSection />
       <ComparisonSection />
@@ -53,7 +52,6 @@ export default async function HomePage() {
       <StepsSection />
       <TemplateCatalog />
       <BottomCta />
-      <MascotFab />
     </>
   );
 }

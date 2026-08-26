@@ -36,11 +36,10 @@ export function PhoneMockupSlaytlari({
   if (!profil) return null;
 
   return (
-    <div>
-      <div className="relative h-[180px] w-full bg-lp-surface">
+    <div className="flex flex-col">
+      {/* Kapak + isim/kategori (Flutter: 156px kapak) */}
+      <div className="relative h-[156px] w-full bg-lp-surface">
         {profil.kapakUrl ? (
-          /* next/image bu projede kapalı (images.unoptimized: true,
-             next.config.ts), düz <img> ile aynı çıktıyı verir. */
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={profil.kapakUrl}
@@ -51,6 +50,11 @@ export function PhoneMockupSlaytlari({
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-lp-surface to-lp-turquoise-surface" />
         )}
+        {/* Üst rozet */}
+        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-lp-bg-editor/90 px-2 py-1">
+          <span className="text-[10px]">{profil.uStRozet.simge}</span>
+          <span className="text-[9px] font-extrabold text-white">{profil.uStRozet.renk === "#FF5A1F" ? "Galeri" : profil.uStRozet.renk === "#EA580C" ? "Menü" : profil.uStRozet.renk === "#DB2777" ? "Randevu" : "WhatsApp"}</span>
+        </div>
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-lp-bg-editor to-transparent p-3">
           <p className="text-[10px] font-extrabold tracking-[1.5px] text-lp-secondary">
             {profil.kategoriSeridi}
@@ -59,24 +63,84 @@ export function PhoneMockupSlaytlari({
         </div>
       </div>
 
-      <div className="flex gap-1.5 p-3">
-        {profil.galeriUrlleri.length > 0 ? (
-          profil.galeriUrlleri.map((url) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={url}
-              src={url}
-              alt=""
-              className="h-14 flex-1 rounded-lg object-cover"
-              loading="lazy"
-            />
-          ))
-        ) : (
-          <div className="h-14 flex-1 rounded-lg bg-lp-surface" />
-        )}
+      {/* Hakkında bölümü */}
+      <div className="px-3 pt-3">
+        <p className="text-[11px] font-black text-white">Hakkında</p>
+        <p className="mt-0.5 text-[10px] leading-tight text-white/60">{profil.aciklama}</p>
       </div>
 
-      <div className="flex justify-center gap-1.5 pb-3">
+      {/* Eylem simgeleri */}
+      <div className="flex gap-2 px-3 pt-2">
+        {profil.eylemler.map((eylem, i) => (
+          <div
+            key={i}
+            className="flex h-7 w-7 items-center justify-center rounded-full"
+            style={{ backgroundColor: eylem.renk }}
+          >
+            <span className="text-[11px]">{eylem.simge}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Eylem satırları */}
+      <div className="flex flex-col gap-1.5 px-3 pt-2">
+        {profil.eylemSatirlari.map((satir, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2"
+          >
+            <div
+              className="flex h-6 w-6 items-center justify-center rounded-lg"
+              style={{ backgroundColor: satir.renk }}
+            >
+              <span className="text-[10px]">{i === 0 ? profil.uStRozet.simge : profil.altRozet.simge}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold text-white">{satir.baslik}</p>
+              <p className="text-[9px] text-white/50">{satir.altBaslik}</p>
+            </div>
+            <span className="text-[10px] text-white/40">›</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Vitrin galerisi + fotoğraf şeridi */}
+      <div className="px-3 pt-2">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-black text-white">Vitrin galerisi</p>
+          <span className="rounded-full bg-lp-primary/20 px-2 py-0.5 text-[9px] font-bold text-lp-primary">
+            {profil.galeriUrlleri.length} fotoğraf
+          </span>
+        </div>
+        <div className="mt-1.5 flex gap-1.5">
+          {profil.galeriUrlleri.length > 0 ? (
+            profil.galeriUrlleri.map((url) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={url}
+                src={url}
+                alt=""
+                className="h-12 flex-1 rounded-lg object-cover"
+                loading="lazy"
+              />
+            ))
+          ) : (
+            <div className="h-12 flex-1 rounded-lg bg-lp-surface" />
+          )}
+        </div>
+      </div>
+
+      {/* Vitrin hazır */}
+      <div className="mx-3 mt-2 flex items-center justify-between rounded-xl border border-lp-primary/20 bg-lp-primary/[0.08] px-3 py-2">
+        <div>
+          <p className="text-[10px] font-bold text-white">Vitrin hazır</p>
+          <p className="text-[9px] text-white/50">2 bağlantı</p>
+        </div>
+        <span className="text-[16px]">📱</span>
+      </div>
+
+      {/* Slayt gösterge noktaları */}
+      <div className="flex justify-center gap-1.5 pb-2 pt-2">
         {profiller.map((aday, sira) => (
           <span
             key={aday.ad}

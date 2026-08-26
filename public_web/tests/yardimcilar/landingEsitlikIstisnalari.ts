@@ -12,11 +12,6 @@
 
 type Istisna = { metin: string; neden: string };
 
-const MOCKUP_ICERIGI =
-  "Telefon mockup'ındaki örnek işletmelerin uydurma menü/eylem içeriği. " +
-  "Web mockup'ı sadeleştirildi: kapak ve galeri küçükleri gösteriliyor, " +
-  "sahte menü ile sahte pazaryeri bağlantıları taşınmadı.";
-
 const KATALOG_ETIKETI =
   "Flutter kataloğunun 20 arayüz anahtarından biri. Web, paylaşılan " +
   "sözleşmedeki (shared/business_categories.json) 19 kanonik etiketi " +
@@ -28,26 +23,6 @@ const ALT_SAYFA =
   "göremez, isin amaci taranabilir yüzey üretmek.";
 
 export const LANDING_ESITLIK_ISTISNALARI: Istisna[] = [
-  { metin: "Yeni sezon reyonları ve mağaza fotoğrafları tek vitrinde.", neden: MOCKUP_ICERIGI },
-  { metin: "Vitrin galerisi", neden: MOCKUP_ICERIGI },
-  { metin: "Raf ve reyon fotoğrafları", neden: MOCKUP_ICERIGI },
-  { metin: "Mağazayı ziyaret edin", neden: MOCKUP_ICERIGI },
-  { metin: "Menü, konum ve WhatsApp sipariş bilgileri tek ekranda.", neden: MOCKUP_ICERIGI },
-  { metin: "Yol tarifi", neden: MOCKUP_ICERIGI },
-  { metin: "Günün menüsü", neden: MOCKUP_ICERIGI },
-  { metin: "Sıcak yemek ve tatlılar", neden: MOCKUP_ICERIGI },
-  { metin: "Paket servis", neden: MOCKUP_ICERIGI },
-  { metin: "WhatsApp ile sipariş", neden: MOCKUP_ICERIGI },
-  { metin: "Randevu, hizmetler ve sosyal medya bağlantıları hazır.", neden: MOCKUP_ICERIGI },
-  { metin: "Kesim, boya ve bakım", neden: MOCKUP_ICERIGI },
-  { metin: "Randevu al", neden: MOCKUP_ICERIGI },
-  { metin: "WhatsApp ile hızlı iletişim", neden: MOCKUP_ICERIGI },
-  { metin: "Servis talebi, adres ve güvenilir iletişim tek vitrinde.", neden: MOCKUP_ICERIGI },
-  { metin: "Servis kaydı", neden: MOCKUP_ICERIGI },
-  { metin: "Ekran, batarya ve bakım", neden: MOCKUP_ICERIGI },
-  { metin: "Google yorumları", neden: MOCKUP_ICERIGI },
-  { metin: "Müşteri güveni", neden: MOCKUP_ICERIGI },
-
   { metin: "Butik & Giyim", neden: KATALOG_ETIKETI },
   { metin: "Kuaför & Güzellik", neden: KATALOG_ETIKETI },
   { metin: "Kafe & Restoran", neden: KATALOG_ETIKETI },
@@ -106,5 +81,17 @@ export const LANDING_ESITLIK_ISTISNALARI: Istisna[] = [
       "Sayı Flutter'da tutarsız: metin 12 diyor, katalog 20 kart çiziyor, " +
       "veritabanında 19 kanonik kategori var. Web sayıyı tek kaynaktan " +
       "(BUSINESS_CATEGORIES.length) basıyor.",
+  },
+  {
+    metin: "Sıradaki adım: Kategorini seç",
+    neden:
+      "Flutter asistan motorunun (VixRexGuidanceService) dinamik mesajı. " +
+      "Web'de bu motor henüz yok (Faz 2); asistan web'e taşındığında bu istisna kaldırılmalı.",
+  },
+  {
+    metin: "✨ Vitrinin harika görünüyor!",
+    neden:
+      "Flutter asistan motorunun (VixRexGuidanceService) dinamik mesajı. " +
+      "Web'de bu motor henüz yok (Faz 2); asistan web'e taşındığında bu istisna kaldırılmalı.",
   },
 ];
