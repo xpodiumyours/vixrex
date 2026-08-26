@@ -11,14 +11,64 @@ const GUVEN_ROZETLERI = [
   "Link ve QR hazır",
 ] as const;
 
+/**
+ * Bilinçli sapma — hareket yok:
+ * Uygulamada (landing_hero_section.dart:65-100) üç mesh glow sin/cos ile
+ * yavaşça salınıyor. Web'de sabit duruyor: salınımın orta noktası alındı.
+ * Sebep: CSS keyframes ile sonsuz hareket görsel regresyon testlerini her
+ * koşuda oynatır (playwright --update-snapshots flaky). Sabit glow görsel
+ * zenginliği verir, testi stabil tutar.
+ */
 export function HeroSection({ profiller }: { profiller: MockupProfili[] }) {
   // Adres ön eki tek kaynaktan gelir; alan adı bağlandığında bu metin de
   // kendiliğinden düzelir (envanter §4, açık madde 5).
   const adresOneki = `${getSiteUrl().replace(/^https?:\/\//, "")}/v/`;
 
   return (
-    <section className="bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-16 pt-14">
-      <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-12 lg:flex-row lg:items-start lg:gap-16">
+    <section className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-16 pt-14">
+      {/* Ambient Mesh Glows — Flutter landing_hero_section.dart:65-100 orta noktası */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        <div
+          aria-hidden="true"
+          className="absolute rounded-full"
+          style={{
+            width: 300,
+            height: 300,
+            top: 100,
+            left: -100,
+            background:
+              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-primary) 30%, transparent), transparent)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute rounded-full"
+          style={{
+            width: 400,
+            height: 400,
+            bottom: 50,
+            right: -50,
+            background:
+              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-secondary) 25%, transparent), transparent)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute rounded-full"
+          style={{
+            width: 250,
+            height: 250,
+            top: 200,
+            right: 150,
+            background:
+              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-pink) 20%, transparent), transparent)",
+          }}
+        />
+      </div>
+      <div className="relative mx-auto flex w-full max-w-[1200px] flex-col items-center gap-12 lg:flex-row lg:items-start lg:gap-16">
         <div className="w-full max-w-[620px]">
           <p className="inline-block rounded-[30px] border border-lp-secondary/45 bg-lp-primary/[0.18] px-3.5 py-2 text-[11px] font-black tracking-[1px] text-lp-secondary">
             VİXREX ASİSTAN İLE DİJİTAL VİTRİN
