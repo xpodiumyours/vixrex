@@ -16,7 +16,7 @@ interface PageProps {
 async function _getBlogData(slug: string) {
   const { data: store, error: storeErr } = await supabase
     .from("stores")
-    .select("slug, name, logo_url")
+    .select("slug, name, logo_url, is_demo")
     .eq("slug", slug)
     .eq("is_published", true)
     .single();
@@ -48,6 +48,11 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
   const data = await getBlogData(params.slug);
   if (!data || data.articles.length === 0) return {};
+
+  // #345: demo vitrinin yazı listesi de indekslenmez.
+  if ((data.store as { is_demo?: boolean | null }).is_demo) {
+    return { robots: { index: false, follow: true } };
+  }
 
   const title = `${data.store.name} İçerik ve Duyurular - Vixrex`;
   const description = `${data.store.name} işletmesinin güncel yazıları, duyuruları ve rehberleri.`;

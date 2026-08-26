@@ -32,7 +32,7 @@ function kodSatirlari(kaynak: string): string {
 const KAYNAKLAR = [
   "../src/app/v/[slug]/VitrinProfileView.tsx",
   "../src/app/v/[slug]/OwnerAssistantPanel.tsx",
-  "../src/app/page.tsx",
+  "../src/app/(site)/page.tsx",
   "../src/lib/siteUrl.ts",
 ];
 
@@ -55,10 +55,24 @@ describe("Adresler tek kaynaktan gelir", () => {
     );
     expect(siteUrl).toContain("export function getAppUrl");
 
-    // page.tsx kendi kopyasını tutmamalı — iki kaynak iki gerçek demek.
-    const page = readFileSync(resolve(__dirname, "../src/app/page.tsx"), "utf-8");
-    expect(page).toContain('from "@/lib/siteUrl"');
+    // Hiçbir sayfa kendi kopyasını tutmamalı — iki kaynak iki gerçek demek.
+    // 2026-08-26: kök sayfa (site) route grubuna taşındı ve artık uygulama
+    // adresine hiç ihtiyaç duymuyor (yönlendirme kaldırıldı, #344); bu
+    // yüzden siteUrl'i içe aktarması ARTIK BEKLENMİYOR. Kilitlenen tek şey,
+    // kendi getAppUrl kopyasını tanımlamaması.
+    const page = readFileSync(
+      resolve(__dirname, "../src/app/(site)/page.tsx"),
+      "utf-8"
+    );
     expect(page).not.toContain("function getAppUrl");
+
+    // next.config.ts de kendi kopyasını tutuyordu; redirect kaldırılınca
+    // o kopya da silindi.
+    const nextConfig = readFileSync(
+      resolve(__dirname, "../next.config.ts"),
+      "utf-8"
+    );
+    expect(nextConfig).not.toContain("function getAppUrl");
   });
 
   it("paylaşım kutusu kopyalananla aynı adresi gösterir", () => {

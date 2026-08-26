@@ -327,6 +327,16 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   if (!data) return { robots: { index: false, follow: false } };
 
   const { store } = data;
+
+  // #345: demo/örnek vitrinler indekslenmez. Bunlar gerçek bir işletme
+  // değil, kiralanmayı bekleyen şablonlar — arama sonuçlarında gerçek
+  // müşteri vitrinleriyle yarışırlarsa hem kullanıcıyı yanıltır hem de
+  // aynı içeriği çoğaltmış oluruz. `follow` açık bırakılıyor: sayfadaki
+  // gerçek ürün/yazı bağlantıları değerini taşımaya devam etsin.
+  if (store.is_demo) {
+    return { robots: { index: false, follow: true } };
+  }
+
   const title = `${store.name} - Vixrex`;
   const description =
     store.description || store.corporate_bio || `${store.name} Dijital Vitrini`;
