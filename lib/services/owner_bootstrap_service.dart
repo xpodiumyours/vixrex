@@ -66,9 +66,7 @@ class OwnerBootstrapService {
   Future<Result<OwnerBootstrapState>> getir() async {
     final client = _supabase;
     if (client == null) {
-      return const Result.success(
-        OwnerBootstrapState.yok('NO_CLIENT'),
-      );
+      return const Result.success(OwnerBootstrapState.yok('NO_CLIENT'));
     }
 
     try {

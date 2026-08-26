@@ -124,14 +124,14 @@ class DemoRentalService {
       // Vitrin artık hesabın: cihazı sunucudaki gerçek durumla besle.
       // Böylece kiralayan kişi uygulamada da vitrinini görür, tarayıcıyı
       // kapatsa bile kaybolmaz.
-      final durum = await OwnerBootstrapService(
-        storage: storage,
-        client: client,
-      ).getir();
+      final durum =
+          await OwnerBootstrapService(storage: storage, client: client).getir();
       await durum.when(
-        success: (state) =>
-            OwnerBootstrapService(storage: storage, client: client)
-                .cihazaUygula(state),
+        success:
+            (state) => OwnerBootstrapService(
+              storage: storage,
+              client: client,
+            ).cihazaUygula(state),
         failure: (_) async => null,
       );
 

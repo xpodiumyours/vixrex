@@ -25,12 +25,8 @@ void main() {
     StoreLocalStorageService.resetCache();
   });
 
-  StoreData vitrin(String ad, {String slug = 'kiralik-kafe-1'}) => StoreData(
-    name: ad,
-    kategori: 'Diğer',
-    status: 'Açık',
-    slug: slug,
-  );
+  StoreData vitrin(String ad, {String slug = 'kiralik-kafe-1'}) =>
+      StoreData(name: ad, kategori: 'Diğer', status: 'Açık', slug: slug);
 
   Map<String, dynamic> sunucuDurumu({
     bool hasDraft = false,
@@ -150,7 +146,9 @@ void main() {
         sunucuDurumu(
           hasDraft: true,
           draftUpdatedAt:
-              DateTime.now().toUtc().subtract(const Duration(hours: 2))
+              DateTime.now()
+                  .toUtc()
+                  .subtract(const Duration(hours: 2))
                   .toIso8601String(),
         ),
       );
@@ -170,7 +168,9 @@ void main() {
         sunucuDurumu(
           hasDraft: true,
           draftUpdatedAt:
-              DateTime.now().toUtc().add(const Duration(hours: 2))
+              DateTime.now()
+                  .toUtc()
+                  .add(const Duration(hours: 2))
                   .toIso8601String(),
         ),
       );
@@ -187,7 +187,9 @@ void main() {
         sunucuDurumu(
           hasDraft: true,
           draftUpdatedAt:
-              DateTime.now().toUtc().subtract(const Duration(days: 5))
+              DateTime.now()
+                  .toUtc()
+                  .subtract(const Duration(days: 5))
                   .toIso8601String(),
         ),
       );
@@ -233,10 +235,11 @@ void main() {
   });
 
   group('CORE migration nöbetçisi', () {
-    final migration = File(
-      '${Directory.current.path}/supabase/migrations/'
-      '20260826000000_vixrex_core_kalici_hesap_sahipligi.sql',
-    ).readAsStringSync();
+    final migration =
+        File(
+          '${Directory.current.path}/supabase/migrations/'
+          '20260826000000_vixrex_core_kalici_hesap_sahipligi.sql',
+        ).readAsStringSync();
 
     test('tek-vitrin kuralı veritabanı garantisiyle duruyor', () {
       expect(migration, contains('CREATE UNIQUE INDEX'));
@@ -250,7 +253,10 @@ void main() {
     });
 
     test('sahiplenince token süresi kalıcıya çekilir', () {
-      expect(migration, contains("edit_token_expires_at = now() + interval '1 year'"));
+      expect(
+        migration,
+        contains("edit_token_expires_at = now() + interval '1 year'"),
+      );
     });
 
     test('klonlama ürünleri ve kategorileri KOPYALAR', () {

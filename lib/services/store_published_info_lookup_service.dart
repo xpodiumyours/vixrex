@@ -43,10 +43,11 @@ class StorePublishedInfoLookupService {
         // cihazda token boş kalıyor, canEditRemote false oluyor ve
         // OwnerPreviewService taslak dalına düşüp YENİ bir vitrin satırı
         // açıyordu.
-        final bootstrap = await OwnerBootstrapService(
-          storage: storage,
-          client: client,
-        ).getir();
+        final bootstrap =
+            await OwnerBootstrapService(
+              storage: storage,
+              client: client,
+            ).getir();
         final state = bootstrap.when(
           success: (value) => value,
           failure: (_) => null,
