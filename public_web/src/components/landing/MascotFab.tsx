@@ -1,5 +1,12 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
+import {
+  parseConsentSnapshot,
+  readConsentSnapshot,
+  subscribeToConsent,
+} from "@/lib/cookieConsent";
+
 /**
  * Yüzen maskot — envanter §2.12.
  *
@@ -14,8 +21,27 @@
  *  - Sayfa açıldığında balon görünür (uygulamadaki gibi).
  *  - Maskot tıklanınca balon kapanır, ascendant'a toggle sinyali gider.
  *  - Ascendant (page.tsx) bu sinyalle PhoneMockup'a isChatOpen geçirir.
+ *
+ * ÇEREZ BİLDİRİMİ ÇAKIŞMASI (2026-08-26, gerçek tarayıcıda ölçüldü):
+ * `CookieBanner` ekranın altını baştan sona kaplıyor (`fixed inset-x-0
+ * bottom-0 z-50`) ve maskotun üstüne biniyordu — siteye İLK giren kişi,
+ * yani çerez seçimini henüz yapmamış herkes, maskota tıklayamıyordu.
+ * Asistanı açan tek düğme oydu. (Playwright 60 denemenin hepsinde
+ * "cookie dialog intercepts pointer events" ile düştü.)
+ *
+ * Çözüm: çerez seçimi yapılana kadar maskot hiç çizilmez. Yukarı kaydırmak
+ * yerine gizlemeyi seçtim çünkü bildirimin yüksekliği içeriğe ve ekran
+ * genişliğine göre değişiyor; sabit bir kaydırma değeri dar ekranda yine
+ * çakışırdı. Seçim yapılır yapılmaz maskot kendiliğinden görünür.
  */
 export function MascotFab({ onToggle }: { onToggle: () => void }) {
+  const consentSnapshot = useSyncExternalStore(
+    subscribeToConsent,
+    readConsentSnapshot,
+    () => null,
+  );
+  if (!parseConsentSnapshot(consentSnapshot)) return null;
+
   return (
     <div className="pointer-events-none fixed bottom-5 right-5 z-40 flex flex-col items-end gap-2">
       {/* Balon — tıklanınca da asistan açılır */}

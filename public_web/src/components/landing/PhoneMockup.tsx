@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { MockupProfili } from "./mockupProfilleri";
 import { PhoneMockupSlaytlari } from "./PhoneMockupSlaytlari";
+import { getAppUrl } from "@/lib/siteUrl";
 
 /**
  * Hero'nun telefon mockup'ı — envanter §2.3.
@@ -34,21 +35,26 @@ export function PhoneMockup({
         İki rozet: sağ üst (üst rozet) ve sol alt (alt rozet).
         Hareket YOK — sabit konumda duruyorlar (Görev 1 gerekçesi).
       */}
+      {/*
+        Uçuşan etiketler — Flutter landing_hero_mockup.dart:98-123.
+        Her profil kendi rozetlerini taşır (sabit koşul yok).
+        Hareket YOK — sabit konumda duruyorlar (Görev 1 gerekçesi).
+      */}
       {!isChatOpen && (
         <>
-          {/* Sağ üst rozet */}
-          <div className="absolute -right-10 top-24 z-20 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.92] px-3 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: ilk.uStRozet.renk }}>
-              <span className="text-[11px]">{ilk.uStRozet.simge}</span>
+          {/* Sağ üst rozet — profilin uStRozet metni */}
+          <div className="absolute -right-6 top-[90px] z-20 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.92] px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
+            <div className="flex h-[22px] w-[22px] items-center justify-center rounded-full" style={{ backgroundColor: ilk.uStRozet.renk }}>
+              <span className="text-[10px]">{ilk.uStRozet.simge}</span>
             </div>
-            <span className="text-[12px] font-extrabold text-gray-800">{ilk.uStRozet.renk === "#FF5A1F" ? "Galeri" : ilk.uStRozet.renk === "#EA580C" ? "Menü" : ilk.uStRozet.renk === "#DB2777" ? "Randevu" : "WhatsApp"}</span>
+            <span className="text-[11px] font-extrabold text-gray-800">{ilk.uStRozet.renk === "#FF5A1F" ? "Galeri" : ilk.uStRozet.renk === "#EA580C" ? "Menü" : ilk.uStRozet.renk === "#DB2777" ? "Randevu" : "WhatsApp"}</span>
           </div>
-          {/* Sol alt rozet */}
-          <div className="absolute -left-10 bottom-36 z-20 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.92] px-3 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: ilk.altRozet.renk }}>
-              <span className="text-[11px]">{ilk.altRozet.simge}</span>
+          {/* Sol alt rozet — profilin altRozet metni */}
+          <div className="absolute -left-6 bottom-[180px] z-20 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.92] px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
+            <div className="flex h-[22px] w-[22px] items-center justify-center rounded-full" style={{ backgroundColor: ilk.altRozet.renk }}>
+              <span className="text-[10px]">{ilk.altRozet.simge}</span>
             </div>
-            <span className="text-[12px] font-extrabold text-gray-800">{ilk.altRozet.renk === "#FF5A1F" ? "QR kod" : ilk.altRozet.renk === "#EA580C" ? "Yol tarifi" : ilk.altRozet.renk === "#DB2777" ? "Instagram" : "Konum"}</span>
+            <span className="text-[11px] font-extrabold text-gray-800">{ilk.altRozet.renk === "#FF5A1F" ? "QR kod" : ilk.altRozet.renk === "#EA580C" ? "Yol tarifi" : ilk.altRozet.renk === "#DB2777" ? "Instagram" : "Konum"}</span>
           </div>
         </>
       )}
@@ -89,15 +95,7 @@ export function PhoneMockup({
         </div>
       </div>
 
-      {/* Mockup tıklanabilir: o kategorinin Keşfet sayfasına götürür. */}
-      {!isChatOpen && (
-        <Link
-          href={ilk.hedefUrl}
-          className="mt-4 flex items-center justify-center rounded-2xl border border-lp-border bg-lp-surface px-4 py-3 text-[13px] font-extrabold text-lp-text-alt transition-colors hover:bg-lp-surface-soft"
-        >
-          Hazır şablonlara göz at
-        </Link>
-      )}
+
     </div>
   );
 }
@@ -185,16 +183,23 @@ function AsistanSohbetIcerigi({
             Hazır Vitrin Seç
           </Link>
           <div className="flex gap-1.5">
-            <Link
-              href="/app"
-              className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-[#25415F] bg-[#0B1730] px-3 py-2 text-[10px] font-bold text-[#D9E7FF] transition-colors hover:bg-[#112448]"
+            {/* Uygulama AYRI bir adreste (vixrex-app); `/app` bu alan adında
+                yok, düz "/app" 404 veriyordu. Depodaki diğer iki çağrı yeri de
+                `getAppUrl()` kullanıyor — tek doğru biçim bu. */}
+            <a
+              href={`${getAppUrl()}/app`}
+              className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[10px] font-bold text-lp-text-alt transition-colors hover:bg-lp-surface-soft"
             >
               <span>✨</span>
               Sıfırdan Oluştur
-            </Link>
+            </a>
+            {/* "Bakınıyorum" = vazgeçtim, gezineyim. Maketi kapatıp sayfaya
+                döner; başka bir yere götürmesi yanlış olurdu. Önceden hiçbir
+                işlevi yoktu, tıklanınca hiçbir şey olmuyordu. */}
             <button
               type="button"
-              className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-[#25415F] bg-[#0B1730] px-3 py-2 text-[10px] font-bold text-[#D9E7FF]"
+              onClick={onClose}
+              className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[10px] font-bold text-lp-text-alt transition-colors hover:bg-lp-surface-soft"
             >
               <span>👀</span>
               Bakınıyorum
