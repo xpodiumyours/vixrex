@@ -22,3 +22,33 @@ export const PUBLIC_STORE_SELECT = [
 
 export const PUBLIC_STORE_SELECT_WITH_VERIFICATION =
   `${PUBLIC_STORE_SELECT},business_verified_at`;
+
+/**
+ * Keşfet listesi için DAR seçim listesi.
+ *
+ * `PUBLIC_STORE_SELECT` ~70 kolon taşıyor; tek bir vitrin sayfası için
+ * doğru, ama 50 kartlık liste için israf. Kart yalnız aşağıdakileri
+ * gösteriyor.
+ *
+ * `user_id` bu listeye ASLA girmemeli: V-09 (20260818050000) o kolonun
+ * SELECT yetkisini authenticated'ten çekti ve PostgreSQL, sorguda geçen
+ * her kolon için yetki arar — kolonun varlığı TÜM sorguyu 42501 ile
+ * düşürür. Bu hata bu depoda iki kez oldu (20260820210000 Keşfet'i,
+ * 20260826000000 sahiplik sorgusunu düşürmüştü).
+ */
+export const EXPLORE_STORE_SELECT = [
+  "id",
+  "slug",
+  "name",
+  "kategori",
+  "business_type",
+  "shelf_image_url",
+  "logo_url",
+  "province_name",
+  "district_name",
+  "status",
+  "is_demo",
+  "rating_score",
+  "review_count",
+  "updated_at",
+].join(",");

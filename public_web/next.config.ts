@@ -2,19 +2,6 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 import path from "path";
 
-const fallbackAppUrl = "https://vixrex-app.vercel.app";
-
-function getAppUrl() {
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (!configured) return fallbackAppUrl;
-
-  try {
-    return new URL(configured).origin;
-  } catch {
-    return fallbackAppUrl;
-  }
-}
-
 // CSP (2026-08-15 taraması: CSP eksikti). 2026-08-16 sıkılaştırma:
 //   - 'unsafe-eval' KALDIRILDI (yalnız dev React'inin eval'i için gerekiyor,
 //     prod build'te gerekmez — bu yüzden yalnız NODE_ENV==='development'
@@ -112,15 +99,6 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: securityHeaders,
-      },
-    ];
-  },
-  async redirects() {
-    return [
-      {
-        source: "/",
-        destination: getAppUrl(),
-        permanent: false,
       },
     ];
   },

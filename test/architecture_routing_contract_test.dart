@@ -61,12 +61,11 @@ void main() {
     });
 
     test('Next.js fallback origins point to active Vercel projects', () {
-      final nextConfig = File('public_web/next.config.ts').readAsStringSync();
       final siteUrl = File('public_web/src/lib/siteUrl.ts').readAsStringSync();
 
-      expect(nextConfig, contains('https://vixrex-app.vercel.app'));
-      expect(nextConfig, isNot(contains('vixrex-two.vercel.app')));
       expect(siteUrl, contains('https://vixrex-public.vercel.app'));
+      expect(siteUrl, contains('https://vixrex-app.vercel.app'));
+      expect(siteUrl, isNot(contains('vixrex-two.vercel.app')));
     });
 
     test('project rules keep public web ownership explicit', () {

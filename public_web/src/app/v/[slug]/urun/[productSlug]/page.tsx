@@ -38,6 +38,7 @@ interface StoreRow {
   shelf_image_url?: string;
   products?: unknown;
   is_published?: boolean;
+  is_demo?: boolean | null;
   product_storage_version?: number;
 }
 
@@ -69,7 +70,7 @@ async function _getProductData(slug: string, productSlug: string) {
   const { data: store, error } = await supabase
     .from("stores")
     .select(
-      "id,slug,name,description,corporate_bio,whatsapp,instagram,website,address,logo_url,shelf_image_url,products,is_published,product_storage_version"
+      "id,slug,name,description,corporate_bio,whatsapp,instagram,website,address,logo_url,shelf_image_url,products,is_published,is_demo,product_storage_version"
     )
     .eq("slug", slug)
     .eq("is_published", true)
@@ -148,6 +149,13 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   if (!data) return { robots: { index: false, follow: false } };
 
   const { store, product, productSlug } = data;
+
+  // #345: demo vitrinin ürün sayfası da indekslenmez. Vitrin sayfası
+  // `follow: true` ile geçildiği için tarayıcı buraya ulaşabilir.
+  if (store.is_demo) {
+    return { robots: { index: false, follow: true } };
+  }
+
   const title = `${product.name} - ${store.name} | Vixrex`;
   const description =
     product.description ||

@@ -6,6 +6,7 @@ export function GET() {
 Allow: /
 Disallow: /v/*/randevu/*
 Disallow: /api/*
+Disallow: /rent-demo
 
 Sitemap: ${buildSiteUrl("/sitemap.xml")}
 `;
