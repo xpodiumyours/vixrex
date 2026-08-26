@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
+import { BUSINESS_CATEGORIES } from "@/lib/businessCategories";
 
 const landingDizini = resolve(__dirname, "../src/components/landing");
 const siteDizini = resolve(__dirname, "../src/components/site");
@@ -15,71 +16,19 @@ function dizinKaynagi(dizin: string): string {
 const kaynak = dizinKaynagi(landingDizini) + "\n" + dizinKaynagi(siteDizini);
 
 /**
- * Landing port metin sözleşmesi (#344, 2026-08-26).
+ * Landing metin KURALLARI.
  *
- * Ana sayfanın metinleri Flutter landing'inden çıkarılan envantere göre
- * birebir taşındı (docs/research/landing-port-envanteri-2026-08-25.md §2).
- * İki yüzey aynı vaadi farklı cümlelerle anlatmaya başlarsa hangisinin
- * doğru olduğu belirsizleşir; bu test o kaymayı yakalar.
+ * Metinlerin Flutter ile aynı olup olmadığı burada DEĞİL,
+ * `landing-esitlik-contract.test.ts` içinde doğrulanıyor — o test listeyi
+ * elle tutmak yerine doğrudan Flutter kaynağından çıkarıyor. Burada yalnız
+ * listeden çıkarılamayacak kurallar kalıyor: yazım biçimi ve tek kaynak
+ * disiplini.
  *
- * Kesme işaretlerine dikkat: envanterde U+2019 (') kullanılıyor, düz
- * tırnak (') değil.
+ * (Bu dosya önce 35 satırlık elle yazılmış bir metin listesi taşıyordu.
+ * Liste kaldırıldı: iki yerde iki kopya tutmak, tam da önlemeye çalıştığımız
+ * ayrışmanın kendisiydi.)
  */
-const ZORUNLU_METINLER = [
-  // §2.1 üst gezinme
-  "Vitrinleri Keşfet",
-  "Giriş Yap",
-  // §2.2 hero
-  "VİXREX ASİSTAN İLE DİJİTAL VİTRİN",
-  "Vixrex Asistan",
-  "birkaç dakikada hazır",
-  "Ücretsiz Vitrinimi Hazırla",
-  "SSL Güvenli Koruma",
-  "Kredi kartı gerekmez",
-  "Komisyon yok",
-  "Link ve QR hazır",
-  // §2.4 değer bandı
-  "Müşterin ihtiyaç duyduğu her bilgiye tek linkten ulaşsın",
-  "Google İşletme",
-  // §2.5 özellik kartları
-  "Dijital vitrinini kolayca hazırla",
-  "Dakikalar içinde yayına alın",
-  "Müşteriler size doğrudan ulaşsın",
-  "Her kanalda aynı vitrini paylaşın",
-  "Bilgilerini panelden güncelle",
-  // §2.6 karşılaştırma
-  "Dijital vitrinin için gerekenler tek yerde",
-  "Ayrı ayrı kurulum",
-  "Vixrex ile",
-  "Tek panel, tek link, doğrudan iletişim",
-  // §2.7 güven bandı
-  "Başlarken sürpriz yok",
-  "Satıştan komisyon alınmaz",
-  "Kodsuz kurulum",
-  // §2.8 adımlar
-  "Üç adımda dijital vitrinin hazır",
-  "Vitrininizi kurun",
-  "Yayınla",
-  "Müşterilerinize duyurun",
-  // §2.9 şablon kataloğu
-  "HAZIR ŞABLONLAR",
-  "İşletme Kategorine Özel Hazır Görseller",
-  "Hazır görseller →",
-  // §2.10 alt CTA
-  "İşletmenizi tek linkte müşterilerinizle buluşturun",
-  "Vixrex Oluştur",
-  // §2.11 altbilgi
-  "VIXREX",
-  "İşletmenizin paylaşılabilir dijital vitrini",
-];
-
-describe("landing port — envanterdeki metinler yerinde", () => {
-  for (const metin of ZORUNLU_METINLER) {
-    it(`"${metin}" sayfada geçiyor`, () => {
-      expect(kaynak).toContain(metin);
-    });
-  }
-
+describe("landing metin kuralları", () => {
   it("kesme işaretleri U+2019 — düz tırnak kullanılmamış", () => {
     expect(kaynak).toContain("Vixrex’e");
     expect(kaynak).toContain("Vixrex’ini");
@@ -93,10 +42,15 @@ describe("landing port — envanterdeki metinler yerinde", () => {
   });
 
   it("kategori sayısı tek kaynaktan gelir, metne gömülmez", () => {
-    // Flutter'da başlıkta "12 farklı kategoride" yazıyor ama 20 kart
-    // çiziliyordu; veritabanında ise 19 kanonik kimlik var. Sayı artık
-    // BUSINESS_CATEGORIES.length'ten okunur.
+    // Flutter'da başlık "12 farklı kategoride" diyor ama katalog 20 kart
+    // çiziyor; veritabanında ise 19 kanonik kategori var. Sayı artık
+    // BUSINESS_CATEGORIES.length'ten okunuyor, yani üçü de ayrışamaz.
     expect(kaynak).toContain("{kategoriSayisi} farklı kategoride");
     expect(kaynak).not.toContain("12 farklı kategoride");
+    expect(BUSINESS_CATEGORIES.length).toBe(19);
+  });
+
+  it("kategori kartları paylaşılan sözleşmeden üretilir, elle yazılmaz", () => {
+    expect(kaynak).toContain("BUSINESS_CATEGORIES.map");
   });
 });

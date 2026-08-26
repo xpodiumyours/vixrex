@@ -134,7 +134,7 @@ export default async function KategoriPage({ params }: Props) {
               href={`${getAppUrl()}/app`}
               className="mt-6 inline-flex rounded-2xl bg-lp-primary px-6 py-3.5 text-[14px] font-black text-lp-on-primary transition-transform hover:-translate-y-0.5"
             >
-              Bu şablonla başla
+              Bu Şablonla Başla
             </a>
           </>
         ) : null}
