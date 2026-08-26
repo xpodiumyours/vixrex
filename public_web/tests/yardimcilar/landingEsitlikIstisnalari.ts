@@ -107,4 +107,16 @@ export const LANDING_ESITLIK_ISTISNALARI: Istisna[] = [
       "veritabanında 19 kanonik kategori var. Web sayıyı tek kaynaktan " +
       "(BUSINESS_CATEGORIES.length) basıyor.",
   },
+  {
+    metin: "Sıradaki adım: Kategorini seç",
+    neden:
+      "Flutter asistan motorunun (VixRexGuidanceService) dinamik mesajı. " +
+      "Web'de bu motor henüz yok (Faz 2); asistan web'e taşındığında bu istisna kaldırılmalı.",
+  },
+  {
+    metin: "✨ Vitrinin harika görünüyor!",
+    neden:
+      "Flutter asistan motorunun (VixRexGuidanceService) dinamik mesajı. " +
+      "Web'de bu motor henüz yok (Faz 2); asistan web'e taşındığında bu istisna kaldırılmalı.",
+  },
 ];

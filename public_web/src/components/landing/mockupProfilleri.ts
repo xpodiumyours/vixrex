@@ -25,13 +25,88 @@ export type MockupProfili = {
   kapakUrl: string | null;
   galeriUrlleri: string[];
   hedefUrl: string;
+  /** Uygulamadaki HeroDemoProfile ile aynı metinler */
+  aciklama: string;
+  durum: string;
+  /** Üst rozet (ör. "Galeri", "Menü") */
+  uStRozet: { simge: string; renk: string };
+  /** Alt rozet (ör. "QR kod", "Yol tarifi") */
+  altRozet: { simge: string; renk: string };
+  /** Eylem simgeleri (ör. WhatsApp, Instagram) */
+  eylemler: readonly { simge: string; renk: string }[];
+  /** Eylem satırları (ör. "Günün menüsü / Sıcak yemek ve tatlılar") */
+  eylemSatirlari: readonly { baslik: string; altBaslik: string; renk: string }[];
 };
 
 const TANIMLAR = [
-  { ad: "Aymira Giyim", serit: "KADIN GİYİM / BUTİK", kimlik: "giyim" },
-  { ad: "Lezzet Durağı", serit: "KAFE / RESTORAN", kimlik: "kafe_lokanta" },
-  { ad: "Nova Kuaför", serit: "KUAFÖR / GÜZELLİK", kimlik: "kuafor" },
-  { ad: "TeknoFix", serit: "TELEFON TEKNİK SERVİS", kimlik: "teknik_servis" },
+  {
+    ad: "Aymira Giyim",
+    serit: "KADIN GİYİM / BUTİK",
+    kimlik: "giyim",
+    aciklama: "Yeni sezon reyonları ve mağaza fotoğrafları tek vitrinde.",
+    durum: "AÇIK",
+    uStRozet: { simge: "🖼️", renk: "#FF5A1F" },
+    altRozet: { simge: "📱", renk: "#FF5A1F" },
+    eylemler: [
+      { simge: "💬", renk: "#25D366" },
+      { simge: "📷", renk: "#E1306C" },
+    ],
+    eylemSatirlari: [
+      { baslik: "Vitrin galerisi", altBaslik: "Raf ve reyon fotoğrafları", renk: "#FF5A1F" },
+      { baslik: "Trendyol", altBaslik: "Mağazayı ziyaret edin", renk: "#F27A1A" },
+    ],
+  },
+  {
+    ad: "Lezzet Durağı",
+    serit: "KAFE / RESTORAN",
+    kimlik: "kafe_lokanta",
+    aciklama: "Menü, konum ve WhatsApp sipariş bilgileri tek ekranda.",
+    durum: "AÇIK",
+    uStRozet: { simge: "📖", renk: "#EA580C" },
+    altRozet: { simge: "📍", renk: "#EA580C" },
+    eylemler: [
+      { simge: "💬", renk: "#25D366" },
+      { simge: "📍", renk: "#EF4444" },
+    ],
+    eylemSatirlari: [
+      { baslik: "Günün menüsü", altBaslik: "Sıcak yemek ve tatlılar", renk: "#EA580C" },
+      { baslik: "Paket servis", altBaslik: "WhatsApp ile sipariş", renk: "#10B981" },
+    ],
+  },
+  {
+    ad: "Nova Kuaför",
+    serit: "KUAFÖR / GÜZELLİK",
+    kimlik: "kuafor",
+    aciklama: "Randevu, hizmetler ve sosyal medya bağlantıları hazır.",
+    durum: "AÇIK",
+    uStRozet: { simge: "📅", renk: "#DB2777" },
+    altRozet: { simge: "📷", renk: "#DB2777" },
+    eylemler: [
+      { simge: "💬", renk: "#25D366" },
+      { simge: "📷", renk: "#E1306C" },
+    ],
+    eylemSatirlari: [
+      { baslik: "Hizmetler", altBaslik: "Kesim, boya ve bakım", renk: "#DB2777" },
+      { baslik: "Randevu al", altBaslik: "WhatsApp ile hızlı iletişim", renk: "#10B981" },
+    ],
+  },
+  {
+    ad: "TeknoFix",
+    serit: "TELEFON TEKNİK SERVİS",
+    kimlik: "teknik_servis",
+    aciklama: "Servis talebi, adres ve güvenilir iletişim tek vitrinde.",
+    durum: "AÇIK",
+    uStRozet: { simge: "💬", renk: "#2563EB" },
+    altRozet: { simge: "📍", renk: "#2563EB" },
+    eylemler: [
+      { simge: "💬", renk: "#25D366" },
+      { simge: "📱", renk: "#2563EB" },
+    ],
+    eylemSatirlari: [
+      { baslik: "Servis kaydı", altBaslik: "Ekran, batarya ve bakım", renk: "#2563EB" },
+      { baslik: "Google yorumları", altBaslik: "Müşteri güveni", renk: "#6366F1" },
+    ],
+  },
 ] as const;
 
 export async function mockupProfilleriniGetir(): Promise<MockupProfili[]> {
@@ -46,6 +121,12 @@ export async function mockupProfilleriniGetir(): Promise<MockupProfili[]> {
       kapakUrl: sablon?.kapaklar[0]?.url ?? null,
       galeriUrlleri: (sablon?.galeri ?? []).slice(0, 3).map((g) => g.url),
       hedefUrl: `/kesfet/${kategoriUrlParcasi(tanim.kimlik)}`,
+      aciklama: tanim.aciklama,
+      durum: tanim.durum,
+      uStRozet: tanim.uStRozet,
+      altRozet: tanim.altRozet,
+      eylemler: tanim.eylemler,
+      eylemSatirlari: tanim.eylemSatirlari,
     };
   });
 }

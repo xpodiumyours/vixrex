@@ -18,7 +18,7 @@ export function SiteHeader() {
     <header className="border-b border-lp-border/40 bg-lp-bg-editor">
       <nav
         aria-label="Ana gezinme"
-        className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-5 py-4 md:px-10"
+        className="flex w-full items-center justify-between px-5 py-4 md:px-10"
       >
         <Link
           href="/"
