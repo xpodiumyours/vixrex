@@ -61,6 +61,7 @@ export function flutterLandingMetinleri(): Set<string> {
   const kaynaklar = [
     readFileSync(resolve(DEPO_KOKU, "lib/screens/landing_screen.dart"), "utf-8"),
     ...dizindekiDosyalar("lib/widgets/landing", [".dart"]),
+    readFileSync(resolve(DEPO_KOKU, "lib/widgets/chatbot_badge.dart"), "utf-8"),
   ].map(yorumsuz);
 
   const metinler = new Set<string>();

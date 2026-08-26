@@ -51,16 +51,16 @@ export function FeaturesSection() {
         <h2 className="text-center text-[38px] font-black leading-[1.1] text-lp-text">
           Dijital vitrinini kolayca hazırla
         </h2>
-        <p className="mx-auto mt-4 max-w-[720px] text-center text-[18px] leading-[1.5] text-lp-text-alt">
+        <p className="mx-auto mt-5 max-w-[720px] text-center text-[18px] leading-[1.5] text-lp-text-alt">
           Müşterinin ihtiyaç duyduğu bilgileri tek vitrinde topla, panelden
           yönet, istediğin yerde paylaş.
         </p>
 
-        <div className="mt-12 grid gap-5 md:grid-cols-2">
+        <div className="mt-12 flex flex-wrap justify-center gap-[18px]">
           {KARTLAR.map((kart) => (
             <article
               key={kart.baslik}
-              className="rounded-[28px] border-[1.2px] border-lp-border/85 bg-lp-surface p-6 shadow-lp-card"
+              className="w-full rounded-[28px] border-[1.2px] border-lp-border/85 bg-lp-surface p-6 shadow-lp-card sm:w-[calc(50%-9px)] lg:w-[calc(25%-14px)]"
             >
               <span
                 className={`flex h-[54px] w-[54px] items-center justify-center rounded-[18px] bg-current/15 ${kart.renk}`}

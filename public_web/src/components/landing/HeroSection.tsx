@@ -1,5 +1,5 @@
 import { OnayIkonu, IleriOkIkonu } from "@/components/site/icons";
-import { getAppUrl, getSiteUrl } from "@/lib/siteUrl";
+import { getSiteUrl } from "@/lib/siteUrl";
 import { PhoneMockup } from "./PhoneMockup";
 import type { MockupProfili } from "./mockupProfilleri";
 
@@ -11,15 +11,73 @@ const GUVEN_ROZETLERI = [
   "Link ve QR hazır",
 ] as const;
 
-export function HeroSection({ profiller }: { profiller: MockupProfili[] }) {
+/**
+ * Bilinçli sapma — hareket yok:
+ * Uygulamada (landing_hero_section.dart:65-100) üç mesh glow sin/cos ile
+ * yavaşça salınıyor. Web'de sabit duruyor: salınımın orta noktası alındı.
+ * Sebep: CSS keyframes ile sonsuz hareket görsel regresyon testlerini her
+ * koşuda oynatır (playwright --update-snapshots flaky). Sabit glow görsel
+ * zenginliği verir, testi stabil tutar.
+ */
+export function HeroSection({
+  profiller,
+  isChatOpen = false,
+  onChatClose,
+}: {
+  profiller: MockupProfili[];
+  isChatOpen?: boolean;
+  onChatClose?: () => void;
+}) {
   // Adres ön eki tek kaynaktan gelir; alan adı bağlandığında bu metin de
   // kendiliğinden düzelir (envanter §4, açık madde 5).
   const adresOneki = `${getSiteUrl().replace(/^https?:\/\//, "")}/v/`;
 
   return (
-    <section className="bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-16 pt-14">
-      <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-12 lg:flex-row lg:items-start lg:gap-16">
-        <div className="w-full max-w-[620px]">
+    <section className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-[50px] pt-5 md:pb-[100px] md:pt-10">
+      {/* Ambient Mesh Glows — Flutter landing_hero_section.dart:65-100 orta noktası */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        <div
+          aria-hidden="true"
+          className="absolute rounded-full"
+          style={{
+            width: 300,
+            height: 300,
+            top: 100,
+            left: -100,
+            background:
+              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-primary) 30%, transparent), transparent)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute rounded-full"
+          style={{
+            width: 400,
+            height: 400,
+            bottom: 50,
+            right: -50,
+            background:
+              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-secondary) 25%, transparent), transparent)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute rounded-full"
+          style={{
+            width: 250,
+            height: 250,
+            top: 200,
+            right: 150,
+            background:
+              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-pink) 20%, transparent), transparent)",
+          }}
+        />
+      </div>
+      <div className="relative mx-auto flex w-full max-w-[1200px] flex-col items-center gap-10 md:flex-row md:items-center md:gap-10">
+        <div className="w-full">
           <p className="inline-block rounded-[30px] border border-lp-secondary/45 bg-lp-primary/[0.18] px-3.5 py-2 text-[11px] font-black tracking-[1px] text-lp-secondary">
             VİXREX ASİSTAN İLE DİJİTAL VİTRİN
           </p>
@@ -39,31 +97,36 @@ export function HeroSection({ profiller }: { profiller: MockupProfili[] }) {
           </p>
 
           {/*
-            Envanterdeki (§2.2 Durum B) kurulum formu burada BİLEREK bir
-            metin kutusu DEĞİL.
-            İki somut sebep:
-              1. CSP `form-action 'self'` (next.config.ts) — başka bir
-                 origin'e form göndermek tarayıcı tarafından engellenir.
-              2. Uygulama yazılan adı zaten alamıyor: app_router.dart:70-75
-                 vitrin adını `state.extra` üzerinden okuyor, adres
-                 parametresinden değil.
-            Yani çalışan bir kutu koymak, yazdığını sessizce çöpe atan bir
-            kutu koymak olurdu. Web'den vitrin kurma Faz 3'ün işi; o zaman
-            burası `/basla`ya bağlanan gerçek bir forma dönüşecek.
+            Kurulum formu — uygulamadaki iki kutulu yapıyla eşitlenir
+            (landing_hero_section.dart:495-541).
+            Sabit önek (localhost:3000/v/) + boş input (isletmeniz).
+            <form method="get"> korunur: JS kapalıyken bile submit çalışır.
+            CSP `form-action 'self'` nedeniyle submit /basla'ya gider;
+            sunucu tarafı orada yakalar.
           */}
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <p className="flex h-[52px] flex-1 items-center rounded-2xl border border-white/[0.12] bg-white/[0.06] px-4 text-[14px] font-bold">
-              <span className="text-white/60">{adresOneki}</span>
-              <span className="text-white/30">isletmeniz</span>
-            </p>
-            <a
-              href={`${getAppUrl()}/app`}
+          <form
+            method="get"
+            action="/basla"
+            className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
+          >
+            <div className="flex h-[52px] flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06]">
+              <span className="hidden whitespace-nowrap px-4 text-[14px] font-bold text-white/60 sm:inline">{adresOneki}</span>
+              <span className="px-4 text-[14px] font-bold text-white/60 sm:hidden">/v/</span>
+              <input
+                type="text"
+                name="isletme"
+                placeholder="isletmeniz"
+                className="h-full flex-1 bg-transparent text-[14px] font-bold text-white outline-none placeholder:text-white/30"
+              />
+            </div>
+            <button
+              type="submit"
               className="flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-lp-primary px-6 text-[15px] font-black text-lp-on-primary transition-transform hover:-translate-y-0.5"
             >
               Ücretsiz Vitrinimi Hazırla
               <IleriOkIkonu boyut={16} />
-            </a>
-          </div>
+            </button>
+          </form>
 
           <ul className="mt-6 flex flex-wrap gap-2">
             {GUVEN_ROZETLERI.map((rozet) => (
@@ -80,7 +143,7 @@ export function HeroSection({ profiller }: { profiller: MockupProfili[] }) {
           </ul>
         </div>
 
-        <PhoneMockup profiller={profiller} />
+        <PhoneMockup profiller={profiller} isChatOpen={isChatOpen} onChatClose={onChatClose} />
       </div>
     </section>
   );
