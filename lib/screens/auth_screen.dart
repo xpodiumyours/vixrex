@@ -1,11 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/legal_config.dart';
 import 'package:vixrex/services/auth_service.dart';
-import 'package:vixrex/services/local_storage_keys.dart';
-import 'package:vixrex/services/secure_token_storage.dart';
+import 'package:vixrex/services/owner_bootstrap_service.dart';
 import 'package:vixrex/services/recaptcha_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/config/app_router.dart';
@@ -175,95 +172,61 @@ class _AuthScreenState extends State<AuthScreen> {
     if (mounted) setState(() => _isLoading = false);
   }
 
+  /// Giriş sonrası VIXREX CORE akışı (2026-08-26):
+  ///   1. Cihazda duran edit token varsa vitrini kalıcı hesaba bağla
+  ///      (`claim_store_for_user` — tek-vitrin kurallı, atomik).
+  ///   2. Hesabın sunucudaki tam durumunu tek çağrıda oku
+  ///      (`bootstrap_owner_state`) ve cihaza yaz — böylece YENİ bir cihazda
+  ///      da vitrin, edit token ve web'de bırakılmış çalışma taslağı gelir.
+  ///
+  /// Eskiden 1. adım boolean dönen `link_store_to_user`'a, 2. adım ise
+  /// canlıda 42501 ile düşen doğrudan `stores` sorgusuna dayanıyordu; ikisi
+  /// de sessizce başarısız olduğu için hiçbir vitrin hiçbir hesaba
+  /// bağlanmamıştı.
   Future<void> _handlePostAuthentication() async {
     final authService = const AuthService();
-    final prefs = await SharedPreferences.getInstance();
 
-    // 1. Check for local edit tokens and link them if present.
-    // Publish writes last_published_edit_token (+ mirrored vitrin/store keys).
-    final localTokenCandidates = <String>[
-      await SecureTokenStorage.loadLastPublishedEditToken() ?? '',
-      await SecureTokenStorage.loadVitrinEditToken() ?? '',
-      await SecureTokenStorage.loadStoreEditToken() ?? '',
-    ];
-    final localEditToken = localTokenCandidates
-        .map((t) => t.trim())
-        .firstWhere((t) => t.isNotEmpty, orElse: () => '');
+    final claimMesaji = (await authService.claimDeviceStore())?.kullaniciMesaji;
 
-    bool linked = false;
-    if (localEditToken.isNotEmpty) {
-      final linkResult = await authService.linkAnonymousStore(localEditToken);
-      linkResult.when(success: (value) => linked = value, failure: (_) {});
+    final stateResult = await authService.getOwnerState();
+    final state = stateResult.when(
+      success: (value) => value,
+      failure: (_) => null,
+    );
+
+    var korunanYerelTaslak = false;
+    if (state != null && state.hasStore) {
+      final uygulama = await const OwnerBootstrapService().cihazaUygula(state);
+      korunanYerelTaslak = uygulama.korunanYerelTaslak;
     }
 
     if (!mounted) return;
 
-    if (linked) {
+    final mesaj =
+        korunanYerelTaslak
+            ? 'Bu cihazdaki düzenlemeniz daha yeni olduğu için korundu.'
+            : claimMesaji;
+    if (mesaj != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Mevcut vitrininiz hesabınızla başarıyla ilişkilendirildi!',
-          ),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: Text(mesaj),
+          backgroundColor:
+              korunanYerelTaslak ? AppColors.warning : Colors.green,
           behavior: SnackBarBehavior.floating,
         ),
       );
     }
 
-    // 2. Fetch the store owned by the authenticated user
-    final storeResult = await authService.getStoreForCurrentUser();
+    if (state == null || !state.hasStore) {
+      AppRouter.navigateToLanding(context);
+      return;
+    }
 
-    storeResult.when(
-      success: (store) async {
-        if (!mounted) return;
-
-        if (store != null) {
-          if (store.isStore) {
-            await prefs.setString(
-              LocalStorageKeys.storeData,
-              jsonEncode(store.toJson()),
-            );
-
-            if (!mounted) return;
-
-            if (store.slug.isNotEmpty) {
-              await prefs.setString(
-                LocalStorageKeys.lastPublishedSlug,
-                store.slug,
-              );
-            }
-
-            if (!mounted) return;
-
-            AppRouter.navigateToLanding(context);
-          } else {
-            await prefs.setString(
-              LocalStorageKeys.vitrinData,
-              jsonEncode(store.toJson()),
-            );
-
-            if (!mounted) return;
-
-            if (store.slug.isNotEmpty) {
-              await prefs.setString(
-                LocalStorageKeys.lastPublishedSlug,
-                store.slug,
-              );
-            }
-
-            if (!mounted) return;
-
-            AppRouter.navigateToHomeShell(context, initialIndex: 0);
-          }
-        } else {
-          AppRouter.navigateToLanding(context);
-        }
-      },
-      failure: (_) {
-        if (!mounted) return;
-        AppRouter.navigateToLanding(context);
-      },
-    );
+    if (state.isStoreMode) {
+      AppRouter.navigateToLanding(context);
+    } else {
+      AppRouter.navigateToHomeShell(context, initialIndex: 0);
+    }
   }
 
   void _showError(String msg) {

@@ -14,6 +14,7 @@ import 'package:vixrex/screens/landing_screen.dart';
 import 'package:vixrex/screens/legal_screen.dart';
 import 'package:vixrex/screens/public_site_redirect_screen.dart';
 import 'package:vixrex/screens/vixrex_onboarding_chat_screen.dart';
+import 'package:vixrex/services/demo_rental_service.dart';
 
 class AppRouter {
   static const String landing = '/';
@@ -382,10 +383,15 @@ class AppRouter {
     );
   }
 
-  /// "Bu vitrini kirala" — demo vitrini taslak olarak kopyalayıp Vixrex
-  /// Asistan'ı (sahip paneli) tarayıcıda açar. `/api/rent-demo` sunucu
-  /// tarafında kopyalama + oturum açma işini yapar; burada yalnız link
-  /// açılır (İncele ile aynı desen, `openPublicUrl`).
+  /// "Bu vitrini kirala" — iki yol var, ayrımı hesap belirler (2026-08-26):
+  ///
+  /// HESAPLI YOL (kalıcı hesapla giriş yapılmışsa): klon `rent_demo_for_account`
+  /// ile SAHİPLİ doğar — vitrin o anda hesaba bağlanır, token bir yıllık olur,
+  /// cihaz sunucudaki durumla beslenir. Kullanıcı tarayıcıyı kapatsa da
+  /// vitrini uygulamada durur.
+  ///
+  /// MİSAFİR YOLU (giriş yok / anonim oturum): eski davranış aynen korunur —
+  /// `/rent-demo` köprü sayfası, reCAPTCHA, servis rolüyle sahipsiz klon.
   static Future<void> navigateToRentDemo(
     BuildContext context,
     String demoSlug,
@@ -393,6 +399,49 @@ class AppRouter {
     final normalizedSlug = demoSlug.trim();
     if (normalizedSlug.isEmpty) return;
 
+    const rentalService = DemoRentalService();
+    if (rentalService.kaliciHesapVar) {
+      final sonuc = await rentalService.hesabaKirala(normalizedSlug);
+
+      if (sonuc.ok && sonuc.duzenleyiciUrl.isNotEmpty) {
+        if (!context.mounted) return;
+        await openPublicUrl(
+          context,
+          sonuc.duzenleyiciUrl,
+          failureMessage: 'Vitrin düzenleyici açılamadı.',
+        );
+        return;
+      }
+
+      // Vitrin kiralandı ama tarayıcı oturumu kurulamadı: vitrin hesapta
+      // duruyor, kullanıcıyı boş bir tarayıcı sayfasına göndermeyelim.
+      if (sonuc.ok) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Vitrin hesabınıza eklendi. Düzenlemek için Vitrinim sekmesine '
+              'geçebilirsiniz.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final mesaj = sonuc.kullaniciMesaji;
+      if (mesaj != null) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mesaj)));
+        return;
+      }
+
+      // Tanımsız/geçici bir sorun: misafir yolu hâlâ çalışıyor, ona düş.
+      if (!sonuc.misafirYolunaDus) return;
+    }
+
+    if (!context.mounted) return;
     await openPublicUrl(
       context,
       PublicSiteConfig.buildRentDemoLink(normalizedSlug),

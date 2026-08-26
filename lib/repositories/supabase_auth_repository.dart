@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/models/owner_bootstrap_state.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/auth_repository.dart';
-import 'package:vixrex/services/store_safe_select.dart';
 
 /// Supabase Auth ile AuthRepository implementasyonu.
 class SupabaseAuthRepository implements AuthRepository {
@@ -54,13 +54,14 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<StoreData?> getStoreForCurrentUser() async {
     final user = currentUser;
     if (user == null) return null;
-    final response =
-        await _client
-            .from('stores')
-            .select(StoreSafeSelect.columns)
-            .eq('user_id', user.id)
-            .maybeSingle();
-    if (response == null) return null;
-    return StoreData.fromJson(response);
+    // 2026-08-26: doğrudan `.eq('user_id', ...)` filtresi canlıda 42501 ile
+    // düşüyordu — V-09 o kolonun SELECT'ini authenticated'ten revoke etti,
+    // PostgreSQL WHERE'de geçen kolon için de yetki arar. Sahiplik sorgusu
+    // artık SECURITY DEFINER olan bootstrap_owner_state üzerinden.
+    final response = await _client.rpc('bootstrap_owner_state');
+    if (response is! Map) return null;
+    return OwnerBootstrapState.fromJson(
+      Map<String, dynamic>.from(response),
+    ).tercihEdilenVeri;
   }
 }

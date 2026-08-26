@@ -4,8 +4,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/legal_config.dart';
 import 'package:vixrex/core/result.dart';
 import 'package:vixrex/core/supabase_error_mapper.dart';
+import 'package:vixrex/models/owner_bootstrap_state.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/owner_bootstrap_service.dart';
 import 'package:vixrex/services/push_notification_service.dart';
+import 'package:vixrex/services/secure_token_storage.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/store_safe_select.dart';
 import 'package:vixrex/utils/failure.dart';
@@ -126,6 +129,11 @@ class AuthService {
       if (userId != null) {
         await PushNotificationService.instance.loginUser(userId);
       }
+
+      // Kimlik bağlandı: kullanıcı artık kalıcı hesap. Cihazdaki vitrin bu
+      // ana kadar sahipsizdi (anonim oturum bilerek sahiplenemez, bkz.
+      // claim_store_for_user) — sahiplenmenin doğru anı tam burası.
+      await claimDeviceStore();
       return Result.success(null);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
@@ -325,36 +333,70 @@ class AuthService {
     return copy;
   }
 
-  /// Fetches the store details for the currently logged-in user.
-  Future<Result<StoreData?>> getStoreForCurrentUser() async {
-    final user = currentUser;
-    if (user == null) return const Result.success(null);
-
-    try {
-      final response =
-          await Supabase.instance.client
-              .from('stores')
-              .select(StoreSafeSelect.columns)
-              .eq('user_id', user.id)
-              .maybeSingle();
-
-      if (response != null) {
-        return Result.success(StoreData.fromJson(response));
-      }
-      return const Result.success(null);
-    } catch (e, s) {
-      return Result.failure(SupabaseErrorMapper.map(e, s));
-    }
+  /// Giriş yapmış kullanıcının sunucudaki tam sahip durumu: vitrin verisi,
+  /// kendi edit token'ı ve varsa web'de bırakılmış çalışma taslağı.
+  ///
+  /// 2026-08-26: burada eskiden `from('stores').eq('user_id', ...)` vardı.
+  /// V-09 (20260818050000) `stores.user_id`'nin SELECT'ini authenticated'ten
+  /// revoke etti; PostgreSQL WHERE'de geçen kolon için de SELECT yetkisi
+  /// arar — sorgunun TAMAMI 42501 ile düşüyordu, yani bu çağrı canlıda hiç
+  /// çalışmıyordu (ölçüldü: user_id dolu satır sayısı 0). 20260820210000
+  /// aynı hatayı Keşfet ve StorePublishedInfoLookupService için düzeltmişti,
+  /// bu çağrı atlanmış. Artık `bootstrap_owner_state` RPC'si kullanılıyor —
+  /// SECURITY DEFINER, user_id'yi asla client'a döndürmez.
+  Future<Result<OwnerBootstrapState>> getOwnerState() async {
+    return const OwnerBootstrapService().getir();
   }
 
-  /// Links an anonymously created store (identifiable by edit token) to the current user.
-  Future<Result<bool>> linkAnonymousStore(String editToken) async {
+  /// Geriye dönük ince kabuk — çağıranlar kademeli olarak [getOwnerState]'e
+  /// geçiyor. Yalnız vitrin verisini döner, token ve taslağı düşürür.
+  Future<Result<StoreData?>> getStoreForCurrentUser() async {
+    final result = await getOwnerState();
+    return result.when(
+      success: (state) => Result<StoreData?>.success(state.tercihEdilenVeri),
+      failure: (failure) => Result<StoreData?>.failure(failure),
+    );
+  }
+
+  /// Cihazda duran edit token'ı bulup vitrini hesaba bağlar. Cihazda hiç
+  /// token yoksa (bağlanacak vitrin yok) `null` döner.
+  ///
+  /// Yayın akışı `last_published_edit_token`'ı yazar ve vitrin/store
+  /// anahtarlarına da aynalar; üçü de aday olarak denenir.
+  Future<StoreClaimResult?> claimDeviceStore() async {
+    final adaylar = <String>[
+      await SecureTokenStorage.loadLastPublishedEditToken() ?? '',
+      await SecureTokenStorage.loadVitrinEditToken() ?? '',
+      await SecureTokenStorage.loadStoreEditToken() ?? '',
+    ];
+    final token = adaylar
+        .map((t) => t.trim())
+        .firstWhere((t) => t.isNotEmpty, orElse: () => '');
+    if (token.isEmpty) return null;
+
+    final sonuc = await claimStore(token);
+    return sonuc.when(success: (value) => value, failure: (_) => null);
+  }
+
+  /// Cihazda duran edit token'la sahipsiz bir vitrini kalıcı hesaba bağlar.
+  ///
+  /// Tek-vitrin kuralı, anonim oturum yasağı ve token süresini kalıcıya
+  /// çekme işi sunucudaki `claim_store_for_user` sözleşmesinde — istemci
+  /// yalnız sonucu yorumlar.
+  Future<Result<StoreClaimResult>> claimStore(String editToken) async {
     try {
       final result = await Supabase.instance.client.rpc(
-        'link_store_to_user',
+        'claim_store_for_user',
         params: {'p_edit_token': editToken},
       );
-      return Result.success(result as bool? ?? false);
+      if (result is! Map) {
+        return const Result.success(
+          StoreClaimResult.basarisiz('INVALID_RESPONSE'),
+        );
+      }
+      return Result.success(
+        StoreClaimResult.fromJson(Map<String, dynamic>.from(result)),
+      );
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
     }
