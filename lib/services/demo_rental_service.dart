@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/repositories/vitrin_sahiplik_repository.dart';
 import 'package:vixrex/services/owner_bootstrap_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 
@@ -73,14 +74,12 @@ class DemoRentalService {
   final StoreLocalStorageService storage;
   final SupabaseClient? _client;
 
-  SupabaseClient? get _supabase {
-    if (_client != null) return _client;
-    try {
-      return Supabase.instance.client;
-    } catch (_) {
-      return null;
-    }
-  }
+  /// Supabase erişimi repository sınırının arkasında — bu servis ne istemciyi
+  /// kendisi edinir ne de RPC adı bilir. Bkz. `VitrinSahiplikRepository`.
+  VitrinSahiplikRepository get _depo =>
+      VitrinSahiplikRepository(client: _client);
+
+  SupabaseClient? get _supabase => _depo.istemci;
 
   /// Kalıcı (anonim olmayan) bir hesapla giriş yapılmış mı?
   bool get kaliciHesapVar {
@@ -98,10 +97,7 @@ class DemoRentalService {
     if (slug.isEmpty) return const DemoRentalResult.basarisiz('INVALID_SLUG');
 
     try {
-      final response = await client.rpc(
-        'rent_demo_for_account',
-        params: {'p_source_slug': slug},
-      );
+      final response = await _depo.rentDemoForAccount(client, slug);
       if (response is! Map) {
         return const DemoRentalResult.basarisiz('ERROR');
       }
@@ -156,9 +152,10 @@ class DemoRentalService {
     String editToken,
   ) async {
     try {
-      final response = await client.rpc(
-        'create_owner_session',
-        params: {'p_slug': slug, 'p_edit_token': editToken},
+      final response = await _depo.createOwnerSession(
+        client,
+        slug: slug,
+        editToken: editToken,
       );
       final code =
           (response is Map ? response['code'] : null)?.toString().trim() ?? '';

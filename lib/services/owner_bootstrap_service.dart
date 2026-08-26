@@ -5,6 +5,7 @@ import 'package:vixrex/core/result.dart';
 import 'package:vixrex/core/supabase_error_mapper.dart';
 import 'package:vixrex/models/owner_bootstrap_state.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/repositories/vitrin_sahiplik_repository.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 
 /// [OwnerBootstrapService.cihazaUygula] sonucu — çağıran tarafın kullanıcıya
@@ -52,14 +53,12 @@ class OwnerBootstrapService {
   final StoreLocalStorageService storage;
   final SupabaseClient? _client;
 
-  SupabaseClient? get _supabase {
-    if (_client != null) return _client;
-    try {
-      return Supabase.instance.client;
-    } catch (_) {
-      return null;
-    }
-  }
+  /// Supabase erişimi repository sınırının arkasında — bu servis ne istemciyi
+  /// kendisi edinir ne de RPC adı bilir. Bkz. `VitrinSahiplikRepository`.
+  VitrinSahiplikRepository get _depo =>
+      VitrinSahiplikRepository(client: _client);
+
+  SupabaseClient? get _supabase => _depo.istemci;
 
   /// Sunucudaki sahip durumunu okur. Anonim oturumda `hasStore == false` ve
   /// `reason == ANONYMOUS_SESSION` döner — hata değildir.
@@ -70,7 +69,7 @@ class OwnerBootstrapService {
     }
 
     try {
-      final response = await client.rpc('bootstrap_owner_state');
+      final response = await _depo.bootstrapOwnerState(client);
       if (response is! Map) {
         return const Result.success(OwnerBootstrapState.yok('NO_STORE'));
       }
