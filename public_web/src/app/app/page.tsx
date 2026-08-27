@@ -210,18 +210,24 @@ export default function AppPage() {
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Vixrex</p>
             <h1 className="mt-1 text-xl font-bold text-[var(--owner-text)]">Vitrinim</h1>
           </div>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="max-w-44 truncate text-xs text-[var(--owner-muted)] sm:max-w-none">{user?.email}</span>
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="max-w-32 truncate text-xs text-[var(--owner-muted)] sm:max-w-none">{user?.email}</span>
             <Link
-              href="/app/hesap"
-              className="owner-button-secondary min-h-11 shrink-0 px-4 py-2 text-xs"
+              href="/app/profil"
+              className="owner-button-secondary min-h-11 shrink-0 px-3 py-2 text-xs"
             >
-              Hesap
+              Profil
+            </Link>
+            <Link
+              href="/app/ayarlar"
+              className="owner-button-secondary min-h-11 shrink-0 px-3 py-2 text-xs"
+            >
+              Ayarlar
             </Link>
             <button
               type="button"
               onClick={cikisYap}
-              className="owner-button-secondary min-h-11 shrink-0 px-4 py-2 text-xs"
+              className="owner-button-secondary min-h-11 shrink-0 px-3 py-2 text-xs"
             >
               Çıkış Yap
             </button>
@@ -319,7 +325,7 @@ export default function AppPage() {
               }}
             />
 
-            {/* Blog ve randevu yönetim bağlantıları */}
+            {/* Yönetim bağlantıları */}
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <Link
                 href={`/v/${stores[0].slug}/blog-yonetim`}
@@ -346,6 +352,20 @@ export default function AppPage() {
                   </p>
                   <p className="text-xs text-[var(--owner-muted)]">
                     Bekleyen randevuları onayla veya reddet
+                  </p>
+                </div>
+              </Link>
+              <Link
+                href="/app/hesap"
+                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
+              >
+                <span className="text-2xl">⚙️</span>
+                <div>
+                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                    Hesap
+                  </p>
+                  <p className="text-xs text-[var(--owner-muted)]">
+                    Profil, ayarlar ve hesap yönetimi
                   </p>
                 </div>
               </Link>
