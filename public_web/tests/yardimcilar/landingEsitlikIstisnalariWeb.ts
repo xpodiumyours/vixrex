@@ -16,12 +16,6 @@
 
 type Istisna = { metin: string; neden: string };
 
-const LANDING_MAKET_SOHBET =
-  "Landing'deki asistan sohbeti bir makettir (VIXREX_RULES.md §1) — sabit " +
-  "reklam metni, motora bağlı değil. Flutter'da aynı yüzey gerçek asistan " +
-  "motoruyla çalışıyor ve metinleri dinamik üretiliyor; birebir karşılığı " +
-  "yok, olmamalı da.";
-
 const DINAMIK_URETIM =
   "Flutter'da bu metin profil verisinden dinamik üretiliyor (ör. '" +
   "${profile.links.length} bağlantı'). Sabit yazı olmadığı için çıkarıcı " +
@@ -33,54 +27,6 @@ const ERISEBILIRLIK =
 
 export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   // --- Landing maket sohbeti (PhoneMockup AsistanSohbetIcerigi) ---
-  {
-    metin: "Dijital vitrin asistanı",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "Merhaba, ben Vixrex Asistan. İşletmeni ne kazandırıyorum?",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "Tek Link & QR Kod:",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "Dükkanına kolayca ulaşılır.",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "WhatsApp Sipariş:",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "Müşterilerin tek tıkla sana ulaşır.",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "Ürün & Galeri:",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "Konum & Adres:",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "Senin işletmen için de 2 dakikada beraber hazırlayalım mı?",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "Hızlı Seçenekler",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "Hazır Vitrin Seç",
-    neden: LANDING_MAKET_SOHBET,
-  },
-  {
-    metin: "Sıfırdan Oluştur",
-    neden: LANDING_MAKET_SOHBET,
-  },
 
   // --- Dinamik üretim ---
   {
@@ -92,5 +38,19 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   {
     metin: "Vixrex Asistan'ı aç",
     neden: ERISEBILIRLIK,
+  },
+
+  // --- Çıkarıcı kapsamı ---
+  {
+    metin: "Dijital vitrin asistanı",
+    neden:
+      "Bu metin Flutter'da DA var — `lib/screens/vixrex_onboarding_chat_" +
+      "screen.dart:325`, aynı cümle. Gerçek bir ayrışma değil: çıkarıcı " +
+      "yalnız `landing_screen.dart`, `widgets/landing/` ve " +
+      "`chatbot_badge.dart` dosyalarını tarıyor, asistan ekranını değil. " +
+      "Kapsamı asistan ekranını da içerecek şekilde genişletmek ayrı bir " +
+      "iş: o dosyada tek seferde onlarca yeni metin dökülür ve her biri " +
+      "tek tek değerlendirilmeli. Toplu istisnaya yazmamak için burada " +
+      "tek kayıt olarak duruyor.",
   },
 ];

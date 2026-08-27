@@ -6,6 +6,11 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import {
+  taslagiOku,
+  taslagiTemizle,
+  type AsistanCevaplari,
+} from "@/lib/landingAsistanAkisi";
+import {
   OwnerProductManager,
   type OwnerProduct,
   type OwnerProductCategory,
@@ -32,6 +37,11 @@ export default function AppPage() {
   const [olusturuyor, setOlusturuyor] = useState(false);
   const [yeniAd, setYeniAd] = useState("");
   const [hata, setHata] = useState("");
+
+  // Ana sayfadaki asistanla konuşulduysa cevaplar tarayıcı oturumunda
+  // duruyor. Vitrin kurulurken doğrudan kullanılır; kullanıcıya aynı
+  // soruları ikinci kez sormayız.
+  const [asistanTaslagi, setAsistanTaslagi] = useState<AsistanCevaplari>({});
 
   async function magazalariGetir(userId: string, showLoading = true) {
     if (showLoading) setYukleniyor(true);
@@ -60,6 +70,15 @@ export default function AppPage() {
         return;
       }
       setUser(session.user);
+
+      // Asistan taslağı varsa vitrin adını doldur — kullanıcı formu boş
+      // görmesin, konuştuğu şeyin kaybolmadığını görsün.
+      const taslak = taslagiOku();
+      if (Object.keys(taslak).length > 0) {
+        setAsistanTaslagi(taslak);
+        if (taslak.name) setYeniAd(taslak.name);
+      }
+
       await magazalariGetir(session.user.id);
 
       // Sahip çerezi kısa ömürlü. Panoya her dönüşte yeniden kuruluyor —
@@ -100,7 +119,10 @@ export default function AppPage() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ name: yeniAd.trim() }),
+      // Ana sayfadaki asistanla konuşan kullanıcı kategori, WhatsApp ve
+      // adresi zaten söylemişti. Onları burada tekrar sormak, "kaldığın
+      // yerden devam edeceğiz" sözünü tutmamak olurdu.
+      body: JSON.stringify({ name: yeniAd.trim(), ...asistanTaslagi }),
     });
 
     const sonuc = await res.json();
@@ -110,6 +132,11 @@ export default function AppPage() {
       setHata(sonuc.hata || "Vitrin oluşturulamadı.");
       return;
     }
+
+    // Taslak kullanıldı, yerinde bırakma: ikinci bir vitrin kurulmaya
+    // çalışılırsa eski cevaplar sessizce geri gelirdi.
+    taslagiTemizle();
+    setAsistanTaslagi({});
 
     // Vitrin oluşturuldu — sahip oturumunu aç ve vitrine git.
     //
