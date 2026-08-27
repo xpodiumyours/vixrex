@@ -16,6 +16,42 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
 
+export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const slug = url.searchParams.get("slug")?.trim() ?? "";
+  if (!slug) {
+    return NextResponse.json(
+      { hata: "Vitrin belirtilmedi." },
+      { status: 400 }
+    );
+  }
+
+  const auth = await verifyOwner(slug);
+  if (!auth.ok) {
+    return NextResponse.json({ hata: auth.error }, { status: 401 });
+  }
+
+  const admin = getSupabaseAdmin();
+
+  const { data, error } = await admin
+    .from("store_articles")
+    .select(
+      "id, title, slug, summary, status, article_type, seo_score, cover_image_url, created_at, updated_at, published_at"
+    )
+    .eq("store_slug", slug)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[articles] list failed:", error.message);
+    return NextResponse.json(
+      { hata: "Yazılar getirilemedi." },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ tamam: true, yaziListesi: data ?? [] });
+}
+
 function generateArticleSlug(title: string): string {
   return title
     .toLowerCase()

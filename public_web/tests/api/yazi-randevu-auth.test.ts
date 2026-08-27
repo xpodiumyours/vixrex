@@ -16,9 +16,10 @@ import { NextRequest } from "next/server";
  * istemcisine hiç dokunulmuyor.
  */
 
-const { mockGet, mockGetSupabaseAdmin } = vi.hoisted(() => ({
+const { mockGet, mockGetSupabaseAdmin, mockVerifyOwner } = vi.hoisted(() => ({
   mockGet: vi.fn(() => undefined),
   mockGetSupabaseAdmin: vi.fn(),
+  mockVerifyOwner: vi.fn(() => null),
 }));
 
 vi.mock("next/headers", () => ({
@@ -27,6 +28,11 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@/lib/supabaseAdmin", () => ({
   getSupabaseAdmin: mockGetSupabaseAdmin,
+}));
+
+vi.mock("@/lib/ownerSession", () => ({
+  OWNER_SESSION_COOKIE: "vixrex_owner_session",
+  verifyOwnerSession: mockVerifyOwner,
 }));
 
 import { POST as YAZI_POST } from "@/app/api/articles/route";
@@ -71,10 +77,13 @@ describe("/api/appointments yetki sözleşmesi", () => {
     expect(mockGetSupabaseAdmin).not.toHaveBeenCalled();
   });
 
-  it("Supabase erişim jetonu olmadan RPC çağrılmaz", async () => {
-    // Sahip çerezi geçerli olsa bile jeton yoksa durmalı: RPC `auth.uid()`
-    // istiyor, jetonsuz çağrı her zaman UNAUTHORIZED ile düşerdi ve
-    // kullanıcı bunu "sunucu bozuk" diye görürdü.
+  it("çerez geçerli ama jeton yoksa RPC çağrılmaz", async () => {
+    // Sahip çerezi geçerli olsa bile Supabase erişim jetonu yoksa:
+    // RPC `auth.uid()` istiyor, jetonsuz çağrı UNAUTHORIZED ile düşer.
+    // Eğer biri geri dönüp getSupabaseAdmin().rpc() kullanırsa bu test kırılır.
+    mockVerifyOwner.mockReturnValueOnce({ storeId: "abc" });
+    mockGet.mockReturnValueOnce("valid-owner-cookie");
+
     const response = await RANDEVU_POST(
       istek("http://localhost/api/appointments", {
         slug: SLUG,
@@ -84,6 +93,8 @@ describe("/api/appointments yetki sözleşmesi", () => {
     );
 
     expect(response.status).toBe(401);
+    // POST'ta getSupabaseAdmin kullanılmaz — kullanıcı jetonuyla RPC çağrılır.
+    // Eğer biri geri dönüp admin rpc() kullanırsa bu satır kırılır.
     expect(mockGetSupabaseAdmin).not.toHaveBeenCalled();
   });
 });
