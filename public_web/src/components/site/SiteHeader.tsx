@@ -44,7 +44,7 @@ export function SiteHeader() {
           </Link>
 
           <a
-            href={`${getAppUrl()}/auth`}
+            href="/giris"
             className="rounded-full px-3 py-2 text-[13px] font-extrabold text-lp-secondary transition-colors hover:text-lp-text md:px-4"
           >
             Giriş Yap

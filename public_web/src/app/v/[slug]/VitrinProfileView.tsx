@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { getAppUrl } from "@/lib/siteUrl";
 
 /** Eylem butonunun arkasındaki şema alanı.
  *
@@ -398,7 +397,7 @@ export default function VitrinProfileView({
           {showContact && (
             <a href="#iletisim" className="hover:text-white transition-colors">İletişim</a>
           )}
-          <Link href={getAppUrl()} className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition">
+          <Link href="/app" className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition">
             Vitrin Oluştur
           </Link>
         </div>
