@@ -10,6 +10,9 @@ import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 void main() {
   test('intent ve mesaj sayısı kilitli', () {
     expect(vixRexIntentSemasi.length, 16);
-    expect(vixRexMesajlari.length, 96);
+    // 2026-08-27: landing asistanı gerçek hâle getirilirken kapanış
+    // mesajları eklendi (landing_finish_baslik/aciklama/buton) — 96 → 99.
+    // Sayı kilidi bilerek duruyor: katalog sessizce büyümesin.
+    expect(vixRexMesajlari.length, 99);
   });
 }
