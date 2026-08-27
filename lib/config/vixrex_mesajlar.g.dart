@@ -290,4 +290,8 @@ const Map<String, String> vixRexMesajlari = {
   'improve_account_aciklama':
       'Giriş yaparak vitrininizi hesabınıza bağlayın — verileriniz güvende kalsın.',
   'improve_account_buton': 'Hesap',
+  'landing_finish_baslik': 'Vitrinin hazır',
+  'landing_finish_aciklama':
+      'Verdiğin bilgilerle vitrinini kurabilirim. Hesabını açtığında kaldığın yerden devam edeceğiz.',
+  'landing_finish_buton': 'Hesap Aç ve Vitrini Kur',
 };

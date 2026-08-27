@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { MockupProfili } from "./mockupProfilleri";
 import { PhoneMockupSlaytlari } from "./PhoneMockupSlaytlari";
+import { LandingAsistanSohbeti } from "./LandingAsistanSohbeti";
 import { getAppUrl } from "@/lib/siteUrl";
 
 /**
@@ -82,7 +83,7 @@ export function PhoneMockup({
           {/* İçerik */}
           <div className="h-full">
             {isChatOpen ? (
-              <AsistanSohbetIcerigi profil={ilk} onClose={onChatClose} />
+              <LandingAsistanSohbeti onClose={onChatClose} />
             ) : (
               <PhoneMockupSlaytlari profiller={profiller} />
             )}
@@ -96,135 +97,6 @@ export function PhoneMockup({
       </div>
 
 
-    </div>
-  );
-}
-
-/**
- * Telefon içindeki asistan sohbet içeriği — Flutter'daki
- * VixRexOnboardingChatScreen compact modunun basitleştirilmiş web karşılığı.
- */
-function AsistanSohbetIcerigi({
-  profil,
-  onClose,
-}: {
-  profil: MockupProfili;
-  onClose?: () => void;
-}) {
-  return (
-    <div className="flex h-full flex-col bg-[#050B1A]">
-      {/* Başlık çubuğu */}
-      <div className="flex items-center justify-between border-b border-[#25415F] px-3 py-2">
-        <div className="flex items-center gap-2">
-          {/* Asistanın yüzü her yerde AYNI olmalı: maskot düğmesi, sohbet
-              başlığı ve mesaj balonu. Burada 🤖 emojisi vardı — aynı
-              "Vixrex Asistan" iki farklı yüzle görünüyordu. Flutter da bu
-              görseli kullanıyor (chatbot_badge.dart). */}
-          <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/vixrex_v_crystal_mascot.png"
-              alt=""
-              width={20}
-              height={20}
-              className="h-5 w-5 object-contain"
-            />
-          </div>
-          <div>
-            <p className="text-[11px] font-bold text-white">Vixrex</p>
-            <p className="text-[9px] text-[#A9BBDA]">Dijital vitrin asistanı</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-[11px] font-bold text-[#A9BBDA] hover:text-white"
-          aria-label="Kapat"
-        >
-          Kapat
-        </button>
-      </div>
-
-      {/* Sohbet alanı */}
-      <div className="flex-1 overflow-y-auto px-3 py-3">
-        <div className="mb-3 flex gap-2">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/vixrex_v_crystal_mascot.png"
-              alt=""
-              width={18}
-              height={18}
-              className="h-[18px] w-[18px] object-contain"
-            />
-          </div>
-          <div className="max-w-[220px] rounded-xl rounded-tl-sm border border-[#147DFF]/20 bg-[#147DFF]/[0.08] px-3 py-2">
-            <p className="text-[11px] leading-relaxed text-white">
-              Merhaba, ben Vixrex Asistan. İşletmeni ne kazandırıyorum?
-            </p>
-            <ul className="mt-2 space-y-1.5 text-[10px] leading-relaxed text-[#A9BBDA]">
-              <li className="flex items-start gap-1.5">
-                <span className="mt-0.5 text-[#147DFF]">⚙</span>
-                <span><strong className="text-white">Tek Link & QR Kod:</strong> Dijital vitrin sayfan.</span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="mt-0.5 text-[#147DFF]">💬</span>
-                <span><strong className="text-white">WhatsApp Sipariş:</strong> Müşterilerin tek tıkla sana ulaşır.</span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="mt-0.5 text-[#147DFF]">🛍</span>
-                <span><strong className="text-white">Ürün & Galeri:</strong> Reyon ve ürünlerini sergilersin.</span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="mt-0.5 text-[#147DFF]">📍</span>
-                <span><strong className="text-white">Konum & Adres:</strong> Dükkanına kolayca ulaşılır.</span>
-              </li>
-            </ul>
-            <p className="mt-2 text-[11px] leading-relaxed text-white">
-              Senin işletmen için de 2 dakikada beraber hazırlayalım mı?
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Hızlı Seçenekler */}
-      <div className="border-t border-[#25415F] px-3 py-3">
-        <p className="mb-2 text-center text-[10px] font-bold text-[#A9BBDA]">
-          Hızlı Seçenekler
-        </p>
-        <div className="flex flex-col gap-1.5">
-          <Link
-            href="/kesfet"
-            className="flex items-center justify-center gap-1.5 rounded-xl bg-[#147DFF] px-3 py-2 text-[11px] font-bold text-[#06152F] transition-transform hover:-translate-y-0.5"
-          >
-            <span>📦</span>
-            Hazır Vitrin Seç
-          </Link>
-          <div className="flex gap-1.5">
-            {/* Uygulama AYRI bir adreste (vixrex-app); `/app` bu alan adında
-                yok, düz "/app" 404 veriyordu. Depodaki diğer iki çağrı yeri de
-                `getAppUrl()` kullanıyor — tek doğru biçim bu. */}
-            <a
-              href={`${getAppUrl()}/app`}
-              className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[10px] font-bold text-lp-text-alt transition-colors hover:bg-lp-surface-soft"
-            >
-              <span>✨</span>
-              Sıfırdan Oluştur
-            </a>
-            {/* "Bakınıyorum" = vazgeçtim, gezineyim. Maketi kapatıp sayfaya
-                döner; başka bir yere götürmesi yanlış olurdu. Önceden hiçbir
-                işlevi yoktu, tıklanınca hiçbir şey olmuyordu. */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[10px] font-bold text-lp-text-alt transition-colors hover:bg-lp-surface-soft"
-            >
-              <span>👀</span>
-              Bakınıyorum
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

@@ -6,6 +6,11 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import {
+  taslagiOku,
+  taslagiTemizle,
+  type AsistanCevaplari,
+} from "@/lib/landingAsistanAkisi";
+import {
   OwnerProductManager,
   type OwnerProduct,
   type OwnerProductCategory,
@@ -33,6 +38,11 @@ export default function AppPage() {
   const [yeniAd, setYeniAd] = useState("");
   const [hata, setHata] = useState("");
 
+  // Ana sayfadaki asistanla konuşulduysa cevaplar tarayıcı oturumunda
+  // duruyor. Vitrin kurulurken doğrudan kullanılır; kullanıcıya aynı
+  // soruları ikinci kez sormayız.
+  const [asistanTaslagi, setAsistanTaslagi] = useState<AsistanCevaplari>({});
+
   async function magazalariGetir(userId: string, showLoading = true) {
     if (showLoading) setYukleniyor(true);
     const { data, error } = await supabase
@@ -48,80 +58,6 @@ export default function AppPage() {
     }
     setStores((data as unknown as Store[]) ?? []);
     if (showLoading) setYukleniyor(false);
-  }
-
-  useEffect(() => {
-    async function init() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        router.push("/giris");
-        return;
-      }
-      setUser(session.user);
-      await magazalariGetir(session.user.id);
-
-      // Sahip çerezi kısa ömürlü. Panoya her dönüşte yeniden kuruluyor —
-      // yoksa kullanıcı ikinci ziyaretinde ürün ekleyemez/silemez, her
-      // çağrı 401 döner. Vitrini olmayan hesapta sessizce başarısız olur,
-      // kurulum akışı zaten ayrı.
-      await sahipOturumuAc();
-    }
-    init();
-    // `sahipOturumuAc` bileşen kapsamında sabit; bağımlılığa eklemek
-    // gereksiz yeniden koşuma yol açar.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
-
-  async function magazaOlustur(e: React.FormEvent) {
-    e.preventDefault();
-    setHata("");
-
-    if (!yeniAd.trim()) {
-      setHata("İşletme adı zorunludur.");
-      return;
-    }
-
-    setOlusturuyor(true);
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
-      setHata("Oturum bulunamadı.");
-      setOlusturuyor(false);
-      return;
-    }
-
-    const res = await fetch("/api/create-store", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ name: yeniAd.trim() }),
-    });
-
-    const sonuc = await res.json();
-    setOlusturuyor(false);
-
-    if (!res.ok) {
-      setHata(sonuc.hata || "Vitrin oluşturulamadı.");
-      return;
-    }
-
-    // Vitrin oluşturuldu — sahip oturumunu aç ve vitrine git.
-    //
-    // Buradaki eski "basitleştirme" çalışmıyordu: `edit_token`'ı doğrudan
-    // `ocode` olarak gönderiyordu. `/api/owner-session` ise
-    // `consume_owner_session` çağırıyor ve TEK KULLANIMLIK KOD bekliyor —
-    // canlıda doğrulandı, `edit_token` kabul etmiyor. Kod bulunamadığı
-    // için çerez hiç kurulmuyordu ve bütün ürün işlemleri 401 alıyordu.
-    if (sonuc.slug) {
-      await sahipOturumuAc();
-      router.push(`/v/${sonuc.slug}`);
-    }
   }
 
   /**
@@ -150,6 +86,94 @@ export default function AppPage() {
     // Çerezi kuran tek yer `/api/owner-session`; burada yalnız ona gidiyoruz.
     await fetch(sonuc.yonlendir, { redirect: "manual" });
     return true;
+  }
+
+  useEffect(() => {
+    async function init() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/giris");
+        return;
+      }
+      setUser(session.user);
+
+      // Asistan taslağı varsa vitrin adını doldur — kullanıcı formu boş
+      // görmesin, konuştuğu şeyin kaybolmadığını görsün.
+      const taslak = taslagiOku();
+      if (Object.keys(taslak).length > 0) {
+        setAsistanTaslagi(taslak);
+        if (taslak.name) setYeniAd(taslak.name);
+      }
+
+      await magazalariGetir(session.user.id);
+
+      // Sahip çerezi kısa ömürlü. Panoya her dönüşte yeniden kuruluyor —
+      // yoksa kullanıcı ikinci ziyaretinde ürün ekleyemez/silemez, her
+      // çağrı 401 döner. Vitrini olmayan hesapta sessizce başarısız olur,
+      // kurulum akışı zaten ayrı.
+      await sahipOturumuAc();
+    }
+    init();
+  }, [router]);
+
+  async function magazaOlustur(e: React.FormEvent) {
+    e.preventDefault();
+    setHata("");
+
+    if (!yeniAd.trim()) {
+      setHata("İşletme adı zorunludur.");
+      return;
+    }
+
+    setOlusturuyor(true);
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setHata("Oturum bulunamadı.");
+      setOlusturuyor(false);
+      return;
+    }
+
+    const res = await fetch("/api/create-store", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      // Ana sayfadaki asistanla konuşan kullanıcı kategori, WhatsApp ve
+      // adresi zaten söylemişti. Onları burada tekrar sormak, "kaldığın
+      // yerden devam edeceğiz" sözünü tutmamak olurdu.
+      body: JSON.stringify({ name: yeniAd.trim(), ...asistanTaslagi }),
+    });
+
+    const sonuc = await res.json();
+    setOlusturuyor(false);
+
+    if (!res.ok) {
+      setHata(sonuc.hata || "Vitrin oluşturulamadı.");
+      return;
+    }
+
+    // Taslak kullanıldı, yerinde bırakma: ikinci bir vitrin kurulmaya
+    // çalışılırsa eski cevaplar sessizce geri gelirdi.
+    taslagiTemizle();
+    setAsistanTaslagi({});
+
+    // Vitrin oluşturuldu — sahip oturumunu aç ve vitrine git.
+    //
+    // Buradaki eski "basitleştirme" çalışmıyordu: `edit_token`'ı doğrudan
+    // `ocode` olarak gönderiyordu. `/api/owner-session` ise
+    // `consume_owner_session` çağırıyor ve TEK KULLANIMLIK KOD bekliyor —
+    // canlıda doğrulandı, `edit_token` kabul etmiyor. Kod bulunamadığı
+    // için çerez hiç kurulmuyordu ve bütün ürün işlemleri 401 alıyordu.
+    if (sonuc.slug) {
+      await sahipOturumuAc();
+      router.push(`/v/${sonuc.slug}`);
+    }
   }
 
   async function cikisYap() {

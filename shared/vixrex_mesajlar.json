@@ -141,6 +141,9 @@
 
     { "anahtar": "improve_account_baslik", "metin": "Hesabınızı güvenceye alın" },
     { "anahtar": "improve_account_aciklama", "metin": "Giriş yaparak vitrininizi hesabınıza bağlayın — verileriniz güvende kalsın." },
-    { "anahtar": "improve_account_buton", "metin": "Hesap" }
+    { "anahtar": "improve_account_buton", "metin": "Hesap" },
+    { "anahtar": "landing_finish_baslik", "metin": "Vitrinin hazır" },
+    { "anahtar": "landing_finish_aciklama", "metin": "Verdiğin bilgilerle vitrinini kurabilirim. Hesabını açtığında kaldığın yerden devam edeceğiz." },
+    { "anahtar": "landing_finish_buton", "metin": "Hesap Aç ve Vitrini Kur" }
   ]
 }
