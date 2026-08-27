@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/models/owner_bootstrap_state.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/store_repository.dart';
 import 'package:vixrex/services/store_safe_select.dart';
@@ -14,14 +15,13 @@ class SupabaseStoreRepository implements StoreRepository {
   Future<StoreData?> getStoreForCurrentUser() async {
     final user = _client.auth.currentUser;
     if (user == null) return null;
-    final response =
-        await _client
-            .from('stores')
-            .select(StoreSafeSelect.columns)
-            .eq('user_id', user.id)
-            .maybeSingle();
-    if (response == null) return null;
-    return StoreData.fromJson(response);
+    // 2026-08-26: bkz. SupabaseAuthRepository — doğrudan user_id filtresi
+    // 42501 veriyordu, sahiplik sorgusu bootstrap_owner_state RPC'sinde.
+    final response = await _client.rpc('bootstrap_owner_state');
+    if (response is! Map) return null;
+    return OwnerBootstrapState.fromJson(
+      Map<String, dynamic>.from(response),
+    ).tercihEdilenVeri;
   }
 
   @override

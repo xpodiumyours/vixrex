@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/services/owner_bootstrap_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 
 /// Kullanıcının Supabase'te yayınlanmış mağazasını arar.
@@ -34,11 +35,35 @@ class StorePublishedInfoLookupService {
   }) async {
     try {
       Map<String, dynamic>? response;
+      var sunucuTokeni = '';
       final userId = client.auth.currentUser?.id;
       if (userId != null) {
-        final rpcResult = await client.rpc('get_own_published_store');
-        if (rpcResult is Map) {
-          response = Map<String, dynamic>.from(rpcResult);
+        // 2026-08-26: önce bootstrap_owner_state — slug/ad İLE BİRLİKTE
+        // vitrinin kendi edit_token'ını da döndürür. Bu olmadan yeni bir
+        // cihazda token boş kalıyor, canEditRemote false oluyor ve
+        // OwnerPreviewService taslak dalına düşüp YENİ bir vitrin satırı
+        // açıyordu.
+        final bootstrap =
+            await OwnerBootstrapService(
+              storage: storage,
+              client: client,
+            ).getir();
+        final state = bootstrap.when(
+          success: (value) => value,
+          failure: (_) => null,
+        );
+        if (state != null && state.hasStore && state.isPublished) {
+          response = {'slug': state.slug, 'name': state.name};
+          sunucuTokeni = state.editToken;
+        }
+
+        // Eski yol: hesapla eşleşen yayınlanmış vitrin (token döndürmez).
+        // bootstrap bir şey bulamadıysa (ör. anonim oturum) hâlâ geçerli.
+        if (response == null) {
+          final rpcResult = await client.rpc('get_own_published_store');
+          if (rpcResult is Map) {
+            response = Map<String, dynamic>.from(rpcResult);
+          }
         }
       }
 
@@ -63,10 +88,15 @@ class StorePublishedInfoLookupService {
       final slug = (response['slug'] ?? '').toString().trim();
       if (slug.isEmpty) return null;
 
-      final editToken =
-          (await storage.loadVitrinEditToken())?.trim() ??
-          (await storage.loadStoreEditToken())?.trim() ??
-          '';
+      // Sunucudan gelen token her zaman kazanır: cihazdaki kopya eski
+      // (ör. süresi dolmuş kiralık token) olabilir, sunucudaki tazedir.
+      var editToken = sunucuTokeni;
+      if (editToken.isEmpty) {
+        editToken =
+            (await storage.loadVitrinEditToken())?.trim() ??
+            (await storage.loadStoreEditToken())?.trim() ??
+            '';
+      }
 
       return PublishedVitrinInfo(
         publicLink: PublicSiteConfig.buildVitrinLink(slug),
