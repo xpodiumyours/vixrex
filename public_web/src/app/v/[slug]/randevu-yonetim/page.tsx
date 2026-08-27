@@ -47,13 +47,13 @@ const DURUM_RENK: Record<string, { metin: string; sinif: string }> = {
   rejected: { metin: "Reddedildi", sinif: "bg-red-500/20 text-red-400" },
   cancelled_by_customer: {
     metin: "Müşteri İptal",
-    sinif: "bg-white/10 text-white/40",
+    sinif: "bg-white/10 text-[var(--owner-muted)]",
   },
   cancelled_by_store: {
     metin: "İşletme İptal",
-    sinif: "bg-white/10 text-white/40",
+    sinif: "bg-white/10 text-[var(--owner-muted)]",
   },
-  expired: { metin: "Süresi Doldu", sinif: "bg-white/10 text-white/40" },
+  expired: { metin: "Süresi Doldu", sinif: "bg-white/10 text-[var(--owner-muted)]" },
   pending: {
     metin: "Onay Bekliyor",
     sinif: "bg-amber-500/20 text-amber-400",
@@ -209,13 +209,13 @@ export default function RandevuYonetimPage() {
   ).length;
 
   return (
-    <main className="min-h-screen bg-[#0c0d10] px-4 py-8 text-[#f4f1ea] sm:px-6">
+    <main className="owner-shell px-4 py-8 sm:px-6">
       <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6">
         {/* Başlık */}
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-[#15171c] px-4 py-3">
+        <div className="flex items-center justify-between gap-3 rounded-2xl owner-card px-4 py-3">
           <Link
             href={`/v/${slug}`}
-            className="inline-flex items-center gap-1 text-sm font-extrabold text-[#E8A87C]"
+            className="inline-flex items-center gap-1 text-sm font-extrabold text-[var(--owner-secondary)]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -230,12 +230,12 @@ export default function RandevuYonetimPage() {
             </svg>
             Vitrine Dön
           </Link>
-          <span className="text-xs font-extrabold text-white/45">
+          <span className="text-xs font-extrabold text-[var(--owner-muted)]">
             Randevu Yönetimi
           </span>
         </div>
 
-        <h1 className="text-2xl font-extrabold text-white">
+        <h1 className="text-2xl font-extrabold text-[var(--owner-text)]">
           Randevuları Yönet
         </h1>
 
@@ -263,8 +263,8 @@ export default function RandevuYonetimPage() {
               onClick={() => setAktifSekme(key)}
               className={`rounded-xl px-4 py-2 text-xs font-extrabold transition ${
                 aktifSekme === key
-                  ? "bg-[#E8A87C] text-[#0c0d10]"
-                  : "border border-white/10 text-white/50 hover:border-white/25"
+                  ? "bg-[var(--owner-primary)] text-[var(--owner-on-primary)]"
+                  : "border border-[var(--owner-border)] text-[var(--owner-text)]/50 hover:border-[var(--owner-border)]"
               }`}
             >
               {label} ({count})
@@ -275,11 +275,11 @@ export default function RandevuYonetimPage() {
         {/* Randevu Listesi */}
         {yukleniyor ? (
           <div className="flex items-center justify-center py-12">
-            <div className="h-4 w-4 animate-pulse rounded-full bg-[#E8A87C]" />
+            <div className="h-4 w-4 animate-pulse rounded-full bg-[var(--owner-primary)]" />
           </div>
         ) : filtrelenmis.length === 0 ? (
-          <div className="rounded-2xl border border-white/8 bg-[#15171c] py-12 text-center">
-            <p className="text-sm text-white/40">
+          <div className="rounded-2xl owner-card py-12 text-center">
+            <p className="text-sm text-[var(--owner-muted)]">
               {aktifSekme === "bekleyen"
                 ? "Bekleyen randevu talebi bulunmuyor."
                 : "Gösterilecek randevu bulunamadı."}
@@ -299,11 +299,11 @@ export default function RandevuYonetimPage() {
               return (
                 <div
                   key={randevu.id}
-                  className="rounded-2xl border border-white/8 bg-[#15171c] p-4"
+                  className="rounded-2xl owner-card p-4"
                 >
                   {/* üst satır: tarih + durum */}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-white/70">
+                    <span className="text-xs font-extrabold text-[var(--owner-text)]/70">
                       {formatDateTime(randevu.appointment_time)}
                     </span>
                     <span
@@ -314,10 +314,10 @@ export default function RandevuYonetimPage() {
                   </div>
 
                   {/* hizmet bilgisi */}
-                  <h3 className="mt-3 text-sm font-extrabold text-white">
+                  <h3 className="mt-3 text-sm font-extrabold text-[var(--owner-text)]">
                     {randevu.service_title}
                   </h3>
-                  <p className="mt-1 text-xs text-[#E8A87C]">
+                  <p className="mt-1 text-xs text-[var(--owner-secondary)]">
                     {randevu.service_price && randevu.service_price !== "0"
                       ? `${randevu.service_price} · `
                       : ""}
@@ -325,22 +325,22 @@ export default function RandevuYonetimPage() {
                   </p>
 
                   {/* müşteri bilgisi */}
-                  <div className="mt-3 space-y-1.5 border-t border-white/8 pt-3">
-                    <p className="text-xs text-white/50">
-                      <span className="font-bold text-white/70">
+                  <div className="mt-3 space-y-1.5 border-t border-[var(--owner-border)] pt-3">
+                    <p className="text-xs text-[var(--owner-text)]/50">
+                      <span className="font-bold text-[var(--owner-text)]/70">
                         Müşteri:
                       </span>{" "}
                       {randevu.customer_name}
                     </p>
-                    <p className="text-xs text-white/50">
-                      <span className="font-bold text-white/70">
+                    <p className="text-xs text-[var(--owner-text)]/50">
+                      <span className="font-bold text-[var(--owner-text)]/70">
                         Telefon:
                       </span>{" "}
                       {randevu.customer_phone}
                     </p>
                     {randevu.customer_notes && (
-                      <p className="text-xs text-white/40">
-                        <span className="font-bold text-white/50">Not:</span>{" "}
+                      <p className="text-xs text-[var(--owner-muted)]">
+                        <span className="font-bold text-[var(--owner-text)]/50">Not:</span>{" "}
                         {randevu.customer_notes}
                       </p>
                     )}
@@ -352,7 +352,7 @@ export default function RandevuYonetimPage() {
                       <p className="text-[10px] font-extrabold text-amber-400">
                         ⚠️ Müşteri tarih değişikliği istedi
                       </p>
-                      <p className="mt-1 text-xs text-white/60">
+                      <p className="mt-1 text-xs text-[var(--owner-text-alt)]">
                         Yeni saat:{" "}
                         {formatDateTime(pendingReschedule.requested_time)}
                       </p>
@@ -375,7 +375,7 @@ export default function RandevuYonetimPage() {
                             })
                           }
                           disabled={isIsleniyor}
-                          className="flex-1 rounded-lg bg-green-600 px-3 py-1.5 text-[10px] font-extrabold text-white transition hover:brightness-110 disabled:opacity-50"
+                          className="flex-1 rounded-lg bg-green-600 px-3 py-1.5 text-[10px] font-extrabold text-[var(--owner-text)] transition hover:brightness-110 disabled:opacity-50"
                         >
                           Onayla & Güncelle
                         </button>
@@ -402,7 +402,7 @@ export default function RandevuYonetimPage() {
                           })
                         }
                         disabled={isIsleniyor}
-                        className="flex-1 rounded-lg bg-green-600 px-3 py-2 text-xs font-extrabold text-white transition hover:brightness-110 disabled:opacity-50"
+                        className="flex-1 rounded-lg bg-green-600 px-3 py-2 text-xs font-extrabold text-[var(--owner-text)] transition hover:brightness-110 disabled:opacity-50"
                       >
                         {isIsleniyor ? "..." : "Onayla"}
                       </button>

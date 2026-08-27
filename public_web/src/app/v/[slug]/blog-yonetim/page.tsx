@@ -167,13 +167,13 @@ export default function BlogYonetimPage() {
     });
 
   return (
-    <main className="min-h-screen bg-[#0c0d10] px-4 py-8 text-[#f4f1ea] sm:px-6">
+    <main className="owner-shell px-4 py-8 sm:px-6">
       <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6">
         {/* Başlık */}
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-[#15171c] px-4 py-3">
+        <div className="flex items-center justify-between gap-3 rounded-2xl owner-card px-4 py-3">
           <Link
             href={`/v/${slug}`}
-            className="inline-flex items-center gap-1 text-sm font-extrabold text-[#E8A87C]"
+            className="inline-flex items-center gap-1 text-sm font-extrabold text-[var(--owner-secondary)]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -188,12 +188,12 @@ export default function BlogYonetimPage() {
             </svg>
             Vitrine Dön
           </Link>
-          <span className="text-xs font-extrabold text-white/45">
+          <span className="text-xs font-extrabold text-[var(--owner-muted)]">
             Blog Yönetimi
           </span>
         </div>
 
-        <h1 className="text-2xl font-extrabold text-white">Yazı Yönetimi</h1>
+        <h1 className="text-2xl font-extrabold text-[var(--owner-text)]">Yazı Yönetimi</h1>
 
         {/* Hata */}
         {hata && (
@@ -206,8 +206,8 @@ export default function BlogYonetimPage() {
         )}
 
         {/* Yeni Yazı Oluştur */}
-        <div className="rounded-2xl border border-white/8 bg-[#15171c] p-4">
-          <h2 className="mb-3 text-sm font-extrabold text-white">
+        <div className="rounded-2xl owner-card p-4">
+          <h2 className="mb-3 text-sm font-extrabold text-[var(--owner-text)]">
             Yeni Yazı Oluştur
           </h2>
           <div className="flex gap-2">
@@ -216,7 +216,7 @@ export default function BlogYonetimPage() {
               value={yeniBaslik}
               onChange={(e) => setYeniBaslik(e.target.value)}
               placeholder="Yazı başlığı..."
-              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-[#E8A87C] focus:outline-none"
+              className="flex-1 rounded-xl border border-[var(--owner-border)] bg-white/5 px-3 py-2.5 text-sm text-[var(--owner-text)] placeholder:text-[var(--owner-muted)] focus:border-[var(--owner-primary)] focus:outline-none"
               onKeyDown={(e) => {
                 if (e.key === "Enter") yaziOlustur();
               }}
@@ -224,7 +224,7 @@ export default function BlogYonetimPage() {
             <button
               onClick={yaziOlustur}
               disabled={olusturuyor || !yeniBaslik.trim()}
-              className="shrink-0 rounded-xl bg-[#E8A87C] px-4 py-2.5 text-sm font-extrabold text-[#0c0d10] transition hover:brightness-110 disabled:opacity-50"
+              className="shrink-0 rounded-xl bg-[var(--owner-primary)] px-4 py-2.5 text-sm font-extrabold text-[var(--owner-on-primary)] transition hover:brightness-110 disabled:opacity-50"
             >
               {olusturuyor ? "Oluşturuluyor..." : "Oluştur"}
             </button>
@@ -234,11 +234,11 @@ export default function BlogYonetimPage() {
         {/* Yazı Listesi */}
         {yukleniyor ? (
           <div className="flex items-center justify-center py-12">
-            <div className="h-4 w-4 animate-pulse rounded-full bg-[#E8A87C]" />
+            <div className="h-4 w-4 animate-pulse rounded-full bg-[var(--owner-primary)]" />
           </div>
         ) : yazilar.length === 0 ? (
-          <div className="rounded-2xl border border-white/8 bg-[#15171c] py-12 text-center">
-            <p className="text-sm text-white/40">
+          <div className="rounded-2xl owner-card py-12 text-center">
+            <p className="text-sm text-[var(--owner-muted)]">
               Henüz yazınız yok. Yukarıdaki formu kullanarak ilk yazınızı
               oluşturun.
             </p>
@@ -250,7 +250,7 @@ export default function BlogYonetimPage() {
               return (
                 <div
                   key={yazi.id}
-                  className="flex items-center gap-4 rounded-2xl border border-white/8 bg-[#15171c] p-4 transition hover:border-white/15"
+                  className="flex items-center gap-4 rounded-2xl owner-card p-4 transition hover:border-[var(--owner-border)]"
                 >
                   {yazi.cover_image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -260,13 +260,13 @@ export default function BlogYonetimPage() {
                       className="h-16 w-16 shrink-0 rounded-xl object-cover"
                     />
                   ) : (
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-white/5 text-xl text-white/20">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-white/5 text-xl text-[var(--owner-muted)]">
                       📝
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="truncate text-sm font-extrabold text-white">
+                      <h3 className="truncate text-sm font-extrabold text-[var(--owner-text)]">
                         {yazi.title}
                       </h3>
                       <span
@@ -276,14 +276,14 @@ export default function BlogYonetimPage() {
                       </span>
                     </div>
                     {yazi.summary && (
-                      <p className="mt-1 line-clamp-1 text-xs text-white/40">
+                      <p className="mt-1 line-clamp-1 text-xs text-[var(--owner-muted)]">
                         {yazi.summary}
                       </p>
                     )}
-                    <p className="mt-1 text-[10px] font-bold text-white/25">
+                    <p className="mt-1 text-[10px] font-bold text-[var(--owner-muted)]">
                       {formatDateTR(yazi.updated_at)}
                       {yazi.seo_score != null && yazi.seo_score > 0 && (
-                        <span className="ml-2 text-[#E8A87C]">
+                        <span className="ml-2 text-[var(--owner-secondary)]">
                           SEO: %{yazi.seo_score}
                         </span>
                       )}
@@ -292,7 +292,7 @@ export default function BlogYonetimPage() {
                   <div className="flex shrink-0 gap-1">
                     <Link
                       href={`/v/${slug}/yazilar/${yazi.slug}`}
-                      className="rounded-lg border border-white/10 px-2.5 py-1.5 text-[10px] font-extrabold text-white/60 transition hover:border-white/25 hover:text-white"
+                      className="rounded-lg border border-[var(--owner-border)] px-2.5 py-1.5 text-[10px] font-extrabold text-[var(--owner-text-alt)] transition hover:border-[var(--owner-border)] hover:text-[var(--owner-text)]"
                     >
                       Gör
                     </Link>

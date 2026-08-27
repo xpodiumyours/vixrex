@@ -23,6 +23,13 @@ const kayit = oku("src/app/kayit/page.tsx");
 const pano = oku("src/app/app/page.tsx");
 const urunler = oku("src/components/owner/OwnerProductManager.tsx");
 
+// Sahip yönetim yüzeyleri — yeni sayfa eklenince buraya da eklenmeli.
+const YONETIM_SAYFALARI = [
+  "src/app/app/page.tsx",
+  "src/app/v/[slug]/blog-yonetim/page.tsx",
+  "src/app/v/[slug]/randevu-yonetim/page.tsx",
+] as const;
+
 describe("sahip yönetim arayüzü sözleşmesi", () => {
   it("üç palet ayrı kalıyor — yönetim, landing ve canlı vitrin", () => {
     // Bu ayrım kazara değil: yayındaki vitrinlerin rengi (#38A0E4) yönetim
@@ -84,5 +91,31 @@ describe("sahip yönetim arayüzü sözleşmesi", () => {
         /^\s*["']use client["'];/m
       );
     }
+  });
+
+  it("yönetim sayfaları kendi rengini uydurmuyor — tanımları kullanıyor", () => {
+    // 27 Ağustos: blog ve randevu yönetim sayfaları eklendiğinde dördüncü bir
+    // palet doğdu — siyah zemin (#0c0d10) ve turuncu vurgu (#E8A87C) elle
+    // yazılmıştı. Sahip panelinin gerçek rengi lacivert-mavi; kullanıcı aynı
+    // panelin içinde gezerken renk değiştiğini gördü.
+    //
+    // Mevcut palet iddiası bunu YAKALAMIYORDU: o, üç paletin birbirine
+    // karışmasını yasaklıyor, yeni bir sayfanın hiçbirini kullanmamasını
+    // değil. Bu iddia o boşluğu kapatıyor.
+    const ihlaller = YONETIM_SAYFALARI.flatMap((yol) => {
+      const kaynak = oku(yol);
+      const sabitRenkler = kaynak.match(/#[0-9A-Fa-f]{6}/g) ?? [];
+      const hatalar: string[] = [];
+
+      if (sabitRenkler.length > 0) {
+        hatalar.push(`${yol}: elle yazılmış renk ${[...new Set(sabitRenkler)].join(", ")}`);
+      }
+      if (!kaynak.includes("owner-shell")) {
+        hatalar.push(`${yol}: kök kabuk 'owner-shell' yok — --owner-* tanımları o kapsamda`);
+      }
+      return hatalar;
+    });
+
+    expect(ihlaller).toEqual([]);
   });
 });
