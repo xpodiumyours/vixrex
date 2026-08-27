@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import BulkProductUpload from "./BulkProductUpload";
 
 export interface OwnerProductCategory {
   id: string;
@@ -45,6 +46,7 @@ export function OwnerProductManager({
 }: OwnerProductManagerProps) {
   const [editing, setEditing] = useState<OwnerProduct | "new" | null>(null);
   const [deleting, setDeleting] = useState<OwnerProduct | null>(null);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -125,6 +127,36 @@ export function OwnerProductManager({
     }
   }
 
+  // ─── Sıralama ─────────────────────────────────────────────────────
+
+  const moveProduct = useCallback(async (fromIndex: number, direction: "up" | "down") => {
+    const toIndex = direction === "up" ? fromIndex - 1 : fromIndex + 1;
+    if (toIndex < 0 || toIndex >= products.length) return;
+
+    // Yeni sıralama oluştur
+    const reordered = [...products];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+
+    // Optimistic update
+    const newIds = reordered.map((p) => p.id);
+
+    try {
+      const response = await fetch("/api/products/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: storeSlug, productIds: newIds }),
+      });
+      if (!response.ok) {
+        throw new Error("Sıralama güncellenemedi.");
+      }
+      await onRefresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sıralama güncellenemedi.");
+      await onRefresh();
+    }
+  }, [products, storeSlug, onRefresh]);
+
   return (
     <section className="mt-8" aria-labelledby="products-title" aria-busy={busy}>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -136,18 +168,34 @@ export function OwnerProductManager({
             Vitrinindeki ürünleri ekle, düzenle veya kaldır.
           </p>
         </div>
-        <button
-          type="button"
-          className="owner-button-primary shrink-0"
-          onClick={() => {
-            setError("");
-            setSuccess("");
-            setEditing("new");
-          }}
-          disabled={busy}
-        >
-          Ürün Ekle
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            className="owner-button-secondary"
+            onClick={() => {
+              setError("");
+              setSuccess("");
+              setShowBulkUpload(!showBulkUpload);
+              setEditing(null);
+            }}
+            disabled={busy}
+          >
+            📄 Toplu Yükle
+          </button>
+          <button
+            type="button"
+            className="owner-button-primary"
+            onClick={() => {
+              setError("");
+              setSuccess("");
+              setShowBulkUpload(false);
+              setEditing("new");
+            }}
+            disabled={busy}
+          >
+            + Ürün Ekle
+          </button>
+        </div>
       </div>
 
       {error ? <p className="owner-error mb-4 text-sm" role="alert">{error}</p> : null}
@@ -156,6 +204,19 @@ export function OwnerProductManager({
           {success}
         </p>
       ) : null}
+
+      {/* Toplu Yükleme */}
+      {showBulkUpload && !editing && (
+        <BulkProductUpload
+          storeSlug={storeSlug}
+          categories={categories}
+          onUploaded={async () => {
+            await onRefresh();
+            setShowBulkUpload(false);
+            setSuccess("Ürünler toplu olarak eklendi.");
+          }}
+        />
+      )}
 
       {editing ? (
         <ProductForm
@@ -208,13 +269,33 @@ export function OwnerProductManager({
                   <p className="mt-1 text-xs text-[var(--owner-muted)]">
                     {product.product_categories?.name || "Kategorisiz"}
                   </p>
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    <button type="button" className="owner-button-secondary" onClick={() => setEditing(product)} disabled={busy}>
-                      Düzenle
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    <button type="button" className="owner-button-secondary text-xs" onClick={() => setEditing(product)} disabled={busy}>
+                      ✏️
                     </button>
-                    <button type="button" className="owner-button-danger" onClick={() => setDeleting(product)} disabled={busy}>
-                      Sil
+                    <button type="button" className="owner-button-danger text-xs" onClick={() => setDeleting(product)} disabled={busy}>
+                      🗑️
                     </button>
+                    <div className="flex gap-0.5">
+                      <button
+                        type="button"
+                        className="owner-button-secondary flex-1 text-xs"
+                        onClick={() => moveProduct(products.indexOf(product), "up")}
+                        disabled={busy || products.indexOf(product) === 0}
+                        title="Yukarı taşı"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className="owner-button-secondary flex-1 text-xs"
+                        onClick={() => moveProduct(products.indexOf(product), "down")}
+                        disabled={busy || products.indexOf(product) === products.length - 1}
+                        title="Aşağı taşı"
+                      >
+                        ↓
+                      </button>
+                    </div>
                   </div>
                 </div>
               </article>
