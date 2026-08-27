@@ -369,20 +369,7 @@ export default function AppPage() {
                   </p>
                 </div>
               </Link>
-              <Link
-                href="/app/moderasyon"
-                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
-              >
-                <span className="text-2xl">🛡️</span>
-                <div>
-                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
-                    Blog Moderasyonu
-                  </p>
-                  <p className="text-xs text-[var(--owner-muted)]">
-                    İnceleme bekleyen yazıları değerlendir
-                  </p>
-                </div>
-              </Link>
+
             </div>
           </section>
         )}
