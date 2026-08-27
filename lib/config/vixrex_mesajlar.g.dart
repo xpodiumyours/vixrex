@@ -181,6 +181,7 @@ const Map<String, String> vixRexMesajlari = {
   'adres': 'Konumunu Vitrinim adres alanından güncelle — GPS veya elle.',
   'yayinla':
       'Yayın için yasal onaylar ve Yayınla butonu Vitrinim’de. Oradan devam et.',
+  'blog_yayinlandi': 'Yazı yayınlandı.',
   'ocr_scan':
       'Fiş/fatura veya raf etiketi ile ürün aktar — mevcut tarayıcıyı aç.',
   'ocr_info':

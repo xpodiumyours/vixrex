@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/config/turkey_cities_config.dart';
+import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/controllers/blog_editor_controller.dart';
 import 'package:vixrex/widgets/editor/blog_seo_panel.dart';
@@ -56,7 +57,7 @@ class _BlogEditorScreenState extends State<BlogEditorScreen> {
     if (success) {
       _showSnackBar(
         targetStatus == 'published'
-            ? 'Yazı yayına gönderildi! (Güvenilir yazar değilseniz önce moderatör incelemesine alınır)'
+            ? vixRexMesajlari['blog_yayinlandi']!
             : 'Yazı taslak olarak kaydedildi.',
       );
 
