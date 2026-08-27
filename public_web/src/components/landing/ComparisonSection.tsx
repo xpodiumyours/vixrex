@@ -1,4 +1,4 @@
-import { TikIkonu, YonOkuIkonu } from "@/components/site/icons";
+import { CarpiIkonu, TikIkonu, YonOkuIkonu } from "@/components/site/icons";
 
 /** Karşılaştırma — envanter §2.6. */
 const AYRI_KURULUM = [
@@ -39,8 +39,10 @@ export function ComparisonSection() {
                 <li key={satir} className="flex items-center gap-3">
                   <span
                     aria-hidden
-                    className="h-9 w-9 shrink-0 rounded-xl bg-lp-bg-editor"
-                  />
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-lp-bg-editor text-lp-muted/70"
+                  >
+                    <CarpiIkonu boyut={16} />
+                  </span>
                   <span className="text-[14px] font-semibold text-lp-muted">
                     {satir}
                   </span>

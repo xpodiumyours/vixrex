@@ -36,9 +36,9 @@ export function PhoneMockupSlaytlari({
   if (!profil) return null;
 
   return (
-    <div className="flex flex-col">
+    <div className="flex h-full flex-col">
       {/* Kapak + isim/kategori (Flutter: 156px kapak) */}
-      <div className="relative h-[156px] w-full bg-lp-surface">
+      <div className="relative h-[196px] w-full shrink-0 bg-lp-surface">
         {profil.kapakUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -64,13 +64,13 @@ export function PhoneMockupSlaytlari({
       </div>
 
       {/* Hakkında bölümü */}
-      <div className="px-3 pt-3">
-        <p className="text-[11px] font-black text-white">Hakkında</p>
-        <p className="mt-0.5 text-[10px] leading-tight text-white/60">{profil.aciklama}</p>
+      <div className="px-3 pt-4">
+        <p className="text-[12px] font-black text-white">Hakkında</p>
+        <p className="mt-1 text-[11px] leading-snug text-white/60">{profil.aciklama}</p>
       </div>
 
       {/* Eylem simgeleri */}
-      <div className="flex gap-2 px-3 pt-2">
+      <div className="flex gap-2 px-3 pt-3">
         {profil.eylemler.map((eylem, i) => (
           <div
             key={i}
@@ -83,11 +83,11 @@ export function PhoneMockupSlaytlari({
       </div>
 
       {/* Eylem satırları */}
-      <div className="flex flex-col gap-1.5 px-3 pt-2">
+      <div className="flex flex-col gap-2 px-3 pt-3">
         {profil.eylemSatirlari.map((satir, i) => (
           <div
             key={i}
-            className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2"
+            className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2.5"
           >
             <div
               className="flex h-6 w-6 items-center justify-center rounded-lg"
@@ -96,8 +96,8 @@ export function PhoneMockupSlaytlari({
               <span className="text-[10px]">{i === 0 ? profil.uStRozet.simge : profil.altRozet.simge}</span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold text-white">{satir.baslik}</p>
-              <p className="text-[9px] text-white/50">{satir.altBaslik}</p>
+              <p className="text-[11px] font-bold text-white">{satir.baslik}</p>
+              <p className="text-[10px] text-white/50">{satir.altBaslik}</p>
             </div>
             <span className="text-[10px] text-white/40">›</span>
           </div>
@@ -105,7 +105,7 @@ export function PhoneMockupSlaytlari({
       </div>
 
       {/* Vitrin galerisi + fotoğraf şeridi */}
-      <div className="px-3 pt-2">
+      <div className="px-3 pt-3">
         <div className="flex items-center justify-between">
           <p className="text-[11px] font-black text-white">Vitrin galerisi</p>
           <span className="rounded-full bg-lp-primary/20 px-2 py-0.5 text-[9px] font-bold text-lp-primary">
@@ -120,18 +120,18 @@ export function PhoneMockupSlaytlari({
                 key={url}
                 src={url}
                 alt=""
-                className="h-12 flex-1 rounded-lg object-cover"
+                className="h-[72px] flex-1 rounded-lg object-cover"
                 loading="lazy"
               />
             ))
           ) : (
-            <div className="h-12 flex-1 rounded-lg bg-lp-surface" />
+            <div className="h-[72px] flex-1 rounded-lg bg-lp-surface" />
           )}
         </div>
       </div>
 
       {/* Vitrin hazır */}
-      <div className="mx-3 mt-2 flex items-center justify-between rounded-xl border border-lp-primary/20 bg-lp-primary/[0.08] px-3 py-2">
+      <div className="mx-3 mt-auto flex items-center justify-between rounded-xl border border-lp-primary/20 bg-lp-primary/[0.08] px-3 py-3">
         <div>
           <p className="text-[10px] font-bold text-white">Vitrin hazır</p>
           <p className="text-[9px] text-white/50">2 bağlantı</p>

@@ -50,8 +50,10 @@ export function PhoneMockup({
             </div>
             <span className="text-[11px] font-extrabold text-gray-800">{ilk.uStRozet.renk === "#FF5A1F" ? "Galeri" : ilk.uStRozet.renk === "#EA580C" ? "Menü" : ilk.uStRozet.renk === "#DB2777" ? "Randevu" : "WhatsApp"}</span>
           </div>
-          {/* Sol alt rozet — profilin altRozet metni */}
-          <div className="absolute -left-6 bottom-[180px] z-20 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.92] px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
+          {/* Sol rozet — profilin altRozet metni. Kapak hizasında durur:
+              daha aşağıdayken vitrin içeriğinin üstüne biniyor ve
+              "Vitrin galerisi" başlığını kesiyordu. */}
+          <div className="absolute -left-6 top-[72px] z-20 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.92] px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
             <div className="flex h-[22px] w-[22px] items-center justify-center rounded-full" style={{ backgroundColor: ilk.altRozet.renk }}>
               <span className="text-[10px]">{ilk.altRozet.simge}</span>
             </div>
