@@ -1,5 +1,3 @@
-import { getAppUrl } from "@/lib/siteUrl";
-
 /**
  * Alt çağrı — envanter §2.10.
  *
@@ -35,7 +33,7 @@ export function BottomCta() {
           paylaşmaya başla.
         </p>
         <a
-          href={`${getAppUrl()}/app`}
+          href="/kayit"
           className="mt-9 inline-flex items-center justify-center rounded-3xl bg-lp-primary px-10 py-6 text-[18px] font-black text-white shadow-lp-panel transition-transform hover:-translate-y-0.5"
         >
           Vixrex Oluştur
