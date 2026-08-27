@@ -106,6 +106,15 @@ export function TikIkonu({ className, boyut = 18 }: IkonProps) {
   );
 }
 
+/** Material `close_rounded` — karşılaştırmada "bu senin işin" satırları. */
+export function CarpiIkonu({ className, boyut = 18 }: IkonProps) {
+  return (
+    <svg {...svgOzellikleri(boyut, className)}>
+      <path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 5.7 18.3 4.3 16.9 10.6 12 4.3 7.1l1.4-1.4L10.6 10.6l6.3-6.3Z" />
+    </svg>
+  );
+}
+
 /** Material `arrow_downward_rounded` / `arrow_forward_rounded` — yön oku. */
 export function YonOkuIkonu({ className, boyut = 22 }: IkonProps) {
   return (
