@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
+import {
+  OwnerProductManager,
+  type OwnerProduct,
+  type OwnerProductCategory,
+} from "@/components/owner/OwnerProductManager";
 
 interface Store {
   id: string;
@@ -13,6 +18,8 @@ interface Store {
   is_published: boolean;
   kategori: string | null;
   updated_at: string | null;
+  products: OwnerProduct[];
+  product_categories: OwnerProductCategory[];
 }
 
 export const dynamic = "force-dynamic";
@@ -26,19 +33,21 @@ export default function AppPage() {
   const [yeniAd, setYeniAd] = useState("");
   const [hata, setHata] = useState("");
 
-  async function magazalariGetir(userId: string) {
-    setYukleniyor(true);
+  async function magazalariGetir(userId: string, showLoading = true) {
+    if (showLoading) setYukleniyor(true);
     const { data, error } = await supabase
       .from("stores")
-      .select("id, slug, name, is_published, kategori, updated_at")
+      .select(
+        "id, slug, name, is_published, kategori, updated_at, products(id, slug, name, description, price_text, image_urls, category_id, stock_status, product_categories(name)), product_categories(id, name)"
+      )
       .eq("user_id", userId)
       .order("updated_at", { ascending: false });
 
     if (error) {
       setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
     }
-    setStores((data as Store[]) ?? []);
-    setYukleniyor(false);
+    setStores((data as unknown as Store[]) ?? []);
+    if (showLoading) setYukleniyor(false);
   }
 
   useEffect(() => {
@@ -191,42 +200,47 @@ export default function AppPage() {
           <section aria-labelledby="vitrinim-title">
             <h2 id="vitrinim-title" className="sr-only">Vitrinim</h2>
             <div className="grid gap-4">
-              {stores.map((magaza) => (
-                <Link
-                  key={magaza.id}
-                  href={`/v/${magaza.slug}`}
-                  className="owner-card owner-link group block p-5 no-underline transition hover:border-[var(--owner-primary)] sm:p-6"
-                >
-                  <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h3 className="truncate text-lg font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
-                          {magaza.name}
-                        </h3>
-                        <span
-                          className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
-                            magaza.is_published
-                              ? "border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 text-[var(--owner-success)]"
-                              : "border-[var(--owner-warning)]/40 bg-[var(--owner-warning)]/10 text-[var(--owner-warning)]"
-                          }`}
-                        >
-                          {magaza.is_published ? "Yayında" : "Taslak"}
-                        </span>
-                      </div>
-                      <p className="mt-2 truncate text-xs text-[var(--owner-muted)]">
-                        /v/{magaza.slug}
-                      </p>
-                      {magaza.kategori ? (
-                        <p className="mt-2 text-sm text-[var(--owner-text-alt)]">{magaza.kategori}</p>
-                      ) : null}
+              <Link
+                href={`/v/${stores[0].slug}`}
+                className="owner-card owner-link group block p-5 no-underline transition hover:border-[var(--owner-primary)] sm:p-6"
+              >
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="truncate text-lg font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                        {stores[0].name}
+                      </h3>
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
+                          stores[0].is_published
+                            ? "border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 text-[var(--owner-success)]"
+                            : "border-[var(--owner-warning)]/40 bg-[var(--owner-warning)]/10 text-[var(--owner-warning)]"
+                        }`}
+                      >
+                        {stores[0].is_published ? "Yayında" : "Taslak"}
+                      </span>
                     </div>
-                    <span className="owner-button-primary inline-flex shrink-0 items-center justify-center sm:min-w-40">
-                      Vitrini Yönet
-                    </span>
+                    <p className="mt-2 truncate text-xs text-[var(--owner-muted)]">
+                      /v/{stores[0].slug}
+                    </p>
+                    {stores[0].kategori ? (
+                      <p className="mt-2 text-sm text-[var(--owner-text-alt)]">{stores[0].kategori}</p>
+                    ) : null}
                   </div>
-                </Link>
-              ))}
+                  <span className="owner-button-primary inline-flex shrink-0 items-center justify-center sm:min-w-40">
+                    Vitrini Yönet
+                  </span>
+                </div>
+              </Link>
             </div>
+            <OwnerProductManager
+              storeSlug={stores[0].slug}
+              products={stores[0].products ?? []}
+              categories={stores[0].product_categories ?? []}
+              onRefresh={async () => {
+                if (user) await magazalariGetir(user.id, false);
+              }}
+            />
           </section>
         )}
       </div>

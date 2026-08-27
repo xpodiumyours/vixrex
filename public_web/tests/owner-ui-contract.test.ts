@@ -6,7 +6,8 @@ import { describe, expect, it } from "vitest";
  * SAHİP YÖNETİM ARAYÜZÜ SÖZLEŞMESİ (2026-08-27).
  *
  * NOT — bu dosya neden `.ts`: ilk hâli `owner-ui-contract.test.mjs` idi ve
- * `node:test` koşucusunu kullanıyordu. Vitest yalnız `tests/**\/*.test.ts`
+ * `node:test` koşucusunu kullanıyordu. Vitest yalnız `tests` altındaki
+ * `.test.ts` dosyalarını
  * topluyor (`vitest.config.ts`), `node --test`'i de hiçbir betik
  * çağırmıyordu. Sonuç: dosya bekçi gibi duruyordu ama HİÇ KOŞMUYORDU —
  * test sayısı eklendikten önce ve sonra aynıydı (675). Koşmayan bekçi,
@@ -20,6 +21,7 @@ const globals = oku("src/app/globals.css");
 const giris = oku("src/app/giris/page.tsx");
 const kayit = oku("src/app/kayit/page.tsx");
 const pano = oku("src/app/app/page.tsx");
+const urunler = oku("src/components/owner/OwnerProductManager.tsx");
 
 describe("sahip yönetim arayüzü sözleşmesi", () => {
   it("üç palet ayrı kalıyor — yönetim, landing ve canlı vitrin", () => {
@@ -49,6 +51,22 @@ describe("sahip yönetim arayüzü sözleşmesi", () => {
     // çoğul dil kullanırsa kullanıcıya olmayan bir yetenek vaat eder.
     expect(pano).not.toMatch(/Vitrinlerim/);
     expect(pano).not.toMatch(/Yeni Vitrin Oluştur/);
+  });
+
+  it("ürün alanları ve kalıcı silme dili Flutter ile aynı kalıyor", () => {
+    for (const etiket of [
+      "Ürün adı *",
+      "Fiyat",
+      "Stok durumu",
+      "Kısa açıklama",
+      "Kategori *",
+    ]) {
+      expect(urunler).toContain(etiket);
+    }
+    expect(urunler).toMatch(/Ürünü Sil/);
+    expect(urunler).toMatch(/Bu işlem geri alınamaz\./);
+    expect(urunler).toMatch(/Vazgeç/);
+    expect(urunler).toMatch(/Kalıcı Sil/);
   });
 
   it("arama motorunun okuduğu sayfalar sunucu bileşeni kalıyor", () => {
