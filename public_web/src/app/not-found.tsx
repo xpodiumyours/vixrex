@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getAppUrl } from "@/lib/siteUrl";
 
 /**
  * Özel 404 sayfası — Next.js App Router convention.
@@ -40,7 +39,7 @@ export default function NotFound() {
         <Link href="/" className="btn-primary">
           Ana Sayfaya Dön
         </Link>
-        <a href={getAppUrl()} className="btn-secondary">
+        <a href="/app" className="btn-secondary">
           Vitrinini Oluştur
         </a>
       </div>
