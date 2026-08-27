@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/premium_service.dart';
 import 'package:vixrex/widgets/vitrin_store_card.dart';
 
@@ -286,6 +287,72 @@ void main() {
       await tester.tap(find.text('Vitrini İncele'));
       await tester.pump();
       expect(incelendi, isTrue);
+    },
+  );
+
+  testWidgets(
+    '9. Kiralık olmayan kartta ürün sayısı gösteriliyor',
+    (WidgetTester tester) async {
+      testStore.products = [
+        Product(id: 'p1', name: 'Ürün 1'),
+        Product(id: 'p2', name: 'Ürün 2'),
+        Product(id: 'p3', name: 'Ürün 3'),
+      ];
+
+      await tester.pumpWidget(
+        buildCard(
+          store: testStore,
+          onFavoritePressed: () {},
+          onWhatsAppPressed: () {},
+        ),
+      );
+
+      expect(find.text('3 ürün'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    '9b. Ürün sayısı 0 ise kartta gösterilmiyor',
+    (WidgetTester tester) async {
+      testStore.products = [];
+
+      await tester.pumpWidget(
+        buildCard(
+          store: testStore,
+          onFavoritePressed: () {},
+          onWhatsAppPressed: () {},
+        ),
+      );
+
+      expect(find.textContaining('ürün'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    '9c. Kiralık kartta ürün sayısı gösterilmiyor',
+    (WidgetTester tester) async {
+      final demoStore = StoreData(
+        name: 'Demo Vitrin',
+        kategori: 'Kafe / Lokanta',
+        slug: 'kiralik-kafe',
+        isDemo: true,
+        products: [
+          Product(id: 'p1', name: 'Ürün 1'),
+          Product(id: 'p2', name: 'Ürün 2'),
+        ],
+      );
+
+      await tester.pumpWidget(
+        buildCard(
+          store: demoStore,
+          onFavoritePressed: () {},
+          onWhatsAppPressed: () {},
+        ),
+      );
+
+      // Kiralık kartlarda fiyat bilgisi var, ürün sayısı yok
+      expect(find.text('2 ürün'), findsNothing);
+      expect(find.text('Aylık 299 TL'), findsOneWidget);
     },
   );
 }

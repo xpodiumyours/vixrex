@@ -60,6 +60,34 @@ export default function AppPage() {
     if (showLoading) setYukleniyor(false);
   }
 
+  /**
+   * Hesabın vitrini için sahip çerezini kurar.
+   *
+   * Ürün ekle/düzenle/sil çağrılarının hepsi bu çereze bakıyor. Çerez
+   * kısa ömürlü olduğu için panoya HER dönüşte yeniden kurulmalı —
+   * yoksa kullanıcı ikinci ziyaretinde ürün yönetemez.
+   */
+  async function sahipOturumuAc(): Promise<boolean> {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return false;
+
+    const res = await fetch("/api/owner-session/self", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return false;
+
+    const sonuc = await res.json();
+    if (!sonuc?.yonlendir) return false;
+
+    // Çerezi kuran tek yer `/api/owner-session`; burada yalnız ona gidiyoruz.
+    await fetch(sonuc.yonlendir, { redirect: "manual" });
+    return true;
+  }
+
   useEffect(() => {
     async function init() {
       const {
@@ -88,9 +116,6 @@ export default function AppPage() {
       await sahipOturumuAc();
     }
     init();
-    // `sahipOturumuAc` bileşen kapsamında sabit; bağımlılığa eklemek
-    // gereksiz yeniden koşuma yol açar.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   async function magazaOlustur(e: React.FormEvent) {
@@ -149,34 +174,6 @@ export default function AppPage() {
       await sahipOturumuAc();
       router.push(`/v/${sonuc.slug}`);
     }
-  }
-
-  /**
-   * Hesabın vitrini için sahip çerezini kurar.
-   *
-   * Ürün ekle/düzenle/sil çağrılarının hepsi bu çereze bakıyor. Çerez
-   * kısa ömürlü olduğu için panoya HER dönüşte yeniden kurulmalı —
-   * yoksa kullanıcı ikinci ziyaretinde ürün yönetemez.
-   */
-  async function sahipOturumuAc(): Promise<boolean> {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) return false;
-
-    const res = await fetch("/api/owner-session/self", {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return false;
-
-    const sonuc = await res.json();
-    if (!sonuc?.yonlendir) return false;
-
-    // Çerezi kuran tek yer `/api/owner-session`; burada yalnız ona gidiyoruz.
-    await fetch(sonuc.yonlendir, { redirect: "manual" });
-    return true;
   }
 
   async function cikisYap() {
