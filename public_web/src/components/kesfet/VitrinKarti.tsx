@@ -84,6 +84,11 @@ export function VitrinKarti({ vitrin }: { vitrin: KesfetVitrini }) {
             </Link>
           ) : null}
         </div>
+        {vitrin.kiralikMi ? (
+          <p className="mt-2 text-center text-[11px] font-semibold text-lp-muted">
+            Giriş yapmazsan vitrinin geçici olur.
+          </p>
+        ) : null}
       </div>
     </article>
   );

@@ -25,8 +25,9 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/components/recaptcha/RecaptchaProvider";
+import { supabase } from "@/lib/supabase";
 
-type Durum = "kontrolEdiliyor" | "gonderiliyor" | "hata";
+type Durum = "kontrolEdiliyor" | "gonderiliyor" | "hata" | "zatenVitriniVar";
 
 function HataSayfasi({ mesaj }: { mesaj: string }) {
   return (
@@ -65,27 +66,141 @@ function BekleniyorSayfasi() {
   );
 }
 
+function MevcutVitrinSayfasi({ slug }: { slug: string }) {
+  return (
+    <main
+      style={{
+        display: "grid",
+        placeItems: "center",
+        minHeight: "100vh",
+        background: "#0B1120",
+        color: "#fff",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      }}
+    >
+      <div style={{ maxWidth: 420, padding: 24, textAlign: "center" }}>
+        <h1 style={{ fontSize: 20 }}>Zaten bir vitrinin var</h1>
+        <p style={{ color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>
+          Bu hesapla ikinci bir vitrin kiralanamaz.
+        </p>
+        {slug ? (
+          <a
+            href={`/v/${encodeURIComponent(slug)}`}
+            style={{ color: "#fff", fontWeight: 700 }}
+          >
+            Mevcut vitrinine git
+          </a>
+        ) : null}
+      </div>
+    </main>
+  );
+}
+
 function RentDemoIcerik() {
   const searchParams = useSearchParams();
   const demoSlug = (searchParams.get("slug") ?? "").trim();
   const { executeRecaptcha, isReady } = useRecaptcha();
   const [durum, setDurum] = useState<Durum>("kontrolEdiliyor");
   const [token, setToken] = useState<string | null>(null);
+  const [hataMesaji, setHataMesaji] = useState("");
+  const [mevcutSlug, setMevcutSlug] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const denendiRef = useRef(false);
 
   useEffect(() => {
-    if (!demoSlug || !isReady || denendiRef.current) return;
-    denendiRef.current = true;
+    if (!demoSlug || denendiRef.current) return;
+    let iptalEdildi = false;
 
-    executeRecaptcha("rent_demo").then((t) => {
-      if (!t) {
+    async function kiralamayiBaslat() {
+      const { data, error } = await supabase.auth.getSession();
+      if (iptalEdildi || denendiRef.current) return;
+
+      if (error) {
+        denendiRef.current = true;
+        setHataMesaji("Oturum bilgisi okunamadı. Lütfen sayfayı yenileyip tekrar dene.");
         setDurum("hata");
         return;
       }
-      setToken(t);
+
+      const session = data.session;
+      const kaliciHesapVar = session?.user != null && !session.user.is_anonymous;
+
+      if (kaliciHesapVar) {
+        denendiRef.current = true;
+
+        const kiralamaYaniti = await fetch("/api/rent-demo/hesap", {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${session.access_token}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ slug: demoSlug }),
+        });
+        const kiralamaSonucu = await kiralamaYaniti.json().catch(() => ({}));
+
+        if (iptalEdildi) return;
+
+        if (kiralamaYaniti.status === 409) {
+          setMevcutSlug(String(kiralamaSonucu.slug ?? ""));
+          setDurum("zatenVitriniVar");
+          return;
+        }
+
+        if (!kiralamaYaniti.ok) {
+          setHataMesaji(
+            String(kiralamaSonucu.hata ?? "Vitrin şu anda kiralanamıyor. Lütfen tekrar dene.")
+          );
+          setDurum("hata");
+          return;
+        }
+
+        const sahipOturumuYaniti = await fetch("/api/owner-session/self", {
+          method: "POST",
+          headers: { authorization: `Bearer ${session.access_token}` },
+        });
+        const sahipOturumu = await sahipOturumuYaniti.json().catch(() => ({}));
+
+        if (!sahipOturumuYaniti.ok || !sahipOturumu.yonlendir) {
+          setHataMesaji(
+            "Vitrin hesabına bağlandı ancak sahip ekranı açılamadı. Vitrinine hesabından ulaşabilirsin."
+          );
+          setDurum("hata");
+          return;
+        }
+
+        window.location.assign(String(sahipOturumu.yonlendir));
+        return;
+      }
+
+      // Misafir yolu değişmedi: reCAPTCHA hazır olduğunda mevcut native
+      // form POST'u ve sunucudaki 303 zinciri çalışır.
+      if (!isReady) return;
+      denendiRef.current = true;
+
+      const recaptchaToken = await executeRecaptcha("rent_demo");
+      if (iptalEdildi) return;
+      if (!recaptchaToken) {
+        setHataMesaji(
+          "Güvenlik doğrulaması başarısız. Lütfen sayfayı yenileyip tekrar dene."
+        );
+        setDurum("hata");
+        return;
+      }
+      setToken(recaptchaToken);
       setDurum("gonderiliyor");
+    }
+
+    void kiralamayiBaslat().catch(() => {
+      if (iptalEdildi) return;
+      denendiRef.current = true;
+      setHataMesaji(
+        "Kiralama bağlantısı kurulamadı. Lütfen biraz sonra tekrar dene."
+      );
+      setDurum("hata");
     });
+    return () => {
+      iptalEdildi = true;
+    };
   }, [demoSlug, isReady, executeRecaptcha]);
 
   useEffect(() => {
@@ -99,9 +214,11 @@ function RentDemoIcerik() {
   }
 
   if (durum === "hata") {
-    return (
-      <HataSayfasi mesaj="Güvenlik doğrulaması başarısız. Lütfen sayfayı yenileyip tekrar dene." />
-    );
+    return <HataSayfasi mesaj={hataMesaji} />;
+  }
+
+  if (durum === "zatenVitriniVar") {
+    return <MevcutVitrinSayfasi slug={mevcutSlug} />;
   }
 
   return (
