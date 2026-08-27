@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { OwnerAuthLayout } from "@/components/owner/OwnerAuthLayout";
 
 export const dynamic = "force-dynamic";
 
@@ -50,78 +51,95 @@ export default function KayitPage() {
 
   if (durum === "gonderildi") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#0c0d10] px-4 py-10 text-[#f4f1ea]">
-        <div className="w-full max-w-sm rounded-2xl border border-white/8 bg-[#15171c] p-6 text-center">
-          <h1 className="mb-2 text-lg font-bold">E-posta Gönderildi</h1>
-          <p className="mb-4 text-sm text-white/60">
+      <OwnerAuthLayout
+        title="E-posta Gönderildi"
+        description="Hesabını doğruladıktan sonra vitrin yönetimine devam edebilirsin."
+      >
+        <div className="text-center" role="status" aria-live="polite">
+          <p className="mb-5 text-sm leading-6 text-[var(--owner-text-alt)]">
             <strong>{email}</strong> adresine doğrulama bağlantısı gönderdik.
             E-postanı kontrol et.
           </p>
           <Link
             href="/giris"
-            className="inline-block rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:shadow-blue-500/30"
+            className="owner-button-primary inline-flex items-center justify-center"
           >
-            Giriş sayfasına dön
+            Giriş Sayfasına Dön
           </Link>
         </div>
-      </main>
+      </OwnerAuthLayout>
     );
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0c0d10] px-4 py-10 text-[#f4f1ea]">
-      <div className="w-full max-w-sm rounded-2xl border border-white/8 bg-[#15171c] p-6">
-        <h1 className="mb-1 text-lg font-bold">Kayıt Ol</h1>
-        <p className="mb-5 text-sm text-white/50">
-          Yeni bir Vixrex hesabı oluştur.
-        </p>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <OwnerAuthLayout
+      title="Kayıt Ol"
+      description="Vitrinini oluşturmak ve yönetmek için Vixrex hesabını aç."
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4" aria-busy={gonderiliyor}>
+        <div className="space-y-2">
+          <label htmlFor="email" className="owner-label">
+            E-posta
+          </label>
           <input
+            id="email"
             type="email"
-            placeholder="E-posta"
+            placeholder="ornek@eposta.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-xl border border-white/10 bg-[#0c0d10] px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+            className="owner-input text-sm"
             autoComplete="email"
             required
           />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="sifre" className="owner-label">
+            Şifre
+          </label>
           <input
+            id="sifre"
             type="password"
-            placeholder="Şifre (en az 6 karakter)"
+            placeholder="En az 6 karakter"
             value={sifre}
             onChange={(e) => setSifre(e.target.value)}
-            className="rounded-xl border border-white/10 bg-[#0c0d10] px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+            className="owner-input text-sm"
             autoComplete="new-password"
+            minLength={6}
             required
           />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="sifre-tekrar" className="owner-label">
+            Şifre Tekrar
+          </label>
           <input
+            id="sifre-tekrar"
             type="password"
-            placeholder="Şifre (tekrar)"
+            placeholder="Şifreni yeniden yaz"
             value={sifreTekrar}
             onChange={(e) => setSifreTekrar(e.target.value)}
-            className="rounded-xl border border-white/10 bg-[#0c0d10] px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+            className="owner-input text-sm"
             autoComplete="new-password"
             required
           />
-
-          {hata && <p className="text-xs text-red-400">{hata}</p>}
-
-          <button
-            type="submit"
-            disabled={gonderiliyor}
-            className="mt-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 py-2.5 text-sm font-bold text-white shadow-md transition hover:shadow-blue-500/30 disabled:opacity-60"
-          >
-            {gonderiliyor ? "Kayıt yapılıyor…" : "Kayıt Ol"}
-          </button>
-        </form>
-
-        <div className="mt-4 text-center text-xs text-white/40">
-          <Link href="/giris" className="hover:text-white/70">
-            Zaten hesabın var mı? Giriş yap
-          </Link>
         </div>
+
+        {hata ? <p className="owner-error text-sm" role="alert">{hata}</p> : null}
+
+        <button
+          type="submit"
+          disabled={gonderiliyor}
+          className="owner-button-primary mt-1"
+        >
+          {gonderiliyor ? "Kayıt yapılıyor…" : "Kayıt Ol"}
+        </button>
+      </form>
+
+      <div className="mt-5 text-center text-sm">
+        <Link href="/giris" className="owner-link">
+          Zaten hesabın var mı? Giriş yap
+        </Link>
       </div>
-    </main>
+    </OwnerAuthLayout>
   );
 }

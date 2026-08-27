@@ -28,12 +28,15 @@ export default function AppPage() {
 
   async function magazalariGetir(userId: string) {
     setYukleniyor(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("stores")
       .select("id, slug, name, is_published, kategori, updated_at")
       .eq("user_id", userId)
       .order("updated_at", { ascending: false });
 
+    if (error) {
+      setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
+    }
     setStores((data as Store[]) ?? []);
     setYukleniyor(false);
   }
@@ -93,7 +96,7 @@ export default function AppPage() {
     // Vitrin oluşturuldu — owner session kur ve vitrine git
     // Basitleştirme: edit_token ile owner-session'a geç
     if (sonuc.slug && sonuc.editToken) {
-      const sessionRes = await fetch(
+      await fetch(
         `/api/owner-session?slug=${sonuc.slug}&ocode=${sonuc.editToken}`,
         { redirect: "manual" }
       );
@@ -110,22 +113,29 @@ export default function AppPage() {
 
   if (yukleniyor) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#0c0d10] text-white/50">
-        Yükleniyor…
+      <main className="owner-shell flex items-center justify-center px-4">
+        <div className="owner-card flex items-center gap-3 px-5 py-4" role="status" aria-live="polite">
+          <span className="h-3 w-3 animate-pulse rounded-full bg-[var(--owner-primary)]" aria-hidden="true" />
+          <span className="text-sm text-[var(--owner-muted)]">Vitrinin yükleniyor…</span>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#0c0d10] text-[#f4f1ea]">
-      <header className="border-b border-white/8 px-6 py-4">
-        <div className="mx-auto flex max-w-4xl items-center justify-between">
-          <h1 className="text-lg font-bold">Vixrex Yönetim Paneli</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-white/40">{user?.email}</span>
+    <main className="owner-shell">
+      <header className="border-b border-[var(--owner-border)] bg-[var(--owner-bg)]/90 px-4 py-4 sm:px-6">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Vixrex</p>
+            <h1 className="mt-1 text-xl font-bold text-[var(--owner-text)]">Vitrinim</h1>
+          </div>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="max-w-44 truncate text-xs text-[var(--owner-muted)] sm:max-w-none">{user?.email}</span>
             <button
+              type="button"
               onClick={cikisYap}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/60 hover:bg-white/5"
+              className="owner-button-secondary min-h-11 shrink-0 px-4 py-2 text-xs"
             >
               Çıkış Yap
             </button>
@@ -133,73 +143,92 @@ export default function AppPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-4xl px-6 py-8">
-        {/* Yeni Vitrin Oluştur */}
-        <section className="mb-8 rounded-2xl border border-white/8 bg-[#15171c] p-6">
-          <h2 className="mb-4 text-base font-bold">Yeni Vitrin Oluştur</h2>
-          <form onSubmit={magazaOlustur} className="flex gap-3">
-            <input
-              type="text"
-              placeholder="İşletme adı (ör: Aymira Giyim)"
-              value={yeniAd}
-              onChange={(e) => setYeniAd(e.target.value)}
-              className="flex-1 rounded-xl border border-white/10 bg-[#0c0d10] px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-            />
-            <button
-              type="submit"
-              disabled={olusturuyor}
-              className="shrink-0 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:shadow-blue-500/30 disabled:opacity-60"
-            >
-              {olusturuyor ? "Oluşturuluyor…" : "Oluştur"}
-            </button>
-          </form>
-          {hata && <p className="mt-2 text-xs text-red-400">{hata}</p>}
-        </section>
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+        <div className="mb-6 max-w-2xl">
+          <h2 className="text-2xl font-bold text-[var(--owner-text)] sm:text-3xl">
+            Vitrinini yönet
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--owner-muted)] sm:text-base">
+            İşletme bilgilerini, ürünlerini ve yayın durumunu aynı vitrin üzerinden yönet.
+          </p>
+        </div>
 
-        {/* Vitrinlerim */}
-        <section>
-          <h2 className="mb-4 text-base font-bold">Vitrinlerim</h2>
-          {stores.length === 0 ? (
-            <p className="rounded-xl border border-white/5 bg-white/[0.02] p-8 text-center text-sm text-white/40">
-              Henüz vitrininiz yok. Yukarıdan yeni bir tane oluşturun.
-            </p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+        {hata ? <p className="owner-error mb-6 text-sm" role="alert">{hata}</p> : null}
+
+        {stores.length === 0 ? (
+          <section className="owner-card p-5 sm:p-8" aria-labelledby="vitrin-olustur-title">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)] lg:items-start">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">İlk Adım</p>
+                <h2 id="vitrin-olustur-title" className="mt-2 text-xl font-bold text-[var(--owner-text)]">
+                  Vitrinini oluştur
+                </h2>
+                <p className="mt-2 max-w-lg text-sm leading-6 text-[var(--owner-muted)]">
+                  İşletme adınla başla. Sonraki adımda vitrinini düzenleyip ürünlerini ekleyebilirsin.
+                </p>
+              </div>
+              <form onSubmit={magazaOlustur} className="space-y-4" aria-busy={olusturuyor}>
+                <div className="space-y-2">
+                  <label htmlFor="isletme-adi" className="owner-label">İşletme Adı</label>
+                  <input
+                    id="isletme-adi"
+                    type="text"
+                    placeholder="Ör. Aymira Giyim"
+                    value={yeniAd}
+                    onChange={(e) => setYeniAd(e.target.value)}
+                    className="owner-input text-sm"
+                    autoComplete="organization"
+                    required
+                  />
+                </div>
+                <button type="submit" disabled={olusturuyor} className="owner-button-primary w-full">
+                  {olusturuyor ? "Vitrin oluşturuluyor…" : "Vitrin Oluştur"}
+                </button>
+              </form>
+            </div>
+          </section>
+        ) : (
+          <section aria-labelledby="vitrinim-title">
+            <h2 id="vitrinim-title" className="sr-only">Vitrinim</h2>
+            <div className="grid gap-4">
               {stores.map((magaza) => (
                 <Link
                   key={magaza.id}
                   href={`/v/${magaza.slug}`}
-                  className="group rounded-2xl border border-white/8 bg-[#15171c] p-5 transition hover:border-blue-500/30"
+                  className="owner-card owner-link group block p-5 no-underline transition hover:border-[var(--owner-primary)] sm:p-6"
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-bold text-white group-hover:text-blue-400">
-                        {magaza.name}
-                      </h3>
-                      <p className="mt-1 text-xs text-white/40">
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="truncate text-lg font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                          {magaza.name}
+                        </h3>
+                        <span
+                          className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
+                            magaza.is_published
+                              ? "border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 text-[var(--owner-success)]"
+                              : "border-[var(--owner-warning)]/40 bg-[var(--owner-warning)]/10 text-[var(--owner-warning)]"
+                          }`}
+                        >
+                          {magaza.is_published ? "Yayında" : "Taslak"}
+                        </span>
+                      </div>
+                      <p className="mt-2 truncate text-xs text-[var(--owner-muted)]">
                         /v/{magaza.slug}
                       </p>
+                      {magaza.kategori ? (
+                        <p className="mt-2 text-sm text-[var(--owner-text-alt)]">{magaza.kategori}</p>
+                      ) : null}
                     </div>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        magaza.is_published
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : "bg-amber-500/20 text-amber-400"
-                      }`}
-                    >
-                      {magaza.is_published ? "Yayında" : "Taslak"}
+                    <span className="owner-button-primary inline-flex shrink-0 items-center justify-center sm:min-w-40">
+                      Vitrini Yönet
                     </span>
                   </div>
-                  {magaza.kategori && (
-                    <p className="mt-2 text-xs text-white/30">
-                      {magaza.kategori}
-                    </p>
-                  )}
                 </Link>
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
       </div>
     </main>
   );
