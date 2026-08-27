@@ -125,8 +125,7 @@ export default function BlogYonetimPage() {
         setHata(sonuc.hata || "Yazı oluşturulamadı.");
         return;
       }
-      setYeniBaslik("");
-      await yaziListesiniGetir();
+      router.push(`/v/${slug}/blog-yonetim/${sonuc.slug}`);
     } catch {
       setHata("Bağlantı kurulamadı.");
     } finally {
@@ -290,6 +289,12 @@ export default function BlogYonetimPage() {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-1">
+                    <Link
+                      href={`/v/${slug}/blog-yonetim/${yazi.slug}`}
+                      className="rounded-lg border border-[var(--owner-primary)] px-2.5 py-1.5 text-[10px] font-extrabold text-[var(--owner-primary)] transition hover:brightness-110"
+                    >
+                      Düzenle
+                    </Link>
                     <Link
                       href={`/v/${slug}/yazilar/${yazi.slug}`}
                       className="rounded-lg border border-[var(--owner-border)] px-2.5 py-1.5 text-[10px] font-extrabold text-[var(--owner-text-alt)] transition hover:border-[var(--owner-border)] hover:text-[var(--owner-text)]"

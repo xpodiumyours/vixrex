@@ -27,6 +27,7 @@ const urunler = oku("src/components/owner/OwnerProductManager.tsx");
 const YONETIM_SAYFALARI = [
   "src/app/app/page.tsx",
   "src/app/v/[slug]/blog-yonetim/page.tsx",
+  "src/app/v/[slug]/blog-yonetim/[articleSlug]/page.tsx",
   "src/app/v/[slug]/randevu-yonetim/page.tsx",
 ] as const;
 

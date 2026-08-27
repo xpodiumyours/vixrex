@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
+import { revalidateTag } from "next/cache";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -19,6 +20,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const slug = url.searchParams.get("slug")?.trim() ?? "";
+  const articleSlug = url.searchParams.get("articleSlug")?.trim() ?? "";
   if (!slug) {
     return NextResponse.json(
       { hata: "Vitrin belirtilmedi." },
@@ -32,6 +34,30 @@ export async function GET(request: NextRequest) {
   }
 
   const admin = getSupabaseAdmin();
+
+  if (articleSlug) {
+    const { data, error } = await admin
+      .from("store_articles")
+      .select(
+        "id, store_slug, title, slug, summary, content, cover_image_url, article_type, target_topic, target_city, seo_score, seo_errors, status, published_at, created_at, updated_at"
+      )
+      .eq("store_slug", slug)
+      .eq("slug", articleSlug)
+      .maybeSingle();
+
+    if (error) {
+      console.error("[articles] detail failed:", error.message);
+      return NextResponse.json(
+        { hata: "Yazı getirilemedi." },
+        { status: 500 }
+      );
+    }
+    if (!data) {
+      return NextResponse.json({ hata: "Yazı bulunamadı." }, { status: 404 });
+    }
+
+    return NextResponse.json({ tamam: true, yazi: data });
+  }
 
   const { data, error } = await admin
     .from("store_articles")
@@ -147,6 +173,8 @@ export async function PATCH(request: NextRequest) {
   }
 
   const articleId = typeof govde.articleId === "string" ? govde.articleId.trim() : "";
+  const articleSlug =
+    typeof govde.articleSlug === "string" ? govde.articleSlug.trim() : "";
   // Alan adı üç API'de aynı: `slug`. Burada `storeSlug` yazıyordu —
   // aynı kavramın iki farklı adı arayüzü yazan kişiyi yanıltır.
   const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
@@ -174,10 +202,46 @@ export async function PATCH(request: NextRequest) {
   if (typeof govde.targetCity === "string") updatePayload.target_city = govde.targetCity.trim();
   if (typeof govde.seoScore === "number") updatePayload.seo_score = govde.seoScore;
   if (Array.isArray(govde.seoErrors)) updatePayload.seo_errors = govde.seoErrors;
-  if (typeof govde.status === "string") updatePayload.status = govde.status;
+  if (typeof govde.status === "string") {
+    const status = govde.status.trim();
+    if (status !== "draft" && status !== "published") {
+      return NextResponse.json(
+        { hata: "Yazı yalnız taslak veya yayında olabilir." },
+        { status: 422 }
+      );
+    }
+    updatePayload.status = status;
+  }
 
   if (Object.keys(updatePayload).length === 0) {
     return NextResponse.json({ hata: "Güncellenecek alan belirtilmedi." }, { status: 422 });
+  }
+
+  if (updatePayload.status === "published") {
+    const { data: mevcut, error: okumaHatasi } = await admin
+      .from("store_articles")
+      .select("title, summary, content")
+      .eq("id", articleId)
+      .eq("store_slug", slug)
+      .maybeSingle();
+    if (okumaHatasi) {
+      console.error("[articles] publish validation failed:", okumaHatasi.message);
+      return NextResponse.json({ hata: "Yazı doğrulanamadı." }, { status: 500 });
+    }
+    if (!mevcut) {
+      return NextResponse.json({ hata: "Yazı bulunamadı." }, { status: 404 });
+    }
+    const yayinAlanlari = ["title", "summary", "content"] as const;
+    const eksikAlanVar = yayinAlanlari.some((alan) => {
+      const deger = updatePayload[alan] ?? mevcut[alan];
+      return typeof deger !== "string" || deger.trim().length === 0;
+    });
+    if (eksikAlanVar) {
+      return NextResponse.json(
+        { hata: "Başlık, özet ve içerik yayın için zorunludur." },
+        { status: 422 }
+      );
+    }
   }
 
   const { error } = await admin
@@ -192,6 +256,13 @@ export async function PATCH(request: NextRequest) {
       { hata: "Yazı güncellenemedi." },
       { status: 500 }
     );
+  }
+
+  if (typeof updatePayload.status === "string") {
+    revalidateTag(`store-${slug}`, { expire: 0 });
+    if (articleSlug) {
+      revalidateTag(`article-${slug}-${articleSlug}`, { expire: 0 });
+    }
   }
 
   return NextResponse.json({ tamam: true });
