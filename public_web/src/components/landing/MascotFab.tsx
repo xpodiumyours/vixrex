@@ -52,20 +52,40 @@ export function MascotFab({ onToggle }: { onToggle: () => void }) {
         👋 Dijital vitrinini hazırlayayım mı?
       </p>
 
-      {/* Maskot butonu */}
+      {/*
+        Maskot düğmesi — Flutter'daki `chatbot_badge.dart` rozetiyle aynı
+        sunum. Oradaki ölçüler birebir alındı:
+
+          60×60 daire
+          zemin   #0E1B2E, alfa 200/255  (~%78)
+          kenarlık 1.5px #38A0E4, alfa 160/255 (~%63)
+          parıltı  #0EA5E9
+          maskot   ClipOval içinde, 4px iç boşluk, contain
+
+        Web'de iki fark vardı: kenarlık başka renkteydi ve görsel daireye
+        KIRPILMIYORDU — maskot dosyasının siyah kare zemini çerçevenin
+        içinde görünüyordu. `overflow-hidden` o kareyi kesiyor.
+
+        BİLİNÇLİ SAPMA: Flutter'da parıltı nabız gibi atıyor. Buradaki
+        sabit — hareketli gölge görsel karşılaştırma testlerini sonsuza
+        kadar oynatır.
+
+        Kenarlık rengi `--primary` (#38A0E4) ile aynı; bu landing değil
+        vitrin mavisi. Flutter'da da öyle, bilerek korundu.
+      */}
       <button
         type="button"
         onClick={onToggle}
-        className="pointer-events-auto flex h-[60px] w-[60px] items-center justify-center rounded-full border border-lp-primary/40 bg-lp-surface shadow-lp-panel transition-transform hover:scale-105"
+        className="pointer-events-auto flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full border-[1.5px] border-[#38A0E4]/60 bg-[#0E1B2E]/80 shadow-[0_0_16px_2px_rgba(14,165,233,0.28)] transition-transform hover:scale-105"
         aria-label="Vixrex Asistan'ı aç"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/vixrex_v_crystal_mascot.png"
           alt=""
-          width={44}
-          height={44}
-          className="h-11 w-11 object-contain"
+          width={60}
+          height={60}
+          className="h-full w-full object-contain p-1"
         />
       </button>
     </div>
