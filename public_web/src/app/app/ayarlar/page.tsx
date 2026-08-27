@@ -29,17 +29,19 @@ export default function AyarlarPage() {
     setExporting(true);
     setExportMsg("");
     try {
+      const { data: oturum } = await supabase.auth.getSession();
+      const oturumEpostasi = oturum.session?.user.email ?? "";
       const { data: durum } = await supabase.rpc("bootstrap_owner_state");
       const sonuc = (durum ?? {}) as { has_store?: boolean; slug?: string };
 
       const veri: Record<string, unknown> = {
         exported_at: new Date().toISOString(),
         app: "Vixrex",
-        user: { email: "mevcut oturum" },
+        user: { email: oturumEpostasi },
       };
 
       if (sonuc.has_store && sonuc.slug) {
-        // Store verisini çek (sadece公开alanlar)
+        // Vitrin verisi — yalnız kullanıcının kendi görebildiği alanlar
         const { data: store } = await supabase
           .from("stores")
           .select("id, slug, name, kategori, description, whatsapp, phone, email, address, is_published, created_at, updated_at")

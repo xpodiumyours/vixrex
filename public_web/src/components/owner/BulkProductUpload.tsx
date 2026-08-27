@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import * as XLSX from "xlsx";
 
 // ─── Türler ─────────────────────────────────────────────────────────────────
 
@@ -167,6 +166,13 @@ export default function BulkProductUpload({
             return cells;
           });
       } else if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+        // Excel okuyucu yalnız Excel dosyası seçilince yükleniyor. Statik
+        // içe aktarımdayken ~400 KB'lık paket, ürün yönetimini AÇAN HERKESE
+        // iniyordu — dosya yüklemeyenler dahil. Ayrıca paketin bilinen ve
+        // yaması olmayan bir açığı var (prototype pollution / ReDoS); tarayıcıda
+        // ve yalnız kullanıcının kendi dosyasıyla çalıştığı için etkisi sınırlı,
+        // yine de yüzeyi küçük tutuyoruz.
+        const XLSX = await import("xlsx");
         const workbook = XLSX.read(buffer, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         if (!sheetName) {
