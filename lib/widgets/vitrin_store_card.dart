@@ -324,6 +324,21 @@ class VitrinStoreCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
 
+                    // Ürün sayısı — web'deki VitrinKarti ile eşitlik.
+                    // Yalnız kiralık olmayan kartlarda, ürün sayisi > 0 ise gösterilir.
+                    if (!_isRentalTemplate && store.products.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          '${store.products.length} ürün',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.mutedText,
+                          ),
+                        ),
+                      ),
+
                     // Kiralık vitrin fiyat bilgisi — iş modeli (spec
                     // 2026-08-17): 14 gün ücretsiz deneme, sonra aylık
                     // 299 TL. Karttaki premium ayrımı: kiralık şablonun

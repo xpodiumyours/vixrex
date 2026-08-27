@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
+import { BUSINESS_CATEGORIES } from "@/lib/businessCategories";
 
 function yorumsuz(kaynak: string): string {
   return kaynak
@@ -44,10 +45,46 @@ describe("Keşfet kartı 'Kirala' CTA'sı", () => {
   it("kiralık ayrımı is_demo'dan gelen alana bakar", () => {
     expect(kart).toContain("vitrin.kiralikMi");
   });
+});
 
-  it("kategori süzgeci düz bağlantı — istemci bileşeni değil", () => {
-    // JavaScript ile süzülen bir liste kategorileri arama motorundan gizler.
+/**
+ * Kategori süzgeci SEO ve erişilebilirlik sözleşmesi.
+ *
+ * Kategori süzgeci, arama motorlarının tüm kategori sayfalarını
+ * keşfedebilmesi için düz <Link> kullanır. JavaScript filtresi
+ * kategorileri robotlardan gizler — bu yüzden "use client" yasaktır.
+ *
+ * Ayrıca erişilebilirlik için <nav> + aria-label zorunludur.
+ */
+describe("Kategori süzgeci SEO + erişilebilirlik", () => {
+  it("istemci bileşeni değil — arama motorundan gizlenmez", () => {
     expect(seritKaynak).not.toContain('"use client"');
-    expect(seritKaynak).toContain('href={`/kesfet/');
+  });
+
+  it("<nav> ve aria-label ile sarılmış — ekran okuyucu tanır", () => {
+    expect(seritKaynak).toContain("<nav");
+    expect(seritKaynak).toContain('aria-label="Kategoriler"');
+  });
+
+  it("Tumu linki /kesfet adresine gider", () => {
+    expect(seritKaynak).toContain('href="/kesfet"');
+  });
+
+  it("her kategori kendi düz linkine sahip — taranabilir sayfa üretir", () => {
+    // KategoriSync kullanici tarafinda kategoriUrlParcasi() cagrisi yapiyor
+    // ve BUSINESS_CATEGORIES uzerinde donup her biri icin Link uretiyor.
+    expect(seritKaynak).toContain("kategoriUrlParcasi(kategori.id)");
+    expect(seritKaynak).toContain("BUSINESS_CATEGORIES.map");
+  });
+
+  it("tireli URL üretir — alt çizgi kullanmaz", () => {
+    // Google alt çizgiyi kelime birleştirici sayar, tireyi ayırıcı.
+    expect(seritKaynak).toContain("kategoriUrlParcasi");
+    expect(seritKaynak).not.toContain("/kesfet/kafe_lokanta");
+  });
+
+  it("aktif kategori aria-current ile işaretlenir", () => {
+    expect(seritKaynak).toContain("aria-current");
+    expect(seritKaynak).toContain("aktifKimlik");
   });
 });
