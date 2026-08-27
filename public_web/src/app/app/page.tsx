@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { sahipOturumuAc } from "@/lib/ownerCookie";
 import type { User } from "@supabase/supabase-js";
 import {
   taslagiOku,
@@ -27,6 +28,12 @@ interface Store {
   product_categories: OwnerProductCategory[];
 }
 
+interface BootstrapOwnerState {
+  has_store?: boolean;
+  slug?: string;
+  reason?: string;
+}
+
 export const dynamic = "force-dynamic";
 
 export default function AppPage() {
@@ -43,14 +50,42 @@ export default function AppPage() {
   // soruları ikinci kez sormayız.
   const [asistanTaslagi, setAsistanTaslagi] = useState<AsistanCevaplari>({});
 
-  async function magazalariGetir(userId: string, showLoading = true) {
+  async function magazalariGetir(showLoading = true) {
     if (showLoading) setYukleniyor(true);
+    setHata("");
+
+    const { data: durum, error: durumHatasi } = await supabase.rpc(
+      "bootstrap_owner_state"
+    );
+
+    if (durumHatasi) {
+      setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
+      setStores([]);
+      if (showLoading) setYukleniyor(false);
+      return;
+    }
+
+    const sonuc = (durum ?? {}) as BootstrapOwnerState;
+    if (sonuc.has_store !== true) {
+      setStores([]);
+      if (showLoading) setYukleniyor(false);
+      return;
+    }
+
+    const slug = sonuc.slug?.trim();
+    if (!slug) {
+      setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
+      setStores([]);
+      if (showLoading) setYukleniyor(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("stores")
       .select(
         "id, slug, name, is_published, kategori, updated_at, products(id, slug, name, description, price_text, image_urls, category_id, stock_status, product_categories(name)), product_categories(id, name)"
       )
-      .eq("user_id", userId)
+      .eq("slug", slug)
       .order("updated_at", { ascending: false });
 
     if (error) {
@@ -60,33 +95,7 @@ export default function AppPage() {
     if (showLoading) setYukleniyor(false);
   }
 
-  /**
-   * Hesabın vitrini için sahip çerezini kurar.
-   *
-   * Ürün ekle/düzenle/sil çağrılarının hepsi bu çereze bakıyor. Çerez
-   * kısa ömürlü olduğu için panoya HER dönüşte yeniden kurulmalı —
-   * yoksa kullanıcı ikinci ziyaretinde ürün yönetemez.
-   */
-  async function sahipOturumuAc(): Promise<boolean> {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) return false;
 
-    const res = await fetch("/api/owner-session/self", {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return false;
-
-    const sonuc = await res.json();
-    if (!sonuc?.yonlendir) return false;
-
-    // Çerezi kuran tek yer `/api/owner-session`; burada yalnız ona gidiyoruz.
-    await fetch(sonuc.yonlendir, { redirect: "manual" });
-    return true;
-  }
 
   useEffect(() => {
     async function init() {
@@ -107,7 +116,7 @@ export default function AppPage() {
         if (taslak.name) setYeniAd(taslak.name);
       }
 
-      await magazalariGetir(session.user.id);
+      await magazalariGetir();
 
       // Sahip çerezi kısa ömürlü. Panoya her dönüşte yeniden kuruluyor —
       // yoksa kullanıcı ikinci ziyaretinde ürün ekleyemez/silemez, her
@@ -300,9 +309,55 @@ export default function AppPage() {
               products={stores[0].products ?? []}
               categories={stores[0].product_categories ?? []}
               onRefresh={async () => {
-                if (user) await magazalariGetir(user.id, false);
+                await magazalariGetir(false);
               }}
             />
+
+            {/* Blog ve randevu yönetim bağlantıları */}
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <Link
+                href={`/v/${stores[0].slug}/blog-yonetim`}
+                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
+              >
+                <span className="text-2xl">📝</span>
+                <div>
+                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                    Blog Yönetimi
+                  </p>
+                  <p className="text-xs text-[var(--owner-muted)]">
+                    Yazılarını düzenle ve yeni yazı oluştur
+                  </p>
+                </div>
+              </Link>
+              <Link
+                href={`/v/${stores[0].slug}/randevu-yonetim`}
+                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
+              >
+                <span className="text-2xl">📅</span>
+                <div>
+                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                    Randevu Yönetimi
+                  </p>
+                  <p className="text-xs text-[var(--owner-muted)]">
+                    Bekleyen randevuları onayla veya reddet
+                  </p>
+                </div>
+              </Link>
+              <Link
+                href="/app/moderasyon"
+                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
+              >
+                <span className="text-2xl">🛡️</span>
+                <div>
+                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                    Blog Moderasyonu
+                  </p>
+                  <p className="text-xs text-[var(--owner-muted)]">
+                    İnceleme bekleyen yazıları değerlendir
+                  </p>
+                </div>
+              </Link>
+            </div>
           </section>
         )}
       </div>
