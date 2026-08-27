@@ -26,6 +26,7 @@ const urunler = oku("src/components/owner/OwnerProductManager.tsx");
 // Sahip yönetim yüzeyleri — yeni sayfa eklenince buraya da eklenmeli.
 const YONETIM_SAYFALARI = [
   "src/app/app/page.tsx",
+  "src/app/app/hesap/page.tsx",
   "src/app/v/[slug]/blog-yonetim/page.tsx",
   "src/app/v/[slug]/blog-yonetim/[articleSlug]/page.tsx",
   "src/app/v/[slug]/randevu-yonetim/page.tsx",

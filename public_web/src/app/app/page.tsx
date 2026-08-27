@@ -212,6 +212,12 @@ export default function AppPage() {
           </div>
           <div className="flex min-w-0 items-center gap-3">
             <span className="max-w-44 truncate text-xs text-[var(--owner-muted)] sm:max-w-none">{user?.email}</span>
+            <Link
+              href="/app/hesap"
+              className="owner-button-secondary min-h-11 shrink-0 px-4 py-2 text-xs"
+            >
+              Hesap
+            </Link>
             <button
               type="button"
               onClick={cikisYap}
