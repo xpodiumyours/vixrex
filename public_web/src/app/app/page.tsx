@@ -61,8 +61,17 @@ export default function AppPage() {
       }
       setUser(session.user);
       await magazalariGetir(session.user.id);
+
+      // Sahip çerezi kısa ömürlü. Panoya her dönüşte yeniden kuruluyor —
+      // yoksa kullanıcı ikinci ziyaretinde ürün ekleyemez/silemez, her
+      // çağrı 401 döner. Vitrini olmayan hesapta sessizce başarısız olur,
+      // kurulum akışı zaten ayrı.
+      await sahipOturumuAc();
     }
     init();
+    // `sahipOturumuAc` bileşen kapsamında sabit; bağımlılığa eklemek
+    // gereksiz yeniden koşuma yol açar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   async function magazaOlustur(e: React.FormEvent) {
@@ -102,16 +111,45 @@ export default function AppPage() {
       return;
     }
 
-    // Vitrin oluşturuldu — owner session kur ve vitrine git
-    // Basitleştirme: edit_token ile owner-session'a geç
-    if (sonuc.slug && sonuc.editToken) {
-      await fetch(
-        `/api/owner-session?slug=${sonuc.slug}&ocode=${sonuc.editToken}`,
-        { redirect: "manual" }
-      );
-      // owner-session redirect zincirini takip et
+    // Vitrin oluşturuldu — sahip oturumunu aç ve vitrine git.
+    //
+    // Buradaki eski "basitleştirme" çalışmıyordu: `edit_token`'ı doğrudan
+    // `ocode` olarak gönderiyordu. `/api/owner-session` ise
+    // `consume_owner_session` çağırıyor ve TEK KULLANIMLIK KOD bekliyor —
+    // canlıda doğrulandı, `edit_token` kabul etmiyor. Kod bulunamadığı
+    // için çerez hiç kurulmuyordu ve bütün ürün işlemleri 401 alıyordu.
+    if (sonuc.slug) {
+      await sahipOturumuAc();
       router.push(`/v/${sonuc.slug}`);
     }
+  }
+
+  /**
+   * Hesabın vitrini için sahip çerezini kurar.
+   *
+   * Ürün ekle/düzenle/sil çağrılarının hepsi bu çereze bakıyor. Çerez
+   * kısa ömürlü olduğu için panoya HER dönüşte yeniden kurulmalı —
+   * yoksa kullanıcı ikinci ziyaretinde ürün yönetemez.
+   */
+  async function sahipOturumuAc(): Promise<boolean> {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return false;
+
+    const res = await fetch("/api/owner-session/self", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return false;
+
+    const sonuc = await res.json();
+    if (!sonuc?.yonlendir) return false;
+
+    // Çerezi kuran tek yer `/api/owner-session`; burada yalnız ona gidiyoruz.
+    await fetch(sonuc.yonlendir, { redirect: "manual" });
+    return true;
   }
 
   async function cikisYap() {
