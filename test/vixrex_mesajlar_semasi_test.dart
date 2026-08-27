@@ -12,7 +12,8 @@ void main() {
     expect(vixRexIntentSemasi.length, 16);
     // 2026-08-27: landing asistanı gerçek hâle getirilirken kapanış
     // mesajları eklendi (landing_finish_baslik/aciklama/buton) — 96 → 99.
+    // Blog yayınlama sonucu iki yüzeyde ortaklaştırıldı — 99 → 100.
     // Sayı kilidi bilerek duruyor: katalog sessizce büyümesin.
-    expect(vixRexMesajlari.length, 99);
+    expect(vixRexMesajlari.length, 100);
   });
 }

@@ -36,6 +36,7 @@
     { "anahtar": "whatsapp", "metin": "WhatsApp numaran Vitrinim iletişim alanında. Oradan güncelle." },
     { "anahtar": "adres", "metin": "Konumunu Vitrinim adres alanından güncelle — GPS veya elle." },
     { "anahtar": "yayinla", "metin": "Yayın için yasal onaylar ve Yayınla butonu Vitrinim’de. Oradan devam et." },
+    { "anahtar": "blog_yayinlandi", "metin": "Yazı yayınlandı." },
     { "anahtar": "ocr_scan", "metin": "Fiş/fatura veya raf etiketi ile ürün aktar — mevcut tarayıcıyı aç." },
     { "anahtar": "ocr_info", "metin": "Nasıl Çalışır:\n1. Fotoğrafınızı çekin veya galeriden seçin\n2. Ürünler otomatik olarak tanınır\n3. Ürünleri onaylayın veya düzenleyin\n4. Onaylanan ürünler vitrininize eklenir\n\nNot: Bu özellik premium gerektirir." },
     { "anahtar": "ocr_premium", "metin": "Premium üyelik ile:\n• Fotoğraftan sınırsız ürün çıkarma\n• Faturadan otomatik ürün kaydı\n• Toplu Excel yükleme\n• Barkod tarama\n\nÜcretsiz deneme: Günde 3 ücretsiz OCR hakkı.\nPremium için uygulama içinden satın alma yapabilirsiniz." },
