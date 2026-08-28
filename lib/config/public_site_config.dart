@@ -1,6 +1,9 @@
 class PublicSiteConfig {
   /// Vitrinlerin yayınlandığı adres. Uygulamanın kendi adresi DEĞİL.
-  static const String varsayilanKoken = 'https://vixrex-public.vercel.app';
+  /// 2026-08-28: gerçek alan adı alındı (vixrex.com). Eski vercel.app
+  /// adresi çalışmaya devam ediyor — yüklü APK'lar ve paylaşılmış eski
+  /// bağlantılar oradan geliyor.
+  static const String varsayilanKoken = 'https://vixrex.com';
 
   static const String configuredOrigin = String.fromEnvironment(
     'PUBLIC_SITE_URL',

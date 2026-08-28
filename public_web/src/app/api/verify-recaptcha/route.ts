@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRecaptchaToken } from "@/lib/recaptchaServer";
 
+// Eski vercel.app adresi listede KALIYOR: alan adı geçişinden sonra da
+// bir süre erişilebilir olacak (yüklü APK'lar ve paylaşılmış eski
+// bağlantılar oradan geliyor). Yenisi eklendi, eskisi çıkarılmadı.
 const ALLOWED_ORIGINS = new Set([
+  "https://vixrex.com",
+  "https://www.vixrex.com",
   "https://app.vixrex.app",
   "https://vixrex-public.vercel.app",
 ]);

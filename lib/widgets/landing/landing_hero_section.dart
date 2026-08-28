@@ -508,7 +508,7 @@ class LandingHeroSection extends StatelessWidget {
                           child: Text(
                             formConstraints.maxWidth < 400
                                 ? '/v/'
-                                : 'vixrex-public.vercel.app/v/',
+                                : 'vixrex.com/v/',
                             style: const TextStyle(
                               color: Colors.white60,
                               fontSize: 14,

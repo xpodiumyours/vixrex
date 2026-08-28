@@ -1,4 +1,7 @@
-const DEFAULT_SITE_URL = "https://vixrex-public.vercel.app";
+// 2026-08-28: gerçek alan adı alındı ve vixrex-public projesine bağlandı.
+// Dropshipping/affiliate programları vercel.app alt alan adını publisher
+// olarak kabul etmiyor; başvuru için kendi alan adı şarttı.
+const DEFAULT_SITE_URL = "https://vixrex.com";
 const LOCAL_DEV_SITE_URL = "http://localhost:3000";
 
 // Uygulamanın (esnaf paneli) adresi. Vitrin adresinden AYRIDIR.

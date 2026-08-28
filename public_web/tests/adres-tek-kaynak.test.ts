@@ -29,11 +29,18 @@ function kodSatirlari(kaynak: string): string {
     .join("\n");
 }
 
+// 2026-08-28: alan adı GERÇEKTEN ALINDI (vixrex.com, Vercel'den satın
+// alındı ve vixrex-public projesine bağlandı; https://vixrex.com 200
+// dönüyor). Artık ölü adres değil.
+//
+// Bu yüzden `siteUrl.ts` listeden ÇIKARILDI: adresin tanımlandığı tek
+// yer orası ve orada yazılı olması gerekiyor. Testin asıl niyeti
+// değişmedi — adres SAYFALARA dağılmasın, tek kaynaktan gelsin. Diğer üç
+// dosyada elle yazılması hâlâ hata.
 const KAYNAKLAR = [
   "../src/app/v/[slug]/VitrinProfileView.tsx",
   "../src/app/v/[slug]/OwnerAssistantPanel.tsx",
   "../src/app/(site)/page.tsx",
-  "../src/lib/siteUrl.ts",
 ];
 
 describe("Adresler tek kaynaktan gelir", () => {
@@ -73,6 +80,19 @@ describe("Adresler tek kaynaktan gelir", () => {
       "utf-8"
     );
     expect(nextConfig).not.toContain("function getAppUrl");
+  });
+
+  it("alan adı yalnız siteUrl.ts içinde tanımlı", () => {
+    // Adres artık gerçek, ama hâlâ TEK yerde durmalı. İkinci bir kopya
+    // doğarsa iki gerçek doğar.
+    const siteUrl = readFileSync(
+      resolve(__dirname, "../src/lib/siteUrl.ts"),
+      "utf-8"
+    );
+    const kod = kodSatirlari(siteUrl);
+    const tanimSayisi = kod.split("const DEFAULT_SITE_URL").length - 1;
+    expect(tanimSayisi).toBe(1);
+    expect(OLU_ADRES.test(kod)).toBe(true);
   });
 
   it("paylaşım kutusu kopyalananla aynı adresi gösterir", () => {
