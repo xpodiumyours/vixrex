@@ -26,9 +26,15 @@ export function SiteFooter() {
         </p>
 
         <nav
-          aria-label="Yasal bilgiler"
+          aria-label="Yardım ve yasal bilgiler"
           className="flex flex-wrap items-center justify-center gap-1"
         >
+          <Link
+            href="/yardim"
+            className="px-3 py-2 text-[13px] font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"
+          >
+            Yardım ve Destek
+          </Link>
           <Link
             href="/privacy"
             className="px-3 py-2 text-[13px] font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"

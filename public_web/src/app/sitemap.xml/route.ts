@@ -104,6 +104,10 @@ export async function GET() {
         oncelik: "0.7",
         siklik: "weekly",
       })),
+      // Yardım sayfası aramadan gelen esnaf için giriş kapısı: "vitrin nasıl
+      // kurulur", "QR menü" gibi sorulara cevap veriyor. Yasal metinlerden
+      // yüksek öncelikli, Keşfet'ten düşük.
+      { yol: "/yardim", oncelik: "0.6", siklik: "monthly" },
       { yol: "/privacy", oncelik: "0.3", siklik: "yearly" },
       { yol: "/legal/privacy", oncelik: "0.3", siklik: "yearly" },
       { yol: "/legal/terms", oncelik: "0.3", siklik: "yearly" },

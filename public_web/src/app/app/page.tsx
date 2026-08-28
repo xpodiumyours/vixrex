@@ -377,6 +377,20 @@ export default function AppPage() {
                   </p>
                 </div>
               </Link>
+              <Link
+                href="/yardim"
+                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
+              >
+                <span className="text-2xl" aria-hidden="true">❓</span>
+                <div>
+                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                    Yardım ve Destek
+                  </p>
+                  <p className="text-xs text-[var(--owner-muted)]">
+                    Kullanım bilgileri ve sık sorulan sorular
+                  </p>
+                </div>
+              </Link>
 
             </div>
           </section>
