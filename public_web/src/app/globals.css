@@ -581,6 +581,19 @@ body.vixrex-kaydediliyor .vixrex-secili-alan {
   animation: vixrex-kaydediliyor-nefes 1s ease-in-out infinite;
 }
 
+/* Vixrex mascot glow pulse — Flutter'daki chatbot_badge.dart pulse animasyonunun CSS karşılığı */
+@keyframes mascot-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 12px 2px rgba(14, 165, 233, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(14, 165, 233, 0.45);
+  }
+}
+.animate-mascot-pulse {
+  animation: mascot-pulse-glow 2s ease-in-out infinite;
+}
+
 /* Hareketi azaltılmış cihazlarda animasyon yok — yalnız renk kalır. */
 @media (prefers-reduced-motion: reduce) {
   .vixrex-degisti,
