@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 type BootstrapSonucu = {
   has_store?: boolean;
@@ -34,8 +35,17 @@ export async function GET(request: NextRequest) {
     return hataYaniti("Sunucu yapılandırması eksik.", 500);
   }
 
-  // Her üç RPC de sahipliği auth.uid() ve/veya sahibin edit token'ı ile
-  // doğrular. Yönetici istemcisi auth.uid() bilgisini kaybeder; kullanılmaz.
+  // Sahiplik `bootstrap_owner_state` ile kuruluyor; o RPC auth.uid()
+  // istiyor, yönetici istemcisi orada kullanılamaz.
+  //
+  // AMA ölçüm RPC'lerinin ikisi aynı değil (canlıdan ölçüldü, 28 Ağustos):
+  //   get_store_premium_status     → authenticated ÇAĞIRABİLİR
+  //   get_today_vitrin_view_count  → authenticated ÇAĞIRAMAZ (yetki yok;
+  //                                  anon ve service_role çağırabiliyor)
+  // İkincisini kullanıcı jetonuyla çağırmak her istekte yetki hatası
+  // veriyordu — pano hiçbir sayı gösteremezdi. O çağrı yönetici
+  // istemcisiyle yapılıyor; sahiplik zaten yukarıda doğrulandı ve RPC
+  // ayrıca edit_token istiyor.
   const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: `Bearer ${bearerToken}` } },
@@ -67,7 +77,7 @@ export async function GET(request: NextRequest) {
   }
 
   const [ziyaretYaniti, premiumYaniti] = await Promise.all([
-    supabaseUser.rpc("get_today_vitrin_view_count", {
+    getSupabaseAdmin().rpc("get_today_vitrin_view_count", {
       p_slug: slug,
       p_edit_token: editToken,
     }),
