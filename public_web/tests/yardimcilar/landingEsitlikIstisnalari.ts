@@ -13,9 +13,9 @@
 type Istisna = { metin: string; neden: string };
 
 const KATALOG_ETIKETI =
-  "Flutter kataloğunun 20 arayüz anahtarından biri. Web, paylaşılan " +
-  "sözleşmedeki (shared/business_categories.json) 19 kanonik etiketi " +
-  "kullanıyor; Flutter'ın anahtarlarının 11'i veritabanında karşılıksız.";
+  "Flutter kataloğunun şablon kataloğu (landing_template_category.dart) " +
+  "kendi etiketlerini kullanır; bunlar shared/business_categories.json'daki " +
+  "19 kanonik etiketten farklı olabilir (ör. 'Butik & Giyim' vs 'Giyim').";
 
 const ALT_SAYFA =
   "Flutter kataloğu bir alt sayfa (bottom sheet) açıyor. Webde onun yerine " +
@@ -33,10 +33,7 @@ export const LANDING_ESITLIK_ISTISNALARI: Istisna[] = [
   { metin: "Spor Salonu", neden: KATALOG_ETIKETI },
   { metin: "Diş Kliniği", neden: KATALOG_ETIKETI },
   { metin: "Teknik Servis", neden: KATALOG_ETIKETI },
-  { metin: "Pet Shop & Veteriner", neden: KATALOG_ETIKETI },
-  { metin: "Hizmet & Danışmanlık", neden: KATALOG_ETIKETI },
-  { metin: "Eğitim & Ders", neden: KATALOG_ETIKETI },
-  { metin: "Ev & Temizlik", neden: KATALOG_ETIKETI },
+
 
   { metin: "Hazır görseller yükleniyor...", neden: ALT_SAYFA },
   { metin: "Kapak Görselleri", neden: ALT_SAYFA },
