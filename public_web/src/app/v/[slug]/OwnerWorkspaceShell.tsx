@@ -79,12 +79,16 @@ export interface OwnerWorkspaceShellProps {
   draft?: WorkingDraftData | null;
   sessionExpiresAt?: number | null;
   assistantHandoff?: AssistantHandoffV1 | null;
+  bookingSettings?: Record<string, unknown> | null;
+  campaignBanner?: { label: string; title: string; description: string; priceText: string; imageUrl: string } | null;
 }
 
 export default function OwnerWorkspaceShell({
   draft,
   sessionExpiresAt,
   assistantHandoff,
+  bookingSettings,
+  campaignBanner,
   ...vitrinProps
 }: OwnerWorkspaceShellProps) {
   const [open, setOpen] = useState(false);
@@ -311,6 +315,10 @@ export default function OwnerWorkspaceShell({
           Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []
         }
         premiumAktifMi={Boolean(draft?.is_premium_active)}
+        bookingSettings={bookingSettings ?? null}
+        aboutSection={vitrinProps.aboutSection ? { kicker: vitrinProps.aboutSection.kicker ?? '', title: vitrinProps.aboutSection.title ?? '', body: vitrinProps.aboutSection.body ?? '', imageUrl: vitrinProps.aboutSection.imageUrl ?? '', imageCaption: vitrinProps.aboutSection.imageCaption ?? '', values: (vitrinProps.aboutSection.values ?? []).map(v => ({ id: v.id ?? '', title: v.title ?? '', description: v.description ?? '' })) } : null}
+        faqItems={(vitrinProps.faqItems ?? []).map(f => ({ id: f.id ?? '', question: f.question ?? '', answer: f.answer ?? '' }))}
+        campaignBanner={campaignBanner ?? null}
       />
     </>
   );

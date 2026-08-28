@@ -741,6 +741,8 @@ export default async function StorePage(props: PageProps) {
         <OwnerWorkspaceShell
           storeName={store.name}
           storeSlug={store.slug}
+          bookingSettings={bookingSettings as Record<string, unknown> | null}
+          campaignBanner={featuredBanner}
           kategori={store.kategori}
           businessType={store.business_type}
           status={displayStatus}
