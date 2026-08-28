@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import type { OwnerSession } from "@/lib/ownerSession";
 
 /**
  * YAZI VE RANDEVU API'LERİNİN YETKİ SÖZLEŞMESİ (2026-08-27).
@@ -17,9 +18,9 @@ import { NextRequest } from "next/server";
  */
 
 const { mockGet, mockGetSupabaseAdmin, mockVerifyOwner } = vi.hoisted(() => ({
-  mockGet: vi.fn(() => undefined),
+  mockGet: vi.fn<() => { value: string } | undefined>(() => undefined),
   mockGetSupabaseAdmin: vi.fn(),
-  mockVerifyOwner: vi.fn(() => null),
+  mockVerifyOwner: vi.fn<() => OwnerSession | null>(() => null),
 }));
 
 vi.mock("next/headers", () => ({
@@ -81,8 +82,12 @@ describe("/api/appointments yetki sözleşmesi", () => {
     // Sahip çerezi geçerli olsa bile Supabase erişim jetonu yoksa:
     // RPC `auth.uid()` istiyor, jetonsuz çağrı UNAUTHORIZED ile düşer.
     // Eğer biri geri dönüp getSupabaseAdmin().rpc() kullanırsa bu test kırılır.
-    mockVerifyOwner.mockReturnValueOnce({ storeId: "abc" });
-    mockGet.mockReturnValueOnce("valid-owner-cookie");
+    mockVerifyOwner.mockReturnValueOnce({
+      storeId: "abc",
+      slug: SLUG,
+      sessionToken: "a".repeat(64),
+    });
+    mockGet.mockReturnValueOnce({ value: "valid-owner-cookie" });
 
     const response = await RANDEVU_POST(
       istek("http://localhost/api/appointments", {
