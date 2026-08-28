@@ -1,12 +1,21 @@
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { alanOnemi } from "@/lib/vitrinReadiness";
 import { ImagePickerPanel } from "./ImagePickerPanel";
+import { turkeyProvinces, getDistrictsForProvince } from "@/lib/turkeyCities";
 import type { HazirGorsel } from "../hooks/useOwnerActions";
 
 interface Props {
   seciliAlan: VitrinField | null;
   giris: string;
   girisRef: React.RefObject<HTMLTextAreaElement | null>;
+  /** owner draft'tan okunan mevcut il değeri — ilçe dropdown'unun bağımlısı */
+  mevcutIl?: string;
+  /** owner draft'tan okunan mevcut ilçe değeri */
+  mevcutIlce?: string;
+  /**İl değiştiğinde çağrılır — ilçe dropdown'unu temizler */
+  onIlDegisti?: (il: string) => void;
+  /** İlçe değiştiğinde çağrılır */
+  onIlceDegisti?: (ilce: string) => void;
   kaydediliyor: boolean;
   geriAliniyor: boolean;
   hazirGorseller: HazirGorsel[];
@@ -31,6 +40,8 @@ export function FieldInputArea({
   geriAliniyor,
   hazirGorseller,
   hazirYukleniyor,
+  mevcutIl = "",
+  mevcutIlce = "",
   setGiris,
   gorselYukle,
   hazirGorselleriAc,
@@ -38,6 +49,8 @@ export function FieldInputArea({
   gonder,
   alanAtla,
   canliyaDondur,
+  onIlDegisti,
+  onIlceDegisti,
   sonrayaBirak,
 }: Props) {
   // "Boş geç" yalnız isteğe bağlı alanlarda çıkar — temel/kalite alanlar
@@ -119,6 +132,60 @@ export function FieldInputArea({
           <p className="mt-2 text-center text-[11px] text-slate-500">
             JPG, PNG veya WebP · en fazla 5 MB
           </p>
+        </div>
+      ) : seciliAlan?.anahtar === "il" ? (
+        /* İl dropdown — Flutter Web FormLocationInfo karşılığı */
+        <div className="flex items-end gap-2">
+          <select
+            value={mevcutIl}
+            onChange={(e) => {
+              const secilen = e.target.value;
+              setGiris(secilen);
+              onIlDegisti?.(secilen);
+            }}
+            disabled={kaydediliyor}
+            className="h-12 flex-1 rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60"
+          >
+            <option value="" disabled>İl seçin…</option>
+            {turkeyProvinces.map((p) => (
+              <option key={p.code} value={p.name}>{p.name}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => void gonder()}
+            disabled={kaydediliyor || !mevcutIl}
+            className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {kaydediliyor ? "…" : "Gönder"}
+          </button>
+        </div>
+      ) : seciliAlan?.anahtar === "ilce" ? (
+        /* İlçe dropdown — seçili ile göre filtrelenmiş */
+        <div className="flex items-end gap-2">
+          <select
+            value={mevcutIlce}
+            onChange={(e) => {
+              const secilen = e.target.value;
+              setGiris(secilen);
+              onIlceDegisti?.(secilen);
+            }}
+            disabled={kaydediliyor || !mevcutIl}
+            className="h-12 flex-1 rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60 disabled:opacity-50"
+          >
+            <option value="" disabled>{mevcutIl ? "İlçe seçin…" : "Önce il seçin"}</option>
+            {getDistrictsForProvince(mevcutIl).map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => void gonder()}
+            disabled={kaydediliyor || !mevcutIlce}
+            className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {kaydediliyor ? "…" : "Gönder"}
+          </button>
         </div>
       ) : seciliAlan?.tip === "secim" && seciliAlan.secenekler ? (
         <div className="flex items-end gap-2">
