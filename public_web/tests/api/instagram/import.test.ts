@@ -15,6 +15,16 @@ vi.mock("node:dns", () => ({
   },
 }));
 
+
+// 8x8 GERÇEK JPEG. Eskiden burada `ORNEK_JPEG` vardı;
+// 28 Ağustos 2026'da yükleme yoluna sunucu tarafı sıkıştırma eklendi
+// (src/lib/gorselSikistir.ts) ve sahte baytlar artık çözülemediği için
+// içe aktarma 500 dönüyordu. Sıkıştırma gerçek görsel bekliyor.
+const ORNEK_JPEG = Uint8Array.from(Buffer.from(
+  "/9j/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAgDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAP/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAABv/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/ALgDpI//2Q==",
+  "base64"
+));
+
 const mockResult = { data: null, error: null };
 let mockMaybeSingleResult: { data: unknown; error: null | { message?: string } } =
   mockResult;
@@ -223,7 +233,7 @@ describe("POST /api/instagram/import", () => {
             read: async () => {
               if (count > 0) return { done: true, value: undefined };
               count++;
-              return { done: false, value: new Uint8Array([1, 2, 3]) };
+              return { done: false, value: ORNEK_JPEG };
             },
           };
         },
@@ -249,7 +259,7 @@ describe("POST /api/instagram/import", () => {
     expect(json.product.slug).toBe("cool-product-description");
     expect(mockBuilder.storage.upload).toHaveBeenCalledWith(
       "test-store/instagram/media-1.jpg",
-      expect.any(Buffer),
+      expect.any(Uint8Array),
       expect.objectContaining({
         contentType: "image/jpeg",
         upsert: true,
@@ -453,7 +463,7 @@ describe("POST /api/instagram/import", () => {
             read: async () => {
               if (count > 0) return { done: true, value: undefined };
               count++;
-              return { done: false, value: new Uint8Array([1, 2, 3]) };
+              return { done: false, value: ORNEK_JPEG };
             },
           };
         },
@@ -476,7 +486,7 @@ describe("POST /api/instagram/import", () => {
     expect(json.product.imagePath).toBe("http://storage/img.jpg");
     expect(mockBuilder.storage.upload).toHaveBeenCalledWith(
       "test-store/instagram/media-1.jpg",
-      expect.any(Buffer),
+      expect.any(Uint8Array),
       expect.objectContaining({ contentType: "image/jpeg", upsert: true }),
     );
   });
