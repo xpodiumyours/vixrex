@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, type ReactNode } from "react";
+import { BottomCta } from "./BottomCta";
 import { MascotFab } from "./MascotFab";
 import { HeroSection } from "./HeroSection";
 import type { MockupProfili } from "./mockupProfilleri";
@@ -16,11 +17,26 @@ import type { MockupProfili } from "./mockupProfilleri";
  * MascotFab/PhoneMockup arasındaki köprüdür.
  */
 export function LandingChatWrapper({
+  children,
   profiller,
 }: {
+  children: ReactNode;
   profiller: MockupProfili[];
 }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [initialAssistantName, setInitialAssistantName] = useState("");
+
+  const handleStartAssistant = useCallback((initialName = "") => {
+    const temizAd = initialName.trim();
+    if (temizAd) setInitialAssistantName(temizAd);
+    setIsChatOpen(true);
+    window.requestAnimationFrame(() => {
+      document.getElementById("vixrex-hero")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, []);
 
   const handleToggle = useCallback(() => {
     setIsChatOpen((onceki) => !onceki);
@@ -32,7 +48,15 @@ export function LandingChatWrapper({
 
   return (
     <>
-      <HeroSection profiller={profiller} isChatOpen={isChatOpen} onChatClose={handleChatClose} />
+      <HeroSection
+        profiller={profiller}
+        isChatOpen={isChatOpen}
+        initialAssistantName={initialAssistantName}
+        onStartAssistant={handleStartAssistant}
+        onChatClose={handleChatClose}
+      />
+      {children}
+      <BottomCta onStartAssistant={() => handleStartAssistant()} />
       <MascotFab onToggle={handleToggle} />
     </>
   );

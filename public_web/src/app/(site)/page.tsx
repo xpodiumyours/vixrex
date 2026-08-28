@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { BottomCta } from "@/components/landing/BottomCta";
 import { ComparisonSection } from "@/components/landing/ComparisonSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { LandingChatWrapper } from "@/components/landing/LandingChatWrapper";
@@ -44,14 +43,14 @@ export default async function HomePage() {
 
   return (
     <>
-      <LandingChatWrapper profiller={profiller} />
-      <ValueBand />
-      <FeaturesSection />
-      <ComparisonSection />
-      <TrustBand />
-      <StepsSection />
-      <TemplateCatalog />
-      <BottomCta />
+      <LandingChatWrapper profiller={profiller}>
+        <ValueBand />
+        <FeaturesSection />
+        <ComparisonSection />
+        <TrustBand />
+        <StepsSection />
+        <TemplateCatalog />
+      </LandingChatWrapper>
     </>
   );
 }

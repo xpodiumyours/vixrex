@@ -41,10 +41,22 @@ import {
  * Legal ve publish adımları demo kipinden çıkar —真正 hesap oluşturma ve
  * vitrin publish işlemi yapılır.
  */
-export function LandingAsistanSohbeti({ onClose }: { onClose?: () => void }) {
-  const [adim, setAdim] = useState(-1); // -1: karşılama
+export function LandingAsistanSohbeti({
+  initialName = "",
+  onClose,
+}: {
+  initialName?: string;
+  onClose?: () => void;
+}) {
+  const tasinanIsletmeAdi = initialName.trim();
+  const [adim, setAdim] = useState(tasinanIsletmeAdi ? 1 : -1); // -1: karşılama
   const [girdi, setGirdi] = useState("");
-  const [cevaplar, setCevaplar] = useState<AsistanCevaplari>({});
+  const [cevaplar, setCevaplar] = useState<AsistanCevaplari>(() => {
+    if (!tasinanIsletmeAdi) return {};
+    const baslangic = { name: initialName.trim() };
+    taslagiKaydet(baslangic);
+    return baslangic;
+  });
   const [il, setIl] = useState("");
   const [ilce, setIlce] = useState("");
   const [adres, setAdres] = useState("");

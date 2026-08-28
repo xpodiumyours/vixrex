@@ -18,10 +18,12 @@ import { LandingAsistanSohbeti } from "./LandingAsistanSohbeti";
 export function PhoneMockup({
   profiller,
   isChatOpen = false,
+  initialAssistantName = "",
   onChatClose,
 }: {
   profiller: MockupProfili[];
   isChatOpen?: boolean;
+  initialAssistantName?: string;
   onChatClose?: () => void;
 }) {
   const ilk = profiller[0];
@@ -83,7 +85,10 @@ export function PhoneMockup({
           {/* İçerik */}
           <div className="h-full">
             {isChatOpen ? (
-              <LandingAsistanSohbeti onClose={onChatClose} />
+              <LandingAsistanSohbeti
+                initialName={initialAssistantName}
+                onClose={onChatClose}
+              />
             ) : (
               <PhoneMockupSlaytlari profiller={profiller} />
             )}
