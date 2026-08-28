@@ -79,3 +79,9 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     neden: KONUM_WEB_OZEL,
   },
 ];
+
+// Blog altbilgi bağlantısı (28 Ağustos) buraya İSTİSNA OLARAK GİRMEDİ ve
+// girmemeli: web→Flutter yönündeki çıkarıcı yalnız
+// `public_web/src/components/landing` dizinini tarıyor ve en az 6 karakter
+// + boşluk arıyor. "Blog" ikisini de karşılamıyor, altbilgi de o dizinde
+// değil. Buraya yazılırsa "bayat istisna" kontrolü kırılır — ölçüldü.
