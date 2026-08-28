@@ -25,28 +25,49 @@ const oku = (yol: string) => readFileSync(resolve(KOK, yol), "utf8");
 
 const akis = oku("src/lib/landingAsistanAkisi.ts");
 const bilesen = oku("src/components/landing/LandingAsistanSohbeti.tsx");
+const ortakKatalog = katalog as typeof katalog & {
+  akis: { id: string; alanlar: string[]; mesaj: string }[];
+};
 
 const mesajAnahtarlari = new Set(
   (katalog.mesajlar as { anahtar: string }[]).map((m) => m.anahtar)
 );
 
 describe("landing asistanı tek kaynaktan konuşuyor", () => {
-  it("akış dosyasının kullandığı her anahtar katalogda var", () => {
-    const kullanilan = [...akis.matchAll(/metin\("([^"]+)"\)/g)].map(
-      (m) => m[1]
+  it("ortak akışın her adımında üç mesaj da katalogda var", () => {
+    expect(ortakKatalog.akis.map((adim) => adim.id)).toEqual([
+      "name", "category", "whatsapp", "location", "legal", "publish", "share",
+    ]);
+    const eksik = ortakKatalog.akis.flatMap((adim) =>
+      ["baslik", "aciklama", "buton"]
+        .map((sonEk) => `${adim.mesaj}_${sonEk}`)
+        .filter((anahtar) => !mesajAnahtarlari.has(anahtar)),
     );
-
-    // Çıkarıcı bozulursa test sessizce yeşile döner: hiç anahtar
-    // bulamayan bir tarama hiçbir eksiği yakalayamaz.
-    expect(kullanilan.length).toBeGreaterThan(10);
-
-    const eksik = kullanilan.filter((a) => !mesajAnahtarlari.has(a));
     expect(
       eksik,
       "Bu anahtarlar shared/vixrex_mesajlar.json içinde yok. " +
         "Metni bileşene yazmak yerine kataloğa ekleyin ve " +
         "`dart run tool/mesaj_semasi_uret.dart` ile Flutter tarafını tazeleyin."
     ).toEqual([]);
+  });
+
+  it("landing ve APK aynı akış sözleşmesini tüketiyor", () => {
+    expect(akis).toContain("vixRexAsistanAkisi");
+    expect(akis).not.toContain("export const ASISTAN_ADIMLARI: AsistanAdimi[] = [");
+    expect(oku("../lib/services/vixrex_profile_snapshot.dart")).toContain(
+      "vixRexAsistanAdimiForAlan",
+    );
+    const apkController = oku("../lib/controllers/vixrex_onboarding_controller.dart");
+    expect(apkController).toContain("_akisMesaji('location')");
+    expect(apkController).not.toContain("İşletmen nerede?\\n");
+  });
+
+  it("landing konuşması yeni asistan oluşturmadan sahip oturumuna devrediliyor", () => {
+    expect(akis).toContain("asistanHandoffOlustur");
+    expect(bilesen).toContain("assistant_handoff: asistanHandoffOlustur");
+    expect(oku("src/app/api/create-store/route.ts")).toContain(
+      '"create_owner_session_with_handoff"',
+    );
   });
 
   it("bileşende elle yazılmış kullanıcı cümlesi yok", () => {

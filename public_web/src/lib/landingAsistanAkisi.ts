@@ -1,4 +1,9 @@
-import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
+import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
+import {
+  vixRexAsistanAkisi,
+  vixRexMesajlari,
+  type VixRexAsistanAkisAdimi,
+} from "@/lib/vixrexMesajlari";
 
 /**
  * Ana sayfadaki Vixrex Asistan'ın konuşma akışı.
@@ -20,14 +25,17 @@ import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
  */
 
 export type AsistanAdimi = {
-  /** Toplanan cevabın anahtarı; `create-store` gövdesiyle aynı adlandırma. */
-  alan: "name" | "kategori" | "whatsapp" | "address";
+  alan: VixRexAsistanAkisAdimi["id"];
+  kolonlar: string[];
+  cevapAnahtari: keyof AsistanCevaplari | null;
+  girdi: VixRexAsistanAkisAdimi["girdi"];
   baslik: string;
   aciklama: string;
   dugme: string;
   yerTutucu: string;
   /** Boş bırakılabilir mi — vitrin kurmak için yalnız ad zorunlu. */
   zorunlu: boolean;
+  secenekler: readonly string[];
 };
 
 function metin(anahtar: string): string {
@@ -48,40 +56,33 @@ export const ASISTAN_KARSILAMA = {
   dugme: metin("welcome_buton"),
 };
 
-export const ASISTAN_ADIMLARI: AsistanAdimi[] = [
-  {
-    alan: "name",
-    baslik: metin("setup_name_baslik"),
-    aciklama: metin("setup_name_aciklama"),
-    dugme: metin("setup_name_buton"),
-    yerTutucu: "Ör. Aymira Giyim",
-    zorunlu: true,
-  },
-  {
-    alan: "kategori",
-    baslik: metin("setup_category_baslik"),
-    aciklama: metin("setup_category_aciklama"),
-    dugme: metin("setup_category_buton"),
-    yerTutucu: "Ör. Butik & Giyim",
-    zorunlu: false,
-  },
-  {
-    alan: "whatsapp",
-    baslik: metin("setup_whatsapp_baslik"),
-    aciklama: metin("setup_whatsapp_aciklama"),
-    dugme: metin("setup_whatsapp_buton"),
-    yerTutucu: "05xx xxx xx xx",
-    zorunlu: false,
-  },
-  {
-    alan: "address",
-    baslik: metin("setup_address_baslik"),
-    aciklama: metin("setup_address_aciklama"),
-    dugme: metin("setup_address_buton"),
-    yerTutucu: "Mahalle, ilçe, il",
-    zorunlu: false,
-  },
-];
+const CEVAP_ANAHTARLARI: Readonly<Record<string, keyof AsistanCevaplari>> = {
+  isletmeAdi: "name",
+  kategori: "kategori",
+  whatsapp: "whatsapp",
+};
+
+export const ASISTAN_ADIMLARI: AsistanAdimi[] = vixRexAsistanAkisi
+  .filter((adim) => ["name", "category", "whatsapp", "location"].includes(adim.id))
+  .map((adim) => {
+    const alanlar = adim.alanlar.map((anahtar) => FIELD_BY_KEY.get(anahtar));
+    if (alanlar.some((alan) => !alan)) {
+      throw new Error(`Vixrex asistan akışında tanımsız alan var: ${adim.alanlar.join(", ")}`);
+    }
+    const ilkAlan = alanlar[0]!;
+    return {
+      alan: adim.id,
+      kolonlar: alanlar.map((alan) => alan!.kolon),
+      cevapAnahtari: CEVAP_ANAHTARLARI[ilkAlan.anahtar] ?? null,
+      girdi: adim.girdi,
+      baslik: metin(`${adim.mesaj}_baslik`),
+      aciklama: metin(`${adim.mesaj}_aciklama`),
+      dugme: metin(`${adim.mesaj}_buton`),
+      yerTutucu: adim.yerTutucu ?? "",
+      zorunlu: alanlar.some((alan) => alan!.zorunlu === true),
+      secenekler: ilkAlan.secenekler ?? [],
+    };
+  });
 
 export const ASISTAN_BITIS = {
   baslik: metin("landing_finish_baslik"),
@@ -90,7 +91,54 @@ export const ASISTAN_BITIS = {
 };
 
 /** Sohbette toplanan cevaplar. Veritabanına değil, tarayıcıya yazılır. */
-export type AsistanCevaplari = Partial<Record<AsistanAdimi["alan"], string>>;
+export interface AsistanCevaplari {
+  name?: string;
+  kategori?: string;
+  whatsapp?: string;
+  address?: string;
+  province_name?: string;
+  district_name?: string;
+  latitude?: number;
+  longitude?: number;
+  location_accuracy_meters?: number;
+  location_source?: "browser_gps" | "manual";
+  assistant_handoff?: {
+    version: 1;
+    completed_steps: ["name", "category", "whatsapp", "location"];
+    next_step: "legal";
+    messages: { role: "assistant" | "user"; text: string }[];
+  };
+}
+
+export function asistanHandoffOlustur(
+  cevaplar: AsistanCevaplari,
+): NonNullable<AsistanCevaplari["assistant_handoff"]> {
+  const messages: { role: "assistant" | "user"; text: string }[] = [
+    {
+      role: "assistant",
+      text: `${ASISTAN_KARSILAMA.baslik}\n${ASISTAN_KARSILAMA.aciklama}`,
+    },
+  ];
+  for (const adim of ASISTAN_ADIMLARI) {
+    const cevap = adim.alan === "location"
+      ? [cevaplar.district_name, cevaplar.province_name, cevaplar.address]
+          .filter(Boolean)
+          .join(" — ")
+      : adim.cevapAnahtari
+        ? String(cevaplar[adim.cevapAnahtari] ?? "")
+        : "";
+    messages.push(
+      { role: "assistant", text: `${adim.baslik}\n${adim.aciklama}` },
+      { role: "user", text: cevap },
+    );
+  }
+  return {
+    version: 1,
+    completed_steps: ["name", "category", "whatsapp", "location"],
+    next_step: "legal",
+    messages,
+  };
+}
 
 export const ASISTAN_TASLAK_ANAHTARI = "vixrex_asistan_taslak";
 

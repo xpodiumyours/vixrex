@@ -2,6 +2,15 @@
   "_uretim": "tool/mesaj_semasi_uret.dart — ELLE DÜZENLEME",
   "_kaynak": "lib/config/chatbot_config.dart + lib/services/vixrex_guidance_service.dart",
   "_not": "Yalnız sabit metin içeriği burada — dinamik olarak birleştirilen mesajlar (ör. snapshotWelcome, nextStepTip) ve hızlı yanıtların aksiyon/payload bağlantıları burada değil, kod tarafında kalır. Faz B (Tek Asistan planı) kapsamı: tek dil/tek ton için karşılaştırılabilir metin gövdesi. Faz G3 hazırlığı (2026-08-15): '_baslik'/'_aciklama'/'_buton' son ekli anahtarlar VixRexGuidanceService'in rehberlik önerileri (VixRexRecommendation) — Next.js'in vitrinReadiness.ts'i de field-anahtar eşlemesiyle aynı anahtarları okur (bkz. public_web/src/lib/assistantState.ts).",
+  "akis": [
+    { "id": "name", "alanlar": ["isletmeAdi"], "mesaj": "setup_name", "girdi": "metin", "yerTutucu": "Ör. Aymira Giyim" },
+    { "id": "category", "alanlar": ["kategori"], "mesaj": "setup_category", "girdi": "secim", "yerTutucu": "Kategori seç" },
+    { "id": "whatsapp", "alanlar": ["whatsapp"], "mesaj": "setup_whatsapp", "girdi": "telefon", "yerTutucu": "05xx xxx xx xx" },
+    { "id": "location", "alanlar": ["adres", "il", "ilce"], "mesaj": "setup_address", "girdi": "konum", "yerTutucu": "Açık adres" },
+    { "id": "legal", "alanlar": [], "mesaj": "setup_legal", "girdi": "onay", "yerTutucu": null },
+    { "id": "publish", "alanlar": [], "mesaj": "setup_publish", "girdi": "eylem", "yerTutucu": null },
+    { "id": "share", "alanlar": [], "mesaj": "share", "girdi": "eylem", "yerTutucu": null }
+  ],
   "intentler": [
     { "payload": "merhaba", "anahtarKelimeler": ["merhaba", "selam", "nasil", "baslat", "baslayalim", "yardim", "ne yapabilirsin"] },
     { "payload": "vixrex_info", "anahtarKelimeler": ["vixrex", "nedir", "ne işe yarar", "nasil calisir", "kurulum", "vitrin"] },

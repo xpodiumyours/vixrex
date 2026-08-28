@@ -181,7 +181,11 @@ export default function AppPage() {
     // canlıda doğrulandı, `edit_token` kabul etmiyor. Kod bulunamadığı
     // için çerez hiç kurulmuyordu ve bütün ürün işlemleri 401 alıyordu.
     if (sonuc.slug) {
-      await sahipOturumuAc();
+      if (sonuc.yonlendir) {
+        await fetch(sonuc.yonlendir, { redirect: "manual" });
+      } else {
+        await sahipOturumuAc();
+      }
       router.push(`/v/${sonuc.slug}`);
     }
   }

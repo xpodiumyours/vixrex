@@ -1,4 +1,5 @@
 import 'package:vixrex/config/vitrin_alanlari.g.dart';
+import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/auto_fill_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
@@ -219,20 +220,20 @@ class VixRexProfileSnapshot {
   VixRexNextStep get nextMissingField {
     final eksik = sonrakiEksikZorunluAlan;
     if (eksik != null) {
-      switch (eksik.anahtar) {
-        case 'isletmeAdi':
+      final akisAdimi = vixRexAsistanAdimiForAlan(eksik.anahtar);
+      switch (akisAdimi?.id) {
+        case 'name':
           return VixRexNextStep.name;
-        case 'kategori':
+        case 'category':
           return VixRexNextStep.category;
         case 'whatsapp':
           return VixRexNextStep.whatsapp;
-        // Adres, il ve ilçe kullanıcıya tek "konum" adımı olarak sorulur
-        // (FormLocationInfo ikisini de tek ekranda toplar) — şemada üç ayrı
-        // zorunlu girdi olması akış aşaması sayısını artırmaz.
-        case 'adres':
-        case 'il':
-        case 'ilce':
+        case 'location':
           return VixRexNextStep.address;
+        default:
+          throw StateError(
+            'Zorunlu ${eksik.anahtar} alanı Vixrex Asistan akışına bağlı değil.',
+          );
       }
     }
     if (!legalCompleted) return VixRexNextStep.legal;

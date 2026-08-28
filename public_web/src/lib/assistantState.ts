@@ -29,7 +29,10 @@ import {
   type EksikAlan,
   type HazirlikRaporu,
 } from "./vitrinReadiness";
-import { vixRexMesajlari } from "./vixrexMesajlari";
+import {
+  vixRexAsistanAdimiForAlan,
+  vixRexMesajlari,
+} from "./vixrexMesajlari";
 
 /** Dart'ın `VixRexJourneyPhase`sinin Next.js'teki karşılığı — yalnız iki
  * hâl var çünkü sahip paneline yalnız var olan bir taslak için gelinir. */
@@ -71,12 +74,6 @@ export interface AssistantState {
  * dilde ayrı yazılı; biri değişirse öbürü unutulabilir, bu Faz F'nin ADR
  * 0001 kategori-2 riskiyle aynı — bilinçli, düşük etkili). */
 const ALAN_ONERI_ID: Readonly<Record<string, string>> = {
-  isletmeAdi: "setup_name",
-  kategori: "setup_category",
-  whatsapp: "setup_whatsapp",
-  adres: "setup_address",
-  il: "setup_address",
-  ilce: "setup_address",
   kapakGorseli: "improve_cover",
   heroRozet: "improve_hero_badge",
   logo: "improve_logo",
@@ -98,7 +95,10 @@ function katalogCumlesi(oneriId: string): string {
  * tarafındaki kuralıyla aynı). */
 export function assistantStateFromRapor(rapor: HazirlikRaporu): AssistantState {
   const ilk = rapor.eksikler[0] ?? null;
-  const oneriId = ilk ? (ALAN_ONERI_ID[ilk.anahtar] ?? null) : null;
+  const akisAdimi = ilk ? vixRexAsistanAdimiForAlan(ilk.anahtar) : null;
+  const oneriId = ilk
+    ? (akisAdimi?.mesaj ?? ALAN_ONERI_ID[ilk.anahtar] ?? null)
+    : null;
 
   return {
     asama: rapor.temelTamam ? "gelistirme" : "kurulum",

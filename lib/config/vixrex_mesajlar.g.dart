@@ -296,3 +296,76 @@ const Map<String, String> vixRexMesajlari = {
       'Verdiğin bilgilerle vitrinini kurabilirim. Hesabını açtığında kaldığın yerden devam edeceğiz.',
   'landing_finish_buton': 'Hesap Aç ve Vitrini Kur',
 };
+
+class VixRexAsistanAkisAdimi {
+  final String id;
+  final List<String> alanlar;
+  final String mesaj;
+  final String girdi;
+  final String? yerTutucu;
+
+  const VixRexAsistanAkisAdimi({
+    required this.id,
+    required this.alanlar,
+    required this.mesaj,
+    required this.girdi,
+    this.yerTutucu,
+  });
+}
+
+/// APK, landing ve sahip panelinin ortak kurulum sırası.
+const List<VixRexAsistanAkisAdimi> vixRexAsistanAkisi = [
+  VixRexAsistanAkisAdimi(
+    id: 'name',
+    alanlar: ['isletmeAdi'],
+    mesaj: 'setup_name',
+    girdi: 'metin',
+    yerTutucu: 'Ör. Aymira Giyim',
+  ),
+  VixRexAsistanAkisAdimi(
+    id: 'category',
+    alanlar: ['kategori'],
+    mesaj: 'setup_category',
+    girdi: 'secim',
+    yerTutucu: 'Kategori seç',
+  ),
+  VixRexAsistanAkisAdimi(
+    id: 'whatsapp',
+    alanlar: ['whatsapp'],
+    mesaj: 'setup_whatsapp',
+    girdi: 'telefon',
+    yerTutucu: '05xx xxx xx xx',
+  ),
+  VixRexAsistanAkisAdimi(
+    id: 'location',
+    alanlar: ['adres', 'il', 'ilce'],
+    mesaj: 'setup_address',
+    girdi: 'konum',
+    yerTutucu: 'Açık adres',
+  ),
+  VixRexAsistanAkisAdimi(
+    id: 'legal',
+    alanlar: [],
+    mesaj: 'setup_legal',
+    girdi: 'onay',
+  ),
+  VixRexAsistanAkisAdimi(
+    id: 'publish',
+    alanlar: [],
+    mesaj: 'setup_publish',
+    girdi: 'eylem',
+  ),
+  VixRexAsistanAkisAdimi(
+    id: 'share',
+    alanlar: [],
+    mesaj: 'share',
+    girdi: 'eylem',
+  ),
+];
+
+VixRexAsistanAkisAdimi? vixRexAsistanAdimiForAlan(String anahtar) {
+  for (final adim in vixRexAsistanAkisi) {
+    if (adim.alanlar.contains(anahtar)) return adim;
+  }
+  return null;
+}

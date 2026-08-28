@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/assistant_handoff.dart';
 import 'package:vixrex/services/auth_service.dart';
@@ -48,6 +49,15 @@ class VixRexOnboardingController extends ChangeNotifier {
        _onPersistTranscript = onPersistTranscript,
        _onRequestFocus = onRequestFocus,
        _onChooseReadyTemplate = onChooseReadyTemplate;
+
+  String _katalogMesaji(String mesaj) =>
+      '${vixRexMesajlari['${mesaj}_baslik']}\n'
+      '${vixRexMesajlari['${mesaj}_aciklama']}';
+
+  String _akisMesaji(String id) {
+    final adim = vixRexAsistanAkisi.firstWhere((adim) => adim.id == id);
+    return _katalogMesaji(adim.mesaj);
+  }
 
   final StoreEditorController _editor;
   final void Function(String text, {String? publicLink}) _onBotMessage;
@@ -113,15 +123,7 @@ class VixRexOnboardingController extends ChangeNotifier {
       _resumeSavedVitrin();
       return;
     }
-    _onBotMessage(
-      'Merhaba, ben Vixrex Asistan.\n\n'
-      'İşletmene ne kazandırıyorum?\n'
-      '• 📱 Tek Link & QR Kod: Dijital vitrin sayfan.\n'
-      '• 💬 WhatsApp Sipariş: Müşterilerin tek tıkla sana ulaşır.\n'
-      '• 🛍️ Ürün & Galeri: Reyon ve ürünlerini sergilersin.\n'
-      '• 📍 Konum & Adres: Dükkanına kolayca ulaşılır.\n\n'
-      'Senin işletmen için de 2 dakikada beraber hazırlayalım mı?',
-    );
+    _onBotMessage(_katalogMesaji('welcome'));
     _notify();
   }
 
@@ -141,29 +143,24 @@ class VixRexOnboardingController extends ChangeNotifier {
     switch (snapshot.nextMissingField) {
       case VixRexNextStep.name:
         _step = VixRexOnboardingStep.name;
-        _onBotMessage('İşletme adını tamamlayalım.');
+        _onBotMessage(_akisMesaji('name'));
         _onRequestFocus?.call();
       case VixRexNextStep.category:
         _step = VixRexOnboardingStep.category;
-        _onBotMessage(
-          'Sıradaki adım: ne iş yaptığını seçelim — vitrinin ona göre '
-          'hazırlanıyor.',
-        );
+        _onBotMessage(_akisMesaji('category'));
       case VixRexNextStep.whatsapp:
         _step = VixRexOnboardingStep.whatsapp;
-        _onBotMessage('Sıradaki adım: WhatsApp numaranı ekleyelim.');
+        _onBotMessage(_akisMesaji('whatsapp'));
         _onRequestFocus?.call();
       case VixRexNextStep.address:
         _step = VixRexOnboardingStep.location;
-        _onBotMessage('Sıradaki adım: adres ve konum bilgini tamamlayalım.');
+        _onBotMessage(_akisMesaji('location'));
       case VixRexNextStep.legal:
         _step = VixRexOnboardingStep.legal;
-        _onBotMessage(
-          'Sıradaki adım: yasal yayınlama onaylarını tamamlayalım.',
-        );
+        _onBotMessage(_akisMesaji('legal'));
       case VixRexNextStep.publish:
         _step = VixRexOnboardingStep.legal;
-        _onBotMessage('Bilgilerin hazır. Sıradaki adım vitrini yayınlamak.');
+        _onBotMessage(_akisMesaji('publish'));
       case VixRexNextStep.share:
         _publicLink = snapshot.publicLink;
         _step = VixRexOnboardingStep.done;
@@ -189,14 +186,14 @@ class VixRexOnboardingController extends ChangeNotifier {
       _onUserMessage(existingName);
       _step = VixRexOnboardingStep.whatsapp;
       _notify();
-      _onBotMessage('Müşteriler seni nasıl bulsun?\nWhatsApp numaranı yaz.');
+      _onBotMessage(_akisMesaji('whatsapp'));
       _onRequestFocus?.call();
       return;
     }
 
     _step = VixRexOnboardingStep.name;
     _notify();
-    _onBotMessage('Harika. İşletmenin adı ne?');
+    _onBotMessage(_akisMesaji('name'));
     _onRequestFocus?.call();
   }
 
@@ -253,10 +250,7 @@ class VixRexOnboardingController extends ChangeNotifier {
     // Eskiden hiç sorulmuyordu; sohbetle açılan her vitrin "Diğer" kalıyor,
     // kategoriye bağlı hiçbir şey (butonlar, bölüm başlıkları, kategoriye
     // özel hazır görseller) çalışmıyordu.
-    _onBotMessage(
-      'Ne iş yapıyorsun?\n'
-      'Seçtiğin işe göre vitrinini hazır kuruyorum.',
-    );
+    _onBotMessage(_akisMesaji('category'));
     return true;
   }
 
@@ -270,7 +264,7 @@ class VixRexOnboardingController extends ChangeNotifier {
     _step = VixRexOnboardingStep.whatsapp;
     _error = null;
     _notify();
-    _onBotMessage('Müşteriler seni nasıl bulsun?\nWhatsApp numaranı yaz.');
+    _onBotMessage(_akisMesaji('whatsapp'));
     _onRequestFocus?.call();
   }
 
@@ -287,11 +281,7 @@ class VixRexOnboardingController extends ChangeNotifier {
     _step = VixRexOnboardingStep.location;
     _error = null;
     _notify();
-    _onBotMessage(
-      'İşletmen nerede?\n'
-      'Aşağıda profil editöründeki konum alanını kullan — '
-      'GPS veya il/ilçe/adres.',
-    );
+    _onBotMessage(_akisMesaji('location'));
     return true;
   }
 
@@ -345,10 +335,7 @@ class VixRexOnboardingController extends ChangeNotifier {
     _step = VixRexOnboardingStep.legal;
     _error = null;
     _notify();
-    _onBotMessage(
-      'Son adım: editördeki yasal onayları işaretle, sonra yayınla.\n'
-      'Kısa tutuyoruz.',
-    );
+    _onBotMessage(_akisMesaji('legal'));
   }
 
   // ── Hesap bağlama ─────────────────────────────────────────────────────

@@ -36,6 +36,7 @@ void main() {
   }
 
   final veri = jsonDecode(kaynak.readAsStringSync()) as Map<String, dynamic>;
+  final akis = (veri['akis'] as List).cast<Map<String, dynamic>>();
   final intentler = (veri['intentler'] as List).cast<Map<String, dynamic>>();
   final mesajlar = (veri['mesajlar'] as List).cast<Map<String, dynamic>>();
 
@@ -103,10 +104,62 @@ void main() {
 
   tampon.writeln('};');
 
+  tampon
+    ..writeln('')
+    ..writeln('class VixRexAsistanAkisAdimi {')
+    ..writeln('  final String id;')
+    ..writeln('  final List<String> alanlar;')
+    ..writeln('  final String mesaj;')
+    ..writeln('  final String girdi;')
+    ..writeln('  final String? yerTutucu;')
+    ..writeln('')
+    ..writeln('  const VixRexAsistanAkisAdimi({')
+    ..writeln('    required this.id,')
+    ..writeln('    required this.alanlar,')
+    ..writeln('    required this.mesaj,')
+    ..writeln('    required this.girdi,')
+    ..writeln('    this.yerTutucu,')
+    ..writeln('  });')
+    ..writeln('}')
+    ..writeln('')
+    ..writeln('/// APK, landing ve sahip panelinin ortak kurulum sırası.')
+    ..writeln('const List<VixRexAsistanAkisAdimi> vixRexAsistanAkisi = [');
+
+  for (final adim in akis) {
+    final alanlar = (adim['alanlar'] as List)
+        .cast<String>()
+        .map(dartString)
+        .join(', ');
+    tampon.writeln('  VixRexAsistanAkisAdimi(');
+    tampon.writeln("    id: ${dartString(adim['id'] as String)},");
+    tampon.writeln('    alanlar: [$alanlar],');
+    tampon.writeln("    mesaj: ${dartString(adim['mesaj'] as String)},");
+    tampon.writeln("    girdi: ${dartString(adim['girdi'] as String)},");
+    if (adim['yerTutucu'] != null) {
+      tampon.writeln(
+        "    yerTutucu: ${dartString(adim['yerTutucu'] as String)},",
+      );
+    }
+    tampon.writeln('  ),');
+  }
+
+  tampon
+    ..writeln('];')
+    ..writeln('')
+    ..writeln(
+      'VixRexAsistanAkisAdimi? vixRexAsistanAdimiForAlan(String anahtar) {',
+    )
+    ..writeln('  for (final adim in vixRexAsistanAkisi) {')
+    ..writeln('    if (adim.alanlar.contains(anahtar)) return adim;')
+    ..writeln('  }')
+    ..writeln('  return null;')
+    ..writeln('}');
+
   final hedef = File('$kok/lib/config/vixrex_mesajlar.g.dart');
   hedef.writeAsStringSync(tampon.toString());
 
   stdout.writeln('Üretildi: lib/config/vixrex_mesajlar.g.dart');
   stdout.writeln('  intent sayısı : ${intentler.length}');
   stdout.writeln('  mesaj sayısı  : ${mesajlar.length}');
+  stdout.writeln('  akış adımı    : ${akis.length}');
 }
