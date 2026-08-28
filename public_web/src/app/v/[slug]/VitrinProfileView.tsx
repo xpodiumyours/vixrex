@@ -32,6 +32,7 @@ import {
 } from "@/lib/vitrinBrandIcons";
 import { editableProps } from "@/lib/vitrinEditableProps";
 import { BolumEksikleri, BolumIskeleti } from "./components/BolumEksikleri";
+import { VixrexAvatar } from "./components/VixrexAvatar";
 import { heroActions } from "@/lib/vitrinHeroActions";
 import { normalizeExternalUrl } from "@/lib/products";
 import {
@@ -334,7 +335,7 @@ export default function VitrinProfileView({
   const primaryActionClass =
     "flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition";
   const ghostActionClass =
-    "flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold bg-white/5 text-white border border-blue-500/20 backdrop-blur-md hover:bg-white/10 transition";
+    "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-transparent text-slate-200 border border-white/15 backdrop-blur-md hover:bg-white/10 hover:text-white transition";
 
   // Hero butonları kategori profiline göre üretilir (vitrinHeroActions).
   const heroButonlari = heroActions(profile, {
@@ -366,16 +367,22 @@ export default function VitrinProfileView({
       <nav
         className={`fixed left-0 right-0 z-50 h-[68px] bg-[#0B1120]/85 backdrop-blur-xl border-b border-blue-500/15 px-6 sm:px-8 flex items-center justify-between ${isPreviewMode ? "top-9" : "top-0"}`}
       >
-        {/* Kök rota başka uygulama hostuna yönlenir; RSC yerine tam sayfa geçişi gerekir. */}
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a href="/" className="flex items-center gap-3 font-extrabold text-xl tracking-tight text-white">
-          <svg className="w-7 h-7 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1.5" />
-            <rect x="14" y="3" width="7" height="7" rx="1.5" />
-            <rect x="14" y="14" width="7" height="7" rx="1.5" />
-            <rect x="3" y="14" width="7" height="7" rx="1.5" />
-          </svg>
-          VIX<span className="text-blue-400">REX</span>
+        {/* Marka kilidi: Vixrex Asistan maskotu + kelime markası.
+            Eski gridli SVG logo kaldırıldı — asistanla aynı yüz her
+            yüzeyde tek olsun diye canonical VixrexAvatar kullanılıyor
+            (Flutter asset'iyle bayt eşitliği sözleşme testinde kilitli).
+            Bağlantı kendi sayfasının başına döner; eskiden "/" ile
+            Vixrex'in ana sayfasına gidiyordu ve esnafın müşterisini
+            başka bir siteye yolluyordu. */}
+        <a
+          href="#ust-bolum"
+          aria-label="Sayfanın başına dön"
+          className="flex items-center gap-2.5"
+        >
+          <VixrexAvatar size={34} halo />
+          <span className="text-[19px] font-extrabold tracking-[0.14em] leading-none text-white">
+            VIX<span className="text-blue-400">REX</span>
+          </span>
         </a>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
@@ -424,20 +431,28 @@ export default function VitrinProfileView({
           }
           style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined}
         >
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/75 to-[#0B1120]/30" />
+          {/* Yazının okunması için alt tarafta güçlü karartma. Eskiden üst
+              kısım neredeyse şeffaftı, başlık fotoğrafın detayına karışıyor
+              ve hiçbiri net görünmüyordu (Casper, 28 Ağustos). */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/92 to-[#0B1120]/45" />
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
           <div className="max-w-2xl">
-            {(displayBadge || showOpenBadge || isBusinessVerified) && (
+            {/* Rozet şeridi artık yalnız DURUM taşıyor (açık/kapalı,
+                doğrulanmış). Kategori buradan kimlik satırına taşındı:
+                aynı kelime hem rozette hem altında yazınca sayfa
+                "her bilgi iki kez" görünüyordu (Casper, 28 Ağustos).
+                Hiçbir bilgi silinmedi — yeri değişti. */}
+            {(heroBadge?.trim() || showOpenBadge || isBusinessVerified) && (
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                {displayBadge && (
+                {heroBadge && heroBadge.trim() && (
                   <div
                     {...editableProps("heroRozet", ownerMode)}
                     className="inline-flex items-center gap-2 bg-blue-500/12 border border-blue-500/25 text-blue-400 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md"
                   >
                     <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
-                    {displayBadge}
+                    {heroBadge.trim()}
                   </div>
                 )}
                 {showOpenBadge && (
@@ -471,15 +486,6 @@ export default function VitrinProfileView({
               </div>
             )}
 
-            {kategori && kategori.trim() && (
-              <div
-                {...editableProps("kategori", ownerMode)}
-                className="mb-1.5 text-[11px] font-bold uppercase tracking-widest text-blue-400/90"
-              >
-                {kategori.trim()}
-              </div>
-            )}
-
             <div className="flex items-center gap-3 sm:gap-4 mb-2">
               <div
                 {...editableProps("logo", ownerMode)}
@@ -500,12 +506,38 @@ export default function VitrinProfileView({
                 )}
               </div>
 
-              <h1
-                {...editableProps("isletmeAdi", ownerMode)}
-                className="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent"
-              >
-                {storeName.toUpperCase()}
-              </h1>
+              <div className="min-w-0">
+                <h1
+                  {...editableProps("isletmeAdi", ownerMode)}
+                  className="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent"
+                >
+                  {storeName.toUpperCase()}
+                </h1>
+
+                {/* Kategori ve kısa konum TEK satırda. Eskiden ikisi ayrı
+                    satırdaydı ve konum aşağıdaki tam adresle üst üste
+                    biniyordu ("Bağcılar" üç kez okunuyordu). Bilgi aynı,
+                    satır sayısı yarıya indi. */}
+                {(kategori?.trim() || heroLocationText || districtProvinceLabel) && (
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] sm:text-xs font-bold uppercase tracking-widest text-blue-400/90">
+                    {kategori && kategori.trim() && (
+                      <span {...editableProps("kategori", ownerMode)}>
+                        {kategori.trim()}
+                      </span>
+                    )}
+                    {(kategori?.trim() && (heroLocationText || districtProvinceLabel)) ? (
+                      <span aria-hidden="true" className="text-blue-400/40">·</span>
+                    ) : null}
+                    {heroLocationText ? (
+                      <span {...editableProps("konumMetni", ownerMode)}>
+                        {heroLocationText}
+                      </span>
+                    ) : districtProvinceLabel ? (
+                      <span>{districtProvinceLabel}</span>
+                    ) : null}
+                  </p>
+                )}
+              </div>
             </div>
 
             {description.trim() && (
@@ -517,16 +549,14 @@ export default function VitrinProfileView({
               </p>
             )}
 
-            {(heroLocationText || districtProvinceLabel || displayAddress || displayEmail || workingHoursToday || showRating) && (
-              <div className="flex flex-wrap gap-4 text-sm text-slate-400">
-                {heroLocationText && (
-                  <span {...editableProps("konumMetni", ownerMode)} className="flex items-center gap-1.5">
-                    📍 {heroLocationText}
-                  </span>
-                )}
-                {districtProvinceLabel && (
-                  <span className="flex items-center gap-1.5">📍 {districtProvinceLabel}</span>
-                )}
+            {/* Detay şeridi: hiçbir alan silinmedi, AĞIRLIĞI düştü.
+                Eskiden bu satırlar başlıkla aynı puntodaydı ve altı ayrı
+                bilgi eşit görünüyordu — göz hangisini okuyacağını
+                bilmiyordu. Artık küçük, gri ve tek grup: kimlik önde,
+                detay arkada. Kısa konum yukarı taşındı (kimlik satırına),
+                burada yalnız TAM adres kaldı. */}
+            {(displayAddress || displayEmail || workingHoursToday || showRating) && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-400/90">
                 {displayAddress && (
                   <span {...editableProps("adres", ownerMode)} className="flex items-center gap-1.5">
                     📍 {displayAddress}

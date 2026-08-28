@@ -23,7 +23,14 @@ describe("Dilim 1 hero kimlik alanları", () => {
   it("view boş alanları gizler ve sahte e-posta/puan kullanmaz", () => {
     expect(viewSource).toContain("heroButonlari.length > 0 &&");
     expect(viewSource).toContain("heroActions(profile,");
-    expect(viewSource).toContain("displayBadge &&");
+    // 28 Ağustos: rozet artık `displayBadge` ile çizilmiyor.
+    // `displayBadge` boşken KATEGORİYE düşüyordu, bu yüzden rozet ile
+    // hemen altındaki kimlik satırı aynı kelimeyi yazıyor ve sayfa
+    // "her bilgi iki kez" görünüyordu. Rozet artık yalnız sahibin
+    // yazdığı ÖZEL metinle (`heroBadge`) çıkıyor; kategori kimlik
+    // satırında tek kez duruyor. Testin niyeti aynı — boş alan
+    // gösterilmesin — koşul daha da sıkılaştı.
+    expect(viewSource).toContain("heroBadge && heroBadge.trim() &&");
     expect(viewSource).toContain("hasPhone &&");
     expect(viewSource).toContain("displayEmail &&");
     expect(viewSource).not.toContain("merhaba@${storeSlug}.com");
