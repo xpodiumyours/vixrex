@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { blogYayindaMi } from "@/data/blogYazilari";
 
 /**
  * Platform altbilgisi (envanter §2.11) — aynı zamanda #346'nın çözümü.
@@ -29,6 +30,17 @@ export function SiteFooter() {
           aria-label="Yardım ve yasal bilgiler"
           className="flex flex-wrap items-center justify-center gap-1"
         >
+          {/* Blog bağlantısı YAYIN ANAHTARINA bağlı: hiç yayında yazı
+              yokken `/blog` 404 verdiği için bağlantı da gösterilmez.
+              Bkz. src/data/blogYazilari.ts */}
+          {blogYayindaMi() ? (
+            <Link
+              href="/blog"
+              className="px-3 py-2 text-[13px] font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"
+            >
+              Blog
+            </Link>
+          ) : null}
           <Link
             href="/yardim"
             className="px-3 py-2 text-[13px] font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"

@@ -6,6 +6,7 @@ import {
   BUSINESS_CATEGORIES,
   kategoriUrlParcasi,
 } from "@/lib/businessCategories";
+import { blogYayindaMi, yayindakiYazilar } from "@/data/blogYazilari";
 
 export const revalidate = 300;
 
@@ -108,6 +109,19 @@ export async function GET() {
       // kurulur", "QR menü" gibi sorulara cevap veriyor. Yasal metinlerden
       // yüksek öncelikli, Keşfet'ten düşük.
       { yol: "/yardim", oncelik: "0.6", siklik: "monthly" },
+      // Blog YAYIN ANAHTARINA bağlı: hiç yayında yazı yokken `/blog` 404
+      // veriyor, o yüzden site haritasına da hiçbir şey eklenmez. Var
+      // olmayan adres bildirmek arama motoruna yanlış sinyal verir.
+      ...(blogYayindaMi()
+        ? [
+            { yol: "/blog", oncelik: "0.6", siklik: "weekly" },
+            ...yayindakiYazilar().map((yazi) => ({
+              yol: `/blog/${yazi.slug}`,
+              oncelik: "0.5",
+              siklik: "monthly",
+            })),
+          ]
+        : []),
       { yol: "/privacy", oncelik: "0.3", siklik: "yearly" },
       { yol: "/legal/privacy", oncelik: "0.3", siklik: "yearly" },
       { yol: "/legal/terms", oncelik: "0.3", siklik: "yearly" },
