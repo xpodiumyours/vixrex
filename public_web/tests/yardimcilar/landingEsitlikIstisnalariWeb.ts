@@ -25,6 +25,14 @@ const ERISEBILIRLIK =
   "Ekran okuyucu etiketi (aria-label), gözle görünen metin değil. Flutter'da " +
   "erişilebilirlik farklı bir mekanizmayla sağlanıyor.";
 
+const KONUM_WEB_OZEL =
+  "Web landing'i konumu tarayıcının `navigator.geolocation` özelliğiyle " +
+  "alıyor; Flutter landing'inde konum adımı YOK — orada konum vitrin " +
+  "düzenleme ekranında `Geolocator` ile toplanıyor (form_location_info). " +
+  "Yani bu dört cümle pencereye özel: aynı karar motoruna aynı " +
+  "`konum_onaylandi` olayı gidiyor, yalnız izin isteme yüzeyi farklı. " +
+  "Flutter landing'ine konum adımı eklenirse bu kayıtlar silinmeli.";
+
 export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   // --- Landing maket sohbeti (PhoneMockup AsistanSohbetIcerigi) ---
 
@@ -52,5 +60,22 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
       "iş: o dosyada tek seferde onlarca yeni metin dökülür ve her biri " +
       "tek tek değerlendirilmeli. Toplu istisnaya yazmamak için burada " +
       "tek kayıt olarak duruyor.",
+  },
+  // --- Konum akışı: web tarayıcı GPS'i, Flutter kendi ekranında ---
+  {
+    metin: "Konum alınıyor…",
+    neden: KONUM_WEB_OZEL,
+  },
+  {
+    metin: "GPS konumu alındı ✓",
+    neden: KONUM_WEB_OZEL,
+  },
+  {
+    metin: "Konum izni alınamadı; il, ilçe ve adresi elle yazabilirsin.",
+    neden: KONUM_WEB_OZEL,
+  },
+  {
+    metin: "İl, ilçe ve açık adresi tamamla.",
+    neden: KONUM_WEB_OZEL,
   },
 ];

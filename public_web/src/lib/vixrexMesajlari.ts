@@ -21,7 +21,16 @@ export interface VixRexMesajSemasi {
   metin: string;
 }
 
+export interface VixRexAsistanAkisAdimi {
+  id: "name" | "category" | "whatsapp" | "location" | "legal" | "publish" | "share";
+  alanlar: string[];
+  mesaj: string;
+  girdi: "metin" | "secim" | "telefon" | "konum" | "onay" | "eylem";
+  yerTutucu: string | null;
+}
+
 interface VixRexMesajKatalogu {
+  akis: VixRexAsistanAkisAdimi[];
   intentler: VixRexIntentSemasi[];
   mesajlar: VixRexMesajSemasi[];
 }
@@ -29,6 +38,16 @@ interface VixRexMesajKatalogu {
 const katalog = vixrexMesajlariJson as VixRexMesajKatalogu;
 
 export const vixRexIntentSemasi: VixRexIntentSemasi[] = katalog.intentler;
+
+/** APK, landing ve sahip panelinin tek kurulum sırası. */
+export const vixRexAsistanAkisi: readonly VixRexAsistanAkisAdimi[] =
+  katalog.akis;
+
+export function vixRexAsistanAdimiForAlan(
+  anahtar: string,
+): VixRexAsistanAkisAdimi | null {
+  return vixRexAsistanAkisi.find((adim) => adim.alanlar.includes(anahtar)) ?? null;
+}
 
 export const vixRexMesajlari: Record<string, string> = Object.fromEntries(
   katalog.mesajlar.map((m) => [m.anahtar, m.metin]),

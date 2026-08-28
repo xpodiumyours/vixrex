@@ -105,6 +105,10 @@ export async function POST(request: NextRequest) {
     whatsapp:
       typeof govde.whatsapp === "string" ? govde.whatsapp.trim() : "",
     address: typeof govde.address === "string" ? govde.address.trim() : "",
+    province_name:
+      typeof govde.province_name === "string" ? govde.province_name.trim() : "",
+    district_name:
+      typeof govde.district_name === "string" ? govde.district_name.trim() : "",
     description:
       typeof govde.description === "string" ? govde.description.trim() : "",
     business_type:
@@ -114,6 +118,24 @@ export async function POST(request: NextRequest) {
     status: "draft",
     is_published: false,
   };
+
+  const latitude = typeof govde.latitude === "number" ? govde.latitude : null;
+  const longitude = typeof govde.longitude === "number" ? govde.longitude : null;
+  if (
+    latitude !== null && longitude !== null &&
+    Number.isFinite(latitude) && Number.isFinite(longitude) &&
+    latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180
+  ) {
+    storeData.latitude = latitude;
+    storeData.longitude = longitude;
+    storeData.location_accuracy_meters =
+      typeof govde.location_accuracy_meters === "number" &&
+      Number.isFinite(govde.location_accuracy_meters)
+        ? govde.location_accuracy_meters
+        : null;
+    storeData.location_source = "browser_gps";
+    storeData.location_consent_at = new Date().toISOString();
+  }
 
   // ADIM 0 — hesabın zaten vitrini var mı?
   //
@@ -209,10 +231,56 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Landing'deki konuşma burada aynı sahip oturumuna bağlanır. Yeni bir
+  // asistan kaydı/tablosu açılmaz; Flutter'ın kullandığı handoff_v1 ve
+  // owner_sessions.assistant_handoff yolu aynen kullanılır.
+  const assistantHandoff =
+    typeof govde.assistant_handoff === "object" &&
+    govde.assistant_handoff !== null
+      ? govde.assistant_handoff
+      : null;
+  const oturumRpc = assistantHandoff
+    ? "create_owner_session_with_handoff"
+    : "create_owner_session";
+  const oturumParametreleri = assistantHandoff
+    ? {
+        p_slug: slug,
+        p_edit_token: editToken,
+        p_assistant_handoff: assistantHandoff,
+      }
+    : { p_slug: slug, p_edit_token: editToken };
+  const { data: oturum, error: oturumHatasi } = await supabaseUser.rpc(
+    oturumRpc,
+    oturumParametreleri,
+  );
+  const kod =
+    typeof oturum === "object" && oturum !== null
+      ? String((oturum as { code?: unknown }).code ?? "").trim()
+      : "";
+  if (oturumHatasi || !kod) {
+    console.error(
+      "[create-store] asistanlı sahip oturumu açılamadı:",
+      oturumHatasi?.message ?? "NO_CODE",
+    );
+    return NextResponse.json(
+      {
+        hata:
+          "Vitrin hesabına bağlandı ama asistan konuşması aktarılamadı. " +
+          "Vitrinim sayfasından devam edebilirsin.",
+        slug,
+      },
+      { status: 500 },
+    );
+  }
+
+  const yonlendir =
+    `/api/owner-session?slug=${encodeURIComponent(slug)}` +
+    `&ocode=${encodeURIComponent(kod)}`;
+
   return NextResponse.json({
     tamam: true,
     slug,
-    editToken,
+    yonlendir,
     message: "Vitrin oluşturuldu.",
   });
 }

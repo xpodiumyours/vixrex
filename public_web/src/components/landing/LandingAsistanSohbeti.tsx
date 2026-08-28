@@ -6,9 +6,11 @@ import {
   ASISTAN_ADIMLARI,
   ASISTAN_BITIS,
   ASISTAN_KARSILAMA,
+  asistanHandoffOlustur,
   taslagiKaydet,
   type AsistanCevaplari,
 } from "@/lib/landingAsistanAkisi";
+import { validateField } from "@/lib/vitrinFieldValidation";
 
 /**
  * Ana sayfadaki Vixrex Asistan — telefon mockup'ının içinde çalışır.
@@ -31,20 +33,89 @@ export function LandingAsistanSohbeti({ onClose }: { onClose?: () => void }) {
   const [adim, setAdim] = useState(-1); // -1: karşılama
   const [girdi, setGirdi] = useState("");
   const [cevaplar, setCevaplar] = useState<AsistanCevaplari>({});
+  const [il, setIl] = useState("");
+  const [ilce, setIlce] = useState("");
+  const [adres, setAdres] = useState("");
+  const [hata, setHata] = useState("");
+  const [gpsBekleniyor, setGpsBekleniyor] = useState(false);
 
   const bitti = adim >= ASISTAN_ADIMLARI.length;
   const aktif = bitti ? null : ASISTAN_ADIMLARI[adim];
 
   function ilerle(deger: string) {
-    if (!aktif) return;
-    const temiz = deger.trim();
-    if (aktif.zorunlu && !temiz) return;
+    if (!aktif || !aktif.cevapAnahtari) return;
+    const semaAnahtari = aktif.kolonlar[0] === "name" ? "isletmeAdi" : aktif.kolonlar[0];
+    const sonuc = validateField(semaAnahtari, deger);
+    if (!sonuc.ok || sonuc.deger === null) {
+      setHata(sonuc.ok ? "Bu alan zorunlu." : sonuc.hata);
+      return;
+    }
 
-    const yeni = { ...cevaplar, [aktif.alan]: temiz };
+    const yeni = { ...cevaplar, [aktif.cevapAnahtari]: String(sonuc.deger) };
     setCevaplar(yeni);
     taslagiKaydet(yeni);
     setGirdi("");
+    setHata("");
     setAdim(adim + 1);
+  }
+
+  function konumuKaydet() {
+    if (il.trim().length < 2 || ilce.trim().length < 2 || adres.trim().length < 5) {
+      setHata("İl, ilçe ve açık adresi tamamla.");
+      return;
+    }
+    const konumluCevaplar: AsistanCevaplari = {
+      ...cevaplar,
+      province_name: il.trim(),
+      district_name: ilce.trim(),
+      address: adres.trim(),
+      location_source: cevaplar.latitude == null ? "manual" : "browser_gps",
+    };
+    const yeni: AsistanCevaplari = {
+      ...konumluCevaplar,
+      assistant_handoff: asistanHandoffOlustur(konumluCevaplar),
+    };
+    setCevaplar(yeni);
+    taslagiKaydet(yeni);
+    setHata("");
+    setAdim(adim + 1);
+  }
+
+  function gpsKonumuAl() {
+    if (!navigator.geolocation) {
+      setHata("Bu tarayıcı GPS konumunu desteklemiyor; adresi elle yazabilirsin.");
+      return;
+    }
+    setGpsBekleniyor(true);
+    navigator.geolocation.getCurrentPosition(
+      (konum) => {
+        const yeni = {
+          ...cevaplar,
+          latitude: konum.coords.latitude,
+          longitude: konum.coords.longitude,
+          location_accuracy_meters: konum.coords.accuracy,
+          location_source: "browser_gps" as const,
+        };
+        setCevaplar(yeni);
+        taslagiKaydet(yeni);
+        setGpsBekleniyor(false);
+        setHata("");
+      },
+      () => {
+        setGpsBekleniyor(false);
+        setHata("Konum izni alınamadı; il, ilçe ve adresi elle yazabilirsin.");
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  function cevapOzeti(alan: (typeof ASISTAN_ADIMLARI)[number]) {
+    if (alan.alan === "location") {
+      return [cevaplar.district_name, cevaplar.province_name, cevaplar.address]
+        .filter(Boolean)
+        .join(" — ");
+    }
+    return alan.cevapAnahtari ? String(cevaplar[alan.cevapAnahtari] ?? "") : "";
   }
 
   return (
@@ -89,7 +160,7 @@ export function LandingAsistanSohbeti({ onClose }: { onClose?: () => void }) {
               <p className="font-bold">{gecmis.baslik}</p>
             </Balon>
             <p className="ml-auto max-w-[80%] rounded-xl rounded-tr-sm bg-lp-surface px-3 py-2 text-right text-[11px] text-lp-text">
-              {cevaplar[gecmis.alan] || "—"}
+              {cevapOzeti(gecmis) || "—"}
             </p>
           </div>
         ))}
@@ -121,7 +192,26 @@ export function LandingAsistanSohbeti({ onClose }: { onClose?: () => void }) {
           </button>
         ) : null}
 
-        {aktif ? (
+        {aktif?.girdi === "konum" ? (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={gpsKonumuAl}
+              disabled={gpsBekleniyor}
+              className="w-full rounded-xl border border-lp-primary px-3 py-2 text-[11px] font-bold text-lp-text"
+            >
+              {gpsBekleniyor ? "Konum alınıyor…" : cevaplar.latitude == null ? "GPS ile konumumu al" : "GPS konumu alındı ✓"}
+            </button>
+            <div className="grid grid-cols-2 gap-1.5">
+              <input value={il} onChange={(e) => setIl(e.target.value)} placeholder="İl" className="rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[11px] text-lp-text" />
+              <input value={ilce} onChange={(e) => setIlce(e.target.value)} placeholder="İlçe" className="rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[11px] text-lp-text" />
+            </div>
+            <input value={adres} onChange={(e) => setAdres(e.target.value)} placeholder={aktif.yerTutucu} className="w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[11px] text-lp-text" />
+            <button type="button" onClick={konumuKaydet} className="w-full rounded-xl bg-lp-primary px-3 py-2 text-[11px] font-black text-lp-on-primary">
+              {aktif.dugme}
+            </button>
+          </div>
+        ) : aktif ? (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -132,22 +222,31 @@ export function LandingAsistanSohbeti({ onClose }: { onClose?: () => void }) {
             <label className="sr-only" htmlFor={`asistan-${aktif.alan}`}>
               {aktif.baslik}
             </label>
-            <input
-              id={`asistan-${aktif.alan}`}
-              value={girdi}
-              onChange={(e) => setGirdi(e.target.value)}
-              placeholder={aktif.yerTutucu}
-              className="flex-1 rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[11px] text-lp-text outline-none placeholder:text-lp-muted"
-            />
+            {aktif.girdi === "secim" ? (
+              <select id={`asistan-${aktif.alan}`} value={girdi} onChange={(e) => setGirdi(e.target.value)} className="flex-1 rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[11px] text-lp-text">
+                <option value="">{aktif.yerTutucu}</option>
+                {aktif.secenekler.map((secenek) => <option key={secenek} value={secenek}>{secenek}</option>)}
+              </select>
+            ) : (
+              <input
+                id={`asistan-${aktif.alan}`}
+                value={girdi}
+                onChange={(e) => setGirdi(e.target.value)}
+                placeholder={aktif.yerTutucu}
+                className="flex-1 rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[11px] text-lp-text outline-none placeholder:text-lp-muted"
+              />
+            )}
             <button
               type="submit"
               className="rounded-xl bg-lp-primary px-3 py-2 text-[11px] font-black text-lp-on-primary disabled:opacity-50"
-              disabled={aktif.zorunlu && !girdi.trim()}
+              disabled={!girdi.trim()}
             >
               {aktif.dugme}
             </button>
           </form>
         ) : null}
+
+        {hata ? <p className="mt-2 text-[10px] font-bold text-red-500" role="alert">{hata}</p> : null}
 
         {bitti ? (
           <Link

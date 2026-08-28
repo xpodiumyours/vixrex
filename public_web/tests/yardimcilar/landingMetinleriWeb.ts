@@ -55,6 +55,18 @@ function tailwindZincirMi(metin: string): boolean {
 /**
  * Tek kelimelik CSS yardımcılarını tanır: flex-1, h-full, w-full, text-[10px] vb.
  */
+/**
+ * JSX ifadesinin ortasında kalan kod parçalarını eler.
+ *
+ * İç içe koşullu JSX'te `) : durum ? (` gibi satırlar iki blok arasında
+ * düz metin gibi görünüyor ve çıkarıcı bunları kullanıcı metni sanıyordu
+ * (28 Ağustos: "tek asistan" dalında eşitlik testi bu yüzden kırıldı).
+ * Gerçek bir Türkçe cümle ")" ile başlamaz ya da "? (" ile bitmez.
+ */
+function jsxIfadeParcasiMi(metin: string): boolean {
+  return /^\)\s*:/.test(metin) || /\?\s*\($/.test(metin);
+}
+
 function tekKelimeCssMi(metin: string): boolean {
   if (metin.includes(" ")) return false;
   return (
@@ -89,6 +101,7 @@ function kullaniciyaGorunurMu(metin: string): boolean {
   if (/^\(prefers-/.test(metin)) return false;
   if (tailwindZincirMi(metin)) return false;
   if (tekKelimeCssMi(metin)) return false;
+  if (jsxIfadeParcasiMi(metin)) return false;
   if (/^aria-/.test(metin)) return false;
   if (/^@?\//.test(metin)) return false;
   if (/\.(tsx|ts|dart|json|css|svg|png|jpg)$/.test(metin)) return false;
