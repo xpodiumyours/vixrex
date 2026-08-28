@@ -4,6 +4,12 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
+import {
+  GorselSikistirmaHatasi,
+  gorseliSikistir,
+  ONBELLEK_SANIYE,
+  type SikistirilmisGorsel,
+} from "@/lib/gorselSikistir";
 
 // Sahip görsel yükleme (implementation_plan.md Commit 10).
 //
@@ -218,16 +224,37 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Sıkıştırma tür doğrulamasından SONRA, depoya yazmadan ÖNCE. Türü
+  // baytlardan doğrulanmış görsel burada en fazla 1600 px'e iner; ölçütler
+  // Flutter'daki ImageOptimizationService ile birebir aynı, iki yüzey aynı
+  // ağırlıkta görsel üretsin diye. Bkz. src/lib/gorselSikistir.ts
+  let sikistirilmis: SikistirilmisGorsel;
+  try {
+    sikistirilmis = await gorseliSikistir(bayt, tur);
+  } catch (hata) {
+    const mesaj =
+      hata instanceof GorselSikistirmaHatasi
+        ? hata.message
+        : "Görsel işlenemedi. Tekrar dene.";
+    return NextResponse.json({ hata: mesaj }, { status: 422 });
+  }
+
   // Yol, DOĞRULANMIŞ oturumun slug'ından türetilir. İstemciden gelen bir
   // yol parçası kullanılmaz — başka vitrinin klasörüne yazılamaz.
   const guvenliSlug = ownerSession.slug.replace(/[^a-zA-Z0-9-]/g, "");
-  const dosyaAdi = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${uzanti}`;
+  const dosyaAdi = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${sikistirilmis.uzanti}`;
   const yol = `${guvenliSlug}/owner/${alan.anahtar}/${dosyaAdi}`;
 
   try {
     const { error } = await admin.storage
       .from("shelf-images")
-      .upload(yol, bayt, { contentType: tur, upsert: false });
+      // Dosya adı zaman damgalı ve içerik hiç değişmiyor; önbellek bir saat
+      // yerine bir yıl. Tekrar eden ziyaretler Supabase trafiğini yemesin.
+      .upload(yol, sikistirilmis.bayt, {
+        contentType: sikistirilmis.tur,
+        cacheControl: ONBELLEK_SANIYE,
+        upsert: false,
+      });
 
     if (error) {
       console.error("[owner-upload] storage error:", error.message);

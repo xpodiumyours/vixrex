@@ -7,6 +7,7 @@ import {
   type ProductItem,
 } from "@/lib/products";
 import { sanitizeInstagramMedia } from "@/lib/instagram";
+import { gorseliSikistir, ONBELLEK_SANIYE } from "@/lib/gorselSikistir";
 import { getConnectedInstagramAccess, revalidateProductTargets } from "@/lib/instagramServer";
 import {
   instagramErrorStatus,
@@ -224,10 +225,19 @@ async function uploadInstagramMedia(args: {
   const objectPath = `${args.storeSlug}/instagram/${args.mediaId}.${extension}`;
   const buffer = await readImageWithLimit(response);
 
+  // Instagram medyayı tam çözünürlükte veriyor. Sahip yüklemesiyle aynı
+  // ölçütten geçir — yoksa içe aktarılan her gönderi depoyu ve aylık
+  // trafiği yer. Bkz. src/lib/gorselSikistir.ts
+  const sikistirilmis = await gorseliSikistir(
+    new Uint8Array(buffer),
+    contentType
+  );
+
   const { error } = await args.admin.storage
     .from("shelf-images")
-    .upload(objectPath, buffer, {
-      contentType,
+    .upload(objectPath, sikistirilmis.bayt, {
+      contentType: sikistirilmis.tur,
+      cacheControl: ONBELLEK_SANIYE,
       upsert: true,
     });
 
