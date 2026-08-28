@@ -4,8 +4,16 @@ import { describe, expect, it } from "vitest";
 
 const migrationsDir = resolve(__dirname, "../../supabase/migrations");
 const migrationFiles = readdirSync(migrationsDir).filter((name) => name.endsWith(".sql"));
+// Bekçinin amacı: bu işlev TEK bir migration içinde TANIMLANSIN. Eskiden
+// "adı geçen dosya" sayılıyordu; 28 Ağustos 2026'da yasal metinler
+// migration'ı işlevin adını yalnızca AÇIKLAMA SATIRINDA andı ("bu değişiklik
+// yayındaki vitrinleri kırmıyor, çünkü assert_store_publish_ready ... ") ve
+// bekçi iki dosya bulup on iddiayı birden düşürdü. Kontrol artık tanıma
+// bakıyor; anmak serbest, ikinci kez tanımlamak değil.
 const readinessFiles = migrationFiles.filter((name) =>
-  readFileSync(resolve(migrationsDir, name), "utf8").includes("assert_store_publish_ready"),
+  /create\s+(or\s+replace\s+)?function\s+public\.assert_store_publish_ready\s*\(/i.test(
+    readFileSync(resolve(migrationsDir, name), "utf8"),
+  ),
 );
 const source = readinessFiles.length === 1
   ? readFileSync(resolve(migrationsDir, readinessFiles[0]), "utf8")
