@@ -18,7 +18,11 @@
  * eziyor. Sınıf yazmak yanıltıcı olurdu — başlık her hâlükârda
  * `--text-dark` (#F8FAFC) çiziliyor ve bu zeminde doğru olan da o.
  */
-export function BottomCta() {
+export function BottomCta({
+  onStartAssistant,
+}: {
+  onStartAssistant: () => void;
+}) {
   return (
     <section
       id="basla"
@@ -32,12 +36,13 @@ export function BottomCta() {
           Vixrex’ini oluştur; linkini, QR kodunu ve WhatsApp iletişimini
           paylaşmaya başla.
         </p>
-        <a
-          href="/kayit"
+        <button
+          type="button"
+          onClick={onStartAssistant}
           className="mt-9 inline-flex items-center justify-center rounded-3xl bg-lp-primary px-10 py-6 text-[18px] font-black text-white shadow-lp-panel transition-transform hover:-translate-y-0.5"
         >
           Vixrex Oluştur
-        </a>
+        </button>
       </div>
     </section>
   );

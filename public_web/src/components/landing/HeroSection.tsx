@@ -22,10 +22,14 @@ const GUVEN_ROZETLERI = [
 export function HeroSection({
   profiller,
   isChatOpen = false,
+  initialAssistantName = "",
+  onStartAssistant,
   onChatClose,
 }: {
   profiller: MockupProfili[];
   isChatOpen?: boolean;
+  initialAssistantName?: string;
+  onStartAssistant: (initialName: string) => void;
   onChatClose?: () => void;
 }) {
   // Adres ön eki tek kaynaktan gelir; alan adı bağlandığında bu metin de
@@ -33,7 +37,7 @@ export function HeroSection({
   const adresOneki = `${getSiteUrl().replace(/^https?:\/\//, "")}/v/`;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-[50px] pt-5 md:pb-[100px] md:pt-10">
+    <section id="vixrex-hero" className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-[50px] pt-5 md:pb-[100px] md:pt-10">
       {/* Ambient Mesh Glows — Flutter landing_hero_section.dart:65-100 orta noktası */}
       <div
         aria-hidden="true"
@@ -97,16 +101,17 @@ export function HeroSection({
           </p>
 
           {/*
-            Kurulum formu — uygulamadaki iki kutulu yapıyla eşitlenir
-            (landing_hero_section.dart:495-541).
-            Sabit önek (localhost:3000/v/) + boş input (isletmeniz).
-            <form method="get"> korunur: JS kapalıyken bile submit çalışır.
-            CSP `form-action 'self'` nedeniyle submit /basla'ya gider;
-            sunucu tarafı orada yakalar.
+            Kurulum başlangıcı — uygulamadaki iki kutulu yapıyla eşitlenir
+            (landing_hero_section.dart:495-541). Girilen ad yeni bir route'a
+            değil, telefon içindeki mevcut Vixrex Asistan akışına aktarılır.
           */}
           <form
-            method="get"
-            action="/basla"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              const isletmeAdi = String(form.get("isletme") ?? "");
+              onStartAssistant(isletmeAdi.trim());
+            }}
             className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
           >
             <div className="flex h-[52px] flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06]">
@@ -143,7 +148,12 @@ export function HeroSection({
           </ul>
         </div>
 
-        <PhoneMockup profiller={profiller} isChatOpen={isChatOpen} onChatClose={onChatClose} />
+        <PhoneMockup
+          profiller={profiller}
+          isChatOpen={isChatOpen}
+          initialAssistantName={initialAssistantName}
+          onChatClose={onChatClose}
+        />
       </div>
     </section>
   );

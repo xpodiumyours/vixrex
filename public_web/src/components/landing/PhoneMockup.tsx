@@ -1,8 +1,6 @@
-import Link from "next/link";
 import type { MockupProfili } from "./mockupProfilleri";
 import { PhoneMockupSlaytlari } from "./PhoneMockupSlaytlari";
 import { LandingAsistanSohbeti } from "./LandingAsistanSohbeti";
-import { getAppUrl } from "@/lib/siteUrl";
 
 /**
  * Hero'nun telefon mockup'ı — envanter §2.3.
@@ -20,10 +18,12 @@ import { getAppUrl } from "@/lib/siteUrl";
 export function PhoneMockup({
   profiller,
   isChatOpen = false,
+  initialAssistantName = "",
   onChatClose,
 }: {
   profiller: MockupProfili[];
   isChatOpen?: boolean;
+  initialAssistantName?: string;
   onChatClose?: () => void;
 }) {
   const ilk = profiller[0];
@@ -85,7 +85,10 @@ export function PhoneMockup({
           {/* İçerik */}
           <div className="h-full">
             {isChatOpen ? (
-              <LandingAsistanSohbeti onClose={onChatClose} />
+              <LandingAsistanSohbeti
+                initialName={initialAssistantName}
+                onClose={onChatClose}
+              />
             ) : (
               <PhoneMockupSlaytlari profiller={profiller} />
             )}
