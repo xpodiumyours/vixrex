@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { OWNER_SESSION_COOKIE } from "@/lib/ownerSession";
+import { vitrinGorsellerinisil } from "@/lib/depoTemizle";
 
 export const dynamic = "force-dynamic";
 
@@ -136,6 +137,19 @@ export async function DELETE(request: NextRequest) {
   const kimlik = await kimlikDogrula(request);
   if (!kimlik.ok) return kimlik.response;
 
+  // Temizlenecek klasörü SİLMEDEN ÖNCE öğren — hesap silindikten sonra
+  // `bootstrap_owner_state` artık vitrini bulamaz. Kullanıcı jetonuyla
+  // çağrılıyor; o RPC yetkisini auth.uid() üzerinden kuruyor, yönetici
+  // anahtarıyla çağrılamaz.
+  let temizlenecekSlug = target === "store" ? slug : "";
+  if (target === "account") {
+    const { data } = await kimlik.client.rpc("bootstrap_owner_state");
+    const durum = data as { has_store?: boolean; slug?: string } | null;
+    if (durum?.has_store === true && typeof durum.slug === "string") {
+      temizlenecekSlug = durum.slug;
+    }
+  }
+
   const { error } =
     target === "store"
       ? await kimlik.client.rpc("delete_store_with_token", {
@@ -157,6 +171,14 @@ export async function DELETE(request: NextRequest) {
           error.message === "STORE_DELETE_NOT_ALLOWED" ? 403 : 500,
       }
     );
+  }
+
+  // Görseller veritabanı kaydıyla birlikte gitmiyor — depo ayrı bir yer.
+  // Bu satır olmadan silinen her vitrinin fotoğrafları kovada kalıyordu
+  // (28 Ağustos ölçümü: 120 MB sahipsiz dosya). Yayındaki Veri Silme
+  // metni de bunu taahhüt ediyor. Hata fırlatmaz; silme zaten oldu.
+  if (temizlenecekSlug) {
+    await vitrinGorsellerinisil(temizlenecekSlug);
   }
 
   if (slug) vitrinOnbelleginiTemizle(slug);
