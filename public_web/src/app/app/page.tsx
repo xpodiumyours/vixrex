@@ -17,6 +17,7 @@ import {
   type OwnerProductCategory,
 } from "@/components/owner/OwnerProductManager";
 import { OwnerDashboardMetrics } from "@/components/owner/OwnerDashboardMetrics";
+import { OwnerNotificationLink } from "@/components/owner/OwnerNotificationLink";
 
 interface Store {
   id: string;
@@ -361,6 +362,7 @@ export default function AppPage() {
                   </p>
                 </div>
               </Link>
+              <OwnerNotificationLink />
               <Link
                 href="/app/hesap"
                 className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
