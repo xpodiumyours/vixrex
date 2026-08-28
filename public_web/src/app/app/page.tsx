@@ -16,6 +16,7 @@ import {
   type OwnerProduct,
   type OwnerProductCategory,
 } from "@/components/owner/OwnerProductManager";
+import { OwnerDashboardMetrics } from "@/components/owner/OwnerDashboardMetrics";
 
 interface Store {
   id: string;
@@ -315,6 +316,7 @@ export default function AppPage() {
                   </span>
                 </div>
               </Link>
+              <OwnerDashboardMetrics />
             </div>
             <OwnerProductManager
               storeSlug={stores[0].slug}
