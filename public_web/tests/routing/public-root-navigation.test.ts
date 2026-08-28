@@ -50,8 +50,14 @@ describe("Public kök navigasyon sözleşmesi", () => {
     expect(configSource).not.toContain("missing");
   });
 
-  it("sayfadaki kök bağlantısı <a href=\"/\"> tam sayfa navigasyonudur", () => {
-    expect(profileViewSource).toContain('<a href="/"');
-    expect(profileViewSource).not.toContain('<Link href="/"');
+  // 28 Ağustos'ta TERSİNE ÇEVRİLDİ: bu iddia eskiden üst bardaki logonun
+  // `/` ile Vixrex'in KENDİ ana sayfasına gitmesini "doğru" sayıyordu.
+  // Bu, esnafın sitesine giren müşteriyi başka bir şirketin sayfasına
+  // yolluyordu — kalite şikayetinin doğrudan sebebiydi. Üst bar artık
+  // Vixrex maskotunu taşıyor ve kendi sayfasının başına dönüyor. Test
+  // SİLİNMEDİ, ters yönde bekçiliğe çevrildi.
+  it("üst bar Vixrex'in ana sayfasına değil, kendi sayfasına döner", () => {
+    expect(profileViewSource).not.toMatch(/<a href="\/"[^>]*>/);
+    expect(profileViewSource).toContain('href="#ust-bolum"');
   });
 });
