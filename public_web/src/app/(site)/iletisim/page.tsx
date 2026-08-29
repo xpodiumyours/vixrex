@@ -113,7 +113,6 @@ export default function IletisimPage() {
               ["Ticaret unvanı", "Furkan Aksakal — Aksakal Ticaret"],
               ["Vergi numarası", "0340472476"],
               ["Faaliyet konusu", "İnternet üzerinden perakende ticaret (479114)"],
-              ["ETBİS", "Elektronik Ticaret Bilgi Sistemi'ne kayıtlıdır"],
             ].map(([etiket, deger]) => (
               <div key={etiket} className="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:gap-4">
                 <dt className="text-[13px] font-black uppercase tracking-wide text-lp-muted sm:w-44 sm:shrink-0">
