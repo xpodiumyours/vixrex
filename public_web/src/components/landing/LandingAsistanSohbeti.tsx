@@ -357,8 +357,8 @@ export function LandingAsistanSohbeti({
         ) : aktif?.girdi === "onay" ? (
           /* Yasal onay adımı — Flutter'daki LegalConsentSection ile birebir */
           <div className="space-y-2">
-            <p className="text-[11px] font-bold text-lp-text">{vixRexMesajlari["setup_legal_section_baslik"]}</p>
-            <p className="text-[10px] text-lp-muted">{vixRexMesajlari["setup_legal_section_aciklama"]}</p>
+            <p className="text-[11px] font-bold text-lp-text">{vixRexMesajlari["setup_legal_baslik"]}</p>
+            <p className="text-[10px] text-lp-muted">{vixRexMesajlari["setup_legal_aciklama"]}</p>
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
