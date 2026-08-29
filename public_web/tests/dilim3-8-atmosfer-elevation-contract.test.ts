@@ -23,9 +23,9 @@ describe("Dilim 3–8 Atmosfer yükseltme", () => {
     expect(viewSource).toContain('id="hakkimizda"');
     expect(viewSource).toContain('id="galeri"');
     expect(viewSource).toContain('id="sss"');
-    expect(viewSource).toContain("showAbout &&");
-    expect(viewSource).toContain("showGallery &&");
-    expect(viewSource).toContain("showFaq &&");
+    expect(viewSource).toContain("{showAbout ? (");
+    expect(viewSource).toContain("{showGallery ? (");
+    expect(viewSource).toContain("{showFaq ? (");
   });
 
   it("ürün kartında fulfillmentRegion gösterir", () => {
@@ -36,8 +36,8 @@ describe("Dilim 3–8 Atmosfer yükseltme", () => {
     expect(pageSource).toContain("showDirectionsLink");
     expect(pageSource).toContain("showStorefrontRating");
     expect(viewSource).toContain("showRating");
-    expect(viewSource).toContain("showContact &&");
-    expect(viewSource).toContain("showProducts &&");
+    expect(viewSource).toContain("{showContact ? (");
+    expect(viewSource).toContain("{showProducts ? (");
   });
 
   it("sahte demo içerik göstermez", () => {
