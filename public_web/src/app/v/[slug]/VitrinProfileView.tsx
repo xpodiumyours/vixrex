@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { VitrinIkon } from "./components/VitrinIkon";
 
 /** Eylem butonunun arkasındaki şema alanı.
  *
@@ -19,7 +20,7 @@ const EYLEM_ALANI: Record<string, string> = {
   website: "website",
 };
 import Link from "next/link";
-import { Suspense, type ReactNode, useState } from "react";
+import { Suspense, type ReactNode, useEffect, useState } from "react";
 import type { VitrinCategoryProfile } from "@/lib/vitrinProfile";
 import { normalizeAddressDisplay } from "@/lib/vitrinCopy";
 import {
@@ -32,7 +33,6 @@ import {
 } from "@/lib/vitrinBrandIcons";
 import { editableProps } from "@/lib/vitrinEditableProps";
 import { BolumEksikleri, BolumIskeleti } from "./components/BolumEksikleri";
-import { VixrexAvatar } from "./components/VixrexAvatar";
 import { heroActions } from "@/lib/vitrinHeroActions";
 import { normalizeExternalUrl } from "@/lib/products";
 import {
@@ -244,6 +244,17 @@ export default function VitrinProfileView({
   isDemo = false,
 }: VitrinProfileViewProps) {
   const [copied, setCopied] = useState(false);
+
+  /* Ust cubuktaki magaza kimligi: sayfa basinda gizli, hero gecilince
+     belirir. Hero'da ad zaten 5xl punto yaziyor, cubukta tekrarlanmasi
+     ayni adi iki kez okutuyordu (Casper, 2026-08-29). */
+  const [kimlikGorunur, setKimlikGorunur] = useState(false);
+  useEffect(() => {
+    const kontrol = () => setKimlikGorunur(window.scrollY > 200);
+    kontrol();
+    window.addEventListener("scroll", kontrol, { passive: true });
+    return () => window.removeEventListener("scroll", kontrol);
+  }, []);
   const displayAddress = normalizeAddressDisplay(address);
   // Faz F (Tek Asistan planı): il/ilçe artık şemada zorunlu alan
   // (docs/alan-eslemesi.md) ama sahibin serbest yazdığı heroLocationText
@@ -362,21 +373,34 @@ export default function VitrinProfileView({
       <nav
         className={`fixed left-0 right-0 z-50 h-[68px] bg-[#0B1120]/85 backdrop-blur-xl border-b border-blue-500/15 px-6 sm:px-8 flex items-center justify-between ${isPreviewMode ? "top-9" : "top-0"}`}
       >
-        {/* Marka kilidi: Vixrex Asistan maskotu + kelime markası.
-            Eski gridli SVG logo kaldırıldı — asistanla aynı yüz her
-            yüzeyde tek olsun diye canonical VixrexAvatar kullanılıyor
-            (Flutter asset'iyle bayt eşitliği sözleşme testinde kilitli).
-            Bağlantı kendi sayfasının başına döner; eskiden "/" ile
-            Vixrex'in ana sayfasına gidiyordu ve esnafın müşterisini
-            başka bir siteye yolluyordu. */}
+        {/* Ust cubuk magazanindir. 2026-08-29 oncesinde burada Vixrex
+            maskotu + kelime markasi vardi, saginda da "Vitrin Olustur"
+            dugmesi: musterinin baktigi sayfada esnafin degil PLATFORMUN
+            reklami. Mobilde sag taraf zaten gizliydi, yani 68px'lik cubuk
+            tamamen bize gidiyordu. Vixrex imzasi kalkmadi — sayfa altinda
+            "VIXREX ile olusturuldu" satiri duruyor, dogru yer orasi. */}
         <a
           href="#ust-bolum"
           aria-label="Sayfanın başına dön"
-          className="flex items-center gap-2.5"
+          className={`flex min-w-0 items-center gap-2.5 transition-opacity duration-300 ${
+            kimlikGorunur ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
         >
-          <VixrexAvatar size={34} halo />
-          <span className="text-[19px] font-extrabold tracking-[0.14em] leading-none text-white">
-            VIX<span className="text-blue-400">REX</span>
+          {logoUrl ? (
+            <Image
+              src={logoUrl}
+              alt=""
+              width={34}
+              height={34}
+              className="h-[34px] w-[34px] shrink-0 rounded-full border border-blue-500/25 object-cover"
+            />
+          ) : (
+            <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-blue-500/25 bg-blue-500/10 text-sm font-extrabold text-blue-300">
+              {storeName.charAt(0).toUpperCase()}
+            </span>
+          )}
+          <span className="truncate text-[17px] font-extrabold leading-none tracking-tight text-white">
+            {storeName}
           </span>
         </a>
 
@@ -399,10 +423,25 @@ export default function VitrinProfileView({
           {showContact && (
             <a href="#iletisim" className="hover:text-white transition-colors">İletişim</a>
           )}
-          <Link href="/app" className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition">
-            Vitrin Oluştur
-          </Link>
         </div>
+
+        {/* Paylas her boyutta gorunur: musterinin vitrini arkadasina
+            yollamasi, bizim yeni vitrin satmamizdan once gelir. */}
+        {!ownerMode && (
+        <a
+          href="#paylas"
+          className="ml-3 flex shrink-0 items-center gap-1.5 rounded-xl border border-blue-500/25 bg-blue-500/10 px-3.5 py-2 text-sm font-semibold text-blue-200 transition hover:border-blue-500/45 hover:text-white"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.6" y1="10.5" x2="15.4" y2="6.5" />
+            <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
+          </svg>
+          Paylaş
+        </a>
+        )}
       </nav>
 
       {/* ===== HERO ===== */}
@@ -424,12 +463,20 @@ export default function VitrinProfileView({
               ? "absolute inset-0 bg-cover bg-center"
               : "absolute inset-0 bg-gradient-to-br from-[#111C33] via-[#0B1120] to-[#16223D]"
           }
-          style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined}
+          style={
+            heroImage
+              ? {
+                  backgroundImage: `url(${heroImage})`,
+                  filter: "blur(3px)",
+                  transform: "scale(1.06)",
+                }
+              : undefined
+          }
         >
           {/* Yazının okunması için alt tarafta güçlü karartma. Eskiden üst
               kısım neredeyse şeffaftı, başlık fotoğrafın detayına karışıyor
               ve hiçbiri net görünmüyordu (Casper, 28 Ağustos). */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/92 to-[#0B1120]/45" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/94 to-[#0B1120]/62" />
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
@@ -554,12 +601,12 @@ export default function VitrinProfileView({
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-400/90">
                 {displayAddress && (
                   <span {...editableProps("adres", ownerMode)} className="flex items-center gap-1.5">
-                    📍 {displayAddress}
+                    <VitrinIkon ad="konum" className="h-3.5 w-3.5 shrink-0" /> {displayAddress}
                   </span>
                 )}
                 {showRating && (
                   <span {...editableProps("puanGoster", ownerMode)} className="flex items-center gap-1.5">
-                    ⭐ {ratingScore!.toFixed(1)}
+                    <VitrinIkon ad="yildiz" className="h-3.5 w-3.5 shrink-0" /> {ratingScore!.toFixed(1)}
                     {typeof reviewCount === "number" && reviewCount > 0
                       ? ` (${reviewCount} değerlendirme)`
                       : ""}
@@ -567,10 +614,10 @@ export default function VitrinProfileView({
                 )}
                 {displayEmail && (
                   <a href={`mailto:${displayEmail}`} className="flex items-center gap-1.5 hover:text-blue-300 transition">
-                    ✉️ {displayEmail}
+                    <VitrinIkon ad="zarf" className="h-3.5 w-3.5 shrink-0" /> {displayEmail}
                   </a>
                 )}
-                {workingHoursToday && <span className="flex items-center gap-1.5">🕐 {workingHoursToday}</span>}
+                {workingHoursToday && <span className="flex items-center gap-1.5"><VitrinIkon ad="saat" className="h-3.5 w-3.5 shrink-0" /> {workingHoursToday}</span>}
               </div>
             )}
           </div>
@@ -617,9 +664,9 @@ export default function VitrinProfileView({
 
       {/* ===== CATEGORIES ===== */}
       {showCategories ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="kategoriler">
-          <div className="flex items-baseline justify-between mb-8">
-            <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
+          <div className="flex items-baseline justify-between mb-5 sm:mb-8">
+            <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
               {categorySectionTitle || "Kategoriler"}
             </h2>
             <a href="#urunler" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">Tümünü gör →</a>
@@ -644,10 +691,18 @@ export default function VitrinProfileView({
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-[#16223D] to-[#0B1120]" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120]/90 via-transparent to-transparent" />
-                <div className="absolute bottom-4 left-4 z-10 text-base font-bold text-white">{cat.name}</div>
-                <div className="absolute bottom-4 right-4 z-10 text-xs font-semibold text-slate-300 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full">
-                  {cat.count} ürün
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/45 to-transparent" />
+                {/* Ad ve sayi ayri ayri `absolute` iken uzun kategori adi
+                    ikinci satira sarip rozetin altina giriyordu (mobilde
+                    "Telefon Ekran & Batarya D" diye kesiliyordu). Tek satir
+                    icinde: ad daralir ve iki satira sigar, rozet sabit kalir. */}
+                <div className="absolute inset-x-0 bottom-0 z-10 p-3.5">
+                  <span className="mb-1.5 inline-block whitespace-nowrap rounded-full bg-black/55 px-2.5 py-0.5 text-[11px] font-semibold text-slate-200 backdrop-blur-md">
+                    {cat.count} ürün
+                  </span>
+                  <p className="text-[15px] font-bold leading-tight text-white line-clamp-2">
+                    {cat.name}
+                  </p>
                 </div>
               </div>
             ))}
@@ -660,7 +715,7 @@ export default function VitrinProfileView({
 
       {/* ===== FEATURED BANNER ===== */}
       {showFeaturedBanner ? (
-        <div id="one-cikan" className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
+        <div id="one-cikan" style={{ scrollMarginTop: "88px" }} className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
           <div
             className={`relative overflow-hidden rounded-3xl border border-blue-500/15 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent p-8 sm:p-11 ${
               featuredImageUrl ? "grid md:grid-cols-2 gap-8 items-center" : ""
@@ -720,9 +775,9 @@ export default function VitrinProfileView({
 
       {/* ===== PRODUCTS ===== */}
       {showProducts ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler">
-          <div className="flex items-baseline justify-between mb-8">
-            <h2 {...editableProps("urunBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler" style={{ scrollMarginTop: "88px" }}>
+          <div className="flex items-baseline justify-between mb-5 sm:mb-8">
+            <h2 {...editableProps("urunBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
               {productSectionTitle || "Tüm Ürünler"}
             </h2>
             <span className="text-sm font-semibold text-slate-400">{productCount} Ürün Listeleniyor</span>
@@ -739,7 +794,7 @@ export default function VitrinProfileView({
 
       {/* ===== ABOUT ===== */}
       {showAbout ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="hakkimizda">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="hakkimizda" style={{ scrollMarginTop: "88px" }}>
           <div className={`grid gap-10 items-start ${aboutImageUrl ? "md:grid-cols-2" : ""}`}>
             {aboutImageUrl && (
               <div {...editableProps("hakkindaGorsel", ownerMode)} className="relative min-h-[280px] rounded-3xl overflow-hidden border border-blue-500/15">
@@ -808,7 +863,7 @@ export default function VitrinProfileView({
 
       {/* ===== GALLERY ===== */}
       {showGallery ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="galeri">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="galeri" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-8 gap-4">
             <div>
               {galleryKicker && (
@@ -821,7 +876,7 @@ export default function VitrinProfileView({
               )}
               <h2
                 {...editableProps("galeriBaslik", ownerMode)}
-                className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white"
+                className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white"
               >
                 {galleryTitle}
               </h2>
@@ -873,15 +928,15 @@ export default function VitrinProfileView({
 
       {/* ===== ARTICLES ===== */}
       {showArticles ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="blog">
-          <div className="flex items-baseline justify-between mb-8">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="blog" style={{ scrollMarginTop: "88px" }}>
+          <div className="flex items-baseline justify-between mb-5 sm:mb-8">
             <div>
               {blogSectionKicker && (
                 <p {...editableProps("blogUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-2">
                   {blogSectionKicker}
                 </p>
               )}
-              <h2 {...editableProps("blogBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              <h2 {...editableProps("blogBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
                 {blogSectionTitle || "Yazılar"}
               </h2>
             </div>
@@ -912,13 +967,13 @@ export default function VitrinProfileView({
 
       {/* ===== FAQ ===== */}
       {showFaq ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="sss">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="sss" style={{ scrollMarginTop: "88px" }}>
           <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
             <div>
               <p {...editableProps("sssUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
                 {faqSectionKicker || "SSS"}
               </p>
-              <h2 {...editableProps("sssBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
+              <h2 {...editableProps("sssBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white mb-3">
                 {faqSectionTitle || "Sıkça sorulan sorular"}
               </h2>
               <p {...editableProps("sssAciklama", ownerMode)} className="text-sm text-slate-400 leading-relaxed">
@@ -948,19 +1003,19 @@ export default function VitrinProfileView({
 
       {/* ===== CONTACT & LOCATION ===== */}
       {showContact ? (
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="iletisim">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="iletisim" style={{ scrollMarginTop: "88px" }}>
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Contact Panel */}
           <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8">
             <div className="flex items-center gap-3 text-lg font-bold text-white mb-6">
-              <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-lg">📍</div>
+              <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-lg"><VitrinIkon ad="konum" className="h-5 w-5 text-blue-300" /></div>
               İletişim & Konum
             </div>
 
             <div className="space-y-5">
               {displayAddress && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🏠</div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="ev" className="h-5 w-5 text-blue-300" /></div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Adres</h4>
                     {/* İki alan tek satırda: mapLabel varsa o görünür (tıklama
@@ -979,7 +1034,7 @@ export default function VitrinProfileView({
 
               {hasPhone && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">📞</div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="telefon" className="h-5 w-5 text-blue-300" /></div>
                   <div
                     {...editableProps("telefon", ownerMode)}
                   >
@@ -999,7 +1054,7 @@ export default function VitrinProfileView({
 
               {whatsappUrl && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">💬</div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="mesaj" className="h-5 w-5 text-blue-300" /></div>
                   <div>
                     <h4 className="text-sm font-bold text-white">WhatsApp</h4>
                     <TrackedWhatsAppLink
@@ -1020,7 +1075,7 @@ export default function VitrinProfileView({
 
               {displayEmail && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">✉️</div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="zarf" className="h-5 w-5 text-blue-300" /></div>
                   <div
                     {...editableProps("eposta", ownerMode)}
                   >
@@ -1034,7 +1089,7 @@ export default function VitrinProfileView({
 
               {websiteUrl && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🌐</div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="kure" className="h-5 w-5 text-blue-300" /></div>
                   <div
                     {...editableProps("website", ownerMode)}
                   >
@@ -1048,7 +1103,7 @@ export default function VitrinProfileView({
 
               {workingHoursToday && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🕐</div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="saat" className="h-5 w-5 text-blue-300" /></div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Çalışma Saatleri</h4>
                     <p
@@ -1093,7 +1148,7 @@ export default function VitrinProfileView({
 
               {marketplaceLinks.length > 0 && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🛒</div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="sepet" className="h-5 w-5 text-blue-300" /></div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Pazaryeri Bağlantıları</h4>
                     <div className="mt-0.5 space-y-0.5">
@@ -1121,7 +1176,7 @@ export default function VitrinProfileView({
 
               {googleBusinessLink && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">🏢</div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="bina" className="h-5 w-5 text-blue-300" /></div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Google İşletme Profili</h4>
                     <a href={googleBusinessLink} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
@@ -1133,7 +1188,7 @@ export default function VitrinProfileView({
 
               {referencesUrl && (
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0">📇</div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="rehber" className="h-5 w-5 text-blue-300" /></div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Referanslar</h4>
                     <a
@@ -1155,7 +1210,7 @@ export default function VitrinProfileView({
           {(mapsEmbedUrl || mapsUrl) && (
           <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 flex flex-col justify-between">
             <div className="flex items-center gap-3 text-lg font-bold text-white mb-4">
-              <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-lg">🗺️</div>
+              <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-lg"><VitrinIkon ad="harita" className="h-5 w-5 text-blue-300" /></div>
               Harita & Navigasyon
             </div>
 
@@ -1172,7 +1227,7 @@ export default function VitrinProfileView({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-slate-800/60 text-slate-400 text-sm">
-                  🗺️ Konum bilgisi bulunamadı
+                  <VitrinIkon ad="harita" className="mr-1 inline h-4 w-4 align-[-3px]" /> Konum bilgisi bulunamadı
                 </div>
               )}
             </div>
@@ -1189,11 +1244,11 @@ export default function VitrinProfileView({
                   {...editableProps("haritaLinki", ownerMode)}
                   className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-blue-500/30 transition"
                 >
-                  🗺️ Yol Tarifi Al
+                  <VitrinIkon ad="harita" className="mr-1 inline h-4 w-4 align-[-3px]" /> Yol Tarifi Al
                 </TrackedDirectionsLink>
               )}
               <a href={vcardHref} download={`${storeSlug}.vcf`} className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-white/5 border border-blue-500/20 text-white hover:bg-white/10 transition">
-                📱 Rehbere Ekle
+                <VitrinIkon ad="cihaz" className="mr-1 inline h-4 w-4 align-[-3px]" /> Rehbere Ekle
               </a>
             </div>
           </div>
@@ -1213,11 +1268,11 @@ export default function VitrinProfileView({
           karıştırır (Casper, 2026-08-14 canlı ekran görüntüsü). Yayından
           sonra normal ziyaretçi modunda tekrar görünür. */}
       {!ownerMode && (
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
+      <div id="paylas" style={{ scrollMarginTop: "88px" }} className="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
         <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 sm:p-10">
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-5 sm:mb-8">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-              🔗
+              <VitrinIkon ad="baglanti" className="h-5 w-5 text-blue-300" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-white">Vitrini Paylaş</h3>
@@ -1294,14 +1349,14 @@ export default function VitrinProfileView({
           içindir. */}
       {isDemo && (
         <section
-          id="kirala"
+          id="kirala" style={{ scrollMarginTop: "88px" }}
           className="border-t border-blue-500/15 bg-gradient-to-b from-blue-950/30 to-transparent py-14"
         >
           <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-400">
               Kiralık vitrin standardı
             </p>
-            <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-white">
+            <h2 className="mt-3 text-[26px] sm:text-4xl font-extrabold text-white">
               Bu hazır {profile.label.toLowerCase()} vitrinini işletmenize göre
               kişiselleştirin
             </h2>

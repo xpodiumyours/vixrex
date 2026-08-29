@@ -30,6 +30,7 @@ export default function FloatingWhatsAppButton({
   ownerMode = false,
 }: FloatingWhatsAppButtonProps) {
   const [visible, setVisible] = useState(false);
+  const [kayiyor, setKayiyor] = useState(false);
 
   useEffect(() => {
     /* İlk 1.2sn'de belirsin — hero'daki buton hâlâ görünürken göz konfetisi yapmasın. */
@@ -37,13 +38,33 @@ export default function FloatingWhatsAppButton({
     return () => clearTimeout(timer);
   }, []);
 
+  /* Buton sabit durdugu icin okunan metnin uzerine biniyordu: telefonda
+     cekilen dokuz ekranin sekizinde bir fiyati ya da bir cumleyi
+     kapatiyordu (Casper, 2026-08-29). Tamamen gizlemek WhatsApp'i
+     ulasilmaz yapardi — bunun yerine kaydirirken kuculup soluklasiyor,
+     el durunca geri geliyor. */
+  useEffect(() => {
+    let zamanlayici: ReturnType<typeof setTimeout>;
+    const kontrol = () => {
+      setKayiyor(true);
+      clearTimeout(zamanlayici);
+      zamanlayici = setTimeout(() => setKayiyor(false), 450);
+    };
+    window.addEventListener("scroll", kontrol, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", kontrol);
+      clearTimeout(zamanlayici);
+    };
+  }, []);
+
   if (ownerMode || !whatsappUrl) return null;
 
   return (
     <div
-      className="fixed z-50 bottom-6 right-4 sm:hidden transition-opacity duration-500"
+      className="fixed z-50 bottom-6 right-4 sm:hidden transition-all duration-300"
       style={{
-        opacity: visible ? 1 : 0,
+        opacity: visible ? (kayiyor ? 0.35 : 1) : 0,
+        transform: kayiyor ? "scale(0.8)" : "scale(1)",
         pointerEvents: visible ? "auto" : "none",
         bottom: "max(env(safe-area-inset-bottom, 0px), 1rem)",
       }}
