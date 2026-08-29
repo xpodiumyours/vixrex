@@ -617,7 +617,7 @@ export default function VitrinProfileView({
 
       {/* ===== CATEGORIES ===== */}
       {showCategories ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="kategoriler">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-8">
             <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               {categorySectionTitle || "Kategoriler"}
@@ -644,10 +644,18 @@ export default function VitrinProfileView({
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-[#16223D] to-[#0B1120]" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120]/90 via-transparent to-transparent" />
-                <div className="absolute bottom-4 left-4 z-10 text-base font-bold text-white">{cat.name}</div>
-                <div className="absolute bottom-4 right-4 z-10 text-xs font-semibold text-slate-300 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full">
-                  {cat.count} ürün
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/45 to-transparent" />
+                {/* Ad ve sayi ayri ayri `absolute` iken uzun kategori adi
+                    ikinci satira sarip rozetin altina giriyordu (mobilde
+                    "Telefon Ekran & Batarya D" diye kesiliyordu). Tek satir
+                    icinde: ad daralir ve iki satira sigar, rozet sabit kalir. */}
+                <div className="absolute inset-x-0 bottom-0 z-10 p-3.5">
+                  <span className="mb-1.5 inline-block whitespace-nowrap rounded-full bg-black/55 px-2.5 py-0.5 text-[11px] font-semibold text-slate-200 backdrop-blur-md">
+                    {cat.count} ürün
+                  </span>
+                  <p className="text-[15px] font-bold leading-tight text-white line-clamp-2">
+                    {cat.name}
+                  </p>
                 </div>
               </div>
             ))}
@@ -660,7 +668,7 @@ export default function VitrinProfileView({
 
       {/* ===== FEATURED BANNER ===== */}
       {showFeaturedBanner ? (
-        <div id="one-cikan" className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
+        <div id="one-cikan" style={{ scrollMarginTop: "88px" }} className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
           <div
             className={`relative overflow-hidden rounded-3xl border border-blue-500/15 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent p-8 sm:p-11 ${
               featuredImageUrl ? "grid md:grid-cols-2 gap-8 items-center" : ""
@@ -720,7 +728,7 @@ export default function VitrinProfileView({
 
       {/* ===== PRODUCTS ===== */}
       {showProducts ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-8">
             <h2 {...editableProps("urunBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               {productSectionTitle || "Tüm Ürünler"}
@@ -739,7 +747,7 @@ export default function VitrinProfileView({
 
       {/* ===== ABOUT ===== */}
       {showAbout ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="hakkimizda">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="hakkimizda" style={{ scrollMarginTop: "88px" }}>
           <div className={`grid gap-10 items-start ${aboutImageUrl ? "md:grid-cols-2" : ""}`}>
             {aboutImageUrl && (
               <div {...editableProps("hakkindaGorsel", ownerMode)} className="relative min-h-[280px] rounded-3xl overflow-hidden border border-blue-500/15">
@@ -808,7 +816,7 @@ export default function VitrinProfileView({
 
       {/* ===== GALLERY ===== */}
       {showGallery ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="galeri">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="galeri" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-8 gap-4">
             <div>
               {galleryKicker && (
@@ -873,7 +881,7 @@ export default function VitrinProfileView({
 
       {/* ===== ARTICLES ===== */}
       {showArticles ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="blog">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="blog" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-8">
             <div>
               {blogSectionKicker && (
@@ -912,7 +920,7 @@ export default function VitrinProfileView({
 
       {/* ===== FAQ ===== */}
       {showFaq ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="sss">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="sss" style={{ scrollMarginTop: "88px" }}>
           <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
             <div>
               <p {...editableProps("sssUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
@@ -948,7 +956,7 @@ export default function VitrinProfileView({
 
       {/* ===== CONTACT & LOCATION ===== */}
       {showContact ? (
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="iletisim">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="iletisim" style={{ scrollMarginTop: "88px" }}>
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Contact Panel */}
           <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8">
@@ -1294,7 +1302,7 @@ export default function VitrinProfileView({
           içindir. */}
       {isDemo && (
         <section
-          id="kirala"
+          id="kirala" style={{ scrollMarginTop: "88px" }}
           className="border-t border-blue-500/15 bg-gradient-to-b from-blue-950/30 to-transparent py-14"
         >
           <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center">

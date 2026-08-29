@@ -138,7 +138,7 @@ export default function ProductCatalog({
   return (
     <section>
       {categoryMap.length > 1 && (
-        <div className="mb-8 flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none">
+        <div className="mb-8 flex items-center gap-2.5 overflow-x-auto pb-2 pr-6 scrollbar-none">
           <a
             href={buildCategoryUrl("")}
             className={`inline-flex items-center justify-center shrink-0 px-5 py-2.5 rounded-xl text-xs sm:text-sm transition duration-200 ${
@@ -189,17 +189,17 @@ export default function ProductCatalog({
                 />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/80 via-transparent to-transparent" />
                 {product.badgeTag ? (
-                  <span className="absolute left-2.5 top-2.5 z-10 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+                  <span className="absolute left-2.5 top-2.5 z-10 max-w-[75%] truncate rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
                     {product.badgeTag}
                   </span>
                 ) : category && category.toLowerCase() !== "tümü" ? (
-                  <span className="absolute left-2.5 top-2.5 z-10 rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 backdrop-blur-md shadow-sm">
+                  <span className="absolute left-2.5 top-2.5 z-10 max-w-[75%] truncate rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 backdrop-blur-md shadow-sm">
                     {category}
                   </span>
                 ) : null}
               </div>
               <div className="space-y-1.5 px-3.5 py-3">
-                <h3 className="truncate text-xs sm:text-sm font-extrabold leading-snug text-white">
+                <h3 className="line-clamp-2 min-h-[2.5em] text-xs sm:text-sm font-extrabold leading-snug text-white">
                   {product.name}
                 </h3>
                 <div className="flex items-baseline gap-2">
