@@ -81,7 +81,7 @@ export function HeroSection({
         />
       </div>
       <div className="relative mx-auto flex w-full max-w-[1200px] flex-col items-center gap-10 md:flex-row md:items-center md:gap-10">
-        <div className="w-full">
+        <div className="w-full flex-1 md:max-w-[560px]">
           <p className="inline-block rounded-[30px] border border-lp-secondary/45 bg-lp-primary/[0.18] px-3.5 py-2 text-[11px] font-black tracking-[1px] text-lp-secondary">
             VİXREX ASİSTAN İLE DİJİTAL VİTRİN
           </p>
@@ -112,7 +112,7 @@ export function HeroSection({
               const isletmeAdi = String(form.get("isletme") ?? "");
               onStartAssistant(isletmeAdi.trim());
             }}
-            className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
+            className="mt-8 flex flex-col gap-3 min-[500px]:flex-row min-[500px]:items-center"
           >
             <div className="flex h-[52px] flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06]">
               <span className="hidden whitespace-nowrap px-4 text-[14px] font-bold text-white/60 sm:inline">{adresOneki}</span>
@@ -133,7 +133,7 @@ export function HeroSection({
             </button>
           </form>
 
-          <ul className="mt-6 flex flex-wrap gap-2">
+          <ul className="mt-6 flex flex-wrap gap-2.5">
             {GUVEN_ROZETLERI.map((rozet) => (
               <li
                 key={rozet}
@@ -148,12 +148,14 @@ export function HeroSection({
           </ul>
         </div>
 
-        <PhoneMockup
-          profiller={profiller}
-          isChatOpen={isChatOpen}
-          initialAssistantName={initialAssistantName}
-          onChatClose={onChatClose}
-        />
+        <div className="flex w-full flex-1 justify-center">
+          <PhoneMockup
+            profiller={profiller}
+            isChatOpen={isChatOpen}
+            initialAssistantName={initialAssistantName}
+            onChatClose={onChatClose}
+          />
+        </div>
       </div>
     </section>
   );

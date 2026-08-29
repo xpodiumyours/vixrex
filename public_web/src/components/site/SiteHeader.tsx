@@ -14,10 +14,10 @@ import { KesfetIkonu, StorefrontIkonu } from "./icons";
  */
 export function SiteHeader() {
   return (
-    <header className="border-b border-lp-border/40 bg-lp-bg-editor">
+    <header className="bg-lp-bg-editor">
       <nav
         aria-label="Ana gezinme"
-        className="flex w-full items-center justify-between px-5 py-4 md:px-10"
+        className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 py-4 md:px-6"
       >
         <Link
           href="/"
@@ -32,21 +32,35 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <Link
             href="/kesfet"
-            className="flex items-center gap-2 rounded-full bg-lp-surface-soft px-3 py-2 text-[13px] font-extrabold text-lp-text-alt transition-colors hover:bg-lp-surface md:px-4"
+            className="hidden items-center gap-2 rounded-full border border-lp-primary/45 bg-lp-surface-soft px-4 py-3 text-[12px] font-black text-lp-primary transition-colors hover:bg-lp-surface md:flex"
+            aria-label="Vitrinleri Keşfet"
+          >
+            <KesfetIkonu boyut={16} />
+            Vitrinleri Keşfet
+          </Link>
+          <Link
+            href="/kesfet"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-lp-border bg-lp-surface-soft text-lp-text md:hidden"
             aria-label="Vitrinleri Keşfet"
           >
             <KesfetIkonu boyut={18} />
-            <span className="hidden md:inline">Vitrinleri Keşfet</span>
           </Link>
 
           <a
             href="/giris"
-            className="rounded-full px-3 py-2 text-[13px] font-extrabold text-lp-secondary transition-colors hover:text-lp-text md:px-4"
+            className="hidden items-center gap-2 rounded-full bg-lp-primary px-4 py-3 text-[12px] font-black text-lp-on-primary md:flex"
           >
             Giriş Yap
+          </a>
+          <a
+            href="/giris"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-lp-primary text-lp-on-primary md:hidden"
+            aria-label="Giriş Yap"
+          >
+            <span aria-hidden className="text-[16px]">→</span>
           </a>
         </div>
       </nav>
