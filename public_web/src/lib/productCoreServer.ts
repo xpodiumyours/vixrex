@@ -74,6 +74,9 @@ export async function createCoreProduct(args: {
   categoryId: string;
   sourceType: string;
   externalProductId: string;
+  oldPriceAmount?: number | null;
+  badgeTag?: string | null;
+  fulfillmentRegion?: string | null;
 }): Promise<CreatedCoreProduct> {
   const { data, error } = await args.admin.rpc("create_store_product_v2", {
     p_store_id: args.storeId,
@@ -85,6 +88,9 @@ export async function createCoreProduct(args: {
     p_category_id: args.categoryId,
     p_source_type: args.sourceType,
     p_external_product_id: args.externalProductId,
+    p_old_price_amount: args.oldPriceAmount ?? null,
+    p_badge_tag: args.badgeTag ?? null,
+    p_fulfillment_region: args.fulfillmentRegion ?? null,
   });
 
   if (error) rpcError(error, "PRODUCT_CORE_CREATE_FAILED");
@@ -107,6 +113,9 @@ export async function updateCoreProduct(args: {
   imageUrls: string[];
   categoryId: string;
   stockStatus: string;
+  oldPriceAmount?: number | null;
+  badgeTag?: string | null;
+  fulfillmentRegion?: string | null;
 }) {
   const { data, error } = await args.admin.rpc("update_store_product", {
     p_product_id: args.productId,
@@ -117,6 +126,12 @@ export async function updateCoreProduct(args: {
     p_image_urls: args.imageUrls,
     p_category_id: args.categoryId,
     p_stock_status: args.stockStatus,
+    p_old_price_amount: args.oldPriceAmount ?? null,
+    p_badge_tag: args.badgeTag ?? null,
+    p_fulfillment_region: args.fulfillmentRegion ?? null,
+    p_clear_old_price_amount: args.oldPriceAmount == null,
+    p_clear_badge_tag: !args.badgeTag,
+    p_clear_fulfillment_region: !args.fulfillmentRegion,
   });
 
   if (error || data?.success !== true) {

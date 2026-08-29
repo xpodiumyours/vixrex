@@ -65,28 +65,39 @@ export function AboutEditor({ slug, mevcut, onClose }: Props) {
         description: v.description.trim(),
       }));
 
-    // Tek tek kaydet — her alan ayrı RPC çağrısı
+    // Hakkımızda metin alanları şemadaki anahtarlarla owner-draft üzerinden,
+    // değer kartları ise JSONB kolon olarak structured-field üzerinden kaydedilir.
     const alanlar: [string, string | null][] = [
-      ["about_kicker", kicker.trim() || null],
-      ["about_title", title.trim() || null],
-      ["corporate_bio", body.trim() || null],
-      ["about_image_url", imageUrl.trim() || null],
-      ["about_image_caption", imageCaption.trim() || null],
-      ["about_values", JSON.stringify(temizValues)],
+      ["hakkindaUstBaslik", kicker.trim() || null],
+      ["hakkindaBaslik", title.trim() || null],
+      ["hakkindaMetin", body.trim() || null],
+      ["hakkindaGorsel", imageUrl.trim() || null],
+      ["hakkindaGorselAlt", imageCaption.trim() || null],
     ];
 
     try {
-      for (const [kolon, deger] of alanlar) {
+      for (const [anahtar, deger] of alanlar) {
         const res = await fetch("/api/owner-draft", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, anahtar: kolon, deger, clientId: null }),
+          body: JSON.stringify({ slug, anahtar, deger, clientId: null }),
         });
         if (!res.ok) {
           const govde = await res.json();
           setMesaj(govde?.hata ?? "Kaydedilemedi.");
           return;
         }
+      }
+      // about_values JSONB — şemada yok, yapılandırılmış alan yolu
+      const valuesRes = await fetch("/api/owner-structured-field", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, kolon: "about_values", deger: temizValues }),
+      });
+      if (!valuesRes.ok) {
+        const govde = await valuesRes.json();
+        setMesaj(govde?.hata ?? "Kaydedilemedi.");
+        return;
       }
       router.refresh();
       onClose();

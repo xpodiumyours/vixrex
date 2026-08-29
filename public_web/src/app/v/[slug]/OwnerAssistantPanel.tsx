@@ -16,6 +16,8 @@ import { BookingSettingsPanel } from "./components/BookingSettingsPanel";
 import { AboutEditor } from "./components/AboutEditor";
 import { FaqEditor } from "./components/FaqEditor";
 import { CampaignEditor } from "./components/CampaignEditor";
+import { MarketplaceEditor } from "./components/MarketplaceEditor";
+import { GalleryEditor } from "./components/GalleryEditor";
 import { PublishBar } from "./components/PublishBar";
 import { VixrexAvatar } from "./components/VixrexAvatar";
 import { SpotlightGuide } from "./components/SpotlightGuide";
@@ -51,6 +53,8 @@ interface Props {
   aboutSection?: { kicker: string; title: string; body: string; imageUrl: string; imageCaption: string; values: Array<{ id: string; title: string; description: string }> } | null;
   faqItems?: Array<{ id: string; question: string; answer: string }> | null;
   campaignBanner?: { label: string; title: string; description: string; priceText: string; imageUrl: string } | null;
+  marketplaceLinks?: Array<{ id: string; platform: string; url: string; subtitle?: string }> | null;
+  galleryItems?: Array<{ id?: string; imageUrl: string; title?: string }> | null;
 }
 
 export default function OwnerAssistantPanel({
@@ -63,6 +67,8 @@ export default function OwnerAssistantPanel({
   aboutSection = null,
   faqItems = null,
   campaignBanner = null,
+  marketplaceLinks = null,
+  galleryItems = null,
 }: Props) {
   const [acik, setAcik] = useState(false);
   // Harita = "Tüm alanlar" paneli. Faz 4 (Casper, 2026-08-22): mobilde
@@ -180,6 +186,8 @@ export default function OwnerAssistantPanel({
   const [aboutAcik, setAboutAcik] = useState(false);
   const [faqAcik, setFaqAcik] = useState(false);
   const [kampanyaAcik, setKampanyaAcik] = useState(false);
+  const [marketplaceAcik, setMarketplaceAcik] = useState(false);
+  const [galeriAcik, setGaleriAcik] = useState(false);
 
   // Yasal onay üçü birden — aynı desen, aynı yorum: draftData stores
   // satırının tam kopyası, owner_forbidden_draft_keys yalnız YAZMAYI
@@ -340,7 +348,7 @@ export default function OwnerAssistantPanel({
               mevcutAyarlar={bookingSettings as { is_enabled: boolean; capacity: number; working_hours: Record<string, { start: string; end: string; active: boolean }>; lunch_break: { start: string; end: string; active: boolean } } | null}
             />
 
-            {/* Hakkımızda / SSS / Kampanya düzenleme kartları */}
+            {/* Hakkımızda / SSS / Kampanya / Galeri / Pazaryeri düzenleme kartları */}
             <div className="border-t border-white/10 px-4 py-3 space-y-1">
               <p className="mb-1 text-[11px] font-semibold text-white/40 uppercase tracking-wider">İçerik Düzenleme</p>
               <button
@@ -351,6 +359,24 @@ export default function OwnerAssistantPanel({
                 <span>ℹ️</span>
                 <span className="flex-1 font-medium text-[13px]">Hakkımızda</span>
                 <span className="text-[10px] text-white/30">{aboutSection?.title ? "Dolu" : "Boş"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setGaleriAcik(true)}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+              >
+                <span>🖼️</span>
+                <span className="flex-1 font-medium text-[13px]">Galeri</span>
+                <span className="text-[10px] text-white/30">{galleryItems && galleryItems.length > 0 ? `${galleryItems.length} görsel` : "Boş"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMarketplaceAcik(true)}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+              >
+                <span>🛒</span>
+                <span className="flex-1 font-medium text-[13px]">Pazaryeri Bağlantıları</span>
+                <span className="text-[10px] text-white/30">{marketplaceLinks && marketplaceLinks.length > 0 ? `${marketplaceLinks.length} link` : "Boş"}</span>
               </button>
               <button
                 type="button"
@@ -423,6 +449,20 @@ export default function OwnerAssistantPanel({
           slug={slug}
           mevcut={campaignBanner ?? { label: "", title: "", description: "", priceText: "", imageUrl: "" }}
           onClose={() => setKampanyaAcik(false)}
+        />
+      )}
+      {marketplaceAcik && (
+        <MarketplaceEditor
+          slug={slug}
+          links={(marketplaceLinks ?? []).map((l, i) => ({ id: l.id || `ml-${i}`, platform: l.platform || "", url: l.url || "", subtitle: l.subtitle || "" }))}
+          onClose={() => setMarketplaceAcik(false)}
+        />
+      )}
+      {galeriAcik && (
+        <GalleryEditor
+          slug={slug}
+          items={(galleryItems ?? []).map((g) => ({ id: g.id || "", imageUrl: g.imageUrl || "", title: g.title || "" }))}
+          onClose={() => setGaleriAcik(false)}
         />
       )}
     </>

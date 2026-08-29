@@ -38,19 +38,19 @@ export function CampaignEditor({ slug, mevcut, onClose }: Props) {
     setMesaj(null);
 
     const alanlar: [string, string | null][] = [
-      ["featured_banner_label", label.trim() || null],
-      ["featured_banner_title", title.trim() || null],
-      ["featured_banner_description", description.trim() || null],
-      ["featured_banner_price_text", priceText.trim() || null],
-      ["featured_banner_image_url", imageUrl.trim() || null],
+      ["bantEtiket", label.trim() || null],
+      ["bantBaslik", title.trim() || null],
+      ["bantAciklama", description.trim() || null],
+      ["bantFiyat", priceText.trim() || null],
+      ["bantGorsel", imageUrl.trim() || null],
     ];
 
     try {
-      for (const [kolon, deger] of alanlar) {
+      for (const [anahtar, deger] of alanlar) {
         const res = await fetch("/api/owner-draft", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, anahtar: kolon, deger, clientId: null }),
+          body: JSON.stringify({ slug, anahtar, deger, clientId: null }),
         });
         if (!res.ok) {
           const govde = await res.json();

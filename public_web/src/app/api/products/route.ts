@@ -68,6 +68,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const oldPriceAmount =
+      typeof govde.oldPriceAmount === "number" && Number.isFinite(govde.oldPriceAmount) ? govde.oldPriceAmount : null;
     const result = await createCoreProduct({
       admin,
       storeId: store.id,
@@ -79,6 +81,9 @@ export async function POST(request: NextRequest) {
       categoryId: typeof govde.categoryId === "string" ? govde.categoryId : "",
       sourceType: "manual",
       externalProductId: "",
+      oldPriceAmount,
+      badgeTag: typeof govde.badgeTag === "string" ? govde.badgeTag.trim() || null : null,
+      fulfillmentRegion: typeof govde.fulfillmentRegion === "string" ? govde.fulfillmentRegion.trim() || null : null,
     });
 
     return NextResponse.json({ tamam: true, id: result.id, slug: result.slug });
@@ -145,6 +150,11 @@ export async function PATCH(request: NextRequest) {
       imageUrls: Array.isArray(govde.imageUrls) ? govde.imageUrls : [],
       categoryId: typeof govde.categoryId === "string" ? govde.categoryId : "",
       stockStatus: typeof govde.stockStatus === "string" ? govde.stockStatus : "Mevcut",
+      oldPriceAmount:
+        typeof govde.oldPriceAmount === "number" && Number.isFinite(govde.oldPriceAmount) ? govde.oldPriceAmount : null,
+      badgeTag: typeof govde.badgeTag === "string" ? govde.badgeTag.trim() || null : null,
+      fulfillmentRegion:
+        typeof govde.fulfillmentRegion === "string" ? govde.fulfillmentRegion.trim() || null : null,
     });
 
     return NextResponse.json({ tamam: true });

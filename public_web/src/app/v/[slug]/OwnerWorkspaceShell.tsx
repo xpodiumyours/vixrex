@@ -319,6 +319,8 @@ export default function OwnerWorkspaceShell({
         aboutSection={vitrinProps.aboutSection ? { kicker: vitrinProps.aboutSection.kicker ?? '', title: vitrinProps.aboutSection.title ?? '', body: vitrinProps.aboutSection.body ?? '', imageUrl: vitrinProps.aboutSection.imageUrl ?? '', imageCaption: vitrinProps.aboutSection.imageCaption ?? '', values: (vitrinProps.aboutSection.values ?? []).map(v => ({ id: v.id ?? '', title: v.title ?? '', description: v.description ?? '' })) } : null}
         faqItems={(vitrinProps.faqItems ?? []).map(f => ({ id: f.id ?? '', question: f.question ?? '', answer: f.answer ?? '' }))}
         campaignBanner={campaignBanner ?? null}
+        marketplaceLinks={(vitrinProps.marketplaceLinks ?? []).map((m) => ({ id: m.id ?? '', platform: m.platform ?? '', url: m.url ?? '', subtitle: m.subtitle ?? '' }))}
+        galleryItems={(vitrinProps.galleryItems ?? []).map((g) => ({ id: g.id || '', imageUrl: g.imageUrl || '', title: g.title || '' }))}
       />
     </>
   );

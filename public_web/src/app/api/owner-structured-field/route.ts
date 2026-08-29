@@ -19,9 +19,13 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 export const dynamic = "force-dynamic";
 
 // İzin verilen yapılandırılmış JSONB kolonları
+// Flutter'daki StoreData.galleryItems / marketplaceLinks / faq_items / about_values
+// karşılığı — hepsi stores tablosunda JSONB dizi kolonlar.
 const ALLOWED_COLUMNS = new Set([
   "faq_items",
   "about_values",
+  "gallery_items",
+  "marketplace_links",
 ]);
 
 export async function POST(request: NextRequest) {
