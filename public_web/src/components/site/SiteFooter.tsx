@@ -42,6 +42,18 @@ export function SiteFooter() {
             </Link>
           ) : null}
           <Link
+            href="/hakkimizda"
+            className="px-3 py-2 text-[13px] font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"
+          >
+            Hakkımızda
+          </Link>
+          <Link
+            href="/iletisim"
+            className="px-3 py-2 text-[13px] font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"
+          >
+            İletişim
+          </Link>
+          <Link
             href="/yardim"
             className="px-3 py-2 text-[13px] font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"
           >
