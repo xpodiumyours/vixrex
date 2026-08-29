@@ -109,6 +109,10 @@ export async function GET() {
       // kurulur", "QR menü" gibi sorulara cevap veriyor. Yasal metinlerden
       // yüksek öncelikli, Keşfet'ten düşük.
       { yol: "/yardim", oncelik: "0.6", siklik: "monthly" },
+      // Kimlik sayfalari: hem ziyaretcinin "bu kim" sorusu hem de
+      // affiliate programlarinin publisher dogrulamasi buradan geciyor.
+      { yol: "/hakkimizda", oncelik: "0.5", siklik: "monthly" },
+      { yol: "/iletisim", oncelik: "0.5", siklik: "monthly" },
       // Blog YAYIN ANAHTARINA bağlı: hiç yayında yazı yokken `/blog` 404
       // veriyor, o yüzden site haritasına da hiçbir şey eklenmez. Var
       // olmayan adres bildirmek arama motoruna yanlış sinyal verir.
