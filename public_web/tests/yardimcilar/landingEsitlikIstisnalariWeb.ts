@@ -141,20 +141,7 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
       "İl dropdown boş seçenek metni. Flutter Web ile aynı.",
   },
 
-  // --- Katalogdan gelen ama testin sees_parser_olmayan metinler ---
-  {
-    metin: "Yasal onayları tamamlayın",
-    neden:
-      "vixrex_mesajlar.json `setup_legal_baslik` anahtarından geliyor. " +
-      "Flutter da aynı katalogdan okuyor ama landing extractoru bu " +
-      "dosyayı kapsamıyor.",
-  },
-  {
-    metin: "Vitrininizi yayınlayabilmeniz için gerekli yasal onayları vermeniz gerekiyor.",
-    neden:
-      "vixrex_mesajlar.json `setup_legal_aciklama` anahtarından geliyor. " +
-      "Aynı neden.",
-  },
+
 
   // --- Karşılama / hızlı seçim buton metinleri ---
   {

@@ -76,6 +76,8 @@
     { "anahtar": "setup_legal_baslik", "metin": "Yasal onayları tamamlayın" },
     { "anahtar": "setup_legal_aciklama", "metin": "Vitrininizi yayınlayabilmeniz için gerekli yasal onayları vermeniz gerekiyor." },
     { "anahtar": "setup_legal_buton", "metin": "Onayları İncele" },
+    { "anahtar": "setup_legal_section_baslik", "metin": "Yasal Bilgilendirme ve Yayınlama Onayı" },
+    { "anahtar": "setup_legal_section_aciklama", "metin": "Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkere açık yayınlama için gereklidir." },
 
     { "anahtar": "setup_publish_baslik", "metin": "Vitrininizi yayınlayın" },
     { "anahtar": "setup_publish_aciklama", "metin": "Tüm gerekli bilgileri doldurdunuz. Şimdi vitrininizi yayınlayabilirsiniz." },
