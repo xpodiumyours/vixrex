@@ -5,13 +5,9 @@ import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import {
-  findProductBySlug,
   getProductImages,
-  getProductUrlSlug,
   normalizeExternalUrl,
   normalizeWhatsappDigits,
-  safeParseJson,
-  slugifyTR,
   type ProductItem,
 } from "@/lib/products";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";

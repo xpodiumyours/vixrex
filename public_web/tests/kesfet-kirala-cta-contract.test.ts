@@ -1,7 +1,6 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
-import { BUSINESS_CATEGORIES } from "@/lib/businessCategories";
 
 function yorumsuz(kaynak: string): string {
   return kaynak

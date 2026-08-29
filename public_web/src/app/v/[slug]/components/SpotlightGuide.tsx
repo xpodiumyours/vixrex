@@ -75,6 +75,8 @@ interface Props {
   canliyaDondur: () => Promise<void>;
   sonrayaBirak?: () => void;
   onKapat: () => void;
+  onGpsKonumAl?: () => void;
+  gpsLoading?: boolean;
   /**
    * Değeri değiştiğinde balonun konumu yeniden ölçülür (Faz 2).
    *

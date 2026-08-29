@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import BulkProductUpload from "./BulkProductUpload";
+import { OwnerCategoryManager } from "./OwnerCategoryManager";
 
 export interface OwnerProductCategory {
   id: string;
@@ -65,6 +66,32 @@ export function OwnerProductManager({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const categoriesWithCount = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of products) {
+      const cid = p.category_id;
+      if (cid) map.set(cid, (map.get(cid) || 0) + 1);
+    }
+    return categories.map((c) => ({ ...c, productCount: map.get(c.id) || 0 }));
+  }, [categories, products]);
+
+  const [filterText, setFilterText] = useState("");
+  const [filterCategory, setFilterCategory] = useState<string>("");
+
+  const filteredProducts = useMemo(() => {
+    const q = filterText.trim().toLowerCase();
+    return products.filter((p) => {
+      if (filterCategory && p.category_id !== filterCategory) return false;
+      if (!q) return true;
+      return (
+        p.name.toLowerCase().includes(q) ||
+        (p.description || "").toLowerCase().includes(q) ||
+        (p.price_text || "").toLowerCase().includes(q) ||
+        (p.badge_tag || "").toLowerCase().includes(q)
+      );
+    });
+  }, [products, filterText, filterCategory]);
 
   async function saveProduct(form: ProductFormValue) {
     setBusy(true);
@@ -202,6 +229,31 @@ export function OwnerProductManager({
         </p>
       ) : null}
 
+      <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} onRefresh={onRefresh} />
+
+      {/* Arama / filtre — Flutter Explore search + product_management_sheet filter karşılığı */}
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <input
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+          placeholder="Ürün ara — ad, açıklama, fiyat, rozet"
+          className="owner-input flex-1 text-sm"
+        />
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="owner-input sm:w-48 text-sm"
+        >
+          <option value="">Tüm kategoriler</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+        {(filterText || filterCategory) && (
+          <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>
+        )}
+      </div>
+
       {showBulkUpload && !editing && (
         <BulkProductUpload
           storeSlug={storeSlug}
@@ -231,9 +283,11 @@ export function OwnerProductManager({
             İlk ürününü ekleyerek vitrininin kataloğunu oluşturmaya başla.
           </p>
         </div>
+      ) : filteredProducts.length === 0 ? (
+        <p className="mt-6 text-center text-sm text-[var(--owner-muted)]">Aramayla eşleşen ürün yok.</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => {
+          {filteredProducts.map((product) => {
             const image = product.image_urls?.find((url) => url.trim());
             return (
               <article key={product.id} className="owner-card overflow-hidden">
@@ -262,8 +316,8 @@ export function OwnerProductManager({
                     <button type="button" className="owner-button-secondary text-xs" onClick={() => setEditing(product)} disabled={busy}>✏️</button>
                     <button type="button" className="owner-button-danger text-xs" onClick={() => setDeleting(product)} disabled={busy}>🗑️</button>
                     <div className="flex gap-0.5">
-                      <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "up")} disabled={busy || products.indexOf(product) === 0} title="Yukarı taşı">↑</button>
-                      <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "down")} disabled={busy || products.indexOf(product) === products.length - 1} title="Aşağı taşı">↓</button>
+                      <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "up")} disabled={busy || !!filterText || !!filterCategory || products.indexOf(product) === 0} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Yukarı taşı"}>↑</button>
+                      <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "down")} disabled={busy || !!filterText || !!filterCategory || products.indexOf(product) === products.length - 1} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Aşağı taşı"}>↓</button>
                     </div>
                   </div>
                 </div>

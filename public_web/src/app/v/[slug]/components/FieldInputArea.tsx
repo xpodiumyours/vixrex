@@ -30,6 +30,9 @@ interface Props {
   /** Kalite alanında "Sonra" — sırayı ilerletir, `atlanmislar`'a YAZMAZ
    * (ADR 0002: "boş geç" yalnız isteğe bağlıda). Yoksa düğme çizilmez. */
   sonrayaBirak?: () => void;
+  /** GPS: adres/enlem/boylam için konum al */
+  onGpsKonumAl?: () => void;
+  gpsLoading?: boolean;
 }
 
 export function FieldInputArea({
@@ -52,6 +55,8 @@ export function FieldInputArea({
   onIlDegisti,
   onIlceDegisti,
   sonrayaBirak,
+  onGpsKonumAl,
+  gpsLoading = false,
 }: Props) {
   // "Boş geç" yalnız isteğe bağlı alanlarda çıkar — temel/kalite alanlar
   // rehberli akışta atlanamaz (ADR 0002).
@@ -212,37 +217,49 @@ export function FieldInputArea({
           </button>
         </div>
       ) : (
-        <div className="flex items-end gap-2">
-          <textarea
-            ref={girisRef}
-            value={giris}
-            onChange={(e) => setGiris(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (!kaydediliyor) void gonder();
+        <div className="space-y-2">
+          {seciliAlan && ["adres", "enlem", "boylam"].includes(seciliAlan.anahtar) && onGpsKonumAl && (
+            <button
+              type="button"
+              onClick={onGpsKonumAl}
+              disabled={gpsLoading || kaydediliyor}
+              className="w-full rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-[11px] font-bold text-blue-300 hover:bg-blue-500/20 disabled:opacity-50"
+            >
+              {gpsLoading ? "Konum alınıyor…" : "📍 GPS ile konumumu al"}
+            </button>
+          )}
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={girisRef}
+              value={giris}
+              onChange={(e) => setGiris(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (!kaydediliyor) void gonder();
+                }
+              }}
+              rows={seciliAlan?.tip === "uzunMetin" ? 3 : 1}
+              maxLength={seciliAlan?.maxUzunluk}
+              disabled={kaydediliyor}
+              placeholder={
+                seciliAlan
+                  ? "Yeni değeri yazın…"
+                  : "Vitrinde bir yazıya tıkla…"
               }
-            }}
-            rows={seciliAlan?.tip === "uzunMetin" ? 3 : 1}
-            maxLength={seciliAlan?.maxUzunluk}
-            disabled={kaydediliyor}
-            placeholder={
-              seciliAlan
-                ? "Yeni değeri yazın…"
-                : "Vitrinde bir yazıya tıkla…"
-            }
-            className={`flex-1 resize-none rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60 ${
-              seciliAlan?.tip === "uzunMetin" ? "py-3" : "h-12 py-3"
-            }`}
-          />
-          <button
-            type="button"
-            onClick={() => void gonder()}
-            disabled={kaydediliyor}
-            className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {kaydediliyor ? "…" : "Gönder"}
-          </button>
+              className={`flex-1 resize-none rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60 ${
+                seciliAlan?.tip === "uzunMetin" ? "py-3" : "h-12 py-3"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => void gonder()}
+              disabled={kaydediliyor}
+              className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {kaydediliyor ? "…" : "Gönder"}
+            </button>
+          </div>
         </div>
       )}
     </div>

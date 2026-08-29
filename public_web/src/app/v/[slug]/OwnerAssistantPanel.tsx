@@ -23,6 +23,8 @@ import { VixrexAvatar } from "./components/VixrexAvatar";
 import { SpotlightGuide } from "./components/SpotlightGuide";
 import { alanOnemi, asamaDolulugu, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
 import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
+import { taslakClientId } from "@/lib/canliVitrinSenkron";
+import { useRouter } from "next/navigation";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
 // yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
@@ -188,6 +190,8 @@ export default function OwnerAssistantPanel({
   const [kampanyaAcik, setKampanyaAcik] = useState(false);
   const [marketplaceAcik, setMarketplaceAcik] = useState(false);
   const [galeriAcik, setGaleriAcik] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const router = useRouter();
 
   // Yasal onay üçü birden — aynı desen, aynı yorum: draftData stores
   // satırının tam kopyası, owner_forbidden_draft_keys yalnız YAZMAYI
@@ -232,6 +236,56 @@ export default function OwnerAssistantPanel({
     setGiris(ilce);
   };
 
+  const handleGpsKonumAl = () => {
+    if (!navigator.geolocation) {
+      mesajEkle("asistan", "Bu tarayıcı GPS konumunu desteklemiyor; adresi elle yazabilirsin.");
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const accuracy = pos.coords.accuracy;
+        try {
+          const saves = await Promise.all([
+            fetch("/api/owner-draft", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug, anahtar: "enlem", deger: lat, clientId: taslakClientId() }),
+            }),
+            fetch("/api/owner-draft", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug, anahtar: "boylam", deger: lng, clientId: taslakClientId() }),
+            }),
+          ]);
+          if (saves.some((r) => !r.ok)) {
+            const firstErr = await saves.find((r) => !r.ok)?.json().catch(() => null);
+            mesajEkle("asistan", firstErr?.hata ?? "Konum kaydedilemedi.");
+            setGpsLoading(false);
+            return;
+          }
+          setAlan("latitude", lat);
+          setAlan("longitude", lng);
+          (setAlan as unknown as (k: string, v: unknown) => void)("location_accuracy_meters", accuracy);
+          (setAlan as unknown as (k: string, v: unknown) => void)("location_source", "browser_gps");
+          mesajEkle("asistan", `Konum alındı: ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${Math.round(accuracy)}m). Yayınlayınca haritada görünecek.`);
+          router.refresh();
+        } catch {
+          mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+        } finally {
+          setGpsLoading(false);
+        }
+      },
+      () => {
+        mesajEkle("asistan", "Konum izni alınamadı; il, ilçe ve adresi elle yazabilirsin.");
+        setGpsLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   return (
     <>
       {/* Sayfada dolaşan rehber — panel açık ve bir alan seçiliyken,
@@ -261,6 +315,8 @@ export default function OwnerAssistantPanel({
           mevcutIlce={mevcutIlce}
           onIlDegisti={handleIlDegisti}
           onIlceDegisti={handleIlceDegisti}
+          onGpsKonumAl={handleGpsKonumAl}
+          gpsLoading={gpsLoading}
         />
       )}
 

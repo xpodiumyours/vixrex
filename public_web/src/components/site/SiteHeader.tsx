@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getAppUrl } from "@/lib/siteUrl";
 import { KesfetIkonu, StorefrontIkonu } from "./icons";
 
 /**

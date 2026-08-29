@@ -134,26 +134,6 @@ interface PublicStoreRow {
   section_visibility: Record<string, boolean> | null;
 }
 
-interface ProductRow {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  price_text: string | null;
-  price_amount: number | null;
-  old_price_amount?: number | null;
-  badge_tag?: string | null;
-  fulfillment_region?: string | null;
-  currency: string;
-  stock_status: string | null;
-  image_urls: string[];
-  category_id: string | null;
-  is_visible: boolean;
-  is_active: boolean;
-  source_type: string;
-  sort_order: number;
-}
-
 interface CategoryRow {
   id: string;
   name: string;

@@ -1,8 +1,6 @@
-import Link from "next/link";
 import type { MockupProfili } from "./mockupProfilleri";
 import { PhoneMockupSlaytlari } from "./PhoneMockupSlaytlari";
 import { LandingAsistanSohbeti } from "./LandingAsistanSohbeti";
-import { getAppUrl } from "@/lib/siteUrl";
 
 /**
  * Hero'nun telefon mockup'ı — envanter §2.3.

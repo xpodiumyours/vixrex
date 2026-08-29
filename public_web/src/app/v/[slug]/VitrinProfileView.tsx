@@ -189,7 +189,6 @@ export default function VitrinProfileView({
   storeName,
   storeSlug,
   kategori,
-  businessType,
   isClosed,
   logoUrl,
   heroImage,
