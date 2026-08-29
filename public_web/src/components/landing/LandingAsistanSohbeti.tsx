@@ -23,7 +23,6 @@ const BITIS_BASLIK = "İşte bu kadar!";
 const BITIS_ACKLAMA = "Artık dijitalde varsın. İşletme adına özel vitrinin hazır.";
 const HATA_VITRIN_OLUSTURULAMADI = "Vitrin oluşturulamadı.";
 const HATA_TEKRAR_DENE = "Bir hata oluştu. Lütfen tekrar dene.";
-const HATA_ADRES_TAMAMLA = "İl, ilçe ve açık adresi tamamla.";
 const HATA_GPS_DESTEKLEMIYOR = "Bu tarayıcı GPS konumunu desteklemiyor; adresi elle yazabilirsin.";
 const HATA_KONUM_IZNI = "Konum izni alınamadı; il, ilçe ve adresi elle yazabilirsin.";
 const HATA_YASAL_ONAY = "Yayın için yasal onayları işaretlemeniz gerekiyor.";
@@ -31,6 +30,7 @@ import {
   turkeyProvinces,
   getDistrictsForProvince,
 } from "@/lib/turkeyCities";
+import { addressHataMesaji } from "@/lib/addressValidator";
 
 /**
  * Ana sayfadaki Vixrex Asistan — telefon mockup'ının içinde çalışır.
@@ -91,9 +91,22 @@ export function LandingAsistanSohbeti({
     setAdim(adim + 1);
   }
 
+  function konumEksigi(): string | null {
+    if (il.trim().length === 0) return "İl seç";
+    if (ilce.trim().length === 0) return "İlçe seç";
+    const hata = addressHataMesaji(adres);
+    if (hata) return "Açık adresi yaz";
+    return null;
+  }
+
   function konumuKaydet() {
-    if (il.trim().length < 2 || ilce.trim().length < 2 || adres.trim().length < 5) {
-      setHata(HATA_ADRES_TAMAMLA);
+    if (il.trim().length === 0 || ilce.trim().length === 0) {
+      setHata("İl ve ilçe gerekli. GPS ile bul ya da listeden seç.");
+      return;
+    }
+    const adresHatasi = addressHataMesaji(adres);
+    if (adresHatasi) {
+      setHata(adresHatasi);
       return;
     }
     const konumluCevaplar: AsistanCevaplari = {
@@ -211,10 +224,10 @@ export function LandingAsistanSohbeti({
 
   return (
     <div className="flex h-full flex-col bg-lp-bg-editor">
-      {/* Başlık çubuğu */}
-      <div className="flex items-center justify-between border-b border-lp-border/60 px-3 py-2">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
+      {/* Başlık çubuğu — Flutter ChatTopBar ile parite: 40px avatar, 13px başlık */}
+      <div className="flex items-center justify-between border-b border-lp-border/60 px-3.5 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/vixrex_v_crystal_mascot.png"
@@ -225,32 +238,32 @@ export function LandingAsistanSohbeti({
             />
           </div>
           <div>
-            <p className="text-[11px] font-bold text-lp-text">Vixrex</p>
-            <p className="text-[9px] text-lp-muted">Dijital vitrin asistanı</p>
+            <p className="text-[13px] font-black text-lp-text">Vixrex</p>
+            <p className="text-[11px] font-medium text-lp-muted">Dijital vitrin asistanı</p>
           </div>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="text-[11px] font-bold text-lp-muted hover:text-lp-text"
+          className="text-[13px] font-bold text-lp-muted hover:text-lp-text"
         >
           Kapat
         </button>
       </div>
 
       {/* Konuşma */}
-      <div className="flex-1 space-y-2.5 overflow-y-auto px-3 py-3">
+      <div className="flex-1 space-y-3 overflow-y-auto px-3.5 py-4">
         <Balon>
           <p className="font-bold">{ASISTAN_KARSILAMA.baslik}</p>
           <p className="mt-1 text-lp-text-alt">{ASISTAN_KARSILAMA.aciklama}</p>
         </Balon>
 
         {ASISTAN_ADIMLARI.slice(0, Math.max(adim, 0)).map((gecmis) => (
-          <div key={gecmis.alan} className="space-y-2.5">
+          <div key={gecmis.alan} className="space-y-3">
             <Balon>
               <p className="font-bold">{gecmis.baslik}</p>
             </Balon>
-            <p className="ml-auto max-w-[80%] rounded-xl rounded-tr-sm bg-lp-surface px-3 py-2 text-right text-[11px] text-lp-text">
+            <p className="ml-auto max-w-[80%] rounded-xl rounded-tr-sm bg-lp-surface px-3 py-2.5 text-right text-[13px] font-semibold text-lp-text">
               {cevapOzeti(gecmis) || "—"}
             </p>
           </div>
@@ -315,50 +328,90 @@ export function LandingAsistanSohbeti({
           </div>
         ) : null}
 
-        {/* Konum adımı */}
+        {/* Konum adımı — Flutter FormLocationInfo ile parite */}
         {aktif?.girdi === "konum" ? (
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={gpsKonumuAl}
-              disabled={gpsBekleniyor}
-              className="w-full rounded-xl border border-lp-primary px-3 py-2 text-[11px] font-bold text-lp-text"
-            >
-              {gpsBekleniyor ? "Konum alınıyor…" : cevaplar.latitude == null ? "GPS ile konumumu al" : "GPS konumu alındı ✓"}
-            </button>
-            <div className="grid grid-cols-2 gap-1.5">
+          <div className="space-y-3">
+            <div>
+              <label htmlFor="asistan-il" className="flex items-center text-[13px] font-bold text-lp-text">
+                İl <span className="ml-0.5 text-red-500" aria-hidden="true"> *</span>
+              </label>
               <select
+                id="asistan-il"
+                aria-required="true"
+                aria-describedby={hata ? "asistan-konum-hata" : undefined}
                 value={il}
-                onChange={(e) => { setIl(e.target.value); setIlce(""); }}
-                className="rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[11px] text-lp-text"
+                onChange={(e) => { setIl(e.target.value); setIlce(""); setHata(""); }}
+                className="mt-1.5 w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-3 text-[13px] font-semibold text-lp-text"
               >
                 <option value="">İl seçiniz</option>
                 {turkeyProvinces.map((p) => (
                   <option key={p.code} value={p.name}>{p.name}</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label htmlFor="asistan-ilce" className="flex items-center text-[13px] font-bold text-lp-text">
+                İlçe <span className="ml-0.5 text-red-500" aria-hidden="true"> *</span>
+              </label>
               <select
+                id="asistan-ilce"
+                aria-required="true"
+                aria-describedby={hata ? "asistan-konum-hata" : undefined}
                 value={ilce}
-                onChange={(e) => setIlce(e.target.value)}
+                onChange={(e) => { setIlce(e.target.value); setHata(""); }}
                 disabled={!il}
-                className="rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[11px] text-lp-text disabled:opacity-50"
+                className="mt-1.5 w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-3 text-[13px] font-semibold text-lp-text disabled:opacity-50"
               >
-                <option value="">{il ? "İlçe seçin" : "Önce il seçin"}</option>
+                <option value="">{il ? "İlçe seçiniz" : "Önce il seçiniz"}</option>
                 {getDistrictsForProvince(il).map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
             </div>
-            <input value={adres} onChange={(e) => setAdres(e.target.value)} placeholder={aktif.yerTutucu} className="w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[11px] text-lp-text" />
-            <button type="button" onClick={konumuKaydet} disabled={il.trim().length < 2 || ilce.trim().length < 2 || adres.trim().length < 5} className="w-full rounded-xl bg-lp-primary px-3 py-2 text-[11px] font-black text-lp-on-primary disabled:opacity-50">
-              {aktif.dugme}
+            <div>
+              <label htmlFor="asistan-adres" className="flex items-center text-[13px] font-bold text-lp-text">
+                Açık Adres (Mahalle, Cadde, Sokak, No) <span className="ml-0.5 text-red-500" aria-hidden="true"> *</span>
+              </label>
+              <input
+                id="asistan-adres"
+                aria-required="true"
+                aria-describedby={hata ? "asistan-konum-hata" : "asistan-adres-ipucu"}
+                value={adres}
+                onChange={(e) => { setAdres(e.target.value); if (hata) setHata(""); }}
+                placeholder="Örn: Çatalmeşe Mah. 207. Sokak No: 12"
+                className="mt-1.5 w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-3 text-[13px] font-semibold text-lp-text outline-none placeholder:text-white/40"
+              />
+              <p id="asistan-adres-ipucu" className="sr-only">Örnek adres</p>
+            </div>
+            <button
+              type="button"
+              onClick={gpsKonumuAl}
+              disabled={gpsBekleniyor}
+              className="flex h-[42px] w-full items-center justify-center gap-2 rounded-xl border border-lp-primary bg-white/[0.04] px-3 text-[13px] font-bold text-lp-primary disabled:opacity-50"
+            >
+              <span aria-hidden="true">◎</span>
+              {gpsBekleniyor ? "GPS Taranıyor..." : cevaplar.latitude == null ? "GPS ile Konumumu Al" : "GPS konumu alındı ✓"}
             </button>
+            <button
+              type="button"
+              onClick={konumuKaydet}
+              disabled={!!konumEksigi()}
+              aria-describedby={konumEksigi() ? "asistan-konum-yardim" : undefined}
+              className="flex h-12 w-full items-center justify-center rounded-xl bg-lp-primary px-3 text-[13px] font-black text-lp-on-primary disabled:opacity-50"
+            >
+              Konumu onayla, devam
+            </button>
+            {konumEksigi() ? (
+              <p id="asistan-konum-yardim" className="text-center text-[11px] font-semibold text-lp-muted">
+                Devam etmek için: {konumEksigi()}
+              </p>
+            ) : null}
           </div>
         ) : aktif?.girdi === "onay" ? (
           /* Yasal onay adımı — Flutter'daki LegalConsentSection ile birebir */
-          <div className="space-y-2">
-            <p className="text-[11px] font-bold text-lp-text">{vixRexMesajlari["setup_legal_baslik"]}</p>
-            <p className="text-[10px] text-lp-muted">{vixRexMesajlari["setup_legal_aciklama"]}</p>
+          <div className="space-y-3">
+            <p className="text-[13px] font-black text-lp-text">{vixRexMesajlari["setup_legal_baslik"]}</p>
+            <p className="text-[11px] leading-[1.4] text-lp-muted">{vixRexMesajlari["setup_legal_aciklama"]}</p>
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -366,7 +419,7 @@ export function LandingAsistanSohbeti({
                 onChange={(e) => setAydinlatmaOnay(e.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded border-lp-border text-lp-primary focus:ring-lp-primary"
               />
-              <span className="text-[11px] text-lp-text">
+              <span className="text-[13px] text-lp-text">
                 <Link href="/legal/privacy" className="text-lp-primary underline" target="_blank">Aydınlatma Metni</Link>
                 ni okudum ve kabul ediyorum.
               </span>
@@ -378,7 +431,7 @@ export function LandingAsistanSohbeti({
                 onChange={(e) => setSartlarOnay(e.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded border-lp-border text-lp-primary focus:ring-lp-primary"
               />
-              <span className="text-[11px] text-lp-text">
+              <span className="text-[13px] text-lp-text">
                 <Link href="/legal/terms" className="text-lp-primary underline" target="_blank">Kullanım Şartları</Link>
                 nı okudum ve kabul ediyorum.
               </span>
@@ -390,7 +443,7 @@ export function LandingAsistanSohbeti({
                 onChange={(e) => setAcikRizaOnay(e.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded border-lp-border text-lp-primary focus:ring-lp-primary"
               />
-              <span className="text-[11px] text-lp-text">
+              <span className="text-[13px] text-lp-text">
                 <Link href="/legal/consent" className="text-lp-primary underline" target="_blank">Açık Rıza Beyanı</Link>
                 nı okudum, anladım ve kabul ediyorum.
               </span>
@@ -407,7 +460,7 @@ export function LandingAsistanSohbeti({
                 setAdim(adim + 1);
               }}
               disabled={!yasalOnayVerildi}
-              className="w-full rounded-xl bg-lp-primary px-3 py-2 text-[11px] font-black text-lp-on-primary disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center rounded-xl bg-lp-primary px-3 text-[13px] font-black text-lp-on-primary disabled:opacity-50"
             >
               {aktif.dugme}
             </button>
@@ -431,7 +484,7 @@ export function LandingAsistanSohbeti({
               e.preventDefault();
               ilerle(girdi);
             }}
-            className="flex gap-1.5"
+            className="flex gap-2"
           >
             <label className="sr-only" htmlFor={`asistan-${aktif.alan}`}>
               {aktif.baslik}
@@ -444,12 +497,12 @@ export function LandingAsistanSohbeti({
                 value={girdi}
                 onChange={(e) => setGirdi(e.target.value)}
                 placeholder={aktif.yerTutucu}
-                className="flex-1 rounded-xl border border-lp-border bg-lp-surface px-3 py-2 text-[11px] text-lp-text outline-none placeholder:text-lp-muted"
+                className="flex h-12 flex-1 rounded-xl border border-lp-border bg-lp-surface px-3.5 text-[13px] font-semibold text-lp-text outline-none placeholder:text-lp-muted"
               />
             )}
             <button
               type="submit"
-              className="rounded-xl bg-lp-primary px-3 py-2 text-[11px] font-black text-lp-on-primary disabled:opacity-50"
+              className="flex h-12 items-center justify-center rounded-xl bg-lp-primary px-4 text-[13px] font-black text-lp-on-primary disabled:opacity-50"
               disabled={!girdi.trim()}
             >
               {aktif.dugme}
@@ -457,7 +510,7 @@ export function LandingAsistanSohbeti({
           </form>
         ) : null}
 
-        {hata ? <p className="mt-2 text-[10px] font-bold text-red-500" role="alert">{hata}</p> : null}
+        {hata ? <p id="asistan-konum-hata" className="mt-2 text-[11px] font-bold text-red-500" role="alert" aria-live="assertive">{hata}</p> : null}
 
         {/* Bitiş — Kayıt yoksa /kayit'a yönlendir (Flutter'daki hesapKorumasız karşılığı) */}
         {bitti && !yayinTamamlandi ? (
@@ -493,18 +546,18 @@ export function LandingAsistanSohbeti({
 
 function Balon({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex gap-2">
-      <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
+    <div className="flex gap-2.5">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/vixrex_v_crystal_mascot.png"
           alt=""
-          width={18}
-          height={18}
-          className="h-[18px] w-[18px] object-contain"
+          width={20}
+          height={20}
+          className="h-5 w-5 object-contain"
         />
       </div>
-      <div className="max-w-[220px] rounded-xl rounded-tl-sm border border-lp-primary/20 bg-lp-primary/[0.08] px-3 py-2 text-[11px] leading-relaxed text-lp-text">
+      <div className="max-w-[260px] rounded-xl rounded-tl-sm border border-lp-primary/20 bg-lp-primary/[0.08] px-3.5 py-3 text-[13px] leading-[1.5] text-lp-text">
         {children}
       </div>
     </div>

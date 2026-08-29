@@ -63,7 +63,7 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   },
   // --- Konum akışı: web tarayıcı GPS'i, Flutter kendi ekranında ---
   {
-    metin: "Konum alınıyor…",
+    metin: "GPS Taranıyor...",
     neden: KONUM_WEB_OZEL,
   },
   {
@@ -75,8 +75,47 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     neden: KONUM_WEB_OZEL,
   },
   {
-    metin: "İl, ilçe ve açık adresi tamamla.",
-    neden: KONUM_WEB_OZEL,
+    metin: "Örn: Çatalmeşe Mah. 207. Sokak No: 12",
+    neden:
+      "Flutter FormLocationInfo hint’i — `location_editor_section.dart:417` " +
+      "aynen bu metin; web placeholder’ı parite için buna eşitlendi.",
+  },
+  {
+    metin: "Açık Adres (Mahalle, Cadde, Sokak, No)",
+    neden:
+      "Flutter label — `location_editor_section.dart:389` aynı metin; " +
+      "web label’ı parite için eklendi, extractor kapsamı dışında.",
+  },
+  {
+    metin: "Örnek adres",
+    neden:
+      "Açık adres sr-only ipucu — Flutter'da hint olarak aynı örnek var " +
+      "ama landing extractor'ında değil; erişilebilirlik için eklendi.",
+  },
+  {
+    metin: "Konumu onayla, devam",
+    neden:
+      "Flutter primary buton — `vixrex_onboarding_chat_screen.dart:456` " +
+      "aynı metin; web katalog `Adres Ekle` diyordu, parite için Flutter’a hizalandı.",
+  },
+  {
+    metin: "İl seç",
+    neden:
+      "Flutter konumEksigi helper — `vixrex_onboarding_controller.dart:307` " +
+      "`İl seç`; web helper’ı parite için eklendi, landing extractor " +
+      "onboarding controller’ı taramıyor.",
+  },
+  {
+    metin: "İlçe seç",
+    neden:
+      "Flutter konumEksigi helper — `vixrex_onboarding_controller.dart:308` " +
+      "`İlçe seç`; aynı gerekçe.",
+  },
+  {
+    metin: "Açık adresi yaz",
+    neden:
+      "Flutter konumEksigi helper — `vixrex_onboarding_controller.dart:311` " +
+      "`Açık adresi yaz`; aynı gerekçe.",
   },
 
   // --- Bitiş mesajları (Flutter Web onboarding bitişi) ---
@@ -124,13 +163,13 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
 
   // --- Select option metinleri ---
   {
-    metin: "İlçe seçin",
+    metin: "İlçe seçiniz",
     neden:
       "İlçe dropdown boş seçenek metni. Flutter Web'de bu metin " +
       "dropdown içinde sabit yazılıyor, katalogdan gelmiyor.",
   },
   {
-    metin: "Önce il seçin",
+    metin: "Önce il seçiniz",
     neden:
       "İlçe dropdown devre dışıyken gösterilen metin. Flutter Web'de " +
       "aynı metin kullanılıyor.",
