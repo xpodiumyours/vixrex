@@ -125,7 +125,7 @@ export async function GET(request: Request) {
   try {
     // HMAC payload: storeId, slug, sessionToken, exp
     token = signOwnerSession(session.store_id, session.slug, session.session_token);
-  } catch (err) {
+  } catch {
     console.error("[owner-session] signOwnerSession failed");
     return ownerErrorPage(
       "Önizleme açılamadı",

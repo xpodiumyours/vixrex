@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
   const merchantOid = `vx_${randomUUID().replace(/-/g, "")}`;
 
-  const { data: siparis, error: siparisHatasi } = await getSupabaseAdmin().rpc(
+  const { error: siparisHatasi } = await getSupabaseAdmin().rpc(
     "create_premium_order",
     {
       p_store_id: ownerSession.storeId,

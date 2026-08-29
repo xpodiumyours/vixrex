@@ -32,12 +32,10 @@ const PAGE_SIZE = 24;
 function CatalogProductImage({
   src,
   alt,
-  fallbackImage,
   storeInitial,
 }: {
   src: string | null;
   alt: string;
-  fallbackImage?: string | null;
   storeInitial: string;
 }) {
   const [prevSrc, setPrevSrc] = useState(src);
@@ -187,7 +185,6 @@ export default function ProductCatalog({
                 <CatalogProductImage
                   src={image}
                   alt={product.name}
-                  fallbackImage={fallbackImage}
                   storeInitial={storeInitial}
                 />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/80 via-transparent to-transparent" />

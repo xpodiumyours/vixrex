@@ -251,7 +251,7 @@ export default function BulkProductUpload({
         setErrors(parseErrors.slice(0, 10)); // İlk 10 hatayı göster
       }
       setStep("map");
-    } catch (_err) {
+    } catch {
       setErrors(["Dosya işlenirken hata oluştu."]);
     }
   }, []);

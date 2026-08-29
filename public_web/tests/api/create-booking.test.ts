@@ -45,7 +45,8 @@ describe("POST /api/create-booking", () => {
   });
 
   it("recaptchaToken eksikse RPC hiç çağrılmaz", async () => {
-    const { recaptchaToken: _drop, ...bodyWithoutToken } = validBody;
+    const bodyWithoutToken = { ...validBody } as Record<string, unknown>;
+    delete bodyWithoutToken.recaptchaToken;
     const response = await POST(request(bodyWithoutToken));
 
     expect(response.status).toBe(403);
@@ -64,7 +65,8 @@ describe("POST /api/create-booking", () => {
   });
 
   it("eksik randevu bilgisiyle RPC çağrılmaz", async () => {
-    const { storeSlug: _drop, ...bodyWithoutSlug } = validBody;
+    const bodyWithoutSlug = { ...validBody } as Record<string, unknown>;
+    delete bodyWithoutSlug.storeSlug;
     const response = await POST(request(bodyWithoutSlug));
 
     expect(response.status).toBe(400);

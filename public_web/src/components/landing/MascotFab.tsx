@@ -76,7 +76,7 @@ export function MascotFab({ onToggle }: { onToggle: () => void }) {
       <button
         type="button"
         onClick={onToggle}
-        className="pointer-events-auto flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full border-[1.5px] border-[#38A0E4]/60 bg-[#0E1B2E]/80 shadow-[0_0_16px_2px_rgba(14,165,233,0.28)] transition-transform hover:scale-105"
+        className="pointer-events-auto flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full border-[1.5px] border-[#38A0E4]/60 bg-[#0E1B2E]/80 transition-transform hover:scale-105 animate-mascot-pulse"
         aria-label="Vixrex Asistan'ı aç"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}

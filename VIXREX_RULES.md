@@ -13,6 +13,23 @@ VixRex, işletmeler için dijital vitrin ve müşteri yönetim platformudur.
 - Supabase: PostgreSQL, Auth ve Storage.
 - Vercel: Flutter paneli ve Next.js public site iki ayrı projedir.
 - Bir yüzeyde çalışırken diğer yüzey yalnızca gerçek bir bağlantı kanıtlanırsa kapsama alınır.
+- **Değişmez kural — iki yüzey, iki ayrı uygulama; eşitleme TEK YÖNLÜDÜR:**
+
+  | Adres | Nedir | Kaynak | Rolü |
+  |---|---|---|---|
+  | `vixrex-app.vercel.app` | **Flutter** | `lib/` (Dart) | **REFERANS / hedef kalite** |
+  | `vixrex.com` | **Next.js** | `public_web/` (TypeScript) | **EŞİTLENECEK TARAF** |
+
+  Bunlar aynı uygulamanın iki ortamı **değildir** — biri dev, diğeri prod değildir. İkisi de canlıdır, ikisi ayrı Vercel projesidir, kod tabanları ve dilleri farklıdır. Tek ortak noktaları aynı Supabase veritabanına yazmalarıdır. Flutter web çıktısı APK ile **aynı koddan** derlenir; bu yüzden Flutter tarafındaki bir değişiklik APK'yı da etkiler.
+
+  **Yön daima Flutter → Next.js.** Bir fark bulunduğunda düzeltme `public_web/` içinde yapılır; `lib/` altına dokunulmaz. "Bu özelliği Flutter'a ekleyelim" biçimindeki bir öneri, kullanıcı açıkça istemedikçe **yanlıştır** — çalışan referans yüzeyi bozar.
+
+  **Emin olmadan yazma:** hangi adresin hangi yüzey olduğunu ekran görüntüsünden veya isimden çıkarma; `lib/` Dart, `public_web/` TypeScript — koddan doğrula. Bu ayrım 2026-08-28'de iki ayrı ajan tarafından **ters** anlaşıldı ve önerilen plan çalışan Flutter tarafını değiştirmeye çalıştı; kural bu yüzden yazıldı.
+
+  **Eşitlik bir tabandır, tavan değildir:** Next.js parite yakaladıktan sonra ileri gidebilir — müşterinin gördüğü ve Google'da çıkan yüzey odur. O aşamada eşitlik bekçisinin kuralı "ikisi birebir aynı" değil, **"Next.js Flutter'ın gerisinde kalamaz"** olacak şekilde güncellenir.
+
+  **Birebir aktarılmayacak üç yer** (web'de kullanıcı giriş yapmamış olduğu için): (1) konum adımından sonra **sohbetin içinde** kayıt adımı vardır, sayfa değişmez, toplanan bilgiler kaybolmaz; (2) Flutter'ın bitiş ekranındaki "Detaylı formu aç → HomeShell" yolu web'de yoktur; (3) alt sekme çubuğu ve `HomeShell` uygulamaya özeldir, web'deki karşılığı mevcut `/app` panosudur. Ayrıca Flutter'daki kusurlar (ör. dar ekranda kesilen düğme yazıları) kopyalanmaz.
+
 - **Değişmez kural — vitrin görünümü yalnızca Next.js'te render edilir:** Flutter, müşterinin veya esnafın göreceği vitrin/önizleme sayfasını kendi başına bir daha ASLA çizmez (özel bir widget ağacıyla, `PreviewScreen` benzeri bir ekranla veya başka bir yöntemle). Esnafın "önizleme" ihtiyacı da dahil, her görünüm `public_web`'in gerçek `/v/:slug` şablonu üzerinden karşılanır — yayın öncesi taslaklar için `?preview_token=` ile (bkz. `save_store_draft_with_token` / `get_store_preview` Supabase fonksiyonları). Flutter yalnızca: veriyi düzenler, Supabase'e yazar, Next.js linkini (yayın veya taslak) açar. Bu kural 2026-08-03'te, aylarca süren Flutter/Next.js vitrin tekrarı karmaşasından sonra kesinleşti — yeniden açılması kullanıcının açık isteğini gerektirir.
 
 - **Değişmez kural — düzenlemenin iki kapısı vardır, üçüncüsü açılmaz:** (1) **Flutter manuel üyelik paneli** — büyük form, toplu işlem, OCR/Excel, çevrimdışı çalışma. (2) **Next.js sahip paneli — Vixrex Asistan.** Vitrin önizlemesinde açılan panel bir form değil, asistan sohbetidir; vitrindeki bir alana tıklandığında panel o alana odaklanır ve kullanıcı ister sohbete yazar ister açılan kutuyu doldurur. İkisi de aynı alan şemasına bakar, aynı doğrulamadan geçer, aynı çalışma taslağına yazar. **Next.js tarafında ikinci bir form paneli açılmaz** — o üçüncü kapı olur ve aynı alan için iki kayıt yolu doğurur. Düzenlenebilir alanların tek kaynağı `docs/vitrin-alan-semasi.md` dosyasıdır; yeni alan önce oraya yazılır, sonra koda geçer. Şemadaki `anahtar` ve `etiket` sütunları, vitrindeki öğelere konan `data-vixrex-editable` / `data-vixrex-label` işaretlerinin kaynağıdır.

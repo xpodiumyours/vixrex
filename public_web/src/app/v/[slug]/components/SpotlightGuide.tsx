@@ -56,6 +56,12 @@ interface Props {
   seciliAlan: VitrinField | null;
   giris: string;
   girisRef: React.RefObject<HTMLTextAreaElement | null>;
+  /** owner draft'tan okunan mevcut il/ilçe değerleri */
+  mevcutIl?: string;
+  mevcutIlce?: string;
+  /**İl/ilçe değiştiğinde çağrılır */
+  onIlDegisti?: (il: string) => void;
+  onIlceDegisti?: (ilce: string) => void;
   kaydediliyor: boolean;
   geriAliniyor: boolean;
   hazirGorseller: HazirGorsel[];
@@ -69,6 +75,8 @@ interface Props {
   canliyaDondur: () => Promise<void>;
   sonrayaBirak?: () => void;
   onKapat: () => void;
+  onGpsKonumAl?: () => void;
+  gpsLoading?: boolean;
   /**
    * Değeri değiştiğinde balonun konumu yeniden ölçülür (Faz 2).
    *

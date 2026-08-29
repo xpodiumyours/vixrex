@@ -78,6 +78,155 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     metin: "İl, ilçe ve açık adresi tamamla.",
     neden: KONUM_WEB_OZEL,
   },
+
+  // --- Bitiş mesajları (Flutter Web onboarding bitişi) ---
+  {
+    metin: "İşte bu kadar!",
+    neden:
+      "Flutter Web onboarding bitiş balonu. Katalog `all_done_baslik` " +
+      "olarak 'Tebrikler!' diyor; Flutter Web ise 'İşte bu kadar!' " +
+      "kullanıyor. Bitiş metni parity'si ayrı değerlendirilmeli.",
+  },
+  {
+    metin: "Artık dijitalde varsın. İşletme adına özel vitrinin hazır.",
+    neden:
+      "Flutter Web onboarding bitiş açıklaması. Katalog `all_done_aciklama` " +
+      "ile farklı metin içeriyor.",
+  },
+
+  // --- Hata mesajları (platform-spesifik) ---
+  {
+    metin: "Vitrin oluşturulamadı.",
+    neden:
+      "Landing publish hata mesajı. Flutter'da bu hata aynı API tarafından " +
+      "döndürülüyor ama landing akışında gösterilmiyor — orada asistan " +
+      "hata mesajını kendi içinde yönetiyor.",
+  },
+  {
+    metin: "Bir hata oluştu. Lütfen tekrar dene.",
+    neden:
+      "Landing publish catch hata mesajı. Flutter Web'de benzer mesaj " +
+      "var ama landing akışında farklı yüzeyde gösteriliyor.",
+  },
+  {
+    metin: "Yayın için yasal onayları işaretlemeniz gerekiyor.",
+    neden:
+      "Landing yasal onay hata mesajı. Flutter Web'de bu kontrol " +
+      "farklı bir katmanda (asistan controller) yapılıyor, landing'de " +
+      "yok.",
+  },
+  {
+    metin: "[landing-asistan] publish error:",
+    neden:
+      "console.error teknik logu, kullanıcıya gösterilmiyor. " +
+      "Flutter'da karşılığı debugPrint ile loglanıyor.",
+  },
+
+  // --- Select option metinleri ---
+  {
+    metin: "İlçe seçin",
+    neden:
+      "İlçe dropdown boş seçenek metni. Flutter Web'de bu metin " +
+      "dropdown içinde sabit yazılıyor, katalogdan gelmiyor.",
+  },
+  {
+    metin: "Önce il seçin",
+    neden:
+      "İlçe dropdown devre dışıyken gösterilen metin. Flutter Web'de " +
+      "aynı metin kullanılıyor.",
+  },
+  {
+    metin: "İl seçiniz",
+    neden:
+      "İl dropdown boş seçenek metni. Flutter Web ile aynı.",
+  },
+
+
+
+  // --- Karşılama / hızlı seçim buton metinleri ---
+  {
+    metin: "Hızlı Seçenekler",
+    neden:
+      "Flutter Web onboarding karşılama başlığı. Katalogda " +
+      "karşılığı yok — Flutter Web'de sabit yazılı.",
+  },
+  {
+    metin: "Hazır Vitrin Seç",
+    neden:
+      "Flutter Web karşılama butonu. Katalogda karşılığı yok.",
+  },
+  {
+    metin: "Sıfırdan Oluştur",
+    neden:
+      "Flutter Web karşılama butonu. Katalogda karşılığı yok.",
+  },
+  {
+    metin: "Detaylı formu aç",
+    neden:
+      "Flutter Web bitiş butonu. Katalogda karşılığı yok.",
+  },
+  {
+    metin: "İşini seç",
+    neden:
+      "Flutter Web kategori grid başlığı. Katalogda karşılığı yok.",
+  },
+
+  // --- Kategori sunum label farkları (A sınıfı — sunum label) ---
+  {
+    metin: "Spor & Fitness",
+    neden:
+      "Flutter Web kategori presentation label'ı. Next.js shared JSON " +
+      "'Spor / Fitness' kullanıyor. Sunum label farkı (A sınıfı).",
+  },
+  {
+    metin: "Sağlık / Yaşam",
+    neden:
+      "Shared JSON kategori label'ı. Flutter Web 'Sağlık & Yaşam' " +
+      "kullanıyor. Sunum label farkı (A sınıfı).",
+  },
+  {
+    metin: "Sağlık & Yaşam",
+    neden:
+      "Flutter Web kategori presentation label'ı. Sunum label farkı.",
+  },
+  {
+    metin: "Oto / Araç",
+    neden:
+      "Shared JSON kategori label'ı. Flutter Web 'Oto & Araç Hizmetleri' " +
+      "kullanıyor. Sunum label farkı.",
+  },
+  {
+    metin: "Oto & Araç Hizmetleri",
+    neden:
+      "Flutter Web kategori presentation label'ı. Sunum label farkı.",
+  },
+
+  // --- Yasal onay link metinleri ---
+  {
+    metin: "Aydınlatma Metni",
+    neden:
+      "Yasal onay checkbox link metni. Flutter Web'de aynı metin " +
+      "kullanılıyor ama Flutter landing extractoru bu ekranı kapsamıyor.",
+  },
+  {
+    metin: "Açık Rıza Beyanı",
+    neden:
+      "Yasal onay checkbox link metni. Aynı neden.",
+  },
+  {
+    metin: "nı okudum, anladım ve kabul ediyorum.",
+    neden:
+      "Yasal onay checkbox açıklama metni parçası. Flutter Web'de " +
+      "aynı metin kullanılıyor ama Flutter landing extractoru bu " +
+      "ekranı kapsamıyor.",
+  },
+  {
+    metin: "Vitrinini aç",
+    neden:
+      "Flutter Web bitiş butonu. Katalogda `landing_finish_buton` olarak " +
+      "'Hesap Aç ve Vitrini Kur' yazıyor; Flutter Web ise 'Vitrinini aç' " +
+      "kullanıyor.",
+  },
 ];
 
 // Blog altbilgi bağlantısı (28 Ağustos) buraya İSTİSNA OLARAK GİRMEDİ ve

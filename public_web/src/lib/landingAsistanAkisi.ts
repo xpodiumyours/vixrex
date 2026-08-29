@@ -63,24 +63,24 @@ const CEVAP_ANAHTARLARI: Readonly<Record<string, keyof AsistanCevaplari>> = {
 };
 
 export const ASISTAN_ADIMLARI: AsistanAdimi[] = vixRexAsistanAkisi
-  .filter((adim) => ["name", "category", "whatsapp", "location"].includes(adim.id))
+  .filter((adim) => ["name", "category", "whatsapp", "location", "legal", "publish"].includes(adim.id))
   .map((adim) => {
     const alanlar = adim.alanlar.map((anahtar) => FIELD_BY_KEY.get(anahtar));
     if (alanlar.some((alan) => !alan)) {
       throw new Error(`Vixrex asistan akışında tanımsız alan var: ${adim.alanlar.join(", ")}`);
     }
-    const ilkAlan = alanlar[0]!;
+    const ilkAlan = alanlar[0];
     return {
       alan: adim.id,
       kolonlar: alanlar.map((alan) => alan!.kolon),
-      cevapAnahtari: CEVAP_ANAHTARLARI[ilkAlan.anahtar] ?? null,
+      cevapAnahtari: ilkAlan ? (CEVAP_ANAHTARLARI[ilkAlan.anahtar] ?? null) : null,
       girdi: adim.girdi,
       baslik: metin(`${adim.mesaj}_baslik`),
       aciklama: metin(`${adim.mesaj}_aciklama`),
       dugme: metin(`${adim.mesaj}_buton`),
       yerTutucu: adim.yerTutucu ?? "",
       zorunlu: alanlar.some((alan) => alan!.zorunlu === true),
-      secenekler: ilkAlan.secenekler ?? [],
+      secenekler: ilkAlan?.secenekler ?? [],
     };
   });
 
@@ -102,10 +102,14 @@ export interface AsistanCevaplari {
   longitude?: number;
   location_accuracy_meters?: number;
   location_source?: "browser_gps" | "manual";
+  legal_consent?: boolean;
+  aydinlatma_onay?: boolean;
+  sartlar_onay?: boolean;
+  acik_riza_onay?: boolean;
   assistant_handoff?: {
     version: 1;
-    completed_steps: ["name", "category", "whatsapp", "location"];
-    next_step: "legal";
+    completed_steps: ["name", "category", "whatsapp", "location", "legal", "publish"];
+    next_step: null;
     messages: { role: "assistant" | "user"; text: string }[];
   };
 }
@@ -134,8 +138,8 @@ export function asistanHandoffOlustur(
   }
   return {
     version: 1,
-    completed_steps: ["name", "category", "whatsapp", "location"],
-    next_step: "legal",
+    completed_steps: ["name", "category", "whatsapp", "location", "legal", "publish"],
+    next_step: null,
     messages,
   };
 }

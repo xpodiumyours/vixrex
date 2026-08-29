@@ -11,11 +11,20 @@ import { ChatTopBar } from "./components/ChatTopBar";
 import { StageMeter } from "./components/StageMeter";
 import { UpNextList } from "./components/UpNextList";
 import { SectionProgressList } from "./components/SectionProgressList";
+import { SectionVisibilityToggle } from "./components/SectionVisibilityToggle";
+import { BookingSettingsPanel } from "./components/BookingSettingsPanel";
+import { AboutEditor } from "./components/AboutEditor";
+import { FaqEditor } from "./components/FaqEditor";
+import { CampaignEditor } from "./components/CampaignEditor";
+import { MarketplaceEditor } from "./components/MarketplaceEditor";
+import { GalleryEditor } from "./components/GalleryEditor";
 import { PublishBar } from "./components/PublishBar";
 import { VixrexAvatar } from "./components/VixrexAvatar";
 import { SpotlightGuide } from "./components/SpotlightGuide";
 import { alanOnemi, asamaDolulugu, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
 import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
+import { taslakClientId } from "@/lib/canliVitrinSenkron";
+import { useRouter } from "next/navigation";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
 // yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
@@ -42,6 +51,12 @@ interface Props {
    * (page.tsx getWorkingDraft). Yalnız PublishBar düğmesinin dürüst
    * etiketidir; güvenlik katmanı RPC'dedir (PREMIUM_REQUIRED). */
   premiumAktifMi?: boolean;
+  bookingSettings?: Record<string, unknown> | null;
+  aboutSection?: { kicker: string; title: string; body: string; imageUrl: string; imageCaption: string; values: Array<{ id: string; title: string; description: string }> } | null;
+  faqItems?: Array<{ id: string; question: string; answer: string }> | null;
+  campaignBanner?: { label: string; title: string; description: string; priceText: string; imageUrl: string } | null;
+  marketplaceLinks?: Array<{ id: string; platform: string; url: string; subtitle?: string }> | null;
+  galleryItems?: Array<{ id?: string; imageUrl: string; title?: string }> | null;
 }
 
 export default function OwnerAssistantPanel({
@@ -50,6 +65,12 @@ export default function OwnerAssistantPanel({
   assistantHandoff = null,
   atlananAlanlar = null,
   premiumAktifMi = false,
+  bookingSettings = null,
+  aboutSection = null,
+  faqItems = null,
+  campaignBanner = null,
+  marketplaceLinks = null,
+  galleryItems = null,
 }: Props) {
   const [acik, setAcik] = useState(false);
   // Harita = "Tüm alanlar" paneli. Faz 4 (Casper, 2026-08-22): mobilde
@@ -163,6 +184,15 @@ export default function OwnerAssistantPanel({
     (yerelTaslak.cloned_from_slug as string | null | undefined)?.trim()
   );
 
+  // Düzenleme modalleri için state
+  const [aboutAcik, setAboutAcik] = useState(false);
+  const [faqAcik, setFaqAcik] = useState(false);
+  const [kampanyaAcik, setKampanyaAcik] = useState(false);
+  const [marketplaceAcik, setMarketplaceAcik] = useState(false);
+  const [galeriAcik, setGaleriAcik] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const router = useRouter();
+
   // Yasal onay üçü birden — aynı desen, aynı yorum: draftData stores
   // satırının tam kopyası, owner_forbidden_draft_keys yalnız YAZMAYI
   // engeller (bkz. accept_store_legal_consent RPC'si, /api/owner-accept-legal).
@@ -191,6 +221,71 @@ export default function OwnerAssistantPanel({
     setSeciliAlan(null);
   };
 
+  // İl/ilçe dropdown state — mevcut taslak değerlerinden yüklenir
+  const mevcutIl = String(yerelTaslak.province_name ?? "");
+  const mevcutIlce = String(yerelTaslak.district_name ?? "");
+
+  const handleIlDegisti = (il: string) => {
+    setAlan("province_name", il);
+    setAlan("district_name", ""); // il değişince ilçe temizlenir
+    setGiris(il);
+  };
+
+  const handleIlceDegisti = (ilce: string) => {
+    setAlan("district_name", ilce);
+    setGiris(ilce);
+  };
+
+  const handleGpsKonumAl = () => {
+    if (!navigator.geolocation) {
+      mesajEkle("asistan", "Bu tarayıcı GPS konumunu desteklemiyor; adresi elle yazabilirsin.");
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const accuracy = pos.coords.accuracy;
+        try {
+          const saves = await Promise.all([
+            fetch("/api/owner-draft", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug, anahtar: "enlem", deger: lat, clientId: taslakClientId() }),
+            }),
+            fetch("/api/owner-draft", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug, anahtar: "boylam", deger: lng, clientId: taslakClientId() }),
+            }),
+          ]);
+          if (saves.some((r) => !r.ok)) {
+            const firstErr = await saves.find((r) => !r.ok)?.json().catch(() => null);
+            mesajEkle("asistan", firstErr?.hata ?? "Konum kaydedilemedi.");
+            setGpsLoading(false);
+            return;
+          }
+          setAlan("latitude", lat);
+          setAlan("longitude", lng);
+          (setAlan as unknown as (k: string, v: unknown) => void)("location_accuracy_meters", accuracy);
+          (setAlan as unknown as (k: string, v: unknown) => void)("location_source", "browser_gps");
+          mesajEkle("asistan", `Konum alındı: ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${Math.round(accuracy)}m). Yayınlayınca haritada görünecek.`);
+          router.refresh();
+        } catch {
+          mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+        } finally {
+          setGpsLoading(false);
+        }
+      },
+      () => {
+        mesajEkle("asistan", "Konum izni alınamadı; il, ilçe ve adresi elle yazabilirsin.");
+        setGpsLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   return (
     <>
       {/* Sayfada dolaşan rehber — panel açık ve bir alan seçiliyken,
@@ -213,11 +308,15 @@ export default function OwnerAssistantPanel({
           canliyaDondur={fieldRestore.canliyaDondur}
           sonrayaBirak={sonrayaBirak}
           onKapat={rehberiKapat}
-          // Taslak değişti = sayfa da değişmiş olabilir (kaydetme artık
-          // sunucudan tazeliyor, Faz 2) → balon konumunu yeniden ölç.
           olcumTetikleyici={yerelTaslak}
           gecisSuruyor={gecisSuruyor}
           onHaritaAc={() => setHaritaAcik(true)}
+          mevcutIl={mevcutIl}
+          mevcutIlce={mevcutIlce}
+          onIlDegisti={handleIlDegisti}
+          onIlceDegisti={handleIlceDegisti}
+          onGpsKonumAl={handleGpsKonumAl}
+          gpsLoading={gpsLoading}
         />
       )}
 
@@ -293,6 +392,68 @@ export default function OwnerAssistantPanel({
 
             <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
 
+            <SectionVisibilityToggle
+              slug={slug}
+              visibility={yerelTaslak.section_visibility as Record<string, boolean> | null}
+              setAlan={setAlan}
+              mesajEkle={mesajEkle}
+            />
+
+            <BookingSettingsPanel
+              slug={slug}
+              mevcutAyarlar={bookingSettings as { is_enabled: boolean; capacity: number; working_hours: Record<string, { start: string; end: string; active: boolean }>; lunch_break: { start: string; end: string; active: boolean } } | null}
+            />
+
+            {/* Hakkımızda / SSS / Kampanya / Galeri / Pazaryeri düzenleme kartları */}
+            <div className="border-t border-white/10 px-4 py-3 space-y-1">
+              <p className="mb-1 text-[11px] font-semibold text-white/40 uppercase tracking-wider">İçerik Düzenleme</p>
+              <button
+                type="button"
+                onClick={() => setAboutAcik(true)}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+              >
+                <span>ℹ️</span>
+                <span className="flex-1 font-medium text-[13px]">Hakkımızda</span>
+                <span className="text-[10px] text-white/30">{aboutSection?.title ? "Dolu" : "Boş"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setGaleriAcik(true)}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+              >
+                <span>🖼️</span>
+                <span className="flex-1 font-medium text-[13px]">Galeri</span>
+                <span className="text-[10px] text-white/30">{galleryItems && galleryItems.length > 0 ? `${galleryItems.length} görsel` : "Boş"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMarketplaceAcik(true)}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+              >
+                <span>🛒</span>
+                <span className="flex-1 font-medium text-[13px]">Pazaryeri Bağlantıları</span>
+                <span className="text-[10px] text-white/30">{marketplaceLinks && marketplaceLinks.length > 0 ? `${marketplaceLinks.length} link` : "Boş"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFaqAcik(true)}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+              >
+                <span>❓</span>
+                <span className="flex-1 font-medium text-[13px]">Sık Sorulan Sorular</span>
+                <span className="text-[10px] text-white/30">{faqItems && faqItems.length > 0 ? `${faqItems.length} soru` : "Boş"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setKampanyaAcik(true)}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+              >
+                <span>🎯</span>
+                <span className="flex-1 font-medium text-[13px]">Öne Çıkan Kampanya</span>
+                <span className="text-[10px] text-white/30">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
+              </button>
+            </div>
+
             <PublishBar
               yayinlaniyor={actions.yayinlaniyor}
               silmeOnayi={actions.silmeOnayi}
@@ -323,6 +484,42 @@ export default function OwnerAssistantPanel({
             ))}
           </div>
         </div>
+      )}
+      {/* Hakkımızda / SSS / Kampanya düzenleme modalleri */}
+      {aboutAcik && aboutSection && (
+        <AboutEditor
+          slug={slug}
+          mevcut={aboutSection}
+          onClose={() => setAboutAcik(false)}
+        />
+      )}
+      {faqAcik && (
+        <FaqEditor
+          slug={slug}
+          items={faqItems ?? []}
+          onClose={() => setFaqAcik(false)}
+        />
+      )}
+      {kampanyaAcik && (
+        <CampaignEditor
+          slug={slug}
+          mevcut={campaignBanner ?? { label: "", title: "", description: "", priceText: "", imageUrl: "" }}
+          onClose={() => setKampanyaAcik(false)}
+        />
+      )}
+      {marketplaceAcik && (
+        <MarketplaceEditor
+          slug={slug}
+          links={(marketplaceLinks ?? []).map((l, i) => ({ id: l.id || `ml-${i}`, platform: l.platform || "", url: l.url || "", subtitle: l.subtitle || "" }))}
+          onClose={() => setMarketplaceAcik(false)}
+        />
+      )}
+      {galeriAcik && (
+        <GalleryEditor
+          slug={slug}
+          items={(galleryItems ?? []).map((g) => ({ id: g.id || "", imageUrl: g.imageUrl || "", title: g.title || "" }))}
+          onClose={() => setGaleriAcik(false)}
+        />
       )}
     </>
   );
