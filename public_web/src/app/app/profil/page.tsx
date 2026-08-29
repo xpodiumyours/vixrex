@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { sahipOturumuAc } from "@/lib/ownerCookie";
 import type { User } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";

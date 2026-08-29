@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
-import { createClient } from "@supabase/supabase-js";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
