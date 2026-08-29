@@ -19,7 +19,7 @@ const EYLEM_ALANI: Record<string, string> = {
   website: "website",
 };
 import Link from "next/link";
-import { Suspense, type ReactNode, useState } from "react";
+import { Suspense, type ReactNode, useEffect, useState } from "react";
 import type { VitrinCategoryProfile } from "@/lib/vitrinProfile";
 import { normalizeAddressDisplay } from "@/lib/vitrinCopy";
 import {
@@ -32,7 +32,6 @@ import {
 } from "@/lib/vitrinBrandIcons";
 import { editableProps } from "@/lib/vitrinEditableProps";
 import { BolumEksikleri, BolumIskeleti } from "./components/BolumEksikleri";
-import { VixrexAvatar } from "./components/VixrexAvatar";
 import { heroActions } from "@/lib/vitrinHeroActions";
 import { normalizeExternalUrl } from "@/lib/products";
 import {
@@ -244,6 +243,17 @@ export default function VitrinProfileView({
   isDemo = false,
 }: VitrinProfileViewProps) {
   const [copied, setCopied] = useState(false);
+
+  /* Ust cubuktaki magaza kimligi: sayfa basinda gizli, hero gecilince
+     belirir. Hero'da ad zaten 5xl punto yaziyor, cubukta tekrarlanmasi
+     ayni adi iki kez okutuyordu (Casper, 2026-08-29). */
+  const [kimlikGorunur, setKimlikGorunur] = useState(false);
+  useEffect(() => {
+    const kontrol = () => setKimlikGorunur(window.scrollY > 200);
+    kontrol();
+    window.addEventListener("scroll", kontrol, { passive: true });
+    return () => window.removeEventListener("scroll", kontrol);
+  }, []);
   const displayAddress = normalizeAddressDisplay(address);
   // Faz F (Tek Asistan planı): il/ilçe artık şemada zorunlu alan
   // (docs/alan-eslemesi.md) ama sahibin serbest yazdığı heroLocationText
@@ -362,21 +372,34 @@ export default function VitrinProfileView({
       <nav
         className={`fixed left-0 right-0 z-50 h-[68px] bg-[#0B1120]/85 backdrop-blur-xl border-b border-blue-500/15 px-6 sm:px-8 flex items-center justify-between ${isPreviewMode ? "top-9" : "top-0"}`}
       >
-        {/* Marka kilidi: Vixrex Asistan maskotu + kelime markası.
-            Eski gridli SVG logo kaldırıldı — asistanla aynı yüz her
-            yüzeyde tek olsun diye canonical VixrexAvatar kullanılıyor
-            (Flutter asset'iyle bayt eşitliği sözleşme testinde kilitli).
-            Bağlantı kendi sayfasının başına döner; eskiden "/" ile
-            Vixrex'in ana sayfasına gidiyordu ve esnafın müşterisini
-            başka bir siteye yolluyordu. */}
+        {/* Ust cubuk magazanindir. 2026-08-29 oncesinde burada Vixrex
+            maskotu + kelime markasi vardi, saginda da "Vitrin Olustur"
+            dugmesi: musterinin baktigi sayfada esnafin degil PLATFORMUN
+            reklami. Mobilde sag taraf zaten gizliydi, yani 68px'lik cubuk
+            tamamen bize gidiyordu. Vixrex imzasi kalkmadi — sayfa altinda
+            "VIXREX ile olusturuldu" satiri duruyor, dogru yer orasi. */}
         <a
           href="#ust-bolum"
           aria-label="Sayfanın başına dön"
-          className="flex items-center gap-2.5"
+          className={`flex min-w-0 items-center gap-2.5 transition-opacity duration-300 ${
+            kimlikGorunur ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
         >
-          <VixrexAvatar size={34} halo />
-          <span className="text-[19px] font-extrabold tracking-[0.14em] leading-none text-white">
-            VIX<span className="text-blue-400">REX</span>
+          {logoUrl ? (
+            <Image
+              src={logoUrl}
+              alt=""
+              width={34}
+              height={34}
+              className="h-[34px] w-[34px] shrink-0 rounded-full border border-blue-500/25 object-cover"
+            />
+          ) : (
+            <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-blue-500/25 bg-blue-500/10 text-sm font-extrabold text-blue-300">
+              {storeName.charAt(0).toUpperCase()}
+            </span>
+          )}
+          <span className="truncate text-[17px] font-extrabold leading-none tracking-tight text-white">
+            {storeName}
           </span>
         </a>
 
@@ -399,10 +422,25 @@ export default function VitrinProfileView({
           {showContact && (
             <a href="#iletisim" className="hover:text-white transition-colors">İletişim</a>
           )}
-          <Link href="/app" className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition">
-            Vitrin Oluştur
-          </Link>
         </div>
+
+        {/* Paylas her boyutta gorunur: musterinin vitrini arkadasina
+            yollamasi, bizim yeni vitrin satmamizdan once gelir. */}
+        {!ownerMode && (
+        <a
+          href="#paylas"
+          className="ml-3 flex shrink-0 items-center gap-1.5 rounded-xl border border-blue-500/25 bg-blue-500/10 px-3.5 py-2 text-sm font-semibold text-blue-200 transition hover:border-blue-500/45 hover:text-white"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.6" y1="10.5" x2="15.4" y2="6.5" />
+            <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
+          </svg>
+          Paylaş
+        </a>
+        )}
       </nav>
 
       {/* ===== HERO ===== */}
@@ -1221,7 +1259,7 @@ export default function VitrinProfileView({
           karıştırır (Casper, 2026-08-14 canlı ekran görüntüsü). Yayından
           sonra normal ziyaretçi modunda tekrar görünür. */}
       {!ownerMode && (
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
+      <div id="paylas" style={{ scrollMarginTop: "88px" }} className="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
         <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 sm:p-10">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
