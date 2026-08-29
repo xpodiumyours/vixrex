@@ -44,7 +44,6 @@ import {
   TrackedPhoneLink,
 } from "@/components/TrackedContactLink";
 import VitrinViewTracker from "@/components/VitrinViewTracker";
-import FloatingWhatsAppButton from "@/components/FloatingWhatsAppButton";
 
 export interface VitrinGalleryItem {
   id?: string;
@@ -371,7 +370,13 @@ export default function VitrinProfileView({
       )}
       {/* ===== NAVBAR ===== */}
       <nav
-        className={`fixed left-0 right-0 z-50 h-[68px] bg-[#0B1120]/85 backdrop-blur-xl border-b border-blue-500/15 px-6 sm:px-8 flex items-center justify-between ${isPreviewMode ? "top-9" : "top-0"}`}
+        className={`fixed left-0 right-0 z-50 h-[68px] bg-[#0B1120]/92 backdrop-blur-xl border-b border-blue-500/15 px-5 sm:px-8 flex items-center justify-between transition-all duration-300 ${
+          isPreviewMode ? "top-9" : "top-0"
+        } ${
+          kimlikGorunur
+            ? "translate-y-0 opacity-100"
+            : "pointer-events-none -translate-y-full opacity-0"
+        }`}
       >
         {/* Ust cubuk magazanindir. 2026-08-29 oncesinde burada Vixrex
             maskotu + kelime markasi vardi, saginda da "Vitrin Olustur"
@@ -382,9 +387,7 @@ export default function VitrinProfileView({
         <a
           href="#ust-bolum"
           aria-label="Sayfanın başına dön"
-          className={`flex min-w-0 items-center gap-2.5 transition-opacity duration-300 ${
-            kimlikGorunur ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
+          className="flex min-w-0 items-center gap-2.5"
         >
           {logoUrl ? (
             <Image
@@ -404,50 +407,30 @@ export default function VitrinProfileView({
           </span>
         </a>
 
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-          {showProducts && (
-            <a href="#urunler" className="hover:text-white transition-colors">{productSectionTitle || "Ürünler"}</a>
-          )}
-          {showCategories && (
-            <a href="#kategoriler" className="hover:text-white transition-colors">{categorySectionTitle || "Kategoriler"}</a>
-          )}
-          {showAbout && (
-            <a href="#hakkimizda" className="hover:text-white transition-colors">Hakkımızda</a>
-          )}
-          {showGallery && (
-            <a href="#galeri" className="hover:text-white transition-colors">Galeri</a>
-          )}
-          {showFaq && (
-            <a href="#sss" className="hover:text-white transition-colors">SSS</a>
-          )}
-          {showContact && (
-            <a href="#iletisim" className="hover:text-white transition-colors">İletişim</a>
-          )}
-        </div>
 
-        {/* Paylas her boyutta gorunur: musterinin vitrini arkadasina
-            yollamasi, bizim yeni vitrin satmamizdan once gelir. */}
-        {!ownerMode && (
-        <a
-          href="#paylas"
-          className="ml-3 flex shrink-0 items-center gap-1.5 rounded-xl border border-blue-500/25 bg-blue-500/10 px-3.5 py-2 text-sm font-semibold text-blue-200 transition hover:border-blue-500/45 hover:text-white"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
-            <circle cx="18" cy="5" r="3" />
-            <circle cx="6" cy="12" r="3" />
-            <circle cx="18" cy="19" r="3" />
-            <line x1="8.6" y1="10.5" x2="15.4" y2="6.5" />
-            <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
-          </svg>
-          Paylaş
-        </a>
+        {/* Ust seritteki tek eylem WhatsApp. Ekranin ortasinda yuzen
+            yesil balon kaldirildi: dokuz ekran goruntusunun sekizinde
+            bir fiyatin ya da cumlenin uzerinde duruyordu. Isini bu
+            dugme goruyor, icerigi de kapatmiyor. */}
+        {!ownerMode && whatsappUrl && (
+          <TrackedWhatsAppLink
+            href={whatsappUrl}
+            storeSlug={storeSlug}
+            clickLocation="storefront_floating"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-3 flex shrink-0 items-center gap-1.5 rounded-xl bg-[#25D366] px-3.5 py-2 text-sm font-bold text-white shadow-lg shadow-black/25 transition hover:brightness-110"
+          >
+            <WhatsAppIcon size={17} className="text-white" />
+            WhatsApp
+          </TrackedWhatsAppLink>
         )}
       </nav>
 
       {/* ===== HERO ===== */}
       <section
         id="ust-bolum"
-        className={`relative w-full min-h-[360px] sm:min-h-[420px] flex items-end overflow-hidden ${isPreviewMode ? "pt-[104px]" : "pt-[68px]"}`}
+        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9" : ""}`}
       >
         {/* Kapak yoksa SAHTE FOTOĞRAF BASILMAZ.
             Eskiden burada sabit bir Unsplash adresi vardı: kapak
@@ -1409,11 +1392,6 @@ export default function VitrinProfileView({
       )}
 
       {/* ===== FLOATING WHATSAPP (mobil) ===== */}
-      <FloatingWhatsAppButton
-        whatsappUrl={whatsappUrl}
-        storeSlug={storeSlug}
-        ownerMode={ownerMode}
-      />
 
       {/* ===== FOOTER ===== */}
       <footer className="border-t border-blue-500/15 py-10 text-center">
