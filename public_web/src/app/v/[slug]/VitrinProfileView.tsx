@@ -664,9 +664,9 @@ export default function VitrinProfileView({
 
       {/* ===== CATEGORIES ===== */}
       {showCategories ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
-          <div className="flex items-baseline justify-between mb-8">
-            <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
+          <div className="flex items-baseline justify-between mb-5 sm:mb-8">
+            <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
               {categorySectionTitle || "Kategoriler"}
             </h2>
             <a href="#urunler" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">Tümünü gör →</a>
@@ -776,8 +776,8 @@ export default function VitrinProfileView({
       {/* ===== PRODUCTS ===== */}
       {showProducts ? (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler" style={{ scrollMarginTop: "88px" }}>
-          <div className="flex items-baseline justify-between mb-8">
-            <h2 {...editableProps("urunBolumBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          <div className="flex items-baseline justify-between mb-5 sm:mb-8">
+            <h2 {...editableProps("urunBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
               {productSectionTitle || "Tüm Ürünler"}
             </h2>
             <span className="text-sm font-semibold text-slate-400">{productCount} Ürün Listeleniyor</span>
@@ -794,7 +794,7 @@ export default function VitrinProfileView({
 
       {/* ===== ABOUT ===== */}
       {showAbout ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="hakkimizda" style={{ scrollMarginTop: "88px" }}>
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="hakkimizda" style={{ scrollMarginTop: "88px" }}>
           <div className={`grid gap-10 items-start ${aboutImageUrl ? "md:grid-cols-2" : ""}`}>
             {aboutImageUrl && (
               <div {...editableProps("hakkindaGorsel", ownerMode)} className="relative min-h-[280px] rounded-3xl overflow-hidden border border-blue-500/15">
@@ -863,7 +863,7 @@ export default function VitrinProfileView({
 
       {/* ===== GALLERY ===== */}
       {showGallery ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="galeri" style={{ scrollMarginTop: "88px" }}>
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="galeri" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-8 gap-4">
             <div>
               {galleryKicker && (
@@ -876,7 +876,7 @@ export default function VitrinProfileView({
               )}
               <h2
                 {...editableProps("galeriBaslik", ownerMode)}
-                className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white"
+                className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white"
               >
                 {galleryTitle}
               </h2>
@@ -928,15 +928,15 @@ export default function VitrinProfileView({
 
       {/* ===== ARTICLES ===== */}
       {showArticles ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="blog" style={{ scrollMarginTop: "88px" }}>
-          <div className="flex items-baseline justify-between mb-8">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="blog" style={{ scrollMarginTop: "88px" }}>
+          <div className="flex items-baseline justify-between mb-5 sm:mb-8">
             <div>
               {blogSectionKicker && (
                 <p {...editableProps("blogUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-2">
                   {blogSectionKicker}
                 </p>
               )}
-              <h2 {...editableProps("blogBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              <h2 {...editableProps("blogBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
                 {blogSectionTitle || "Yazılar"}
               </h2>
             </div>
@@ -967,13 +967,13 @@ export default function VitrinProfileView({
 
       {/* ===== FAQ ===== */}
       {showFaq ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="sss" style={{ scrollMarginTop: "88px" }}>
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="sss" style={{ scrollMarginTop: "88px" }}>
           <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
             <div>
               <p {...editableProps("sssUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
                 {faqSectionKicker || "SSS"}
               </p>
-              <h2 {...editableProps("sssBaslik", ownerMode)} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
+              <h2 {...editableProps("sssBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white mb-3">
                 {faqSectionTitle || "Sıkça sorulan sorular"}
               </h2>
               <p {...editableProps("sssAciklama", ownerMode)} className="text-sm text-slate-400 leading-relaxed">
@@ -1003,7 +1003,7 @@ export default function VitrinProfileView({
 
       {/* ===== CONTACT & LOCATION ===== */}
       {showContact ? (
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12" id="iletisim" style={{ scrollMarginTop: "88px" }}>
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="iletisim" style={{ scrollMarginTop: "88px" }}>
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Contact Panel */}
           <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8">
@@ -1270,7 +1270,7 @@ export default function VitrinProfileView({
       {!ownerMode && (
       <div id="paylas" style={{ scrollMarginTop: "88px" }} className="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
         <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 sm:p-10">
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-5 sm:mb-8">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
               <VitrinIkon ad="baglanti" className="h-5 w-5 text-blue-300" />
             </div>
@@ -1356,7 +1356,7 @@ export default function VitrinProfileView({
             <p className="text-xs font-bold uppercase tracking-widest text-blue-400">
               Kiralık vitrin standardı
             </p>
-            <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-white">
+            <h2 className="mt-3 text-[26px] sm:text-4xl font-extrabold text-white">
               Bu hazır {profile.label.toLowerCase()} vitrinini işletmenize göre
               kişiselleştirin
             </h2>
