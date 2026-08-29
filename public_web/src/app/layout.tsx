@@ -34,6 +34,12 @@ export const metadata: Metadata = {
   verification: {
     google: "EDYISkto7FZ88bohG5vwlJJgR4UEqRcL8lkV48cu7t0",
   },
+  // Mitgo/Admitad yayinci dogrulamasi (2026-08-29). Panelde reklam alani
+  // olusturulurken isteniyor; etiket ana sayfanin <head> bolumunde
+  // bulunmazsa alan dogrulanmiyor ve basvuru ilerlemiyor.
+  other: {
+    "mitgo-verification": "7db678d9-bb04-443d-9502-6c60d868823a",
+  },
 };
 
 /** Mobil tarayıcı + Flutter APK WebView için tutarlı ölçek */
