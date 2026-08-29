@@ -161,8 +161,6 @@ export async function POST(request: NextRequest) {
       { status: 409 }
     );
   }
-
-  // ADIM 1 — vitrini oluştur.
   //
   // DİKKAT: `create_store_with_token` sahipliği KURMAZ. Canlı veritabanında
   // doğrulandı (2026-08-27, pg_get_functiondef): fonksiyon gövdesinde

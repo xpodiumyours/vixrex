@@ -20,6 +20,9 @@ export default defineConfig({
   use: {
     ...temelYapilandirma.use,
     baseURL: "http://localhost:3000",
+    video: "on",
+    trace: "on",
+    screenshot: "on",
   },
   webServer: {
     command: "npm run build && npm run start",
