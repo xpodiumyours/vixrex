@@ -89,11 +89,24 @@ export default function ProfilPage() {
     router.refresh();
   }
 
+  const [qrAcik, setQrAcik] = useState(false);
+
   async function linkiKopyala() {
-    if (!storeSlug) return;
+    if (!storeSlug) {
+      setSifreHata("Link kopyalamak için önce vitrininizi yayınlayın.");
+      return;
+    }
     const link = `${window.location.origin}/v/${storeSlug}`;
     await navigator.clipboard.writeText(link);
-    setSifreMesaj("Vitrin linki panoya kopyalandı!");
+    setSifreMesaj("Vitrin linki kopyalandı!");
+  }
+
+  function qrAc() {
+    if (!storeSlug) {
+      setSifreHata("QR kodu göstermek için önce vitrininizi yayınlayın.");
+      return;
+    }
+    setQrAcik(true);
   }
 
   if (yukleniyor) {
@@ -140,36 +153,63 @@ export default function ProfilPage() {
         </section>
 
         {/* Vitrin Bağlantısı */}
-        {publicLink && (
-          <section className="owner-card p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-[var(--owner-text)]">Vitrin Bağlantısı</h2>
-            <p className="mt-1 text-sm text-[var(--owner-muted)]">
-              Vitrinini paylaşmak için bu bağlantıyı kopyala.
-            </p>
-            <div className="mt-3 flex items-center gap-2">
-              <div className="flex-1 truncate rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] px-3 py-2 text-sm text-[var(--owner-text)]">
-                {typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink}
+        <section className="owner-card p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-[var(--owner-text)]">Vitrin Bağlantısı</h2>
+          {publicLink ? (
+            <>
+              <p className="mt-1 text-sm text-[var(--owner-muted)]">Vitrinini paylaşmak için bu bağlantıyı kopyala.</p>
+              <div className="mt-3 flex items-center gap-2">
+                <div className="flex-1 truncate rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] px-3 py-2 text-sm text-[var(--owner-text)]">
+                  {typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink}
+                </div>
+                <button type="button" className="owner-button-primary shrink-0 px-4 py-2 text-xs" onClick={linkiKopyala}>📋 Kopyala</button>
               </div>
-              <button
-                type="button"
-                className="owner-button-primary shrink-0 px-4 py-2 text-xs"
-                onClick={linkiKopyala}
-              >
-                📋 Kopyala
-              </button>
+              <div className="mt-3 flex gap-2">
+                <a href={publicLink} target="_blank" rel="noopener noreferrer" className="owner-button-secondary px-4 py-2 text-xs">🔗 Vitrini Gör</a>
+              </div>
+            </>
+          ) : (
+            <p className="mt-3 rounded-xl bg-[var(--owner-bg-soft)] px-3 py-3 text-sm font-bold text-[var(--owner-muted)]">Henüz yayınlanmamış</p>
+          )}
+        </section>
+
+        {/* Hızlı QR Kod Paylaşımı — Flutter lib/screens/profile_screen.dart:204 _qrCard */}
+        <section className="owner-card p-5 sm:p-6 cursor-pointer hover:border-[var(--owner-primary)]/40" onClick={qrAc} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && qrAc()}>
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--owner-primary)]/10 text-[var(--owner-primary)]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h7v7h-7z"/><path d="M6 6h1v1H6zM17 6h1v1h-1zM6 17h1v1H6zM14 17h1v1h-1zM18 14v1h1v-1zM14 18h1v1h-1zM18 18h1v1h-1z"/></svg>
             </div>
-            <div className="mt-3 flex gap-2">
-              <a
-                href={publicLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="owner-button-secondary px-4 py-2 text-xs"
-              >
-                🔗 Vitrini Gör
-              </a>
+            <div className="flex-1">
+              <p className="font-bold text-[var(--owner-text)]">Hızlı QR Kod Paylaşımı</p>
+              <p className="text-xs text-[var(--owner-muted)]">Vitrin QR kodunuza hızlıca ulaşın.</p>
             </div>
-          </section>
+            <span className="text-[var(--owner-muted)]">›</span>
+          </div>
+        </section>
+
+        {/* QR Modal */}
+        {qrAcik && publicLink && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setQrAcik(false)}>
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center" onClick={(e) => e.stopPropagation()}>
+              <h3 className="font-black text-gray-900">Vitrin QR Kodu</h3>
+              <p className="mt-1 text-xs text-gray-500">{typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink}</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink)}`} alt="QR" className="mx-auto mt-4 h-60 w-60 rounded-xl border" />
+              <button type="button" onClick={() => setQrAcik(false)} className="owner-button-secondary mt-4 w-full">Kapat</button>
+            </div>
+          </div>
         )}
+
+        {/* Seçenekler — Flutter lib/screens/profile_screen.dart:245 _option */}
+        <Link href="/app/ayarlar" className="owner-card flex items-center gap-4 p-4 hover:border-[var(--owner-primary)]/40">
+          <span className="text-[var(--owner-muted)]">⚙️</span><span className="flex-1 font-bold text-[var(--owner-text)]">Uygulama Ayarları</span><span className="text-[var(--owner-muted)]">›</span>
+        </Link>
+        <Link href="/yardim" className="owner-card flex items-center gap-4 p-4 hover:border-[var(--owner-primary)]/40">
+          <span className="text-[var(--owner-muted)]">❓</span><span className="flex-1 font-bold text-[var(--owner-text)]">Kullanım Bilgisi & Destek</span><span className="text-[var(--owner-muted)]">›</span>
+        </Link>
+        <Link href="/legal/privacy" className="owner-card flex items-center gap-4 p-4 hover:border-[var(--owner-primary)]/40">
+          <span className="text-[var(--owner-muted)]">🛡️</span><span className="flex-1 font-bold text-[var(--owner-text)]">Gizlilik ve Güvenlik politikası</span><span className="text-[var(--owner-muted)]">›</span>
+        </Link>
 
         {/* Şifre Değiştirme */}
         <section className="owner-card p-5 sm:p-6">
