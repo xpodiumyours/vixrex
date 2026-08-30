@@ -48,6 +48,7 @@ export const EXPLORE_STORE_SELECT = [
   "district_name",
   "status",
   "is_demo",
+  "whatsapp",
   "rating_score",
   "review_count",
   "updated_at",

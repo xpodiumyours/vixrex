@@ -15,150 +15,51 @@
 hedefler ve kararlar.**
 
 Çelişki çıkarsa **kod kazanır** — Vault (bu dosya, ADR'ler) yanlış/eski
-kalmışsa güncellenir, kod ona uydurulmaz. Sebep: kod her zaman çalışan,
-doğrulanabilir gerçek; bir not eskiyip unutulabilir ama kimse fark etmez.
-Gerekçesi: [[0003-vault-baglam-kurali]].
-
-**Pratik sonuç:** Bir iddia burada veya bir ADR'de yazıyor ama kodda
-doğrulanamıyorsa (ör. bir dosya/fonksiyon artık yok, davranış değişmiş) —
-önce kodu doğru kabul et, sonra bu notu düzelt. Tersini yapma.
+kalmışsa güncellenir, kod ona uydurulmaz. Gerekçesi: [[0003-vault-baglam-kurali]].
 
 ## VixRex nedir (onaylanmış hedef)
 
-Esnafın (küçük işletme sahibi) **kod bilmeden, tek tıkla** dijital vitrin
-sahibi olmasını sağlayan platform. Merkezi felsefe: "esnaf yazıya tıklar,
-VixRex Asistan değiştirir" — form doldurtmak değil, sohbet/tıkla-değiştir
-deneyimi.
+Esnafın **kod bilmeden, tek tıkla** dijital vitrin sahibi olmasını sağlayan platform. Felsefe: "esnaf yazıya tıklar, VixRex Asistan değiştirir".
 
 İki istemci:
-- **Flutter** (`lib/`) — esnafın kendi paneli: sahiplik, vitrin kurulumu,
-  ürün/kategori yönetimi, randevu, Instagram senkronu.
-- **Next.js** (`public_web/`) — herkese açık vitrin sayfaları (`/v/:slug`)
-  + sahip modunda "Vixrex Asistan" tıkla-değiştir paneli.
+- **Flutter** (`lib/`) — esnaf paneli: kurulum, vitrin edit, ürün, randevu, Instagram
+- **Next.js** (`public_web/`) — public vitrin `/v/:slug` + sahip tıkla-düzenle paneli
 
-İkisi de aynı Supabase/Postgres çekirdeğine yazar. Hangi mantığın **tek
-omurgada** (backend/DB) hangisinin **istemciye özel** kalacağı bilinçli bir
-karar: [[0001-vixrex-core-omurga-ve-uzman-beyinler]].
+İkisi de aynı Supabase'e yazar. Tek omurga kararı: [[0001-vixrex-core-omurga-ve-uzman-beyinler]].
 
-## Şu anki teknik/ürün durumu (2026-08-17 itibariyle — bu bölüm en hızlı
-eskiyen kısım, kod ile çelişirse KOD kazanır)
+## Hızlı başlangıç (30 saniye)
 
-> **GÜVENLİ GERİ DÖNÜŞ NOKTASI (2026-08-17):** Premium/Kiralık Vitrin
-> planına başlamadan önceki canlı durum. Git: `main` @ `e160f71`;
-> `docs/context-baglama` dalı main'den 2 commit ileride (skill tek kaynak +
-> PR kapsam CI), çalışma ağacı temiz. Canlıda çalışanlar: "Bu vitrini
-> kirala" akışı ÜCRETSİZ (ödeme altyapısı YOK), deneme temizliği 30 saat
-> (yayınlanmayan taslağı siler), premium DB şeması YOK (profiles yalnız
-> id/email), Flutter `PremiumService` iskeleti hiçbir ekrana bağlı değil.
-> Bu plandan sonra bu not eskirse güncellenir; kod çelişirse kod kazanır.
->
-> **GÜNCELLEME (2026-08-17, akşam):** 2 dal commit'i (skill tek kaynak +
-> PR kapsam CI) PR #207 olarak açıldı (merge bekliyor). Yerel ana dal artık
-> `bring/premium-base` (origin/main @ `2ac4c0b` + PR #207'in 2 commit'i);
-> 6 premium PR'ın tamamı bu dalın üzerinde uncommitted duruyor. Not: yerel
-> main, origin/main'den ayrılmış ~9 eski commit taşıyordu — bunlar bilerek
-> main'e taşınmadı (origin'deki yeni sürümleriyle aşılmıştı). Derin geri
-> dönüş noktası değişmedi: premium öncesi canlı durum main @ `e160f71`.
-> Kod çelişirse kod kazanır.
->
-> **GÜNCELLEME (2026-08-17, gece):** 5 premium migration CANLIYA UYGULANDI
-> (Management API üzerinden, `chfulefxczbgurtgavtp`): `20260817000000`
-> (premium şema + koruma tetikleyicisi), `20260817010000` (14 gün deneme +
-> taslağa dön + cron), `20260817020000` (yayın kapısı), `20260817030000`
-> (PayTR RPC'leri), `20260817040000` (durum okuma). Canlı doğrulandı: kolon,
-> tetikleyici, premium_orders+RLS, 5 fonksiyon, 2 cron işi, fail-closed
-> spot testler (STORE_NOT_FOUND/UNKNOWN_ORDER). DİKKAT: yayın kapısı
-> (#3) artık AKTİF — premium'suz kiralık vitrin yayınlanamaz; web PR'ları
-> (ödemeli akış) henüz deploy değil, pencere açık. Kayıtlar canlı
-> `schema_migrations`'da (CLI formatı). Web kodları hâlâ uncommitted,
-> `bring/premium-base` üzerinde; PR #207 merge bekliyor.
+1. `AGENTS.md` → nasıl çalışılır, skill ve PR kuralları
+2. `VIXREX_RULES.md` → ürün/güvenlik/kanıt sınırları
+3. Bu dosya → şu anki gerçek ne
+4. `docs/agents/repository-guide.md` → depo haritası ve komutlar
 
-- **CSP/görseller (2026-08-17):** #193'ün `img-src *` → allowlist dönüşümü
-  vitrinlerin gerçekte kullandığı hostları (images.unsplash.com, api.qrserver.com)
-  ve maps.google.com'u (frame-src) listeye eklememişti — görseller sessizce
-  engelleniyordu. PR #197 ile eklendi + kontrat testi ve E2E görsel yükleme
-  testi (canlı tarayıcı, main push'ta) eklendi. Font kırılmasıyla (#196) aynı
-  desendi: CSP daraltılırken gerçek kaynaklar taranmadan liste kesilmişti.
-- **CI onarımı (2026-08-17):** ci.yml #189'dan beri HİÇ çalışmıyordu — step-level
-  `if` içinde `secrets` context'i kullanımı workflow'u GitHub'da geçersiz
-  kılıyordu (0s "invalid workflow" fail). Düzeltildi (PR #197); Flutter/Next.js
-  testleri, gitleaks ve auth check yeniden CI'da koşuyor. Ders: PR check
-  listesinde ci.yml job'ları görünmüyorsa workflow geçersizdir, sessizce
-  "yeşil" gibi görünür.
-- **Güvenlik:** rent-demo klon RPC'si, audit-log yetkileri, varsayılan
-  fonksiyon izinleri, upload/report oran sınırları güvenlik taramasıyla
-  kapatıldı (PR #183-188, main'de). CSP/Sentry/CI güvenlik kontrolü ayrı
-  bir oturumda (Kilo CLI) paralel işleniyor — bu dosya o işin bittiğini
-  VARSAYMAZ, kodda doğrula.
-- **Instagram ürün içe aktarma:** kod tam (Meta OAuth ile bağlanma, medya
-  seçme, ürüne aktarma) ama **`INSTAGRAM_SYNC_ENABLED=false`** —
-  `lib/config/instagram_sync_config.dart`. Meta App Review'a henüz
-  başvurulmadı (2026-08-15 itibariyle). Bilinen eksikler: sayfalama yok
-  (yalnız ilk ~25 medya), toplu seçim yok (tek tek), video/reels
-  desteklenmiyor (yalnız fotoğraf). Araştırma:
-  `docs/research/vixrex-google-urun-yerel-seo-2026-08-15.md`.
-- **Vixrex Asistan rehberli tamamlama:** [[0002-vixrex-asistan-rehberli-tamamlama]]
-  kararına göre kural-tabanlı (gerçek LLM çağrısı yok) — bilinçli, maliyet/
-  tutarlılık gerekçesiyle.
-- **Tek Asistan Planı tamamlandı (2026-08-17, kod doğrulaması 2026-08-19):**
-  üç aşama da koda girdi — tek mesaj katalogu (`shared/vixrex_mesajlar.json`),
-  tek şema (`shared/vitrin_alanlari.json`), tek "sırada ne var" motoru (iki
-  istemci de şemadaki `zorunlu` işaretinden karar verir). CI'da
-  `schema-drift` sapma kontrolü var (`.github/workflows/ci.yml`). Detay:
-  `docs/tek-asistan-plani.md`.
-- **Vixrex Asistan'dan yasal onay verilebiliyor (2026-08-20, PR #267):**
-  kirala akışı Next.js'te tıkanıyordu — yayınlamak için gizlilik/şartlar/
-  yayın izni onayı zorunluydu ama onu vermenin tek yolu Flutter üyelik
-  paneliydi. Yeni `accept_store_legal_consent` RPC'si + `/api/owner-accept-legal`
-  + `/legal/[type]` sayfası + PublishBar'da onay kutusu ile kapatıldı.
-  Migration canlıya uygulandı (`chfulefxczbgurtgavtp`, `supabase db push`
-  ile doğrulandı). Gerçek tarayıcıda uçtan uca test edilirken 2 entegrasyon
-  hatası bulunup düzeltildi (sahip panelinin donmuş taslak kopyasından
-  okuması, `stores`taki koşulsuz versiyon artırma tetikleyicisinin
-  yayınlamayı yanlışça reddetmesi).
-- **Karşılama üçe bölündü — "Hazır Vitrin Seç" (2026-08-20, PR #268):**
-  onboarding sohbetindeki tek "Evet, Oluşturalım" yolu üçe ayrıldı: Hazır
-  Vitrin Seç (Keşfet'i yalnız kiralık şablonlarla sohbetin üstüne açar),
-  Sıfırdan Oluştur (eski yol, adı değişti), Bakınıyorum. Kategori artık
-  kiralanan şablondan geliyor, ayrıca sorulmuyor bu yolda.
-- **Kategori etiketi uyuşmazlığı (2026-08-20, henüz açılmadı):** Flutter
-  (`business_category_config.dart`) ve Next.js (`vitrinProfile.ts`) 19
-  kategoriden 7'sini farklı yazıyor (ör. "Danışmanlık" / "Hizmet &
-  Danışmanlık") — DB'de kategori tablosu + foreign key ile kilitleme
-  planı bu yüzden durduruldu, önce etiketler hizalanmalı. Next.js'in kısa
-  hali kazanacak diye karar verildi ama kod henüz yazılmadı.
-- **Dış denetim bulguları (2026-08-20, GitHub #229-266):** ChatGPT'nin
-  çıkardığı, Kilo Code'un kod üzerinden doğruladığı 38 bulgu issue olarak
-  kayıt altına alındı — sitemap ürün URL'si üretmiyor (#229), şube
-  desteklenmiyor (#256), `vitrin_views` tablosu dolmuyor gibi görünüyor
-  (#255) dahil. Triage tamamlandı (2026-08-25): 24 kapanmıştı, kalanlar
-  etiketlendi; kod işi olan tek aday #235'ti.
-- **Şablon görselleri kendi depomuza taşındı (2026-08-25, #235,
-  commit `638e863` yerelde — push bekliyor):** hazır vitrin görselleri
-  artık Unsplash değil, kendi `category-templates` bucket'ımızdan
-  servis ediliyor. Canlıdaki 349 satırdan 23'ünün Unsplash adresi ZATEN
-  ölmüştü (404) → pasifleştirildi (hiçbir vitrin/ürün etkilenmedi).
-  Eski adresler yeni `source_url` kolonunda. Havuzu BÜYÜTME kapsam
-  dışında bırakıldı — ayrı iş. Migration canlıya Management API ile
-  uygulandı ve `schema_migrations`'a kaydedildi.
+Kodla çelişirse **kod kazanır**, sonra bu dosya düzeltilir.
+
+## Şu anki gerçek (2026-08-30 doğrulanmış — kod kazanır)
+
+> **GÜVENLİ GERİ DÖNÜŞ:** `main @ 455d846` (chore: yeni GA). Önceki güvenli nokta `e160f71` (premium öncesi) artık geride — premium 6 migration main'de.
+
+**Canlıda ne var (kod + migration + testten doğrulandı):**
+- **Premium/Kiralık:** 6 migration main'de (`20260817_premium_*` + `20260820_iade` + `20260821_expiry`). Kirala → 14 gün deneme → aylık 299 TL. Kod `supabase/migrations/` ile uyumlu, canlı `premium_orders` RLS fail-closed.
+- **Vitrin görünümü (29 Ağustos, 5 PR merge `c98e2b8`):** hero kapak metni kapatmıyor, üst çubuk sayfa başında gizli, tek eylem WhatsApp, mobil kartlar kesilmiyor. Test `vitrin: bolum kosullarini gercek cizim yerinden olc` kilitliyor.
+- **Keşfet eşitliği (bu oturum, doğrulanmış):** Flutter `lib/screens/explore_screen.dart:303` arama + template grup + favori + pin + WhatsApp sheet → Next `public_web/src/components/kesfet/KesfetIcerik.tsx:1` ve `VitrinKarti.tsx:12` ile akış+görünüm eşitlendi. SEO `revalidate 300` + `generateStaticParams` 19 kategori korunarak (client filtre, SSR bozulmadı). `npm run test 113/790 PASS`, `npm run build ○ /kesfet SSG`.
+- **Asistan tek kaynak:** `shared/vixrex_mesajlar.json` (99 mesaj) + `shared/vitrin_alanlari.json` + `vitrinFieldSchema.ts` → `schema-drift` CI kilitli. Landing asistanı hibrit: taslak `sessionStorage vixrex_asistan_taslak` + gerçek `POST /api/create-store` (`LandingAsistanSohbeti.tsx:168` `yayinla()`). Yorum satırı `landingAsistanAkisi.ts:20` güncellendi.
+- **Instagram:** Kapalı `lib/config/instagram_sync_config.dart:enabled=false` (default). Kod hazır, Meta Review bekliyor.
+- **Güvenlik:** rent-demo HMAC, RLS, CSP `next.config.ts:41` allowlist, `vercel.json:44` Flutter noindex — hepsi main'de.
+
+**Açık işler (GitHub Issues'ta, burada değil):** `docs/durum.md` ve `Vault/Vixrex Açık İşler.md` — 18 issue, hepsi geçerli (tek ürün kararı #328 bekliyor). Bu dosya issue listelemez.
 
 ## Kalıcı kararlar (ADR'ler)
 
-- [[0001-vixrex-core-omurga-ve-uzman-beyinler]] — hangi mantık tek omurgada, hangisi istemciye özel.
-- [[0002-vixrex-asistan-rehberli-tamamlama]] — rehberlik motoru neden kural-tabanlı, LLM değil.
-- [[0003-vault-baglam-kurali]] — bu dosyanın kendisinin var oluş gerekçesi.
+- [[0001-vixrex-core-omurga-ve-uzman-beyinler]]
+- [[0002-vixrex-asistan-rehberli-tamamlama]] — kural-tabanlı, LLM değil
+- [[0003-vault-baglam-kurali]]
 
-## Diğer kaynaklar (bu dosyanın YERİNE geçmez, tamamlar)
+## Diğer kaynaklar (tamamlar, yerine geçmez)
 
-- `AGENTS.md` — ajan başlangıç sırası, yetki sınırları, skill akışı.
-- `VIXREX_RULES.md` — ürün/güvenlik/kanıt/canlı sistem sınırları (operasyonel kurallar).
-- `docs/agents/repository-guide.md` — teknik depo haritası.
-- `docs/agents/store-editor-controller-parcalama.md` — devam eden controller parçalama işinin durumu.
-- `docs/vitrin-alan-semasi.md` — vitrin alanlarının tek kaynağı (canonical: `public_web/src/lib/vitrinFieldSchema.ts`).
-- `docs/durum.md` — güncel durum notları.
-- `docs/kok-neden-arastirmasi.md` — kök neden araştırmaları.
-- `docs/e2e-otomasyon-plani.md` — E2E otomasyon planı.
-- `docs/dal-durum-haritasi.md` — dal durum haritası.
-- `docs/arsiv/` — tamamlanmış işlerin arşivi (ör. `vixrex-asistan-13-faz-plani-2026-08-06`).
-- `docs/research/` — araştırma notları (ör. google ürün/yere SEO).
-- `docs/adr/` — kalıcı mimari kararlar (0001 omurga, 0002 asistan, 0003 vault kuralı).
+- `AGENTS.md`, `VIXREX_RULES.md`
+- `docs/agents/repository-guide.md`, `docs/agents/store-editor-controller-parcalama.md`
+- `docs/vitrin-alan-semasi.md` (canonical: `vitrinFieldSchema.ts`)
+- `docs/durum.md`, `docs/arsiv/` (biten işler)
+- `docs/adr/` (0001-0003)

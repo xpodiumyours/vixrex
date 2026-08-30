@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { KategoriSeridi } from "@/components/kesfet/KategoriSeridi";
-import { VitrinKarti } from "@/components/kesfet/VitrinKarti";
+import { KesfetIcerik } from "@/components/kesfet/KesfetIcerik";
 import { kesfetVitrinleriniGetir } from "@/lib/explore";
 
 /**
@@ -43,23 +42,7 @@ export default async function KesfetPage() {
           kirala, kendi işletmenin vitrini olsun.
         </p>
 
-        <div className="mt-8">
-          <KategoriSeridi />
-        </div>
-
-        {vitrinler.length === 0 ? (
-          <p className="mt-12 rounded-2xl border border-lp-border bg-lp-surface px-5 py-8 text-center text-[14px] font-semibold text-lp-muted">
-            Şu anda yayında vitrin yok.
-          </p>
-        ) : (
-          <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {vitrinler.map((vitrin) => (
-              <li key={vitrin.slug}>
-                <VitrinKarti vitrin={vitrin} />
-              </li>
-            ))}
-          </ul>
-        )}
+        <KesfetIcerik vitrinler={vitrinler} />
       </div>
     </div>
   );
