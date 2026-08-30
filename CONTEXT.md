@@ -73,6 +73,36 @@ eskiyen kısım, kod ile çelişirse KOD kazanır)
 > `schema_migrations`'da (CLI formatı). Web kodları hâlâ uncommitted,
 > `bring/premium-base` üzerinde; PR #207 merge bekliyor.
 
+- **Web + Mobil mimari tamlık denetimi (2026-08-30):** Kod-okuma denetimi
+  (değişiklik yapılmadı), tam rapor:
+  `docs/research/vixrex-web-mobil-tamlik-denetimi-2026-08-30.md`.
+  **Yeni P0 bulgu:** ürün kategorisi Flutter tarafında ilişkisel
+  `product_categories` tablosuna hiç yazılmıyor —
+  `product_category_management_screen.dart` yerel bellekte sahte ID
+  (`category-${microsaniye}`) üretiyor, `syncCatalogToRemote`
+  (`store_editor_controller.dart:733-770`) bunu hiçbir RPC'ye göndermiyor;
+  ürün gerçek UUID kategoriye bağlanamayınca kategorisiz kaydediliyor.
+  Next.js tarafı (`/api/product-categories`, `upsert_store_category` RPC)
+  doğru çalışıyor. Flutter'da oluşturulan yeni kategoriler bu yüzden
+  Next.js'te asla görünmüyor — henüz düzeltilmedi.
+  **Auth/ownership notu:** `stores.user_id`/`auth.uid()` zinciri ortak, ama
+  Next.js owner-yetkilendirmesi asıl olarak `vixrex_owner_session` HMAC
+  çerezi + `edit_token` üzerinden çalışıyor ve bu kanal Supabase Auth
+  login'siz de tam CRUD yetkisi veriyor (kasıtlı — önizleme/handoff/rent-demo
+  akışları için gerekli, kaldırılacak bir hata değil, ama "owner = auth.uid()"
+  varsayımıyla yeni kod yazılırken hesaba katılmalı).
+  **Aşağıdaki üç eski not artık geçersiz, kod ilerlemiş (kod kazanır
+  kuralı gereği burada düzeltiliyor):** (1) "Kategori etiketi uyuşmazlığı"
+  notu (bkz. altta) — etiket metinleri `shared/business_categories.json` ile
+  senkron edildi (PR #319/commit `d159072`), CI drift kontrolü var; **ama bu,
+  yukarıdaki YENİ P0 ilişkisel zincir sorunuyla karıştırılmamalı, o hâlâ
+  açık.** (2) "#229 sitemap ürün URL'si üretmiyor" — çözüldü,
+  `sitemap.xml/route.ts:157-170` ürün URL'lerini XML'e ekliyor. (3) "#255
+  vitrin_views dolmuyor" — çözüldü, migration `20260823120000_...` canlıya
+  uygulanmış ve `VitrinViewTracker.tsx` doğru çalışıyor. (4) Premium/PayTR
+  "web PR'ları henüz deploy değil" notu (altta, 2026-08-17 gece) — artık
+  eski: `api/paytr/callback/route.ts` commit `b13fcab` (2026-08-29) ile
+  main'de, imza+tutar doğrulaması kodda mevcut.
 - **CSP/görseller (2026-08-17):** #193'ün `img-src *` → allowlist dönüşümü
   vitrinlerin gerçekte kullandığı hostları (images.unsplash.com, api.qrserver.com)
   ve maps.google.com'u (frame-src) listeye eklememişti — görseller sessizce
@@ -160,5 +190,7 @@ eskiyen kısım, kod ile çelişirse KOD kazanır)
 - `docs/e2e-otomasyon-plani.md` — E2E otomasyon planı.
 - `docs/dal-durum-haritasi.md` — dal durum haritası.
 - `docs/arsiv/` — tamamlanmış işlerin arşivi (ör. `vixrex-asistan-13-faz-plani-2026-08-06`).
-- `docs/research/` — araştırma notları (ör. google ürün/yere SEO).
+- `docs/research/` — araştırma notları (ör. google ürün/yere SEO,
+  `vixrex-web-mobil-tamlik-denetimi-2026-08-30.md` — web+mobil mimari
+  tamlık denetimi, açık P0: ürün kategorisi ilişkisel zincir kopukluğu).
 - `docs/adr/` — kalıcı mimari kararlar (0001 omurga, 0002 asistan, 0003 vault kuralı).
