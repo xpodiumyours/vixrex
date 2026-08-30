@@ -16,13 +16,18 @@ fikirleri, konum kuralı): [[vizyon-katman-mimarisi-2026-08-17]].
 
 - [[VIXREX_RULES]] — **değişmez kurallar.** Bir tartışma çıktığında buraya bakılır
 - [[vixrex-asistan-13-faz-plani-2026-08-06]] — tamamlanmış 13 fazın tarihsel planı
+- [[tek-asistan-plani]] — dört yüzey/üç beyin sorununu kapatan plan (tamamlandı, bkz. CONTEXT.md)
 - [[AGENTS]] — yapay zekâ ajanlarının uyacağı kurallar
 - [[repository-guide]] — modelden bağımsız teknik depo haritası
+- [[store-editor-controller-parcalama]] — devam eden controller parçalama işinin durumu; buna dokunmadan önce oku
+- [[triage-labels]] — issue etiket sözlüğü
+- [[casper-calisma-notu-2026-08-17]] — kullanıcıyı tanıma notu; her oturum başında CONTEXT.md ile birlikte okunur
 
 ## Yayına çıkarken
 
 - [[yayina-cikis-kontrol-listesi]] — **canlıya çıkmadan önce mutlaka**
 - [[google-gorunurluk]] — Google'da nasıl bulunuruz
+- [[seo-mimari-plani]] — SEO mimarisi planı
 
 ## Hukuk
 
@@ -34,6 +39,16 @@ fikirleri, konum kuralı): [[vizyon-katman-mimarisi-2026-08-17]].
 - [[vitrin-alan-semasi]] — esnafın düzenleyebildiği 41 alan
 - [[domain]] — kavramlar
 - [[issue-tracker]] — iş takibi; aktif plan ve durum GitHub Issues içindedir
+- [[adresler]] — hangi adres hangi yüzey, tek kart
+- [[akis-envanteri]] — Next.js akış envanteri (VAR/YARIM/YOK/BİLİNÇLİ YOK)
+- [[kabul-senaryosu]] — esnafın uçtan uca yaşayacağı yol
+- [[oauth-client-secret-setup]] — Google OAuth client secret kurulumu ve sızıntı geçmişi
+- [[dal-durum-haritasi]] — dal durum haritası
+- [[durum]] — güncel durum notları
+- [[e2e-otomasyon-plani]] — E2E otomasyon planı
+- [[kok-neden-arastirmasi]] — kök neden araştırmaları
+- [[ui-tutarlilik-envanteri]] — Flutter panel UI tutarlılık envanteri (2026-08-08)
+- [[vixrex-core-kalici-hesap-notu]] — kalıcı hesap sahipliği migration'ının kaydı (2026-08-26)
 - [[vixrex-web-mobil-tamlik-denetimi-2026-08-30]] — web+mobil mimari tamlık
   denetimi (kod kanıtlı); güncel P0: ürün kategorisi Flutter'da ilişkisel
   tabloya yazmıyor. Bu, aynı konudaki eski `docs/web-mobil-tamlik-raporu-
