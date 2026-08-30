@@ -2,7 +2,7 @@
 
 **Yazan:** Claude (27 Ağustos 2026) · **Yürüten:** Freebuff · **Doğrulayan:** Claude
 
-Bu, `docs/gorev-web-uygulama-farklari.md` içindeki Görev 2'den **geriye kalan
+Bu, `docs/arsiv/gorev-web-uygulama-farklari-2026-08-26.md` içindeki Görev 2'den **geriye kalan
 tek parça**. Diğer maddeler 26 Ağustos'ta bitti, koddan doğrulandı:
 
 - Görev 1 (arka plan parıltısı) — bitti

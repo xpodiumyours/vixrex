@@ -1,7 +1,9 @@
 # Canlı Test Senaryoları — Faz 1-4
 
 **Tarih:** 27 Ağustos 2026
-**Test Hesabı:** `vixrex.deneme.1787845811686@gmail.com` / `Deneme!1787845811686`
+**Test Hesabı:** `vixrex.deneme.1787845811686@gmail.com` (şifre bu dosyadan
+kaldırıldı — 2026-08-30 denetimi, VIXREX_RULES.md madde 7; şifreyi hesabı
+tutan kişiden ayrı kanaldan al)
 **Vitrin:** `deneme-kuafor-salonu-mtbp9tip` (taslak, Keşfet'te görünmez)
 **Canlı Adres:** `https://vixrex-public.vercel.app`
 
@@ -128,13 +130,13 @@ Web'den şifre değiştirip yeni şifreyle giriş yapabiliyor muyuz?
 | 3 | "Vitrin Bağlantısı" bölümünü kontrol et | Link görünür | ☐ |
 | 4 | "Kopyala" butonuna tıkla | "Panoya kopyalandı" mesajı | ☐ |
 | 5 | "Vitrini Gör" butonuna tıkla | Yeni sekmede vitrin açılır | ☐ |
-| 6 | Şifre değiştirme: "Yeni Şifre" alanına yaz: `Deneme!Yeni2026` | — | ☐ |
-| 7 | "Yeni Şifre (Tekrar)" alanına yaz: `Deneme!Yeni2026` | — | ☐ |
+| 6 | Şifre değiştirme: "Yeni Şifre" alanına kendi seçtiğin geçici bir şifre yaz | — | ☐ |
+| 7 | "Yeni Şifre (Tekrar)" alanına aynı geçici şifreyi yaz | — | ☐ |
 | 8 | "Şifreyi Değiştir" tıkla | "Şifre başarıyla değiştirildi" mesajı | ☐ |
 | 9 | "Çıkış Yap" tıkla | Çıkış yapılır, `/`'ye yönlendirilir | ☐ |
 | 10 | Eski şifreyle giriş dene | Giriş başarısız olur | ☐ |
-| 11 | Yeni şifreyle (`Deneme!Yeni2026`) giriş dene | Giriş başarılı olur | ☐ |
-| 12 | **ÖNEMLİ:** Eski şifreyi geri değiştir | Profil sayfasında şifre değiştir → `Deneme!1787845811686` | ☐ |
+| 11 | Yeni (geçici) şifreyle giriş dene | Giriş başarılı olur | ☐ |
+| 12 | **ÖNEMLİ:** Eski şifreyi geri değiştir | Profil sayfasında şifreyi test hesabının bilinen eski şifresine döndür | ☐ |
 
 ### Başarısız Olursa
 - Şifre değiştirme 400 dönerse: Supabase Auth minimum 6 karakter zorunlu

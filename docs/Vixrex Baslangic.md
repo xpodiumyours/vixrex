@@ -34,6 +34,10 @@ fikirleri, konum kuralı): [[vizyon-katman-mimarisi-2026-08-17]].
 - [[vitrin-alan-semasi]] — esnafın düzenleyebildiği 41 alan
 - [[domain]] — kavramlar
 - [[issue-tracker]] — iş takibi; aktif plan ve durum GitHub Issues içindedir
+- [[vixrex-web-mobil-tamlik-denetimi-2026-08-30]] — web+mobil mimari tamlık
+  denetimi (kod kanıtlı); güncel P0: ürün kategorisi Flutter'da ilişkisel
+  tabloya yazmıyor. Bu, aynı konudaki eski `docs/web-mobil-tamlik-raporu-
+  2026-08-27.md` raporunun yerini alır — o rapor artık kod ile çelişiyor.
 
 ## Şablon
 

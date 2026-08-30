@@ -12,7 +12,7 @@
 
 ## Neden 3 PR? Daha büyük tespit
 
-`docs/agents/vixrex-core-kalici-hesap-notu.md:9` canlı ölçüm: 29 vitrinde `user_id` dolu sayısı **0**, 175 user'ın 172'si anonim. 4 kırık halka tek PR'da düzeltilemez — DB garantisi, Flutter sahiplenme, Web platformu farklı yüzeyler. Ayrıca `docs/seo-mimari-plani.md:42` + `docs/gorev-web-uygulama-farklari.md` sayfayı eşitleme işi (Hero, Keşfet, blog) Web PR'ına ait; DB PR'ı ile karışmamalı. Vibe-yama kültürü (AGENTS.md:25 skill zinciri atlanıyor) bu yüzden büyüdü — tek dev PR = geri alınamaz.
+`docs/agents/vixrex-core-kalici-hesap-notu.md:9` canlı ölçüm: 29 vitrinde `user_id` dolu sayısı **0**, 175 user'ın 172'si anonim. 4 kırık halka tek PR'da düzeltilemez — DB garantisi, Flutter sahiplenme, Web platformu farklı yüzeyler. Ayrıca `docs/seo-mimari-plani.md:42` + `docs/arsiv/gorev-web-uygulama-farklari-2026-08-26.md` sayfayı eşitleme işi (Hero, Keşfet, blog) Web PR'ına ait; DB PR'ı ile karışmamalı. Vibe-yama kültürü (AGENTS.md:25 skill zinciri atlanıyor) bu yüzden büyüdü — tek dev PR = geri alınamaz.
 
 Sıra: **PR1 DB → PR2 Flutter → PR3 Web**. PR2 PR1'e, PR3 PR1'e bağımlı (DB'siz Flutter `claim_store_for_user` 42883 verir). PR3, PR2'den bağımsız deploy olur ama testte PR1'in `is_demo` filtresi gerekir.
 
@@ -105,7 +105,7 @@ flutter test test/auth_service_test.dart test/explore_controller_test.dart  # re
 ## PR3 — Web Platform: Landing SSR + Keşfet Dizini (eşitleme)
 
 **Dal:** `feat/web-platform-landing-kesfet` (PR1 sonrası main'den, PR2 ile paralel gidebilir ama PR2'den sonra merge önerilir)
-**Amaç:** `public_web/src/app/page.tsx:1` redirect'ini gerçek SSR landing ile değiştirmek, Google'ın tarayabileceği `/kesfet` dizini + kategori sayfaları + sitemap/canonical düzeltmeleri. `docs/research/landing-port-envanteri-2026-08-25.md:8` + `docs/gorev-web-uygulama-farklari.md` sayfayı eşitleme işi burada biter.
+**Amaç:** `public_web/src/app/page.tsx:1` redirect'ini gerçek SSR landing ile değiştirmek, Google'ın tarayabileceği `/kesfet` dizini + kategori sayfaları + sitemap/canonical düzeltmeleri. `docs/research/landing-port-envanteri-2026-08-25.md:8` + `docs/arsiv/gorev-web-uygulama-farklari-2026-08-26.md` sayfayı eşitleme işi burada biter.
 
 **Dosyalar (~48 dosya, ama 600 satır sınırını aşar — Kapsam-Onay gerekir):**
 - `public_web/src/app/(site)/page.tsx:1` (59 satır) — `revalidate=300`, `HeroSection` + `ValueBand` + `FeaturesSection` + `ComparisonSection` + `TrustBand` + `StepsSection` + `TemplateCatalog` + `BottomCta` + `MascotFab`
@@ -131,7 +131,7 @@ cd public_web && npm run lint && npm test && npm run build
 # build: 52 route, / (5m) ve /kesfet (5m) SSR görünmeli, is_demo filtreli sitemap
 curl -s http://localhost:3000/sitemap.xml | grep -c "/kesfet"   # >1
 curl -s http://localhost:3000/ | grep -c "Vixrex"                # >0 (SSR HTML)
-# görsel: 390px ve 1280px ekran görüntüsü (docs/gorev-web-uygulama-farklari.md:94 doğrulama kesitleri)
+# görsel: 390px ve 1280px ekran görüntüsü (docs/arsiv/gorev-web-uygulama-farklari-2026-08-26.md:94 doğrulama kesitleri)
 flutter analyze lib/ && flutter test  # regresyon (PR2 sonrası, kırmızı olmamalı)
 ```
 
@@ -145,14 +145,14 @@ Kapsam-Onay: Landing port envanteri (718 satır) + Keşfet dizini tek PR — 48 
 **Unutma listesi (bu PR kapatır):**
 - Blog "uygulamam SEO değil" saçmalığı: Blog zaten SSR (`yazilar/page.tsx:86` `BreadcrumbList`, `yazilar/[articleSlug]/page.tsx:120` `BlogPosting`), Flutter zaten bilinçli `noindex` (`vercel.json:44`). Bu PR sonrası `vixrex-public` `/` de SSR olunca karışıklık biter.
 - Renk paleti: `lp-*` izole, `globals.css:11` vitrin tokenları dokunulmadı — 29 canlı vitrin etkilenmez.
-- Eşitleme: `docs/gorev-web-uygulama-farklari.md` Görev 1-4 (arka plan parıltısı, maskot balonu, hero önek, mockup) bu PR'ın devamı — ayrı küçük PR'lar olarak `mockupProfilleri.ts:51` ve `HeroSection.tsx:87` üzerinde ilerler.
+- Eşitleme: `docs/arsiv/gorev-web-uygulama-farklari-2026-08-26.md` Görev 1-4 (arka plan parıltısı, maskot balonu, hero önek, mockup) bu PR'ın devamı — ayrı küçük PR'lar olarak `mockupProfilleri.ts:51` ve `HeroSection.tsx:87` üzerinde ilerler.
 
 ---
 
 ## Ortak Çalışma Kuralları (3 PR için de)
 
 - **Yama yok:** Her PR `grill-with-docs` → `implement` zinciri, `VIXREX_RULES.md:3` ilgili düzeltme yok.
-- **Derleme:** Her PR sonunda `public_web: npm run lint && npm test && npm run build` çıktısı PR açıklamasında gösterilir (docs/gorev-web-uygulama-farklari.md:35).
+- **Derleme:** Her PR sonunda `public_web: npm run lint && npm test && npm run build` çıktısı PR açıklamasında gösterilir (docs/arsiv/gorev-web-uygulama-farklari-2026-08-26.md:35).
 - **Commit mesajı:** `feat(db): ...`, `feat(flutter): ...`, `feat(web): ...` — tek amaç.
 - **Kirli ağaç temizliği (şimdi):** `public_web/scratch-ss/*`, `olcum-gecici.mjs`, `ss-gecici.mjs`, `pr_body*.md` (12 dosya) ya `.gitignore`'a ya da `git clean -fd` ile silinmeli. `linux/flutter/generated_*` `flutter pub get` ile yeniden üretilir, commit'e alınmamalı.
 

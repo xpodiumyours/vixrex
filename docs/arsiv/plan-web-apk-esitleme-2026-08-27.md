@@ -188,7 +188,8 @@ gelmeli; eski dosyalar örnek alınmamalı.
 ## 5. Doğrulama hesabı
 
 Canlıda hazır bir test hesabı var:
-`vixrex.deneme.1787845811686@gmail.com` / `Deneme!1787845811686`,
+`vixrex.deneme.1787845811686@gmail.com` (şifre bu dosyadan kaldırıldı —
+2026-08-30 denetimi, VIXREX_RULES.md madde 7),
 vitrin `deneme-kuafor-salonu-mtbp9tip` (taslak, Keşfet'te görünmez).
 Canlı adres: `https://vixrex-public.vercel.app`.
 
