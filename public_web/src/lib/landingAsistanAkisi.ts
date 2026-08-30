@@ -17,9 +17,11 @@ import {
  * doğrulama) bir veri yapısı. Bileşenin içine gömülürse ikinci bir akış
  * tanımı doğar ve "tek beyin" iddiası biter.
  *
- * KAPSAM: hibrit — taslak `sessionStorage vixrex_asistan_taslak`ta, publish gerçek
- * `POST /api/create-store` (`LandingAsistanSohbeti.tsx:168 yayinla()`). Legal/publish
- * dahildir; giriş yoksa `/kayit`e yönlendirir.
+ * KAPSAM: landing sohbeti DEMO kipindedir — hiçbir şey veritabanına
+ * yazılmaz. Yasal onay ve yayınlama adımları (setup_legal_*,
+ * setup_publish_*) burada YOK; ikisi de hesap gerektiriyor ve kayıt
+ * sonrasına ait. Toplanan cevaplar tarayıcıda tutulup kayıt akışına
+ * taşınır.
  */
 
 export type AsistanAdimi = {

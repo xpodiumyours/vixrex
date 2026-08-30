@@ -29,7 +29,6 @@ export type KesfetVitrini = {
   acikMi: boolean;
   urunSayisi: number;
   guncellemeZamani: string | null;
-  whatsapp: string | null;
 };
 
 type StoreSatiri = {
@@ -44,7 +43,6 @@ type StoreSatiri = {
   district_name: string | null;
   status: string | null;
   is_demo: boolean | null;
-  whatsapp: string | null;
   updated_at: string | null;
 };
 
@@ -118,7 +116,6 @@ async function _kesfetGetir(): Promise<KesfetVitrini[]> {
       acikMi: durum === "" || durum.startsWith("açık") || durum.startsWith("acik"),
       urunSayisi: sayaclar.get(satir.id) ?? 0,
       guncellemeZamani: satir.updated_at,
-      whatsapp: satir.whatsapp?.trim() || null,
     };
   });
 }
