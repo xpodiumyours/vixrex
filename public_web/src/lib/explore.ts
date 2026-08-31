@@ -21,6 +21,7 @@ export const KESFET_LIMIT = 50;
 export type KesfetVitrini = {
   slug: string;
   ad: string;
+  aciklama: string;
   kategoriEtiketi: string;
   kategoriKimligi: string | null;
   kapakUrl: string | null;
@@ -28,6 +29,8 @@ export type KesfetVitrini = {
   kiralikMi: boolean;
   acikMi: boolean;
   urunSayisi: number;
+  urunAdlari: string[];
+  whatsapp: string | null;
   guncellemeZamani: string | null;
 };
 
@@ -35,6 +38,8 @@ type StoreSatiri = {
   id: string;
   slug: string | null;
   name: string | null;
+  description: string | null;
+  address: string | null;
   kategori: string | null;
   business_type: string | null;
   shelf_image_url: string | null;
@@ -43,6 +48,7 @@ type StoreSatiri = {
   district_name: string | null;
   status: string | null;
   is_demo: boolean | null;
+  whatsapp: string | null;
   updated_at: string | null;
 };
 
@@ -50,7 +56,7 @@ function konumMetni(satir: StoreSatiri): string {
   const ilce = satir.district_name?.trim() ?? "";
   const il = satir.province_name?.trim() ?? "";
   if (ilce && il) return `${ilce}, ${il}`;
-  return ilce || il || "Konum belirtilmedi";
+  return ilce || il || satir.address?.trim() || "Konum belirtilmedi";
 }
 
 function kategoriEtiketi(satir: StoreSatiri): {
@@ -71,22 +77,22 @@ async function _kesfetGetir(): Promise<KesfetVitrini[]> {
     .order("updated_at", { ascending: false })
     .limit(KESFET_LIMIT);
 
-  if (error || !data) {
-    if (error) console.error("[kesfet] vitrin sorgusu başarısız:", error.message);
-    return [];
+  if (error) {
+    console.error("[kesfet] vitrin sorgusu başarısız:", error.message);
+    throw new Error("Vitrinler okunamadı");
   }
+  if (!data) return [];
 
   const satirlar = (data as unknown as StoreSatiri[]).filter(
     (satir) => (satir.slug ?? "").trim().length > 0
   );
   if (satirlar.length === 0) return [];
 
-  // Ürün sayısı yalnız kartta rozet olarak görünüyor; sayılamazsa liste
-  // yine de çizilir — bu yüzden hata durumunda boş sayaçla devam edilir.
   const sayaclar = new Map<string, number>();
+  const urunAdlari = new Map<string, string[]>();
   const { data: urunler, error: urunHatasi } = await supabase
     .from("products")
-    .select("store_id")
+    .select("store_id,name")
     .in(
       "store_id",
       satirlar.map((satir) => satir.id)
@@ -96,9 +102,16 @@ async function _kesfetGetir(): Promise<KesfetVitrini[]> {
 
   if (urunHatasi) {
     console.error("[kesfet] ürün sayısı okunamadı:", urunHatasi.message);
+    throw new Error("Vitrin ürünleri okunamadı");
   } else {
-    for (const urun of (urunler ?? []) as { store_id: string }[]) {
+    for (const urun of (urunler ?? []) as { store_id: string; name: string | null }[]) {
       sayaclar.set(urun.store_id, (sayaclar.get(urun.store_id) ?? 0) + 1);
+      const ad = urun.name?.trim();
+      if (ad) {
+        const adlar = urunAdlari.get(urun.store_id) ?? [];
+        adlar.push(ad);
+        urunAdlari.set(urun.store_id, adlar);
+      }
     }
   }
 
@@ -108,6 +121,7 @@ async function _kesfetGetir(): Promise<KesfetVitrini[]> {
     return {
       slug: (satir.slug ?? "").trim(),
       ad: satir.name?.trim() || "İsimsiz vitrin",
+      aciklama: satir.description?.trim() || "",
       kategoriEtiketi: etiket,
       kategoriKimligi: kimlik,
       kapakUrl: satir.shelf_image_url?.trim() || satir.logo_url?.trim() || null,
@@ -115,17 +129,24 @@ async function _kesfetGetir(): Promise<KesfetVitrini[]> {
       kiralikMi: satir.is_demo === true,
       acikMi: durum === "" || durum.startsWith("açık") || durum.startsWith("acik"),
       urunSayisi: sayaclar.get(satir.id) ?? 0,
+      urunAdlari: urunAdlari.get(satir.id) ?? [],
+      whatsapp: satir.whatsapp?.trim() || null,
       guncellemeZamani: satir.updated_at,
     };
   });
 }
 
 /** Yayındaki vitrinler, en son güncellenen önce. */
-export const kesfetVitrinleriniGetir = () =>
-  unstable_cache(_kesfetGetir, ["kesfet"], {
+const kesfetVitrinleriniOnbellektenGetir = unstable_cache(
+  _kesfetGetir,
+  ["kesfet"],
+  {
     tags: ["kesfet"],
     revalidate: 300,
-  })();
+  }
+);
+
+export const kesfetVitrinleriniGetir = kesfetVitrinleriniOnbellektenGetir;
 
 /** Tek kategorinin yayındaki vitrinleri — ek sorgu atmaz, listeyi süzer. */
 export async function kategoriVitrinleriniGetir(

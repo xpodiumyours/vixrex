@@ -4,8 +4,11 @@ export interface BusinessCategoryCore {
   id: string;
   order: number;
   label: string;
+  templateGroup: BusinessTemplateGroup;
   aliases: string[];
 }
+
+export type BusinessTemplateGroup = "perakende" | "hizmet" | "gida" | "diger";
 
 export function normalizeBusinessCategoryTerm(value: string): string {
   return value
@@ -22,10 +25,21 @@ export function normalizeBusinessCategoryTerm(value: string): string {
 export function validateBusinessCategoryContract(
   categories: readonly BusinessCategoryCore[],
 ): void {
+  const templateGroups = new Set<BusinessTemplateGroup>([
+    "perakende",
+    "hizmet",
+    "gida",
+    "diger",
+  ]);
   const ids = new Set<string>();
   const terms = new Map<string, string>();
   categories.forEach((category, index) => {
-    if (!category.id || ids.has(category.id) || category.order !== index + 1) {
+    if (
+      !category.id ||
+      ids.has(category.id) ||
+      category.order !== index + 1 ||
+      !templateGroups.has(category.templateGroup)
+    ) {
       throw new Error(`Kategori ID/sıra sözleşmesi geçersiz: ${category.id}`);
     }
     ids.add(category.id);
@@ -40,7 +54,8 @@ export function validateBusinessCategoryContract(
   });
 }
 
-export const BUSINESS_CATEGORIES = categoryContract.categories satisfies BusinessCategoryCore[];
+export const BUSINESS_CATEGORIES =
+  categoryContract.categories as BusinessCategoryCore[];
 validateBusinessCategoryContract(BUSINESS_CATEGORIES);
 
 const BY_ID = new Map(BUSINESS_CATEGORIES.map((category) => [category.id, category]));

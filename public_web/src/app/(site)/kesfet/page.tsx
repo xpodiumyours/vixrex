@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { KategoriSeridi } from "@/components/kesfet/KategoriSeridi";
-import { VitrinKarti } from "@/components/kesfet/VitrinKarti";
+import { cookies } from "next/headers";
+import { KesfetIcerik } from "@/components/kesfet/KesfetIcerik";
 import { kesfetVitrinleriniGetir } from "@/lib/explore";
+import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 
 /**
  * Keşfet dizini (#344).
@@ -29,38 +30,27 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function KesfetPage() {
+type Props = { searchParams: Promise<{ yalniz_kiralik?: string }> };
+
+export default async function KesfetPage({ searchParams }: Props) {
   const vitrinler = await kesfetVitrinleriniGetir();
+  const sadeceKiralik = (await searchParams).yalniz_kiralik === "1";
+  const sahipCerezi = (await cookies()).get(OWNER_SESSION_COOKIE)?.value;
+  const ilkSahipSlug = sahipCerezi
+    ? vitrinler.find((vitrin) => verifyOwnerSession(sahipCerezi, vitrin.slug))?.slug ?? null
+    : null;
 
   return (
-    <div className="px-6 py-12">
-      <div className="mx-auto w-full max-w-[1200px]">
-        <h1 className="text-[32px] font-black leading-tight text-lp-text md:text-[38px]">
-          Vixrex&apos;leri Keşfet
-        </h1>
-        <p className="mt-3 max-w-[640px] text-[16px] leading-[1.5] text-lp-text-alt">
-          Yayındaki tüm Vixrex vitrinlerini inceleyin. Beğendiğin hazır vitrini
-          kirala, kendi işletmenin vitrini olsun.
-        </p>
-
-        <div className="mt-8">
-          <KategoriSeridi />
-        </div>
-
-        {vitrinler.length === 0 ? (
-          <p className="mt-12 rounded-2xl border border-lp-border bg-lp-surface px-5 py-8 text-center text-[14px] font-semibold text-lp-muted">
-            Şu anda yayında vitrin yok.
-          </p>
-        ) : (
-          <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {vitrinler.map((vitrin) => (
-              <li key={vitrin.slug}>
-                <VitrinKarti vitrin={vitrin} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
+    <KesfetIcerik
+      vitrinler={vitrinler}
+      ilkSahipSlug={ilkSahipSlug}
+      sadeceKiralik={sadeceKiralik}
+      baslik={sadeceKiralik ? "Hazır Vitrin Seç" : "Vixrex'leri Keşfet"}
+      aciklama={
+        sadeceKiralik
+          ? "Beğendiğini kirala, kendi vitrinin olsun"
+          : "Yayındaki tüm Vixrex vitrinlerini inceleyin. Beğendiğin hazır vitrini kirala, kendi işletmenin vitrini olsun."
+      }
+    />
   );
 }
