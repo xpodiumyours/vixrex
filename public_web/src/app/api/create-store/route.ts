@@ -231,6 +231,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // PR4-C15: yeni mağaza + çalışma taslağı hazırla — yayın gibi konuşma
+  await supabaseUser.rpc("get_or_create_working_draft", {
+    p_slug: slug,
+    p_edit_token: editToken,
+  });
+
   // Landing'deki konuşma burada aynı sahip oturumuna bağlanır. Yeni bir
   // asistan kaydı/tablosu açılmaz; Flutter'ın kullandığı handoff_v1 ve
   // owner_sessions.assistant_handoff yolu aynen kullanılır.
