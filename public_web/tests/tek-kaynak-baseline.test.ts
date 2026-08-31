@@ -140,7 +140,10 @@ describe("PR1-C2 — owner_flow_states kalıcı akış kaydı", () => {
     expect(hasDirectPolicy).toBe(false);
   });
 
-  it("bootstrap fonksiyonu henüz yok — PR1-C4 ile gelecek (eski istemciler etkilenmez)", () => {
-    expect(allMigrations).not.toMatch(/get_owner_workspace_bootstrap|owner_workspace_bootstrap/i);
+  it("bootstrap fonksiyonu PR1-C4 ile oluşturuldu (yalnız okur, eski istemciler etkilenmez)", () => {
+    expect(allMigrations).toMatch(/create or replace function public\.get_owner_workspace_bootstrap/);
+    expect(allMigrations).toMatch(/security definer/);
+    expect(allMigrations).toMatch(/set search_path = pg_catalog/);
+    expect(allMigrations).toMatch(/grant execute on function public\.get_owner_workspace_bootstrap\(\) to authenticated/);
   });
 });
