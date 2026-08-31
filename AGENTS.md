@@ -1,11 +1,74 @@
 # VixRex Agent Başlangıcı
 
+## HIZLI GÖREV YOLU — ÖNCELİKLİ KURAL
+
+Aşağıdaki isteklerde tam depo incelemesi YAPMA:
+
+- "son commit'i incele"
+- "ne değişti"
+- "diff'e bak"
+- "bu commit ne yaptı"
+- "mevcut durumu söyle"
+- "şu dosyayı kontrol et"
+- küçük UI/CSS düzeltmesi incelemesi
+
+Bu görevlerde çalışma sırası:
+
+1. Önce yalnız:
+   - `git status --short`
+   - `git show --stat --oneline HEAD`
+   - `git diff HEAD^ HEAD -- <değişen dosyalar>`
+
+2. Sadece değişen dosyaları ve doğrudan bağlı kodu oku.
+
+3. `VIXREX_RULES.md` ve `CONTEXT.md` her görevde baştan sona tekrar okunmaz.
+   Yalnız görev ürün/mimari/güvenlik kuralına dokunuyorsa ilgili bölüm okunur.
+
+4. Bu görevlerde varsayılan olarak YASAK:
+   - standards review
+   - spec review
+   - code-review skill
+   - ask-matt
+   - alt ajan/subagent
+   - issue/PR geçmişi taraması
+   - bütün repo taraması
+   - plan belgesi analizi
+   - GitHub Actions araştırması
+
+5. Test/lint/build varsayılan olarak ÇALIŞTIRILMAZ.
+
+   Sadece:
+   - kullanıcı açıkça isterse,
+   - değişiklik derleme/runtime riski taşıyorsa,
+   - bulunan somut bir hatayı doğrulamak gerekiyorsa
+
+   ilgili EN KÜÇÜK test çalıştırılır.
+
+6. Aynı başarılı test/build ikinci kez çalıştırılmaz.
+
+7. İnceleme çıktısı doğrudan şu formatta verilir:
+
+   DEĞİŞTİ:
+   - dosya
+   - yapılan değişiklik
+
+   BAŞARDIĞI:
+   - somut sonuç
+
+   EKSİK/HATALI:
+   - yalnız doğrulanmış bulgular
+
+   SONRAKİ AKSİYON:
+   - gerekiyorsa tek net işlem
+
+8. Basit commit/diff incelemesinde amaç doğruluk + hızdır.
+   Araştırma işini kendi kendine büyütme.
 Bu depoda çalışmaya başlamadan önce:
 
-1. `VIXREX_RULES.md` dosyasını baştan sona oku.
-2. `CONTEXT.md` dosyasını oku — kalıcı ürün/mimari kararlar ve "Şu anki
-   teknik/ürün durumu" bölümü (bu bölüm en hızlı eskir; kodla çelişirse
-   KOD kazanır, notu güncelle — bkz. ADR 0003).
+1. Yeni çalışma oturumunda veya görev ilgili kurallara dokunuyorsa
+   `VIXREX_RULES.md` dosyasının gerekli bölümünü oku.
+2. `CONTEXT.md` yalnız ürün/mimari karar gerektiren görevlerde okunur.
+   Basit commit/diff/UI incelemesinde tekrar okunmaz.
 3. İlgili kodu, `git status` çıktısını ve mevcut diff'i incele.
 4. Kullanıcının açık kapsamı dışına çıkma; issue, PR, skill veya plan belgesi üretmeyi kendiliğinden yeni işe dönüştürme.
 
@@ -60,6 +123,7 @@ Bu bir zincir DEĞİLDİR: issue bağlama, kanıt scripti veya ek onay gerektirm
 
 ## Doğrulama bütçesi
 
+- Salt inceleme/durum/commit-diff görevlerinde doğrulama bütçesi varsayılan olarak 0 test + 0 build'dir.
 - Geliştirme sırasında yalnız ilgili küçük kontrolü çalıştır.
 - İş bitince etkilenen yüzeyin analiz/lint/typecheck kapısını çalıştır.
 - Aynı değişiklik için başarılı tam test paketini gereksiz yere tekrarlama.
