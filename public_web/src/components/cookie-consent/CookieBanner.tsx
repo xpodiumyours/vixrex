@@ -40,11 +40,11 @@ export function CookieBanner() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-black/10 bg-white p-4 shadow-lg dark:border-white/10 dark:bg-[#121820]"
+      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-2xl rounded-2xl border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-[#121820] md:inset-x-auto md:left-1/2 md:w-[calc(100%-2rem)] md:-translate-x-1/2"
       role="dialog"
       aria-label="Çerez tercihleri"
     >
-      <div className="mx-auto flex max-w-3xl flex-col gap-3">
+      <div className="flex flex-col gap-3">
         <p className="text-sm leading-relaxed text-[#182028] dark:text-[#E2E8F0]">
           Gerekli çerezler siteyi çalıştırmak için kullanılır. Analitik ve
           pazarlama çerezleri yalnızca izninizle açılır. Resmi çerez politikası
