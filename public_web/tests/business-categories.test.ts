@@ -36,8 +36,8 @@ describe("ortak kategori core", () => {
   it("normalize edilmiş alias çakışmasını reddeder", () => {
     expect(() =>
       validateBusinessCategoryContract([
-        { id: "bir", order: 1, label: "Bir", aliases: ["Çakışma"] },
-        { id: "iki", order: 2, label: "İki", aliases: ["cakisma"] },
+        { id: "bir", order: 1, label: "Bir", templateGroup: "diger", aliases: ["Çakışma"] },
+        { id: "iki", order: 2, label: "İki", templateGroup: "diger", aliases: ["cakisma"] },
       ]),
     ).toThrow(/alias.*çakış/i);
   });

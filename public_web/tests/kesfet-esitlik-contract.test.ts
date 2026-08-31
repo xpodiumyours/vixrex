@@ -8,8 +8,8 @@ import { describe, expect, it } from "vitest";
  * Flutter ve web aynı başlık ve alt başlığı göstermeli.
  * Bu test iki tarafın aynı metinleri kullandığını kilitler.
  *
- * Boş durum metinleri test edilmez — farklı bağlamlarda farklı
- * mesajlar göstermek meşrudur (web'de arama/filtre yok, Flutter'da var).
+ * Etkileşimli arama ve filtreler ayrı istemci modülünde tutulur; sayfa SEO
+ * metadata ve başlığı sunucu tarafında üretmeye devam eder.
  */
 describe("Keşfet eşitlik sözleşmesi", () => {
   const webKaynak = readFileSync(
@@ -24,8 +24,7 @@ describe("Keşfet eşitlik sözleşmesi", () => {
   it("başlık her iki tarafta aynı", () => {
     // Flutter: `"Vixrex'leri Keşfet"` (onlyRentalTemplates=false)
     expect(flutterKaynak).toContain("Vixrex'leri Keşfet");
-    // Web: `Vixrex&apos;leri Keşfet`
-    expect(webKaynak).toContain("Vixrex&apos;leri Keşfet");
+    expect(webKaynak).toContain("Vixrex'leri Keşfet");
   });
 
   it("alt başlığın ortak gövdesi iki tarafta aynı", () => {
@@ -124,5 +123,25 @@ describe("Keşfet eşitlik sözleşmesi", () => {
       "utf-8"
     );
     expect(flutterKart).toContain(".toUpperCase()");
+  });
+
+  it("masaüstü Keşfet görünümünde sol gezinme menüsü var", () => {
+    const icerik = readFileSync(
+      resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"),
+      "utf-8"
+    );
+    const yanMenu = readFileSync(
+      resolve(__dirname, "../src/components/kesfet/KesfetYanMenu.tsx"),
+      "utf-8"
+    );
+    expect(webKaynak).toContain("<KesfetIcerik");
+    expect(icerik).toContain("<KesfetYanMenu");
+    for (const etiket of ["Vitrinim", "Keşfet", "Vixrex", "Profil"]) {
+      expect(yanMenu).toContain(etiket);
+    }
+  });
+
+  it("ana Keşfet sayfası canlı veriyi build sırasında istemez", () => {
+    expect(webKaynak).toContain('export const dynamic = "force-dynamic"');
   });
 });
