@@ -1,9 +1,10 @@
-import { OnayIkonu, IleriOkIkonu } from "@/components/site/icons";
+import Link from "next/link";
+import { KesfetIkonu, OnayIkonu, IleriOkIkonu, StorefrontIkonu } from "@/components/site/icons";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { PhoneMockup } from "./PhoneMockup";
 import type { MockupProfili } from "./mockupProfilleri";
 
-/** Hero — envanter §2.2. */
+/** Hero — envanter §2.2. Flutter referans: landing_hero_section.dart:613-616 (4 rozet) */
 const GUVEN_ROZETLERI = [
   "SSL Güvenli Koruma",
   "Kredi kartı gerekmez",
@@ -37,7 +38,55 @@ export function HeroSection({
   const adresOneki = `${getSiteUrl().replace(/^https?:\/\//, "")}/v/`;
 
   return (
-    <section id="vixrex-hero" className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-[50px] pt-5 md:pb-[100px] md:pt-10">
+    <section id="vixrex-hero" className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-[50px] pt-0 md:pb-[100px] md:pt-0">
+      {/* Top Nav — Flutter landing_hero_section.dart:189-363 ile parite */}
+      <nav
+        aria-label="Ana gezinme"
+        className="relative mx-auto flex w-full max-w-[1200px] items-center justify-between py-4"
+      >
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-lp-text"
+          aria-label="Vixrex ana sayfa"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-lp-primary/15 text-lp-primary">
+            <StorefrontIkonu boyut={20} />
+          </span>
+          <span className="text-[20px] font-black tracking-[-0.5px]">Vixrex</span>
+        </Link>
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/kesfet"
+            className="hidden items-center gap-2 rounded-full border border-lp-primary/45 bg-lp-surface-soft px-4 py-3 text-[12px] font-black text-lp-primary transition-colors hover:bg-lp-surface md:flex"
+            aria-label="Vitrinleri Keşfet"
+          >
+            <KesfetIkonu boyut={16} />
+            Vitrinleri Keşfet
+          </Link>
+          <Link
+            href="/kesfet"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-lp-border bg-lp-surface-soft text-lp-text md:hidden"
+            aria-label="Vitrinleri Keşfet"
+          >
+            <KesfetIkonu boyut={18} />
+          </Link>
+          <Link
+            href="/giris"
+            className="hidden items-center gap-2 rounded-full bg-lp-primary px-4 py-3 text-[12px] font-black text-lp-on-primary md:flex"
+          >
+            Giriş Yap
+          </Link>
+          <Link
+            href="/giris"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-lp-primary text-lp-on-primary md:hidden"
+            aria-label="Giriş Yap"
+          >
+            <span aria-hidden className="text-[16px]">
+              →
+            </span>
+          </Link>
+        </div>
+      </nav>
       {/* Ambient Mesh Glows — Flutter landing_hero_section.dart:65-100 orta noktası */}
       <div
         aria-hidden="true"
