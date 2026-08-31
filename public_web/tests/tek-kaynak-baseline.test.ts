@@ -97,9 +97,20 @@ describe("baseline — konuşma geçişi şu an kısa ömürlü", () => {
     expect(sessionMigration).not.toMatch(/assistant_messages|conversation/i);
   });
 
-  it("kalıcı assistant_conversations / assistant_messages henüz YOK — PR1-C3 ile gelecek", () => {
-    expect(allMigrations).not.toMatch(/create table public\.assistant_conversations/);
-    expect(allMigrations).not.toMatch(/create table public\.assistant_messages/);
+  it("kalıcı assistant_conversations / assistant_messages PR1-C3 ile oluşturuldu", () => {
+    expect(allMigrations).toMatch(/create table public\.assistant_conversations/);
+    expect(allMigrations).toMatch(/create table public\.assistant_messages/);
+  });
+
+  it("assistant_messages idempotent client_message_id ve seq unique ile korunuyor", () => {
+    expect(allMigrations).toMatch(/idx_assistant_messages_client_id/);
+    expect(allMigrations).toMatch(/idx_assistant_messages_conversation_seq/);
+    expect(allMigrations).toMatch(/client_message_id text/);
+  });
+
+  it("RLS açık ve doğrudan politika yok (yalnız definer)", () => {
+    expect(allMigrations).toContain("alter table public.assistant_conversations enable row level security");
+    expect(allMigrations).toContain("alter table public.assistant_messages enable row level security");
   });
 
   it("landing asistanı sessionStorage ile taslak taşıyor (kalıcı değil) — PR1 sonrası owner_flow_states'e aktarılacak", () => {
