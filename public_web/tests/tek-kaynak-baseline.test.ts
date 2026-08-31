@@ -110,13 +110,26 @@ describe("baseline — konuşma geçişi şu an kısa ömürlü", () => {
   });
 });
 
-// ---------- 6. Tek-kaynak yeni tablolar henüz yok ----------
-describe("baseline — PR1 yeni tek-kaynak tabloları henüz yok (geriye uyumluluk)", () => {
-  it("owner_flow_states tablosu henüz oluşturulmadı", () => {
-    expect(allMigrations).not.toMatch(/create table public\.owner_flow_states/);
+// ---------- 6. Tek-kaynak yeni tablolar (PR1-C2 sonrası) ----------
+describe("PR1-C2 — owner_flow_states kalıcı akış kaydı", () => {
+  it("owner_flow_states tablosu oluşturuldu", () => {
+    expect(allMigrations).toMatch(/create table public\.owner_flow_states/);
   });
 
-  it("bootstrap fonksiyonu henüz yok (eski istemciler etkilenmez)", () => {
+  it("user_id + flow_type + version + completed_steps ile tek kaynak", () => {
+    expect(allMigrations).toMatch(/user_id uuid not null references auth\.users/);
+    expect(allMigrations).toMatch(/flow_type text not null check/);
+    expect(allMigrations).toMatch(/completed_steps text\[\]/);
+    expect(allMigrations).toMatch(/version bigint not null default 1/);
+  });
+
+  it("RLS açık ve doğrudan politika yok (yalnız definer fonksiyon)", () => {
+    expect(allMigrations).toContain("alter table public.owner_flow_states enable row level security");
+    const hasDirectPolicy = /create policy[^;]*owner_flow_states/i.test(allMigrations);
+    expect(hasDirectPolicy).toBe(false);
+  });
+
+  it("bootstrap fonksiyonu henüz yok — PR1-C4 ile gelecek (eski istemciler etkilenmez)", () => {
     expect(allMigrations).not.toMatch(/get_owner_workspace_bootstrap|owner_workspace_bootstrap/i);
   });
 });
