@@ -167,10 +167,8 @@ export function KesfetIcerik({
   );
 
   return (
-    <div className="lg:flex">
+    <main className="min-[901px]:flex">
       <KesfetYanMenu sorgu={sorgu} sorguyuDegistir={setSorgu} />
-
-      <StatusBar sahipSlug={sahipSlug} premium={premium} />
 
       <MascotFab onToggle={() => {
         // Navigate to appropriate assistant based on user status
@@ -178,7 +176,10 @@ export function KesfetIcerik({
         window.location.href = '/';
       }} />
 
-      <section className="min-w-0 flex-1 px-4 py-8 sm:px-6 md:py-12" aria-labelledby="kesfet-baslik">
+      <div className="min-w-0 flex-1">
+        <StatusBar sahipSlug={sahipSlug} premium={premium} />
+
+        <section className="px-4 py-8 sm:px-6 md:py-12" aria-labelledby="kesfet-baslik">
         <div className="mx-auto w-full max-w-[1200px]">
           <h1 id="kesfet-baslik" className="text-[32px] font-black leading-tight text-lp-text md:text-[38px]">
             {baslik}
@@ -191,7 +192,7 @@ export function KesfetIcerik({
         <label htmlFor="kesfet-arama" className="sr-only">
           Vitrin, ürün veya il/ilçe ara
         </label>
-        <div className="relative lg:hidden">
+        <div className="relative min-[901px]:hidden">
           <span
             aria-hidden="true"
             className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lp-muted"
@@ -344,7 +345,8 @@ export function KesfetIcerik({
         <p className="sr-only" aria-live="polite">{vitrinler.length} vitrin gösteriliyor.</p>
       ) : null}
         </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </main>
   );
 }

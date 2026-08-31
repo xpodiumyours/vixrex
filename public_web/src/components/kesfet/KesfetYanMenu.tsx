@@ -44,7 +44,7 @@ export function KesfetYanMenu({ sorgu, sorguyuDegistir }: Props) {
   return (
     <aside
       aria-label="Uygulama menüsü"
-      className="sticky top-0 hidden h-screen w-[220px] shrink-0 flex-col border-r border-lp-border bg-lp-surface md:flex"
+      className="sticky top-0 hidden h-screen w-[220px] shrink-0 flex-col border-r border-lp-border bg-lp-surface min-[901px]:flex"
     >
       <Link
         href="/"
