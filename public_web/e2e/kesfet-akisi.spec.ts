@@ -98,4 +98,79 @@ test.describe("Keşfet dizini", () => {
     await page.waitForURL("**/v/**", { timeout: 15_000 });
     expect(page.url()).toContain("/v/");
   });
+
+  for (const senaryo of [
+    { genislik: 375, yukseklik: 812, yanMenu: false, kolon: 2 },
+    { genislik: 768, yukseklik: 1024, yanMenu: false, kolon: 3 },
+    { genislik: 901, yukseklik: 900, yanMenu: true, kolon: 2 },
+    { genislik: 1024, yukseklik: 900, yanMenu: true, kolon: 3 },
+    { genislik: 1280, yukseklik: 900, yanMenu: true, kolon: 4 },
+  ]) {
+    test(`${senaryo.genislik}px kabuk ve kart kolonları taşmadan yerleşir`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({
+        width: senaryo.genislik,
+        height: senaryo.yukseklik,
+      });
+      const response = await page.goto("/kesfet", {
+        waitUntil: "domcontentloaded",
+      });
+      expect(response?.ok()).toBeTruthy();
+
+      const yanMenu = page.getByRole("complementary", {
+        name: "Uygulama menüsü",
+      });
+      if (senaryo.yanMenu) {
+        await expect(yanMenu).toBeVisible();
+      } else {
+        await expect(yanMenu).toBeHidden();
+      }
+
+      const sayfaOlculeri = await page.evaluate(() => ({
+        icGenislik: window.innerWidth,
+        belgeGenisligi: document.documentElement.scrollWidth,
+      }));
+      expect(sayfaOlculeri.belgeGenisligi).toBeLessThanOrEqual(
+        sayfaOlculeri.icGenislik
+      );
+
+      const baslikKutusu = await page.locator("#kesfet-baslik").boundingBox();
+      expect(baslikKutusu).not.toBeNull();
+      if (!senaryo.yanMenu) {
+        expect(baslikKutusu!.y).toBeLessThan(160);
+      }
+
+      const kartlar = page.locator('ul[aria-label="Vitrinler"] > li');
+      expect(await kartlar.count()).toBeGreaterThanOrEqual(senaryo.kolon);
+      const kartKutulari = await kartlar.evaluateAll((elemanlar) =>
+        elemanlar.slice(0, 8).map((eleman) => {
+          const kutu = eleman.getBoundingClientRect();
+          return { x: kutu.x, y: kutu.y };
+        })
+      );
+      const ilkSatirY = kartKutulari[0].y;
+      const ilkSatirKolonlari = kartKutulari.filter(
+        (kutu) => Math.abs(kutu.y - ilkSatirY) < 2
+      ).length;
+      expect(ilkSatirKolonlari).toBe(senaryo.kolon);
+
+      const durumCubugu = page.getByTestId("kesfet-status-bar");
+      if (senaryo.yanMenu) {
+        await expect(durumCubugu).toBeVisible();
+        const [durumKutusu, icerikKutusu] = await Promise.all([
+          durumCubugu.boundingBox(),
+          page.locator('section[aria-labelledby="kesfet-baslik"]').boundingBox(),
+        ]);
+        expect(durumKutusu).not.toBeNull();
+        expect(icerikKutusu).not.toBeNull();
+        expect(Math.abs(durumKutusu!.x - icerikKutusu!.x)).toBeLessThan(2);
+        expect(
+          Math.abs(durumKutusu!.width - icerikKutusu!.width)
+        ).toBeLessThan(2);
+      } else {
+        await expect(durumCubugu).toBeHidden();
+      }
+    });
+  }
 });

@@ -1,112 +1,145 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { useState, type ReactNode } from "react";
+
+export type VitrinDurumu =
+  | "yukleniyor"
+  | "misafir"
+  | "yok"
+  | "yayinlanmamis"
+  | "yayinli"
+  | "hata";
 
 type StatusBarProps = {
+  durum: VitrinDurumu;
   sahipSlug?: string | null;
   premium?: { aktif: boolean; bitis: string | null } | null;
 };
 
-export function StatusBar({ sahipSlug, premium }: StatusBarProps) {
-  const [session, setSession] = useState<boolean | null>(null);
-  const [vitrinDurumu, setVitrinDurumu] = useState<'misafir' | 'yok' | 'yayinlanmamis' | 'yayinli'>('misafir');
+function Kabuk({ children }: { children: ReactNode }) {
+  return (
+    <div
+      data-testid="kesfet-status-bar"
+      className="sticky top-0 z-20 hidden border-b border-lp-border bg-lp-bg-editor px-6 py-4 min-[901px]:block"
+    >
+      <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-4">
+        {children}
+      </div>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    async function durumuGetir() {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session !== null);
+export function StatusBar({ durum, sahipSlug, premium }: StatusBarProps) {
+  const [kopyalandi, setKopyalandi] = useState(false);
 
-      if (data.session && sahipSlug) {
-        const { data: vitrinData, error } = await supabase
-          .from('vitriner')
-          .select('published, store_name, public_link')
-          .eq('slug', sahipSlug)
-          .single();
-
-        if (!error && vitrinData) {
-          setVitrinDurumu(vitrinData.published ? 'yayinli' : 'yayinlanmamis');
-        } else {
-          setVitrinDurumu('yok');
-        }
-      } else if (!data.session) {
-        setVitrinDurumu('misafir');
-      } else {
-        setVitrinDurumu('yok');
-      }
+  async function baglantiyiKopyala() {
+    if (!sahipSlug) return;
+    const baglanti = new URL(`/v/${sahipSlug}`, window.location.origin).href;
+    try {
+      await navigator.clipboard.writeText(baglanti);
+      setKopyalandi(true);
+      window.setTimeout(() => setKopyalandi(false), 2_000);
+    } catch {
+      setKopyalandi(false);
     }
-    void durumuGetir();
-  }, [sahipSlug]);
+  }
 
-  if (vitrinDurumu === 'misafir') {
+  if (durum === "yukleniyor") {
     return (
-      <div className="sticky top-0 z-10 bg-lp-bg-editor px-6 py-4 md:px-8 border-b border-lp-border">
-        <div className="mx-auto max-w-[1200px] flex items-center justify-between w-full">
-          <span className="text-[14px] font-medium text-lp-text">
-            Misafir girişi. <Link href="/giris" className="text-lp-primary hover:underline">Vitrin oluştur</Link> için hesap açın.
+      <Kabuk>
+        <span className="text-[14px] font-medium text-lp-muted" role="status">
+          Vitrin durumu yükleniyor…
+        </span>
+      </Kabuk>
+    );
+  }
+
+  if (durum === "misafir") {
+    return (
+      <Kabuk>
+        <span className="text-[14px] font-medium text-lp-text">
+          Misafir girişi.{" "}
+          <Link href="/giris" className="font-bold text-lp-primary hover:underline">
+            Vitrin oluşturmak için hesap açın
+          </Link>
+          .
+        </span>
+      </Kabuk>
+    );
+  }
+
+  if (durum === "yok") {
+    return (
+      <Kabuk>
+        <span className="text-[14px] font-medium text-lp-text">
+          Vitrininiz henüz oluşturulmadı.{" "}
+          <Link href="/app" className="font-bold text-lp-primary hover:underline">
+            Vitrin oluşturarak başlayın
+          </Link>
+          .
+        </span>
+      </Kabuk>
+    );
+  }
+
+  if (durum === "yayinlanmamis") {
+    return (
+      <Kabuk>
+        <span className="text-[14px] font-medium text-lp-text">
+          <span className="font-bold text-lp-muted">Yayında değil</span>
+          {" — "}
+          <Link href="/app" className="font-bold text-lp-primary hover:underline">
+            Vitrini yayınla
+          </Link>
+          .
+        </span>
+      </Kabuk>
+    );
+  }
+
+  if (durum === "hata") {
+    return (
+      <Kabuk>
+        <span className="text-[14px] font-medium text-lp-text" role="status">
+          Vitrin durumu şu an alınamıyor.{" "}
+          <Link href="/app" className="font-bold text-lp-primary hover:underline">
+            Vitrinim’e git
+          </Link>
+          .
+        </span>
+      </Kabuk>
+    );
+  }
+
+  if (!sahipSlug) return null;
+
+  return (
+    <Kabuk>
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="shrink-0 text-[14px] font-bold text-emerald-400">Yayında</span>
+        {premium?.aktif ? (
+          <span className="rounded-full border border-lp-primary/40 bg-lp-primary/10 px-2 py-1 text-[11px] font-black text-lp-primary">
+            Premium
           </span>
-        </div>
+        ) : null}
+        <span className="truncate text-[13px] font-semibold text-lp-muted">/v/{sahipSlug}</span>
       </div>
-    );
-  }
-
-  if (vitrinDurumu === 'yok') {
-    return (
-      <div className="sticky top-0 z-10 bg-lp-bg-editor px-6 py-4 md:px-8 border-b border-lp-border">
-        <div className="mx-auto max-w-[1200px] flex items-center justify-between w-full">
-          <span className="text-[14px] font-medium text-lp-text">
-            Vitrininiz henüz oluşturulmadı. <Link href="/app" className="text-lp-primary hover:underline">Vitrin oluştur</Link> başlayın.
-          </span>
-        </div>
+      <div className="flex shrink-0 items-center gap-3">
+        <Link
+          href={`/v/${sahipSlug}`}
+          className="text-[12px] font-black text-lp-primary hover:underline"
+        >
+          Vitrini aç
+        </Link>
+        <button
+          type="button"
+          onClick={baglantiyiKopyala}
+          className="text-[12px] font-black text-lp-primary hover:underline"
+        >
+          {kopyalandi ? "Kopyalandı" : "Bağlantıyı kopyala"}
+        </button>
       </div>
-    );
-  }
-
-  if (vitrinDurumu === 'yayinlanmamis') {
-    return (
-      <div className="sticky top-0 z-10 bg-lp-bg-editor px-6 py-4 md:px-8 border-b border-lp-border">
-        <div className="mx-auto max-w-[1200px] flex items-center justify-between w-full">
-          <span className="text-[14px] font-medium text-lp-text">
-            <span className="font-semibold text-lp-muted">Yayında değil</span> — <Link href="/app" className="text-lp-primary hover:underline">Vitrini yayınla</Link>.
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (vitrinDurumu === 'yayinli') {
-    return (
-      <div className="sticky top-0 z-10 bg-lp-bg-editor px-6 py-4 md:px-8 border-b border-lp-border">
-        <div className="mx-auto max-w-[1200px] flex items-center justify-between w-full">
-          <div className="flex items-center gap-3">
-            <span className="text-[14px] font-medium text-lp-text">
-              {premium?.aktif ? 'Premium' : ''}
-            </span>
-            <span className="text-[14px] font-medium text-lp-primary" style={{ whiteSpace: 'nowrap' }}>
-              {sahipSlug ? 'Vitrininize gir' : ''}
-            </span>
-          </div>
-          <div className="hidden sm:flex items-center gap-2">
-            <Link
-              href={`/v/${sahipSlug}`}
-              className="text-[12px] font-black text-lp-primary hover:underline"
-              title="Vitrin'i aç"
-            >
-              Aç
-            </Link>
-            <button
-              onClick={() => navigator.clipboard.writeText(`/v/${sahipSlug}`)}
-              className="text-[12px] font-black text-lp-primary hover:underline"
-              title="Kopyala"
-            >
-              Kopyala
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+    </Kabuk>
+  );
 }

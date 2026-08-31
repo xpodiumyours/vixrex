@@ -141,3 +141,4 @@ export default async function KategoriPage({ params }: Props) {
     </div>
   );
 }
+

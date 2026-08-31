@@ -1,14 +1,11 @@
-import { SiteFooter } from "@/components/site/SiteFooter";
-import { SiteHeader } from "@/components/site/SiteHeader";
 import { organizationJsonLd, safeJsonLdHtml, webSiteJsonLd } from "@/lib/jsonLd";
 import { getSiteUrl } from "@/lib/siteUrl";
 
 /**
- * Platform yüzeyinin düzeni: ana sayfa, blog ve kurumsal sayfalar.
- * Keşfet, uygulama kabuğuna benzeyen ayrı `(explore)` grubunda yaşar.
- * Route grupları adresi değiştirmez: `(site)/page.tsx` yine `/` adresinde yayınlanır.
+ * Keşfet uygulama kabuğu. Platform başlık/altbilgisi burada özellikle yoktur;
+ * ana Keşfet kendi yan menüsünü kullanır. Route grubu URL'yi değiştirmez.
  */
-export default function SiteLayout({
+export default function ExploreLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const siteUrl = getSiteUrl();
@@ -27,9 +24,7 @@ export default function SiteLayout({
           __html: safeJsonLdHtml(webSiteJsonLd(siteUrl)),
         }}
       />
-      <SiteHeader />
-      <main className="flex-1">{children}</main>
-      <SiteFooter />
+      {children}
     </div>
   );
 }

@@ -12,7 +12,7 @@ import { kesfetVitrinleriniFiltrele } from "@/lib/kesfetFiltreleme";
 import { supabase } from "@/lib/supabase";
 import { KesfetYanMenu } from "./KesfetYanMenu";
 import { VitrinKarti, type PremiumBilgisi } from "./VitrinKarti";
-import { StatusBar } from "./StatusBar";
+import { StatusBar, type VitrinDurumu } from "./StatusBar";
 import { MascotFab } from "@/components/landing/MascotFab";
 
 const FAVORI_ANAHTARI = "favorite_stores";
@@ -20,9 +20,10 @@ const KATEGORI_GRUPLARI = new Map(
   BUSINESS_CATEGORIES.map((kategori) => [kategori.id, kategori.templateGroup])
 );
 const GRUPLAR: Array<{
-  deger: BusinessTemplateGroup;
+  deger: BusinessTemplateGroup | undefined;
   etiket: string;
 }> = [
+  { deger: undefined, etiket: "Tümü" },
   { deger: "perakende", etiket: "Perakende" },
   { deger: "hizmet", etiket: "Hizmet" },
   { deger: "gida", etiket: "Gıda" },
@@ -31,6 +32,7 @@ const GRUPLAR: Array<{
 
 type PanoOzeti = {
   slug?: string;
+  yayinli?: boolean;
   premiumAktif?: boolean;
   premiumBitis?: string | null;
 };
@@ -55,6 +57,8 @@ export function KesfetIcerik({
   const [favoriAdlari, setFavoriAdlari] = useState<string[]>([]);
   const [sahipSlug, setSahipSlug] = useState<string | null>(ilkSahipSlug);
   const [premium, setPremium] = useState<PremiumBilgisi | null>(null);
+  const [vitrinDurumu, setVitrinDurumu] =
+    useState<VitrinDurumu>("yukleniyor");
 
   useEffect(() => {
     let iptal = false;
@@ -76,22 +80,55 @@ export function KesfetIcerik({
       }
       if (!iptal) setFavoriAdlari(kayitliFavoriler);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session || iptal) return;
+      try {
+        const {
+          data: { session },
+          error: oturumHatasi,
+        } = await supabase.auth.getSession();
+        if (iptal) return;
+        if (oturumHatasi) {
+          setVitrinDurumu("hata");
+          return;
+        }
+        if (!session) {
+          setVitrinDurumu("misafir");
+          return;
+        }
 
-      const yanit = await fetch("/api/owner-dashboard/summary", {
-        headers: { authorization: `Bearer ${session.access_token}` },
-      });
-      if (!yanit.ok || iptal) return;
+        const yanit = await fetch("/api/owner-dashboard/summary", {
+          headers: { authorization: `Bearer ${session.access_token}` },
+        });
+        if (iptal) return;
+        if (yanit.status === 401) {
+          setVitrinDurumu("misafir");
+          return;
+        }
+        if (yanit.status === 404) {
+          setSahipSlug(null);
+          setPremium(null);
+          setVitrinDurumu("yok");
+          return;
+        }
+        if (!yanit.ok) {
+          setVitrinDurumu("hata");
+          return;
+        }
 
-      const ozet = (await yanit.json()) as PanoOzeti;
-      if (ozet.slug) setSahipSlug(ozet.slug);
-      setPremium({
-        aktif: ozet.premiumAktif === true,
-        bitis: ozet.premiumBitis ?? null,
-      });
+        const ozet = (await yanit.json()) as PanoOzeti;
+        const slug = ozet.slug?.trim();
+        if (!slug) {
+          setVitrinDurumu("hata");
+          return;
+        }
+        setSahipSlug(slug);
+        setPremium({
+          aktif: ozet.premiumAktif === true,
+          bitis: ozet.premiumBitis ?? null,
+        });
+        setVitrinDurumu(ozet.yayinli === true ? "yayinli" : "yayinlanmamis");
+      } catch {
+        if (!iptal) setVitrinDurumu("hata");
+      }
     }
     void tarayiciDurumunuGetir();
     return () => {
@@ -167,19 +204,18 @@ export function KesfetIcerik({
   );
 
   return (
-    <div className="lg:flex">
+    <main className="min-[901px]:flex">
       <KesfetYanMenu sorgu={sorgu} sorguyuDegistir={setSorgu} />
 
-      <StatusBar sahipSlug={sahipSlug} premium={premium} />
-
       <MascotFab onToggle={() => {
-        // Navigate to appropriate assistant based on user status
-        // This reuses existing assistant flow - no new motor written
-        window.location.href = '/';
+        window.location.assign(sahipSlug ? `/v/${sahipSlug}` : "/#vixrex-hero");
       }} />
 
-      <section className="min-w-0 flex-1 px-4 py-8 sm:px-6 md:py-12" aria-labelledby="kesfet-baslik">
-        <div className="mx-auto w-full max-w-[1200px]">
+      <div className="min-w-0 flex-1">
+      <StatusBar durum={vitrinDurumu} sahipSlug={sahipSlug} premium={premium} />
+
+      <section className="px-4 py-8 sm:px-6 md:py-12" aria-labelledby="kesfet-baslik">
+        <div className="@container mx-auto w-full max-w-[1200px]">
           <h1 id="kesfet-baslik" className="text-[32px] font-black leading-tight text-lp-text md:text-[38px]">
             {baslik}
           </h1>
@@ -191,7 +227,7 @@ export function KesfetIcerik({
         <label htmlFor="kesfet-arama" className="sr-only">
           Vitrin, ürün veya il/ilçe ara
         </label>
-        <div className="relative lg:hidden">
+        <div className="relative min-[901px]:hidden">
           <span
             aria-hidden="true"
             className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lp-muted"
@@ -226,7 +262,7 @@ export function KesfetIcerik({
         <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Vitrin grupları">
           {GRUPLAR.map((secenek) => (
             <button
-              key={secenek.deger}
+              key={secenek.deger ?? "tumu"}
               type="button"
               aria-pressed={grup === secenek.deger}
               onClick={() => grubuSec(secenek.deger)}
@@ -310,11 +346,11 @@ export function KesfetIcerik({
           </button>
         </div>
       ) : (
-        <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4" aria-label="Vitrinler">
+        <ul className="mt-6 grid grid-cols-2 gap-3 @min-[700px]:grid-cols-3 @min-[1000px]:grid-cols-4" aria-label="Vitrinler">
           {filtreliVitrinler.map((vitrin, index) => (
             <li
               key={vitrin.slug}
-              className="animate-fade-in motion-reduce:animate-none"
+              className="min-w-0 animate-fade-in motion-reduce:animate-none"
               style={{ animationDelay: `${Math.min(index, 6) * 30}ms` }}
             >
               <VitrinKarti
@@ -345,6 +381,7 @@ export function KesfetIcerik({
       ) : null}
         </div>
       </section>
-    </div>
+      </div>
+    </main>
   );
 }

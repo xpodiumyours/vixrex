@@ -14,6 +14,14 @@ const rootLayout = readFileSync(
   resolve(__dirname, "../src/app/layout.tsx"),
   "utf-8"
 );
+const exploreLayout = readFileSync(
+  resolve(__dirname, "../src/app/(explore)/layout.tsx"),
+  "utf-8"
+);
+const kategoriLayout = readFileSync(
+  resolve(__dirname, "../src/app/(explore)/kesfet/[kategori]/layout.tsx"),
+  "utf-8"
+);
 
 /**
  * #346 — yasal sayfalara sitenin hiçbir yerinden bağlantı yoktu.
@@ -46,9 +54,19 @@ describe("altbilgi yasal bağlantıları (#346)", () => {
   });
 
   it("başlık/altbilgi yalnız (site) grubunda, vitrin sayfalarında değil", () => {
-    expect(siteLayout).toContain("SiteHeader");
-    expect(siteLayout).toContain("SiteFooter");
+    expect(siteLayout).toContain("<SiteHeader />");
+    expect(siteLayout).toContain("<SiteFooter />");
     expect(rootLayout).not.toContain("SiteHeader");
     expect(rootLayout).not.toContain("SiteFooter");
+  });
+
+  it("ana Keşfet uygulama kabuğunda site başlık/altbilgisi yoktur", () => {
+    expect(exploreLayout).not.toContain("SiteHeader");
+    expect(exploreLayout).not.toContain("SiteFooter");
+  });
+
+  it("kategori sayfaları SEO iç bağlantıları için site kabuğunu korur", () => {
+    expect(kategoriLayout).toContain("<SiteHeader />");
+    expect(kategoriLayout).toContain("<SiteFooter />");
   });
 });

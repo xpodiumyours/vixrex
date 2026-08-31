@@ -6,6 +6,7 @@ type BootstrapSonucu = {
   has_store?: boolean;
   slug?: string;
   edit_token?: string;
+  is_published?: boolean;
 };
 
 type PremiumSonucu = {
@@ -101,6 +102,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     tamam: true,
     slug,
+    yayinli: sahiplik.is_published === true,
     bugunkuZiyaret:
       Number.isFinite(ziyaretSayisi) && ziyaretSayisi >= 0 ? ziyaretSayisi : 0,
     premiumAktif: premium.is_premium === true,

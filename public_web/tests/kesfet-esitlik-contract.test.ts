@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
  */
 describe("Keşfet eşitlik sözleşmesi", () => {
   const webKaynak = readFileSync(
-    resolve(__dirname, "../src/app/(site)/kesfet/page.tsx"),
+    resolve(__dirname, "../src/app/(explore)/kesfet/page.tsx"),
     "utf-8"
   );
   const flutterKaynak = readFileSync(
@@ -139,6 +139,58 @@ describe("Keşfet eşitlik sözleşmesi", () => {
     for (const etiket of ["Vitrinim", "Keşfet", "Vixrex", "Profil"]) {
       expect(yanMenu).toContain(etiket);
     }
+  });
+
+  it("Flutter'ın 900px kabuk eşiği web'de de korunuyor", () => {
+    const flutterKabuk = readFileSync(
+      resolve(__dirname, "../../lib/screens/home_shell_screen.dart"),
+      "utf-8"
+    );
+    const icerik = readFileSync(
+      resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"),
+      "utf-8"
+    );
+    const yanMenu = readFileSync(
+      resolve(__dirname, "../src/components/kesfet/KesfetYanMenu.tsx"),
+      "utf-8"
+    );
+    expect(flutterKabuk).toMatch(/width\s*>\s*900/);
+    expect(icerik).toContain("min-[901px]:flex");
+    expect(yanMenu).toContain("min-[901px]:flex");
+    expect(yanMenu).not.toContain("md:flex");
+    expect(icerik).toContain("@container");
+    expect(icerik).toContain("@min-[700px]:grid-cols-3");
+    expect(icerik).toContain("@min-[1000px]:grid-cols-4");
+  });
+
+  it("grup filtresi Tümü seçeneğiyle sıfırlanabilir", () => {
+    const icerik = readFileSync(
+      resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"),
+      "utf-8"
+    );
+    expect(icerik).toContain('{ deger: undefined, etiket: "Tümü" }');
+  });
+
+  it("vitrin durumu yalnız mevcut owner summary/VIXREX CORE hattından gelir", () => {
+    const icerik = readFileSync(
+      resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"),
+      "utf-8"
+    );
+    const durumCubugu = readFileSync(
+      resolve(__dirname, "../src/components/kesfet/StatusBar.tsx"),
+      "utf-8"
+    );
+    const ozetRotasi = readFileSync(
+      resolve(__dirname, "../src/app/api/owner-dashboard/summary/route.ts"),
+      "utf-8"
+    );
+
+    expect(icerik).toContain('fetch("/api/owner-dashboard/summary"');
+    expect(durumCubugu).not.toContain("@/lib/supabase");
+    expect(durumCubugu).not.toContain(".from(");
+    expect(durumCubugu).not.toContain("vitriner");
+    expect(ozetRotasi).toContain("is_published?: boolean");
+    expect(ozetRotasi).toContain("yayinli: sahiplik.is_published === true");
   });
 
   it("ana Keşfet sayfası canlı veriyi build sırasında istemez", () => {
