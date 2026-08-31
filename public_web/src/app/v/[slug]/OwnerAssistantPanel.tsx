@@ -71,8 +71,9 @@ export default function OwnerAssistantPanel({
   campaignBanner = null,
   marketplaceLinks = null,
   galleryItems = null,
-}: Props) {
-  const [acik, setAcik] = useState(false);
+  flowState = null,
+}: Props & { flowState?: Record<string, unknown> | null }) {
+  const [acik, setAcik] = useState(() => Boolean(flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step));
   // Harita = "Tüm alanlar" paneli. Faz 4 (Casper, 2026-08-22): mobilde
   // panel bütün sayfayı kapatıyordu — "sadece Vixrex maskotu olsun,
   // kutucuklarda zaten ne yapılacağı yazıyor". Artık alan seçilince
@@ -88,6 +89,15 @@ export default function OwnerAssistantPanel({
     sorgu.addEventListener("change", guncelle);
     return () => sorgu.removeEventListener("change", guncelle);
   }, []);
+
+  // PR4-C14: aktif kurulum/kiralama akışı varsa asistan açık ve sıradaki alan odaklı başlar
+  useEffect(() => {
+    if (flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step) {
+      setAcik(true);
+      const isDesktop = window.matchMedia("(min-width: 640px)").matches;
+      setHaritaAcik(isDesktop);
+    }
+  }, [flowState]);
 
   // Panel açıkken vitrindeki TÜM doldurulabilir yerler sürekli hafif ışıklı
   // dursun (Vixrex Asistan rehberli tamamlama, ADR 0002) — yalnız o an
