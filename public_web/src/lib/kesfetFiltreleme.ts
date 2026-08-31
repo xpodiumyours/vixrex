@@ -2,7 +2,7 @@ import type { BusinessTemplateGroup } from "./businessCategories";
 
 export type KesfetFiltreleri = {
   sorgu: string;
-  grup: BusinessTemplateGroup | "tumu";
+  grup: BusinessTemplateGroup | undefined;
   kategoriKimligi: string | null;
   sadeceFavoriler: boolean;
   favoriAdlari: readonly string[];
@@ -33,7 +33,7 @@ export function kesfetVitrinleriniFiltrele<T extends FiltrelenebilirVitrin>(
   return vitrinler.filter((vitrin) => {
     if (filtreler.sadeceKiralik && !vitrin.kiralikMi) return false;
     if (
-      filtreler.grup !== "tumu" &&
+      filtreler.grup !== undefined &&
       (!vitrin.kategoriKimligi ||
         kategoriGruplari.get(vitrin.kategoriKimligi) !== filtreler.grup)
     ) {

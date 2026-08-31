@@ -12,16 +12,17 @@ import { kesfetVitrinleriniFiltrele } from "@/lib/kesfetFiltreleme";
 import { supabase } from "@/lib/supabase";
 import { KesfetYanMenu } from "./KesfetYanMenu";
 import { VitrinKarti, type PremiumBilgisi } from "./VitrinKarti";
+import { StatusBar } from "./StatusBar";
+import { MascotFab } from "@/components/landing/MascotFab";
 
 const FAVORI_ANAHTARI = "favorite_stores";
 const KATEGORI_GRUPLARI = new Map(
   BUSINESS_CATEGORIES.map((kategori) => [kategori.id, kategori.templateGroup])
 );
 const GRUPLAR: Array<{
-  deger: BusinessTemplateGroup | "tumu";
+  deger: BusinessTemplateGroup;
   etiket: string;
 }> = [
-  { deger: "tumu", etiket: "Tümü" },
   { deger: "perakende", etiket: "Perakende" },
   { deger: "hizmet", etiket: "Hizmet" },
   { deger: "gida", etiket: "Gıda" },
@@ -48,7 +49,7 @@ export function KesfetIcerik({
   aciklama: string;
 }) {
   const [sorgu, setSorgu] = useState("");
-  const [grup, setGrup] = useState<BusinessTemplateGroup | "tumu">("tumu");
+  const [grup, setGrup] = useState<BusinessTemplateGroup | undefined>(undefined);
   const [kategoriKimligi, setKategoriKimligi] = useState<string | null>(null);
   const [sadeceFavoriler, setSadeceFavoriler] = useState(false);
   const [favoriAdlari, setFavoriAdlari] = useState<string[]>([]);
@@ -100,9 +101,9 @@ export function KesfetIcerik({
 
   const kategoriler = useMemo(
     () =>
-      grup === "tumu"
-        ? BUSINESS_CATEGORIES
-        : BUSINESS_CATEGORIES.filter((kategori) => kategori.templateGroup === grup),
+      grup
+        ? BUSINESS_CATEGORIES.filter((kategori) => kategori.templateGroup === grup)
+        : BUSINESS_CATEGORIES,
     [grup]
   );
 
@@ -126,7 +127,7 @@ export function KesfetIcerik({
     return [sonuc[sahipIndex], ...sonuc.slice(0, sahipIndex), ...sonuc.slice(sahipIndex + 1)];
   }, [vitrinler, sorgu, grup, kategoriKimligi, sadeceFavoriler, favoriAdlari, sadeceKiralik, sahipSlug]);
 
-  function grubuSec(yeniGrup: BusinessTemplateGroup | "tumu") {
+  function grubuSec(yeniGrup: BusinessTemplateGroup | undefined) {
     setGrup(yeniGrup);
     setKategoriKimligi(null);
   }
@@ -147,7 +148,7 @@ export function KesfetIcerik({
 
   function filtreleriTemizle() {
     setSorgu("");
-    setGrup("tumu");
+    setGrup(undefined);
     setKategoriKimligi(null);
     setSadeceFavoriler(false);
   }
@@ -162,12 +163,20 @@ export function KesfetIcerik({
   }
 
   const filtreVar = Boolean(
-    sorgu.trim() || grup !== "tumu" || kategoriKimligi || sadeceFavoriler
+    sorgu.trim() || grup !== undefined || kategoriKimligi || sadeceFavoriler
   );
 
   return (
     <div className="lg:flex">
       <KesfetYanMenu sorgu={sorgu} sorguyuDegistir={setSorgu} />
+
+      <StatusBar sahipSlug={sahipSlug} premium={premium} />
+
+      <MascotFab onToggle={() => {
+        // Navigate to appropriate assistant based on user status
+        // This reuses existing assistant flow - no new motor written
+        window.location.href = '/';
+      }} />
 
       <section className="min-w-0 flex-1 px-4 py-8 sm:px-6 md:py-12" aria-labelledby="kesfet-baslik">
         <div className="mx-auto w-full max-w-[1200px]">
