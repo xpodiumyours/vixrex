@@ -140,4 +140,8 @@ describe("Keşfet eşitlik sözleşmesi", () => {
       expect(yanMenu).toContain(etiket);
     }
   });
+
+  it("ana Keşfet sayfası canlı veriyi build sırasında istemez", () => {
+    expect(webKaynak).toContain('export const dynamic = "force-dynamic"');
+  });
 });

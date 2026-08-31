@@ -13,6 +13,9 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
  * hem de her vitrine giden iç bağlantıyı üreten yüzey.
  */
 export const revalidate = 300;
+// Çerez ve canlı vitrin verisi kullanan ana Keşfet build sırasında
+// ön-üretilmez. Veri sorgusunun 5 dakikalık cache'i ayrı olarak korunur.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Keşfet — yayındaki Vixrex vitrinleri",
