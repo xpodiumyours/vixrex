@@ -499,12 +499,12 @@ export function LandingAsistanSohbeti({
                 value={girdi}
                 onChange={(e) => setGirdi(e.target.value)}
                 placeholder={aktif.yerTutucu}
-                className="flex h-12 flex-1 rounded-xl border border-lp-border bg-lp-surface px-3.5 text-[13px] font-semibold text-lp-text outline-none placeholder:text-lp-muted"
+                className="flex h-12 min-w-0 flex-1 rounded-xl border border-lp-border bg-lp-surface px-3.5 text-[13px] font-semibold text-lp-text outline-none placeholder:text-lp-muted"
               />
             )}
             <button
               type="submit"
-              className="flex h-12 items-center justify-center rounded-xl bg-lp-primary px-4 text-[13px] font-black text-lp-on-primary disabled:opacity-50"
+              className="flex h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-lp-primary px-3 text-[11px] font-black text-lp-on-primary disabled:opacity-50"
               disabled={!girdi.trim()}
             >
               {aktif.dugme}
