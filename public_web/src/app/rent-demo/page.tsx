@@ -99,6 +99,7 @@ function MevcutVitrinSayfasi({ slug }: { slug: string }) {
 function RentDemoIcerik() {
   const searchParams = useSearchParams();
   const demoSlug = (searchParams.get("slug") ?? "").trim();
+  const hesapliAkis = searchParams.get("hesap") === "1";
   const { executeRecaptcha, isReady } = useRecaptcha();
   const [durum, setDurum] = useState<Durum>("kontrolEdiliyor");
   const [token, setToken] = useState<string | null>(null);
@@ -124,6 +125,13 @@ function RentDemoIcerik() {
 
       const session = data.session;
       const kaliciHesapVar = session?.user != null && !session.user.is_anonymous;
+
+      if (hesapliAkis && !kaliciHesapVar) {
+        denendiRef.current = true;
+        const geriDonus = `/rent-demo?slug=${encodeURIComponent(demoSlug)}&hesap=1`;
+        window.location.replace(`/giris?next=${encodeURIComponent(geriDonus)}`);
+        return;
+      }
 
       if (kaliciHesapVar) {
         denendiRef.current = true;
@@ -201,7 +209,7 @@ function RentDemoIcerik() {
     return () => {
       iptalEdildi = true;
     };
-  }, [demoSlug, isReady, executeRecaptcha]);
+  }, [demoSlug, hesapliAkis, isReady, executeRecaptcha]);
 
   useEffect(() => {
     if (durum === "gonderiliyor" && token && formRef.current) {

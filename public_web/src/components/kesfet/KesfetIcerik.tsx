@@ -79,7 +79,7 @@ export function KesfetIcerik({
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session || iptal) return;
+      if (!session || session.user.is_anonymous || iptal) return;
 
       const yanit = await fetch("/api/owner-dashboard/summary", {
         headers: { authorization: `Bearer ${session.access_token}` },
@@ -224,7 +224,7 @@ export function KesfetIcerik({
           ) : null}
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Vitrin grupları">
+        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Vitrin grupları">
           {GRUPLAR.map((secenek) => (
             <button
               key={secenek.deger}
@@ -242,7 +242,7 @@ export function KesfetIcerik({
           ))}
         </div>
 
-        <nav className="flex gap-2 overflow-x-auto pb-1" aria-label="Vitrin kategorileri">
+        <nav className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Vitrin kategorileri">
           <button
             type="button"
             aria-pressed={sadeceFavoriler}

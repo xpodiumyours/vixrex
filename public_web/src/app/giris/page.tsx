@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -8,12 +8,23 @@ import { OwnerAuthLayout } from "@/components/owner/OwnerAuthLayout";
 
 export const dynamic = "force-dynamic";
 
+function guvenliSonrakiYol(aday: string | null): string {
+  if (!aday || !aday.startsWith("/") || aday.startsWith("//")) return "/app";
+  return aday;
+}
+
 export default function GirisPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [sifre, setSifre] = useState("");
   const [hata, setHata] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
+  const [sonrakiYol, setSonrakiYol] = useState("/app");
+
+  useEffect(() => {
+    const aday = new URLSearchParams(window.location.search).get("next");
+    setSonrakiYol(guvenliSonrakiYol(aday));
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,7 +51,7 @@ export default function GirisPage() {
       return;
     }
 
-    router.push("/app");
+    router.push(sonrakiYol);
     router.refresh();
   }
 
@@ -107,7 +118,7 @@ export default function GirisPage() {
           const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-              redirectTo: `${window.location.origin}/app`,
+              redirectTo: `${window.location.origin}${sonrakiYol}`,
             },
           });
           setGonderiliyor(false);
@@ -127,7 +138,10 @@ export default function GirisPage() {
       </button>
 
       <div className="mt-5 flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-        <Link href="/kayit" className="owner-link">
+        <Link
+          href={sonrakiYol === "/app" ? "/kayit" : `/kayit?next=${encodeURIComponent(sonrakiYol)}`}
+          className="owner-link"
+        >
           Hesabın yok mu? Kayıt ol
         </Link>
         <Link href="/sifre-sifirla" className="owner-link">

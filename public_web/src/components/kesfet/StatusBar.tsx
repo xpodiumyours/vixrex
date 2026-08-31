@@ -10,15 +10,15 @@ type StatusBarProps = {
 };
 
 export function StatusBar({ sahipSlug, premium }: StatusBarProps) {
-  const [session, setSession] = useState<boolean | null>(null);
   const [vitrinDurumu, setVitrinDurumu] = useState<'misafir' | 'yok' | 'yayinlanmamis' | 'yayinli'>('misafir');
 
   useEffect(() => {
     async function durumuGetir() {
       const { data } = await supabase.auth.getSession();
-      setSession(data.session !== null);
+      const kaliciHesapVar =
+        data.session?.user != null && !data.session.user.is_anonymous;
 
-      if (data.session && sahipSlug) {
+      if (kaliciHesapVar && sahipSlug) {
         const { data: vitrinData, error } = await supabase
           .from('vitriner')
           .select('published, store_name, public_link')
@@ -30,7 +30,7 @@ export function StatusBar({ sahipSlug, premium }: StatusBarProps) {
         } else {
           setVitrinDurumu('yok');
         }
-      } else if (!data.session) {
+      } else if (!kaliciHesapVar) {
         setVitrinDurumu('misafir');
       } else {
         setVitrinDurumu('yok');
