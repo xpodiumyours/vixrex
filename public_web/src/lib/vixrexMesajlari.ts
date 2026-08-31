@@ -29,10 +29,17 @@ export interface VixRexAsistanAkisAdimi {
   yerTutucu: string | null;
 }
 
+export interface VixRexHizliSecenek {
+  id: "hazir_vitrin_sec" | "sifirdan_olustur" | "bakiniyorum";
+  etiket: string;
+  ikon: string;
+}
+
 interface VixRexMesajKatalogu {
   akis: VixRexAsistanAkisAdimi[];
   intentler: VixRexIntentSemasi[];
   mesajlar: VixRexMesajSemasi[];
+  hizliSecenekler: VixRexHizliSecenek[];
 }
 
 const katalog = vixrexMesajlariJson as VixRexMesajKatalogu;
@@ -52,3 +59,6 @@ export function vixRexAsistanAdimiForAlan(
 export const vixRexMesajlari: Record<string, string> = Object.fromEntries(
   katalog.mesajlar.map((m) => [m.anahtar, m.metin]),
 );
+
+export const vixRexHizliSecenekler: readonly VixRexHizliSecenek[] =
+  katalog.hizliSecenekler;

@@ -53,8 +53,8 @@
     { "anahtar": "anlasilamadi", "metin": "Üzgünüm, bunu tam anlayamadım. Aşağıdaki seçeneklerden birini deneyebilirsiniz:" },
     { "anahtar": "taslak_cakismasi", "metin": "Canlı vitrin değişmiş — burada gördüğün eski hâli." },
 
-    { "anahtar": "welcome_baslik", "metin": "Vitrininizi Oluşturun" },
-    { "anahtar": "welcome_aciklama", "metin": "Vixrex ile dijital vitrininizi oluşturmak için ilk adımı atın." },
+    { "anahtar": "welcome_baslik", "metin": "Merhaba, ben Vixrex Asistan." },
+    { "anahtar": "welcome_aciklama", "metin": "İşletmene ne kazandırıyorum?\n- Tek Link & QR Kod: Dijital vitrin sayfan.\n- WhatsApp Sipariş: Müşterilerin tek tıkla sana ulaşır.\n- Ürün & Galeri: Reyon ve ürünlerini sergilersin.\n- Konum & Adres: Dükkanına kolayca ulaşılır.\n\nSenin işletmen için de 2 dakikada beraber hazırlayalım mı?" },
     { "anahtar": "welcome_buton", "metin": "Başla" },
 
     { "anahtar": "setup_name_baslik", "metin": "İşletme adınızı girin" },
@@ -155,5 +155,10 @@
     { "anahtar": "landing_finish_baslik", "metin": "Vitrinin hazır" },
     { "anahtar": "landing_finish_aciklama", "metin": "Verdiğin bilgilerle vitrinini kurabilirim. Hesabını açtığında kaldığın yerden devam edeceğiz." },
     { "anahtar": "landing_finish_buton", "metin": "Hesap Aç ve Vitrini Kur" }
+  ],
+  "hizliSecenekler": [
+    {"id": "hazir_vitrin_sec", "etiket": "Hazır Vitrin Seç", "ikon": "storefront"},
+    {"id": "sifirdan_olustur", "etiket": "Sıfırdan Oluştur", "ikon": "auto_awesome"},
+    {"id": "bakiniyorum", "etiket": "Bakınıyorum", "ikon": "visibility"}
   ]
 }

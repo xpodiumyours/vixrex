@@ -10,7 +10,7 @@ import {
   taslagiKaydet,
   type AsistanCevaplari,
 } from "@/lib/landingAsistanAkisi";
-import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
+import { vixRexHizliSecenekler, vixRexMesajlari } from "@/lib/vixrexMesajlari";
 import { validateField } from "@/lib/vitrinFieldValidation";
 
 /**
@@ -295,7 +295,7 @@ export function LandingAsistanSohbeti({
 
       {/* Girdi alanı */}
       <div className="border-t border-lp-border/60 p-3">
-        {/* Karşılama — Flutter'daki Hızlı Seçenekler ile birebir */}
+        {/* Karşılama — hızlı seçenekler tek katalogdan (PR2-C6) */}
         {adim === -1 ? (
           <div className="space-y-2">
             <p className="text-center text-[11px] font-bold text-lp-muted">Hızlı Seçenekler</p>
@@ -307,7 +307,7 @@ export function LandingAsistanSohbeti({
                 <path d="M3 10.5 12 4l9 6.5V20H3z" />
                 <path d="M8 20v-6h8v6" />
               </svg>
-              Hazır Vitrin Seç
+              {vixRexHizliSecenekler.find((h) => h.id === "hazir_vitrin_sec")?.etiket ?? "Hazır Vitrin Seç"}
             </Link>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -316,7 +316,7 @@ export function LandingAsistanSohbeti({
                 className="flex items-center justify-center gap-1.5 rounded-xl border border-lp-border bg-lp-surface px-3 py-2.5 text-[11px] font-bold text-lp-text"
               >
                 <span className="text-[12px]">✨</span>
-                Sıfırdan Oluştur
+                {vixRexHizliSecenekler.find((h) => h.id === "sifirdan_olustur")?.etiket ?? "Sıfırdan Oluştur"}
               </button>
               <button
                 type="button"
@@ -324,7 +324,7 @@ export function LandingAsistanSohbeti({
                 className="flex items-center justify-center gap-1.5 rounded-xl border border-lp-border bg-lp-surface px-3 py-2.5 text-[11px] font-bold text-lp-text"
               >
                 <span className="text-[12px]">👁️</span>
-                Bakınıyorum
+                {vixRexHizliSecenekler.find((h) => h.id === "bakiniyorum")?.etiket ?? "Bakınıyorum"}
               </button>
             </div>
           </div>

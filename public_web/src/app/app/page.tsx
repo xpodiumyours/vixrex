@@ -11,6 +11,8 @@ import {
   taslagiTemizle,
   type AsistanCevaplari,
 } from "@/lib/landingAsistanAkisi";
+import { importLandingFlowStateIfNeeded } from "@/lib/ownerFlowImport";
+import { vixRexHizliSecenekler } from "@/lib/vixrexMesajlari";
 import {
   OwnerProductManager,
   type OwnerProduct,
@@ -46,6 +48,9 @@ export default function AppPage() {
   const [olusturuyor, setOlusturuyor] = useState(false);
   const [yeniAd, setYeniAd] = useState("");
   const [hata, setHata] = useState("");
+  const [flowState, setFlowState] = useState<Record<string, unknown> | null>(null);
+  const [conversation, setConversation] = useState<Record<string, unknown> | null>(null);
+  const [showNameForm, setShowNameForm] = useState(false);
 
   // Ana sayfadaki asistanla konuşulduysa cevaplar tarayıcı oturumunda
   // duruyor. Vitrin kurulurken doğrudan kullanılır; kullanıcıya aynı
@@ -57,7 +62,7 @@ export default function AppPage() {
     setHata("");
 
     const { data: durum, error: durumHatasi } = await supabase.rpc(
-      "bootstrap_owner_state"
+      "get_owner_workspace_bootstrap"
     );
 
     if (durumHatasi) {
@@ -67,34 +72,70 @@ export default function AppPage() {
       return;
     }
 
-    const sonuc = (durum ?? {}) as BootstrapOwnerState;
-    if (sonuc.has_store !== true) {
-      setStores([]);
+    const sonuc = (durum ?? {}) as Record<string, unknown>;
+    // PR3-C12: yeni bootstrap (store + flow_state + conversation) — paralel başlangıç kaldırıldı
+    const yeniStore = (sonuc as { store?: Store | null }).store;
+    const yeniFlow = (sonuc as { flow_state?: Record<string, unknown> | null }).flow_state ?? null;
+    const yeniConversation = (sonuc as { conversation?: Record<string, unknown> | null }).conversation ?? null;
+    setFlowState(yeniFlow);
+    setConversation(yeniConversation);
+
+    // Eski bootstrap geriye uyum: has_store/slug
+    if (yeniStore && typeof yeniStore === "object" && (yeniStore as Store).slug) {
+      const slug = (yeniStore as Store).slug.trim();
+      if (!slug) {
+        setStores([]);
+        if (showLoading) setYukleniyor(false);
+        return;
+      }
+      // store doğrudan bootstrap'ten geldi, ek sorguya gerek yok ama ürünler için yine çekiyoruz
+      // (working_draft ürünleri ayrı, mevcut akışta store tablosu esas)
+      const { data, error } = await supabase
+        .from("stores")
+        .select(
+          "id, slug, name, is_published, kategori, updated_at, products(id, slug, name, description, price_text, image_urls, category_id, stock_status, product_categories(name)), product_categories(id, name)"
+        )
+        .eq("slug", slug)
+        .order("updated_at", { ascending: false });
+
+      if (error) {
+        setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
+      }
+      setStores((data as unknown as Store[]) ?? []);
       if (showLoading) setYukleniyor(false);
       return;
     }
 
-    const slug = sonuc.slug?.trim();
-    if (!slug) {
-      setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
-      setStores([]);
+    // Eski yol: has_store
+    const eskiSonuc = sonuc as BootstrapOwnerState;
+    if (eskiSonuc.has_store === true && eskiSonuc.slug) {
+      const slug = eskiSonuc.slug.trim();
+      if (!slug) {
+        setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
+        setStores([]);
+        if (showLoading) setYukleniyor(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("stores")
+        .select(
+          "id, slug, name, is_published, kategori, updated_at, products(id, slug, name, description, price_text, image_urls, category_id, stock_status, product_categories(name)), product_categories(id, name)"
+        )
+        .eq("slug", slug)
+        .order("updated_at", { ascending: false });
+
+      if (error) {
+        setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
+      }
+      setStores((data as unknown as Store[]) ?? []);
       if (showLoading) setYukleniyor(false);
       return;
     }
 
-    const { data, error } = await supabase
-      .from("stores")
-      .select(
-        "id, slug, name, is_published, kategori, updated_at, products(id, slug, name, description, price_text, image_urls, category_id, stock_status, product_categories(name)), product_categories(id, name)"
-      )
-      .eq("slug", slug)
-      .order("updated_at", { ascending: false });
-
-    if (error) {
-      setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
-    }
-    setStores((data as unknown as Store[]) ?? []);
+    // Mağaza yok: akış varsa devam, yoksa ortak karşılama (PR2)
+    setStores([]);
     if (showLoading) setYukleniyor(false);
+    return;
   }
 
 
@@ -109,6 +150,9 @@ export default function AppPage() {
         return;
       }
       setUser(session.user);
+
+      // PR3-C11: hesap sonrası yerel landing başlangıcını tek active conversation'a aktar
+      await importLandingFlowStateIfNeeded();
 
       // Asistan taslağı varsa vitrin adını doldur — kullanıcı formu boş
       // görmesin, konuştuğu şeyin kaybolmadığını görsün.
@@ -254,37 +298,106 @@ export default function AppPage() {
         {hata ? <p className="owner-error mb-6 text-sm" role="alert">{hata}</p> : null}
 
         {stores.length === 0 ? (
-          <section className="owner-card p-5 sm:p-8" aria-labelledby="vitrin-olustur-title">
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)] lg:items-start">
+          flowState ? (
+            <section className="owner-card p-5 sm:p-8" aria-labelledby="vitrin-devam-title">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">İlk Adım</p>
-                <h2 id="vitrin-olustur-title" className="mt-2 text-xl font-bold text-[var(--owner-text)]">
-                  Vitrinini oluştur
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Devam Ediyor</p>
+                <h2 id="vitrin-devam-title" className="mt-2 text-xl font-bold text-[var(--owner-text)]">
+                  Kurulumun kaldığı yerden devam ediyor
                 </h2>
                 <p className="mt-2 max-w-lg text-sm leading-6 text-[var(--owner-muted)]">
-                  İşletme adınla başla. Sonraki adımda vitrinini düzenleyip ürünlerini ekleyebilirsin.
+                  {flowState && typeof flowState === "object" && "current_step" in flowState
+                    ? `Sıradaki adım: ${String((flowState as { current_step?: string }).current_step ?? "devam")}`
+                    : "Önceki adımda bıraktığın yerden devam edebilirsin."}
+                </p>
+                {flowState && typeof flowState === "object" && "selected_template" in flowState && (flowState as { selected_template?: string }).selected_template ? (
+                  <p className="mt-2 text-sm text-[var(--owner-text-alt)]">Seçilen şablon: {(flowState as { selected_template: string }).selected_template}</p>
+                ) : null}
+              </div>
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowNameForm(true)}
+                  className="owner-button-primary"
+                >
+                  Devam Et
+                </button>
+              </div>
+              {showNameForm ? (
+                <form onSubmit={magazaOlustur} className="mt-6 space-y-4" aria-busy={olusturuyor}>
+                  <div className="space-y-2">
+                    <label htmlFor="isletme-adi" className="owner-label">İşletme Adı</label>
+                    <input
+                      id="isletme-adi"
+                      type="text"
+                      placeholder="Ör. Aymira Giyim"
+                      value={yeniAd}
+                      onChange={(e) => setYeniAd(e.target.value)}
+                      className="owner-input text-sm"
+                      autoComplete="organization"
+                      required
+                    />
+                  </div>
+                  <button type="submit" disabled={olusturuyor} className="owner-button-primary w-full">
+                    {olusturuyor ? "Vitrin oluşturuluyor…" : "Vitrin Oluştur"}
+                  </button>
+                </form>
+              ) : null}
+            </section>
+          ) : (
+            <section className="owner-card p-5 sm:p-8" aria-labelledby="vitrin-bos-title">
+              <div className="mb-4">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Vixrex Asistan</p>
+                <h2 id="vitrin-bos-title" className="mt-2 text-xl font-bold text-[var(--owner-text)]">
+                  Merhaba, ben Vixrex Asistan.
+                </h2>
+                <p className="mt-2 max-w-lg whitespace-pre-line text-sm leading-6 text-[var(--owner-muted)]">
+                  {"İşletmene ne kazandırıyorum?\n- Tek Link & QR Kod: Dijital vitrin sayfan.\n- WhatsApp Sipariş: Müşterilerin tek tıkla sana ulaşır.\n- Ürün & Galeri: Reyon ve ürünlerini sergilersin.\n- Konum & Adres: Dükkanına kolayca ulaşılır.\n\nSenin işletmen için de 2 dakikada beraber hazırlayalım mı?"}
                 </p>
               </div>
-              <form onSubmit={magazaOlustur} className="space-y-4" aria-busy={olusturuyor}>
-                <div className="space-y-2">
-                  <label htmlFor="isletme-adi" className="owner-label">İşletme Adı</label>
-                  <input
-                    id="isletme-adi"
-                    type="text"
-                    placeholder="Ör. Aymira Giyim"
-                    value={yeniAd}
-                    onChange={(e) => setYeniAd(e.target.value)}
-                    className="owner-input text-sm"
-                    autoComplete="organization"
-                    required
-                  />
+              <p className="mb-3 text-center text-xs font-bold text-[var(--owner-muted)]">Hızlı Seçenekler</p>
+              <div className="grid gap-3">
+                <Link
+                  href="/kesfet?yalniz_kiralik=1"
+                  className="owner-button-primary flex items-center justify-center gap-2"
+                >
+                  {vixRexHizliSecenekler.find((h) => h.id === "hazir_vitrin_sec")?.etiket ?? "Hazır Vitrin Seç"}
+                </Link>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowNameForm(true)}
+                    className="owner-button-secondary flex items-center justify-center gap-2"
+                  >
+                    {vixRexHizliSecenekler.find((h) => h.id === "sifirdan_olustur")?.etiket ?? "Sıfırdan Oluştur"}
+                  </button>
+                  <Link href="/kesfet" className="owner-button-secondary flex items-center justify-center gap-2">
+                    {vixRexHizliSecenekler.find((h) => h.id === "bakiniyorum")?.etiket ?? "Bakınıyorum"}
+                  </Link>
                 </div>
-                <button type="submit" disabled={olusturuyor} className="owner-button-primary w-full">
-                  {olusturuyor ? "Vitrin oluşturuluyor…" : "Vitrin Oluştur"}
-                </button>
-              </form>
-            </div>
-          </section>
+              </div>
+              {showNameForm ? (
+                <form onSubmit={magazaOlustur} className="mt-6 space-y-4" aria-busy={olusturuyor}>
+                  <div className="space-y-2">
+                    <label htmlFor="isletme-adi" className="owner-label">İşletme Adı</label>
+                    <input
+                      id="isletme-adi"
+                      type="text"
+                      placeholder="Ör. Aymira Giyim"
+                      value={yeniAd}
+                      onChange={(e) => setYeniAd(e.target.value)}
+                      className="owner-input text-sm"
+                      autoComplete="organization"
+                      required
+                    />
+                  </div>
+                  <button type="submit" disabled={olusturuyor} className="owner-button-primary w-full">
+                    {olusturuyor ? "Vitrin oluşturuluyor…" : "Vitrin Oluştur"}
+                  </button>
+                </form>
+              ) : null}
+            </section>
+          )
         ) : (
           <section aria-labelledby="vitrinim-title">
             <h2 id="vitrinim-title" className="sr-only">Vitrinim</h2>

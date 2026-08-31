@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { OwnerAuthLayout } from "@/components/owner/OwnerAuthLayout";
+import { guvenliDonusYolu } from "@/lib/guvenliDonus";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,12 @@ export default function KayitPage() {
   const [sifreTekrar, setSifreTekrar] = useState("");
   const [hata, setHata] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
+  const [sonrakiYol, setSonrakiYol] = useState("/app");
+
+  useEffect(() => {
+    const aday = new URLSearchParams(window.location.search).get("next");
+    setSonrakiYol(guvenliDonusYolu(aday));
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +45,9 @@ export default function KayitPage() {
     const { error } = await supabase.auth.signUp({
       email: email.trim(),
       password: sifre,
+      options: {
+        emailRedirectTo: `${window.location.origin}${sonrakiYol}`,
+      },
     });
     setGonderiliyor(false);
 
@@ -61,7 +71,7 @@ export default function KayitPage() {
             E-postanı kontrol et.
           </p>
           <Link
-            href="/giris"
+            href={sonrakiYol === "/app" ? "/giris" : `/giris?next=${encodeURIComponent(sonrakiYol)}`}
             className="owner-button-primary inline-flex items-center justify-center"
           >
             Giriş Sayfasına Dön
@@ -150,7 +160,7 @@ export default function KayitPage() {
           const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-              redirectTo: `${window.location.origin}/app`,
+              redirectTo: `${window.location.origin}${sonrakiYol}`,
             },
           });
           setGonderiliyor(false);
@@ -170,7 +180,10 @@ export default function KayitPage() {
       </button>
 
       <div className="mt-5 text-center text-sm">
-        <Link href="/giris" className="owner-link">
+        <Link
+          href={sonrakiYol === "/app" ? "/giris" : `/giris?next=${encodeURIComponent(sonrakiYol)}`}
+          className="owner-link"
+        >
           Zaten hesabın var mı? Giriş yap
         </Link>
       </div>

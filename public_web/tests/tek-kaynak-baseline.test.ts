@@ -166,3 +166,19 @@ describe("PR1-C5 — dar akış ve konuşma fonksiyonları", () => {
     expect(allMigrations).toMatch(/revoke execute on function public\.append_assistant_message/);
   });
 });
+
+describe("PR3-C11 — landing import tek active conversation'a idempotent", () => {
+  it("import_landing_flow_state ayrı landing conversation oluşturmaz, mevcut tek conversation'a ekler", () => {
+    expect(allMigrations).toMatch(/create or replace function public\.import_landing_flow_state/);
+    expect(allMigrations).toContain("assistant_conversations where user_id = v_user_id");
+    expect(allMigrations).toContain("append_assistant_message");
+    // ayrı tablo/ayrı conversation oluşturma yok
+    expect(allMigrations).not.toMatch(/create table public\.landing_conversations/);
+  });
+
+  it("tekrar çağrı aynı sonucu üretir (client_message_id idempotent)", () => {
+    expect(allMigrations).toContain("p_client_message_id");
+    expect(allMigrations).toMatch(/revoke execute on function public\.import_landing_flow_state/);
+    expect(allMigrations).toMatch(/grant execute on function public\.import_landing_flow_state/);
+  });
+});

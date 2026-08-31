@@ -5,13 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { OwnerAuthLayout } from "@/components/owner/OwnerAuthLayout";
+import { guvenliDonusYolu } from "@/lib/guvenliDonus";
 
 export const dynamic = "force-dynamic";
-
-function guvenliSonrakiYol(aday: string | null): string {
-  if (!aday || !aday.startsWith("/") || aday.startsWith("//")) return "/app";
-  return aday;
-}
 
 export default function GirisPage() {
   const router = useRouter();
@@ -23,7 +19,7 @@ export default function GirisPage() {
 
   useEffect(() => {
     const aday = new URLSearchParams(window.location.search).get("next");
-    setSonrakiYol(guvenliSonrakiYol(aday));
+    setSonrakiYol(guvenliDonusYolu(aday));
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {

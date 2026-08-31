@@ -365,7 +365,9 @@ class _VixRexOnboardingChatScreenState
               ),
             ),
             ChatPill(
-              label: 'Hazır Vitrin Seç',
+              label: vixRexHizliSecenekler
+                  .firstWhere((e) => e.id == 'hazir_vitrin_sec')
+                  .etiket,
               icon: Icons.storefront_rounded,
               primary: true,
               onTap: busy ? null : _onboarding.chooseReadyTemplate,
@@ -375,7 +377,9 @@ class _VixRexOnboardingChatScreenState
               children: [
                 Expanded(
                   child: ChatPill(
-                    label: 'Sıfırdan Oluştur',
+                    label: vixRexHizliSecenekler
+                        .firstWhere((e) => e.id == 'sifirdan_olustur')
+                        .etiket,
                     icon: Icons.auto_awesome,
                     primary: false,
                     onTap: busy ? null : _onboarding.chooseScratch,
@@ -384,7 +388,9 @@ class _VixRexOnboardingChatScreenState
                 const SizedBox(width: 8),
                 Expanded(
                   child: ChatPill(
-                    label: 'Bakınıyorum',
+                    label: vixRexHizliSecenekler
+                        .firstWhere((e) => e.id == 'bakiniyorum')
+                        .etiket,
                     icon: Icons.visibility_outlined,
                     primary: false,
                     onTap: busy ? null : _onboarding.declineWelcome,
