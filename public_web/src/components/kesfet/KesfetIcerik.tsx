@@ -79,7 +79,7 @@ export function KesfetIcerik({
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session || iptal) return;
+      if (!session || session.user.is_anonymous || iptal) return;
 
       const yanit = await fetch("/api/owner-dashboard/summary", {
         headers: { authorization: `Bearer ${session.access_token}` },
