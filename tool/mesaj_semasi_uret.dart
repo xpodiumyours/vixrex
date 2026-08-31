@@ -39,6 +39,8 @@ void main() {
   final akis = (veri['akis'] as List).cast<Map<String, dynamic>>();
   final intentler = (veri['intentler'] as List).cast<Map<String, dynamic>>();
   final mesajlar = (veri['mesajlar'] as List).cast<Map<String, dynamic>>();
+  final hizliSecenekler =
+      (veri['hizliSecenekler'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
   String dartString(String s) {
     final kacisli = s
@@ -106,6 +108,32 @@ void main() {
 
   tampon
     ..writeln('')
+    ..writeln('class VixRexHizliSecenek {')
+    ..writeln('  final String id;')
+    ..writeln('  final String etiket;')
+    ..writeln('  final String ikon;')
+    ..writeln('')
+    ..writeln('  const VixRexHizliSecenek({')
+    ..writeln('    required this.id,')
+    ..writeln('    required this.etiket,')
+    ..writeln('    required this.ikon,')
+    ..writeln('  });')
+    ..writeln('}')
+    ..writeln('')
+    ..writeln('const List<VixRexHizliSecenek> vixRexHizliSecenekler = [');
+
+  for (final h in hizliSecenekler) {
+    tampon.writeln('  VixRexHizliSecenek(');
+    tampon.writeln("    id: ${dartString(h['id'] as String)},");
+    tampon.writeln("    etiket: ${dartString(h['etiket'] as String)},");
+    tampon.writeln("    ikon: ${dartString(h['ikon'] as String)},");
+    tampon.writeln('  ),');
+  }
+
+  tampon.writeln('];');
+
+  tampon
+    ..writeln('')
     ..writeln('class VixRexAsistanAkisAdimi {')
     ..writeln('  final String id;')
     ..writeln('  final List<String> alanlar;')
@@ -162,4 +190,5 @@ void main() {
   stdout.writeln('  intent sayısı : ${intentler.length}');
   stdout.writeln('  mesaj sayısı  : ${mesajlar.length}');
   stdout.writeln('  akış adımı    : ${akis.length}');
+  stdout.writeln('  hızlı seçenek : ${hizliSecenekler.length}');
 }

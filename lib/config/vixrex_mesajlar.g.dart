@@ -189,6 +189,36 @@ const Map<String, String> vixRexMesajlari = {
   'landing_finish_buton': 'Hesap Aç ve Vitrini Kur',
 };
 
+class VixRexHizliSecenek {
+  final String id;
+  final String etiket;
+  final String ikon;
+
+  const VixRexHizliSecenek({
+    required this.id,
+    required this.etiket,
+    required this.ikon,
+  });
+}
+
+const List<VixRexHizliSecenek> vixRexHizliSecenekler = [
+  VixRexHizliSecenek(
+    id: 'hazir_vitrin_sec',
+    etiket: 'Hazır Vitrin Seç',
+    ikon: 'storefront',
+  ),
+  VixRexHizliSecenek(
+    id: 'sifirdan_olustur',
+    etiket: 'Sıfırdan Oluştur',
+    ikon: 'auto_awesome',
+  ),
+  VixRexHizliSecenek(
+    id: 'bakiniyorum',
+    etiket: 'Bakınıyorum',
+    ikon: 'visibility',
+  ),
+];
+
 class VixRexAsistanAkisAdimi {
   final String id;
   final List<String> alanlar;
