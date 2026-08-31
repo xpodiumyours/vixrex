@@ -68,7 +68,7 @@ export function useOwnerChat(
           });
         })
         .then(() => {})
-        .catch(() => {});
+        .then(() => {})
     },
     [opts?.slug]
   );
