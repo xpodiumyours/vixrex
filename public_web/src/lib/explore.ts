@@ -150,8 +150,16 @@ export const kesfetVitrinleriniGetir = kesfetVitrinleriniOnbellektenGetir;
 
 /** Tek kategorinin yayındaki vitrinleri — ek sorgu atmaz, listeyi süzer. */
 export async function kategoriVitrinleriniGetir(
-  kategoriKimligi: string
+  kategoriKimligi: string,
+  listeyiGetir: () => Promise<KesfetVitrini[]> = kesfetVitrinleriniGetir
 ): Promise<KesfetVitrini[]> {
-  const hepsi = await kesfetVitrinleriniGetir();
-  return hepsi.filter((vitrin) => vitrin.kategoriKimligi === kategoriKimligi);
+  try {
+    const hepsi = await listeyiGetir();
+    return hepsi.filter((vitrin) => vitrin.kategoriKimligi === kategoriKimligi);
+  } catch {
+    // Bu fonksiyon statik kategori sayfalarının build aşamasında da çalışır.
+    // Geçici veri kesintisi bütün web yayınını durdurmamalı; ana Keşfet
+    // çağrısı hatayı taşımaya ve kendi error boundary'sini göstermeye devam eder.
+    return [];
+  }
 }

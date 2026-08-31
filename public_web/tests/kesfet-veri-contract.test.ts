@@ -7,6 +7,7 @@ import {
   kategoriUrlParcasindanCoz,
   BUSINESS_CATEGORIES,
 } from "@/lib/businessCategories";
+import { kategoriVitrinleriniGetir } from "@/lib/explore";
 
 /**
  * Yorumları söker. Bu dosyadaki iddialar KODU sınıyor; açıklama satırında
@@ -100,5 +101,15 @@ describe("kategori adres parçaları", () => {
 
   it("bilinmeyen parça null döner", () => {
     expect(kategoriUrlParcasindanCoz("boyle-bir-kategori-yok")).toBeNull();
+  });
+});
+
+describe("kategori sayfası yayın dayanıklılığı", () => {
+  it("build sırasında veri kaynağına ulaşılamazsa boş liste döner", async () => {
+    const sonuc = await kategoriVitrinleriniGetir("giyim", async () => {
+      throw new Error("geçici bağlantı hatası");
+    });
+
+    expect(sonuc).toEqual([]);
   });
 });
