@@ -147,3 +147,22 @@ describe("PR1-C2 — owner_flow_states kalıcı akış kaydı", () => {
     expect(allMigrations).toMatch(/grant execute on function public\.get_owner_workspace_bootstrap\(\) to authenticated/);
   });
 });
+
+describe("PR1-C5 — dar akış ve konuşma fonksiyonları", () => {
+  it("update_owner_flow_state sürüm kontrollü ve yalnız auth.uid()", () => {
+    expect(allMigrations).toMatch(/create or replace function public\.update_owner_flow_state/);
+    expect(allMigrations).toContain("VERSION_CONFLICT");
+    expect(allMigrations).toContain("FLOW_NOT_FOUND_OR_UNAUTHORIZED");
+    expect(allMigrations).toMatch(/set search_path = pg_catalog, public/);
+    expect(allMigrations).toMatch(/grant execute on function public\.update_owner_flow_state/);
+    expect(allMigrations).toMatch(/revoke execute on function public\.update_owner_flow_state/);
+  });
+
+  it("append_assistant_message idempotent ve sıralı", () => {
+    expect(allMigrations).toMatch(/create or replace function public\.append_assistant_message/);
+    expect(allMigrations).toContain("CONVERSATION_NOT_FOUND_OR_UNAUTHORIZED");
+    expect(allMigrations).toContain("client_message_id");
+    expect(allMigrations).toMatch(/grant execute on function public\.append_assistant_message/);
+    expect(allMigrations).toMatch(/revoke execute on function public\.append_assistant_message/);
+  });
+});
