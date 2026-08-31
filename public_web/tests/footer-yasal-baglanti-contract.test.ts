@@ -10,6 +10,10 @@ const siteLayout = readFileSync(
   resolve(__dirname, "../src/app/(site)/layout.tsx"),
   "utf-8"
 );
+const siteHeader = readFileSync(
+  resolve(__dirname, "../src/components/site/SiteHeader.tsx"),
+  "utf-8"
+);
 const rootLayout = readFileSync(
   resolve(__dirname, "../src/app/layout.tsx"),
   "utf-8"
@@ -58,6 +62,13 @@ describe("altbilgi yasal bağlantıları (#346)", () => {
     expect(siteLayout).toContain("<SiteFooter />");
     expect(rootLayout).not.toContain("SiteHeader");
     expect(rootLayout).not.toContain("SiteFooter");
+  });
+
+  it("landing gezinmesinde Keşfet ve Giriş eylemleri kaybolmaz", () => {
+    expect(siteHeader).toContain('href="/kesfet"');
+    expect(siteHeader).toContain("Vitrinleri Keşfet");
+    expect(siteHeader).toContain('href="/giris"');
+    expect(siteHeader).toContain("Giriş Yap");
   });
 
   it("ana Keşfet uygulama kabuğunda site başlık/altbilgisi yoktur", () => {
