@@ -3,11 +3,19 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/chatbot_config.dart';
 import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/repositories/vixrex_conversation_repository.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 
 /// VixRex chatbot servis katmanı.
-/// Kural tabanlı, tamamen offline çalışır.
+/// Yanıt motoru cihazda çalışır; kalıcı hesapta geçmiş ortak Supabase
+/// konuşmasıyla eşitlenir ve çevrimdışıyken yerel önbelleğe geri düşer.
 class ChatbotService {
+  ChatbotService({VixrexConversationRepository? conversationRepository})
+    : _conversationRepository =
+          conversationRepository ?? const VixrexConversationRepository();
+
+  final VixrexConversationRepository _conversationRepository;
+
   static const String _greetedKey = 'vixrex_greeted';
   static const String _sharedMilestoneKey = 'vixrex_vitrin_shared';
   static const String _dismissedRecommendationKey =
@@ -184,6 +192,7 @@ class ChatbotService {
       final prefs = await SharedPreferences.getInstance();
       final jsonList = history.map((m) => m.toJson()).toList();
       await prefs.setString(_historyKeyFor(scope), jsonEncode(jsonList));
+      await _conversationRepository.syncMessages(history);
     } catch (e) {
       if (kDebugMode) debugPrint('saveHistory error: $e');
     }
@@ -193,9 +202,30 @@ class ChatbotService {
   Future<List<ChatMessage>> loadHistory({String? scope}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return _decodeHistory(prefs.getString(_historyKeyFor(scope)));
+      final local = _decodeHistory(prefs.getString(_historyKeyFor(scope)));
+      if (!_conversationRepository.canSync) return local;
+
+      final remote = await _conversationRepository.loadMessages();
+      final remoteIds = remote.map((message) => message.id).toSet();
+      final merged = [
+        ...remote,
+        ...local.where((message) => !remoteIds.contains(message.id)),
+      ];
+      if (local.isNotEmpty) {
+        await _conversationRepository.syncMessages(local);
+      }
+      await prefs.setString(
+        _historyKeyFor(scope),
+        jsonEncode(merged.map((message) => message.toJson()).toList()),
+      );
+      return merged;
     } catch (_) {
-      return [];
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        return _decodeHistory(prefs.getString(_historyKeyFor(scope)));
+      } catch (_) {
+        return [];
+      }
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
@@ -71,6 +73,7 @@ class _VixRexOnboardingChatScreenState
   final _inputFocus = FocusNode();
 
   final List<_ChatLine> _lines = [];
+  Future<void> _transcriptPersistQueue = Future<void>.value();
 
   @override
   void initState() {
@@ -144,18 +147,20 @@ class _VixRexOnboardingChatScreenState
         onOpenPublicLink: publicLink == null ? null : _openPublicLink,
       ),
     );
+    _queueTranscriptPersistence();
     _scrollToEnd();
   }
 
   void _pushUser(String text) {
     _lines.add(_ChatLine.user(text));
+    _queueTranscriptPersistence();
     _scrollToEnd();
   }
 
   // Faz C: bu mesajlar gerçek transkript, "üretilmiş rehberlik" değil —
   // uretilmis varsayılan false'ta kalır, reconcileGuidanceHistory bunları
   // asla ayıklamaz (onboarding_handoff_v1 işaretçili son mesaj dahil).
-  List<ChatMessage> _transcriptAsChatMessages() {
+  List<ChatMessage> _transcriptAsChatMessages({bool markHandoff = true}) {
     final now = DateTime.now();
     final out = <ChatMessage>[];
     for (var i = 0; i < _lines.length; i++) {
@@ -170,11 +175,12 @@ class _VixRexOnboardingChatScreenState
           text: text,
           isBot: line.isBot,
           timestamp: now.add(Duration(milliseconds: i)),
-          snapshotStateKey: isLast ? _kOnboardingHandoffMarker : null,
+          snapshotStateKey:
+              isLast && markHandoff ? _kOnboardingHandoffMarker : null,
         ),
       );
     }
-    if (out.isEmpty) {
+    if (out.isEmpty && markHandoff) {
       out.add(
         ChatMessage.bot(
           'Kurulum sohbeti tamamlandı.',
@@ -183,6 +189,24 @@ class _VixRexOnboardingChatScreenState
       );
     }
     return out;
+  }
+
+  Future<void> _persistTranscriptIncrementally() async {
+    final service = ChatbotService();
+    final transcript = _transcriptAsChatMessages(markHandoff: false);
+    final existing = await service.loadHistory();
+    final transcriptIds = transcript.map((message) => message.id).toSet();
+    await service.saveHistory([
+      ...transcript,
+      ...existing.where((message) => !transcriptIds.contains(message.id)),
+    ]);
+  }
+
+  void _queueTranscriptPersistence() {
+    _transcriptPersistQueue = _transcriptPersistQueue
+        .then((_) => _persistTranscriptIncrementally())
+        .catchError((Object _) {});
+    unawaited(_transcriptPersistQueue);
   }
 
   /// Onboarding balonlarını mevcut rehber history’sine yazar (tek sefer).

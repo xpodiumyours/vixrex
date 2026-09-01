@@ -7,6 +7,8 @@ import { KesfetIkonu, StorefrontIkonu } from "@/components/site/icons";
 type Props = {
   sorgu: string;
   sorguyuDegistir: (deger: string) => void;
+  aktifBolum?: "kesfet" | "vixrex";
+  vixrexAc: () => void;
 };
 
 function KisiIkonu() {
@@ -31,16 +33,20 @@ const MENU: Array<{
   etiket: string;
   href: string;
   ikon: ReactNode;
-  secili?: boolean;
 }> = [
   { etiket: "Vitrinim", href: "/app", ikon: <StorefrontIkonu boyut={20} /> },
-  { etiket: "Keşfet", href: "/kesfet", ikon: <KesfetIkonu boyut={20} />, secili: true },
-  { etiket: "Vixrex", href: "/#vixrex-hero", ikon: <AsistanIkonu /> },
+  { etiket: "Keşfet", href: "/kesfet", ikon: <KesfetIkonu boyut={20} /> },
+  { etiket: "Vixrex", href: "#vixrex-asistan", ikon: <AsistanIkonu /> },
   { etiket: "Profil", href: "/app/profil", ikon: <KisiIkonu /> },
 ];
 
 /** Flutter ShellSidebar'ın masaüstü Keşfet karşılığı. */
-export function KesfetYanMenu({ sorgu, sorguyuDegistir }: Props) {
+export function KesfetYanMenu({
+  sorgu,
+  sorguyuDegistir,
+  aktifBolum = "kesfet",
+  vixrexAc,
+}: Props) {
   return (
     <aside
       aria-label="Uygulama menüsü"
@@ -78,21 +84,42 @@ export function KesfetYanMenu({ sorgu, sorguyuDegistir }: Props) {
       </div>
 
       <nav className="flex-1 px-3 py-1" aria-label="Ana bölümler">
-        {MENU.map((oge) => (
-          <Link
-            key={oge.etiket}
-            href={oge.href}
-            aria-current={oge.secili ? "page" : undefined}
-            className={`relative my-1 flex min-h-11 items-center gap-3 rounded-xl px-3 text-[13px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
-              oge.secili
-                ? "bg-lp-primary/15 text-lp-text before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-full before:bg-lp-primary"
-                : "text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
-            }`}
-          >
-            <span className={oge.secili ? "text-lp-primary" : "text-current"}>{oge.ikon}</span>
-            {oge.etiket}
-          </Link>
-        ))}
+        {MENU.map((oge) => {
+          const aktif = oge.etiket === "Vixrex"
+            ? aktifBolum === "vixrex"
+            : oge.etiket === "Keşfet" && aktifBolum === "kesfet";
+          const className = `relative my-1 flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+            aktif
+              ? "bg-lp-primary/15 text-lp-text before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-full before:bg-lp-primary"
+              : "text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
+          }`;
+          const content = (
+            <>
+              <span className={aktif ? "text-lp-primary" : "text-current"}>{oge.ikon}</span>
+              {oge.etiket}
+            </>
+          );
+          return oge.etiket === "Vixrex" ? (
+            <button
+              key={oge.etiket}
+              type="button"
+              onClick={vixrexAc}
+              aria-current={aktif ? "page" : undefined}
+              className={className}
+            >
+              {content}
+            </button>
+          ) : (
+            <Link
+              key={oge.etiket}
+              href={oge.href}
+              aria-current={aktif ? "page" : undefined}
+              className={className}
+            >
+              {content}
+            </Link>
+          );
+        })}
       </nav>
 
       <p className="px-4 py-4 text-[11px] font-semibold text-lp-muted">v1.0.0</p>

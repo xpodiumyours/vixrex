@@ -14,6 +14,7 @@ import { KesfetYanMenu } from "./KesfetYanMenu";
 import { VitrinKarti, type PremiumBilgisi } from "./VitrinKarti";
 import { StatusBar } from "./StatusBar";
 import { MascotFab } from "@/components/landing/MascotFab";
+import { SharedVixrexAssistant } from "@/components/vixrex/SharedVixrexAssistant";
 
 const FAVORI_ANAHTARI = "favorite_stores";
 const KATEGORI_GRUPLARI = new Map(
@@ -55,6 +56,7 @@ export function KesfetIcerik({
   const [favoriAdlari, setFavoriAdlari] = useState<string[]>([]);
   const [sahipSlug, setSahipSlug] = useState<string | null>(ilkSahipSlug);
   const [premium, setPremium] = useState<PremiumBilgisi | null>(null);
+  const [aktifBolum, setAktifBolum] = useState<"kesfet" | "vixrex">("kesfet");
 
   useEffect(() => {
     let iptal = false;
@@ -169,18 +171,24 @@ export function KesfetIcerik({
 
   return (
     <main className="min-[901px]:flex">
-      <KesfetYanMenu sorgu={sorgu} sorguyuDegistir={setSorgu} />
+      <KesfetYanMenu
+        sorgu={sorgu}
+        sorguyuDegistir={setSorgu}
+        aktifBolum={aktifBolum}
+        vixrexAc={() => setAktifBolum("vixrex")}
+      />
 
-      <MascotFab mesajGoster={false} onToggle={() => {
-        // Navigate to appropriate assistant based on user status
-        // This reuses existing assistant flow - no new motor written
-        window.location.href = '/';
-      }} />
+      {aktifBolum === "kesfet" ? (
+        <MascotFab mesajGoster={false} onToggle={() => setAktifBolum("vixrex")} />
+      ) : null}
 
       <div className="min-w-0 flex-1">
         <StatusBar sahipSlug={sahipSlug} premium={premium} />
 
-        <section className="px-3 py-5" aria-labelledby="kesfet-baslik">
+        {aktifBolum === "vixrex" ? (
+          <SharedVixrexAssistant onBrowse={() => setAktifBolum("kesfet")} />
+        ) : (
+          <section className="px-3 py-5" aria-labelledby="kesfet-baslik">
         <div className="w-full">
           <h1 id="kesfet-baslik" className="text-[20px] font-black leading-tight text-lp-text">
             {baslik}
@@ -348,6 +356,7 @@ export function KesfetIcerik({
       ) : null}
         </div>
         </section>
+        )}
       </div>
     </main>
   );
