@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -20,6 +20,8 @@ import {
 } from "@/components/owner/OwnerProductManager";
 import { OwnerDashboardMetrics } from "@/components/owner/OwnerDashboardMetrics";
 import { OwnerNotificationLink } from "@/components/owner/OwnerNotificationLink";
+import { VitrinimEditor } from "@/components/owner/VitrinimEditor";
+import { PUBLIC_STORE_SELECT } from "@/lib/publicStoreSelect";
 
 interface Store {
   id: string;
@@ -49,85 +51,117 @@ export default function AppPage() {
   const [yeniAd, setYeniAd] = useState("");
   const [hata, setHata] = useState("");
   const [flowState, setFlowState] = useState<Record<string, unknown> | null>(null);
-  const [conversation, setConversation] = useState<Record<string, unknown> | null>(null);
   const [showNameForm, setShowNameForm] = useState(false);
+  const [workingDraft, setWorkingDraft] = useState<Record<string, unknown>>({});
 
   // Ana sayfadaki asistanla konuşulduysa cevaplar tarayıcı oturumunda
   // duruyor. Vitrin kurulurken doğrudan kullanılır; kullanıcıya aynı
   // soruları ikinci kez sormayız.
   const [asistanTaslagi, setAsistanTaslagi] = useState<AsistanCevaplari>({});
 
-  async function magazalariGetir(showLoading = true) {
+  const magazaDetayiniGetir = useCallback(async function magazaDetayiniGetir(
+    slug: string,
+    draftOverride?: Record<string, unknown> | null
+  ): Promise<boolean> {
+    const { data: storeData, error: storeError } = await supabase
+      .from("stores")
+      .select(`${PUBLIC_STORE_SELECT},updated_at`)
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (storeError || !storeData) {
+      console.error(
+        "[app/bootstrap] store detail query failed",
+        storeError?.message ?? "STORE_NOT_FOUND"
+      );
+      return false;
+    }
+
+    const storeRow = storeData as unknown as Record<string, unknown>;
+    const storeId = String(storeRow.id ?? "");
+    if (!storeId) return false;
+
+    const [productsResult, categoriesResult] = await Promise.all([
+      supabase
+        .from("products")
+        .select("id, slug, name, description, price_text, image_urls, category_id, stock_status, product_categories(name)")
+        .eq("store_id", storeId),
+      supabase
+        .from("product_categories")
+        .select("id, name")
+        .eq("store_id", storeId),
+    ]);
+
+    if (productsResult.error || categoriesResult.error) {
+      console.error(
+        "[app/bootstrap] catalog query failed",
+        productsResult.error?.message ?? categoriesResult.error?.message
+      );
+    }
+
+    setWorkingDraft(draftOverride ?? storeRow);
+    setStores([
+      {
+        ...(storeData as unknown as Store),
+        products: (productsResult.data as unknown as OwnerProduct[]) ?? [],
+        product_categories:
+          (categoriesResult.data as unknown as OwnerProductCategory[]) ?? [],
+      },
+    ]);
+    return true;
+  }, []);
+
+  const magazalariGetir = useCallback(async function magazalariGetir(showLoading = true) {
     if (showLoading) setYukleniyor(true);
     setHata("");
 
-    const { data: durum, error: durumHatasi } = await supabase.rpc(
+    let { data: durum, error: durumHatasi } = await supabase.rpc(
       "get_owner_workspace_bootstrap"
     );
 
     if (durumHatasi) {
-      setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
-      setStores([]);
-      if (showLoading) setYukleniyor(false);
-      return;
+      console.warn(
+        "[app/bootstrap] birleşik bootstrap kullanılamadı; güvenli yedek yol kullanılıyor.",
+        durumHatasi.code
+      );
+      // Yeni birleşik RPC canlı şemada geçici olarak bozulursa kullanıcıyı
+      // "vitrinin yok" ekranına düşürme. Kalıcı sahiplik RPC'sinden slug'ı
+      // alıp aynı RLS korumalı tablolardan vitrini doğrudan yükle.
+      const eskiBootstrap = await supabase.rpc("bootstrap_owner_state");
+      if (eskiBootstrap.error) {
+        setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
+        setStores([]);
+        if (showLoading) setYukleniyor(false);
+        return;
+      }
+      durum = eskiBootstrap.data;
+      durumHatasi = null;
     }
 
     const sonuc = (durum ?? {}) as Record<string, unknown>;
     // PR3-C12: yeni bootstrap (store + flow_state + conversation) — paralel başlangıç kaldırıldı
     const yeniStore = (sonuc as { store?: Store | null }).store;
     const yeniFlow = (sonuc as { flow_state?: Record<string, unknown> | null }).flow_state ?? null;
-    const yeniConversation = (sonuc as { conversation?: Record<string, unknown> | null }).conversation ?? null;
+    const yeniWorkingDraft = (sonuc as { working_draft?: { draft_data?: Record<string, unknown> } | null }).working_draft;
     setFlowState(yeniFlow);
-    setConversation(yeniConversation);
-
-    // Eski bootstrap geriye uyum: has_store/slug
-    if (yeniStore && typeof yeniStore === "object" && (yeniStore as Store).slug) {
-      const slug = (yeniStore as Store).slug.trim();
-      if (!slug) {
-        setStores([]);
-        if (showLoading) setYukleniyor(false);
-        return;
-      }
-      // store doğrudan bootstrap'ten geldi, ek sorguya gerek yok ama ürünler için yine çekiyoruz
-      // (working_draft ürünleri ayrı, mevcut akışta store tablosu esas)
-      const { data, error } = await supabase
-        .from("stores")
-        .select(
-          "id, slug, name, is_published, kategori, updated_at, products(id, slug, name, description, price_text, image_urls, category_id, stock_status, product_categories(name)), product_categories(id, name)"
-        )
-        .eq("slug", slug)
-        .order("updated_at", { ascending: false });
-
-      if (error) {
-        setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
-      }
-      setStores((data as unknown as Store[]) ?? []);
-      if (showLoading) setYukleniyor(false);
-      return;
-    }
-
-    // Eski yol: has_store
+    // Yeni ve eski bootstrap sonuçlarını tek slug yolunda birleştir.
     const eskiSonuc = sonuc as BootstrapOwnerState;
-    if (eskiSonuc.has_store === true && eskiSonuc.slug) {
-      const slug = eskiSonuc.slug.trim();
-      if (!slug) {
+    const slug =
+      yeniStore && typeof yeniStore === "object" && (yeniStore as Store).slug
+        ? (yeniStore as Store).slug.trim()
+        : eskiSonuc.has_store === true
+          ? eskiSonuc.slug?.trim() ?? ""
+          : "";
+
+    if (slug) {
+      const tamam = await magazaDetayiniGetir(
+        slug,
+        yeniWorkingDraft?.draft_data ?? null
+      );
+      if (!tamam) {
         setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
         setStores([]);
-        if (showLoading) setYukleniyor(false);
-        return;
       }
-      const { data, error } = await supabase
-        .from("stores")
-        .select(
-          "id, slug, name, is_published, kategori, updated_at, products(id, slug, name, description, price_text, image_urls, category_id, stock_status, product_categories(name)), product_categories(id, name)"
-        )
-        .eq("slug", slug)
-        .order("updated_at", { ascending: false });
-
-      if (error) {
-        setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
-      }
-      setStores((data as unknown as Store[]) ?? []);
       if (showLoading) setYukleniyor(false);
       return;
     }
@@ -136,7 +170,7 @@ export default function AppPage() {
     setStores([]);
     if (showLoading) setYukleniyor(false);
     return;
-  }
+  }, [magazaDetayiniGetir]);
 
 
 
@@ -162,16 +196,19 @@ export default function AppPage() {
         if (taslak.name) setYeniAd(taslak.name);
       }
 
-      await magazalariGetir();
-
       // Sahip çerezi kısa ömürlü. Panoya her dönüşte yeniden kuruluyor —
       // yoksa kullanıcı ikinci ziyaretinde ürün ekleyemez/silemez, her
       // çağrı 401 döner. Vitrini olmayan hesapta sessizce başarısız olur,
       // kurulum akışı zaten ayrı.
       await sahipOturumuAc();
+
+      // Düzenleyiciyi ancak sahip çerezi kurulmayı denedikten sonra aç.
+      // Böylece ilk alan değişikliği, sayfa daha yeni görünür olmuşken 401
+      // ile düşmez.
+      await magazalariGetir();
     }
     init();
-  }, [router]);
+  }, [router, magazalariGetir]);
 
   async function magazaOlustur(e: React.FormEvent) {
     e.preventDefault();
@@ -249,6 +286,18 @@ export default function AppPage() {
           <span className="text-sm text-[var(--owner-muted)]">Vitrinin yükleniyor…</span>
         </div>
       </main>
+    );
+  }
+
+  if (stores.length > 0) {
+    return (
+      <VitrinimEditor
+        store={stores[0]}
+        initialDraft={workingDraft}
+        onRefresh={async () => {
+          await magazalariGetir(false);
+        }}
+      />
     );
   }
 

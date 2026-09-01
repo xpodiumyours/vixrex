@@ -60,8 +60,9 @@ begin
       'created_at', c.created_at,
       'updated_at', c.updated_at,
       'messages', coalesce((
-        select jsonb_agg(
-          jsonb_build_object(
+        select jsonb_agg(last_message.payload order by last_message.seq asc)
+        from (
+          select m.seq, jsonb_build_object(
             'id', m.id,
             'seq', m.seq,
             'role', m.role,
@@ -70,12 +71,12 @@ begin
             'catalog_snapshot', m.catalog_snapshot,
             'client_message_id', m.client_message_id,
             'created_at', m.created_at
-          ) order by m.seq asc
-        )
-        from public.assistant_messages m
-        where m.conversation_id = c.id
-        order by m.seq desc
-        limit 20
+          ) as payload
+          from public.assistant_messages m
+          where m.conversation_id = c.id
+          order by m.seq desc
+          limit 20
+        ) last_message
       ), '[]'::jsonb)
     ) into v_conversation
     from public.assistant_conversations c
@@ -96,8 +97,9 @@ begin
       'created_at', c.created_at,
       'updated_at', c.updated_at,
       'messages', coalesce((
-        select jsonb_agg(
-          jsonb_build_object(
+        select jsonb_agg(last_message.payload order by last_message.seq asc)
+        from (
+          select m.seq, jsonb_build_object(
             'id', m.id,
             'seq', m.seq,
             'role', m.role,
@@ -106,12 +108,12 @@ begin
             'catalog_snapshot', m.catalog_snapshot,
             'client_message_id', m.client_message_id,
             'created_at', m.created_at
-          ) order by m.seq asc
-        )
-        from public.assistant_messages m
-        where m.conversation_id = c.id
-        order by m.seq desc
-        limit 20
+          ) as payload
+          from public.assistant_messages m
+          where m.conversation_id = c.id
+          order by m.seq desc
+          limit 20
+        ) last_message
       ), '[]'::jsonb)
     ) into v_conversation
     from public.assistant_conversations c

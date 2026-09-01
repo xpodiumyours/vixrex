@@ -7,7 +7,7 @@ import { KesfetIkonu, StorefrontIkonu } from "@/components/site/icons";
 type Props = {
   sorgu: string;
   sorguyuDegistir: (deger: string) => void;
-  aktifBolum?: "kesfet" | "vixrex";
+  aktifBolum?: "vitrinim" | "kesfet" | "vixrex";
   vixrexAc: () => void;
 };
 
@@ -87,7 +87,9 @@ export function KesfetYanMenu({
         {MENU.map((oge) => {
           const aktif = oge.etiket === "Vixrex"
             ? aktifBolum === "vixrex"
-            : oge.etiket === "Keşfet" && aktifBolum === "kesfet";
+            : oge.etiket === "Keşfet"
+              ? aktifBolum === "kesfet"
+              : oge.etiket === "Vitrinim" && aktifBolum === "vitrinim";
           const className = `relative my-1 flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
             aktif
               ? "bg-lp-primary/15 text-lp-text before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-full before:bg-lp-primary"

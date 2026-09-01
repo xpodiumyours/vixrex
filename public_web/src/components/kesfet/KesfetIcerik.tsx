@@ -59,6 +59,16 @@ export function KesfetIcerik({
   const [aktifBolum, setAktifBolum] = useState<"kesfet" | "vixrex">("kesfet");
 
   useEffect(() => {
+    async function baslangicBolumunuAc() {
+      await Promise.resolve();
+      if (new URLSearchParams(window.location.search).get("vixrex") === "1") {
+        setAktifBolum("vixrex");
+      }
+    }
+    void baslangicBolumunuAc();
+  }, []);
+
+  useEffect(() => {
     let iptal = false;
     async function tarayiciDurumunuGetir() {
       await Promise.resolve();
