@@ -176,12 +176,27 @@ export default function AppPage() {
 
   useEffect(() => {
     async function init() {
-      const {
+      let {
         data: { session },
       } = await supabase.auth.getSession();
+      // Flutter web ile parite: Vitrinim anonimken manuel panele açılmalı,
+      // Google login'e zorlamamalı. Yoksa Keşfet alt menüdeki Vitrinim
+      // tıklaması /giris'e düşüyordu (mobil eşitlik sonrası raporlandı).
+      // Mevcut /app akışı korunur — yalnız oturum yoksa Flutter'daki
+      // _oturumuGuvenceyeAl gibi anonim oturum denenir, başarısızsa /giris'e düşer.
       if (!session) {
-        router.push("/giris");
-        return;
+        try {
+          const { data: anonData } = await supabase.auth.signInAnonymously();
+          if (anonData?.session) {
+            session = anonData.session;
+          } else {
+            router.push("/giris");
+            return;
+          }
+        } catch {
+          router.push("/giris");
+          return;
+        }
       }
       setUser(session.user);
 
