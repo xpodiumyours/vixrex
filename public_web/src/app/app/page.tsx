@@ -409,58 +409,75 @@ export default function AppPage() {
               ) : null}
             </section>
           ) : (
-            <section className="owner-card p-5 sm:p-8" aria-labelledby="vitrin-bos-title">
-              <div className="mb-4">
+            <div className="space-y-6">
+              <div className="owner-card p-5 sm:p-6 bg-lp-surface border border-lp-border">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Vixrex Asistan</p>
-                <h2 id="vitrin-bos-title" className="mt-2 text-xl font-bold text-[var(--owner-text)]">
-                  Merhaba, ben Vixrex Asistan.
-                </h2>
-                <p className="mt-2 max-w-lg whitespace-pre-line text-sm leading-6 text-[var(--owner-muted)]">
-                  {"İşletmene ne kazandırıyorum?\n- Tek Link & QR Kod: Dijital vitrin sayfan.\n- WhatsApp Sipariş: Müşterilerin tek tıkla sana ulaşır.\n- Ürün & Galeri: Reyon ve ürünlerini sergilersin.\n- Konum & Adres: Dükkanına kolayca ulaşılır.\n\nSenin işletmen için de 2 dakikada beraber hazırlayalım mı?"}
+                <p className="mt-2 text-sm leading-6 text-[var(--owner-muted)]">
+                  Hazır şablonla başla ya da aşağıda bilgilerini doldur — her iki yol aynı vitrin formuna çıkar.
                 </p>
-              </div>
-              <p className="mb-3 text-center text-xs font-bold text-[var(--owner-muted)]">Hızlı Seçenekler</p>
-              <div className="grid gap-3">
-                <Link
-                  href="/kesfet?yalniz_kiralik=1"
-                  className="owner-button-primary flex items-center justify-center gap-2"
-                >
-                  {vixRexHizliSecenekler.find((h) => h.id === "hazir_vitrin_sec")?.etiket ?? "Hazır Vitrin Seç"}
-                </Link>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowNameForm(true)}
-                    className="owner-button-secondary flex items-center justify-center gap-2"
-                  >
-                    {vixRexHizliSecenekler.find((h) => h.id === "sifirdan_olustur")?.etiket ?? "Sıfırdan Oluştur"}
-                  </button>
-                  <Link href="/kesfet" className="owner-button-secondary flex items-center justify-center gap-2">
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <Link href="/kesfet?yalniz_kiralik=1" className="owner-button-primary flex items-center justify-center gap-2 text-xs">
+                    {vixRexHizliSecenekler.find((h) => h.id === "hazir_vitrin_sec")?.etiket ?? "Hazır Vitrin Seç"}
+                  </Link>
+                  <Link href="/kesfet" className="owner-button-secondary flex items-center justify-center gap-2 text-xs">
                     {vixRexHizliSecenekler.find((h) => h.id === "bakiniyorum")?.etiket ?? "Bakınıyorum"}
                   </Link>
+                  <span className="hidden sm:flex items-center justify-center text-xs text-[var(--owner-muted)]">↓ Aşağıda formu doldur</span>
                 </div>
               </div>
-              {showNameForm ? (
-                <form onSubmit={magazaOlustur} className="mt-6 space-y-4" aria-busy={olusturuyor}>
-                  <div className="space-y-2">
-                    <label htmlFor="isletme-adi" className="owner-label">İşletme Adı</label>
-                    <input
-                      id="isletme-adi"
-                      type="text"
-                      placeholder="Ör. Aymira Giyim"
-                      value={yeniAd}
-                      onChange={(e) => setYeniAd(e.target.value)}
-                      className="owner-input text-sm"
-                      autoComplete="organization"
-                      required
-                    />
-                  </div>
-                  <button type="submit" disabled={olusturuyor} className="owner-button-primary w-full">
-                    {olusturuyor ? "Vitrin oluşturuluyor…" : "Vitrin Oluştur"}
-                  </button>
-                </form>
-              ) : null}
-            </section>
+              <VitrinimEditor
+                store={{ slug: "taslak", name: yeniAd, is_published: false, products: [], product_categories: [] }}
+                initialDraft={{ ...asistanTaslagi, ...workingDraft, name: yeniAd }}
+                isCreationMode
+                onCreate={async (draft) => {
+                  const ad = String((draft as Record<string, unknown>).name || yeniAd || "").trim();
+                  if (!ad) {
+                    setHata("İşletme adı zorunludur.");
+                    return;
+                  }
+                  setOlusturuyor(true);
+                  setHata("");
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) {
+                      setHata("Oturum bulunamadı.");
+                      return;
+                    }
+                    const payload: Record<string, unknown> = { name: ad, ...asistanTaslagi };
+                    // VitrinimEditor draft'ı kolon isimleriyle gelir — direkt ekle
+                    for (const [k, v] of Object.entries(draft as Record<string, unknown>)) {
+                      if (v != null && String(v).trim() !== "") payload[k] = v;
+                    }
+                    const res = await fetch("/api/create-store", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+                      body: JSON.stringify(payload),
+                    });
+                    const sonuc = await res.json();
+                    if (!res.ok) {
+                      setHata(sonuc.hata || "Vitrin oluşturulamadı.");
+                      return;
+                    }
+                    taslagiTemizle();
+                    setAsistanTaslagi({});
+                    if (sonuc.slug) {
+                      if (sonuc.yonlendir) await fetch(sonuc.yonlendir, { redirect: "manual" });
+                      else await sahipOturumuAc();
+                      router.push(`/v/${sonuc.slug}`);
+                    } else {
+                      await magazalariGetir();
+                    }
+                  } finally {
+                    setOlusturuyor(false);
+                  }
+                }}
+                onRefresh={async () => {
+                  await magazalariGetir(false);
+                }}
+              />
+              {hata ? <p className="owner-error text-sm" role="alert">{hata}</p> : null}
+              {olusturuyor ? <p className="text-sm text-[var(--owner-muted)]" role="status">Vitrin oluşturuluyor…</p> : null}
+            </div>
           )
         ) : (
           <section aria-labelledby="vitrinim-title">

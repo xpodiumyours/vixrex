@@ -28,6 +28,8 @@ interface Props {
   };
   initialDraft: Draft;
   onRefresh: () => Promise<void>;
+  isCreationMode?: boolean;
+  onCreate?: (draft: Draft) => Promise<void>;
 }
 
 type FieldSpec = {
@@ -121,7 +123,7 @@ function filled(value: unknown): boolean {
   return typeof value === "string" ? value.trim().length > 0 : Boolean(value);
 }
 
-export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
+export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode = false, onCreate }: Props) {
   const router = useRouter();
   const [draft, setDraft] = useState<Draft>({ name: store.name, ...initialDraft });
   const [openSection, setOpenSection] = useState(0);
@@ -186,6 +188,10 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
   }
 
   async function save(key: string) {
+    if (isCreationMode) {
+      setMessage("Taslak güncellendi — yayınlayınca kaydedilecek.");
+      return;
+    }
     setSavingKey(key);
     setMessage("");
     try {
@@ -205,6 +211,18 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
   }
 
   async function publish() {
+    if (isCreationMode && onCreate) {
+      setPublishing(true);
+      setMessage("");
+      try {
+        await onCreate(draft);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Vitrin oluşturulamadı.");
+      } finally {
+        setPublishing(false);
+      }
+      return;
+    }
     setPublishing(true);
     setMessage("");
     try {
@@ -246,6 +264,12 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
   }
 
   async function uploadGorsel(file: File, anahtar: string) {
+    if (isCreationMode) {
+      // Yaratım modunda dosya yükleme doğrudan depoya gitmez — önizleme için lokal URL kullan
+      // Gerçek yükleme vitrin oluşturulduktan sonra yapılacak. Şimdilik dosya adını göster.
+      setMessage("Görsel önizlemesi eklendi — vitrin oluşturulunca yüklenecek.");
+      return;
+    }
     setUploading(true);
     setMessage("");
     try {
