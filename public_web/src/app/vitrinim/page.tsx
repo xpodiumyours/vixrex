@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { OWNER_SESSION_COOKIE, verifyOwnerSessionCookie } from "@/lib/ownerSession";
+import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { PUBLIC_STORE_SELECT } from "@/lib/publicStoreSelect";
 import { VitrinimClient } from "./VitrinimClient";
@@ -9,9 +9,23 @@ import { VitrinimClient } from "./VitrinimClient";
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
 
+function cookieSlug(token: string | undefined): string {
+  if (!token) return "";
+  try {
+    const payload = token.split(".")[0];
+    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+      slug?: unknown;
+    };
+    return typeof decoded.slug === "string" ? decoded.slug : "";
+  } catch {
+    return "";
+  }
+}
+
 export default async function VitrinimPage() {
   const cookieStore = await cookies();
-  const ownerSession = verifyOwnerSessionCookie(cookieStore.get(OWNER_SESSION_COOKIE)?.value);
+  const ownerCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
+  const ownerSession = verifyOwnerSession(ownerCookie, cookieSlug(ownerCookie));
   if (!ownerSession) redirect("/app");
 
   const admin = getSupabaseAdmin();

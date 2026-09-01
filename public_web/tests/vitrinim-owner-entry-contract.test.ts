@@ -8,7 +8,7 @@ const client = oku("../src/app/vitrinim/VitrinimClient.tsx");
 describe("Vitrinim Flutter eşitlik geçişi", () => {
   it("sidebar sahiplik çözücü rotaya gider", () => expect(sidebar).toContain('etiket: "Vitrinim", href: "/vitrinim"'));
   it("misafir sahip çerezini doğrular", () => {
-    expect(page).toContain("verifyOwnerSessionCookie(");
+    expect(page).toContain("verifyOwnerSession(");
     expect(page).toContain('"get_working_draft_for_session"');
     expect(page).toContain('.eq("id", ownerSession.storeId)');
   });
