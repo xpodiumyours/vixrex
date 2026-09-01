@@ -140,6 +140,32 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
     return () => { active = false; };
   }, [initialDraft, store.name]);
 
+  useEffect(() => {
+    async function oturumuUzat() {
+      if (document.visibilityState !== "visible") return;
+      await fetch("/api/owner-session-extend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: store.slug }),
+      }).catch(() => undefined);
+    }
+
+    const gorunurlukDegisti = () => {
+      if (document.visibilityState === "visible") void oturumuUzat();
+    };
+
+    void oturumuUzat();
+    const interval = window.setInterval(() => {
+      void oturumuUzat();
+    }, 5 * 60 * 1000);
+    document.addEventListener("visibilitychange", gorunurlukDegisti);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", gorunurlukDegisti);
+    };
+  }, [store.slug]);
+
   const progress = useMemo(() => {
     const count = (keys: string[]) => keys.filter((key) => {
       const column = FIELD_BY_KEY.get(key)?.kolon ?? key;

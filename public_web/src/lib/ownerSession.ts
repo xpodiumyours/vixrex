@@ -99,7 +99,7 @@ export function signOwnerSession(
 
 export function verifyOwnerSession(
   token: string | undefined | null,
-  slug: string
+  slug?: string
 ): OwnerSession | null {
   if (!token) return null;
 
@@ -141,7 +141,7 @@ export function verifyOwnerSession(
     return null;
   }
 
-  if (parsed.slug !== slug) return null;
+  if (slug && parsed.slug !== slug) return null;
   if (parsed.exp <= Date.now()) return null;
 
   // sessionToken biçimi: 64 hex char

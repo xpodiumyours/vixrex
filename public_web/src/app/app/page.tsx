@@ -53,6 +53,7 @@ export default function AppPage() {
   const [flowState, setFlowState] = useState<Record<string, unknown> | null>(null);
   const [showNameForm, setShowNameForm] = useState(false);
   const [workingDraft, setWorkingDraft] = useState<Record<string, unknown>>({});
+  const [misafirSahip, setMisafirSahip] = useState(false);
 
   // Ana sayfadaki asistanla konuşulduysa cevaplar tarayıcı oturumunda
   // duruyor. Vitrin kurulurken doğrudan kullanılır; kullanıcıya aynı
@@ -109,6 +110,50 @@ export default function AppPage() {
       },
     ]);
     return true;
+  }, []);
+
+  const misafirVitrininiGetir = useCallback(async function misafirVitrininiGetir(
+    showLoading = true
+  ): Promise<boolean> {
+    if (showLoading) setYukleniyor(true);
+    setHata("");
+
+    try {
+      const response = await fetch("/api/owner-dashboard", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        if (!showLoading) {
+          setHata("Sahip oturumunun süresi doldu. Vitrini yeniden aç.");
+        }
+        if (showLoading) setYukleniyor(false);
+        return false;
+      }
+
+      const body = (await response.json()) as {
+        store?: Store;
+        workingDraft?: Record<string, unknown>;
+      };
+
+      if (!body.store?.slug) {
+        if (showLoading) setYukleniyor(false);
+        return false;
+      }
+
+      setWorkingDraft(body.workingDraft ?? body.store);
+      setStores([body.store]);
+      setMisafirSahip(true);
+      if (showLoading) setYukleniyor(false);
+      return true;
+    } catch {
+      if (!showLoading) {
+        setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
+      }
+      if (showLoading) setYukleniyor(false);
+      return false;
+    }
   }, []);
 
   const magazalariGetir = useCallback(async function magazalariGetir(showLoading = true) {
@@ -180,9 +225,13 @@ export default function AppPage() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        router.push("/giris");
+        const sahipPaneliAcildi = await misafirVitrininiGetir();
+        if (!sahipPaneliAcildi) {
+          router.push("/giris");
+        }
         return;
       }
+      setMisafirSahip(false);
       setUser(session.user);
 
       // PR3-C11: hesap sonrası yerel landing başlangıcını tek active conversation'a aktar
@@ -208,7 +257,7 @@ export default function AppPage() {
       await magazalariGetir();
     }
     init();
-  }, [router, magazalariGetir]);
+  }, [router, magazalariGetir, misafirVitrininiGetir]);
 
   async function magazaOlustur(e: React.FormEvent) {
     e.preventDefault();
@@ -295,6 +344,10 @@ export default function AppPage() {
         store={stores[0]}
         initialDraft={workingDraft}
         onRefresh={async () => {
+          if (misafirSahip) {
+            await misafirVitrininiGetir(false);
+            return;
+          }
           await magazalariGetir(false);
         }}
       />
