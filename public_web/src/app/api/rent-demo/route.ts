@@ -114,7 +114,12 @@ export async function POST(request: Request) {
     minScore: 0.5,
   });
   if (!recaptchaResult.success) {
-    console.warn("[rent-demo] reCAPTCHA reddedildi:", recaptchaResult.error);
+    console.warn(
+      "[rent-demo] reCAPTCHA reddedildi:",
+      recaptchaResult.error,
+      "errorCodes:", recaptchaResult.errorCodes,
+      "score:", recaptchaResult.score
+    );
     return rentErrorPage("Vitrin açılamadı", ERROR_COPY.RECAPTCHA_FAILED);
   }
 
