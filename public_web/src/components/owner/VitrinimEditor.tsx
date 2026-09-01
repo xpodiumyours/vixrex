@@ -455,27 +455,40 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
                             );
                           })}
 
-                          {section.title === "İçerik ve SEO" ? (
-                            <div className="space-y-4 pt-2">
-                              <div className="grid gap-2 sm:grid-cols-2">
-                                <button type="button" onClick={() => setActiveEditor("about")} className={editorButtonClass}>Hakkımızda bölümünü düzenle</button>
-                                <button type="button" onClick={() => setActiveEditor("campaign")} className={editorButtonClass}>Kampanyayı düzenle</button>
-                                <button type="button" onClick={() => setActiveEditor("faq")} className={editorButtonClass}>Sık sorulanları düzenle</button>
-                                <button type="button" onClick={() => setActiveEditor("marketplace")} className={editorButtonClass}>Pazar yeri bağlantıları</button>
-                                <Link href={`/v/${store.slug}/blog-yonetim`} className={`${editorButtonClass} flex items-center justify-center`}>Blog yönetimi</Link>
+                           {section.title === "İçerik ve SEO" ? (
+                             <div className="space-y-6 pt-2">
+                               <div className="space-y-4">
+                                 <h3 className="text-[13px] font-black text-lp-text">Hakkımızda</h3>
+                                 <AboutEditor inline slug={store.slug} mevcut={{ kicker: String(draft.about_kicker || ""), title: String(draft.about_title || ""), body: String(draft.corporate_bio || ""), imageUrl: String(draft.about_image_url || ""), imageCaption: String(draft.about_image_caption || ""), values: aboutValues }} onClose={() => { void onRefresh(); }} />
+                               </div>
+                               <div className="space-y-4">
+                                 <h3 className="text-[13px] font-black text-lp-text">Öne çıkan kampanya</h3>
+                                 <CampaignEditor inline slug={store.slug} mevcut={{ label: String(draft.featured_banner_label || ""), title: String(draft.featured_banner_title || ""), description: String(draft.featured_banner_description || ""), priceText: String(draft.featured_banner_price_text || ""), imageUrl: String(draft.featured_banner_image_url || "") }} onClose={() => { void onRefresh(); }} />
+                               </div>
+                               <div className="space-y-4">
+                                 <h3 className="text-[13px] font-black text-lp-text">Sık sorulanlar</h3>
+                                 <FaqEditor inline slug={store.slug} items={faqItems} onClose={() => { void onRefresh(); }} />
+                               </div>
+                               <div className="space-y-4">
+                                 <h3 className="text-[13px] font-black text-lp-text">Pazar yeri bağlantıları</h3>
+                                 <MarketplaceEditor inline slug={store.slug} links={marketplaceLinks} onClose={() => { void onRefresh(); }} />
+                               </div>
+                               <Link href={`/v/${store.slug}/blog-yonetim`} className={`${editorButtonClass} flex items-center justify-center`}>Blog yönetimi</Link>
+                               <p className="mb-3 text-[12px] font-bold text-lp-muted">Ürünler ve kategoriler</p>
+                               <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} onRefresh={onRefresh} />
+                             </div>
+                           ) : null}
+                            {section.title === "Konum ve saatler" ? (
+                              <button type="button" onClick={() => void konumuAl()} disabled={locating} className={`${editorButtonClass} w-full`}>
+                                {locating ? "Konum alınıyor…" : "📍 Konumumu al (GPS)"}
+                              </button>
+                            ) : null}
+                            {section.title === "Görseller" ? (
+                              <div className="pt-2">
+                                <h3 className="mb-3 text-[13px] font-black text-lp-text">Galeri</h3>
+                                <GalleryEditor inline slug={store.slug} items={galleryItems} onClose={() => { void onRefresh(); }} />
                               </div>
-                              <p className="mb-3 text-[12px] font-bold text-lp-muted">Ürünler ve kategoriler</p>
-                              <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} onRefresh={onRefresh} />
-                            </div>
-                          ) : null}
-                           {section.title === "Konum ve saatler" ? (
-                             <button type="button" onClick={() => void konumuAl()} disabled={locating} className={`${editorButtonClass} w-full`}>
-                               {locating ? "Konum alınıyor…" : "📍 Konumumu al (GPS)"}
-                             </button>
-                           ) : null}
-                           {section.title === "Görseller" ? (
-                             <button type="button" onClick={() => setActiveEditor("gallery")} className={`${editorButtonClass} w-full`}>Galeriyi düzenle ({galleryItems.length})</button>
-                           ) : null}
+                            ) : null}
                         </div>
                       ) : null}
                     </section>

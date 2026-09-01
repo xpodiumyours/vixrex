@@ -108,4 +108,14 @@ describe("F0 — bölüm ve form iskeleti kilidi (Flutter = Next.js)", () => {
     expect(vitrinEditorSource).toContain('count(["adres", "il", "ilce"');
     expect(vitrinEditorSource).toContain('["il", "İl"]');
   });
+
+  it("F2b — VitrinimEditor akordeonda inline (modal kaldırıldı)", () => {
+    // F2b: 4 modal editör tek akordeona taşındı — VitrinimEditor artık inline gömer
+    for (const comp of ["AboutEditor inline", "CampaignEditor inline", "FaqEditor inline", "MarketplaceEditor inline", "GalleryEditor inline"]) {
+      expect(vitrinEditorSource, comp).toContain(comp);
+    }
+    // Ayrı pencere butonları artık yok, doğrudan akordeon içinde
+    expect(vitrinEditorSource).not.toContain('setActiveEditor("about")');
+    expect(vitrinEditorSource).not.toContain('setActiveEditor("gallery")');
+  });
 });
