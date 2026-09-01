@@ -5,6 +5,10 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { PUBLIC_STORE_SELECT } from "@/lib/publicStoreSelect";
 import { VitrinimClient } from "./VitrinimClient";
+import type {
+  OwnerProduct,
+  OwnerProductCategory,
+} from "@/components/owner/OwnerProductManager";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -51,7 +55,12 @@ export default async function VitrinimPage() {
   const draftPayload = draftResult.data as { draft_data?: Record<string, unknown> };
   return (
     <VitrinimClient
-      store={{ ...storeResult.data, products: productsResult.data ?? [], product_categories: categoriesResult.data ?? [] }}
+      store={{
+        ...storeResult.data,
+        products: (productsResult.data as unknown as OwnerProduct[]) ?? [],
+        product_categories:
+          (categoriesResult.data as unknown as OwnerProductCategory[]) ?? [],
+      }}
       initialDraft={draftPayload.draft_data ?? storeResult.data}
     />
   );
