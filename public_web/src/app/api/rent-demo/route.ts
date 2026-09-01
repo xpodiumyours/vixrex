@@ -14,9 +14,10 @@ import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 // Yeni zincir:
 //   GET  → veritabanına DOKUNMAZ, yalnız /rent-demo?slug=x'e 303 (eski
 //          yüklü Flutter APK'ları hâlâ GET atıyor — kırmadan yönlendirir).
-//   POST → gerçek akış: reCAPTCHA v3 doğrula → IP'yi HMAC'le → SERVİS
-//          ROLÜYLE start_demo_trial RPC'sini çağır (oran sınırı + klonlama
-//          + owner-session TEK transaction'da, bkz. migration) →
+//   POST → gerçek akış: reCAPTCHA v3 ek sinyalini doğrula (Google erişilemezse
+//          akışı kilitlemez) → IP'yi HMAC'le → SERVİS ROLÜYLE start_demo_trial
+//          RPC'sini çağır. Zorunlu güvenlik kapısı DB'deki kısa/günlük/global
+//          oran sınırı + atomik klonlama ve owner-session zinciridir →
 //          /api/owner-session'a 303.
 //
 // /rent-demo/page.tsx (yeni köprü sayfası) reCAPTCHA token'ını alıp bu
@@ -30,7 +31,6 @@ const ERROR_COPY: Record<string, string> = {
   SOURCE_NOT_FOUND: "Bu vitrin artık kiralık örnek olarak mevcut değil.",
   RATE_LIMITED: "Çok fazla deneme yapıldı. Lütfen biraz sonra tekrar dene.",
   SLUG_GENERATION_FAILED: "Vitrin şu anda kiralanamıyor. Lütfen tekrar dene.",
-  RECAPTCHA_FAILED: "Güvenlik doğrulaması başarısız. Lütfen sayfayı yenileyip tekrar dene.",
   SERVICE_UNAVAILABLE: "Vitrin şu anda kiralanamıyor. Lütfen biraz sonra tekrar dene.",
 };
 
@@ -103,24 +103,30 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!recaptchaToken) {
-    return rentErrorPage("Vitrin açılamadı", ERROR_COPY.RECAPTCHA_FAILED);
-  }
-
-  // rent_demo daha maliyetli bir eylem (gerçek veri üretimi) olduğu için
-  // proje genelindeki varsayılan eşikten (0.3, bkz. recaptchaServer.ts)
-  // bilerek daha sıkı bir eşik kullanılıyor.
-  const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, "rent_demo", {
-    minScore: 0.5,
-  });
-  if (!recaptchaResult.success) {
-    console.warn(
-      "[rent-demo] reCAPTCHA reddedildi:",
-      recaptchaResult.error,
-      "errorCodes:", recaptchaResult.errorCodes,
-      "score:", recaptchaResult.score
+  // reCAPTCHA ek bot sinyalidir; Google betiği/servisi mobil ağda
+  // yüklenemezse kiralama sonsuza kadar beklememeli. Asıl zorunlu koruma
+  // aşağıdaki HMAC istemci parmak izi ve start_demo_trial içindeki üç
+  // katmanlı oran sınırıdır (3/10 dk, 10/gün, 100/saat global).
+  if (recaptchaToken && recaptchaToken !== "recaptcha-unavailable") {
+    const recaptchaResult = await verifyRecaptchaToken(
+      recaptchaToken,
+      "rent_demo",
+      { minScore: 0.5 }
     );
-    return rentErrorPage("Vitrin açılamadı", ERROR_COPY.RECAPTCHA_FAILED);
+    if (!recaptchaResult.success) {
+      console.warn(
+        "[rent-demo] reCAPTCHA kullanılamadı; oran sınırlı akış sürüyor:",
+        recaptchaResult.error,
+        "errorCodes:",
+        recaptchaResult.errorCodes,
+        "score:",
+        recaptchaResult.score
+      );
+    }
+  } else {
+    console.warn(
+      "[rent-demo] reCAPTCHA tokenı yok; oran sınırlı akış sürüyor"
+    );
   }
 
   let clientKey: string;

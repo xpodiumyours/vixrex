@@ -29,6 +29,9 @@ import { supabase } from "@/lib/supabase";
 
 type Durum = "kontrolEdiliyor" | "gonderiliyor" | "hata" | "zatenVitriniVar";
 
+const RECAPTCHA_FALLBACK_TOKEN = "recaptcha-unavailable";
+const RECAPTCHA_BEKLEME_MS = 3500;
+
 function HataSayfasi({ mesaj }: { mesaj: string }) {
   return (
     <main
@@ -177,21 +180,24 @@ function RentDemoIcerik() {
         return;
       }
 
-      // Misafir yolu değişmedi: reCAPTCHA hazır olduğunda mevcut native
-      // form POST'u ve sunucudaki 303 zinciri çalışır.
-      if (!isReady) return;
-      denendiRef.current = true;
-
-      const recaptchaToken = await executeRecaptcha("rent_demo");
-      if (iptalEdildi) return;
-      if (!recaptchaToken) {
-        setHataMesaji(
-          "Güvenlik doğrulaması başarısız. Lütfen sayfayı yenileyip tekrar dene."
+      // Misafir yolu: reCAPTCHA ek korumadır fakat Google betiği mobil ağda
+      // yüklenmezse kullanıcı sonsuza kadar bekletilmez. Sunucudaki zorunlu
+      // HMAC + üç katmanlı oran sınırı her durumda çalışmaya devam eder.
+      if (!isReady) {
+        await new Promise((resolve) =>
+          window.setTimeout(resolve, RECAPTCHA_BEKLEME_MS)
         );
-        setDurum("hata");
+        if (iptalEdildi || denendiRef.current) return;
+        denendiRef.current = true;
+        setToken(RECAPTCHA_FALLBACK_TOKEN);
+        setDurum("gonderiliyor");
         return;
       }
-      setToken(recaptchaToken);
+
+      denendiRef.current = true;
+      const recaptchaToken = await executeRecaptcha("rent_demo");
+      if (iptalEdildi) return;
+      setToken(recaptchaToken || RECAPTCHA_FALLBACK_TOKEN);
       setDurum("gonderiliyor");
     }
 

@@ -50,7 +50,7 @@ describe("GET /api/rent-demo — GÜVENLİK: artık veritabanına dokunmaz", () 
   });
 });
 
-describe("POST /api/rent-demo — reCAPTCHA olmadan RPC çağrılmaz", () => {
+describe("POST /api/rent-demo — reCAPTCHA ek koruma, oran sınırı zorunlu", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -58,12 +58,20 @@ describe("POST /api/rent-demo — reCAPTCHA olmadan RPC çağrılmaz", () => {
     vi.unstubAllGlobals();
   });
 
-  it("recaptchaToken eksikse hata sayfası döner, RPC çağrılmaz", async () => {
+  it("recaptchaToken eksikse oran sınırlamalı kiralama devam eder", async () => {
+    mockRpc.mockResolvedValue({
+      data: { slug: "kiralik-butik-ab12cd34", code: "ocode123" },
+      error: null,
+    });
+
     const response = await POST(postRequest({ slug: "kiralik-butik" }));
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(303);
     expect(mockVerifyRecaptchaToken).not.toHaveBeenCalled();
-    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockRpc).toHaveBeenCalledWith("start_demo_trial", {
+      p_source_slug: "kiralik-butik",
+      p_client_key: expect.any(String),
+    });
   });
 
   it("slug eksikse hata sayfası döner, RPC çağrılmaz", async () => {
@@ -73,23 +81,30 @@ describe("POST /api/rent-demo — reCAPTCHA olmadan RPC çağrılmaz", () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it("reCAPTCHA reddederse hata sayfası döner, RPC çağrılmaz", async () => {
+  it("reCAPTCHA reddederse oran sınırlamalı kiralama devam eder", async () => {
     mockVerifyRecaptchaToken.mockResolvedValue({
       success: false,
       error: "Score too low",
+    });
+    mockRpc.mockResolvedValue({
+      data: { slug: "kiralik-butik-ab12cd34", code: "ocode123" },
+      error: null,
     });
 
     const response = await POST(
       postRequest({ slug: "kiralik-butik", recaptchaToken: "tok" })
     );
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(303);
     expect(mockVerifyRecaptchaToken).toHaveBeenCalledWith(
       "tok",
       "rent_demo",
       { minScore: 0.5 }
     );
-    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockRpc).toHaveBeenCalledWith("start_demo_trial", {
+      p_source_slug: "kiralik-butik",
+      p_client_key: expect.any(String),
+    });
   });
 });
 
