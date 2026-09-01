@@ -34,7 +34,13 @@ import {
  * genişliğine göre değişiyor; sabit bir kaydırma değeri dar ekranda yine
  * çakışırdı. Seçim yapılır yapılmaz maskot kendiliğinden görünür.
  */
-export function MascotFab({ onToggle }: { onToggle: () => void }) {
+export function MascotFab({
+  onToggle,
+  mesajGoster = true,
+}: {
+  onToggle: () => void;
+  mesajGoster?: boolean;
+}) {
   const consentSnapshot = useSyncExternalStore(
     subscribeToConsent,
     readConsentSnapshot,
@@ -45,12 +51,14 @@ export function MascotFab({ onToggle }: { onToggle: () => void }) {
   return (
     <div className="pointer-events-none fixed bottom-5 right-5 z-40 flex flex-col items-end gap-2">
       {/* Balon — tıklanınca da asistan açılır */}
-      <p
-        className="pointer-events-auto max-w-[230px] cursor-pointer rounded-2xl border border-lp-border bg-lp-surface px-4 py-3 text-[13px] font-semibold text-lp-text-alt shadow-lp-card transition-opacity hover:opacity-90"
-        onClick={onToggle}
-      >
-        👋 Dijital vitrinini hazırlayayım mı?
-      </p>
+      {mesajGoster ? (
+        <p
+          className="pointer-events-auto max-w-[230px] cursor-pointer rounded-2xl border border-lp-border bg-lp-surface px-4 py-3 text-[13px] font-semibold text-lp-text-alt shadow-lp-card transition-opacity hover:opacity-90"
+          onClick={onToggle}
+        >
+          👋 Dijital vitrinini hazırlayayım mı?
+        </p>
+      ) : null}
 
       {/*
         Maskot düğmesi — Flutter'daki `chatbot_badge.dart` rozetiyle aynı

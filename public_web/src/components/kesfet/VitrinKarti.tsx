@@ -93,7 +93,7 @@ export function VitrinKarti({
   return (
     <>
       <article
-        className={`group flex min-h-[280px] h-full flex-col overflow-hidden rounded-[18px] border bg-lp-surface shadow-[0_8px_16px_rgba(0,0,0,0.28)] transition duration-200 ease-out hover:scale-[1.015] hover:shadow-[0_12px_24px_rgba(0,0,0,0.2)] motion-reduce:transform-none ${
+        className={`group flex min-h-[320px] h-full flex-col overflow-hidden rounded-[18px] border bg-lp-surface shadow-[0_8px_16px_rgba(0,0,0,0.28)] transition duration-200 ease-out hover:scale-[1.015] hover:shadow-[0_12px_24px_rgba(0,0,0,0.2)] motion-reduce:transform-none ${
           sahipMi
             ? "border-2 border-lp-primary shadow-[0_0_14px_rgba(20,125,255,0.2)]"
             : "border-lp-border"

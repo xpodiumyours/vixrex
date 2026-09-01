@@ -165,12 +165,13 @@ export function KesfetIcerik({
   const filtreVar = Boolean(
     sorgu.trim() || grup !== undefined || kategoriKimligi || sadeceFavoriler
   );
+  const gorunenAciklama = aciklama.split(". ")[0];
 
   return (
     <main className="min-[901px]:flex">
       <KesfetYanMenu sorgu={sorgu} sorguyuDegistir={setSorgu} />
 
-      <MascotFab onToggle={() => {
+      <MascotFab mesajGoster={false} onToggle={() => {
         // Navigate to appropriate assistant based on user status
         // This reuses existing assistant flow - no new motor written
         window.location.href = '/';
@@ -179,20 +180,21 @@ export function KesfetIcerik({
       <div className="min-w-0 flex-1">
         <StatusBar sahipSlug={sahipSlug} premium={premium} />
 
-        <section className="px-4 py-8 sm:px-6 md:py-12" aria-labelledby="kesfet-baslik">
-        <div className="mx-auto w-full max-w-[1200px]">
-          <h1 id="kesfet-baslik" className="text-[32px] font-black leading-tight text-lp-text md:text-[38px]">
+        <section className="px-3 py-5" aria-labelledby="kesfet-baslik">
+        <div className="w-full">
+          <h1 id="kesfet-baslik" className="text-[20px] font-black leading-tight text-lp-text">
             {baslik}
           </h1>
-          <p className="mt-3 max-w-[640px] text-[16px] leading-[1.5] text-lp-text-alt">
-            {aciklama}
+          <p className="mt-3 text-[12px] font-semibold leading-[1.5] text-lp-muted" title={aciklama}>
+            <span aria-hidden="true">{gorunenAciklama}</span>
+            <span className="sr-only">{aciklama}</span>
           </p>
 
-      <div className="mt-8 space-y-3">
+      <div className="mt-3 space-y-5">
         <label htmlFor="kesfet-arama" className="sr-only">
           Vitrin, ürün veya il/ilçe ara
         </label>
-        <div className="relative min-[901px]:hidden">
+        <div className="relative">
           <span
             aria-hidden="true"
             className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lp-muted"
@@ -225,13 +227,25 @@ export function KesfetIcerik({
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Vitrin grupları">
+          <button
+            type="button"
+            aria-pressed={grup === undefined}
+            onClick={() => grubuSec(undefined)}
+            className={`min-h-8 shrink-0 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              grup === undefined
+                ? "border-lp-primary bg-lp-primary text-lp-on-primary"
+                : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
+            }`}
+          >
+            Tümü
+          </button>
           {GRUPLAR.map((secenek) => (
             <button
               key={secenek.deger}
               type="button"
               aria-pressed={grup === secenek.deger}
               onClick={() => grubuSec(secenek.deger)}
-              className={`min-h-11 shrink-0 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              className={`min-h-8 shrink-0 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
                 grup === secenek.deger
                   ? "border-lp-primary bg-lp-primary text-lp-on-primary"
                   : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
@@ -247,7 +261,7 @@ export function KesfetIcerik({
             type="button"
             aria-pressed={sadeceFavoriler}
             onClick={() => setSadeceFavoriler((deger) => !deger)}
-            className={`flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+            className={`flex min-h-8 shrink-0 items-center gap-2 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
               sadeceFavoriler
                 ? "border-lp-primary bg-lp-primary text-lp-on-primary"
                 : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
@@ -258,25 +272,13 @@ export function KesfetIcerik({
             </svg>
             Favorilerim
           </button>
-          <Link
-            href="/kesfet"
-            onClick={(event) => kategoriBaglantisiniFiltreyeCevir(event, null)}
-            aria-current={kategoriKimligi === null ? "page" : undefined}
-            className={`flex min-h-11 shrink-0 items-center rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
-              kategoriKimligi === null
-                ? "border-lp-primary bg-lp-primary text-lp-on-primary"
-                : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
-            }`}
-          >
-            Tümü
-          </Link>
           {kategoriler.map((kategori) => (
             <Link
               key={kategori.id}
               href={`/kesfet/${kategoriUrlParcasi(kategori.id)}`}
               onClick={(event) => kategoriBaglantisiniFiltreyeCevir(event, kategori.id)}
               aria-current={kategoriKimligi === kategori.id ? "page" : undefined}
-              className={`flex min-h-11 shrink-0 items-center rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              className={`flex min-h-8 shrink-0 items-center rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
                 kategoriKimligi === kategori.id
                   ? "border-lp-primary bg-lp-primary text-lp-on-primary"
                   : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
@@ -311,7 +313,7 @@ export function KesfetIcerik({
           </button>
         </div>
       ) : (
-        <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4" aria-label="Vitrinler">
+        <ul className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4" aria-label="Vitrinler">
           {filtreliVitrinler.map((vitrin, index) => (
             <li
               key={vitrin.slug}

@@ -41,11 +41,14 @@ export function StatusBar({ sahipSlug, premium }: StatusBarProps) {
 
   if (vitrinDurumu === 'misafir') {
     return (
-      <div className="sticky top-0 z-10 bg-lp-bg-editor px-6 py-4 md:px-8 border-b border-lp-border">
-        <div className="mx-auto max-w-[1200px] flex items-center justify-between w-full">
+      <div className="sticky top-0 z-10 min-h-[61px] border-b border-lp-border bg-lp-bg-editor px-5 py-3">
+        <div className="flex min-h-9 w-full items-center justify-between gap-4">
           <span className="text-[14px] font-medium text-lp-text">
             Misafir girişi. <Link href="/giris" className="text-lp-primary hover:underline">Vitrin oluştur</Link> için hesap açın.
           </span>
+          <Link href="/giris" className="hidden min-h-9 shrink-0 items-center rounded-xl bg-lp-primary px-4 text-[14px] font-black text-lp-on-primary hover:brightness-110 sm:flex">
+            Vitrin oluştur
+          </Link>
         </div>
       </div>
     );
@@ -53,11 +56,14 @@ export function StatusBar({ sahipSlug, premium }: StatusBarProps) {
 
   if (vitrinDurumu === 'yok') {
     return (
-      <div className="sticky top-0 z-10 bg-lp-bg-editor px-6 py-4 md:px-8 border-b border-lp-border">
-        <div className="mx-auto max-w-[1200px] flex items-center justify-between w-full">
+      <div className="sticky top-0 z-10 min-h-[61px] border-b border-lp-border bg-lp-bg-editor px-5 py-3">
+        <div className="flex min-h-9 w-full items-center justify-between gap-4">
           <span className="text-[14px] font-medium text-lp-text">
             Vitrininiz henüz oluşturulmadı. <Link href="/app" className="text-lp-primary hover:underline">Vitrin oluştur</Link> başlayın.
           </span>
+          <Link href="/app" className="hidden min-h-9 shrink-0 items-center rounded-xl bg-lp-primary px-4 text-[14px] font-black text-lp-on-primary hover:brightness-110 sm:flex">
+            Vitrin oluştur
+          </Link>
         </div>
       </div>
     );
@@ -65,11 +71,15 @@ export function StatusBar({ sahipSlug, premium }: StatusBarProps) {
 
   if (vitrinDurumu === 'yayinlanmamis') {
     return (
-      <div className="sticky top-0 z-10 bg-lp-bg-editor px-6 py-4 md:px-8 border-b border-lp-border">
-        <div className="mx-auto max-w-[1200px] flex items-center justify-between w-full">
+      <div className="sticky top-0 z-10 min-h-[61px] border-b border-lp-border bg-lp-bg-editor px-5 py-3">
+        <div className="flex min-h-9 w-full items-center justify-between gap-4">
           <span className="text-[14px] font-medium text-lp-text">
-            <span className="font-semibold text-lp-muted">Yayında değil</span> — <Link href="/app" className="text-lp-primary hover:underline">Vitrini yayınla</Link>.
+            <span className="rounded-full border border-lp-border bg-lp-surface-soft px-3 py-1 text-[12px] font-black text-lp-muted">Yayında değil</span>
+            <span className="ml-3 text-[12px] font-semibold text-lp-muted">Vitrininizi henüz yayınlamadınız</span>
           </span>
+          <Link href="/app" className="flex min-h-9 shrink-0 items-center rounded-xl bg-lp-primary px-4 text-[14px] font-black text-lp-on-primary hover:brightness-110">
+            Vitrini yayınla
+          </Link>
         </div>
       </div>
     );
@@ -77,8 +87,8 @@ export function StatusBar({ sahipSlug, premium }: StatusBarProps) {
 
   if (vitrinDurumu === 'yayinli') {
     return (
-      <div className="sticky top-0 z-10 bg-lp-bg-editor px-6 py-4 md:px-8 border-b border-lp-border">
-        <div className="mx-auto max-w-[1200px] flex items-center justify-between w-full">
+      <div className="sticky top-0 z-10 min-h-[61px] border-b border-lp-border bg-lp-bg-editor px-5 py-3">
+        <div className="flex min-h-9 w-full items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="text-[14px] font-medium text-lp-text">
               {premium?.aktif ? 'Premium' : ''}
