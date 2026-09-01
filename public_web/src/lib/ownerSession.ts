@@ -97,7 +97,7 @@ export function signOwnerSession(
   return `${payload}.${signature}`;
 }
 
-export function verifyOwnerSession(
+function verifyOwnerSessionToken(
   token: string | undefined | null,
   slug?: string
 ): OwnerSession | null {
@@ -150,4 +150,21 @@ export function verifyOwnerSession(
   }
 
   return { storeId: parsed.storeId, slug: parsed.slug, sessionToken: parsed.sessionToken };
+}
+
+export function verifyOwnerSession(
+  token: string | undefined | null,
+  slug: string
+): OwnerSession | null {
+  return verifyOwnerSessionToken(token, slug);
+}
+
+/**
+ * Yalnız HttpOnly sahip çerezinden vitrin bağlamını çözmek için kullanılır.
+ * İmza, süre ve session-token biçimi doğrulanmadan slug döndürmez.
+ */
+export function verifyOwnerSessionCookie(
+  token: string | undefined | null
+): OwnerSession | null {
+  return verifyOwnerSessionToken(token);
 }

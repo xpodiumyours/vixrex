@@ -24,7 +24,7 @@ describe("Vitrinim misafir sahiplik geçişi", () => {
 
   it("manuel paneli HMAC sahip çerezi ve sunucu taslağıyla açar", () => {
     expect(route).toContain("OWNER_SESSION_COOKIE");
-    expect(route).toContain("verifyOwnerSession(");
+    expect(route).toContain("verifyOwnerSessionCookie(");
     expect(route).toContain('"get_working_draft_for_session"');
     expect(route).toContain('.eq("id", ownerSession.storeId)');
     expect(route).toContain('.eq("slug", ownerSession.slug)');
@@ -42,7 +42,8 @@ describe("Vitrinim misafir sahiplik geçişi", () => {
   });
 
   it("slug verilmediğinde yalnız imzası doğrulanmış çerezdeki slugı kabul eder", () => {
-    expect(ownerSession).toContain("slug?: string");
+    expect(ownerSession).toContain("function verifyOwnerSessionToken(");
+    expect(ownerSession).toContain("export function verifyOwnerSessionCookie(");
     expect(ownerSession).toContain("if (slug && parsed.slug !== slug) return null");
   });
 });

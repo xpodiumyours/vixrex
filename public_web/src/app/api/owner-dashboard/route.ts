@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import {
+  OWNER_SESSION_COOKIE,
+  verifyOwnerSessionCookie,
+} from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { PUBLIC_STORE_SELECT } from "@/lib/publicStoreSelect";
 
@@ -8,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const cookieStore = await cookies();
-  const ownerSession = verifyOwnerSession(
+  const ownerSession = verifyOwnerSessionCookie(
     cookieStore.get(OWNER_SESSION_COOKIE)?.value
   );
 
