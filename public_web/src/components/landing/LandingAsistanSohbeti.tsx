@@ -31,6 +31,8 @@ import {
   getDistrictsForProvince,
 } from "@/lib/turkeyCities";
 import { addressHataMesaji } from "@/lib/addressValidator";
+import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
+import { supabase } from "@/lib/supabase";
 
 /**
  * Ana sayfadaki Vixrex Asistan — telefon mockup'ının içinde çalışır.
@@ -65,6 +67,8 @@ export function LandingAsistanSohbeti({
   const [yayinliyor, setYayinliyor] = useState(false);
   const [yayinTamamlandi, setYayinTamamlandi] = useState(false);
   const [olusturulanSlug, setOlusturulanSlug] = useState<string | null>(null);
+  const [hesapKorumasiz, setHesapKorumasiz] = useState(false);
+  const [hesapBaglaniyor, setHesapBaglaniyor] = useState(false);
 
   // Legal onay durumları — Flutter'daki LegalConsentSection ile birebir
   const [aydinlatmaOnay, setAydinlatmaOnay] = useState(false);
@@ -133,18 +137,38 @@ export function LandingAsistanSohbeti({
     }
     setGpsBekleniyor(true);
     navigator.geolocation.getCurrentPosition(
-      (konum) => {
-        const yeni = {
+      async (konum) => {
+        try {
+          const cozulen = await gpsAdresiniCoz(
+            konum.coords.latitude,
+            konum.coords.longitude,
+          );
+          setIl(cozulen.provinceName);
+          setIlce(cozulen.districtName);
+          setAdres(cozulen.address);
+
+          const yeni = {
           ...cevaplar,
           latitude: konum.coords.latitude,
           longitude: konum.coords.longitude,
           location_accuracy_meters: konum.coords.accuracy,
           location_source: "browser_gps" as const,
-        };
-        setCevaplar(yeni);
-        taslagiKaydet(yeni);
-        setGpsBekleniyor(false);
-        setHata("");
+            province_name: cozulen.provinceName,
+            district_name: cozulen.districtName,
+            address: cozulen.address,
+          };
+          setCevaplar(yeni);
+          taslagiKaydet(yeni);
+          setHata("");
+        } catch (error) {
+          setHata(
+            error instanceof Error
+              ? error.message
+              : "Koordinat alındı ancak adres çözümlenemedi. Mevcut adresiniz korundu.",
+          );
+        } finally {
+          setGpsBekleniyor(false);
+        }
       },
       () => {
         setGpsBekleniyor(false);
@@ -173,11 +197,6 @@ export function LandingAsistanSohbeti({
 
     try {
       // Supabase auth session kontrolü
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-      const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-      const supabase = createClient(supabaseUrl, supabaseAnon);
-
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
@@ -211,6 +230,15 @@ export function LandingAsistanSohbeti({
 
       // Başarılı — slug'ı kaydet, bitiş ekranını göster
       setOlusturulanSlug(sonuc.slug);
+      setHesapKorumasiz(sonuc.hesapKorumasiz === true);
+      if (typeof sonuc.yonlendir === "string" && sonuc.yonlendir) {
+        // Tek kullanımlık sahip kodunu tüketip HttpOnly sahip çerezini kur.
+        // Edit token tarayıcı JavaScript'ine hiç açılmaz.
+        await fetch(sonuc.yonlendir, {
+          redirect: "manual",
+          credentials: "same-origin",
+        });
+      }
       setYayinTamamlandi(true);
       setAdim(ASISTAN_ADIMLARI.length); // bitti = true yapar
       taslagiKaydet({ ...cevaplar, legal_consent: true });
@@ -221,6 +249,25 @@ export function LandingAsistanSohbeti({
       setYayinliyor(false);
     }
   }, [cevaplar, yasalOnayVerildi, yayinliyor]);
+
+  async function hesabiGoogleaBagla() {
+    if (!olusturulanSlug || hesapBaglaniyor) return;
+    setHesapBaglaniyor(true);
+    setHata("");
+
+    const { error } = await supabase.auth.linkIdentity({
+      provider: "google",
+      options: {
+        redirectTo:
+          `${window.location.origin}/hesap-bagla?slug=` +
+          encodeURIComponent(olusturulanSlug),
+      },
+    });
+    if (error) {
+      setHata(error.message || "Google hesabı bağlanamadı.");
+      setHesapBaglaniyor(false);
+    }
+  }
 
   return (
     <div className="flex h-full flex-col bg-lp-bg-editor">
@@ -252,7 +299,7 @@ export function LandingAsistanSohbeti({
       </div>
 
       {/* Konuşma */}
-      <div className="flex-1 space-y-3 overflow-y-auto px-3.5 py-4">
+      <div className="flex-1 space-y-3 overflow-y-auto px-3.5 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <Balon>
           <p className="font-bold">{ASISTAN_KARSILAMA.baslik}</p>
           <p className="mt-1 text-lp-text-alt">{ASISTAN_KARSILAMA.aciklama}</p>
@@ -394,6 +441,11 @@ export function LandingAsistanSohbeti({
               <span aria-hidden="true">◎</span>
               {gpsBekleniyor ? "GPS Taranıyor..." : cevaplar.latitude == null ? "GPS ile Konumumu Al" : "GPS konumu alındı ✓"}
             </button>
+            {cevaplar.latitude != null ? (
+              <p className="text-center text-[10px] text-lp-muted">
+                Adres verisi © OpenStreetMap katkıcıları
+              </p>
+            ) : null}
             <button
               type="button"
               onClick={konumuKaydet}
@@ -527,6 +579,25 @@ export function LandingAsistanSohbeti({
         {/* Yayın tamamlandı — Flutter Web'deki "Vitrinini aç" + "Detaylı formu aç" */}
         {yayinTamamlandi && olusturulanSlug ? (
           <div className="space-y-2">
+            {hesapKorumasiz ? (
+              <div className="rounded-xl border border-lp-primary/40 bg-lp-primary/[0.08] p-3">
+                <p className="text-[12px] font-black text-lp-text">
+                  Vitrinini hesabına bağla
+                </p>
+                <p className="mt-1 text-[10px] leading-[1.45] text-lp-muted">
+                  Şu an vitrinin bu cihaza bağlı. Telefonunu değiştirirsen ya da
+                  tarayıcı verilerini silersen erişimini kaybedersin.
+                </p>
+                <button
+                  type="button"
+                  onClick={hesabiGoogleaBagla}
+                  disabled={hesapBaglaniyor}
+                  className="mt-2 flex w-full items-center justify-center rounded-xl bg-lp-primary px-3 py-2.5 text-[12px] font-black text-lp-on-primary disabled:opacity-50"
+                >
+                  {hesapBaglaniyor ? "Google açılıyor…" : "Google ile bağla"}
+                </button>
+              </div>
+            ) : null}
             <Link
               href={`/v/${olusturulanSlug}?owner=true`}
               className="flex w-full items-center justify-center rounded-xl bg-lp-primary px-3 py-2.5 text-[12px] font-black text-lp-on-primary"
@@ -630,7 +701,7 @@ function KategoriGrid({
   onSelect: (deger: string) => void;
 }) {
   return (
-    <div className="relative max-h-[272px] overflow-y-auto">
+    <div className="relative max-h-[272px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <p className="mb-2 text-center text-[11px] font-bold text-lp-muted">İşini seç</p>
       <div className="grid grid-cols-2 gap-2">
         {secenekler.map((secenek) => {

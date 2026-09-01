@@ -9,7 +9,6 @@ release_apk
 scratch
 supabase
 .codex-remote-attachments
-**/.git
 **/node_modules
 **/.next
 public_web_node_modules._bak

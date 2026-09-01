@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { yayinSahiplikKarari } from "@/lib/yayinSahiplikKarari";
 
 /**
  * Yeni vitrin oluşturma (sıfırdan).
@@ -10,19 +11,16 @@ import { createClient } from "@supabase/supabase-js";
  *   → slug üretilir (ad + timestamp)
  *   → edit_token üretilir (32 byte hex)
  *   → create_store_with_token RPC çağrılır (SECURITY DEFINER)
- *   → store oluşur, user_id = auth.uid() olarak atanır
+ *   → store yayınlanır; kalıcı kullanıcıysa user_id hesaba bağlanır,
+ *     anonim kullanıcıysa Flutter gibi cihaz sahip oturumuyla devam eder
  *   → owner session cookie kurulur
  *   → /v/{slug} adresine redirect
  *
  * GÜVENLİK:
- *   - Supabase Auth session zorunlu (anon vitrin创建 yapamaz)
+ *   - Supabase Auth session zorunlu (anonim Supabase oturumu kabul edilir)
  *   - slug çakışması otomatik önlenir (RPC unique constraint)
  *   - edit_token 1 yıl süreli (create_store_with_token içinde)
- *   - user_id = auth.uid() (RPC SECURITY DEFINER)
- *
- * ÖNEMLİ: RPC'yi KULLANICININ KENDİ oturumuyla (JWT) çağırıyoruz,
- * admin/servis rolüyle DEĞİL. Böylece auth.uid() RPC içinde gerçek
- * kullanıcıya döner ve user_id doğru atanır.
+ *   - Kalıcı hesap sahipliği claim_store_for_user ile kurulur
  */
 
 export const dynamic = "force-dynamic";
@@ -94,6 +92,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Oturum geçersiz." }, { status: 401 });
   }
 
+  const sahiplikKarari = yayinSahiplikKarari(user);
+
   // slug ve edit_token üret
   const slug = generateSlug(name);
   const editToken = generateEditToken();
@@ -115,8 +115,8 @@ export async function POST(request: NextRequest) {
       typeof govde.business_type === "string"
         ? govde.business_type.trim()
         : "",
-    status: "draft",
-    is_published: false,
+    status: "Açık",
+    is_published: true,
   };
 
   const latitude = typeof govde.latitude === "number" ? govde.latitude : null;
@@ -143,23 +143,25 @@ export async function POST(request: NextRequest) {
   // OLMAZSA sıra şöyle işler: vitrin oluşur → sahiplik çağrısı
   // ALREADY_OWNS_STORE ile reddeder → ortada SAHİPSİZ bir vitrin kalır.
   // Öksüz kayıt üretmemek için önce bakıyoruz.
-  const { data: mevcutVitrin } = await supabaseUser
-    .from("stores")
-    .select("slug")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  if (sahiplikKarari.claimStore) {
+    const { data: mevcutVitrin } = await supabaseUser
+      .from("stores")
+      .select("slug")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
 
-  if (mevcutVitrin?.slug) {
-    return NextResponse.json(
-      {
-        hata:
-          "Bu hesabın zaten bir vitrini var. Bir hesap yalnızca bir " +
-          "vitrin yönetebilir.",
-        slug: mevcutVitrin.slug,
-      },
-      { status: 409 }
-    );
+    if (mevcutVitrin?.slug) {
+      return NextResponse.json(
+        {
+          hata:
+            "Bu hesabın zaten bir vitrini var. Bir hesap yalnızca bir " +
+            "vitrin yönetebilir.",
+          slug: mevcutVitrin.slug,
+        },
+        { status: 409 }
+      );
+    }
   }
 
   // ADIM 1 — vitrini oluştur.
@@ -184,51 +186,49 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: metin }, { status: 400 });
   }
 
-  // ADIM 2 — vitrini oturum açmış hesaba bağla.
+  // ADIM 2 — kalıcı oturumsa vitrini hesaba bağla. Anonim oturumda
+  // Flutter ile aynı şekilde cihaz sahip oturumu korunur; Google kimliği
+  // yayın sonrasında bağlandığında aynı claim RPC'si çalıştırılır.
   //
   // `claim_store_for_user`, canlıda `auth.uid()` kullanan TEK sahiplik
   // fonksiyonudur (`link_store_to_user` boolean kabuğa çevrildi ve artık
   // kullanmıyor). Kullanıcının kendi istemcisiyle çağrılması şart; admin
   // istemcisiyle çağrılırsa `auth.uid()` yine null olur.
   //
-  // Bu adım atlanırsa vitrin SAHİPSİZ doğar: kullanıcı başka cihazdan
-  // giremez (`bootstrap_owner_state` user_id üzerinden arar) ve hesap
-  // başına tek vitrin kuralı işlemez (kısmi unique index NULL satırları
-  // kapsamaz). 2026-08-26 öncesinde canlıdaki 29 vitrinin hiçbirinde
-  // user_id yoktu; aynı duruma dönmemek için bu çağrı zorunludur.
+  // Kalıcı kullanıcıda bu adım atlanırsa vitrin hesaptan bulunamaz.
   // DİKKAT: bu fonksiyon başarısızlıkta HATA FIRLATMAZ — `{ok:false,
   // reason:...}` biçiminde VERİ döndürür (yalnız oturum yoksa UNAUTHORIZED
   // fırlatır). Sadece `error` alanına bakmak, reddedilen bir sahiplenmeyi
   // "başarılı" saymak demektir. Sonuç gövdesi de kontrol edilmeli.
-  const { data: sahiplikSonucu, error: sahiplikHatasi } =
-    await supabaseUser.rpc("claim_store_for_user", {
-      p_edit_token: editToken,
-    });
+  if (sahiplikKarari.claimStore) {
+    const { data: sahiplikSonucu, error: sahiplikHatasi } =
+      await supabaseUser.rpc("claim_store_for_user", {
+        p_edit_token: editToken,
+      });
 
-  const sahiplikTamam =
-    !sahiplikHatasi &&
-    typeof sahiplikSonucu === "object" &&
-    sahiplikSonucu !== null &&
-    (sahiplikSonucu as { ok?: unknown }).ok === true;
+    const sahiplikTamam =
+      !sahiplikHatasi &&
+      typeof sahiplikSonucu === "object" &&
+      sahiplikSonucu !== null &&
+      (sahiplikSonucu as { ok?: unknown }).ok === true;
 
-  if (!sahiplikTamam) {
-    // Vitrin oluştu ama hesaba bağlanamadı — yarım durum. Kullanıcıya
-    // "oldu" demek yanlış olur: o vitrini bir daha bulamaz.
-    const sebep =
-      sahiplikHatasi?.message ??
-      (sahiplikSonucu as { reason?: string } | null)?.reason ??
-      "BILINMEYEN";
-    console.error("[create-store] claim_store_for_user başarısız:", sebep);
-    return NextResponse.json(
-      {
-        hata:
-          "Vitrin oluşturuldu ama hesabına bağlanamadı. " +
-          "Lütfen tekrar giriş yapıp dene.",
-        slug,
-        sebep,
-      },
-      { status: 500 }
-    );
+    if (!sahiplikTamam) {
+      const sebep =
+        sahiplikHatasi?.message ??
+        (sahiplikSonucu as { reason?: string } | null)?.reason ??
+        "BILINMEYEN";
+      console.error("[create-store] claim_store_for_user başarısız:", sebep);
+      return NextResponse.json(
+        {
+          hata:
+            "Vitrin oluşturuldu ama hesabına bağlanamadı. " +
+            "Lütfen tekrar giriş yapıp dene.",
+          slug,
+          sebep,
+        },
+        { status: 500 }
+      );
+    }
   }
 
   // PR4-C15: yeni mağaza + çalışma taslağı hazırla — yayın gibi konuşma
@@ -287,6 +287,7 @@ export async function POST(request: NextRequest) {
     tamam: true,
     slug,
     yonlendir,
+    hesapKorumasiz: sahiplikKarari.hesapKorumasiz,
     message: "Vitrin oluşturuldu.",
   });
 }

@@ -71,6 +71,13 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     neden: KONUM_WEB_OZEL,
   },
   {
+    metin: "Adres verisi © OpenStreetMap katkıcıları",
+    neden:
+      "Web, Flutter ile aynı Nominatim adres verisini sunucu vekili üzerinden " +
+      "kullanıyor. Nominatim kullanım politikası web yüzeyinde görünür kaynak " +
+      "göstermeyi gerektirdiği için bu yasal/servis atfı yalnız webde bulunur.",
+  },
+  {
     metin: "Konum izni alınamadı; il, ilçe ve adresi elle yazabilirsin.",
     neden: KONUM_WEB_OZEL,
   },

@@ -25,6 +25,7 @@ import { alanOnemi, asamaDolulugu, sonrakiRehberAlan } from "@/lib/vitrinReadine
 import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { useRouter } from "next/navigation";
+import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
 // yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
@@ -258,18 +259,22 @@ export default function OwnerAssistantPanel({
         const lng = pos.coords.longitude;
         const accuracy = pos.coords.accuracy;
         try {
-          const saves = await Promise.all([
-            fetch("/api/owner-draft", {
+          const cozulen = await gpsAdresiniCoz(lat, lng);
+          const alanlar = [
+            { anahtar: "enlem", deger: lat },
+            { anahtar: "boylam", deger: lng },
+            { anahtar: "adres", deger: cozulen.address },
+            { anahtar: "il", deger: cozulen.provinceName },
+            { anahtar: "ilce", deger: cozulen.districtName },
+          ] as const;
+          const clientId = taslakClientId();
+          const saves = await Promise.all(
+            alanlar.map(({ anahtar, deger }) => fetch("/api/owner-draft", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ slug, anahtar: "enlem", deger: lat, clientId: taslakClientId() }),
-            }),
-            fetch("/api/owner-draft", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ slug, anahtar: "boylam", deger: lng, clientId: taslakClientId() }),
-            }),
-          ]);
+              body: JSON.stringify({ slug, anahtar, deger, clientId }),
+            })),
+          );
           if (saves.some((r) => !r.ok)) {
             const firstErr = await saves.find((r) => !r.ok)?.json().catch(() => null);
             mesajEkle("asistan", firstErr?.hata ?? "Konum kaydedilemedi.");
@@ -278,12 +283,18 @@ export default function OwnerAssistantPanel({
           }
           setAlan("latitude", lat);
           setAlan("longitude", lng);
+          setAlan("address", cozulen.address);
+          setAlan("province_name", cozulen.provinceName);
+          setAlan("district_name", cozulen.districtName);
           (setAlan as unknown as (k: string, v: unknown) => void)("location_accuracy_meters", accuracy);
           (setAlan as unknown as (k: string, v: unknown) => void)("location_source", "browser_gps");
-          mesajEkle("asistan", `Konum alındı: ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${Math.round(accuracy)}m). Yayınlayınca haritada görünecek.`);
+          mesajEkle("asistan", `${cozulen.districtName}, ${cozulen.provinceName} adresi GPS ile dolduruldu (±${Math.round(accuracy)}m).`);
           router.refresh();
-        } catch {
-          mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+        } catch (error) {
+          mesajEkle(
+            "asistan",
+            error instanceof Error ? error.message : "Adres çözümlenemedi. Tekrar dene.",
+          );
         } finally {
           setGpsLoading(false);
         }
