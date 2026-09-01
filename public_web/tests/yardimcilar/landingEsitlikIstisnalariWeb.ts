@@ -247,6 +247,40 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
       "Flutter Web kategori presentation label'ı. Sunum label farkı.",
   },
 
+  // --- Hesap bağlama / Google kimlik bağlama metinleri ---
+  {
+    metin: "Vitrinini hesabına bağla",
+    neden:
+      "Web landing'inde yayınlanan vitrin sonrası hesap bağlama uyarısı. " +
+      "Flutter landing'inde bu uyarı henüz yok — hesap bağlama akışı " +
+      "Flutter'da farklı bir yüzeyde (sahiplik paneli) yürütülüyor.",
+  },
+  {
+    metin: "Şu an vitrinin bu cihaza bağlı. Telefonunu değiştirirsen ya da " +
+      "tarayıcı verilerini silersen erişimini kaybedersin.",
+    neden:
+      "Web landing'inde hesap bağlama uyarısı açıklaması. Flutter " +
+      "landing'inde aynı uyarı henüz eklenmedi.",
+  },
+  {
+    metin: "Google ile bağla",
+    neden:
+      "Web landing'inde hesap bağlama butonu. Flutter'da bu buton " +
+      "sahiplik panelinde farklı bir akışla sunuluyor.",
+  },
+  {
+    metin: "Google açılıyor…",
+    neden:
+      "Web landing'inde hesap bağlama yükleniyor durumu. Flutter'da " +
+      "aynı durum mesajı henüz eklenmedi.",
+  },
+  {
+    metin: "Google hesabı bağlanamadı.",
+    neden:
+      "Web landing'inde hesap bağlama hata mesajı. Flutter'da bu hata " +
+      "farklı bir yüzeyde gösteriliyor.",
+  },
+
   // --- Yasal onay link metinleri ---
   {
     metin: "Aydınlatma Metni",

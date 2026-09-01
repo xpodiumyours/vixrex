@@ -30,7 +30,7 @@ const vitrinler = [
 
 const temelFiltre = {
   sorgu: "",
-  grup: "tumu" as const,
+  grup: undefined as BusinessTemplateGroup | undefined,
   kategoriKimligi: null,
   sadeceFavoriler: false,
   favoriAdlari: [] as string[],

@@ -58,8 +58,11 @@ class DemoRentalResult {
 /// NEDEN (2026-08-26): kiralama bugüne kadar yalnız misafir yoluyla
 /// çalışıyordu. Uygulama sadece tarayıcıda `/rent-demo` linkini açıyor,
 /// üretilen vitrinin slug'ını da edit token'ını da hiç öğrenmiyordu
-/// (AppRouter.navigateToRentDemo). Vitrin sahipsiz doğduğu ve token'ı 24
-/// saatlik olduğu için (V-15) ertesi gün kimse o vitrine ulaşamıyordu.
+/// (AppRouter.navigateToRentDemo). Vitrin sahipsiz doğuyordu.
+///
+/// Token süresi 2026-09-01'de 24 saatten 14 güne çıkarıldı — misafir
+/// kullanıcıya "14 gün ücretsiz deneme" vaadini yerine getirmek için.
+/// Kalıcı hesaplarda rent_demo_for_account token'ı 1 yıl'a çekiyor.
 ///
 /// Hesaplı yolda klon SAHİPLİ doğar (`rent_demo_for_account`): kiralama
 /// anında hesaba bağlanır, token bir yıllık olur, tek-vitrin kuralı

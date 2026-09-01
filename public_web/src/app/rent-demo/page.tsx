@@ -240,8 +240,29 @@ function RentDemoIcerik() {
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
-      <div style={{ textAlign: "center" }}>
+      <div style={{ maxWidth: 420, padding: 24, textAlign: "center" }}>
         <p style={{ color: "rgba(255,255,255,0.7)" }}>Vitrin hazırlanıyor…</p>
+        <div
+          style={{
+            marginTop: 24,
+            padding: 16,
+            borderRadius: 12,
+            background: "rgba(251, 191, 36, 0.15)",
+            border: "1px solid rgba(251, 191, 36, 0.3)",
+            textAlign: "left",
+            fontSize: 13,
+            lineHeight: 1.6,
+          }}
+        >
+          <p style={{ margin: 0, fontWeight: 700, color: "#FBBF24" }}>
+            ⚠️ Deneme sürümü — yalnız bu cihazda
+          </p>
+          <p style={{ margin: "8px 0 0", color: "rgba(255,255,255,0.8)" }}>
+            Vitrinin 14 gün boyunca ücretsiz. Fakat şu an erişimi yalnız bu
+            cihaza özeldir. Vitrini kalıcı olarak hesabına bağlamak için
+            vitrin yönetim ekranından Google ile giriş yapman yeterli.
+          </p>
+        </div>
       </div>
       {/* JS'siz/gövde-parse edilemeyen ortamlarda bile POST'un native form
           davranışıyla gitmesi için gerçek bir <form>; action route.ts'in

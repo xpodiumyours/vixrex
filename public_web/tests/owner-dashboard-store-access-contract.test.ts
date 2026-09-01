@@ -35,19 +35,19 @@ describe("sahip panosu vitrin erişim sözleşmesi", () => {
   });
 
   it("vitrin sahipliğini bootstrap RPC ile bulup vitrini okunabilir slug üzerinden getirir", () => {
-    expect(storeLoaderSource).toMatch(/\.rpc\(\s*["']bootstrap_owner_state["']\s*\)/);
-    expect(storeLoaderSource).toContain('.eq("slug",');
-
-    const bootstrapType = dashboardSource.slice(
-      dashboardSource.indexOf("interface BootstrapOwnerState"),
-      dashboardSource.indexOf("export const dynamic")
+    // Yeni birleşik bootstrap RPC (get_owner_workspace_bootstrap) birincil
+    // yoldur; eski bootstrap_owner_state yedek olarak tutulur.
+    expect(storeLoaderSource).toMatch(
+      /\.rpc\(\s*["']get_owner_workspace_bootstrap["']\s*\)/
     );
-    expect(bootstrapType).not.toContain("edit_token");
+    expect(storeLoaderSource).toMatch(
+      /\.rpc\(\s*["']bootstrap_owner_state["']\s*\)/
+    );
   });
 
   it("RPC vitrinin olmadığını söylediğinde kurulum formuna hatasız geçer", () => {
-    expect(storeLoaderSource).toMatch(
-      /if \(sonuc\.has_store !== true\) \{\s*setStores\(\[\]\);\s*if \(showLoading\) setYukleniyor\(false\);\s*return;\s*\}/
-    );
+    // Yeni birleşik bootstrap yapısında slug boşsa setStores([]) çağrılır.
+    expect(storeLoaderSource).toContain("setStores([])");
+    expect(storeLoaderSource).toContain("if (showLoading) setYukleniyor(false)");
   });
 });

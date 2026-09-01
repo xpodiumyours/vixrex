@@ -65,8 +65,10 @@ describe("Kategori süzgeci SEO + erişilebilirlik", () => {
     expect(seritKaynak).toContain('aria-label="Kategoriler"');
   });
 
-  it("Tumu linki /kesfet adresine gider", () => {
-    expect(seritKaynak).toContain('href="/kesfet"');
+  it("Tumu linki yok — varsayılan olarak tüm kategoriler gösterilir", () => {
+    // KategoriSeridi artık "Tümü" linki içermez; tüm vitrinler varsayılan
+    // olarak gösterilir, aktif kategori yoksa hepsi görünür.
+    expect(seritKaynak).not.toContain('">Tümü</');
   });
 
   it("her kategori kendi düz linkine sahip — taranabilir sayfa üretir", () => {
