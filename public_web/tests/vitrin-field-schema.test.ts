@@ -248,6 +248,37 @@ describe("Commit 8 kabul ölçütü — yeni alan kod değişikliği istemez", (
   });
 });
 
+describe("F0 contract freeze — tek kaynak alan sayısı ve zorunlu seti", () => {
+  it("toplam alan sayısı 46 — shared/vitrin_alanlari.json tek kaynak", () => {
+    expect(VITRIN_FIELDS.length).toBe(46);
+  });
+
+  it("6 zorunlu alan doğru set (isletmeAdi/kategori/whatsapp/adres/il/ilce)", () => {
+    const zorunlu = VITRIN_FIELDS.filter((f) => f.zorunlu).map((f) => f.anahtar);
+    expect(zorunlu.length).toBe(6);
+    expect(new Set(zorunlu)).toEqual(
+      new Set(["isletmeAdi", "kategori", "whatsapp", "adres", "il", "ilce"]),
+    );
+  });
+
+  it("zorunlu alanların kolonları stores tablosunda yazılabilir kolonlarda", () => {
+    const zorunluKolonlar = VITRIN_FIELDS.filter((f) => f.zorunlu).map((f) => f.kolon);
+    for (const kolon of zorunluKolonlar) {
+      expect(EDITABLE_COLUMNS).toContain(kolon);
+    }
+  });
+
+  it("detached kopyaya karşı shared JSON ile TS şema eşit", () => {
+    const shared = JSON.parse(
+      readFileSync(resolve(__dirname, "../../shared/vitrin_alanlari.json"), "utf-8"),
+    ) as { alanlar: Array<{ anahtar: string }> };
+    expect(shared.alanlar.length).toBe(VITRIN_FIELDS.length);
+    expect(new Set(shared.alanlar.map((a) => a.anahtar))).toEqual(
+      new Set(VITRIN_FIELDS.map((f) => f.anahtar)),
+    );
+  });
+});
+
 describe("owner-draft ucu — güvenlik sözleşmesi", () => {
   const routeSource = readFileSync(
     resolve(__dirname, "../src/app/api/owner-draft/route.ts"),

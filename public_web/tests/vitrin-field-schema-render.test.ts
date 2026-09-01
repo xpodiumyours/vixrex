@@ -2,11 +2,19 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
 
-import { VITRIN_FIELDS } from "../src/lib/vitrinFieldSchema";
+import { VITRIN_FIELDS, SECTION_ORDER } from "../src/lib/vitrinFieldSchema";
 import { PUBLIC_STORE_SELECT } from "../src/lib/publicStoreSelect";
 
 const viewSource = readFileSync(
   resolve(__dirname, "../src/app/v/[slug]/VitrinProfileView.tsx"),
+  "utf-8",
+);
+const vitrinEditorSource = readFileSync(
+  resolve(__dirname, "../src/components/owner/VitrinimEditor.tsx"),
+  "utf-8",
+);
+const flutterFormSource = readFileSync(
+  resolve(__dirname, "../../lib/screens/my_vitrin/sections/vitrin_form_section.dart"),
   "utf-8",
 );
 
@@ -50,5 +58,39 @@ describe("vitrin alan şeması render bütünlüğü", () => {
         .map(({ kolon, prop }) => `${kolon} → ${prop}`)
         .join(", ")}`,
     ).toEqual([]);
+  });
+});
+
+describe("F0 — bölüm ve form iskeleti kilidi (Flutter = Next.js)", () => {
+  it("SECTION_ORDER sayfa sırası vitrindeki gerçek sıra ile aynı", () => {
+    expect(SECTION_ORDER).toEqual([
+      "hero",
+      "categories",
+      "featured",
+      "products",
+      "about",
+      "gallery",
+      "blog",
+      "faq",
+      "contact",
+    ]);
+  });
+
+  it("VitrinimEditor 5 bölüm başlığı Flutter ile birebir", () => {
+    // Flutter: lib/screens/my_vitrin/sections/vitrin_form_section.dart:217
+    const flutterBasliklar = ["Kimlik", "İletişim", "Konum ve saatler", "Görseller", "İçerik ve SEO"];
+    for (const baslik of flutterBasliklar) {
+      expect(flutterFormSource).toContain(`'${baslik}'`);
+      expect(vitrinEditorSource).toContain(`"${baslik}"`);
+    }
+  });
+
+  it("VitrinimEditor her bölümün zorunlu işareti Flutter ile eşit (ilk 3 bölüm zorunlu)", () => {
+    // Flutter form_accordion isRequired: index <= locationSectionIndex (2)
+    // Next: SECTIONS 5 bölümden ilk 3'ü required:true (Kimlik/İletişim/Konum)
+    // Not: alan seviyesinde de required:true var, o yüzden bölüm başlığına göre sayarız
+    const bolumZorunluSayisi = (vitrinEditorSource.match(/title:\s*"(?:Kimlik|İletişim|Konum ve saatler)",\s*\n\s*required:\s*true/g) || []).length;
+    expect(bolumZorunluSayisi).toBe(3);
+    expect(flutterFormSource).toContain("isRequired: index <= MyVitrinState.locationSectionIndex");
   });
 });
