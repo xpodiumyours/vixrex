@@ -1,9 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import BulkProductUpload from "./BulkProductUpload";
 import { OwnerCategoryManager } from "./OwnerCategoryManager";
+import {
+  productQueueEnqueue,
+  productQueueFlush,
+  productQueueCount,
+} from "@/lib/productQueue";
 
 export interface OwnerProductCategory {
   id: string;
@@ -66,6 +71,55 @@ export function OwnerProductManager({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [queuedCount, setQueuedCount] = useState(0);
+
+  // Ürün ayrı kuyruk — vitrin draft kuyruğundan bağımsız (F4)
+  // Bağlantı dönünce otomatik dener, draft'ı bloklamaz.
+  useEffect(() => {
+    const syncQueued = () => setQueuedCount(productQueueCount(storeSlug));
+    syncQueued();
+    const flush = async () => {
+      const res = await productQueueFlush(async (op) => {
+        try {
+          let r: Response | null = null;
+          if (op.type === "create") {
+            r = await fetch("/api/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: op.slug, ...op.payload }) });
+          } else if (op.type === "update") {
+            r = await fetch("/api/products", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: op.slug, ...op.payload }) });
+          } else if (op.type === "delete") {
+            r = await fetch("/api/products", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: op.slug, ...op.payload }) });
+          } else if (op.type === "reorder") {
+            r = await fetch("/api/products/reorder", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: op.slug, ...op.payload }) });
+          }
+          if (!r) return false;
+          if (r.ok) return true;
+          // 4xx ise yeniden denemek anlamsız — kuyruktan at
+          if (r.status >= 400 && r.status < 500) return true;
+          return false;
+        } catch {
+          return false;
+        }
+      }, storeSlug);
+      if (res.flushed > 0) {
+        await onRefresh();
+        setSuccess(`${res.flushed} kuyruktaki ürün işlemi gönderildi.`);
+      }
+      syncQueued();
+    };
+    // İlk mount + online olduğunda dene
+    void flush();
+    const onOnline = () => void flush();
+    const onVisible = () => { if (typeof document !== "undefined" && document.visibilityState === "visible") void flush(); };
+    window.addEventListener("online", onOnline);
+    document.addEventListener("visibilitychange", onVisible);
+    // Periyodik senk
+    const id = setInterval(syncQueued, 2000);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(id);
+    };
+  }, [storeSlug, onRefresh]);
 
   const categoriesWithCount = useMemo(() => {
     const map = new Map<string, number>();
@@ -139,7 +193,15 @@ export function OwnerProductManager({
       setEditing(null);
       setSuccess(isNew ? "Ürün kaydedildi." : "Ürün güncellendi.");
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Ürün kaydedilemedi.");
+      const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+      const isNetworkError = saveError instanceof TypeError && String(saveError.message).includes("fetch");
+      if (isOffline || isNetworkError) {
+        productQueueEnqueue({ slug: storeSlug, type: isNew ? "create" : "update", payload: body });
+        setQueuedCount(productQueueCount(storeSlug));
+        setError("Bağlantı yok — ürün kuyruğa alındı, bağlantı gelince otomatik gönderilecek.");
+      } else {
+        setError(saveError instanceof Error ? saveError.message : "Ürün kaydedilemedi.");
+      }
     } finally {
       setBusy(false);
     }
@@ -164,7 +226,15 @@ export function OwnerProductManager({
       setDeleting(null);
       setSuccess("Ürün kalıcı olarak silindi.");
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Ürün silinemedi.");
+      const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+      const isNetworkError = deleteError instanceof TypeError && String(deleteError.message).includes("fetch");
+      if (isOffline || isNetworkError) {
+        productQueueEnqueue({ slug: storeSlug, type: "delete", payload: { productId: deleting!.id } });
+        setQueuedCount(productQueueCount(storeSlug));
+        setError("Bağlantı yok — silme kuyruğa alındı.");
+      } else {
+        setError(deleteError instanceof Error ? deleteError.message : "Ürün silinemedi.");
+      }
     } finally {
       setBusy(false);
     }
@@ -186,7 +256,15 @@ export function OwnerProductManager({
       if (!response.ok) throw new Error("Sıralama güncellenemedi.");
       await onRefresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sıralama güncellenemedi.");
+      const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+      const isNetworkError = err instanceof TypeError && String(err.message).includes("fetch");
+      if (isOffline || isNetworkError) {
+        productQueueEnqueue({ slug: storeSlug, type: "reorder", payload: { productIds: newIds } });
+        setQueuedCount(productQueueCount(storeSlug));
+        setError("Bağlantı yok — sıralama kuyruğa alındı.");
+      } else {
+        setError(err instanceof Error ? err.message : "Sıralama güncellenemedi.");
+      }
       await onRefresh();
     }
   }, [products, storeSlug, onRefresh]);
@@ -223,6 +301,11 @@ export function OwnerProductManager({
       </div>
 
       {error ? <p className="owner-error mb-4 text-sm" role="alert">{error}</p> : null}
+      {queuedCount > 0 ? (
+        <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-bold text-amber-600" role="status">
+          {queuedCount} ürün işlemi kuyrukta — bağlantı gelince otomatik gönderilecek (vitrin metin kuyruğundan ayrı).
+        </p>
+      ) : null}
       {success ? (
         <p className="mb-4 rounded-xl border border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 p-3 text-sm text-[var(--owner-success)]" role="status">
           {success}
