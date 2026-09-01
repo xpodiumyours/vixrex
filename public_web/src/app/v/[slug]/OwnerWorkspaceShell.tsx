@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import OwnerAssistantPanel from "./OwnerAssistantPanel";
 import { hazirlikRaporu } from "@/lib/vitrinReadiness";
 import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
@@ -81,6 +82,8 @@ export interface OwnerWorkspaceShellProps {
   assistantHandoff?: AssistantHandoffV1 | null;
   bookingSettings?: Record<string, unknown> | null;
   campaignBanner?: { label: string; title: string; description: string; priceText: string; imageUrl: string } | null;
+  /** Kiralık demo vitrin mi — true ise "hesabına bağla" uyarısı gösterilir. */
+  isDemo?: boolean;
 }
 
 export default function OwnerWorkspaceShell({
@@ -89,6 +92,7 @@ export default function OwnerWorkspaceShell({
   assistantHandoff,
   bookingSettings,
   campaignBanner,
+  isDemo,
   ...vitrinProps
 }: OwnerWorkspaceShellProps) {
   const [open, setOpen] = useState(false);
@@ -254,6 +258,35 @@ export default function OwnerWorkspaceShell({
               ✕
             </button>
           </div>
+
+          {/* Kiralık demo vitrin uyarısı — Google ile hesap bağla */}
+          {isDemo ? (
+            <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+              <p className="text-[12px] font-black text-amber-400">
+                ⚠️ Vitrinini kaydetmek için hesabına bağla
+              </p>
+              <p className="mt-1 text-[10px] leading-[1.45] text-slate-400">
+                Şu an vitrinin bu cihaza bağlı. Telefonunu değiştirirsen ya da
+                tarayıcı verilerini silersen özelleştirmelerini kaybedersin.
+                Google ile giriş yaparak vitrini kalıcı hale getirebilirsin.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const slug = vitrinProps.storeSlug;
+                  supabase.auth.linkIdentity({
+                    provider: "google",
+                    options: {
+                      redirectTo: `${window.location.origin}/hesap-bagla?slug=${encodeURIComponent(slug)}`,
+                    },
+                  });
+                }}
+                className="mt-2 flex w-full items-center justify-center rounded-xl bg-amber-500 px-3 py-2 text-[11px] font-black text-black hover:bg-amber-400 transition-colors"
+              >
+                Google ile bağla
+              </button>
+            </div>
+          ) : null}
 
           <div className="space-y-3 text-xs text-slate-400 mb-4 p-3 rounded-lg bg-white/5 border border-white/10">
             <div className="flex justify-between">

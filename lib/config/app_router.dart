@@ -455,48 +455,17 @@ class AppRouter {
       if (!sonuc.misafirYolunaDus) return;
     }
 
-    // Misafir yolunda uyarı diyaloğu göster — vitrin yalnız bu cihazda
-    // kalır, 14 gün ücretsiz deneme süresi vardır.
+    // Misafir yolunda hafif bilgilendirme — kullanıcıyı engelleme,
+    // SAHİPLİK sayfasındaki uyarı zaten uyaracak.
     if (!context.mounted) return;
-    final onay = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Deneme Başlat'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Bu vitrini 14 gün boyunca ücretsiz deneyebilirsin.',
-            ),
-            SizedBox(height: 12),
-            Text(
-              '⚠️ Dikkat: Şu an vitrinin erişimi yalnız bu cihaza özeldir. '
-              'Farklı bir cihazdan giriş yaparsan vitrine ulaşamazsın.',
-              style: TextStyle(fontSize: 13),
-            ),
-            SizedBox(height: 12),
-            Text(
-              '💡 Vitrini kalıcı olarak hesabına bağlamak için Google ile '
-              'giriş yapman yeterli. Böylece vitrini her yerden yönetebilirsin.',
-              style: TextStyle(fontSize: 13),
-            ),
-          ],
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          '💡 Vitrinini özelleştir, beğendiğinde Google ile hesabına bağla.',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Vazgeç'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Devam Et'),
-          ),
-        ],
+        duration: Duration(seconds: 3),
       ),
     );
-
-    if (onay != true) return; // Kullanıcı vazgeçti
 
     await openPublicUrl(
       context,

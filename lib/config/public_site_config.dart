@@ -83,7 +83,11 @@ class PublicSiteConfig {
   static String buildRentDemoLink(String demoSlug) {
     final trimmed = demoSlug.trim();
     if (trimmed.isEmpty) return buildPublicLink('/rent-demo');
-    final query = Uri(queryParameters: {'slug': trimmed, 'hesap': '1'}).query;
+    // hesap=1 kullanilmiyor — kirala butonu kullaniciyi dogrudan
+    // ozellestirme ekranina goturur, giris zorunlulugu yoktur.
+    // Kullanici ozellestirmeyi bitirdikten sonra "kalici hesaba bagla"
+    // uyarisi gorur.
+    final query = Uri(queryParameters: {'slug': trimmed}).query;
     return '${buildPublicLink('/rent-demo')}?$query';
   }
 

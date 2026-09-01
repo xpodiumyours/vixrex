@@ -197,7 +197,7 @@ export function VitrinKarti({
                 <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 items-center justify-center rounded-[10px] border border-lp-primary px-2 text-[11px] font-black text-lp-primary transition-colors hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
                   İncele
                 </Link>
-                <Link href={`/rent-demo?slug=${encodeURIComponent(vitrin.slug)}&hesap=1`} className="flex min-h-11 items-center justify-center rounded-[10px] bg-lp-primary px-2 text-[11px] font-black text-lp-on-primary transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary focus-visible:ring-offset-2">
+                <Link href={`/rent-demo?slug=${encodeURIComponent(vitrin.slug)}`} className="flex min-h-11 items-center justify-center rounded-[10px] bg-lp-primary px-2 text-[11px] font-black text-lp-on-primary transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary focus-visible:ring-offset-2">
                   Kirala
                 </Link>
               </div>

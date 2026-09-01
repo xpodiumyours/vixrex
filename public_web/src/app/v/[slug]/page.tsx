@@ -773,6 +773,7 @@ export default async function StorePage(props: PageProps) {
           draft={draft}
           sessionExpiresAt={sessionExpiresAt}
           assistantHandoff={assistantHandoff}
+          isDemo={Boolean(store.is_demo)}
         />
       ) : null}
     </>
