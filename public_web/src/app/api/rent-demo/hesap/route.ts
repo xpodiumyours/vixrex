@@ -5,6 +5,7 @@ type KiralamaSonucu = {
   ok?: boolean;
   reason?: string;
   slug?: string;
+  edit_token?: string;
   retry_after?: number;
 };
 
@@ -58,8 +59,9 @@ export async function POST(request: NextRequest) {
     return hataYaniti("Oturum geçersiz.", 401);
   }
 
-  const { data, error } = await supabaseUser.rpc("rent_demo_for_account", {
+  const { data, error } = await supabaseUser.rpc("rent_demo_canonical", {
     p_source_slug: sourceSlug,
+    p_flow_type: "kiralama",
   });
 
   if (error) {
@@ -71,9 +73,52 @@ export async function POST(request: NextRequest) {
   const slug = (sonuc.slug ?? "").trim();
 
   switch (sonuc.reason) {
-    case "RENTED":
-      if (!slug) return hataYaniti("Şu anda kiralanamıyor.", 500);
-      return NextResponse.json({ tamam: true, slug });
+    case "RENTED": {
+      const editToken = (sonuc.edit_token ?? "").trim();
+      if (!slug || !editToken) {
+        return hataYaniti("Şu anda kiralanamıyor.", 500);
+      }
+
+      // Flutter ile aynı zincir: kiralama sonucundaki anahtarla sahip
+      // oturumunu hemen üret. Hesabı tekrar bootstrap ederek ikinci bir
+      // kopma noktası oluşturma; edit_token tarayıcıya asla dönmez.
+      const { data: oturum, error: oturumHatasi } = await supabaseUser.rpc(
+        "create_owner_session",
+        { p_slug: slug, p_edit_token: editToken }
+      );
+
+      if (oturumHatasi) {
+        console.error(
+          "[rent-demo/hesap] sahip oturumu hatası:",
+          oturumHatasi.message
+        );
+        return hataYaniti(
+          "Vitrin hesabına bağlandı ancak sahip ekranı açılamadı. Vitrinine hesabından ulaşabilirsin.",
+          500
+        );
+      }
+
+      const kod =
+        typeof oturum === "object" && oturum !== null
+          ? String((oturum as { code?: unknown }).code ?? "").trim()
+          : "";
+      if (!kod) {
+        return hataYaniti(
+          "Vitrin hesabına bağlandı ancak sahip ekranı açılamadı. Vitrinine hesabından ulaşabilirsin.",
+          500
+        );
+      }
+
+      const hedef = new URL("/api/owner-session", request.url);
+      hedef.searchParams.set("slug", slug);
+      hedef.searchParams.set("ocode", kod);
+
+      return NextResponse.json({
+        tamam: true,
+        slug,
+        yonlendir: hedef.pathname + hedef.search,
+      });
+    }
     case "ALREADY_OWNS_STORE":
       return NextResponse.json(
         { tamam: false, sebep: "ALREADY_OWNS_STORE", slug },

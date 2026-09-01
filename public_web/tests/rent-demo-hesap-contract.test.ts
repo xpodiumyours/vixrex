@@ -31,10 +31,11 @@ describe("hesaba bağlı vitrin kiralama sözleşmesi", () => {
     });
   });
 
-  it("rent_demo_for_account RPC'sini yönetici istemcisiyle çağırmaz", () => {
+  it("kanonik kiralama RPC'sini kullanıcı oturumuyla çağırır", () => {
     const routeSource = readFileSync(routePath, "utf8");
 
-    expect(routeSource).toContain('"rent_demo_for_account"');
+    expect(routeSource).toContain('"rent_demo_canonical"');
+    expect(routeSource).not.toContain('"rent_demo_for_account"');
     expect(routeSource).not.toContain("getSupabaseAdmin");
   });
 
@@ -57,15 +58,20 @@ describe("hesaba bağlı vitrin kiralama sözleşmesi", () => {
       data: { user: { id: "user-1" } },
       error: null,
     });
-    mockRpc.mockResolvedValue({
-      data: {
-        ok: true,
-        reason: "RENTED",
-        slug: "yeni-vitrin",
-        edit_token: "gizli-duzenleme-anahtari",
-      },
-      error: null,
-    });
+    mockRpc
+      .mockResolvedValueOnce({
+        data: {
+          ok: true,
+          reason: "RENTED",
+          slug: "yeni-vitrin",
+          edit_token: "gizli-duzenleme-anahtari",
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { code: "tek-kullanimlik-kod" },
+        error: null,
+      });
 
     const response = await POST(
       new NextRequest("http://localhost/api/rent-demo/hesap", {
@@ -82,9 +88,16 @@ describe("hesaba bağlı vitrin kiralama sözleşmesi", () => {
     expect(await response.json()).toEqual({
       tamam: true,
       slug: "yeni-vitrin",
+      yonlendir:
+        "/api/owner-session?slug=yeni-vitrin&ocode=tek-kullanimlik-kod",
     });
-    expect(mockRpc).toHaveBeenCalledWith("rent_demo_for_account", {
+    expect(mockRpc).toHaveBeenNthCalledWith(1, "rent_demo_canonical", {
       p_source_slug: "kiralik-vitrin",
+      p_flow_type: "kiralama",
+    });
+    expect(mockRpc).toHaveBeenNthCalledWith(2, "create_owner_session", {
+      p_slug: "yeni-vitrin",
+      p_edit_token: "gizli-duzenleme-anahtari",
     });
   });
 });

@@ -47,11 +47,11 @@ class VitrinSahiplikRepository {
     return client.rpc('bootstrap_owner_state');
   }
 
-  /// `rent_demo_for_account` — demo vitrini kalıcı hesaba kiralar.
+  /// `rent_demo_canonical` — Flutter ve Next.js için tek kiralama zinciri.
   Future<dynamic> rentDemoForAccount(SupabaseClient client, String sourceSlug) {
     return client.rpc(
-      'rent_demo_for_account',
-      params: {'p_source_slug': sourceSlug},
+      'rent_demo_canonical',
+      params: {'p_source_slug': sourceSlug, 'p_flow_type': 'kiralama'},
     );
   }
 

@@ -162,13 +162,7 @@ function RentDemoIcerik() {
           return;
         }
 
-        const sahipOturumuYaniti = await fetch("/api/owner-session/self", {
-          method: "POST",
-          headers: { authorization: `Bearer ${session.access_token}` },
-        });
-        const sahipOturumu = await sahipOturumuYaniti.json().catch(() => ({}));
-
-        if (!sahipOturumuYaniti.ok || !sahipOturumu.yonlendir) {
+        if (!kiralamaSonucu.yonlendir) {
           setHataMesaji(
             "Vitrin hesabına bağlandı ancak sahip ekranı açılamadı. Vitrinine hesabından ulaşabilirsin."
           );
@@ -176,7 +170,10 @@ function RentDemoIcerik() {
           return;
         }
 
-        window.location.assign(String(sahipOturumu.yonlendir));
+        // API, Flutter'daki gibi kiralama + sahip oturumu zincirini tek
+        // işlemde tamamladı. Tarayıcı yalnız tek kullanımlık giriş adresine
+        // gider; edit_token istemciye taşınmaz.
+        window.location.assign(String(kiralamaSonucu.yonlendir));
         return;
       }
 
