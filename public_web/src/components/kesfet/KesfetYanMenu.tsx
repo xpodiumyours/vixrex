@@ -34,7 +34,7 @@ const MENU: Array<{
   href: string;
   ikon: ReactNode;
 }> = [
-  { etiket: "Vitrinim", href: "/app", ikon: <StorefrontIkonu boyut={20} /> },
+  { etiket: "Vitrinim", href: "/vitrinim", ikon: <StorefrontIkonu boyut={20} /> },
   { etiket: "Keşfet", href: "/kesfet", ikon: <KesfetIkonu boyut={20} /> },
   { etiket: "Vixrex", href: "#vixrex-asistan", ikon: <AsistanIkonu /> },
   { etiket: "Profil", href: "/app/profil", ikon: <KisiIkonu /> },
