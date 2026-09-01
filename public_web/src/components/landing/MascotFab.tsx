@@ -49,7 +49,7 @@ export function MascotFab({
   if (!parseConsentSnapshot(consentSnapshot)) return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-5 right-5 z-40 flex flex-col items-end gap-2">
+    <div className="pointer-events-none fixed bottom-[80px] min-[901px]:bottom-5 right-5 z-40 flex flex-col items-end gap-2">
       {/* Balon — tıklanınca da asistan açılır */}
       {mesajGoster ? (
         <p

@@ -192,13 +192,13 @@ export function KesfetIcerik({
         <MascotFab mesajGoster={false} onToggle={() => setAktifBolum("vixrex")} />
       ) : null}
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 pb-[72px] min-[901px]:pb-0">
         <StatusBar sahipSlug={sahipSlug} premium={premium} />
 
         {aktifBolum === "vixrex" ? (
           <SharedVixrexAssistant onBrowse={() => setAktifBolum("kesfet")} />
         ) : (
-          <section className="px-3 py-5" aria-labelledby="kesfet-baslik">
+          <section className="px-3 py-5 pb-[80px] min-[901px]:pb-5" aria-labelledby="kesfet-baslik">
         <div className="w-full">
           <h1 id="kesfet-baslik" className="text-[20px] font-black leading-tight text-lp-text">
             {baslik}

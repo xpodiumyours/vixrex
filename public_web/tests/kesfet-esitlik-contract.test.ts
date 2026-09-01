@@ -144,4 +144,54 @@ describe("Keşfet eşitlik sözleşmesi", () => {
   it("ana Keşfet sayfası canlı veriyi build sırasında istemez", () => {
     expect(webKaynak).toContain('export const dynamic = "force-dynamic"');
   });
+
+  it("mobil sabit alt menü aynı dört hedefle var — masaüstü gizli kuralı yakalar", () => {
+    const yanMenu = readFileSync(
+      resolve(__dirname, "../src/components/kesfet/KesfetYanMenu.tsx"),
+      "utf-8"
+    );
+    // Masaüstü menü 901px üstünde görünür
+    expect(yanMenu).toContain("min-[901px]:flex");
+    // Mobil menü 901px altında sabit ve masaüstünde gizli
+    expect(yanMenu).toContain("fixed");
+    expect(yanMenu).toContain("bottom-0");
+    expect(yanMenu).toContain("min-[901px]:hidden");
+    expect(yanMenu).toContain('aria-label="Mobil uygulama menüsü"');
+    // Aynı dört hedef mobilde de render ediliyor — yeni akış yok, mevcut MENU reuse
+    for (const etiket of ["Vitrinim", "Keşfet", "Vixrex", "Profil"]) {
+      expect(yanMenu).toContain(etiket);
+    }
+    // Mevcut akışlar korunuyor — /app, /kesfet, /app/profil ve Vixrex tetikleyici
+    expect(yanMenu).toContain('"/app"');
+    expect(yanMenu).toContain('"/kesfet"');
+    expect(yanMenu).toContain('"/app/profil"');
+    expect(yanMenu).toContain("vixrexAc");
+  });
+
+  it("mobil alt menü dört butonu da içerir", () => {
+    const yanMenu = readFileSync(
+      resolve(__dirname, "../src/components/kesfet/KesfetYanMenu.tsx"),
+      "utf-8"
+    );
+    // MENU dizisi tek kaynak — dört etiket de orada
+    const menuBlok = yanMenu.slice(yanMenu.indexOf("const MENU"));
+    for (const etiket of ["Vitrinim", "Keşfet", "Vixrex", "Profil"]) {
+      expect(menuBlok).toContain(`"${etiket}"`);
+    }
+    // Mobil nav MENU.map ile üretiliyor — ayrı hardcode menü yok
+    expect(yanMenu).toContain("MENU.map");
+    // Mobil nav fixed class'ı ile mobil boşluk ve maskot offset'i birlikte çalışır
+    const icerik = readFileSync(
+      resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"),
+      "utf-8"
+    );
+    expect(icerik).toContain("pb-[72px]");
+    expect(icerik).toContain("min-[901px]:pb-0");
+    const mascot = readFileSync(
+      resolve(__dirname, "../src/components/landing/MascotFab.tsx"),
+      "utf-8"
+    );
+    expect(mascot).toContain("bottom-[80px]");
+    expect(mascot).toContain("min-[901px]:bottom-5");
+  });
 });
