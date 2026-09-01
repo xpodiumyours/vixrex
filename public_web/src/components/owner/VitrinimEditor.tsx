@@ -8,6 +8,7 @@ import { KesfetYanMenu } from "@/components/kesfet/KesfetYanMenu";
 import { OnayIkonu, StorefrontIkonu } from "@/components/site/icons";
 import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
 import { safeParseJson } from "@/lib/products";
+import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
 import { OwnerProductManager, type OwnerProduct, type OwnerProductCategory } from "./OwnerProductManager";
 import { AboutEditor } from "@/app/v/[slug]/components/AboutEditor";
 import { CampaignEditor } from "@/app/v/[slug]/components/CampaignEditor";
@@ -47,6 +48,7 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
       { key: "isletmeTuru", label: "İşletme Türü", placeholder: "Örn: Butik" },
       { key: "kisaTanitim", label: "Kısa Açıklama", placeholder: "Bugün vitrinde ne var? Kısa bir tanıtım yaz.", kind: "textarea" },
       { key: "heroRozet", label: "Kapak Rozeti", placeholder: "Örn: Atölye / Mağaza" },
+      { key: "logo", label: "Logo", placeholder: "Logo görsel bağlantısı", kind: "url" },
     ],
   },
   {
@@ -64,9 +66,14 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
     required: true,
     fields: [
       { key: "adres", label: "Açık Adres", placeholder: "Mahalle, cadde, bina no", kind: "textarea", required: true },
+      { key: "il", label: "İl", placeholder: "Örn: İstanbul", required: true },
+      { key: "ilce", label: "İlçe", placeholder: "Örn: Kadıköy", required: true },
+      { key: "mahalle", label: "Mahalle", placeholder: "Örn: Caddebostan" },
       { key: "konumMetni", label: "Vitrin Konum Metni", placeholder: "Örn: Kadıköy, İstanbul" },
       { key: "haritaEtiketi", label: "Harita Kartı Etiketi", placeholder: "Örn: Çarşı içi" },
       { key: "calismaSaatleri", label: "Çalışma Saatleri", placeholder: "Pzt–Cmt 09.00–19.00", kind: "textarea" },
+      { key: "enlem", label: "Enlem", placeholder: "41.015", kind: "text" },
+      { key: "boylam", label: "Boylam", placeholder: "28.978", kind: "text" },
     ],
   },
   {
@@ -122,6 +129,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [legalAccepted, setLegalAccepted] = useState(() => Boolean(
     initialDraft.privacy_notice_version &&
     initialDraft.terms_version &&
@@ -146,9 +154,9 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
       return filled(draft[column]);
     }).length;
     const counts = [
-      { done: count(["isletmeAdi", "kategori", "isletmeTuru", "kisaTanitim", "heroRozet"]), total: 5 },
+      { done: count(["isletmeAdi", "kategori", "isletmeTuru", "kisaTanitim", "heroRozet", "logo"]), total: 6 },
       { done: count(["whatsapp", "telefon", "eposta", "instagram"]), total: 4 },
-      { done: count(["adres", "konumMetni", "haritaEtiketi", "calismaSaatleri"]), total: 4 },
+      { done: count(["adres", "il", "ilce", "mahalle", "konumMetni", "haritaEtiketi", "calismaSaatleri", "enlem", "boylam"]), total: 9 },
       { done: count(["kapakGorseli", "gallery_items", "galeriUstBaslik", "galeriBaslik", "galeriAksiyonMetni", "galeriAksiyonLinki"]), total: 6 },
       {
         done:
@@ -168,6 +176,8 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
     ["kategori", "Kategori"],
     ["whatsapp", "WhatsApp"],
     ["adres", "Adres"],
+    ["il", "İl"],
+    ["ilce", "İlçe"],
   ].filter(([key]) => !filled(valueFor(draft, key))).map(([, label]) => label);
 
   function updateLocal(key: string, value: string) {
@@ -235,30 +245,82 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
     }
   }
 
-  async function uploadCover(file: File) {
+  async function uploadGorsel(file: File, anahtar: string) {
     setUploading(true);
     setMessage("");
     try {
       const form = new FormData();
       form.append("slug", store.slug);
-      form.append("anahtar", "kapakGorseli");
+      form.append("anahtar", anahtar);
       form.append("dosya", file);
       const uploadResponse = await fetch("/api/owner-upload", { method: "POST", body: form });
       const uploadBody = await uploadResponse.json();
       if (!uploadResponse.ok) throw new Error(uploadBody?.hata ?? "Görsel yüklenemedi.");
-      updateLocal("kapakGorseli", uploadBody.url);
+      updateLocal(anahtar, uploadBody.url);
       const saveResponse = await fetch("/api/owner-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: store.slug, anahtar: "kapakGorseli", deger: uploadBody.url, clientId: null }),
+        body: JSON.stringify({ slug: store.slug, anahtar, deger: uploadBody.url, clientId: null }),
       });
       const saveBody = await saveResponse.json();
       if (!saveResponse.ok) throw new Error(saveBody?.hata ?? "Görsel kaydedilemedi.");
-      setMessage("Kapak görselin kaydedildi.");
+      setMessage(`${FIELD_BY_KEY.get(anahtar)?.etiket ?? "Görsel"} kaydedildi.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Görsel yüklenemedi.");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function uploadCover(file: File) {
+    return uploadGorsel(file, "kapakGorseli");
+  }
+
+  async function konumuAl() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setMessage("Tarayıcı konum desteği vermiyor.");
+      return;
+    }
+    setLocating(true);
+    setMessage("");
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 }),
+      );
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      updateLocal("enlem", lat);
+      updateLocal("boylam", lng);
+      // Enlem/boylamı hemen kaydet — tek tek save çağrısı gerekli (validateField sayi tipi)
+      await save("enlem");
+      await save("boylam");
+      try {
+        const cozum = await gpsAdresiniCoz(Number(lat), Number(lng));
+        if (cozum.provinceName) {
+          updateLocal("il", cozum.provinceName);
+          await save("il");
+        }
+        if (cozum.districtName) {
+          updateLocal("ilce", cozum.districtName);
+          await save("ilce");
+        }
+        // Adres boşsa reverse-geocode adresini doldur, doluysa dokunma (kullanıcı elle yazmış olabilir)
+        const mevcutAdres = valueFor(draft, "adres").trim();
+        if (!mevcutAdres && cozum.address) {
+          updateLocal("adres", cozum.address);
+          await save("adres");
+        }
+        // Mahalle reverse sonuçta suburb olarak gelebiliyor ama gpsAdresiniCoz mahalleyi ayrı döndürmüyor;
+        // adres içinde zaten var, ek alan olarak ayrıca doldurmuyoruz — kullanıcı gerekirse elle ekler
+        setMessage("Konum alındı — enlem/boylam ve il/ilçe güncellendi.");
+      } catch (e) {
+        setMessage(e instanceof Error ? e.message : "Konum alındı, adres çözümlenemedi. Enlem/boylam kaydedildi.");
+      }
+    } catch (e) {
+      const msg = e instanceof GeolocationPositionError ? e.message : "Konum alınamadı. İzin verin ve tekrar deneyin.";
+      setMessage(msg);
+    } finally {
+      setLocating(false);
     }
   }
 
@@ -366,17 +428,17 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
                             return (
                               <div key={field.key}>
                                 <label htmlFor={id} className="mb-2 block text-[12px] font-bold text-lp-muted">{field.label}{field.required ? <span className="text-lp-primary"> *</span> : null}</label>
-                                {field.key === "kapakGorseli" ? (
+                                {field.key === "kapakGorseli" || field.key === "logo" ? (
                                   <div className="space-y-3">
                                     {value ? (
                                       <div className="relative h-32 w-full overflow-hidden rounded-xl border border-lp-border">
-                                        <Image src={value} alt="Kapak önizlemesi" fill sizes="(max-width: 1024px) 100vw, 540px" className="object-cover" />
+                                        <Image src={value} alt={`${field.label} önizlemesi`} fill sizes="(max-width: 1024px) 100vw, 540px" className="object-cover" />
                                       </div>
                                     ) : null}
                                     <label htmlFor={id} className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-dashed border-lp-border bg-lp-surface px-4 text-[13px] font-black text-lp-secondary hover:border-lp-primary">
-                                      {uploading ? "Yükleniyor…" : value ? "Kapak görselini değiştir" : "Kapak görseli yükle"}
+                                      {uploading ? "Yükleniyor…" : value ? `${field.label} değiştir` : `${field.label} yükle`}
                                     </label>
-                                    <input id={id} type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadCover(file); }} className="sr-only" />
+                                    <input id={id} type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadGorsel(file, field.key); }} className="sr-only" />
                                   </div>
                                 ) : field.kind === "textarea" ? (
                                   <textarea id={id} value={value} placeholder={field.placeholder} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={`${common} min-h-24 resize-y py-3`} />
@@ -406,9 +468,14 @@ export function VitrinimEditor({ store, initialDraft, onRefresh }: Props) {
                               <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} onRefresh={onRefresh} />
                             </div>
                           ) : null}
-                          {section.title === "Görseller" ? (
-                            <button type="button" onClick={() => setActiveEditor("gallery")} className={`${editorButtonClass} w-full`}>Galeriyi düzenle ({galleryItems.length})</button>
-                          ) : null}
+                           {section.title === "Konum ve saatler" ? (
+                             <button type="button" onClick={() => void konumuAl()} disabled={locating} className={`${editorButtonClass} w-full`}>
+                               {locating ? "Konum alınıyor…" : "📍 Konumumu al (GPS)"}
+                             </button>
+                           ) : null}
+                           {section.title === "Görseller" ? (
+                             <button type="button" onClick={() => setActiveEditor("gallery")} className={`${editorButtonClass} w-full`}>Galeriyi düzenle ({galleryItems.length})</button>
+                           ) : null}
                         </div>
                       ) : null}
                     </section>

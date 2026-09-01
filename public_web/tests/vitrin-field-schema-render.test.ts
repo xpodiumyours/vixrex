@@ -93,4 +93,19 @@ describe("F0 — bölüm ve form iskeleti kilidi (Flutter = Next.js)", () => {
     expect(bolumZorunluSayisi).toBe(3);
     expect(flutterFormSource).toContain("isRequired: index <= MyVitrinState.locationSectionIndex");
   });
+
+  it("F2 — VitrinimEditor eksik alanlar eklendi (il/ilce/mahalle/logo/enlem/boylam)", () => {
+    // F2: Flutter paritesi için Next’e taşınması kararlaştırılan 6 alan
+    for (const key of ["il", "ilce", "mahalle", "logo", "enlem", "boylam"]) {
+      expect(vitrinEditorSource, `VitrinimEditor ${key} içermeli`).toContain(`key: "${key}"`);
+    }
+    // GPS butonu ve reverse-geocode entegrasyonu
+    expect(vitrinEditorSource).toContain("konumuAl");
+    expect(vitrinEditorSource).toContain("gpsAdresiniCoz");
+    // Logo upload genelleştirildi
+    expect(vitrinEditorSource).toContain('uploadGorsel');
+    // Progress ve missing listte yeni zorunlu alanlar
+    expect(vitrinEditorSource).toContain('count(["adres", "il", "ilce"');
+    expect(vitrinEditorSource).toContain('["il", "İl"]');
+  });
 });
