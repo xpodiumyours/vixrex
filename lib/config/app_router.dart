@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/legal_config.dart';
+import 'package:vixrex/config/web_navigate_stub.dart'
+    if (dart.library.html) 'package:vixrex/config/web_navigate_web.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/screens/auth_screen.dart';
@@ -156,6 +159,12 @@ class AppRouter {
     final uri = Uri.tryParse(url.trim());
     if (uri == null) return false;
 
+    // Web'de aynı sekmede aç — mobilde dış tarayıcıda.
+    if (kIsWeb) {
+      webNavigateImpl(uri.toString());
+      return true;
+    }
+
     var launched = false;
     try {
       launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -170,6 +179,8 @@ class AppRouter {
     }
     return launched;
   }
+
+
 
   // Centralized Navigators using GoRouter with standard Navigator fallbacks for isolated testing
   static void navigateToLanding(BuildContext context) {

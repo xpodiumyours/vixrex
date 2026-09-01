@@ -83,7 +83,7 @@ class PublicSiteConfig {
   static String buildRentDemoLink(String demoSlug) {
     final trimmed = demoSlug.trim();
     if (trimmed.isEmpty) return buildPublicLink('/rent-demo');
-    final query = Uri(queryParameters: {'slug': trimmed}).query;
+    final query = Uri(queryParameters: {'slug': trimmed, 'hesap': '1'}).query;
     return '${buildPublicLink('/rent-demo')}?$query';
   }
 
