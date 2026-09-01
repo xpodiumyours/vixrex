@@ -29,11 +29,20 @@ export default function HesapPage() {
 
   useEffect(() => {
     async function init() {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const session = sessionData.session;
+      let { data: sessionData } = await supabase.auth.getSession();
+      let session = sessionData.session;
       if (!session) {
-        router.replace("/giris");
-        return;
+        try {
+          const { data: anonData } = await supabase.auth.signInAnonymously();
+          if (anonData?.session) session = anonData.session;
+          else {
+            router.replace("/giris");
+            return;
+          }
+        } catch {
+          router.replace("/giris");
+          return;
+        }
       }
       setEmail(session.user.email ?? "");
 

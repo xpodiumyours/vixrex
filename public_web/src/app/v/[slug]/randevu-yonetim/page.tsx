@@ -103,12 +103,21 @@ export default function RandevuYonetimPage() {
   const randevulariGetir = useCallback(async () => {
     setHata(null);
 
-    const {
+    let {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) {
-      router.push("/giris");
-      return;
+      try {
+        const { data: anonData } = await supabase.auth.signInAnonymously();
+        if (anonData?.session) session = anonData.session;
+        else {
+          router.push("/giris");
+          return;
+        }
+      } catch {
+        router.push("/giris");
+        return;
+      }
     }
 
     try {
@@ -165,10 +174,18 @@ export default function RandevuYonetimPage() {
   ) {
     setIslemYapiliyor(appointmentId);
 
-    const {
+    let {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      try {
+        const { data: anonData } = await supabase.auth.signInAnonymously();
+        if (anonData?.session) session = anonData.session;
+        else return;
+      } catch {
+        return;
+      }
+    }
 
     try {
       const res = await fetch("/api/appointments", {

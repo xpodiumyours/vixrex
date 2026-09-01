@@ -27,10 +27,19 @@ export default function ProfilPage() {
 
   useEffect(() => {
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
+      let { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        router.push("/giris");
-        return;
+        try {
+          const { data: anonData } = await supabase.auth.signInAnonymously();
+          if (anonData?.session) session = anonData.session;
+          else {
+            router.push("/giris");
+            return;
+          }
+        } catch {
+          router.push("/giris");
+          return;
+        }
       }
       setUser(session.user);
 

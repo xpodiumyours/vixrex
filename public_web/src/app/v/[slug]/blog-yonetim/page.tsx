@@ -49,12 +49,21 @@ export default function BlogYonetimPage() {
   const yaziListesiniGetir = useCallback(async () => {
     setHata(null);
 
-    const {
+    let {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) {
-      router.push("/giris");
-      return;
+      try {
+        const { data: anonData } = await supabase.auth.signInAnonymously();
+        if (anonData?.session) session = anonData.session;
+        else {
+          router.push("/giris");
+          return;
+        }
+      } catch {
+        router.push("/giris");
+        return;
+      }
     }
 
     try {
@@ -106,12 +115,21 @@ export default function BlogYonetimPage() {
     if (!yeniBaslik.trim()) return;
     setOlusturuyor(true);
 
-    const {
+    let {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) {
-      router.push("/giris");
-      return;
+      try {
+        const { data: anonData } = await supabase.auth.signInAnonymously();
+        if (anonData?.session) session = anonData.session;
+        else {
+          router.push("/giris");
+          return;
+        }
+      } catch {
+        router.push("/giris");
+        return;
+      }
     }
 
     try {
@@ -136,10 +154,18 @@ export default function BlogYonetimPage() {
   async function yaziSil(articleId: string) {
     if (!window.confirm("Bu yazıyı silmek istediğinden emin misin?")) return;
 
-    const {
+    let {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      try {
+        const { data: anonData } = await supabase.auth.signInAnonymously();
+        if (anonData?.session) session = anonData.session;
+        else return;
+      } catch {
+        return;
+      }
+    }
 
     try {
       const res = await fetch("/api/articles", {
