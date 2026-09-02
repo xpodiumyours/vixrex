@@ -536,7 +536,7 @@ export function LandingAsistanSohbeti({
                 aria-describedby={hata ? "asistan-konum-hata" : undefined}
                 value={il}
                 onChange={(e) => { setIl(e.target.value); setIlce(""); setHata(""); }}
-                className="mt-1.5 w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-3 text-[13px] font-semibold text-lp-text"
+                className="mt-1.5 min-h-[48px] w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-3 text-[13px] font-semibold text-lp-text"
               >
                 <option value="">İl seçiniz</option>
                 {turkeyProvinces.map((p) => (
@@ -555,7 +555,7 @@ export function LandingAsistanSohbeti({
                 value={ilce}
                 onChange={(e) => { setIlce(e.target.value); setHata(""); }}
                 disabled={!il}
-                className="mt-1.5 w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-3 text-[13px] font-semibold text-lp-text disabled:opacity-50"
+                className="mt-1.5 min-h-[48px] w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-3 text-[13px] font-semibold text-lp-text disabled:opacity-50"
               >
                 <option value="">{il ? "İlçe seçiniz" : "Önce il seçiniz"}</option>
                 {getDistrictsForProvince(il).map((d) => (
@@ -574,7 +574,7 @@ export function LandingAsistanSohbeti({
                 value={adres}
                 onChange={(e) => { setAdres(e.target.value); if (hata) setHata(""); }}
                 placeholder="Örn: Çatalmeşe Mah. 207. Sokak No: 12"
-                className="mt-1.5 w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-3 text-[13px] font-semibold text-lp-text outline-none placeholder:text-white/40"
+                className="mt-1.5 min-h-[48px] w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-3 text-[13px] font-semibold text-lp-text outline-none placeholder:text-white/40"
               />
               <p id="asistan-adres-ipucu" className="sr-only">Örnek adres</p>
             </div>
@@ -776,7 +776,7 @@ function Balon({ children }: { children: React.ReactNode }) {
           className="h-5 w-5 object-contain"
         />
       </div>
-      <div className="max-w-[260px] rounded-xl rounded-tl-sm border border-lp-primary/20 bg-lp-primary/[0.08] px-3.5 py-3 text-[13px] leading-[1.5] text-lp-text">
+      <div className="max-w-[260px] rounded-xl rounded-tl-sm border border-lp-primary/20 bg-lp-primary/[0.08] px-3.5 py-3 text-[14px] leading-[1.5] text-lp-text">
         {children}
       </div>
     </div>
