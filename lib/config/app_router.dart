@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/legal_config.dart';
 import 'package:vixrex/config/web_navigate_stub.dart'
-    if (dart.library.html) 'package:vixrex/config/web_navigate_web.dart';
+    if (dart.library.js_interop) 'package:vixrex/config/web_navigate_web.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/screens/auth_screen.dart';
