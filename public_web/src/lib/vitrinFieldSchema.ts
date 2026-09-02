@@ -93,6 +93,20 @@ export interface VitrinField {
    * (kategoriye bağlı hiçbir şey çalışmaz). `doluMu()` bunu okur.
    */
   bosDegerler?: readonly string[];
+  /**
+   * Faz D (Tek Asistan planı, 2026-09-02): bu alan asistan tarafından
+   * kategoriye göre otomatik doldurulabilir mi — kiralanan bir şablonu
+   * işletmeye uyarlarken "8'ini ben hazırladım" dediği alanlar bunlar.
+   *
+   * Kural seti (kullanıcı onayıyla): yalnız YAPISAL/kozmetik alanlar
+   * otomatik — gerçek işletme kimliği (ad, iletişim, adres, saatler,
+   * logo, ürünler), sahte olamayacak "hikaye" metni (hakkındaMetin) ve
+   * yanlışsa utandırıcı olan ince ayrımlar (işletmeTuru) HİÇBİR ZAMAN
+   * otomatik doldurulmaz — bkz. otomatikVitrinIcerik.ts başındaki not.
+   * Kampanya bandı (bant*) da otomatik DEĞİL: gerçek kampanya yoksa
+   * asistan sahte fiyat/indirim yazmaz, bölümü kapalı bırakır.
+   */
+  otomatikDoldurulabilir?: boolean;
 }
 
 export const VITRIN_FIELDS: readonly VitrinField[] = [
@@ -118,6 +132,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kalite: true,
     maxUzunluk: 60,
     ipucu: "Örn: Profesyonel Teknik Servis / Kadıköy",
+    otomatikDoldurulabilir: true,
   },
   {
     anahtar: "kisaTanitim",
@@ -127,6 +142,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "description",
     bolum: "hero",
     maxUzunluk: 300,
+    otomatikDoldurulabilir: true,
   },
   {
     anahtar: "konumMetni",
@@ -180,6 +196,9 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "shelf_image_url",
     bolum: "hero",
     kalite: true,
+    // Mevcut hazirGorseller/kategori görsel önerisi mekanizmasından
+    // doldurulur — gerçek fotoğraf yüklenene kadar makul bir yer tutucu.
+    otomatikDoldurulabilir: true,
   },
 
   // ── İletişim ──────────────────────────────────────────────────────────
@@ -334,6 +353,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "category_section_title",
     bolum: "categories",
     maxUzunluk: 60,
+    otomatikDoldurulabilir: true,
   },
   {
     anahtar: "urunBolumBaslik",
@@ -343,6 +363,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "product_section_title",
     bolum: "products",
     maxUzunluk: 60,
+    otomatikDoldurulabilir: true,
   },
 
   // ── Öne çıkan kampanya bandı ──────────────────────────────────────────
@@ -410,6 +431,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     bolum: "about",
     maxUzunluk: 90,
     kalite: true,
+    otomatikDoldurulabilir: true,
   },
   {
     anahtar: "hakkindaMetin",
@@ -448,6 +470,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "gallery_section_kicker",
     bolum: "gallery",
     maxUzunluk: 40,
+    otomatikDoldurulabilir: true,
   },
   {
     anahtar: "galeriBaslik",
@@ -457,6 +480,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "gallery_section_title",
     bolum: "gallery",
     maxUzunluk: 90,
+    otomatikDoldurulabilir: true,
   },
   {
     anahtar: "galeriAksiyonMetni",
@@ -466,6 +490,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "gallery_action_label",
     bolum: "gallery",
     maxUzunluk: 40,
+    otomatikDoldurulabilir: true,
   },
   {
     anahtar: "galeriAksiyonLinki",
@@ -485,6 +510,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "blog_section_kicker",
     bolum: "blog",
     maxUzunluk: 40,
+    otomatikDoldurulabilir: true,
   },
   {
     anahtar: "blogBaslik",
@@ -494,6 +520,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "blog_section_title",
     bolum: "blog",
     maxUzunluk: 90,
+    otomatikDoldurulabilir: true,
   },
 
   // ── SSS ───────────────────────────────────────────────────────────────
@@ -505,6 +532,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "faq_section_kicker",
     bolum: "faq",
     maxUzunluk: 40,
+    otomatikDoldurulabilir: true,
   },
   {
     anahtar: "sssBaslik",
@@ -514,6 +542,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "faq_section_title",
     bolum: "faq",
     maxUzunluk: 90,
+    otomatikDoldurulabilir: true,
   },
   {
     anahtar: "sssAciklama",
@@ -523,6 +552,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     kolon: "faq_section_description",
     bolum: "faq",
     maxUzunluk: 200,
+    otomatikDoldurulabilir: true,
   },
 
   // ── Görünürlük ────────────────────────────────────────────────────────
