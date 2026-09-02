@@ -40,18 +40,23 @@ export function KesfetIcerik({
   vitrinler,
   ilkSahipSlug = null,
   sadeceKiralik = false,
+  ilkKategoriKimligi = null,
   baslik,
   aciklama,
 }: {
   vitrinler: KesfetVitrini[];
   ilkSahipSlug?: string | null;
   sadeceKiralik?: boolean;
+  /** Faz B (Tek Asistan planı): asistan "Ne iş yapıyorsun?" cevabından
+   * `/kesfet?kategori=...` ile gelindiyse ilk açılışta bu kategori seçili
+   * gelsin — kullanıcı elle tekrar filtre uygulamak zorunda kalmasın. */
+  ilkKategoriKimligi?: string | null;
   baslik: string;
   aciklama: string;
 }) {
   const [sorgu, setSorgu] = useState("");
   const [grup, setGrup] = useState<BusinessTemplateGroup | undefined>(undefined);
-  const [kategoriKimligi, setKategoriKimligi] = useState<string | null>(null);
+  const [kategoriKimligi, setKategoriKimligi] = useState<string | null>(ilkKategoriKimligi);
   const [sadeceFavoriler, setSadeceFavoriler] = useState(false);
   const [favoriAdlari, setFavoriAdlari] = useState<string[]>([]);
   const [sahipSlug, setSahipSlug] = useState<string | null>(ilkSahipSlug);

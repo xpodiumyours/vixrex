@@ -79,15 +79,21 @@ describe("balon klavyeyi biliyor", () => {
 });
 
 describe("maskot rehberi başlatır, haritayı değil", () => {
-  it("mobilde Vixrex düğmesi haritayı AÇMAZ", () => {
+  it("Vixrex düğmesi haritayı AÇMAZ (masaüstünde de) — Faz A, Tek Asistan planı", () => {
     // Casper, 2026-08-22: "mobilde asistan maskota tıklayınca yine sayfa
     // kapanıyor". Düğme haritayı da açıyordu, harita mobilde tam ekran.
-    expect(panel).toContain("setHaritaAcik(yeni && (masaustu || !yapilacakVar))");
+    // Faz A (2026-09-02): masaüstünde de artık otomatik açmıyor —
+    // SpotlightGuide varsayılan yol, harita yalnız ☰ ile elle açılır.
+    expect(panel).toContain("setHaritaAcik(yeni && !yapilacakVar)");
     expect(panel).not.toContain("setHaritaAcik(yeni);");
   });
 
-  it("doldurulacak alan kalmadıysa mobilde harita açılır", () => {
+  it("doldurulacak alan kalmadıysa harita açılır", () => {
     // Yoksa asistan açılıyor ama ekranda hiçbir şey görünmüyor gibi olur.
-    expect(panel).toContain("setHaritaAcik(yeni && (masaustu || !yapilacakVar))");
+    expect(panel).toContain("setHaritaAcik(yeni && !yapilacakVar)");
+  });
+
+  it("aktif akışta masaüstünde artık otomatik harita açılmıyor", () => {
+    expect(panel).not.toContain("setHaritaAcik(isDesktop)");
   });
 });

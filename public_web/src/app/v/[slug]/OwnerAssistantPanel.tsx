@@ -91,12 +91,12 @@ export default function OwnerAssistantPanel({
     return () => sorgu.removeEventListener("change", guncelle);
   }, []);
 
-  // PR4-C14: aktif kurulum/kiralama akışı varsa asistan açık ve sıradaki alan odaklı başlar
+  // PR4-C14: aktif kurulum/kiralama akışı varsa asistan açık ve sıradaki alan odaklı başlar.
+  // Faz A (Tek Asistan planı, 2026-09-02): harita artık burada otomatik açılmıyor —
+  // SpotlightGuide varsayılan yol, harita yalnız "Tüm alanlar" (☰) ile elle açılır.
   useEffect(() => {
     if (flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step) {
       setAcik(true);
-      const isDesktop = window.matchMedia("(min-width: 640px)").matches;
-      setHaritaAcik(isDesktop);
     }
   }, [flowState]);
 
@@ -347,19 +347,18 @@ export default function OwnerAssistantPanel({
         onClick={() => {
           const yeni = !acik;
           setAcik(yeni);
-          // MOBİLDE harita açılmaz (Casper, 2026-08-22: "asistan maskotuna
-          // tıklayınca yine sayfa kapanıyor"). Maskot rehberi başlatır:
-          // aşağıdaki etki ilk eksik alanı seçer, sayfada sembol ve balon
-          // görünür, vitrin görünür kalır. Harita yalnız balondaki ☰ ile
-          // açılır. Masaüstünde harita yan panel, sayfayı kapatmıyor.
+          // Harita açılmaz (Faz A, Tek Asistan planı, 2026-09-02): maskot
+          // rehberi başlatır, aşağıdaki etki ilk eksik alanı seçer, sayfada
+          // sembol ve balon görünür, vitrin görünür kalır. Harita yalnız
+          // balondaki ☰ ile ("Tüm alanlar") elle açılır — masaüstünde de.
           //
           // Tek istisna: doldurulacak alan kalmadıysa seçilecek bir şey de
-          // yok — o zaman mobilde de harita açılır, yoksa asistan açılmış
+          // yok — o zaman harita otomatik açılır, yoksa asistan açılmış
           // ama ekranda hiçbir şey yokmuş gibi görünürdü.
           const yapilacakVar = Boolean(
             sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar),
           );
-          setHaritaAcik(yeni && (masaustu || !yapilacakVar));
+          setHaritaAcik(yeni && !yapilacakVar);
         }}
         className="fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition"
         aria-label="Vixrex Asistan"

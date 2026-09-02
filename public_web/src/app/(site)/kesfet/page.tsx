@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { KesfetIcerik } from "@/components/kesfet/KesfetIcerik";
 import { kesfetVitrinleriniGetir } from "@/lib/explore";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import { kategoriUrlParcasindanCoz } from "@/lib/businessCategories";
 
 /**
  * Keşfet dizini (#344).
@@ -33,11 +34,18 @@ export const metadata: Metadata = {
   },
 };
 
-type Props = { searchParams: Promise<{ yalniz_kiralik?: string }> };
+type Props = { searchParams: Promise<{ yalniz_kiralik?: string; kategori?: string }> };
 
 export default async function KesfetPage({ searchParams }: Props) {
   const vitrinler = await kesfetVitrinleriniGetir();
-  const sadeceKiralik = (await searchParams).yalniz_kiralik === "1";
+  const params = await searchParams;
+  const sadeceKiralik = params.yalniz_kiralik === "1";
+  // Faz B (Tek Asistan planı): asistan "Ne iş yapıyorsun?" cevabından
+  // buraya `?kategori=<kanonik-veya-tire-id>` ile yönlendirir. Bilinmeyen
+  // değer sessizce yoksayılır — sayfa filtresiz açılır, hata vermez.
+  const ilkKategoriKimligi = params.kategori
+    ? (kategoriUrlParcasindanCoz(params.kategori)?.id ?? null)
+    : null;
   const sahipCerezi = (await cookies()).get(OWNER_SESSION_COOKIE)?.value;
   const ilkSahipSlug = sahipCerezi
     ? vitrinler.find((vitrin) => verifyOwnerSession(sahipCerezi, vitrin.slug))?.slug ?? null
@@ -48,6 +56,7 @@ export default async function KesfetPage({ searchParams }: Props) {
       vitrinler={vitrinler}
       ilkSahipSlug={ilkSahipSlug}
       sadeceKiralik={sadeceKiralik}
+      ilkKategoriKimligi={ilkKategoriKimligi}
       baslik={sadeceKiralik ? "Hazır Vitrin Seç" : "Vixrex'leri Keşfet"}
       aciklama={
         sadeceKiralik
