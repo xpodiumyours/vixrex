@@ -440,13 +440,15 @@ const List<VitrinAlani> vitrinAlanlari = [
 
 /// Yayın için doldurulması ZORUNLU alanlar — şemadan gelir.
 /// Elle liste tutulmaz; şemada zorunlu işaretlemek yeter.
-final List<VitrinAlani> zorunluAlanlar =
-    vitrinAlanlari.where((a) => a.zorunlu).toList();
+final List<VitrinAlani> zorunluAlanlar = vitrinAlanlari
+    .where((a) => a.zorunlu)
+    .toList();
 
 /// Zorunlu değil ama vitrini kaliteye çıkaran alanlar — şemadan
 /// gelir. Elle liste tutulmaz; şemada kalite işaretlemek yeter.
-final List<VitrinAlani> kaliteAlanlari =
-    vitrinAlanlari.where((a) => a.kalite).toList();
+final List<VitrinAlani> kaliteAlanlari = vitrinAlanlari
+    .where((a) => a.kalite)
+    .toList();
 
 /// Anahtardan alana hızlı erişim.
 final Map<String, VitrinAlani> alanAnahtarla = {
