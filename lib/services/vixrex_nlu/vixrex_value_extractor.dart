@@ -23,7 +23,10 @@ class VixrexValueExtractor {
     }
 
     // Faz 1 emniyeti: sadece alan adı + fiil/yanlış gibi değersiz cümleler netleştirme için null.
-    if (_isFieldOnlyWithoutValue(raw, alan)) return null;
+    if (_isFieldOnlyWithoutValue(raw, alan)) {
+      // print('isFieldOnlyWithoutValue true for $raw / ${alan.anahtar}');
+      return null;
+    }
 
     // 1) Tırnak içi – en güvenilir.
     final quoted = _extractQuoted(raw);
@@ -115,45 +118,57 @@ class VixrexValueExtractor {
   }
 
   String? _extractAfterColon(String input, VixrexNiyetAlan alan) {
-    // Basit ":" / "=" sonrası – ama "No:24" içindeki ":" değil.
-    final idxColon = input.indexOf(':');
-    final idxEq = input.indexOf('=');
-    int idx = -1;
-    if (idxColon != -1 && idxEq != -1) {
-      idx = idxColon < idxEq ? idxColon : idxEq;
-    } else if (idxColon != -1) {
-      idx = idxColon;
-    } else if (idxEq != -1) {
-      idx = idxEq;
+    // Sadece alan adından hemen sonra gelen ":" / "=" – "https://" ve "?q=" içindeki değil.
+    final normInput = VixrexNormalizer.normalize(input);
+    String? bestEa;
+    int bestLen = -1;
+    int bestIdx = -1;
+    for (final ea in alan.esAnlamlar) {
+      final normEa = VixrexNormalizer.normalize(ea);
+      final idx = normInput.indexOf(normEa);
+      if (idx != -1 && normEa.length > bestLen) {
+        bestEa = ea;
+        bestLen = normEa.length;
+        bestIdx = idx;
+      }
+    }
+    if (bestEa == null || bestIdx == -1) return null;
+    // Normalized index ile orijinalde yaklaşık bitişi bul (Türkçe İ/i için RegExp güvenilmez)
+    int fieldEnd = bestIdx + bestLen;
+    if (fieldEnd > input.length) fieldEnd = input.length;
+    // Gerçek input'ta alan adından sonraki ":" aranır – normalize uzunluğu aynı olduğu için yaklaşık doğru.
+    // Küçük sapma için 2 karakter toleransla ara.
+    String afterField;
+    if (fieldEnd < input.length) {
+      afterField = input.substring(fieldEnd).trimLeft();
+      // Eğer afterField ":" ile başlamıyorsa, 2 karakter geri/ileri ara (örn. "nı" eki nedeniyle 2 sapma)
+      if (!afterField.startsWith(':') && !afterField.startsWith('=')) {
+        // 2 karakter geri dene
+        final altEnd = (fieldEnd - 2).clamp(0, input.length);
+        final alt = input.substring(altEnd).trimLeft();
+        if (alt.startsWith(':') || alt.startsWith('=')) {
+          afterField = alt;
+        } else {
+          // 2 karakter ileri dene
+          final alt2 = fieldEnd + 2 <= input.length ? input.substring(fieldEnd + 2).trimLeft() : '';
+          if (alt2.startsWith(':') || alt2.startsWith('=')) {
+            afterField = alt2;
+          } else {
+            return null;
+          }
+        }
+      }
     } else {
       return null;
     }
-    final beforeColon = input.substring(0, idx).trim();
-    final after = input.substring(idx + 1).trim();
+    if (afterField.isEmpty) return null;
+    if (!afterField.startsWith(':') && !afterField.startsWith('=')) return null;
+    final sep = afterField[0];
+    final after = afterField.substring(1).trim();
     if (after.isEmpty) return null;
-    // "No:24" içindeki ":" alan ayracı değil – adresin parçası.
-    if (beforeColon.toLowerCase().endsWith('no') || beforeColon.toLowerCase().endsWith('no.') || beforeColon.length > 40) {
-      // Eğer beforeColon içinde alan adı yoksa ve "no" ise, ayraç değil.
-      // Ama "İşletme adı: Aymira" gibi durumda beforeColon = "İşletme adı" -> uzun ama alan adı içerir, ayraçtır.
-      // Bu yüzden sadece "no" ile biten ve alan adı içermeyen durumda null.
-      final normBefore = VixrexNormalizer.normalize(beforeColon);
-      bool hasField = false;
-      for (final ea in alan.esAnlamlar) {
-        if (normBefore.contains(VixrexNormalizer.normalize(ea))) {
-          hasField = true;
-          break;
-        }
-      }
-      if (!hasField) return null;
-      // Alan adı varsa bile "No" ile bitiyorsa (adres içindeki No:) – ayraç değil, değerin parçası.
-      if (beforeColon.toLowerCase().trim().endsWith('no') || beforeColon.toLowerCase().trim().endsWith('no.')) {
-        return null;
-      }
-    }
-    // ":" sonrası da tırnak içinde olabilir.
+    if (sep == ':' && after.startsWith('//')) return null;
     final quotedAfter = _extractQuoted(after);
     if (quotedAfter != null && quotedAfter.trim().isNotEmpty) return quotedAfter.trim();
-    // Alan adını temizle (": Aymira" → "Aymira")
     final cleaned = _stripFieldMention(after, alan);
     if (cleaned.isNotEmpty) return cleaned;
     return after;

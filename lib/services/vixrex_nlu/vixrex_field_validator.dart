@@ -143,8 +143,27 @@ class VixrexFieldValidator {
       case 'il':
       case 'ilce':
         return 60;
+      case 'mahalle':
+        return 60;
+      case 'haritaEtiketi':
+        return 120;
+      case 'calismaSaatleri':
+        return 400;
+      case 'instagram':
+        return 30;
+      case 'haritaLinki':
+        return 2000;
+      case 'hakkindaBaslik':
+        return 90;
+      case 'hakkindaMetin':
+        return 1200;
       case 'kategori':
         return 40;
+      case 'logo':
+      case 'kapakGorseli':
+      case 'bantGorsel':
+      case 'hakkindaGorsel':
+        return 2000;
       default:
         return null;
     }

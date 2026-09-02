@@ -75,43 +75,39 @@ function extractBetweenFieldAndVerb(input: string, alan: VixrexNiyetAlan): strin
 }
 
 function extractAfterColon(input: string, alan?: VixrexNiyetAlan): string | null {
-  const idxColon = input.indexOf(":");
-  const idxEq = input.indexOf("=");
-  let idx = -1;
-  if (idxColon !== -1 && idxEq !== -1) idx = Math.min(idxColon, idxEq);
-  else if (idxColon !== -1) idx = idxColon;
-  else if (idxEq !== -1) idx = idxEq;
-  else return null;
-  const before = input.slice(0, idx).trim();
-  const after = input.slice(idx + 1).trim();
+  if (!alan) return null;
+  const normInput = vixrexNormalizeDartParity(input);
+  let bestEa: string | null = null;
+  let bestLen = -1;
+  let bestIdx = -1;
+  for (const ea of alan.esAnlamlar) {
+    const n = vixrexNormalizeDartParity(ea);
+    const idx = normInput.indexOf(n);
+    if (idx !== -1 && n.length > bestLen) { bestEa = ea; bestLen = n.length; bestIdx = idx; }
+  }
+  if (!bestEa || bestIdx === -1) return null;
+  let fieldEnd = bestIdx + bestLen;
+  if (fieldEnd > input.length) fieldEnd = input.length;
+  let afterField = input.slice(fieldEnd).trimStart();
+  if (!afterField.startsWith(":") && !afterField.startsWith("=")) {
+    const altEnd = Math.max(0, fieldEnd - 2);
+    const alt = input.slice(altEnd).trimStart();
+    if (alt.startsWith(":") || alt.startsWith("=")) afterField = alt;
+    else {
+      const alt2 = fieldEnd + 2 <= input.length ? input.slice(fieldEnd + 2).trimStart() : "";
+      if (alt2.startsWith(":") || alt2.startsWith("=")) afterField = alt2;
+      else return null;
+    }
+  }
+  if (!afterField.startsWith(":") && !afterField.startsWith("=")) return null;
+  const sep = afterField[0];
+  const after = afterField.slice(1).trim();
   if (!after) return null;
-  if (before.toLowerCase().endsWith("no") || before.toLowerCase().endsWith("no.")) {
-    if (alan) {
-      const nb = vixrexNormalizeDartParity(before);
-      let hasField = false;
-      for (const ea of alan.esAnlamlar) if (nb.includes(vixrexNormalizeDartParity(ea))) { hasField = true; break; }
-      if (!hasField) return null;
-      if (before.toLowerCase().trim().endsWith("no") || before.toLowerCase().trim().endsWith("no.")) return null;
-    } else {
-      // adres içindeki No: – ayraç değil
-      if (/no\s*$/i.test(before)) return null;
-    }
-  }
-  if (before.length > 40) {
-    // Uzun beforeColon + No değilse, yine de alan adı var mı kontrol et
-    if (alan) {
-      const nb = vixrexNormalizeDartParity(before);
-      let hasField = false;
-      for (const ea of alan.esAnlamlar) if (nb.includes(vixrexNormalizeDartParity(ea))) { hasField = true; break; }
-      if (!hasField) return null;
-    }
-  }
+  if (sep === ":" && after.startsWith("//")) return null;
   const q = extractQuoted(after);
   if (q && q.trim()) return q.trim();
-  if (alan) {
-    const cleaned = stripFieldMention(after, alan);
-    if (cleaned) return cleaned;
-  }
+  const cleaned = stripFieldMention(after, alan);
+  if (cleaned) return cleaned;
   return after;
 }
 function extractBeforeVerb(input: string): string | null {

@@ -21,6 +21,8 @@ import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_session_controller.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/vixrex_promotion_service.dart';
+import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_executor.dart';
 import 'package:vixrex/widgets/chatbot_badge.dart';
 import 'package:vixrex/widgets/editor/qr_code_bottom_sheet.dart';
 import 'package:vixrex/widgets/shell/shell_sidebar.dart';
@@ -362,7 +364,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     setState(() => _dismissedVixRexRecommendationId = recommendationId);
   }
 
-  // Faz 1 – 46 alan borusu: genel alan güncelleme (yeni)
+  // Faz 1–2 – 46 alan borusu: genel alan güncelleme (yeni)
   void _handleVixRexUpdateField(String anahtar, Object? deger) {
     final editorController = _myVitrinKey.currentState?.controller;
     if (editorController == null) {
@@ -371,17 +373,27 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       );
       return;
     }
-    // Yasal alanlar bu borudan yasak – mevcut legal akışa yönlendirme gerekmez (sözlükte yok).
-    // Özel akış: il/ilce listeden seçilmeli – burada serbest metinle yazmayı denemeyip yönlendir.
-    if (anahtar == 'il' || anahtar == 'ilce') {
-      _vixrexScrollToAction(VixRexAction.scrollToAddress);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('İl/İlçe listeden seçilmeli – adres bölümüne yönlendirildin.'), duration: Duration(seconds: 2)),
-      );
-      return;
+    final alan = vixrexNiyetAlanByAnahtar[anahtar];
+    if (alan != null) {
+      final ok = const VixrexExecutor().execute(controller: editorController, alan: alan, deger: deger);
+      if (ok) {
+        editorController.saveLocally();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kaydedildi: ${alan.etiket}'), duration: const Duration(seconds: 2)),
+        );
+        return;
+      }
+      // Executor false → özel akış (il/ilce)
+      if (anahtar == 'il' || anahtar == 'ilce') {
+        _vixrexScrollToAction(VixRexAction.scrollToAddress);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('İl/İlçe listeden seçilmeli – adres bölümüne yönlendirildin.'), duration: Duration(seconds: 2)),
+        );
+        return;
+      }
     }
+    // Fallback: eski yol
     try {
-      // deger String/num/bool olabilir – VixrexExecutor ile aynı mantık.
       if (deger is bool) {
         editorController.updateField(anahtar, deger);
       } else if (deger is num) {
@@ -389,7 +401,6 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       } else {
         editorController.updateField(anahtar, deger?.toString() ?? '');
       }
-      // Özel: kategori string label’ı selectCategory ile senkron et (businessType + booking paketi)
       if (anahtar == 'kategori' && deger is String) {
         try {
           editorController.selectCategory(deger);
@@ -400,7 +411,6 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         SnackBar(content: Text('Kaydedildi: $anahtar'), duration: const Duration(seconds: 2)),
       );
     } catch (e) {
-      // writeField desteklemiyor → özel akış (görsel yükle vb.)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Bu alan için panelden devam et: $e'), duration: const Duration(seconds: 2)),
       );

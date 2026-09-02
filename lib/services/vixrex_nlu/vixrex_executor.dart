@@ -31,19 +31,55 @@ class VixrexExecutor {
         controller.updateBusinessType(deger as String);
         return true;
       case 'il':
-        // Faz 1 dar: il/ilçe tek başına metin update'i değil, province/district seçimi.
-        // StoreEditorController.selectProvince(data, code, name) data ister – burada sade.
-        // Faz 1’de il/ilçe için doğrudan StoreData’ya yazmayalım, netleştirme ile
-        // kullanıcıdan il/ilçe listeden seçtirilecek; bu yüzden burada doğrudan
-        // string olarak yazmıyoruz – false dönerek çağıranı yönlendirme yapmaya zorluyoruz.
-        // Fakat parity için basit metin yazımı da desteklenmeli – geçici olarak
-        // StoreData’ya yazmıyoruz, çünkü il/ilçe resmi liste + kod eşlemesi gerektirir.
-        // Faz 1’de il/ilçe sadece netleştirme ile listeden seçilecek, serbest metin reddedilecek.
-        return false;
       case 'ilce':
+        // Faz 1–2: il/ilçe listeden seçilmeli – serbest metinle yazma desteklenmiyor.
+        // HomeShell özel akışa yönlendirir (scrollToAddress + liste).
         return false;
       case 'adres':
         controller.updateAddressText(deger as String);
+        return true;
+      case 'mahalle':
+        controller.data.neighborhoodName = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'haritaEtiketi':
+        controller.data.mapLabel = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'calismaSaatleri':
+        controller.updateWorkingHoursText(deger as String);
+        return true;
+      case 'haritaLinki':
+        controller.updateGoogleBusinessLink(deger as String);
+        return true;
+      case 'hakkindaBaslik':
+        controller.data.aboutTitle = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'hakkindaMetin':
+        controller.updateCorporateBio(deger as String);
+        return true;
+      case 'heroRozet':
+        controller.updateHeroBadge(deger as String);
+        return true;
+      case 'logo':
+        controller.data.logoUrl = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'kapakGorseli':
+        controller.setCoverUrl(deger as String);
+        return true;
+      case 'instagram':
+        controller.updateInstagram(deger as String);
+        return true;
+      case 'website':
+        controller.updateWebsite(deger as String);
+        return true;
+      case 'telefon':
+        controller.updatePhone(deger as String);
+        return true;
+      case 'eposta':
+        controller.updateEmail(deger as String);
         return true;
       default:
         break;
