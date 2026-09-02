@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/bulk_product_upload_screen.dart';
 import 'package:vixrex/screens/product_category_management_screen.dart';
 import 'package:vixrex/services/bulk_product_field_update_service.dart';
+import 'package:vixrex/services/product_conversation_logger.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/product/bulk_product_field_update_sheet.dart';
 import 'package:vixrex/widgets/product/product_editor_sheet.dart';
@@ -158,6 +161,17 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
               ? 'Ürün taslağa eklendi, vitrin yayınlandığında senkronlanacak.'
               : 'Ürün güncellendi (uzak kayıt başarısız, tekrar deneyin).'),
     );
+    // Faz6 parity: tek ürün ekle/düzenle de ortak sohbete düşsün
+    unawaited(
+      ProductConversationLogger.log(
+        count: 1,
+        source: 'tek_urun',
+        scope: widget.storeSlug,
+        extra: product == null
+            ? '${result.name} eklendi'
+            : '${result.name} güncellendi',
+      ),
+    );
   }
 
   Future<void> _openCategories() async {
@@ -209,6 +223,14 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     });
     await _persist();
     widget.showMessage('Ürün kopyalandı.');
+    unawaited(
+      ProductConversationLogger.log(
+        count: 1,
+        source: 'cogaltma',
+        scope: widget.storeSlug,
+        extra: '${product.name} → ${copy.name}',
+      ),
+    );
   }
 
   Future<void> _delete(Product product) async {
@@ -243,6 +265,14 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
 
     setState(() => _products.removeWhere((item) => item.id == product.id));
     widget.showMessage('Ürün kalıcı olarak silindi.');
+    unawaited(
+      ProductConversationLogger.log(
+        count: 1,
+        source: 'silme',
+        scope: widget.storeSlug,
+        extra: product.name,
+      ),
+    );
   }
 
   /// Ürün başlıklarını düzenler (boşluk/büyük-küçük harf) — VixRex önerileri Complete.
@@ -273,6 +303,13 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
 
     await _persist();
     widget.showMessage('$improved ürün başlığı iyileştirildi.');
+    unawaited(
+      ProductConversationLogger.log(
+        count: improved,
+        source: 'baslik',
+        scope: widget.storeSlug,
+      ),
+    );
   }
 
   String _improveProductTitle(String raw) {
@@ -352,6 +389,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
   }
 
   Future<void> _applyBulkPrice(PriceAdjustMode mode, double value) async {
+    final count = _selectedProducts.length;
     final result = _bulkFieldUpdater.applyPriceAdjustment(
       products: _selectedProducts,
       mode: mode,
@@ -360,30 +398,75 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     await _finishBulkApply({
       for (final p in result.updated) p.id: p,
     }, skippedCount: result.skipped.length);
+    if (count > 0) {
+      unawaited(
+        ProductConversationLogger.log(
+          count: result.updated.length,
+          source: 'fiyat',
+          scope: widget.storeSlug,
+          extra: '${mode.name} $value',
+        ),
+      );
+    }
   }
 
   Future<void> _applyBulkStockStatus(String stockStatus) async {
+    final count = _selectedProducts.length;
     final updated = _bulkFieldUpdater.applyStockStatus(
       _selectedProducts,
       stockStatus,
     );
     await _finishBulkApply({for (final p in updated) p.id: p});
+    if (count > 0) {
+      unawaited(
+        ProductConversationLogger.log(
+          count: count,
+          source: 'stok',
+          scope: widget.storeSlug,
+          extra: stockStatus,
+        ),
+      );
+    }
   }
 
   Future<void> _applyBulkCategory(ProductCategory category) async {
+    final selected = _selectedProducts;
+    final count = selected.length;
+    final catName = category.name;
     final updated = _bulkFieldUpdater.applyCategory(
-      _selectedProducts,
+      selected,
       category,
     );
     await _finishBulkApply({for (final p in updated) p.id: p});
+    if (count > 0) {
+      unawaited(
+        ProductConversationLogger.log(
+          count: count,
+          source: 'kategori',
+          scope: widget.storeSlug,
+          extra: catName,
+        ),
+      );
+    }
   }
 
   Future<void> _applyBulkVisibility(bool isVisible) async {
+    final count = _selectedProducts.length;
     final updated = _bulkFieldUpdater.applyVisibility(
       _selectedProducts,
       isVisible,
     );
     await _finishBulkApply({for (final p in updated) p.id: p});
+    if (count > 0) {
+      unawaited(
+        ProductConversationLogger.log(
+          count: count,
+          source: 'gorunurluk',
+          scope: widget.storeSlug,
+          extra: isVisible ? 'görünür' : 'gizli',
+        ),
+      );
+    }
   }
 
   Future<void> _reorderProducts(int oldIndex, int newIndex) async {
@@ -393,6 +476,13 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       _products.insert(newIndex, item);
     });
     await _persist();
+    unawaited(
+      ProductConversationLogger.log(
+        count: _products.length,
+        source: 'reorder',
+        scope: widget.storeSlug,
+      ),
+    );
   }
 
   @override
@@ -650,6 +740,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       categories: _categories,
       storeId: widget.storeId,
       editToken: widget.editToken,
+      storeSlug: widget.storeSlug,
       onSaved: (products) async {
         setState(() {
           _products.insertAll(0, products);
@@ -671,6 +762,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       context: context,
       storeId: widget.storeId,
       editToken: widget.editToken,
+      storeSlug: widget.storeSlug,
       onUploaded: () {
         if (mounted) setState(() {});
       },

@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/ocr_catalog_result.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
+import 'package:vixrex/services/product_conversation_logger.dart';
 import 'store_editor_controller.dart';
 
 /// OCR state yönetimi controller'ı.
@@ -182,6 +185,15 @@ class OcrController extends ChangeNotifier {
       }
       _result = null;
       notifyListeners();
+      // Faz 4: ortak konuşmaya log — Next.js sahip paneli 15sn poll ile görür
+      unawaited(
+        ProductConversationLogger.log(
+          count: savedCount,
+          source: 'ocr',
+          scope: editor.publishedInfo?.publicLink,
+          extra: _scanMode == 'shelf_label' ? 'raf/etiket' : 'fiş/fatura',
+        ),
+      );
     } catch (e) {
       _errorMessage = 'Ürünler kaydedilemedi: $e';
       notifyListeners();

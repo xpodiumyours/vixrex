@@ -16,6 +16,8 @@ class ChatbotService {
 
   final VixrexConversationRepository _conversationRepository;
 
+  bool get canSync => _conversationRepository.canSync;
+
   static const String _greetedKey = 'vixrex_greeted';
   static const String _sharedMilestoneKey = 'vixrex_vitrin_shared';
   static const String _dismissedRecommendationKey =

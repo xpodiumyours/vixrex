@@ -115,7 +115,7 @@ export default function OwnerAssistantPanel({
     draftData,
     atlananAlanlar ?? []
   );
-  const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff);
+  const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff, { slug });
 
   const {
     seciliAlan,

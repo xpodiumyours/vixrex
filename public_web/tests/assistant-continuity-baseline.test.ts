@@ -180,7 +180,9 @@ describe("Vixrex Asistan sürekliliği — sonraki PR kabul hedefleri", () => {
     expect(ownerPageSource).toContain("parseAssistantHandoff(draft.assistant_handoff)");
     expect(ownerPageSource).toContain("assistantHandoff={assistantHandoff}");
     expect(ownerShellSource).toContain("assistantHandoff={assistantHandoff}");
-    expect(ownerPanelSource).toContain("useOwnerChat(rapor, assistantHandoff)");
+    expect(ownerPanelSource).toContain("useOwnerChat(rapor, assistantHandoff,");
+    // Faz 1: ortak Supabase konuşmasına bağlı — slug ile kalıcı senkron
+    expect(ownerPanelSource).toContain("{ slug }");
   });
 
   it("Next.js tekrar selam vermeden handoff'taki sıradaki adımdan devam eder", () => {

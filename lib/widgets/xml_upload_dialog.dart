@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:vixrex/services/product_conversation_logger.dart';
 import 'package:vixrex/services/xml_product_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
@@ -7,12 +10,14 @@ import 'package:vixrex/theme/app_colors.dart';
 class XmlUploadDialog extends StatefulWidget {
   final String storeId;
   final String editToken;
+  final String storeSlug;
   final VoidCallback? onUploaded;
 
   const XmlUploadDialog({
     super.key,
     required this.storeId,
     required this.editToken,
+    this.storeSlug = '',
     this.onUploaded,
   });
 
@@ -20,6 +25,7 @@ class XmlUploadDialog extends StatefulWidget {
     required BuildContext context,
     required String storeId,
     required String editToken,
+    String storeSlug = '',
     VoidCallback? onUploaded,
   }) {
     return showDialog(
@@ -28,6 +34,7 @@ class XmlUploadDialog extends StatefulWidget {
           (_) => XmlUploadDialog(
             storeId: storeId,
             editToken: editToken,
+            storeSlug: storeSlug,
             onUploaded: onUploaded,
           ),
     );
@@ -75,6 +82,14 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
     });
 
     if (result.isSuccess && mounted) {
+      // Faz 4: ortak konuşmaya log — Next.js poll ile görür
+      unawaited(
+        ProductConversationLogger.log(
+          count: result.inserted,
+          source: 'xml',
+          scope: widget.storeSlug.isNotEmpty ? widget.storeSlug : null,
+        ),
+      );
       widget.onUploaded?.call();
     }
   }

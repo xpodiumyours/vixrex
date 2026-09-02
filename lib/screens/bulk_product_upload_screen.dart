@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vixrex/controllers/bulk_product_upload_controller.dart';
+import 'package:vixrex/services/product_conversation_logger.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/screens/bulk_product_upload/widgets/bulk_upload_initial_view.dart';
 import 'package:vixrex/screens/bulk_product_upload/widgets/bulk_upload_parsing_view.dart';
@@ -25,6 +28,7 @@ class BulkProductUploadScreen extends StatefulWidget {
   final List<ProductCategory> categories;
   final String storeId;
   final String editToken;
+  final String storeSlug;
 
   const BulkProductUploadScreen({
     super.key,
@@ -32,6 +36,7 @@ class BulkProductUploadScreen extends StatefulWidget {
     this.categories = const [],
     this.storeId = '',
     this.editToken = '',
+    this.storeSlug = '',
   });
 
   static Future<bool?> show({
@@ -40,6 +45,7 @@ class BulkProductUploadScreen extends StatefulWidget {
     List<ProductCategory> categories = const [],
     String storeId = '',
     String editToken = '',
+    String storeSlug = '',
   }) {
     return showModalBottomSheet<bool>(
       context: context,
@@ -52,6 +58,7 @@ class BulkProductUploadScreen extends StatefulWidget {
             categories: categories,
             storeId: storeId,
             editToken: editToken,
+            storeSlug: storeSlug,
           ),
     );
   }
@@ -92,7 +99,16 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
       onSave: (products) async => widget.onSaved(products),
     );
     if (saved && mounted) {
-      _showMessage('${_controller.savedCount} ürün başarıyla eklendi.');
+      final count = _controller.savedCount;
+      _showMessage('$count ürün başarıyla eklendi.');
+      // Faz 4: ortak konuşmaya log — Next.js 15sn poll ile görür
+      unawaited(
+        ProductConversationLogger.log(
+          count: count,
+          source: 'bulk',
+          scope: widget.storeSlug.isNotEmpty ? widget.storeSlug : null,
+        ),
+      );
       Navigator.of(context).pop(true);
     } else if (_controller.errorMessage != null && mounted) {
       _showMessage(_controller.errorMessage!);
@@ -418,6 +434,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
       context: context,
       storeId: widget.storeId,
       editToken: widget.editToken,
+      storeSlug: widget.storeSlug,
       onUploaded: () {
         if (mounted) setState(() {});
       },

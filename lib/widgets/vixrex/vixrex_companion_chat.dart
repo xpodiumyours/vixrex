@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/config/chatbot_config.dart';
@@ -54,11 +56,16 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   final List<ChatMessage> _messages = [];
   bool _loading = true;
   bool _typing = false;
+  Timer? _pollTimer;
+  bool _pollActive = false;
 
   @override
   void initState() {
     super.initState();
     _bootstrap();
+    // Faz 2/3: kalıcı hesaplarda Next.js sahip paneli ile çift yönlü senkron
+    // RLS nedeniyle Realtime postgres_changes dinlenemez, 15sn RPC poll daha güvenilir
+    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) => _poll());
   }
 
   @override
@@ -66,6 +73,9 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     super.didUpdateWidget(oldWidget);
     final oldScope = _historyScopeFor(oldWidget.snapshot);
     if (oldScope != _historyScope) {
+      // Scope değişince poll’u sıfırla — eski conversation’a poll etmemek için
+      _pollTimer?.cancel();
+      _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) => _poll());
       setState(() {
         _messages.clear();
         _loading = true;
@@ -76,6 +86,40 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     if (oldWidget.recommendation.id != widget.recommendation.id ||
         oldWidget.hasShared != widget.hasShared) {
       _refreshGuidanceTip();
+    }
+  }
+
+  Future<void> _poll() async {
+    if (_loading || _pollActive || !mounted) return;
+    // Kalıcı hesap değilse (anonim) poll yok — bellek modu
+    if (!_service.canSync) return;
+    final scope = _historyScope;
+    // Scope boşsa (yayın yok) poll’a gerek yok — local scope zaten tek cihaz
+    if (scope.isEmpty) return;
+    _pollActive = true;
+    try {
+      final history = await _service.loadHistory(scope: scope);
+      if (!mounted || scope != _historyScope) return;
+      // Yeni mesaj var mı? (remote’dan gelen Next.js yazıları)
+      if (history.length <= _messages.length) return;
+      // Handoff tekilleştirme: DB varsa handoff’u ez, yoksa rehber tipini yenile
+      final reconciled = _service.reconcileGuidanceHistory(
+        history: history,
+        currentGuidance: _currentGuidanceFor(history),
+        handoffMarker: _handoffMarker,
+      );
+      // Sadece gerçekten yeni içerik varsa setState — gereksiz rebuild yok
+      if (reconciled.length == _messages.length) return;
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(reconciled);
+      });
+      // Yerel önbelleği de tazele (loadHistory zaten yazdı, ama reconcile sonrası da kaydet)
+      await _service.saveHistory(_messages, scope: scope);
+      _scrollToEnd();
+    } finally {
+      _pollActive = false;
     }
   }
 
@@ -266,6 +310,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _inputCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
