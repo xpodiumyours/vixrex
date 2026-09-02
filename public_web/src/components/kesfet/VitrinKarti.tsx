@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import type { KesfetVitrini } from "@/lib/explore";
+import { useKesfetKirala } from "@/lib/useKesfetKirala";
 
 export type PremiumBilgisi = {
   aktif: boolean;
@@ -64,6 +65,17 @@ export function VitrinKarti({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [whatsappHatasi, setWhatsappHatasi] = useState("");
   const numara = whatsappNumarasi(vitrin.whatsapp);
+  // Faz C3 (Tek Asistan planı): "Kirala" artık Keşfet'ten ayrılmıyor.
+  const kiralaDialogRef = useRef<HTMLDialogElement>(null);
+  const {
+    durum: kiralaDurumu,
+    hataMesaji: kiralaHatasi,
+    mevcutSlug: kiralaMevcutSlug,
+    token: kiralaToken,
+    formRef: kiralaFormRef,
+    baslat: kiralaBaslat,
+    sifirla: kiralaSifirla,
+  } = useKesfetKirala(vitrin.slug);
   const premiumMetni = sahipMi ? premiumEtiketi(premium) : null;
   const vitrinAdi = vitrin.ad.trim() || "vitrininiz";
   const mesajlar = [
@@ -197,9 +209,16 @@ export function VitrinKarti({
                 <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 items-center justify-center rounded-[10px] border border-lp-primary px-2 text-[11px] font-black text-lp-primary transition-colors hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
                   İncele
                 </Link>
-                <Link href={`/rent-demo?slug=${encodeURIComponent(vitrin.slug)}`} className="flex min-h-11 items-center justify-center rounded-[10px] bg-lp-primary px-2 text-[11px] font-black text-lp-on-primary transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary focus-visible:ring-offset-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    kiralaDialogRef.current?.showModal();
+                    kiralaBaslat();
+                  }}
+                  className="flex min-h-11 items-center justify-center rounded-[10px] bg-lp-primary px-2 text-[11px] font-black text-lp-on-primary transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary focus-visible:ring-offset-2"
+                >
                   Kirala
-                </Link>
+                </button>
               </div>
             ) : (
               <button
@@ -267,6 +286,100 @@ export function VitrinKarti({
           </div>
         </div>
       </dialog>
+
+      {/* Faz C3 (Tek Asistan planı, 2026-09-02): "Kirala" artık ayrı bir
+       * sayfaya (/rent-demo) sıçramıyor — kullanıcı Keşfet'ten hiç
+       * ayrılmadan aynı akışı (useKesfetKirala) burada görüyor. Yalnız
+       * son adımda (native form POST → 303 zinciri) tarayıcı /v/:slug'a
+       * geçer; bu her zaman olması gereken, tek kaçınılmaz sıçrama. */}
+      <dialog
+        ref={kiralaDialogRef}
+        aria-labelledby={`kirala-baslik-${vitrin.slug}`}
+        onClose={kiralaSifirla}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) event.currentTarget.close();
+        }}
+        className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-lp-border bg-lp-surface p-0 text-lp-text shadow-2xl backdrop:bg-black/60"
+      >
+        <div className="p-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-lp-primary/60 bg-lp-surface-soft" aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/vixrex_v_crystal_mascot.png" alt="" className="h-9 w-9 object-contain" />
+            </span>
+            <div className="min-w-0">
+              <h2 id={`kirala-baslik-${vitrin.slug}`} className="truncate text-[14px] font-black">Vixrex</h2>
+              <p className="mt-1 text-[12px] font-semibold text-lp-muted">{vitrin.ad} vitrini işletmene ayarlıyorum</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => kiralaDialogRef.current?.close()}
+              aria-label="Kiralama panelini kapat"
+              className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lp-muted hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="mt-4 space-y-2" aria-live="polite">
+            {kiralaDurumu === "kontrolEdiliyor" || kiralaDurumu === "gonderiliyor" ? (
+              <>
+                <div className="max-w-[85%] rounded-t-xl rounded-br-xl rounded-bl-[4px] border border-lp-border bg-lp-surface-soft px-3.5 py-3 text-[13px] leading-relaxed text-lp-text-alt">
+                  Vitrini işletmene ayarlıyorum… 🎉
+                </div>
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] leading-[1.5] text-lp-text-alt">
+                  <span className="font-black text-amber-500">⚠️ Deneme sürümü — yalnız bu cihazda.</span>{" "}
+                  Vitrinin 14 gün boyunca ücretsiz. Kalıcı hale getirmek için
+                  vitrin yönetim ekranından Google ile giriş yapman yeterli.
+                </div>
+              </>
+            ) : null}
+
+            {kiralaDurumu === "hata" ? (
+              <>
+                <div className="max-w-[85%] rounded-t-xl rounded-br-xl rounded-bl-[4px] border border-red-500/30 bg-red-500/10 px-3.5 py-3 text-[13px] leading-relaxed text-red-300">
+                  {kiralaHatasi || "Vitrin şu anda kiralanamıyor."}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    kiralaSifirla();
+                    kiralaBaslat();
+                  }}
+                  className="flex min-h-10 w-full items-center justify-center rounded-xl bg-lp-primary px-3 text-[12px] font-black text-lp-on-primary"
+                >
+                  Tekrar dene
+                </button>
+              </>
+            ) : null}
+
+            {kiralaDurumu === "zatenVitriniVar" ? (
+              <>
+                <div className="max-w-[85%] rounded-t-xl rounded-br-xl rounded-bl-[4px] border border-lp-border bg-lp-surface-soft px-3.5 py-3 text-[13px] leading-relaxed text-lp-text-alt">
+                  Bu hesapla ikinci bir vitrin kiralanamaz — zaten bir vitrinin var.
+                </div>
+                {kiralaMevcutSlug ? (
+                  <Link
+                    href={`/v/${encodeURIComponent(kiralaMevcutSlug)}`}
+                    className="flex min-h-10 w-full items-center justify-center rounded-xl bg-lp-primary px-3 text-[12px] font-black text-lp-on-primary"
+                  >
+                    Mevcut vitrinine git
+                  </Link>
+                ) : null}
+              </>
+            ) : null}
+          </div>
+        </div>
+      </dialog>
+      {/* Misafir yolu: gerçek <form> POST — fetch/JS ile yönlendirme takip
+       * edilmez, tarayıcı 303 zincirini native izlesin diye (bkz.
+       * useKesfetKirala.ts ve /rent-demo/page.tsx'teki aynı desen). */}
+      <form ref={kiralaFormRef} method="POST" action="/api/rent-demo" hidden>
+        <input type="hidden" name="slug" value={vitrin.slug} />
+        <input type="hidden" name="recaptchaToken" value={kiralaToken ?? ""} />
+      </form>
     </>
   );
 }

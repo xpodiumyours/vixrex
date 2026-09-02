@@ -26,14 +26,31 @@ const seritKaynak = yorumsuz(
  * kuralı taşır (bkz. demo-kirala-cta-contract.test.ts).
  *
  * 2026-08-15'te kapatılan açık: `/api/rent-demo` GET'te hiçbir kimlik ya da
- * oran sınırlaması olmadan veritabanına yazıyordu. Doğru yol, reCAPTCHA
- * doğrulamasını yapan `/rent-demo` köprü sayfasıdır. Kart bu köprüyü
- * atlarsa aynı açık yeni bir yüzeyden geri gelir.
+ * oran sınırlaması olmadan veritabanına yazıyordu.
+ *
+ * Faz C3 (Tek Asistan planı, 2026-09-02): "Kirala" artık `/rent-demo`
+ * köprü SAYFASINA yönlendirmiyor — Keşfet'ten ayrılmadan aynı akışı
+ * (useKesfetKirala.ts) yerinde çalıştırıyor. Bu, `/api/rent-demo`'ya
+ * doğrudan referans vermeyi ZORUNLU kılıyor — eski "hiç geçmesin"
+ * kuralı artık uygulanamaz. Güvenlik doğrulandı (api/rent-demo/route.ts
+ * okunarak): asıl zorunlu kapı reCAPTCHA DEĞİL — client IP'nin HMAC
+ * parmak izi + `start_demo_trial` RPC'sindeki üç katmanlı oran sınırı
+ * (3/10dk, 10/gün, 100/saat). reCAPTCHA yalnız ek/yumuşak sinyal,
+ * başarısız olsa bile akış devam eder. Yani gerçek koruma HANGİ
+ * bileşenin `/api/rent-demo`'yu andığına değil, isteğin native
+ * `<form method="POST">` ile (fetch/GET değil) gitmesine bağlı — test
+ * artık BUNU zorunlu kılıyor.
  */
 describe("Keşfet kartı 'Kirala' CTA'sı", () => {
-  it("güvenli köprü sayfasına gider, doğrudan API'ye değil", () => {
-    expect(kart).toContain("/rent-demo?slug=");
-    expect(kart).not.toContain("/api/rent-demo");
+  it("native form POST ile gider — fetch/GET ile değil (2026-08-15 açığı tekrarlanmaz)", () => {
+    expect(kart).toContain('<form ref={kiralaFormRef} method="POST" action="/api/rent-demo"');
+    // GET'e düşecek çıplak bir <a href="/api/rent-demo"> veya fetch(GET) yok.
+    expect(kart).not.toMatch(/href=["'`]\/api\/rent-demo/);
+    expect(kart).not.toContain('fetch("/api/rent-demo"');
+  });
+
+  it("reCAPTCHA token'ı forma taşıyor (yumuşak sinyal, ama taşınmalı)", () => {
+    expect(kart).toContain('name="recaptchaToken"');
   });
 
   it("fiyat vaadi vitrin CTA'sıyla aynı", () => {
