@@ -13,7 +13,8 @@ void main() {
     // 2026-08-27: landing asistanı gerçek hâle getirilirken kapanış
     // mesajları eklendi (landing_finish_baslik/aciklama/buton) — 96 → 99.
     // Blog yayınlama sonucu iki yüzeyde ortaklaştırıldı — 99 → 100.
+    // Faz 1 NLU netleştirme mesajları eklendi (netlestirme_sor/sor_genel/onay/basari/hata/belirsiz) — 100 → 106.
     // Sayı kilidi bilerek duruyor: katalog sessizce büyümesin.
-    expect(vixRexMesajlari.length, 100);
+    expect(vixRexMesajlari.length, 106);
   });
 }

@@ -8,6 +8,8 @@ import 'package:vixrex/services/vixrex_assistant_nlu_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_field_validator.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_nlu_pipeline.dart';
 import 'package:vixrex/widgets/chat/chat_bubble.dart';
 import 'package:vixrex/widgets/chat/chat_composer.dart';
 import 'package:vixrex/widgets/chat/chat_progress.dart';
@@ -30,6 +32,7 @@ class VixRexCompanionChat extends StatefulWidget {
   final ValueChanged<VixRexAction> onAction;
   final ValueChanged<String> onDismissRecommendation;
   final void Function(VixRexNluField field, String value) onSaveField;
+  final void Function(String anahtar, Object? deger)? onUpdateField;
   final FocusNode inputFocusNode;
 
   const VixRexCompanionChat({
@@ -41,6 +44,7 @@ class VixRexCompanionChat extends StatefulWidget {
     required this.onAction,
     required this.onDismissRecommendation,
     required this.onSaveField,
+    this.onUpdateField,
     required this.inputFocusNode,
   });
 
@@ -199,6 +203,22 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     });
   }
 
+  // Faz 1: 46 alan borusu – feature-flag ile eski davranışı korur.
+  // Pipeline önce dener, notUnderstood ise eski ChatbotService’e düşer.
+  static const _pipelineEnabled = true;
+  final _pipeline = VixrexNluPipeline();
+
+  bool _needsSpecialFlowFor(String anahtar) {
+    // Faz 1 dar: il/ilce listeden seçilmeli, serbest metinle yazılmamalı.
+    // gorsel alanlar da URL değilse özel akış (galeri/upload).
+    if (anahtar == 'il' || anahtar == 'ilce') return true;
+    if (anahtar == 'logo' || anahtar == 'kapakGorseli' || anahtar == 'bantGorsel' || anahtar == 'hakkindaGorsel') {
+      // Sadece https URL ise düz yaz, yoksa özel akış.
+      return false; // şimdilik URL kabul, özel akış yok – Faz 2’de eklenecek.
+    }
+    return false;
+  }
+
   void _send(String raw) {
     final text = raw.trim();
     if (text.isEmpty || _typing) return;
@@ -214,6 +234,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     Future<void>.delayed(const Duration(milliseconds: 450), () async {
       if (!mounted) return;
       late final ChatMessage bot;
+      // 1) Eski NLU (OpenAI) hâlâ kapalı – isEnabled false, korunur.
       if (VixRexAssistantNluService.isEnabled) {
         final remote = await _nluService.propose(text);
         if (!mounted) return;
@@ -225,9 +246,63 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
                   prompt: remote.reply,
                 )
                 : ChatMessage.bot(remote.reply);
+      } else if (_pipelineEnabled) {
+        // 2) Yeni 46 alan borusu – önce dener.
+        final result = await _pipeline.handle(
+          input: text,
+          controller: null, // CompanionChat controller’a doğrudan erişmez, HomeShell onUpdateField’e delege eder.
+          scope: _historyScope,
+          onValidate: (alan, hamDeger) async {
+            final v = VixrexFieldValidator.validate(alan, hamDeger);
+            return (ok: v.ok, hata: v.hata, normalizedDeger: v.normalizedDeger);
+          },
+          needsSpecialFlow: (alan) => _needsSpecialFlowFor(alan.anahtar),
+        );
+        if (result.outcome == VixrexNluPipelineOutcome.notUnderstood) {
+          // Alan bulunamadı → eski kural tabanlı sohbete düş.
+          bot = _service.respond(text, widget.snapshot, widget.hasShared);
+        } else if (result.outcome == VixrexNluPipelineOutcome.handled) {
+          // Başarılı doğrulama ama controller yok → HomeShell’e delege et.
+          final anahtar = result.appliedAnahtar;
+          final deger = result.appliedDeger;
+          if (anahtar != null && deger != null && widget.onUpdateField != null) {
+            widget.onUpdateField!(anahtar, deger);
+            // Pipeline zaten clarifier.basari mesajını üretti – onu kullan.
+            bot = result.message;
+          } else if (anahtar != null && deger != null) {
+            // Fallback: eski 5 alan haritası (geriye uyum)
+            final mapped = _mapAnahtarToLegacyField(anahtar);
+            if (mapped != null) {
+              widget.onSaveField(mapped, deger.toString());
+              bot = ChatMessage.bot('Kaydettim ✅ ${result.message.text}');
+            } else {
+              bot = result.message;
+            }
+          } else {
+            bot = result.message;
+          }
+        } else if (result.outcome == VixrexNluPipelineOutcome.needsSpecialFlow) {
+          // il/ilce gibi özel akış – mevcut VixrexAction’a yönlendir.
+          final anahtar = result.appliedAnahtar;
+          if (anahtar == 'il' || anahtar == 'ilce') {
+            widget.onAction(VixRexAction.scrollToAddress);
+            bot = ChatMessage.bot(
+              result.message.text,
+              quickReplies: const [
+                QuickReply(label: 'Adrese git', payload: 'action_address', action: VixRexAction.scrollToAddress),
+              ],
+            );
+          } else {
+            bot = result.message;
+          }
+        } else {
+          // needsClarification / blockedLegal / notUnderstood dışındaki – netleştirme sorusu.
+          bot = result.message;
+        }
       } else {
         bot = _service.respond(text, widget.snapshot, widget.hasShared);
       }
+      if (!mounted) return;
       setState(() {
         _typing = false;
         _messages.add(bot);
@@ -235,6 +310,23 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
       _service.saveHistory(_messages, scope: _historyScope);
       _scrollToEnd();
     });
+  }
+
+  VixRexNluField? _mapAnahtarToLegacyField(String anahtar) {
+    switch (anahtar) {
+      case 'isletmeAdi':
+        return VixRexNluField.storeName;
+      case 'whatsapp':
+        return VixRexNluField.whatsapp;
+      case 'adres':
+        return VixRexNluField.address;
+      case 'kisaTanitim':
+        return VixRexNluField.description;
+      case 'kategori':
+        return VixRexNluField.category;
+      default:
+        return null;
+    }
   }
 
   ChatMessage _buildNluConfirmMessage({

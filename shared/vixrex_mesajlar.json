@@ -154,7 +154,13 @@
     { "anahtar": "improve_account_buton", "metin": "Hesap" },
     { "anahtar": "landing_finish_baslik", "metin": "Vitrinin hazır" },
     { "anahtar": "landing_finish_aciklama", "metin": "Verdiğin bilgilerle vitrinini kurabilirim. Hesabını açtığında kaldığın yerden devam edeceğiz." },
-    { "anahtar": "landing_finish_buton", "metin": "Hesap Aç ve Vitrini Kur" }
+    { "anahtar": "landing_finish_buton", "metin": "Hesap Aç ve Vitrini Kur" },
+    { "anahtar": "netlestirme_sor", "metin": "{etiket} için ne yazayım? Örn: {ipucu}" },
+    { "anahtar": "netlestirme_sor_genel", "metin": "{etiket} için hangi değeri yazayım?" },
+    { "anahtar": "netlestirme_onay", "metin": "{etiket} için “{deger}” mi demek istedin? Onaylıyor musun? (evet/hayır)" },
+    { "anahtar": "netlestirme_basari", "metin": "Kaydettim: {etiket} → {deger}" },
+    { "anahtar": "netlestirme_hata", "metin": "{hata}" },
+    { "anahtar": "netlestirme_belirsiz", "metin": "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap” veya “WhatsApp numaram ...”" }
   ],
   "hizliSecenekler": [
     {"id": "hazir_vitrin_sec", "etiket": "Hazır Vitrin Seç", "ikon": "storefront"},

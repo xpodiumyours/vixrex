@@ -23,6 +23,7 @@ class VixRexScreen extends StatefulWidget {
   final ValueChanged<VixRexAction> onAction;
   final ValueChanged<String> onDismissRecommendation;
   final void Function(VixRexNluField field, String value) onSaveField;
+  final void Function(String anahtar, Object? deger)? onUpdateField;
   final VoidCallback? onSetupComplete;
 
   const VixRexScreen({
@@ -35,6 +36,7 @@ class VixRexScreen extends StatefulWidget {
     required this.onAction,
     required this.onDismissRecommendation,
     required this.onSaveField,
+    this.onUpdateField,
     this.onSetupComplete,
   });
 
@@ -95,6 +97,7 @@ class _VixRexScreenState extends State<VixRexScreen> {
                     onAction: widget.onAction,
                     onDismissRecommendation: widget.onDismissRecommendation,
                     onSaveField: widget.onSaveField,
+                    onUpdateField: widget.onUpdateField,
                     inputFocusNode: _chatInputFocusNode,
                   ),
                 ),

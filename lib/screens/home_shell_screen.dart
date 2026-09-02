@@ -362,6 +362,51 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     setState(() => _dismissedVixRexRecommendationId = recommendationId);
   }
 
+  // Faz 1 – 46 alan borusu: genel alan güncelleme (yeni)
+  void _handleVixRexUpdateField(String anahtar, Object? deger) {
+    final editorController = _myVitrinKey.currentState?.controller;
+    if (editorController == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vitrin henüz yüklenmedi. Lütfen bekleyin.'), duration: Duration(seconds: 2)),
+      );
+      return;
+    }
+    // Yasal alanlar bu borudan yasak – mevcut legal akışa yönlendirme gerekmez (sözlükte yok).
+    // Özel akış: il/ilce listeden seçilmeli – burada serbest metinle yazmayı denemeyip yönlendir.
+    if (anahtar == 'il' || anahtar == 'ilce') {
+      _vixrexScrollToAction(VixRexAction.scrollToAddress);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('İl/İlçe listeden seçilmeli – adres bölümüne yönlendirildin.'), duration: Duration(seconds: 2)),
+      );
+      return;
+    }
+    try {
+      // deger String/num/bool olabilir – VixrexExecutor ile aynı mantık.
+      if (deger is bool) {
+        editorController.updateField(anahtar, deger);
+      } else if (deger is num) {
+        editorController.updateField(anahtar, deger);
+      } else {
+        editorController.updateField(anahtar, deger?.toString() ?? '');
+      }
+      // Özel: kategori string label’ı selectCategory ile senkron et (businessType + booking paketi)
+      if (anahtar == 'kategori' && deger is String) {
+        try {
+          editorController.selectCategory(deger);
+        } catch (_) {}
+      }
+      editorController.saveLocally();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Kaydedildi: $anahtar'), duration: const Duration(seconds: 2)),
+      );
+    } catch (e) {
+      // writeField desteklemiyor → özel akış (görsel yükle vb.)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bu alan için panelden devam et: $e'), duration: const Duration(seconds: 2)),
+      );
+    }
+  }
+
   /// Faz 8.1 — sohbette onaylanan alanı GERÇEK `StoreEditorController`
   /// üzerinden kaydeder. Anlama katmanı mock; yazma yolu değişmedi
   /// (ikinci yazma yolu açılmadı).
@@ -510,6 +555,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         dismissedRecommendationId: _dismissedVixRexRecommendationId,
         onAction: _handleVixRexAction,
         onSaveField: _handleVixRexSaveField,
+        onUpdateField: _handleVixRexUpdateField,
         onDismissRecommendation: _dismissVixRexRecommendation,
         onSetupComplete: _onVixRexSetupComplete,
       ),
