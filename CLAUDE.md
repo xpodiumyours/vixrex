@@ -87,3 +87,9 @@ Flutter reads via `--dart-define` (`String.fromEnvironment`): `SUPABASE_URL`, `S
 ## Deployment
 
 Two separate Vercel projects, each with its own `ignoreCommand` gating on changed paths (`.github/scripts/changed_surfaces.py`): `vixrex-app` (root `vercel.json`, builds the Flutter web release via `vercel-build.sh`) and `vixrex-public` (`public_web/vercel.json`, `npm run build`). Root `vercel.json` redirects `/v/*`, `/sitemap.xml`, `/robots.txt` to the `vixrex-public` domain — the DB schema itself only changes through `supabase/migrations/`, never by hand on the dashboard.
+
+## Claude Code session setup
+
+- `.claude/hooks/session-start.sh` (registered in `.claude/settings.json`) runs on every Claude Code on the web session start: `npm install` in `public_web/`, and — if `flutter` isn't already on `PATH` — a pinned shallow clone of Flutter `3.44.4` (matching `ci.yml`'s `FLUTTER_VERSION`) into `~/.flutter-sdk`, then `flutter pub get`. Idempotent; first run takes ~1–2 min, cached container reuse makes later runs ~5s.
+- `.mcp.json` lists Supabase, GitHub, and Vercel as remote MCP servers (OAuth on first connect, no secrets committed) — available to any MCP-compatible client pointed at this repo, not just Claude Code on the web.
+- A recurring Routine ("Vixrex sağlık kontrolü", every 6h) does a read-only check of `main`'s CI status and open-PR activity and pushes a notification if something new is red or commented — it never edits code or PRs itself.
