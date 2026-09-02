@@ -263,10 +263,12 @@ const Map<String, String> vixRexMesajlari = {
   'landing_finish_buton': 'Hesap Aç ve Vitrini Kur',
   'netlestirme_sor': '{etiket} için ne yazayım? Örn: {ipucu}',
   'netlestirme_sor_genel': '{etiket} için hangi değeri yazayım?',
-  'netlestirme_onay': '{etiket} için “{deger}” mi demek istedin? Onaylıyor musun? (evet/hayır)',
+  'netlestirme_onay':
+      '{etiket} için “{deger}” mi demek istedin? Onaylıyor musun? (evet/hayır)',
   'netlestirme_basari': 'Kaydettim: {etiket} → {deger}',
   'netlestirme_hata': '{hata}',
-  'netlestirme_belirsiz': 'Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap” veya “WhatsApp numaram ...”',
+  'netlestirme_belirsiz':
+      'Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap” veya “WhatsApp numaram ...”',
 };
 
 class VixRexHizliSecenek {
