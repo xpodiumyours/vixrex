@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { KesfetIkonu, OnayIkonu, IleriOkIkonu, StorefrontIkonu } from "@/components/site/icons";
+import { KesfetIkonu, OnayIkonu, IleriOkIkonu, StorefrontIkonu, GirisIkonu } from "@/components/site/icons";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { PhoneMockup } from "./PhoneMockup";
 import type { MockupProfili } from "./mockupProfilleri";
@@ -55,9 +55,10 @@ export function HeroSection({
           <span className="text-[20px] font-black tracking-[-0.5px]">Vixrex</span>
         </Link>
         <div className="flex items-center gap-2.5">
+          {/* Vitrinleri Keşfet — Flutter: rounded-[14px], border lp-primary/45 */}
           <Link
             href="/kesfet"
-            className="hidden items-center gap-2 rounded-full border border-lp-primary/45 bg-lp-surface-soft px-4 py-3 text-[12px] font-black text-lp-primary transition-colors hover:bg-lp-surface md:flex"
+            className="hidden items-center gap-2 rounded-[14px] border border-lp-primary/45 bg-lp-surface-soft px-4 py-3 text-[12px] font-black text-lp-primary transition-colors hover:bg-lp-surface md:flex"
             aria-label="Vitrinleri Keşfet"
           >
             <KesfetIkonu boyut={16} />
@@ -65,25 +66,25 @@ export function HeroSection({
           </Link>
           <Link
             href="/kesfet"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-lp-border bg-lp-surface-soft text-lp-text md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-lp-border bg-lp-surface-soft text-lp-text md:hidden"
             aria-label="Vitrinleri Keşfet"
           >
             <KesfetIkonu boyut={18} />
           </Link>
+          {/* Giriş Yap — Flutter: rounded-[14px], Icons.login_rounded ikonu */}
           <Link
             href="/giris"
-            className="hidden items-center gap-2 rounded-full bg-lp-primary px-4 py-3 text-[12px] font-black text-lp-on-primary md:flex"
+            className="hidden items-center gap-2 rounded-[14px] bg-lp-primary px-4 py-3 text-[12px] font-black text-lp-on-primary transition-colors hover:opacity-90 md:flex"
           >
+            <GirisIkonu boyut={16} />
             Giriş Yap
           </Link>
           <Link
             href="/giris"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-lp-primary text-lp-on-primary md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-lp-primary text-lp-on-primary md:hidden"
             aria-label="Giriş Yap"
           >
-            <span aria-hidden className="text-[16px]">
-              →
-            </span>
+            <GirisIkonu boyut={18} />
           </Link>
         </div>
       </nav>

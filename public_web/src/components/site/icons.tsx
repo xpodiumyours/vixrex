@@ -123,3 +123,12 @@ export function YonOkuIkonu({ className, boyut = 22 }: IkonProps) {
     </svg>
   );
 }
+
+/** Material `login_rounded` — Giriş Yap butonu (Flutter landing nav). */
+export function GirisIkonu({ className, boyut = 20 }: IkonProps) {
+  return (
+    <svg {...svgOzellikleri(boyut, className)}>
+      <path d="M11 7 9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5Zm9 12h-8v2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-8v2h8Z" />
+    </svg>
+  );
+}
