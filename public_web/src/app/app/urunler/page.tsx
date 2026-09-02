@@ -26,12 +26,13 @@ export default function UrunlerPage() {
     setYukleniyor(true);
     setHata("");
     const { data: durum, error: durumHatasi } = await supabase.rpc("bootstrap_owner_state");
-    if (durumHatasi || (durum as any)?.has_store !== true) {
+    const bootstrap = durum as { has_store?: boolean; slug?: string } | null;
+    if (durumHatasi || bootstrap?.has_store !== true) {
       setHata("Vitrin bulunamadı. Önce vitrin oluştur.");
       setYukleniyor(false);
       return;
     }
-    const slug = String((durum as any).slug ?? "").trim();
+    const slug = String(bootstrap.slug ?? "").trim();
     if (!slug) {
       setHata("Vitrin slug okunamadı.");
       setYukleniyor(false);
