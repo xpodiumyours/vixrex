@@ -11,6 +11,7 @@ export type KesfetKiralaDurum =
   | "kapali"
   | "kontrolEdiliyor"
   | "gonderiliyor"
+  | "hesapGerekli"
   | "hata"
   | "zatenVitriniVar";
 
@@ -24,20 +25,32 @@ export interface KesfetKiralaState {
   baslat: () => void;
   /** Modal kapatılınca durumu sıfırlar (tekrar denenebilsin). */
   sifirla: () => void;
+  /** hesapGerekli durumunda: Google ile bağlanıp gerçek hesaba kiralar. */
+  hesapaBaglaVeKirala: () => void;
+  /** hesapGerekli durumunda: kullanıcı bilinçli olarak misafir kalmayı seçer. */
+  misafirDevamEt: () => void;
+  hesapBaglaniyor: boolean;
+  hesapBaglaHata: string;
 }
 
 /**
- * "Kirala" düğmesinin Keşfet'te KALARAK çalışan hâli — Faz C3 (Tek
- * Asistan planı, 2026-09-02, kullanıcı kararıyla küçültüldü: giriş
- * ZORUNLU olmuyor, yalnız `/rent-demo`'nun ayrı-sayfa sıçraması Keşfet
- * içi bir deneyime çevriliyor).
+ * "Kirala" düğmesinin Keşfet'te KALARAK çalışan hâli.
+ *
+ * Faz C3 (2026-09-02): `/rent-demo`'nun ayrı-sayfa sıçraması Keşfet içi
+ * bir deneyime çevrildi. UI/UX görünüm fazı (2026-09-02, kullanıcı
+ * kararı): "uyarla" anı artık ÖNCELİKLE hesap istiyor — hesabı olmayan
+ * ziyaretçi artık otomatik misafir kiralamıyor, "Google ile devam et"
+ * teklifi görüyor (`hesapGerekli` durumu). Google linkIdentity() sonucu
+ * `/kesfet-hesap-bagla` sayfası üzerinden `/api/rent-demo/hesap`'a
+ * (rent_demo_canonical — hesap zorunlu, is_permanent_user ile korunur)
+ * bağlanır. Faz C3'ün "giriş asla zorlanmaz" ilkesi tamamen atılmadı:
+ * kullanıcı `misafirDevamEt()` ile eski otomatik misafir yolunu (reCAPTCHA
+ * + native form POST) bilinçli olarak hâlâ seçebilir — güvenlik ağı
+ * kalsın diye kaldırılmadı, yalnız artık varsayılan değil.
  *
  * Mantık `RentDemoIcerik`in (app/rent-demo/page.tsx) misafir + hesaplı
- * dallarıyla BİREBİR aynı — session kontrolü, hesaplı kullanıcıda
+ * dallarıyla aynı kökten geliyor — session kontrolü, hesaplı kullanıcıda
  * `/api/rent-demo/hesap`, misafirde reCAPTCHA + native `<form>` POST.
- * `hesapliAkis && !kaliciHesapVar → /giris'e zorla yönlendir` dalı
- * KASITLI OLARAK yok: Kirala hiçbir zaman giriş zorlamaz, sadece zaten
- * girişliyse hesaba bağlı kiralar.
  *
  * KASITLI KOPYA, refactor DEĞİL: `/rent-demo/page.tsx`'i Flutter (harici
  * tarayıcı, `AppRouter.navigateToRentDemo`) ve eski APK'lar hâlâ doğrudan
@@ -50,21 +63,61 @@ export function useKesfetKirala(slug: string): KesfetKiralaState {
   const [token, setToken] = useState<string | null>(null);
   const [hataMesaji, setHataMesaji] = useState("");
   const [mevcutSlug, setMevcutSlug] = useState("");
+  const [hesapBaglaniyor, setHesapBaglaniyor] = useState(false);
+  const [hesapBaglaHata, setHesapBaglaHata] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const denendiRef = useRef(false);
+  const misafirZorlaRef = useRef(false);
 
   function baslat() {
     if (!slug || durum !== "kapali") return;
     denendiRef.current = false;
+    misafirZorlaRef.current = false;
     setDurum("kontrolEdiliyor");
   }
 
   function sifirla() {
     denendiRef.current = false;
+    misafirZorlaRef.current = false;
     setToken(null);
     setHataMesaji("");
     setMevcutSlug("");
+    setHesapBaglaniyor(false);
+    setHesapBaglaHata("");
     setDurum("kapali");
+  }
+
+  async function hesapaBaglaVeKirala() {
+    setHesapBaglaHata("");
+    setHesapBaglaniyor(true);
+    // Bu cihazda hiç oturum yoksa linkIdentity'nin bağlanacağı bir kimlik
+    // gerekir — OwnerWorkspaceShell'deki "hesabına bağla" ile aynı desen.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const { error: anonHata } = await supabase.auth.signInAnonymously();
+      if (anonHata) {
+        setHesapBaglaHata("Bağlantı kurulamadı. Lütfen tekrar dene.");
+        setHesapBaglaniyor(false);
+        return;
+      }
+    }
+    const { error } = await supabase.auth.linkIdentity({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/kesfet-hesap-bagla?slug=${encodeURIComponent(slug)}`,
+      },
+    });
+    if (error) {
+      setHesapBaglaHata(error.message || "Google hesabı bağlanamadı.");
+      setHesapBaglaniyor(false);
+    }
+    // Başarılıysa tarayıcı Google'a yönlenir; bu bileşen zaten terk edilir.
+  }
+
+  function misafirDevamEt() {
+    misafirZorlaRef.current = true;
+    denendiRef.current = false;
+    setDurum("kontrolEdiliyor");
   }
 
   useEffect(() => {
@@ -126,6 +179,16 @@ export function useKesfetKirala(slug: string): KesfetKiralaState {
         return;
       }
 
+      // Hesabı olmayan ziyaretçi: artık otomatik misafir kiralaması
+      // yapılmaz — önce hesap teklif edilir (bkz. hesapaBaglaVeKirala).
+      // Kullanıcı misafirDevamEt() ile bilinçli olarak bu duvarı aşarsa
+      // misafirZorlaRef true olur ve aşağıdaki eski akış çalışır.
+      if (!misafirZorlaRef.current) {
+        denendiRef.current = true;
+        setDurum("hesapGerekli");
+        return;
+      }
+
       // Misafir yolu: reCAPTCHA ek korumadır, Google betiği yüklenmezse
       // sonsuza kadar bekletilmez — sunucudaki HMAC + oran sınırı zaten var.
       if (!isReady) {
@@ -166,5 +229,17 @@ export function useKesfetKirala(slug: string): KesfetKiralaState {
     }
   }, [durum, token]);
 
-  return { durum, hataMesaji, mevcutSlug, token, formRef, baslat, sifirla };
+  return {
+    durum,
+    hataMesaji,
+    mevcutSlug,
+    token,
+    formRef,
+    baslat,
+    sifirla,
+    hesapaBaglaVeKirala,
+    misafirDevamEt,
+    hesapBaglaniyor,
+    hesapBaglaHata,
+  };
 }

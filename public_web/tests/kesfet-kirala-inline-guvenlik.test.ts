@@ -35,10 +35,14 @@ describe("useKesfetKirala — /rent-demo/page.tsx ile aynı güvenlik mekaniği"
     expect(kaynak).toContain('fetch("/api/rent-demo/hesap"');
   });
 
-  it("giriş ZORUNLU tutulmuyor — kullanıcı kararıyla küçültülmüş kapsam", () => {
-    // hesapliAkis && !kaliciHesapVar → /giris'e zorla yönlendiren dal
-    // BİLEREK yok: Kirala hiçbir zaman giriş duvarı çıkarmaz.
+  it("hesap gerekiyor ama giriş DUVARI değil — misafir yolu bilinçli tercihle hâlâ açık", () => {
+    // UI/UX görünüm fazı (2026-09-02): hesabı olmayan ziyaretçi artık
+    // otomatik misafir kiralamıyor, önce "Google ile devam et" görüyor
+    // (hesapGerekli). Ama /giris?next= gibi kesin bir duvar da yok —
+    // misafirDevamEt() ile eski akış hâlâ bilinçli olarak seçilebilir.
     expect(kaynak).not.toContain("/giris?next=");
+    expect(kaynak).toContain('"hesapGerekli"');
+    expect(kaynak).toContain("function misafirDevamEt()");
   });
 
   it("zaten vitrini olan kullanıcı 409'da yönlendirilmiyor, bilgilendiriliyor", () => {

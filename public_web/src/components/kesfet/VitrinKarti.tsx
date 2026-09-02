@@ -75,6 +75,10 @@ export function VitrinKarti({
     formRef: kiralaFormRef,
     baslat: kiralaBaslat,
     sifirla: kiralaSifirla,
+    hesapaBaglaVeKirala: kiralaHesapaBagla,
+    misafirDevamEt: kiralaMisafirDevamEt,
+    hesapBaglaniyor: kiralaHesapBaglaniyor,
+    hesapBaglaHata: kiralaHesapBaglaHata,
   } = useKesfetKirala(vitrin.slug);
   const premiumMetni = sahipMi ? premiumEtiketi(premium) : null;
   const vitrinAdi = vitrin.ad.trim() || "vitrininiz";
@@ -334,6 +338,32 @@ export function VitrinKarti({
                   Vitrinin 14 gün boyunca ücretsiz. Kalıcı hale getirmek için
                   vitrin yönetim ekranından Google ile giriş yapman yeterli.
                 </div>
+              </>
+            ) : null}
+
+            {kiralaDurumu === "hesapGerekli" ? (
+              <>
+                <div className="max-w-[85%] rounded-t-xl rounded-br-xl rounded-bl-[4px] border border-lp-border bg-lp-surface-soft px-3.5 py-3 text-[13px] leading-relaxed text-lp-text-alt">
+                  Bu vitrini sana ayırabilmem için hesabını bağlamamız gerekiyor.
+                </div>
+                {kiralaHesapBaglaHata ? (
+                  <p className="text-[11px] font-bold text-red-400" role="alert">{kiralaHesapBaglaHata}</p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={kiralaHesapaBagla}
+                  disabled={kiralaHesapBaglaniyor}
+                  className="flex min-h-10 w-full items-center justify-center rounded-xl bg-lp-primary px-3 text-[12px] font-black text-lp-on-primary disabled:opacity-50"
+                >
+                  {kiralaHesapBaglaniyor ? "Google açılıyor…" : "Google ile devam et"}
+                </button>
+                <button
+                  type="button"
+                  onClick={kiralaMisafirDevamEt}
+                  className="flex min-h-10 w-full items-center justify-center text-[11px] font-bold text-lp-muted hover:text-lp-text"
+                >
+                  Şimdilik misafir olarak dene
+                </button>
               </>
             ) : null}
 

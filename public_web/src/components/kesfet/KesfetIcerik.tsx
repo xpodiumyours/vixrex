@@ -66,12 +66,20 @@ export function KesfetIcerik({
   useEffect(() => {
     async function baslangicBolumunuAc() {
       await Promise.resolve();
-      if (new URLSearchParams(window.location.search).get("vixrex") === "1") {
+      // UI/UX görünüm fazı (2026-09-02): landing'in niyet akışından
+      // (?kategori=...) gelindiyse Vixrex sekmesi artık elle tıklanması
+      // gereken gizli bir sekme değil — landing'de yazılan konuşma
+      // (bkz. LandingAsistanSohbeti.tsx niyetSohbetiKaydet) burada
+      // otomatik görünsün diye doğrudan açılıyor.
+      if (
+        new URLSearchParams(window.location.search).get("vixrex") === "1" ||
+        ilkKategoriKimligi
+      ) {
         setAktifBolum("vixrex");
       }
     }
     void baslangicBolumunuAc();
-  }, []);
+  }, [ilkKategoriKimligi]);
 
   useEffect(() => {
     let iptal = false;
