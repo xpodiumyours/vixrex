@@ -12,7 +12,6 @@ import {
   type AsistanCevaplari,
 } from "@/lib/landingAsistanAkisi";
 import { importLandingFlowStateIfNeeded } from "@/lib/ownerFlowImport";
-import { vixRexHizliSecenekler } from "@/lib/vixrexMesajlari";
 import {
   OwnerProductManager,
   type OwnerProduct,
@@ -44,7 +43,8 @@ export const dynamic = "force-dynamic";
 
 export default function AppPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  // Oturum yalnız yönlendirme için okunuyor; ekranda gösterilmiyor.
+  const [, setUser] = useState<User | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [olusturuyor, setOlusturuyor] = useState(false);
@@ -287,12 +287,6 @@ export default function AppPage() {
     }
   }
 
-  async function cikisYap() {
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-  }
-
   if (yukleniyor) {
     return (
       <main className="owner-shell flex items-center justify-center px-4">
@@ -318,47 +312,11 @@ export default function AppPage() {
 
   return (
     <main className="owner-shell">
-      <header className="border-b border-[var(--owner-border)] bg-[var(--owner-bg)]/90 px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Vixrex</p>
-            <h1 className="mt-1 text-xl font-bold text-[var(--owner-text)]">Vitrinim</h1>
-          </div>
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="max-w-32 truncate text-xs text-[var(--owner-muted)] sm:max-w-none">{user?.email}</span>
-            <Link
-              href="/app/profil"
-              className="owner-button-secondary min-h-11 shrink-0 px-3 py-2 text-xs"
-            >
-              Profil
-            </Link>
-            <Link
-              href="/app/ayarlar"
-              className="owner-button-secondary min-h-11 shrink-0 px-3 py-2 text-xs"
-            >
-              Ayarlar
-            </Link>
-            <button
-              type="button"
-              onClick={cikisYap}
-              className="owner-button-secondary min-h-11 shrink-0 px-3 py-2 text-xs"
-            >
-              Çıkış Yap
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-6 max-w-2xl">
-          <h2 className="text-2xl font-bold text-[var(--owner-text)] sm:text-3xl">
-            Vitrinini yönet
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--owner-muted)] sm:text-base">
-            İşletme bilgilerini, ürünlerini ve yayın durumunu aynı vitrin üzerinden yönet.
-          </p>
-        </div>
-
+      {/* Flutter'daki Vitrinim ekranıyla hizalı: ikinci üst çubuk (Vixrex/Vitrinim +
+          Profil·Ayarlar·Çıkış) ve "Vitrinini yönet" başlığı yok. Gezinme soldaki
+          AppSidebar'da; Profil/Ayarlar/Çıkış /app/profil altında. Ekranın en
+          üstündeki tek şerit VitrinimEditor'ün yayın durumu çubuğudur. */}
+      <div className="w-full">
         {hata ? <p className="owner-error mb-6 text-sm" role="alert">{hata}</p> : null}
 
         {stores.length === 0 ? (
@@ -409,22 +367,10 @@ export default function AppPage() {
               ) : null}
             </section>
           ) : (
+            // Flutter'da bu ekranda "Hazır Vitrin Seç / Bakınıyorum / Aşağıda
+            // formu doldur" kartı yok — doğrudan Vixrex Oluştur ile başlıyor.
+            // Hazır vitrin seçimi Keşfet'te duruyor.
             <div className="space-y-6">
-              <div className="owner-card p-5 sm:p-6 bg-lp-surface border border-lp-border">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Vixrex Asistan</p>
-                <p className="mt-2 text-sm leading-6 text-[var(--owner-muted)]">
-                  Hazır şablonla başla ya da aşağıda bilgilerini doldur — her iki yol aynı vitrin formuna çıkar.
-                </p>
-                <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                  <Link href="/kesfet?yalniz_kiralik=1" className="owner-button-primary flex items-center justify-center gap-2 text-xs">
-                    {vixRexHizliSecenekler.find((h) => h.id === "hazir_vitrin_sec")?.etiket ?? "Hazır Vitrin Seç"}
-                  </Link>
-                  <Link href="/kesfet" className="owner-button-secondary flex items-center justify-center gap-2 text-xs">
-                    {vixRexHizliSecenekler.find((h) => h.id === "bakiniyorum")?.etiket ?? "Bakınıyorum"}
-                  </Link>
-                  <span className="hidden sm:flex items-center justify-center text-xs text-[var(--owner-muted)]">↓ Aşağıda formu doldur</span>
-                </div>
-              </div>
               <VitrinimEditor
                 store={{ slug: "taslak", name: yeniAd, is_published: false, products: [], product_categories: [] }}
                 initialDraft={{ ...asistanTaslagi, ...workingDraft, name: yeniAd }}
