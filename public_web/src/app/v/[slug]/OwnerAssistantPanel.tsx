@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
 import { VITRIN_FIELDS } from "@/lib/vitrinFieldSchema";
 import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
+import { yonetimOnerileriUret } from "@/lib/yonetimOnerileri";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
 // yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
@@ -67,6 +68,9 @@ interface Props {
    * kurulumda da true gelir ama kategori henüz seçilmediği için hiçbir şey
    * yapmaz — otomatikDeger() kategori olmadan null döner. */
   draftYeniOlusturuldu?: boolean;
+  /** Faz E: yönetim modu önerileri için — sayfa server'da zaten hesaplıyor. */
+  urunFiyatsizSayisi?: number;
+  urunAciklamasizSayisi?: number;
 }
 
 export default function OwnerAssistantPanel({
@@ -82,6 +86,8 @@ export default function OwnerAssistantPanel({
   marketplaceLinks = null,
   galleryItems = null,
   draftYeniOlusturuldu = false,
+  urunFiyatsizSayisi = 0,
+  urunAciklamasizSayisi = 0,
   flowState = null,
 }: Props & { flowState?: Record<string, unknown> | null }) {
   const [acik, setAcik] = useState(() => Boolean(flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step));
@@ -272,6 +278,26 @@ export default function OwnerAssistantPanel({
       }
     })();
   }, [draftYeniOlusturuldu, yerelTaslak, slug, setAlan, mesajEkle, router]);
+
+  // Faz E (Tek Asistan planı, 2026-09-02): yönetim modu — vitrin yayında
+  // ise kurulum rehberi yerine "bugün ilgilenmen gereken şey" önerisi.
+  // Panel her açılışta bir kez söyler (gün takibi yok — kapsam bilerek
+  // küçük tutuldu, gerçek ihtiyaç görülürse eklenir).
+  const yonetimOnerisiSoylendiRef = useRef(false);
+  useEffect(() => {
+    if (!acik || !yerelTaslak.is_published || yonetimOnerisiSoylendiRef.current) return;
+    yonetimOnerisiSoylendiRef.current = true;
+    const oneriler = yonetimOnerileriUret(yerelTaslak, urunFiyatsizSayisi, urunAciklamasizSayisi);
+    if (oneriler.length === 0) return;
+    const baslik =
+      oneriler.length === 1
+        ? "Vitrininde bugün ilgilenmen gereken bir şey var:"
+        : `Vitrininde bugün ilgilenmen gereken ${oneriler.length} şey var:`;
+    mesajEkle(
+      "asistan",
+      `${baslik}\n${oneriler.map((o, i) => `${i + 1}. ${o.mesaj}`).join("\n")}`
+    );
+  }, [acik, yerelTaslak, urunFiyatsizSayisi, urunAciklamasizSayisi, mesajEkle]);
 
   // Yasal onay üçü birden — aynı desen, aynı yorum: draftData stores
   // satırının tam kopyası, owner_forbidden_draft_keys yalnız YAZMAYI

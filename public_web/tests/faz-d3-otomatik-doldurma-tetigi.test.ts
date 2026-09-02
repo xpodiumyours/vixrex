@@ -58,7 +58,7 @@ describe("otomatik doldurma yalnız BOŞ alanları doldurur, otomatikDoldurulabi
     // hazirlananSayisi > 0 kontrolü olmadan mesajEkle çağıran koşulsuz bir dal yok.
     const otomatikBlok = panel.slice(
       panel.indexOf("otomatikDoldurmaBasladiRef"),
-      panel.indexOf("// Yasal onay üçü birden")
+      panel.indexOf("// Faz E (Tek Asistan planı")
     );
     const mesajEkleCagrilari = (otomatikBlok.match(/mesajEkle\(/g) ?? []).length;
     expect(mesajEkleCagrilari).toBe(1); // yalnız hazirlananSayisi>0 dalında

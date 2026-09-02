@@ -757,6 +757,10 @@ export default async function StorePage(props: PageProps) {
           profile={vitrinProfile}
           collections={collections}
           productCount={visibleProducts.length}
+          // Faz E (Tek Asistan planı): yönetim modu için ucuz sayaçlar —
+          // yeni sorgu yok, zaten çekilmiş visibleProducts'tan türetiliyor.
+          urunFiyatsizSayisi={visibleProducts.filter((p) => !p.price).length}
+          urunAciklamasizSayisi={visibleProducts.filter((p) => !p.description?.trim()).length}
           galleryItems={gallerySection.items}
           marketplaceLinks={marketplaceLinks}
           articles={articles}

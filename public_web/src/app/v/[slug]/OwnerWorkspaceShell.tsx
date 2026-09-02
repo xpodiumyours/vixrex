@@ -76,6 +76,9 @@ export interface OwnerWorkspaceShellProps {
   profile: VitrinCategoryProfile;
   collections: VitrinCollection[];
   productCount: number;
+  /** Faz E: yönetim modu önerileri için — fiyatı/açıklaması boş ürün sayısı. */
+  urunFiyatsizSayisi?: number;
+  urunAciklamasizSayisi?: number;
   galleryItems: VitrinGalleryItem[];
   marketplaceLinks: VitrinMarketplaceLink[];
   articles: VitrinArticleTeaser[];
@@ -393,6 +396,8 @@ export default function OwnerWorkspaceShell({
         slug={vitrinProps.storeSlug}
         draftData={(draft?.draft_data ?? {}) as Record<string, unknown>}
         draftYeniOlusturuldu={Boolean(draft?.created)}
+        urunFiyatsizSayisi={vitrinProps.urunFiyatsizSayisi ?? 0}
+        urunAciklamasizSayisi={vitrinProps.urunAciklamasizSayisi ?? 0}
         assistantHandoff={assistantHandoff}
         atlananAlanlar={
           Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []
