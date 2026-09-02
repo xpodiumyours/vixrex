@@ -1,7 +1,7 @@
-/// Web'de aynı sekmede navigasyon — dart:html implementasyonu.
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+/// Web'de aynı sekmede navigasyon — package:web implementasyonu.
+/// dart:html Wasm'da `dart.library.html` false olur ve stub'a düşer, bu yüzden package:web kullanılır.
+import 'package:web/web.dart' as web;
 
 void webNavigateImpl(String url) {
-  html.window.location.href = url;
+  web.window.location.href = url;
 }

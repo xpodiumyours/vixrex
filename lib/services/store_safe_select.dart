@@ -31,6 +31,7 @@ class StoreSafeSelect {
     'is_published',
     'is_store',
     'is_demo',
+    'storefront_kind',
     'faq_items',
     'about_values',
     'section_visibility',
