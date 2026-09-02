@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { KesfetYanMenu } from "@/components/kesfet/KesfetYanMenu";
 import { OnayIkonu, StorefrontIkonu } from "@/components/site/icons";
 import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
 import { safeParseJson } from "@/lib/products";
@@ -127,7 +126,6 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
   const router = useRouter();
   const [draft, setDraft] = useState<Draft>({ name: store.name, ...initialDraft });
   const [openSection, setOpenSection] = useState(0);
-  const [query, setQuery] = useState("");
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -374,15 +372,9 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
   const editorButtonClass = "min-h-11 rounded-xl border border-lp-border bg-lp-surface px-4 text-[13px] font-black text-lp-text hover:border-lp-primary hover:text-lp-secondary";
 
   return (
-    <main className="min-h-screen bg-lp-bg-editor text-lp-text">
-      <div className="flex min-h-screen">
-        <KesfetYanMenu
-          sorgu={query}
-          sorguyuDegistir={setQuery}
-          aktifBolum="vitrinim"
-          vixrexAc={() => router.push("/kesfet?vixrex=1")}
-        />
-        <div className="min-w-0 flex-1">
+    // Yan menü ve tam ekran kabuğu app/layout.tsx'te kuruluyor (AppSidebar).
+    // Burada tekrar edilirse iki menü iç içe çizilir.
+    <main className="min-w-0 flex-1 bg-lp-bg-editor text-lp-text">
           <header className="sticky top-0 z-20 flex min-h-[61px] items-center justify-between gap-4 border-b border-lp-border bg-lp-bg-light/95 px-5 backdrop-blur sm:px-8">
             <div className="flex min-w-0 items-center gap-3 text-[12px] font-bold">
               <span className={`rounded-full border px-3 py-1 ${store.is_published ? "border-emerald-500/50 text-emerald-300" : "border-lp-border text-lp-muted"}`}>
@@ -542,8 +534,6 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
               </div>
             </section>
           </div>
-        </div>
-      </div>
 
       {activeEditor === "gallery" ? <GalleryEditor slug={store.slug} items={galleryItems} onClose={() => { void closeStructuredEditor(); }} /> : null}
       {activeEditor === "faq" ? <FaqEditor slug={store.slug} items={faqItems} onClose={() => { void closeStructuredEditor(); }} /> : null}
