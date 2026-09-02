@@ -27,10 +27,28 @@ export interface AssistantHandoffV1 {
   messages: AssistantHandoffMessage[];
 }
 
+/**
+ * Hızlı cevap düğmesi — Faz C2 (Tek Asistan planı, 2026-09-02).
+ * Flutter'daki `QuickReply` (lib/models/chat_message.dart) ile aynı
+ * fikir, kasıtlı olarak küçültülmüş: Flutter'ın `VixRexAction` enum'ı
+ * OCR/XML/scrollTo gibi yalnız Flutter'a özgü aksiyonlar taşıyor, bunların
+ * hiçbiri owner panelinde anlamsız. `payload` serbest bir string —
+ * hangi tıklamanın ne yapacağına çağıran taraf (mesajı ekleyen kod) karar
+ * verir, bu tip yalnız görünümü taşır.
+ */
+export interface QuickReply {
+  label: string;
+  payload: string;
+}
+
 export interface OwnerChatMessage {
   id: number;
   kimden: "asistan" | "kullanici";
   metin: string;
+  /** Yalnız oturum belleğinde tutulur, DB'ye yazılmaz (bkz. useOwnerChat
+   * mesajEkle) — sayfa yenilenince veya başka cihazdan pollenince kaybolur.
+   * Kalıcılık gerekirse ilk gerçek kullanım (Faz C3) karar versin. */
+  hizliCevaplar?: QuickReply[];
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

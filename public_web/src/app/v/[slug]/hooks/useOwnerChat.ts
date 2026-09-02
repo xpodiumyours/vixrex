@@ -13,7 +13,14 @@ export type Mesaj = OwnerChatMessage;
 
 export interface OwnerChatHook {
   mesajlar: Mesaj[];
-  mesajEkle: (kimden: Mesaj["kimden"], metin: string) => void;
+  /** Faz C2: üçüncü argüman opsiyonel — mevcut 30'dan fazla çağrı yeri
+   * hiç değişmeden çalışmaya devam eder. Hızlı cevaplar yalnız oturum
+   * belleğinde tutulur, DB'ye yazılmaz (bkz. persist() içindeki not). */
+  mesajEkle: (
+    kimden: Mesaj["kimden"],
+    metin: string,
+    hizliCevaplar?: Mesaj["hizliCevaplar"]
+  ) => void;
   akisRef: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -67,13 +74,23 @@ export function useOwnerChat(
         }));
         // Dedup: DB daha uzunsa veya ilk mesaj farklıysa (handoff → gerçek DB geçişi) senkronize et
         setMesajlar((prev) => {
-          if (opts2?.forceReplace) return mapped;
-          if (mapped.length > prev.length) return mapped;
+          // Faz C2: hizliCevaplar DB'ye yazılmıyor (yalnız oturum belleği) —
+          // poll DB'den taze bir dizi getirdiğinde aynı index'teki metin
+          // eşleşiyorsa önceki hızlı cevapları kaybetmeden taşı. Eşleşmezse
+          // (mesaj gerçekten değiştiyse) taşımaz — yanlış mesaja iliştirmez.
+          const zenginlestir = (hedef: Mesaj[]) =>
+            hedef.map((msg, i) =>
+              prev[i]?.hizliCevaplar && prev[i].metin === msg.metin
+                ? { ...msg, hizliCevaplar: prev[i].hizliCevaplar }
+                : msg
+            );
+          if (opts2?.forceReplace) return zenginlestir(mapped);
+          if (mapped.length > prev.length) return zenginlestir(mapped);
           // Aynı uzunlukta ama içerik farklıysa (başka cihaz yazdı, poll geç yakaladı) — seq’e göre en günceli al
           if (mapped.length === prev.length && mapped.length > 0) {
             const prevFirst = prev[0]?.metin ?? "";
             const mappedFirst = mapped[0]?.metin ?? "";
-            if (prevFirst !== mappedFirst) return mapped;
+            if (prevFirst !== mappedFirst) return zenginlestir(mapped);
           }
           return prev;
         });
@@ -137,12 +154,17 @@ export function useOwnerChat(
   }, [fetchAndSync, opts?.initialDbMessages]);
 
   const mesajEkle = useCallback(
-    (kimden: Mesaj["kimden"], metin: string) => {
+    (kimden: Mesaj["kimden"], metin: string, hizliCevaplar?: Mesaj["hizliCevaplar"]) => {
       const trimmed = metin.trim();
       if (!trimmed) return;
       sayacRef.current += 1;
       const id = sayacRef.current;
-      setMesajlar((m) => [...m, { id, kimden, metin: trimmed }]);
+      setMesajlar((m) => [
+        ...m,
+        hizliCevaplar && hizliCevaplar.length > 0
+          ? { id, kimden, metin: trimmed, hizliCevaplar }
+          : { id, kimden, metin: trimmed },
+      ]);
 
       // Kalıcı konuşmaya da yaz — fire-and-forget, UI bloklanmaz
       // conversationId yoksa lazy-resolve dene (tek sefer)
@@ -157,6 +179,13 @@ export function useOwnerChat(
             p_role: role,
             p_message_key: null,
             p_message_text: trimmed,
+            // Faz C2: hizliCevaplar kasıtlı olarak p_catalog_snapshot'a
+            // yazılmıyor — column var ve okuma tarafı (get_assistant_
+            // conversation) zaten geçiriyor, ama bunu kullanmak DB'de JSON
+            // string encode/decode + poll'un zenginlestir() eşleşmesiyle
+            // aynı işi iki yerde yapmak demek. C3 gerçek bir kalıcılık
+            // ihtiyacı (ör. sayfa yenilenince "Google ile devam et"
+            // düğmesinin kaybolmaması) doğrularsa buraya taşınabilir.
             p_catalog_snapshot: null,
           });
         } catch {
