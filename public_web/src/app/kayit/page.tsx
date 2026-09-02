@@ -23,7 +23,11 @@ export default function KayitPage() {
   const [showLogin, setShowLogin] = useState(true);
 
   useEffect(() => {
+    // SSR'da window yok — sunucu her zaman "/app" render eder (useState
+    // başlangıcı), hydration mismatch olmasın diye bilerek lazy init değil
+    // effect kullanılıyor; mount sonrası gerçek "next" değeri buradan gelir.
     const aday = new URLSearchParams(window.location.search).get("next");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSonrakiYol(guvenliDonusYolu(aday));
   }, []);
 

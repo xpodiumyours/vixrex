@@ -119,11 +119,19 @@ export default function OwnerAssistantPanel({
   // PR4-C14: aktif kurulum/kiralama akışı varsa asistan açık ve sıradaki alan odaklı başlar.
   // Faz A (Tek Asistan planı, 2026-09-02): harita artık burada otomatik açılmıyor —
   // SpotlightGuide varsayılan yol, harita yalnız "Tüm alanlar" (☰) ile elle açılır.
-  useEffect(() => {
+  //
+  // Effect değil, render-zamanında ayarlama (react-hooks/set-state-in-effect,
+  // 2026-09-02): flowState prop'u değiştiğinde acik'i güncellemek için
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  // deseni — bir önceki flowState ile karşılaştırıp farklıysa aynı render
+  // içinde setState çağır, ekstra bir paint/effect turu gerekmiyor.
+  const [prevFlowState, setPrevFlowState] = useState(flowState);
+  if (flowState !== prevFlowState) {
+    setPrevFlowState(flowState);
     if (flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step) {
       setAcik(true);
     }
-  }, [flowState]);
+  }
 
   // Panel açıkken vitrindeki TÜM doldurulabilir yerler sürekli hafif ışıklı
   // dursun (Vixrex Asistan rehberli tamamlama, ADR 0002) — yalnız o an

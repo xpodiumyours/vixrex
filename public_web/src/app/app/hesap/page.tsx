@@ -29,7 +29,7 @@ export default function HesapPage() {
 
   useEffect(() => {
     async function init() {
-      let { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData } = await supabase.auth.getSession();
       let session = sessionData.session;
       if (!session) {
         try {

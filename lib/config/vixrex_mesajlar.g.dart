@@ -21,15 +21,40 @@ class VixRexIntentSemasi {
 const List<VixRexIntentSemasi> vixRexIntentSemasi = [
   VixRexIntentSemasi(
     payload: 'merhaba',
-    anahtarKelimeler: ['merhaba', 'selam', 'nasil', 'baslat', 'baslayalim', 'yardim', 'ne yapabilirsin'],
+    anahtarKelimeler: [
+      'merhaba',
+      'selam',
+      'nasil',
+      'baslat',
+      'baslayalim',
+      'yardim',
+      'ne yapabilirsin',
+    ],
   ),
   VixRexIntentSemasi(
     payload: 'vixrex_info',
-    anahtarKelimeler: ['vixrex', 'nedir', 'ne işe yarar', 'nasil calisir', 'kurulum', 'vitrin'],
+    anahtarKelimeler: [
+      'vixrex',
+      'nedir',
+      'ne işe yarar',
+      'nasil calisir',
+      'kurulum',
+      'vitrin',
+    ],
   ),
   VixRexIntentSemasi(
     payload: 'membership_info',
-    anahtarKelimeler: ['ucret', 'fiyat', 'para', 'komisyon', 'ucretsiz', 'odeme', 'bedava', 'uyelik', 'kullanim'],
+    anahtarKelimeler: [
+      'ucret',
+      'fiyat',
+      'para',
+      'komisyon',
+      'ucretsiz',
+      'odeme',
+      'bedava',
+      'uyelik',
+      'kullanim',
+    ],
   ),
   VixRexIntentSemasi(
     payload: 'kapak',
@@ -37,7 +62,14 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
   ),
   VixRexIntentSemasi(
     payload: 'fotograf',
-    anahtarKelimeler: ['fotograf', 'resim', 'foto', 'galeri', 'gorsel', 'yukle'],
+    anahtarKelimeler: [
+      'fotograf',
+      'resim',
+      'foto',
+      'galeri',
+      'gorsel',
+      'yukle',
+    ],
   ),
   VixRexIntentSemasi(
     payload: 'aciklama',
@@ -53,7 +85,13 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
   ),
   VixRexIntentSemasi(
     payload: 'randevu',
-    anahtarKelimeler: ['randevu', 'rezervasyon', 'saat', 'takvim', 'musteri kabul'],
+    anahtarKelimeler: [
+      'randevu',
+      'rezervasyon',
+      'saat',
+      'takvim',
+      'musteri kabul',
+    ],
   ),
   VixRexIntentSemasi(
     payload: 'whatsapp',
@@ -61,11 +99,25 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
   ),
   VixRexIntentSemasi(
     payload: 'adres',
-    anahtarKelimeler: ['adres', 'konum', 'harita', 'nerede', 'yol tarifi', 'lokasyon'],
+    anahtarKelimeler: [
+      'adres',
+      'konum',
+      'harita',
+      'nerede',
+      'yol tarifi',
+      'lokasyon',
+    ],
   ),
   VixRexIntentSemasi(
     payload: 'yayinla',
-    anahtarKelimeler: ['yayinla', 'canli', 'aktif', 'yayinda', 'goster', 'acik'],
+    anahtarKelimeler: [
+      'yayinla',
+      'canli',
+      'aktif',
+      'yayinda',
+      'goster',
+      'acik',
+    ],
   ),
   VixRexIntentSemasi(
     payload: 'ocr_scan',
@@ -77,11 +129,26 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
   ),
   VixRexIntentSemasi(
     payload: 'xml_upload',
-    anahtarKelimeler: ['xml', 'feed', 'toplu urun', 'toplu urun yukle', 'tedarikci', 'tedarik'],
+    anahtarKelimeler: [
+      'xml',
+      'feed',
+      'toplu urun',
+      'toplu urun yukle',
+      'tedarikci',
+      'tedarik',
+    ],
   ),
   VixRexIntentSemasi(
     payload: 'hesap',
-    anahtarKelimeler: ['hesap', 'giris', 'uye ol', 'kayit', 'guvence', 'hesabimi', 'login'],
+    anahtarKelimeler: [
+      'hesap',
+      'giris',
+      'uye ol',
+      'kayit',
+      'guvence',
+      'hesabimi',
+      'login',
+    ],
   ),
 ];
 
@@ -93,7 +160,8 @@ const Map<String, String> vixRexMesajlari = {
   'vitrin_kurulum': 'Vitrin kurulumu için yalnızca İşletme Adı, WhatsApp, Adres ve Yasal Onay adımlarını tamamlamanız yeterlidir.',
   'kapak': 'Hazır kapak görselleri artık vitrinin kendi sayfasında: Önizle ile aç, kapak alanına tıkla, Vixrex Asistan sana kategorine özel görselleri gösterir. İstersen buradan da seçebilirsin.',
   'fotograf': 'Galeriye görsel ekle veya kapak şablonu seç. İkisi de mevcut Vitrinim editöründen açılır.',
-  'aciklama': 'Kısa bir işletme açıklaması ekle — müşteri seni daha çabuk anlar.',
+  'aciklama':
+      'Kısa bir işletme açıklaması ekle — müşteri seni daha çabuk anlar.',
   'urun': 'Ürün/hizmet ekle: elle yaz veya fiş/etiket tarayıcıyı kullan. İkisi de mevcut uygulama yolları.',
   'xml_upload': 'XML ile toplu ürün yüklemek için tedarikçinin XML linkini paylaş. Sistem otomatik olarak ürünleri vitrine ekleyecek.',
   'qr_yayinda': 'Linkini kopyala, QR göster veya WhatsApp ile paylaş — hepsi mevcut paylaşım yolları.',
@@ -103,7 +171,8 @@ const Map<String, String> vixRexMesajlari = {
   'adres': 'Konumunu Vitrinim adres alanından güncelle — GPS veya elle.',
   'yayinla': 'Yayın için yasal onaylar ve Yayınla butonu Vitrinim’de. Oradan devam et.',
   'blog_yayinlandi': 'Yazı yayınlandı.',
-  'ocr_scan': 'Fiş/fatura veya raf etiketi ile ürün aktar — mevcut tarayıcıyı aç.',
+  'ocr_scan':
+      'Fiş/fatura veya raf etiketi ile ürün aktar — mevcut tarayıcıyı aç.',
   'ocr_info': 'Nasıl Çalışır:\n1. Fotoğrafınızı çekin veya galeriden seçin\n2. Ürünler otomatik olarak tanınır\n3. Ürünleri onaylayın veya düzenleyin\n4. Onaylanan ürünler vitrininize eklenir\n\nNot: Bu özellik premium gerektirir.',
   'ocr_premium': 'Premium üyelik ile:\n• Fotoğraftan sınırsız ürün çıkarma\n• Faturadan otomatik ürün kaydı\n• Toplu Excel yükleme\n• Barkod tarama\n\nÜcretsiz deneme: Günde 3 ücretsiz OCR hakkı.\nPremium için uygulama içinden satın alma yapabilirsiniz.',
   'hesap': 'Vitrinini güvenceye almak için giriş yap / üye ol. Mevcut Auth ekranı açılır; vitrin token ile hesaba bağlanır.',
@@ -113,13 +182,15 @@ const Map<String, String> vixRexMesajlari = {
   'welcome_aciklama': 'İşletmene ne kazandırıyorum?\n- Tek Link & QR Kod: Dijital vitrin sayfan.\n- WhatsApp Sipariş: Müşterilerin tek tıkla sana ulaşır.\n- Ürün & Galeri: Reyon ve ürünlerini sergilersin.\n- Konum & Adres: Dükkanına kolayca ulaşılır.\n\nSenin işletmen için de 2 dakikada beraber hazırlayalım mı?',
   'welcome_buton': 'Başla',
   'setup_name_baslik': 'İşletme adınızı girin',
-  'setup_name_aciklama': 'Vitrininizde görünecek işletme adınızı ekleyerek başlayın.',
+  'setup_name_aciklama':
+      'Vitrininizde görünecek işletme adınızı ekleyerek başlayın.',
   'setup_name_buton': 'İşletme Adı Ekle',
   'setup_whatsapp_baslik': 'WhatsApp numaranızı ekleyin',
   'setup_whatsapp_aciklama': 'Müşterilerinizin sizi hızlıca ulaşabilmesi için WhatsApp numaranızı girin.',
   'setup_whatsapp_buton': 'WhatsApp Ekle',
   'setup_address_baslik': 'Adres ve konum bilgisi ekleyin',
-  'setup_address_aciklama': 'Müşterilerin sizi bulabilmesi için adres ve konum bilgisi ekleyin.',
+  'setup_address_aciklama':
+      'Müşterilerin sizi bulabilmesi için adres ve konum bilgisi ekleyin.',
   'setup_address_buton': 'Adres Ekle',
   'setup_category_baslik': 'İşletme kategorinizi seçin',
   'setup_category_aciklama': 'Vitrininizin doğru şablon ve önerilerle kurulması için kategorinizi seçin.',
@@ -146,7 +217,8 @@ const Map<String, String> vixRexMesajlari = {
   'improve_cover_aciklama': 'Güzel. Şimdi kategorine göre hazır şablonlardan birini seçelim — dijital vitrini hızlıca daha güzel yapalım.',
   'improve_cover_buton': 'Hazır şablonları aç',
   'improve_gallery_baslik': 'Galeri görselleri ekleyin',
-  'improve_gallery_aciklama': 'Ürün veya hizmet fotoğraflarınızı galeriye ekleyin.',
+  'improve_gallery_aciklama':
+      'Ürün veya hizmet fotoğraflarınızı galeriye ekleyin.',
   'improve_gallery_buton': 'Galeriye Git',
   'improve_desc_baslik': 'İşletme açıklaması ekleyin',
   'improve_desc_aciklama': 'İşletmenizi tanıtan kısa bir açıklama ekleyin.',
@@ -167,13 +239,15 @@ const Map<String, String> vixRexMesajlari = {
   'improve_google_link_aciklama': 'Müşterin tek tıkla yol tarifi alsın veya Google\'daki işletme sayfana ulaşsın.',
   'improve_google_link_buton': 'Bağlantı ekle',
   'improve_about_title_baslik': 'Hakkımızda başlığı ekle',
-  'improve_about_title_aciklama': 'Hakkımızda bölümüne kısa, dikkat çekici bir başlık yaz.',
+  'improve_about_title_aciklama':
+      'Hakkımızda bölümüne kısa, dikkat çekici bir başlık yaz.',
   'improve_about_title_buton': 'Başlık ekle',
   'improve_about_bio_baslik': 'İşletmenin hikayesini anlat',
   'improve_about_bio_aciklama': 'Hakkımızda metnine işletmenin hikayesini, neyi farklı yaptığını yaz — müşteri seni tanısın.',
   'improve_about_bio_buton': 'Hikayeni yaz',
   'improve_booking_baslik': 'Randevu sistemi kurun',
-  'improve_booking_aciklama': 'Müşterileriniz online randevu alsın — 7/24 açık kalın.',
+  'improve_booking_aciklama':
+      'Müşterileriniz online randevu alsın — 7/24 açık kalın.',
   'improve_booking_buton': 'Randevu ayarları',
   'improve_blog_baslik': 'Duyuru veya yazı paylaşın',
   'improve_blog_aciklama': 'Kampanya, indirim veya haberlerinizi yazarak Google\'da üst sıralara çıkın.',
