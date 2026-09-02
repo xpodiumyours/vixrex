@@ -171,24 +171,23 @@ export default function OwnerAssistantPanel({
   // dolaşmasın, birkaç cümleyle anlatsın" isteği. Panel açılınca, tek-tek
   // soru akışına düşmeden ÖNCE, en az bir zorunlu alan eksikse esnaftan
   // tek bir paragrafla anlatmasını ister (bkz. serbestMetinCikarim.ts).
-  // Oturum başına yalnız bir kez sorulur — kabul de red de kalıcı olarak
-  // aşağıdaki auto-select efektine yol verir.
+  //
+  // BİLİNÇLİ TASARIM: davet bir sohbet balonu OLARAK gösterilip
+  // "Anlatayım" tıklanınca kart panelin tepesinde açılmıyor — göz sohbet
+  // akışı (panelin en altı) ile kart (panelin tepesi) arasında zıplardı.
+  // Bu, StepCard'ın 2026-08-22'de kaldırılma sebebiyle (bkz. aşağıdaki
+  // "StepCard/FieldInputArea artık burada YOK" yorumu) AYNI hata olurdu.
+  // Bunun yerine kart doğrudan, kendi açıklamasıyla birlikte, panel
+  // açılınca tek seferlik kendiliğinden görünür — aracı bir sohbet
+  // mesajı/tıklaması yok.
   const [anlatimAcik, setAnlatimAcik] = useState(false);
   const [anlatimGonderiliyor, setAnlatimGonderiliyor] = useState(false);
   const anlatimSunulduRef = useRef(false);
   useEffect(() => {
     if (!acik || anlatimSunulduRef.current || rapor.temelTamam) return;
     anlatimSunulduRef.current = true;
-    mesajEkle(
-      "asistan",
-      "İşletmeni birkaç cümleyle anlatır mısın? WhatsApp numaranı, çalışma saatlerini, adresini ve ne iş yaptığını yazarsan bulabildiklerimi otomatik dolduruyorum.",
-      [
-        { label: "Anlatayım", payload: "serbest_anlatimi_ac" },
-        { label: "Tek tek sor", payload: "ilk_eksik_alana_git" },
-      ],
-      "📝"
-    );
-  }, [acik, rapor.temelTamam, mesajEkle]);
+    setAnlatimAcik(true);
+  }, [acik, rapor.temelTamam]);
 
   // 2026-08-22: "sayfada dolaşan rehber" — panel ilk açıldığında henüz
   // hiçbir alan seçili değilse, sırayı elle aramaya gerek kalmadan ilk
@@ -209,10 +208,6 @@ export default function OwnerAssistantPanel({
   // açıldığındaki otomatik-seçimle (yukarıdaki `acik`/`seciliAlan` efekti)
   // aynı mantığı kullanıcı isteğiyle tekrar tetikler.
   const handleHizliCevap = (payload: string) => {
-    if (payload === "serbest_anlatimi_ac") {
-      setAnlatimAcik(true);
-      return;
-    }
     if (payload === "ilk_eksik_alana_git") {
       const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
       if (ilkEksik) alanSec(ilkEksik.anahtar);

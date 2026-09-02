@@ -16,14 +16,16 @@ const MIN_UZUNLUK = 10;
 
 /**
  * "İşletmeni anlat" kartı — serbest metinden alan çıkarımının (bkz.
- * serbestMetinCikarim.ts) giriş yüzeyi. Panelin ana kaydırma gövdesinde
- * (StageMeter ile UpNextList arasında) yaşar — SpotlightGuide'ın balonuyla
- * KARIŞTIRILMAMALI: o tek bir VITRIN_FIELD'ın değerini düzenler, bu ise
- * tek seferlik, birden çok alana yayılan bir anlatım girişidir; iki farklı
- * şey aynı yerde durmuyor diye eskiden yaşanan "kutucuklar kopuk" sorunuyla
- * (bkz. OwnerAssistantPanel.tsx'teki StepCard yorum tarihçesi) aynı hataya
- * düşülmüyor — burada ikinci bir alan-düzenleme kutusu YOK, tek seferlik
- * bir giriş var.
+ * serbestMetinCikarim.ts) giriş yüzeyi. Panel açılınca kendiliğinden,
+ * doğrudan burada belirir — bir sohbet balonu + tıklama aracılığıyla DEĞİL
+ * (aracı bir mesaj olsaydı göz sohbet akışı ile kartın gerçek konumu
+ * arasında zıplardı, tıpkı StepCard'ın 2026-08-22'de kaldırılma
+ * sebebiyle aynı hata — bkz. OwnerAssistantPanel.tsx'teki o yorum).
+ * Bu yüzden açıklama metni burada, kartın kendisinde.
+ *
+ * SpotlightGuide'ın balonuyla KARIŞTIRILMAMALI: o tek bir VITRIN_FIELD'ın
+ * değerini düzenler, bu ise tek seferlik, birden çok alana yayılan bir
+ * anlatım girişidir — ikinci bir alan-düzenleme kutusu değil.
  */
 export function IsletmeniAnlatKarti({ gonderiliyor, onGonder, onVazgec }: Props) {
   const [metin, setMetin] = useState("");
@@ -31,9 +33,16 @@ export function IsletmeniAnlatKarti({ gonderiliyor, onGonder, onVazgec }: Props)
 
   return (
     <div className="border-t border-white/10 px-4 py-3 space-y-2">
-      <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
-        İşletmeni Anlat
-      </p>
+      <div className="flex items-start gap-2.5">
+        <span className="text-base leading-none" aria-hidden="true">📝</span>
+        <div>
+          <p className="text-[13px] font-black text-white">İşletmeni anlat</p>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-white/50">
+            WhatsApp numaranı, çalışma saatlerini, adresini ve ne iş yaptığını
+            birkaç cümleyle yazarsan bulabildiklerimi otomatik dolduruyorum.
+          </p>
+        </div>
+      </div>
       <textarea
         value={metin}
         onChange={(e) => setMetin(e.target.value)}
