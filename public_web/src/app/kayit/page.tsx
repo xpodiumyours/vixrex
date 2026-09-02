@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { OwnerAuthLayout } from "@/components/owner/OwnerAuthLayout";
 import { guvenliDonusYolu } from "@/lib/guvenliDonus";
+import { vixRexHizliSecenekler } from "@/lib/vixrexMesajlari";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default function KayitPage() {
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [sonrakiYol, setSonrakiYol] = useState("/app");
   const [showLogin, setShowLogin] = useState(true);
+  const [hizliSecenekGorunur, setHizliSecenekGorunur] = useState(true);
 
   useEffect(() => {
     // SSR'da window yok — sunucu her zaman "/app" render eder (useState
@@ -93,33 +95,38 @@ export default function KayitPage() {
       title="Kayıt Ol"
       description="Vitrinini oluşturmak ve yönetmek için Vixrex hesabını aç."
     >
-      {/* Flutter uyumlu: Hızlı Seçenekler */}
-      <div className="my-4 flex flex-col items-center gap-2">
-        <div className="text-xs font-medium text-[var(--owner-muted)]">Hızlı Seçenekler</div>
-        <div className="flex gap-2 flex-wrap justify-center">
-          <button
-            type="button"
-            className="owner-button-primary flex-1 sm:w-48 text-sm font-medium"
-            onClick={() => router.push("/giris")}
-          >
-            Hazır Vitrin Seç
-          </button>
-          <button
-            type="button"
-            className="owner-button-primary flex-1 sm:w-48 text-sm font-medium"
-            onClick={() => setShowLogin(!showLogin)}
-          >
-            Sıfırdan Oluştur
-          </button>
-          <button
-            type="button"
-            className="owner-button-secondary flex-1 sm:w-48 text-sm font-medium"
-            onClick={() => setShowLogin(!showLogin)}
-          >
-            Bakiniyorum
-          </button>
+      {/* Flutter uyumlu: Hızlı Seçenekler (bkz. vixRexOnboardingController
+          chooseReadyTemplate/chooseScratch/declineWelcome) — üç düğmenin de
+          kendi eylemi var, "Sıfırdan Oluştur" ve "Bakınıyorum" aynı toggle'ı
+          paylaşmıyor. Etiketler shared/vixrex_mesajlar.json'dan geliyor. */}
+      {hizliSecenekGorunur ? (
+        <div className="my-4 flex flex-col items-center gap-2">
+          <div className="text-xs font-medium text-[var(--owner-muted)]">Hızlı Seçenekler</div>
+          <div className="flex gap-2 flex-wrap justify-center">
+            <button
+              type="button"
+              className="owner-button-primary flex-1 sm:w-48 text-sm font-medium"
+              onClick={() => router.push("/kesfet?yalniz_kiralik=1")}
+            >
+              {vixRexHizliSecenekler.find((secenek) => secenek.id === "hazir_vitrin_sec")?.etiket}
+            </button>
+            <button
+              type="button"
+              className="owner-button-primary flex-1 sm:w-48 text-sm font-medium"
+              onClick={() => setShowLogin(true)}
+            >
+              {vixRexHizliSecenekler.find((secenek) => secenek.id === "sifirdan_olustur")?.etiket}
+            </button>
+            <button
+              type="button"
+              className="owner-button-secondary flex-1 sm:w-48 text-sm font-medium"
+              onClick={() => setHizliSecenekGorunur(false)}
+            >
+              {vixRexHizliSecenekler.find((secenek) => secenek.id === "bakiniyorum")?.etiket}
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {showLogin ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4" aria-busy={gonderiliyor}>
