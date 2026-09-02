@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
@@ -26,6 +26,8 @@ import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { useRouter } from "next/navigation";
 import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
+import { VITRIN_FIELDS } from "@/lib/vitrinFieldSchema";
+import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
 // yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
@@ -58,6 +60,13 @@ interface Props {
   campaignBanner?: { label: string; title: string; description: string; priceText: string; imageUrl: string } | null;
   marketplaceLinks?: Array<{ id: string; platform: string; url: string; subtitle?: string }> | null;
   galleryItems?: Array<{ id?: string; imageUrl: string; title?: string }> | null;
+  /** Faz D3 (Tek Asistan planı): get_working_draft_for_session'ın `created`
+   * alanı — bu taslak İLK KEZ şu çağrıda oluşturulduysa true. Kiralanan bir
+   * şablonda kategori zaten dolu gelir; bu ikisi birlikteyken otomatik
+   * doldurma tek seferlik tetiklenir (bkz. aşağıdaki useEffect). Sıfırdan
+   * kurulumda da true gelir ama kategori henüz seçilmediği için hiçbir şey
+   * yapmaz — otomatikDeger() kategori olmadan null döner. */
+  draftYeniOlusturuldu?: boolean;
 }
 
 export default function OwnerAssistantPanel({
@@ -72,6 +81,7 @@ export default function OwnerAssistantPanel({
   campaignBanner = null,
   marketplaceLinks = null,
   galleryItems = null,
+  draftYeniOlusturuldu = false,
   flowState = null,
 }: Props & { flowState?: Record<string, unknown> | null }) {
   const [acik, setAcik] = useState(() => Boolean(flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step));
@@ -203,6 +213,65 @@ export default function OwnerAssistantPanel({
   const [galeriAcik, setGaleriAcik] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const router = useRouter();
+
+  // Faz D3 (Tek Asistan planı, 2026-09-02): kiralanan bir şablon ilk kez
+  // açıldığında (draftYeniOlusturuldu) ve kategori zaten doluysa, yapısal/
+  // kozmetik alanları (otomatikDoldurulabilir) kategoriye göre otomatik
+  // doldurur — GERÇEK işletme kimliğine hiç dokunmaz (o alanlar zaten
+  // clone_demo_store_as_draft'ta boş geliyor, bkz. Faz D2 migration).
+  // Sıfırdan kurulumda da draftYeniOlusturuldu true gelir ama kategori
+  // henüz seçilmediği için otomatikDeger() null döner, hiçbir şey olmaz.
+  const otomatikDoldurmaBasladiRef = useRef(false);
+  useEffect(() => {
+    if (!draftYeniOlusturuldu || otomatikDoldurmaBasladiRef.current) return;
+    const kategoriEtiketi =
+      typeof yerelTaslak.kategori === "string" ? yerelTaslak.kategori : null;
+    if (!kategoriEtiketi) return;
+    otomatikDoldurmaBasladiRef.current = true;
+
+    const otomatikAlanlar = VITRIN_FIELDS.filter(
+      (alan) => alan.otomatikDoldurulabilir && alan.tip !== "gorsel"
+    );
+
+    (async () => {
+      let hazirlananSayisi = 0;
+      for (const alan of otomatikAlanlar) {
+        // Zaten doluysa üzerine yazma — yalnız boşu doldur.
+        const mevcut = yerelTaslak[alan.kolon];
+        if (typeof mevcut === "string" && mevcut.trim().length > 0) continue;
+
+        const deger = otomatikDeger(alan, kategoriEtiketi);
+        if (!deger) continue;
+
+        try {
+          const yanit = await fetch("/api/owner-draft", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              slug,
+              anahtar: alan.anahtar,
+              deger,
+              clientId: taslakClientId(),
+            }),
+          });
+          if (yanit.ok) {
+            setAlan(alan.kolon, deger);
+            hazirlananSayisi += 1;
+          }
+        } catch {
+          // Tek alan başarısız olursa akışı durdurmaz, kalanlarla devam eder.
+        }
+      }
+
+      if (hazirlananSayisi > 0) {
+        router.refresh();
+        mesajEkle(
+          "asistan",
+          `Vitrini kategorine göre uyarladım — ${hazirlananSayisi} alanı hazırladım (rozet, tanıtım, bölüm başlıkları). Şimdi senden gerçek bilgiler almam gerekiyor: işletme adın, WhatsApp'ın, adresin ve çalışma saatlerin.`
+        );
+      }
+    })();
+  }, [draftYeniOlusturuldu, yerelTaslak, slug, setAlan, mesajEkle, router]);
 
   // Yasal onay üçü birden — aynı desen, aynı yorum: draftData stores
   // satırının tam kopyası, owner_forbidden_draft_keys yalnız YAZMAYI

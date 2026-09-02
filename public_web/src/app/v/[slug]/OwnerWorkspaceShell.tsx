@@ -392,6 +392,7 @@ export default function OwnerWorkspaceShell({
       <OwnerAssistantPanel
         slug={vitrinProps.storeSlug}
         draftData={(draft?.draft_data ?? {}) as Record<string, unknown>}
+        draftYeniOlusturuldu={Boolean(draft?.created)}
         assistantHandoff={assistantHandoff}
         atlananAlanlar={
           Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []
