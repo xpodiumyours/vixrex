@@ -177,6 +177,17 @@ export default function OwnerAssistantPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [acik]);
 
+  // Faz C2/D3 polish: hızlı cevap düğmelerinin ilk gerçek kullanımı —
+  // otomatik doldurma mesajındaki "Başlayalım" düğmesi, panel ilk
+  // açıldığındaki otomatik-seçimle (yukarıdaki `acik`/`seciliAlan` efekti)
+  // aynı mantığı kullanıcı isteğiyle tekrar tetikler.
+  const handleHizliCevap = (payload: string) => {
+    if (payload === "ilk_eksik_alana_git") {
+      const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
+      if (ilkEksik) alanSec(ilkEksik.anahtar);
+    }
+  };
+
   const actions = useOwnerActions({
     slug,
     seciliAlan,
@@ -249,7 +260,7 @@ export default function OwnerAssistantPanel({
     );
 
     (async () => {
-      let hazirlananSayisi = 0;
+      const hazirlananEtiketler: string[] = [];
       for (const alan of otomatikAlanlar) {
         // Zaten doluysa üzerine yazma — yalnız boşu doldur.
         const mevcut = yerelTaslak[alan.kolon];
@@ -271,18 +282,21 @@ export default function OwnerAssistantPanel({
           });
           if (yanit.ok) {
             setAlan(alan.kolon, deger);
-            hazirlananSayisi += 1;
+            hazirlananEtiketler.push(alan.etiket);
           }
         } catch {
           // Tek alan başarısız olursa akışı durdurmaz, kalanlarla devam eder.
         }
       }
 
-      if (hazirlananSayisi > 0) {
+      if (hazirlananEtiketler.length > 0) {
         router.refresh();
+        const liste = hazirlananEtiketler.map((etiket) => `✓ ${etiket}`).join("\n");
         mesajEkle(
           "asistan",
-          `Vitrini kategorine göre uyarladım — ${hazirlananSayisi} alanı hazırladım (rozet, tanıtım, bölüm başlıkları). Şimdi senden gerçek bilgiler almam gerekiyor: işletme adın, WhatsApp'ın, adresin ve çalışma saatlerin.`
+          `Vitrini kategorine göre uyarladım:\n${liste}\n\nŞimdi senden gerçek bilgiler almam gerekiyor: işletme adın, WhatsApp'ın, adresin ve çalışma saatlerin.`,
+          [{ label: "Başlayalım", payload: "ilk_eksik_alana_git" }],
+          "✨"
         );
       }
     })();
@@ -308,7 +322,7 @@ export default function OwnerAssistantPanel({
           ? `En çok görüntülenen ürün: ${haftalikPerformans.en_cok_goruntulenen_urun}.`
           : null,
       ].filter(Boolean);
-      mesajEkle("asistan", satirlar.join(" "));
+      mesajEkle("asistan", satirlar.join(" "), undefined, "📊");
     }
 
     const oneriler = yonetimOnerileriUret(yerelTaslak, urunFiyatsizSayisi, urunAciklamasizSayisi);
@@ -619,7 +633,7 @@ export default function OwnerAssistantPanel({
             className="max-h-40 shrink-0 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3"
           >
             {mesajlar.map((m) => (
-              <ChatBubble key={m.id} mesaj={m} />
+              <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
             ))}
           </div>
         </div>

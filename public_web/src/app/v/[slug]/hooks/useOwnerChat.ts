@@ -19,7 +19,8 @@ export interface OwnerChatHook {
   mesajEkle: (
     kimden: Mesaj["kimden"],
     metin: string,
-    hizliCevaplar?: Mesaj["hizliCevaplar"]
+    hizliCevaplar?: Mesaj["hizliCevaplar"],
+    sistemIkon?: Mesaj["sistemIkon"]
   ) => void;
   akisRef: React.RefObject<HTMLDivElement | null>;
 }
@@ -80,8 +81,12 @@ export function useOwnerChat(
           // (mesaj gerçekten değiştiyse) taşımaz — yanlış mesaja iliştirmez.
           const zenginlestir = (hedef: Mesaj[]) =>
             hedef.map((msg, i) =>
-              prev[i]?.hizliCevaplar && prev[i].metin === msg.metin
-                ? { ...msg, hizliCevaplar: prev[i].hizliCevaplar }
+              (prev[i]?.hizliCevaplar || prev[i]?.sistemIkon) && prev[i].metin === msg.metin
+                ? {
+                    ...msg,
+                    ...(prev[i].hizliCevaplar ? { hizliCevaplar: prev[i].hizliCevaplar } : {}),
+                    ...(prev[i].sistemIkon ? { sistemIkon: prev[i].sistemIkon } : {}),
+                  }
                 : msg
             );
           if (opts2?.forceReplace) return zenginlestir(mapped);
@@ -154,16 +159,25 @@ export function useOwnerChat(
   }, [fetchAndSync, opts?.initialDbMessages]);
 
   const mesajEkle = useCallback(
-    (kimden: Mesaj["kimden"], metin: string, hizliCevaplar?: Mesaj["hizliCevaplar"]) => {
+    (
+      kimden: Mesaj["kimden"],
+      metin: string,
+      hizliCevaplar?: Mesaj["hizliCevaplar"],
+      sistemIkon?: Mesaj["sistemIkon"]
+    ) => {
       const trimmed = metin.trim();
       if (!trimmed) return;
       sayacRef.current += 1;
       const id = sayacRef.current;
       setMesajlar((m) => [
         ...m,
-        hizliCevaplar && hizliCevaplar.length > 0
-          ? { id, kimden, metin: trimmed, hizliCevaplar }
-          : { id, kimden, metin: trimmed },
+        {
+          id,
+          kimden,
+          metin: trimmed,
+          ...(hizliCevaplar && hizliCevaplar.length > 0 ? { hizliCevaplar } : {}),
+          ...(sistemIkon ? { sistemIkon } : {}),
+        },
       ]);
 
       // Kalıcı konuşmaya da yaz — fire-and-forget, UI bloklanmaz

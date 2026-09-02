@@ -20,17 +20,30 @@ interface Props {
 export function ChatBubble({ mesaj, onHizliCevap }: Props) {
   const botMu = mesaj.kimden === "asistan";
   const hizliCevaplar = mesaj.hizliCevaplar ?? [];
+  const sistemIkon = mesaj.sistemIkon;
   return (
     <div className={`max-w-[85%] space-y-1.5 ${botMu ? "" : "ml-auto"}`}>
-      <div
-        className={`border border-white/10 px-3.5 py-3 text-sm leading-relaxed text-slate-200 ${
-          botMu
-            ? "rounded-t-xl rounded-br-xl rounded-bl-[4px] bg-white/[0.06]"
-            : "rounded-t-xl rounded-bl-xl rounded-br-[4px] bg-[#0B1120]"
-        }`}
-      >
-        {mesaj.metin}
-      </div>
+      {sistemIkon ? (
+        // Faz D3/E/F polish: otomatik doldurma, yönetim önerisi ve haftalık
+        // performans mesajları — sıradan sohbet balonundan görsel olarak
+        // ayrılsın diye vurgulu "sistem kartı" (ikon + tonlu arka plan).
+        <div className="flex gap-2.5 rounded-xl border border-blue-400/20 bg-blue-500/[0.08] px-3.5 py-3 text-sm leading-relaxed text-slate-100">
+          <span className="text-base leading-none" aria-hidden="true">
+            {sistemIkon}
+          </span>
+          <span className="whitespace-pre-line">{mesaj.metin}</span>
+        </div>
+      ) : (
+        <div
+          className={`whitespace-pre-line border border-white/10 px-3.5 py-3 text-sm leading-relaxed text-slate-200 ${
+            botMu
+              ? "rounded-t-xl rounded-br-xl rounded-bl-[4px] bg-white/[0.06]"
+              : "rounded-t-xl rounded-bl-xl rounded-br-[4px] bg-[#0B1120]"
+          }`}
+        >
+          {mesaj.metin}
+        </div>
+      )}
 
       {/* Faz C2: hızlı cevaplar — Flutter `VixRexQuickReplies`/`ChatPill`
        * ile aynı görsel dil, ilk seçenek vurgulu (primary). */}

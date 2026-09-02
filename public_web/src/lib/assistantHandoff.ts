@@ -49,6 +49,13 @@ export interface OwnerChatMessage {
    * mesajEkle) — sayfa yenilenince veya başka cihazdan pollenince kaybolur.
    * Kalıcılık gerekirse ilk gerçek kullanım (Faz C3) karar versin. */
   hizliCevaplar?: QuickReply[];
+  /**
+   * Sistem kartı ikonu — Faz D3/E/F mesajlarını (otomatik doldurma,
+   * yönetim önerisi, haftalık performans) sıradan sohbet balonundan
+   * görsel olarak ayırmak için. Yoksa mesaj normal balon olarak kalır.
+   * Yalnız oturum belleğinde tutulur (hizliCevaplar ile aynı sebep).
+   */
+  sistemIkon?: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

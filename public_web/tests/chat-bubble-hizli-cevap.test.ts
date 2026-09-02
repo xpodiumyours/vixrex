@@ -14,9 +14,9 @@ const oku = (yol: string) =>
  * OCR/XML/scrollTo gibi yalnız Flutter'a özgü aksiyonlar owner panelinde
  * anlamsız; `payload` serbest string, anlamı çağıran tarafta.
  *
- * Şu an hiçbir yer `mesajEkle`yi 3. argümanla çağırmıyor — bu tamamen
- * kullanılmayan, hazır bekleyen bir yetenek. İlk gerçek kullanım Faz C3
- * ("Google ile devam et" sohbet balonunda).
+ * İlk gerçek kullanım: OwnerAssistantPanel'in Faz D3 otomatik doldurma
+ * mesajındaki "Başlayalım" düğmesi (UI/UX cilası, 2026-09-02) —
+ * ilk_eksik_alana_git payload'ı sonrakiRehberAlan+alanSec'i tetikler.
  */
 describe("QuickReply tipi mevcut mesaj sözleşmesini bozmadan eklendi", () => {
   const handoffKaynak = oku("lib/assistantHandoff.ts");
@@ -45,7 +45,9 @@ describe("useOwnerChat.mesajEkle geriye uyumlu genişledi", () => {
 
   it("15sn poll, önceki mesajdaki hızlı cevabı metin eşleşirse korur", () => {
     expect(kaynak).toContain("const zenginlestir = (hedef: Mesaj[]) =>");
-    expect(kaynak).toContain("prev[i]?.hizliCevaplar && prev[i].metin === msg.metin");
+    expect(kaynak).toContain(
+      "(prev[i]?.hizliCevaplar || prev[i]?.sistemIkon) && prev[i].metin === msg.metin"
+    );
   });
 });
 
@@ -68,5 +70,27 @@ describe("ChatBubble hızlı cevap düğmelerini çizer", () => {
 
   it("hızlı cevap yoksa hiçbir şey çizilmez (boş dizi güvenli)", () => {
     expect(kaynak).toContain("hizliCevaplar.length > 0 ? (");
+  });
+
+  it("sistemIkon varsa ayrı, tonlu bir kart çizer — sıradan balon değil", () => {
+    expect(kaynak).toContain("mesaj.sistemIkon");
+    expect(kaynak).toContain("bg-blue-500/[0.08]");
+  });
+});
+
+/**
+ * UI/UX cilası (2026-09-02) — Faz D3/E/F mesajlarının görsel ayrımı ve
+ * D3'ün "N alanı hazırladım" satırının işaretli listeye dönüşmesi.
+ */
+describe("Faz D3/E/F mesajları sistemIkon taşır — sıradan balondan ayrışır", () => {
+  const panel = oku("app/v/[slug]/OwnerAssistantPanel.tsx");
+
+  it("D3 otomatik doldurma tamamlanınca ✨ ikonu ve hazırlanan alanların işaretli listesiyle söyler", () => {
+    expect(panel).toContain('hazirlananEtiketler.map((etiket) => `✓ ${etiket}`)');
+    expect(panel).toContain('"✨"');
+  });
+
+  it("F haftalık performans özeti 📊 ikonuyla söylenir", () => {
+    expect(panel).toContain('mesajEkle("asistan", satirlar.join(" "), undefined, "📊");');
   });
 });

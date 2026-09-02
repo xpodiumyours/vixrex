@@ -49,18 +49,23 @@ describe("otomatik doldurma yalnız BOŞ alanları doldurur, otomatikDoldurulabi
     expect(panel).toContain("taslakClientId()");
   });
 
-  it("en az bir alan hazırlandıysa asistan kullanıcıya ne yapıldığını söyler", () => {
-    expect(panel).toContain("hazirlananSayisi > 0");
+  it("en az bir alan hazırlandıysa asistan kullanıcıya ne yapıldığını (işaretli liste ile) söyler", () => {
+    expect(panel).toContain("hazirlananEtiketler.length > 0");
+    expect(panel).toContain('hazirlananEtiketler.map((etiket) => `✓ ${etiket}`)');
     expect(panel).toContain("Şimdi senden gerçek bilgiler almam gerekiyor");
   });
 
+  it("tamamlanma mesajı 'Başlayalım' hızlı cevabı ve ✨ sistem ikonuyla gelir", () => {
+    expect(panel).toContain('[{ label: "Başlayalım", payload: "ilk_eksik_alana_git" }]');
+  });
+
   it("hiçbir alan hazırlanmadıysa (kategori boş/sıfırdan kurulum) sessiz kalır — yalan mesaj yazmaz", () => {
-    // hazirlananSayisi > 0 kontrolü olmadan mesajEkle çağıran koşulsuz bir dal yok.
+    // hazirlananEtiketler.length > 0 kontrolü olmadan mesajEkle çağıran koşulsuz bir dal yok.
     const otomatikBlok = panel.slice(
       panel.indexOf("otomatikDoldurmaBasladiRef"),
       panel.indexOf("// Faz E (Tek Asistan planı")
     );
     const mesajEkleCagrilari = (otomatikBlok.match(/mesajEkle\(/g) ?? []).length;
-    expect(mesajEkleCagrilari).toBe(1); // yalnız hazirlananSayisi>0 dalında
+    expect(mesajEkleCagrilari).toBe(1); // yalnız hazirlananEtiketler.length>0 dalında
   });
 });
