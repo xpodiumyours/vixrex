@@ -13,6 +13,7 @@ import {
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
+import ProductViewTracker from "@/components/ProductViewTracker";
 
 export const revalidate = 300;
 
@@ -281,6 +282,7 @@ export default async function ProductDetailPage(props: PageProps) {
 
   return (
     <>
+      <ProductViewTracker storeSlug={store.slug} productSlug={productSlug} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(productJsonLd) }}

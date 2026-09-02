@@ -93,6 +93,15 @@ export interface OwnerWorkspaceShellProps {
    * kemeri: müşteri klonları her zaman false doğar, "hesabına bağla"
    * bandı asıl kararı draft.has_account'tan alır (bkz. Faz 0). */
   isDemo?: boolean;
+  /** Faz F: son 7 gün özeti — yalnız yayında olan vitrinde, sunucuda
+   * hesaplanmış (page.tsx). */
+  haftalikPerformans?: {
+    goruntuleme: number;
+    whatsapp_tiklama: number;
+    telefon_tiklama: number;
+    konum_tiklama: number;
+    en_cok_goruntulenen_urun: string | null;
+  } | null;
 }
 
 export default function OwnerWorkspaceShell({
@@ -398,6 +407,7 @@ export default function OwnerWorkspaceShell({
         draftYeniOlusturuldu={Boolean(draft?.created)}
         urunFiyatsizSayisi={vitrinProps.urunFiyatsizSayisi ?? 0}
         urunAciklamasizSayisi={vitrinProps.urunAciklamasizSayisi ?? 0}
+        haftalikPerformans={vitrinProps.haftalikPerformans ?? null}
         assistantHandoff={assistantHandoff}
         atlananAlanlar={
           Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []

@@ -1,6 +1,8 @@
 "use client";
 
 import type { AnchorHTMLAttributes, MouseEvent } from "react";
+import { supabase } from "@/lib/supabase";
+import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 
 export const WHATSAPP_CLICK_EVENT = "whatsapp_click";
 
@@ -33,16 +35,27 @@ export function trackWhatsAppClick(
   context: WhatsAppClickContext,
 ): void {
   const storeSlug = context.storeSlug.trim();
-  if (!gtag || !storeSlug) return;
+  if (!storeSlug) return;
 
-  const parameters: Record<string, string> = {
-    store_slug: storeSlug,
-    click_location: context.clickLocation,
-  };
-  const productSlug = context.productSlug?.trim();
-  if (productSlug) parameters.product_slug = productSlug;
+  if (gtag) {
+    const parameters: Record<string, string> = {
+      store_slug: storeSlug,
+      click_location: context.clickLocation,
+    };
+    const productSlug = context.productSlug?.trim();
+    if (productSlug) parameters.product_slug = productSlug;
+    gtag("event", WHATSAPP_CLICK_EVENT, parameters);
+  }
 
-  gtag("event", WHATSAPP_CLICK_EVENT, parameters);
+  // Faz F (Tek Asistan planı, 2026-09-02): GA'nın yanına çift yazım —
+  // asistan bunu okuyabilsin diye Supabase'e de düşer.
+  supabase
+    .rpc("record_vitrin_engagement", {
+      p_store_slug: storeSlug,
+      p_event_type: "whatsapp_click",
+      p_session_key: ziyaretAnahtariniOkuyaUret(),
+    })
+    .then(() => {});
 }
 
 interface TrackedWhatsAppLinkProps

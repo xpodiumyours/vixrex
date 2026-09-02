@@ -71,6 +71,14 @@ interface Props {
   /** Faz E: yönetim modu önerileri için — sayfa server'da zaten hesaplıyor. */
   urunFiyatsizSayisi?: number;
   urunAciklamasizSayisi?: number;
+  /** Faz F: son 7 gün özeti — yalnız yayında olan vitrinde. */
+  haftalikPerformans?: {
+    goruntuleme: number;
+    whatsapp_tiklama: number;
+    telefon_tiklama: number;
+    konum_tiklama: number;
+    en_cok_goruntulenen_urun: string | null;
+  } | null;
 }
 
 export default function OwnerAssistantPanel({
@@ -88,6 +96,7 @@ export default function OwnerAssistantPanel({
   draftYeniOlusturuldu = false,
   urunFiyatsizSayisi = 0,
   urunAciklamasizSayisi = 0,
+  haftalikPerformans = null,
   flowState = null,
 }: Props & { flowState?: Record<string, unknown> | null }) {
   const [acik, setAcik] = useState(() => Boolean(flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step));
@@ -287,6 +296,21 @@ export default function OwnerAssistantPanel({
   useEffect(() => {
     if (!acik || !yerelTaslak.is_published || yonetimOnerisiSoylendiRef.current) return;
     yonetimOnerisiSoylendiRef.current = true;
+
+    // Faz F: performans varsa önce onu söyler.
+    if (haftalikPerformans && haftalikPerformans.goruntuleme > 0) {
+      const satirlar = [
+        `Bu hafta ${haftalikPerformans.goruntuleme} kişi vitrinini gördü.`,
+        haftalikPerformans.whatsapp_tiklama > 0
+          ? `${haftalikPerformans.whatsapp_tiklama} kişi WhatsApp'a geçti.`
+          : null,
+        haftalikPerformans.en_cok_goruntulenen_urun
+          ? `En çok görüntülenen ürün: ${haftalikPerformans.en_cok_goruntulenen_urun}.`
+          : null,
+      ].filter(Boolean);
+      mesajEkle("asistan", satirlar.join(" "));
+    }
+
     const oneriler = yonetimOnerileriUret(yerelTaslak, urunFiyatsizSayisi, urunAciklamasizSayisi);
     if (oneriler.length === 0) return;
     const baslik =
@@ -297,7 +321,7 @@ export default function OwnerAssistantPanel({
       "asistan",
       `${baslik}\n${oneriler.map((o, i) => `${i + 1}. ${o.mesaj}`).join("\n")}`
     );
-  }, [acik, yerelTaslak, urunFiyatsizSayisi, urunAciklamasizSayisi, mesajEkle]);
+  }, [acik, yerelTaslak, urunFiyatsizSayisi, urunAciklamasizSayisi, haftalikPerformans, mesajEkle]);
 
   // Yasal onay üçü birden — aynı desen, aynı yorum: draftData stores
   // satırının tam kopyası, owner_forbidden_draft_keys yalnız YAZMAYI

@@ -2,6 +2,8 @@
 
 import type { AnchorHTMLAttributes, MouseEvent } from "react";
 import type { GtagCommand, WhatsAppClickLocation } from "./TrackedWhatsAppLink";
+import { supabase } from "@/lib/supabase";
+import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 
 export const PHONE_CLICK_EVENT = "phone_click";
 
@@ -18,12 +20,25 @@ function trackContactEvent(
   context: ContactClickContext,
 ): void {
   const storeSlug = context.storeSlug.trim();
-  if (!gtag || !storeSlug) return;
+  if (!storeSlug) return;
 
-  gtag("event", eventName, {
-    store_slug: storeSlug,
-    click_location: context.clickLocation,
-  });
+  if (gtag) {
+    gtag("event", eventName, {
+      store_slug: storeSlug,
+      click_location: context.clickLocation,
+    });
+  }
+
+  // Faz F (Tek Asistan planı, 2026-09-02): GA'nın yanına çift yazım —
+  // eventName zaten record_vitrin_engagement'ın event_type'ıyla eşleşiyor
+  // (phone_click / directions_click).
+  supabase
+    .rpc("record_vitrin_engagement", {
+      p_store_slug: storeSlug,
+      p_event_type: eventName,
+      p_session_key: ziyaretAnahtariniOkuyaUret(),
+    })
+    .then(() => {});
 }
 
 export function trackPhoneClick(
