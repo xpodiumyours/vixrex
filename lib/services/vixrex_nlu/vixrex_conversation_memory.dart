@@ -55,8 +55,7 @@ class VixrexConversationMemory implements VixrexConversationMemoryPort {
   static const _localScope = 'local';
 
   String _keyFor(String? scope) {
-    final s = scope?.trim().isEmpty == true ? _localScope : scope!.trim();
-    // Scope’u normalize et – ChatbotService._historyKeyFor ile aynı mantık ama sade.
+    final s = (scope == null || scope.trim().isEmpty) ? _localScope : scope.trim();
     final norm = s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
     return '$_prefix$norm';
   }

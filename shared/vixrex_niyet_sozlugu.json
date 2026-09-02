@@ -615,7 +615,7 @@
       "kolon": "show_directions_link",
       "bolum": "contact",
       "beklenenVeriTipi": "acikKapali (true/false)",
-      "esAnlamlar": ["yol tarifi göster", "yol tarifi butonu", "haritada yol tarifi", "navigasyon göster"],
+      "esAnlamlar": ["yol tarifi göster", "yol tarifi butonu", "haritada yol tarifi", "navigasyon göster", "yol tarifi", "yol tarifini"],
       "ornekIfadeler": [
         "Yol tarifini göster",
         "Yol tarifi butonunu gizle",

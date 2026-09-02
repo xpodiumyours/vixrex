@@ -1,7 +1,7 @@
 "use client";
 
 import { VIXREX_NIYET_SOZLUGU, type VixrexNiyetAlan } from "./vixrexNiyetSozlugu";
-import { resolveVixrexIntent } from "./vixrexIntentResolver";
+import { resolveVixrexIntent, resolveVixrexIntentsAll } from "./vixrexIntentResolver";
 import { extractVixrexValue } from "./vixrexValueExtractor";
 import { validateField } from "./vitrinFieldValidation";
 import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
@@ -75,8 +75,25 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
     }
   }
 
-  const alan = resolveVixrexIntent(trimmed);
-  if (!alan) return { outcome: "notUnderstood", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap”" };
+  const all = resolveVixrexIntentsAll(trimmed);
+  if (all.length === 0) return { outcome: "notUnderstood", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap”" };
+  if (all.length > 1) {
+    const ok: Array<{ alan: VixrexNiyetAlan; deger: unknown }> = [];
+    const hatalar: string[] = [];
+    for (const a of all) {
+      if (needsSpecialFlow(a.anahtar)) { hatalar.push(`${a.etiket} için panelden devam et`); continue; }
+      const ham = extractVixrexValue(trimmed, a);
+      if (!ham) { hatalar.push(`${a.etiket} için değer bulunamadı`); continue; }
+      const v = validateField(a.anahtar, ham);
+      if (!v.ok) { hatalar.push((v as { hata: string }).hata); continue; }
+      ok.push({ alan: a, deger: (v as { deger: unknown }).deger ?? ham });
+    }
+    if (ok.length === 0) return { outcome: "needsClarification", message: hatalar.join("\n") || "Hangi alanı değiştirmek istediğini netleştirebilir misin?" };
+    clearPending();
+    const metin = ok.map(({ alan, deger }) => clarifySuccess(alan, deger)).join("\n");
+    return { outcome: "handled", message: metin, anahtar: ok[0].alan.anahtar, deger: ok[0].deger };
+  }
+  const alan = all[0];
   if (needsSpecialFlow(alan.anahtar)) {
     savePending(alan);
     return { outcome: "needsSpecialFlow", message: clarifyAsk(alan), anahtar: alan.anahtar };

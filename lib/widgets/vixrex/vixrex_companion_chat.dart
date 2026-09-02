@@ -262,18 +262,19 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           // Alan bulunamadı → eski kural tabanlı sohbete düş.
           bot = _service.respond(text, widget.snapshot, widget.hasShared);
         } else if (result.outcome == VixrexNluPipelineOutcome.handled) {
-          // Başarılı doğrulama ama controller yok → HomeShell’e delege et.
-          final anahtar = result.appliedAnahtar;
-          final deger = result.appliedDeger;
-          if (anahtar != null && deger != null && widget.onUpdateField != null) {
-            widget.onUpdateField!(anahtar, deger);
-            // Pipeline zaten clarifier.basari mesajını üretti – onu kullan.
+          // Başarılı doğrulama ama controller yok → HomeShell’e delege et (çok-alanlı dahil).
+          final anahtarlar = result.appliedAnahtarlar ?? (result.appliedAnahtar != null ? [result.appliedAnahtar!] : <String>[]);
+          final degerler = result.appliedDegerler ?? (result.appliedDeger != null ? [result.appliedDeger!] : <Object>[]);
+          if (anahtarlar.isNotEmpty && widget.onUpdateField != null) {
+            for (var i = 0; i < anahtarlar.length && i < degerler.length; i++) {
+              widget.onUpdateField!(anahtarlar[i], degerler[i]);
+            }
             bot = result.message;
-          } else if (anahtar != null && deger != null) {
-            // Fallback: eski 5 alan haritası (geriye uyum)
-            final mapped = _mapAnahtarToLegacyField(anahtar);
+          } else if (anahtarlar.isNotEmpty) {
+            // Fallback: eski 5 alan haritası (geriye uyum) – sadece ilk
+            final mapped = _mapAnahtarToLegacyField(anahtarlar.first);
             if (mapped != null) {
-              widget.onSaveField(mapped, deger.toString());
+              widget.onSaveField(mapped, degerler.first.toString());
               bot = ChatMessage.bot('Kaydettim ✅ ${result.message.text}');
             } else {
               bot = result.message;

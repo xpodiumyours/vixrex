@@ -138,11 +138,14 @@ class VixrexFieldValidator {
         return 60;
       case 'kisaTanitim':
         return 300;
+      case 'konumMetni':
+        return 60;
+      case 'isletmeTuru':
+        return 40;
       case 'adres':
         return 200;
       case 'il':
       case 'ilce':
-        return 60;
       case 'mahalle':
         return 60;
       case 'haritaEtiketi':
@@ -151,12 +154,47 @@ class VixrexFieldValidator {
         return 400;
       case 'instagram':
         return 30;
+      case 'website':
       case 'haritaLinki':
+      case 'referansLinki':
         return 2000;
+      case 'hakkindaUstBaslik':
+        return 40;
       case 'hakkindaBaslik':
         return 90;
       case 'hakkindaMetin':
         return 1200;
+      case 'hakkindaGorselAlt':
+        return 120;
+      case 'galeriUstBaslik':
+        return 40;
+      case 'galeriBaslik':
+        return 90;
+      case 'galeriAksiyonMetni':
+        return 40;
+      case 'kategoriBolumBaslik':
+      case 'urunBolumBaslik':
+        return 60;
+      case 'bantEtiket':
+        return 40;
+      case 'bantBaslik':
+        return 90;
+      case 'bantAciklama':
+        return 200;
+      case 'bantFiyat':
+        return 30;
+      case 'blogUstBaslik':
+        return 40;
+      case 'blogBaslik':
+        return 90;
+      case 'sssUstBaslik':
+        return 40;
+      case 'sssBaslik':
+        return 90;
+      case 'sssAciklama':
+        return 200;
+      case 'eposta':
+        return 120;
       case 'kategori':
         return 40;
       case 'logo':

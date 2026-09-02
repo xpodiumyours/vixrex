@@ -81,6 +81,97 @@ class VixrexExecutor {
       case 'eposta':
         controller.updateEmail(deger as String);
         return true;
+      case 'konumMetni':
+        controller.data.heroLocationText = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'enlem':
+        controller.data.latitude = (deger as num).toDouble();
+        controller.notifyListeners();
+        return true;
+      case 'boylam':
+        controller.data.longitude = (deger as num).toDouble();
+        controller.notifyListeners();
+        return true;
+      case 'kategoriBolumBaslik':
+        controller.updateCategorySectionTitle(deger as String);
+        return true;
+      case 'urunBolumBaslik':
+        controller.updateProductSectionTitle(deger as String);
+        return true;
+      case 'bantEtiket':
+        controller.data.featuredBannerLabel = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'bantBaslik':
+        controller.data.featuredBannerTitle = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'bantAciklama':
+        controller.data.featuredBannerDescription = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'bantGorsel':
+        controller.data.featuredBannerImageUrl = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'bantFiyat':
+        controller.data.featuredBannerPriceText = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'hakkindaUstBaslik':
+        controller.data.aboutKicker = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'hakkindaGorsel':
+        controller.data.aboutImageUrl = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'hakkindaGorselAlt':
+        controller.data.aboutImageCaption = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'galeriUstBaslik':
+        controller.data.gallerySectionKicker = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'galeriBaslik':
+        controller.data.gallerySectionTitle = (deger as String).trim();
+        controller.notifyListeners();
+        return true;
+      case 'galeriAksiyonMetni':
+        controller.updateGalleryActionLabel(deger as String);
+        return true;
+      case 'galeriAksiyonLinki':
+        controller.updateGalleryActionHref(deger as String);
+        return true;
+      case 'blogUstBaslik':
+        controller.updateBlogSectionKicker(deger as String);
+        return true;
+      case 'blogBaslik':
+        controller.updateBlogSectionTitle(deger as String);
+        return true;
+      case 'sssUstBaslik':
+        controller.updateFaqSectionKicker(deger as String);
+        return true;
+      case 'sssBaslik':
+        controller.updateFaqSectionTitle(deger as String);
+        return true;
+      case 'sssAciklama':
+        controller.updateFaqSectionDescription(deger as String);
+        return true;
+      case 'puanGoster':
+        controller.updateShowStorefrontRating(deger as bool);
+        return true;
+      case 'yolTarifiGoster':
+        controller.updateShowDirectionsLink(deger as bool);
+        return true;
+      case 'referansLinki':
+        controller.updateReferencesLink(deger as String);
+        return true;
+      case 'kisaTanitim':
+        controller.setDescription(deger as String);
+        return true;
       default:
         break;
     }

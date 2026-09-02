@@ -236,19 +236,20 @@ class VixrexValueExtractor {
   }
 
   String? _extractPhone(String input) {
-    // Önce tırnak içindeki numarayı dene
     final quoted = _extractQuoted(input);
     if (quoted != null) {
       final digits = quoted.replaceAll(RegExp(r'[^0-9]'), '');
-      if (RegExp(r'^0?5\d{9}$').hasMatch(digits) || RegExp(r'^90\d{10}$').hasMatch(digits)) {
-        return quoted.trim();
-      }
+      if (digits.length >= 10 && digits.length <= 13) return quoted.trim();
     }
-    // Düz metindeki ilk telefon benzeri diziyi yakala
+    // Mobil 5xx
     final m = RegExp(r'(\+?90\s?)?0?\s?5\d{2}\s?\d{3}\s?\d{2}\s?\d{2}').firstMatch(input);
     if (m != null) return m.group(0)?.trim();
-    final m2 = RegExp(r'5\d{9}').firstMatch(input.replaceAll(RegExp(r'[^0-9]'), ' ').replaceAll(RegExp(r'\s+'), ' '));
-    if (m2 != null) return m2.group(0);
+    // Sabit hat 0212 vb. – 10-11 haneli herhangi bir numara
+    final mLand = RegExp(r'0?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}').firstMatch(input);
+    if (mLand != null) {
+      final digits = mLand.group(0)!.replaceAll(RegExp(r'[^0-9]'), '');
+      if (digits.length >= 10 && digits.length <= 11) return mLand.group(0)?.trim();
+    }
     return null;
   }
 
@@ -296,9 +297,9 @@ class VixrexValueExtractor {
     if (m == null) return null;
     var afterField = input.substring(m.end).trim();
     if (afterField.isEmpty) return null;
-    // Baştaki ekleri at: "nı/ni, mı/mi, yı/yi, sını, imi" gibi
+    // Baştaki ekleri at: "nı/ni, mı/mi, yı/yi, sını, imi, u/ü" gibi
     afterField = afterField.replaceAll(RegExp(r"^[\s:=\-–—,]+"), '').trim();
-    afterField = afterField.replaceAll(RegExp(r"^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi|numaramı|numarami|imi|ımı|umu|ümü|yi|yı)\b\s*", caseSensitive: false), '').trim();
+    afterField = afterField.replaceAll(RegExp(r"^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi|numaramı|numarami|imi|ımı|umu|ümü|yi|yı|u|ü|ı|i)\b\s*", caseSensitive: false), '').trim();
     if (afterField.isEmpty) return null;
     // Fiilden öncesini al: " ... yap" → fiile kadar
     final verbIdx = afterField.toLowerCase().indexOf(RegExp(r'\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz)\b').pattern);

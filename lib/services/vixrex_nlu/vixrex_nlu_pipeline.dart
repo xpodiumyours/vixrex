@@ -17,12 +17,16 @@ class VixrexNluPipelineResult {
   final ChatMessage message; // asistanın cevabı
   final String? appliedAnahtar;
   final Object? appliedDeger;
+  final List<String>? appliedAnahtarlar;
+  final List<Object>? appliedDegerler;
 
   const VixrexNluPipelineResult({
     required this.outcome,
     required this.message,
     this.appliedAnahtar,
     this.appliedDeger,
+    this.appliedAnahtarlar,
+    this.appliedDegerler,
   });
 }
 
@@ -147,15 +151,63 @@ class VixrexNluPipeline {
       }
     }
 
-    // 1) Alan bul.
-    final alan = _intentResolver.resolve(trimmed);
-    if (alan == null) {
-      // Alan bulunamadı ama pending varsa yukarıda zaten denendi – gerçekten belirsiz.
+    // 1) Alan bul – Faz 3 çok-alanlı: birden fazla alan varsa hepsini dene.
+    final tumAlanlar = _intentResolver.resolveAll(trimmed);
+    if (tumAlanlar.isEmpty) {
       return VixrexNluPipelineResult(
         outcome: VixrexNluPipelineOutcome.notUnderstood,
         message: ChatMessage.bot(_clarifier.belirsiz()),
       );
     }
+    // Çok-alanlı: 2+ alan ve her biri için değer varsa toplu işle (Faz 3).
+    if (tumAlanlar.length > 1) {
+      final basarili = <VixrexNiyetAlan>[];
+      final basariliDegerler = <Object>[];
+      final hatalar = <String>[];
+      for (final a in tumAlanlar) {
+        if (needsSpecialFlow != null && needsSpecialFlow(a)) {
+          hatalar.add('${a.etiket} için panelden devam et');
+          continue;
+        }
+        final ham = _valueExtractor.extract(trimmed, a);
+        if (ham == null || ham.trim().isEmpty) {
+          hatalar.add('${a.etiket} için değer bulunamadı');
+          continue;
+        }
+        final v = await onValidate(a, ham);
+        if (!v.ok) {
+          hatalar.add(v.hata ?? '${a.etiket} geçersiz');
+          continue;
+        }
+        if (controller != null) {
+          final ok = _executor.execute(controller: controller, alan: a, deger: v.normalizedDeger ?? ham);
+          if (!ok) {
+            hatalar.add('${a.etiket} için özel akış gerekli');
+            continue;
+          }
+        }
+        basarili.add(a);
+        basariliDegerler.add(v.normalizedDeger ?? ham);
+      }
+      if (basarili.isEmpty) {
+        return VixrexNluPipelineResult(
+          outcome: VixrexNluPipelineOutcome.needsClarification,
+          message: ChatMessage.bot(hatalar.isNotEmpty ? hatalar.join('\n') : _clarifier.belirsiz()),
+        );
+      }
+      if (controller != null) await controller.saveLocally();
+      await _memory.clearPendingSlot(scope: scope);
+      final metin = basarili.asMap().entries.map((e) => _clarifier.basari(e.value, basariliDegerler[e.key].toString())).join('\n');
+      return VixrexNluPipelineResult(
+        outcome: VixrexNluPipelineOutcome.handled,
+        message: ChatMessage.bot(metin),
+        appliedAnahtar: basarili.first.anahtar,
+        appliedDeger: basariliDegerler.first,
+        appliedAnahtarlar: basarili.map((e) => e.anahtar).toList(),
+        appliedDegerler: basariliDegerler,
+      );
+    }
+    final alan = tumAlanlar.first;
 
     // 1b) Yasal alanlar bu borudan yasak – mevcut legal akışa yönlendir.
     // Sözlükte yasal alanlar yok, bu dal Faz 1’de ölü – fakat emniyet için kontrol.

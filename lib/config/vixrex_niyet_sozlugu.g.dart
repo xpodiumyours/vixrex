@@ -1,6 +1,5 @@
 // ÜRETİLMİŞ DOSYA — ELLE DÜZENLEME.
 // Kaynak : shared/vixrex_niyet_sozlugu.json
-// Üreten : shared/vixrex_niyet_sozlugu.json → lib/config/vixrex_niyet_sozlugu.g.dart
 
 class VixrexNiyetAlan {
   final String anahtar;
@@ -11,18 +10,8 @@ class VixrexNiyetAlan {
   final String beklenenVeriTipi;
   final List<String> esAnlamlar;
   final List<String> ornekIfadeler;
-  const VixrexNiyetAlan({
-    required this.anahtar,
-    required this.etiket,
-    required this.tip,
-    required this.kolon,
-    required this.bolum,
-    required this.beklenenVeriTipi,
-    required this.esAnlamlar,
-    required this.ornekIfadeler,
-  });
+  const VixrexNiyetAlan({required this.anahtar,required this.etiket,required this.tip,required this.kolon,required this.bolum,required this.beklenenVeriTipi,required this.esAnlamlar,required this.ornekIfadeler,});
 }
-
 const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   VixrexNiyetAlan(
     anahtar: 'isletmeAdi',
@@ -471,7 +460,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'show_directions_link',
     bolum: 'contact',
     beklenenVeriTipi: 'acikKapali (true/false)',
-    esAnlamlar: ['yol tarifi göster', 'yol tarifi butonu', 'haritada yol tarifi', 'navigasyon göster'],
+    esAnlamlar: ['yol tarifi göster', 'yol tarifi butonu', 'haritada yol tarifi', 'navigasyon göster', 'yol tarifi', 'yol tarifini'],
     ornekIfadeler: ['Yol tarifini göster', 'Yol tarifi butonunu gizle', 'Yol tarifini aç', 'Navigasyonu kapat'],
   ),
   VixrexNiyetAlan(
@@ -485,7 +474,4 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     ornekIfadeler: ['Referans linkini {deger} yap', 'Referans bağlantısını {deger} olarak değiştir'],
   ),
 ];
-
-final Map<String, VixrexNiyetAlan> vixrexNiyetAlanByAnahtar = {
-  for (final a in vixrexNiyetSozlugu) a.anahtar: a,
-};
+final Map<String, VixrexNiyetAlan> vixrexNiyetAlanByAnahtar = { for (final a in vixrexNiyetSozlugu) a.anahtar: a, };

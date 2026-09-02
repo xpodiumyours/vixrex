@@ -27,10 +27,15 @@ function extractPhone(input: string): string | null {
   const quoted = extractQuoted(input);
   if (quoted) {
     const digits = quoted.replace(/[^0-9]/g, "");
-    if (/^0?5\d{9}$/.test(digits) || /^90\d{10}$/.test(digits)) return quoted.trim();
+    if (digits.length >= 10 && digits.length <= 13) return quoted.trim();
   }
   const m = input.match(/(\+?90\s?)?0?\s?5\d{2}\s?\d{3}\s?\d{2}\s?\d{2}/);
   if (m) return m[0].trim();
+  const mLand = input.match(/0?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}/);
+  if (mLand) {
+    const d = mLand[0].replace(/[^0-9]/g, "");
+    if (d.length >= 10 && d.length <= 11) return mLand[0].trim();
+  }
   return null;
 }
 
@@ -62,7 +67,7 @@ function extractBetweenFieldAndVerb(input: string, alan: VixrexNiyetAlan): strin
   if (!m || m.index === undefined) return null;
   let after = input.slice(m.index + m[0].length).trim();
   after = after.replace(/^[\s:=\-–—,]+/, "").trim();
-  after = after.replace(/^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi|numaramı|numarami|imi|ımı|umu|ümü|yi|yı)\b\s*/i, "").trim();
+  after = after.replace(/^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi|numaramı|numarami|imi|ımı|umu|ümü|yi|yı|u|ü|ı|i)\b\s*/i, "").trim();
   if (!after) return null;
   const vm = after.match(/\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz)\b/i);
   let cand = vm ? after.slice(0, vm.index).trim() : after;
