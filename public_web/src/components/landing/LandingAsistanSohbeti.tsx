@@ -61,7 +61,7 @@ import {
  * sessizce yutulur: DB yazımı başarısız olsa da yönlendirme engellenmez.
  */
 async function niyetSohbetiKaydet(
-  mesajlar: Array<{ role: "assistant" | "user"; text: string }>,
+  mesajlar: Array<{ role: "assistant" | "user"; text: string; messageKey?: string }>,
 ) {
   try {
     const oturumVar = await ensureAnonymousSession();
@@ -69,12 +69,25 @@ async function niyetSohbetiKaydet(
     const conversationId = await ensureSharedAssistantConversation();
     if (!conversationId) return;
     for (const mesaj of mesajlar) {
-      await appendRawSharedAssistantMessage(conversationId, mesaj.role, mesaj.text);
+      await appendRawSharedAssistantMessage(
+        conversationId,
+        mesaj.role,
+        mesaj.text,
+        mesaj.messageKey ?? null,
+      );
     }
   } catch {
     // Konuşma köprüsü opsiyonel bir zenginleştirme — akışı hiç bloklamaz.
   }
 }
+
+/**
+ * Panelin (OwnerAssistantPanel) landing'de yazılan bu mesajı bulup serbest
+ * metin çıkarımını (serbestMetinCikarim.ts) üstünde çalıştırabilmesi için
+ * sabit bir işaret — bkz. OwnerAssistantPanel.tsx'teki
+ * "landingNiyetSerbestMetniIsle" efekti.
+ */
+const NIYET_SERBEST_METIN_ANAHTARI = "niyet_serbest_metin";
 
 /**
  * Ana sayfadaki Vixrex Asistan — telefon mockup'ının içinde çalışır.
@@ -98,6 +111,12 @@ export function LandingAsistanSohbeti({
   // Faz C1 (Tek Asistan planı): "Hazır Vitrin Seç" artık direkt /kesfet'e
   // atlamıyor, önce hangi işe uygun vitrin aradığını soruyor.
   const [niyetKategoriSoruluyor, setNiyetKategoriSoruluyor] = useState(false);
+  // Serbest niyet anlatımı (2026-09-02) — "esnaf sohbetten aldığımız
+  // bilgiyle vitrini doldursun" isteği: kategori kutucuklarına ek,
+  // opsiyonel bir serbest metin. Yazılırsa NIYET_SERBEST_METIN_ANAHTARI
+  // ile konuşmaya işaretlenir; panel (OwnerAssistantPanel) vitrin
+  // kiralanınca bunu bulup serbestMetinCikarim.ts ile otomatik dolduruyor.
+  const [niyetSerbestMetin, setNiyetSerbestMetin] = useState("");
   const [girdi, setGirdi] = useState("");
   const [cevaplar, setCevaplar] = useState<AsistanCevaplari>(() => {
     if (!tasinanIsletmeAdi) return {};
@@ -399,8 +418,12 @@ export function LandingAsistanSohbeti({
         {adim === -1 && niyetKategoriSoruluyor ? (
           /* Faz C1 (Tek Asistan planı): "Hazır Vitrin Seç" niyet sorusu —
            * kategori seçilince doğrudan filtreli Keşfet'e gider (Faz B'nin
-           * ?kategori= kablosunu kullanır), sohbete hiçbir şey yazılmaz —
-           * burada henüz hesap/kiralama yok, yalnız yönlendirme. */
+           * ?kategori= kablosunu kullanır). Burada henüz hesap/kiralama
+           * yok. Tek konuşma köprüsü (2026-09-02, bkz. niyetSohbetiKaydet)
+           * seçimi/anlatılanı assistant_conversations'a da yazıyor —
+           * serbest metin alanı yazılırsa (NIYET_SERBEST_METIN_ANAHTARI
+           * ile işaretli) panel kiralama sonrası bunu bulup
+           * serbestMetinCikarim.ts ile otomatik dolduruyor. */
           <div className="space-y-2">
             <KategoriGrid
               secenekler={PROFILES.map((p) => p.label)}
@@ -417,6 +440,37 @@ export function LandingAsistanSohbeti({
                 router.push(hedef);
               }}
             />
+            <p className="text-center text-[10px] font-bold text-lp-muted">veya</p>
+            <textarea
+              value={niyetSerbestMetin}
+              onChange={(e) => setNiyetSerbestMetin(e.target.value)}
+              placeholder="İşini birkaç cümleyle anlat (opsiyonel) — WhatsApp'ını, adresini, çalışma saatlerini yazarsan, vitrinini seçtiğinde otomatik dolduracağım."
+              rows={2}
+              className="w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-2.5 text-[12px] font-medium text-lp-text outline-none placeholder:text-lp-muted"
+            />
+            {niyetSerbestMetin.trim().length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const metin = niyetSerbestMetin.trim();
+                  const kategori = resolveBusinessCategory(metin);
+                  const hedef = kategori
+                    ? `/kesfet?yalniz_kiralik=1&kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
+                    : "/kesfet?yalniz_kiralik=1";
+                  void niyetSohbetiKaydet([
+                    { role: "user", text: metin, messageKey: NIYET_SERBEST_METIN_ANAHTARI },
+                    {
+                      role: "assistant",
+                      text: "Anlattıklarını not aldım — vitrinini seçtiğinde bunlardan otomatik dolduracağım.",
+                    },
+                  ]);
+                  router.push(hedef);
+                }}
+                className="w-full rounded-xl bg-lp-primary px-3 py-2.5 text-[12px] font-black text-lp-on-primary"
+              >
+                Anlat ve devam et
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setNiyetKategoriSoruluyor(false)}

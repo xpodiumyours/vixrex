@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
-import { useOwnerActions } from "./hooks/useOwnerActions";
+import { useOwnerActions, bonusAlanlariCikarVeKaydet } from "./hooks/useOwnerActions";
 import { useFieldRestore } from "./hooks/useFieldRestore";
 import { ChatBubble } from "./components/ChatBubble";
 import { ChatTopBar } from "./components/ChatTopBar";
@@ -29,6 +29,7 @@ import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
 import { VITRIN_FIELDS } from "@/lib/vitrinFieldSchema";
 import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
 import { yonetimOnerileriUret } from "@/lib/yonetimOnerileri";
+import { supabase } from "@/lib/supabase";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
 // yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
@@ -301,6 +302,47 @@ export default function OwnerAssistantPanel({
       }
     })();
   }, [draftYeniOlusturuldu, yerelTaslak, slug, setAlan, mesajEkle, router]);
+
+  // Landing'de anlatılanın panele taşınması (2026-09-02) — "kullanıcı
+  // landing'de yazdığı bilgilerle vitrin doldurulmaya başlasın" isteği.
+  // Faz G1'in tek konuşma köprüsü landing'in niyet akışını zaten
+  // assistant_conversations'a yazıyordu; eksik olan tek parça, o
+  // konuşmanın panelde OKUNMASIYDI. Burada: taze bir taslakta (kiralık ya
+  // da sıfırdan, aynı draftYeniOlusturuldu sinyali) landing'de
+  // NIYET_SERBEST_METIN_ANAHTARI ile işaretlenmiş bir mesaj varsa, aynı
+  // motoru (bonusAlanlariCikarVeKaydet — panelin kendi soru kutusunun da
+  // kullandığı fonksiyon) o metin üzerinde çalıştırır. İkinci argüman
+  // ("") hariç tutulacak bir kolon olmadığını belirtir — burada "az önce
+  // cevaplanan alan" diye bir şey yok, hepsi adaydır.
+  const landingNiyetIslendiRef = useRef(false);
+  useEffect(() => {
+    if (!draftYeniOlusturuldu || landingNiyetIslendiRef.current) return;
+    landingNiyetIslendiRef.current = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_assistant_conversation");
+        if (error || !data) return;
+        const conv = data as {
+          messages?: Array<{ role: string; message_text: string; message_key?: string | null }>;
+        };
+        const niyetMesaji = (conv.messages ?? []).find(
+          (m) => m.message_key === "niyet_serbest_metin" && m.role === "user"
+        );
+        if (!niyetMesaji?.message_text) return;
+        await bonusAlanlariCikarVeKaydet(
+          niyetMesaji.message_text,
+          "",
+          slug,
+          mesajEkle,
+          setAlan,
+          () => router.refresh()
+        );
+      } catch {
+        // Köprü opsiyonel bir zenginleştirme — bulunamazsa/başarısız
+        // olursa normal tek-tek soru akışı hiç etkilenmeden devam eder.
+      }
+    })();
+  }, [draftYeniOlusturuldu, slug, mesajEkle, setAlan, router]);
 
   // Faz E (Tek Asistan planı, 2026-09-02): yönetim modu — vitrin yayında
   // ise kurulum rehberi yerine "bugün ilgilenmen gereken şey" önerisi.

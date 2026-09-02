@@ -108,7 +108,7 @@ const SERBEST_ANLATIM_ESLEME: ReadonlyArray<[keyof SerbestMetinSonuc, string]> =
  * yutulur, "işledim" gibi yanıltıcı bir mesaj da verilmez (bkz.
  * serbestMetinCikarim.ts dosya başı yorumu — dürüstlük kuralı aynı).
  */
-async function bonusAlanlariCikarVeKaydet(
+export async function bonusAlanlariCikarVeKaydet(
   metin: string,
   cevaplananKolon: string,
   slug: string,

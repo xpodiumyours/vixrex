@@ -330,6 +330,17 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
       "Niyet sorusundan karşılama ekranına dönüş butonu. Flutter'da " +
       "karşılığı yok çünkü sorunun kendisi yok.",
   },
+
+  // --- "Landing'de anlatılanın panele taşınması" (2026-09-02) — niyet
+  // sorusuna eklenen opsiyonel serbest metin alanı. Flutter'da niyet
+  // sorusunun kendisi yok (yukarıdaki C1 istisnalarıyla aynı gerekçe),
+  // bu yüzden ona eklenen bu serbest metin dalı da yok.
+  {
+    metin: "Anlattıklarını not aldım — vitrinini seçtiğinde bunlardan otomatik dolduracağım.",
+    neden:
+      "Serbest niyet metni gönderilince yazılan asistan onayı. Niyet " +
+      "sorusunun kendisi Flutter'da olmadığı için bu dal da yok.",
+  },
 ];
 
 // Blog altbilgi bağlantısı (28 Ağustos) buraya İSTİSNA OLARAK GİRMEDİ ve
