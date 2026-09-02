@@ -26,9 +26,11 @@ import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { useRouter } from "next/navigation";
 import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
-import { VITRIN_FIELDS } from "@/lib/vitrinFieldSchema";
+import { VITRIN_FIELDS, FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
 import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
 import { yonetimOnerileriUret } from "@/lib/yonetimOnerileri";
+import { serbestMetindenAlanlariCikar, type SerbestMetinSonuc } from "@/lib/serbestMetinCikarim";
+import { IsletmeniAnlatKarti } from "./components/IsletmeniAnlatKarti";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
 // yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
@@ -165,27 +167,122 @@ export default function OwnerAssistantPanel({
       },
     });
 
+  // Serbest metinle alan doldurma (2026-09-02) — "esnaf 46 alanı tek tek
+  // dolaşmasın, birkaç cümleyle anlatsın" isteği. Panel açılınca, tek-tek
+  // soru akışına düşmeden ÖNCE, en az bir zorunlu alan eksikse esnaftan
+  // tek bir paragrafla anlatmasını ister (bkz. serbestMetinCikarim.ts).
+  // Oturum başına yalnız bir kez sorulur — kabul de red de kalıcı olarak
+  // aşağıdaki auto-select efektine yol verir.
+  const [anlatimAcik, setAnlatimAcik] = useState(false);
+  const [anlatimGonderiliyor, setAnlatimGonderiliyor] = useState(false);
+  const anlatimSunulduRef = useRef(false);
+  useEffect(() => {
+    if (!acik || anlatimSunulduRef.current || rapor.temelTamam) return;
+    anlatimSunulduRef.current = true;
+    mesajEkle(
+      "asistan",
+      "İşletmeni birkaç cümleyle anlatır mısın? WhatsApp numaranı, çalışma saatlerini, adresini ve ne iş yaptığını yazarsan bulabildiklerimi otomatik dolduruyorum.",
+      [
+        { label: "Anlatayım", payload: "serbest_anlatimi_ac" },
+        { label: "Tek tek sor", payload: "ilk_eksik_alana_git" },
+      ],
+      "📝"
+    );
+  }, [acik, rapor.temelTamam, mesajEkle]);
+
   // 2026-08-22: "sayfada dolaşan rehber" — panel ilk açıldığında henüz
   // hiçbir alan seçili değilse, sırayı elle aramaya gerek kalmadan ilk
   // eksik alanı (önce zorunlu, sonra kalite — sonrakiRehberAlan zaten bu
   // sırayı uyguluyor) otomatik seçer. Kullanıcı istediği alana da hâlâ
   // doğrudan tıklayabilir (useFieldSelection'daki global dinleyici).
+  // `anlatimAcik` koruması (2026-09-02): serbest anlatım kartı açıkken
+  // tek-alan spot'una otomatik atlanmasın diye eklendi.
   useEffect(() => {
-    if (!acik || seciliAlan) return;
+    if (!acik || seciliAlan || anlatimAcik) return;
     const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
     if (ilkEksik) alanSec(ilkEksik.anahtar);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [acik]);
+  }, [acik, anlatimAcik]);
 
   // Faz C2/D3 polish: hızlı cevap düğmelerinin ilk gerçek kullanımı —
   // otomatik doldurma mesajındaki "Başlayalım" düğmesi, panel ilk
   // açıldığındaki otomatik-seçimle (yukarıdaki `acik`/`seciliAlan` efekti)
   // aynı mantığı kullanıcı isteğiyle tekrar tetikler.
   const handleHizliCevap = (payload: string) => {
+    if (payload === "serbest_anlatimi_ac") {
+      setAnlatimAcik(true);
+      return;
+    }
     if (payload === "ilk_eksik_alana_git") {
       const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
       if (ilkEksik) alanSec(ilkEksik.anahtar);
     }
+  };
+
+  // Serbest metin çıkarımının VITRIN_FIELDS `anahtar` isimlerine eşlemesi
+  // — GPS'in handleGpsKonumAl'daki {anahtar, deger} listesiyle aynı desen.
+  const SERBEST_ANLATIM_ESLEME: Array<[keyof SerbestMetinSonuc, string]> = [
+    ["whatsapp", "whatsapp"],
+    ["kategoriEtiketi", "kategori"],
+    ["calismaSaatleriMetni", "calismaSaatleri"],
+    ["ilAdi", "il"],
+    ["ilceAdi", "ilce"],
+    ["adres", "adres"],
+  ];
+
+  const handleSerbestAnlatimGonder = async (metin: string) => {
+    setAnlatimGonderiliyor(true);
+    mesajEkle("kullanici", metin);
+
+    const sonuc = serbestMetindenAlanlariCikar(metin);
+    const bulunanlar = SERBEST_ANLATIM_ESLEME
+      .map(([sonucAnahtari, anahtar]) => {
+        const deger = sonuc[sonucAnahtari];
+        const alan = FIELD_BY_KEY.get(anahtar);
+        return deger && alan ? { anahtar, kolon: alan.kolon, etiket: alan.etiket, deger } : null;
+      })
+      .filter((x): x is { anahtar: string; kolon: string; etiket: string; deger: string } => x !== null);
+
+    const clientId = taslakClientId();
+    const yanitlar = await Promise.all(
+      bulunanlar.map(({ anahtar, deger }) =>
+        fetch("/api/owner-draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, anahtar, deger, clientId }),
+        }).catch(() => null)
+      )
+    );
+    const basarili = bulunanlar.filter((_, i) => yanitlar[i]?.ok);
+    basarili.forEach(({ kolon, deger }) => setAlan(kolon, deger));
+
+    setAnlatimAcik(false);
+    setAnlatimGonderiliyor(false);
+
+    if (basarili.length > 0) {
+      router.refresh();
+      const liste = basarili.map(({ etiket }) => `✓ ${etiket}`).join("\n");
+      mesajEkle(
+        "asistan",
+        `Anlattıklarından şunları anladım:\n${liste}\n\nİşletme adın gibi birkaç şeyi de senden almam gerekiyor.`,
+        [{ label: "Devam", payload: "ilk_eksik_alana_git" }],
+        "✨"
+      );
+    } else {
+      // Dürüstlük kuralı (bkz. serbestMetinCikarim.ts dosya başı yorumu):
+      // hiçbir şey anlaşılamadığında "işledim" gibi yanıltıcı bir mesaj
+      // verilmez.
+      mesajEkle(
+        "asistan",
+        "Yazdığından net bir bilgi çıkaramadım — sorun değil, birlikte tek tek dolduralım.",
+        [{ label: "Başlayalım", payload: "ilk_eksik_alana_git" }]
+      );
+    }
+  };
+
+  const handleSerbestAnlatimVazgec = () => {
+    setAnlatimAcik(false);
+    handleHizliCevap("ilk_eksik_alana_git");
   };
 
   const actions = useOwnerActions({
@@ -528,6 +625,14 @@ export default function OwnerAssistantPanel({
               temelTamam={rapor.temelTamam}
               eksikTemelSayisi={eksikTemelSayisi}
             />
+
+            {anlatimAcik && (
+              <IsletmeniAnlatKarti
+                gonderiliyor={anlatimGonderiliyor}
+                onGonder={handleSerbestAnlatimGonder}
+                onVazgec={handleSerbestAnlatimVazgec}
+              />
+            )}
 
             {/* StepCard/FieldInputArea artık burada YOK — 2026-08-22:
              * kullanıcı test etti, panelin tepesindeki sabit kutu spot

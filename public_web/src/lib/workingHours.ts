@@ -69,15 +69,32 @@ export function normalizeWeekMap(raw: unknown): WeekMap | null {
   return count > 0 ? out : null;
 }
 
-/** Eski string alan: "09:00 - 20:00" → hafta içi varsayılan (bilgi amaçlı, zayıf) */
-export function weekMapFromPlainString(value: string | null | undefined): WeekMap | null {
-  const raw = String(value || "").trim();
-  if (!raw) return null;
-  const m = raw.match(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/);
+/** "09:00 - 20:00" biçimindeki saat aralığı deseni — çalışma saatleri
+ * serbest metinden çıkarımının da kullandığı TEK DOĞRU KAYNAK (bkz.
+ * serbestMetinCikarim.ts). Anchor YOK: bir cümlenin/paragrafın ortasında
+ * geçen bir aralığı da bulur, yalnız tam eşleşen bir string'i değil. */
+export const TIME_RANGE_REGEX = /(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/;
+
+/** Bir metindeki ilk "HH:MM - HH:MM" aralığını bulur. */
+export function findTimeRange(
+  text: string | null | undefined,
+): { start: string; end: string; raw: string } | null {
+  const raw = String(text || "");
+  const m = raw.match(TIME_RANGE_REGEX);
   if (!m) return null;
   const start = padTime(m[1]);
   const end = padTime(m[2]);
   if (!start || !end) return null;
+  return { start, end, raw: `${start} - ${end}` };
+}
+
+/** Eski string alan: "09:00 - 20:00" → hafta içi varsayılan (bilgi amaçlı, zayıf) */
+export function weekMapFromPlainString(value: string | null | undefined): WeekMap | null {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  const bulunan = findTimeRange(raw);
+  if (!bulunan) return null;
+  const { start, end } = bulunan;
   const out: WeekMap = {};
   for (let d = 1; d <= 6; d++) {
     out[String(d)] = { start, end, active: true };
