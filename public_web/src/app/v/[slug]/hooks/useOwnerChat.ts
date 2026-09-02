@@ -55,9 +55,12 @@ export function useOwnerChat(
       if (pollActiveRef.current) return;
       pollActiveRef.current = true;
       try {
+        // UI/UX cilası devamı (2026-09-02): anonim oturum artık dışlanmıyor
+        // — landing'in niyet akışı (bkz. assistantConversation.ts) anonim
+        // auth.uid() ile bir konuşma başlatmış olabilir; aynı tarayıcıda
+        // sahip paneline gelindiğinde o konuşma burada devam etmeli.
         const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user as { is_anonymous?: boolean } | undefined;
-        if (!session || user?.is_anonymous) return;
+        if (!session) return;
         const { data, error } = await supabase.rpc("get_assistant_conversation");
         if (error || !data) return;
         const conv = data as {
@@ -215,8 +218,7 @@ export function useOwnerChat(
       supabase.auth
         .getSession()
         .then(({ data: { session } }) => {
-          const u = session?.user as { is_anonymous?: boolean } | undefined;
-          if (!session || u?.is_anonymous) return null;
+          if (!session) return null;
           return supabase.rpc("get_assistant_conversation");
         })
         .then((res) => {

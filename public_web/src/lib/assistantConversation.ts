@@ -47,9 +47,43 @@ async function ensureConversation(): Promise<string | null> {
   return typeof id === "string" ? id : null;
 }
 
+/**
+ * Tek konuşma köprüsü (UI/UX cilası devamı, 2026-09-02) — landing, Keşfet
+ * ve sahip paneli aynı `assistant_conversations` satırını paylaşabilsin
+ * diye landing artık ilk gerçek niyet anında (ör. "Hazır Vitrin Seç")
+ * sessizce anonim bir Supabase Auth oturumu açar. Kullanıcı sonra Google
+ * ile `linkIdentity()` yaparsa (bkz. OwnerWorkspaceShell "hesabına bağla",
+ * rent_demo_canonical akışı) auth.uid() DEĞİŞMEZ — aynı konuşma taşınır.
+ * Salt gezinen, hiç niyet seçmeyen ziyaretçi için oturum açılmaz.
+ */
+export async function ensureAnonymousSession(): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) return true;
+  const { error } = await supabase.auth.signInAnonymously();
+  return !error;
+}
+
+/** Ham mesaj ekleme — `sendSharedAssistantMessage`'ın aksine metni NLP
+ * eşleşmesiyle üretmez, çağıran taraf (landing akışı gibi) metni kendi
+ * belirler. Hata sessizce yutulur — konuşma köprüsü, akışı bloklamaz. */
+export async function appendRawSharedAssistantMessage(
+  conversationId: string,
+  role: SharedAssistantMessage["role"],
+  text: string,
+  messageKey: string | null = null,
+): Promise<void> {
+  try {
+    await appendMessage(conversationId, role, text, messageKey);
+  } catch {
+    // Anonim oturum reddedilirse veya ağ hatası olursa sessizce yut.
+  }
+}
+
+export { ensureConversation as ensureSharedAssistantConversation };
+
 export async function loadSharedAssistantContext(): Promise<SharedAssistantContext> {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session || session.user.is_anonymous) {
+  if (!session) {
     return {
       authenticated: false,
       conversationId: null,

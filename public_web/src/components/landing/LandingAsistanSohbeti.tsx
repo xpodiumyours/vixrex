@@ -46,6 +46,35 @@ import {
 import { addressHataMesaji } from "@/lib/addressValidator";
 import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
 import { supabase } from "@/lib/supabase";
+import {
+  appendRawSharedAssistantMessage,
+  ensureAnonymousSession,
+  ensureSharedAssistantConversation,
+} from "@/lib/assistantConversation";
+
+/**
+ * Tek konuşma köprüsü (UI/UX cilası devamı, 2026-09-02) — landing'deki
+ * niyet sorusu artık `assistant_conversations`'a da yazılıyor. Kullanıcı
+ * salt "Sıfırdan Oluştur"/"Bakınıyorum" derse (ya da hiçbir şeye
+ * dokunmazsa) oturum açılmaz — yalnız "Hazır Vitrin Seç" akışı (Keşfet'e
+ * yönlendiren, gerçek bir niyet taşıyan tek dal) köprüyü kurar. Hata
+ * sessizce yutulur: DB yazımı başarısız olsa da yönlendirme engellenmez.
+ */
+async function niyetSohbetiKaydet(
+  mesajlar: Array<{ role: "assistant" | "user"; text: string }>,
+) {
+  try {
+    const oturumVar = await ensureAnonymousSession();
+    if (!oturumVar) return;
+    const conversationId = await ensureSharedAssistantConversation();
+    if (!conversationId) return;
+    for (const mesaj of mesajlar) {
+      await appendRawSharedAssistantMessage(conversationId, mesaj.role, mesaj.text);
+    }
+  } catch {
+    // Konuşma köprüsü opsiyonel bir zenginleştirme — akışı hiç bloklamaz.
+  }
+}
 
 /**
  * Ana sayfadaki Vixrex Asistan — telefon mockup'ının içinde çalışır.
@@ -381,6 +410,10 @@ export function LandingAsistanSohbeti({
                 const hedef = kategori
                   ? `/kesfet?yalniz_kiralik=1&kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
                   : "/kesfet?yalniz_kiralik=1";
+                void niyetSohbetiKaydet([
+                  { role: "user", text: deger },
+                  { role: "assistant", text: `${deger} işletmesine uygun hazır vitrinleri buldum.` },
+                ]);
                 router.push(hedef);
               }}
             />
@@ -397,7 +430,16 @@ export function LandingAsistanSohbeti({
             <p className="text-center text-[11px] font-bold text-lp-muted">Hızlı Seçenekler</p>
             <button
               type="button"
-              onClick={() => setNiyetKategoriSoruluyor(true)}
+              onClick={() => {
+                setNiyetKategoriSoruluyor(true);
+                void niyetSohbetiKaydet([
+                  {
+                    role: "user",
+                    text: vixRexHizliSecenekler.find((h) => h.id === "hazir_vitrin_sec")?.etiket ?? "Hazır Vitrin Seç",
+                  },
+                  { role: "assistant", text: `${NIYET_KATEGORI_SORUSU} ${NIYET_KATEGORI_ACIKLAMA}` },
+                ]);
+              }}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-lp-primary px-3 py-2.5 text-[12px] font-black text-lp-on-primary"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
