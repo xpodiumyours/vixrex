@@ -5,10 +5,10 @@ import { describe, expect, it } from "vitest";
 const oku = (yol: string) => readFileSync(resolve(__dirname, yol), "utf-8");
 
 const migration = oku(
-  "../../supabase/migrations/20260821143000_restore_working_draft_field.sql"
+  "../../supabase/migrations/20260821144858_restore_working_draft_field.sql"
 );
 const aclMigration = oku(
-  "../../supabase/migrations/20260821145000_restrict_restore_working_draft_field_acl.sql"
+  "../../supabase/migrations/20260821145030_restrict_restore_working_draft_field_acl.sql"
 );
 const route = oku("../src/app/api/owner-draft-restore/route.ts");
 const hook = oku("../src/app/v/[slug]/hooks/useFieldRestore.ts");

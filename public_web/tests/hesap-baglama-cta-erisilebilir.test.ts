@@ -47,7 +47,7 @@ describe("get_working_draft_for_session RPC'si has_account döner (Faz 0)", () =
   const migrasyon = readFileSync(
     resolve(
       __dirname,
-      "../../supabase/migrations/20260902120000_working_draft_has_account_flag.sql",
+      "../../supabase/migrations/20260902095512_faz0_working_draft_has_account_flag.sql",
     ),
     "utf8",
   );

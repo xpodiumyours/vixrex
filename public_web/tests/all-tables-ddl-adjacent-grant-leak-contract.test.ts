@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 
 const migrationPath = resolve(
   __dirname,
-  "../../supabase/migrations/20260821200730_revoke_ddl_adjacent_privileges_all_public_tables.sql",
+  "../../supabase/migrations/20260821200659_emergency_revoke_ddl_adjacent_privileges_all_public_tables.sql",
 );
 const source = readFileSync(migrationPath, "utf8");
 

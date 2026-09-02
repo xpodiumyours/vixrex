@@ -39,7 +39,7 @@ describe("Faz F — tıklamalar artık Supabase'e de yazılıyor (GA'nın yanın
 
 describe("Faz F — haftalık özet yalnız sahip oturumuyla okunur", () => {
   const migrasyon = readFileSync(
-    resolve(__dirname, "../../supabase/migrations/20260902140000_vitrin_engagement_events.sql"),
+    resolve(__dirname, "../../supabase/migrations/20260902112954_faz_f_vitrin_engagement_events.sql"),
     "utf8"
   );
 

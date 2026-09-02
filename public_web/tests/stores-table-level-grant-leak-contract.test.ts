@@ -7,12 +7,21 @@ import { describe, expect, it } from "vitest";
 // edit_token/user_id dahil her sütun sade anon anahtarla okunabiliyordu,
 // TRUNCATE ile de tüm tablo boşaltılabilirdi. Bu test o düzeltmenin
 // migration dosyasında kalıcı olarak durduğunu kilitler.
+//
+// Migration geçmişi onarımı (2026-09-02): tek dosya (fix_stores_table_
+// level_grant_leak) üretim geçmişiyle uyuşmuyordu — canlıda aynı tarama
+// gerçekte 3 AYRI migration'a bölünmüş uygulanmış. Repo artık üretimle
+// birebir eşleşiyor; bu test de o 3 dosyayı birlikte okuyacak şekilde
+// güncellendi, hiçbir iddia gevşetilmedi.
 
-const migrationPath = resolve(
-  __dirname,
-  "../../supabase/migrations/20260821195828_fix_stores_table_level_grant_leak.sql",
-);
-const source = readFileSync(migrationPath, "utf8");
+const migrationsDir = resolve(__dirname, "../../supabase/migrations");
+const source = [
+  "20260821195225_fix_stores_column_grants_anon_leak_and_authenticated_gap.sql",
+  "20260821195520_emergency_revoke_stores_table_level_anon_privileges.sql",
+  "20260821195730_revoke_stores_excess_authenticated_table_privileges.sql",
+]
+  .map((dosya) => readFileSync(resolve(migrationsDir, dosya), "utf8"))
+  .join("\n");
 
 describe("stores tablo-seviyesi GRANT sızıntısı kapalı kalır", () => {
   it("anon'un tablo seviyesindeki yazma/TRUNCATE yetkileri açıkça kaldırılıyor", () => {

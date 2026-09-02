@@ -10,7 +10,7 @@ import { resolve } from "path";
  * token_14_days.sql, ürün/kategori kopyalamayı ve cloned_from_slug'ı
  * ÜÇÜNCÜ KEZ kaybetmişti (20260826000000'ın kendi başlığında anlattığı
  * aynı hata deseni: eski gövde üzerine CREATE OR REPLACE). Bu dosya
- * ("20260902130000_clone_demo_store_fix_and_faz_d.sql") düzeltiyor —
+ * ("20260902111032_faz_d2_clone_demo_fix_and_identity_null.sql") düzeltiyor —
  * bu test bir DAHA kaybolmasını önlüyor.
  *
  * Faz D2 kural seti: gerçek işletme kimliği ve kampanya bandı artık
@@ -18,7 +18,7 @@ import { resolve } from "path";
  */
 const migrationsDir = resolve(__dirname, "../../supabase/migrations");
 const kaynak = readFileSync(
-  resolve(migrationsDir, "20260902130000_clone_demo_store_fix_and_faz_d.sql"),
+  resolve(migrationsDir, "20260902111032_faz_d2_clone_demo_fix_and_identity_null.sql"),
   "utf-8"
 );
 
