@@ -7,7 +7,10 @@ import { useState } from "react";
 const NAV = [
   { href: "/app", label: "Vitrinim", icon: "🏪", match: (p: string) => p === "/app" || p.startsWith("/app/urunler") },
   { href: "/kesfet", label: "Keşfet", icon: "🧭", match: (p: string) => p.startsWith("/kesfet") },
-  { href: "/app", label: "Vixrex", icon: "✨", match: (p: string) => p === "/app" },
+  // Flutter'da "Vixrex" ayrı bir ekran; Next.js'te henüz karşılığı yok, madde
+  // /app'e gidiyor. Eşleşmesi "Vitrinim" ile aynı olduğu için ikisi birden mavi
+  // yanıyordu. Kendi sayfası açılana kadar aktif durumu Vitrinim'e bırakıyor.
+  { href: "/app", label: "Vixrex", icon: "✨", match: () => false },
   { href: "/app/profil", label: "Profil", icon: "👤", match: (p: string) => p.startsWith("/app/profil") || p.startsWith("/app/hesap") || p.startsWith("/app/ayarlar") || p.startsWith("/app/bildirimler") },
 ] as const;
 
