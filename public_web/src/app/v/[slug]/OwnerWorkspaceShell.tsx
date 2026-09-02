@@ -33,6 +33,10 @@ export interface WorkingDraftData {
   /** Kiralık şablon vitrinin premium süresi AKTİF mi — sunucuda hesaplanır
    * (React purity: istemci render'ında Date.now() çağrılmaz). */
   is_premium_active?: boolean;
+  /** Faz 0 (Tek Asistan planı): vitrinin stores.user_id'si dolu mu —
+   * ham id hiç gelmez, yalnız bu türetilmiş boolean. "Hesabına bağla"
+   * bandının gösterilip gösterilmeyeceğine bununla karar verilir. */
+  has_account?: boolean;
 }
 
 export interface OwnerWorkspaceShellProps {
@@ -82,7 +86,9 @@ export interface OwnerWorkspaceShellProps {
   assistantHandoff?: AssistantHandoffV1 | null;
   bookingSettings?: Record<string, unknown> | null;
   campaignBanner?: { label: string; title: string; description: string; priceText: string; imageUrl: string } | null;
-  /** Kiralık demo vitrin mi — true ise "hesabına bağla" uyarısı gösterilir. */
+  /** Kiralık ŞABLONUN kendisi mi (stores.is_demo) — yalnız ek güvenlik
+   * kemeri: müşteri klonları her zaman false doğar, "hesabına bağla"
+   * bandı asıl kararı draft.has_account'tan alır (bkz. Faz 0). */
   isDemo?: boolean;
 }
 
@@ -98,6 +104,8 @@ export default function OwnerWorkspaceShell({
   const [open, setOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [sessionSecondsLeft, setSessionSecondsLeft] = useState<number | null>(null);
+  const [hesapBaglaniyor, setHesapBaglaniyor] = useState(false);
+  const [hesapBaglaHata, setHesapBaglaHata] = useState("");
   // sayfa yüklendiğindeki sabit değerden başlar, her başarılı uzatmada
   // güncellenir — bkz. aşağıdaki "aktifken oturumu uzat" efekti.
   const [effectiveExpiresAt, setEffectiveExpiresAt] = useState<number | null>(
@@ -259,8 +267,14 @@ export default function OwnerWorkspaceShell({
             </button>
           </div>
 
-          {/* Kiralık demo vitrin uyarısı — Google ile hesap bağla */}
-          {isDemo ? (
+          {/* Hesapsız vitrin uyarısı — Google ile hesap bağla (Faz 0,
+           * Tek Asistan planı). Önceki koşul `isDemo` idi: stores.is_demo
+           * yalnız 9 kanonik ŞABLONUN kendisinde true, hiçbir müşteri
+           * klonunda değil — ve get_working_draft_for_session zaten
+           * is_demo=true iken DEMO_STORE_IMMUTABLE fırlattığı için bu
+           * bant ulaşılamaz koddu (27/29 gerçek mağaza hiç göremiyordu,
+           * canlı veriyle doğrulandı 2026-09-02). Artık draft.has_account. */}
+          {!isDemo && draft?.has_account === false ? (
             <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
               <p className="text-[12px] font-black text-amber-400">
                 ⚠️ Vitrinini kaydetmek için hesabına bağla
@@ -270,20 +284,55 @@ export default function OwnerWorkspaceShell({
                 tarayıcı verilerini silersen özelleştirmelerini kaybedersin.
                 Google ile giriş yaparak vitrini kalıcı hale getirebilirsin.
               </p>
+              {hesapBaglaHata ? (
+                <p className="mt-2 text-[10px] font-bold text-red-400" role="alert">
+                  {hesapBaglaHata}
+                </p>
+              ) : null}
               <button
                 type="button"
-                onClick={() => {
-                  const slug = vitrinProps.storeSlug;
-                  supabase.auth.linkIdentity({
-                    provider: "google",
-                    options: {
-                      redirectTo: `${window.location.origin}/hesap-bagla?slug=${encodeURIComponent(slug)}`,
-                    },
-                  });
+                disabled={hesapBaglaniyor}
+                onClick={async () => {
+                  setHesapBaglaHata("");
+                  setHesapBaglaniyor(true);
+                  try {
+                    // Web ziyaretçisinde henüz HİÇBİR Supabase oturumu
+                    // olmayabilir (Flutter'ın aksine burada açılışta
+                    // otomatik anonim oturum açılmıyor) — linkIdentity
+                    // bağlanacak bir oturum bulamazsa sessizce hiçbir şey
+                    // yapmaz. Diğer sayfalardaki (blog-yonetim vb.) kurulu
+                    // desenle aynı: önce anonim oturumu güvenceye al.
+                    const {
+                      data: { session },
+                    } = await supabase.auth.getSession();
+                    if (!session) {
+                      const { error: anonHata } = await supabase.auth.signInAnonymously();
+                      if (anonHata) {
+                        setHesapBaglaHata("Bağlantı başlatılamadı. Lütfen tekrar dene.");
+                        setHesapBaglaniyor(false);
+                        return;
+                      }
+                    }
+                    const { error } = await supabase.auth.linkIdentity({
+                      provider: "google",
+                      options: {
+                        redirectTo: `${window.location.origin}/hesap-bagla?slug=${encodeURIComponent(vitrinProps.storeSlug)}`,
+                      },
+                    });
+                    if (error) {
+                      setHesapBaglaHata("Google ile bağlanamadı. Lütfen tekrar dene.");
+                      setHesapBaglaniyor(false);
+                    }
+                    // Başarılıysa tarayıcı Google'a yönlenir; bundan sonrası
+                    // /hesap-bagla sayfasının işi.
+                  } catch {
+                    setHesapBaglaHata("Bir şeyler ters gitti. Lütfen tekrar dene.");
+                    setHesapBaglaniyor(false);
+                  }
                 }}
-                className="mt-2 flex w-full items-center justify-center rounded-xl bg-amber-500 px-3 py-2 text-[11px] font-black text-black hover:bg-amber-400 transition-colors"
+                className="mt-2 flex w-full items-center justify-center rounded-xl bg-amber-500 px-3 py-2 text-[11px] font-black text-black hover:bg-amber-400 transition-colors disabled:opacity-60"
               >
-                Google ile bağla
+                {hesapBaglaniyor ? "Bağlanıyor…" : "Google ile bağla"}
               </button>
             </div>
           ) : null}
