@@ -4,7 +4,8 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
-import type { VitrinField } from "@/lib/vitrinFieldSchema";
+import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
+import { serbestMetindenAlanlariCikar, type SerbestMetinSonuc } from "@/lib/serbestMetinCikarim";
 import type { Mesaj } from "./useOwnerChat";
 
 /** Hangi alan hangi tür hazır görsele karşılık geliyor. */
@@ -47,7 +48,12 @@ interface Deps {
   seciliAlan: VitrinField | null;
   giris: string;
   yerelTaslak: Record<string, unknown>;
-  mesajEkle: (kimden: Mesaj["kimden"], metin: string) => void;
+  mesajEkle: (
+    kimden: Mesaj["kimden"],
+    metin: string,
+    hizliCevaplar?: Mesaj["hizliCevaplar"],
+    sistemIkon?: Mesaj["sistemIkon"]
+  ) => void;
   setAlan: (kolon: string, deger: unknown) => void;
   setGiris: (v: string) => void;
   /** Kayıt (veya boş geçme) başarılı olunca çağrılır: sırada başka alan
@@ -77,6 +83,72 @@ function alaniParlat(anahtar: string) {
   if (!oge) return;
   oge.classList.add(PARLAMA_SINIFI);
   window.setTimeout(() => oge.classList.remove(PARLAMA_SINIFI), 1400);
+}
+
+// Serbest metinden bonus alan çıkarımının VITRIN_FIELDS `anahtar`
+// isimlerine eşlemesi.
+const SERBEST_ANLATIM_ESLEME: ReadonlyArray<[keyof SerbestMetinSonuc, string]> = [
+  ["whatsapp", "whatsapp"],
+  ["kategoriEtiketi", "kategori"],
+  ["calismaSaatleriMetni", "calismaSaatleri"],
+  ["ilAdi", "il"],
+  ["ilceAdi", "ilce"],
+  ["adres", "adres"],
+];
+
+/**
+ * "Esnaf 46 alanı tek tek dolaşmasın" (2026-09-02) — YENİ bir ekran
+ * elemanı EKLEMEDEN: esnaf zaten var olan bir soru kutusuna (ör.
+ * "İşletme adın?") normalden uzun bir cümle yazarsa, aynı kutu üstünden
+ * arka planda diğer alanları da doldurur (bkz. serbestMetinCikarim.ts).
+ * Az önce doğrudan cevaplanan alan (`cevaplananKolon`) hariç tutulur —
+ * o zaten kendi normal yoluyla (gonder() içinde) kaydedildi.
+ *
+ * Bonus, gönderimin ANA sonucunu asla etkilemez: hata olursa sessizce
+ * yutulur, "işledim" gibi yanıltıcı bir mesaj da verilmez (bkz.
+ * serbestMetinCikarim.ts dosya başı yorumu — dürüstlük kuralı aynı).
+ */
+async function bonusAlanlariCikarVeKaydet(
+  metin: string,
+  cevaplananKolon: string,
+  slug: string,
+  mesajEkle: Deps["mesajEkle"],
+  setAlan: (kolon: string, deger: unknown) => void,
+  routerRefresh: () => void,
+) {
+  const sonuc = serbestMetindenAlanlariCikar(metin);
+  const bulunanlar = SERBEST_ANLATIM_ESLEME
+    .map(([sonucAnahtari, anahtar]) => {
+      const deger = sonuc[sonucAnahtari];
+      const alan = FIELD_BY_KEY.get(anahtar);
+      if (!deger || !alan || alan.kolon === cevaplananKolon) return null;
+      return { anahtar, kolon: alan.kolon, etiket: alan.etiket, deger };
+    })
+    .filter((x): x is { anahtar: string; kolon: string; etiket: string; deger: string } => x !== null);
+
+  if (bulunanlar.length === 0) return;
+
+  try {
+    const clientId = taslakClientId();
+    const yanitlar = await Promise.all(
+      bulunanlar.map(({ anahtar, deger }) =>
+        fetch("/api/owner-draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, anahtar, deger, clientId }),
+        })
+      )
+    );
+    const basarili = bulunanlar.filter((_, i) => yanitlar[i]?.ok);
+    if (basarili.length === 0) return;
+
+    basarili.forEach(({ kolon, deger }) => setAlan(kolon, deger));
+    routerRefresh();
+    const liste = basarili.map(({ etiket }) => `✓ ${etiket}`).join("\n");
+    mesajEkle("asistan", `Yazdığından ayrıca şunları da anladım:\n${liste}`, undefined, "✨");
+  } catch {
+    // Bonus bir zenginleştirme — başarısız olursa asıl kaydı etkilemez.
+  }
 }
 
 export function useOwnerActions({
@@ -311,6 +383,21 @@ export function useOwnerActions({
       router.refresh();
       alaniParlat(alan.anahtar);
       alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
+
+      // "Esnaf 46 alanı tek tek dolaşmasın" (2026-09-02) — bu KUTUYA
+      // (ör. "İşletme adın?") normalden uzun bir cümle yazılırsa, arka
+      // planda diğer alanları da doldurmayı dener. Yeni bir ekran
+      // elemanı yok — yalnız zaten var olan bu giriş kutusu akıllanıyor.
+      if (typeof gonderilecek === "string" && metin.length >= 15) {
+        void bonusAlanlariCikarVeKaydet(
+          metin,
+          alan.kolon,
+          slug,
+          mesajEkle,
+          setAlan,
+          () => router.refresh()
+        );
+      }
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
