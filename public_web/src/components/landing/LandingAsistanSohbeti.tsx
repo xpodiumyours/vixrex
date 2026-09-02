@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import {
   ASISTAN_ADIMLARI,
@@ -12,11 +13,13 @@ import {
 } from "@/lib/landingAsistanAkisi";
 import { vixRexHizliSecenekler, vixRexMesajlari } from "@/lib/vixrexMesajlari";
 import { validateField } from "@/lib/vitrinFieldValidation";
+import { PROFILES } from "@/lib/vitrinProfile";
+import { resolveBusinessCategory, kategoriUrlParcasi } from "@/lib/businessCategories";
 
 /**
- * Yayınlama sonrası bitiş metinleri — Flutter Web'deki "İşte bu kadar!" 
- * ve "Artık dijitalde varsın..." karşılığı. Katalogda `all_done_*` 
- * anahtarları farklı metin içeriyor ("Tebrikler!"), bu yüzden 
+ * Yayınlama sonrası bitiş metinleri — Flutter Web'deki "İşte bu kadar!"
+ * ve "Artık dijitalde varsın..." karşılığı. Katalogda `all_done_*`
+ * anahtarları farklı metin içeriyor ("Tebrikler!"), bu yüzden
  * Flutter Web referansına göre burada tanımlı.
  */
 const BITIS_BASLIK = "İşte bu kadar!";
@@ -26,6 +29,16 @@ const HATA_TEKRAR_DENE = "Bir hata oluştu. Lütfen tekrar dene.";
 const HATA_GPS_DESTEKLEMIYOR = "Bu tarayıcı GPS konumunu desteklemiyor; adresi elle yazabilirsin.";
 const HATA_KONUM_IZNI = "Konum izni alınamadı; il, ilçe ve adresi elle yazabilirsin.";
 const HATA_YASAL_ONAY = "Yayın için yasal onayları işaretlemeniz gerekiyor.";
+/**
+ * "Hazır vitrin bul" niyet sorusu — Tek Asistan planı Faz C1 (2026-09-02).
+ * WEB-ONLY: Flutter'da bu adım henüz yok, bu yüzden shared/vixrex_mesajlar.json
+ * katalogundan DEĞİL burada tanımlı (BITIS_BASLIK ile aynı istisna deseni).
+ * Flutter parity eklenince katalog anahtarına taşınıp
+ * tool/mesaj_semasi_uret.dart ile üretilecek.
+ */
+const NIYET_KATEGORI_SORUSU = "Ne iş yapıyorsun?";
+const NIYET_KATEGORI_ACIKLAMA =
+  "İşine uygun hazır vitrinleri Keşfet'ten göstereyim.";
 import {
   turkeyProvinces,
   getDistrictsForProvince,
@@ -50,8 +63,12 @@ export function LandingAsistanSohbeti({
   initialName?: string;
   onClose?: () => void;
 }) {
+  const router = useRouter();
   const tasinanIsletmeAdi = initialName.trim();
   const [adim, setAdim] = useState(tasinanIsletmeAdi ? 1 : -1); // -1: karşılama
+  // Faz C1 (Tek Asistan planı): "Hazır Vitrin Seç" artık direkt /kesfet'e
+  // atlamıyor, önce hangi işe uygun vitrin aradığını soruyor.
+  const [niyetKategoriSoruluyor, setNiyetKategoriSoruluyor] = useState(false);
   const [girdi, setGirdi] = useState("");
   const [cevaplar, setCevaplar] = useState<AsistanCevaplari>(() => {
     if (!tasinanIsletmeAdi) return {};
@@ -305,6 +322,13 @@ export function LandingAsistanSohbeti({
           <p className="mt-1 text-lp-text-alt">{ASISTAN_KARSILAMA.aciklama}</p>
         </Balon>
 
+        {niyetKategoriSoruluyor ? (
+          <Balon>
+            <p className="font-bold">{NIYET_KATEGORI_SORUSU}</p>
+            <p className="mt-1 text-lp-text-alt">{NIYET_KATEGORI_ACIKLAMA}</p>
+          </Balon>
+        ) : null}
+
         {ASISTAN_ADIMLARI.slice(0, Math.max(adim, 0)).map((gecmis) => (
           <div key={gecmis.alan} className="space-y-3">
             <Balon>
@@ -343,11 +367,37 @@ export function LandingAsistanSohbeti({
       {/* Girdi alanı */}
       <div className="border-t border-lp-border/60 p-3">
         {/* Karşılama — hızlı seçenekler tek katalogdan (PR2-C6) */}
-        {adim === -1 ? (
+        {adim === -1 && niyetKategoriSoruluyor ? (
+          /* Faz C1 (Tek Asistan planı): "Hazır Vitrin Seç" niyet sorusu —
+           * kategori seçilince doğrudan filtreli Keşfet'e gider (Faz B'nin
+           * ?kategori= kablosunu kullanır), sohbete hiçbir şey yazılmaz —
+           * burada henüz hesap/kiralama yok, yalnız yönlendirme. */
+          <div className="space-y-2">
+            <KategoriGrid
+              secenekler={PROFILES.map((p) => p.label)}
+              secilen=""
+              onSelect={(deger) => {
+                const kategori = resolveBusinessCategory(deger);
+                const hedef = kategori
+                  ? `/kesfet?yalniz_kiralik=1&kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
+                  : "/kesfet?yalniz_kiralik=1";
+                router.push(hedef);
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setNiyetKategoriSoruluyor(false)}
+              className="w-full text-center text-[11px] font-bold text-lp-muted hover:text-lp-text"
+            >
+              ‹ Geri
+            </button>
+          </div>
+        ) : adim === -1 ? (
           <div className="space-y-2">
             <p className="text-center text-[11px] font-bold text-lp-muted">Hızlı Seçenekler</p>
-            <Link
-              href="/kesfet?yalniz_kiralik=1"
+            <button
+              type="button"
+              onClick={() => setNiyetKategoriSoruluyor(true)}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-lp-primary px-3 py-2.5 text-[12px] font-black text-lp-on-primary"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -355,7 +405,7 @@ export function LandingAsistanSohbeti({
                 <path d="M8 20v-6h8v6" />
               </svg>
               {vixRexHizliSecenekler.find((h) => h.id === "hazir_vitrin_sec")?.etiket ?? "Hazır Vitrin Seç"}
-            </Link>
+            </button>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -367,7 +417,7 @@ export function LandingAsistanSohbeti({
               </button>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => router.push("/kesfet")}
                 className="flex items-center justify-center gap-1.5 rounded-xl border border-lp-border bg-lp-surface px-3 py-2.5 text-[11px] font-bold text-lp-text"
               >
                 <span className="text-[12px]">👁️</span>

@@ -307,6 +307,29 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
       "'Hesap Aç ve Vitrini Kur' yazıyor; Flutter Web ise 'Vitrinini aç' " +
       "kullanıyor.",
   },
+
+  // --- Faz C1 (Tek Asistan planı, 2026-09-02): "Hazır Vitrin Seç" niyet
+  // sorusu. Flutter'da bu adım henüz yok — orada "Hazır Vitrin Seç"
+  // butonu doğrudan Keşfet'e gidiyor, ara bir kategori sorusu sormuyor.
+  // Flutter'a eklenince bu üç kayıt katalog anahtarına taşınıp
+  // tool/mesaj_semasi_uret.dart ile üretilmeli, sonra buradan silinmeli.
+  {
+    metin: "Ne iş yapıyorsun?",
+    neden:
+      "Web landing'inde 'Hazır Vitrin Seç'e tıklayınca sorulan kategori " +
+      "niyet sorusu (Faz C1). Flutter'da bu ara adım yok, buton doğrudan " +
+      "Keşfet'e gidiyor.",
+  },
+  {
+    metin: "İşine uygun hazır vitrinleri Keşfet'ten göstereyim.",
+    neden: "Yukarıdaki niyet sorusunun açıklaması. Aynı gerekçe.",
+  },
+  {
+    metin: "‹ Geri",
+    neden:
+      "Niyet sorusundan karşılama ekranına dönüş butonu. Flutter'da " +
+      "karşılığı yok çünkü sorunun kendisi yok.",
+  },
 ];
 
 // Blog altbilgi bağlantısı (28 Ağustos) buraya İSTİSNA OLARAK GİRMEDİ ve
