@@ -361,7 +361,15 @@ export default function VitrinProfileView({
   const formattedUrlDisplay = publicUrl.replace(/^https?:\/\//i, "");
 
   return (
-    <div className="min-h-screen bg-[#0B1120] text-[#F8FAFC] font-sans selection:bg-blue-500 selection:text-white">
+    // Sahip modunda sayfanın altında iki yüzen düğme duruyor (kalem ve
+    // Vixrex Asistan); alttaki içerik onların altında kalıp okunamıyordu
+    // (galeri başlıkları ekran görüntüsünde kayboldu). Düğme yüksekliği
+    // kadar boşluk bırakılır.
+    <div
+      className={`min-h-screen bg-[#0B1120] text-[#F8FAFC] font-sans selection:bg-blue-500 selection:text-white${
+        ownerMode ? " pb-28" : ""
+      }`}
+    >
       {!ownerMode && !isPreviewMode && <VitrinViewTracker storeSlug={storeSlug} />}
       {isPreviewMode && (
         <div className="fixed top-0 left-0 right-0 z-[60] h-9 bg-amber-500 text-[#0B1120] text-xs sm:text-sm font-bold flex items-center justify-center gap-2">

@@ -349,25 +349,25 @@ export default function OwnerWorkspaceShell({
             </div>
           ) : null}
 
-          <div className="space-y-3 text-xs text-slate-400 mb-4 p-3 rounded-lg bg-white/5 border border-white/10">
-            <div className="flex justify-between">
-              <span>Taslak sürümü</span>
-              <span className="font-mono text-white">{draft?.draft_version ?? 1}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Canlı sürüm</span>
-              <span className="font-mono text-white">{draft?.live_version ?? 1}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Oturum kalan</span>
-              <span className="font-mono text-white font-bold">
-                {sessionSecondsLeft !== null ? formatSessionTime(sessionSecondsLeft) : "—"}
-              </span>
-            </div>
+          {/* 2026-09-03: burada "Taslak sürümü 13 / Canlı sürüm 1" ve sürekli
+           * inen bir "Oturum kalan 29:58" sayacı duruyordu. Sürüm numaraları
+           * esnafa hiçbir şey anlatmıyor, geri sayım ise boş yere korkutuyor.
+           * Yerine tek cümlelik durum; sayaç yalnız gerçekten azaldığında. */}
+          <div className="mb-4 space-y-2 rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-slate-400">
+            <p className="text-slate-300">
+              {(draft?.draft_version ?? 1) > (draft?.live_version ?? 1)
+                ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."
+                : "Vitrinin yayındaki hâliyle aynı."}
+            </p>
+            {sessionSecondsLeft !== null && sessionSecondsLeft < 300 && (
+              <p className="font-semibold text-amber-400">
+                Oturumun {formatSessionTime(sessionSecondsLeft)} sonra kapanacak — değişikliklerin kayıtlı.
+              </p>
+            )}
             {draft?.version_conflict && (
-              <div className="text-amber-400 text-center font-semibold">
-                ⚠️ Sürüm çakışması — canlı veri değişmiş
-              </div>
+              <p className="text-center font-semibold text-amber-400">
+                Vitrinin başka bir yerden değiştirilmiş — önce canlı sürümü al.
+              </p>
             )}
           </div>
 

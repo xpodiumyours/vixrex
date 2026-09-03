@@ -93,17 +93,30 @@ function kisaDeger(deger: unknown): string | null {
 }
 
 /** Bölümün altındaki soluk "buraya eklenebilir" şeridi. */
-export function BolumEksikleri({ bolum, taslak, ownerMode }: Props) {
+export function BolumEksikleri({
+  bolum,
+  taslak,
+  ownerMode,
+  sade = false,
+}: Props & { sade?: boolean }) {
   if (!ownerMode || !taslak) return null;
 
   const alanlar = seritAlanlari(bolum, taslak);
   if (alanlar.length === 0) return null;
 
   return (
-    <div className="mt-6 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-3">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-        Bu bölüme eklenebilir
-      </p>
+    <div
+      className={
+        sade
+          ? "mt-2"
+          : "mt-6 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+      }
+    >
+      {!sade && (
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          Bu bölüme eklenebilir
+        </p>
+      )}
       <div className="flex flex-wrap gap-1.5">
         {alanlar.map((alan) => {
           const dolu = doluMu(taslak[alan.kolon], alan.bosDegerler);
@@ -152,15 +165,19 @@ export function BolumIskeleti({ bolum, taslak, ownerMode }: Props) {
       id={SECTION_DOM_ID[bolum]}
       className="max-w-7xl mx-auto px-6 sm:px-8 py-4"
     >
-      <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-5 py-4">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+      {/* 2026-09-03: her gizli bölüm için dev kesikli kutu + aynı iki
+       * cümlelik açıklama çiziliyordu; vitrin dükkân değil şantiye gibi
+       * duruyordu (ekran görüntüsüyle görüldü). Kutu tek satırlık sakin
+       * bir şeride indi. Tamamen kaldırmıyoruz: rehberin gizli bölümdeki
+       * alana yürüyebilmesi için o alanların sayfada bir yeri olmalı. */}
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2.5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
           {SECTION_LABELS[bolum]}
+          <span className="ml-2 normal-case tracking-normal text-slate-600">
+            müşteriye görünmüyor
+          </span>
         </p>
-        <p className="mt-1 text-[13px] leading-relaxed text-slate-400">
-          Bu bölüm şu an müşteriye görünmüyor. Buradaki alanları şimdiden
-          hazırlayabilirsin.
-        </p>
-        <BolumEksikleri bolum={bolum} taslak={taslak} ownerMode={ownerMode} />
+        <BolumEksikleri bolum={bolum} taslak={taslak} ownerMode={ownerMode} sade />
       </div>
     </section>
   );
