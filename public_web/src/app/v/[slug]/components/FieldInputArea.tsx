@@ -4,6 +4,13 @@ import { ImagePickerPanel } from "./ImagePickerPanel";
 import { turkeyProvinces, getDistrictsForProvince } from "@/lib/turkeyCities";
 import type { HazirGorsel } from "../hooks/useOwnerActions";
 
+// TEK giriş bileşeni — metin/uzunMetin/görsel/seçim/il/ilçe/GPS hepsi
+// burada, `seciliAlan.tip`e göre dallanır. 2026-09-03'ten (Çalışma masası
+// / Yön C, Faz 3) beri panelin ALT ŞERİDİNDE render edilir — sayfada
+// dolaşan balonun (SpotlightGuide) içinde DEĞİL; balon yeniden konumlanınca
+// yazma yeri artık sıçramıyor, sabit kalıyor. `seciliAlan` boşken de
+// (özgür yazım, NLU motoru cümleden alanı kendi bulur) aynı kutu çalışır.
+
 interface Props {
   seciliAlan: VitrinField | null;
   giris: string;
@@ -242,10 +249,11 @@ export function FieldInputArea({
               rows={seciliAlan?.tip === "uzunMetin" ? 3 : 1}
               maxLength={seciliAlan?.maxUzunluk}
               disabled={kaydediliyor}
+              aria-label="Vixrex Asistan'a yaz"
               placeholder={
                 seciliAlan
-                  ? "Yeni değeri yazın…"
-                  : "Vitrinde bir yazıya tıkla…"
+                  ? `${seciliAlan.etiket} için yaz…`
+                  : "Yaz, ben hallederim. Örn: işletme adım Öz Kardeşler"
               }
               className={`flex-1 resize-none rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60 ${
                 seciliAlan?.tip === "uzunMetin" ? "py-3" : "h-12 py-3"

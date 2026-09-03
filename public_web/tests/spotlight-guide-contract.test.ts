@@ -37,7 +37,7 @@ describe("SpotlightGuide — sayfada dolaşan rehber", () => {
 
   it("panel açıldığında ilk eksik alanı otomatik seçer — mevcut sonrakiRehberAlan sırasını (önce zorunlu, sonra kalite) kullanır", () => {
     expect(panelSource).toContain(
-      'import { alanOnemi, asamaDolulugu, sonrakiRehberAlan } from "@/lib/vitrinReadiness";',
+      'import { alanOnemi, sonrakiRehberAlan } from "@/lib/vitrinReadiness";',
     );
     expect(panelSource).toMatch(
       /sonrakiRehberAlan\(yerelTaslak,\s*null,\s*atlanmisAlanlar\)/,

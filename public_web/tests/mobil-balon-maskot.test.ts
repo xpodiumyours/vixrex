@@ -23,8 +23,16 @@ describe("mobilde panel sayfayı kapatmaz", () => {
     expect(panel).toContain('window.matchMedia("(min-width: 640px)")');
   });
 
-  it("panel yalnız harita açıkken çizilir", () => {
-    expect(panel).toContain("{acik && haritaAcik && (");
+  it("panel kabı asistan açıkken çizilir — sohbet+giriş şeridi harita kapalıyken de görünür (Faz 3, 2026-09-03)", () => {
+    // Eskiden panelin tamamı (başlık, SIRADA, bölümler, sohbet, giriş
+    // kutusu) tek blok hâlinde yalnız `haritaAcik`e bağlıydı. Casper'ın
+    // "alt şerit hep görünür" kararıyla (Çalışma masası / Yön C, Faz 3)
+    // sohbet+giriş artık aynı kaptan ayrılmıyor: kap `acik`te açılır, üst
+    // içerik (ChatTopBar/SIRADA/bölümler/PublishBar) hâlâ yalnız
+    // `haritaAcik`te — ☰ hâlâ sihirbaz kalabalığını gizli tutar.
+    expect(panel).toContain("{acik && (");
+    expect(panel).toContain("{haritaAcik && (");
+    expect(panel).not.toContain("{acik && haritaAcik && (");
   });
 
   it("mobilde harita açıkken balon gizlenir — üst üste binmez", () => {

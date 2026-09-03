@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import OwnerAssistantPanel from "./OwnerAssistantPanel";
-import { hazirlikRaporu } from "@/lib/vitrinReadiness";
 import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
 import type {
   VitrinFeaturedBanner,
@@ -113,24 +111,12 @@ export default function OwnerWorkspaceShell({
   isDemo,
   ...vitrinProps
 }: OwnerWorkspaceShellProps) {
-  const [open, setOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
   const [sessionSecondsLeft, setSessionSecondsLeft] = useState<number | null>(null);
-  const [hesapBaglaniyor, setHesapBaglaniyor] = useState(false);
-  const [hesapBaglaHata, setHesapBaglaHata] = useState("");
   // sayfa yüklendiğindeki sabit değerden başlar, her başarılı uzatmada
   // güncellenir — bkz. aşağıdaki "aktifken oturumu uzat" efekti.
   const [effectiveExpiresAt, setEffectiveExpiresAt] = useState<number | null>(
     sessionExpiresAt ?? null
   );
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const update = () => setIsDesktop(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
 
   useEffect(() => {
     if (!effectiveExpiresAt) return;
@@ -184,19 +170,7 @@ export default function OwnerWorkspaceShell({
     };
   }, [sessionExpiresAt, vitrinProps.storeSlug]);
 
-  const hiddenOnMobile = !open && !isDesktop;
 
-  // Faz G2 (Tek Asistan planı): panel oturum/sürüm paneli olarak kalır,
-  // asistan işi almaz — yalnız AssistantState'in Next.js tarafındaki
-  // karşılığı olan hazirlikRaporu'dan tek cümlelik özet gösterir. Bu,
-  // asistanın söylediğiyle AYNI kaynaktan geliyor (useOwnerDraft'ın da
-  // kullandığı fonksiyon) — panel kendi kararını üretmez.
-  const rapor = hazirlikRaporu(
-    (draft?.draft_data ?? {}) as Record<string, unknown>,
-    new Set(
-      Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []
-    )
-  );
 
   const [tazeleniyor, setTazeleniyor] = useState(false);
   const [tazelemeHatasi, setTazelemeHatasi] = useState<string | null>(null);
@@ -229,11 +203,6 @@ export default function OwnerWorkspaceShell({
     }
   };
 
-  const formatSessionTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
 
   return (
     <>
@@ -252,157 +221,18 @@ export default function OwnerWorkspaceShell({
         </div>
       )}
 
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-5 left-5 z-[70] lg:hidden bg-slate-700 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-xl"
-        aria-label="Sahip çalışma alanını aç"
-      >
-        ✎
-      </button>
-
-      <aside
-        aria-hidden={hiddenOnMobile ? true : undefined}
-        {...(hiddenOnMobile ? { inert: true } : {})}
-        className={`fixed top-0 right-0 z-[65] h-full w-full sm:w-96 bg-[#0B1120] border-l border-white/10 shadow-2xl overflow-y-auto transition-transform duration-200 ${
-          open ? "translate-x-0" : "translate-x-full"
-        } lg:translate-x-0`}
-      >
-        <div className="p-5 pt-14">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white font-bold text-base">Sahip Çalışma Alanı</h2>
-            <button
-              onClick={() => setOpen(false)}
-              className="lg:hidden text-white/60 text-lg"
-              aria-label="Kapat"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Hesapsız vitrin uyarısı — Google ile hesap bağla (Faz 0,
-           * Tek Asistan planı). Önceki koşul `isDemo` idi: stores.is_demo
-           * yalnız 9 kanonik ŞABLONUN kendisinde true, hiçbir müşteri
-           * klonunda değil — ve get_working_draft_for_session zaten
-           * is_demo=true iken DEMO_STORE_IMMUTABLE fırlattığı için bu
-           * bant ulaşılamaz koddu (27/29 gerçek mağaza hiç göremiyordu,
-           * canlı veriyle doğrulandı 2026-09-02). Artık draft.has_account. */}
-          {!isDemo && draft?.has_account === false ? (
-            <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
-              <p className="text-[12px] font-black text-amber-400">
-                ⚠️ Vitrinini kaydetmek için hesabına bağla
-              </p>
-              <p className="mt-1 text-[10px] leading-[1.45] text-slate-400">
-                Şu an vitrinin bu cihaza bağlı. Telefonunu değiştirirsen ya da
-                tarayıcı verilerini silersen özelleştirmelerini kaybedersin.
-                Google ile giriş yaparak vitrini kalıcı hale getirebilirsin.
-              </p>
-              {hesapBaglaHata ? (
-                <p className="mt-2 text-[10px] font-bold text-red-400" role="alert">
-                  {hesapBaglaHata}
-                </p>
-              ) : null}
-              <button
-                type="button"
-                disabled={hesapBaglaniyor}
-                onClick={async () => {
-                  setHesapBaglaHata("");
-                  setHesapBaglaniyor(true);
-                  try {
-                    // Web ziyaretçisinde henüz HİÇBİR Supabase oturumu
-                    // olmayabilir (Flutter'ın aksine burada açılışta
-                    // otomatik anonim oturum açılmıyor) — linkIdentity
-                    // bağlanacak bir oturum bulamazsa sessizce hiçbir şey
-                    // yapmaz. Diğer sayfalardaki (blog-yonetim vb.) kurulu
-                    // desenle aynı: önce anonim oturumu güvenceye al.
-                    const {
-                      data: { session },
-                    } = await supabase.auth.getSession();
-                    if (!session) {
-                      const { error: anonHata } = await supabase.auth.signInAnonymously();
-                      if (anonHata) {
-                        setHesapBaglaHata("Bağlantı başlatılamadı. Lütfen tekrar dene.");
-                        setHesapBaglaniyor(false);
-                        return;
-                      }
-                    }
-                    const { error } = await supabase.auth.linkIdentity({
-                      provider: "google",
-                      options: {
-                        redirectTo: `${window.location.origin}/hesap-bagla?slug=${encodeURIComponent(vitrinProps.storeSlug)}`,
-                      },
-                    });
-                    if (error) {
-                      setHesapBaglaHata("Google ile bağlanamadı. Lütfen tekrar dene.");
-                      setHesapBaglaniyor(false);
-                    }
-                    // Başarılıysa tarayıcı Google'a yönlenir; bundan sonrası
-                    // /hesap-bagla sayfasının işi.
-                  } catch {
-                    setHesapBaglaHata("Bir şeyler ters gitti. Lütfen tekrar dene.");
-                    setHesapBaglaniyor(false);
-                  }
-                }}
-                className="mt-2 flex w-full items-center justify-center rounded-xl bg-amber-500 px-3 py-2 text-[11px] font-black text-black hover:bg-amber-400 transition-colors disabled:opacity-60"
-              >
-                {hesapBaglaniyor ? "Bağlanıyor…" : "Google ile bağla"}
-              </button>
-            </div>
-          ) : null}
-
-          {/* 2026-09-03: burada "Taslak sürümü 13 / Canlı sürüm 1" ve sürekli
-           * inen bir "Oturum kalan 29:58" sayacı duruyordu. Sürüm numaraları
-           * esnafa hiçbir şey anlatmıyor, geri sayım ise boş yere korkutuyor.
-           * Yerine tek cümlelik durum; sayaç yalnız gerçekten azaldığında. */}
-          <div className="mb-4 space-y-2 rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-slate-400">
-            <p className="text-slate-300">
-              {(draft?.draft_version ?? 1) > (draft?.live_version ?? 1)
-                ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."
-                : "Vitrinin yayındaki hâliyle aynı."}
-            </p>
-            {sessionSecondsLeft !== null && sessionSecondsLeft < 300 && (
-              <p className="font-semibold text-amber-400">
-                Oturumun {formatSessionTime(sessionSecondsLeft)} sonra kapanacak — değişikliklerin kayıtlı.
-              </p>
-            )}
-            {draft?.version_conflict && (
-              <p className="text-center font-semibold text-amber-400">
-                Vitrinin başka bir yerden değiştirilmiş — önce canlı sürümü al.
-              </p>
-            )}
-          </div>
-
-          <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-white">
-                {rapor.temelTamam
-                  ? "Vitrin yayına hazır"
-                  : "Kurulum sürüyor"}
-              </p>
-              <span className="shrink-0 font-mono text-xs text-slate-400">
-                %{rapor.yuzde} · {rapor.doluSayisi}/{rapor.toplamSayisi}
-              </span>
-            </div>
-            {rapor.sonrakiAdim && (
-              <p className="text-xs leading-relaxed text-slate-400">
-                {rapor.sonrakiAdim}
-              </p>
-            )}
-            <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              Düzenleme Vixrex Asistan&apos;da — sağ alttaki düğmeye basın
-              veya vitrinde değiştirmek istediğiniz yazıya tıklayın.
-            </p>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-white/10 text-xs text-slate-500 space-y-1">
-            <p>Değişiklikler çalışma taslağına kaydedilir.</p>
-            <p>Müşteriler göremez — yalnız siz bu panelde görürsünüz.</p>
-            <p>Yayınlandığında canlı vitrin güncellenir.</p>
-          </div>
-        </div>
-      </aside>
+      {/* 2026-09-03 (Çalışma masası / Yön C): "Sahip Çalışma Alanı"
+       * çekmecesi buradaydı. Ekranda iki panel vardı (çekmece + Vixrex
+       * Asistan) ve İKİ FARKLI YÜZDE gösteriyorlardı: çekmece sunucudaki
+       * draft_data'yı, panel useOwnerDraft'ın canlı taslağını okuyordu.
+       * Çekmece kaldırıldı, içeriği asistan paneline taşındı; doluluk
+       * artık tek yerden, panelin kendi raporundan geliyor. */}
 
       <OwnerAssistantPanel
         slug={vitrinProps.storeSlug}
+        hesapBagliDegil={!isDemo && draft?.has_account === false}
+        oturumSaniye={sessionSecondsLeft}
+        yayinlanmamisDegisiklik={(draft?.draft_version ?? 1) > (draft?.live_version ?? 1)}
         draftData={(draft?.draft_data ?? {}) as Record<string, unknown>}
         draftYeniOlusturuldu={Boolean(draft?.created)}
         urunFiyatsizSayisi={vitrinProps.urunFiyatsizSayisi ?? 0}
