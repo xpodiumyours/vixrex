@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   ASISTAN_ADIMLARI,
   ASISTAN_BITIS,
@@ -142,6 +142,15 @@ export function LandingAsistanSohbeti({
 
   const bitti = adim >= ASISTAN_ADIMLARI.length;
   const aktif = bitti ? null : ASISTAN_ADIMLARI[adim];
+
+  // GAP-22: Flutter _inputFocus gibi — adım değişince metin inputuna focus
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!bitti && aktif?.girdi === "metin") {
+      const t = setTimeout(() => inputRef.current?.focus(), 80);
+      return () => clearTimeout(t);
+    }
+  }, [adim, bitti, aktif?.girdi]);
 
   function ilerle(deger: string) {
     if (!aktif || !aktif.cevapAnahtari) return;
@@ -378,8 +387,8 @@ export function LandingAsistanSohbeti({
         ) : null}
 
         {ASISTAN_ADIMLARI.slice(0, Math.max(adim, 0)).map((gecmis) => (
-          <div key={gecmis.alan} className="space-y-3">
-            <Balon>
+          <div key={gecmis.alan} className="space-y-3 opacity-60">
+            <Balon gecmis>
               <p className="font-bold">{gecmis.baslik}</p>
             </Balon>
             <p className="ml-auto max-w-[80%] rounded-xl rounded-tr-sm bg-lp-surface px-3 py-2.5 text-right text-[13px] font-semibold text-lp-text">
@@ -694,6 +703,7 @@ export function LandingAsistanSohbeti({
             ) : (
               <input
                 id={`asistan-${aktif.alan}`}
+                ref={inputRef}
                 value={girdi}
                 onChange={(e) => setGirdi(e.target.value)}
                 placeholder={aktif.yerTutucu}
@@ -763,7 +773,7 @@ export function LandingAsistanSohbeti({
   );
 }
 
-function Balon({ children }: { children: React.ReactNode }) {
+function Balon({ children, gecmis = false }: { children: React.ReactNode; gecmis?: boolean }) {
   return (
     <div className="flex gap-2.5">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
@@ -776,7 +786,8 @@ function Balon({ children }: { children: React.ReactNode }) {
           className="h-5 w-5 object-contain"
         />
       </div>
-      <div className="max-w-[260px] rounded-xl rounded-tl-sm border border-lp-primary/20 bg-lp-primary/[0.08] px-3.5 py-3 text-[14px] leading-[1.5] text-lp-text">
+      {/* GAP-08: aktif adım border daha belirgin, geçmiş adım soluk */}
+      <div className={`max-w-[260px] rounded-xl rounded-tl-sm border px-3.5 py-3 text-[14px] leading-[1.5] text-lp-text ${gecmis ? "border-lp-border/40 bg-lp-surface/60" : "border-lp-primary/20 bg-lp-primary/[0.08]"}`}>
         {children}
       </div>
     </div>
