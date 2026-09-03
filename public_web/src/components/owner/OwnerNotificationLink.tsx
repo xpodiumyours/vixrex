@@ -20,7 +20,7 @@ export function OwnerNotificationLink() {
 
   return (
     <Link href="/app/bildirimler" className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]">
-      <span className="text-2xl" aria-hidden="true">🔔</span>
+      <span className="text-[var(--owner-secondary)]" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg></span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">Bildirimler</p>

@@ -552,7 +552,7 @@ export default function BulkProductUpload({
             </p>
             <div className="mt-2 flex gap-4 text-xs text-[var(--owner-text)]">
               <span>📊 Toplam: {batchResult.toplam}</span>
-              <span className="text-[var(--owner-success)]">✅ Eklenen: {batchResult.eklenen}</span>
+              <span className="text-[var(--owner-success)]">Eklenen: {batchResult.eklenen}</span>
               {batchResult.hatali > 0 && (
                 <span className="text-yellow-700">⚠️ Hatalı: {batchResult.hatali}</span>
               )}

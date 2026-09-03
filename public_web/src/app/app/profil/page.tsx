@@ -211,7 +211,7 @@ export default function ProfilPage() {
 
         {/* Seçenekler — Flutter lib/screens/profile_screen.dart:245 _option */}
         <Link href="/app/ayarlar" className="owner-card flex items-center gap-4 p-4 hover:border-[var(--owner-primary)]/40">
-          <span className="text-[var(--owner-muted)]">⚙️</span><span className="flex-1 font-bold text-[var(--owner-text)]">Uygulama Ayarları</span><span className="text-[var(--owner-muted)]">›</span>
+          <span className="text-[var(--owner-muted)]" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3.2" /><path d="M4.5 12a7.5 7.5 0 0 1 .2-1.6l-1.6-1.2 1.8-3.1 1.9.7A7.5 7.5 0 0 1 9.5 4.3l.3-2h4.4l.3 2c.9.3 1.8.8 2.5 1.5l1.9-.7 1.8 3.1-1.6 1.2c.1.5.2 1 .2 1.6s-.1 1.1-.2 1.6l1.6 1.2-1.8 3.1-1.9-.7c-.7.7-1.6 1.2-2.5 1.5l-.3 2H9.8l-.3-2a7.5 7.5 0 0 1-2.5-1.5l-1.9.7-1.8-3.1 1.6-1.2A7.5 7.5 0 0 1 4.5 12z" /></svg></span><span className="flex-1 font-bold text-[var(--owner-text)]">Uygulama Ayarları</span><span className="text-[var(--owner-muted)]">›</span>
         </Link>
         <Link href="/yardim" className="owner-card flex items-center gap-4 p-4 hover:border-[var(--owner-primary)]/40">
           <span className="text-[var(--owner-muted)]">❓</span><span className="flex-1 font-bold text-[var(--owner-text)]">Kullanım Bilgisi & Destek</span><span className="text-[var(--owner-muted)]">›</span>

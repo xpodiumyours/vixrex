@@ -86,7 +86,11 @@ export default function GirisPage() {
             Vitrinlerinizi yönetmek için bilgilerinizi girin.
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+          <form
+            onSubmit={handleSubmit}
+            aria-busy={gonderiliyor}
+            className="mt-6 flex flex-col gap-4"
+          >
             {/* E-posta */}
             <div className="flex flex-col gap-1.5">
               <label htmlFor="giris-email" className="owner-label">
