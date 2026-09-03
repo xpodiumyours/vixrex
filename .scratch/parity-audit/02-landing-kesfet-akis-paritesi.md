@@ -50,7 +50,17 @@ Nasıl (tek-kaynak, istisna dosyasında yazan yön):
 | Kirala sonucu | `app_router.dart:409-475` `navigateToRentDemo`: hesaplıysa `rent_demo_for_account` (kalıcı, 1 yıllık token) → owner URL; misafirse uyarı + `/rent-demo` köprü (reCAPTCHA, sahipsiz klon, 14 gün) | Faz C3: `Kirala` Keşfet'ten ayrılmıyor — inline `useKesfetKirala` paneli (`VitrinKarti.tsx:68,290-292`); `/rent-demo/page.tsx` hâlâ duruyor |
 | Fiyat vaadi | `Aylık 299 TL` + `14 gün ücretsiz dene` (bekçili) | Aynı (bekçili) |
 
-**KARAR GEREKİYOR:** Misafir yolunda Web inline panel mi, Flutter `/rent-demo` köprüsü mü referans olacak? İkisi de çalışıyor ama kullanıcı farklı ekran görüyor. (Not: fiyat "299 TL" ~10 yerde hardcode — ayrı borç, `CLAUDE.md` borç listesi.)
+**KARAR (2026-09-03, Casper): köprü yolu → UYGULANDI (aynı gün).**
+`/rent-demo` kanonik kiralama yoludur (orada zaten var); Flutter'a ikinci
+kiralama yazılmaz. Doğrulama: Flutter'da tek Kirala kapısı
+(`ExploreScreen:527` → `navigateToRentDemo`), hesaplı yol bile backend
+RPC'dir (`DemoRentalService` — UI importu yok), misafir köprüye taşınır,
+giriş zorlanmaz. Kilitler: `test/kiralama_kopru_contract_test.dart` (6 test:
+tek kapı, tek URL builder, ince servis, kanonik `rent_demo_canonical`) +
+`public_web/tests/kirala-kopru-senkron-contract.test.ts` (4 test: köprü
+sayfası + inline akış aynı 3 çapada — hesap API, yedek jeton, owner-session
+zinciri). Web inline paneline dokunulmadı (C3 kararı saklı); iki tarifin
+ayrışma riski ("KASITLI KOPYA" notu) artık testle kilitli.
 
 ### Akış 3 — "Vitrinini aç / Detaylı formu aç" (yayın bitişi)
 
