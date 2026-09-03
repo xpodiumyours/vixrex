@@ -544,20 +544,20 @@ body.vixrex-asistan-acik [data-vixrex-editable]:hover {
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.6) !important;
 }
 
-/* 2026-09-03 (Casper'ın onayladığı "C" tasarımına sadakat): masaüstünde
-   Vixrex Asistan artık sağda 460px genişliğinde, kalıcı bir panel
-   (OwnerAssistantPanel.tsx'teki `sm:w-[460px]` sabit-konumlu panel).
-   `position: fixed` olduğu için normal akışta yer kaplamaz — panel
-   açıkken vitrinin kendisi de sağa doğru bu boşluğu bırakmazsa, ortalanmış
-   içerik (`max-w-7xl mx-auto`) panelin ALTINDA kalır. `body`'ye sağ dolgu
-   eklemek, içeriği panelin bıraktığı alana göre yeniden ortalar — vitrin
-   sayfasının kendi dosyasına (VitrinProfileView.tsx) hiç dokunulmadan. */
-@media (min-width: 640px) {
-  body.vixrex-asistan-acik {
-    padding-right: 460px;
-    transition: padding-right 0.2s ease;
-  }
-}
+/* 2026-09-03 (Casper canlıda buldu — DENENDİ, GERİ ALINDI): panel açıkken
+   `body`'ye sağ dolgu ekleyip vitrin içeriğini o boşluğa göre yeniden
+   ortalamayı denedim. YANLIŞ ÇIKTI: vitrinin kendi `sm:`/`md:` gibi
+   duyarlı (responsive) sınıfları TARAYICI PENCERESİNİN genişliğine göre
+   karar veriyor, içeriğin GERÇEKTE ne kadar yer kapladığına göre değil.
+   Sonuç: pencere geniş olduğu için vitrin hâlâ "masaüstü" stillerini
+   kullanmaya devam ediyor ama o stiller artık dar bir sütuna sıkışıyor —
+   rozetler/başlıklar üst üste biniyor (ekran görüntüsüyle doğrulandı).
+   Bunu doğru çözmek VitrinProfileView.tsx'in kendi duyarlı tasarımını
+   "kapsayıcı sorgusu" (container query) ile yeniden yazmayı gerektirir —
+   büyük, ayrı bir iş. Şimdilik panel eskisi gibi bir KAPLAMA (overlay):
+   `position: fixed` olduğu için vitrinin genişliğine hiç dokunmuyor,
+   yalnız sağdaki 460px'lik şeridin ÜSTÜNE biniyor — küçük widget hâlinde
+   zaten hep böyleydi, tam boy olması bunu bozmuyor. */
 
 /* Faz 2 (2026-08-22) — kaydetme sayfaya yansıdığında görülsün.
    Kaydetme artık `router.refresh()` ile sayfayı sunucudan tazeliyor;
