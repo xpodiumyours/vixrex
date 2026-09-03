@@ -261,7 +261,11 @@ export function SpotlightGuide(props: Props) {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[80]" aria-hidden={false}>
-      {/* Spot ışığı: hedefin dışı karartılır, kendisi delik gibi açık kalır. */}
+      {/* Hedef halkası — vitrin ARTIK KARARMIYOR (Faz 4, Çalışma masası /
+       * Yön C, 2026-09-03). Eskiden dışı `boxShadow: 0 0 0 9999px rgba(...)`
+       * ile karartılıyordu; esnaf neyi değiştirdiğini vitrinin geri kalanına
+       * bakmadan göremiyordu. Artık yalnız halka + hafif dış parıltı: hedef
+       * hâlâ göze çarpıyor, vitrinin geri kalanı gerçek rengiyle görünür. */}
       <div
         className="pointer-events-none absolute rounded-2xl ring-2 ring-blue-400/70 transition-all duration-300 ease-out"
         style={{
@@ -269,7 +273,7 @@ export function SpotlightGuide(props: Props) {
           left: rect.left - 8,
           width: rect.width + 16,
           height: rect.height + 16,
-          boxShadow: "0 0 0 9999px rgba(3, 7, 18, 0.74)",
+          boxShadow: "0 0 0 4px rgba(56, 189, 248, 0.18), 0 0 28px 6px rgba(56, 189, 248, 0.25)",
         }}
       />
 
