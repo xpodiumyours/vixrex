@@ -736,21 +736,29 @@ export default function OwnerAssistantPanel({
             </div>
           )}
 
-          {/* Sohbet akışı — kendi kaydırma alanında sabit yükseklik kalır
-           * (Faz G3, G3.1: "ÇIKAR: sohbet akışının paneli kaplaması") —
-           * yukarıdaki gövdeden bağımsız, kendi otomatik-aşağı-kaydırma
-           * mantığı (useOwnerChat.akisRef) değişmedi.
+          {/* Sohbet akışı — kendi kaydırma alanında, kendi otomatik-aşağı-
+           * kaydırma mantığı (useOwnerChat.akisRef) değişmedi.
            *
-           * 2026-09-03 ölçüm düzenlemesi: eski `max-h-40` (160px) elle
-           * atılmış rastgele bir değerdi — masaüstünde panel TAM yükseklikte
-           * dururken sohbet yine de 160px'e sıkışıyordu. Artık ekrana göre
-           * ölçülü: mobilde panel alt-şerit olduğu için mütevazı (%20vh),
-           * masaüstünde panelin tam yüksekliğine oranla daha geniş (%32vh).
-           * Kaydırma şeridi de varsayılan kalın OS şeridi yerine ince,
-           * koyu panele uyumlu (bkz. .vixrex-panel-kaydirici, globals.css). */}
+           * 2026-09-03 ölçüm düzenlemesi (2. tur): "Faz G3.1: ÇIKAR sohbet
+           * akışının paneli kaplaması" kararıyla bu kutu `max-h-40` (sonra
+           * `max-h-[20vh]/[32vh]`) gibi SABİT bir tavana bağlanmıştı — o
+           * zamanki panel tasarımında sohbet büyüyüp paneli kaplıyordu.
+           * Ama şimdiki panel (Faz C) `flex flex-col` ve TOPLAM yüksekliği
+           * zaten sabit (sm:top-9 sm:bottom-5) — başlık/SIRADA/yazı kutusu
+           * kendi boylarını koruyor. Sabit tavan burada paneli kaplama
+           * riskini önlemiyordu, tam tersi bir kusur yaratıyordu: harita
+           * kapalıyken (varsayılan) hiçbir kardeş öge büyüyüp boşluğu
+           * doldurmadığından tavanın altındaki alan boş kalıyor, yazı kutusu
+           * panelin ortasında asılı kalıyordu (Casper canlıda gördü, ekran
+           * görüntüsüyle işaretledi). `min-h-0 flex-1` — haritaAcik dolgu
+           * kutusunun (yukarıda, satır ~643) zaten kullandığı desen — kalan
+           * boşluğu doldurur, yazı kutusu panelin dibine yapışır; panel
+           * yüksekliği sabit olduğu için taşıp "kaplama" riski yok.
+           * Kaydırma şeridi ince, koyu panele uyumlu kalmaya devam ediyor
+           * (bkz. .vixrex-panel-kaydirici, globals.css). */}
           <div
             ref={akisRef}
-            className="vixrex-panel-kaydirici max-h-[20vh] shrink-0 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3 sm:max-h-[32vh]"
+            className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3"
           >
             {mesajlar.map((m) => (
               <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
