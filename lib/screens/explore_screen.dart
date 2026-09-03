@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/app_router.dart';
+import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/controllers/explore_controller.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/repositories/explore_repository.dart';
@@ -30,11 +31,18 @@ class ExploreScreen extends StatefulWidget {
   /// iken kullanılmaz.
   final VoidCallback? onNoneMatch;
 
+  /// Niyet sorusundan gelen ön-filtre (Web'deki `/kesfet?kategori=` karşılığı,
+  /// 2026-09-03). Yalnız bilinen bir kategori etiketiyle eşleşirse uygulanır;
+  /// bilinmeyen değer sessizce yoksayılır (sayfa süzgeçsiz açılır, hata vermez
+  /// — Web'deki "bilinmeyen değer sessizce yoksayılır" kuralıyla aynı).
+  final String? initialCategory;
+
   const ExploreScreen({
     super.key,
     this.repository,
     this.onlyRentalTemplates = false,
     this.onNoneMatch,
+    this.initialCategory,
   });
 
   @override
@@ -81,6 +89,12 @@ class ExploreScreenState extends State<ExploreScreen> {
       onlyRentalTemplates: widget.onlyRentalTemplates,
     );
     await _controller.initialize();
+    final ilkKategori = widget.initialCategory?.trim() ?? '';
+    if (mounted &&
+        ilkKategori.isNotEmpty &&
+        BusinessCategoryConfig.categories.any((k) => k.label == ilkKategori)) {
+      _controller.setCategory(ilkKategori);
+    }
     if (mounted) {
       setState(() {
         _isControllerInitialized = true;

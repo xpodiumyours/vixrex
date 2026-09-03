@@ -9,7 +9,12 @@ const SATIR_SONU = String.fromCharCode(10);
 function yorumsuz(kaynak: string): string {
   return kaynak
     .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "");
+    .replace(/^\s*\/\/.*$/gm, "")
+    // Satır-içi `//` yorum artıkları (`// GAP-22: ...`) JSX içerik
+    // taramasına sızıp kod parçalarını metin sanmaya yol açıyordu
+    // (2026-09-03: "= ASISTAN_ADIMLARI.length; ... useRef" kırığı).
+    // `://` (URL) korunur — yalnız `:` ile başlamayan `//` kesilir.
+    .replace(/([^:])\/\/.*$/gm, "$1");
 }
 
 function dizindekiDosyalar(dizin: string, uzantilar: string[]): string[] {
@@ -120,6 +125,22 @@ function kullaniciyaGorunurMu(metin: string): boolean {
   if (/^if \(!/.test(metin)) return false;
   if (/^return \(/.test(metin)) return false;
   if (/^null,/.test(metin)) return false;
+
+  // JSX içerik taraması `>=` ile generic `<T>` arasındaki JS kodunu
+  // tek parça yakalayabiliyor (2026-09-03: "= ASISTAN_ADIMLARI.length;
+  // const aktif = ... useRef" kırığı). Türkçe kullanıcı metninde `=`
+  // ve `?.` asla geçmez; `const/let/return/useRef/...` de geçmez —
+  // geçen her aday koddur. (`;` tek başına elenemez: "Konum izni
+  // alınamadı; ..." gerçek bir kullanıcı metnidir.)
+  if (metin.includes("=")) return false;
+  if (metin.includes("//")) return false;
+  if (metin.includes("?.")) return false;
+  if (
+    /\b(const|let|var|return|import|typeof|useRef|useState|useEffect|null|undefined)\b/.test(
+      metin
+    )
+  )
+    return false;
 
   return true;
 }

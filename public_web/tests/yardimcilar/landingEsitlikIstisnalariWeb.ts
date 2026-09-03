@@ -308,39 +308,11 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
       "kullanıyor.",
   },
 
-  // --- Faz C1 (Tek Asistan planı, 2026-09-02): "Hazır Vitrin Seç" niyet
-  // sorusu. Flutter'da bu adım henüz yok — orada "Hazır Vitrin Seç"
-  // butonu doğrudan Keşfet'e gidiyor, ara bir kategori sorusu sormuyor.
-  // Flutter'a eklenince bu üç kayıt katalog anahtarına taşınıp
-  // tool/mesaj_semasi_uret.dart ile üretilmeli, sonra buradan silinmeli.
-  {
-    metin: "Ne iş yapıyorsun?",
-    neden:
-      "Web landing'inde 'Hazır Vitrin Seç'e tıklayınca sorulan kategori " +
-      "niyet sorusu (Faz C1). Flutter'da bu ara adım yok, buton doğrudan " +
-      "Keşfet'e gidiyor.",
-  },
-  {
-    metin: "İşine uygun hazır vitrinleri Keşfet'ten göstereyim.",
-    neden: "Yukarıdaki niyet sorusunun açıklaması. Aynı gerekçe.",
-  },
-  {
-    metin: "‹ Geri",
-    neden:
-      "Niyet sorusundan karşılama ekranına dönüş butonu. Flutter'da " +
-      "karşılığı yok çünkü sorunun kendisi yok.",
-  },
-
-  // --- "Landing'de anlatılanın panele taşınması" (2026-09-02) — niyet
-  // sorusuna eklenen opsiyonel serbest metin alanı. Flutter'da niyet
-  // sorusunun kendisi yok (yukarıdaki C1 istisnalarıyla aynı gerekçe),
-  // bu yüzden ona eklenen bu serbest metin dalı da yok.
-  {
-    metin: "Anlattıklarını not aldım — vitrinini seçtiğinde bunlardan otomatik dolduracağım.",
-    neden:
-      "Serbest niyet metni gönderilince yazılan asistan onayı. Niyet " +
-      "sorusunun kendisi Flutter'da olmadığı için bu dal da yok.",
-  },
+  // --- Faz C1 (Tek Asistan planı, 2026-09-02) → Akış 1 paritesi (2026-09-03):
+  // "Hazır Vitrin Seç" niyet sorusu artık katalogda
+  // (shared/vixrex_mesajlar.json `niyet_*`) — iki yüzey de aynı
+  // anahtarları okuyor, istisnaya gerek kalmadı. Kayıtlar silindi;
+  // soru metinleri bileşende literal olarak geçmiyor.
 ];
 
 // Blog altbilgi bağlantısı (28 Ağustos) buraya İSTİSNA OLARAK GİRMEDİ ve

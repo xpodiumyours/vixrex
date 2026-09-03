@@ -31,14 +31,14 @@ const HATA_KONUM_IZNI = "Konum izni alınamadı; il, ilçe ve adresi elle yazabi
 const HATA_YASAL_ONAY = "Yayın için yasal onayları işaretlemeniz gerekiyor.";
 /**
  * "Hazır vitrin bul" niyet sorusu — Tek Asistan planı Faz C1 (2026-09-02).
- * WEB-ONLY: Flutter'da bu adım henüz yok, bu yüzden shared/vixrex_mesajlar.json
- * katalogundan DEĞİL burada tanımlı (BITIS_BASLIK ile aynı istisna deseni).
- * Flutter parity eklenince katalog anahtarına taşınıp
- * tool/mesaj_semasi_uret.dart ile üretilecek.
+ * Akış 1 paritesi (2026-09-03) ile katalogda: shared/vixrex_mesajlar.json
+ * `niyet_*` anahtarları. Flutter aynı anahtarları okuyor
+ * (lib/config/vixrex_mesajlar.g.dart) — iki yüzey tek kaynaktan konuşur.
+ * Sabit adları korunur (tek-konusma-koprusu bekçisi NIYET_KATEGORI_SORUSU
+ * adını arar).
  */
-const NIYET_KATEGORI_SORUSU = "Ne iş yapıyorsun?";
-const NIYET_KATEGORI_ACIKLAMA =
-  "İşine uygun hazır vitrinleri Keşfet'ten göstereyim.";
+const NIYET_KATEGORI_SORUSU = vixRexMesajlari.niyet_kategori_baslik;
+const NIYET_KATEGORI_ACIKLAMA = vixRexMesajlari.niyet_kategori_aciklama;
 import {
   turkeyProvinces,
   getDistrictsForProvince,
@@ -453,7 +453,7 @@ export function LandingAsistanSohbeti({
             <textarea
               value={niyetSerbestMetin}
               onChange={(e) => setNiyetSerbestMetin(e.target.value)}
-              placeholder="İşini birkaç cümleyle anlat (opsiyonel) — WhatsApp'ını, adresini, çalışma saatlerini yazarsan, vitrinini seçtiğinde otomatik dolduracağım."
+              placeholder={vixRexMesajlari.niyet_serbest_yertutucu}
               rows={2}
               className="w-full rounded-xl border border-lp-border bg-lp-surface px-3 py-2.5 text-[12px] font-medium text-lp-text outline-none placeholder:text-lp-muted"
             />
@@ -470,14 +470,14 @@ export function LandingAsistanSohbeti({
                     { role: "user", text: metin, messageKey: NIYET_SERBEST_METIN_ANAHTARI },
                     {
                       role: "assistant",
-                      text: "Anlattıklarını not aldım — vitrinini seçtiğinde bunlardan otomatik dolduracağım.",
+                      text: vixRexMesajlari.niyet_ack,
                     },
                   ]);
                   router.push(hedef);
                 }}
                 className="w-full rounded-xl bg-lp-primary px-3 py-2.5 text-[12px] font-black text-lp-on-primary"
               >
-                Anlat ve devam et
+                {vixRexMesajlari.niyet_anlat_buton}
               </button>
             ) : null}
             <button
@@ -485,7 +485,7 @@ export function LandingAsistanSohbeti({
               onClick={() => setNiyetKategoriSoruluyor(false)}
               className="w-full text-center text-[11px] font-bold text-lp-muted hover:text-lp-text"
             >
-              ‹ Geri
+              {vixRexMesajlari.niyet_geri_buton}
             </button>
           </div>
         ) : adim === -1 ? (

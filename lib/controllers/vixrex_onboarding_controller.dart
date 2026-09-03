@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
@@ -26,6 +27,11 @@ import 'package:vixrex/utils/whatsapp_link_helper.dart';
 /// depoya yazmak ekranın transkript listesine bakmayı gerektirir.
 enum VixRexOnboardingStep {
   welcome,
+
+  /// "Hazır Vitrin Seç"ten gelen niyet sorusu (Web C1 paritesi, 2026-09-03).
+  /// Sıfırdan-yolundaki [category] adımından FARKLI: profil kategorisini
+  /// değil, Keşfet ön-filtresini seçer; editöre hiçbir şey yazmaz.
+  templateNiyet,
   name,
   category,
   whatsapp,
@@ -42,7 +48,7 @@ class VixRexOnboardingController extends ChangeNotifier {
     required void Function(String text) onUserMessage,
     required Future<void> Function() onPersistTranscript,
     void Function()? onRequestFocus,
-    void Function()? onChooseReadyTemplate,
+    void Function(String? kategoriEtiketi)? onChooseReadyTemplate,
   }) : _editor = editorController,
        _onBotMessage = onBotMessage,
        _onUserMessage = onUserMessage,
@@ -67,8 +73,10 @@ class VixRexOnboardingController extends ChangeNotifier {
   // Bu sınıf widget bilmez (yukarıdaki sınıf yorumu) — "Hazır Vitrin Seç"
   // ekranına gitmek bir Navigator çağrısı gerektirir, o yüzden burada
   // NAVİGE ETMEYİZ, yalnız ekrana haber veririz. Ekran (screen) bunu
-  // AppRouter.pushReadyTemplatePicker ile karşılar.
-  final void Function()? _onChooseReadyTemplate;
+  // AppRouter.pushReadyTemplatePicker ile karşılar. Seçilen kategori
+  // etiketi (ızgara/free-text çözümünden) parametreyle taşınır; null ise
+  // Keşfet süzgeçsiz açılır.
+  final void Function(String? kategoriEtiketi)? _onChooseReadyTemplate;
 
   bool _disposed = false;
 
@@ -197,16 +205,73 @@ class VixRexOnboardingController extends ChangeNotifier {
     _onRequestFocus?.call();
   }
 
-  /// "Hazır Vitrin Seç" — adım DEĞİŞMEZ (welcome'da kalır). Ekrana geçişi
-  /// haber verir; kiralama tamamlanınca kullanıcı zaten tarayıcıya geçip
-  /// Vixrex Asistan'da devam ediyor (bkz. AppRouter.navigateToRentDemo) —
-  /// bu sohbetin işi burada biter. "Uygun olan yok" derse ekran
-  /// [chooseScratch]'ı çağırıp eski yola döner.
+  /// "Hazır Vitrin Seç" — niyet sorusu adımını açar (Web C1 paritesi).
+  /// Eskiden adım değişmeden Keşfet'e geçiliyordu; artık soru önce
+  /// sorulur: ekran ızgara + serbest metin + geri çizer. Keşfet'e geçiş,
+  /// kategori seçilince ([selectTemplateCategory]) ya da serbest metin
+  /// gönderilince ([submitTemplateFreeText]) olur. Kiralama tamamlanınca
+  /// kullanıcı zaten tarayıcıya geçip Vixrex Asistan'da devam ediyor
+  /// (bkz. AppRouter.navigateToRentDemo) — bu sohbetin işi burada biter.
+  /// "Uygun olan yok" derse ekran [chooseScratch]'ı çağırıp eski yola döner.
   void chooseReadyTemplate() {
     _onUserMessage('Hazır bir vitrin görmek istiyorum');
+    _onBotMessage(
+      '${vixRexMesajlari['niyet_kategori_baslik']}\n'
+      '${vixRexMesajlari['niyet_kategori_aciklama']}',
+    );
+    _step = VixRexOnboardingStep.templateNiyet;
     _notify();
-    _onChooseReadyTemplate?.call();
+    _onRequestFocus?.call();
   }
+
+  /// Niyet ızgarasından kategori seçimi — Keşfet bu etiketle ön-filtreli
+  /// açılır. Profil kategorisine DOKUNMAZ (sıfırdan-yolundaki
+  /// [selectCategory] ile karıştırma).
+  void selectTemplateCategory(String label) {
+    _onUserMessage(label);
+    _onBotMessage('$label işletmesine uygun hazır vitrinleri buldum.');
+    _notify();
+    _onChooseReadyTemplate?.call(label);
+  }
+
+  /// "‹ Geri" — soruyu kapatıp karşılamaya döner, sohbete satır eklenmez
+  /// (Web'deki `setNiyetKategoriSoruluyor(false)` karşılığı).
+  void cancelTemplateNiyet() {
+    _step = VixRexOnboardingStep.welcome;
+    _notify();
+  }
+
+  /// Serbest niyet metni — kategori çözülürse ön-filtreli, çözülmezse
+  /// süzgeçsiz Keşfet açılır. Yönlendirme asla engellenmez (Web paritesi:
+  /// DB yazımı orada da best-effort). `true` döner ⇒ ekran kutuyu temizler.
+  Future<bool> submitTemplateFreeText(String raw) async {
+    final metin = raw.trim();
+    if (metin.isEmpty) return false;
+    _onUserMessage(metin);
+    _onBotMessage(vixRexMesajlari['niyet_ack']!);
+    _notify();
+    _onChooseReadyTemplate?.call(templateKategoriCoz(metin));
+    return true;
+  }
+
+  /// Serbest metinden kategori etiketi çözümü (best-effort) — ızgara
+  /// etiketiyle birebir eşleşme (Türkçe I/İ duyarsız). Web'deki
+  /// `resolveBusinessCategory` karşılığı; oradaki kadar esnek değil
+  /// (bulanık eşleşme yok) — bulunamazsa null döner, Keşfet süzgeçsiz
+  /// açılır. Sessiz daraltmadan iyidir: yanlış filtre boş liste gösterir.
+  String? templateKategoriCoz(String metin) {
+    final normal = _kucukHarf(metin);
+    if (normal.isEmpty) return null;
+    for (final kategori in BusinessCategoryConfig.categories) {
+      if (_kucukHarf(kategori.label) == normal) return kategori.label;
+    }
+    return null;
+  }
+
+  /// Türkçe I/İ duyarsız küçük harf (Web'deki NFD normalizasyonunun en
+  /// küçük karşılığı — ızgara etiketi eşleşmesi için yeterli).
+  static String _kucukHarf(String s) =>
+      s.trim().replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
 
   void declineWelcome() {
     _onUserMessage('Şimdilik bakınıyorum');
@@ -224,6 +289,8 @@ class VixRexOnboardingController extends ChangeNotifier {
     switch (_step) {
       case VixRexOnboardingStep.name:
         return submitName(text);
+      case VixRexOnboardingStep.templateNiyet:
+        return submitTemplateFreeText(text);
       case VixRexOnboardingStep.whatsapp:
         return submitWhatsapp(text);
       case VixRexOnboardingStep.location:

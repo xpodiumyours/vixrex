@@ -483,6 +483,7 @@ class AppRouter {
   static Future<void> pushReadyTemplatePicker(
     BuildContext context, {
     required VoidCallback onNoneMatch,
+    String? initialCategory,
   }) {
     return Navigator.of(context).push(
       MaterialPageRoute(
@@ -490,6 +491,7 @@ class AppRouter {
             (_) => ExploreScreen(
               onlyRentalTemplates: true,
               onNoneMatch: onNoneMatch,
+              initialCategory: initialCategory,
             ),
       ),
     );

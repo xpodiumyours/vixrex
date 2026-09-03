@@ -295,6 +295,15 @@ const Map<String, String> vixRexMesajlari = {
   'landing_finish_aciklama':
       'Verdiğin bilgilerle vitrinini kurabilirim. Hesabını açtığında kaldığın yerden devam edeceğiz.',
   'landing_finish_buton': 'Hesap Aç ve Vitrini Kur',
+  'niyet_kategori_baslik': 'Ne iş yapıyorsun?',
+  'niyet_kategori_aciklama':
+      'İşine uygun hazır vitrinleri Keşfet\'ten göstereyim.',
+  'niyet_geri_buton': '‹ Geri',
+  'niyet_anlat_buton': 'Anlat ve devam et',
+  'niyet_serbest_yertutucu':
+      'İşini birkaç cümleyle anlat (opsiyonel) — WhatsApp\'ını, adresini, çalışma saatlerini yazarsan, vitrinini seçtiğinde otomatik dolduracağım.',
+  'niyet_ack':
+      'Anlattıklarını not aldım — vitrinini seçtiğinde bunlardan otomatik dolduracağım.',
   'netlestirme_sor': '{etiket} için ne yazayım? Örn: {ipucu}',
   'netlestirme_sor_genel': '{etiket} için hangi değeri yazayım?',
   'netlestirme_onay':

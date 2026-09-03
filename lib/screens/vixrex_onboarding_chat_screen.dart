@@ -99,12 +99,14 @@ class _VixRexOnboardingChatScreenState
     if (mounted) setState(() {});
   }
 
-  /// Keşfet'i "sadece kiralık" modunda sohbetin üstüne açar. "Uygun olan
-  /// yok" derse ekranı kapatıp sıfırdan-oluştur yoluna döner — sohbet
-  /// aynı yerde bekliyor olur, kaybolmaz.
-  void _openReadyTemplatePicker() {
+  /// Keşfet'i "sadece kiralık" modunda sohbetin üstüne açar. [initialCategory]
+  /// doluysa liste o etiketle ön-filtreli gelir (niyet sorusu akışı).
+  /// "Uygun olan yok" derse ekranı kapatıp sıfırdan-oluştur yoluna döner —
+  /// sohbet aynı yerde bekliyor olur, kaybolmaz.
+  void _openReadyTemplatePicker([String? initialCategory]) {
     AppRouter.pushReadyTemplatePicker(
       context,
+      initialCategory: initialCategory,
       onNoneMatch: () {
         Navigator.of(context).pop();
         _onboarding.chooseScratch();
@@ -302,7 +304,12 @@ class _VixRexOnboardingChatScreenState
     final step = _onboarding.step;
     final showInput =
         step == VixRexOnboardingStep.name ||
-        step == VixRexOnboardingStep.whatsapp;
+        step == VixRexOnboardingStep.whatsapp ||
+        step == VixRexOnboardingStep.templateNiyet;
+    final inputHint =
+        step == VixRexOnboardingStep.templateNiyet
+            ? vixRexMesajlari['niyet_serbest_yertutucu']!
+            : '';
 
     final column = Column(
       children: [
@@ -324,7 +331,7 @@ class _VixRexOnboardingChatScreenState
               textAlign: TextAlign.center,
             ),
           ),
-        _buildComposer(showInput),
+        _buildComposer(showInput, inputHint),
       ],
     );
 
@@ -361,7 +368,7 @@ class _VixRexOnboardingChatScreenState
     );
   }
 
-  Widget _buildComposer(bool showInput) {
+  Widget _buildComposer(bool showInput, [String inputHint = '']) {
     final step = _onboarding.step;
     final busy = _onboarding.busy;
 
@@ -423,6 +430,60 @@ class _VixRexOnboardingChatScreenState
                 ),
               ],
             ),
+          ],
+          // Niyet sorusu — "Hazır Vitrin Seç"ten gelen ara adım (Web C1
+          // paritesi, 2026-09-03). Izgara sıfırdan-yolundaki KategoriSecici
+          // ile aynı widget; SEÇİM BURADA PROFİLE YAZMAZ, yalnız Keşfet'i
+          // ön-filtreli açar. Sıralama Web'deki gibi: ızgara → veya →
+          // giriş kutusu (aşağıda, showInput) → anlat-butonu → geri.
+          // Mikro-fark: Web'de buton kutunun ALTINDA, burada ÜSTÜNDE
+          // (paylaşılan composer altta sabit) — işlev aynı.
+          if (step == VixRexOnboardingStep.templateNiyet) ...[
+            KategoriSecici(
+              busy: busy,
+              onSelected: _onboarding.selectTemplateCategory,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'veya',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.mutedText,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _inputController,
+              builder: (context, value, _) {
+                if (value.text.trim().isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _primaryButton(
+                    vixRexMesajlari['niyet_anlat_buton']!,
+                    busy ? null : () => _onSend(),
+                  ),
+                );
+              },
+            ),
+            TextButton(
+              onPressed: busy ? null : _onboarding.cancelTemplateNiyet,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.mutedText,
+                minimumSize: const Size.fromHeight(40),
+              ),
+              child: Text(
+                vixRexMesajlari['niyet_geri_buton']!,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
           ],
           // Kategori seçimi — sohbetin içinde, ayrı ekrana götürmeden.
           if (step == VixRexOnboardingStep.category) ...[
@@ -509,10 +570,11 @@ class _VixRexOnboardingChatScreenState
               controller: _inputController,
               focusNode: _inputFocus,
               enabled: !busy,
-              // Ad/WhatsApp/konum girişi — genel sohbet sorusu değil,
+              // Ad/WhatsApp/konum/niyet girişi — genel sohbet sorusu değil,
               // ChatComposer'ın varsayılan "Vixrex'e sor…" ipucu burada
-              // yanıltıcı olur.
-              hintText: '',
+              // yanıltıcı olur. Niyet adımında katalogdaki serbest-metin
+              // ipucu gösterilir (Web'deki textarea placeholder karşılığı).
+              hintText: inputHint,
               onSubmit: (_) => _onSend(),
             ),
           // TEK ASİSTAN (C2): birincil yol vitrini AÇIP birlikte devam

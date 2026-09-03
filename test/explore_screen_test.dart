@@ -230,4 +230,92 @@ void main() {
     expect(find.text('Sipariş vermek istiyorum'), findsOneWidget);
     expect(find.text('Adres ve çalışma saatleri'), findsOneWidget);
   });
+
+  // Akış 1 paritesi (2026-09-03): niyet sorusundan gelen initialCategory
+  // listeyi ön-filtreli açar (Web'deki `/kesfet?kategori=` karşılığı).
+  testWidgets('ExploreScreen initialCategory ile ön-filtreli açılır', (
+    WidgetTester tester,
+  ) async {
+    final repo = _FakeExploreRepository(
+      stores: [
+        StoreData(
+          name: 'Aymira Giyim',
+          description: 'Yeni Sezon Ürünler',
+          kategori: 'Giyim',
+          whatsapp: '905551234567',
+          address: 'Kadıköy',
+          slug: 'aymira-giyim',
+          isDemo: true,
+        ),
+        StoreData(
+          name: 'Lezzet Durağı',
+          description: 'Ev Yemekleri',
+          kategori: 'Yiyecek & İçecek',
+          whatsapp: '905557654321',
+          address: 'Beşiktaş',
+          slug: 'lezzet-duragi',
+          isDemo: true,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExploreScreen(
+          repository: repo,
+          onlyRentalTemplates: true,
+          initialCategory: 'Giyim',
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Hazır Vitrin Seç'), findsOneWidget);
+    expect(find.text('Aymira Giyim'), findsOneWidget);
+    expect(find.text('Lezzet Durağı'), findsNothing);
+  });
+
+  testWidgets('ExploreScreen bilinmeyen initialCategory sessizce yoksayar', (
+    WidgetTester tester,
+  ) async {
+    final repo = _FakeExploreRepository(
+      stores: [
+        StoreData(
+          name: 'Aymira Giyim',
+          description: 'Yeni Sezon Ürünler',
+          kategori: 'Giyim',
+          whatsapp: '905551234567',
+          address: 'Kadıköy',
+          slug: 'aymira-giyim',
+          isDemo: true,
+        ),
+        StoreData(
+          name: 'Lezzet Durağı',
+          description: 'Ev Yemekleri',
+          kategori: 'Yiyecek & İçecek',
+          whatsapp: '905557654321',
+          address: 'Beşiktaş',
+          slug: 'lezzet-duragi',
+          isDemo: true,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExploreScreen(
+          repository: repo,
+          onlyRentalTemplates: true,
+          initialCategory: 'Uzay Üssü',
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    // Süzgeçsiz açılır — hata/boş durum yok, iki vitrin de görünür.
+    expect(find.text('Aymira Giyim'), findsOneWidget);
+    expect(find.text('Lezzet Durağı'), findsOneWidget);
+  });
 }

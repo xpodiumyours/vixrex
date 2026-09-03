@@ -14,7 +14,11 @@ void main() {
     // mesajları eklendi (landing_finish_baslik/aciklama/buton) — 96 → 99.
     // Blog yayınlama sonucu iki yüzeyde ortaklaştırıldı — 99 → 100.
     // Faz 1 NLU netleştirme mesajları eklendi (netlestirme_sor/sor_genel/onay/basari/hata/belirsiz) — 100 → 106.
+    // Akış 1 paritesi (2026-09-03): "Hazır Vitrin Seç" niyet sorusu iki
+    // yüzeyde de katalogdan konuşsun diye niyet_kategori_baslik/aciklama,
+    // niyet_geri_buton, niyet_anlat_buton, niyet_serbest_yertutucu,
+    // niyet_ack eklendi — 106 → 112.
     // Sayı kilidi bilerek duruyor: katalog sessizce büyümesin.
-    expect(vixRexMesajlari.length, 106);
+    expect(vixRexMesajlari.length, 112);
   });
 }
