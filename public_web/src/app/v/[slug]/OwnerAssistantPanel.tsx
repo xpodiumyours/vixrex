@@ -739,10 +739,18 @@ export default function OwnerAssistantPanel({
           {/* Sohbet akışı — kendi kaydırma alanında sabit yükseklik kalır
            * (Faz G3, G3.1: "ÇIKAR: sohbet akışının paneli kaplaması") —
            * yukarıdaki gövdeden bağımsız, kendi otomatik-aşağı-kaydırma
-           * mantığı (useOwnerChat.akisRef) değişmedi. */}
+           * mantığı (useOwnerChat.akisRef) değişmedi.
+           *
+           * 2026-09-03 ölçüm düzenlemesi: eski `max-h-40` (160px) elle
+           * atılmış rastgele bir değerdi — masaüstünde panel TAM yükseklikte
+           * dururken sohbet yine de 160px'e sıkışıyordu. Artık ekrana göre
+           * ölçülü: mobilde panel alt-şerit olduğu için mütevazı (%20vh),
+           * masaüstünde panelin tam yüksekliğine oranla daha geniş (%32vh).
+           * Kaydırma şeridi de varsayılan kalın OS şeridi yerine ince,
+           * koyu panele uyumlu (bkz. .vixrex-panel-kaydirici, globals.css). */}
           <div
             ref={akisRef}
-            className="max-h-40 shrink-0 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3"
+            className="vixrex-panel-kaydirici max-h-[20vh] shrink-0 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3 sm:max-h-[32vh]"
           >
             {mesajlar.map((m) => (
               <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />

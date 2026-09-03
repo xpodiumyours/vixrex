@@ -13,6 +13,7 @@ import 'package:vixrex/services/vixrex_nlu/vixrex_nlu_pipeline.dart';
 import 'package:vixrex/widgets/chat/chat_bubble.dart';
 import 'package:vixrex/widgets/chat/chat_composer.dart';
 import 'package:vixrex/widgets/chat/chat_progress.dart';
+import 'package:vixrex/widgets/chat/vixrex_thin_scrollbar.dart';
 import 'package:vixrex/widgets/vixrex_quick_replies.dart';
 
 const String _nluConfirmPrefix = 'nlu_confirm:';
@@ -212,7 +213,10 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     // Faz 1 dar: il/ilce listeden seçilmeli, serbest metinle yazılmamalı.
     // gorsel alanlar da URL değilse özel akış (galeri/upload).
     if (anahtar == 'il' || anahtar == 'ilce') return true;
-    if (anahtar == 'logo' || anahtar == 'kapakGorseli' || anahtar == 'bantGorsel' || anahtar == 'hakkindaGorsel') {
+    if (anahtar == 'logo' ||
+        anahtar == 'kapakGorseli' ||
+        anahtar == 'bantGorsel' ||
+        anahtar == 'hakkindaGorsel') {
       // Sadece https URL ise düz yaz, yoksa özel akış.
       return false; // şimdilik URL kabul, özel akış yok – Faz 2’de eklenecek.
     }
@@ -250,7 +254,8 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
         // 2) Yeni 46 alan borusu – önce dener.
         final result = await _pipeline.handle(
           input: text,
-          controller: null, // CompanionChat controller’a doğrudan erişmez, HomeShell onUpdateField’e delege eder.
+          controller:
+              null, // CompanionChat controller’a doğrudan erişmez, HomeShell onUpdateField’e delege eder.
           scope: _historyScope,
           onValidate: (alan, hamDeger) async {
             final v = VixrexFieldValidator.validate(alan, hamDeger);
@@ -263,8 +268,16 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           bot = _service.respond(text, widget.snapshot, widget.hasShared);
         } else if (result.outcome == VixrexNluPipelineOutcome.handled) {
           // Başarılı doğrulama ama controller yok → HomeShell’e delege et (çok-alanlı dahil).
-          final anahtarlar = result.appliedAnahtarlar ?? (result.appliedAnahtar != null ? [result.appliedAnahtar!] : <String>[]);
-          final degerler = result.appliedDegerler ?? (result.appliedDeger != null ? [result.appliedDeger!] : <Object>[]);
+          final anahtarlar =
+              result.appliedAnahtarlar ??
+              (result.appliedAnahtar != null
+                  ? [result.appliedAnahtar!]
+                  : <String>[]);
+          final degerler =
+              result.appliedDegerler ??
+              (result.appliedDeger != null
+                  ? [result.appliedDeger!]
+                  : <Object>[]);
           if (anahtarlar.isNotEmpty && widget.onUpdateField != null) {
             for (var i = 0; i < anahtarlar.length && i < degerler.length; i++) {
               widget.onUpdateField!(anahtarlar[i], degerler[i]);
@@ -282,7 +295,8 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           } else {
             bot = result.message;
           }
-        } else if (result.outcome == VixrexNluPipelineOutcome.needsSpecialFlow) {
+        } else if (result.outcome ==
+            VixrexNluPipelineOutcome.needsSpecialFlow) {
           // il/ilce gibi özel akış – mevcut VixrexAction’a yönlendir.
           final anahtar = result.appliedAnahtar;
           if (anahtar == 'il' || anahtar == 'ilce') {
@@ -290,7 +304,11 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
             bot = ChatMessage.bot(
               result.message.text,
               quickReplies: const [
-                QuickReply(label: 'Adrese git', payload: 'action_address', action: VixRexAction.scrollToAddress),
+                QuickReply(
+                  label: 'Adrese git',
+                  payload: 'action_address',
+                  action: VixRexAction.scrollToAddress,
+                ),
               ],
             );
           } else {
@@ -425,36 +443,41 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // 2026-09-03 (Çalışma masası düzeni, web paritesi): aynı ince,
+        // yüzeye uyumlu kaydırma şeridi (VixrexThinScrollbar).
         Expanded(
-          child: ListView.builder(
+          child: VixrexThinScrollbar(
             controller: _scrollCtrl,
-            padding: const EdgeInsets.only(top: 8, bottom: 12),
-            itemCount: _messages.length + (_typing ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (_typing && index == _messages.length) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: ChatTypingIndicator(),
-                );
-              }
-              final msg = _messages[index];
-              if (msg.isBot) {
+            child: ListView.builder(
+              controller: _scrollCtrl,
+              padding: const EdgeInsets.only(top: 8, bottom: 12),
+              itemCount: _messages.length + (_typing ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (_typing && index == _messages.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: ChatTypingIndicator(),
+                  );
+                }
+                final msg = _messages[index];
+                if (msg.isBot) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ChatBubble.bot(
+                      text: msg.text,
+                      footer:
+                          msg.snapshotScore != null
+                              ? ChatScoreBar(score: msg.snapshotScore!)
+                              : null,
+                    ),
+                  );
+                }
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: ChatBubble.bot(
-                    text: msg.text,
-                    footer:
-                        msg.snapshotScore != null
-                            ? ChatScoreBar(score: msg.snapshotScore!)
-                            : null,
-                  ),
+                  child: ChatBubble.user(text: msg.text),
                 );
-              }
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: ChatBubble.user(text: msg.text),
-              );
-            },
+              },
+            ),
           ),
         ),
         if (replies.isNotEmpty)

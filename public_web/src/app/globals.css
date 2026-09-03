@@ -619,3 +619,24 @@ body.vixrex-kaydediliyor .vixrex-secili-alan {
     background-color: rgba(52, 211, 153, 0.16);
   }
 }
+
+/* Çalışma masası — asistan paneli içi ince kaydırma şeridi (2026-09-03):
+   işletim sisteminin kalın varsayılan şeridi koyu panelde göze batıyordu.
+   Web + Flutter'da aynı düzen kuralı: ince, yüzeyle uyumlu, yuvarlak uç. */
+.vixrex-panel-kaydirici {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+.vixrex-panel-kaydirici::-webkit-scrollbar {
+  width: 6px;
+}
+.vixrex-panel-kaydirici::-webkit-scrollbar-track {
+  background: transparent;
+}
+.vixrex-panel-kaydirici::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 9999px;
+}
+.vixrex-panel-kaydirici::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.34);
+}

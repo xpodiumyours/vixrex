@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Çalışma kuralı — ÖNCE SOR (2026-09-03, Casper)
+
+Bu repoda hiçbir adımı, hiçbir değişikliği Casper'a sormadan yapma —
+küçük görünse bile. "Şunu düzelteyim mi", "bu iki seçenekten hangisi"
+diye sor, cevabı bekle, sonra uygula. Bir düzeltmenin "doğru" göründüğü
+sana değil ona ait bir karar.
+
+Neden: 2026-09-03'te "Çalışma masası" ekranı bitmeden, onaylanmamış bir
+düzeltmeyle akıllı motorun (serbest cümleden alan çıkaran motor) bir
+parçası sessizce devre dışı bırakıldı ve doğrudan main'e alındı — Casper
+canlıda fark etti, saatlerce token yakıldı, sonuç güvensizlik oldu. Bkz.
+`~/.claude/projects/C--Users-Casper/memory/once-sor-onay-bekle.md`.
+
 ## What this repo is
 
 VixRex — a platform that lets small businesses run a digital storefront (`vitrin`) without writing code. Two independently deployed apps share one Supabase (PostgreSQL) database:

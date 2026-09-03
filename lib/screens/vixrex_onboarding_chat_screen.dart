@@ -15,6 +15,7 @@ import 'package:vixrex/widgets/chat/chat_bubble.dart';
 import 'package:vixrex/widgets/chat/chat_composer.dart';
 import 'package:vixrex/widgets/chat/chat_pill.dart';
 import 'package:vixrex/widgets/chat/chat_top_bar.dart';
+import 'package:vixrex/widgets/chat/vixrex_thin_scrollbar.dart';
 import 'package:vixrex/widgets/editor/form_location_info.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 import 'package:vixrex/widgets/onboarding/kategori_secici.dart';
@@ -314,12 +315,18 @@ class _VixRexOnboardingChatScreenState
     final column = Column(
       children: [
         if (!widget.embeddedInShell) _buildTopBar(),
+        // 2026-09-03 (Çalışma masası düzeni, web paritesi): sohbet listesi
+        // varsayılan kalın şerit yerine web panelindekiyle aynı ince,
+        // yüzeye uyumlu kaydırma şeridini kullanır (VixrexThinScrollbar).
         Expanded(
-          child: ListView.builder(
+          child: VixrexThinScrollbar(
             controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-            itemCount: _lines.length,
-            itemBuilder: (context, index) => _ChatBubble(line: _lines[index]),
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              itemCount: _lines.length,
+              itemBuilder: (context, index) => _ChatBubble(line: _lines[index]),
+            ),
           ),
         ),
         if (_onboarding.error != null)
@@ -397,9 +404,10 @@ class _VixRexOnboardingChatScreenState
               ),
             ),
             ChatPill(
-              label: vixRexHizliSecenekler
-                  .firstWhere((e) => e.id == 'hazir_vitrin_sec')
-                  .etiket,
+              label:
+                  vixRexHizliSecenekler
+                      .firstWhere((e) => e.id == 'hazir_vitrin_sec')
+                      .etiket,
               icon: Icons.storefront_rounded,
               primary: true,
               onTap: busy ? null : _onboarding.chooseReadyTemplate,
@@ -409,9 +417,10 @@ class _VixRexOnboardingChatScreenState
               children: [
                 Expanded(
                   child: ChatPill(
-                    label: vixRexHizliSecenekler
-                        .firstWhere((e) => e.id == 'sifirdan_olustur')
-                        .etiket,
+                    label:
+                        vixRexHizliSecenekler
+                            .firstWhere((e) => e.id == 'sifirdan_olustur')
+                            .etiket,
                     icon: Icons.auto_awesome,
                     primary: false,
                     onTap: busy ? null : _onboarding.chooseScratch,
@@ -420,9 +429,10 @@ class _VixRexOnboardingChatScreenState
                 const SizedBox(width: 8),
                 Expanded(
                   child: ChatPill(
-                    label: vixRexHizliSecenekler
-                        .firstWhere((e) => e.id == 'bakiniyorum')
-                        .etiket,
+                    label:
+                        vixRexHizliSecenekler
+                            .firstWhere((e) => e.id == 'bakiniyorum')
+                            .etiket,
                     icon: Icons.visibility_outlined,
                     primary: false,
                     onTap: busy ? null : _onboarding.declineWelcome,
