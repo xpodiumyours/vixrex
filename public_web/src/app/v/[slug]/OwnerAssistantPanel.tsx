@@ -580,9 +580,7 @@ export default function OwnerAssistantPanel({
         // yazma yeri panelin ALT ŞERİDİNDE ve asistan açıkken HEP açık,
         // "Tüm alanlar" (☰) kapalıyken de. Önceki hâlde bu kutu yalnız
         // SpotlightGuide'ın balonundaydı; balon her alanda yeniden
-        // konumlanınca göz sıçrıyordu. Üst içerik (yüzde başlığı, SIRADA,
-        // bölümler, yayınla) hâlâ yalnız `haritaAcik`te çizilir — ☰ hâlâ
-        // sihirbaz kalabalığını gizli tutar (bkz. mobil-balon-maskot.test.ts).
+        // konumlanınca göz sıçrıyordu.
         //
         // 2026-08-22 mobil uyum düzeltmesi: eski className yalnız
         // `bottom-24 right-5` idi (üst sınır YOKTU) — 9 bölümlük
@@ -595,43 +593,54 @@ export default function OwnerAssistantPanel({
         // maskot olsun", tam ekran kaplayan bir panel mobilde istenmedi).
         //
         // 2026-09-03 (Casper'ın onayladığı "C" tasarım tuvaline sadakat
-        // düzeltmesi): tuvalde asistan sağda 460px, EKRANIN TAMAMI kadar
-        // yükseklikte, hep açık bir panel olarak tasarlanmıştı — burada
-        // (Faz 1-5 yazılırken) sessizce alt köşede kapalı-varsayılan küçük
-        // bir karta dönüşmüştü, Casper'a hiç sorulmadan. Masaüstünde
-        // (`sm:`) artık sağa sabitlenmiş, üstteki taslak şeridi+navbar'ın
-        // (en fazla 104px) altından ekranın dibine kadar uzanan kalıcı bir
-        // sütun; `acik` masaüstünde ilk açılışta otomatik true olur (aşağı
-        // bkz. masaustuIlkAcilisRef). Mobil davranış hiç değişmedi.
-        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:inset-y-auto sm:top-[104px] sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px]">
+        // düzeltmesi, iki turda): tuvalde asistan sağda 460px, EKRANIN
+        // TAMAMI kadar yükseklikte, başlığı/SIRADA'sı HER ZAMAN görünen,
+        // hep açık bir panel olarak tasarlanmıştı — burada (Faz 1-5
+        // yazılırken) sessizce alt köşede kapalı-varsayılan, başlıksız
+        // küçük bir karta dönüşmüştü, Casper'a hiç sorulmadan. Masaüstünde
+        // (`sm:`) artık sağa sabitlenmiş, taslak şeridinin (36px — navbar'ın
+        // DEĞİL: sahip modunda navbar'ın sağ tarafı zaten hep boş, bkz.
+        // VitrinProfileView.tsx `{!ownerMode && whatsappUrl && ...}`, o
+        // yüzden üstüne binmesi sorun değil) altından ekranın dibine kadar
+        // uzanan kalıcı bir sütun; `acik` masaüstünde ilk açılışta otomatik
+        // true olur (aşağı bkz. masaustuIlkAcilisRef). Başlık (ChatTopBar) +
+        // SIRADA artık `haritaAcik`ten bağımsız, panel açıkken hep çizilir
+        // (aşağıda). Mobil davranış hiç değişmedi.
+        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:inset-y-auto sm:top-9 sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px]">
+          {/* 2026-09-03 (Casper'ın onayladığı "C" tasarımına sadakat, ikinci
+           * tur): tuvalde maskot+"Vixrex Asistan"+%hazır başlığı ve SIRADA
+           * listesi panel her açıldığında GÖRÜNÜRDÜ — "☰ Tüm alanlar" gibi
+           * bir gizleme yoktu. Burada ikisi de yanlışlıkla `haritaAcik`
+           * (yalnız "☰" ile açılan DETAY görünümü) koşuluna bağlanmıştı;
+           * panel `acik` olsa bile `haritaAcik` false olduğu sürece boş/
+           * başsız görünüyordu. Şimdi ikisi de `acik`e taşındı — yalnız
+           * gerçekten İKİNCİL olan detaylar (Tüm bölümler, rezervasyon
+           * ayarları, içerik düzenleme kısayolları, yayınla çubuğu)
+           * `haritaAcik`'in ardında kalmaya devam ediyor (Faz 2'nin
+           * "sihirbaz kalabalığı kalksın" kararı bunlar için hâlâ geçerli). */}
+          <ChatTopBar
+            rapor={rapor}
+            onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
+          />
+
+          {hesapBagliDegil ? <HesapBaglaSeridi slug={slug} /> : null}
+
+          {oturumSaniye !== null && oturumSaniye < 300 ? (
+            <p className="border-b border-white/10 px-4 py-2 text-[11px] font-semibold text-amber-400">
+              Oturunun bitmesine az kaldı — değişikliklerin kayıtlı.
+            </p>
+          ) : null}
+
+          <UpNextList
+            yerelTaslak={yerelTaslak}
+            suankiAnahtar={seciliAlan?.anahtar ?? null}
+            atlanmisAlanlar={atlanmisAlanlar}
+            alanSec={alanSec}
+            alanAtla={alanAtlandi}
+          />
+
           {haritaAcik && (
-            <>
-              <ChatTopBar
-                rapor={rapor}
-                onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
-              />
-
-              {hesapBagliDegil ? <HesapBaglaSeridi slug={slug} /> : null}
-
-              {oturumSaniye !== null && oturumSaniye < 300 ? (
-                <p className="border-b border-white/10 px-4 py-2 text-[11px] font-semibold text-amber-400">
-                  Oturunun bitmesine az kaldı — değişikliklerin kayıtlı.
-                </p>
-              ) : null}
-
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                {/* StageMeter buradan kalktı (Çalışma masası / Yön C):
-                 * doluluk yüzdesi zaten ChatTopBar'da tek yerde duruyor,
-                 * ikinci bir ölçer paneli sihirbaza çeviriyordu. */}
-
-                <UpNextList
-                  yerelTaslak={yerelTaslak}
-                  suankiAnahtar={seciliAlan?.anahtar ?? null}
-                  atlanmisAlanlar={atlanmisAlanlar}
-                  alanSec={alanSec}
-                  alanAtla={alanAtlandi}
-                />
-
+            <div className="min-h-0 flex-1 overflow-y-auto">
                 {/* Bölüm listesi ekranın yarısını kaplıyordu; artık kapalı
                  * duran bir açılırın içinde — isteyen açar. */}
                 <details className="border-b border-white/10">
@@ -724,8 +733,7 @@ export default function OwnerAssistantPanel({
                   onayVeriliyor={actions.onayVeriliyor}
                   onayVer={actions.onayVer}
                 />
-              </div>
-            </>
+            </div>
           )}
 
           {/* Sohbet akışı — kendi kaydırma alanında sabit yükseklik kalır
