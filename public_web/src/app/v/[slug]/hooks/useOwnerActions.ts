@@ -101,6 +101,27 @@ const SERBEST_ANLATIM_ESLEME: ReadonlyArray<[keyof SerbestMetinSonuc, string]> =
 ];
 
 /**
+ * Bonus çıkarımın (yukarıdaki eşleme) kapsadığı GERÇEK kolon adları.
+ *
+ * 2026-09-03 (Casper, canlıda bulundu): esnaf seçili bir kutuya (ör.
+ * "İşletme Adı") zengin bir cümle yazınca — "işletme adım Konak Kafe,
+ * whatsapp numaram 0542..." — eskiden TÜM cümle olduğu gibi seçili alana
+ * kaydediliyordu; telefon numarası işletme adının içine yapışıyordu.
+ * Kapsamdaki alanlar (whatsapp/kategori/il/ilçe/saat/adres) için bu risk
+ * yok — bonus zaten bunları AYRI ayrı doğru çözüyor, aynı cümle iki kez
+ * (biri ham, biri doğru) yazılsa da ikisi de doğru alana gider. Risk
+ * yalnız kapsam DIŞINDAKİ alanlarda (en başta işletme adı) — kimlik hiç
+ * tahmin edilmez (bkz. serbestMetinCikarim.ts dosya başı), o yüzden ham
+ * cümleyi bölüştürecek güvenli bir yol yok. Kullanımı: gonder() içindeki
+ * "abstain" kontrolü.
+ */
+const BONUS_KAPSAMINDAKI_KOLONLAR: ReadonlySet<string> = new Set(
+  SERBEST_ANLATIM_ESLEME
+    .map(([, anahtar]) => FIELD_BY_KEY.get(anahtar)?.kolon)
+    .filter((k): k is string => Boolean(k))
+);
+
+/**
  * "Esnaf 46 alanı tek tek dolaşmasın" (2026-09-02) — YENİ bir ekran
  * elemanı EKLEMEDEN: esnaf zaten var olan bir soru kutusuna (ör.
  * "İşletme adın?") normalden uzun bir cümle yazarsa, aynı kutu üstünden
@@ -403,6 +424,33 @@ export function useOwnerActions({
     }
 
     const alan = seciliAlan;
+
+    // Abstain (2026-09-03, bkz. BONUS_KAPSAMINDAKI_KOLONLAR yorumu): seçili
+    // alan bonusun GÜVENLE çözemeyeceği türdense (en başta işletme adı) ve
+    // cümlede başka taninan alanlara ait açık ipucu varsa, ham cümleyi
+    // olduğu gibi seçili alana YAZMAYIZ — hangi kısmın kime ait olduğunu
+    // bölmeye çalışmak yanlış bölünürse kimlik karışıklığı yaratır (ör.
+    // telefon numarası işletme adının içine yapışır). Bunun yerine
+    // dürüstçe sorarız; bonus çıkarım aynı cümleden DİĞER alanları yine
+    // de doğru kaydeder — seçili alan hiç ellenmez, esnaf yeniden yazar.
+    if (
+      alan.tip !== "acikKapali" &&
+      metin.length >= 15 &&
+      !BONUS_KAPSAMINDAKI_KOLONLAR.has(alan.kolon) &&
+      Object.values(serbestMetindenAlanlariCikar(metin)).some(Boolean)
+    ) {
+      mesajEkle("kullanici", metin);
+      mesajEkle(
+        "asistan",
+        `Bu cümlede birden fazla bilgi var gibi görünüyor. "${alan.etiket}" için sadece onu yazar mısın?`
+      );
+      setGiris("");
+      void bonusAlanlariCikarVeKaydet(metin, "", slug, mesajEkle, setAlan, () =>
+        router.refresh()
+      );
+      return;
+    }
+
     const gonderilecek: string | boolean =
       alan.tip === "acikKapali"
         ? ["evet", "aç", "açık", "göster", "true"].includes(metin.toLowerCase())
