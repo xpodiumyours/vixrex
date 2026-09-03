@@ -21,6 +21,7 @@ import { GalleryEditor } from "./components/GalleryEditor";
 import { PublishBar } from "./components/PublishBar";
 import { VixrexAvatar } from "./components/VixrexAvatar";
 import { SpotlightGuide } from "./components/SpotlightGuide";
+import { FieldInputArea } from "./components/FieldInputArea";
 import { alanOnemi, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
 import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
@@ -506,30 +507,12 @@ export default function OwnerAssistantPanel({
       {acik && !(!masaustu && haritaAcik) && (
         <SpotlightGuide
           seciliAlan={seciliAlan}
-          giris={giris}
-          girisRef={girisRef}
-          kaydediliyor={actions.kaydediliyor}
           geriAliniyor={fieldRestore.geriAliniyor}
-          hazirGorseller={actions.hazirGorseller}
-          hazirYukleniyor={actions.hazirYukleniyor}
-          setGiris={setGiris}
-          gorselYukle={actions.gorselYukle}
-          hazirGorselleriAc={actions.hazirGorselleriAc}
-          hazirGorselSec={actions.hazirGorselSec}
-          gonder={actions.gonder}
-          alanAtla={actions.alanAtla}
           canliyaDondur={fieldRestore.canliyaDondur}
-          sonrayaBirak={sonrayaBirak}
           onKapat={rehberiKapat}
           olcumTetikleyici={yerelTaslak}
           gecisSuruyor={gecisSuruyor}
           onHaritaAc={() => setHaritaAcik(true)}
-          mevcutIl={mevcutIl}
-          mevcutIlce={mevcutIlce}
-          onIlDegisti={handleIlDegisti}
-          onIlceDegisti={handleIlceDegisti}
-          onGpsKonumAl={handleGpsKonumAl}
-          gpsLoading={gpsLoading}
         />
       )}
 
@@ -565,143 +548,146 @@ export default function OwnerAssistantPanel({
         )}
       </button>
 
-      {acik && haritaAcik && (
+      {acik && (
+        // 2026-09-03 (Çalışma masası / Yön C, Faz 3) — Casper'ın kararı:
+        // yazma yeri panelin ALT ŞERİDİNDE ve asistan açıkken HEP açık,
+        // "Tüm alanlar" (☰) kapalıyken de. Önceki hâlde bu kutu yalnız
+        // SpotlightGuide'ın balonundaydı; balon her alanda yeniden
+        // konumlanınca göz sıçrıyordu. Üst içerik (yüzde başlığı, SIRADA,
+        // bölümler, yayınla) hâlâ yalnız `haritaAcik`te çizilir — ☰ hâlâ
+        // sihirbaz kalabalığını gizli tutar (bkz. mobil-balon-maskot.test.ts).
+        //
         // 2026-08-22 mobil/masaüstü uyum düzeltmesi: eski className yalnız
         // `bottom-24 right-5` idi (üst sınır YOKTU) — 9 bölümlük
         // SectionProgressList tamamen açıldığında panel içeriği ekranın
-        // üstünden taşıp kayboluyordu, hiçbir yerde tek bir kaydırma alanı
-        // içermediği için o kısma ulaşmanın yolu yoktu (canlıda görüldü).
-        // Artık mobilde (sm altı) üst+alt sınır birlikte sabit — yükseklik
-        // otomatik hesaplanır; masaüstünde eski konum korunur ama
-        // max-h ile aynı taşma bir daha olamaz. Ortadaki gövde tek kaydırma
-        // alanı, başlık sabit kalır.
-        <div className="fixed inset-x-3 top-16 bottom-24 z-[75] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:top-auto sm:right-5 sm:w-[min(24rem,calc(100vw-2.5rem))] sm:max-h-[calc(100vh-8rem)]">
-          <ChatTopBar
-            rapor={rapor}
-            onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
-          />
+        // üstünden taşıp kayboluyordu. `top-16` sabitiyle çözülmüştü; artık
+        // kutu içeriğe göre büyüyor (`max-h`, sabit `top` YOK) — kapalıyken
+        // (yalnız sohbet+giriş) ekranın dibine yaslanır, açıkken yukarı
+        // doğru büyür. Ortadaki gövde tek kaydırma alanı, başlık sabit kalır.
+        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:right-5 sm:w-[min(24rem,calc(100vw-2.5rem))]">
+          {haritaAcik && (
+            <>
+              <ChatTopBar
+                rapor={rapor}
+                onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
+              />
 
-          {hesapBagliDegil ? <HesapBaglaSeridi slug={slug} /> : null}
+              {hesapBagliDegil ? <HesapBaglaSeridi slug={slug} /> : null}
 
-          {oturumSaniye !== null && oturumSaniye < 300 ? (
-            <p className="border-b border-white/10 px-4 py-2 text-[11px] font-semibold text-amber-400">
-              Oturunun bitmesine az kaldı — değişikliklerin kayıtlı.
-            </p>
-          ) : null}
+              {oturumSaniye !== null && oturumSaniye < 300 ? (
+                <p className="border-b border-white/10 px-4 py-2 text-[11px] font-semibold text-amber-400">
+                  Oturunun bitmesine az kaldı — değişikliklerin kayıtlı.
+                </p>
+              ) : null}
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {/* StageMeter buradan kalktı (Çalışma masası / Yön C):
-             * doluluk yüzdesi zaten ChatTopBar'da tek yerde duruyor,
-             * ikinci bir ölçer paneli sihirbaza çeviriyordu. */}
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                {/* StageMeter buradan kalktı (Çalışma masası / Yön C):
+                 * doluluk yüzdesi zaten ChatTopBar'da tek yerde duruyor,
+                 * ikinci bir ölçer paneli sihirbaza çeviriyordu. */}
 
-            {/* StepCard/FieldInputArea artık burada YOK — 2026-08-22:
-             * kullanıcı test etti, panelin tepesindeki sabit kutu spot
-             * ışığının gösterdiği alandan görsel olarak kopuk kalıyordu
-             * ("kutucuklar açılıyor ama içine yazılmıyor" geri bildirimi).
-             * Gerçek giriş alanı artık yalnız SpotlightGuide'ın balonunda —
-             * ikinci bir kopyası yok. */}
+                <UpNextList
+                  yerelTaslak={yerelTaslak}
+                  suankiAnahtar={seciliAlan?.anahtar ?? null}
+                  atlanmisAlanlar={atlanmisAlanlar}
+                  alanSec={alanSec}
+                  alanAtla={alanAtlandi}
+                />
 
-            <UpNextList
-              yerelTaslak={yerelTaslak}
-              suankiAnahtar={seciliAlan?.anahtar ?? null}
-              atlanmisAlanlar={atlanmisAlanlar}
-              alanSec={alanSec}
-              alanAtla={alanAtlandi}
-            />
+                {/* Bölüm listesi ekranın yarısını kaplıyordu; artık kapalı
+                 * duran bir açılırın içinde — isteyen açar. */}
+                <details className="border-b border-white/10">
+                  <summary className="cursor-pointer list-none px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400 hover:text-slate-200">
+                    Tüm bölümler
+                  </summary>
+                  <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
+                </details>
 
-            {/* Bölüm listesi ekranın yarısını kaplıyordu; artık kapalı
-             * duran bir açılırın içinde — isteyen açar. */}
-            <details className="border-b border-white/10">
-              <summary className="cursor-pointer list-none px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400 hover:text-slate-200">
-                Tüm bölümler
-              </summary>
-              <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
-            </details>
+                <SectionVisibilityToggle
+                  slug={slug}
+                  visibility={yerelTaslak.section_visibility as Record<string, boolean> | null}
+                  setAlan={setAlan}
+                  mesajEkle={mesajEkle}
+                />
 
-            <SectionVisibilityToggle
-              slug={slug}
-              visibility={yerelTaslak.section_visibility as Record<string, boolean> | null}
-              setAlan={setAlan}
-              mesajEkle={mesajEkle}
-            />
+                <BookingSettingsPanel
+                  slug={slug}
+                  mevcutAyarlar={bookingSettings as { is_enabled: boolean; capacity: number; working_hours: Record<string, { start: string; end: string; active: boolean }>; lunch_break: { start: string; end: string; active: boolean } } | null}
+                />
 
-            <BookingSettingsPanel
-              slug={slug}
-              mevcutAyarlar={bookingSettings as { is_enabled: boolean; capacity: number; working_hours: Record<string, { start: string; end: string; active: boolean }>; lunch_break: { start: string; end: string; active: boolean } } | null}
-            />
+                {/* Hakkımızda / SSS / Kampanya / Galeri / Pazaryeri düzenleme kartları */}
+                <div className="border-t border-white/10 px-4 py-3 space-y-1">
+                  <p className="mb-1 text-[11px] font-semibold text-white/40 uppercase tracking-wider">İçerik Düzenleme</p>
+                  <button
+                    type="button"
+                    onClick={() => setAboutAcik(true)}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+                  >
+                    <span>ℹ️</span>
+                    <span className="flex-1 font-medium text-[13px]">Hakkımızda</span>
+                    <span className="text-[10px] text-white/30">{aboutSection?.title ? "Dolu" : "Boş"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGaleriAcik(true)}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+                  >
+                    <span>🖼️</span>
+                    <span className="flex-1 font-medium text-[13px]">Galeri</span>
+                    <span className="text-[10px] text-white/30">{galleryItems && galleryItems.length > 0 ? `${galleryItems.length} görsel` : "Boş"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMarketplaceAcik(true)}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+                  >
+                    <span>🛒</span>
+                    <span className="flex-1 font-medium text-[13px]">Pazaryeri Bağlantıları</span>
+                    <span className="text-[10px] text-white/30">{marketplaceLinks && marketplaceLinks.length > 0 ? `${marketplaceLinks.length} link` : "Boş"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFaqAcik(true)}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+                  >
+                    <span>❓</span>
+                    <span className="flex-1 font-medium text-[13px]">Sık Sorulan Sorular</span>
+                    <span className="text-[10px] text-white/30">{faqItems && faqItems.length > 0 ? `${faqItems.length} soru` : "Boş"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setKampanyaAcik(true)}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
+                  >
+                    <span>🎯</span>
+                    <span className="flex-1 font-medium text-[13px]">Öne Çıkan Kampanya</span>
+                    <span className="text-[10px] text-white/30">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
+                  </button>
+                </div>
 
-            {/* Hakkımızda / SSS / Kampanya / Galeri / Pazaryeri düzenleme kartları */}
-            <div className="border-t border-white/10 px-4 py-3 space-y-1">
-              <p className="mb-1 text-[11px] font-semibold text-white/40 uppercase tracking-wider">İçerik Düzenleme</p>
-              <button
-                type="button"
-                onClick={() => setAboutAcik(true)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
-              >
-                <span>ℹ️</span>
-                <span className="flex-1 font-medium text-[13px]">Hakkımızda</span>
-                <span className="text-[10px] text-white/30">{aboutSection?.title ? "Dolu" : "Boş"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setGaleriAcik(true)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
-              >
-                <span>🖼️</span>
-                <span className="flex-1 font-medium text-[13px]">Galeri</span>
-                <span className="text-[10px] text-white/30">{galleryItems && galleryItems.length > 0 ? `${galleryItems.length} görsel` : "Boş"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMarketplaceAcik(true)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
-              >
-                <span>🛒</span>
-                <span className="flex-1 font-medium text-[13px]">Pazaryeri Bağlantıları</span>
-                <span className="text-[10px] text-white/30">{marketplaceLinks && marketplaceLinks.length > 0 ? `${marketplaceLinks.length} link` : "Boş"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFaqAcik(true)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
-              >
-                <span>❓</span>
-                <span className="flex-1 font-medium text-[13px]">Sık Sorulan Sorular</span>
-                <span className="text-[10px] text-white/30">{faqItems && faqItems.length > 0 ? `${faqItems.length} soru` : "Boş"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setKampanyaAcik(true)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
-              >
-                <span>🎯</span>
-                <span className="flex-1 font-medium text-[13px]">Öne Çıkan Kampanya</span>
-                <span className="text-[10px] text-white/30">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
-              </button>
-            </div>
+                <p className="px-4 pb-1 pt-3 text-[11px] font-semibold text-slate-400">
+                  {yayinlanmamisDegisiklik
+                    ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."
+                    : "Vitrinin yayındaki hâliyle aynı."}
+                </p>
 
-            <p className="px-4 pb-1 pt-3 text-[11px] font-semibold text-slate-400">
-              {yayinlanmamisDegisiklik
-                ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."
-                : "Vitrinin yayındaki hâliyle aynı."}
-            </p>
-
-            <PublishBar
-              yayinlaniyor={actions.yayinlaniyor}
-              silmeOnayi={actions.silmeOnayi}
-              yayinla={actions.yayinla}
-              silmeOnayla={actions.silmeOnayla}
-              sil={actions.sil}
-              setSilmeOnayi={actions.setSilmeOnayi}
-              temelTamam={rapor.temelTamam}
-              eksikTemelSayisi={eksikTemelSayisi}
-              kiralikVitrinMi={kiralikVitrinMi}
-              premiumAktifMi={premiumAktifMi}
-              yasalOnayli={yasalOnayli}
-              onayVeriliyor={actions.onayVeriliyor}
-              onayVer={actions.onayVer}
-            />
-          </div>
+                <PublishBar
+                  yayinlaniyor={actions.yayinlaniyor}
+                  silmeOnayi={actions.silmeOnayi}
+                  yayinla={actions.yayinla}
+                  silmeOnayla={actions.silmeOnayla}
+                  sil={actions.sil}
+                  setSilmeOnayi={actions.setSilmeOnayi}
+                  temelTamam={rapor.temelTamam}
+                  eksikTemelSayisi={eksikTemelSayisi}
+                  kiralikVitrinMi={kiralikVitrinMi}
+                  premiumAktifMi={premiumAktifMi}
+                  yasalOnayli={yasalOnayli}
+                  onayVeriliyor={actions.onayVeriliyor}
+                  onayVer={actions.onayVer}
+                />
+              </div>
+            </>
+          )}
 
           {/* Sohbet akışı — kendi kaydırma alanında sabit yükseklik kalır
            * (Faz G3, G3.1: "ÇIKAR: sohbet akışının paneli kaplaması") —
@@ -716,42 +702,38 @@ export default function OwnerAssistantPanel({
             ))}
           </div>
 
-          {/* HEP AÇIK sohbet şeridi. Eskiden yazı kutusu yalnız bir alana
-           * tıklanınca (SpotlightGuide balonunda) açılıyordu; tıklamayan
+          {/* HEP AÇIK giriş şeridi (Faz 3). Eskiden yazı kutusu yalnız bir
+           * alana tıklanınca (SpotlightGuide balonunda) açılıyordu; tıklamayan
            * esnaf "hangi alanı değiştireceğini bilmiyorum" cevabını alıyordu.
            * Artık buraya her zaman yazılabilir: alan seçiliyse o alana
            * kaydeder, seçili değilse akıllı motor cümleden alanı kendi bulur
-           * (useOwnerActions.gonder). */}
+           * (useOwnerActions.gonder). TEK giriş bileşeni — StepCard'ın da
+           * kullandığı FieldInputArea, ikinci bir kopyası değil; görsel/
+           * seçim/il-ilçe/GPS için gereken özel kutuları da o çizer. */}
           <div className="shrink-0 border-t border-white/10 px-3 py-2">
-            <div className="flex items-end gap-2">
-              <textarea
-                value={giris}
-                onChange={(e) => setGiris(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    if (!actions.kaydediliyor) void actions.gonder();
-                  }
-                }}
-                rows={1}
-                disabled={actions.kaydediliyor}
-                aria-label="Vixrex Asistan'a yaz"
-                placeholder={
-                  seciliAlan
-                    ? `${seciliAlan.etiket} için yaz…`
-                    : "Yaz, ben hallederim. Örn: işletme adım Öz Kardeşler"
-                }
-                className="h-11 flex-1 resize-none rounded-lg border border-white/10 bg-slate-900/70 px-3 py-3 text-sm text-white outline-none focus:border-blue-500/60 disabled:opacity-60"
-              />
-              <button
-                type="button"
-                onClick={() => void actions.gonder()}
-                disabled={actions.kaydediliyor || !giris.trim()}
-                className="h-11 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {actions.kaydediliyor ? "…" : "Gönder"}
-              </button>
-            </div>
+            <FieldInputArea
+              seciliAlan={seciliAlan}
+              giris={giris}
+              girisRef={girisRef}
+              kaydediliyor={actions.kaydediliyor}
+              geriAliniyor={fieldRestore.geriAliniyor}
+              hazirGorseller={actions.hazirGorseller}
+              hazirYukleniyor={actions.hazirYukleniyor}
+              mevcutIl={mevcutIl}
+              mevcutIlce={mevcutIlce}
+              setGiris={setGiris}
+              gorselYukle={actions.gorselYukle}
+              hazirGorselleriAc={actions.hazirGorselleriAc}
+              hazirGorselSec={actions.hazirGorselSec}
+              gonder={actions.gonder}
+              alanAtla={actions.alanAtla}
+              canliyaDondur={fieldRestore.canliyaDondur}
+              sonrayaBirak={sonrayaBirak}
+              onIlDegisti={handleIlDegisti}
+              onIlceDegisti={handleIlceDegisti}
+              onGpsKonumAl={handleGpsKonumAl}
+              gpsLoading={gpsLoading}
+            />
           </div>
         </div>
       )}

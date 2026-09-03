@@ -5,8 +5,6 @@ import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { SECTION_LABELS } from "@/lib/vitrinFieldSchema";
 import { alanOnemi, type EksikOnem } from "@/lib/vitrinReadiness";
 import { VixrexAvatar } from "./VixrexAvatar";
-import { FieldInputArea } from "./FieldInputArea";
-import type { HazirGorsel } from "../hooks/useOwnerActions";
 
 // 2026-08-22: "esnaf tıkladığında yan panelde form açılmasın, oyunlardaki
 // gibi ok/spot ışığıyla sayfada dolaşsın" isteği — sıralama mantığı
@@ -20,8 +18,16 @@ import type { HazirGorsel } from "../hooks/useOwnerActions";
 // yaz" ile panelin tepesindeki sabit kutuyu odaklıyordu — kullanıcı test
 // edip "kutucuklar açılıyor ama içine yazılmıyor, hep aynı yere yazılıyor"
 // dedi (gözün balon → panel tepesi arası zıplaması kafa karıştırıyordu).
-// Artık gerçek giriş alanı (FieldInputArea — metin/görsel/seçim, TEK
-// KAYNAK) doğrudan balonun içinde: okuduğun yer ile yazdığın yer aynı.
+// Artık gerçek giriş alanı (FieldInputArea) balonun içindeydi.
+//
+// 2026-09-03 (Çalışma masası / Yön C, Faz 3) — Casper canlıda test etti:
+// "kutucuklar açılıyor ama panel her tıklamada zıplıyor" geri bildirimi
+// bu sefer TERSİNDEN geldi — balon her alanda yeniden konumlanınca giriş
+// kutusu da yeniden çiziliyor, yazarken göz sıçrıyordu. Karar (AskUser):
+// yazma yeri artık panelin ALT ŞERİDİNDE, asistan açıkken HEP açık ve
+// SABİT — hangi alan seçilirse seçilsin yeri değişmez. FieldInputArea o
+// şeride taşındı (bkz. OwnerAssistantPanel), silinmedi. Balon artık
+// yalnız BİLGİ verir: alanın ne olduğu + "Canlı hâline döndür".
 
 interface Rect {
   top: number;
@@ -54,29 +60,10 @@ const ONEM_METNI: Record<EksikOnem, { yazi: string; sinif: string; kural: string
 
 interface Props {
   seciliAlan: VitrinField | null;
-  giris: string;
-  girisRef: React.RefObject<HTMLTextAreaElement | null>;
-  /** owner draft'tan okunan mevcut il/ilçe değerleri */
-  mevcutIl?: string;
-  mevcutIlce?: string;
-  /**İl/ilçe değiştiğinde çağrılır */
-  onIlDegisti?: (il: string) => void;
-  onIlceDegisti?: (ilce: string) => void;
-  kaydediliyor: boolean;
   geriAliniyor: boolean;
-  hazirGorseller: HazirGorsel[];
-  hazirYukleniyor: boolean;
-  setGiris: (v: string) => void;
-  gorselYukle: (dosya: File) => Promise<void>;
-  hazirGorselleriAc: () => Promise<void>;
-  hazirGorselSec: (url: string) => Promise<void>;
-  gonder: () => Promise<void>;
-  alanAtla: () => Promise<void>;
+  /** Seçili alanı canlıdaki değerine döndürür — balonun tek eylemi. */
   canliyaDondur: () => Promise<void>;
-  sonrayaBirak?: () => void;
   onKapat: () => void;
-  onGpsKonumAl?: () => void;
-  gpsLoading?: boolean;
   /**
    * Değeri değiştiğinde balonun konumu yeniden ölçülür (Faz 2).
    *
@@ -100,11 +87,13 @@ interface Props {
 }
 
 /** Sayfada gezen spot ışığı — panel açıkken, bir alan seçiliyken görünür.
- * Gerçek giriş alanını (FieldInputArea) balonun içinde barındırır; ayrı,
- * bağlantısız bir kutu YOKTUR. */
+ * Yalnız bilgi verir (etiket, önem, "bu ne işe yarar", "Canlı hâline
+ * döndür"); giriş kutusu YOK — o panelin alt şeridinde, sabit (Faz 3). */
 export function SpotlightGuide(props: Props) {
   const {
     seciliAlan,
+    geriAliniyor,
+    canliyaDondur,
     onKapat,
     olcumTetikleyici,
     gecisSuruyor = false,
@@ -297,13 +286,13 @@ export function SpotlightGuide(props: Props) {
         <VixrexAvatar size={22} decorative />
       </div>
 
-      {/* Ok + balon — gerçek giriş alanı da içinde.
+      {/* Ok + balon.
        * 2026-08-22 mobil/masaüstü uyum düzeltmesi: balonun kendisi
-       * yükseklik sınırı taşımıyordu — FieldInputArea içeriği (uzun metin,
-       * hazır görsel ızgarası) kısa/mobil ekranlarda balonu viewport
-       * dışına taşırabiliyordu. Ok işareti kutunun kenarından taşarak
-       * çizildiği için (negatif top/bottom) kaydırma yalnız İÇ gövdeye
-       * uygulanır — dış kutuya overflow verilirse ok kırpılır. */}
+       * yükseklik sınırı taşımıyordu — uzun açıklama metni kısa/mobil
+       * ekranlarda balonu viewport dışına taşırabiliyordu. Ok işareti
+       * kutunun kenarından taşarak çizildiği için (negatif top/bottom)
+       * kaydırma yalnız İÇ gövdeye uygulanır — dış kutuya overflow
+       * verilirse ok kırpılır. */}
       <div
         // Yolda balon kapalı: ekranda uçan bir kutu yerine, yürüyen bir
         // sembol görünür (Faz 3b). Varınca açılır.
@@ -391,9 +380,16 @@ export function SpotlightGuide(props: Props) {
             </div>
           </div>
 
-          {/* Gerçek giriş alanı — StepCard/panelin kullandığı AYNI bileşen,
-           * ikinci bir kopyası değil. */}
-          <FieldInputArea {...props} />
+          {/* Balonun tek eylemi. Yazma/seçme artık burada DEĞİL — panelin
+           * alt şeridinde, sabit (Faz 3, Çalışma masası / Yön C). */}
+          <button
+            type="button"
+            onClick={() => void canliyaDondur()}
+            disabled={geriAliniyor}
+            className="self-start text-[12px] font-bold text-blue-300 underline decoration-dotted hover:text-blue-200 disabled:opacity-50"
+          >
+            {geriAliniyor ? "Döndürülüyor…" : "Canlı hâline döndür"}
+          </button>
         </div>
       </div>
     </div>
