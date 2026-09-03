@@ -13,6 +13,10 @@ export interface VixrexPipelineResult {
   message: string;
   anahtar?: string;
   deger?: unknown;
+  /** Tek cümlede birden çok alan anlaşıldıysa hepsi burada. `anahtar`/`deger`
+   * geriye dönük uyum için ilkini taşımaya devam eder — yalnız onu okuyan
+   * çağıran diğer alanları sessizce kaybederdi. */
+  tumu?: Array<{ anahtar: string; kolon: string; deger: unknown }>;
 }
 
 const PENDING_KEY = "vixrex_pending_slot_v1_local";
@@ -70,7 +74,10 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
         const v = validateField(alan.anahtar, trimmed);
         if (!v.ok) return { outcome: "needsClarification", message: (v as { hata: string }).hata, anahtar: alan.anahtar };
         clearPending();
-        return { outcome: "handled", message: clarifySuccess(alan, (v as { deger: unknown }).deger ?? trimmed), anahtar: alan.anahtar, deger: (v as { deger: unknown }).deger ?? trimmed };
+        {
+          const kesin = (v as { deger: unknown }).deger ?? trimmed;
+          return { outcome: "handled", message: clarifySuccess(alan, kesin), anahtar: alan.anahtar, deger: kesin, tumu: [{ anahtar: alan.anahtar, kolon: alan.kolon, deger: kesin }] };
+        }
       }
     }
   }
@@ -106,5 +113,12 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
   const v = validateField(alan.anahtar, ham);
   if (!v.ok) return { outcome: "needsClarification", message: (v as { hata: string }).hata, anahtar: alan.anahtar };
   clearPending();
-  return { outcome: "handled", message: clarifySuccess(alan, (v as { deger: unknown }).deger ?? ham), anahtar: alan.anahtar, deger: (v as { deger: unknown }).deger ?? ham };
+  const kesinDeger = (v as { deger: unknown }).deger ?? ham;
+  return {
+    outcome: "handled",
+    message: clarifySuccess(alan, kesinDeger),
+    anahtar: alan.anahtar,
+    deger: kesinDeger,
+    tumu: [{ anahtar: alan.anahtar, kolon: alan.kolon, deger: kesinDeger }],
+  };
 }

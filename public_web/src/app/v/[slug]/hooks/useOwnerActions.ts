@@ -6,6 +6,7 @@ import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
 import { serbestMetindenAlanlariCikar, type SerbestMetinSonuc } from "@/lib/serbestMetinCikarim";
+import { handleVixrexNluMessage } from "@/lib/vixrexNluPipeline";
 import type { Mesaj } from "./useOwnerChat";
 
 /** Hangi alan hangi tür hazır görsele karşılık geliyor. */
@@ -56,6 +57,9 @@ interface Deps {
   ) => void;
   setAlan: (kolon: string, deger: unknown) => void;
   setGiris: (v: string) => void;
+  /** Akıllı motor alanı anladı ama değeri eksikse o alanı seçili yapar —
+   * esnaf devamında yalnız değeri yazsın. */
+  alanSec?: (anahtar: string) => void;
   /** Kayıt (veya boş geçme) başarılı olunca çağrılır: sırada başka alan
    * varsa oraya geçer. */
   alanaGecVeyaBitir: (
@@ -161,6 +165,7 @@ export function useOwnerActions({
   setGiris,
   alanaGecVeyaBitir,
   alanAtlandi,
+  alanSec,
 }: Deps): OwnerActionsHook {
   const router = useRouter();
   const [kaydediliyor, setKaydediliyor] = useState(false);
@@ -333,13 +338,52 @@ export function useOwnerActions({
     const metin = giris.trim();
 
     if (!seciliAlan) {
-      // Anlamadığımızı dürüstçe söyleriz.
-      if (metin) mesajEkle("kullanici", metin);
-      mesajEkle(
-        "asistan",
-        "Hangi alanı değiştireceğini bilmiyorum. Vitrinde düzenlemek istediğin yazıya tıkla, sonra yeni değeri yaz."
-      );
+      // Esnaf hicbir yere tiklamadan da yazabilmeli: cumleyi akilli motor
+      // cozer, hangi alan oldugunu 46 alanlik niyet sozlugunden kendi bulur.
+      // (Motor yaziliydi ama hicbir yerden cagrilmiyordu.)
+      if (!metin) return;
+      mesajEkle("kullanici", metin);
       setGiris("");
+      setKaydediliyor(true);
+      try {
+        const sonuc = await handleVixrexNluMessage(metin);
+        const cozulen = sonuc.tumu ?? [];
+
+        if (sonuc.outcome !== "handled" || cozulen.length === 0) {
+          mesajEkle("asistan", sonuc.message);
+          // Motor alani anladi ama degeri eksikse o alani secili hale getir:
+          // esnaf devaminda sadece degeri yazsin, alani tekrar tarif etmesin.
+          if (sonuc.anahtar) alanSec?.(sonuc.anahtar);
+          return;
+        }
+
+        let tazeTaslak = { ...yerelTaslak };
+        const kaydedilen: string[] = [];
+        for (const { anahtar, kolon, deger } of cozulen) {
+          const yanit = await fetch("/api/owner-draft", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slug, anahtar, deger, clientId: taslakClientId() }),
+          });
+          if (!yanit.ok) continue;
+          setAlan(kolon, deger as string | boolean);
+          tazeTaslak = { ...tazeTaslak, [kolon]: deger };
+          kaydedilen.push(anahtar);
+          alaniParlat(anahtar);
+        }
+
+        if (kaydedilen.length === 0) {
+          mesajEkle("asistan", "Kaydedemedim, tekrar dener misin?");
+          return;
+        }
+        mesajEkle("asistan", sonuc.message);
+        router.refresh();
+        alanaGecVeyaBitir(kaydedilen[kaydedilen.length - 1], tazeTaslak);
+      } catch {
+        mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+      } finally {
+        setKaydediliyor(false);
+      }
       return;
     }
 

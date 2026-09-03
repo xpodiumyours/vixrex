@@ -207,6 +207,7 @@ export default function OwnerAssistantPanel({
     setGiris,
     alanaGecVeyaBitir,
     alanAtlandi,
+    alanSec,
   });
 
   const fieldRestore = useFieldRestore({
@@ -685,6 +686,44 @@ export default function OwnerAssistantPanel({
             {mesajlar.map((m) => (
               <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
             ))}
+          </div>
+
+          {/* HEP AÇIK sohbet şeridi. Eskiden yazı kutusu yalnız bir alana
+           * tıklanınca (SpotlightGuide balonunda) açılıyordu; tıklamayan
+           * esnaf "hangi alanı değiştireceğini bilmiyorum" cevabını alıyordu.
+           * Artık buraya her zaman yazılabilir: alan seçiliyse o alana
+           * kaydeder, seçili değilse akıllı motor cümleden alanı kendi bulur
+           * (useOwnerActions.gonder). */}
+          <div className="shrink-0 border-t border-white/10 px-3 py-2">
+            <div className="flex items-end gap-2">
+              <textarea
+                value={giris}
+                onChange={(e) => setGiris(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!actions.kaydediliyor) void actions.gonder();
+                  }
+                }}
+                rows={1}
+                disabled={actions.kaydediliyor}
+                aria-label="Vixrex Asistan'a yaz"
+                placeholder={
+                  seciliAlan
+                    ? `${seciliAlan.etiket} için yaz…`
+                    : "Yaz, ben hallederim. Örn: işletme adım Öz Kardeşler"
+                }
+                className="h-11 flex-1 resize-none rounded-lg border border-white/10 bg-slate-900/70 px-3 py-3 text-sm text-white outline-none focus:border-blue-500/60 disabled:opacity-60"
+              />
+              <button
+                type="button"
+                onClick={() => void actions.gonder()}
+                disabled={actions.kaydediliyor || !giris.trim()}
+                className="h-11 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {actions.kaydediliyor ? "…" : "Gönder"}
+              </button>
+            </div>
           </div>
         </div>
       )}
