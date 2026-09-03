@@ -723,28 +723,6 @@ export default function OwnerAssistantPanel({
                     <span className="text-[10px] text-white/30">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
                   </button>
                 </div>
-
-                <p className="px-4 pb-1 pt-3 text-[11px] font-semibold text-slate-400">
-                  {yayinlanmamisDegisiklik
-                    ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."
-                    : "Vitrinin yayındaki hâliyle aynı."}
-                </p>
-
-                <PublishBar
-                  yayinlaniyor={actions.yayinlaniyor}
-                  silmeOnayi={actions.silmeOnayi}
-                  yayinla={actions.yayinla}
-                  silmeOnayla={actions.silmeOnayla}
-                  sil={actions.sil}
-                  setSilmeOnayi={actions.setSilmeOnayi}
-                  temelTamam={rapor.temelTamam}
-                  eksikTemelSayisi={eksikTemelSayisi}
-                  kiralikVitrinMi={kiralikVitrinMi}
-                  premiumAktifMi={premiumAktifMi}
-                  yasalOnayli={yasalOnayli}
-                  onayVeriliyor={actions.onayVeriliyor}
-                  onayVer={actions.onayVer}
-                />
             </div>
           )}
 
@@ -808,6 +786,34 @@ export default function OwnerAssistantPanel({
               onIlceDegisti={handleIlceDegisti}
               onGpsKonumAl={handleGpsKonumAl}
               gpsLoading={gpsLoading}
+            />
+          </div>
+
+          {/* Adım 9 (sahiplik ekranı gözden geçirme, 2026-09-03): Yayınla
+           * eskiden yalnız "Tüm alanlar" (haritaAcik) açıkken görünen ikincil
+           * bir bölümün içindeydi — panelin asıl SONUCU ikinci sekmede
+           * saklanıyordu. Artık composer'ın hemen altında, harita açık
+           * olsun olmasın hep görünen sabit bir şerit. */}
+          <div className="shrink-0 border-t border-white/10 px-4 py-3">
+            <p className="pb-2 text-[11px] font-semibold text-slate-400">
+              {yayinlanmamisDegisiklik
+                ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."
+                : "Vitrinin yayındaki hâliyle aynı."}
+            </p>
+            <PublishBar
+              yayinlaniyor={actions.yayinlaniyor}
+              silmeOnayi={actions.silmeOnayi}
+              yayinla={actions.yayinla}
+              silmeOnayla={actions.silmeOnayla}
+              sil={actions.sil}
+              setSilmeOnayi={actions.setSilmeOnayi}
+              temelTamam={rapor.temelTamam}
+              eksikTemelSayisi={eksikTemelSayisi}
+              kiralikVitrinMi={kiralikVitrinMi}
+              premiumAktifMi={premiumAktifMi}
+              yasalOnayli={yasalOnayli}
+              onayVeriliyor={actions.onayVeriliyor}
+              onayVer={actions.onayVer}
             />
           </div>
         </div>
