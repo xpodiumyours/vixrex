@@ -129,6 +129,20 @@ export default function OwnerAssistantPanel({
     return () => sorgu.removeEventListener("change", guncelle);
   }, []);
 
+  // 2026-09-03 (Casper'ın onayladığı "C" tasarımına sadakat): tuvalde
+  // asistan masaüstünde HEP AÇIK, kapanmayan bir panel olarak tasarlanmıştı
+  // — esnaf ekranı açar açmaz oradaydı. Yalnız BİR KEZ, masaüstü ilk fark
+  // edildiğinde otomatik açar; esnaf sonradan elle kapatırsa (ör. vitrini
+  // engelsiz görmek için) bir daha kendiliğinden açılıp üstüne binmez.
+  // Mobilde dokunulmadı — Faz 4'ün "sadece maskot" kararı geçerli kalır.
+  const masaustuIlkAcilisRef = useRef(false);
+  useEffect(() => {
+    if (masaustu && !masaustuIlkAcilisRef.current) {
+      masaustuIlkAcilisRef.current = true;
+      setAcik(true);
+    }
+  }, [masaustu]);
+
   // PR4-C14: aktif kurulum/kiralama akışı varsa asistan açık ve sıradaki alan odaklı başlar.
   // Faz A (Tek Asistan planı, 2026-09-02): harita artık burada otomatik açılmıyor —
   // SpotlightGuide varsayılan yol, harita yalnız "Tüm alanlar" (☰) ile elle açılır.
@@ -570,14 +584,26 @@ export default function OwnerAssistantPanel({
         // bölümler, yayınla) hâlâ yalnız `haritaAcik`te çizilir — ☰ hâlâ
         // sihirbaz kalabalığını gizli tutar (bkz. mobil-balon-maskot.test.ts).
         //
-        // 2026-08-22 mobil/masaüstü uyum düzeltmesi: eski className yalnız
+        // 2026-08-22 mobil uyum düzeltmesi: eski className yalnız
         // `bottom-24 right-5` idi (üst sınır YOKTU) — 9 bölümlük
         // SectionProgressList tamamen açıldığında panel içeriği ekranın
         // üstünden taşıp kayboluyordu. `top-16` sabitiyle çözülmüştü; artık
         // kutu içeriğe göre büyüyor (`max-h`, sabit `top` YOK) — kapalıyken
         // (yalnız sohbet+giriş) ekranın dibine yaslanır, açıkken yukarı
         // doğru büyür. Ortadaki gövde tek kaydırma alanı, başlık sabit kalır.
-        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:right-5 sm:w-[min(24rem,calc(100vw-2.5rem))]">
+        // Mobilde bu hâliyle KALIR (Faz 4, 2026-08-22 — Casper: "sadece
+        // maskot olsun", tam ekran kaplayan bir panel mobilde istenmedi).
+        //
+        // 2026-09-03 (Casper'ın onayladığı "C" tasarım tuvaline sadakat
+        // düzeltmesi): tuvalde asistan sağda 460px, EKRANIN TAMAMI kadar
+        // yükseklikte, hep açık bir panel olarak tasarlanmıştı — burada
+        // (Faz 1-5 yazılırken) sessizce alt köşede kapalı-varsayılan küçük
+        // bir karta dönüşmüştü, Casper'a hiç sorulmadan. Masaüstünde
+        // (`sm:`) artık sağa sabitlenmiş, üstteki taslak şeridi+navbar'ın
+        // (en fazla 104px) altından ekranın dibine kadar uzanan kalıcı bir
+        // sütun; `acik` masaüstünde ilk açılışta otomatik true olur (aşağı
+        // bkz. masaustuIlkAcilisRef). Mobil davranış hiç değişmedi.
+        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:inset-y-auto sm:top-[104px] sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px]">
           {haritaAcik && (
             <>
               <ChatTopBar

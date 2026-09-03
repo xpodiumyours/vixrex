@@ -7,6 +7,8 @@ import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
 import { serbestMetindenAlanlariCikar, type SerbestMetinSonuc } from "@/lib/serbestMetinCikarim";
 import { handleVixrexNluMessage } from "@/lib/vixrexNluPipeline";
+import { VIXREX_NIYET_ALAN_BY_ANAHTAR } from "@/lib/vixrexNiyetSozlugu";
+import { extractVixrexValue, digerAlanaAitIpucuVarMi } from "@/lib/vixrexValueExtractor";
 import type { Mesaj } from "./useOwnerChat";
 
 /** Hangi alan hangi tür hazır görsele karşılık geliyor. */
@@ -99,6 +101,64 @@ const SERBEST_ANLATIM_ESLEME: ReadonlyArray<[keyof SerbestMetinSonuc, string]> =
   ["ilceAdi", "ilce"],
   ["adres", "adres"],
 ];
+
+/**
+ * Seçili bir kutuya (ör. "İşletme Adı") zengin bir cümle yazılınca, kutunun
+ * KENDİ değerini cümleden temizce ayırmayı dener.
+ *
+ * 2026-09-03 (Casper canlıda buldu, kiralık-kafe vitrini): "işletme adım
+ * Konak Kafe, whatsapp numaram 0542..." yazılınca eskiden TÜM cümle
+ * olduğu gibi isim alanına kaydediliyordu ("KONAK KAFE 05421802573").
+ * Whatsapp'ı `serbestMetindenAlanlariCikar` zaten AYRI ve doğru buluyordu
+ * (regex kalıbı), ama isim kutusunun kendisi hiç ayrıştırılmıyordu.
+ *
+ * Üç adım, en güvenliden en riskliye:
+ *  1) Seçili alan bonus'un kapsadığı (whatsapp/kategori/saat/il/ilçe/adres)
+ *     kolonlardan biriyse, bonus'un kendi regex/sözlük tabanlı çıkarıcısı
+ *     kullanılır — bu, anahtar kelime aramasından güçlüdür (ör. "whatsapp"
+ *     kelimesi hiç geçmese de bir telefon kalıbını yakalar).
+ *  2) Aksi hâlde 46 alanlık niyet motoru (hiçbir kutu seçili değilken zaten
+ *     kullanılan aynı motor, `vixrexValueExtractor.ts`) cümlede bu alanın
+ *     kendi anahtar kelimesini (ör. "işletme adı") arar ve ondan sonraki
+ *     kısmı, BAŞKA bir alana ait ipucuna kadar (bkz. o dosyadaki sınır
+ *     düzeltmesi) ayırır.
+ *  3) İkisinden en az biri bir şey bulduysa, İKİSİ ARASINDA EN KISA OLAN
+ *     kullanılır — bulaşma her zaman metni UZATIR, hiç kısaltmaz, o yüzden
+ *     kısa olan daha temizdir (ör. adres bonus'u "adresimiz Atatürk Cad.
+ *     No:24" döndürse de niyet motoru "Atatürk Cad. No:24" verir, ikincisi
+ *     seçilir).
+ *  4) İkisi de bir şey bulamadıysa: cümlede başka bir alana ait TANINAN bir
+ *     ipucu var mı diye bakılır (`digerAlanaAitIpucuVarMi` — kelime sınırlı,
+ *     kısa/genel eş-anlamları saymaz). Yoksa muhtemelen tek parça düz bir
+ *     cevaptır (ör. uzun bir "hakkında" metni) — olduğu gibi kaydedilir.
+ *     Varsa, hangi kısmın seçili alana ait olduğunu güvenle ayıramadık
+ *     demektir — `null` döner, çağıran taraf ham metni YAZMAZ, dürüstçe
+ *     sorar (bonus yine de diğer alanları ayrıca doğru kaydeder).
+ */
+export function temizlenmisSeciliDeger(metin: string, alan: VitrinField): string | null {
+  const adaylar: string[] = [];
+
+  const bonusAnahtari = SERBEST_ANLATIM_ESLEME.find(([, anahtar]) => anahtar === alan.anahtar)?.[0];
+  if (bonusAnahtari) {
+    const bonusDeger = serbestMetindenAlanlariCikar(metin)[bonusAnahtari];
+    if (bonusDeger) adaylar.push(bonusDeger);
+  }
+
+  const niyetAlani = VIXREX_NIYET_ALAN_BY_ANAHTAR.get(alan.anahtar);
+  if (niyetAlani) {
+    const cikan = extractVixrexValue(metin, niyetAlani);
+    if (cikan) adaylar.push(cikan);
+  }
+
+  if (adaylar.length > 0) {
+    return adaylar.reduce((enKisa, aday) => (aday.length < enKisa.length ? aday : enKisa));
+  }
+
+  const baskaIpucuVarMi =
+    Object.values(serbestMetindenAlanlariCikar(metin)).some(Boolean) ||
+    digerAlanaAitIpucuVarMi(metin, alan.anahtar);
+  return baskaIpucuVarMi ? null : metin;
+}
 
 /**
  * "Esnaf 46 alanı tek tek dolaşmasın" (2026-09-02) — YENİ bir ekran
@@ -403,10 +463,33 @@ export function useOwnerActions({
     }
 
     const alan = seciliAlan;
-    const gonderilecek: string | boolean =
-      alan.tip === "acikKapali"
-        ? ["evet", "aç", "açık", "göster", "true"].includes(metin.toLowerCase())
-        : metin;
+
+    // Zengin cümle ayrıştırması (2026-09-03, bkz. temizlenmisSeciliDeger
+    // yorumu): kısa girdilerde ve aç/kapa alanlarda davranış AYNI kalır —
+    // ayrıştırma yalnız 15+ karakterlik metinlerde denenir (bonus'un
+    // tetiklenme eşiğiyle aynı, aşağıda).
+    let gonderilecek: string | boolean;
+    if (alan.tip === "acikKapali") {
+      gonderilecek = ["evet", "aç", "açık", "göster", "true"].includes(metin.toLowerCase());
+    } else if (metin.length < 15) {
+      gonderilecek = metin;
+    } else {
+      const temiz = temizlenmisSeciliDeger(metin, alan);
+      if (temiz === null) {
+        // Cümlede başka bir alana ait ipucu var ama seçili alanın kendi
+        // değerini güvenle ayıramadık — ham metni YAZMAYIZ, dürüstçe
+        // sorarız. Bonus yine de diğer alanları ayrıca doğru kaydeder.
+        mesajEkle("kullanici", metin);
+        mesajEkle(
+          "asistan",
+          `Bu cümlede birden fazla bilgi var gibi görünüyor. "${alan.etiket}" için sadece onu yazar mısın?`
+        );
+        setGiris("");
+        void bonusAlanlariCikarVeKaydet(metin, "", slug, mesajEkle, setAlan, () => router.refresh());
+        return;
+      }
+      gonderilecek = temiz;
+    }
 
     mesajEkle("kullanici", metin || "(boş bırak)");
     setKaydediliyor(true);

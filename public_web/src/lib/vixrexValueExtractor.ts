@@ -1,4 +1,4 @@
-import type { VixrexNiyetAlan } from "./vixrexNiyetSozlugu";
+import { VIXREX_NIYET_SOZLUGU, type VixrexNiyetAlan } from "./vixrexNiyetSozlugu";
 import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
 
 // Dart VixrexValueExtractor ile aynı kural – parity için birebir.
@@ -53,6 +53,18 @@ function isFieldOnlyWithoutValue(input: string, alan: VixrexNiyetAlan): boolean 
   return rem.length < 3;
 }
 
+// Eş-anlam sözlüğü yalnız 3. tekil iyelik hâlini tutuyor ("işletme adı"),
+// ama esnaf doğal olarak 1. tekil de yazar ("işletme adım"). Eşleşme "adı"
+// ile bitince hemen ardından gelen "m" değere yapışıp kalıyordu ("m Konak
+// Kafe" gibi). Eşleşmeden hemen sonra boşluksuz devam eden harfler varsa
+// (iyelik ekinin geri kalanı) onları da atlanacak kısma dahil ederiz.
+function esAnlamEslesmeSonu(input: string, m: RegExpMatchArray): number {
+  let end = (m.index ?? 0) + m[0].length;
+  const devam = input.slice(end).match(/^[a-zA-ZçğıöşüÇĞİÖŞÜ]+/);
+  if (devam) end += devam[0].length;
+  return end;
+}
+
 function extractBetweenFieldAndVerb(input: string, alan: VixrexNiyetAlan): string | null {
   const normInput = vixrexNormalizeDartParity(input);
   let bestEa: string | null = null;
@@ -65,7 +77,7 @@ function extractBetweenFieldAndVerb(input: string, alan: VixrexNiyetAlan): strin
   if (!bestEa) return null;
   const m = input.match(new RegExp(bestEa.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
   if (!m || m.index === undefined) return null;
-  let after = input.slice(m.index + m[0].length).trim();
+  let after = input.slice(esAnlamEslesmeSonu(input, m)).trim();
   after = after.replace(/^[\s:=\-–—,]+/, "").trim();
   after = after.replace(/^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi|numaramı|numarami|imi|ımı|umu|ümü|yi|yı|u|ü|ı|i)\b\s*/i, "").trim();
   if (!after) return null;
@@ -159,7 +171,7 @@ function remainderAfterFieldMention(input: string, alan: VixrexNiyetAlan): strin
   if (!matchedEa) return null;
   const m = input.match(new RegExp(matchedEa.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
   if (!m || m.index === undefined) return null;
-  const after = input.slice(m.index + m[0].length).trim();
+  const after = input.slice(esAnlamEslesmeSonu(input, m)).trim();
   if (!after) return null;
   const cleaned = after
     .replace(/^[\s:=\-–—,]+/, "")
@@ -169,7 +181,97 @@ function remainderAfterFieldMention(input: string, alan: VixrexNiyetAlan): strin
   return stripQuotes(cleaned);
 }
 
+// 2026-09-03 (Casper canlıda buldu, kiralık-kafe vitrini): serbest metin
+// alanları (işletme adı, adres gibi) bir cümlede BAŞKA bir alana ait
+// bilgiyle karışabiliyordu — "işletme adım Konak Kafe, whatsapp numaram
+// 0542..." yazınca isim alanına whatsapp numarası da yapışıyordu. Motor
+// whatsapp'ı AYRI ve doğru buluyordu (extractPhone kendi regex'iyle), ama
+// isim adayının nerede BİTMESİ gerektiğini hiç bilmiyordu — "alanın
+// eş-anlamından sonra cümlenin sonuna kadar her şeyi al" mantığı buydu.
+//
+// Bilinçli bir "kimlik tahmin edilmez" kuralı DEĞİL bu — gözden kaçmış bir
+// sınır eksikliğiydi (bkz. serbestMetinCikarim.ts'teki gerçek kasıtlı kural,
+// o ayrı bir dosya/amaç). Çözüm: yalnızca SERBEST METİN tipi alanlarda
+// (isim, adres, kısa tanıtım vb. — tip="metin"/"uzunMetin"), adayın içinde
+// (a) bir telefon kalıbı ya da (b) bir virgül/"ve" sonrasında BAŞKA bir
+// alana ait tanınan bir kelime varsa, aday oraya kadar kesilir.
+//
+// Virgül/"ve" şartı BİLEREK var: "il" gibi kısa/genel eş-anlamların normal
+// bir cümle ortasında (virgülsüz) yanlışlıkla sınır sayılmasını önler —
+// gerçek "kitchen sink" cümleler zaten virgülle listeler (bkz.
+// serbest-alan-sinirlama.test.ts).
+const TELEFON_SINIR_REGEX =
+  /(\+?90[\s.-]?)?0?[\s.-]?5\d{2}[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}/;
+
+function digerAlanlarinEsAnlamlari(kendiAnahtar: string): string[] {
+  const out: string[] = [];
+  for (const a of VIXREX_NIYET_SOZLUGU) {
+    if (a.anahtar === kendiAnahtar) continue;
+    for (const ea of a.esAnlamlar) {
+      // Çok kısa (≤3 harf) eş-anlamlar ("il", "tel", "ig" gibi) sınır
+      // aramasında kullanılmaz — normal bir cümlede tesadüfen geçme
+      // ihtimalleri çok yüksek, yanlış pozitif riski gerçek faydadan büyük.
+      if (vixrexNormalizeDartParity(ea).replace(/[^a-z0-9]/g, "").length > 3) out.push(ea);
+    }
+  }
+  return out;
+}
+
+/**
+ * Bir cümlede, verilen alanın DIŞINDA tanınan başka bir alana ait güvenli
+ * (kısa/genel olmayan, kelime sınırlı) bir ipucu var mı?
+ *
+ * `resolveVixrexIntentsAll` bunun için KULLANILMAZ — o saf substring
+ * eşleştirir (word-boundary yok, uzunluk filtresi yok), "ailece" gibi
+ * gündelik bir kelime içinde "il" geçtiği için "il" alanını yanlışlıkla
+ * eşleştirebilir. Bu fonksiyon `serbestMetinAdayiniSinirla` ile AYNI
+ * güvenli listeyi (kısa eş-anlamlar hariç) ve kelime sınırını kullanır —
+ * seçili bir kutunun ham metni olduğu gibi mi kaydedileceğine (yoksa
+ * dürüstçe mi sorulacağına) karar vermek için kullanılır (bkz.
+ * useOwnerActions.ts → temizlenmisSeciliDeger).
+ */
+export function digerAlanaAitIpucuVarMi(metin: string, kendiAnahtar: string): boolean {
+  const normMetin = " " + vixrexNormalizeDartParity(metin) + " ";
+  return digerAlanlarinEsAnlamlari(kendiAnahtar).some((ea) => {
+    const n = vixrexNormalizeDartParity(ea).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`[^a-z0-9]${n}[^a-z0-9]`).test(normMetin);
+  });
+}
+
+function serbestMetinAdayiniSinirla(aday: string, alan: VixrexNiyetAlan): string {
+  if (!isFreeTextTip(alan.tip) || alan.tip === "telefon" || alan.tip === "url" || alan.tip === "eposta") {
+    return aday;
+  }
+
+  let sinir = aday.length;
+
+  const tel = aday.match(TELEFON_SINIR_REGEX);
+  if (tel && tel.index !== undefined && tel.index > 0) sinir = Math.min(sinir, tel.index);
+
+  const digerEsAnlamlar = digerAlanlarinEsAnlamlari(alan.anahtar);
+  const ayracRegex = /[,;]|\bve\b/gi;
+  let m: RegExpExecArray | null;
+  while ((m = ayracRegex.exec(aday)) !== null) {
+    if (m.index >= sinir) break;
+    const kuyruk = " " + vixrexNormalizeDartParity(aday.slice(m.index + m[0].length));
+    const eslesti = digerEsAnlamlar.some((ea) => {
+      const n = vixrexNormalizeDartParity(ea).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return new RegExp(`[^a-z0-9]${n}([^a-z0-9]|$)`).test(kuyruk);
+    });
+    if (eslesti) sinir = Math.min(sinir, m.index);
+  }
+
+  if (sinir >= aday.length) return aday;
+  const kesilmis = aday.slice(0, sinir).trim().replace(/[\s.,;]+$/, "").trim();
+  return kesilmis.length >= 2 ? kesilmis : aday;
+}
+
 export function extractVixrexValue(input: string, alan: VixrexNiyetAlan): string | null {
+  const sonuc = extractVixrexValueHam(input, alan);
+  return sonuc === null ? null : serbestMetinAdayiniSinirla(sonuc, alan);
+}
+
+function extractVixrexValueHam(input: string, alan: VixrexNiyetAlan): string | null {
   const raw = input.trim();
   if (!raw) return null;
   if (alan.tip === "telefon") {
