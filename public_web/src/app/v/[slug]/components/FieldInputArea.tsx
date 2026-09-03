@@ -247,7 +247,13 @@ export function FieldInputArea({
                 }
               }}
               rows={seciliAlan?.tip === "uzunMetin" ? 3 : 1}
-              maxLength={seciliAlan?.maxUzunluk}
+              /* Kutuya alan sınırı UYGULANMAZ: seçili alan varken bile
+               * esnaf zengin/uzun bir cümle yazabilmeli — gonder() zaten
+               * bu cümleden seçili alanın kendi değerini ayıklıyor
+               * (temizlenmisSeciliDeger) ve kalanı bonusAlanlariCikarVeKaydet
+               * ile diğer alanlara dağıtıyor (useOwnerActions.ts). Alanın
+               * kendi maxUzunluk'u, ayıklanan DEĞERE sunucuda validateField
+               * ile uygulanıyor — ham mesaja değil. */
               disabled={kaydediliyor}
               aria-label="Vixrex Asistan'a yaz"
               placeholder={
