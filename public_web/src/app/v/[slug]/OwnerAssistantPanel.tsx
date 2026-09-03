@@ -9,7 +9,6 @@ import { useFieldRestore } from "./hooks/useFieldRestore";
 import { ChatBubble } from "./components/ChatBubble";
 import { ChatTopBar } from "./components/ChatTopBar";
 import { HesapBaglaSeridi } from "./components/HesapBaglaSeridi";
-import { StageMeter } from "./components/StageMeter";
 import { UpNextList } from "./components/UpNextList";
 import { SectionProgressList } from "./components/SectionProgressList";
 import { SectionVisibilityToggle } from "./components/SectionVisibilityToggle";
@@ -22,7 +21,7 @@ import { GalleryEditor } from "./components/GalleryEditor";
 import { PublishBar } from "./components/PublishBar";
 import { VixrexAvatar } from "./components/VixrexAvatar";
 import { SpotlightGuide } from "./components/SpotlightGuide";
-import { alanOnemi, asamaDolulugu, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
+import { alanOnemi, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
 import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { useRouter } from "next/navigation";
@@ -238,9 +237,6 @@ export default function OwnerAssistantPanel({
     return () => document.body.classList.remove("vixrex-kaydediliyor");
   }, [actions.kaydediliyor]);
 
-  // Faz G3 (Tek Asistan planı, G3.1): üç aşamalı ilerleme şeridi için
-  // önem başına dolu/toplam — şemadan hesaplanır, elle sayılmaz.
-  const dolulugu = asamaDolulugu(yerelTaslak, atlanmisAlanlar);
   const eksikTemelSayisi = rapor.eksikler.filter((e) => e.onem === "temel").length;
 
   // Kiralık şablon vitrin mi (cloned_from_slug dolu) + premium aktif mi.
@@ -594,11 +590,9 @@ export default function OwnerAssistantPanel({
           ) : null}
 
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <StageMeter
-              dolulugu={dolulugu}
-              temelTamam={rapor.temelTamam}
-              eksikTemelSayisi={eksikTemelSayisi}
-            />
+            {/* StageMeter buradan kalktı (Çalışma masası / Yön C):
+             * doluluk yüzdesi zaten ChatTopBar'da tek yerde duruyor,
+             * ikinci bir ölçer paneli sihirbaza çeviriyordu. */}
 
             {/* StepCard/FieldInputArea artık burada YOK — 2026-08-22:
              * kullanıcı test etti, panelin tepesindeki sabit kutu spot
@@ -612,9 +606,17 @@ export default function OwnerAssistantPanel({
               suankiAnahtar={seciliAlan?.anahtar ?? null}
               atlanmisAlanlar={atlanmisAlanlar}
               alanSec={alanSec}
+              alanAtla={alanAtlandi}
             />
 
-            <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
+            {/* Bölüm listesi ekranın yarısını kaplıyordu; artık kapalı
+             * duran bir açılırın içinde — isteyen açar. */}
+            <details className="border-b border-white/10">
+              <summary className="cursor-pointer list-none px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400 hover:text-slate-200">
+                Tüm bölümler
+              </summary>
+              <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
+            </details>
 
             <SectionVisibilityToggle
               slug={slug}
