@@ -182,14 +182,19 @@ class VitrinStoreCard extends StatelessWidget {
                             height: 90,
                             child: Stack(
                               children: [
+                                // Şeridin merkezi 90x90'lık kırpma kutusunun
+                                // İÇİNDE kalmalı; (-30,-30) konumunda yazı
+                                // görünür alanın dışına düşüyor ve kartta
+                                // boş turuncu köşe kalıyordu (web'de yazı
+                                // görünürken uygulamada görünmüyordu).
                                 Positioned(
-                                  top: -30,
-                                  left: -30,
+                                  top: 8,
+                                  left: -34,
                                   child: Transform.rotate(
                                     angle: -0.785398, // -45°
                                     child: Container(
                                       width: 120,
-                                      height: 36,
+                                      height: 22,
                                       alignment: Alignment.center,
                                       decoration: const BoxDecoration(
                                         color: Color(0xFFF59E0B),

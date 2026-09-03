@@ -597,6 +597,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         icon: Icons.assistant_outlined,
         selectedIcon: Icons.assistant_rounded,
         label: 'Vixrex',
+        gorselYolu: ShellSidebarItem.maskotYolu,
       ),
       ShellSidebarItem(
         icon: Icons.person_outline_rounded,
@@ -623,9 +624,22 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         selectedIcon: Icon(Icons.travel_explore_rounded),
         label: 'Keşfet',
       ),
-      const NavigationDestination(
-        icon: Icon(Icons.assistant_outlined),
-        selectedIcon: Icon(Icons.assistant_rounded),
+      NavigationDestination(
+        icon: Opacity(
+          opacity: 0.7,
+          child: Image.asset(
+            ShellSidebarItem.maskotYolu,
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+          ),
+        ),
+        selectedIcon: Image.asset(
+          ShellSidebarItem.maskotYolu,
+          width: 24,
+          height: 24,
+          fit: BoxFit.contain,
+        ),
         label: 'Vixrex',
       ),
       const NavigationDestination(

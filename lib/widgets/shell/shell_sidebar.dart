@@ -49,10 +49,12 @@ class ShellSidebar extends StatelessWidget {
                     color: AppColors.brandSoft,
                     borderRadius: BorderRadius.circular(AppColors.radius12),
                   ),
-                  child: const Icon(
-                    Icons.storefront_rounded,
-                    color: AppColors.secondary,
-                    size: 20,
+                  padding: const EdgeInsets.all(4),
+                  child: Image.asset(
+                    ShellSidebarItem.maskotYolu,
+                    width: 26,
+                    height: 26,
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(width: AppColors.spacing12),
@@ -114,11 +116,20 @@ class ShellSidebarItem {
     required this.icon,
     required this.selectedIcon,
     required this.label,
+    this.gorselYolu,
   });
+
+  /// Vixrex maskotu — Vixrex'i temsil eden tek simge bu. Yerine soyut bir
+  /// ikon (assistant, konuşma balonu) KOYULMAZ: maskot aynı zamanda
+  /// uygulamanın logosu, web ile aynı görünmeli.
+  static const String maskotYolu = 'assets/images/vixrex_v_crystal_mascot.png';
 
   final IconData icon;
   final IconData selectedIcon;
   final String label;
+
+  /// Doluysa [icon]/[selectedIcon] yerine bu görsel çizilir.
+  final String? gorselYolu;
 }
 
 class _SidebarRow extends StatelessWidget {
@@ -157,11 +168,23 @@ class _SidebarRow extends StatelessWidget {
                     : null,
             child: Row(
               children: [
-                Icon(
-                  isSelected ? item.selectedIcon : item.icon,
-                  color: isSelected ? AppColors.secondary : AppColors.mutedText,
-                  size: 20,
-                ),
+                if (item.gorselYolu != null)
+                  Opacity(
+                    opacity: isSelected ? 1 : 0.7,
+                    child: Image.asset(
+                      item.gorselYolu!,
+                      width: 20,
+                      height: 20,
+                      fit: BoxFit.contain,
+                    ),
+                  )
+                else
+                  Icon(
+                    isSelected ? item.selectedIcon : item.icon,
+                    color:
+                        isSelected ? AppColors.secondary : AppColors.mutedText,
+                    size: 20,
+                  ),
                 const SizedBox(width: AppColors.spacing12),
                 Expanded(
                   child: Text(

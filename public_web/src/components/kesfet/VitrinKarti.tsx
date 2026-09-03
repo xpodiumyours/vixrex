@@ -206,7 +206,13 @@ export function VitrinKarti({
           <div className="mt-auto pt-3">
             {vitrin.kiralikMi ? (
               <div className="grid grid-cols-2 gap-1.5">
-                <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 items-center justify-center rounded-[10px] border border-lp-primary px-2 text-[11px] font-black text-lp-primary transition-colors hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
+                <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] border border-lp-primary px-2 text-[11px] font-black text-lp-primary transition-colors hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
+                  {/* Flutter kartıyla parite: butonlarda ikon var (dükkân / anahtar). */}
+                  <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <path d="M3 9.5 4.5 5h15L21 9.5" />
+                    <path d="M3 9.5a2.5 2.5 0 0 0 4.5 1.5 2.5 2.5 0 0 0 4.5 0 2.5 2.5 0 0 0 4.5 0A2.5 2.5 0 0 0 21 9.5" />
+                    <path d="M5 12v7h14v-7" />
+                  </svg>
                   İncele
                 </Link>
                 <button
@@ -215,8 +221,12 @@ export function VitrinKarti({
                     kiralaDialogRef.current?.showModal();
                     kiralaBaslat();
                   }}
-                  className="flex min-h-11 items-center justify-center rounded-[10px] bg-lp-primary px-2 text-[11px] font-black text-lp-on-primary transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary focus-visible:ring-offset-2"
+                  className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] bg-lp-primary px-2 text-[11px] font-black text-lp-on-primary transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary focus-visible:ring-offset-2"
                 >
+                  <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <circle cx="8" cy="12" r="3.5" />
+                    <path d="M11.5 12H21l-1.5 2.5M17 12v2.5" />
+                  </svg>
                   Kirala
                 </button>
               </div>

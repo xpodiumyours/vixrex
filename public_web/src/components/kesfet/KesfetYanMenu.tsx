@@ -20,12 +20,18 @@ function KisiIkonu() {
   );
 }
 
-function AsistanIkonu() {
+/** Vixrex maskotu — Vixrex'i temsil eden tek simge bu. Yerine soyut bir
+ * ikon (konuşma balonu, artı-kare) KOYULMAZ: maskot aynı zamanda
+ * uygulamanın logosu, iki yüzeyde de aynı görünmeli. */
+function MaskotIkonu({ boyut = 20 }: { boyut?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M7 18.5 3.5 21l.9-4.2A8 8 0 1 1 7 18.5Z" />
-      <path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01" strokeLinecap="round" />
-    </svg>
+    <img
+      src="/images/vixrex_v_crystal_mascot.png"
+      alt=""
+      aria-hidden="true"
+      className="object-contain"
+      style={{ width: boyut, height: boyut }}
+    />
   );
 }
 
@@ -36,7 +42,7 @@ const MENU: Array<{
 }> = [
   { etiket: "Vitrinim", href: "/app", ikon: <StorefrontIkonu boyut={20} /> },
   { etiket: "Keşfet", href: "/kesfet", ikon: <KesfetIkonu boyut={20} /> },
-  { etiket: "Vixrex", href: "#vixrex-asistan", ikon: <AsistanIkonu /> },
+  { etiket: "Vixrex", href: "#vixrex-asistan", ikon: <MaskotIkonu boyut={20} /> },
   { etiket: "Profil", href: "/app/profil", ikon: <KisiIkonu /> },
 ];
 
@@ -58,8 +64,8 @@ export function KesfetYanMenu({
           aria-label="Vixrex ana sayfa"
           className="flex items-center gap-3 border-b border-lp-border px-5 py-6 text-lp-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lp-primary"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-lp-primary/15 text-lp-primary">
-            <StorefrontIkonu boyut={20} />
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-lp-primary/15">
+            <MaskotIkonu boyut={26} />
           </span>
           <span className="text-[18px] font-black">Vixrex</span>
         </Link>
