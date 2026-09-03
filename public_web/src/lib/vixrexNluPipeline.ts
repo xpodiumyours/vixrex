@@ -98,7 +98,13 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
     if (ok.length === 0) return { outcome: "needsClarification", message: hatalar.join("\n") || "Hangi alanı değiştirmek istediğini netleştirebilir misin?" };
     clearPending();
     const metin = ok.map(({ alan, deger }) => clarifySuccess(alan, deger)).join("\n");
-    return { outcome: "handled", message: metin, anahtar: ok[0].alan.anahtar, deger: ok[0].deger };
+    return {
+      outcome: "handled",
+      message: metin,
+      anahtar: ok[0].alan.anahtar,
+      deger: ok[0].deger,
+      tumu: ok.map(({ alan, deger }) => ({ anahtar: alan.anahtar, kolon: alan.kolon, deger })),
+    };
   }
   const alan = all[0];
   if (needsSpecialFlow(alan.anahtar)) {
