@@ -31,6 +31,7 @@ import { VITRIN_FIELDS } from "@/lib/vitrinFieldSchema";
 import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
 import { yonetimOnerileriUret } from "@/lib/yonetimOnerileri";
 import { supabase } from "@/lib/supabase";
+import { ensureAnonymousSession } from "@/lib/assistantConversation";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
 // yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
@@ -127,6 +128,17 @@ export default function OwnerAssistantPanel({
     guncelle();
     sorgu.addEventListener("change", guncelle);
     return () => sorgu.removeEventListener("change", guncelle);
+  }, []);
+
+  // Adım 4 (2026-09-03): pending slot ve sohbet geçmişi artık kalıcı
+  // `assistant_conversations` tablosuna (auth.uid() ile) yazılıyor —
+  // localStorage değil. Panel açılır açılmaz (hesap bağlı olsun olmasın)
+  // anonim bir Supabase Auth oturumu garanti eder; zaten oturum varsa
+  // (landing'den taşınmış veya gerçek hesap) hiçbir şey değişmez. Hata
+  // sessizce yutulur — akışı bloklamaz, yalnız kalıcılık o oturumda
+  // devreye girmez (bkz. vixrexNluPipeline.ts, useOwnerChat.ts).
+  useEffect(() => {
+    void ensureAnonymousSession();
   }, []);
 
   // 2026-09-03 (Casper'ın onayladığı "C" tasarımına sadakat): tuvalde

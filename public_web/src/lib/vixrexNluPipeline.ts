@@ -1,5 +1,6 @@
 "use client";
 
+import { supabase } from "./supabase";
 import { VIXREX_NIYET_SOZLUGU, type VixrexNiyetAlan } from "./vixrexNiyetSozlugu";
 import { resolveVixrexIntent, resolveVixrexIntentsAll } from "./vixrexIntentResolver";
 import { extractVixrexValue } from "./vixrexValueExtractor";
@@ -19,22 +20,33 @@ export interface VixrexPipelineResult {
   tumu?: Array<{ anahtar: string; kolon: string; deger: unknown }>;
 }
 
-const PENDING_KEY = "vixrex_pending_slot_v1_local";
-
-function loadPending(): { anahtar: string; etiket: string; tip: string } | null {
+// Adım 4 (2026-09-03): pending slot artık localStorage DEĞİL, kalıcı ve
+// paylaşılan `assistant_conversations.pending_slot` (Furkan, 2026-09-02,
+// "NLU Faz 1-3") — RPC'ler auth.uid() ister. OwnerAssistantPanel panel
+// açılışında ensureAnonymousSession() çağırıp her esnafa (hesabı olmasa
+// bile) gerçek bir auth.uid() sağlıyor; böylece assistant_conversations'ın
+// NOT NULL user_id kısıtına dokunmadan, mevcut cross-client tabloya
+// yazabiliyoruz. Oturum henüz kurulmadıysa RPC NOT_AUTHENTICATED döner —
+// diğer fire-and-forget yazımlarla aynı desende sessizce yutulur, pending
+// o turda basitçe "yok" sayılır.
+async function loadPending(): Promise<{ anahtar: string; etiket: string; tip: string } | null> {
   try {
-    const raw = typeof window !== "undefined" ? localStorage.getItem(PENDING_KEY) : null;
-    if (!raw) return null;
-    return JSON.parse(raw);
+    const { data, error } = await supabase.rpc("get_assistant_pending_slot");
+    if (error || !data) return null;
+    return data as { anahtar: string; etiket: string; tip: string };
   } catch { return null; }
 }
-function savePending(a: VixrexNiyetAlan) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(PENDING_KEY, JSON.stringify({ anahtar: a.anahtar, etiket: a.etiket, tip: a.tip }));
+async function savePending(a: VixrexNiyetAlan): Promise<void> {
+  try {
+    await supabase.rpc("set_assistant_pending_slot", {
+      p_slot: { anahtar: a.anahtar, etiket: a.etiket, tip: a.tip },
+    });
+  } catch { /* sessizce yut — bellek modu korunur */ }
 }
-function clearPending() {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(PENDING_KEY);
+async function clearPending(): Promise<void> {
+  try {
+    await supabase.rpc("set_assistant_pending_slot", { p_slot: null });
+  } catch { /* sessizce yut */ }
 }
 
 function needsSpecialFlow(anahtar: string): boolean {
@@ -55,11 +67,11 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
   if (!trimmed) return { outcome: "notUnderstood", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap”" };
 
   const norm = vixrexNormalizeDartParity(trimmed);
-  const pending = loadPending();
+  const pending = await loadPending();
 
   // Evet/hayır pending ile – Faz 1 dar: sadece temizle.
   if (pending && (norm === "evet" || norm === "hayır" || norm === "hayir" || norm === "iptal")) {
-    clearPending();
+    await clearPending();
     if (norm === "evet") return { outcome: "needsClarification", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin?" };
     return { outcome: "needsClarification", message: "Tamam, vazgeçtim. Başka nasıl yardımcı olabilirim?" };
   }
@@ -73,7 +85,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
         if (needsSpecialFlow(alan.anahtar)) return { outcome: "needsSpecialFlow", message: clarifyAsk(alan), anahtar: alan.anahtar };
         const v = validateField(alan.anahtar, trimmed);
         if (!v.ok) return { outcome: "needsClarification", message: (v as { hata: string }).hata, anahtar: alan.anahtar };
-        clearPending();
+        await clearPending();
         {
           const kesin = (v as { deger: unknown }).deger ?? trimmed;
           return { outcome: "handled", message: clarifySuccess(alan, kesin), anahtar: alan.anahtar, deger: kesin, tumu: [{ anahtar: alan.anahtar, kolon: alan.kolon, deger: kesin }] };
@@ -96,7 +108,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
       ok.push({ alan: a, deger: (v as { deger: unknown }).deger ?? ham });
     }
     if (ok.length === 0) return { outcome: "needsClarification", message: hatalar.join("\n") || "Hangi alanı değiştirmek istediğini netleştirebilir misin?" };
-    clearPending();
+    await clearPending();
     const metin = ok.map(({ alan, deger }) => clarifySuccess(alan, deger)).join("\n");
     return {
       outcome: "handled",
@@ -108,17 +120,17 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
   }
   const alan = all[0];
   if (needsSpecialFlow(alan.anahtar)) {
-    savePending(alan);
+    await savePending(alan);
     return { outcome: "needsSpecialFlow", message: clarifyAsk(alan), anahtar: alan.anahtar };
   }
   const ham = extractVixrexValue(trimmed, alan);
   if (!ham) {
-    savePending(alan);
+    await savePending(alan);
     return { outcome: "needsClarification", message: clarifyAsk(alan), anahtar: alan.anahtar };
   }
   const v = validateField(alan.anahtar, ham);
   if (!v.ok) return { outcome: "needsClarification", message: (v as { hata: string }).hata, anahtar: alan.anahtar };
-  clearPending();
+  await clearPending();
   const kesinDeger = (v as { deger: unknown }).deger ?? ham;
   return {
     outcome: "handled",
