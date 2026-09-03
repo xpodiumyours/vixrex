@@ -20,6 +20,10 @@ const oku = (yol: string) =>
  */
 describe("hesap bağlama CTA'sı gerçek edit_token sahiplerine ulaşır", () => {
   const kaynak = oku("app/v/[slug]/OwnerWorkspaceShell.tsx");
+  // 2026-09-03 (Çalışma masası / Yön C): "Sahip Çalışma Alanı" çekmecesi
+  // kalktı; bandın KOŞULU hâlâ shell'de (draft.has_account), bağlanma
+  // MANTIĞI ise HesapBaglaSeridi'ne taşındı ve asistan panelinde çiziliyor.
+  const serit = oku("app/v/[slug]/components/HesapBaglaSeridi.tsx");
 
   it("bant artık isDemo yerine draft.has_account'a bakar", () => {
     expect(kaynak).toContain("draft?.has_account === false");
@@ -32,14 +36,17 @@ describe("hesap bağlama CTA'sı gerçek edit_token sahiplerine ulaşır", () =>
   });
 
   it("linkIdentity'den önce oturum yoksa anonim oturum açılır (blog-yonetim ile aynı desen)", () => {
-    expect(kaynak).toContain("supabase.auth.getSession()");
-    expect(kaynak).toContain("supabase.auth.signInAnonymously()");
-    expect(kaynak).toContain("supabase.auth.linkIdentity({");
+    expect(serit).toContain("supabase.auth.getSession()");
+    expect(serit).toContain("supabase.auth.signInAnonymously()");
+    expect(serit).toContain("supabase.auth.linkIdentity({");
   });
 
   it("bağlanma denemesi hata/yükleniyor durumunu kullanıcıya gösterir", () => {
-    expect(kaynak).toContain("hesapBaglaniyor");
-    expect(kaynak).toContain("hesapBaglaHata");
+    expect(serit).toContain("baglaniyor");
+    expect(serit).toContain("hata");
+    // Şerit gerçekten panelde çiziliyor olmalı — dosya var ama
+    // çağrılmıyorsa esnaf uyarıyı hiç görmez.
+    expect(oku("app/v/[slug]/OwnerAssistantPanel.tsx")).toContain("HesapBaglaSeridi");
   });
 });
 

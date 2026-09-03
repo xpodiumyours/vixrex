@@ -8,6 +8,7 @@ import { useOwnerActions, bonusAlanlariCikarVeKaydet } from "./hooks/useOwnerAct
 import { useFieldRestore } from "./hooks/useFieldRestore";
 import { ChatBubble } from "./components/ChatBubble";
 import { ChatTopBar } from "./components/ChatTopBar";
+import { HesapBaglaSeridi } from "./components/HesapBaglaSeridi";
 import { StageMeter } from "./components/StageMeter";
 import { UpNextList } from "./components/UpNextList";
 import { SectionProgressList } from "./components/SectionProgressList";
@@ -47,6 +48,14 @@ import { supabase } from "@/lib/supabase";
 
 interface Props {
   slug: string;
+  /** Vitrin bir hesaba bağlı değil — cihaz belleğinde duruyor. Uyarı şeridi
+   * eskiden "Sahip Çalışma Alanı" çekmecesindeydi; çekmece kalkınca buraya
+   * taşındı (Çalışma masası / Yön C). */
+  hesapBagliDegil?: boolean;
+  /** Sahip önizleme oturumundan kalan saniye; yalnız son 5 dakikada gösterilir. */
+  oturumSaniye?: number | null;
+  /** Taslak sürümü canlıdan ileride mi — "yayınlanmamış değişiklik var". */
+  yayinlanmamisDegisiklik?: boolean;
   draftData: Record<string, unknown>;
   assistantHandoff?: AssistantHandoffV1 | null;
   /** "Boş geç" denen isteğe bağlı alanlar — sunucudan kalıcı gelir (ADR 0002,
@@ -99,6 +108,9 @@ export default function OwnerAssistantPanel({
   urunAciklamasizSayisi = 0,
   haftalikPerformans = null,
   flowState = null,
+  hesapBagliDegil = false,
+  oturumSaniye = null,
+  yayinlanmamisDegisiklik = false,
 }: Props & { flowState?: Record<string, unknown> | null }) {
   const [acik, setAcik] = useState(() => Boolean(flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step));
   // Harita = "Tüm alanlar" paneli. Faz 4 (Casper, 2026-08-22): mobilde
@@ -573,6 +585,14 @@ export default function OwnerAssistantPanel({
             onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
           />
 
+          {hesapBagliDegil ? <HesapBaglaSeridi slug={slug} /> : null}
+
+          {oturumSaniye !== null && oturumSaniye < 300 ? (
+            <p className="border-b border-white/10 px-4 py-2 text-[11px] font-semibold text-amber-400">
+              Oturunun bitmesine az kaldı — değişikliklerin kayıtlı.
+            </p>
+          ) : null}
+
           <div className="min-h-0 flex-1 overflow-y-auto">
             <StageMeter
               dolulugu={dolulugu}
@@ -657,6 +677,12 @@ export default function OwnerAssistantPanel({
                 <span className="text-[10px] text-white/30">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
               </button>
             </div>
+
+            <p className="px-4 pb-1 pt-3 text-[11px] font-semibold text-slate-400">
+              {yayinlanmamisDegisiklik
+                ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."
+                : "Vitrinin yayındaki hâliyle aynı."}
+            </p>
 
             <PublishBar
               yayinlaniyor={actions.yayinlaniyor}
