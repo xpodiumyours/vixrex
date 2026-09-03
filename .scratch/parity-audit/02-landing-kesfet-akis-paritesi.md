@@ -100,3 +100,12 @@ tam süit 1005+1 (tek fail önceden-kırık `owner-ui-contract`), eslint+tsc tem
 2. Karar başına küçük PR: kod + istisna listesi güncellemesi + bekçi yeşil.
 3. Kapılar her PR'da: `npm run lint`, `npx tsc --noEmit`, `npm run test`, `dart analyze`, ilgili `flutter test`.
 4. Canlı yan-yana foto: `.\dev.ps1` (`:5000` + `:3000`) ile aynı girdilerle — `report.md` durum-eşitleme tablosundaki reçeteyle (ad/iş/WhatsApp/il/ilçe/adres aynı, GPS kapalı).
+
+## Canlı doğrulama + EŞİTLEME KAPANIŞI (2026-09-03)
+
+Üç akış `03-canli-dogrulama/` altında doğrulandı (bkz. `rapor.md`): landing GEÇTİ
+(desktop + mobil), niyet sorusu GEÇTİ (web piksel + Flutter widget 4/4),
+Keşfet GEÇTİ (canlı veriyle birebir). `/v/:slug` kapsam dışı bırakıldı
+(kullanıcı kararı). Parite çalışması burada bitti — kalan işler (`giris`
+`aria-busy`, 15 flutter baz faili, `AppEmptyState` taşması, yasal-onay
+etiketleri) ayrı işler olarak ilgili alanlarda duruyor.
