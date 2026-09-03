@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { KesfetIkonu, StorefrontIkonu } from "@/components/site/icons";
+import { SharedVixrexAssistant } from "@/components/vixrex/SharedVixrexAssistant";
 
 /** Vixrex maskotu — Vixrex'i temsil eden tek simge bu. Emoji veya soyut
  * ikon KOYULMAZ: maskot aynı zamanda uygulamanın logosu. */
@@ -34,14 +35,48 @@ const NAV = [
   // Flutter'da "Vixrex" ayrı bir ekran; Next.js'te henüz karşılığı yok, madde
   // /app'e gidiyor. Eşleşmesi "Vitrinim" ile aynı olduğu için ikisi birden mavi
   // yanıyordu. Kendi sayfası açılana kadar aktif durumu Vitrinim'e bırakıyor.
-  { href: "/app", label: "Vixrex", icon: <MaskotIkonu boyut={20} />, match: () => false },
+  // Flutter'da "Vixrex" shell'in ayri bir sekmesi. Web'de de aynisi olsun
+  // diye bu madde gezinme yapmaz, asistan panelini yerinde acar.
+  { href: null, label: "Vixrex", icon: <MaskotIkonu boyut={20} />, match: () => false },
   { href: "/app/profil", label: "Profil", icon: <KisiIkonu />, match: (p: string) => p.startsWith("/app/profil") || p.startsWith("/app/hesap") || p.startsWith("/app/ayarlar") || p.startsWith("/app/bildirimler") },
-] as Array<{ href: string; label: string; icon: ReactNode; match: (p: string) => boolean }>;
+] as Array<{ href: string | null; label: string; icon: ReactNode; match: (p: string) => boolean }>;
+
+/** Vixrex Asistan paneli — Flutter'daki Vixrex sekmesinin web karsiligi.
+ * Menuden acilir, sayfadan ayrilmaz. */
+function AsistanPaneli({ kapat }: { kapat: () => void }) {
+  const router = useRouter();
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/60" role="dialog" aria-modal="true" aria-label="Vixrex Asistan">
+      <button type="button" aria-label="Paneli kapat" className="flex-1 cursor-default" onClick={kapat} />
+      <div className="flex h-full w-full max-w-[460px] flex-col overflow-y-auto border-l border-white/10 bg-[#0B1730]">
+        <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
+          <MaskotIkonu boyut={28} />
+          <span className="flex-1 text-[15px] font-black text-white">Vixrex Asistan</span>
+          <button
+            type="button"
+            onClick={kapat}
+            aria-label="Kapat"
+            className="rounded-lg px-2 py-1 text-white/60 hover:bg-white/10 hover:text-white"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <SharedVixrexAssistant
+          onBrowse={() => {
+            kapat();
+            router.push("/kesfet");
+          }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [q, setQ] = useState("");
+  const [asistanAcik, setAsistanAcik] = useState(false);
 
   function onSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -54,6 +89,7 @@ export function AppSidebar() {
   }
 
   return (
+    <>
     <aside className="hidden w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#0B1730] md:flex">
       <div className="flex h-[64px] items-center gap-3 border-b border-white/10 px-5">
         <MaskotIkonu boyut={32} />
@@ -77,14 +113,20 @@ export function AppSidebar() {
       <nav className="flex-1 space-y-1 px-3">
         {NAV.map((item) => {
           const active = item.match(pathname);
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-bold transition-colors ${active ? "bg-[#147DFF] text-white" : "text-white/70 hover:bg-white/5 hover:text-white"}`}
-            >
+          const sinif = `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] font-bold transition-colors ${active ? "bg-[#147DFF] text-white" : "text-white/70 hover:bg-white/5 hover:text-white"}`;
+          const govde = (
+            <>
               <span className="flex h-5 w-5 items-center justify-center">{item.icon}</span>
               {item.label}
+            </>
+          );
+          return item.href === null ? (
+            <button key={item.label} type="button" onClick={() => setAsistanAcik(true)} className={sinif}>
+              {govde}
+            </button>
+          ) : (
+            <Link key={item.label} href={item.href} className={sinif}>
+              {govde}
             </Link>
           );
         })}
@@ -94,22 +136,38 @@ export function AppSidebar() {
         <p className="text-[11px] font-bold text-white/30">v1.0.0</p>
       </div>
     </aside>
+    {asistanAcik ? <AsistanPaneli kapat={() => setAsistanAcik(false)} /> : null}
+    </>
   );
 }
 
 export function AppBottomNav() {
   const pathname = usePathname();
+  const [asistanAcik, setAsistanAcik] = useState(false);
   return (
+    <>
     <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-white/10 bg-[#0B1730] px-2 py-1 md:hidden">
       {NAV.map((item) => {
         const active = item.match(pathname);
-        return (
-          <Link key={item.label} href={item.href} className={`flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[11px] font-bold ${active ? "text-[#147DFF]" : "text-white/60"}`}>
+        const sinif = `flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[11px] font-bold ${active ? "text-[#147DFF]" : "text-white/60"}`;
+        const govde = (
+          <>
             <span className="flex h-5 w-5 items-center justify-center">{item.icon}</span>
             {item.label}
+          </>
+        );
+        return item.href === null ? (
+          <button key={item.label} type="button" onClick={() => setAsistanAcik(true)} className={sinif}>
+            {govde}
+          </button>
+        ) : (
+          <Link key={item.label} href={item.href} className={sinif}>
+            {govde}
           </Link>
         );
       })}
     </nav>
+    {asistanAcik ? <AsistanPaneli kapat={() => setAsistanAcik(false)} /> : null}
+    </>
   );
 }
