@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
-import type { VitrinField } from "@/lib/vitrinFieldSchema";
+import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
 import type { Mesaj } from "./useOwnerChat";
 
 interface Deps {
@@ -17,6 +17,14 @@ interface Deps {
 interface FieldRestoreHook {
   geriAliniyor: boolean;
   canliyaDondur: () => Promise<void>;
+  /**
+   * Faz 5 (Çalışma masası / Yön C, 2026-09-03): motorun tek cümleden
+   * birden fazla alanı birden doldurduğu durumda, onay kartındaki
+   * "Geri al" hepsini birden canlı hâline döndürür. `canliyaDondur`
+   * yalnız o an SEÇİLİ tek alanı bilir; bu, seçimden bağımsız, anahtar
+   * listesiyle çalışır.
+   */
+  coklaCanliyaDondur: (anahtarlar: string[]) => Promise<void>;
 }
 
 export function useFieldRestore({
@@ -88,5 +96,60 @@ export function useFieldRestore({
     }
   }, [slug, seciliAlan, mesajEkle, setAlan, setGiris, router]);
 
-  return { geriAliniyor, canliyaDondur };
+  const coklaCanliyaDondur = useCallback(
+    async (anahtarlar: string[]) => {
+      const alanlar = anahtarlar
+        .map((a) => FIELD_BY_KEY.get(a))
+        .filter((a): a is VitrinField => Boolean(a));
+      if (alanlar.length === 0) return;
+      setGeriAliniyor(true);
+
+      try {
+        const sonuclar = await Promise.all(
+          alanlar.map(async (alan) => {
+            const yanit = await fetch("/api/owner-draft-restore", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                slug,
+                anahtar: alan.anahtar,
+                clientId: taslakClientId(),
+              }),
+            });
+            const govde = (await yanit.json()) as { hata?: string; deger?: unknown };
+            return { alan, ok: yanit.ok, govde };
+          })
+        );
+
+        for (const { alan, ok, govde } of sonuclar) {
+          if (!ok) continue;
+          setAlan(alan.kolon, govde.deger);
+          if (seciliAnahtarRef.current === alan.anahtar) {
+            setGiris(
+              alan.tip === "acikKapali" ||
+                govde.deger === null ||
+                govde.deger === undefined
+                ? ""
+                : String(govde.deger)
+            );
+          }
+        }
+
+        const basarili = sonuclar.filter((s) => s.ok).map((s) => s.alan.etiket);
+        if (basarili.length === 0) {
+          mesajEkle("asistan", "Geri alınamadı, tekrar dener misin?");
+          return;
+        }
+        mesajEkle("asistan", `${basarili.join(", ")} canlı hâline döndürüldü.`);
+        router.refresh();
+      } catch {
+        mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+      } finally {
+        setGeriAliniyor(false);
+      }
+    },
+    [slug, mesajEkle, setAlan, setGiris, router]
+  );
+
+  return { geriAliniyor, canliyaDondur, coklaCanliyaDondur };
 }

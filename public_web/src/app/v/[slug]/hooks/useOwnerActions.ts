@@ -376,7 +376,22 @@ export function useOwnerActions({
           mesajEkle("asistan", "Kaydedemedim, tekrar dener misin?");
           return;
         }
-        mesajEkle("asistan", sonuc.message);
+        // Faz 5 (Çalışma masası / Yön C, 2026-09-03): motor cümleyi kendi
+        // çözüp alanı doldurduğunda düz "Kaydettim: X" balonu yerine onay
+        // kartı çıkar — esnaf "Doğru" ile onaylar ya da "Geri al" ile
+        // hepsini birden canlı hâline döndürür (bkz.
+        // useFieldRestore.coklaCanliyaDondur). `sonuc.message` zaten
+        // "Kaydettim: <etiket> → <değer>" biçiminde — metin değişmedi,
+        // yalnız görünümü (sistemIkon) ve eylemleri (hizliCevaplar) eklendi.
+        mesajEkle(
+          "asistan",
+          sonuc.message,
+          [
+            { label: "Doğru", payload: "onay_tamam" },
+            { label: "Geri al", payload: `geri_al:${kaydedilen.join(",")}` },
+          ],
+          "✅"
+        );
         router.refresh();
         alanaGecVeyaBitir(kaydedilen[kaydedilen.length - 1], tazeTaslak);
       } catch {

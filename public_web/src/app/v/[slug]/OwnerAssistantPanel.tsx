@@ -206,6 +206,19 @@ export default function OwnerAssistantPanel({
     if (payload === "ilk_eksik_alana_git") {
       const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
       if (ilkEksik) alanSec(ilkEksik.anahtar);
+      return;
+    }
+    // Faz 5 (Çalışma masası / Yön C): onay kartındaki "Geri al" —
+    // motorun tek cümleden doldurduğu tüm alanları birden canlı hâline
+    // döndürür (bkz. useOwnerActions.gonder, useFieldRestore.coklaCanliyaDondur).
+    // "Doğru" için ayrı bir dal YOK — kayıt zaten olmuş, düğme yalnız
+    // onayı görünür kılar.
+    if (payload.startsWith("geri_al:")) {
+      const anahtarlar = payload
+        .slice("geri_al:".length)
+        .split(",")
+        .filter(Boolean);
+      if (anahtarlar.length > 0) void fieldRestore.coklaCanliyaDondur(anahtarlar);
     }
   };
 
