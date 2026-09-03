@@ -15,6 +15,23 @@ parçası sessizce devre dışı bırakıldı ve doğrudan main'e alındı — C
 canlıda fark etti, saatlerce token yakıldı, sonuç güvensizlik oldu. Bkz.
 `~/.claude/projects/C--Users-Casper/memory/once-sor-onay-bekle.md`.
 
+### Görsel/UI hatalarında: önce canlı doğrula, sonra "düzelttim" de (2026-09-03, Casper)
+
+Bir UI/görsel hatayı (ekran görüntüsüyle bildirilen, "kutu kaymış",
+"boşluk yanlış" tarzı) koda bakıp tahminle düzeltip commit etme. Önce
+Browser pane / preview ile canlı aç, sorunu kendi gözünle gör, düzeltmeyi
+uyguladıktan sonra AYNI şekilde tekrar bak ve doğrula — ancak öyle "düzelttim"
+de. Canlı doğrulama gerçekten mümkün değilse (ör. sandbox'tan Supabase'e ağ
+erişimi yok), bunu açıkça söyle ve Casper'dan ekran görüntüsü/canlı bakış
+iste — kör tahminle "olması gerekir" diyerek commit atma.
+
+Neden: Aynı gün içinde bu yüzden iki uzun oturum (807 ve 461 mesaj) büyük
+ölçüde verimsiz soru-cevap döngüsüne girdi — biri kısmi/kozmetik bir
+düzeltmeyi "tam çözmedi" itirafıyla sundu, diğeri ekran görüntüsünden
+tahmin yürütüp hangi kutudan bahsedildiğini defalarca sordu. Canlı
+doğrulama araçları (Browser pane) zaten mevcut; kullanılmaması gereksiz
+tur ve token'a mal oluyor.
+
 ## What this repo is
 
 VixRex — a platform that lets small businesses run a digital storefront (`vitrin`) without writing code. Two independently deployed apps share one Supabase (PostgreSQL) database:
