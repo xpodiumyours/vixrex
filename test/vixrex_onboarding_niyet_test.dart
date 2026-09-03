@@ -121,4 +121,11 @@ void main() {
 
     expect(pickerCalls, ['Giyim']);
   });
+
+  test('baglaniyor baslangicta false (Akış 3: baglama etiketi katalogdan)', () {
+    // hesabiBagla() Supabase gerektirir — burada yalnız başlangıç
+    // durumu kilitlenir; düğme etiketi baglaniyor'a göre seçilir.
+    expect(onboarding.baglaniyor, isFalse);
+    expect(onboarding.busy, isFalse);
+  });
 }

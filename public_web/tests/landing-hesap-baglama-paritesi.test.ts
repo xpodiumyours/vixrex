@@ -8,10 +8,21 @@ const oku = (yol: string) =>
 describe("landing Flutter hesap bağlama paritesi", () => {
   it("yayın sonrası cihaz bağlı uyarısını ve Google kimlik bağlamayı gösterir", () => {
     const kaynak = oku("components/landing/LandingAsistanSohbeti.tsx");
-    expect(kaynak).toContain("Vitrinini hesabına bağla");
-    expect(kaynak).toContain("bu cihaza bağlı");
+    // Metinler katalogdan gelir (Akış 3 paritesi) — bileşende literal
+    // aranmaz, okunan anahtar aranır; Türkçe gövde katalogda doğrulanır.
+    expect(kaynak).toContain("vixRexMesajlari.hesap_bagla_baslik");
+    expect(kaynak).toContain("vixRexMesajlari.hesap_bagla_aciklama");
+    expect(kaynak).toContain("vixRexMesajlari.hesap_bagla_buton");
     expect(kaynak).toContain("supabase.auth.linkIdentity");
     expect(kaynak).toContain("sonuc.yonlendir");
+    const katalog = JSON.parse(
+      readFileSync(resolve(__dirname, "../../shared/vixrex_mesajlar.json"), "utf-8"),
+    ) as { mesajlar: { anahtar: string; metin: string }[] };
+    const metinler = Object.fromEntries(
+      katalog.mesajlar.map((m) => [m.anahtar, m.metin]),
+    );
+    expect(metinler.hesap_bagla_baslik).toContain("Vitrinini hesabına bağla");
+    expect(metinler.hesap_bagla_aciklama).toContain("bu cihaza bağlı");
   });
 
   it("Google dönüşünde sahip çereziyle aynı vitrini kalıcı hesaba bağlar", () => {

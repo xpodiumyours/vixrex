@@ -44,6 +44,14 @@ void main() {
       chat.indexOf('if (step == VixRexOnboardingStep.done)'),
     );
     expect(doneBlok, contains('hesapKorumasiz'));
-    expect(doneBlok, contains('Google ile bağla'));
+    // Akış 3 paritesi (2026-09-03): etiket katalogdan okunuyor — Web ile
+    // aynı anahtar (tek kaynak). Türkçe gövde üretilmiş dosyada doğrulanır.
+    expect(doneBlok, contains("vixRexMesajlari['hesap_bagla_buton']"));
+    final katalog = oku('lib/config/vixrex_mesajlar.g.dart');
+    expect(katalog, contains("'hesap_bagla_buton': 'Google ile bağla'"));
+    expect(
+      katalog,
+      contains("'hesap_bagla_baslik': 'Vitrinini hesabına bağla'"),
+    );
   });
 }

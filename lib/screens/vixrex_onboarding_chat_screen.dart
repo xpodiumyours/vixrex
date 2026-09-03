@@ -592,20 +592,18 @@ class _VixRexOnboardingChatScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Vitrinini hesabına bağla',
-                      style: TextStyle(
+                    Text(
+                      vixRexMesajlari['hesap_bagla_baslik']!,
+                      style: const TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: AppColors.darkText,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Şu an vitrinin bu cihaza bağlı. Telefonunu '
-                      'değiştirirsen ya da tarayıcı verilerini silersen '
-                      'erişimini kaybedersin.',
-                      style: TextStyle(
+                    Text(
+                      vixRexMesajlari['hesap_bagla_aciklama']!,
+                      style: const TextStyle(
                         fontSize: 12,
                         height: 1.35,
                         color: AppColors.mutedText,
@@ -615,7 +613,13 @@ class _VixRexOnboardingChatScreenState
                     OutlinedButton.icon(
                       onPressed: busy ? null : _onboarding.hesabiBagla,
                       icon: const Icon(Icons.link_rounded, size: 18),
-                      label: const Text('Google ile bağla'),
+                      // Bağlama sürerken etiket değişir (Web'deki
+                      // "Google açılıyor…" karşılığı).
+                      label: Text(
+                        _onboarding.baglaniyor
+                            ? vixRexMesajlari['hesap_bagla_yukleniyor']!
+                            : vixRexMesajlari['hesap_bagla_buton']!,
+                      ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
                         side: const BorderSide(color: AppColors.border),

@@ -18,7 +18,10 @@ void main() {
     // yüzeyde de katalogdan konuşsun diye niyet_kategori_baslik/aciklama,
     // niyet_geri_buton, niyet_anlat_buton, niyet_serbest_yertutucu,
     // niyet_ack eklendi — 106 → 112.
+    // Akış 3 paritesi (2026-09-03): yayın-sonrası hesap bağlama paneli iki
+    // yüzeyde de katalogdan konuşsun diye hesap_bagla_baslik/aciklama/
+    // buton/yukleniyor/hata eklendi — 112 → 117.
     // Sayı kilidi bilerek duruyor: katalog sessizce büyümesin.
-    expect(vixRexMesajlari.length, 112);
+    expect(vixRexMesajlari.length, 117);
   });
 }

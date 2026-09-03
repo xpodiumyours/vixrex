@@ -86,6 +86,11 @@ class VixRexOnboardingController extends ChangeNotifier {
   bool _busy = false;
   bool get busy => _busy;
 
+  /// Google kimlik bağlama sürüyor (Web'deki `hesapBaglaniyor` karşılığı).
+  /// [_busy] genel meşguliyet, bu yalnız bağlama düğmesinin etiketidir.
+  bool _baglaniyor = false;
+  bool get baglaniyor => _baglaniyor;
+
   String? _error;
   String? get error => _error;
 
@@ -423,11 +428,13 @@ class VixRexOnboardingController extends ChangeNotifier {
   Future<void> hesabiBagla() async {
     if (_busy) return;
     _busy = true;
+    _baglaniyor = true;
     _error = null;
     _notify();
     final sonuc = await const AuthService().hesabiGoogleaBagla();
     if (_disposed) return;
     _busy = false;
+    _baglaniyor = false;
     if (sonuc.isFailure) {
       _error = sonuc.failure!.message;
       _notify();

@@ -304,6 +304,12 @@ const Map<String, String> vixRexMesajlari = {
       'İşini birkaç cümleyle anlat (opsiyonel) — WhatsApp\'ını, adresini, çalışma saatlerini yazarsan, vitrinini seçtiğinde otomatik dolduracağım.',
   'niyet_ack':
       'Anlattıklarını not aldım — vitrinini seçtiğinde bunlardan otomatik dolduracağım.',
+  'hesap_bagla_baslik': 'Vitrinini hesabına bağla',
+  'hesap_bagla_aciklama':
+      'Şu an vitrinin bu cihaza bağlı. Telefonunu değiştirirsen ya da tarayıcı verilerini silersen erişimini kaybedersin.',
+  'hesap_bagla_buton': 'Google ile bağla',
+  'hesap_bagla_yukleniyor': 'Google açılıyor…',
+  'hesap_bagla_hata': 'Google hesabı bağlanamadı.',
   'netlestirme_sor': '{etiket} için ne yazayım? Örn: {ipucu}',
   'netlestirme_sor_genel': '{etiket} için hangi değeri yazayım?',
   'netlestirme_onay':

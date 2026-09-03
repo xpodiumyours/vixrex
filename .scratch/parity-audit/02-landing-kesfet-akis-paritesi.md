@@ -70,7 +70,22 @@ ayrışma riski ("KASITLI KOPYA" notu) artık testle kilitli.
 | Hesap bağlama | Sahiplik panelinde ayrı yüzey (`app_router` misafir uyarısı `:470-468`) | Bitiş ekranında inline panel: `Vitrinini hesabına bağla` + `Google ile bağla` (`:738-756`) — Flutter landing'inde yok (istisnada: `landingEsitlikIstisnalariWeb.ts:250-283`) |
 | Kayıtsız bitiş | — | `ASISTAN_BITIS.dugme` → `/kayit` (`:725-733`) |
 
-**KARAR GEREKİYOR:** Hesap bağlama Web'deki gibi bitiş ekranına mı taşınsın (Flutter'a eklenir), yoksa Web Flutter'daki gibi sahiplik paneline mi alınsın? Web'deki metinler istisnada duruyor — karar sonrası istisna silinir ya da Flutter'a eklenir.
+**KARAR (2026-09-03, Casper): olağan kullanıcı sırası → UYGULANDI (aynı gün).**
+Bitiş + hesap bağlama zaten iki tarafta da AYNI panelmiş (spec'teki "Flutter'da
+yok" tespiti bayattı — metinler onboarding done adımındaymış, çıkarıcı kapsamı
+dışında). Yapılan: 5 metin kataloğa (`hesap_bagla_baslik/aciklama/buton/
+yukleniyor/hata`, kilit 112→117); Flutter düğmeye `baglaniyor` yükleniyor
+etiketi eklendi (Web'deki "Google açılıyor…" karşılığı — Flutter'da yoktu);
+Web 4 literal + hata-yedeği kataloğa bağlandı; 5 istisna kaydı silindi;
+`landing-hesap-baglama-paritesi` + `hesap_baglama_test` anahtar-üzerinden
+doğrulamaya çevrildi (niyet güçlendi).
+- Bilinçli farklar (dokunulmadı): bitiş yönü platforma özel (Flutter →
+native owner workspace, Web → `/v/:slug?owner=true`); "Detaylı formu aç"
+Flutter'da HomeShell sekmesine, Web'de vitrin profil sekmesine gider;
+Flutter hata metinleri nedene özel, Web yedekte genel. Yasal-onay link
+etiketleri (`Aydınlatma Metni` vb.) ayrı yüzey — istisnada duruyor.
+- Kapılar: analyze temiz, Dart ilgili 6 dosya 42/42, web parite 6 dosya 45/45,
+tam süit 1005+1 (tek fail önceden-kırık `owner-ui-contract`), eslint+tsc temiz.
 
 ## Bilinçli farklar (dokunulmaz)
 

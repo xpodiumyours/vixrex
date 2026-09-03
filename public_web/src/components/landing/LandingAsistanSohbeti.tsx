@@ -338,7 +338,7 @@ export function LandingAsistanSohbeti({
       },
     });
     if (error) {
-      setHata(error.message || "Google hesabı bağlanamadı.");
+      setHata(error.message || vixRexMesajlari.hesap_bagla_hata);
       setHesapBaglaniyor(false);
     }
   }
@@ -738,11 +738,10 @@ export function LandingAsistanSohbeti({
             {hesapKorumasiz ? (
               <div className="rounded-xl border border-lp-primary/40 bg-lp-primary/[0.08] p-3">
                 <p className="text-[12px] font-black text-lp-text">
-                  Vitrinini hesabına bağla
+                  {vixRexMesajlari.hesap_bagla_baslik}
                 </p>
                 <p className="mt-1 text-[10px] leading-[1.45] text-lp-muted">
-                  Şu an vitrinin bu cihaza bağlı. Telefonunu değiştirirsen ya da
-                  tarayıcı verilerini silersen erişimini kaybedersin.
+                  {vixRexMesajlari.hesap_bagla_aciklama}
                 </p>
                 <button
                   type="button"
@@ -750,7 +749,7 @@ export function LandingAsistanSohbeti({
                   disabled={hesapBaglaniyor}
                   className="mt-2 flex w-full items-center justify-center rounded-xl bg-lp-primary px-3 py-2.5 text-[12px] font-black text-lp-on-primary disabled:opacity-50"
                 >
-                  {hesapBaglaniyor ? "Google açılıyor…" : "Google ile bağla"}
+                  {hesapBaglaniyor ? vixRexMesajlari.hesap_bagla_yukleniyor : vixRexMesajlari.hesap_bagla_buton}
                 </button>
               </div>
             ) : null}
