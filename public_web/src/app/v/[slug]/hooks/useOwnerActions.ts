@@ -419,16 +419,23 @@ export function useOwnerActions({
 
         let tazeTaslak = { ...yerelTaslak };
         const kaydedilen: string[] = [];
+        const kaydedilenSatirlar: string[] = [];
+        const basarisizEtiketler: string[] = [];
         for (const { anahtar, kolon, deger } of cozulen) {
+          const alan = FIELD_BY_KEY.get(anahtar);
           const yanit = await fetch("/api/owner-draft", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ slug, anahtar, deger, clientId: taslakClientId() }),
           });
-          if (!yanit.ok) continue;
+          if (!yanit.ok) {
+            basarisizEtiketler.push(alan?.etiket ?? anahtar);
+            continue;
+          }
           setAlan(kolon, deger as string | boolean);
           tazeTaslak = { ...tazeTaslak, [kolon]: deger };
           kaydedilen.push(anahtar);
+          kaydedilenSatirlar.push(`Kaydettim: ${alan?.etiket ?? anahtar} → ${String(deger)}`);
           alaniParlat(anahtar);
         }
 
@@ -440,12 +447,18 @@ export function useOwnerActions({
         // çözüp alanı doldurduğunda düz "Kaydettim: X" balonu yerine onay
         // kartı çıkar — esnaf "Doğru" ile onaylar ya da "Geri al" ile
         // hepsini birden canlı hâline döndürür (bkz.
-        // useFieldRestore.coklaCanliyaDondur). `sonuc.message` zaten
-        // "Kaydettim: <etiket> → <değer>" biçiminde — metin değişmedi,
-        // yalnız görünümü (sistemIkon) ve eylemleri (hizliCevaplar) eklendi.
+        // useFieldRestore.coklaCanliyaDondur). Kart metni `sonuc.message`
+        // (pipeline'ın kayıttan ÖNCEKİ tahmini) DEĞİL, yukarıdaki döngüden
+        // dönen gerçek kayıt sonucundan (`kaydedilenSatirlar`) üretilir —
+        // aksi halde kısmen başarısız bir kayıtta esnafa hiç kaydedilmemiş
+        // bir alanı da "kaydettim" diye göstermiş oluruz.
+        const kayitMesaji =
+          basarisizEtiketler.length > 0
+            ? `${kaydedilenSatirlar.join("\n")}\n\nKaydedemedim: ${basarisizEtiketler.join(", ")}`
+            : kaydedilenSatirlar.join("\n");
         mesajEkle(
           "asistan",
-          sonuc.message,
+          kayitMesaji,
           [
             { label: "Doğru", payload: "onay_tamam" },
             { label: "Geri al", payload: `geri_al:${kaydedilen.join(",")}` },
