@@ -42,20 +42,13 @@ class ShellSidebar extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.brandSoft,
-                    borderRadius: BorderRadius.circular(AppColors.radius12),
-                  ),
-                  padding: const EdgeInsets.all(4),
-                  child: Image.asset(
-                    ShellSidebarItem.maskotYolu,
-                    width: 26,
-                    height: 26,
-                    fit: BoxFit.contain,
-                  ),
+                // Maskot kendi basina durur — arkasina renkli kutu KOYULMAZ,
+                // yoksa yapistirilmis bir rozet gibi gorunuyor.
+                Image.asset(
+                  ShellSidebarItem.maskotYolu,
+                  width: 34,
+                  height: 34,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(width: AppColors.spacing12),
                 const Text('Vixrex', style: AppTextStyles.sectionTitle),
@@ -122,7 +115,7 @@ class ShellSidebarItem {
   /// Vixrex maskotu — Vixrex'i temsil eden tek simge bu. Yerine soyut bir
   /// ikon (assistant, konuşma balonu) KOYULMAZ: maskot aynı zamanda
   /// uygulamanın logosu, web ile aynı görünmeli.
-  static const String maskotYolu = 'assets/images/vixrex_v_crystal_mascot.png';
+  static const String maskotYolu = 'assets/images/vixrex_maskot_ikon.png';
 
   final IconData icon;
   final IconData selectedIcon;

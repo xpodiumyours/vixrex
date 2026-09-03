@@ -26,7 +26,7 @@ function KisiIkonu() {
 function MaskotIkonu({ boyut = 20 }: { boyut?: number }) {
   return (
     <img
-      src="/images/vixrex_v_crystal_mascot.png"
+      src="/images/vixrex_maskot_ikon.png"
       alt=""
       aria-hidden="true"
       className="object-contain"
@@ -64,9 +64,7 @@ export function KesfetYanMenu({
           aria-label="Vixrex ana sayfa"
           className="flex items-center gap-3 border-b border-lp-border px-5 py-6 text-lp-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lp-primary"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-lp-primary/15">
-            <MaskotIkonu boyut={26} />
-          </span>
+          <MaskotIkonu boyut={34} />
           <span className="text-[18px] font-black">Vixrex</span>
         </Link>
 
