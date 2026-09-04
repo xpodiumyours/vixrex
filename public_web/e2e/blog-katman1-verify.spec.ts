@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const slug = "kuafor-icin-internet-sitesi";
 
-async function blogAkisiniDogrula(page: Parameters<typeof test>[0] extends never ? never : any, ad: string) {
+async function blogAkisiniDogrula(page: Page, ad: string) {
   await page.goto("/blog");
   await expect(page.getByRole("heading", { name: "Esnaf için dijital rehber" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Kuaför salonu için internet sitesi/ })).toBeVisible();
