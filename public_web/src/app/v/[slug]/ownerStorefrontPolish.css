@@ -4,9 +4,8 @@
  * canlı/müşteri vitrini etkilenmez.
  */
 
-/* Uzun "örnek görünüm" etiketi hero genişliğini belirleyen ana içerik gibi
- * davranmasın. Dürüstlük etiketi kalır ama durum rozeti ve işletme kimliğini
- * sıkıştırmayacak kadar kompakt olur. */
+/* Dürüstlük etiketi görünür kalır ama hero kompozisyonunu belirleyen genişlik
+ * unsuru gibi davranmaz. */
 body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
   max-width: 10.5rem;
   padding: 0.35rem 0.55rem;
@@ -15,33 +14,41 @@ body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
   letter-spacing: 0.04em;
 }
 
-/* Sahiplikte asistan bir overlay'dir; kapalıyken vitrin, müşterinin gördüğü
- * genişliği kaybetmemeli. 1024px altındaki telefon/tablet görünümünde hero
- * zorla tek sütun tutulur ve eylemler tam vitrin genişliğine yayılır. */
-@media (max-width: 1023px) {
+/* Önceki denemede grid sütunlarına müdahale etmek mobil hero'yu daha da
+ * daralttı. Mobilde grid hesabını tamamen devreden çıkarıp, public vitrinin
+ * tek sütun davranışını doğrudan blok akışıyla koruyoruz. */
+@media (max-width: 767px) {
   body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 {
-    grid-template-columns: minmax(0, 1fr) !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
   }
 
-  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:first-child {
-    width: 100%;
-    min-width: 0;
-    max-width: none;
+  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:first-child,
+  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:last-child {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
   }
 
   body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:last-child {
-    width: 100%;
-    min-width: 0 !important;
+    margin-top: 1.5rem;
+    display: flex;
     flex-direction: column;
   }
 
   body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:last-child > a {
-    width: 100%;
+    width: 100% !important;
   }
 
   body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="isletmeAdi"] {
     max-width: 100%;
     overflow-wrap: normal;
+    word-break: normal;
   }
 }
 
