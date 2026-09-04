@@ -25,6 +25,28 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
     return () => shell.classList.remove("vixrex-owner-assistant-shell");
   }, []);
 
+  const kapat = () => {
+    onKapat();
+
+    // OwnerAssistantPanel'ın eski mobil davranışında başlıktaki X yalnız
+    // `haritaAcik` state'ini kapatıyor, `acik` state'ini kapatmıyordu. Bu
+    // nedenle X ekranda hiçbir şey yapmıyormuş gibi kalıyordu. Parent iş
+    // akışını değiştirmeden, yalnız mobilde mevcut canonical Vixrex
+    // tetikleyicisini programatik olarak kapalı duruma geçiriyoruz. Böylece
+    // aynı toggle yolu kullanılır; ikinci bir açık/kapalı state üretilmez.
+    if (
+      typeof window !== "undefined" &&
+      !window.matchMedia("(min-width: 640px)").matches
+    ) {
+      window.requestAnimationFrame(() => {
+        const tetik = document.querySelector<HTMLButtonElement>(
+          'button[aria-label="Vixrex Asistan"][aria-expanded="true"]',
+        );
+        tetik?.click();
+      });
+    }
+  };
+
   return (
     <>
       <div
@@ -67,7 +89,7 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
 
           <button
             type="button"
-            onClick={onKapat}
+            onClick={kapat}
             className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.045] text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
             aria-label="Asistanı kapat"
           >
@@ -114,8 +136,17 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
             top: auto !important;
             bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
             width: auto !important;
-            max-height: min(78dvh, 720px) !important;
+            max-height: min(82dvh, 760px) !important;
             border-radius: 1.5rem 1.5rem 1.25rem 1.25rem !important;
+          }
+
+          /* Mobilde sohbet alanı sabit başlık/Sırada/composer arasında sıfıra
+           * kadar eziliyordu. Mesaj state'i doğru çalışsa bile kullanıcı
+           * gönderdiğini göremiyordu. Sohbete gerçek bir minimum görünür alan
+           * ayırıyoruz; taşan mesajlar kendi mevcut scroll alanında kalır. */
+          .vixrex-owner-assistant-shell > .vixrex-panel-kaydirici {
+            min-height: 8.5rem !important;
+            flex: 1 1 8.5rem !important;
           }
 
           /* Mobilde eski dolaşan SpotlightGuide ile yeni bottom-sheet aynı
