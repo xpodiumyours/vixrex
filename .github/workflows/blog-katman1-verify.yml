@@ -1,0 +1,47 @@
+name: TEMP — Blog Katman 1 doğrulama
+
+# Yalnız Katman 1 branch'inde, mevcut main lint hatasına takılmadan
+# tip/test/build kanıtı üretmek için geçici doğrulama workflow'u.
+# VERIFY tamamlanınca PR'dan silinecek; main'e girmeyecek.
+on:
+  push:
+    branches:
+      - feat/blog-omurga-katman-1
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Katman 1 — tip, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Tip kontrolü
+        run: npx tsc --noEmit
+
+      - name: Testler
+        run: npm run test
+
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
