@@ -6,7 +6,7 @@ import {
   BUSINESS_CATEGORIES,
   kategoriUrlParcasi,
 } from "@/lib/businessCategories";
-import { blogYayindaMi, yayindakiYazilar } from "@/data/blogYazilari";
+import { yayindakiYazilar } from "@/data/blogYazilari";
 
 export const revalidate = 300;
 
@@ -57,7 +57,10 @@ function escapeXml(value: string) {
 
 export async function GET() {
   try {
-    const { stores, products, articles } = await getSitemapData();
+    const [{ stores, products, articles }, vixrexBlogYazilari] = await Promise.all([
+      getSitemapData(),
+      yayindakiYazilar(),
+    ]);
     const baseUrl = getSiteUrl();
     const articleLastModByStore = new Map<string, string>();
     const productsByStoreId = new Map<
@@ -89,7 +92,7 @@ export async function GET() {
         }
       }
     }
-    
+
     // 2026-08-26 (#344): kök artık Flutter'a yönlenmiyor, gerçek bir sayfa.
     // Platform yüzeyleri de site haritasına girer — daha önce yalnız
     // /v/ içerik URL'leri vardı, platformun kendisi hiç yoktu.
@@ -113,13 +116,13 @@ export async function GET() {
       // affiliate programlarinin publisher dogrulamasi buradan geciyor.
       { yol: "/hakkimizda", oncelik: "0.5", siklik: "monthly" },
       { yol: "/iletisim", oncelik: "0.5", siklik: "monthly" },
-      // Blog YAYIN ANAHTARINA bağlı: hiç yayında yazı yokken `/blog` 404
-      // veriyor, o yüzden site haritasına da hiçbir şey eklenmez. Var
-      // olmayan adres bildirmek arama motoruna yanlış sinyal verir.
-      ...(blogYayindaMi()
+      // Blog yalnız merkezi tabloda yayınlanmış en az bir Vixrex yazısı varsa
+      // görünür. Taslaklar RLS + explicit status filtresi nedeniyle buraya
+      // gelemez; boş blog mevcut davranışındaki gibi sitemap'e eklenmez.
+      ...(vixrexBlogYazilari.length > 0
         ? [
             { yol: "/blog", oncelik: "0.6", siklik: "weekly" },
-            ...yayindakiYazilar().map((yazi) => ({
+            ...vixrexBlogYazilari.map((yazi) => ({
               yol: `/blog/${yazi.slug}`,
               oncelik: "0.5",
               siklik: "monthly",
