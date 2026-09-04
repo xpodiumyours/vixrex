@@ -1,0 +1,67 @@
+name: Blog Katman 2 Verify
+
+on:
+  push:
+    branches:
+      - feat/blog-kutuphanesi-katman-2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Katman 2 — tip, hedefli lint, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Katman 2 dosyalarında lint
+        run: >-
+          npx eslint
+          "src/app/(site)/blog/page.tsx"
+          "src/app/(site)/blog/[slug]/page.tsx"
+          "src/app/(site)/blog/konu/[topic]/page.tsx"
+          "src/app/(site)/blog/sektor/[sector]/page.tsx"
+          "src/app/api/vixrex-blog/admin-articles/route.ts"
+          "src/app/api/vixrex-blog/admin-upload/route.ts"
+          "src/app/sitemap.xml/route.ts"
+          "src/components/blog/BlogArticleCard.tsx"
+          "src/data/blogYazilari.ts"
+          "src/lib/blogTaxonomy.ts"
+          "src/lib/platformAdminAuth.ts"
+          "tests/blog-kutuphane-contract.test.ts"
+          "tests/blog-taxonomy.test.ts"
+          "tests/blog-yayin-anahtari.test.ts"
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Katman 1 + Katman 2 blog sözleşme testleri
+        run: >-
+          npx vitest run
+          tests/blog-yayin-anahtari.test.ts
+          tests/blog-kutuphane-contract.test.ts
+          tests/blog-taxonomy.test.ts
+
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
