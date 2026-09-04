@@ -4,6 +4,7 @@ Ana plan: `docs/kilitli-plan-blog-akilli-motor-dijital-carsi.md`
 Final entegrasyon kararı: `docs/kilitli-plan-final-entegrasyon-test-karari.md`
 Güvenli geri dönüş: `checkpoint/main-post-413-20260904`
 Aktif PR Katman 1: `#414`
+Aktif Katman 2 PR: `#415`
 Aktif Katman 2 branch'i: `feat/blog-kutuphanesi-katman-2`
 
 ## Katman 1 — Vixrex Blog Omurgası
@@ -58,7 +59,22 @@ Aktif Katman 2 branch'i: `feat/blog-kutuphanesi-katman-2`
 - [x] 2.3 BUILD — public veri katmanı konu/sektör/il/etiket filtreleri ve ilgili yazı sorgusuyla genişletildi
 - [x] 2.4 BUILD — `/blog/konu/[topic]`, `/blog/sektor/[sector]`, kütüphane kartları, kapak görselleri ve kontrollü sitemap bağlantıları eklendi
 - [x] 2.5 BUILD — merkezi kapak yükleme owner-session'dan ayrıldı; platform admin + mevcut 1600px/82 sıkıştırma çekirdeği kullanılıyor
-- [ ] Teknik VERIFY — test/type/build/migration güvenliği tamamlanmadan Katman 2 kapanmaz
+
+### Katman 2 Teknik VERIFY
+
+- [x] Secret sızıntı taraması geçti
+- [x] Supabase auth security config kontrolü geçti
+- [x] Şema üretim/sapma kontrolü geçti
+- [x] Katman 2 değişen dosyalarında hedefli lint geçti
+- [x] TypeScript `tsc --noEmit` geçti
+- [x] Katman 1 + Katman 2 blog sözleşme testleri geçti
+- [x] Production build geçti
+- [ ] Supabase migration zinciri sıfırdan + GRANT güvenlik bekçisi
+- [ ] Katman 2 migration canlı DB'ye kontrollü uygulama
+- [ ] Canlı DB metadata, relation RLS ve mevcut 2 taslağın yayın durumunu doğrulama
+- [ ] Katman 2 Teknik VERIFY tamamlandı
+
+Not: Genel Next.js lint yalnız main'de önceden bulunan `giris/page.tsx:23` hatasında kırmızı; Katman 2 değişen dosyalarının hedefli lint'i yeşil. Flutter genel biçim kontrolü de mevcut baseline farklarında kırmızı; Katman 2 Flutter dosyası değiştirmiyor.
 
 Araştırma: `docs/research/katman-2-merkezi-blog-kutuphanesi-arastirma.md`
 LOCK: `docs/research/katman-2-merkezi-blog-kutuphanesi-lock.md`
