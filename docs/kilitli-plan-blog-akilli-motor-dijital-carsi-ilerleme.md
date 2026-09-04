@@ -30,8 +30,9 @@ Aktif PR: `#414`
 - [x] İlk tam test turunda Katman 1 kaynaklı sitemap mock uyumsuzluğu bulundu ve fail-closed düzeltildi
 - [x] Katman 1 kapı testleri son turu — 7 dosya / 32 test geçti
 - [x] Production build — Next.js 16.2.11 production build başarıyla tamamlandı
+- [x] Kod seviyesinde public vitrin + Keşfet + Kirala/sahiplik regresyon kontrolü — tam test envanterinde Katman 1 dışı yalnız iki bilinen baseline kontrat hatası kaldı
 - [ ] Gerçek yayın satırıyla Preview mobil + masaüstü ekran doğrulaması
-- [ ] `/v/[slug]`, Keşfet, Kirala/sahiplik regresyon kontrolü
+- [ ] Preview üzerinde public vitrin + Keşfet + Kirala/sahiplik ekran smoke testi
 
 ### Baseline notları — Katman 1 kaynaklı değil
 
@@ -39,6 +40,11 @@ Aktif PR: `#414`
 - Tam Vitest turunda PR #413 sonrası main'de zaten bulunan iki kontrat beklentisi kırmızı: eski 36px maskot beklentisi ve owner-draft `SERVICE_ROLE` metin beklentisi. Katman 1 bu dosyalara dokunmuyor.
 - Tam test envanteri: 143 test dosyasından 141 geçti; 1022 testten 1019 geçti, 2 baseline hata ve 1 todo kaldı.
 - Flutter format kontrolü mevcut baseline biçim farklarında kırmızı; Katman 1 Flutter dosyası değiştirmiyor.
+
+### Preview engeli
+
+- Vercel `vixrex-public` ve `vixrex-app` son head için Hobby build-rate-limit nedeniyle yeni Preview üretmiyor.
+- Preview oluşmadan test amacıyla merkezi bir yazı `published` yapılmayacak; canlı DB şu an 2 taslak / 0 yayın olarak güvenli durumda.
 
 - [ ] DECIDE — geçen/kalan maddeler kullanıcıya sunulacak
 - [ ] MERGE — yalnız kullanıcı açık onay verirse
