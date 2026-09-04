@@ -21,6 +21,7 @@ import { resolveBusinessCategory } from "./businessCategories";
 import { findTimeRange, TIME_RANGE_REGEX } from "./workingHours";
 import { isAddressValid } from "./addressValidator";
 import { ilIlceCikar } from "./turkeyPlaceMatcher";
+import { seciliKimlikTelefonKestirmesiniCikar } from "./ownerSelectedInput";
 
 export interface SerbestMetinSonuc {
   whatsapp?: string; // "90XXXXXXXXXX"
@@ -86,6 +87,18 @@ export function serbestMetindenAlanlariCikar(paragraf: string): SerbestMetinSonu
   const telefonAdayi = paragraf.match(TELEFON_ADAYI_REGEX)?.[0] ?? "";
   const whatsapp = telefonAdayi ? telefonuNormallestir(telefonAdayi) : null;
   if (whatsapp) sonuc.whatsapp = whatsapp;
+
+  // Gerçek testte "Çarşı teknik servis 0542..." seçili kimlik sorusuna
+  // verilen kısa cevaptı. Genel çıkarıcı, telefon dışındaki "çarşı" ve
+  // "teknik servis" parçalarını sırasıyla adres/kategori sanıp yanlış
+  // alanlara yazıyordu. Etiketsiz kısa metin + sonda mobil numara deseni
+  // kimlik cevabı OLABİLİR; genel motor kimliği tahmin etmediği için burada
+  // en güvenli davranış yalnız kesin olan telefonu döndürmek ve kalan metni
+  // kategori/adrese dağıtmamaktır. Seçili alan kendi değerini ayrı bağlamda
+  // ownerSelectedInput üzerinden alır.
+  if (whatsapp && seciliKimlikTelefonKestirmesiniCikar(paragraf)) {
+    return sonuc;
+  }
 
   const kategori = resolveBusinessCategory(paragraf);
   if (kategori) sonuc.kategoriEtiketi = kategori.label;
