@@ -6,7 +6,7 @@ const KOK = resolve(__dirname, "..");
 const oku = (yol: string) => readFileSync(resolve(KOK, yol), "utf8");
 
 const migration = oku(
-  "../supabase/migrations/20260904193000_add_vixrex_blog_library_metadata.sql"
+  "../supabase/migrations/20260904195755_add_vixrex_blog_library_metadata.sql"
 );
 const kaynak = oku("src/data/blogYazilari.ts");
 
