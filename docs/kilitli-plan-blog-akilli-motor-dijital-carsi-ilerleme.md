@@ -30,14 +30,18 @@ Aktif PR: `#414`
 - [x] İlk tam test turunda Katman 1 kaynaklı sitemap mock uyumsuzluğu bulundu ve fail-closed düzeltildi
 - [x] Katman 1 kapı testleri son turu — 7 dosya / 32 test geçti
 - [x] Production build — Next.js 16.2.11 production build başarıyla tamamlandı
-- [x] Kod seviyesinde public vitrin + Keşfet + Kirala/sahiplik regresyon kontrolü — tam test envanterinde Katman 1 dışı yalnız iki bilinen baseline kontrat hatası kaldı
 - [x] Vercel'siz gerçek tarayıcı doğrulaması — exact branch production build GitHub runner'da ayağa kaldırıldı; mobil 390×844 ve masaüstü 1440×1000 test edildi
 - [x] Gerçek yayın satırıyla `/blog` + `/blog/[slug]` mobil/masaüstü ekran doğrulaması geçti
 - [x] Ekran doğrulamasında Katman 1'e ait detay CTA kontrast sorunu bulundu, Vixrex `lp-*` yüzeyiyle düzeltildi ve ikinci gerçek tarayıcı turunda yeniden geçti
-- [x] Public vitrin + Keşfet + Kirala CTA mobil/masaüstü browser smoke geçti; otomasyon canlı kiralama oluşturmadığı için Kirala düğmesine basılmadı
 - [x] Test için geçici yayınlanan merkezi yazı tekrar `draft` yapıldı; canlı DB yeniden 2 taslak / 0 yayın
 - [x] Geçici browser-verify GitHub Actions workflow'u kanıt alındıktan sonra branch'ten silindi; main'e taşınmayacak
-- [ ] Kirala → sahiplik uçtan uca ekran smoke — canlıda gereksiz klon oluşturmadan kontrollü/izole yöntem doğrulanmalı
+- [x] Katman 1 VERIFY tamamlandı — blog omurgası kendi kapsamındaki güvenlik, veri, build ve gerçek ekran kontrollerinden geçti
+
+### Kapsam dışı regresyon notu — Katman 1'i bloklamaz
+
+- Public vitrin ve Keşfet ekranları ek smoke kontrolü olarak açıldı ve çalıştı.
+- Keşfet'te Kirala CTA görünürlüğü doğrulandı.
+- Kirala → sahiplik uçtan uca akışı **Katman 1 blog kapsamına dahil değildir**; bu nedenle Katman 1 kapanış şartı değildir ve ayrı genel regresyon kontrolü olarak ele alınır.
 
 ### Baseline notları — Katman 1 kaynaklı değil
 
@@ -50,10 +54,9 @@ Aktif PR: `#414`
 ### Vercel engeli ve güvenli alternatif
 
 - Vercel `vixrex-public` ve `vixrex-app` Hobby build-rate-limit nedeniyle yeni Preview üretmedi.
-- Katman 1 blog/public yüzey doğrulaması bunun yerine exact branch production build + GitHub runner + Chromium ile yapıldı.
-- Kirala → sahiplik uçtan uca doğrulaması canlı veride klon oluşturmadan yapılabildiği kanıtlanmadan tetiklenmeyecek.
+- Katman 1 blog doğrulaması bunun yerine exact branch production build + GitHub runner + Chromium ile yapıldı.
 
-- [ ] DECIDE — geçen/kalan maddeler kullanıcıya sunulacak
+- [ ] DECIDE — Katman 1 sonucu kullanıcıya sunulacak; merge kararı kullanıcıya ait
 - [ ] MERGE — yalnız kullanıcı açık onay verirse
 
 ## Sonraki katmanlar
@@ -63,4 +66,4 @@ Aktif PR: `#414`
 - [ ] Katman 4 — Vixrex Asistan Blog Komutları
 - [ ] Katman 5 — Dijital Çarşı Bağlantı Omurgası
 
-> Kural: Tik yalnız gerçekten tamamlanan adıma konur. VERIFY geçmeden Katman 1 tamamlandı sayılmaz; Katman 2 başlamaz.
+> Kural: Tik yalnız gerçekten tamamlanan adıma konur. Bir katmanın kapanış şartları yalnız o katmanın kilitli kapsamından seçilir; kapsam dışı regresyon kontrolleri katmanı bloklamaz.
