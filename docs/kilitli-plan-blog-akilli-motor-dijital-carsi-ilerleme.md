@@ -31,8 +31,13 @@ Aktif PR: `#414`
 - [x] Katman 1 kapı testleri son turu — 7 dosya / 32 test geçti
 - [x] Production build — Next.js 16.2.11 production build başarıyla tamamlandı
 - [x] Kod seviyesinde public vitrin + Keşfet + Kirala/sahiplik regresyon kontrolü — tam test envanterinde Katman 1 dışı yalnız iki bilinen baseline kontrat hatası kaldı
-- [ ] Gerçek yayın satırıyla Preview mobil + masaüstü ekran doğrulaması
-- [ ] Preview üzerinde public vitrin + Keşfet + Kirala/sahiplik ekran smoke testi
+- [x] Vercel'siz gerçek tarayıcı doğrulaması — exact branch production build GitHub runner'da ayağa kaldırıldı; mobil 390×844 ve masaüstü 1440×1000 test edildi
+- [x] Gerçek yayın satırıyla `/blog` + `/blog/[slug]` mobil/masaüstü ekran doğrulaması geçti
+- [x] Ekran doğrulamasında Katman 1'e ait detay CTA kontrast sorunu bulundu, Vixrex `lp-*` yüzeyiyle düzeltildi ve ikinci gerçek tarayıcı turunda yeniden geçti
+- [x] Public vitrin + Keşfet + Kirala CTA mobil/masaüstü browser smoke geçti; otomasyon canlı kiralama oluşturmadığı için Kirala düğmesine basılmadı
+- [x] Test için geçici yayınlanan merkezi yazı tekrar `draft` yapıldı; canlı DB yeniden 2 taslak / 0 yayın
+- [x] Geçici browser-verify GitHub Actions workflow'u kanıt alındıktan sonra branch'ten silindi; main'e taşınmayacak
+- [ ] Kirala → sahiplik uçtan uca ekran smoke — canlıda gereksiz klon oluşturmadan kontrollü/izole yöntem doğrulanmalı
 
 ### Baseline notları — Katman 1 kaynaklı değil
 
@@ -40,11 +45,13 @@ Aktif PR: `#414`
 - Tam Vitest turunda PR #413 sonrası main'de zaten bulunan iki kontrat beklentisi kırmızı: eski 36px maskot beklentisi ve owner-draft `SERVICE_ROLE` metin beklentisi. Katman 1 bu dosyalara dokunmuyor.
 - Tam test envanteri: 143 test dosyasından 141 geçti; 1022 testten 1019 geçti, 2 baseline hata ve 1 todo kaldı.
 - Flutter format kontrolü mevcut baseline biçim farklarında kırmızı; Katman 1 Flutter dosyası değiştirmiyor.
+- Cookie izin bandı gerçek tarayıcı ekranlarında içerik üzerine geliyor; global/mevcut yüzeydir, Katman 1 tarafından eklenmedi.
 
-### Preview engeli
+### Vercel engeli ve güvenli alternatif
 
-- Vercel `vixrex-public` ve `vixrex-app` son head için Hobby build-rate-limit nedeniyle yeni Preview üretmiyor.
-- Preview oluşmadan test amacıyla merkezi bir yazı `published` yapılmayacak; canlı DB şu an 2 taslak / 0 yayın olarak güvenli durumda.
+- Vercel `vixrex-public` ve `vixrex-app` Hobby build-rate-limit nedeniyle yeni Preview üretmedi.
+- Katman 1 blog/public yüzey doğrulaması bunun yerine exact branch production build + GitHub runner + Chromium ile yapıldı.
+- Kirala → sahiplik uçtan uca doğrulaması canlı veride klon oluşturmadan yapılabildiği kanıtlanmadan tetiklenmeyecek.
 
 - [ ] DECIDE — geçen/kalan maddeler kullanıcıya sunulacak
 - [ ] MERGE — yalnız kullanıcı açık onay verirse
