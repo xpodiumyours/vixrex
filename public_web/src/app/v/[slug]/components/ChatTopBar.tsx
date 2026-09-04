@@ -8,13 +8,14 @@ interface Props {
 
 /**
  * MOD 2 başlığı (2026-09-04 doğrulanmış mockup):
- * - solda Vixrex avatar + çevrimiçi durumu,
+ * - solda Vixrex avatar + düzenleme bağlamı,
  * - sağda korkutucu yüzde yerine "Aşama N/3",
  * - ham alan sayacı yalnız ikincil/küçük bilgi,
  * - kapatma X'i.
  *
- * Üç aşama mevcut şemadaki önem sınıflarından türetilir; yeni bir sayaç
- * veya ikinci doğruluk kaynağı oluşturulmaz:
+ * Ağ/Supabase bağlantısı ayrıca doğrulanmadığı için "Çevrimiçi" gibi bir
+ * durum uydurulmaz. Üç aşama mevcut şemadaki önem sınıflarından türetilir;
+ * yeni bir sayaç veya ikinci doğruluk kaynağı oluşturulmaz:
  * 1 = temel alanlar, 2 = kalite alanları, 3 = isteğe bağlı/son düzenlemeler.
  */
 export function ChatTopBar({ rapor, onKapat }: Props) {
@@ -27,9 +28,8 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
         <VixrexAvatar size={36} halo decorative />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold text-white">Vixrex Asistan</p>
-          <p className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] font-semibold text-slate-400">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" aria-hidden="true" />
-            Çevrimiçi
+          <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-400">
+            Vitrin düzenleme
           </p>
         </div>
         <div className="shrink-0 text-right">
