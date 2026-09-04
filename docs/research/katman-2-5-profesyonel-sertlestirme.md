@@ -8,18 +8,23 @@ Katman 3 RESEARCH bu 5 madde tamamlanmadan başlamaz.
 
 Amaç: Repo migration dosya adları ile canlı Supabase migration history sürümlerini birebir hizalamak.
 
-Doğrulanan sapma:
-- Repo: `20260904173500_add_vixrex_blog_articles.sql`
+Doğrulanan eski sapma:
+- Repo eski: `20260904173500_add_vixrex_blog_articles.sql`
 - Canlı history: `20260904182313_add_vixrex_blog_articles`
-- Repo: `20260904193000_add_vixrex_blog_library_metadata.sql`
+- Repo eski: `20260904193000_add_vixrex_blog_library_metadata.sql`
 - Canlı history: `20260904195755_add_vixrex_blog_library_metadata`
 
-Kural:
-- Canlı şema yeniden uygulanmayacak.
-- Veri değiştiren yeni migration yazılmayacak.
-- Önce migration history ile dosya adları eşitlenecek, sonra sıfırdan migration zinciri tekrar doğrulanacak.
+Uygulanan düzeltme:
+- Katman 1 branch'inde dosya `20260904182313_add_vixrex_blog_articles.sql` olarak hizalandı.
+- Katman 2 stack branch'inde aynı Katman 1 dosyası hizalandı.
+- Katman 2 metadata dosyası `20260904195755_add_vixrex_blog_library_metadata.sql` olarak hizalandı.
+- Eski iki timestamp dosyası aktif Katman 2 branch'inden kaldırıldı.
+- Canlı şemaya bu hizalama için yeni SQL uygulanmadı; yalnız repo migration kimliği canlı history ile eşitlendi.
 
-Durum: **sapma doğrulandı, düzeltme bekliyor.**
+Kalan doğrulama:
+- Sıfırdan migration zinciri + GRANT bekçisi yeni dosya adlarıyla tekrar geçmeli.
+
+Durum: **dosya/history hizalaması yapıldı, zincir VERIFY bekliyor.**
 
 ## 2. Blog RLS performans sertleştirmesi
 
@@ -31,12 +36,20 @@ Hedef:
 
 Admin kontrolleri davranış değiştirmeden `(select auth.uid())` biçimine alınacak.
 
+Uygulama branch'inde yeni hardening migration'ı eklendi:
+- `20260904203000_optimize_vixrex_blog_rls.sql`
+
 Kural:
 - Public `published` görünürlüğü değişmeyecek.
 - Admin yetkisi genişlemeyecek.
 - `anon` taslak erişimi 0 kalacak.
 
-Durum: **uyarı doğrulandı, düzeltme bekliyor.**
+Kalan doğrulama:
+- sıfırdan migration zinciri
+- gerçek allow/deny davranış testi
+- canlı uygulama sonrası Supabase Performance Advisor tekrar kontrolü
+
+Durum: **kodlandı, VERIFY bekliyor.**
 
 ## 3. Gerçek allow/deny davranış testleri
 
@@ -58,12 +71,12 @@ CI `auth-config-check` işi secret'lar yoksa başarıyla çıkıp kontrolü atla
 
 Canlı Security Advisor denetiminde `Leaked Password Protection` kapalı olarak raporlandı.
 
-Plan kuralı:
-- İlerleme panosunda bu kontrol artık `geçti` diye mutlak yazılmayacak.
-- CI job sonucu ile canlı Auth Advisor sonucu ayrı raporlanacak.
-- Bu madde blog davranışını değiştirmez; doğrulama raporlamasını düzeltir.
+Uygulanan düzeltme:
+- İlerleme panosunda `auth security geçti` şeklindeki mutlak ifade kaldırıldı.
+- CI job sonucu ile canlı Auth Advisor sonucu ayrı raporlanıyor.
+- Canlı `Leaked Password Protection` durumu açıkça `kapalı` olarak kaydedildi.
 
-Durum: **plan kaydı düzeltilecek.**
+Durum: **TAMAMLANDI.**
 
 ## 5. Taslak blog içerik doğruluğu ve provenance
 
@@ -75,9 +88,14 @@ Yayın öncesi:
 - `source_urls` ve provenance alanları gerçek kaynaklarla doldurulacak
 - doğrulama tamamlanmadan `published` yapılmayacak
 
-Özellikle eski `Google adresinize kod içeren kart gönderir` gibi tek doğrulama yöntemi varmış gibi yazılan ifadeler güncel Google Business Profile doğrulama yöntemleriyle uyumlu hale getirilecek.
+İlk kaynak araştırması doğrulandı:
+- Google Business Profile doğrulama yöntemi tek bir posta kartı yöntemi değildir; kullanılabilir yöntemleri Google işletmeye göre otomatik belirler.
+- Yerel sonuçlar ağırlıklı olarak alaka düzeyi, mesafe ve belirginlik/popülerlik sinyallerine dayanır.
+- Google Search belirli bir sayfanın dizine eklenmesini veya belirli bir sürede sonuç göstermesini garanti etmez.
 
-Durum: **bekliyor.**
+Bu nedenle eski `Google adresinize kod içeren kart gönderir` ve sabit `bir ila dört hafta` gibi kesin ifadeler yayın öncesi düzeltilecektir.
+
+Durum: **kaynak araştırması başladı, içerik/veri güncellemesi bekliyor.**
 
 ## Çıkış kriteri
 
