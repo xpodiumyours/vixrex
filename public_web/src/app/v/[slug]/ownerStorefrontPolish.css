@@ -42,7 +42,7 @@ body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
     pointer-events: none;
   }
 
-  body.vixrex-asistan-isliyor button[aria-label="Vixrex Asistan"] > span {
+  body.vixrex-asistan-isliyor button[aria-label="Vixrex Asistan"] > span:not(:first-child) {
     display: none !important;
   }
 
