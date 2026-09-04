@@ -32,7 +32,7 @@ class ArticleService {
     int limit = 20,
   }) async {
     try {
-      final safeLimit = limit.clamp(1, 50);
+      final safeLimit = limit.clamp(1, 50).toInt();
       final res = await _resolveClient
           .from('vixrex_blog_articles')
           .select(
