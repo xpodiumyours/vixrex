@@ -15,10 +15,30 @@ Aktif PR: `#414`
 - [x] 1.3 BUILD — `/blog`, `/blog/[slug]` ve sitemap merkezi kaynağa bağlandı; taslak 404 davranışı korundu
 - [x] 1.4 BUILD — blog ana sayfası Vixrex `lp-*` tasarım diliyle 1200px büyüyebilir katalog düzenine çıkarıldı; detay okuma genişliği korunuyor
 - [x] Güvenlik sözleşme testi — public yalnız `published`, iki mevcut yazı `draft`, `store_articles` dokunulmazlığı kaynak testine bağlandı
-- [ ] 1.5 VERIFY — GitHub CI migration zinciri / güvenlik / tip / test / build sonucu
-- [ ] 1.5 VERIFY — merkezi migration'ın kontrollü DB doğrulaması
-- [ ] 1.5 VERIFY — gerçek yayın satırıyla Preview mobil + masaüstü ekran doğrulaması
-- [ ] 1.5 VERIFY — `/v/[slug]`, Keşfet, Kirala/sahiplik regresyon kontrolü
+
+### 1.5 VERIFY
+
+- [x] Secret sızıntı taraması geçti
+- [x] Supabase auth security config kontrolü geçti
+- [x] Şema üretim/sapma kontrolü geçti
+- [x] Supabase migration zinciri sıfırdan kuruldu ve GRANT güvenlik bekçisi geçti
+- [x] TypeScript `tsc --noEmit` geçti
+- [x] Canlı DB migration kontrollü uygulandı
+- [x] Canlı DB'de 2 kayıt = 2 taslak / 0 yayın doğrulandı
+- [x] Canlı DB'de RLS, unique slug ve published index doğrulandı
+- [x] `anon` rolüyle taslak görünürlüğü = 0 satır doğrulandı
+- [x] İlk tam test turunda Katman 1 kaynaklı sitemap mock uyumsuzluğu bulundu ve fail-closed düzeltildi
+- [ ] Katman 1 kapı testleri son turu
+- [ ] Production build
+- [ ] Gerçek yayın satırıyla Preview mobil + masaüstü ekran doğrulaması
+- [ ] `/v/[slug]`, Keşfet, Kirala/sahiplik regresyon kontrolü
+
+### Baseline notları — Katman 1 kaynaklı değil
+
+- Next.js genel lint, main'de önceden bulunan `giris/page.tsx:23` hatasında duruyor.
+- Tam Vitest turunda PR #413 sonrası main'de zaten bulunan iki kontrat beklentisi kırmızı: eski 36px maskot beklentisi ve owner-draft `SERVICE_ROLE` metin beklentisi. Katman 1 bu dosyalara dokunmuyor.
+- Flutter format kontrolü mevcut baseline biçim farklarında kırmızı; Katman 1 Flutter dosyası değiştirmiyor.
+
 - [ ] DECIDE — geçen/kalan maddeler kullanıcıya sunulacak
 - [ ] MERGE — yalnız kullanıcı açık onay verirse
 
