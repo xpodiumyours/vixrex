@@ -9,6 +9,7 @@ import {
   type VitrinSection,
 } from "@/lib/vitrinFieldSchema";
 import { bolumdeKalanSayisi, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
+import { digerAlanaAitIpucuVarMi } from "@/lib/vixrexValueExtractor";
 import {
   bekle,
   ogeIcinHedefY,
@@ -53,6 +54,21 @@ interface Deps {
   onAlanSecildi?: () => void;
 }
 
+/**
+ * Rehber bir alanı otomatik seçmiş olsa bile esnaf başka bir alanı açıkça
+ * tarif etmeye başlarsa seçili alan artık mesajı kilitlememeli. Bu durumda
+ * seçim temizlenir; gönderim `useOwnerActions` içindeki 46 alanlık NLU
+ * yoluna düşer. Kısa/genel kelimeler `digerAlanaAitIpucuVarMi` tarafından
+ * zaten filtrelenir, yani düz bir alan cevabı serbest mesaja dönüşmez.
+ */
+export function seciliAlaniBirakmaliMi(
+  metin: string,
+  seciliAlan: VitrinField | null,
+): boolean {
+  if (!seciliAlan || !metin.trim()) return false;
+  return digerAlanaAitIpucuVarMi(metin, seciliAlan.anahtar);
+}
+
 export function useFieldSelection({
   yerelTaslak,
   atlanmisAlanlar,
@@ -60,7 +76,7 @@ export function useFieldSelection({
   onAlanSecildi,
 }: Deps): FieldSelectionHook {
   const [seciliAlan, setSeciliAlan] = useState<VitrinField | null>(null);
-  const [giris, setGiris] = useState("");
+  const [giris, setGirisState] = useState("");
   const girisRef = useRef<HTMLTextAreaElement>(null);
   const vurguluRef = useRef<Element | null>(null);
   // Her geçişe artan numara: yolda yeni bir alan seçilirse eskisi susar.
@@ -72,6 +88,22 @@ export function useFieldSelection({
     vurguluRef.current?.classList.remove(VURGU_SINIFI);
     vurguluRef.current = null;
   }, []);
+
+  /**
+   * Kullanıcı serbestçe başka bir alanı tarif etmeye başladığında otomatik
+   * rehber seçimini bırak. Böylece `gonder()` anında `seciliAlan === null`
+   * olur ve mesaj gerçek akıllı motora gider. Seçili alanın kendi düz cevabı
+   * ise aynen mevcut alan düzenleme yolunda kalır.
+   */
+  const setGiris = useCallback(
+    (v: string) => {
+      setGirisState(v);
+      if (!seciliAlaniBirakmaliMi(v, seciliAlan)) return;
+      vurguyuTemizle();
+      setSeciliAlan(null);
+    },
+    [seciliAlan, vurguyuTemizle],
+  );
 
   /**
    * Rehberin hedefe YÜRÜMESİ (Faz 3b).
@@ -141,7 +173,10 @@ export function useFieldSelection({
       onAlanSecildi?.();
       setSeciliAlan(alan);
       const mevcut = yerelTaslak[alan.kolon];
-      setGiris(
+      // Mevcut alan değeri programa bağlı olarak yüklenirken akıllı `setGiris`
+      // kullanılmaz; aksi halde içeriğinde başka bir alan kelimesi geçen eski
+      // metin seçimi yanlışlıkla bırakabilirdi.
+      setGirisState(
         alan.tip === "acikKapali"
           ? ""
           : mevcut === null || mevcut === undefined
