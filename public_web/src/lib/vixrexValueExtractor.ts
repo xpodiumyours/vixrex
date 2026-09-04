@@ -1,5 +1,6 @@
 import { VIXREX_NIYET_SOZLUGU, type VixrexNiyetAlan } from "./vixrexNiyetSozlugu";
 import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
+import { seciliKimlikTelefonKestirmesiniCikar } from "./ownerSelectedInput";
 
 // Dart VixrexValueExtractor ile aynı kural – parity için birebir.
 function extractQuoted(input: string): string | null {
@@ -274,6 +275,17 @@ export function extractVixrexValue(input: string, alan: VixrexNiyetAlan): string
 function extractVixrexValueHam(input: string, alan: VixrexNiyetAlan): string | null {
   const raw = input.trim();
   if (!raw) return null;
+
+  // Seçili "İşletme Adı" alanına etiketsiz biçimde "Çarşı teknik servis
+  // 0542..." yazıldığında alan bağlamı, genel serbest-metin tahmininden daha
+  // güçlüdür. Telefon sondaysa helper ana metni güvenle ayırır. Açıkça
+  // "işletme adım / whatsapp numaram" yazılan klasik zengin cümlelerde
+  // helper null döner ve aşağıdaki mevcut ayrıştırma aynen devam eder.
+  if (alan.anahtar === "isletmeAdi") {
+    const kestirme = seciliKimlikTelefonKestirmesiniCikar(raw);
+    if (kestirme) return kestirme.anaDeger;
+  }
+
   if (alan.tip === "telefon") {
     const p = extractPhone(raw);
     if (p) return p;
