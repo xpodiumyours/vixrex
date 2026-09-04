@@ -1,0 +1,53 @@
+/*
+ * Kiralık vitrinin sahiplik görünümü, aynı vitrinin "İncele" görünümündeki
+ * mobil kompozisyonu korur. Bu dosya yalnız OwnerWorkspaceShell ile yüklenir;
+ * canlı/müşteri vitrini etkilenmez.
+ */
+
+/* Uzun "örnek görünüm" etiketi hero genişliğini belirleyen ana içerik gibi
+ * davranmasın. Dürüstlük etiketi kalır ama durum rozeti ve işletme kimliğini
+ * sıkıştırmayacak kadar kompakt olur. */
+body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
+  max-width: 10.5rem;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.625rem;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+}
+
+/* Sahiplikte asistan bir overlay'dir; kapalıyken vitrin, müşterinin gördüğü
+ * genişliği kaybetmemeli. 1024px altındaki telefon/tablet görünümünde hero
+ * zorla tek sütun tutulur ve eylemler tam vitrin genişliğine yayılır. */
+@media (max-width: 1023px) {
+  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:first-child {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:last-child {
+    width: 100%;
+    min-width: 0 !important;
+    flex-direction: column;
+  }
+
+  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:last-child > a {
+    width: 100%;
+  }
+
+  body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="isletmeAdi"] {
+    max-width: 100%;
+    overflow-wrap: normal;
+  }
+}
+
+@media (max-width: 639px) {
+  body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
+    max-width: 9rem;
+    font-size: 0.5625rem;
+  }
+}
