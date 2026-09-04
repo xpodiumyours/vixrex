@@ -85,13 +85,14 @@ LOCK: `docs/research/katman-2-merkezi-blog-kutuphanesi-lock.md`
 
 Plan: `docs/research/katman-2-5-profesyonel-sertlestirme.md`
 
-- [ ] 2.5.1 Migration history eşitliği — repo/canlı timestamp sapması doğrulandı; canlı şema yeniden uygulanmadan dosya/history eşitlenecek ve migration zinciri tekrar doğrulanacak
-- [ ] 2.5.2 Blog RLS performans sertleştirmesi — Supabase Advisor uyarıları giderilecek; yetki davranışı değişmeyecek
-- [ ] 2.5.3 Gerçek allow/deny + admin API davranış testleri — kaynak sözleşme testlerine ek olarak RLS/API davranışı gerçek DB üzerinde kanıtlanacak
-- [x] 2.5.4 Auth security raporlaması düzeltildi — CI job ile canlı Advisor sonucu artık ayrı tutuluyor; canlıda Leaked Password Protection kapalı kaydedildi
-- [ ] 2.5.5 Taslak içerik doğruluğu + provenance — iki taslak güncel birincil kaynaklarla doğrulanacak, `source_urls` doldurulacak; bitmeden yayın yok
+- [x] 2.5.1 Migration history eşitliği — owner catalog ve blog sertleştirme migration sürümleri canlı Supabase history ile eşitlendi; son branch HEAD üzerinde migration zinciri sıfırdan başarıyla kuruldu
+- [x] 2.5.2 Blog RLS performans sertleştirmesi — admin policy'lerinde `(select auth.uid())` kullanımı canlıya uygulandı; canlı Performance Advisor'da iki Vixrex blog tablosu için `auth_rls_initplan` uyarısı kalmadığı doğrulandı
+- [x] 2.5.3 Gerçek allow/deny + admin API davranış testleri — yerel gerçek Supabase + production Next.js üzerinde RLS ve admin API davranış testi başarıyla geçti
+- [x] 2.5.4 Auth security raporlaması düzeltildi — CI job ile canlı Advisor sonucu ayrı tutuluyor; canlıda `Leaked Password Protection` kapalı olduğu açıkça kaydedildi
+- [x] 2.5.5 Taslak içerik doğruluğu + provenance — iki taslak birincil Google kaynaklarıyla güncellendi; `source_urls` dolduruldu; canlı DB'de ikisinin de hâlâ `draft` olduğu doğrulandı
+- [x] Katman 2.5 kapısı — migration zinciri + GRANT + production build + gerçek RLS/admin API doğrulamasının son turu başarıyla geçti
 
-**KAPI:** 2.5.1–2.5.5 tamamlanmadan Katman 3 RESEARCH başlamaz.
+**KAPI AÇILDI:** Katman 3 yalnız `RESEARCH` ile başlayabilir. Katman 3 BUILD, RESEARCH → UX-FIT → SECURITY/RISK → LOOK → LOCK tamamlanmadan başlamaz.
 
 ## Sonraki katmanlar
 
