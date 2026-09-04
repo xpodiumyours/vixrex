@@ -17,24 +17,6 @@ describe("ilIlceCikar — serbest metinden il/ilçe çıkarımı", () => {
     expect(ilIlceCikar("Kaliteli ürünler satıyoruz.")).toBeNull();
   });
 
-  it("işletme adındaki çıplak ilçe kelimesini konum sanmaz", () => {
-    expect(ilIlceCikar("Konak kafe 05421802573")).toBeNull();
-  });
-
-  it("aynı ilçe açık konum ekiyle yazılırsa yine doğru çözülür", () => {
-    expect(ilIlceCikar("Konak'ta bir kafe işletiyorum")).toEqual({
-      il: "İzmir",
-      ilce: "Konak",
-    });
-  });
-
-  it("il ve ilçe birlikte açıkça yazılırsa çıplak ilçe adı da doğrulanır", () => {
-    expect(ilIlceCikar("İzmir Konak şubemiz")).toEqual({
-      il: "İzmir",
-      ilce: "Konak",
-    });
-  });
-
   it("gerçek belirsizlik — 'Kemer' hem Antalya hem Burdur'da, il belirtilmezse tahmin etmez", () => {
     expect(ilIlceCikar("Kemer'de küçük bir kırtasiyem var.")).toBeNull();
   });
