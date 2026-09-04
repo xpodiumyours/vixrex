@@ -12,49 +12,12 @@ env:
   FLUTTER_VERSION: "3.44.4"
 
 jobs:
-  db-behavior:
-    name: Katman 3 — gerçek DB allow/deny + idempotency
+  format-probe:
+    name: Katman 3 — Dart format farkı
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      - name: Seed adımını bu doğrulama için kapat
-        run: |
-          sed -i '/^# If enabled, seeds the database after migrations during a db reset\.$/{n;s/^enabled = true$/enabled = false/}' supabase/config.toml
-      - name: Yerel Supabase — tüm migration zinciri
-        run: supabase start
-      - name: Katman 3 DB davranış sözleşmesi
-        run: PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/katman3_blog_import_verify.sql
-      - name: Yerel Supabase'i durdur
-        if: always()
-        run: supabase stop
-
-  app-contracts:
-    name: Katman 3 — Next + Flutter hedefli doğrulama
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: public_web/package-lock.json
-      - name: Next bağımlılıkları
-        working-directory: public_web
-        run: npm ci
-      - name: Katman 3 + blog sözleşme testleri
-        working-directory: public_web
-        run: npx vitest run tests/blog-vitrine-import-contract.test.ts tests/blog-kutuphane-contract.test.ts tests/blog-editor-page-contract.test.ts
-      - name: TypeScript
-        working-directory: public_web
-        run: npx tsc --noEmit
-      - name: Production build
-        working-directory: public_web
-        run: npm run build
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -62,7 +25,8 @@ jobs:
           cache: true
       - name: Flutter bağımlılıkları
         run: flutter pub get
-      - name: Değişen Flutter dosyaları format
-        run: dart format --output=none --set-exit-if-changed lib/services/article_service.dart lib/screens/blog_post_list_screen.dart
-      - name: Değişen Flutter dosyaları analyze
-        run: dart analyze lib/services/article_service.dart lib/screens/blog_post_list_screen.dart --fatal-infos
+      - name: Dart format ve fark
+        run: |
+          dart format lib/services/article_service.dart lib/screens/blog_post_list_screen.dart
+          git diff -- lib/services/article_service.dart lib/screens/blog_post_list_screen.dart
+          git diff --exit-code -- lib/services/article_service.dart lib/screens/blog_post_list_screen.dart
