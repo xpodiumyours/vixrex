@@ -67,12 +67,14 @@ Aktif Katman 2 branch'i: `feat/blog-kutuphanesi-katman-2`
 - [x] Şema üretim/sapma kontrolü geçti
 - [x] Katman 2 değişen dosyalarında hedefli lint geçti
 - [x] TypeScript `tsc --noEmit` geçti
-- [x] Katman 1 + Katman 2 blog sözleşme testleri geçti
+- [x] Katman 1 + Katman 2 blog sözleşme testleri — 3 dosya / 22 test geçti
 - [x] Production build geçti
-- [ ] Supabase migration zinciri sıfırdan + GRANT güvenlik bekçisi
-- [ ] Katman 2 migration canlı DB'ye kontrollü uygulama
-- [ ] Canlı DB metadata, relation RLS ve mevcut 2 taslağın yayın durumunu doğrulama
-- [ ] Katman 2 Teknik VERIFY tamamlandı
+- [x] Supabase migration zinciri sıfırdan + GRANT güvenlik bekçisi geçti
+- [x] Katman 2 migration canlı DB'ye kontrollü uygulandı
+- [x] Canlı DB metadata ve relation RLS doğrulandı; mevcut 2 yazı hâlâ taslak, 0 yayın
+- [x] `anon` rolüyle merkezi taslak yazı görünürlüğü = 0; relation görünürlüğü = 0
+- [x] Migration sonrası production build tekrar çalıştırıldı; yeni metadata kolonları canlı DB'de okunarak build temiz geçti
+- [x] Katman 2 Teknik VERIFY tamamlandı
 
 Not: Genel Next.js lint yalnız main'de önceden bulunan `giris/page.tsx:23` hatasında kırmızı; Katman 2 değişen dosyalarının hedefli lint'i yeşil. Flutter genel biçim kontrolü de mevcut baseline farklarında kırmızı; Katman 2 Flutter dosyası değiştirmiyor.
 
