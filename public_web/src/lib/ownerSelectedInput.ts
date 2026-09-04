@@ -15,6 +15,8 @@ const TURKIYE_MOBIL_SONDA_REGEX =
 const ACIK_ETIKET_REGEX =
   /\b(işletme\s+ad[ıi]m?|isletme\s+ad[iı]m?|whatsapp|watsap|telefon|numara(?:m|sı|si)?)\b/i;
 
+const KISA_CEVAP_MAKS_UZUNLUK = 60;
+
 export interface SeciliKimlikTelefonKestirmesi {
   anaDeger: string;
 }
@@ -33,6 +35,16 @@ export function seciliKimlikTelefonKestirmesiniCikar(
     .replace(/[\s,;:–—-]+$/g, "")
     .trim();
 
-  if (anaDeger.length < 2) return null;
+  // Bu kestirme bir paragraf çözücü değildir. Uzun açıklamalarda veya birden
+  // fazla cümlede telefonun sonda olması, baştaki her şeyi işletme kimliği
+  // yapmaz. O tür girdiler mevcut serbest-metin motoruna bırakılır.
+  if (
+    anaDeger.length < 2 ||
+    anaDeger.length > KISA_CEVAP_MAKS_UZUNLUK ||
+    /[.!?;\n]/.test(anaDeger)
+  ) {
+    return null;
+  }
+
   return { anaDeger };
 }
