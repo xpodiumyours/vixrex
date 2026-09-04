@@ -3,8 +3,8 @@
 Ana plan: `docs/kilitli-plan-blog-akilli-motor-dijital-carsi.md`
 Final entegrasyon kararı: `docs/kilitli-plan-final-entegrasyon-test-karari.md`
 Güvenli geri dönüş: `checkpoint/main-post-413-20260904`
-Aktif PR: `#414`
-Aktif araştırma branch'i: `research/blog-kutuphanesi-katman-2`
+Aktif PR Katman 1: `#414`
+Aktif Katman 2 branch'i: `feat/blog-kutuphanesi-katman-2`
 
 ## Katman 1 — Vixrex Blog Omurgası
 
@@ -53,8 +53,12 @@ Aktif araştırma branch'i: `research/blog-kutuphanesi-katman-2`
 - [x] SECURITY/RISK — taslak RLS, tek kategori kaynağı, merkezi admin görsel yetkisi, filtre URL patlaması ve relation bütünlüğü riskleri çıkarıldı
 - [x] LOOK — canlı şema, RLS, `/api/articles`, owner blog editörü, public blog, kategori/konum kaynakları ve görsel upload çekirdeği gerçek kod/veriyle teyit edildi
 - [x] LOCK — 9 BUILD sınırı, 7 konu ailesi, kullanım amacı sözlüğü, konum ve etiket sınırları kullanıcı devam onayıyla kilitlendi
-- [ ] BUILD
-- [ ] Teknik VERIFY
+- [x] 2.1 BUILD — `shared/blog_taxonomy.json` ile 7 konu + 7 amaç tek kaynağa alındı; sektörler mevcut 19 kategori kaynağını kullanıyor
+- [x] 2.2 BUILD — merkezi tabloya konu/amaç/sektör/konum/etiket/provenance metadata migration'ı ve FK ilgili-yazı relation tablosu eklendi
+- [x] 2.3 BUILD — public veri katmanı konu/sektör/il/etiket filtreleri ve ilgili yazı sorgusuyla genişletildi
+- [x] 2.4 BUILD — `/blog/konu/[topic]`, `/blog/sektor/[sector]`, kütüphane kartları, kapak görselleri ve kontrollü sitemap bağlantıları eklendi
+- [x] 2.5 BUILD — merkezi kapak yükleme owner-session'dan ayrıldı; platform admin + mevcut 1600px/82 sıkıştırma çekirdeği kullanılıyor
+- [ ] Teknik VERIFY — test/type/build/migration güvenliği tamamlanmadan Katman 2 kapanmaz
 
 Araştırma: `docs/research/katman-2-merkezi-blog-kutuphanesi-arastirma.md`
 LOCK: `docs/research/katman-2-merkezi-blog-kutuphanesi-lock.md`
