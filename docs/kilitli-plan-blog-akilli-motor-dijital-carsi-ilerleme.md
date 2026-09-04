@@ -110,9 +110,28 @@ LOCK: `docs/research/katman-3-vitrine-yazi-cekme-lock.md`
 - [x] 3.3 BUILD — bounded merkezi kütüphane seçimi mevcut Next.js Blog Yönetimi yüzeyine bağlandı; import sonrası mevcut editör açılıyor
 - [x] 3.4 BUILD — Flutter aynı merkezi published kütüphane ve aynı import RPC sözleşmesine bağlandı; ayrı backend kurulmadı
 - [x] BUILD tamamlandı — kilitli Katman 3 kapsamındaki kod yüzeyleri tamamlandı; kaynak sözleşme testi ve gerçek DB davranış testi eklendi
-- [ ] Teknik VERIFY
 
-**KURAL:** BUILD tamamlandı işareti doğrulandı anlamına gelmez. Katman 3 migration canlıya uygulanmadı; Teknik VERIFY tüm kapıları geçmeden canlıya uygulanmayacak ve Katman 4 başlamayacak.
+### Katman 3 Teknik VERIFY
+
+- [x] Katman 3 + blog hedefli sözleşme testleri — 3 dosya / 22 test geçti
+- [x] TypeScript `tsc --noEmit` geçti
+- [x] Production Next.js build geçti
+- [x] Flutter 3.44.4 üzerinde `flutter pub get` geçti
+- [x] Değişen Flutter dosyaları `dart format --set-exit-if-changed` kapısından geçti
+- [x] Değişen Flutter dosyaları `dart analyze --fatal-infos` kapısından geçti
+- [x] Yerel Supabase tüm migration zincirini sıfırdan kurdu
+- [x] Gerçek DB allow/deny + published→draft + idempotency + provenance + owner CRUD + anon gizlilik davranış testi geçti
+- [x] Katman 3 migration canlı Supabase'e kontrollü uygulandı
+- [x] Canlı migration version `20260904225525` ile repo migration dosya sürümü eşitlendi; yeni migration-history drift oluşturulmadı
+- [x] Canlı DB'de 4 provenance kolonu, FK, import-mode check constraint, partial unique index ve import RPC doğrulandı
+- [x] RPC `PUBLIC` execute taşımıyor; yalnız gerekli `anon` ve `authenticated` rolleri execute alıyor
+- [x] Migration veri taşımadı: `store_articles` 15→15 kaldı, imported-from-Vixrex = 0, mevcut 15 yazının tamamı yayındaki eski kayıtlar olarak kaldı
+- [x] Merkezi blog durumu değişmedi: 2 taslak / 0 yayın
+- [x] Migration sürümü eşitlendikten sonra tam Katman 3 doğrulama workflow'u yeniden çalıştırıldı ve iki job da tamamen yeşil geçti
+- [x] Geçici Katman 3 doğrulama workflow'u kanıt alındıktan sonra branch'ten kaldırıldı
+- [x] Katman 3 Teknik VERIFY tamamlandı
+
+**KURAL:** Katman 3 teknik olarak kapandı. Gerçek kullanıcı ekran kabul testi plana uygun olarak final Katman 1–5 entegrasyon kapısında yapılacak; Katman 4 başlamadan önce Katman 3'te eksik teknik kapı kalmadı.
 
 ## Sonraki katmanlar
 
