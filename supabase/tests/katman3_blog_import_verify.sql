@@ -146,7 +146,7 @@ delete from public.vixrex_blog_articles where id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaa
 do $$
 declare c integer; source_id uuid; source_slug text;
 begin
-  select count(*), min(source_vixrex_blog_article_id), min(source_vixrex_blog_article_slug)
+  select count(*), max(source_vixrex_blog_article_id::text)::uuid, min(source_vixrex_blog_article_slug)
     into c, source_id, source_slug
   from public.store_articles
   where store_slug='katman3-test-a'
