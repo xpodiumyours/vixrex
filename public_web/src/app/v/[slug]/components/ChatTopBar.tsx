@@ -27,6 +27,7 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
     if (!shell) return;
 
     shell.classList.add("vixrex-owner-assistant-shell");
+    let mesajSayisiBaslangic = 0;
 
     const canonicalTetik = () =>
       document.querySelector<HTMLButtonElement>('button[aria-label^="Vixrex Asistan"]');
@@ -38,11 +39,18 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
       tetik.setAttribute("aria-label", "Vixrex Asistan");
     };
 
-    const sonMesajDurumu = (): "basarili" | "hata" | "belirsiz" => {
-      const son = shell.querySelector<HTMLElement>(
-        ".vixrex-panel-kaydirici > :last-child",
+    const yeniMesajlarinDurumu = (): "basarili" | "hata" | "belirsiz" => {
+      const tumMesajlar = Array.from(
+        shell.querySelectorAll<HTMLElement>(".vixrex-panel-kaydirici > *"),
       );
-      const metin = (son?.textContent ?? "").toLocaleLowerCase("tr-TR");
+      const yeniMesajlar = tumMesajlar.slice(mesajSayisiBaslangic);
+      const metin = yeniMesajlar
+        .map((oge) => oge.textContent ?? "")
+        .join("\n")
+        .toLocaleLowerCase("tr-TR");
+
+      // Hata/kararsızlık başarıdan önce değerlendirilir. Böylece aynı kayıt
+      // turunda önceki bir başarı metni kalsa bile yanlış "Düzenlendi" denmez.
       if (
         /kaydedemedim|kaydedilemedi|bağlantı kurulamadı|tekrar dene|birden fazla bilgi|sadece onu yazar mısın/.test(
           metin,
@@ -62,6 +70,9 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
 
       if (kaydediliyor && !kayitSuruyorRef.current) {
         kayitSuruyorRef.current = true;
+        mesajSayisiBaslangic = shell.querySelectorAll(
+          ".vixrex-panel-kaydirici > *",
+        ).length;
         shell.classList.add("vixrex-assistant-compact");
         const tetik = canonicalTetik();
         if (tetik) {
@@ -74,12 +85,14 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
       if (!kaydediliyor && kayitSuruyorRef.current) {
         kayitSuruyorRef.current = false;
         // React mesaj state'i ve vitrin taslağı aynı turda güncelleniyor.
-        // Son balonu okumadan önce DOM'un o turu tamamlamasına izin ver.
+        // Yalnız bu kayıt turunda eklenen balonları okumadan önce DOM'un o
+        // turu tamamlamasına izin ver.
         window.setTimeout(() => {
-          const sonuc = sonMesajDurumu();
+          const sonuc = yeniMesajlarinDurumu();
           const tetik = canonicalTetik();
 
-          // Emin olmadığımız durumda başarı uydurmayız; asistan açık kalır.
+          // Emin olmadığımız veya hata olan durumda başarı uydurmayız;
+          // asistan açılır ve gerçek son mesajı kullanıcı görür.
           if (sonuc !== "basarili") {
             shell.classList.remove("vixrex-assistant-compact");
             tetikDurumunuTemizle();
