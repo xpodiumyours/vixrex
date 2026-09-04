@@ -4,6 +4,7 @@ Ana plan: `docs/kilitli-plan-blog-akilli-motor-dijital-carsi.md`
 Final entegrasyon kararı: `docs/kilitli-plan-final-entegrasyon-test-karari.md`
 Güvenli geri dönüş: `checkpoint/main-post-413-20260904`
 Aktif PR: `#414`
+Aktif araştırma branch'i: `research/blog-kutuphanesi-katman-2`
 
 ## Katman 1 — Vixrex Blog Omurgası
 
@@ -47,7 +48,7 @@ Aktif PR: `#414`
 
 ## Katman 2 — Merkezi Blog Kütüphanesi
 
-- [ ] RESEARCH
+- [ ] RESEARCH — **başladı**, araştırma dosyası: `docs/research/katman-2-merkezi-blog-kutuphanesi-arastirma.md`
 - [ ] UX-FIT
 - [ ] SECURITY/RISK
 - [ ] LOOK
