@@ -1,60 +1,25 @@
 /*
- * Kiralık vitrinin sahiplik görünümü, aynı vitrinin "İncele" görünümündeki
- * mobil kompozisyonu korur. Bu dosya yalnız OwnerWorkspaceShell ile yüklenir;
- * canlı/müşteri vitrini etkilenmez.
+ * Kiralık vitrinin sahiplik görünümünde vitrin kompozisyonu, aynı vitrinin
+ * "İncele" görünümüyle aynı kalmalı. Buradaki kurallar yalnız owner kiralık
+ * önizlemesine uygulanır; public/müşteri vitrini etkilenmez.
  */
 
-/* Dürüstlük etiketi görünür kalır ama hero kompozisyonunu belirleyen genişlik
- * unsuru gibi davranmaz. */
+/* Kök neden: #ust-bolum bir flex container. OwnerMode'da yalnızca eklenen
+ * BolumEksikleri de doğrudan flex child olduğu için ana hero ile yatay alan
+ * paylaşıyor ve vitrini sol yarıya sıkıştırıyordu. Kiralık owner ekranında
+ * bu yardımcı şerit zaten Vixrex Asistan'daki Sırada akışıyla tekrarlandığı
+ * için hero içinde çizilmez. Böylece ana hero, public görünümdeki tek normal
+ * flex child olarak aynı genişliği alır. */
+body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 ~ div:not(.absolute) {
+  display: none !important;
+}
+
+/* Dürüstlük etiketi görünür kalır; yalnız owner'a ait bir açıklama olduğu
+ * için kompakt tutulur. Hero'nun ölçüsünü veya sütun hesabını değiştirmez. */
 body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
-  max-width: 10.5rem;
-  padding: 0.35rem 0.55rem;
+  max-width: 11.5rem;
+  padding: 0.35rem 0.6rem;
   font-size: 0.625rem;
   line-height: 1.15;
   letter-spacing: 0.04em;
-}
-
-/* Önceki denemede grid sütunlarına müdahale etmek mobil hero'yu daha da
- * daralttı. Mobilde grid hesabını tamamen devreden çıkarıp, public vitrinin
- * tek sütun davranışını doğrudan blok akışıyla koruyoruz. */
-@media (max-width: 767px) {
-  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 {
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
-  }
-
-  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:first-child,
-  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:last-child {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: none !important;
-  }
-
-  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:last-child {
-    margin-top: 1.5rem;
-    display: flex;
-    flex-direction: column;
-  }
-
-  body.vixrex-owner-rental-preview #ust-bolum > div.relative.z-10 > div:last-child > a {
-    width: 100% !important;
-  }
-
-  body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="isletmeAdi"] {
-    max-width: 100%;
-    overflow-wrap: normal;
-    word-break: normal;
-  }
-}
-
-@media (max-width: 639px) {
-  body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
-    max-width: 9rem;
-    font-size: 0.5625rem;
-  }
 }
