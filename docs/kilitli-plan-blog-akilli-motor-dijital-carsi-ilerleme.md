@@ -6,7 +6,8 @@ Güvenli geri dönüş: `checkpoint/main-post-413-20260904`
 Aktif PR Katman 1: `#414`
 Aktif Katman 2 PR: `#415`
 Aktif Katman 2 branch'i: `feat/blog-kutuphanesi-katman-2`
-Aktif Katman 3 araştırma branch'i: `research/vitrine-yazi-cekme-katman-3`
+Aktif Katman 3 PR: `#416`
+Aktif Katman 3 branch'i: `feat/vitrine-yazi-cekme-katman-3`
 
 ## Katman 1 — Vixrex Blog Omurgası
 
@@ -104,10 +105,14 @@ LOCK: `docs/research/katman-3-vitrine-yazi-cekme-lock.md`
 - [x] SECURITY/RISK — yalnız published kaynak, zorunlu draft, DB owner-session tekrar doğrulaması, kaynak ilişkisi ve idempotency şartları çıkarıldı
 - [x] LOOK — canlı `store_articles` kolon/constraint/policy/index/trigger yapısı ve gerçek Next.js/Flutter CRUD yüzeyleri doğrulandı
 - [x] LOCK — 12 ürün/güvenlik şartı kullanıcı tarafından açıkça onaylandı; source provenance, iki import modu, idempotency ve mevcut editörü yeniden kullanma sınırları kilitlendi
-- [ ] BUILD
+- [x] 3.1 BUILD — `store_articles` kaynak provenance alanları, kaynak-slug partial unique idempotency ve DB owner doğrulamalı published→draft import RPC'si kodlandı
+- [x] 3.2 BUILD — Next.js owner-session cookie + DB session tekrar doğrulamalı dar import API adapter'ı kodlandı
+- [ ] 3.3 BUILD — bounded merkezi kütüphane seçimi mevcut Next.js Blog Yönetimi yüzeyine bağlanacak
+- [ ] 3.4 BUILD — Flutter aynı RPC/veri sözleşmesine bağlanacak; ayrı backend kurulmayacak
+- [ ] BUILD tamamlandı
 - [ ] Teknik VERIFY
 
-**KAPI AÇILDI:** Katman 3 BUILD yalnız kilitli kapsamla başlayabilir; kapsam değişirse yeniden RESEARCH/LOCK gerekir.
+**KURAL:** BUILD kodlandı işareti doğrulandı anlamına gelmez. Migration canlıya uygulanmadı; 3.1–3.4 tamamlandıktan sonra teknik VERIFY yapılacak.
 
 ## Sonraki katmanlar
 
