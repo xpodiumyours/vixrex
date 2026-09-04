@@ -142,7 +142,16 @@ export function useFieldSelection({
         void hedefeGit(hedef, alan.bolum);
       }
 
-      onAlanSecildi?.();
+      // Gönder sonrası mobil işlem sürerken sıradaki alan otomatik seçilir.
+      // Bu seçim paneli tekrar açmamalı; kullanıcı "Düzenleniyor…" sırasında
+      // vitrini görmeye devam eder. İşlem dışındaki normal alan tıklamalarında
+      // eski davranış aynen korunur ve panel açılır.
+      const mobilIslemSuruyor =
+        typeof document !== "undefined" &&
+        document.body.classList.contains("vixrex-asistan-isliyor");
+      if (!mobilIslemSuruyor) {
+        onAlanSecildi?.();
+      }
       setSeciliAlan(alan);
       const mevcut = yerelTaslak[alan.kolon];
       setGiris(
