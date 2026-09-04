@@ -97,16 +97,17 @@ Plan: `docs/research/katman-2-5-profesyonel-sertlestirme.md`
 ## Katman 3 — Vitrine Yazı Çekme / Taslak Enjeksiyonu
 
 Araştırma: `docs/research/katman-3-vitrine-yazi-cekme-arastirma.md`
+LOCK: `docs/research/katman-3-vitrine-yazi-cekme-lock.md`
 
 - [x] RESEARCH — merkezi yazı modeli, canlı `store_articles`, CRUD, owner-session, Flutter/Next.js blog davranışı, duplicate/canonical riski ve ölçek araştırıldı; sonuç **UYGUN AMA ŞARTLI**
 - [x] UX-FIT — mevcut Blog Yönetimi + mevcut editör yeniden kullanılacak; paralel blog yönetim ekranı kurulmayacak
 - [x] SECURITY/RISK — yalnız published kaynak, zorunlu draft, DB owner-session tekrar doğrulaması, kaynak ilişkisi ve idempotency şartları çıkarıldı
 - [x] LOOK — canlı `store_articles` kolon/constraint/policy/index/trigger yapısı ve gerçek Next.js/Flutter CRUD yüzeyleri doğrulandı
-- [ ] LOCK — araştırma + UX-FIT şartları kullanıcı tarafından onaylandıktan sonra kapsam kilitlenecek
+- [x] LOCK — 12 ürün/güvenlik şartı kullanıcı tarafından açıkça onaylandı; source provenance, iki import modu, idempotency ve mevcut editörü yeniden kullanma sınırları kilitlendi
 - [ ] BUILD
 - [ ] Teknik VERIFY
 
-**KAPI:** Katman 3 BUILD, kullanıcı araştırma/UX-FIT sonucunu açıkça onaylamadan başlamaz.
+**KAPI AÇILDI:** Katman 3 BUILD yalnız kilitli kapsamla başlayabilir; kapsam değişirse yeniden RESEARCH/LOCK gerekir.
 
 ## Sonraki katmanlar
 
