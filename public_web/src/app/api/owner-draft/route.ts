@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { validateField } from "@/lib/vitrinFieldValidation";
@@ -56,6 +56,29 @@ function supabaseAnon() {
   );
 }
 
+/**
+ * Preview ortamında SERVICE_ROLE secret'ı tanımlı değilse eski kod
+ * getSupabaseAdmin() içinde throw ediyor, Next.js HTML 500 dönüyor ve istemci
+ * bunu JSON sanıp parse etmeye çalışınca yalnız "Bağlantı kurulamadı" görüyordu.
+ *
+ * Üretimde fail-closed davranışı KORUNUR: service role yoksa kayıt açılmaz.
+ * Preview'da ise yalnız rate-limit katmanı atlanır; kayıt yine iki ayrı kapıdan
+ * geçer: imzalı HttpOnly owner çerezi + update_working_draft_field içindeki
+ * session-token/store yetkisi. Böylece PR Preview fonksiyonel test edilebilir,
+ * production güvenlik davranışı değişmez.
+ */
+function rateLimitAdmin(): SupabaseClient | null {
+  try {
+    return getSupabaseAdmin();
+  } catch (error) {
+    if (process.env.VERCEL_ENV === "preview") {
+      console.warn("[owner-draft] preview rate limit skipped: service role unavailable");
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function POST(request: NextRequest) {
   let govde: { slug?: unknown; anahtar?: unknown; deger?: unknown; clientId?: unknown };
   try {
@@ -92,44 +115,56 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: sonuc.hata }, { status: 422 });
   }
 
-  // Oran sınırı: store slug bazlı (ownerSession.slug doğrulanmış)
-  // V-55: SECURITY DEFINER RPC'ye oran sınırı ekle
-  const admin = getSupabaseAdmin();
-
-  // Dakikalık pencere
-  const { data: minuteRows, error: minuteError } = await admin.rpc("consume_assistant_request", {
-    p_client_key: `owner_draft:${ownerSession.slug}:min`,
-    p_max_requests: DRAFT_LIMIT_PER_MINUTE,
-    p_window_seconds: 60,
-  });
-  if (minuteError) {
-    console.error("[owner-draft] minute rate limit failed:", minuteError.message);
-    return NextResponse.json({ hata: "Kaydedilemedi. Lütfen tekrar dene." }, { status: 500 });
-  }
-  const minuteResult = Array.isArray(minuteRows) ? minuteRows[0] : minuteRows;
-  if (minuteResult && !minuteResult.allowed) {
+  // Oran sınırı: store slug bazlı (ownerSession.slug doğrulanmış).
+  // Production'da service-role zorunlu. Preview'da secret yoksa yukarıdaki
+  // açıklanan dar istisna ile yalnız bu katman atlanır.
+  let admin: SupabaseClient | null;
+  try {
+    admin = rateLimitAdmin();
+  } catch (error) {
+    console.error("[owner-draft] rate limit admin unavailable", error);
     return NextResponse.json(
-      { hata: `Çok sık güncelleme. ${minuteResult.retry_after_seconds} saniye sonra tekrar dene.` },
-      { status: 429 }
+      { hata: "Kaydetme servisi şu anda kullanılamıyor. Lütfen tekrar dene." },
+      { status: 503 }
     );
   }
 
-  // Saatlik pencere
-  const { data: hourRows, error: hourError } = await admin.rpc("consume_assistant_request", {
-    p_client_key: `owner_draft:${ownerSession.slug}:hour`,
-    p_max_requests: DRAFT_LIMIT_PER_HOUR,
-    p_window_seconds: 3600,
-  });
-  if (hourError) {
-    console.error("[owner-draft] hourly rate limit failed:", hourError.message);
-    return NextResponse.json({ hata: "Kaydedilemedi. Lütfen tekrar dene." }, { status: 500 });
-  }
-  const hourResult = Array.isArray(hourRows) ? hourRows[0] : hourRows;
-  if (hourResult && !hourResult.allowed) {
-    return NextResponse.json(
-      { hata: `Saatlik güncelleme limitine ulaştın. ${hourResult.retry_after_seconds} saniye sonra tekrar dene.` },
-      { status: 429 }
-    );
+  if (admin) {
+    // Dakikalık pencere
+    const { data: minuteRows, error: minuteError } = await admin.rpc("consume_assistant_request", {
+      p_client_key: `owner_draft:${ownerSession.slug}:min`,
+      p_max_requests: DRAFT_LIMIT_PER_MINUTE,
+      p_window_seconds: 60,
+    });
+    if (minuteError) {
+      console.error("[owner-draft] minute rate limit failed:", minuteError.message);
+      return NextResponse.json({ hata: "Kaydedilemedi. Lütfen tekrar dene." }, { status: 500 });
+    }
+    const minuteResult = Array.isArray(minuteRows) ? minuteRows[0] : minuteRows;
+    if (minuteResult && !minuteResult.allowed) {
+      return NextResponse.json(
+        { hata: `Çok sık güncelleme. ${minuteResult.retry_after_seconds} saniye sonra tekrar dene.` },
+        { status: 429 }
+      );
+    }
+
+    // Saatlik pencere
+    const { data: hourRows, error: hourError } = await admin.rpc("consume_assistant_request", {
+      p_client_key: `owner_draft:${ownerSession.slug}:hour`,
+      p_max_requests: DRAFT_LIMIT_PER_HOUR,
+      p_window_seconds: 3600,
+    });
+    if (hourError) {
+      console.error("[owner-draft] hourly rate limit failed:", hourError.message);
+      return NextResponse.json({ hata: "Kaydedilemedi. Lütfen tekrar dene." }, { status: 500 });
+    }
+    const hourResult = Array.isArray(hourRows) ? hourRows[0] : hourRows;
+    if (hourResult && !hourResult.allowed) {
+      return NextResponse.json(
+        { hata: `Saatlik güncelleme limitine ulaştın. ${hourResult.retry_after_seconds} saniye sonra tekrar dene.` },
+        { status: 429 }
+      );
+    }
   }
 
   const { error, data } = await supabaseAnon().rpc("update_working_draft_field", {

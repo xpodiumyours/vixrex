@@ -71,6 +71,38 @@ export function FieldInputArea({
 
   const kaliteMi = seciliAlan ? alanOnemi(seciliAlan) === "kalite" : false;
 
+  // Mobilde Gönder'e basıldığı anda asistan sheet'i geri çekilir; kayıt/NLU
+  // çalışırken kullanıcı vitrini görmeye devam eder. Canonical Vixrex düğmesi
+  // zaten panelin tek aç/kapat yüzeyi olduğu için ikinci bir state yolu açmıyoruz.
+  // Masaüstü davranışına dokunulmaz.
+  const gonderVeVitriniGoster = async () => {
+    const mobil =
+      typeof window !== "undefined" &&
+      !window.matchMedia("(min-width: 640px)").matches;
+
+    if (!giris.trim() && seciliAlan?.tip !== "acikKapali") {
+      await gonder();
+      return;
+    }
+
+    if (mobil) {
+      document.body.classList.add("vixrex-asistan-isliyor");
+      document
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label="Vixrex Asistan"][aria-expanded="true"]'
+        )
+        ?.click();
+    }
+
+    try {
+      await gonder();
+    } finally {
+      if (mobil) {
+        document.body.classList.remove("vixrex-asistan-isliyor");
+      }
+    }
+  };
+
   return (
     <div>
       {seciliAlan && (
@@ -165,7 +197,7 @@ export function FieldInputArea({
           </select>
           <button
             type="button"
-            onClick={() => void gonder()}
+            onClick={() => void gonderVeVitriniGoster()}
             disabled={kaydediliyor || !mevcutIl}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
@@ -192,7 +224,7 @@ export function FieldInputArea({
           </select>
           <button
             type="button"
-            onClick={() => void gonder()}
+            onClick={() => void gonderVeVitriniGoster()}
             disabled={kaydediliyor || !mevcutIlce}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
@@ -216,7 +248,7 @@ export function FieldInputArea({
           </select>
           <button
             type="button"
-            onClick={() => void gonder()}
+            onClick={() => void gonderVeVitriniGoster()}
             disabled={kaydediliyor || !giris}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
@@ -243,7 +275,7 @@ export function FieldInputArea({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  if (!kaydediliyor) void gonder();
+                  if (!kaydediliyor) void gonderVeVitriniGoster();
                 }
               }}
               rows={seciliAlan?.tip === "uzunMetin" ? 3 : 1}
@@ -267,7 +299,7 @@ export function FieldInputArea({
             />
             <button
               type="button"
-              onClick={() => void gonder()}
+              onClick={() => void gonderVeVitriniGoster()}
               disabled={kaydediliyor}
               className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
             >

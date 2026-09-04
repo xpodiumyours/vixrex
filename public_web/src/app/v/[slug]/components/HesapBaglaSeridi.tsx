@@ -5,12 +5,9 @@ import { supabase } from "@/lib/supabase";
 
 /** Hesapsız vitrin uyarısı — Google ile hesap bağlama şeridi.
  *
- * 2026-09-03 (Çalışma masası / Yön C): bu blok "Sahip Çalışma Alanı"
- * çekmecesinin içindeydi. Çekmece kalktı — ekranda tek panel var, o da
- * Vixrex Asistan — ve bu uyarı oraya, başlığın hemen altına taşındı.
- * Mantık aynen korundu: linkIdentity bağlanacak bir oturum bulamazsa
- * sessizce hiçbir şey yapmıyor, o yüzden önce anonim oturum güvenceye
- * alınıyor (diğer sayfalardaki kurulu desenle aynı).
+ * Mobilde asistanın ana işini (vitrini düzenleme + sohbet) itmemesi için
+ * tek satırlık kompakt uyarı olarak görünür; açıklama masaüstünde korunur.
+ * Kimlik bağlama mantığı değişmez.
  */
 export function HesapBaglaSeridi({ slug }: { slug: string }) {
   const [baglaniyor, setBaglaniyor] = useState(false);
@@ -50,27 +47,33 @@ export function HesapBaglaSeridi({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="border-b border-white/10 bg-amber-500/10 px-4 py-3">
-      <p className="text-[12px] font-black text-amber-400">
-        Vitrinini kaydetmek için hesabına bağla
-      </p>
-      <p className="mt-1 text-[11px] leading-[1.45] text-slate-400">
-        Şu an vitrinin bu cihaza bağlı. Telefonunu değiştirirsen özelleştirmelerini
-        kaybedersin.
-      </p>
+    <div className="border-b border-white/10 bg-amber-500/10 px-3 py-2.5 sm:px-4 sm:py-3">
+      <div className="flex items-center gap-3 sm:block">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11px] font-black text-amber-400 sm:text-[12px]">
+            Vitrinini hesabına bağla
+          </p>
+          <p className="mt-1 hidden text-[11px] leading-[1.45] text-slate-400 sm:block">
+            Şu an vitrinin bu cihaza bağlı. Telefonunu değiştirirsen özelleştirmelerini
+            kaybedersin.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          disabled={baglaniyor}
+          onClick={() => void bagla()}
+          className="shrink-0 rounded-lg bg-amber-500 px-3 py-2 text-[10px] font-black text-black transition-colors hover:bg-amber-400 disabled:opacity-60 sm:mt-2 sm:w-full sm:rounded-xl sm:text-[11px]"
+        >
+          {baglaniyor ? "Bağlanıyor…" : "Google ile bağla"}
+        </button>
+      </div>
+
       {hata ? (
         <p className="mt-2 text-[10px] font-bold text-red-400" role="alert">
           {hata}
         </p>
       ) : null}
-      <button
-        type="button"
-        disabled={baglaniyor}
-        onClick={() => void bagla()}
-        className="mt-2 flex w-full items-center justify-center rounded-xl bg-amber-500 px-3 py-2 text-[11px] font-black text-black transition-colors hover:bg-amber-400 disabled:opacity-60"
-      >
-        {baglaniyor ? "Bağlanıyor…" : "Google ile bağla"}
-      </button>
     </div>
   );
 }

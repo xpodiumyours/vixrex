@@ -26,6 +26,8 @@ import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 
 export const dynamic = "force-dynamic";
 
+const PRODUCTION_RENT_DEMO_URL = "https://vixrex.com/api/rent-demo";
+
 const ERROR_COPY: Record<string, string> = {
   INVALID_SLUG: "Vitrin bulunamadı.",
   SOURCE_NOT_FOUND: "Bu vitrin artık kiralık örnek olarak mevcut değil.",
@@ -66,6 +68,102 @@ function rentErrorPage(title: string, message: string): Response {
   });
 }
 
+/**
+ * Vercel Preview ortamında server-only sırlar Preview'a tanımlı değilse
+ * kiralama akışı daha `start_demo_trial` çağrısına ulaşmadan 500 oluyordu.
+ *
+ * Preview'a servis rolü anahtarı gömmek yerine yalnız ayrıcalıklı klonlama
+ * adımını canlı Vixrex backend'ine yaptırıyoruz. Canlı backend kendi
+ * RATE_LIMIT_SECRET + SERVICE_ROLE güvenlik sınırını kullanır ve tek
+ * kullanımlık owner code döndüren 303 Location üretir. Bu kod burada
+ * okunur ve PREVIEW domain'indeki /api/owner-session'a aktarılır; böylece
+ * kullanıcı klonlanan vitrini aynı PR'ın sahiplik UI'ıyla açar.
+ *
+ * Production davranışı değişmez. Preview'da gerekli server secret'ları
+ * gerçekten varsa da normal yerel akış kullanılmaya devam eder.
+ */
+async function previewRentalBridge(
+  request: Request,
+  demoSlug: string,
+): Promise<Response | null> {
+  if (process.env.VERCEL_ENV !== "preview") return null;
+
+  const serviceRoleHazir = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+  const rateLimitHazir = Boolean(process.env.RATE_LIMIT_SECRET?.trim());
+  if (serviceRoleHazir && rateLimitHazir) return null;
+
+  let upstream: Response;
+  try {
+    const body = new URLSearchParams({
+      slug: demoSlug,
+      recaptchaToken: "recaptcha-unavailable",
+    });
+
+    upstream = await fetch(PRODUCTION_RENT_DEMO_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        "user-agent": "Vixrex-Preview-Rental-Bridge/1.0",
+      },
+      body: body.toString(),
+      redirect: "manual",
+      cache: "no-store",
+    });
+  } catch (err) {
+    console.error("[rent-demo] preview production bridge request failed", err);
+    return rentErrorPage("Vitrin açılamadı", ERROR_COPY.SERVICE_UNAVAILABLE);
+  }
+
+  if (upstream.status >= 300 && upstream.status < 400) {
+    const location = upstream.headers.get("location");
+    if (!location) {
+      console.error("[rent-demo] preview bridge redirect missing location");
+      return rentErrorPage("Vitrin açılamadı", ERROR_COPY.SERVICE_UNAVAILABLE);
+    }
+
+    const upstreamDestination = new URL(location, PRODUCTION_RENT_DEMO_URL);
+    const slug = upstreamDestination.searchParams.get("slug")?.trim() ?? "";
+    const code = upstreamDestination.searchParams.get("ocode")?.trim() ?? "";
+
+    if (
+      upstreamDestination.pathname !== "/api/owner-session" ||
+      !slug ||
+      !code
+    ) {
+      console.error("[rent-demo] preview bridge returned unexpected redirect");
+      return rentErrorPage("Vitrin açılamadı", ERROR_COPY.SERVICE_UNAVAILABLE);
+    }
+
+    const localUrl = new URL(request.url);
+    const destination = new URL("/api/owner-session", localUrl);
+    destination.searchParams.set("slug", slug);
+    destination.searchParams.set("ocode", code);
+
+    const response = NextResponse.redirect(destination, 303);
+    response.headers.set("cache-control", "no-store");
+    return response;
+  }
+
+  if (!upstream.ok) {
+    const contentType = upstream.headers.get("content-type") || "text/html; charset=utf-8";
+    const body = await upstream.text().catch(() => "");
+    if (body) {
+      return new Response(body, {
+        status: upstream.status,
+        headers: {
+          "content-type": contentType,
+          "cache-control": "no-store",
+        },
+      });
+    }
+
+    return rentErrorPage("Vitrin açılamadı", ERROR_COPY.SERVICE_UNAVAILABLE);
+  }
+
+  console.error("[rent-demo] preview bridge returned unexpected success response");
+  return rentErrorPage("Vitrin açılamadı", ERROR_COPY.SERVICE_UNAVAILABLE);
+}
+
 // GET: artık veritabanına dokunmaz. Eski (güncellenmemiş) Flutter APK'ları
 // hâlâ bu URL'i açıyor — onları kırmadan güvenli köprü sayfasına taşır.
 export async function GET(request: Request) {
@@ -103,6 +201,9 @@ export async function POST(request: Request) {
     );
   }
 
+  const bridged = await previewRentalBridge(request, demoSlug);
+  if (bridged) return bridged;
+
   // reCAPTCHA ek bot sinyalidir; Google betiği/servisi mobil ağda
   // yüklenemezse kiralama sonsuza kadar beklememeli. Asıl zorunlu koruma
   // aşağıdaki HMAC istemci parmak izi ve start_demo_trial içindeki üç
@@ -139,7 +240,15 @@ export async function POST(request: Request) {
     return rentErrorPage("Vitrin açılamadı", ERROR_COPY.SERVICE_UNAVAILABLE);
   }
 
-  const { data, error } = await getSupabaseAdmin().rpc("start_demo_trial", {
+  let admin;
+  try {
+    admin = getSupabaseAdmin();
+  } catch (err) {
+    console.error("[rent-demo] Supabase admin unavailable", err);
+    return rentErrorPage("Vitrin açılamadı", ERROR_COPY.SERVICE_UNAVAILABLE);
+  }
+
+  const { data, error } = await admin.rpc("start_demo_trial", {
     p_source_slug: demoSlug,
     p_client_key: clientKey,
   });

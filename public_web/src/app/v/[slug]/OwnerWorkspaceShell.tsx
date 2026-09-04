@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import OwnerAssistantPanel from "./OwnerAssistantPanel";
+import "./ownerStorefrontPolish.css";
 import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
 import type {
   VitrinFeaturedBanner,
@@ -118,6 +119,16 @@ export default function OwnerWorkspaceShell({
     sessionExpiresAt ?? null
   );
 
+  // Kiralık vitrin sahip ekranında yalnız bu oturuma ait görünüm cilasını
+  // etkinleştirir. Canlı/müşteri vitrini bu body sınıfını hiç almaz.
+  useEffect(() => {
+    const kiralikOwner =
+      typeof draft?.draft_data?.cloned_from_slug === "string" &&
+      draft.draft_data.cloned_from_slug.trim().length > 0;
+    document.body.classList.toggle("vixrex-owner-rental-preview", kiralikOwner);
+    return () => document.body.classList.remove("vixrex-owner-rental-preview");
+  }, [draft]);
+
   useEffect(() => {
     if (!effectiveExpiresAt) return;
     const tick = () => {
@@ -202,7 +213,6 @@ export default function OwnerWorkspaceShell({
       setTazeleniyor(false);
     }
   };
-
 
   return (
     <>

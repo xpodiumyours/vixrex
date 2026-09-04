@@ -139,12 +139,66 @@ interface CategoryRow {
   name: string;
 }
 
-async function _buildStoreDataBundle(store: PublicStoreRow) {
+interface OwnerCatalogData {
+  categories: CategoryRow[];
+  products: Array<Record<string, unknown>>;
+}
+
+const OWNER_TEMPLATE_FALLBACK_KEYS: ReadonlyArray<keyof PublicStoreRow> = [
+  "name",
+  "logo_url",
+  "whatsapp",
+  "phone",
+  "address",
+  "working_hours",
+  "province_name",
+  "district_name",
+];
+
+function bosGorunumDegeri(value: unknown): boolean {
+  return value === null || value === undefined || (typeof value === "string" && value.trim() === "");
+}
+
+/**
+ * Kiralanan demo vitrinde gerçek işletme kimliği DB'ye bilinçli olarak boş
+ * yazılır. Ancak sahip ekranı bu yüzden satın alınan/incelemede görülen kaliteli
+ * vitrini boş bir şantiye gibi göstermemeli. Bu fonksiyon yalnız GÖRÜNÜM için
+ * şablondaki örnek kimliği boş alanlara taşır; draft_data değişmez, hazırlık
+ * motoru ve yayın kapısı gerçek esnaf bilgisini istemeye devam eder.
+ */
+function ownerGorunumunuSablonlaTamamla(
+  draftStore: PublicStoreRow,
+  templateStore: PublicStoreRow,
+): { store: PublicStoreRow; ornekKullanildi: boolean } {
+  const merged = { ...draftStore };
+  let ornekKullanildi = false;
+
+  for (const key of OWNER_TEMPLATE_FALLBACK_KEYS) {
+    if (bosGorunumDegeri(merged[key]) && !bosGorunumDegeri(templateStore[key])) {
+      (merged as Record<string, unknown>)[key] = templateStore[key];
+      ornekKullanildi = true;
+    }
+  }
+
+  // Klon satırında status='draft' teknik durumdur; müşteri vitrininin açık/
+  // kapalı rozetini bozmasın. Bu da yalnız render değeri, DB'ye yazılmaz.
+  if (merged.status === "draft" && templateStore.status) {
+    merged.status = templateStore.status;
+    ornekKullanildi = true;
+  }
+
+  return { store: merged, ornekKullanildi };
+}
+
+async function _buildStoreDataBundle(
+  store: PublicStoreRow,
+  ownerCatalog: OwnerCatalogData | null = null,
+) {
   const slug = store.slug;
   try {
     const storeId = store.id;
 
-    const [bookingResult, articlesResult, categoryResult, productResult] = await Promise.all([
+    const [bookingResult, articlesResult] = await Promise.all([
       supabase
         .from("booking_settings")
         .select("*")
@@ -158,32 +212,46 @@ async function _buildStoreDataBundle(store: PublicStoreRow) {
         .order("published_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false })
         .limit(3),
-      supabase
-        .from("product_categories")
-        .select("id,name")
-        .eq("store_id", storeId)
-        .eq("is_active", true)
-        .order("sort_order"),
-      supabase
-        .from("products")
-        .select(
-          "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order"
-        )
-        .eq("store_id", storeId)
-        .eq("is_active", true)
-        .eq("is_visible", true)
-        .order("sort_order", { ascending: true })
-        .order("id", { ascending: true }),
     ]);
 
-    const categories = (categoryResult.data || []) as CategoryRow[];
+    let categories: CategoryRow[];
+    let productRows: Array<Record<string, unknown>>;
+
+    if (ownerCatalog) {
+      // Yayınlanmamış sahip taslağında normal public RLS ürün/kategorileri
+      // gizler. Owner session tokenı doğrulanmış dar RPC'den gelen katalog
+      // kullanılır; public RLS gevşetilmez.
+      categories = ownerCatalog.categories;
+      productRows = ownerCatalog.products;
+    } else {
+      const [categoryResult, productResult] = await Promise.all([
+        supabase
+          .from("product_categories")
+          .select("id,name")
+          .eq("store_id", storeId)
+          .eq("is_active", true)
+          .order("sort_order"),
+        supabase
+          .from("products")
+          .select(
+            "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order"
+          )
+          .eq("store_id", storeId)
+          .eq("is_active", true)
+          .eq("is_visible", true)
+          .order("sort_order", { ascending: true })
+          .order("id", { ascending: true }),
+      ]);
+      categories = (categoryResult.data || []) as CategoryRow[];
+      productRows = (productResult.data || []) as Array<Record<string, unknown>>;
+    }
 
     const categoryMap = new Map<string, string>();
     categories.forEach((cat) => {
       categoryMap.set(cat.id, cat.name);
     });
 
-    const visibleProducts = (productResult.data || [])
+    const visibleProducts = productRows
       .filter((p: Record<string, unknown>) => (p.name as string)?.trim())
       .map((p: Record<string, unknown>) => ({
         id: p.id as string,
@@ -295,6 +363,24 @@ async function getWorkingDraft(sessionToken: string): Promise<WorkingDraftData |
   return draft;
 }
 
+async function getOwnerCatalog(sessionToken: string): Promise<OwnerCatalogData | null> {
+  const { data, error } = await supabase.rpc("get_owner_catalog_for_session", {
+    p_session_token: sessionToken,
+  });
+  if (error || !data) {
+    console.error("Owner catalog query failed:", error);
+    return null;
+  }
+
+  const raw = data as { categories?: unknown; products?: unknown };
+  return {
+    categories: Array.isArray(raw.categories) ? (raw.categories as CategoryRow[]) : [],
+    products: Array.isArray(raw.products)
+      ? (raw.products as Array<Record<string, unknown>>)
+      : [],
+  };
+}
+
 export interface HaftalikPerformans {
   goruntuleme: number;
   whatsapp_tiklama: number;
@@ -387,6 +473,8 @@ export default async function StorePage(props: PageProps) {
 
   let data;
   let draft: WorkingDraftData | null = null;
+  let ownerCatalog: OwnerCatalogData | null = null;
+  let ownerTemplatePreview = false;
   let sessionExpiresAt: number | null = null;
   let haftalikPerformans: HaftalikPerformans | null = null;
 
@@ -398,6 +486,8 @@ export default async function StorePage(props: PageProps) {
     if (!draft) {
       isOwnerMode = false;
     } else {
+      ownerCatalog = await getOwnerCatalog(ownerSession.sessionToken);
+
       // Faz F: yalnız yayında olan vitrin için — sorgu boşuna gitmesin.
       if (draft.draft_data?.is_published) {
         haftalikPerformans = await getHaftalikPerformans(ownerSession.sessionToken);
@@ -417,14 +507,31 @@ export default async function StorePage(props: PageProps) {
   }
 
   if (isOwnerMode && draft) {
-    data = draft?.draft_data
-      ? await _buildStoreDataBundle({
-          ...draft.draft_data,
-          id: draft.store_id,
-          slug: draft.slug,
-          is_published: true,
-        } as unknown as PublicStoreRow)
-      : await getStoreData(params.slug);
+    if (draft.draft_data) {
+      let ownerDisplayStore = {
+        ...draft.draft_data,
+        id: draft.store_id,
+        slug: draft.slug,
+        is_published: true,
+      } as unknown as PublicStoreRow;
+
+      const sourceSlug = String(draft.draft_data.cloned_from_slug || "").trim();
+      if (sourceSlug) {
+        const templateBundle = await getStoreData(sourceSlug);
+        if (templateBundle?.store) {
+          const merged = ownerGorunumunuSablonlaTamamla(
+            ownerDisplayStore,
+            templateBundle.store,
+          );
+          ownerDisplayStore = merged.store;
+          ownerTemplatePreview = merged.ornekKullanildi;
+        }
+      }
+
+      data = await _buildStoreDataBundle(ownerDisplayStore, ownerCatalog);
+    } else {
+      data = await getStoreData(params.slug);
+    }
   } else {
     data = await getStoreData(params.slug);
   }
@@ -501,7 +608,9 @@ export default async function StorePage(props: PageProps) {
   const phoneDigits = normalizeWhatsappDigits(displayPhone);
   const phoneUrl = phoneDigits ? `tel:+${phoneDigits}` : null;
   const displayEmail = String(store.email || "").trim();
-  const displayHeroBadge = String(store.hero_badge || "").trim();
+  const displayHeroBadge = ownerTemplatePreview
+    ? "ÖRNEK GÖRÜNÜM · DOKUNUP DEĞİŞTİR"
+    : String(store.hero_badge || "").trim();
   const phoneDigitsForSchema = phoneDigits || whatsappDigits;
   const featuredBanner = (() => {
     const label = String(store.featured_banner_label || "").trim();
