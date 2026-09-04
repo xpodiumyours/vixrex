@@ -73,13 +73,49 @@ function ilAdiMetindeGeciyorMu(il: string, normalizedMetin: string): boolean {
   return new RegExp(`\\b${kaciril(normalizeTr(il))}\\b`).test(normalizedMetin);
 }
 
+/**
+ * Tek başına bir ilçe adı konum kanıtı değildir: "Konak Kafe", "Şişli
+ * Moda" gibi işletme adlarında ilçe kelimesi marka/adın parçası olabilir.
+ * Ekran testinde "Konak kafe 0542..." ifadesinin İzmir/Konak diye otomatik
+ * doldurulması bu yanlış pozitifi somut olarak gösterdi.
+ *
+ * İlçe ancak şu iki kanıttan biri varsa otomatik konum sayılır:
+ * - ilgili il de metinde açıkça geçiyorsa ("İzmir Konak"), veya
+ * - ilçe adı konum eki/bağlamıyla yazılmışsa ("Konak'ta", "Konak ilçesinde").
+ *
+ * Amaç hassasiyeti artırmak: kanıt yoksa boş bırakılır, kullanıcıdan sonra
+ * normal konum adımında istenir; marka adından konum tahmin edilmez.
+ */
+function tekIlceIcinKonumKanitiVarMi(
+  terim: string,
+  il: string,
+  normalizedMetin: string,
+): boolean {
+  if (ilAdiMetindeGeciyorMu(il, normalizedMetin)) return true;
+
+  const t = kaciril(terim);
+  const ekli = new RegExp(
+    `\\b${t}\\b\\s*(?:['’]\\s*)?(?:de|da|te|ta|nde|nda|den|dan|ten|tan|nden|ndan|deki|daki|teki|taki|ndeki|ndaki)\\b`,
+  );
+  if (ekli.test(normalizedMetin)) return true;
+
+  const acikBaglam = new RegExp(
+    `\\b${t}\\b\\s+(?:ilce|ilcesi|ilcesinde|semt|semtinde|bolge|bolgesinde)\\b`,
+  );
+  return acikBaglam.test(normalizedMetin);
+}
+
 export function ilIlceCikar(paragraf: string): YerSonucu | null {
   const normalize = normalizeTr(paragraf);
 
   const ilceEslesmeleri = eslesenleriBul(normalize, ILCE_ADAYLARI);
-  for (const { deger: adaylar } of ilceEslesmeleri) {
+  for (const { terim, deger: adaylar } of ilceEslesmeleri) {
     if (adaylar.length === 1) {
-      return { il: adaylar[0].il, ilce: adaylar[0].ilce };
+      const aday = adaylar[0];
+      if (tekIlceIcinKonumKanitiVarMi(terim, aday.il, normalize)) {
+        return { il: aday.il, ilce: aday.ilce };
+      }
+      continue;
     }
     // Belirsiz ilçe (birden fazla ilde var) — paragrafta illerden TAM BİR
     // tanesi de geçiyorsa o çift kullanılır. Sıfır ya da birden fazlası
