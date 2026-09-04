@@ -7,30 +7,30 @@ import { safeJsonLdHtml } from "@/lib/jsonLd";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 
 /**
- * Tek blog yazısı.
+ * Tek Vixrex blog yazısı.
  *
- * Örnek alınan dosya: `app/v/[slug]/yazilar/[articleSlug]/page.tsx` —
- * BlogPosting + BreadcrumbList JSON-LD ve gövde biçimlendirme deseni
- * oradan geliyor. JSON-LD kaçışı YALNIZ `safeJsonLdHtml` üzerinden;
- * `json-ld-xss` testi bunu koruyor.
- *
- * Taslak yazılar buradan da görünmez: `yaziyiBul` yalnız yayındakilere
- * bakar, `generateStaticParams` de yalnız onları üretir.
+ * Veri merkezi `vixrex_blog_articles` tablosundan gelir. Public okuma katmanı
+ * yalnız `published` yazıları döndürdüğü için taslak slug burada da 404 olur.
+ * BlogPosting + BreadcrumbList JSON-LD ve sanitize edilmiş gövde davranışı
+ * korunur.
  */
+
+export const revalidate = 300;
 
 interface SayfaProps {
   params: Promise<{ slug: string }>;
 }
 
-export function generateStaticParams() {
-  return yayindakiYazilar().map((yazi) => ({ slug: yazi.slug }));
+export async function generateStaticParams() {
+  const yazilar = await yayindakiYazilar();
+  return yazilar.map((yazi) => ({ slug: yazi.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: SayfaProps): Promise<Metadata> {
   const { slug } = await params;
-  const yazi = yaziyiBul(slug);
+  const yazi = await yaziyiBul(slug);
   if (!yazi) return { title: "Yazı bulunamadı | Vixrex" };
 
   return {
@@ -44,13 +44,14 @@ export async function generateMetadata({
       type: "article",
       publishedTime: yazi.yayinTarihi,
       modifiedTime: yazi.guncellemeTarihi,
+      ...(yazi.kapakGorseli ? { images: [yazi.kapakGorseli] } : {}),
     },
   };
 }
 
 export default async function BlogYaziPage({ params }: SayfaProps) {
   const { slug } = await params;
-  const yazi = yaziyiBul(slug);
+  const yazi = await yaziyiBul(slug);
   if (!yazi) notFound();
 
   const siteUrl = getSiteUrl();
@@ -65,6 +66,7 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
     description: yazi.ozet,
     datePublished: yazi.yayinTarihi,
     dateModified: yazi.guncellemeTarihi,
+    ...(yazi.kapakGorseli ? { image: [yazi.kapakGorseli] } : {}),
     author: { "@type": "Organization", name: "Vixrex" },
     publisher: {
       "@type": "Organization",
