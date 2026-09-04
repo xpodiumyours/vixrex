@@ -38,6 +38,19 @@ import path from "path";
 // fonts.googleapis.com, font-src'e fonts.gstatic.com eklendi.
 const isDev = process.env.NODE_ENV === "development";
 
+// Supabase URL ve publishable key gizli değildir; web istemcisine zaten
+// gönderilen public proje kimlikleridir. Vercel env varsa her zaman öncelikli.
+// Yalnız Preview env'i eksik kaldığında placeholder Supabase'e düşmemek için
+// gerçek public değerler son fallback olarak kullanılır.
+const publicSupabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.SUPABASE_URL ||
+  "https://chfulefxczbgurtgavtp.supabase.co";
+const publicSupabaseKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  "sb_publishable_GcCRXDh6vXFGR1UvBFG-3w_x85hvXbN"; // gitleaks:allow — Supabase publishable key, sır değil
+
 const CSP =
   "default-src 'self'; " +
   "script-src 'self' 'unsafe-inline'" +
@@ -78,6 +91,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: publicSupabaseUrl,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: publicSupabaseKey,
+  },
   turbopack: {
     root: path.join(__dirname, ".."),
   },
