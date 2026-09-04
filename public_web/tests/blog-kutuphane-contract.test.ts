@@ -70,4 +70,20 @@ describe("Katman 2 merkezi blog kütüphanesi sözleşmesi", () => {
     expect(sitemap).toContain("/blog/konu/");
     expect(sitemap).toContain("/blog/sektor/");
   });
+
+  it("merkezi kapak yükleme owner-session'dan ayrıdır ve ortak sıkıştırma çekirdeğini kullanır", () => {
+    const upload = oku("src/app/api/vixrex-blog/admin-upload/route.ts");
+    const auth = oku("src/lib/platformAdminAuth.ts");
+    const compression = oku("src/lib/gorselSikistir.ts");
+
+    expect(upload).toContain("platformAdminDogrula");
+    expect(upload).toContain("gorseliSikistir");
+    expect(upload).toContain('vixrex-blog/covers/');
+    expect(upload).not.toContain("OWNER_SESSION_COOKIE");
+    expect(upload).not.toContain("FIELD_BY_KEY");
+    expect(auth).toContain('.from("admins")');
+    expect(auth).toContain("auth.getUser(token)");
+    expect(compression).toContain("export const UZUN_KENAR = 1600");
+    expect(compression).toContain("export const KALITE = 82");
+  });
 });
