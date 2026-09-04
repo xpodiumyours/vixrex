@@ -5,11 +5,8 @@ import 'package:vixrex/theme/app_colors.dart';
 
 /// Mevcut blog yazılarını listeler, tıklayınca düzenlemeye açar.
 ///
-/// Önceden "Blog Yazılarım" kartındaki "Aç" butonu her zaman YENİ bir
-/// yazı ekranı açıyordu — mevcut yazılar hiç listelenmiyor, hiç
-/// düzenlenemiyordu. Bu ekran o eksiği kapatır: `article_service.dart`
-/// içindeki `fetchArticles`/`updateArticle` zaten hazırdı, yalnız bir
-/// liste arayüzü eksikti.
+/// Katman 3'te aynı ekran içine Vixrex merkezi kütüphanesinden güvenli
+/// taslak çekme eylemi eklenir. Ayrı blog yönetim ekranı/backend kurulmaz.
 class BlogPostListScreen extends StatefulWidget {
   final String storeSlug;
 
@@ -65,6 +62,265 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
     if (mounted) _load();
   }
 
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  Future<void> _openVixrexLibrary() async {
+    final result = await _articleService.fetchVixrexLibrary(limit: 20);
+    if (!mounted) return;
+    if (!result.isSuccess) {
+      _showMessage('Vixrex kütüphanesi yüklenemedi. Tekrar deneyin.');
+      return;
+    }
+
+    final library = result.data ?? const <Map<String, dynamic>>[];
+    if (library.isEmpty) {
+      _showMessage('Şu anda yayında Vixrex yazısı bulunmuyor.');
+      return;
+    }
+
+    String? importingId;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return SafeArea(
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(sheetContext).size.height * 0.82,
+                ),
+                decoration: const BoxDecoration(
+                  color: AppColors.bgEditor,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(AppColors.radius20),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 18, 12, 12),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Vixrex Kütüphanesi',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 18,
+                                    color: AppColors.darkText,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Yayındaki bir rehberi vitrininize taslak olarak alın.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.mutedText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed:
+                                importingId == null
+                                    ? () => Navigator.of(sheetContext).pop()
+                                    : null,
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: AppColors.border),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                        itemCount: library.length,
+                        separatorBuilder:
+                            (_, __) => const SizedBox(height: AppColors.spacing12),
+                        itemBuilder: (context, index) {
+                          final article = library[index];
+                          final id = (article['id'] as String?)?.trim() ?? '';
+                          final title =
+                              (article['title'] as String?)?.trim() ??
+                              'Başlıksız yazı';
+                          final summary =
+                              (article['summary'] as String?)?.trim() ?? '';
+                          final minutes = article['reading_minutes'];
+                          final topic =
+                              (article['primary_topic'] as String?)?.trim() ?? '';
+                          final isImporting = importingId == id;
+
+                          Future<void> importWithMode(String mode) async {
+                            if (id.isEmpty || importingId != null) return;
+                            setSheetState(() => importingId = id);
+
+                            final importResult = await _articleService
+                                .importVixrexBlogArticle(
+                                  storeSlug: widget.storeSlug,
+                                  sourceArticleId: id,
+                                  mode: mode,
+                                );
+                            if (!mounted) return;
+
+                            if (!importResult.isSuccess) {
+                              if (Navigator.of(sheetContext).canPop()) {
+                                setSheetState(() => importingId = null);
+                              }
+                              _showMessage(
+                                'Yazı vitrininize eklenemedi. Tekrar deneyin.',
+                              );
+                              return;
+                            }
+
+                            final importedSlug =
+                                (importResult.data?['article_slug'] as String?)
+                                    ?.trim();
+                            final refreshed = await _articleService.fetchArticles(
+                              widget.storeSlug,
+                            );
+                            if (!mounted) return;
+
+                            Map<String, dynamic>? importedArticle;
+                            if (refreshed.isSuccess && importedSlug != null) {
+                              for (final item in refreshed.data ?? const []) {
+                                if (item['slug'] == importedSlug) {
+                                  importedArticle = item;
+                                  break;
+                                }
+                              }
+                            }
+
+                            if (Navigator.of(sheetContext).canPop()) {
+                              Navigator.of(sheetContext).pop();
+                            }
+
+                            if (importedArticle != null) {
+                              await AppRouter.navigateToBlogEditor(
+                                context,
+                                slug: widget.storeSlug,
+                                article: importedArticle,
+                              );
+                            } else {
+                              _showMessage(
+                                'Taslak eklendi. Yazı listesi yenileniyor.',
+                              );
+                            }
+                            if (mounted) await _load();
+                          }
+
+                          return Card(
+                            margin: EdgeInsets.zero,
+                            color: AppColors.surfaceSoft,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppColors.radius16,
+                              ),
+                              side: const BorderSide(color: AppColors.border),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppColors.spacing16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: const TextStyle(
+                                      color: AppColors.darkText,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  if (summary.isNotEmpty) ...[
+                                    const SizedBox(height: AppColors.spacing8),
+                                    Text(
+                                      summary,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: AppColors.mutedText,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                  if (minutes != null || topic.isNotEmpty) ...[
+                                    const SizedBox(height: AppColors.spacing8),
+                                    Text(
+                                      [
+                                        if (minutes != null) '$minutes dk',
+                                        if (topic.isNotEmpty) topic,
+                                      ].join(' · '),
+                                      style: const TextStyle(
+                                        color: AppColors.mutedText,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: AppColors.spacing12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed:
+                                              importingId == null
+                                                  ? () => importWithMode(
+                                                    'linked_excerpt',
+                                                  )
+                                                  : null,
+                                          child: Text(
+                                            isImporting
+                                                ? 'Ekleniyor…'
+                                                : 'Kısa sürüm',
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppColors.spacing8),
+                                      Expanded(
+                                        child: FilledButton(
+                                          onPressed:
+                                              importingId == null
+                                                  ? () => importWithMode(
+                                                    'adaptable_draft',
+                                                  )
+                                                  : null,
+                                          child: Text(
+                                            isImporting
+                                                ? 'Ekleniyor…'
+                                                : 'Uyarlanabilir taslak',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   String _statusLabel(String? status) {
     switch (status) {
       case 'published':
@@ -84,6 +340,14 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.bgEditor,
         title: const Text('Blog Yazılarım'),
+        actions: [
+          TextButton.icon(
+            onPressed: _openVixrexLibrary,
+            icon: const Icon(Icons.auto_stories_outlined, size: 18),
+            label: const Text('Vixrex Kütüphanesi'),
+          ),
+          const SizedBox(width: AppColors.spacing8),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewPost,
@@ -117,7 +381,7 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
-            'Henüz blog yazısı yok. "Yeni Yazı" ile ilkini ekleyebilirsin.',
+            'Henüz blog yazısı yok. "Yeni Yazı" veya "Vixrex Kütüphanesi" ile ilkini ekleyebilirsin.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.mutedText),
           ),
