@@ -78,15 +78,18 @@ import { ensureAnonymousSession } from "@/lib/assistantConversation";
 //       composer altında sabit şerit olması, 2026-09-03) — kalan iş yalnız
 //       GÖRSEL ağırlık/stil.
 //   Yayına alma dağınık
-//     → Alt navigasyon: 🏠(vitrin) / ✏️(düzenle) / 👁️(önizle=müşteri modu) /
-//       ⚙️(ayarlar). BU, önceki 10 maddede YOKTU — yeni bir yapısal öğe
-//       (kalıcı bottom tab bar). SpotlightGuide'ın "balonu küçült" fikrini
-//       (eski madde 5) muhtemelen gereksiz kılıyor: balon yerine zaten
-//       "✏️ düzenle" modunda esnaf tek bir aktif alanla baş başa kalıyor.
+//     → Alt navigasyon: vitrin / düzenle / önizle (=müşteri modu) / ayarlar,
+//       4 sekme. BU, önceki 10 maddede YOKTU — yeni bir yapısal öğe (kalıcı
+//       bottom tab bar). İKONLAR EMOJİ OLMAYACAK (Casper, 2026-09-04) — gerçek
+//       SVG/icon component (repoda zaten ikon kullanımı varsa onun deseniyle,
+//       yoksa yeni eklenecek bir ikon seti). SpotlightGuide'ın "balonu
+//       küçült" fikrini (eski madde 5) muhtemelen gereksiz kılıyor: balon
+//       yerine zaten "düzenle" modunda esnaf tek bir aktif alanla baş başa
+//       kalıyor.
 //
 // SONUÇ — ESKİ 5 MADDE NASIL DEĞİŞTİ:
 //   Madde 1 (yüzde → N/6)         → YENİDEN ÇERÇEVELENDİ: "Aşama 2/3" stepper.
-//   Madde 2 (SIRADA tek görev)    → KORUNUYOR, bottom-sheet içinde "✏️ düzenle"
+//   Madde 2 (SIRADA tek görev)    → KORUNUYOR, bottom-sheet içinde "düzenle"
 //                                    modunun kendi ekranı olarak yaşıyor.
 //   Madde 5 (Spotlight küçült)    → MUHTEMELEN GEREKSİZLEŞTİ — balon modeli
 //                                    yerine ayrı bir "düzenle" tam-ekran modu
@@ -97,7 +100,8 @@ import { ensureAnonymousSession } from "@/lib/assistantConversation";
 //                                    modunda hâlâ geçerli.
 //   Madde 10 (mobil split-view)   → GENİŞLEDİ: yalnız mobil değil, masaüstü de
 //                                    dahil "bottom sheet, 3 mod" modeline.
-//   YENİ: alt navigasyon (🏠/✏️/👁️/⚙️) — önceki plana hiç yoktu, eklendi.
+//   YENİ: alt navigasyon (vitrin/düzenle/önizle/ayarlar, emoji DEĞİL gerçek
+//   ikon) — önceki plana hiç yoktu, eklendi.
 //
 // SIRADAKİ AJAN NEREDEN BAŞLAMALI (sıra önemli):
 //   1) Casper'dan GERÇEK mockup görselini iste — bu blok yalnız bir metin
@@ -108,9 +112,10 @@ import { ensureAnonymousSession } from "@/lib/assistantConversation";
 //      DENMEZ. Sandbox'ta public_web/.env.local yoksa (2026-09-03'te öyleydi)
 //      bunu açıkça söyle, kör tahminle commit atma.
 //   3) Küçük, geri alınabilir adımlarla ilerle — örn. önce yalnız alt
-//      navigasyonu (🏠/✏️/👁️/⚙️) ekle ve canlı doğrula, SONRA bottom-sheet
-//      geçişine geç. Hepsini tek commit'te denemek, ÖNCE SOR kuralını
-//      (bu dosyanın en üstündeki CLAUDE.md talimatı) ihlal eder.
+//      navigasyonu (emoji DEĞİL, gerçek ikonlarla) ekle ve canlı doğrula,
+//      SONRA bottom-sheet geçişine geç. Hepsini tek commit'te denemek,
+//      ÖNCE SOR kuralını (bu dosyanın en üstündeki CLAUDE.md talimatı) ihlal
+//      eder.
 //   4) ÖNCE SOR: küçük görünse bile Casper'a sormadan hiçbir adımı uygulama
 //      (bkz. CLAUDE.md, "Çalışma kuralı — ÖNCE SOR").
 // ============================================================================
