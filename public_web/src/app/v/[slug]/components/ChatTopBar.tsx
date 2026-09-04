@@ -15,6 +15,7 @@ interface Props {
 // görünümü verir; Keşfet/public vitrin/global layout davranışına dokunmaz.
 export function ChatTopBar({ rapor, onKapat }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const asama = rapor.yuzde < 34 ? 1 : rapor.yuzde < 67 ? 2 : 3;
 
   useEffect(() => {
     const shell = rootRef.current?.parentElement;
@@ -58,9 +59,9 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
           </div>
 
           <div className="shrink-0 rounded-xl border border-white/10 bg-white/[0.045] px-2.5 py-1.5 text-right">
-            <p className="text-[14px] font-black leading-none text-sky-300">%{rapor.yuzde}</p>
+            <p className="text-[12px] font-black leading-none text-sky-300">Aşama {asama}/3</p>
             <p className="mt-1 text-[9px] font-semibold leading-none text-slate-500">
-              {rapor.doluSayisi}/{rapor.toplamSayisi}
+              {rapor.doluSayisi}/{rapor.toplamSayisi} alan
             </p>
           </div>
 
@@ -83,7 +84,7 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
               style={{ width: `${rapor.yuzde}%` }}
             />
           </div>
-          <span className="shrink-0 text-[10px] font-semibold text-slate-500">hazır</span>
+          <span className="shrink-0 text-[10px] font-semibold text-slate-500">%{rapor.yuzde} hazır</span>
         </div>
       </div>
 
@@ -111,10 +112,20 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
             left: 0.75rem !important;
             right: 0.75rem !important;
             top: auto !important;
-            bottom: 5.5rem !important;
+            bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
             width: auto !important;
-            max-height: min(72dvh, 680px) !important;
+            max-height: min(78dvh, 720px) !important;
             border-radius: 1.5rem 1.5rem 1.25rem 1.25rem !important;
+          }
+
+          /* Mobilde eski dolaşan SpotlightGuide ile yeni bottom-sheet aynı
+           * anda çizilince kullanıcı iki ayrı düzenleme yüzeyi görüyordu.
+           * Sheet artık mobilde TEK düzenleme yüzeyi; eski halka/balon yalnız
+           * masaüstünde kalır. Bu selector SpotlightGuide'ın mevcut kökünü
+           * hedefler ve sahiplik dışı hiçbir ekranı etkilemez. */
+          body.vixrex-asistan-acik
+            div[aria-hidden="false"].pointer-events-none.fixed.inset-0[class~="z-[80]"] {
+            display: none !important;
           }
         }
 
