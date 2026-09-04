@@ -31,4 +31,17 @@ describe("seçili işletme adı + sondaki telefon", () => {
     expect(extractVixrexValue(klasik, isletme)).toBe("Konak Kafe");
     expect(extractVixrexValue(klasik, whatsapp)).toBe("0542 180 25 73");
   });
+
+  it("telefonla biten normal uzun paragrafı kimlik cevabı sanmaz", () => {
+    const paragraf =
+      "Beşiktaş'ta küçük bir kafemiz var, İhlamurdere Cad. No:5'te. " +
+      "Her gün 08:00 - 23:00 arası açığız. Rezervasyon için 0533 987 65 43.";
+
+    expect(seciliKimlikTelefonKestirmesiniCikar(paragraf)).toBeNull();
+    const sonuc = serbestMetindenAlanlariCikar(paragraf);
+    expect(sonuc.kategoriEtiketi).toBe("Kafe / Lokanta");
+    expect(sonuc.calismaSaatleriMetni).toBe("08:00 - 23:00");
+    expect(sonuc.whatsapp).toBe("905339876543");
+    expect(sonuc.adres).toContain("İhlamurdere Cad");
+  });
 });
