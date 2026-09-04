@@ -7,14 +7,11 @@ import { tarihiYaz } from "@/lib/blogIcerik";
 /**
  * Vixrex blog listesi.
  *
- * Örnek alınan dosya: `(site)/yardim/page.tsx` — sunucu bileşeni, aynı
- * `lp-*` tasarım simgeleri. `(site)` route grubunda olduğu için başlık ve
- * altbilgi kendiliğinden geliyor.
- *
- * HİÇ YAYINDA YAZI YOKSA 404: Casper'ın kararı, boş blog yokluktan kötüdür.
- * Sayfa bugün bilerek 404 veriyor; ilk yazı `yayinda: true` olduğu anda
- * kendiliğinden açılır. Bkz. `src/data/blogYazilari.ts`.
+ * Katman 1'de içerik kaynağı `vixrex_blog_articles` tablosuna taşındı.
+ * Hiç yayınlanmış yazı yoksa mevcut davranış korunur: `/blog` 404 verir.
  */
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Blog | Vixrex",
@@ -23,8 +20,8 @@ export const metadata: Metadata = {
     "QR menü ve müşteri kazanma rehberleri.",
 };
 
-export default function BlogListePage() {
-  const yazilar = yayindakiYazilar();
+export default async function BlogListePage() {
+  const yazilar = await yayindakiYazilar();
   if (yazilar.length === 0) notFound();
 
   return (
