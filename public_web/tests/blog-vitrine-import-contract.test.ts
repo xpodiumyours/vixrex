@@ -6,7 +6,7 @@ const KOK = resolve(__dirname, "..");
 const oku = (yol: string) => readFileSync(resolve(KOK, yol), "utf8");
 
 const migration = oku(
-  "../supabase/migrations/20260904213500_add_vixrex_blog_store_import.sql",
+  "../supabase/migrations/20260904225525_add_vixrex_blog_store_import.sql",
 );
 const api = oku("src/app/api/articles/import-vixrex/route.ts");
 const webYonetim = oku("src/app/v/[slug]/blog-yonetim/page.tsx");
